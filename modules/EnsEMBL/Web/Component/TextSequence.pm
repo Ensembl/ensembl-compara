@@ -29,13 +29,14 @@ sub new {
 sub get_sequence_data {
   my ($self, $slices, $config) = @_;
   my $hub = $self->hub;
-  my (@sequence, @markup, $population);
+  my (@sequence, @markup, %consequence_types, $population);
   
   if ($config->{'snp_display'}) {
-    my @consequence = $hub->param('consequence_filter');
-    my $pop_filter  = $hub->param('population_filter');
+    my @consequence       = $hub->param('consequence_filter');
+    my $pop_filter        = $hub->param('population_filter');
+       %consequence_types = map { $_ => 1 } @consequence if join('', @consequence) ne 'off';
     
-    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if join('', @consequence) ne 'off';
+    $config->{'consequence_filter'} = \@consequence if %consequence_types;
     
     if ($pop_filter && $pop_filter ne 'off') {
       $population = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($pop_filter);
@@ -110,8 +111,9 @@ sub get_sequence_data {
       my $u_snps = {};
       
       eval {
-        $snps = $population ? $slice->get_all_VariationFeatures_by_Population($population, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures(1);
-        $snps = [ map { my $snp = $_; grep($config->{'consequence_filter'}{$_}, @{$snp->consequence_type}) ? $snp : () } @$snps ] if $snps && $config->{'consequence_filter'};
+        # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
+        # This isn't a problem, however, since filtering by population is disabled for now anyway.
+        $snps = $population ? $slice->get_all_VariationFeatures_by_Population($population, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures($config->{'consequence_filter'});
       };
       
       if (scalar @$snps) {
@@ -141,7 +143,7 @@ sub get_sequence_data {
         my $end            = $_->end;
         my $alleles        = $_->allele_string;
         my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
-           $snp_type       = lc [ grep $config->{'consequence_filter'}{$_}, @{$_->consequence_type} ]->[0] if $config->{'consequence_filter'};
+           $snp_type       = lc [ grep $consequence_types{$_}, @{$_->consequence_type} ]->[0] if %consequence_types;
         
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
@@ -240,7 +242,7 @@ sub get_sequence_data {
         }
       }
     }
-    
+     
     # Get exons
     if ($config->{'exon_display'}) {
       my $exontype = $config->{'exon_display'};
@@ -1039,7 +1041,6 @@ sub get_key {
       $image_config->{'legend'}->{$type} = $key{$type};
     }
   }
-
   
   $image_config->image_width(650);
   
