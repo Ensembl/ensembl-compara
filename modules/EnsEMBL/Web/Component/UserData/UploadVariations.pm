@@ -126,11 +126,10 @@ sub content {
     label  => 'Type of consequences to display',
     name   => 'terms',
     values => [
-      { value => 'display',  name => 'Ensembl terms'           },
       { value => 'SO',       name => 'Sequence Ontology terms' },
-      { value => 'NCBI',     name => 'NCBI terms'              },
+      { value => 'display',  name => 'Ensembl terms'           },
     ],
-    value  => 'ensembl',
+    value  => 'SO',
     select => 'select',
   );  
   
