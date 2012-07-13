@@ -67,38 +67,30 @@ sub new {
 =cut
 
 sub get_DBAdaptor {
-  my $self = shift;
-  my $database = shift || $self->error( 'FATAL', "Need a DBAdaptor name" );
-     $database = "SNP" if $database eq "snp";
-     $database = "otherfeatures" if $database eq "est";
-  my $species = shift || $self->default_species();
-  $self->{'_dbs'}->{$species} ||= {}; 
+  my $self     = shift;
+  my $database = shift || $self->error('FATAL', 'Need a DBAdaptor name');
+     $database = 'SNP'           if $database eq 'snp';
+     $database = 'otherfeatures' if $database eq 'est';
+  my $species  = shift || $self->default_species;
+  
+  $self->{'_dbs'}{$species} ||= {}; 
 
   # if we have connected to the db before, return the adaptor from the cache
-  if(exists($self->{'_dbs'}->{$species}->{$database})){ 
-    return $self->{'_dbs'}->{$species}->{$database};
-  }
+  return $self->{'_dbs'}{$species}{$database} if exists $self->{'_dbs'}{$species}{$database};
     
   # try to retrieve the DBAdaptor from the Registry
   my $dba = $reg->get_DBAdaptor($species, $database);
   # warn "$species - $database - $dba";
 
   # Funcgen Database Files Overwrite
-  if ($database eq 'funcgen' && $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'} ){
-    if ($species =~/^(mus|homo)/i ){
-      my $root = $self->{'species_defs'}->ENSEMBL_REGULATION_FILE_PATH;
-      $root .= '/' . lc($species) . '/' . $self->{'species_defs'}->ASSEMBLY_NAME;   
-	    $dba->get_ResultSetAdaptor->dbfile_data_root($root);    
-    }
+  if ($database eq 'funcgen' && $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'}) {
+    my $file_path = join '/', $self->{'species_defs'}->DATAFILE_BASE_PATH, lc $species, 'regulation_' . $self->{'species_defs'}->ENSEMBL_VERSION;
+    $dba->get_ResultSetAdaptor->dbfile_data_root(join '/', $file_path, $self->{'species_defs'}->ASSEMBLY_NAME) if -e $file_path && -d $file_path;
   }  
- 
-  # Glovar
-  $self->{'_dbs'}->{$species}->{$database} = $dba;
-
-  if (!exists($self->{'_dbs'}->{$species}->{$database})) {
-    return undef;
-  }
-  return $self->{'_dbs'}->{$species}->{$database};
+  
+  $self->{'_dbs'}{$species}{$database} = $dba;
+  
+  return $self->{'_dbs'}{$species}{$database};
 }
 
 =head2 get_databases
