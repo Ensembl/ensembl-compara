@@ -343,16 +343,17 @@ sub store {
     my ($self, $tree) = @_;
 
     # Firstly, store the nodes
+    my $has_root_id = (exists $tree->{'_root_id'} ? 1 : 0);
     my $root_id = $self->db->get_GeneTreeNodeAdaptor->store($tree->root);
     $tree->{'_root_id'} = $root_id;
 
     # Secondly, the tree itself
-    # trick: we INSERT IGNORE to create an entry and we then update it
-    # method_link_species_set_id must be set to its real value because of the foreign key
-    my $sth = $self->prepare('INSERT IGNORE INTO gene_tree_root (root_id, method_link_species_set_id) VALUES (?, ?)');
-    $sth->execute($root_id, $tree->method_link_species_set_id);
-
-    $sth = $self->prepare('UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?'),
+    my $sth;
+    if ($has_root_id) {
+        $sth = $self->prepare('UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?'),
+    } else {
+        $sth = $self->prepare('INSERT INTO gene_tree_root (tree_type, member_type, clusterset_id, method_link_species_set_id, stable_id, version, root_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    }
     $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $root_id);
     
     $tree->adaptor($self);
