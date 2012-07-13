@@ -1558,7 +1558,7 @@ sub _munge_meta {
 
     # check if there are sample search entries defined in meta table ( the case with Ensembl Genomes)
     # they can be overwritten at a later stage  via INI files
-    my @ks = grep { /^sample\./ } keys %{$meta_hash || {}};
+    my @ks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
     my $shash;
 
     foreach my $k (@ks) {
@@ -1573,8 +1573,8 @@ sub _munge_meta {
         $shash->{$type.'_TEXT'} = $value;
       } 
     }
-    
-    $self->tree->{$species}{'SAMPLE_DATA'} = $shash if $shash;
+
+    $self->tree->{$species}{'SAMPLE_DATA'} = $shash if scalar keys %$shash;
 
     # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree($species)->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
