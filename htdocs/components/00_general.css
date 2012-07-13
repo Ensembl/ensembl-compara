@@ -150,7 +150,7 @@ div.error h3, div.warning h3,
 div.info h3                   { background-repeat: no-repeat; background-position: 4px 2px; }
 div.error h3, div.error h4    { background-image: url(/i/16/rev/alert.png); background-color: #a55; color: #fff; }
 div.warning h3                { background-image: url(/i/16/rev/alert.png); background-color: #daa246; }
-div.info h3                   { background-image: url(/i/16/rev/info.png);  background-color: #ccc; }
+div.info h3                   { background-image: url(/i/16/info.png);  background-color: #ccc; }
 div.hint h3                   { background-image: none; padding: 4px 8px 2px 8px; background-color: #ccc; height: 20px; padding-top: 8px; }
 
 /* "close" icon */
