@@ -44,16 +44,16 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 67,                                              # current release number
+        'rel'               => 68,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
         # Commented out to make sure people define it on the command line
-        #'member_type'         => 'protein',                                       # either 'protein' or 'ncrna'
+        'member_type'       => 'ncrna',                                       # either 'protein' or 'ncrna'
 
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'rel_db'      => {
-            -host         => 'compara3', -dbname       => 'mm14_ensembl_compara_67',
+            -host         => 'compara3', -dbname       => 'mm14_ensembl_compara_68',
             -port         => 3306,
             -user         => 'ensro',
             -pass         => '',
@@ -94,8 +94,7 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-         0 => { -desc => 'default',          'LSF' => '' },
-         1 => { -desc => 'long_dumps',       'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]" -q long' },
+         'long_dumps' => {'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]" -q long' },
     };
 }
 
@@ -125,7 +124,8 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'dump_for_uniprot',
+        ($self->o('member_type') eq 'protein' ?
+          { -logic_name => 'dump_for_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
@@ -146,7 +146,8 @@ sub pipeline_analyses {
                         JOIN member gm on (m.gene_member_id = gm.member_id)
                         JOIN member pm on (gm.member_id = pm.gene_member_id)
                     WHERE
-                        gtr.member_type = #member_type#
+                        gtr.member_type = '#member_type#'
+                        AND gtr.clusterset_id = "default"
                 |,
             },
             -input_ids => [
@@ -156,7 +157,8 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#name_root#.tree_content.txt' } },
             },
-        },
+          }
+        : () ),
 
         {   -logic_name => 'dump_all_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
@@ -171,7 +173,7 @@ sub pipeline_analyses {
                 {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
             ],
             -hive_capacity => -1,
-            -rc_id => 1,
+            -rc_name => 'long_dumps',
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml', },
@@ -191,7 +193,7 @@ sub pipeline_analyses {
                 {'tree_type' => 'tree', 'member_type' => $self->o('member_type'), 'file' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', 'possible_orth' => 1},
             ],
             -hive_capacity => -1,
-            -rc_id => 1,
+            -rc_name => 'long_dumps',
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
@@ -204,8 +206,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'member_type'           => $self->o('member_type'),
-                'query'                 => "SELECT root_id FROM gene_tree_root WHERE tree_type = 'tree' AND member_type = '#member_type#'",
+                'query'                 => 'SELECT root_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "'.($self->o('member_type')).'"',
                 'input_id'              => { 'tree_id' => '#root_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
                 'fan_branch_code'       => 2,
             },
@@ -334,7 +335,7 @@ sub pipeline_analyses {
                 'input_id'          => { 'cmd' => '#cmd#'},
                 'fan_branch_code'   => 2,
             },
-            -wait_for => [ 'archive_long_files', 'dump_for_uniprot', 'dump_all_homologies', 'dump_all_trees'],
+            -wait_for => [ 'archive_long_files', 'dump_all_homologies', 'dump_all_trees'],
             -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'prepare_dir' ],
