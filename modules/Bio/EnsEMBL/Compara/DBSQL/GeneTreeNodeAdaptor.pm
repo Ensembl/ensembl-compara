@@ -109,6 +109,7 @@ sub fetch_all_roots {
 sub fetch_by_Member_root_id {
     my ($self, $member, $clusterset_id) = @_;
     deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all_by_Member instead');
+    $clusterset_id = 'default' if ((not defined $clusterset_id) or ($clusterset_id == 0) or ($clusterset_id == 1));
     return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id))->[0];
 }
 
@@ -123,6 +124,7 @@ sub fetch_by_Member_root_id {
 sub fetch_by_gene_Member_root_id {
     my ($self, $member, $clusterset_id) = @_;
     deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all_by_Member instead');
+    $clusterset_id = 'default' if ((not defined $clusterset_id) or ($clusterset_id == 0) or ($clusterset_id == 1));
     return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id))->[0];
 }
 
@@ -189,6 +191,7 @@ sub fetch_all_AlignedMember_by_Member {
 sub fetch_AlignedMember_by_member_id_root_id {
     my ($self, $member_id, $clusterset_id) = @_;
     deprecate('Use fetch_all_AlignedMember_by_Member($member_id, -clusterset_id=>$clusterset_id) instead');
+    $clusterset_id = 'default' if ((not defined $clusterset_id) or ($clusterset_id == 0) or ($clusterset_id == 1));
     return $self->fetch_all_AlignedMember_by_Member($member_id, -clusterset_id => $clusterset_id)->[0];
 }
 
@@ -216,7 +219,7 @@ sub gene_member_id_is_in_tree {
     my ($self, $member_id) = @_;
     deprecate('Use fetch_all_by_Member($member_id) instead');
     my $trees = $self->fetch_all_AlignedMember_by_Member($member_id);
-    return $trees->[0]->root_id if $trees;
+    return $trees->[0]->root_id if scalar(@$trees);
 }
 
 

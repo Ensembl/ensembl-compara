@@ -78,10 +78,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::D
              : MethodLinkSpeciesSet or int: either the object or its dbID
                NB: It currently gives the same partition of the data as member_type
   Arg [-CLUSTERSET_ID] (opt)
-             : int: the root_id of the clusterset node
-               NB: It currently gives the same partition of the data as member_type
-               NB: The definition of this argument is unstable and might change
-                   in the future
+             : string: the name of the clusterset (default is "default")
   Example    : $all_trees = $genetree_adaptor->fetch_all();
   Description: Fetches from the database all the gene trees
   Returntype : arrayref of Bio::EnsEMBL::Compara::GeneTree
@@ -207,9 +204,7 @@ sub fetch_by_node_id {
   Arg [-METHOD_LINK_SPECIES_SET] (opt)
              : MethodLinkSpeciesSet or int: either the object or its dbID
   Arg [-CLUSTERSET_ID] (opt)
-             : int: the root_id of the clusterset node
-               NB: The definition of this argument is unstable and might change
-                   in the future
+             : string: the name of the clusterset (default is "default")
   Example    : $all_trees = $genetree_adaptor->fetch_all_by_Member($member);
   Description: Fetches from the database all the gene trees that contains this member
                If the member is not an ENSEMBLGENE, it has to be canoncal, otherwise,
@@ -225,7 +220,7 @@ sub fetch_all_by_Member {
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
     # Discard the UNIPROT members
-    return if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['gene_tree_member', 'gtm'], 'gtn.node_id = gtm.node_id'], [['member', 'm'], 'gtm.member_id = m.member_id']];
     my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
@@ -244,6 +239,36 @@ sub fetch_all_by_Member {
         $self->bind_param_generic_fetch($clusterset_id, SQL_VARCHAR);
     }
 
+    return $self->generic_fetch($constraint, $join);
+}
+
+
+=head2 fetch_default_for_Member
+
+  Arg[1]     : Member or member_id
+  Example    : $trees = $genetree_adaptor->fetch_default_for_Member($member);
+  Description: Fetches from the database the default gene tree that contains this member
+               If the member is not an ENSEMBLGENE, it has to be canoncal, otherwise,
+                 the function would return undef
+  Returntype : Bio::EnsEMBL::Compara::GeneTree
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_default_for_Member {
+    my ($self, $member) = @_;
+
+    # Discard the UNIPROT members
+    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+
+    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['gene_tree_member', 'gtm'], 'gtn.node_id = gtm.node_id'], [['member', 'm'], 'gtm.member_id = m.member_id']];
+    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?)) AND (gtr.clusterset_id = "default")';
+    
+    my $member_id = (ref($member) ? $member->dbID : $member);
+    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    
     return $self->generic_fetch($constraint, $join);
 }
 
