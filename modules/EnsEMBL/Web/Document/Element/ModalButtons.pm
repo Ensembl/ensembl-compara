@@ -11,9 +11,9 @@ use base qw(EnsEMBL::Web::Document::Element::ToolButtons);
 sub label_classes {
   return {
     'Save as...'          => 'save',
-    'Load configuration'  => 'load',
-    'Reset configuration' => 'reset',
-    'Reset track order'   => 'list',
+    'Load configuration'  => 'config-load',
+    'Reset configuration' => 'config-reset',
+    'Reset track order'   => 'order-reset',
     'Add custom track'    => 'data',
   };
 }
