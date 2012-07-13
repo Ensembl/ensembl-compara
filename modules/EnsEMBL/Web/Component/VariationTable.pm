@@ -149,7 +149,7 @@ sub stats_table {
       $descriptions{$term} = '-';
     }
     
-    $colours{$term} = $colourmap->hex_by_name($var_styles->{$con->SO_term}->{default});
+    $colours{$term} = $colourmap->hex_by_name($var_styles->{lc($con->SO_term)}->{default});
     $ranks{$term} = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
   }
 
