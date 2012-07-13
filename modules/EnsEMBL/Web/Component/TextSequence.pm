@@ -113,7 +113,7 @@ sub get_sequence_data {
       eval {
         # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
         # This isn't a problem, however, since filtering by population is disabled for now anyway.
-        $snps = $population ? $slice->get_all_VariationFeatures_by_Population($population, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures($config->{'consequence_filter'});
+        $snps = $population ? $slice->get_all_VariationFeatures_by_Population($population, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures($config->{'consequence_filter'}, 1);
       };
       
       if (scalar @$snps) {
