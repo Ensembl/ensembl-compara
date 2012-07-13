@@ -307,8 +307,8 @@ sub write_data {
   # Prints each tree
   $w->startTag("groups");
   foreach my $tree (@{$list_trees}) {
-    $self->_write_tree($tree);
-    $tree->release_tree() if ! $self->no_release_trees;
+    $self->_write_tree($tree->root);
+    $tree->root->release_tree() if ! $self->no_release_trees;
   }
   $w->endTag("groups");
 

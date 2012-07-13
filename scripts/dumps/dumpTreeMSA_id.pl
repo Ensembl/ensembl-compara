@@ -72,7 +72,7 @@ unless (defined $url) {
 }
 
 my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
-my $adaptor = $dba->get_GeneTreeNodeAdaptor;
+my $adaptor = $dba->get_GeneTreeAdaptor;
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {
@@ -97,7 +97,7 @@ foreach my $tree_id (@tree_ids) {
 
   system("mkdir -p $dirpath") && die "Could not make directory '$dirpath: $!";
 
-  my $root = $adaptor->fetch_node_by_node_id($tree_id);
+  my $root = $adaptor->fetch_by_root_id($tree_id)->root;
 
   $tree_id = "tree.".$tree_id;
 
