@@ -131,7 +131,7 @@ sub table_row {
   if ($user_record) {
     $url_params{'id'} = $file->id;
     
-    $save = qq{<img src="${img_url}database.png" alt="saved" title="Saved data" />};
+    $save = qq{<img src="${img_url}dis/save.png" alt="saved" title="Saved data" />};
   } else {
     my $save_html = qq{<a href="%s" class="modal_link"><img src="${img_url}save.png" alt="save" title="%s" /></a>};
     my $save_url  = $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'save_remote' : 'save_upload', code => $file->{'code'}, __clear => 1 });
@@ -209,7 +209,7 @@ sub table_row_das {
   
   if ($user_record) {
     %url_params = ( id => $file->id );
-    $save       = qq{<img src="${img_url}database.png" alt="saved" title="Saved data" />};
+    $save       = qq{<img src="${img_url}dis/save.png" alt="saved" title="Saved data" />};
   } else {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
     my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
