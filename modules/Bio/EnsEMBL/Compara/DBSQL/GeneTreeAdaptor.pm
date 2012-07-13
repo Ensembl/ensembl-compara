@@ -397,7 +397,18 @@ sub _objs_from_sth {
   my @tree_list = ();
 
   while(my $rowhash = $sth->fetchrow_hashref) {
-    my $tree = new Bio::EnsEMBL::Compara::GeneTree(-adaptor => $self, %$rowhash);
+    #my $tree = new Bio::EnsEMBL::Compara::GeneTree(-adaptor => $self, %$rowhash);
+    my $tree = Bio::EnsEMBL::Compara::GeneTree->new_fast({
+        _adaptor => $self,
+        _root_id => $rowhash->{root_id},
+        _tree_type => $rowhash->{tree_type},
+        _member_type => $rowhash->{member_type},
+        _clusterset_id => $rowhash->{clusterset_id},
+        _method_link_species_set_id => $rowhash->{method_link_species_set_id},
+        _stable_id => $rowhash->{stable_id},
+        _version => $rowhash->{version},
+        _parent_id => $rowhash->{parent_id},
+    });
     push @tree_list, $tree;
   }
 
