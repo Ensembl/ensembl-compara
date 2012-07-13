@@ -34,12 +34,13 @@ sub content {
 
   if ($icontext) {
     if ($icontext eq 'FULL') {
-      $msg = "The <b>full</b> intronic sequence around this $object_type is used.";
+      $msg = "<p>The <b>full</b> intronic sequence around this $object_type is used.";
     } else {
-      $msg = "Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
+      $msg = "<p>Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
     }
+    $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
 
-    $msg .= '<br />';
+    $msg .= qq(<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/docs/variation/predicted_data.html#consequence_type_table">More information about this table</a>.</p>);
   }
 
   if ($consequence_type || $count < 25) {
@@ -50,7 +51,7 @@ sub content {
 
     $html = $self->render_content($table, $consequence_type);
   } else {
-    $html  = $self->_hint('snp_table', 'Configuring the page', qq{<p>${msg}To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
+    $html  = $self->_hint('snp_table', 'Configuring the page', $msg);
     $html .= $self->render_content($self->stats_table(\@transcripts, $gene_object)); # no sub-table selected, just show stats
   }
   
