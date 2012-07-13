@@ -84,7 +84,7 @@ sub make_table {
       { key => 'polyphen', sort => 'position_html', title => 'PolyPhen', align => 'center', help => $glossary->{'PolyPhen'} },
     );
 
-    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', title => 'Frequency', align => 'center' };
+    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', title => 'Global MAF', align => 'center', help => $glossary->{'Global MAF'} };
   }
  
   if ($self->hub->type ne 'Transcript'){
