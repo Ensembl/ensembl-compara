@@ -80,7 +80,7 @@ sub content {
     </div>
   </div>
 </div>
-', $image->render, $self->stats_table->render, $self->chromosome_form->render);
+', $image->render, $self->stats_table->render, $self->chromosome_form('Vmapview')->render);
 
   return $html;
 }
