@@ -49,7 +49,7 @@ sub sets_table {
   my $icon_url = $img_url . '16/';
   my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};
   my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
-  my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}saved.png" alt="use" title="Use this configuration set" /></a><div class="config_used">Configuration set applied</div>};
+  my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}dis/save.png" alt="use" title="Use this configuration set" /></a><div class="config_used">Configuration set applied</div>};
   my @rows;
   
   my @columns = (
