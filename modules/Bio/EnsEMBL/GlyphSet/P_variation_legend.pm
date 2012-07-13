@@ -25,7 +25,7 @@ sub _init {
   my @res      = $self->get_text_width(0, 'X', '', font => $fontname, ptsize => $fontsize);
   my $th       = $res[3] - ($h / 2);
   my $y        = $th;
-  my %labels   = map { $_->display_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %labels   = map { $_->SO_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
   $labels{'Insert'} = [ 9e9,     'Insert' ];
   $labels{'Delete'} = [ 9e9 + 1, 'Delete' ];

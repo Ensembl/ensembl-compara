@@ -92,7 +92,7 @@ sub features {
     ### ensure the display of the VEP features using colours corresponding to their consequence
     if ($self->my_config('format') eq 'SNP_EFFECT') {
       my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      
-      my %cons_lookup = map { $overlap_cons{$_}{'display_term'} => $overlap_cons{$_}{'rank'} } keys %overlap_cons;
+      my %cons_lookup = map { $overlap_cons{$_}{'SO_term'} => $overlap_cons{$_}{'rank'} } keys %overlap_cons;
     
       ## Group results into sets by start, end and allele, so we can treat them 
       ## as single features in the next step 

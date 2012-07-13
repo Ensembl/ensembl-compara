@@ -74,7 +74,7 @@ sub fetch_features {
          $sources = { map { $_ => 1 } @$sources } if $sources; 
       my $sets    = $self->my_config('sets');
          $sets    = { map { $_ => 1 } @$sets } if $sets;
-      my %ct      = map { $_->display_term => $_->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+      my %ct      = map { $_->SO_term => $_->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
       my @vari_features;
       
       if ($id =~ /set/) {
