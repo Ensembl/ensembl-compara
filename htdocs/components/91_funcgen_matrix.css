@@ -31,7 +31,7 @@ table.funcgen_matrix tr                                            { height: 26p
 table.funcgen_matrix tr.hidden                                     { display: none!important; }
 table.funcgen_matrix tr th,                                     
 table.funcgen_matrix tr td                                         { width: 25px; height: 25px; padding: 0; }
-table.funcgen_matrix thead th p                                    { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; white-space: nowrap; }
+table.funcgen_matrix thead th p                                    { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; white-space: nowrap; margin: 0; }
 table.funcgen_matrix thead th p                                    { -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
 table.funcgen_matrix thead th div.select_all_column                { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; white-space: nowrap; }
 table.funcgen_matrix thead th div.select_all_column div            { margin-top: 4px; }
@@ -44,8 +44,8 @@ table.funcgen_matrix td.option,   div.matrix_key .key .off         { background-
 table.funcgen_matrix td.on,       div.matrix_key .key .on          { background-color: [[MH_BORDER]]; }
 table.funcgen_matrix td.disabled, div.matrix_key .key .disabled    { background-color: #B5B5B5; }
 table.funcgen_matrix td.filter p,
-div.config div.matrix_key .key .filter p                           { background-color: #008000; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
-table.funcgen_matrix td.highlight p                                { background-color: #DAA520; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
+div.config div.matrix_key .key .filter p                           { background-color: #008000; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); margin: 0; }
+table.funcgen_matrix td.highlight p                                { background-color: #DAA520; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); margin: 0; }
 table.funcgen_matrix tr.renderers                                  { height: 30px; }
 table.funcgen_matrix tr.renderers th img.menu_option               { position: relative; left: 3px; top: 5px; }
 table.funcgen_matrix tr.renderers th ul.popup_menu                 { width: 145px; margin-top: -2px; }
