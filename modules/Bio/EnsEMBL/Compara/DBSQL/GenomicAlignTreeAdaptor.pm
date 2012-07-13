@@ -1074,9 +1074,27 @@ sub _tables {
 
 sub _default_where_clause {
 
-  return "gat.node_id = ga.node_id";
+#  return "gat.node_id = ga.node_id";
 #  return "gat.node_id = gag.node_id AND gag.genomic_align_id = ga.genomic_align_id";
-#  return "";
+  return "";
+}
+
+=head2 _left_join
+
+  Args       : none
+  Example    : none
+  Description: a clause for use with generic_fetch
+  Returntype : none
+  Exceptions : none
+  Caller     : BaseAdaptor::generic_fetch
+  Status     : At risk
+
+=cut
+
+sub _left_join {
+    return (
+        ['genomic_align', 'gat.node_id = ga.node_id']
+    );
 }
 
 =head2 _objs_from_sth
