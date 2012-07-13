@@ -39,7 +39,7 @@ sub init {
   
   $self->add_tracks('other',
     [ 'scalebar',       'Scale bar', 'P_scalebar', { display => 'normal', strand => 'r' }],
-    [ 'exon_structure', 'Protein',   'P_protein',  { display => 'normal', strand => 'f', colourset => 'protein_feature', menu => 'no' }],
+    [ 'exon_structure', 'Ensembl Protein',   'P_protein',  { display => 'normal', strand => 'f', colourset => 'protein_feature', menu => 'no' }],
   );
 }
 
