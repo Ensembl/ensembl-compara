@@ -282,10 +282,6 @@ sub get_all_Members {
     return $self->{'_member_array'};
 }
 
-sub member_class {
-    return 'Bio::EnsEMBL::Compara::GeneTreeMember';
-}
-
 =head2 add_Member
 
   Arg [1]    : GeneTreeMember
