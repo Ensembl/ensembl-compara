@@ -922,11 +922,13 @@ sub check_homology_consistency {
 
     foreach my $mlss_member_id ( keys %{$self->param('homology_consistency')} ) {
         my $count = scalar(keys %{$self->param('homology_consistency')->{$mlss_member_id}});
-        if ($count > 1) {
-            my ($mlss, $member_id) = split("_", $mlss_member_id);
-            $bad_key = "mlss member_id : $mlss $member_id";
-            print "$bad_key\n" if ($self->debug);
-        }
+
+        next if $count == 1;
+        next if $count == 2 and exists $self->param('homology_consistency')->{$mlss_member_id}->{contiguous_gene_split} and exists $self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog};
+
+        my ($mlss, $member_id) = split("_", $mlss_member_id);
+        $bad_key = "mlss member_id : $mlss $member_id";
+        print "$bad_key\n" if ($self->debug);
     }
     $self->throw("Inconsistent homologies: $bad_key") if defined $bad_key;
 }
