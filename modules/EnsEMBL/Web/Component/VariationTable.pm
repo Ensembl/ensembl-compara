@@ -120,13 +120,19 @@ sub stats_table {
   
   my $columns = [
     { key => 'count', title => 'Number of variants', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
-    { key => 'view',  title => '',                   sort => 'none',           width => '5%',  align => 'center' },
+    { key => 'view',  title => '',                   sort => 'none',           width => '5%',  align => 'center' },   
+    { key => 'key',   title => '',                   sort => 'none',           width => '2%',  align => 'center' },
     { key => 'type',  title => 'Type',               sort => 'numeric_hidden', width => '20%'                    },   
-    { key => 'desc',  title => 'Description',        sort => 'none',           width => '55%'                    },
+    { key => 'desc',  title => 'Description',        sort => 'none',           width => '53%'                    },
   ];
   
-  my (%counts, %total_counts, %ranks, %descriptions, %labels);
+  my (%counts, %total_counts, %ranks, %descriptions, %labels, %colours);
   my $total_counts;
+  
+  # colour stuff
+  my $species_defs = $hub->species_defs;
+  my $var_styles   = $species_defs->colour('variation');
+  my $colourmap    = $hub->colourmap;
   
   my @all_cons = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
@@ -143,6 +149,7 @@ sub stats_table {
       $descriptions{$term} = '-';
     }
     
+    $colours{$term} = $colourmap->hex_by_name($var_styles->{$con->SO_term}->{default});
     $ranks{$term} = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
   }
 
@@ -194,6 +201,8 @@ sub stats_table {
   my @rows;
   
   foreach my $con (keys %descriptions) {
+    my $colour_block = sprintf('<div style="background-color: #%s; width: 10px;">&nbsp;</div>', $colours{$con});
+    
     if ($counts{$con}) {
       my $count = $counts{$con};
       my $warning = $count > 10000 ? $warning_text : '';
@@ -202,14 +211,16 @@ sub stats_table {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
         desc  => $descriptions{$con}.' '.$warning,
         count => $count,
-        view  => $self->ajax_add($self->ajax_url(undef, { sub_table => $con, update_panel => 1 }), $con)
+        view  => $self->ajax_add($self->ajax_url(undef, { sub_table => $con, update_panel => 1 }), $con),
+        key   => $colour_block,
       };
     } else {
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
         desc  => $descriptions{$con},
         count => 0,
-        view  => '-'
+        view  => '-',
+        key   => $colour_block,
       };
     }
   }
