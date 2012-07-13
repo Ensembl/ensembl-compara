@@ -218,11 +218,9 @@ sub parse_newick_into_tree {
   
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
-  $tree->root->flatten_tree;
-  $tree->root->print_tree(20) if($self->debug);
+  my %leaves;
   foreach my $node (@{$tree->root->get_all_leaves}) {
-    next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-    $node->disavow_parent;
+    $leaves{$node->member_id} = $node if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
   }
 
   #parse newick into a new tree object structure
@@ -248,7 +246,6 @@ sub parse_newick_into_tree {
         print STDERR "$node is split_gene of $othernode\n" if $self->debug;
         my $newnode = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $nsplits++;
-        $newnode->node_id(-$nsplits);
         $othernode->parent->add_child($newnode);
         $newnode->add_child($othernode);
         $newnode->add_child($node);
@@ -262,26 +259,22 @@ sub parse_newick_into_tree {
     my $njtree_phyml_name = $leaf->get_tagvalue('name');
     $njtree_phyml_name =~ /(\d+)\_\d+/;
     my $member_id = $1;
+    my $old_leaf = $leaves{$member_id};
+    if (not $old_leaf) {
+      $leaf->print_node;
+      die "unable to find node in newick for member $member_id";
+    }
+    bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
+    $leaf->member_id($member_id);
     $leaf->add_tag('name', $member_id);
   }
+  #$newroot->node_id($tree->root_id);
+  #$newroot->adaptor($tree->root->adaptor);
   $newroot->print_tree(20) if($self->debug > 1);
 
-  # Leaves of newick tree are named with member_id of members from
-  # input tree move members (leaves) of input tree into newick tree to
-  # mirror the 'member_id' nodes
-  foreach my $member (@{$tree->root->get_all_leaves}) {
-    my $tmpnode = $newroot->find_node_by_name($member->member_id);
-    if($tmpnode) {
-      $tmpnode->parent->add_child($member, $tmpnode->distance_to_parent);
-      $tmpnode->disavow_parent;
-      #$member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
-      #bless $tmpnode, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-      #$tmpnode->node_id($member->node_id);
-      #$tmpnode->adaptor($member->adaptor);
-    } else {
-      $member->print_member;
-      die "unable to find node in newick for member";
-    }
+  foreach my $node (@{$tree->root->children}) {
+    $node->disavow_parent;
+    $node->release_tree;
   }
 
   foreach my $newsubroot (@{$newroot->children}) {
