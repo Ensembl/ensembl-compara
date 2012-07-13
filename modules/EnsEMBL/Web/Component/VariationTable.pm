@@ -100,7 +100,10 @@ sub render_content {
   my $html;
 
   if ($consequence_type) {
-    $html = $self->toggleable_table("$consequence_type variants", $consequence_type, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    my $consequence_label = ucfirst($consequence_type);
+    $consequence_label =~ s/_/ /g;
+    $consequence_label .='s';
+    $html = $self->toggleable_table("$consequence_label", $consequence_type, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   } else {
     $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variations in $stable_id by consequence type</h2>} . $table->render;
   }
