@@ -847,7 +847,6 @@ sub _user_track_settings {
   } else {
     $strand         = 'b'; 
     @user_renderers = @{$self->{'alignment_renderers'}};
-    push @user_renderers,'misalign','Imperfections' if lc $format eq 'psl'; # Maybe, in future, other formats, too
   }
   
   return ($strand, \@user_renderers);
@@ -1469,6 +1468,7 @@ sub add_dna_align_features {
       });
     }
   }
+  $self->add_track('information', 'diff_legend', 'Difference Legend', 'diff_legend', { strand => 'r' });
 }
 
 sub add_data_files {
