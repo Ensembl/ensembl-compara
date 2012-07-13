@@ -132,7 +132,7 @@ sub add_image_config_notes {
     </div>
     <div>
       <ul class="configuration_key">
-        <li><img src="${img_url}track-das.gif" /><span>Distributed Annotation Source (DAS)</span></li>
+        <li><img src="${img_url}track-das.gif" /><span>External data (DAS)</span></li>
         <li><img src="${img_url}track-user.gif" /><span>User-added track</span></li>
       </ul>
     </div>
