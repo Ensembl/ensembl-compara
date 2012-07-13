@@ -154,7 +154,13 @@ sub _draw_delete_blobs {
   foreach my $c (@$clusters) {
     my $middle = $self->_blob_middle($c);
     my $start = min($c->{'disp_ref_start'},$middle-$c->{'size'}/2);
-    my $end = max($c->{'disp_ref_end'},$middle+$c->{'size'}/2);    
+    my $end = max($c->{'disp_ref_end'},$middle+$c->{'size'}/2); 
+    
+    if(@{$c->{'blobs'}} > 1) {
+      # some pink will show
+      $self->{'config'}->{'_difference_legend_pink'} = 1;
+    }
+    
     # pink rectangle
     $self->push($self->Rect({
       x         => $c->{'disp_ref_start'} + $c->{'ref_to_img'},
@@ -165,8 +171,7 @@ sub _draw_delete_blobs {
       bordercolour => undef,
       absolutey => 1,
     }));    
-    # rectabgle for zmenu
-    warn "size=".$c->{'size'}."\n";
+    # rectangle for zmenu
     $self->push($self->Rect({
       x         => $start + $c->{'ref_to_img'},
       y         => 20 + $bump_offset,
@@ -306,11 +311,14 @@ sub _draw_blob {
   }
   if($c->{'rel'}) {
     $self->_overlay_text($c,$c->{'reserve_end'},$y,"...",'black',$paler,undef,$middle + $c->{'size'}/2+1);
+    $self->{'config'}->{'_difference_legend_el'} = 1;
   } elsif($c->{'lel'}) {
     $self->_overlay_text($c,$c->{'reserve_start'},$y,"...",'black',$paler,$middle - $c->{'size'}/2-1,undef);
+    $self->{'config'}->{'_difference_legend_el'} = 1;
   } elsif($c->{'midel'}) {
     $self->_overlay_text($c,$middle-$c->{'size'}/4,$y,"...",'black',$paler);
     $self->_overlay_text($c,$middle+$c->{'size'}/4,$y,"...",'black',$paler);
+    $self->{'config'}->{'_difference_legend_el'} = 1;
   }
 }
 
@@ -328,16 +336,17 @@ sub _draw_insert_lines {
   foreach my $c (@$clusters) {
     my $bmiddle = $self->_blob_middle($c);
     my $bstart = $bmiddle - $c->{'size'}/2;
-    warn "alt blob\n";
+    if(@{$c->{'blobs'}} > 1) {
+      # some dots will show
+      $self->{'config'}->{'_difference_legend_dots'} = 1;
+    }
     # Apportion blob
     my $blob_len;
     $blob_len += $_->{'length'} for(@{$c->{'blobs'}});
     my $px_per_len = $c->{'size'} / $blob_len;
-    warn "px_per_len = $px_per_len\n";
     my $offset = 0;
     foreach my $b (sort { $a->{'disp_ref_start'} <=> $b->{'disp_ref_start'} } @{$c->{'blobs'}}) {
       my $len = $b->{'length'} * $px_per_len;
-      warn "($offset,$len)\n";
       $self->push($self->Poly({
         points => [
           $b->{'disp_ref_start'} + $c->{'ref_to_img'},18+$bump_offset,    # left on ref
@@ -410,9 +419,9 @@ sub draw_cigar_difference {
   $options ||= {};
   $options = { # set defaults: relies on later initialiazers overriding earlier.
     row_height => 40,
-    smallest_width => { 'D' => 6, 'I' => 4 }, # 8
-    composite_width => { 'D' => 8, 'I' => 12 }, # 32
-    leeway => 4, # 24
+    smallest_width => { 'D' => 4, 'I' => 4 }, # 8
+    composite_width => { 'D' => 0, 'I' => 10 }, # D = 0 because leeway is enough
+    leeway => 6, # 24
     skip_labels => 0,
     %$options
   };
@@ -433,6 +442,7 @@ sub draw_cigar_difference {
     } else {
       @features = @tmp;
     }
+    $self->{'config'}->{'_difference_legend'} = 1; # instruct to draw legend
     foreach my $f (@features) {
       my %parts;
       my $cigar;
