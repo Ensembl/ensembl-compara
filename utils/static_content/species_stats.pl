@@ -47,7 +47,7 @@ BEGIN{
 
   $SCRIPT_ROOT = dirname( $Bin );
   ($SERVERROOT = $SCRIPT_ROOT) =~ s#/utils##;
-  my $plugin = $PRE ? '/sanger-plugins/pre' : 'public-plugins/ensembl';
+  my $plugin = $PRE ? '/sanger-plugins/pre' : '/public-plugins/ensembl';
   $PLUGIN_ROOT ||= $SERVERROOT.$plugin;
 
   unless( $PLUGIN_ROOT =~ /^\// ){ # Relative path
@@ -209,6 +209,17 @@ foreach my $spp (@valid_spp) {
     }
 
     my ($pseudo, $rna, $ig_segments, $exons, $transcripts, $snps, $statuses);  
+   
+    my %glossary = $SD->multiX('ENSEMBL_GLOSSARY');
+ 
+    my %glossary_lookup = (
+      'known'               => 'Known gene',
+      'novel'               => 'Novel gene',
+      'known_by_projection' => 'Projected gene (or known by_projection)',
+      'pseudogene'          => 'Pseudogene',
+      'exon'                => 'Exon',
+      'transcript'          => 'Transcript',
+    );
 
     unless ($pre) { 
 ###
@@ -489,15 +500,18 @@ foreach my $spp (@valid_spp) {
    
       if (scalar @$statuses){
         foreach my $status_c (@$statuses) {
-           my $status = $status_c->[0];           
-           my $count  = $status_c->[1];
-           $status =~ s/_/ /g;
-           $status = ucfirst(lc($status));
-	   $count = thousandify($count);
-	   $rowcount++;
-	   $row = stripe_row($rowcount);
-            print STATS qq($row
-            <td class="data">$status genes:</td>
+          my $status = $status_c->[0];           
+          my $count  = $status_c->[1];
+          my $term = $glossary_lookup{lc($status)};
+          my $text = $glossary{$term};
+          $status =~ s/_/ /g;
+          $status = ucfirst(lc($status));
+	        $count = thousandify($count);
+	        $rowcount++;
+          my $header = $term ? qq{<span class="glossary_mouseover">$status genes<span class="floating_popup">$text</span></span>} : "$status genes";
+	        $row = stripe_row($rowcount);
+          print STATS qq($row
+            <td class="data">$header:</td>
             <td class="value">$count</td>
            </tr> );
         }
@@ -507,8 +521,11 @@ foreach my $spp (@valid_spp) {
         $pseudo = thousandify($pseudo);
         $rowcount++;
         $row = stripe_row($rowcount);
+        my $term = $glossary_lookup{'pseudogene'};
+        my $text = $glossary{$term};
+        my $header = $term ? qq{<span class="glossary_mouseover">Pseudogenes<span class="floating_popup">$text</span></span>} : "Pseudogenes";
         print STATS qq($row
-          <td class="data">Pseudogenes:</td>
+          <td class="data">$header:</td>
           <td class="value">$pseudo</td>
       </tr>
       );
@@ -539,16 +556,22 @@ foreach my $spp (@valid_spp) {
       $rowcount++;
       $exons = thousandify($exons);
       $row = stripe_row($rowcount);
+      my $term = $glossary_lookup{'exon'};
+      my $text = $glossary{$term};
+      my $header = $term ? qq{<span class="glossary_mouseover">Gene exons<span class="floating_popup">$text</span></span>} : "Gene exons";
       print STATS qq($row
-          <td class="data">Gene exons:</td>
+          <td class="data">$header:</td>
           <td class="value">$exons</td>
       </tr>);
 
       $rowcount++;
       $transcripts = thousandify($transcripts);
       $row = stripe_row($rowcount);
+      $term = $glossary_lookup{'transcript'};
+      $text = $glossary{$term};
+      $header = $term ? qq{<span class="glossary_mouseover">Gene transcripts<span class="floating_popup">$text</span></span>} : "Gene transcriptss";
       print STATS qq($row
-          <td class="data">Gene transcripts:</td>
+          <td class="data">$header:</td>
           <td class="value">$transcripts</td>
       </tr>
   </table>
