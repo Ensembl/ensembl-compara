@@ -5,14 +5,12 @@
 33	9371	echinops_telfairi	TENREC	1	2006-01-Ensembl	
 36	69293	gasterosteus_aculeatus	BROADS1	1	2006-06-Ensembl	
 37	8090	oryzias_latipes	MEDAKA1	1	2006-05-Ensembl	
-39	9615	canis_familiaris	BROADD2	1	2006-11-Ensembl	
 42	9031	gallus_gallus	WASHUC2	1	2006-08-Ensembl	
 43	9258	ornithorhynchus_anatinus	OANA5	1	2007-01-Ensembl	
 46	13616	monodelphis_domestica	BROADO5	1	2007-02-Ensembl	
 48	37347	tupaia_belangeri	TREESHREW	1	2006-10-Ensembl	
 49	9365	erinaceus_europaeus	HEDGEHOG	1	2006-10-Ensembl	
 55	42254	sorex_araneus	COMMON_SHREW1	1	2007-04-Ensembl	
-57	10090	mus_musculus	NCBIM37	1	2010-04-Ensembl	
 58	30608	microcebus_murinus	micMur1	1	2007-07-Ensembl	
 60	9601	pongo_abelii	PPYG2	1	2007-10-Ensembl	
 61	9796	equus_caballus	EquCab2	1	2007-09-Ensembl	
@@ -54,6 +52,9 @@
 128	7719	ciona_intestinalis	KH	1	2011-08-Ensembl	
 129	7897	latimeria_chalumnae	LatCha1	1	2011-09-Ensembl	
 130	8128	oreochromis_niloticus	Orenil1.0	1	2011-05-Ensembl	
-131	43179	spermophilus_tridecemlineatus	spetri2	1	2011-12-Ensembl	
+131	43179	ictidomys_tridecemlineatus	spetri2	1	2011-12-Ensembl	
 132	9823	sus_scrofa	Sscrofa10.2	1	2011-09-Ensembl	
 133	6239	caenorhabditis_elegans	WBcel215	1	2012-03-WormBase	
+134	10090	mus_musculus	GRCm38	1	2012-01-Ensembl	
+135	9615	canis_familiaris	CanFam3.1	1	2011-11-Ensembl	
+136	13735	pelodiscus_sinensis	PelSin_1.0	1	2011-11-Ensembl	
