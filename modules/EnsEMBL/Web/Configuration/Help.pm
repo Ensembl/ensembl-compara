@@ -6,6 +6,14 @@ use strict;
 
 use base qw(EnsEMBL::Web::Configuration);
 
+sub short_caption {
+  return 'Help';
+}
+
+sub caption {
+  return 'Help';
+}
+
 sub set_default_action {
   my $self = shift;
   $self->{'_data'}{'default'} = 'Search';
@@ -85,7 +93,7 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   ));
-  $T->append($self->create_subnode( 'View', '',
+  $T->append($self->create_subnode( 'View', 'Page Help',
     [qw(archive EnsEMBL::Web::Component::Help::View
         )],
       { 'no_menu_entry' => 1 }
