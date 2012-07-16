@@ -94,7 +94,9 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-         'long_dumps' => {'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]" -q long' },
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+         '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
     };
 }
 
@@ -131,8 +133,7 @@ sub pipeline_analyses {
                 'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
                 'name_root'     => $self->o('name_root'),
                 'target_dir'    => $self->o('target_dir'),
-                'member_type'   => $self->o('member_type'),
-                'query'         => qq|
+                'query'         => sprintf q|
                     SELECT 
                         gtr.stable_id AS GeneTreeStableID, 
                         pm.stable_id AS EnsPeptideStableID,
@@ -146,9 +147,9 @@ sub pipeline_analyses {
                         JOIN member gm on (m.gene_member_id = gm.member_id)
                         JOIN member pm on (gm.member_id = pm.gene_member_id)
                     WHERE
-                        gtr.member_type = '#member_type#'
-                        AND gtr.clusterset_id = "default"
-                |,
+                        gtr.member_type = '%s'
+                        AND gtr.clusterset_id = '%s'
+                |, $self->o('member_type'), 'default'
             },
             -input_ids => [
                 {'cmd' => 'mysql #db_conn# -N -q -e "#query#" > #target_dir#/#name_root#.tree_content.txt',},
@@ -173,7 +174,6 @@ sub pipeline_analyses {
                 {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
             ],
             -hive_capacity => -1,
-            -rc_name => 'long_dumps',
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml', },
@@ -193,7 +193,7 @@ sub pipeline_analyses {
                 {'tree_type' => 'tree', 'member_type' => $self->o('member_type'), 'file' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', 'possible_orth' => 1},
             ],
             -hive_capacity => -1,
-            -rc_name => 'long_dumps',
+            -rc_name => '1Gb_job',
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
@@ -206,7 +206,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'query'                 => 'SELECT root_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "'.($self->o('member_type')).'"',
+                'query'                 => sprintf 'SELECT root_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
                 'input_id'              => { 'tree_id' => '#root_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
                 'fan_branch_code'       => 2,
             },
@@ -232,6 +232,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
+            -rc_name       => '500Mb_job',
         },
 
         {   -logic_name => 'generate_collations',
