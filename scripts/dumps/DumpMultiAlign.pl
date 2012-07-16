@@ -137,7 +137,7 @@ format. The scores are dumped together with the orginal alignment.
 The list of species used to get those alignments. The names
 should correspond to the name of the core database in the
 registry_configuration_file or any of its aliases. Alternatively,
-you can use a pre-defined species_set_name like mammals or primates.
+you can use a pre-defined species_set_name like "mammals" or "primates".
 
 =item B<[--restrict]>
 
@@ -169,7 +169,7 @@ each alignment. "Fasta" is the default format.
 
 This script uses the Bio::AlignIO::xxx modules to format the output
 except for the maf and emf formats because the Bio::AlignIO::maf module
-does not support writting and there is no module for emf.
+does not support writing and there is no module for emf.
 
 =item B<[--output_file filename]>
 
@@ -386,7 +386,6 @@ if ($help) {
   print $description, $usage;
   exit(0);
 }
-
 # Configure the Bio::EnsEMBL::Registry
 # Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
@@ -910,7 +909,7 @@ if ($conservation_score_mlss) {
     my $length = $end-$start+1;
 
     my $conservation_scores = $new_genomic_align_block->adaptor->db->get_ConservationScoreAdaptor->
-        fetch_all_by_GenomicAlignBlock($genomic_align_block, $start, $end, $length, $length, undef, 1);
+        fetch_all_by_GenomicAlignBlock($new_genomic_align_block, $start, $end, $length, $length, undef, 1);
 
     my $this_conservation_score = shift @$conservation_scores;
      for (my $i = 0; $i<@$aligned_seqs; $i++) {
