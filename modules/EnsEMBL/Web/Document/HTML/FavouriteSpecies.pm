@@ -4,6 +4,7 @@ package EnsEMBL::Web::Document::HTML::FavouriteSpecies;
 
 use strict;
 
+use POSIX qw(ceil floor);
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
@@ -149,7 +150,11 @@ sub render_with_images {
   my $species_defs  = $self->species_defs;
   my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
   my $image_type    = $self->image_type;
-  my $html;
+  my $html = qq(<div class="column-wrapper"><div class="column-two"><div class="column-padding">
+                <dl class="species-list">);
+
+  my $breakpoint = ceil(scalar(@species_list) / 2);
+  my $i = 1;
   
   foreach (@species_list) {
     $html .= qq{
@@ -161,13 +166,18 @@ sub render_with_images {
       </dt>
       <dd><span class="small normal">$_->{'assembly'}</span></dd>
     };
+    if ($i == $breakpoint) {
+      $html .= qq(</dl>
+                  </div></div>
+                  <div class="column-two"><div class="column-padding">
+                  <dl class="species-list">);
+    }
+    $i++;
   }
+
+  $html .= '</dl></div></div></div>';
   
-  return qq{
-    <dl class="species-list">
-      $html
-    </dl>
-  };
+  return $html;
 }
 
 1;
