@@ -143,7 +143,8 @@ sub default_options {
 					                                      #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
 
 #Human specific masking
-#					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"},
+#					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"
+                                              },
 			     #non human example
 #   			    'reference'     => {'chunk_size'      => 10000000,
 #   						'overlap'         => 0,
