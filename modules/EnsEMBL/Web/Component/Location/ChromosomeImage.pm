@@ -65,6 +65,8 @@ sub content {
   $image->karyotype($self->hub, $object, \@pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
 
+  my $chr_form = $self->chromosome_form('Vsynteny');
+
   my $html = sprintf('
 <div class="column-wrapper">
   <div class="column-two">
@@ -74,13 +76,13 @@ sub content {
   </div>
   <div class="column-two">
     <div class="column-padding">
+    %s
     <h3>Chromosome Statistics</h3>
     %s
-    <div style="margin-top:48px">%s</div>
     </div>
   </div>
 </div>
-', $image->render, $self->stats_table->render, $self->chromosome_form('Vmapview')->render);
+', $image->render, $self->chromosome_form('Vmapview')->render, $self->stats_table->render);
 
   return $html;
 }
