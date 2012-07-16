@@ -41,7 +41,6 @@ package EnsEMBL::Web::SpeciesDefs;
 ###  # Getting a parameter with multiple values
 ###  my( @chromosomes ) = @{$speciesdefs->ENSEMBL_CHROMOSOMES};
 
-
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -53,6 +52,7 @@ use File::Spec;
 use Hash::Merge qw(merge);
 use Storable qw(lock_nstore lock_retrieve thaw);
 use Time::HiRes qw(time);
+use Fcntl qw(O_WRONLY O_CREAT);
 
 use SiteDefs qw(:ALL);
 
@@ -692,18 +692,47 @@ sub timer_push {
 
 sub img_url { return $_[0]->ENSEMBL_STATIC_SERVER . ($_[0]->ENSEMBL_IMAGE_ROOT || '/i/'); }
 
+sub _userdb_fault {
+  my ($self,$value) = @_;
+
+  my $file = $SiteDefs::ENSEMBL_USERDBFAULTFILE;
+  my $curval = -e $file;
+  if(defined $value) { # set/reset
+    if($value) {
+      if(!$curval and open(USERDBFAULT,">$file")) {
+        print USERDBFAULT scalar(localtime)."\n" unless $curval;
+        close USERDBFAULT;
+      }
+      utime(time,time,$file);
+    } elsif($curval and not $value) {
+      unlink $file;
+    }
+  }
+  my $timeout = $SiteDefs::ENSEMBL_USERDBFAULTTIMEOUT;
+  $timeout = 300 unless defined $timeout;
+  return undef if (time - [stat($file)]->[9]) > $timeout;
+  return $curval;
+}
+
 sub has_userdb {
   my $self = shift;
+
+  return 0 if($self->_userdb_fault);
+ 
   my $dsn = sprintf(
     'DBI:mysql:database=%s;host=%s;port=%s',
     $self->ENSEMBL_USERDB_NAME,
     $self->ENSEMBL_USERDB_HOST,
     $self->ENSEMBL_USERDB_PORT
   );
-  if (DBI->connect($dsn, $self->ENSEMBL_USERDB_USER, $self->ENSEMBL_USERDB_PASS)) {
-    return 1;
+  my $dbh;
+  eval {
+    $dbh = DBI->connect($dsn, $self->ENSEMBL_USERDB_USER, $self->ENSEMBL_USERDB_PASS);
   };
-  return 0;
+  my $val = (!$@ and defined $dbh);
+  $dbh->disconnect() if defined $dbh;
+  $self->_userdb_fault(!$val);
+  return $val;
 }
 
 sub marts {
