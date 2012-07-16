@@ -566,7 +566,7 @@ sub build_imageconfig_menus {
     my $controls = $node->get('controls');
     my $subset   = $node->get('subset');
     my $name     = encode_entities($node->get('name'));
-    my $icon     = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
+    my $icon     = $external ? sprintf '<img src="%strack-%s.gif" style="width:48px;height:16px" alt="%s" />', $img_url, lc $external, $external : ''; # Exernal data icons, etc
     my @classes  = ($id, 'track', $external);
     my ($selected, $menu, $help);
     
