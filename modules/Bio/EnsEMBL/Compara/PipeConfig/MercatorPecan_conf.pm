@@ -722,7 +722,7 @@ sub pipeline_analyses {
 #             -wait_for => [ 'mercator' ],
              -hive_capacity => 500,  
              -flow_into => {
-		 2 => [ 'gerp_mem1'], #retry with more memory
+		 2 => [ 'gerp_himem'], #retry with more memory
              },
 	     -rc_name => '1Gb',
          },
