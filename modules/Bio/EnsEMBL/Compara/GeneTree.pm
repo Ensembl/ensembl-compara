@@ -24,6 +24,7 @@ Bio::EnsEMBL::Compara::GeneTree
 
 Class to represent a gene tree object. Contains a link to
 the root of the tree, as long as general tree properties.
+It implements the AlignedMemberSet interface (via the leaves).
 
 =head1 INHERITANCE TREE
 
@@ -64,28 +65,18 @@ no strict 'refs';
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet', 'Bio::EnsEMBL::Compara::Taggable');
 
 
-=head2 member_class
-
-  Description: Returns the type of member used in the set
-  Returntype : String: Bio::EnsEMBL::Compara::GeneTreeMember
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub member_class {
-    return 'Bio::EnsEMBL::Compara::GeneTreeMember';
-}
-
+##############################
+# Constructors / Destructors #
+##############################
 
 =head2 new
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
+  Arg [1]    :
+  Example    :
+  Description:
   Returntype : Bio::EnsEMBL::Compara::GeneTree
-  Exceptions : 
-  Caller     : 
+  Exceptions :
+  Caller     :
 
 =cut
 
@@ -106,12 +97,13 @@ sub new {
     return $self;
 }
 
+
 =head2 deep_copy
 
-  Description: Returns a copy of $self. All the members are themselves copied
+  Description: Returns a copy of $self (as an AlignedMemberSet). All the
+               members are themselves copied, but the tree topology is lost.
   Returntype : Bio::EnsEMBL::Compara::GeneTree
-  Caller     : general
-  Status     : Stable
+  Caller     : General
 
 =cut
 
@@ -125,15 +117,13 @@ sub deep_copy {
 }
 
 
-
-=head2 DESTROY()
+=head2 DESTROY
 
   Description : Deletes the reference to the root node and breaks
                 the circular reference.
   Returntype  : None
-  Exceptions  : None
-  Status      : System
-  
+  Caller      : System
+
 =cut
 
 sub DESTROY {
@@ -142,15 +132,18 @@ sub DESTROY {
 }
 
 
-=head2 tree_type()
+#####################
+# Object attributes #
+#####################
+
+=head2 tree_type
 
   Description : Getter/Setter for the tree_type field. This field can
                 currently be 'tree', 'supertree' or 'clusterset'
   Returntype  : String
-  Exceptions  : None
   Example     : my $type = $tree->tree_type();
-  Status      : Stable  
-  
+  Caller      : General
+
 =cut
 
 sub tree_type {
@@ -160,15 +153,14 @@ sub tree_type {
 }
 
 
-=head2 member_type()
+=head2 member_type
 
   Description : Getter/Setter for the member_type field. This field can
                 currently be 'ncrna' or 'protein'
   Returntype  : String
-  Exceptions  : None
   Example     : my $type = $tree->member_type();
-  Status      : Stable  
-  
+  Caller      : General
+
 =cut
 
 sub member_type {
@@ -178,6 +170,18 @@ sub member_type {
 }
 
 
+=head2 clusterset_id
+
+  Description : Getter/Setter for the clusterset_id field. This field can
+                be any string. Each dataset should contain a set of trees
+                with the "default" clusterset_id. Other clusterset_id are
+                used to store linked / additionnal data.
+  Returntype  : String
+  Example     : my $clusterset_id = $tree->clusterset_id();
+  Caller      : General
+
+=cut
+
 sub clusterset_id {
     my $self = shift;
     $self->{'_clusterset_id'} = shift if(@_);
@@ -185,28 +189,45 @@ sub clusterset_id {
 }
 
 
+=head2 root_id
 
-=head2 root()
+  Description : Getter for the root_id of the root node of the tree.
+  Returntype  : Integer
+  Example     : my $root_node_id = $tree->root_id();
+  Caller      : General
+
+=cut
+
+sub root_id {
+    my $self = shift;
+    return $self->{'_root_id'};
+}
+
+
+################
+# Tree loading #
+################
+
+=head2 root
 
   Description : Getter for the root node of the tree. This returns an
                 object fetch from the database if root_id is defined.
                 Otherwise, it will create a new GeneTreeNode object.
   Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode
-  Exceptions  : None
   Example     : my $root_node = $tree->root();
-  Status      : Stable
-  
+  Caller      : General
+
 =cut
 
 sub root {
     my $self = shift;
 
     if (not defined $self->{'_root'}) {
-        if (defined $self->{'_root_id'} and defined $self->{'_adaptor'}) {
+        if (defined $self->{'_root_id'} and defined $self->adaptor) {
             # Loads all the nodes in one go
-            my $gtn_adaptor = $self->{'_adaptor'}->db->get_GeneTreeNodeAdaptor;
+            my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
             $gtn_adaptor->{'_ref_tree'} = $self;
-            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+            $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
             delete $gtn_adaptor->{'_ref_tree'};
 
         } else {
@@ -219,10 +240,28 @@ sub root {
 }
 
 
+=head2 preload
+
+  Description : Method to load all the tree data in one go. This currently
+                includes if not loaded yet, and all the gene Members
+                associated with the leaves.
+                In the future, it will include all the tags
+  Returntype  : node
+  Example     : $tree->preload();
+  Caller      : General
+
+=cut
 
 sub preload {
     my $self = shift;
-    return unless defined $self->{'_adaptor'};
+    return unless defined $self->adaptor;
+
+    if (not defined $self->{'_root'} and defined $self->{'_root_id'}) {
+        my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
+        $gtn_adaptor->{'_ref_tree'} = $self;
+        $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+        delete $gtn_adaptor->{'_ref_tree'};
+    }
 
     # Loads all the gene members in one go
     my %leaves;
@@ -230,38 +269,105 @@ sub preload {
         $leaves{$pm->gene_member_id} = $pm if UNIVERSAL::isa($pm, 'Bio::EnsEMBL::Compara::GeneTreeMember');
     }
     my @m_ids = keys(%leaves);
-    my $all_gm = $self->{'_adaptor'}->db->get_MemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
+    my $all_gm = $self->adaptor->db->get_MemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
     foreach my $gm (@$all_gm) {
         $leaves{$gm->dbID}->gene_member($gm);
     }
 }
 
 
-=head2 root_id()
+=head2 attach_alignment
 
-  Description : Getter/Setter for the root_id of the root node of the tree.
-                This is internally synchronised with the root() method and
-                vice-versa to ensure consistency.
-  Returntype  : Integer
-  Exceptions  : None
-  Example     : my $root_node_id = $tree->root_id();
-  Status      : Stable
-  
+  Arg [1]     : String: clusterset_id
+  Description : Method to fetch the alternative tree with the given
+                clusterset_id and attach its multiple alignment to
+                the current tree. The alternative tree is returned.
+  Returntype  : GeneTree
+  Example     : $supertree->attach_alignment('super-align');
+  Caller      : General
+
 =cut
 
-sub root_id {
+sub attach_alignment {
     my $self = shift;
-    return $self->{'_root_id'};
+    my $other_clusterset_id = shift;
+    return unless defined $self->adaptor;
+
+    # Gets the other tree
+    my $others = $self->adaptor->fetch_all_linked_trees($self);
+    my @good_others = grep {$_->clusterset_id eq $other_clusterset_id} @$others;
+    die "'$other_clusterset_id' tree not found\n" unless scalar(@good_others);
+
+    # Gets the alignment
+    my %cigars;
+    my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
+    foreach my $leaf (@{$gtn_adaptor->fetch_all_AlignedMember_by_root_id($good_others[0]->root_id)}) {
+        $cigars{$leaf->member_id} = $leaf->cigar_line;
+    }
+
+    # Assigns it
+    foreach my $leaf (@{$self->root->get_all_leaves}) {
+        $leaf->cigar_line($cigars{$leaf->member_id});
+    }
+
+    return $good_others[0];
 }
+
+
+=head2 expand_subtrees
+
+  Description : Method to fetch the subtrees of the current tree
+                and attach them to the tips of the current tree
+  Returntype  : none
+  Example     : $supertree->expand_subtrees();
+  Caller      : General
+
+=cut
+
+sub expand_subtrees {
+    my $self = shift;
+    return unless defined $self->adaptor;
+
+    # Gets the subtrees
+    my %subtrees;
+    foreach my $subtree (@{$self->adaptor->fetch_subtrees($self)}) {
+        $subtree->preload;
+        $subtrees{$subtree->root->_parent_id} = $subtree->root;
+    }
+
+    # Attaches them
+    $self->preload;
+    foreach my $leaf (@{$self->root->get_all_leaves}) {
+        next unless exists $subtrees{$leaf->node_id};
+        $leaf->parent->add_child($subtrees{$leaf->node_id});
+        $leaf->disavow_parent;
+    }
+}
+
+
+##############################
+# AlignedMemberSet interface #
+##############################
+
+=head2 member_class
+
+  Description: Returns the type of member used in the set
+  Returntype : String: Bio::EnsEMBL::Compara::GeneTreeMember
+  Caller     : Bio::EnsEMBL::Compara::MemberSet
+
+=cut
+
+sub member_class {
+    return 'Bio::EnsEMBL::Compara::GeneTreeMember';
+}
+
 
 =head2 get_all_Members
 
-  Arg [1]    : None
-  Example    : 
-  Description: 
+  Example    :
+  Description: Returns the list of all the GeneTreeMember of the tree
   Returntype : array reference of Bio::EnsEMBL::Compara::GeneTreeMember
-  Exceptions : 
-  Caller     : 
+  Caller     : General
 
 =cut
 
@@ -282,15 +388,16 @@ sub get_all_Members {
     return $self->{'_member_array'};
 }
 
+
 =head2 add_Member
 
   Arg [1]    : GeneTreeMember
-  Example    : 
-  Description: Add a new GeneTreeMember to this set
+  Example    :
+  Description: Add a new GeneTreeMember to this set and to the tree as
+               a child of the root node
   Returntype : none
   Exceptions : Throws if input objects don't check
-  Caller     : general
-  Status     : Stable
+  Caller     : General
 
 =cut
 
@@ -300,8 +407,12 @@ sub add_Member {
     $self->root->add_child($member);
     $member->tree($self);
     $self->SUPER::add_Member($member);
-} 
+}
 
+
+########
+# Misc #
+########
 
 # Dynamic definition of functions to allow NestedSet methods work with GeneTrees
 foreach my $func_name (qw(get_all_nodes get_all_leaves get_all_sorted_leaves
