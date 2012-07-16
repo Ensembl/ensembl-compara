@@ -90,7 +90,7 @@ sub populate_tree {
   
   if ($sample_data && keys %$sample_data) {
     my $data_menu       = $self->create_submenu('Data', 'Sample entry points');
-    my $karyotype_url   = $sample_data->{'KARYOTYPE_PARAM'} ? "$species_path/Location/Genome?r=$sample_data->{'KARYOTYPE_PARAM'}" : "$species_path/Location/Genome";
+    my $karyotype_url   = $sample_data->{'KARYOTYPE_PARAM'} ? "$species_path/Location/Genome?r=$sample_data->{'KARYOTYPE_PARAM'}" : "$species_path/Location/Genome?r=$sample_data->{'LOCATION_PARAM'}";
     my $location_url    = "$species_path/Location/View?r=$sample_data->{'LOCATION_PARAM'}";
     my $gene_url        = "$species_path/Gene/Summary?g=$sample_data->{'GENE_PARAM'}";
     my $transcript_url  = "$species_path/Transcript/Summary?t=$sample_data->{'TRANSCRIPT_PARAM'}";
