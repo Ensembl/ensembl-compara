@@ -537,7 +537,7 @@ sub load_user_tracks {
       $strand = $entry->{'strand'} if $entry->{'strand'};
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
-        external    => 'tmp',
+        external    => 'user',
         glyphset    => '_flat_file',
         colourset   => 'classes',
         sub_type    => 'tmp',
@@ -588,16 +588,22 @@ sub load_user_tracks {
     my $add_method = lc "_add_$url_sources{$code}{'format'}_track";
     
     if ($self->can($add_method)) {
-      $self->$add_method(key => $code, menu => $menu, source => $url_sources{$code});
+      $self->$add_method(
+        key      => $code,
+        menu     => $menu,
+        source   => $url_sources{$code},
+        external => 'user'
+      );
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
           Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s',
           encode_entities($url_sources{$code}{'source_type'}), encode_entities($url_sources{$code}{'source_url'})
         ),
-        url    => $url_sources{$code}{'source_url'},
-        format => $url_sources{$code}{'format'},
-        style  => $url_sources{$code}{'style'},
+        url      => $url_sources{$code}{'source_url'},
+        format   => $url_sources{$code}{'format'},
+        style    => $url_sources{$code}{'style'},
+        external => 'user',
       );
     }
   }
@@ -614,19 +620,18 @@ sub load_user_tracks {
       
       next unless $analysis;
       
-      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version,$analysis->program_version);
-      $strand = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
-      my $external    = $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp';
+      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version, $analysis->program_version);
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
       my $caption     = encode_entities($analysis->display_label);
          $caption     = "$source_name: $caption" unless $caption eq $upload_sources{$logic_name}{'source_name'};
+         $strand      = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
       
       push @tracks, [ $logic_name, $caption, {
-        external    => $external,
+        external    => 'user',
         glyphset    => '_user_data',
         colourset   => 'classes',
-        sub_type    => $external,
+        sub_type    => $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp',
         renderers   => $renderers,
         source_name => $source_name,
         logic_name  => $logic_name,
@@ -696,7 +701,7 @@ sub _add_bam_track {
       'histogram', 'Coverage only'
     ], 
     options => {
-      external => 'url',
+      external => 'external',
       sub_type => 'bam'
     },
     @_
@@ -714,7 +719,7 @@ sub _add_bigbed_track {
   ];
  
   my $options = {
-      external => 'url',
+      external => 'external',
       sub_type => 'url',
       colourset => 'feature',
       style => $args{'source'}{'style'},
@@ -746,7 +751,7 @@ sub _add_bigwig_track {
       'tiling', 'Wiggle plot',
     ], 
     options => {
-      external => 'url',
+      external => 'external',
       sub_type => 'bigwig',
       colour   => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
     },
@@ -763,7 +768,7 @@ sub _add_vcf_track {
       'compact',   'Compact'
     ], 
     options => {
-      external   => 'url',
+      external   => 'external',
       sources    => undef,
       depth      => 0.5,
       bump_width => 0,
@@ -785,7 +790,7 @@ sub _add_flat_file_track {
   my $track = $self->create_track($key, $name, {
     display     => 'off',
     strand      => $strand,
-    external    => 'url',
+    external    => 'external',
     glyphset    => '_flat_file',
     colourset   => 'classes',
     caption     => $name,
@@ -1243,7 +1248,7 @@ sub load_configured_das {
       $key = "${category}_external";
     }
     
-    $menu->append($self->create_submenu($key, 'External data (DAS)', { external => 1 })) if $menu && !$menu->get_node($key);
+    $menu->append($self->create_submenu($key, 'External data', { external => 1 })) if $menu && !$menu->get_node($key);
     
     $self->add_das_tracks($key, $source, $extra);
   }
@@ -1402,7 +1407,7 @@ sub add_das_tracks {
   
   my $track = $self->create_track('das_' . $source->logic_name, $source->label, {
     %{$extra || {}},
-    external    => 'DAS',
+    external    => 'external',
     glyphset    => '_das',
     display     => 'off',
     logic_names => [ $source->logic_name ],
