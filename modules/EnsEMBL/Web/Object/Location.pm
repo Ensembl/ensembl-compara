@@ -126,13 +126,13 @@ sub short_caption {
 sub caption {
   my $self = shift;
   my $caption;
-  if ($self->seq_region_name) {
+  if ($self->seq_region_name && $self->hub->action ne 'Genome') {
     $caption .= $self->neat_sr_name($self->seq_region_type, $self->seq_region_name).': '
                   .$self->thousandify($self->seq_region_start).'-'
                   .$self->thousandify($self->seq_region_end);
   }
   else {
-    $caption .= 'Whole Genome';
+    $caption .= 'Location';
   }
   return $caption;
 }
