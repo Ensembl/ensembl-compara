@@ -265,12 +265,10 @@ if (defined $species_tree_file or $species_tree_from_db) {
     foreach my $this_leaf (@$all_leaves) {
 
         my $long_name = $this_leaf->name;
-        $long_name =~ s/Ictidomys/Spermophilus/;
         $long_name =~ tr/_/ /d;
         my $spp = { 'long_name' => $long_name };
 
         my $name = $this_leaf->name;
-        $name =~ s/Ictidomys/Spermophilus/;
         $name = lc $name;
         $name =~ tr/ /_/d;
 
