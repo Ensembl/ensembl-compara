@@ -528,7 +528,7 @@ sub detail_panel {
       transcript => qq{<a href="$tr_url">$tr_id</a>},
       protein    => $prot_id ? qq{<a href="$prot_url">$prot_id</a>} : '-',
       ens_term   => join(', ', keys(%ens_term)),
-      so_term    => join(', ', map { sprintf '%s - <i>(%s)</i> (%s)', $_->label, $_->description, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
+      so_term    => join(', ', map { sprintf '%s - <i>%s</i> (%s)', $_->label, $_->description, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
       hgvs       => join('<br />', grep $_, $hgvs_c, $hgvs_p) || '-',
     );
     
