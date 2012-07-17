@@ -361,6 +361,21 @@ sub ensembl_alias_name {
 }
 
 
+=head scientific_name
+
+  Example    : $ncbi->scientific_name;
+  Description: The scientific name of this taxon
+  Returntype : string
+  Exceptions :
+  Caller     : general
+
+=cut
+
+sub scientific_name {
+    my ($self) = @_;
+    return $self->get_tagvalue('scientific_name');
+}
+
 =head2 binomial
 
   Example    : $ncbi->binomial;
@@ -374,9 +389,9 @@ sub ensembl_alias_name {
 sub binomial {
   my $self = shift;
   if ($self->has_tag('scientific name') && ($self->rank eq 'species' || $self->rank eq 'subspecies')) {
-    return $self->get_tagvalue('scientific name');
+      return $self->scientific_name;
   } else {
-    warning("taxon_id=",$self->node_id," is not a species or subspecies. So binomial is undef\n");
+    warning("taxon_id=",$self->node_id," is not a species or subspecies. So binomial is undef (try the scientific_name method)\n");
     return undef;
   }
 }
