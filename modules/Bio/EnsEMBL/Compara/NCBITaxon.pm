@@ -373,7 +373,7 @@ sub ensembl_alias_name {
 
 sub scientific_name {
     my ($self) = @_;
-    return $self->get_tagvalue('scientific_name');
+    return $self->get_tagvalue('scientific name');
 }
 
 =head2 binomial
