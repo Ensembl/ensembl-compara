@@ -13,9 +13,10 @@
 .panel h2.normal          { border:none; padding: 2px 0; margin: 8px 0 0 0; }
 
 .panel p                  { margin: 16px 0 0; padding: 0; line-height: 16px; }
-.panel dl.summary         { margin: 0; position: relative; clear: left; }
-.panel dl.summary dt      { margin-bottom:4px; clear: left; float: left; width: 160px; }
-.panel dl.summary dd      { margin: 4px 0 4px 160px; }  
+.panel dl.summary         { margin: 0; padding: 0; position: relative; clear: left; }
+.panel dl.summary dt      {  clear: left; float: left; width: 160px; }
+.panel dl.summary dd      { margin: 4px 0 0 160px; }  
+.panel dl.summary dd p    { margin: 0; padding:0; }  
 .panel dl.normal dt       { clear: none; float: none; width: 100%; margin: 0.5em 0 0 0; font-weight: bold; }
 .panel dl.normal dd       { margin: 0.5em 0 0 2em; }
 
