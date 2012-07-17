@@ -97,6 +97,8 @@ sub create_user_pointers {
   my $hub          = $self->hub;
   my $image_config = $hub->get_imageconfig('Vkaryotype');
   my @pointers     = ();
+  my %used_colour  = ();
+  my @all_colours  = @{$hub->species_defs->TRACK_COLOUR_ARRAY||[]};
 
   while (my ($key, $hash) = each %$data) {
     my $display = $image_config->get_node($key)->get('display');
@@ -104,7 +106,16 @@ sub create_user_pointers {
     while (my ($analysis, $track) = each %$hash) {
       my ($render, $style) = split '_', $display;
       my $colour = $self->_user_track_colour($track); 
-
+      if ($used_colour{$colour}) {
+        ## pick a unique colour instead
+        foreach (@all_colours) {
+          next if $used_colour{$_};
+          $colour = $_;
+          last;
+        }
+      }
+      $image_config->get_node($key)->set('colour', $colour);
+      $used_colour{$colour} = 1;
       if ($render eq 'highlight') {
         push @pointers, $image->add_pointers($hub, {
           config_name => 'Vkaryotype',
