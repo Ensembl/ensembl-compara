@@ -215,6 +215,7 @@ sub _initialise_runnables{
 	$self->throw("Nothing in config $sp: $me_key" );
       my $db_str = $datasources->{$db_key}||
 	$self->throw("Nothing in config $sp: $me_key: $db_key" );
+      if (ref $db_str eq 'HASH'){$db_str = $db_str->{'file'};} 
 
       # -Gather blast environment variables from EnsEMBL::Web::SpeciesDefs
       my %config;
