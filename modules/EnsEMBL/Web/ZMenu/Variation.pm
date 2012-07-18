@@ -90,6 +90,7 @@ sub content {
   my $source  = join ', ', @{$feature->get_all_sources||[]};
   my $allele  = $feature->allele_string;
   my $alleles = length $allele < 16 ? $allele : substr($allele, 0, 14) . '..';
+  my $gmaf    = $feature->minor_allele_frequency." (".$feature->minor_allele.")" if defined($feature->minor_allele);
   
   my @entries = (
     [ 'bp',             $bp                  ],
@@ -101,6 +102,7 @@ sub content {
   );
   
   unshift @entries, [ 'LRG bp', $lrg_bp ] if $lrg_bp;
+  push @entries, [ 'Global MAF', $gmaf ] if defined($gmaf);
 
 
  
