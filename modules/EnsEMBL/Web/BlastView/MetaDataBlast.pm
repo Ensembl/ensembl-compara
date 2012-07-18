@@ -137,6 +137,8 @@ STAGE_SETUP:{
           my $entry = $form->addobj_form_entry();
           $entry->set_value( $ty );
           $entry->set_default( $ty ) if $ty eq $ty_def;
+          my $label = $ty;
+          if ($label eq 'peptide'){$label = 'protein';}
           $entry->set_label( "$ty queries" );
           #$entry->set_cgi_onchange( 'javascript:changedQueryType()' );
           $entry->set_cgi_onclick( 'javascript:changedQueryType()' );
@@ -219,7 +221,9 @@ STAGE_SETUP:{
 	ENTRY_RADIO:{
 	    my $entry = $form->addobj_form_entry();
 	    $entry->set_value( $type );
-	    $entry->set_label( "$type database" );
+      my $label_type = $type;
+      if ($label_type eq 'peptide'){ $label_type = 'protein'; }
+	    $entry->set_label( "$label_type database" );
 	    $entry->set_default( $type ) if $type eq $def_ty;
 	    $entry->set_cgi_onclick('javascript:changedDatabaseType()');
 	    $entry->set_label_summary
