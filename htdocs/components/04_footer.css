@@ -1,4 +1,4 @@
-#footer, #wide-footer         { clear: both; text-align: center; font-size: 0.9em; padding: 16px 0 0; margin: 16px; border-top: [[NEUTRAL_BORDER]] solid 1px; }
+#footer, #wide-footer         { clear: both; text-align: center; font-size: 0.9em; padding: 16px 0 0; margin: 16px; }
 #footer                       { margin-left: 240px; }
 @media print {
   #footer                     { margin-left: 16px; }
