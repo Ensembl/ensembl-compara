@@ -35,8 +35,8 @@ sub content_ajax {
   my ($include_list, $exclude_list, $extra_inputs);
   
   $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) for sort keys %{$url->[1]};
-  $include_list .= sprintf '<li class="%s"><span>%s</span><span class="switch"></span></li>', $_, $all{$_} for sort { $included{$a} <=> $included{$b} } keys %included;
-  $exclude_list .= sprintf '<li class="%s"><span>%s</span><span class="switch"></span></li>', $_, $all{$_} for sort { $all{$a} cmp $all{$b} } grep !$included{$_}, keys %all;
+  $include_list .= sprintf '<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_} for sort { $included{$a} <=> $included{$b} } keys %included;
+  $exclude_list .= sprintf '<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_} for sort { $all{$a} cmp $all{$b} } grep !$included{$_}, keys %all;
   
   my $content = sprintf('
     <div class="content">
