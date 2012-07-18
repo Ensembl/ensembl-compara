@@ -106,17 +106,17 @@ div.ff-notes {
   width: auto;
 }
 input.fbutton {
-  background-color:[[MH_BG]];
-  border:outset [[MH_BG]] 2px;
-  color:#fff;
+  background-color:[[BUTTON_BG]];
+  border:double [[BUTTON_TEXT]] 3px;
+  color:[[BUTTON_TEXT]];
   font-weight:bold;
   margin-bottom: 3px;
 }
-input.fbutton:active {
-  border-style: inset;
+input.fbutton:active, input.fbutton:hover {
+  background-color:[[BUTTON_BG_HOVER]];
 }
 input.fbutton.disabled, input.fbutton.disabled:active {
-  border-style: outset;
+  background-color:#999;
 }
 .fselect {
   width: 210px;
