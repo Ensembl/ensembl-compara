@@ -621,7 +621,7 @@ sub detail_panel {
       { allele     => 'Allele (variation)'         },
       { t_allele   => 'Allele (transcript)'        },
       { so_term    => 'Consequence (SO term)'      },
-      { ens_term   => 'Consequence (Ensembl term)' },
+      { ens_term   => 'Consequence (Old Ensembl term)' },
       { hgvs       => 'HGVS names'                 },
       { exon       => 'Exon'                       },
       { exon_coord => 'Position in exon'           },

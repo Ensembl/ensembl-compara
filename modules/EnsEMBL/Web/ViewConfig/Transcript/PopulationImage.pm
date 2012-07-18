@@ -120,7 +120,7 @@ sub form {
     name   => 'consequence_format',
     values => [
       { value => 'label',   name => 'Sequence Ontology terms' },
-      { value => 'display', name => 'Ensembl terms'           },
+      { value => 'display', name => 'Old Ensembl terms'       },
     ]
   });  
   

@@ -127,7 +127,7 @@ sub content {
     name   => 'terms',
     values => [
       { value => 'SO',       name => 'Sequence Ontology terms' },
-      { value => 'display',  name => 'Ensembl terms'           },
+      { value => 'display',  name => 'Old Ensembl terms'       },
     ],
     value  => 'SO',
     select => 'select',

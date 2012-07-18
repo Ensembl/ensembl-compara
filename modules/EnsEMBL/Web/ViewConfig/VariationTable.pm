@@ -97,7 +97,7 @@ sub form {
     name   => 'consequence_format',
     values => [
       { value => 'so',       name => 'Sequence Ontology terms' },
-      { value => 'ensembl',  name => 'Ensembl terms'           },
+      { value => 'ensembl',  name => 'Old Ensembl terms'       },
     ]
   });
   
