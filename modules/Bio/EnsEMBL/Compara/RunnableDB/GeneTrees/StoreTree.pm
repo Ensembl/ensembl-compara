@@ -269,6 +269,7 @@ sub parse_newick_into_tree {
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $leaf->member_id($member_id);
+    $leaf->cigar_line($old_leaf->cigar_line);
     $leaf->node_id($old_leaf->node_id);
     $leaf->add_tag('name', $member_id);
   }
