@@ -231,19 +231,20 @@ sub parse_newick_into_tree {
   close(FH);
 
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
+  print  "Tree loaded from file:\n";
   $newroot->print_tree(20) if($self->debug > 1);
 
   my $split_genes = $self->param('split_genes');
 
   if (defined $split_genes) {
-    print STDERR "Retrieved split_genes hash: ", Dumper($split_genes) if $self->debug;
+    print  "Retrieved split_genes hash: ", Dumper($split_genes) if $self->debug;
     my $nsplits = 0;
     while ( my ($name, $other_name) = each(%{$split_genes})) {
-        print STDERR "$name is split_gene of $other_name\n" if $self->debug;
+        print  "$name is split_gene of $other_name\n" if $self->debug;
         my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $node->name($name);
         my $othernode = $newroot->find_node_by_name($other_name);
-        print STDERR "$node is split_gene of $othernode\n" if $self->debug;
+        print  "$node is split_gene of $othernode\n" if $self->debug;
         my $newnode = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $nsplits++;
         $othernode->parent->add_child($newnode);
@@ -253,6 +254,8 @@ sub parse_newick_into_tree {
         $newnode->print_tree(10);
     }
   }
+  print  "Tree after split_genes insertions:\n";
+  $newroot->print_tree(20) if($self->debug > 1);
 
   # get rid of the taxon_id needed by njtree -- name tag
   foreach my $leaf (@{$newroot->get_all_leaves}) {
@@ -266,10 +269,10 @@ sub parse_newick_into_tree {
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $leaf->member_id($member_id);
+    $leaf->node_id($old_leaf->node_id);
     $leaf->add_tag('name', $member_id);
   }
-  #$newroot->node_id($tree->root_id);
-  #$newroot->adaptor($tree->root->adaptor);
+  print  "Tree with GeneTreeNode objects:\n";
   $newroot->print_tree(20) if($self->debug > 1);
 
   foreach my $node (@{$tree->root->children}) {
@@ -281,8 +284,7 @@ sub parse_newick_into_tree {
     $tree->root->add_child($newsubroot, $newsubroot->distance_to_parent);
   }
 
-  # Newick tree is now empty so release it
-  $newroot->release_tree;
+  #TODO copy root tags
 
   $tree->root->print_tree if($self->debug);
   # check here on the leaf to test if they all are GeneTreeMembers as
