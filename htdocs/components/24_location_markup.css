@@ -16,8 +16,8 @@
 .relocate form label     { float: left; display: block; width: 5em; margin-top: 5px; padding-right: 5px; }
 body.ie6 .relocate input { height: 24px; }
 
-input.go-button       { padding: 0; height: 24px; width: 34px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
-input.go-button:hover { background-color: [[TINT_BORDER]]; }
+input.go-button       { padding: 0; height: 24px; width: 34px; color:[[BUTTON_TEXT]]; background-color: [[BUTTON_BG]]; border: 3px double [[BUTTON_TEXT]]; font-weight: bold; }
+input.go-button:hover { background-color: [[BUTTON_BG_HOVER]]; }
 
 .image_nav          { position: relative; top: 5px; float: right; width: 304px; }
 body.ie6 .image_nav { width: 311px; }
