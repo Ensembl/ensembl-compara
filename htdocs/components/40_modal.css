@@ -128,10 +128,10 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .multi_selector_list li                         { position: relative; height: 22px; padding-left: 10px; list-style-image: none; cursor: pointer; clear: both; }
 .modal_content .multi_selector_list ul.included li             { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
 .modal_content .multi_selector_list ul.excluded li             { background-color: #EEE; color: [[CONTRAST_TEXT]]; border: 1px solid [[NEUTRAL_BORDER]]; }
-.modal_content .multi_selector_list ul li span                 { position: absolute; margin-top: 3px; }
-.modal_content .multi_selector_list ul li span.switch          { height: 16px; width: 22px; background-repeat: no-repeat; background-position: 3px 0; right: 0; }
-.modal_content .multi_selector_list ul.included li span.switch { background-image: url(/i/16/delete.png); }
-.modal_content .multi_selector_list ul.excluded li span.switch { background-image: url(/i/16/add.png); }
+.modal_content .multi_selector_list ul li span                 { position: absolute; left:28px; padding-top: 5px; }
+.modal_content .multi_selector_list ul li span.switch          { height: 16px; width: 24px; background-repeat: no-repeat; background-position: 6px 3px; left:0px; }
+.modal_content .multi_selector_list ul.included li span.switch { background-image: url(/i/16/minus-button.png); }
+.modal_content .multi_selector_list ul.excluded li span.switch { background-image: url(/i/16/plus-button.png); }
 
 .modal_content .multi_selector_hint                            { margin: 16px; }
 
