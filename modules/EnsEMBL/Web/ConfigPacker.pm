@@ -1672,6 +1672,7 @@ sub _configure_blast {
     $tree->{$blast_type.'_DATASOURCES'}{'DATASOURCE_TYPE'} = $method_info[1]; ## dna or peptide
     my $db_type = $method_info[2]; ## dna or peptide
     foreach my $source_type (keys %$sources) { ## CDNA_ALL, PEP_ALL, etc
+      my $source_label = $sources->{$source_type};
       next if $source_type eq 'DEFAULT';
       next if ($db_type eq 'dna' && $source_type =~ /^PEP/);
       next if ($db_type eq 'peptide' && $source_type !~ /^PEP/);
@@ -1690,10 +1691,11 @@ sub _configure_blast {
         if ($search_type ne 'BLAT') {
           $type =~ s/latestgp(.*)/dna$1\.toplevel/;
           $type =~ s/.masked/_rm/;
+          $type =~ s/.soft/_sm/;
           my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'} || $self->db_tree->{'DB_RELEASE_VERSION'};
           my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $repeat_date, $type ).".fa";
 #          print "AUTOGENERATING $source_type......$file\n";
-          $tree->{$blast_type.'_DATASOURCES'}{$source_type} = $file;
+          $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $file, 'label' => $source_label};
         }
       } 
       else {
@@ -1701,7 +1703,7 @@ sub _configure_blast {
         my $version = $self->db_tree->{'DB_RELEASE_VERSION'} || $SiteDefs::ENSEMBL_VERSION;
         my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $version, $type ).".fa";
 #        print "AUTOGENERATING $source_type......$file\n";
-        $tree->{$blast_type.'_DATASOURCES'}{$source_type} = $file;
+        $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $file, 'label' => $source_label};
       }
     }
 #    warn "TREE $blast_type = ".Dumper($tree->{$blast_type.'_DATASOURCES'});
