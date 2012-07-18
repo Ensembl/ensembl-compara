@@ -236,7 +236,7 @@ STAGE_SETUP:{
 	    #$entry->set_options( \@opts );
 	    $entry->set_default($def_db);
       # Get option labels. Note hack to send abinitio to bottom
-	    my $optref = [ map { [$_->[0],$_->[0]] }
+	    my $optref = [ map { [$_->[0],$_->[1]] }
                      sort{ $a->[2] <=> $b->[2] || $a->[1] cmp $b->[1] }
                      map { [$_,$db_labels{$_},/ABINITIO/i?1:0] } @opts ];
 	    $entry->set_options( $optref );

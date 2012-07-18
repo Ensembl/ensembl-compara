@@ -95,16 +95,16 @@ sub _build_conf{
 
       # Update conf
       $CONF->{species_by_method}->{$me} ||= {};
-      $CONF->{species_by_method}->{$me}->{$sp} = 1;
-      # Loop for each conf entry
-      foreach my $db( sort keys %$conf ){	
+      $CONF->{species_by_method}->{$me}->{$sp} = 1; 
+      # Loop for each conf entry 
+      foreach my $db( sort keys %$conf ){  ;	
 	      my $lb = '';
 	      if( $db =~ /^DATASOURCE/ ){ next }
-	      if( $me eq 'BLAST' ){ 
+	      if( $me =~/BLAST/ ){ 
 	        if( $db =~ /DEFAULT/ ){ next }
-	        $lb = $conf->{$db};
-	        $CONF->{DATABASES}->{$db}->{LABEL} = $lb;
-	        next;
+	        $lb = $conf->{$db}->{'label'} || '';            
+	        #$CONF->{DATABASES}->{$db}->{LABEL} = $lb;
+	        #next;
 	      }
   	    if( $me eq 'SSAHA' ){ 
 	        if( $db =~ /^SOURCE/ ){ next }
@@ -116,8 +116,8 @@ sub _build_conf{
 	      push @$FACT, [ $sp, $db, $me, $qty, $dty ];
         #warn "DATASOURCE ".Dumper($a);
 
-	      $CONF->{SPECIES}->{$sp}->{$db} = 1;
-	      $CONF->{DATABASES}->{$db}->{LABEL}       = $lb if $lb;
+	      $CONF->{SPECIES}->{$sp}->{$db} = 1; 
+	      $CONF->{DATABASES}->{$db}->{LABEL}       = $lb if $lb; 
 	      $CONF->{DATABASES}->{$db}->{D_TYPE}      = $dty;
 	      $CONF->{DATABASES}->{$db}->{$sp} = 1;
 
@@ -209,7 +209,7 @@ sub default_database{
 =cut
 
 sub database_labels {
-  my $self = shift;
+  my $self = shift; 
   return ( map{$_, $CONF->{DATABASES}->{$_}->{LABEL} } 
 	   keys %{$CONF->{DATABASES}} );
 }
