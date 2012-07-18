@@ -56,7 +56,6 @@
 
 <h2>Introduction</h2>
 
-<p><i>
 
 <p>
 This document gives a high-level description of the tables that
@@ -110,13 +109,11 @@ Different tables are populated throughout the gene build process:
 </table>
 
 <p>
-This document refers to version <strong>67</strong> of the EnsEMBL
+This document refers to version <strong>68</strong> of the EnsEMBL
 core schema.
 </p>
 
 
-
-</i></p>
 <br />
 
 <h3 id="top">List of the tables:</h3><h2>Fundamental Tables</h2>
@@ -129,15 +126,16 @@ core schema.
 		<li><a href="#dna"><b>dna</b></a></li>
 		<li><a href="#dnac"><b>dnac</b></a></li>
 		<li><a href="#exon"><b>exon</b></a></li>
+		<li><a href="#intron_supporting_evidence"><b>intron_supporting_evidence</b></a></li>
+		<li><a href="#transcript_intron_supporting_evidence"><b>transcript_intron_supporting_evidence</b></a></li>
 		<li><a href="#exon_transcript"><b>exon_transcript</b></a></li>
 		<li><a href="#gene"><b>gene</b></a></li>
 		<li><a href="#gene_attrib"><b>gene_attrib</b></a></li>
-		<li><a href="#intron_supporting_evidence"><b>intron_supporting_evidence</b></a></li>
 		<li><a href="#karyotype"><b>karyotype</b></a></li>
 		<li><a href="#meta"><b>meta</b></a></li>
 		<li><a href="#meta_coord"><b>meta_coord</b></a></li>
-		<li><a href="#operon"><b>operon</b></a></li>
 	</ul></td><td><ul>
+		<li><a href="#operon"><b>operon</b></a></li>
 		<li><a href="#operon_transcript"><b>operon_transcript</b></a></li>
 		<li><a href="#operon_transcript_gene"><b>operon_transcript_gene</b></a></li>
 		<li><a href="#seq_region"><b>seq_region</b></a></li>
@@ -192,9 +190,9 @@ core schema.
 		<li><a href="#gene_archive"><b>gene_archive</b></a></li>
 		<li><a href="#mapping_session"><b>mapping_session</b></a></li>
 		<li><a href="#mapping_set"><b>mapping_set</b></a></li>
+		<li><a href="#stable_id_event"><b>stable_id_event</b></a></li>
 		<li><a href="#peptide_archive"><b>peptide_archive</b></a></li>
 		<li><a href="#seq_region_mapping"><b>seq_region_mapping</b></a></li>
-		<li><a href="#stable_id_event"><b>stable_id_event</b></a></li>
 		</ul>
 </td></tr></table><h2>External References</h2>
 <table><tr><td>
@@ -213,8 +211,8 @@ core schema.
 </td></tr></table><h2>Miscellaneous</h2>
 <table><tr><td>
  <ul>
-		<li><a href="#data_file"><b>data_file</b></a></li>
 		<li><a href="#interpro"><b>interpro</b></a></li>
+		<li><a href="#data_file"><b>data_file</b></a></li>
 		</ul>
 </td></tr></table>
 	  <input type="button" onclick="show_hide_all()" style="background-color:#933;color:#FFF;cursor:pointer" value="Show/hide all" />
@@ -222,9 +220,7 @@ core schema.
 	<br />
 <hr />
 <h2>Fundamental Tables</h2>
-<p>A PDF document of the schema is available <a href="fundamental_tables_core.pdf" target="_blank">here</a>.
-<br />
-<a href="fundamental_tables_core.pdf" target="_blank"> <img border="0" src="fundamental_tables_thumb.png" alt="Fundamental Tables Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
+<p>A PDF document of the schema is available <a href="fundamental_tables_core.pdf" target="_blank">here</a>.<br /> <a href="fundamental_tables_core.pdf" target="_blank"> <img border="0" src="fundamental_tables_thumb.png" alt="Fundamental Tables Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -440,6 +436,69 @@ core schema.
     <tr style="vertical-align:middle">
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="intron_supporting_evidence" style="font-size:11pt;font-weight:bold">intron_supporting_evidence</span></td>
+      <td style="width:180px;text-align:right"><a id="a_intron_supporting_evidence" style="cursor:pointer;text-decoration:underline" onclick="show_hide('intron_supporting_evidence')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Provides the evidence which we have used to declare an intronic region</p>
+
+	<div id="div_intron_supporting_evidence" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>intron_supporting_evidence_id</b></td><td>INT(10)</td><td></td><td>Surrogate primary key</td><td>primary key</td></tr>
+		<tr class="bg2"><td><b>analysis_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_start</b></td><td>INT(10)</td><td></td><td>Sequence start position.</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_end</b></td><td>INT(10)</td><td></td><td>Sequence end position.</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_strand</b></td><td>TINYINT(2)</td><td></td><td>Sequence region strand: 1 - forward; -1 - reverse.</td><td></td></tr>
+		<tr class="bg1"><td><b>hit_name</b></td><td>VARCHAR(100)</td><td></td><td>External entity name/identifier.</td><td></td></tr>
+		<tr class="bg2"><td><b>score</b></td><td>DECIMAL(10,3)</td><td></td><td>Score supporting the intron </td><td></td></tr>
+		<tr class="bg1"><td><b>score_type</b></td><td>ENUM('NONE', 'DEPTH')</td><td>'NONE'</td><td>The type of score e.g. NONE</td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#transcript_intron_supporting_evidence">transcript_intron_supporting_evidence</a></li>
+	<li><a href="#analysis">analysis</a></li>
+	<li><a href="#seq_region">seq_region</a></li>
+</ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="transcript_intron_supporting_evidence" style="font-size:11pt;font-weight:bold">transcript_intron_supporting_evidence</span></td>
+      <td style="width:180px;text-align:right"><a id="a_transcript_intron_supporting_evidence" style="cursor:pointer;text-decoration:underline" onclick="show_hide('transcript_intron_supporting_evidence')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Links intronic evidence to a pair of exons used within a transcript and to resolve the m:m relationship between introns and transcripts</p>
+
+	<div id="div_transcript_intron_supporting_evidence" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>intron_supporting_evidence_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#intron_supporting_evidence">intron_supporting_evidence</a> table</td><td>primary key</td></tr>
+		<tr class="bg2"><td><b>transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>primary key</td></tr>
+		<tr class="bg1"><td><b>previous_exon_id</b></td><td>INT(10)</td><td></td><td>Foreign key to <a href="#exon">exon</a> indicating the left hand flanking exon of the intron (assume forward strand)</td><td></td></tr>
+		<tr class="bg2"><td><b>next_exon_id</b></td><td>INT(10)</td><td></td><td>Foreign key to <a href="#exon">exon</a> indicating the right hand flanking exon of the intron (assume forward strand)</td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#intron_supporting_evidence">intron_supporting_evidence</a></li>
+	<li><a href="#transcript">transcript</a></li>
+	<li><a href="#exon">exon</a></li>
+</ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="exon_transcript" style="font-size:11pt;font-weight:bold">exon_transcript</span></td>
       <td style="width:180px;text-align:right"><a id="a_exon_transcript" style="cursor:pointer;text-decoration:underline" onclick="show_hide('exon_transcript')">Show</a> columns
 				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
@@ -531,35 +590,6 @@ core schema.
 <ul>
 	<li><a href="#gene">gene</a></li>
 	<li><a href="#attrib_type">attrib_type</a></li>
-</ul>
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#000000"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="intron_supporting_evidence" style="font-size:11pt;font-weight:bold">intron_supporting_evidence</span></td>
-      <td style="width:180px;text-align:right"><a id="a_intron_supporting_evidence" style="cursor:pointer;text-decoration:underline" onclick="show_hide('intron_supporting_evidence')">Show</a> columns
-				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-<p>Provides the evidence which we have used to declare an intronic region</p>
-
-	<div id="div_intron_supporting_evidence" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>intron_supporting_evidence_id</b></td><td>INT(10)</td><td></td><td>Surrogate primary key</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>previous_exon_id</b></td><td>INT(10)</td><td></td><td>Indicates the exon flanking upstream of the intron. Foreign key references to the <a href="#exon">exon</a> table.</td><td></td></tr>
-		<tr class="bg1"><td><b>next_exon_id</b></td><td>INT(10)</td><td></td><td>Indicates the exon flanking downstream of the intron. Foreign key references to the <a href="#exon">exon</a> table.</td><td></td></tr>
-		<tr class="bg2"><td><b>hit_name</b></td><td>VARCHAR(100)</td><td></td><td>External entity name/identifier.</td><td></td></tr>
-		<tr class="bg1"><td><b>score</b></td><td>DECIMAL(10,3)</td><td></td><td>Score supporting the intron </td><td></td></tr>
-		<tr class="bg2"><td><b>score_type</b></td><td>ENUM('NONE', 'DEPTH')</td><td>'NONE'</td><td>The type of score e.g. NONE</td><td></td></tr>
-</table>
-</div>
-<p><b>See also:</b></p>
-<ul>
-	<li><a href="#exon">exon</a></li>
 </ul>
 
 <br />
@@ -964,9 +994,7 @@ core schema.
 <br />
 <hr />
 <h2>Features and Analyses</h2>
-<p>A PDF document of the schema is available <a href="features_analyses_core.pdf" target="_blank">here</a>.
-<br />
-<a href="features_analyses_core.pdf" target="_blank"> <img border="0" src="features_analyses_thumb.png" alt="Features and Analyses Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
+<p>A PDF document of the schema is available <a href="features_analyses_core.pdf" target="_blank">here</a>.<br /> <a href="features_analyses_core.pdf" target="_blank"> <img border="0" src="features_analyses_thumb.png" alt="Features and Analyses Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -1958,9 +1986,7 @@ core schema.
 <br />
 <hr />
 <h2>ID Mapping</h2>
-<p>A PDF document of the schema is available <a href="id_mapping_core.pdf" target="_blank">here</a>.
-<br />
-<a href="id_mapping_core.pdf" target="_blank"> <img border="0" src="id_mapping_thumb.png" alt="ID Mapping Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
+<p>A PDF document of the schema is available <a href="id_mapping_core.pdf" target="_blank">here</a>.<br /> <a href="id_mapping_core.pdf" target="_blank"> <img border="0" src="id_mapping_thumb.png" alt="ID Mapping Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -2052,6 +2078,36 @@ core schema.
     <tr style="vertical-align:middle">
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="stable_id_event" style="font-size:11pt;font-weight:bold">stable_id_event</span></td>
+      <td style="width:180px;text-align:right"><a id="a_stable_id_event" style="cursor:pointer;text-decoration:underline" onclick="show_hide('stable_id_event')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents what happened to all gene, transcript and translation stable IDs during a mapping session. This includes which IDs where deleted, created and related to each other. Each event is represented by one or more rows in the table.</p>
+
+	<div id="div_stable_id_event" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>old_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the previous release.</td><td>unique key: uni_idx<br />key: old_idx</td></tr>
+		<tr class="bg2"><td><b>old_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
+		<tr class="bg1"><td><b>new_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the current release.</td><td>unique key: uni_idx<br />key: new_idx</td></tr>
+		<tr class="bg2"><td><b>new_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
+		<tr class="bg1"><td><b>mapping_session_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#mapping_session">mapping_session</a> table.</td><td>unique key: uni_idx</td></tr>
+		<tr class="bg2"><td><b>type</b></td><td>ENUM('gene', 'transcript', 'translation')</td><td></td><td>ENUM('gene', 'transcript', 'translation') NOT NULL,</td><td>unique key: uni_idx</td></tr>
+		<tr class="bg1"><td><b>score</b></td><td>FLOAT</td><td>0</td><td>Combined mapping score.</td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#mapping_session">mapping_session</a></li>
+</ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="peptide_archive" style="font-size:11pt;font-weight:bold">peptide_archive</span></td>
       <td style="width:180px;text-align:right"><a id="a_peptide_archive" style="cursor:pointer;text-decoration:underline" onclick="show_hide('peptide_archive')">Show</a> columns
 				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
@@ -2095,42 +2151,10 @@ core schema.
 	<li><a href="#seq_region">seq_region</a></li>
 	<li><a href="#mapping_set">mapping_set</a></li>
 </ul>
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#000000"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="stable_id_event" style="font-size:11pt;font-weight:bold">stable_id_event</span></td>
-      <td style="width:180px;text-align:right"><a id="a_stable_id_event" style="cursor:pointer;text-decoration:underline" onclick="show_hide('stable_id_event')">Show</a> columns
-				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-<p>Represents what happened to all gene, transcript and translation stable IDs during a mapping session. This includes which IDs where deleted, created and related to each other. Each event is represented by one or more rows in the table.</p>
-
-	<div id="div_stable_id_event" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>old_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the previous release.</td><td>unique key: uni_idx<br />key: old_idx</td></tr>
-		<tr class="bg2"><td><b>old_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
-		<tr class="bg1"><td><b>new_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the current release.</td><td>unique key: uni_idx<br />key: new_idx</td></tr>
-		<tr class="bg2"><td><b>new_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
-		<tr class="bg1"><td><b>mapping_session_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#mapping_session">mapping_session</a> table.</td><td>unique key: uni_idx</td></tr>
-		<tr class="bg2"><td><b>type</b></td><td>ENUM('gene', 'transcript', 'translation')</td><td></td><td>ENUM('gene', 'transcript', 'translation') NOT NULL,</td><td>unique key: uni_idx</td></tr>
-		<tr class="bg1"><td><b>score</b></td><td>FLOAT</td><td>0</td><td>Combined mapping score.</td><td></td></tr>
-</table>
-</div>
-<p><b>See also:</b></p>
-<ul>
-	<li><a href="#mapping_session">mapping_session</a></li>
-</ul>
 <br />
 <hr />
 <h2>External References</h2>
-<p>A PDF document of the schema is available <a href="xrefs_core.pdf" target="_blank">here</a>.
-<br />
-<a href="xrefs_core.pdf" target="_blank"> <img border="0" src="xrefs_thumb.png" alt="External References Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
+<p>A PDF document of the schema is available <a href="xrefs_core.pdf" target="_blank">here</a>.<br /> <a href="xrefs_core.pdf" target="_blank"> <img border="0" src="xrefs_thumb.png" alt="External References Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -2274,7 +2298,7 @@ core schema.
 		<tr class="bg1"><td><b>ensembl_object_type</b></td><td>ENUM('RawContig', 'Transcript', 'Gene',<br />'Translation', 'Operon', 'OperonTranscript')</td><td></td><td>Ensembl object type: 'RawContig', 'Transcript', 'Gene','Translation'.</td><td>key: ensembl_idx</td></tr>
 		<tr class="bg2"><td><b>xref_id</b></td><td>ensembl_object_type</td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.</td><td></td></tr>
 		<tr class="bg1"><td><b>linkage_annotation</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Additional annotation on the linkage.</td><td></td></tr>
-		<tr class="bg2"><td><b>analysis_id</b></td><td>SMALLINT</td><td>NULL</td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: analysis_idx</td></tr>
+		<tr class="bg2"><td><b>analysis_id</b></td><td>SMALLINT</td><td>0</td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: analysis_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -2422,8 +2446,8 @@ core schema.
 		<tr class="bg2"><td><b>display_label</b></td><td>VARCHAR(128)</td><td></td><td>Display label for the EnsEMBL web site.</td><td>key: display_index</td></tr>
 		<tr class="bg1"><td><b>version</b></td><td>VARCHAR(10)</td><td>'0'</td><td>Object version.</td><td></td></tr>
 		<tr class="bg2"><td><b>description</b></td><td>TEXT</td><td></td><td>Object description.</td><td></td></tr>
-		<tr class="bg1"><td><b>info_type</b></td><td>ENUM( 'PROJECTION', 'MISC', 'DEPENDENT',<br />'DIRECT', 'SEQUENCE_MATCH',<br />'INFERRED_PAIR', 'PROBE',<br />'UNMAPPED', 'COORDINATE_OVERLAP', <br />'CHECKSUM' )</td><td></td><td>'PROJECTION', 'MISC', 'DEPENDENT','DIRECT', 'SEQUENCE_MATCH','INFERRED_PAIR', 'PROBE','UNMAPPED', 'COORDINATE_OVERLAP', 'CHECKSUM'.</td><td>unique key: id_index<br />key: info_type_idx</td></tr>
-		<tr class="bg2"><td><b>info_text</b></td><td>VARCHAR(255)</td><td></td><td>Text</td><td>unique key: id_index</td></tr>
+		<tr class="bg1"><td><b>info_type</b></td><td>ENUM( 'NONE', 'PROJECTION', 'MISC', 'DEPENDENT',<br />'DIRECT', 'SEQUENCE_MATCH',<br />'INFERRED_PAIR', 'PROBE',<br />'UNMAPPED', 'COORDINATE_OVERLAP', <br />'CHECKSUM' )</td><td>'NONE'</td><td>'PROJECTION', 'MISC', 'DEPENDENT','DIRECT', 'SEQUENCE_MATCH','INFERRED_PAIR', 'PROBE','UNMAPPED', 'COORDINATE_OVERLAP', 'CHECKSUM'.</td><td>unique key: id_index<br />key: info_type_idx</td></tr>
+		<tr class="bg2"><td><b>info_text</b></td><td>VARCHAR(255)</td><td>''</td><td>Text</td><td>unique key: id_index</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -2435,6 +2459,27 @@ core schema.
 <hr />
 <h2>Miscellaneous</h2>
 <p>Other tables</p>
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="interpro" style="font-size:11pt;font-weight:bold">interpro</span></td>
+      <td style="width:180px;text-align:right"><a id="a_interpro" style="cursor:pointer;text-decoration:underline" onclick="show_hide('interpro')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p><a href="http://www.ebi.ac.uk/interpro/">InterPro</a> - The InterPro website</p>
+
+	<div id="div_interpro" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>interpro_ac</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein accession number.</td><td>unique key: accession_idx</td></tr>
+		<tr class="bg2"><td><b>id</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein id.</td><td>unique key: accession_idx<br />key: id_idx</td></tr>
+</table>
+</div>
+
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -2461,28 +2506,6 @@ core schema.
 		<tr class="bg2"><td><b>file_type</b></td><td>enum('BAM','BIGBED','BIGWIG','VCF')</td><td></td><td>Type of file e.g. BAM, BIGBED, BIGWIG and VCF</td><td>unique key: df_unq_idx</td></tr>
 </table>
 </div>
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#000000"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="interpro" style="font-size:11pt;font-weight:bold">interpro</span></td>
-      <td style="width:180px;text-align:right"><a id="a_interpro" style="cursor:pointer;text-decoration:underline" onclick="show_hide('interpro')">Show</a> columns
-				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-<p><a href="http://www.ebi.ac.uk/interpro/">InterPro</a> - The InterPro website</p>
-
-	<div id="div_interpro" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>interpro_ac</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein accession number.</td><td>unique key: accession_idx</td></tr>
-		<tr class="bg2"><td><b>id</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein id.</td><td>unique key: accession_idx<br />key: id_idx</td></tr>
-</table>
-</div>
-
 
 <hr />
 <h2>Concepts</h2>
@@ -2527,7 +2550,6 @@ the number of rows in the feature table around 4-fold.
 </dd>
 </dl>
 <hr />
-
 
 </body>
 </html>
