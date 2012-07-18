@@ -8,7 +8,6 @@ use Apache2::Const;
 use HTML::Entities qw(encode_entities decode_entities);
 use JSON           qw(from_json);
 
-use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
 
 use base qw(EnsEMBL::Web::Root);
