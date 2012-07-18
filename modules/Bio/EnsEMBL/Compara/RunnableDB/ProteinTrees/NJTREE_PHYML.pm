@@ -214,8 +214,18 @@ sub run_njtree_phyml {
     $self->compara_dba->dbc->disconnect_when_inactive(1);
   # ./njtree best -f spec-v4.1.nh -p tree -o $BASENAME.best.nhx \
   # $BASENAME.nucl.mfa -b 100 2>&1/dev/null
+  warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$protein_tree->root->get_all_leaves}), scalar(keys %{$self->param('split_genes')}));
 
-  if (1 == $self->param('bootstrap')) {
+  if ( (scalar(@{$protein_tree->root->get_all_leaves}) - scalar(keys %{$self->param('split_genes')})) == 2 ) {
+
+    # Not enough genes for treebest. We can fake the tree instead
+    open(OUTGENETREE, ">$newick_file");
+    my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {sprintf("%d_%d", $_->member_id, $self->param('use_genomedb_id') ? $_->genome_db_id : $_->taxon_id)} @{$protein_tree->root->get_all_leaves});
+    print sprintf('(%s);', join(',', @goodgenes));
+    print OUTGENETREE sprintf('(%s);', join(',', @goodgenes));
+    close OUTGENETREE;
+
+  } elsif (1 == $self->param('bootstrap')) {
     my $comput_ok = 0;
     until ($comput_ok) {
 
