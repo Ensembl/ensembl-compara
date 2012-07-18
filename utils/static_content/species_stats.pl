@@ -915,11 +915,11 @@ sub hits2html {
   my $interpro_path = "/$species/Info";
   if($isbig == 0){
     # the Top40 page
-    print qq(<p class="center"><a href="$interpro_path/IPtop500">View</a> top 500 InterPro hits (large table)</p>);
+    print qq(<p><a href="$interpro_path/IPtop500">View</a> top 500 InterPro hits (large table)</p>);
   }
   else{
     # >top40  page
-    print qq(<p class="center"><a href="$interpro_path/IPtop40">View</a> top 40 InterPro hits</p>);
+    print qq(<p><a href="$interpro_path/IPtop40">View</a> top 40 InterPro hits</p>);
   }
   close(HTML);
 }
