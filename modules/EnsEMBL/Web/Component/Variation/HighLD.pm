@@ -47,8 +47,8 @@ sub summary_table {
   my $table              = $self->new_table([
     { key => 'name',   title => 'Population',              sort => 'html',   align => 'left'   },
     { key => 'desc',   title => 'Description',             sort => 'string', align => 'left'   },
-    { key => 'tags',   title => 'Tags',                 sort => 'string', align => 'center' },
-    { key => 'tagged', title => 'Tagged by',              sort => 'string', align => 'center' },
+    { key => 'tags',   title => 'Tags',                    sort => 'string', align => 'center' },
+    { key => 'tagged', title => 'Tagged by',               sort => 'string', align => 'center' },
     { key => 'table',  title => 'Linked variations table', sort => 'none',   align => 'center' },
     { key => 'plot',   title => 'LD plot (image)',         sort => 'none',   align => 'center' },
     { key => 'export', title => 'LD plot (table)',         sort => 'none',   align => 'center' },
@@ -150,7 +150,6 @@ sub summary_table {
     '1KGtag',
     'Tagging information',
     qq{<p>NB: For release 67, tagged data has not been calculated for the 1000 Genomes phase 1 data.</p>},
-    '80%'
   );
   
   if ($table_with_no_rows) {
@@ -162,7 +161,7 @@ sub summary_table {
         <li>Variation $v does not have enough genotypes to calculate LD values</li>
         <li>Estimated r<sup>2</sup> values are below 0.05 and have been filtered out</li>
       </ul>
-    }, '80%');
+    });
   }
   
   $html .= $table->render;
