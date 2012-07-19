@@ -53,7 +53,8 @@ sub default_options {
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'rel_db'      => {
-            -host         => 'compara3', -dbname       => 'mm14_ensembl_compara_68',
+            -host         => 'compara3',
+            -dbname       => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('rel')),
             -port         => 3306,
             -user         => 'ensro',
             -pass         => '',
