@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment;
 
 use strict;
 
-use EnsEMBL::Web::Document::HTML::TwoCol;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -26,7 +24,7 @@ sub content {
   my $trans_length = $transcript->length;
   my $e_count      = scalar @{$transcript->get_all_Exons};
   my $translation  = $transcript->translation;
-  my $table        = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table        = $self->new_twocol;
   my ($cds_aa_length, $cds_length, $e_alignment, $html);
 
   # get external sequence and type (DNA or PEP) - refseq try with and without version
@@ -169,7 +167,7 @@ sub content {
   }
 
   my $type   = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
-  my $table2 = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table2 = $self->new_twocol;
   if ($ext_seq) {
     # get transcript sequence
     my $trans_sequence = $object->get_int_seq($transcript, $seq_type)->[0];

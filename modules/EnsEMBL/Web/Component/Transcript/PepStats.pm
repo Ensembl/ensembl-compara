@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
-use EnsEMBL::Web::Document::HTML::TwoCol;
 
 sub _init {
   my $self = shift;
@@ -37,7 +36,7 @@ sub content {
     }
     $stats_to_show .= sprintf("%s: %s<br />", $stat->name, $stat_string);
   }
-  my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table  = $self->new_twocol;
   unless ($stats_to_show =~/^\w/){return;}
   $table->add_row('Statistics',
 		  "<p>$stats_to_show</p>",

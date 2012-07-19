@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::TranslationInfo;
 
 use strict;
 
-use EnsEMBL::Web::Document::HTML::TwoCol;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -17,7 +15,7 @@ sub _init {
 sub content {
   my $self         = shift;
   my $object       = $self->object;
-  my $table        = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table        = $self->new_twocol;
   my $transcript   = $object->Obj;
   my $translation  = $transcript->translation;
 
