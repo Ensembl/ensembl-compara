@@ -1100,6 +1100,8 @@ sub export_sequence {
       
       $class = join ' ', sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } split /\s+/, $class;
       
+      $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/ if $seq->{'url'};
+      
       if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
         my $style = join '', map keys %{$class_to_style->{$_}->[1]}, split / /, $previous_class;
         
@@ -1121,11 +1123,6 @@ sub export_sequence {
         }
         
         $section = '';
-      }
-      
-      if ($seq->{'url'}) {
-        $class .= qq{ HYPERLINK "$seq->{'url'}" }; # FIXME: Doesn't work
-        $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/;
       }
       
       $section .= $seq->{'letter'};
