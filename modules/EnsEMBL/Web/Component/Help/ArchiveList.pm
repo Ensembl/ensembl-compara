@@ -83,21 +83,14 @@ sub content {
       if ($type eq 'Info') {
         foreach my $release (reverse sort keys %archive) {
           next if $release == $hub->species_defs->ENSEMBL_VERSION;
-          
-          if ($release > 50) {
-            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
-          } else {
-            $url = $species.'/index.html';
-            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
-          }
+          push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
           $count++;
         }
       } else {
-        my $releases = get_archive_redirect($type, $action, $hub);
-        my ($old_params, $old_url) = get_old_params($params, $type, $action);
+        my $releases = get_archive_redirect($type, $action, $hub) || [];
         
         foreach my $poss_release (reverse sort keys %archive) {
-          my $release_happened = 0;
+          my $release_happened = !scalar @$releases;
           
           next if $poss_release == $hub->species_defs->ENSEMBL_VERSION;
           
@@ -110,8 +103,6 @@ sub content {
             }
             
             $release_happened = 1;
-            
-            $url = "$species/" . ($old_url || $old_view) . $old_params if $poss_release < 51;
           }
           
           push @links, $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}, $initial_sets, $latest_sets) if $release_happened;
@@ -166,10 +157,6 @@ sub _output_link {
   my $initial_geneset = $initial_sets->{$release} || ''; 
   my $current_geneset = $latest_sets->{$release} || '';
   my $previous_geneset = $latest_sets->{$release-1} || '';
-  #warn "\n>>> release $release = $release_date";
-  #warn ">>> initial $initial_geneset";
-  #warn ">>> current $current_geneset";
-  #warn "<<< previous $previous_geneset";
  
   my $string = qq(<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>);
   if ($assembly) {
@@ -188,53 +175,6 @@ sub _output_link {
   }
   $string .= '</li>';
   return $string;
-}
-
-# Map new parameters to old 
-sub get_old_params {
-  my ($new_params, $type, $action) = @_;
-  
-  my %parameters = map { $_->[0] => uri_unescape($_->[1]) } map {[ split '=' ]} split /[;&]/, $new_params;
-  
-  my $old_params;
-  
-  if ($type eq 'Location') {
-    my $location = $parameters{'r'};
-    my ($chr, $start, $end) = $location =~ /^(\w+):(\d+)\-(\d+)$/;
-    
-    if ($action eq 'Marker') {
-      if (my $m = $parameters{'m'}) {
-        $old_params = "marker=$m";
-      } else {        
-        return ("chr=$chr;start=$start;end=$end", 'contigview');
-      }
-    } elsif ($action eq 'Multi') {
-      $old_params = "c=$chr:" . ($start+$end)/2 . ';w=' . ($end-$start+1);
-      $old_params .= ";$_=$parameters{$_}" for grep { /s\d+/ } keys %parameters;
-    } else {
-      $old_params = "chr=$chr;start=$start;end=$end";
-    }
-  } elsif ($type eq 'Gene') {
-    $old_params = "gene=$parameters{'g'}";
-  } elsif ($type eq 'Variation') {
-    $old_params = "snp=$parameters{'v'}";
-  } elsif ($type eq 'Transcript') {
-    if ($action eq 'Idhistory/Protein') {
-      $old_params = "peptide=$parameters{'t'}";
-    } elsif ($action eq 'SupportingEvidence/Alignment' || $action eq 'Similarity/Align') {
-      $old_params = "transcript=$parameters{'t'};exon=$parameters{'exon'};sequence=$parameters{'sequence'}";
-    } elsif ($action eq 'Domains/Genes') {
-      $old_params = "domainentry=$parameters{'domain'}";
-    } else {
-      $old_params = "transcript=$parameters{'t'}";
-    }
-  } else {
-    $old_params = $new_params;
-  }
-  
-  $old_params = "?$old_params" if $old_params;
-  
-  return $old_params;
 }
 
 1;
