@@ -75,18 +75,18 @@ sub content {
 
     if (@$genes) {
       ## Table of gene info
-      my $table = $self->new_table([], [], { margin => '1em 0px' });
+      my $table = $self->new_table;
       
       $table->add_columns(
-        { key => 'id',   title => 'Gene ID and Location',  width => '30%', align => 'center' },
-        { key => 'name', title => 'Gene Name',             width => '20%', align => 'center' },
-        { key => 'desc', title => 'Description(if known)', width => '50%', align => 'left'   }
+        { key => 'id',   title => 'Gene ID and Location',  width => '30%'},
+        { key => 'name', title => 'Gene Name',             width => '20%'},
+        { key => 'desc', title => 'Description(if known)', width => '50%'}
       );
       
       foreach my $gene (sort { $object->seq_region_sort($a->seq_region_name, $b->seq_region_name) || $a->seq_region_start <=> $b->seq_region_start } @$genes) {
         my $row = {};
         $row->{'id'} = sprintf(
-          '<a href="%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small" style="text-decoration:none">%s: %s</a>',
+          '<a href="%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small nodeco">%s: %s</a>',
           $spath, $gene->stable_id, $gene->stable_id,
           $spath, $gene->slice->seq_region_name, $gene->start, $gene->end,
           $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name), 
