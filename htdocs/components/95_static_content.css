@@ -89,10 +89,8 @@ div.species-box img { float: left; height: 48px; margin-right: 8px; width: 48px;
   Species homepages
 ----------------------------------------------------------------------*/
 
-table.species-stats {          width:100%;       }
-table.species-stats td {       padding:4px 0;    }
-table.species-stats td.data {  font-weight:bold;width:25%;padding-left:10px; }
-table.species-stats td.value { text-align:left;padding:4px; }
+table.species-stats td.data {  font-weight:bold; width:25%; }
+table.species-stats td.value { text-align:left; }
 
 img.species-entry { float:left; margin-right:4px; clear:left; }
 
