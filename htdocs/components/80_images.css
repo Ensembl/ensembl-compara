@@ -40,3 +40,15 @@ div.iexport_menu div a.view  { right: 26px; margin: 0; float: none; }
 div.iexport_menu div a img   { float: none; margin: 0; }
 
 body.ie67 div.iexport_menu a { margin-top: -16px; }
+
+/* Styles for sprite mouseovers */
+a.icon_link       { text-decoration:none; }
+div.icon          { padding: 0; margin:4px 4px 0 0; }
+div.sprite        { padding:2px 8px; margin:4px 0 0 0; background: no-repeat top left; }
+div.sprite:hover  { background-position: left bottom; }
+
+div.info          { background-image: url(/i/16/swp/info.png); }
+div.save          { background-image: url(/i/16/swp/save.png); }
+div.delete        { background-image: url(/i/16/swp/trash.png); }
+div.share         { background-image: url(/i/16/swp/share.png); }
+div.download      { background-image: url(/i/16/swp/download.png); }
