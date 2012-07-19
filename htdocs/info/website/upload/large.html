@@ -12,7 +12,7 @@
 
 <p>All of these formats can be viewed in Ensembl by creating a custom data track using the 'Attach Remote File' function, in the lefthand menu when you click "Manage Your Data".</p>
 
-<img class="screenshot" src="/img/help/url.gif" alt="screenshot" />
+<p><img src="/img/help/url.gif" alt="" /></p>
 
 <h2 id="bam-format">BAM format</h2>
 <p>BAM files is a compressed version of the SAM (Sequence Alignment/Map) binary format. BAM uses an index file to give fast access to small sections of the file..</p>
@@ -42,7 +42,7 @@
 </ul>
 
 
-In order to produce the indexed vcf file with the .gz.tbi extension you must follow the following steps:
+<p>In order to produce the indexed vcf file with the .gz.tbi extension you must follow the following steps:</p>
 <ul>
 <li>Compress your vcf file using <a href="http://sourceforge.net/projects/bgzip/">bgzip</a></li>
 <li>Index the vcf.gz file using <a href="http://samtools.sourceforge.net/tabix.shtml">tabix</a>. Use will need to pass the option -p vcf to tabix, for example "/usr/bin/tabix -p vcf my_file.vcf.gz"</li>
