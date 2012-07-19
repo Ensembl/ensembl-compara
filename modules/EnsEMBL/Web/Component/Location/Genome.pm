@@ -239,8 +239,8 @@ sub _render_features {
           $swatch = qq{<div style="background-color:$colour;" title="$colour"></div>};
         }
         push @$rows, {
-              'ftype'  => {'value' => $type_name, 'style' => $self->cell_style},
-              'colour' => {'value' => qq(<div class="swatch-wrapper"><div class="swatch">$swatch</div>$legend</div>), 'style' => $self->cell_style},
+              'ftype'  => {'value' => $type_name},
+              'colour' => {'value' => qq(<div class="swatch-wrapper"><div class="swatch">$swatch</div>$legend</div>)},
         };
       }
       my $legend = $self->new_table($columns, $rows); 
@@ -281,10 +281,9 @@ sub _render_features {
       my $column_info = $table_info->{'custom_columns'} || $default_column_info;
       my $columns = [];
       my $col;
-      my $cell_style = $self->cell_style;
 
       foreach $col (@{$table_info->{'column_order'}||[]}) {
-        push @$columns, { 'key' => $col, 'style' => $cell_style, %{$column_info->{$col}} };
+        push @$columns, { 'key' => $col, %{$column_info->{$col}} };
       }
 
       ## Add "extra" columns (unique to particular table types)
@@ -293,8 +292,7 @@ sub _render_features {
         push @$columns, {
                     'key'   => $col->{'key'}, 
                     'title' => $col->{'title'}, 
-                    'sort'  => $col->{'sort'}, 
-                    'style' => $cell_style,
+                    'sort'  => $col->{'sort'}
                     }; 
       }
       
@@ -309,11 +307,10 @@ sub _render_features {
     my $table_info  = $self->configure_UserData_table($image_config);
     my $column_info = $default_column_info;
     my $columns     = [];
-    my $cell_style  = $self->cell_style;
     my $col;
 
     foreach $col (@{$table_info->{'column_order'}||[]}) {
-      push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}, 'style' => $cell_style};
+      push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}};
     }
 
     my $table = $self->new_table($columns, $table_info->{'rows'}, { header => 'no' });
@@ -347,9 +344,9 @@ sub _configure_Gene_table {
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'extname' => {'value' => $feature->{'extname'}, 'style' => $self->cell_style},
-              'names'   => {'value' => $self->_names_link($feature, $feature_type), 'style' => $self->cell_style},
-              'loc'     => {'value' => $self->_location_link($feature), 'style' => $self->cell_style},
+              'extname' => {'value' => $feature->{'extname'}},
+              'names'   => {'value' => $self->_names_link($feature, $feature_type)},
+              'loc'     => {'value' => $self->_location_link($feature)},
               };
     $self->add_extras($row, $feature, $extras);
     push @$rows, $row;
@@ -377,9 +374,9 @@ sub _configure_ProbeFeature_table {
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'loc'     => {'value' => $self->_location_link($feature), 'style' => $self->cell_style},
-              'length'  => {'value' => $feature->{'length'},            'style' => $self->cell_style}, 
-              'names'   => {'value' => $feature->{'label'},             'style' => $self->cell_style},
+              'loc'     => {'value' => $self->_location_link($feature)},
+              'length'  => {'value' => $feature->{'length'},          }, 
+              'names'   => {'value' => $feature->{'label'},           },
               };
     $self->add_extras($row, $feature, $extras);
     push @$rows, $row;
@@ -411,9 +408,9 @@ sub _configure_Xref_table {
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'loc'     => {'value' => $self->_location_link($feature), 'style' => $self->cell_style},
-              'length'  => {'value' => $feature->{'length'},            'style' => $self->cell_style}, 
-              'xref'    => {'value' => $feature->{'label'},             'style' => $self->cell_style},
+              'loc'     => {'value' => $self->_location_link($feature)},
+              'length'  => {'value' => $feature->{'length'},          }, 
+              'xref'    => {'value' => $feature->{'label'},           },
               };
     $self->add_extras($row, $feature, $extras);
     push @$rows, $row;
@@ -442,7 +439,7 @@ sub add_extras {
   my ($self, $row, $feature, $extras) = @_;
   foreach my $col (@$extras) {
     my $key = $col->{'key'};
-    $row->{$key} = {'value' => $feature->{'extra'}{$key}, 'style' => $self->cell_style};
+    $row->{$key} = {'value' => $feature->{'extra'}{$key}};
   }
 }
 

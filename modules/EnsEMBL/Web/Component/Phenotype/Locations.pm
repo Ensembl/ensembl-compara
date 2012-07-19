@@ -59,8 +59,8 @@ sub _configure_Variation_table {
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'loc'     => {'value' => $self->_var_location_link($feature), 'style' => $self->cell_style},
-              'names'   => {'value' => $self->_variation_link($feature, $feature_type), 'style' => $self->cell_style},
+              'loc'     => {'value' => $self->_var_location_link($feature)},
+              'names'   => {'value' => $self->_variation_link($feature, $feature_type)},
               'options' => {'class' => $feature->{'html_id'}},
               };
 

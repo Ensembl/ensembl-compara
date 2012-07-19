@@ -71,8 +71,6 @@ sub chromosome_form {
 
 ## USER DATA DISPLAYS ON VERTICAL DRAWING CODE
 
-sub cell_style {my $self = shift; return 'padding:4px 10px';}
-
 sub pointer_default {
   my ($self, $feature_type) = @_;
   
@@ -149,8 +147,8 @@ sub configure_UserData_table {
     my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$colour" title="$colour"></span>};
       
     push @rows, {
-      colour => { value => $swatch, style => $self->cell_style },
-      track  => { value => $label,  style => $self->cell_style },
+      colour => { value => $swatch },
+      track  => { value => $label  },
     };
   }
   
