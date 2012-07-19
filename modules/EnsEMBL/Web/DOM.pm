@@ -16,7 +16,7 @@ use constant {
       frame frameset head h1 h2 h3 h4 h5 h6 hr html i iframe img input ins
       kbd label legend li link map meta noframes noscript object ol optgroup
       option p param pre q samp script select small span strong style sub
-      sup table tbody td textarea tfoot th thead title tr tt ul var
+      sup table tbody td textarea tfoot th thead title tr tt ul var wbr
   )]
 };
 
