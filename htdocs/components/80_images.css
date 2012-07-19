@@ -47,7 +47,7 @@ div.icon          { padding:4px 8px 4px 0; }
 div.sprite        { height:16px; width:16px; margin-top:2px; background: no-repeat top left;}
 div.sprite:hover  { background-position: left bottom; }
 
-div.info          { background-image: url(/i/16/swp/info.png); }
+div.infoicon      { background-image: url(/i/16/swp/info.png); }
 div.save          { background-image: url(/i/16/swp/save.png); }
 div.delete        { background-image: url(/i/16/swp/trash.png); }
 div.share         { background-image: url(/i/16/swp/share.png); }
