@@ -17,7 +17,7 @@
 .relocate form label     { float: left; display: block; width: 64px; margin-top: 5px; padding-right: 5px; }
 body.ie6 .relocate input { height: 24px; }
 
-input.go-button       { padding: 0; height: 23px; font-size: 10px; width: 34px; color:[[BUTTON_TEXT]]; background-color: [[BUTTON_BG]]; border: 3px double [[BUTTON_TEXT]]; font-weight: bold; }
+input.go-button       { padding: 0; height: 23px; font-size: 10px; width: 34px; color:[[BUTTON_TEXT]]; background-color: [[BUTTON_BG]]; border: 3px double [[BUTTON_TEXT]]; font-weight: bold; cursor: pointer; }
 input.go-button:hover { background-color: [[BUTTON_BG_HOVER]]; }
 
 .navbar div.image_nav           { position: absolute; top: 50%; right: 0; margin-top: -10px; width: 304px; height: 20px; }
