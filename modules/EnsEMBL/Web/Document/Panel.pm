@@ -298,6 +298,7 @@ sub _caption_h2_with_helplink {
      $html .= sprintf ' <a href="/Help/View?id=%s" class="popup help-header constant" title="Click for help (opens in new window)">', encode_entities($id) if $id;
      $html .= $self->{'caption'};
      $html .= '</a>' if $id;
+     #$html .= '<div class="sprite infoicon" style="display:inline;padding:0 6px;margin-left:4px">&nbsp;</div></a>' if $id;
      $html .= '</h1>';
 
   return $html;
