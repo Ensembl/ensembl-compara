@@ -40,5 +40,7 @@ body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 .tool_buttons .save      { background-image: url(/i/16/rev/save.png);      }
 .tool_buttons .load      { background-image: url(/i/16/rev/paste.png);     }
 .tool_buttons .list      { background-image: url(/i/16/rev/list.png);      }
-.tool_buttons .reset     { background-image: url(/i/16/rev/reload.png);    }
- 
+
+.tool_buttons .config-load  { background-image: url(/i/16/rev/setting-load.png);  }
+.tool_buttons .config-reset { background-image: url(/i/16/rev/setting-reset.png); }
+.tool_buttons .order-reset  { background-image: url(/i/16/rev/order-reset.png);   } 
