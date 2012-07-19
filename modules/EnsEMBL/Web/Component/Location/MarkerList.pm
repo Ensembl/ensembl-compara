@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Location::MarkerList;
 
 use strict;
 
-use EnsEMBL::Web::Document::HTML::TwoCol;
-
 use base qw(EnsEMBL::Web::Component);
 
 sub _init {
@@ -43,10 +41,10 @@ sub content {
   
   my $s = $c > 1 ? 's' : '';
   
-  $html = "
+  $html = qq(
     <h3>$c mapped marker$s found:</h3>
-    <table>
-  ";
+    <table class="bottom-margin">
+  );
   
   foreach my $name (sort keys %mfs) {
     my ($link, $r);
@@ -137,7 +135,7 @@ sub render_marker_details {
 	return '<h3>No markers found</h3>' unless scalar @$markers;
   
 	foreach my $m (@$markers) {
-		my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
+		my $table  = $self->new_twocol;
 		my $m_name = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
     
 		$html .= "<h3>Marker $m_name</h3>";
