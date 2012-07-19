@@ -103,6 +103,7 @@ sub fetch_input {
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
+    $protein_tree->preload();
     $protein_tree->print_tree(10) if($self->debug);
 
     $self->param('protein_tree', $protein_tree);
