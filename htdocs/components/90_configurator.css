@@ -36,6 +36,7 @@ form.configuration div.config ul.config_menu li .controls           { float: rig
 form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
 form.configuration div.config ul.config_menu li .controls .empty    { cursor: default; }
 form.configuration div.config ul.config_menu li .menu_help          { background: url(/i/info_toggle.png) no-repeat top left; }
+form.configuration div.config ul.config_menu li .menu_help:hover    { background-position: center left; }
 form.configuration div.config ul.config_menu li .menu_help.open     { background-position: bottom left; }
 form.configuration div.config ul.config_menu li .favourite          { background: url(/i/star.png) no-repeat top left; }
 form.configuration div.config ul.config_menu li.fav .favourite      { background-position: left bottom; }
