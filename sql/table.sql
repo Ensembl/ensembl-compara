@@ -681,6 +681,10 @@ CREATE TABLE gene_tree_node (
 #
 # semantics:
 #    root_id           - node_id of the root of the tree
+#    member_type       - type of members in the tree
+#    tree_type         - type of the tree
+#    clusterset_id     - name of the set of trees
+#    method_link_species_set_id - reference to the method_link_species_set table
 #    stable_id         - the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10) )
 #    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
 
@@ -688,7 +692,7 @@ CREATE TABLE gene_tree_root (
     root_id                         INT(10) UNSIGNED NOT NULL,
     member_type                     ENUM('protein', 'ncrna') NOT NULL,
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
-    clusterset_id                   VARCHAR(20) NOT NULL,
+    clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
     version                         INT UNSIGNED,           # version of the stable_id (changes only when members move to/from existing trees)

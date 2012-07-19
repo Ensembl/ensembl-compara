@@ -35,7 +35,7 @@ ADD PRIMARY KEY (node_id);
 -- set NULLs to 1 first, then update all values
 UPDATE gene_tree_root SET clusterset_id = 1 WHERE clusterset_id IS NULL;
 ALTER TABLE gene_tree_root
-MODIFY COLUMN clusterset_id VARCHAR(20) NOT NULL;
+MODIFY COLUMN clusterset_id VARCHAR(20) NOT NULL DEFAULT 'default';
 UPDATE gene_tree_root SET clusterset_id = "default";
 
 -- New (generic) name
