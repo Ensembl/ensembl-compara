@@ -33,9 +33,9 @@ sub content {
 
   if (!$hub->param('filter_module')) { ## No errors
     $form->add_notes({'id' => 'upload_notes', 'heading' => 'IMPORTANT NOTE', 'text' => qq{
-      We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. 
-      If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL" class="modal_link">attach it to $sitename</a> without uploading.<br />
-      <a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>
+      <p>We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. 
+      If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL" class="modal_link">attach it to $sitename</a> without uploading.</p>
+      <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
     }});
   }
 

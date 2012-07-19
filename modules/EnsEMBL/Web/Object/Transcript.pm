@@ -1271,10 +1271,10 @@ sub sort_oligo_data {
         'ptype'  => $p_type, 
       });
       
-      $text .= '<div class="multicol">';
+      $text .= '<p>';
       $text .= $probe_name;
       $text .= qq{ <span class="small">[$probe_text]</span>} if $probe_text;
-      $text .= qq{  [<a href="$url">view all locations</a>]</div>};
+      $text .= qq{  [<a href="$url">view all locations</a>]</p>};
     }
     
     push @{$self->__data->{'links'}{'ARRAY'}}, [ $array || $array, $text ];

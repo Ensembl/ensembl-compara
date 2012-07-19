@@ -43,7 +43,7 @@ sub content {
     $row->{'id'}          .= scalar @$genes > 1 ? sprintf('(<a href="%s">%s genes</a>)', $hub->url($url_params), scalar @$genes) : '(1 gene)';
     $row->{'id'}          .= sprintf '<br />(<a href="%s">all proteins in family</a>)',  $hub->url({ function => "Proteins$ckey", family => $family_id });
     $row->{'annot'}        = $families->{$family_id}{'info'}{'description'};
-    $row->{'transcripts'}  = '<ul>';
+    $row->{'transcripts'}  = '<ul class="compact">';
     $row->{'transcripts'} .= sprintf '<li><a href="%s">%s</a> (%s)</li>', $hub->url($url_params), $_->stable_id, $_->display_xref for @{$family->{'transcripts'}}; 
     $row->{'transcripts'} .= '</ul>';
 

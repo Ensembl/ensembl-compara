@@ -149,13 +149,13 @@ sub summary_table {
   $html .= $self->_hint(
     '1KGtag',
     'Tagging information',
-    qq{NB: For release 67, tagged data has not been calculated for the 1000 Genomes phase 1 data.},
+    qq{<p>NB: For release 67, tagged data has not been calculated for the 1000 Genomes phase 1 data.</p>},
     '80%'
   );
   
   if ($table_with_no_rows) {
     $html .= $self->_hint('HighLD', 'Linked variation information', qq{
-      A variation may have no LD data in a given population for the following reasons:
+      <p>A variation may have no LD data in a given population for the following reasons:</p>
       <ul>
         <li>Linked variations are being filtered out by page configuration</li>
         <li>Variation $v has a minor allele frequency close or equal to 0</li>

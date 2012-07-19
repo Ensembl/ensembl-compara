@@ -49,9 +49,9 @@ sub content {
     $archive_object = $object->get_archive_object; 
   }
   
-  my $latest = $archive_object->get_latest_incarnation;
-  my $id     = $latest->stable_id . '.' . $latest->version;
-  my $version_html;
+  my $latest        = $archive_object->get_latest_incarnation;
+  my $id            = $latest->stable_id . '.' . $latest->version;
+  my $version_html  = [];
   my $status;
   
   if ($archive_object->is_current) {
@@ -61,35 +61,16 @@ sub content {
   } else {
     $status = 'Retired (see below for possible successors)'; # this stable ID no longer exists
   }
-  
 
   if ($archive_object->release >= $object->get_earliest_archive){ 
-    $version_html = sprintf '<a href="%s">%s</a>', $self->_archive_link($archive_object), $id;
+    push @$version_html, sprintf('<a href="%s">%s</a>', $self->_archive_link($archive_object), $id);
   } else {
-    $version_html = $id;
-  } 
- 
-  $version_html .= "<br />\n";
-  $version_html .= 'Release: ' . $latest->release;
-  $version_html .= ' (current)' if $archive_object->is_current;
-  $version_html .= "<br />\n";
-  $version_html .= 'Assembly: ' . $latest->assembly . "<br />\n";
-  $version_html .= 'Database: ' . $latest->db_name  . '<br />';
-  
-  return qq{
-    <dl class="summary">
-      <dt>Stable ID</dt>
-      <dd>$id</dd>
-    </dl>
-    <dl class="summary">
-      <dt>Status</dt>
-      <dd>$status</dd>  
-    </dl>
-    <dl class = "summary">
-      <dt>Latest Version</dt>
-      <dd>$version_html</dd> 
-    </dl><br />
-  };
+    push @$version_html, $id;
+  }
+
+  push @$version_html, 'Release: ' . $latest->release . ($archive_object->is_current ? ' (current)' : ''), 'Assembly: ' . $latest->assembly, 'Database: ' . $latest->db_name;
+
+  return $self->new_twocol(['Stable ID', $id], ['Status', $status], ['Latest Version', join('', map sprintf('<p>%s</p>', $_), @$version_html), 1])->render;
 }
 
 

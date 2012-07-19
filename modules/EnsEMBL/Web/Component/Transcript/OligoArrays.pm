@@ -20,9 +20,8 @@ sub content {
 
   my $transcript = $self->object;
   $transcript->get_oligo_probe_data;
-  my $html = $self->_matches('oligo_arrays', 'Oligo Matches', 'ARRAY' );
+  return $self->_matches('oligo_arrays', 'Oligo Matches', 'ARRAY', 'RenderAsTwoCol');
 
-  return $html;
 }
-1;
 
+1;

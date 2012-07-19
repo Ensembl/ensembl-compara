@@ -91,10 +91,12 @@ sub content {
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
   
   return qq{
-    <div class="notes">
-      <h4>Help</h4>
-      <p class="space-below">You can rename your uploads and attached URLs by clicking on their current name in the Source column</p><br />
-      <p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+    <div class="info">
+      <h3>Help</h3>
+      <div class="message-pad">
+        <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
+        <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+      </div>
     </div>
     <h2 class="legend">Your data</h2>
     $html

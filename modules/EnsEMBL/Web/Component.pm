@@ -19,6 +19,7 @@ use Bio::EnsEMBL::VDrawableContainer;
 
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::Table;
+use EnsEMBL::Web::Document::HTML::TwoCol;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
@@ -256,7 +257,7 @@ sub config_msg {
     config    => '_page'
  });
   
-  return qq{Click <a href="$url" class="modal_link">"Configure this page"</a> to change the sources of external annotations that are available in the External Data menu.};
+  return qq{<p>Click <a href="$url" class="modal_link">"Configure this page"</a> to change the sources of external annotations that are available in the External Data menu.</p>};
 }
 
 sub ajax_url {
@@ -387,6 +388,12 @@ sub new_table {
   return $table;
 }
 
+sub new_twocol {
+  ## Creates and returns a new EnsEMBL::Web::Document::HTML::TwoCol.
+  shift;
+  return EnsEMBL::Web::Document::HTML::TwoCol->new(@_);
+}
+
 sub new_form {
   ## Creates and returns a new Form object.
   ## @param   HashRef as accepted by Form->new
@@ -431,12 +438,13 @@ sub _export_image {
   return 0;
 }
 
-sub _matches {
+sub _matches { ## TODO - tidy this
   my ($self, $key, $caption, @keys) = @_;
-  my $output_as_table = $keys[-1] eq 'RenderAsTables';
-  my $show_version    = ($keys[-1] eq 'show_version') ? 'show_version' : '';
+  my $output_as_twocol  = $keys[-1] eq 'RenderAsTwoCol';
+  my $output_as_table   = $keys[-1] eq 'RenderAsTables';
+  my $show_version      = $keys[-1] eq 'show_version' ? 'show_version' : '';
 
-  pop @keys if ($output_as_table || $show_version) ; # if output_as_table or show_version then the last value isn't meaningful
+  pop @keys if ($output_as_twocol || $output_as_table || $show_version) ; # if output_as_table or show_version or output_as_twocol then the last value isn't meaningful
 
   my $object       = $self->object;
   my $species_defs = $self->hub->species_defs;
@@ -451,7 +459,8 @@ sub _matches {
   }
 
   my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
-
+  return unless @links;
+  @links = $self->remove_redundant_xrefs(@links) if $keys[0] eq 'ALT_TRANS';
   return unless @links;
 
   my $db    = $object->get_db;
@@ -459,22 +468,7 @@ sub _matches {
   $entry =~ s/bio::ensembl:://;
 
   my @rows;
-  my $html;
-
-  if ($species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-    $html = '<p></p>';
-  } else {
-    $html = "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
-  }
-
-  # use tables for formatting if we are not outputting a data table
-  $html .= '<table cellpadding="4">' unless $output_as_table;
-
-  @links = $self->remove_redundant_xrefs(@links) if $keys[0] eq 'ALT_TRANS';
-
-  return unless @links;
-
-  my $list_html;
+  my $html = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '' : "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
 
   # in order to preserve the order, we use @links for acces to keys
   while (scalar @links) {
@@ -482,36 +476,41 @@ sub _matches {
     my $j   = 0;
     my $text;
 
-    $list_html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
-    $list_html .= '</td></tr>' if $key ne '';
-    $list_html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong></th><td>};
-
     # display all other vales for the same key
     while ($j < scalar @links) {
       my ($other_key , $other_text) = @{$links[$j]};
       if ($key eq $other_key) {
-        $list_html .= $other_text;
-        $text      .= "$other_text<br />";
-
+        $text      .= $other_text;
         splice @links, $j, 1;
       } else {
         $j++;
       }
     }
 
-    $list_html .= "</td></tr>";
-
     push @rows, { dbtype => $key, dbid => $text };
   }
 
-  if ($output_as_table) {
-    return $html . $self->new_table([ 
-      { key => 'dbtype', align => 'left', title => 'External database' },
-      { key => 'dbid',   align => 'left', title => 'Database identifier'    }
-    ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
+  my $table;
+
+  if ($output_as_twocol) {
+    $table = $self->new_twocol;
+    $table->add_row("$_->{'dbtype'}:", " $_->{'dbid'}", 1) for @rows;    
+  } elsif ($output_as_table) { # if flag is on, display datatable, otherwise a simple table
+    $table = $self->new_table([
+        { key => 'dbtype', align => 'left', title => 'External database' },
+        { key => 'dbid',   align => 'left', title => 'Database identifier' }
+      ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 }
+    );
   } else {
-    return "$html$list_html</table>";
+    $table = $self->dom->create_element('table', {'cellspacing' => '0', 'children' => [
+      map {'node_name' => 'tr', 'children' => [
+        {'node_name' => 'th', 'inner_HTML' => "$_->{'dbtype'}:"},
+        {'node_name' => 'td', 'inner_HTML' => " $_->{'dbid'}"  }
+      ]}, @rows
+    ]});
   }
+
+  return $html.$table->render;
 }
 
 sub _sort_similarity_links {
@@ -725,10 +724,12 @@ sub transcript_table {
   my $hub         = $self->hub;
   my $object      = $self->object;
   my $species     = $hub->species;
+  my $table       = $self->new_twocol;
+  my $html        = '';
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = encode_entities($object->gene_description);
-  $description    = '' if $description eq 'No description';
-  
+     $description = '' if $description eq 'No description';
+
   if ($description) {
     my ($edb, $acc);
     
@@ -745,20 +746,17 @@ sub transcript_table {
       $l1      =~ s/\&amp\;/\&/g;
       my $t1   = "Source: $edb $acc";
       my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
-      
+
       $description .= qq( <span class="small">@{[ $link ]}</span>) if $acc && $acc ne 'content';
     }
-    
-    $description = qq{
-      <dt>Description</dt>
-      <dd>$description</dd>
-    };
+
+    $table->add_row('Description', "<p>$description</p>", 1);
   }
   
   my $seq_region_name  = $object->seq_region_name;
   my $seq_region_start = $object->seq_region_start;
   my $seq_region_end   = $object->seq_region_end;
-  
+
   my $location_html = sprintf(
     '<a href="%s">%s: %s-%s</a> %s.',
     $hub->url({
@@ -804,11 +802,13 @@ sub transcript_table {
     
     $reg->add_DNAAdaptor($species, 'vega', $species, $orig_group); # set dnadb back to the original group
   }
-  
+
+  $location_html = "<p>$location_html</p>";
+
   if ($page_type eq 'gene') {
     # Haplotype/PAR locations
     my $alt_locs = $object->get_alternative_locations;
-    
+
     if (@$alt_locs) {
       $location_html .= '
         <p> This gene is mapped to the following HAP/PARs:</p>
@@ -829,14 +829,9 @@ sub transcript_table {
         </ul>';
     }
   }
-  
-  my $html = qq{
-    <dl class="summary">
-      $description
-      <dt>Location</dt>
-      <dd>$location_html</dd>
-  };
-  
+
+  $table->add_row('Location', $location_html, 1);
+
   my $gene = $object->gene;
   
   if ($gene) {
@@ -856,7 +851,7 @@ sub transcript_table {
       $plural =~ s/s$//;
     }
     
-    my $label = "This gene has $count $plural";
+    my $gene_html = "This gene has $count $plural";
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
@@ -866,7 +861,7 @@ sub transcript_table {
         g      => $gene_id
       });
     
-      $label = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $label};
+      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $gene_html};
     }
     
     my $hide    = $hub->get_cookies('toggle_transcripts_table') eq 'closed';
@@ -931,7 +926,16 @@ sub transcript_table {
     # Add rows to transcript table sorted by biotype
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
 
-    my $table = $self->new_table(\@columns, \@rows, {
+    $table->add_row(
+      sprintf('<a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">%s</a>',
+        $hide ? 'closed' : 'open',
+        $page_type eq 'gene' ? 'Transcripts' : 'Gene',
+      ),
+      "<p>$gene_html</p>",
+      1
+    );
+
+    my $table_2 = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
@@ -939,19 +943,11 @@ sub transcript_table {
       id                => 'transcripts_table',
       exportable        => 0
     });
-    
-    $html .= sprintf(qq{
-        <dt><a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">%s</a></dt>
-        <dd>%s</dd>
-      </dl>
-      %s}, 
-      $hide ? 'closed' : 'open',
-      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
-      $label,
-      $table->render
-    );
+
+    $html = $table->render.$table_2->render;
+
   } else {
-    $html .= '</dl>';
+    $html = $table->render;
   }
   
   return qq{<div class="summary_panel">$html</div>};

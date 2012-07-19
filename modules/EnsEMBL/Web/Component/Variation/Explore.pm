@@ -73,9 +73,9 @@ sub content {
   foreach my $button (@buttons) {
     if (($i % $break) == 0) {
       $html .= qq(
-        <div">
+        <div>
       );
-    } 
+    }
     my $title = $button->{'title'};
     my $img   = 'var_'.$button->{'img'};
     my $url   = $button->{'url'};
@@ -103,7 +103,7 @@ sub content {
   $html .= qq(
     <div class="column-wrapper">
       <div class="column-two">
-        <div class="column-padding">
+        <div class="column-padding no-left-margin">
           <h2>Using the website</h2>
           <ul>
             <li>Video: <a href="/Help/Movie?id=208">Browsing SNPs and CNVs in Ensembl</a></li>
@@ -116,7 +116,7 @@ sub content {
         </div>
       </div>
       <div class="column-two">
-        <div class="column-padding">
+        <div class="column-padding no-right-margin">
           <h2>Programmatic access</h2>
           <ul>
             <li>Tutorial: <a href="http://www.ensembl.org/info/docs/api/variation/variation_tutorial.html">Accessing variation data with the Variation API</a></li>

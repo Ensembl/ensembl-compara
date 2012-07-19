@@ -73,9 +73,9 @@ sub render_content {
     my $table_id = $phenotype;
        $table_id =~ s/[^\w]/_/g;
     
-    $html = $self->toggleable_table("$phenotype associated variants", $table_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html = $self->toggleable_table("$phenotype associated variants", $table_id, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
   } else {
-    $html = qq{<a id="$self->{'id'}_top"></a><h2>Phenotypes associated with the gene from variation annotations</h2>} . $table->render;
+    $html = qq(<a id="$self->{'id'}_top"></a><h2>Phenotypes associated with the gene from variation annotations</h2>) . $table->render;
   }
 
   return $html;
@@ -381,7 +381,7 @@ sub gene_phenotypes {
   my $g_name           = $obj->stable_id;
   my @keys             = ('MISC');
   my @similarity_links = @{$object->get_similarity_hash($obj)};
-  my $html             = qq{<br /><a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
+  my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
   my (@rows, %list, $list_html);
   
   $self->_sort_similarity_links($output_as_table, @similarity_links);

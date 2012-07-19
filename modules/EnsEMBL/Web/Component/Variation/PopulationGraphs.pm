@@ -22,21 +22,12 @@ sub content {
   
   my @pop_phase1 = grep{ /phase_1/} keys(%$pop_freq);
   return '' unless (scalar @pop_phase1);
-  
-  my $html = qq{
-    <h2>1000 Genomes allele frequencies</h2>
-    <input type="hidden" class="panel_type" value="PopulationGraph" />
-  };
-  
-  my $legend = '';
-  my $input  = '';
-  my $graph  = '';
-  my $gtitle = '';
+
+  my @graphs;
+  my @inputs;
   my $graph_id = 0;
-  my $count    = 1;
-  my $line_lim = 5;
 	my $height   = 50;
-  
+
   my @alleles;
   # Get alleles list
   foreach my $pop_name (sort(keys(%$pop_freq))) {
@@ -82,27 +73,19 @@ sub content {
         last;
     	}
 		}
-		
-    my $border = $short_name eq 'ALL' ? '2px' : '1px';
-    $input  .= qq{<input type="hidden" class="population" value="[$values]" />};
-    $graph  .= qq{<td style="border:$border solid #000">&nbsp;<b>$short_name</b><div id="graphHolder$graph_id" style="width:118px;height:$height\px;"></div></td>};
-    $graph  .= qq{<td style="width:15px"></td>} if ($short_name eq 'ALL');
-    
-    if ($count == $line_lim) { 
-      $count = 0;
-      $graph .= '</tr><tr>';
-    }
+
+    push @inputs, qq{<input type="hidden" class="population" value="[$values]" />};
+    push @graphs, sprintf qq{<div class="pie-chart%s"><span>$short_name</span><div id="graphHolder$graph_id" style="width:118px;height:$height\px;"></div></div>}, $short_name eq 'ALL' ? ' all-population' : '';
+
     $graph_id ++;
-    $count ++;
-  } 
+  }
 
-  $html .= $input;
-  $html .= '<table>';
-  $html .= "<tr>$graph</tr>";  
-  $html .= '</table><br />'; 
-  return $html;
+  return sprintf q{<h2>1000 Genomes allele frequencies</h2><input type="hidden" class="panel_type" value="PopulationGraph" />%s<div class="population-genetics-pie">%s</div>},
+    join('', @inputs),
+    join('', @graphs)
+  ;
+
 }
-
 
 sub format_frequencies {
   my ($self, $freq_data) = @_;

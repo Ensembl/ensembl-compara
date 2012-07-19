@@ -23,7 +23,7 @@ sub content {
   
   return qq{
     <div class="column-two left">
-      <p class="no-top-margin">&copy; $year <span class="print_hide"><a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> / 
+      <p>&copy; $year <span class="print_hide"><a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> / 
         <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a></span>
         <span class="screen_hide_inline">WTSI / EBI</span>.
         (<a href="http://www.ensembl.org/info/about/legal/privacy.html">Privacy policy</a>)

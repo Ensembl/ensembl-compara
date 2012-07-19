@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::TranscriptSummary;
 
 use strict;
 
-use EnsEMBL::Web::Document::HTML::TwoCol;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -18,7 +16,7 @@ sub content {
   my $self         = shift;
   my $object       = $self->object;
   my $hub          = $self->hub;
-  my $table        = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table        = $self->new_twocol;
   my $species_defs = $hub->species_defs;
   my $sp           = $species_defs->DISPLAY_NAME;
   my $transcript   = $object->Obj;
@@ -93,7 +91,7 @@ sub content {
     }
   };
 
-  $table->add_row($label, $text, 1);
+  $table->add_row($label, "<p>$text</p>", 1);
 
   ## add frameshift introns info
   my $frameshift_introns = $object->get_frameshift_introns;
@@ -150,7 +148,7 @@ sub content {
 
   ## add alternative transcript info
   my $alt_trans = $self->_matches('alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS', 'show_version');
-  $table->add_row('Alternative transcripts', "<p>$alt_trans</p>", 1) if $alt_trans;
+  $table->add_row('Alternative transcripts', $alt_trans, 1) if $alt_trans;
 
   return $table->render;
 }

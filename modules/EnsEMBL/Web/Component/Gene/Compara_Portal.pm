@@ -21,7 +21,7 @@ sub content {
   ];
 
   my $html  = $self->SUPER::content;
-     $html .= qq{<div class="centered">More views of comparative genomics data, such as multiple alignments and synteny, are available on the <a href="$location">Location</a> page for this gene.</div>};
+     $html .= qq{<p class="center">More views of comparative genomics data, such as multiple alignments and synteny, are available on the <a href="$location">Location</a> page for this gene.</p>};
 
   return $html;
 }

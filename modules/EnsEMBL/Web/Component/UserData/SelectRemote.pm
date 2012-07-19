@@ -31,13 +31,10 @@ sub content {
   my %format_name = map {$format_info->{$_}{'label'} => 1} (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
   my $format_list = join(', ', (sort {lc($a) cmp lc($b)} keys %format_name));
 
-  my $note = qq(
-Accessing data via a URL can be slow unless you use an indexed format such as BAM. 
-However it has the advantage that you always see the same data as the file on your own machine.<br /><br />
-We currently accept attachment of the following formats: $format_list.
-  );
-
-  $note .= ' <strong>Note</strong>: VCF files must be indexed prior to attachment.' if grep(/vcf/i, keys %format_name);
+  my $note = sprintf qq(
+    <p>Accessing data via a URL can be slow unless you use an indexed format such as BAM.However it has the advantage that you always see the same data as the file on your own machine.</p>
+    <p>We currently accept attachment of the following formats: $format_list.%s</p>), grep(/vcf/i, keys %format_name) ? ' <b>Note</b>: VCF files must be indexed prior to attachment.' : ''
+  ;
 
   $form->add_notes({
     'heading' => 'Tip',

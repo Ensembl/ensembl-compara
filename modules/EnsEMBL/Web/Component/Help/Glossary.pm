@@ -36,15 +36,17 @@ sub content {
 
   if (scalar(@words)) {
   
-    my $style = 'text-align:right;margin-right:2em';
-    $html .= qq(<dl class="normal">\n); 
+    $html .= qq(<dl class="normal striped twocol">\n); 
+
+    my @bg = qw(bg1 bg2);
 
     foreach my $word (@words) {
-      $html .= sprintf(qq(<dt id="word%s">%s), $word->{'id'}, $word->{'word'});
+      $html .= qq(<dt id="word$word->{'id'}" class="$bg[1]">$word->{'word'});
       if ($word->{'expanded'}) {
-        $html .= ' ('.$word->{'expanded'}.')';
+        $html .= " ($word->{'expanded'})";
       }
-      $html .= "</dt>\n<dd>".$word->{'meaning'}."</dd>\n";
+      $html .= qq(</dt>\n<dd class="$bg[1]">$word->{'meaning'}</dd>\n);
+      @bg = reverse @bg;
     }
     $html .= "</dl>\n";
   }

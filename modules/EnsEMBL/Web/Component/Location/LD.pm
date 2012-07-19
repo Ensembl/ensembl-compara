@@ -14,22 +14,16 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $html = '<dl class="summary">';
 
   if ($self->hub->param('pop1')) {
-    my $focus    = $self->focus;
-    my $pop_html = $self->population_info;
-
-    $html .= " <dt>Focus: </dt><dd>$focus</dd>" if $focus; 
-    $html .= $self->prediction_method;
-    $html .= " <dt>Populations: </dt><dd>$pop_html</dd>";
-  } else {
-    $html .= $self->_info('No Population Selected', '<p>You must select a population(s) using the "Select populations" link from menu on the left hand side of this page.</p>');
+    return $self->new_twocol(
+      $focus ? ['Focus:', $focus] : (),
+      $self->prediction_method,
+      ['Populations:', $self->population_info, 1]
+    )->render;
   }
 
-  $html .= '</dl><br />';
-  
-  return $html;
+  return $self->_info('No Population Selected', '<p>You must select a population(s) using the "Select populations" link from menu on the left hand side of this page.</p>');
 }
 
 #-----------------------------------------------------------------------------
@@ -69,15 +63,12 @@ sub prediction_method {
   ### Purpose: standard blurb about calculation of LD
   ### Description : Adds text information about the prediction method
 
-  my $self = shift;
-  my $label = 'Prediction method';
-  my $info = '<p>LD values were calculated by a pairwise
- estimation between SNPs genotyped in the same individuals and within a
- 100kb window.  An established method was used to estimate the maximum
- likelihood of the proportion that each possible haplotype contributed to the
- double heterozygote.</p>';
-  
-  return "<dt>$label: </dt><dd>$info</dd>";
+  return ['Prediction method', 'LD values were calculated by a pairwise
+    estimation between SNPs genotyped in the same individuals and within a
+    100kb window. An established method was used to estimate the maximum
+    likelihood of the proportion that each possible haplotype contributed to the
+    double heterozygote.'
+  ];
 }
 
 #-----------------------------------------------------------------------------
@@ -94,15 +85,12 @@ sub population_info {
   my $pop_html;
 
   if (!scalar @$pop_ids) {
-    if (@{$object->pops_for_slice(100000)}) {
-      $pop_html = qq("Population", "Please select a population from the 'Configure this page' link in the left hand menu.");
-      return $pop_html;
-    } else {
-      $pop_html = qq("Population", "There is no LD data for this species.");
-      return $pop_html;
-    }
+    return @{$object->pops_for_slice(100000)}
+      ? qq(<p>"Population", "Please select a population from the 'Configure this page' link in the left hand menu."</p>)
+      : qq(<p>"Population", "There is no LD data for this species."</p>)
+    ;
   }
-  
+
   foreach my $name (sort { $a cmp $b } map { $object->pop_name_from_id($_) || () } @$pop_ids) {
     my $pop       = $object->pop_obj_from_name($name); 
     my $super_pop = $object->extra_pop($pop->{$name}{'PopObject'}, 'super'); 
@@ -111,7 +99,7 @@ sub population_info {
     $html        .= $self->print_pop_info($super_pop, 'Super-population');
     $pop_html    .= "<table>$html</table>";
   }
-  
+
   return $pop_html;
 }
 
@@ -141,11 +129,11 @@ sub print_pop_info {
 
     if ($v && $label eq 'Population') {
       my $tagged = $self->tagged_snp($pop->{$pop_name}{'Name'});
-      $row .= "<tr><th>SNP in tagged set for this population:<br /></th><td>$tagged</td>" if $tagged;
+      $row .= "<tr><th>SNP in tagged set for this population:</th><td>$tagged</td>" if $tagged;
     }
   }
   
-  return "<tr>$row<br /></tr>";
+  return "<tr>$row</tr>";
 }
 
 #-----------------------------------------------------------------------------

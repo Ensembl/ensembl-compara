@@ -33,7 +33,7 @@ sub render {
     }
     
     my $title        = $section->{'_title'} || ucfirst $dir;
-    my @second_level = @{$self->create_links($section, ' style="font-weight:bold"')};
+    my @second_level = @{$self->create_links($section, ' class="bold"')};
     
     $html{$column} .= qq{<div class="plain-box"><h2 class="box-header">$title</h2>\n};
 
@@ -62,7 +62,7 @@ sub render {
     $html{$column} .= '</div>';
   }
 
-  $html{$_} = qq(<div class="column-three"><div class="column-padding">$html{$_}</div></div>) for grep $html{$_}, keys %html;
+  $html{$_} = sprintf(q(<div class="column-three"><div class="column-padding%s">%s</div></div>), $_ eq 'middle' ? '' : " no-$_-margin", $html{$_}) for grep $html{$_}, keys %html; # no-left-margin, no-right-margin
 
   return qq(<div class="column-wrapper">
               $html{'left'}
@@ -72,7 +72,7 @@ sub render {
 }
 
 sub create_links {
-  my ($self, $level, $style) = @_;
+  my ($self, $level, $attribs) = @_;
   my $links = [];
     
   ## Do we have subpages/dirs, or just metadata?
@@ -90,7 +90,7 @@ sub create_links {
       my $path  = $pages->{'_path'} || "$level->{'_path'}$sub";
       my $title = $pages->{'_title'} || ucfirst $sub;
         
-      push @$links, { key => $pages, link => qq(<a href="$path" title="$title"$style>$title</a>) };
+      push @$links, { key => $pages, link => qq(<a href="$path" title="$title"$attribs>$title</a>) };
     }
   }
 

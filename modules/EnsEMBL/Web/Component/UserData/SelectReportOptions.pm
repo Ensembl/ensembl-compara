@@ -29,8 +29,8 @@ sub content {
 
   if (!$hub->param('filter_module')) { ## No errors
     $form->add_notes({'id' => 'upload_notes', 'heading' => 'IMPORTANT NOTE', 'text' => qq{
-      This web tool is only suitable for exporting a limited dataset: a maximum of <strong>5 megabases</strong> total input is allowed (1 megabase if variation or regulation is selected).<br /> 
- If you wish to produce a report based on many regions or regions with dense data, we recommend using the standalone <a href="/tools.html">API script</a>
+<p>This web tool is only suitable for exporting a limited dataset: a maximum of <b>5 megabases</b> total input is allowed (1 megabase if variation or regulation is selected).</p>
+<p>If you wish to produce a report based on many regions or regions with dense data, we recommend using the standalone <a href="/tools.html">API script</a></p>
     }});
   }
 

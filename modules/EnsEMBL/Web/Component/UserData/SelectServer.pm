@@ -31,9 +31,9 @@ sub content {
   my $form = $self->modal_form('select_server', $action_url, {'wizard' => 1, 'back_button' => 0});
   $form->add_notes({
     'heading'=>'Tip',
-    'text'=>qq($sitename supports the $das_link, a network of data sources
+    'text'=>qq(<p>$sitename supports the $das_link, a network of data sources
                accessible over the web. DAS combines the advantages of $url_link
-               and $upload_link data, but requires special software.)});
+               and $upload_link data, but requires special software.</p>)});
 
   my @preconf_das = $object->get_das_servers;
 

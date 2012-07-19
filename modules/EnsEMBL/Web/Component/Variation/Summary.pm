@@ -19,24 +19,20 @@ sub content {
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
   my $failed             = $variation->failed_description ? $self->failed($feature_slice) : ''; ## First warn if variation has been failed
-  my $summary            = $self->variation_source;
-     $summary           .= $self->alleles($feature_slice);
-     $summary           .= $self->location;
-     $summary           .= $self->co_located($feature_slice) if $feature_slice;
-     $summary           .= $self->validation_status;
-     $summary           .= $self->clinical_significance;
-     $summary           .= $self->synonyms;
-     $summary           .= $self->hgvs;
-     $summary           .= $self->sets;
-    
-  return qq{
-    <div class="summary_panel">
-      $failed
-      <dl class="summary">
-        $summary
-      </dl>
-    </div>
-  };
+
+  my $summary_table      = $self->new_twocol(
+    $self->variation_source,
+    $self->alleles($feature_slice),
+    $self->location,
+    $feature_slice ? $self->co_located($feature_slice) : (),
+    $self->validation_status,
+    $self->clinical_significance,
+    $self->synonyms,
+    $self->hgvs,
+    $self->sets
+  );
+
+  return qq{<div class="summary_panel">$failed%s}, $summary_table->render;
 }
 
 sub failed {
@@ -112,11 +108,7 @@ sub variation_source {
     $source_link = $url ? qq{<a href="$url">$source$version</a>} : "$source $version";
   }
 
-  return sprintf('
-    <dt>Source</dt> 
-    <dd>%s - %s</dd>',
-    $source_link, $description
-  );
+  return ['Source', sprintf('<p>%s - %s</p>', $source_link, $description), 1];
 }
 
 
@@ -125,8 +117,8 @@ sub co_located {
   my $hub        = $self->hub;
   my $adaptor    = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   my @variations = (@{$adaptor->fetch_all_by_Slice($feature_slice)}, @{$adaptor->fetch_all_somatic_by_Slice($feature_slice)});
-  my $html;
-  
+  my @row;
+
   if (@variations) {
     my $name  = $self->object->name;
     my $start = $feature_slice->start;
@@ -151,19 +143,17 @@ sub co_located {
     }
     
     if (scalar keys %by_source) {
+      my $html;
       foreach (keys %by_source) {
         $html .= " <b>$_</b> ";
         $html .= join ', ', @{$by_source{$_}};
       }
 
-      $html = qq{
-        <dt>Co-located</dt>
-        <dd>with $html</dd>
-      };
+      push @row, 'Co-located', "<p>with $html</p>", 1;
     }
   }
   
-  return $html;
+  return @row ? \@row : ();
 }
 
 sub synonyms {
@@ -216,25 +206,21 @@ sub synonyms {
   # Large text display
   if ($count_sources > 1) { # Collapsed div display 
     my $show = $self->hub->get_cookies('toggle_variation_synonyms') eq 'open';
-    
-    return sprintf('
-      <dt><a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a></dt>
-      <dd>This feature has <strong>%s</strong> synonyms - click the plus to show</dd>
-      <dd class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></dd>',
-      $show ? 'open' : 'closed',
-      $count,
-      $show ? '' : 'display:none',
-      join('', map "<li>$_</li>", @synonyms_list)
-    );
+
+    return [
+      sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
+      sprintf('<p>This feature has <strong>%s</strong> synonyms - click the plus to show</p><p class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></p>',
+        $count,
+        $show ? '' : 'display:none',
+        join('', map "<li>$_</li>", @synonyms_list)
+      ),
+      1
+    ];
+
   } else {
-    return sprintf('
-      <dt>Synonyms</dt>
-      <dd>%s</dd>', 
-      $count_sources ? $synonyms_list[0] : 'None currently in the database'
-    ); 
+    return ['Synonyms', $count_sources ? "<p>$synonyms_list[0]</p>" : '<p>None currently in the database</p>', 1];
   }
 }
-
 
 sub alleles {
   my ($self, $feature_slice) = @_;
@@ -320,9 +306,8 @@ sub alleles {
     }
   }
   
-  return qq{<dt>Alleles</dt><dd>$html</dd>};
+  return [ 'Alleles', qq(<div class="twocol-cell">$html</div>), 1 ];
 }
-
 
 sub location {
   my $self     = shift;
@@ -330,12 +315,12 @@ sub location {
   my %mappings = %{$object->variation_feature_mapping};
   my $count    = scalar keys %mappings;
   
-  return '<dl class="summary"><dt>Location</dt><dd>This feature has not been mapped.</dd></dl>' unless $count;
+  return ['Location', 'This feature has not been mapped', 1] unless $count;
   
   my $hub = $self->hub;
   my $vf  = $hub->param('vf');
   my $id  = $object->name;
-  my ($html, $location, $location_link);
+  my (@rows, $location, $location_link);
   
   if ($vf) {
     my $variation = $object->Obj;
@@ -378,34 +363,24 @@ sub location {
     }
     
     # ignore vf and region as we want them to be overwritten
-    my $core_params = join '', map $params->{$_} && $_ ne 'vf' && $_ ne 'r' ? qq{<input name="$_" value="$params->{$_}" type="hidden" />} : (), keys %$params;
-    my $options     = join '', map qq{<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>}, @locations;
-    
-    $html = sprintf('
-        This feature maps to %s genomic locations
-      </dd>
-      <dt>Selected location</dt>
-      <dd>
-        <form action="%s" method="get">
-          %s
-          <select name="vf" class="fselect">
-            %s
-          </select>
-          <input value="Go" class="fbutton" type="submit">
-          %s
-        </form>
-      </dd>',
-      $count,
-      $hub->url({ vf => undef, v => $id, source => $object->source }),
-      $core_params,
-      $options,
-      $location_link
+    my $core_params = join '', map $params->{$_} && $_ ne 'vf' && $_ ne 'r' ? qq(<input name="$_" value="$params->{$_}" type="hidden" />) : (), keys %$params;
+    my $options     = join '', map qq(<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>), @locations;
+
+    @rows = (
+      ['Location', "This feature maps to $count genomic locations"],
+      ['Selected location', sprintf('<form action="%s" method="get">%s<select name="vf" class="fselect">%s</select><input value="Go" class="fbutton" type="submit">%s</form>',
+        $hub->url({ vf => undef, v => $id, source => $object->source }),
+        $core_params,
+        $options,
+        $location_link
+      ), 1],
     );
+
   } else {
-    $html = "$location$location_link";
+    @rows = [ 'Location', "<p>$location$location_link</p>", 1 ];
   }
   
-  return qq{<dt>Location</dt><dd>$html</dd>};
+  return @rows;
 }
 
 
@@ -471,9 +446,8 @@ sub validation_status {
     $html .= join ', ', sort @status_list;
   }
   
-  return qq{ <dt>Validation status</dt><dd>$html</dd>};
+  return ['Validation status', "<p>$html</p>", 1];
 }
-
 
 sub clinical_significance {
   my $self   = shift;
@@ -481,10 +455,11 @@ sub clinical_significance {
   my $hub    = $self->hub; 
   my ($clin_sign,$colour) = $object->clinical_significance;
   my $c_link = $hub->get_ExtURL_link("dbSNP", "DBSNP_CLIN", '');
-  return $clin_sign ? qq{<dt title="Clinical significance">Clinical significance</dt>
-                         <dd><span style="color:$colour">$clin_sign</span> (from $c_link)</dd>} : '';
+  return $clin_sign ? [
+    {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance'},
+    qq{<p><span style="color:$colour">$clin_sign</span> (from $c_link)</p>}
+  ] : ();
 }
-
 
 sub hgvs {
   my $self      = shift;
@@ -505,23 +480,20 @@ sub hgvs {
   if ($count > 1) {
     my $show = $self->hub->get_cookies('toggle_HGVS_names') eq 'open';
     my $s    = $count > 1 ? 's' : '';
-    
-    $html = sprintf('
-      <dt><a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a></dt>
-      <dd>This feature has %s HGVS name%s - click the plus to show</dd>
-      <dd class="HGVS_names"><div class="toggleable" style="font-weight:normal;%s">%s</div></dd>',
-      $show ? 'open' : 'closed',
-      $count, $s,
-      $show ? '' : 'display:none',
-      $html
-    );
+
+    return [
+      sprintf('<a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
+      sprintf(qq(<div class="twocol-cell">
+        <p>This feature has $count HGVS name$s - click the plus to show</p>
+        <div class="HGVS_names"><div class="toggleable" style="font-weight:normal;%s">$html</div></div>
+      </div>), $show ? '' : 'display:none'),
+      1
+    ];
   } elsif ($count == 1) {
-    $html = qq{<dt>HGVS name</dt><dd>$html</dd>};  
-  } else {
-    $html = qq{<dt>HGVS name</dt><dd>None</dd>};
+    return ['HGVS name', "<p>$html</p>", 1];
   }
-  
-  return $html;
+
+  return ['HGVS name', 'None'];
 }
 
 sub sets{
@@ -535,20 +507,14 @@ sub sets{
   my @genotyping_sets_list;
 
   foreach my $vs (@variation_sets){
-      next unless $vs =~/Affy|Illumina/;  ## only showing genotyping chip sets
-      push @genotyping_sets_list,  $vs;
+    next unless $vs =~/Affy|Illumina/;  ## only showing genotyping chip sets
+    push @genotyping_sets_list,  $vs;
   }
 
-  my $count_sets = scalar @genotyping_sets_list;
-
-  if ($count_sets > 1) {
-    my $list = join(', ', @genotyping_sets_list);
-    return qq{ <dt>Genotyping chips</dt><dd>This variation has assays on: $list</dd>};
-
-  } else {
-    return ;
-
-  }
+  return scalar @genotyping_sets_list
+    ? ['Genotyping chips', sprintf('This variation has assays on: %s', join(', ', @genotyping_sets_list))]
+    : ()
+  ;
 }
 
 

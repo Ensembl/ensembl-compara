@@ -40,60 +40,31 @@ sub render {
 
   ## Now pick a random tip and display it
   if (scalar(@$tips)) {
-    $html .= qq(<div class="info-box embedded-box float-right">
-<h3 class="box-header">Did you know...?</h3>);
-
-    my $random = int(rand(scalar(@$tips)));
-    my $tip = $tips->[$random];
-    $html .= $tip->{'content'};
-
-    $html .= qq(\n</div>\n);
+    $html .= sprintf q(<div class="info-box did-you-know float-right"><h3>Did you know&hellip;?</h3>%s</div>), $tips->[ int(rand(scalar(@$tips))) ]->{'content'};
   }
 
-  $html .= qq(
-<h2 class="box-header">New to $sitename?</h2>
-<p>Did you know you can:</p>
-<dl>
-<dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/info/website/tutorials/">Learn how to use $sitename</a></dt>
-<dd>with our video tutorials and walk-throughs</dd>
-<dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/info/website/help/control_panel.html#cp-panel">Add custom tracks</a></dt>
-<dd>using our new Control Panel</dd>
-<dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/info/website/upload/index.html">Upload and analyse your data</a></dt>
-);
-  if ($sd->ENSEMBL_LOGINS) {
-    $html .= qq(<dd>and save it to your $sitename account</dd>);
-  }
-  else {
-    $html .= qq(<dd>and display it alongside $sitename data</dd>);
-  }
-  if ($sd->ENSEMBL_BLAST_ENABLED) {
-    $html .= qq(
-<dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/Multi/blastview">Search for a DNA or protein sequence</a></dt>
-<dd>using BLAST or BLAT</dd>);
-  }
-  $html .= qq(
-<dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/info/data/api.html">Fetch only the data you want</a></dt>
-<dd>from our public database, using the Perl API</dd>
-<dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/info/data/ftp/">Download our databases via FTP</a></dt>
-<dd>in FASTA, MySQL and other formats</dd>
-);
-  if ($sd->ENSEMBL_MART_ENABLED != 0) {
-    $html .= qq(<dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/biomart/martview">Mine $sitename with BioMart</a></dt>
-<dd>and export sequences or tables in text, html, or Excel format</dd>
-);
-  }
-  $html .= qq(</dl>
+  $html .= qq(<h2>New to $sitename?</h2><p>Did you know you can:</p><div class="new-to-ensembl">);
 
-<p>Still got questions? Try our <a href="/Help/Faq" class="popup">FAQs</a> or <a href="/Help/Glossary" class="popup">glossary</a></p>
+  my @did_you_know = (
+    '/info/website/tutorials/'                        => "Learn how to use $sitename"             => 'with our video tutorials and walk-throughs',
+    '/info/website/help/control_panel.html#cp-panel'  => 'Add custom tracks'                      => 'using our new Control Panel',
+    '/info/website/upload/index.html'                 => 'Upload and analyse your data'           => $sd->ENSEMBL_LOGINS ? "and save it to your $sitename account" : "and display it alongside $sitename data",
+    $sd->ENSEMBL_BLAST_ENABLED ? (
+    '/Multi/blastview'                                => 'Search for a DNA or protein sequence'   => 'using BLAST or BLAT'
+    ) : (),
+    '/info/data/api.html'                             => 'Fetch only the data you want'           => 'from our public database, using the Perl API',
+    '/info/data/ftp/'                                 => 'Download our databases via FTP'         => 'in FASTA, MySQL and other formats',
+    $sd->ENSEMBL_MART_ENABLED != 0 ? (
+    '/biomart/martview'                               => "Mine $sitename with BioMart"            => 'and export sequences or tables in text, html, or Excel format'
+    ) : ()
   );
-  
+
+  while (my ($url, $heading, $extra) = splice @did_you_know, 0, 3) {
+    $html .= qq(<p><a href="$url">$heading</a><span>$extra</span></p>);
+  }
+
+  $html .= qq(</div><p>Still got questions? Try our <a href="/Help/Faq" class="popup">FAQs</a> or <a href="/Help/Glossary" class="popup">glossary</a></p>); 
+   
   return $html;
 }
 

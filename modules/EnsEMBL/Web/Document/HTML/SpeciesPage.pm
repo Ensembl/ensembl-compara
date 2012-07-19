@@ -80,7 +80,7 @@ sub render {
     my $link_text = $common =~ /\./ ? $name : $common;
 
     push @htmlspecies, sprintf(
-      '<div class="species-box"><img src="%3$s/i/species/48/%1$s.png" alt="%5$s" class="sp-thumb" />'.$htmllinks{$info->{'status'}}.($_ =~ /\./ ? '' : '<br /><i>%5$s</i>').'<br />%6$s</div>',
+      '<div class="species-box"><img src="%3$s/i/species/48/%1$s.png" alt="%5$s" />'.$htmllinks{$info->{'status'}}.($_ =~ /\./ ? '' : '<br /><i>%5$s</i>').'<br />%6$s</div>',
       $dir,
       $link_text,
       $static_server,
@@ -94,9 +94,9 @@ sub render {
 
   return sprintf('<h2>%s Species</h2>
     <div class="column-wrapper">
+      <div class="column-three"><div class="column-padding no-left-margin">%s</div></div>
       <div class="column-three"><div class="column-padding">%s</div></div>
-      <div class="column-three"><div class="column-padding">%s</div></div>
-      <div class="column-three"><div class="column-padding">%s</div></div>
+      <div class="column-three"><div class="column-padding no-right-margin">%s</div></div>
     </div>',
     $sitename,
     join('', splice @htmlspecies, 0, $row_count),

@@ -37,10 +37,10 @@ sub content {
   }
  
   my $c = scalar keys %mfs; 
-  $html = "
+  $html = qq(
       <h3>$c mapped markers found:</h3>
-      <table>
-  ";
+      <table class="margin-bottom">
+  );
   
   foreach my $name (sort keys %mfs) {
     my ($link, $r);

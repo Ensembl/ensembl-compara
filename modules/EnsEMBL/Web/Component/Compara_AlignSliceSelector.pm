@@ -22,7 +22,7 @@ sub content {
   my $db_hash      = $species_defs->multi_hash;
   my $align        = $hub->param('align');
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
-  my $extra_inputs = join '', map qq{<input type="hidden" name="$_" value="$url->[1]{$_}" />}, sort keys %{$url->[1] || {}};
+  my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
   my $species = $hub->species;
@@ -77,7 +77,7 @@ sub content {
   return sprintf(qq{
       <div class="navbar" style="width:%spx; text-align:left">
         <form action="%s" method="get">
-          <div style="padding:2px;">
+          <div>
             <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
             %s
             <input value="Go" type="submit" class="go-button" />

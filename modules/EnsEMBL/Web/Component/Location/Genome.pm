@@ -213,8 +213,8 @@ sub _render_features {
         my $type_name = $feature_display_name->{$type} || $type;
         my $colour    = $legend_info->{$type}{'colour'};
         my @gradient  = @{$legend_info->{$type}{'gradient'}||[]};
-        my $swatch_style = 'width:30px;height:20px;border:2px solid #999;text-align:center;padding:4px 0 0 0;'; 
-        my $swatch;
+        my $swatch    = '';
+        my $legend    = '';
         if ($colour eq 'gradient' && @gradient) {
           $gradient[0] = '20';
           my @colour_scale = $hub->colourmap->build_linear_gradient(@gradient);
@@ -230,17 +230,17 @@ sub _render_features {
             else {
               $label = $i % 3 ? '' : sprintf("%.1f", ($i/3 + 2));
             }
-            $swatch .= qq{<div style="background:#$step;color:#fff;float:left;$swatch_style">$label</div>};
+            $swatch .= qq{<div style="background:#$step">$label</div>};
             $i++;
           }
-          $swatch .= '<br /><div style="clear:both;margin-left:120px">Less significant -log(p-values) &lt;-------------------------&gt; More significant -log(p-values)</div>';
+          $legend = sprintf '<div class="swatch-legend">Less significant -log(p-values) &#9668;<span>%s</span>&#9658; More significant -log(p-values)</div>', ' ' x 20;
         }
-        else { 
-          $swatch = qq{<span style="background-color:$colour;display:block;$swatch_style" title="$colour"></span>};
+        else {
+          $swatch = qq{<div style="background-color:$colour;" title="$colour"></div>};
         }
         push @$rows, {
               'ftype'  => {'value' => $type_name, 'style' => $self->cell_style},
-              'colour' => {'value' => $swatch,    'style' => $self->cell_style},
+              'colour' => {'value' => qq(<div class="swatch-wrapper"><div class="swatch">$swatch</div>$legend</div>), 'style' => $self->cell_style},
         };
       }
       my $legend = $self->new_table($columns, $rows); 
@@ -299,7 +299,7 @@ sub _render_features {
       }
       
       my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'} || {}} });
-      $html .= '<h3 style="margin-top:1em">'.$table_info->{'header'}.'</h3>';
+      $html .= "<h3>$table_info->{'header'}</h3>";
       $html .= $table->render;
     }
   }
@@ -317,7 +317,7 @@ sub _render_features {
     }
 
     my $table = $self->new_table($columns, $table_info->{'rows'}, { header => 'no' });
-    $html .= '<h3 style="margin-top:1em">'.$table_info->{'header'}.'</h3>';
+    $html .= "<h3>$table_info->{'header'}</h3>";
     $html .= $table->render;
   }
 

@@ -22,7 +22,7 @@ sub content {
   ];
 
   my $html  = $self->SUPER::content;
-     $html .= '<div class="centered">';
+     $html .= '<p class="center">';
   
   if ($gene) {
     $html .= qq{More views of comparative genomics data, such as orthologues and paralogues, are available on the <a href="$gene">Gene</a> page.};
@@ -30,7 +30,7 @@ sub content {
     $html .= 'Additional comparative genomics views are available for individual genes.';
   }
      
-  return "$html</div>";
+  return "$html</p>";
 }
 
 1;

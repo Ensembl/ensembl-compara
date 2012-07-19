@@ -132,10 +132,10 @@ sub content_sub_slice {
   my $template = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
-  my $style = $start == 1 ? 'margin-bottom:0px;' : $end == $slice_length ? 'margin-top:0px;': 'margin-top:0px; margin-bottom:0px' if $start && $end;
+  my $class = $end == $slice_length ? '': ' class="no-bottom-margin"' if $start && $end;
   
-  $config->{'html_template'} = qq{$template<pre style="$style">%s</pre>};
-  
+  $config->{'html_template'} = qq{$template<pre$class>%s</pre>};
+
   if ($padding) {
     my @pad = split ',', $padding;
     
@@ -292,7 +292,7 @@ sub get_slice_table {
 
     $table_rows .= qq{
     <tr>
-      <th>$species &gt;&nbsp;</th>
+      <th>$species &rsaquo;</th>
       <td>};
 
     foreach my $slice (@{$_->{'underlying_slices'}}) {
@@ -321,7 +321,7 @@ sub get_slice_table {
   
   $region_padding++ if $region_padding;
   
-  my $rtn = "<table>$table_rows</table>";
+  my $rtn = qq(<table class="bottom-margin" cellspacing="0">$table_rows</table>);
   $rtn    = qq{<p>NOTE: <a href="/info/docs/compara/analyses.html#epo">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
   
   return $return_padding ? ($rtn, "$species_padding,$region_padding,$number_padding") : $rtn;

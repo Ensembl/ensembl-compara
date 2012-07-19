@@ -58,8 +58,8 @@ sub render {
   return $self->$func if $self->can($func);
   
   my $options     = $self->{'options'}        || {};
+  my $style       = [ split(';', $options->{'style'} || ''), $options->{'margin'} ? "margin: $options->{'margin'}" : ()];
   my $width       = $options->{'width'}       || '100%';
-  my $margin      = $options->{'margin'}      || '0px';
   my $padding     = $options->{'cellpadding'} || 0;
   my $spacing     = $options->{'cellspacing'} || 0;
   my $align       = $options->{'align'}       || 'autocenter';
@@ -111,8 +111,10 @@ sub render {
   $thead  = "<thead>$thead</thead>" if $thead;
   $tbody  = "<tbody>$tbody</tbody>" if $tbody;
   
+  $style  = join ';', @$style, "width: $width";
+
   my $table = qq(
-    <table$table_id class="$class" style="width:$width;margin:$margin;$options->{'style'}" cellpadding="$padding" cellspacing="$spacing">
+    <table$table_id class="$class" style="$style" cellpadding="$padding" cellspacing="$spacing">
       $thead
       $tbody
     </table>

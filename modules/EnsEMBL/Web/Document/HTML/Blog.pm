@@ -49,7 +49,7 @@ sub render {
     $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
   }
   
-  $html .= qq(<a href="$blog_url">Go to Ensembl blog &rarr;</a>);
+  $html .= qq(<p><a href="$blog_url">Go to Ensembl blog &rarr;</a></p>);
 
   return $html;
 }

@@ -119,21 +119,13 @@ sub content {
       exportable        => 0
     });
     
-    $html = sprintf(qq{
-      <dl class="summary">
-				<dt>Description</dt>
-				<dd>$description</dd>
-        <dt>Location</dt>
-        <dd>$location_html</dd>
-        <dt><a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">Transcripts</a></dt>
-        <dd>There $plural_1 $count $plural_2 in this region:</dd>
-      </dl>
-      %s}, 
-      $hide ? 'closed' : 'open',
-      $table->render
-    );
+    $html = $self->new_twocol(
+      ['Description', "<p>$description</p>", 1],
+      ['Location', "<p>$location_html</p>", 1],
+      [sprintf('<a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">Transcripts</a>', $hide ? 'closed' : 'open'), "There $plural_1 $count $plural_2 in this region:", 1]
+    )->render.$table->render;
   }
-  
+
   return qq{<div class="summary_panel">$html</div>};
 }
 

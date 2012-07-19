@@ -14,9 +14,9 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $html = '';
+  my $self    = shift;
+  my $object  = $self->object;
+  my $table   = $self->new_twocol;
   
   ## first check we have uniquely determined variation
   return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
@@ -88,15 +88,7 @@ sub content {
       $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele">'.uc("$1").'<\/span>'/eg;
       $f_html =~ s/\n/\n/g;
       
-      $html .=  qq(
-        <dl class="summary">
-          <dt>$f_label</dt>
-          <dd>
-            <pre>$f_html</pre>
-            <blockquote><em>(Variant highlighted)</em></blockquote>
-          </dd>
-        </dl>
-      ) unless $display_type eq 'align';
+      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>", 1) unless $display_type eq 'align';
     }
   }
 
@@ -116,17 +108,9 @@ sub content {
       
       $f_label = "Flanking Sequence<br/>(".$object->vari->source.")";
       
-      $html .=  qq(
-        <dl class="summary">
-          <dt>$f_label</dt>
-          <dd>
-            <pre>$f_html</pre>
-            <blockquote><em>(Variant highlighted)</em></blockquote>
-          </dd>
-        </dl>
-      );
-      
-      return $html;
+      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>", 1);
+
+      return $table->render;
     }
     
     # trim sequences if necessary
@@ -334,19 +318,9 @@ sub content {
     );
   }
   
-  $html .=  qq(
-    <dl class="summary">
-      <dt>$f_label</dt>
-      <dd>
-        $warning
-        <pre>$f_html</pre>
-        <blockquote><em>(Variant highlighted$key)</em></blockquote>
-      </dd>
-    </dl>
-  );
+  $table->add_row($f_label, "$warning<pre>$f_html</pre><p><em>(Variant highlighted$key)</em></p>", 1);
 
-
-  return $html;
+  return $table->render;
 }
 
 1;

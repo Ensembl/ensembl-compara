@@ -58,10 +58,10 @@ sub render {
 
   if (keys %$sample_data) {
     $examples = join ' or ', map { $sample_data->{$_}
-      ? qq(<a href="$search_url?q=$sample_data->{$_}">$sample_data->{$_}</a>)
+      ? qq(<a class="nowrap" href="$search_url?q=$sample_data->{$_}">$sample_data->{$_}</a>)
       : ()
     } qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);
-    $examples = qq(e.g. $examples) if $examples;
+    $examples = qq(<p class="search-example">e.g. $examples</p>) if $examples;
   }
 
   # form field
@@ -76,6 +76,7 @@ sub render {
       'type'    => 'dropdown',
       'name'    => 'species',
       'id'      => 'species',
+      'class'   => 'input',
       'values'  => [
         {'value' => '', 'caption' => 'All species'},
         {'value' => '', 'caption' => '---', 'disabled' => 1},
@@ -87,8 +88,11 @@ sub render {
   }
 
   # search input box & submit button
-  $field->add_element({'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q'}, 1);
+  $field->add_element({'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 'input'}, 1);
   $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
+
+  my $elements_wrapper = $field->elements->[0];
+  $elements_wrapper->append_child('span', {'class' => 'inp-group', 'children' => [ splice @{$elements_wrapper->child_nodes}, 0, 2 ]})->after({'node_name' => 'wbr'}) for (0..1);
 
   return $form->render;
 }

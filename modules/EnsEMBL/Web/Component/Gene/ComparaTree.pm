@@ -71,38 +71,14 @@ sub content {
   my $hidden_genes_counter = 0;
   my $link                 = $hub->type eq 'GeneTree' ? '' : sprintf ' <a href="%s">%s</a>', $hub->url({ species => 'Multi', type => 'GeneTree', action => undef, gt => $tree_stable_id, __clear => 1 }), $tree_stable_id;
   my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id);
-  
-  my $html = sprintf('
-    <h3>GeneTree%s</h3>
-      <dl class="summary">
-        <dt style="width:15em">Number of genes</dt>
-        <dd>%s</dd>
-      </dl>
-      <dl class="summary">
-        <dt style="width:15em">Number of speciation nodes</dt>
-        <dd>%s</dd>
-      </dl>
-      <dl class="summary">
-        <dt style="width:15em">Number of duplication nodes</dt>
-        <dd>%s</dd>
-      </dl>
-      <dl class="summary">
-        <dt style="width:15em">Number of ambiguous nodes</dt>
-        <dd>%s</dd>
-      </dl>
-      <dl class="summary">
-        <dt style="width:15em">Number of gene split events</dt>
-        <dd>%s</dd>
-      </dl>
-      <p>&nbsp;</p>
-    ',
-    $link,
-    scalar(@$leaves),
-    $self->get_num_nodes_with_tag($tree, 'node_type', 'speciation'),
-    $self->get_num_nodes_with_tag($tree, 'node_type', 'duplication'),
-    $self->get_num_nodes_with_tag($tree, 'node_type', 'dubious'),
-    $self->get_num_nodes_with_tag($tree, 'node_type', 'gene_split'),
-  );
+
+  my $html                 = sprintf '<h3>GeneTree%s</h3>%s', $link, $self->new_twocol(
+    ['Number of genes',             scalar(@$leaves)                                                  ],
+    ['Number of speciation nodes',  $self->get_num_nodes_with_tag($tree, 'node_type', 'speciation')   ],
+    ['Number of duplication',       $self->get_num_nodes_with_tag($tree, 'node_type', 'duplication')  ],
+    ['Number of ambiguous',         $self->get_num_nodes_with_tag($tree, 'node_type', 'dubious')      ],
+    ['Number of gene split events', $self->get_num_nodes_with_tag($tree, 'node_type', 'gene_split')   ]
+  )->render;
 
   if ($highlight_gene) {
     my $highlight_gene_display_label;
@@ -248,9 +224,11 @@ sub content {
 
   $html .= $image->render;
   $html .= sprintf(qq{
-    <div style="margin-top:1em"><b>View options:</b><br/>
-    <small><ul>%s</ul></small>
-    Use the 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.</div>
+    <div>
+      <h4>View options:</h4>
+      <ul>%s</ul>
+      <p>Use the 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.</p>
+    </div>
   }, join '', @view_links);
   
   return $html;

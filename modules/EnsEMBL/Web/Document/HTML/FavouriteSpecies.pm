@@ -4,7 +4,6 @@ package EnsEMBL::Web::Document::HTML::FavouriteSpecies;
 
 use strict;
 
-use POSIX qw(ceil floor);
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
@@ -92,28 +91,15 @@ sub render_species_list {
   return $fav_html if $fragment;
   
   # output list
-  my $html = '
-    <div class="static_favourite_species">';
-  
-  if ($logins && $user && scalar(@ok_faves)) {
-    $html .= '<h3 class="box-header">Favourite genomes</h3>';
-  } else {
-    $html .= '<h3 class="box-header">Popular genomes</h3>';
-  }
-  
-  if ($logins) {
-    if ($user) {
-      $html .= '(<span class="link toggle_link">Change favourites</span>)';
-    } else {
-      $html .= '(<a href="/Account/Login" class="modal_link modal_title_Login/Register">Log in to customize this list</a>)';
-    }
-  }
-  
-  $html .= sprintf('
-      <div class="species_list_container">%s</div>
-    </div>
-  ', $fav_html);
-  
+  my $html = sprintf qq{<div class="static_favourite_species"><h3>%s genomes</h3><div class="species_list_container species-list">$fav_html</div></div><p class="customise-species-list">(%s)</p>}, 
+    $logins && $user && scalar(@ok_faves) ? 'Favourite' : 'Popular',
+    $logins
+    ? $user
+      ? '<span class="link toggle_link">Change favourites</span>'
+      : '<a href="/Account/Login" class="modal_link modal_title_Login/Register">Log in to customize this list</a>'
+    : ''
+  ;
+
   return $html;
 }
 
@@ -122,26 +108,24 @@ sub render_ajax_reorder_list {
   my $species_defs = $self->species_defs;
   my $favourites   = $self->favourites;
   my %species_info = %{$self->species_info};
-  my @fav_list     = map qq{<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>}, map $species_info{$_}, @$favourites;
+  my @fav_list     = map qq\<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>\, map $species_info{$_}, @$favourites;
   
   delete $species_info{$_} for @$favourites;
   
   my @sorted       = sort { $a->{'common'} cmp $b->{'common'} } values %species_info;
-  my @species_list = map qq{<li id="species-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>}, @sorted;
+  my @species_list = map qq\<li id="species-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>\, @sorted;
   
   return sprintf('
-    For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <span class="link toggle_link">Save</span>
-    <br />
-    <br />
-    <strong>Favourites</strong>
+    <p>For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <span class="link toggle_link">Save</span></p>
+    <p><strong>Favourites</strong></p>
     <ul class="favourites list">
       %s
     </ul>
-    <strong>Other available species</strong>
+    <p><strong>Other available species</strong></p>
     <ul class="species list">
       %s
     </ul>
-    <span class="link toggle_link">Save selection</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a>
+    <p><span class="link toggle_link">Save selection</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a></p>
   ', join("\n", @fav_list), join("\n", @species_list));
 }
 
@@ -150,33 +134,20 @@ sub render_with_images {
   my $species_defs  = $self->species_defs;
   my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
   my $image_type    = $self->image_type;
-  my $html = qq(<div class="column-wrapper"><div class="column-two"><div class="column-padding">
-                <dl class="species-list">);
+  my $html;
 
-  my $breakpoint = ceil(scalar(@species_list) / 2);
-  my $i = 1;
-  
   foreach (@species_list) {
-    $html .= qq{
-      <dt>
+    $html .= qq(
+      <div class="species-box">
         <a href="$_->{'key'}/Info/Index">
-          <img src="$static_server/i/species/48/$_->{'key'}$image_type" alt="$_->{'name'}" title="Browse $_->{'name'}" class="sp-thumb" height="48" width="48" />
-          $_->{'common'}
+          <img src="$static_server/i/species/48/$_->{'key'}$image_type" alt="$_->{'name'}" title="Browse $_->{'name'}" height="48" width="48" />
+          <span>$_->{'common'}</span>
         </a>
-      </dt>
-      <dd><span class="small normal">$_->{'assembly'}</span></dd>
-    };
-    if ($i == $breakpoint) {
-      $html .= qq(</dl>
-                  </div></div>
-                  <div class="column-two"><div class="column-padding">
-                  <dl class="species-list">);
-    }
-    $i++;
+        <span>$_->{'assembly'}</span>
+      </div>
+    );
   }
 
-  $html .= '</dl></div></div></div>';
-  
   return $html;
 }
 
