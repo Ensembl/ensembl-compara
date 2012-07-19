@@ -1,4 +1,4 @@
-#ensembl module for bio::ensembl::compara::production::epoanchors::dumpgenomesequence
+# ensembl module for bio::ensembl::compara::production::epoanchors::dumpgenomesequence
 # you may distribute this module under the same terms as perl itself
 #
 # POD documentation - main docs before the code
@@ -13,13 +13,15 @@ $exonate_anchors->write_output(); writes to disc and database
 
 =head1 DESCRIPTION
 
-module to dump the genome sequence of a given set of pecies to file
+Module to dump the genome sequences of a given set of species to disc.
+It will also set up the jobs for mapping of anchors to those genomes if 
+an anchor_batch_size is specified in the pipe-config file.  
 
 =head1 AUTHOR - compara
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
-Email compara@ebi.ac.uk
+Email dev@ensembl.org
 
 =head1 CONTACT
 
@@ -56,7 +58,8 @@ sub fetch_input {
 	my $genome_db_adaptor = $self->compara_dba()->get_adaptor("GenomeDB");
 	my $genome_db = $genome_db_adaptor->fetch_by_dbID( $self->param('genome_db_id') );
 	my $dnafrag_adaptor = $self->compara_dba()->get_adaptor("DnaFrag");
-	open(my $filehandle, ">$seq_dump_loc/genome_seq") or die "cant open $seq_dump_loc\n";
+	my $genome_dump_file = "$seq_dump_loc/genome_seq";
+	open(my $filehandle, ">$genome_dump_file") or die "cant open $genome_dump_file\n";
 	my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new($filehandle);
 	$serializer->chunk_factor($chunk_factor);
 	$serializer->line_width($seq_width);
@@ -86,7 +89,8 @@ sub fetch_input {
 				$anchor_string .= $ref->[0] . ",";
 			}else{
 				$anchor_string .= $ref->[0];
-				push(@anchor_ids, { 'anchor_ids' => "$anchor_string", 'genome_db_id' => $self->param('genome_db_id') });
+				push(@anchor_ids, { 'anchor_ids' => "[ $anchor_string ]", 'genome_db_file' => "$genome_dump_file", 
+					'genome_db_id' => $self->param('genome_db_id'), });
 				$anchor_string = "";
 			}
 			$count++;
@@ -98,7 +102,7 @@ sub fetch_input {
 sub write_output {
 	my ($self) = @_;
 	return unless $self->param('query_and_target');
-	$self->dataflow_output_id( $self->param('query_and_target'), 2);
+	$self->dataflow_output_id( $self->param('query_and_target'), 2) if $self->param('query_and_target');
 }
 
 1;
