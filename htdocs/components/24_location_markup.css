@@ -1,7 +1,8 @@
-.navbar      { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin: 16px 0 0 0; padding: 5px 0 8px; font-weight: bold; border: 1px solid [[TABLE_HEADER]]; position: relative; overflow:hidden; }
+.navbar      { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin: 0 0 16px 0; padding: 8px 0 8px; font-weight: bold; border: 1px solid [[TABLE_HEADER]]; position: relative; overflow:hidden; }
 .navbar a    { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
 .navbar div  { margin: 0 5px; }
-.navbar form { margin-top: 0; }
+.navbar form { margin: 0; }
+.navbar form select { position: relative; top: -1px; }
 
 .navbar span.ramp            { position: relative; float: left; bottom: 3px; text-align: center; width: 80px; }
 .navbar span.ramp a          { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; display: inline-block; }
@@ -10,17 +11,17 @@
 .navbar .homology_move { position: relative; top: 3px; }
 
 .relocate                { float: left; }
-.relocate input          { border: 1px solid [[TINT_BORDER]]; height: 18px; padding: 2px 4px 1px; width: 250px; }
+.relocate input          { border: 1px solid [[TINT_BORDER]]; height: 18px; padding: 2px 4px; width: 250px; }
 .relocate input:hover    { background-color: [[CONTRAST_BG]]; }
 .relocate form           { float: left; padding: 2px 0; width: 370px; }
-.relocate form label     { float: left; display: block; width: 5em; margin-top: 5px; padding-right: 5px; }
+.relocate form label     { float: left; display: block; width: 64px; margin-top: 5px; padding-right: 5px; }
 body.ie6 .relocate input { height: 24px; }
 
-input.go-button       { padding: 0; height: 24px; width: 34px; color:[[BUTTON_TEXT]]; background-color: [[BUTTON_BG]]; border: 3px double [[BUTTON_TEXT]]; font-weight: bold; }
+input.go-button       { padding: 0; height: 23px; font-size: 10px; width: 34px; color:[[BUTTON_TEXT]]; background-color: [[BUTTON_BG]]; border: 3px double [[BUTTON_TEXT]]; font-weight: bold; }
 input.go-button:hover { background-color: [[BUTTON_BG_HOVER]]; }
 
-.image_nav          { position: relative; top: 5px; float: right; width: 304px; }
-body.ie6 .image_nav { width: 311px; }
+.navbar div.image_nav           { position: absolute; top: 50%; right: 0; margin-top: -10px; width: 304px; height: 20px; }
+body.ie6 .navbar div.image_nav  { width: 311px; }
 
 a.move, a.zoom_in, a.zoom_out { float: left; top: 0; margin: 0; width: 20px; height: 20px; background-repeat: no-repeat; }
 a.zoom_in                     { margin-left:  4px; background: url(/i/zoom-plus.gif);  }
@@ -55,6 +56,4 @@ body.ie6 ul.autocomplete          { width: 250px; }
 
 .navbar.narrow1 .relocate,
 .navbar.narrow2 .relocate           { width: 370px; }
-.navbar.narrow1 .image_nav          { top: 20px; }
-body.ie6 .navbar.narrow1 .image_nav { margin: 0; }
-.navbar.narrow2 .image_nav          { float: left; left: 5em; padding: 5px 2px; }
+.navbar.narrow2 div.image_nav       { position: static; padding: 8px 0 0 35px; clear: both; }

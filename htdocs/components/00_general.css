@@ -12,10 +12,11 @@ body.ie6 th, body.ie6 td { font-size: 13px; }
   Default whitespace settings round features...
 ----------------------------------------------------------------------*/
 
-img  { border: 0; }
-pre  { margin-left: 1em; }
-p    { margin: 8px 0; }
-form { border: none; margin-top: 16px; margin-bottom: 0; padding: 0; }
+img     { border: 0; }
+form    { border: none; margin: 0 0 16px 0; }
+p       { margin: 0 0 16px; line-height: 16px; padding: 0; }
+ul, ol  { margin: 0 0 16px; line-height: 16px; padding-left: 32px; }
+pre     { margin: 0 0 16px; }
 
 /*----------------------------------------------------------------------
   Minimum page width
@@ -34,8 +35,21 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
 .hidden  { display: none; }
 .hide    { display: none; } /* need to remove this if we can */
 .page    { text-align: center; padding: 0.25em; }
-.spinner { height: 100px; display: block; border: 0; margin: 0 auto; padding: 2px; vertical-align: bottom; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
+.spinner { height: 100px; display: block; border: 16px solid transparent; margin: 0 0 16px; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
 .pointer { cursor: pointer; }
+
+/*----------------------------------------------------------------------
+  Manual margin settings - to override any existing margins
+----------------------------------------------------------------------*/
+.top-margin       { margin-top:     16px  !important; }
+.bottom-margin    { margin-bottom:  16px  !important; }
+.left-margin      { margin-left:    16px  !important; }
+.right-margin     { margin-right:   16px  !important; }
+.no-top-margin    { margin-top:     0     !important; }
+.no-bottom-margin { margin-bottom:  0     !important; }
+.no-left-margin   { margin-left:    0     !important; }
+.no-right-margin  { margin-right:   0     !important; }
+.half-margin      { margin-bottom:  8px   !important; }
 
 /*----------------------------------------------------------------------
   jQuery resizable handles
@@ -50,11 +64,12 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
   Headings
 ----------------------------------------------------------------------*/
 
-h1, h2, h3, h4 { color: [[PAGE_HEADER]]; margin: 16px 0 0; }
-h1     { font-size: 1.5em; }
-h2     { font-size: 1.2em; }
-h3     { font-size: 1.1em; }
-h4     { font-size: 1em;   }
+h1, h2, h3, h4  { color: [[PAGE_HEADER]]; margin: 0 0 16px; }
+h1, h2          { padding-top: 4px; }
+h1              { font-size: 1.5em; }
+h2              { font-size: 1.2em; }
+h3              { font-size: 1.1em; }
+h4              { font-size: 1em;   }
 
 /*----------------------------------------------------------------------
   Colours and backgrounds
@@ -80,7 +95,7 @@ span.sequence { font-family: Courier New, Courier, monospace; }
 a.bigtext     { text-decoration: none;                        }
 
 /*----------------------------------------------------------------------
-  Text layout
+  Text layout & styling
 ----------------------------------------------------------------------*/
 
 .nowrap             { white-space: nowrap;    }
@@ -91,7 +106,12 @@ a.bigtext     { text-decoration: none;                        }
 .bottom             { vertical-align: bottom; }
 .autocenter_wrapper { text-align: center;     }
 .autocenter         { text-align: left; margin: 0 auto; }
+.bold               { font-weight: bold; }
+.italic             { font-style: italic; }
 .invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
+.clear              { clear: both; }
+.clear-left         { clear: left; }
+.clear-right        { clear: right; }
 
 /*----------------------------------------------------------------------
  Links 
@@ -126,40 +146,52 @@ ul li ul li, ul.level2 li    { list-style-image: url(/i/bullet_2.gif); }
 ul li ol li                  { list-style-image: none; }
 ul li ul, ul li ol, ol li ul { margin-top: 0.5em; }
 dt { font-weight: bold; }
-dd { margin-bottom: 1em; }
+dd { margin-bottom: 16px; }
 
 /*----------------------------------------------------------------------
   Errors and info boxes
 ----------------------------------------------------------------------*/
 
-.error-pad { padding: 0 16px 16px; }
+div.error,
+div.warning,
+div.info,
+div.hint            { border: none; margin: 0 0 16px; }
+div.error div,
+div.warning div,
+div.info div,
+div.hint div        { border: 1px solid; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
 
-div.error div, div.warning div,
-div.info div, div.hint div        { border: 1px solid; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
+div.syntax-error,
+div.error           { color: #333; background-color: [[PAGE_BG]]; }
+div.error div       { border-color: #a55; }
+div.warning div     { border-color: #fd9; }
+div.info div,
+div.hint div        { border-color: #ccc; }
 
-div.syntax-error, div.error                 { color: #333; background-color: #fff; }
-div.error, div.warning, div.info, div.hint  { border: none; margin: 16px 0 0; }
-div.error div                               { border-color: #a55; }
-div.warning div                             { border-color: #fd9; }
-div.info div, div.hint div                  { border-color: #ccc; }
+.error-pad, .message-pad { padding: 16px 16px 0; }
 
-div.error h3, div.warning h3,
-div.info h3, div.hint h3      { border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; margin: 0; padding: 4px 8px 2px 24px; }
+div.error h3,
+div.warning h3,
+div.info h3,
+div.hint h3         { border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; margin: 0; padding: 4px 8px 2px 24px; }
 
-div.error h3, div.warning h3,
+div.error h3,
+div.warning h3,
 div.info h3                   { background-repeat: no-repeat; background-position: 4px 2px; }
-div.error h3, div.error h4    { background-image: url(/i/16/rev/alert.png); background-color: #a55; color: #fff; }
+div.error h3,
+div.error h4                  { background-image: url(/i/16/rev/alert.png); background-color: #a55; color: [[PAGE_BG]]; }
 div.warning h3                { background-image: url(/i/16/rev/alert.png); background-color: #daa246; }
-div.info h3                   { background-image: url(/i/16/info.png);  background-color: #ccc; }
+div.info h3                   { background-image: url(/i/16/rev/info.png);  background-color: #ccc; }
 div.hint h3                   { background-image: none; padding: 4px 8px 2px 8px; background-color: #ccc; height: 20px; padding-top: 8px; }
 
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
 
-.ajax_error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; border: solid 1px [[ALERT_TEXT]]; font-weight: bold; margin: 1em; padding: 1em; }
+.ajax_error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; border: solid 1px [[ALERT_TEXT]]; font-weight: bold; margin: 0 0 16px; padding: 16px; }
 
-div.notes    { padding: 4px; margin-bottom: 10px; background-color: [[CONTRAST_BG]]; border: 1px [[CONTRAST_BORDER]] solid; }
-div.notes h4 { background: url(/i/16/info.png) top left no-repeat; height: 16px; margin: 4px 0 8px 4px; padding-left: 24px; }
+div.notes    { padding: 16px 16px 8px; margin-bottom: 16px; background-color: [[CONTRAST_BG]]; border: 1px [[CONTRAST_BORDER]] solid; }
+div.notes h4 { background: url(/i/16/info.png) top left no-repeat; height: 16px; line-height: 16px; padding-left: 24px; }
+div.notes p  { margin-bottom: 8px; }
 
 /***********************************************************************
 **

@@ -17,7 +17,7 @@ div.modal_content div.species_select select { display: block; width: 100%; margi
 
 form.configuration div,
 form.configuration h2                                               { -webkit-margin-collapse: collapse; }
-form.configuration h1                                               { border-bottom: 1px solid [[PANEL_BORDER]]; display: none; padding: 2px; margin: 4px 0 6px; }
+form.configuration h1                                               { border-bottom: 1px solid [[PANEL_BORDER]]; display: none; padding: 2px; margin: 0 0 6px; }
 form.configuration h1,
 form.configuration div.config h2                                    { cursor: pointer; font-size: 20px; }
 form.configuration div.config h2                                    { margin: 4px 0 9px; }

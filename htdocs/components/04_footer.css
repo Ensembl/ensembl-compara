@@ -1,7 +1,7 @@
-#footer, #wide-footer         { clear: both; text-align: center; font-size: 0.9em; padding: 16px 0 0; margin: 16px; }
+#footer, #wide-footer         { clear: both; text-align: center; font-size: 0.9em; margin: 0 16px; }
 #footer                       { margin-left: 240px; }
 @media print {
   #footer                     { margin-left: 16px; }
 }
 #footer img, #wide-footer img { vertical-align: middle; height: 20px }
-#footer p,   #wide-footer p   { padding: 0; }
+#footer p,   #wide-footer p   { padding: 0; margin: 16px 0; }

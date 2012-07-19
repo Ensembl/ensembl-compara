@@ -5,10 +5,10 @@
 #masthead a:hover,
 #masthead span.disabled.toggle:hover      { color: [[MH_HOVER]] !important; }
 #masthead ul                              { list-style: none; margin: 0; padding: 0 }
-#masthead li                              { list-style-image: none; float: left; text-align: center; white-space: nowrap; }
+#masthead li                              { list-style: none; float: left; text-align: center; white-space: nowrap; }
 #masthead .mh                             { float: left; }
 #masthead ul.tools                        { margin: 19px 0 0 -5px; height: 16px; overflow: hidden; }
-#masthead ul.tools li                     { padding: 0 10px; border-right: 1px solid [[MH_TEXT]]; }
+#masthead ul.tools li                     { padding: 0 10px; border-right: 1px solid [[MH_TEXT]]; margin: 0; }
 #masthead ul.tools li.last                { border: 0; }
 #masthead ul.tabs                         { margin: 0; padding: 0; width: 100%; }
 #masthead ul.tabs li                      { background: [[MH_TAB]]; margin: 0 5px 0 2px; padding: 0; border-radius: 10px 10px 0 0; -moz-border-radius: 10px 10px 0 0; -webkit-border-radius: 10px 10px 0 0; }
@@ -47,7 +47,6 @@
 
 body.mac #masthead                        { font-size: 13px; }
 body.mac #masthead ul.tabs li             { height: 21px; }
-body.mac #masthead ul.tabs span.dropdown  { padding-top: 4px; }
 body.mac #masthead div.more a             { padding: 4px; }
 body.mac #masthead .tools_holder          { top: 13px; }
 body.mac #masthead .account_holder        { top: 5px; }

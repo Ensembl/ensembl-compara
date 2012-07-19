@@ -9,7 +9,7 @@ form.std label, form.nonstd label { font-weight:bold; }
 form.std fieldset { text-align: left; }
 form.nonstd fieldset { padding: 0.5em; margin: 0; }
 
-form.std              { margin: 0; padding: 0;}
+form.std              { margin: 0 0 8px 0; padding: 0;}
 form.std table        { width:100% }
 form.std fieldset     { padding: 0; }
 form.std fieldset th, 
@@ -55,11 +55,11 @@ legend { /*intentionally made similar to panel h2 */
   font-size: 1.2em;
 }
 div.fnotes {
-  padding: 6px 0;
+  margin-bottom: 16px;  /* TODO - remove this and wrap all the notes in <p>*/
 }
 div.form-field {
   overflow: hidden;
-  margin-top: 9px;
+  margin-bottom: 8px;
   clear: both;
 }
 label.ff-label {
@@ -139,7 +139,7 @@ input.fbutton.disabled, input.fbutton.disabled:active {
 }
 .panel p.ff-checklist {
   line-height: 20px;
-  margin: 0 10px 16px 0;
+  margin: 0 8px 8px 0;
   overflow: hidden;
 }
 div.select_all label {

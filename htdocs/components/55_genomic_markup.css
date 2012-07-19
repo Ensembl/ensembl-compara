@@ -40,10 +40,29 @@ span.sdu { background-color: [[SEQ_SNPDELETE_TR_UTR]] } /* Delete in UTR region 
 span.sf  { background-color: [[SEQ_FRAMESHIFT]] }       /* Frameshift */
 span.aa  { color: [[SEQ_AMINOACID]] }                   /* Amino acid */
 
-pre.text_sequence   { margin-top: 0; float: left; }
+pre.text_sequence   { margin: 0 0 16px; float: left; }
 pre.exon_sequence   { margin: 0; }
 pre a.sequence_info { text-decoration: none; color: [[PAGE_TEXT]]; }
-div.sequence_key    { margin: 0 0 1em 1em; }
+div.sequence_key    { margin: 0 0 16px; }
 
 div.alignment_list p { margin-top: 1em; }
 div.alignment_list a { text-decoration: none; }
+
+/* phenotype swatch */
+
+div.swatch-wrapper { float: left; text-align: center; }
+div.swatch { background-color: #999; padding-left: 2px; float: left; }
+div.swatch div { float: left; width:30px; line-height:20px; height: 20px; text-align:center; margin: 2px 2px 2px 0; color: #fff; }
+div.swatch-legend { clear: both; padding: 8px 0; }
+div.swatch-legend span { text-decoration: line-through; font-size: 20px; white-space: pre; line-height: 10px; margin: 0px -3px; }
+
+/* pie charts on population genetics */
+
+div.population-genetics-pie { overflow: hidden; }
+div.population-genetics-pie div.pie-chart { float: left; border: [[PANEL_BORDER]] solid 1px; margin: 0 4px 16px 0; padding: 4px 1px 1px; }
+div.population-genetics-pie div.pie-chart span { font-weight: bold; padding: 4px; }
+div.population-genetics-pie div.all-population { border-width: 2px; margin-right: 16px; padding: 3px 0 0; }
+
+/* Little "allele type" coloured box on structural variation page */
+
+span.structural-variation-allele { float: left; margin: 4px 4px 4px 0; padding: 4px; }

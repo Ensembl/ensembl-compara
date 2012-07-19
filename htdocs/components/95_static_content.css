@@ -4,14 +4,24 @@
 **
 ***********************************************************************/
 
-body.static p, body.static li, body.static pre { font-size: 1em; line-height:1.2em; 
-                                                 padding:8px 0 0 0; margin:0; }
+body.static li { line-height: 16px; padding: 0; margin: 8px 0; list-style: disc; }
 
-body.static h1     { color: [[PAGE_HEADER]]; padding:0; margin:0; }
-body.static h2     { color: [[CONTRAST_HEADER]]; padding-top:16px; margin: 0; }
-body.static h3     { color: [[CONTRAST_HEADER]]; padding-top:16px; margin: 0; }
-body.static h4     { color: [[CONTRAST_HEADER]]; padding-top:16px; margin: 0; }
-body.static .box-header { margin: 0; padding:0; }
+body.static pre { line-height: 16px; margin: 0 0 16px; }
+
+body.static dl  { margin: 0 0 16px; }
+
+body.static dl.twocol dt  { width: 284px; float: left; clear: left; margin-bottom: -100px; padding: 0 16px 0 0; }
+body.static dl.twocol dd  { padding-left: 300px; line-height: 16px; margin: 0; }
+
+body.static dl.striped     { border: [[NEUTRAL_BORDER]] solid 1px; }
+body.static dl.striped dt  { padding: 8px; }
+body.static dl.striped dd  { padding: 8px 8px 8px 300px; }
+body.static dl.striped dd p { margin: 0; }
+
+body.static h1     { color: [[PAGE_HEADER]];  }
+body.static h2     { color: [[CONTRAST_HEADER]]; }
+body.static h3     { color: [[CONTRAST_HEADER]]; }
+body.static h4     { color: [[CONTRAST_HEADER]]; }
 
 body.static form   { margin-bottom:16px; }
 
@@ -35,7 +45,7 @@ div.footnotes ol li { font-size:0.9em; }
 
 code { font: 1em andale mono, sans-serif; font-weight: bold; }
 
-.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; margin: 1em 1em 0.2em 1em; padding: 0.2em 0.5em; }
+.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; padding: 8px !important; }
 
 .code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, sans-serif; color: [[CONTRAST_BG]] }
 .code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
@@ -55,26 +65,25 @@ kbd.line { display:block; margin-left:20px; }
 
 /* Species thumbnail images */
 
+/* DEPRECATED - use "div.species-box img" */
 .sp-thumb { float:left; margin-right:4px; clear:left; border-width:1px; border-style:solid; border-color:#ccc;
   border-radius:8px; -moz-border-radius: 8px; -webkit-border-radius: 8px;}
-
-/* Species list */
-dl.species-list dt { margin:0; padding:0; min-height:16px;   font-size:120%; font-weight:bold; }
-dl.species-list dd { margin:-2px 0 2px 0; padding:0; min-height:40px; }
-dl.species-list dd:last-child { min-height:32px; }
-dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
-
-body.ie7 dl.species-list dd { margin: -28px 0 2px 44px; }
 
 div.species-news p.headline { margin:0; padding:4px 0; font-size:110%; min-height:40px; }
 
 ul#favourites_list li, ul#species_list li { cursor:move; }
 
+div.species-list div.species-box    { width: 50%; float: left; /* min-width: 250px; */ }
+div.species-list div.species-box span { font-size: 80%; padding-top: 4px; display: block; }
+div.species-list div.species-box a    { text-decoration: none; font-weight: bold; }
+div.species-list div.species-box a span  { font-size: 108%; display: inline-block; }
+p.customise-species-list            { clear: both; }
+
 /*----------------------------------------------------------------------
 species page
 ----------------------------------------------------------------------*/
-div.species-box     { margin: 10px 0; overflow: hidden; padding: 3px; }
-div.species-box img { float: left; height: 48px; margin-right: 8px; width: 48px; }
+div.species-box     { margin: 0 0 16px; overflow: hidden; }
+div.species-box img { float: left; height: 48px; margin-right: 8px; width: 48px; border: [[PANEL_BORDER]] solid 1px; border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 
 /*----------------------------------------------------------------------
   Species homepages
@@ -93,7 +102,7 @@ table.img-table td { vertical-align: top }
 table.img-table .img-1 td { background-color: [[IMAGE_BG1]] }
 table.img-table .img-2 td { background-color: [[IMAGE_BG2]] }
 
-ul.breadcrumbs                   { position: relative; left: 0; margin: 4px 0; padding: 0 0 0 1em; height: 20px; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; font-weight: bold; overflow: hidden; }
+ul.breadcrumbs                   { position: relative; left: 0; margin: -13px 0 16px !important; padding: 0 0 0 1em; height: 20px; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; font-weight: bold; overflow: hidden; }
 ul.breadcrumbs li                { float: left; list-style: none; margin:0 8px 0 0; padding: 0 16px 0 0; font-size: 0.9em; line-height: 1.8em; height: 100%; background: url(/i/chevron.gif) no-repeat right 50%; }
 ul.breadcrumbs li.last           { background-image: none; }
 ul.breadcrumbs li a              { text-decoration: none; outline: none; }
@@ -110,17 +119,22 @@ iframe#doxygen { border: #ccc 1px solid; }
 /*----------------------------------------------------------------------
 search-form on home page and species home page
 ----------------------------------------------------------------------*/
-form.search-form div.form-field { margin-top: 0; }
+form.search-form div.form-field { margin: 0; }
 
 form.search-form          label.ff-label { line-height: 22px; font-weight: normal; width: auto; }
 form.homepage-search-form label.ff-label { line-height: 20px; }
 
 form.search-form          div.ff-right,
 form.search-form          div.ff-notes { padding-left: 72px; }
+form.search-form          div.ff-notes p.search-example { margin: 0; }
 form.homepage-search-form div.ff-right,
 form.homepage-search-form div.ff-notes { padding-left: 50px; text-align: left; }
+form.homepage-search-form div.ff-notes p.search-example { margin: 0 0 16px; }
 
 form.homepage-search-form fieldset { display: inline; }
+
+form.homepage-search-form .input { width: 180px !important; }
+form.homepage-search-form span.inp-group { white-space: nowrap; }
 
 form.search-form input.ftext { padding: 2px 0; }
 form.search-form div.ff-right label { margin-right: 6px; margin-left: 0; line-height: 20px; }
@@ -128,9 +142,21 @@ form.search-form div.ff-right .submit { margin-top: 9px; }
 form.search-form div.ff-notes a { font-weight: bold; text-decoration: none; }
 form.homepage-search-form { text-align: center; margin: 0 !important; }
 
+/* did you know column on home page */
+div.new-to-ensembl p      { background: url("/i/e-quest.gif") no-repeat scroll left -2px transparent; padding-left: 32px; }
+div.new-to-ensembl p a    { font-weight: bold; font-size: 108%; }
+div.new-to-ensembl p span { display: block; }
+div.did-you-know          { padding: 16px; }
+div.did-you-know p        { margin: 0; }
+
 /*-----------------------------------------------------------------------
 contact link on help and faq page 
 -------------------------------------------------------------------------*/
 
 div.help-contact img { padding-top: 0; height: 42px; width: 45px; }
-div.help-contact p   { padding: 0; margin: 0; line-height: 42px; }
+div.help-contact p   { padding: 0; line-height: 42px; }
+
+/*-----------------------------------------------------------------------
+floating archive box on help page
+-------------------------------------------------------------------------*/
+.archive-box { min-width: 400px; }

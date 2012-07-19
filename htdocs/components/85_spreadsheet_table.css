@@ -2,7 +2,7 @@
 ** 'Spreadsheet' with striped rows
 ***********************************************************************/
 
-table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid; margin: 16px 0; }
+table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; border-spacing: 0; }
 table.ss   th, 
 table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; }
 table.ss   th,
@@ -21,7 +21,7 @@ body.ienew table.fixed { table-layout: auto; }
 table.padded-cell td,
 table.padded-cell th    { padding: 8px; }
  
-table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin-bottom: 0; }
+table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
 table.data_table th:first-child,
 table.data_table td:first-child.wrap { padding-left: 2px; }
@@ -29,7 +29,7 @@ table.data_table th.sorting_disabled { cursor: text; padding-right: 5px; }
 table.data_table th div              { height: 19px; padding: 3px 0; }
 table.toggle_table th div            { padding: 0; }
 
-.dataTables_wrapper, .toggleTable_wrapper { margin: 10px 0; clear: both; position: relative; }
+.dataTables_wrapper, .toggleTable_wrapper { margin: 0 0 16px; clear: both; position: relative; }
 
 .dataTables_top,
 .dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }

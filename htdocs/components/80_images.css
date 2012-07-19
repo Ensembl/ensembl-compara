@@ -2,19 +2,19 @@
 
 img { border: 0; }
 
-img.float-left  { float:left;  padding: 16px 16px 0 0; }
-img.float-right { float:right; padding: 16px 0 0 16px; margin-right: 16px; }
+img.float-left  { float:left;  margin: 0 16px 16px 0; padding: 0; }
+img.float-right { float:right; margin: 0 0 16px 16px; padding: 0; }
+
 /* Equivalents for imported WordPress feed */
 img.alignleft { float:left;  margin-right: 10px; }
 img.alignright { float:right;  margin-left: 10px; }
 
-img.screenshot { text-align: center; margin: 10px auto; }
 img.karyomap   { text-align: center; margin: auto; }
 img.flash      { margin: 20px auto; }
 
 /* Dynamic images */
 
-div.image_container { position: relative; border: 1px solid #999999; margin-top: 16px; }
+div.image_container { position: relative; border: 1px solid #999999; margin-bottom: 16px; }
 
 body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 
