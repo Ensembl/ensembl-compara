@@ -2,38 +2,30 @@ package EnsEMBL::Web::Document::HTML::TwoCol;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
-
-use base qw(EnsEMBL::Web::Document::HTML);
+use base qw(
+  EnsEMBL::Web::DOM::Node::Element::Div
+  EnsEMBL::Web::Document::HTML
+);
 
 sub new {
-  my $class = shift;
-  my $self = { 'content' => [] };
-  bless $self, $class;
+  ## @constructor
+  ## @param List of arrayref of arguments as accepted by add_row method
+  my $self = shift->SUPER::new;
+  $self->set_attribute('class', 'twocol');
+  $self->add_row(@$_) for @_;
   return $self;
 }
 
-sub _row {
-  my ($self, $label, $value) = @_;
-  
-  return sprintf '
-  <dl class="summary">
-    <dt class="__h">%s</dt>
-    <dd>%s</dd>
-  </dl>', encode_entities($label), $value;
-}
-
 sub add_row {
-  my ($self, $label, $value, $raw) = @_;
-  
-  $value = sprintf '<p>%s</p>', encode_entities($value) unless $raw;
-  
-  push @{$self->{'content'}}, $self->_row($label, $value);
-}
+  my ($self, $label, $value, $is_html) = @_;
 
-sub render {
-  my $self = shift;
-  return join '', @{$self->{'content'}};
+  my $lhs = $self->dom->create_element('div', ref $label ? $label : {($is_html ? 'inner_HTML' : 'inner_text') => $label});
+  my $rhs = $self->dom->create_element('div', !ref $value ? $is_html ? {'inner_HTML' => $value} : {'children' => [{'node_name' => 'p', 'inner_text' => $value}]} : $value);
+
+  $lhs->set_attribute('class', 'lhs');
+  $rhs->set_attribute('class', 'rhs');
+
+  return $self->append_child('div', {'class' => 'row', 'children' => [ $lhs, $rhs ]});
 }
 
 1;
