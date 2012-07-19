@@ -80,13 +80,13 @@ sub content {
   }
   
   my $columns = [
-    { key => 'res',    title => 'Residue',            width => '5%',  align => 'center', sort => 'numeric' },
-    { key => 'id',     title => 'Variation ID',       width => '10%', align => 'center', sort => 'html'    }, 
-    { key => 'type',   title => 'Variation type',     width => '20%', align => 'center', sort => 'string'  },
-    { key => 'allele', title => 'Alleles',            width => '10%', align => 'center', sort => 'string'  },
-    { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  align => 'center', sort => 'string'  },
-    { key => 'alt',    title => 'Residues',           width => '10%', align => 'center', sort => 'string'  },
-    { key => 'codons', title => 'Codons',             width => '10%', align => 'center', sort => 'string'  },
+    { key => 'res',    title => 'Residue',            width => '5%',  sort => 'numeric' },
+    { key => 'id',     title => 'Variation ID',       width => '10%', sort => 'html'    }, 
+    { key => 'type',   title => 'Variation type',     width => '20%', sort => 'string'  },
+    { key => 'allele', title => 'Alleles',            width => '10%', sort => 'string'  },
+    { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  sort => 'string'  },
+    { key => 'alt',    title => 'Residues',           width => '10%', sort => 'string'  },
+    { key => 'codons', title => 'Codons',             width => '10%', sort => 'string'  },
   ];
   
   push @$columns, (
