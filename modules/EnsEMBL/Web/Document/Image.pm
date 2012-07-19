@@ -126,7 +126,7 @@ sub render_toolbar {
 
   if ($toolbar) {
     $top    = $self->toolbars->{'top'}    ? sprintf '<div class="image_toolbar top print_hide">%s</div>%s',    $toolbar, $export             : '';
-    $bottom = $self->toolbars->{'bottom'} ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $export : '';
+    $bottom = ($self->toolbars->{'bottom'} || $height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $export : '';
   }
 
   return ($top, $bottom);
