@@ -13,8 +13,8 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-
+  my $self  = shift;
+  my $focus = $self->focus;
   if ($self->hub->param('pop1')) {
     return $self->new_twocol(
       $focus ? ['Focus:', $focus] : (),
