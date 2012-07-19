@@ -19,7 +19,8 @@ body.static div#content { margin-left: 240px; }
 div#content div.panel { background-color:[[PANEL_BG]]; }
 */
 
-a.help-header { color: [[PAGE_HEADER]]; text-decoration: none; background: url(/i/16/info.png) no-repeat right center; padding-right: 24px; }
+a.help-header { color: [[PAGE_HEADER]]; text-decoration: none; background: url(/i/16/swp/info.png) no-repeat 100% 2px; padding-right: 24px; }
+a.help-header:hover { background-position: 100% -16px; }
 
 .glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
 .floating_popup { 
