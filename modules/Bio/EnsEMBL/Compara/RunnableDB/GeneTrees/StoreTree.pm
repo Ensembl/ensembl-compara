@@ -195,8 +195,6 @@ sub store_node_tags
         next unless $node->has_tag($tag);
         my $value = $node->get_tagvalue($tag);
         my $db_tag = $mapped_tags{$tag};
-        # Because the duplication_confidence_score won't be computed for dubious nodes
-        $db_tag = 'duplication_confidence_score' if ($node_type eq 'dubious') and ($tag eq 'SIS');
         # tree_support is only valid in protein trees (so far)
         next if ($tag eq 'T') and (not $self->param('store_tree_support'));
 

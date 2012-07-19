@@ -109,15 +109,19 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('treeDBA', $self->compara_dba->get_GeneTreeNodeAdaptor);
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
     my $starttime = time();
     $self->param('tree_id_str') or die "tree_id_str is an obligatory parameter";
     my $tree_id = $self->param($self->param('tree_id_str')) or die "'*_tree_id' is an obligatory parameter";
-    my $gene_tree = $self->param('treeDBA')->fetch_tree_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
     $gene_tree->preload();
-    $self->param('gene_tree', $gene_tree);
+    $self->param('gene_tree', $gene_tree->root);
+
+    #if ($self->input_job->retry_count > 0) {
+    $self->delete_old_homologies;
+    $self->delete_old_orthotree_tags;
+    $self->fill_easy_values;
 
     if($self->debug) {
         $self->param('gene_tree')->print_tree($self->param('tree_scale'));
@@ -126,8 +130,6 @@ sub fetch_input {
     unless($self->param('gene_tree')) {
         $self->throw("undefined GeneTree as input\n");
     }
-    $self->delete_old_homologies;
-    $self->delete_old_orthotree_tags;
     $self->param('taxon_tree', $self->load_species_tree_from_string( $self->get_species_tree_string ) );
     my %mlss_hash;
     $self->param('mlss_hash', \%mlss_hash);
@@ -541,8 +543,6 @@ sub delete_old_orthotree_tags
 {
     my $self = shift;
 
-    #return undef unless ($self->input_job->retry_count > 0);
-
     my $tree_node_id = $self->param('gene_tree')->node_id;
 
     print "deleting old orthotree tags\n" if ($self->debug);
@@ -564,8 +564,6 @@ sub delete_old_orthotree_tags
 sub delete_old_homologies {
     my $self = shift;
 
-    #return undef unless ($self->input_job->retry_count > 0);
-
     my $tree_node_id = $self->param('gene_tree')->node_id;
 
     # New method all in one go -- requires key on tree_node_id
@@ -586,6 +584,24 @@ sub delete_old_homologies {
     
     printf("%1.3f secs to delete old homologies\n", time()-$delete_time) if ($self->debug);
 }
+
+sub fill_easy_values
+{
+    my $self = shift;
+
+    my $tree_node_id = $self->param('gene_tree')->node_id;
+
+    my $sql1 = 'UPDATE gene_tree_node JOIN gene_tree_node_attr USING (node_id) SET duplication_confidence_score = 0 WHERE root_id = ? AND node_type = "dubious"';
+    my $sth1 = $self->compara_dba->dbc->prepare($sql1);
+    $sth1->execute($tree_node_id);
+    $sth1->finish;
+
+    my $sql2 = 'UPDATE gene_tree_node JOIN gene_tree_node_attr USING (node_id) SET duplication_confidence_score = 1 WHERE root_id = ? AND node_type = "gene_split"';
+    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
+    $sth2->execute($tree_node_id);
+    $sth2->finish;
+}
+
 
 sub genepairlink_check_dups
 {
