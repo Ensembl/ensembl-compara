@@ -130,16 +130,16 @@ sub check_for_split_genes {
     my $tmp_time = time();
 
     my @all_protein_leaves = @{$protein_tree->get_all_leaves};
-    printf("%1.3f secs to fetch all leaves\n", time()-$tmp_time) if ($self->debug);
+    my @good_leaves = grep {defined $_->chr_start and defined $_->chr_end and defined $_->chr_name and defined $_->chr_strand and defined $_->taxon_id} @all_protein_leaves;
 
     if($self->debug) {
-        printf("%d proteins in tree\n", scalar(@all_protein_leaves));
+        printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@all_protein_leaves), scalar(@good_leaves));
+        print "build paralogs graph\n";
     }
-    printf("build paralogs graph\n") if($self->debug);
     my @genepairlinks;
     my $graphcount = 0;
-    while (my $protein1 = shift @all_protein_leaves) {
-        foreach my $protein2 (@all_protein_leaves) {
+    while (my $protein1 = shift @good_leaves) {
+        foreach my $protein2 (@good_leaves) {
             next unless ($protein1->genome_db_id == $protein2->genome_db_id);
             push @genepairlinks, [$protein1, $protein2];
             print "build graph $graphcount\n" if ($self->debug and ($graphcount++ % 10 == 0));
@@ -164,25 +164,26 @@ sub check_for_split_genes {
         $pair->update_alignment_stats;
         print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
 
+        my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
+        my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
+        my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
+        my $strand1 = $gene_member1->chr_strand; my $strand2 = $gene_member2->chr_strand;
+        my $taxon_id1 = $gene_member1->taxon_id; my $taxon_id2 = $gene_member2->taxon_id;
+        my $name1 = $gene_member1->chr_name; my $name2 = $gene_member2->chr_name;
+
         # Checking for gene_split cases
         if (0 == $protein1->perc_id && 0 == $protein2->perc_id && 0 == $protein1->perc_pos && 0 == $protein2->perc_pos) {
 
             # Condition A1: If same seq region and less than 1MB distance
-            my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
-            if ($gene_member1->chr_name eq $gene_member2->chr_name 
-                    && ($self->param('max_dist_no_overlap') > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
-                    && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
+            if ($name1 eq $name2 && ($self->param('max_dist_no_overlap') > abs($start1 - $start2)) && $strand1 eq $strand2 ) {
 
                 # Condition A2: there have to be the only 2 or 3 protein coding
                 # genes in the range defined by the gene pair. This should
                 # strictly be 2, only the pair in question, but in clean perc_id
                 # = 0 cases, we allow for 2+1: the rare case where one extra
                 # protein coding gene is partially or fully embedded in another.
-                my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
-                my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
                 if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
-                my $strand1 = $gene_member1->chr_strand; my $taxon_id1 = $gene_member1->taxon_id; my $name1 = $gene_member1->chr_name;
                 print "Checking split genes overlap\n" if $self->debug;
                 my @genes_in_range = @{$self->param('member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
 
@@ -208,21 +209,17 @@ sub check_for_split_genes {
         # Condition B1: all 4 percents below 10
         } elsif ($protein1->perc_id < $self->param('small_overlap_percentage') && $protein2->perc_id < $self->param('small_overlap_percentage')
               && $protein1->perc_pos < $self->param('small_overlap_percentage') && $protein2->perc_pos < $self->param('small_overlap_percentage')) {
-            my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
 
             # Condition B2: If non-overlapping and smaller than 500kb start and 500kb end distance
-            if ($gene_member1->chr_name eq $gene_member2->chr_name 
-                    && ($self->param('max_dist_small_overlap') > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
-                    && ($self->param('max_dist_small_overlap') > abs($gene_member1->chr_end - $gene_member2->chr_end)) 
-                    && (($gene_member1->chr_start - $gene_member2->chr_start)*($gene_member1->chr_end - $gene_member2->chr_end)) > 1
-                    && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
+            if ($name1 eq $name2 
+                    && ($self->param('max_dist_small_overlap') > abs($start1 - $start2)) 
+                    && ($self->param('max_dist_small_overlap') > abs($end1 - $end2)) 
+                    && (($start1 - $start2)*($end1 - $end2)) > 1
+                    && $strand1 eq $strand2 ) {
 
                 # Condition B3: they have to be the only 2 genes in the range:
-                my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
-                my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
                 if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
-                my $strand1 = $gene_member1->chr_strand; my $taxon_id1 = $gene_member1->taxon_id; my $name1 = $gene_member1->chr_name;
 
                 my @genes_in_range = @{$self->param('member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
                 if ((2+$self->param('max_nb_genes_small_overlap')) < scalar @genes_in_range) {
@@ -243,10 +240,9 @@ sub check_for_split_genes {
         }
     }
 
-    printf("%1.3f secs label gene splits\n", time()-$tmp_time) if($self->debug>1);
 
     if($self->debug) {
-        printf("%d pairings\n", scalar(@sorted_genepairlinks));
+        printf("%1.3f secs to analyze %d pairings (%d groups found)\n", time()-$tmp_time, scalar(@sorted_genepairlinks), scalar(@{$connected_split_genes->holding_node->links}) );
     }
 
 }
