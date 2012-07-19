@@ -44,12 +44,12 @@ sub content {
     my $table = $self->new_table([], [], { data_table => 1 });
     
     $table->add_columns(
-      { key => 'type',     title => 'Domain type', width => '15%', align => 'center', sort => 'string'                        },
-      { key => 'start',    title => 'Start',       width => '10%', align => 'center', sort => 'numeric', hidden_key => '_loc' },
-      { key => 'end',      title => 'End',         width => '10%', align => 'center', sort => 'numeric'                       },
-      { key => 'desc',     title => 'Description', width => '15%', align => 'center', sort => 'string'                        },
-      { key => 'acc',      title => 'Accession',   width => '10%', align => 'center', sort => 'html'                          },
-      { key => 'interpro', title => 'InterPro',    width => '40%', align => 'center', sort => 'html'                          }
+      { key => 'type',     title => 'Domain type', width => '15%', sort => 'string'                        },
+      { key => 'start',    title => 'Start',       width => '10%', sort => 'numeric', hidden_key => '_loc' },
+      { key => 'end',      title => 'End',         width => '10%', sort => 'numeric'                       },
+      { key => 'desc',     title => 'Description', width => '15%', sort => 'string'                        },
+      { key => 'acc',      title => 'Accession',   width => '10%', sort => 'html'                          },
+      { key => 'interpro', title => 'InterPro',    width => '40%', sort => 'html'                          }
     );
     
     foreach my $domain (
@@ -92,9 +92,9 @@ sub content {
     my $table = $self->new_table([], [], { data_table => 1 });
     
     $table->add_columns(
-      { key => 'type',  title => 'Feature type', width => '40%', align => 'center', sort => 'string'                        },
-      { key => 'start', title => 'Start',        width => '30%', align => 'center', sort => 'numeric', hidden_key => '_loc' },
-      { key => 'end',   title => 'End',          width => '30%', align => 'center', sort => 'numeric'                       }
+      { key => 'type',  title => 'Feature type', width => '40%', sort => 'string'                        },
+      { key => 'start', title => 'Start',        width => '30%', sort => 'numeric', hidden_key => '_loc' },
+      { key => 'end',   title => 'End',          width => '30%', sort => 'numeric'                       }
     );
     
     foreach my $domain (
