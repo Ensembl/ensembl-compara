@@ -5,7 +5,6 @@ use warnings;
 no warnings "uninitialized";
 
 use CGI qw(escapeHTML);
-use EnsEMBL::Web::Document::HTML::TwoCol;
 
 use base qw(EnsEMBL::Web::Component::LRG);
 
@@ -19,11 +18,8 @@ sub content {
   my $self  = shift;
   my $label = 'Prediction Method';
   my $text  = 'Data from LRG database';
-  my $table = new EnsEMBL::Web::Document::HTML::TwoCol;
-  
-  $table->add_row($label, "<p>$text</p>", 1);
-  
-  return $table->render;
+
+  return $self->new_twocol([$label, "<p>$text</p>", 1])->render;
 }
 
 

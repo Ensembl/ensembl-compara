@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Gene::GeneSummary;
 
 use strict;
 
-use EnsEMBL::Web::Document::HTML::TwoCol;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -19,7 +17,7 @@ sub content {
   my $hub          = $self->hub;
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
-  my $table        = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table        = $self->new_twocol;
   my $location     = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
   my $site_type    = $species_defs->ENSEMBL_SITETYPE;
   my $matches      = $object->get_database_matches;

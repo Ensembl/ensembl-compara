@@ -9,8 +9,6 @@ use XHTML::Validator;
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
-use EnsEMBL::Web::Document::HTML::TwoCol;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -50,7 +48,7 @@ sub content {
   
   my $desc     = $source->description;
   my $homepage = $source->homepage;
-  my $table    = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table    = $self->new_twocol;
   
   $table->add_row('Description', $desc, 1);
   $table->add_row('Homepage', qq(<a href="$homepage">$homepage</a>), 1) if $homepage;
