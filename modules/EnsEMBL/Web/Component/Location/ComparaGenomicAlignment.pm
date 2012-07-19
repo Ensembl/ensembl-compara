@@ -2,8 +2,6 @@ package EnsEMBL::Web::Component::Location::ComparaGenomicAlignment;
 
 use strict;
 
-use EnsEMBL::Web::Document::HTML::TwoCol;
-
 use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
