@@ -21,7 +21,7 @@
 #masthead ul.tabs li.active a,
 #masthead ul.tabs li.active span.dropdown { color: [[PAGE_TEXT]]; font-weight: bold; }
 #masthead ul.tabs span.dropdown a         { display: inline; }
-#masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 85%; background-image: none; }
+#masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 11px; line-height: 11px; background-image: none; }
 #masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
 #masthead div.dropdown                    { position: absolute; top: 21px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[TINT_BORDER]]; padding-bottom: 5px; }
