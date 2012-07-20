@@ -48,7 +48,7 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
   },
   
   updateSearch: function (type) {
-    var label = $('.' + type + ' input', this.elLk.menu).val();
+    var label = type ? $('.' + type + ' input', this.elLk.menu).val() : false;
     
     if (label) {
       this.elLk.img.attr('src', '/i/search/' + type + '.gif');
