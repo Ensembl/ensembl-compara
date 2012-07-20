@@ -1474,7 +1474,7 @@ sub add_dna_align_features {
       });
     }
   }
-  $self->add_track('information', 'diff_legend', 'Difference Legend', 'diff_legend', { strand => 'r' });
+  $self->add_track('information', 'diff_legend', 'Alignment Difference Legend', 'diff_legend', { strand => 'r' });
 }
 
 sub add_data_files {
