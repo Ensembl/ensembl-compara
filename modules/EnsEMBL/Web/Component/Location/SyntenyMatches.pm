@@ -74,7 +74,7 @@ sub content {
       $table->add_row({
         gene_ids => $sp_ids, 
         gene_loc => $sp_loc,
-        arrow    => $row->{'homologue_no'} ? '-&gt;' : '', 
+        arrow    => $row->{'homologue_no'} ? '&rarr;' : '', 
         homo_ids => $other_ids,
         homo_loc => $other_loc,
         multi    => $multi
