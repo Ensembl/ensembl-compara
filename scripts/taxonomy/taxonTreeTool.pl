@@ -26,6 +26,7 @@ GetOptions('help'           => \$help,
            'scale=f'        => \$self->{'scale'},
            'mini'           => \$self->{'minimize_tree'},
            'index'          => \$self->{'build_leftright_index'},
+           'genetree_dist'  => \$self->{'genetree_dist'},
            'url_core=s'     => \$url_core,
            'memory_leak'    => \$self->{'memory_leak'}
           );
@@ -59,6 +60,12 @@ unless(defined($self->{'comparaDBA'})) {
   print("no url\n\n");
   usage();
 }
+
+# Used to get the average branch lengths from the trees
+my $sql_dist_1 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN gene_tree_node_attr gtna USING (node_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtna.node_type = "speciation" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND gtna.taxon_id = ?';
+my $sql_dist_2 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN gene_tree_member USING (node_id) JOIN member USING (member_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND member.taxon_id = ?';
+my $sth_dist_1 = $self->{'comparaDBA'}->dbc->prepare($sql_dist_1);
+my $sth_dist_2 = $self->{'comparaDBA'}->dbc->prepare($sql_dist_2);
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -178,6 +185,25 @@ sub fetch_by_ncbi_taxa_list {
 }
 
 
+sub get_distances_from_genetrees {
+    my $self = shift;
+    my $node = shift;
+    foreach my $child (@{$node->children}) {
+        my $sth = ($child->get_child_count ? $sth_dist_1 : $sth_dist_2);
+        $sth->execute($node->taxon_id, $child->taxon_id);
+        my @allval = sort {$a <=> $b} map {$_->[0]} @{$sth->fetchall_arrayref};
+        $sth->finish;
+        my $n = scalar(@allval);
+        if ($n) {
+            my $i = int($n/2);
+            my $val = $allval[$i];
+            print $node->taxon_id, "/", $node->name, " ", $child->taxon_id, "/", $child->name, " $val ($n/$i)\n";
+            $child->distance_to_parent($val);
+        }
+        $self->get_distances_from_genetrees($child);
+    }
+}
+
 sub fetch_compara_ncbi_taxa {
   my $self = shift;
   
@@ -197,6 +223,7 @@ sub fetch_compara_ncbi_taxa {
   }
 
   $root = $root->minimize_tree if($self->{'minimize_tree'});
+  $self->get_distances_from_genetrees($root) if $self->{'genetree_dist'};
   $root->print_tree($self->{'scale'});
   
   my $newick = $root->newick_format;
