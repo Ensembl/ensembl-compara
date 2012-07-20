@@ -85,9 +85,10 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_; 
     return {
-         0 => { -desc => 'mem2500',  'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' },
-         1 => { -desc => 'mem3500',  'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
-         2 => { -desc => 'mem7500',  'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },  
+	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' },
+	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
+	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
     };  
 }
 
@@ -226,7 +227,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			2 => [ 'map_anchors' ],
 		},
-		-rc_id => 1,
+		-rc_id => 'mem3500',
 		-hive_capacity => 10,
 	    },
 	    {	-logic_name     => 'map_anchors',
@@ -239,7 +240,7 @@ sub pipeline_analyses {
 	    },		
 	    {	-logic_name     => 'remove_overlaps',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps',
-		-rc_id => 2,
+		-rc_id => 'mem3500',
 		-wait_for  => [ 'map_anchors' ],
 		-input_ids  => [{}],
 	    },
@@ -254,7 +255,7 @@ sub pipeline_analyses {
                                2 => [ 'trim_anchor_align' ],
                               },  
 		-wait_for  => [ 'remove_overlaps' ],
-		-rc_id => 2,
+		-rc_id => 'mem7500',
             },  
 	    {   -logic_name => 'trim_anchor_align',			
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
