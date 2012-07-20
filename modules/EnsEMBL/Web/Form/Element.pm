@@ -36,6 +36,7 @@ sub configure {
   ##  - shortnote       A short text to go just right the text/password/file or select.
   ##  - inline          Flag stating whether checkbox/radio buttons are to be disaplayed in a horizontal line in case of checklist/radiolist
   ##  - size            Size attribute for text input, password input or select.
+  ##  - style           Style attribute works for string based input, textarea and select dropdpwn
   ##  - selectall       Flag to tell whether or not we need a selectall checkbox in case of a checklist
   ##  - values          ArrayRef of either string values, or Hashrefs with following keys (for each option, checkbox or radio)
   ##    - id            Id attribute for the option
