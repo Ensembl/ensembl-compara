@@ -536,11 +536,6 @@ sub _write_gerp_dataflow {
 # 
 ##########################################
 
-#sub input_dir {
-#  my $self = shift;
-#  $self->{'_input_dir'} = shift if(@_);
-#  return $self->{'_input_dir'};
-#}
 
 sub add_fasta_files {
     my ($self, $value) = @_;

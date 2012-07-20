@@ -150,16 +150,16 @@ sub fetch_input {
       $self->param('do_transactions', 1);
   }
 
-  ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
+  ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->param('dnafrag_regions'). At this point the
   ## DnaFragRegions are in random order
-  $self->_load_DnaFragRegions($self->param('synteny_region_id'));
+  $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param('synteny_region_id')) );
 
-  if ($self->dnafrag_regions) {
+  if($self->param('dnafrag_regions')) {     # does it ever return a FALSE by design?
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
-    if ($self->get_species_tree and $self->dnafrag_regions) {
-      $self->_build_tree_string;
-      print "seq_string ", $self->tree_string, "\n";
+    if ($self->get_species_tree) {
+      $self->param('tree_string', $self->get_tree_string);
+      print "seq_string ", $self->param('tree_string'), "\n";
     }
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
@@ -167,33 +167,33 @@ sub fetch_input {
     $self->_dump_fasta;
 
   } else {
-    throw("Cannot start Pecan job because some information is missing");
+    throw("Cannot start Ortheus job because some information is missing");
   }
 
   return 1;
 }
 
-sub run
-{
+sub run {
   my $self = shift;
+
   my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Ortheus(
       -workdir => $self->worker_temp_directory,
-      -fasta_files => $self->fasta_files,
-      -tree_string => $self->tree_string,
+      -fasta_files => $self->param('fasta_files'),
+      -tree_string => $self->param('tree_string'),
       -species_tree => $self->get_species_tree->newick_simple_format,
-      -species_order => $self->species_order,
+      -species_order => $self->param('species_order'),
       -analysis => $self->analysis,
       -parameters => $self->param('java_options'),
-      -options => $self->options,
+      -options => $self->param('options'),
       );
   $self->param('runnable', $runnable);
 
 
   #disconnect pairwise compara database
-  if ($self->{pairwise_compara_dba}) {
-      foreach my $dba (values %{$self->{pairwise_compara_dba}}) {
-	  $dba->dbc->disconnect_if_idle;
+  if ($self->param('pairwise_compara_dba')) {
+      foreach my $dba (values %{$self->param('pairwise_compara_dba')}) {
+          $dba->dbc->disconnect_if_idle;
       }
   }
 
@@ -209,6 +209,7 @@ sub run
 
   $self->parse_results();
 }
+
 sub write_output {
     my ($self) = @_;
 
@@ -526,36 +527,32 @@ sub parse_results {
 
 
       #   $self->workdir("/home/jherrero/ensembl/worker.8139/");
-    my $tree_file;
-    my $workdir;
-    $tree_file = $self->worker_temp_directory . "/output.$$.tree";
+    my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
 
-    my $ordered_fasta_files = $self->fasta_files;
+    my $ordered_fasta_files = $self->param('fasta_files');
 
     if (-e $tree_file) {
-	## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
-	open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
-	my ($newick, $files) = <F>;
-	close(F);
-	$newick =~ s/[\r\n]+$//;
-	$self->tree_string($newick);
-	$files =~ s/[\r\n]+$//;
+            ## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
+        open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
+        my ($newick, $files) = <F>;
+        close(F);
+        $newick =~ s/[\r\n]+$//;
+        $self->param('tree_string', $newick);
 
-	my $all_files = [split(" ", $files)];
-	
-	#store ordered fasta_files
-	$ordered_fasta_files = $all_files;
-	$self->fasta_files(@$all_files);
-	print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
+            #store ordered fasta_files
+        $files =~ s/[\r\n]+$//;
+        $ordered_fasta_files = [split(" ", $files)];
+        $self->param('fasta_files', $ordered_fasta_files);
+        print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$ordered_fasta_files), "\n";
     }
     
     
-    #   $self->tree_string("((0:0.06969,1:0.015698):1e-05,2:0.008148):1e-05;");
-    #   $self->fasta_files(["/home/jherrero/ensembl/worker.8139/seq1.fa", "/home/jherrero/ensembl/worker.8139/seq2.fa", "/home/jherrero/ensembl/worker.8139/seq3.fa"]);
+    #   $self->param('tree_string', "((0:0.06969,1:0.015698):1e-05,2:0.008148):1e-05;");
+    #   $self->param('fasta_files', ["/home/jherrero/ensembl/worker.8139/seq1.fa", "/home/jherrero/ensembl/worker.8139/seq2.fa", "/home/jherrero/ensembl/worker.8139/seq3.fa"]);
     
     
-    my (@ordered_leaves) = $self->tree_string =~ /[(,]([^(:)]+)/g;
-    print "++NEWICK: ", $self->tree_string, "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->fasta_files}), "\n";
+    my (@ordered_leaves) = $self->param('tree_string') =~ /[(,]([^(:)]+)/g;
+    print "++NEWICK: ", $self->param('tree_string'), "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->param('fasta_files')}), "\n";
 
     #my $alignment_file = $self->workdir . "/output.$$.mfa";
 
@@ -573,7 +570,7 @@ sub parse_results {
     #genomic_align in the genomic_align_group
     my $genomic_align_group;
 
-    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->tree_string);
+    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $self->param('tree_string') );
   $tree->print_tree(100);
     
     print $tree->newick_format("simple"), "\n";
@@ -581,7 +578,7 @@ sub parse_results {
     print "Reading $alignment_file...\n";
     my $ids;
 
-    #foreach my $this_file (@{$self->fasta_files}) {
+    #foreach my $this_file (@{$self->param('fasta_files')}) {
     foreach my $this_file (@$ordered_fasta_files) {
 
 	push(@$ids, qx"head -1 $this_file");
@@ -714,7 +711,7 @@ sub parse_results {
 		#information extracted from fasta header
 		my $seq_id = ($1);
 
-		my $all_dnafrag_regions = $self->dnafrag_regions;
+		my $all_dnafrag_regions = $self->param('dnafrag_regions');
 
 		my $dfr = $all_dnafrag_regions->[$seq_id-1];
 
@@ -960,53 +957,11 @@ sub _extract_sequence {
 # 
 ##########################################
 
-sub input_dir {
-  my $self = shift;
-  $self->{'_input_dir'} = shift if(@_);
-  return $self->{'_input_dir'};
-}
 
 sub synteny_region_id {
   my ($self, $value) = shift;
   $self->param('synteny_region_id') = shift if(@_);
   return $self->param('synteny_region_id');
-}
-
-sub dnafrag_regions {
-  my $self = shift;
-  $self->{'_dnafrag_regions'} = shift if(@_);
-  return $self->{'_dnafrag_regions'};
-}
-
-sub options {
-  my $self = shift;
-  $self->{'_options'} = shift if(@_);  return $self->{'_options'};
-}
-
-sub fasta_files {
-  my $self = shift;
-
-  $self->{'_fasta_files'} = [] unless (defined $self->{'_fasta_files'});
-
-  if (@_) {
-    my $value = shift;
-    push @{$self->{'_fasta_files'}}, $value;
-  }
-
-  return $self->{'_fasta_files'};
-}
-
-sub species_order {
-  my $self = shift;
-
-  $self->{'_species_order'} = [] unless (defined $self->{'_species_order'});
-
-  if (@_) {
-    my $value = shift;
-    push @{$self->{'_species_order'}}, $value;
-  }
-
-  return $self->{'_species_order'};
 }
 
 
@@ -1073,23 +1028,6 @@ sub get_species_tree {
   return $self->param('species_tree');
 }
 
-sub tree_string {
-  my $self = shift;
-  $self->{'_tree_string'} = shift if(@_);
-  return $self->{'_tree_string'};
-}
-
-#sub method_link_species_set_id {
-#  my $self = shift;
-#  $self->{'_method_link_species_set_id'} = shift if(@_);
-#  return $self->{'_method_link_species_set_id'};
-#}
-#
-#sub max_block_size {
-#  my $self = shift;
-#  $self->{'_max_block_size'} = shift if(@_);
-#  return $self->{'_max_block_size'};
-#}
 
 
 ##########################################
@@ -1098,36 +1036,34 @@ sub tree_string {
 #
 ##########################################
 
-=head2 _load_DnaFragRegions
+=head2 get_DnaFragRegions
 
   Arg [1]    : int syteny_region_id
-  Example    : $self->_load_DnaFragRegions();
-  Description: Gets the list of DnaFragRegions for this
-               syteny_region_id. Resulting DnaFragRegions are
-               stored using the dnafrag_regions getter/setter.
+  Example    : $self->get_DnaFragRegions();
+  Description: Gets the list of DnaFragRegions for this syteny_region_id.
   Returntype : listref of Bio::EnsEMBL::Compara::DnaFragRegion objects
   Exception  :
   Warning    :
 
 =cut
 
-sub _load_DnaFragRegions {
+sub get_DnaFragRegions {
   my ($self, $synteny_region_id) = @_;
 
-  my $dnafrag_regions = [];
+  my @dnafrag_regions = ();
 
   # Fail if dbID has not been provided
-  return $dnafrag_regions if (!$synteny_region_id);
+  return \@dnafrag_regions if (!$synteny_region_id);
 
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
   my $sr = $sra->fetch_by_dbID($self->param('synteny_region_id'));
 
   my $regions = $sr->get_all_DnaFragRegions();
   foreach my $dfr (@$regions) { 
-    push(@{$dnafrag_regions}, $dfr);
+    push @dnafrag_regions, $dfr;
   }
 
-  $self->dnafrag_regions($dnafrag_regions);
+  return \@dnafrag_regions;
 }
 
 
@@ -1171,7 +1107,7 @@ sub _load_2XGenomes {
 
   #Find all the dnafrag_regions for the reference genome in this synteny region
   my $ref_dnafrags =[];
-  foreach my $dnafrag_region (@{$self->dnafrag_regions}) {
+  foreach my $dnafrag_region (@{$self->param('dnafrag_regions')}) {
       if ($dnafrag_region->genome_db->dbID == $ref_genome_db->dbID) {
 	  push @$ref_dnafrags, $dnafrag_region;
       }
@@ -1185,6 +1121,11 @@ sub _load_2XGenomes {
 
   print "Synteny region $synteny_region_id num copies " . scalar(@$ref_dnafrags) . "\n" if $self->debug;
 
+  my $pairwise_compara_dba = $self->param('pairwise_compara_dba', {});
+
+  $self->param('2x_dnafrag_region', []);
+  $self->param('ga_frag', []);
+
   #Find the BLASTZ_NET alignments between the reference species and each
   #2X genome.
   foreach my $params (@parameters) {
@@ -1197,7 +1138,7 @@ sub _load_2XGenomes {
       my $pairwise_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_db_url );
 
       #need to store this to allow disconnect when call ortheus
-      $self->{pairwise_compara_dba}->{$pairwise_dba->dbc->dbname} = $pairwise_dba;
+      $pairwise_compara_dba->{$pairwise_dba->dbc->dbname} = $pairwise_dba;
       #Get pairwise genomic_align_block adaptor
       my $gaba = $pairwise_dba->get_GenomicAlignBlockAdaptor;
 
@@ -1264,8 +1205,8 @@ sub _load_2XGenomes {
 	  
 	  $self->_build_2x_composite_seq($pairwise_dba, $ref_slice_adaptor, $target_slice_adaptor, $ga_frag_array->[$longest_ref_region]);
 
-	  push @{$self->{ga_frag}}, $ga_frag_array->[$longest_ref_region];
-	  push @{$self->{'2x_dnafrag_region'}}, $ga_frag_array->[$longest_ref_region]->[0]->{dnafrag_region};
+	  push @{$self->param('ga_frag')}, $ga_frag_array->[$longest_ref_region];
+	  push @{$self->param('2x_dnafrag_region')}, $ga_frag_array->[$longest_ref_region]->[0]->{dnafrag_region};
 	  next;
       }
 
@@ -1318,9 +1259,9 @@ sub _load_2XGenomes {
 
 	  #store composite_seq in ga_frag_array->[$longest_ref_region]
 	  $self->_build_2x_composite_seq($pairwise_dba, $ref_slice_adaptor, $target_slice_adaptor, $ga_frag_array->[$longest_ref_region]);
-	  push @{$self->{ga_frag}}, $ga_frag_array->[$longest_ref_region];
+	  push @{$self->param('ga_frag')}, $ga_frag_array->[$longest_ref_region];
 
-	  push @{$self->{'2x_dnafrag_region'}}, $ga_frag_array->[$longest_ref_region]->[0]->{dnafrag_region};
+	  push @{$self->param('2x_dnafrag_region')}, $ga_frag_array->[$longest_ref_region]->[0]->{dnafrag_region};
 
       }
   } 
@@ -1342,15 +1283,18 @@ sub _load_2XGenomes {
 sub _dump_fasta {
   my $self = shift;
 
-  my $all_dnafrag_regions = $self->dnafrag_regions;
+  my $all_dnafrag_regions = $self->param('dnafrag_regions');
 
   ## Dump FASTA files in the order given by the tree string (needed by Pecan)
   my @seqs;
-  if ($self->tree_string) {
-    @seqs = ($self->tree_string =~ /seq(\d+)/g);
+  if ($self->param('tree_string')) {
+    @seqs = ($self->param('tree_string') =~ /seq(\d+)/g);
   } else {
     @seqs = (1..scalar(@$all_dnafrag_regions));
   }
+
+  $self->param('fasta_files', []);
+  $self->param('species_order', []);
 
   foreach my $seq_id (@seqs) {
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
@@ -1361,10 +1305,10 @@ sub _dump_fasta {
 
     #Check if I have a DnaFragRegion object or my 2x genome object
     if (!UNIVERSAL::isa($dfr, 'Bio::EnsEMBL::Compara::DnaFragRegion')) {
-	print "FOUND 2X GENOME\n" if $self->debug;
-	print "num of frags " . @$dfr . "\n" if $self->debug;
-	$self->_dump_2x_fasta($dfr, $file, $seq_id);
-	next;
+        print "FOUND 2X GENOME\n" if $self->debug;
+        print "num of frags " . @$dfr . "\n" if $self->debug;
+        $self->_dump_2x_fasta($dfr, $file, $seq_id);
+        next;
     }
     open F, ">$file" || throw("Couldn't open $file");
 
@@ -1388,30 +1332,29 @@ sub _dump_fasta {
 
     close F;
 
-    push @{$self->fasta_files}, $file;
-    push @{$self->species_order}, $dfr->dnafrag->genome_db_id;
+    push @{$self->param('fasta_files')}, $file;
+    push @{$self->param('species_order')}, $dfr->dnafrag->genome_db_id;
   }
 
   return 1;
 }
 
 
-=head2 _build_tree_string
+=head2 get_tree_string
 
   Arg [1]    : -none-
-  Example    : $self->_build_tree_string();
-  Description: This method sets the tree_string using the orginal
+  Example    : $self->get_tree_string();
+  Description: This method generates the tree_string using the orginal
                species tree and the set of DnaFragRegions. The
                tree is edited by the _update_tree method which
-               resort the DnaFragRegions (see _update_tree elsewwhere
-               in this document)
+               resort the DnaFragRegions (see _update_tree elsewhere in this document)
   Returntype : -none-
   Exception  :
   Warning    :
 
 =cut
 
-sub _build_tree_string {
+sub get_tree_string {
   my $self = shift;
 
   my $tree = $self->get_species_tree->copy;
@@ -1430,7 +1373,7 @@ sub _build_tree_string {
 
   $tree->release_tree;
 
-  $self->tree_string($tree_string);
+  return $tree_string;
 }
 
 
@@ -1455,9 +1398,8 @@ sub _update_tree {
   my $self = shift;
   my $tree = shift;
 
-  my $all_dnafrag_regions = $self->dnafrag_regions;
+  my $all_dnafrag_regions = $self->param('dnafrag_regions');
   my $ordered_dnafrag_regions = [];
-  my $ordered_2x_genomes = [];
 
   my $idx = 1;
   my $all_leaves = $tree->get_all_leaves;
@@ -1472,7 +1414,7 @@ sub _update_tree {
     }
 
     my $index = 0;
-    foreach my $ga_frags (@{$self->{ga_frag}}) {
+    foreach my $ga_frags (@{$self->param('ga_frag')}) {
 	my $first_frag = $ga_frags->[0];
 	if ($first_frag->{genome_db_id} == $this_leaf->name) {
 	    push(@$these_2x_genomes, $index);
@@ -1492,22 +1434,21 @@ sub _update_tree {
     } elsif (@$these_dnafrag_regions > 1) {
       ## If more than 1 has been found, let Ortheus estimate the Tree
 	#need to add on 2x genomes to dnafrag_regions array
-	my $dfa = $self->dnafrag_regions;
-	foreach my $ga_frags (@{$self->{ga_frag}}) {
+	my $dfa = $self->param('dnafrag_regions');
+	foreach my $ga_frags (@{$self->param('ga_frag')}) {
 	    push @$dfa, $ga_frags;
 	}
-	$self->dnafrag_regions($dfa);
+	$self->param('dnafrag_regions', $dfa);
 	return undef;
 
    } elsif (@$these_2x_genomes == 1) {
 	#See what happens...
 	#Find 2x genomes
-       my $ga_frags = $self->{ga_frag}->[$these_2x_genomes->[0]];
+       my $ga_frags = $self->param('ga_frag')->[$these_2x_genomes->[0]];
        print "number of frags " . @$ga_frags . "\n" if $self->debug;
 
 	print "2x seq$idx " . $ga_frags->[0]->{genome_db_id} . "\n" if $self->debug;
 	$this_leaf->name("seq".$idx++);
-	#push(@$ordered_2x_genomes, $these_2x_genomes->[0]);
 	push(@$ordered_dnafrag_regions, $ga_frags);
   } else {
       ## If none has been found...
@@ -1515,10 +1456,7 @@ sub _update_tree {
       $tree = $tree->minimize_tree;
     }
  }
- $self->dnafrag_regions($ordered_dnafrag_regions);
-
- $self->{ordered_2x_genomes} = $ordered_2x_genomes;
-
+ $self->param('dnafrag_regions', $ordered_dnafrag_regions);
 
   #if (scalar(@$all_dnafrag_regions) != scalar(@$ordered_dnafrag_regions) or
    #   scalar(@$all_dnafrag_regions) != scalar(@{$tree->get_all_leaves})) {
@@ -2097,15 +2035,13 @@ sub _dump_2x_fasta {
     my ($self, $ga_frags, $file, $seq_id) = @_;
 
     open F, ">$file" || throw("Couldn't open $file");
-
     print F ">SeqID" . $seq_id . "\n";
-
     #stored concatenated mfa sequence on first frag
     print F $ga_frags->[0]->{seq},"\n";
-    
     close F;
-    push @{$self->fasta_files}, $file;
-    push @{$self->species_order}, $ga_frags->[0]->{genome_db_id};
+
+    push @{$self->param('fasta_files')}, $file;
+    push @{$self->param('species_order')}, $ga_frags->[0]->{genome_db_id};
 
 }
 
