@@ -144,7 +144,7 @@ sub content {
       
         $transcript_url = $hub->url({
           type   => 'Transcript',
-          action => $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
+          action => 'Variation_Transcript/Table',
           db     => 'core',
           r      => undef,
           t      => $trans_name,
