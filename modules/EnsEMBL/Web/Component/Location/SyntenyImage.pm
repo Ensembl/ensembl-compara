@@ -73,7 +73,6 @@ sub content {
   );
 
   my $html = sprintf('
-<div>
   <div class="synteny_image">
     %s
   </div>
@@ -81,7 +80,6 @@ sub content {
     %s
     %s
   </div>
-</div>
 ', $image->render, $self->species_form->render, $chr_form->render);
 
   return $html;
