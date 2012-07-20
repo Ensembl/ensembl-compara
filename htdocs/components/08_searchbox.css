@@ -2,7 +2,7 @@
 div.search                    { margin: 1px 1px 0 0; height: 22px; }
 div.search img                { cursor: pointer; height: 16px; width: 16px; }
 div.search div                { background-color: [[PANEL_BG]] !important; float: left; height: 16px; padding: 3px; font-weight: bold; }
-div.search div input          { border: 0; width: 20em; height: 16px; line-height: 16px; font-family: inherit; font-size: inherit; position: relative; top: -1px; outline: 0; }
+div.search div input          { border: 0; width: 20em; height: 16px; line-height: 16px; font-family: inherit; font-size: inherit; color: [[PAGE_TEXT]]; position: relative; top: -1px; outline: 0; }
 body.mac div.search div input { position: static; }
 div.search div input.inactive { font-style: italic; color: [[PAGE_BORDER]]; }
 div.search div.button img     { cursor: pointer; }
