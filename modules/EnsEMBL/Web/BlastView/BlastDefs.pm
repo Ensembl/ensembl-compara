@@ -102,9 +102,9 @@ sub _build_conf{
 	      if( $db =~ /^DATASOURCE/ ){ next }
 	      if( $me =~/BLAST/ ){ 
 	        if( $db =~ /DEFAULT/ ){ next }
-	        $lb = $conf->{$db}->{'label'} || '';            
-	        #$CONF->{DATABASES}->{$db}->{LABEL} = $lb;
-	        #next;
+          if (ref $conf->{$db} eq 'HASH') {
+	          $lb = $conf->{$db}->{'label'} || '';
+          }            
 	      }
   	    if( $me eq 'SSAHA' ){ 
 	        if( $db =~ /^SOURCE/ ){ next }
