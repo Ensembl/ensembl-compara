@@ -39,6 +39,7 @@ form.configuration div.config ul.config_menu li .menu_help          { background
 form.configuration div.config ul.config_menu li .menu_help:hover    { background-position: center left; }
 form.configuration div.config ul.config_menu li .menu_help.open     { background-position: bottom left; }
 form.configuration div.config ul.config_menu li .favourite          { background: url(/i/star.png) no-repeat top left; }
+form.configuration div.config ul.config_menu li .favourite:hover    { background-position: center left; }
 form.configuration div.config ul.config_menu li.fav .favourite      { background-position: left bottom; }
 form.configuration div.config ul.config_menu                        { margin-left: 5px; }
 form.configuration div.config ul.config_menu li .strand             { background: url(/i/strand.png) no-repeat left top; cursor: default!important; }
