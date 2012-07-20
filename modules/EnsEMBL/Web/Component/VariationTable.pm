@@ -202,7 +202,7 @@ sub stats_table {
   my @rows;
   
   foreach my $con (keys %descriptions) {
-    my $colour_block = sprintf('<div style="background-color: #%s; width: 10px;">&nbsp;</div>', $colours{$con});
+    my $colour_block = sprintf('<div style="background-color: %s; width: 10px;">&nbsp;</div>', $colours{$con});
     
     if ($counts{$con}) {
       my $count = $counts{$con};
