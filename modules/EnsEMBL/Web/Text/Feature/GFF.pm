@@ -52,14 +52,19 @@ sub rawend   { my $self = shift; return $self->{'__raw__'}[4]; }
 sub id       {
   my $self = shift;
 
-# use Data::Dumper; local $Data::Dumper::Indent = 0; warn Dumper($self->{'__extra__'});
-  return $self->{'__extra__'}{'transcript_id'} ? $self->{'__extra__'}{'transcript_id'}[0]
-       : $self->{'__extra__'}{'genscan'      } ? $self->{'__extra__'}{'genscan'}[0]
-       : $self->{'__extra__'}{'hid'          } ? $self->{'__extra__'}{'hid'}[0]
-       : $self->{'__attribs__'}{'ID'         } ? $self->{'__attribs__'}{'ID'}
-       : $self->{'__raw__'}[8]                ?  $self->{'__raw__'}[8]
-       :                                         $self->{'__raw__'}[2]
-       ;
+  foreach my $key (qw(transcript_id genscan hid)) {
+    my $v = $self->{'__extra__'}->{$key};
+    return $v->[0] if defined $v;
+  }
+  foreach my $key (qw(hid ID)) {
+    my $v = $self->{'__attribs__'}->{$key};
+    return $v if defined $v;    
+  }
+  foreach my $column (8,2) {
+    my $v = $self->{'__raw__'}->[$column];
+    return $v if $v;
+  }
+  return $self->{'__raw__'}->[2];
 }
 
 sub hstart  { my $self = shift; return $self->{'__extra__'}{'hstart'}  ? $self->{'__extra__'}{'hstart'}[0]  : undef ;  }
