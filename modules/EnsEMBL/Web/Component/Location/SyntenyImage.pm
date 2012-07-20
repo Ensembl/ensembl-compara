@@ -73,17 +73,13 @@ sub content {
   );
 
   my $html = sprintf('
-<div class="column-wrapper">
-  <div class="column-two">
-    <div class="column-padding">
+<div>
+  <div class="synteny_image">
     %s
-    </div>
   </div>
-  <div class="column-two">
-    <div class="column-padding">
+  <div class="synteny_forms">
     %s
     %s
-    </div>
   </div>
 </div>
 ', $image->render, $self->species_form->render, $chr_form->render);
@@ -98,7 +94,7 @@ sub species_form {
   my $url              = $hub->url({ otherspecies => undef }, 1);
   my $image_config     = $hub->get_imageconfig('Vsynteny');
   my $vwidth           = $image_config->image_height;
-  my $form             = $self->new_form({ id => 'change_sp', action => $url->[0], method => 'get', class => 'nonstd autocenter labels_right check', style => $vwidth ? "width:${vwidth}px" : undef });
+  my $form             = $self->new_form({ id => 'change_sp', action => $url->[0], method => 'get', class => 'autocenter check', style => $vwidth ? "width:${vwidth}px" : undef });
   my %synteny_hash     = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
   my %synteny          = %{$synteny_hash{$hub->species} || {}};
   my @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} } map {{ name => $_, common => $species_defs->get_config($_, 'SPECIES_COMMON_NAME') }} keys %synteny;
@@ -106,20 +102,23 @@ sub species_form {
 
   foreach my $next (@sorted_by_common) {
     next if $next->{'name'} eq $hub->species;
-    push @values, { name => $next->{'common'}, value => $next->{'name'} };
+    push @values, { caption => $next->{'common'}, value => $next->{'name'} };
   }
 
   $form->add_hidden({ name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
-  $form->add_element(
-    type         => 'DropDownAndSubmit',
-    select       => 'select',
-    style        => 'narrow',
-    name         => 'otherspecies',
-    label        => 'Change Species',
-    values       => \@values,
-    value        => $hub->param('otherspecies') || $hub->param('species') || $self->default_otherspecies,
-    button_value => 'Go'
-  );
+  $form->add_field({
+    'label'       => 'Change Species',
+    'inline'      => 1,
+    'elements'    => [{
+      'type'        => 'dropdown',
+      'name'        => 'otherspecies',
+      'values'      => \@values,
+      'value'       => $hub->param('otherspecies') || $hub->param('species') || $self->default_otherspecies,
+    }, {
+      'type'        => 'submit',
+      'value'       => 'Go'
+    }]
+  });
 
   return $form;
 }
