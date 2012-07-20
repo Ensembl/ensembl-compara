@@ -80,7 +80,6 @@ sub new {
       'stack',       'Stacked',
       'unlimited',   'Stacked unlimited',
       'ungrouped',   'Ungrouped',
-      'difference',  'Differences',
     ],
   };
   
@@ -852,6 +851,7 @@ sub _user_track_settings {
   } else {
     $strand         = 'b'; 
     @user_renderers = @{$self->{'alignment_renderers'}};
+    push @user_renderers,'difference','Differences';
   }
   
   return ($strand, \@user_renderers);
@@ -1448,6 +1448,7 @@ sub add_dna_align_features {
     my $menu = ($k =~ /rnaseq|simple/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
     if ($menu) {
       my $alignment_renderers = [ @{$self->{'alignment_renderers'}} ];
+      #push @$alignment_renderers,'difference','Differences';
       if (my @other_renderers = @{$data->{$key_2}{'additional_renderers'} || [] }) {
         my $i = 0;
         while ($i < scalar(@other_renderers)) {
