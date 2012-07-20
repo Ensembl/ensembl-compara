@@ -343,8 +343,7 @@ sub add_element {
   foreach my $option (@{$params{'values'}}) { 
     $option = {'value' => $option, 'caption' => $option} if ref($option) ne 'HASH';
     if (exists $option->{'name'}) {
-      $option->{'caption'} = $option->{'name'};
-      delete $option->{'name'};
+      $option->{'caption'} = delete $option->{'name'};
     }
   }
 
