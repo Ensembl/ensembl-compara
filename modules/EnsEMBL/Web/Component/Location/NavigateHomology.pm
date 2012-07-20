@@ -102,7 +102,7 @@ sub content {
   }
 
   return qq{
-    <div class="autocenter_wrapper">
+    <div class="autocenter_wrapper clear">
       <div class="navbar autocenter">
         <table style="width:100%">
           <tr>
