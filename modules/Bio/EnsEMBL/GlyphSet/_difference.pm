@@ -57,13 +57,9 @@ sub _cluster_zmenu {
   my @cigfrag;
   foreach my $i ($cigar_min_i .. $cigar_max_i) {
     my $frag = "";
-    if($cidx{$i}) {
-      $frag .= "<u><em>";
-    }
+    $frag .= "<u><em>" if($cidx{$i});
     $frag .= $c->{'cigar'}->[$i];
-    if($cidx{$i}) {
-      $frag .= "</u></em>";
-    }
+    $frag .= "</u></em>" if($cidx{$i});
     push @cigfrag,$frag;
   }
   my $ref_mid = ($c->{'ref_start'}+$c->{'ref_end'})/2;
