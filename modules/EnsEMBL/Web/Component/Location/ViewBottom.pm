@@ -30,7 +30,7 @@ sub _add_object_track {
       my $flag = $hub->session->get_data(type => 'auto_add', code => lc $key);
       unless($flag->{'data'}) {
         $image_config->update_track_renderer(lc $key,'transcript_label');
-        $extra .= $self->_info("Information","The track containing the highlighted gene has been added to your display.")."<br/>";
+        $extra .= $self->_info("Information","<p>The track containing the highlighted gene has been added to your display.</p>")."<br/>";
         $hub->session->set_data(type => 'auto_add' , code => lc $key, data => 1); 
         $hub->session->store();
       }

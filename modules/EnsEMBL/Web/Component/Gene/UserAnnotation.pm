@@ -40,7 +40,7 @@ sub content {
     }
   }
   else {
-    $html = $self->_info('User Account', 'You need to be logged in to save your own annotation');
+    $html = $self->_info('User Account', '<p>You need to be logged in to save your own annotation</p>');
   }
 
   return $html;

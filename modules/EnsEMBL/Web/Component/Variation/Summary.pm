@@ -53,7 +53,7 @@ sub failed {
     $html .= "<li>$_</li>" foreach @descs;
     $html .= '</ul></p>';
   } else {
-    $html = $descs[0];
+    $html = "<p>$descs[0]</p>";
   }
   
   return $self->_warning('This variation has been flagged as failed', $html, '50%');
@@ -209,7 +209,7 @@ sub synonyms {
 
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
-      sprintf('<p>This feature has <strong>%s</strong> synonyms - click the plus to show</p><p class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></p>',
+      sprintf('<p>This feature has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? '' : 'display:none',
         join('', map "<li>$_</li>", @synonyms_list)
@@ -457,7 +457,7 @@ sub clinical_significance {
   my $c_link = $hub->get_ExtURL_link("dbSNP", "DBSNP_CLIN", '');
   return $clin_sign ? [
     {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance'},
-    qq{<p><span style="color:$colour">$clin_sign</span> (from $c_link)</p>}
+    qq{<p><span style="color:$colour">$clin_sign</span> (from $c_link)</p>},1
   ] : ();
 }
 

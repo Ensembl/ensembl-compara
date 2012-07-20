@@ -30,7 +30,7 @@ sub content {
 
   #my $msg = "Click 'configure this page' to change the sources of external ".
   #           "annotations that are available in the External Data menu.";
-  return $self->_info('Info',        $msg, '100%');
+  return $self->_info('Info',"<p>$msg</p>", '100%');
 }
 
 1;

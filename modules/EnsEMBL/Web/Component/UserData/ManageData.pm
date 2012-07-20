@@ -86,7 +86,7 @@ sub content {
   }
   
 #  $html  .= $self->group_shared_data; # DOESN'T WORK YET
-  $html  .= $self->_warning('File not found', sprintf('The file%s marked not found %s unavailable. Please try again later.', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
+  $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html ||= '<p class="space-below">You have no custom data.</p>';
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
   

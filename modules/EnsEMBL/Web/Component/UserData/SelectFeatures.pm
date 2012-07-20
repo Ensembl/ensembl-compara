@@ -109,7 +109,7 @@ sub content {
     $html .= '<input type="hidden" class="panel_type" value="AssemblyMappings" />';
     $html .= $form->render;
   } else {
-    $html .= $self->_info('No mappings', 'Sorry, no species currently have assembly mappings.');
+    $html .= $self->_info('No mappings', '<p>Sorry, no species currently have assembly mappings.</p>');
   }
   
   return $html;

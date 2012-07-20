@@ -39,7 +39,7 @@ sub content {
   if ($hub->param('consequence_mapper') && $count) {
     $html .= $self->_info(
       'Too many features',
-      sprintf('Your file contained %s features; however this web tool will only convert the first %s features in the file.', $count, $hub->param('size_limit'))
+      sprintf('<p>Your file contained %s features; however this web tool will only convert the first %s features in the file.</p>', $count, $hub->param('size_limit'))
     );
   }
   

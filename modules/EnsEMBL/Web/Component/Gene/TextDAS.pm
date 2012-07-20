@@ -40,11 +40,11 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $logic_name   = $hub->function; # The DAS source this page represents
 
-  return $self->_error('No DAS source specified', 'No parameter passed!', '100%') unless $logic_name;
+  return $self->_error('No DAS source specified', '<p>No parameter passed!</p>', '100%') unless $logic_name;
   
   my $source = $hub->get_das_by_logic_name($logic_name);
   
-  return $self->_error(qq{DAS source "$logic_name" specified does not exist}, 'Cannot find the specified DAS source key supplied', '100%') unless $source;
+  return $self->_error(qq{DAS source "$logic_name" specified does not exist}, '<p>Cannot find the specified DAS source key supplied</p>', '100%') unless $source;
   
   my $desc     = $source->description;
   my $homepage = $source->homepage;
@@ -70,7 +70,7 @@ sub content {
   my $source_err = $data->{'source'}->{'error'};
   
   if ($source_err) {
-    $html .= $self->_error('Error', $source_err, '100%');
+    $html .= $self->_error('Error', "<p>$source_err</p>", '100%');
     return $html;
   }
   
@@ -85,7 +85,7 @@ sub content {
     $html .= sprintf qq{<h3>%s %s [<a href="%s">view DAS response</a>]</h3>\n}, $cs->label, $segment, $url;
     
     if ($err) {
-      $html .= $self->_error('Error', $err, '100%');
+      $html .= $self->_error('Error', "<p>$err</p>", '100%');
       next;
     }
     
@@ -122,7 +122,7 @@ sub content {
         # Show the error, but only show one at a time as it could get spammy
         if ($warning && !$self->{'errored'}) {
           $self->{'errored'} = 1;
-          $html .= $self->_warning('Problem parsing note', "$self->{'validate_error'}$warning", '100%');
+          $html .= $self->_warning('Problem parsing note', "<p>$self->{'validate_error'}$warning</p>", '100%');
         }
         
         push @notes, "<div>$note</div>";
@@ -139,7 +139,7 @@ sub content {
         # Show the error, but only show one at a time as it could get spammy
         if ($warning && !$self->{'errored'}) {
           $self->{'errored'} = 1;
-          $html .= $self->_warning('Problem parsing link', "$self->{'validate_error'}$warning", '100%');
+          $html .= $self->_warning('Problem parsing link', "<p>$self->{'validate_error'}$warning</p>", '100%');
         }
         
         push @links, sprintf '<div><a href="%s">%s</a></div>', $href, $cdata;

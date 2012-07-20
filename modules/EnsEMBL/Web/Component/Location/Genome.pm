@@ -63,7 +63,7 @@ sub _render_features {
 
   if ($id && $total_features < 1) {
     my $ids = join(', ', $id);
-    return $self->_warning('Not found', sprintf('No mapping of %s found', $ids || 'unknown feature'));
+    return $self->_warning('Not found', sprintf('<p>No mapping of %s found</p>', $ids || 'unknown feature'));
   }
 
   ## Add in userdata tracks

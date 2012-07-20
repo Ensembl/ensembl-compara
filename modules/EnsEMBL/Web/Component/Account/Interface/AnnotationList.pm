@@ -135,7 +135,7 @@ sub content {
   }
 
   if ($no_species) {
-    $html .= '<br />'.$self->_info('Old Annotations', 'Some of your annotations were saved before we changed our web code in 2008, so we cannot linked directly to the gene from here. You can still edit the annotation and see it displayed on the corresponding gene page.', '100%');
+    $html .= '<br />'.$self->_info('Old Annotations', '<p>Some of your annotations were saved before we changed our web code in 2008, so we cannot linked directly to the gene from here. You can still edit the annotation and see it displayed on the corresponding gene page.</p>', '100%');
   }
 
   return $html;

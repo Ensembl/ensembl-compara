@@ -123,7 +123,7 @@ sub gene_transcript_table {
       action    => 'Context'
      });
     
-    my $msg = qq{No genes fall within the structural variant.<br /> Please, go to the <a href="$url">Genomic context</a> page for more detailed information.};
+    my $msg = qq{<p>No genes fall within the structural variant.<br /> Please, go to the <a href="$url">Genomic context</a> page for more detailed information.</p>};
     return $self->_info('No genes', $msg, '50%');
   }
 }

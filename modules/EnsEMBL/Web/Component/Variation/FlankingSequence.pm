@@ -311,9 +311,9 @@ sub content {
   if($up_trimmed or $down_trimmed) {
     $warning = $self->_warning(
       'Flanking sequence trimmed',
-      'The flanking sequence shown below has been trimmed to '.
+      '<p>The flanking sequence shown below has been trimmed to '.
       $trim_size.
-      'bp each side of the variant position, as indicated by the \'...\' marks',
+      'bp each side of the variant position, as indicated by the \'...\' marks</p>',
       '50%',
     );
   }

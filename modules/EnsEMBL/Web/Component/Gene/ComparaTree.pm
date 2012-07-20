@@ -95,12 +95,12 @@ sub content {
     if ($member && $gene && $highlight_species) {
       $html .= $self->_info('Highlighted genes',
         sprintf(
-          'In addition to all <I>%s</I> genes, the %s gene (<I>%s</I>) and its paralogues have been highlighted. <a href="%s">Click here to switch off highlighting</a>.', 
+          '<p>In addition to all <I>%s</I> genes, the %s gene (<I>%s</I>) and its paralogues have been highlighted. <a href="%s">Click here to switch off highlighting</a>.</p>', 
           $member->genome_db->name, $highlight_gene_display_label, $highlight_species, $unhighlight
         )
       );
     } else {
-      $html .= $self->_warning('WARNING', "$highlight_gene gene is not in this Gene Tree");
+      $html .= $self->_warning('WARNING', "<p>$highlight_gene gene is not in this Gene Tree</p>");
       $highlight_gene = undef;
     }
   }
@@ -127,7 +127,7 @@ sub content {
       }
     }
 
-    $html .= $self->_info('Hidden genes', "There are $hidden_genes_counter hidden genes in the tree. Use the 'configure page' link in the left panel to change the options.") if $hidden_genes_counter;
+    $html .= $self->_info('Hidden genes', "<p>There are $hidden_genes_counter hidden genes in the tree. Use the 'configure page' link in the left panel to change the options.</p>") if $hidden_genes_counter;
   }
 
   $image_config->set_parameters({

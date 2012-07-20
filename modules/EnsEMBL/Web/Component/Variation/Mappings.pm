@@ -37,7 +37,7 @@ sub content {
       
     $html .= $self->_warning(
       'Warning',
-      'Consequences for this variation have been calculated using the Ensembl reference allele' . (defined $feature_slice ? ' (' . $feature_slice->seq .')' : ''),
+      '<p>Consequences for this variation have been calculated using the Ensembl reference allele' . (defined $feature_slice ? ' (' . $feature_slice->seq .')</p>' : '</p>'),
       '50%'
     );
   }
@@ -57,7 +57,7 @@ sub content {
       
       $html .= $self->_info(
         'Information',
-        "This display shows consequence predictions in the 'Type' column for all possible alleles (A/C/G/T) at this position. Ensembl has permission to display only the public HGMD dataset which does not include alleles.<br/><br/>$link",
+        "<p>This display shows consequence predictions in the 'Type' column for all possible alleles (A/C/G/T) at this position. Ensembl has permission to display only the public HGMD dataset which does not include alleles.<br/><br/>$link</p>",
         '50%',
       ); 
     }
