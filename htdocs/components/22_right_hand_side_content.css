@@ -84,6 +84,10 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 .alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom: 16px;
                              border-width: 1px; border-style: solid; overflow: hidden; }
 .plain-box    { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
+
+body.ie6 .plain-box,
+body.ie7 .plain-box { zoom: 100%; }
+
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
 .info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[ALERT_BORDER]]; }
