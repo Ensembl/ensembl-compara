@@ -544,22 +544,20 @@ foreach my $homology (@{$homologies}) {
 
 <p>
 Each homology relation has 2 or more members, you should find there the initial member used as a query.
-The get_all_MemberAttribute method returns an array of pairs of Member and Attributes. The Member
-corresponds to the gene or protein and the Attribute object contains information about how this
-Member has been aligned.
+The get_all_Members method returns an array of Member objects. The Member is actually an AlignedMember
+(for the underlying protein) and contains information about how this Member has been aligned.
 </p>
 
 <pre class="code">
 my $homology = $homologies->[0]; # take one of the homologies and look into it
 
-foreach my $member_attribute (@{$homology-&gt;get_all_Member_Attribute}) {
+foreach my $member (@{$homology-&gt;get_all_Members}) {
 
-  # for each Member, you get information on the Member specifically and in
-  # relation to the homology relation via Attribute object
+  # each AlignedMember contains both the information on the Member and in
+  # relation to the homology
 
-  my ($member, $attribute) = @{$member_attribute};
-  print (join &quot; &quot;, map { $member-&gt;$_ }  qw(stable_id taxon_id)).&quot;\n&quot;;
-  print (join &quot; &quot;, map { $attribute-&gt;$_ } qw(perc_id perc_pos perc_cov)).&quot;\n&quot;;
+  print (join &quot; &quot;, map { $member-&gt;$_ } qw(stable_id taxon_id)).&quot;\n&quot;;
+  print (join &quot; &quot;, map { $member-&gt;$_ } qw(perc_id perc_pos perc_cov)).&quot;\n&quot;;
 
 }
 </pre>
@@ -599,8 +597,7 @@ my $families = $family_adaptor-&gt;fetch_all_by_Member($member);
 foreach my $family (@{$families}) {
     print join(&quot; &quot;, map { $family-&gt;$_ }  qw(description description_score)).&quot;\n&quot;;
 
-    foreach my $member_attribute (@{$family-&gt;get_all_Member_Attribute}) {
-        my ($member, $attribute) = @{$member_attribute};
+    foreach my $member (@{$family-&gt;get_all_Members}) {
         print $member-&gt;stable_id,&quot; &quot;,$member-&gt;taxon_id,&quot;\n&quot;;
     }
 
