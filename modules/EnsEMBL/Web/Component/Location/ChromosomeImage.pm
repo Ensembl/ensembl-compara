@@ -47,12 +47,12 @@ sub content {
   if ($config->get_node('Vannotation_status_left') && $config->get_node('Vannotation_status_right')) {
     $config->get_node('Vannotation_status_left')->set('display', $config->get_node('Vannotation_status_right')->get('display'));
   }
-  my $image    = $self->new_karyotype_image($config);
-  $image->image_type         = 'chromosome';
-  $image->image_name         = $species.'-'.$chr_name;
+  my $image                 = $self->new_karyotype_image($config);
+  $image->image_type        = 'chromosome';
+  $image->image_name        = $species.'-'.$chr_name;
   $image->set_button('drag', 'title' => 'Click or drag to jump to a region' );
-  $image->imagemap         = 'yes';
-  $image->{'panel_number'} = 'chrom';
+  $image->imagemap          = 'yes';
+  $image->{'panel_number'}  = 'chrom';
 
   ## Add user tracks if turned on
   my @pointers;
@@ -65,24 +65,19 @@ sub content {
   $image->karyotype($self->hub, $object, \@pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
 
-  my $chr_form = $self->chromosome_form('Vsynteny');
+  my $chr_form    = $self->chromosome_form('Vsynteny');
+  my $image_html  = $image->render; # needs to be done before getting the width of image
 
   my $html = sprintf('
-<div class="column-wrapper">
-  <div class="column-two">
-    <div class="column-padding">
+  <div class="chromosome_image">
     %s
-    </div>
   </div>
-  <div class="column-two">
-    <div class="column-padding">
+  <div class="chromosome_stats" style="width: %spx">
     %s
     <h3>Chromosome Statistics</h3>
     %s
-    </div>
-  </div>
-</div>
-', $image->render, $self->chromosome_form('Vmapview')->render, $self->stats_table->render);
+  </div>',
+  $image_html, 2 + ($image->{'width'} || 348),  $self->chromosome_form('Vmapview')->render, $self->stats_table->render);
 
   return $html;
 }
@@ -113,11 +108,7 @@ sub stats_table {
     'Raw percentage of map covered by sequence clones',
   );
   
-  my $table = new EnsEMBL::Web::Document::Table([], [], { data_table => 0, exportable => 0 });
-  $table->add_columns(
-    { key => 'header', title => ''},
-    { key => 'value',  title => ''},
-  );
+  my $table = new EnsEMBL::Web::Document::Table([{ key => 'header'}, { key => 'value'}], [], { header => 'no', exportable => 0, 'class' => 'tint' });
 
   my ($stats, %chr_stats);
   my $chr = $object->Obj->{'slice'};
