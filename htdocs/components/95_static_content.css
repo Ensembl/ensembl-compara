@@ -4,7 +4,7 @@
 **
 ***********************************************************************/
 
-body.static li { line-height: 16px; padding: 0; margin: 8px 0; list-style: disc; }
+body.static li { line-height: 16px; padding: 0; margin: 8px 0; }
 
 body.static pre { line-height: 16px; margin: 0 0 16px; }
 
