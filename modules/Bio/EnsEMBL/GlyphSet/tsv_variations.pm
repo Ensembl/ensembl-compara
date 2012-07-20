@@ -134,8 +134,9 @@ sub _init {
 	my $var_codon = $conseq_type->codons;
 	$var_codon =~ s/\//\|/g;
 	
-    my $aa = "$ref_pep to $var_pep";
-	my $codon = "$ref_codon $var_codon";
+    my $aa;
+    $aa = "$ref_pep to $var_pep" if defined $ref_pep and defined $var_pep;
+	my $codon = "$ref_codon $var_codon" if defined $ref_codon and defined $var_codon;
 
     # Draw ------------------------------------------------
     my @res = $self->get_text_width( 0, $var_pep, '', 'font'=>$fontname, 'ptsize' => $fontsize );
