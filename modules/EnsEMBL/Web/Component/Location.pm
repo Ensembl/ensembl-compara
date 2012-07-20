@@ -40,30 +40,28 @@ sub default_otherspecies {
 }
 
 sub chromosome_form {
-  my ($self, $ic)  = @_;
-  my $hub          = $self->hub;
-  my $object       = $self->object;
-  my $image_config = $hub->get_imageconfig($ic);
-  my $vwidth       = $image_config->image_height;
-  my $form         = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'nonstd autocenter labels_right check', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
-  
-  my @chrs;
-  push @chrs, { 'name' => $_, 'value' => $_ } for @{$self->object->species_defs->ENSEMBL_CHROMOSOMES};
-  my $chr_name     = $object->seq_region_name;
-  my $label        = 'Change Chromosome';
+  my ($self, $ic)   = @_;
+  my $hub           = $self->hub;
+  my $object        = $self->object;
+  my $image_config  = $hub->get_imageconfig($ic);
+  my $vwidth        = $image_config->image_height;
+  my @chrs          = map { 'caption' => $_, 'value' => $_ }, @{$self->object->species_defs->ENSEMBL_CHROMOSOMES};
+  my $form          = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'autocenter check', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
 
-  $form->add_element(
-    type         => 'DropDownAndSubmit',
-    select       => 'select',
-    style        => 'narrow',
-    on_change     => 'submit',
-    name         => 'r',
-    label        => $label,
-    values       => \@chrs,
-    value        => $chr_name,
-    button_value => 'Go'
-  );
-  
+  $form->add_field({
+    'label'       => 'Change Chromosome',
+    'inline'      => 1,
+    'elements'    => [{
+      'type'        => 'dropdown',
+      'name'        => 'r',
+      'values'      => \@chrs,
+      'value'       => $object->seq_region_name
+    }, {
+      'type'        => 'submit',
+      'value'       => 'Go'
+    }]
+  });
+
   return $form;
 }
 
