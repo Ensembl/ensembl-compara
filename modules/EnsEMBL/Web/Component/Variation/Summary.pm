@@ -32,7 +32,7 @@ sub content {
     $self->sets
   );
 
-  return qq{<div class="summary_panel">$failed%s}, $summary_table->render;
+  return sprintf qq{<div class="summary_panel">$failed%s}, $summary_table->render;
 }
 
 sub failed {
