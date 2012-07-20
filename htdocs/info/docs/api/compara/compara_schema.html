@@ -544,7 +544,7 @@ table.</p>
       <td>species_set_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
-      <td>PRI</td>
+      <td>UNI</td>
       <td></td>
       <td>auto_increment</td>
       <td>internal (non-unique) ID</td>
@@ -553,8 +553,8 @@ table.</p>
       <td>genome_db_id</td>
       <td>int(10) unsigned</td>
       <td>YES</td>
-      <td>PRI</td>
-      <td>0</td>
+      <td>UNI</td>
+      <td>NULL</td>
       <td></td>
       <td>external reference to <a href="#genome_db">genome_db.genome_db_id</a></td>
     </tr>
@@ -3148,12 +3148,12 @@ Header table to gene trees
     </tr>
     <tr>
       <td>clusterset_id</td>
-      <td>int(10) unsigned</td>
-      <td>YES</td>
+      <td>varchar(20)</td>
+      <td>NO</td>
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td>root_id for the set of clusters</td>
+      <td>name for the set of clusters</td>
     </tr>
     <tr>
       <td>method_link_species_set_id</td>
