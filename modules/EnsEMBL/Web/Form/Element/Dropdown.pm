@@ -17,7 +17,7 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
   
-  exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name class size);
+  exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name class size style);
   exists $params->{$_} and $params->{$_} == 1 and $self->$_(1) for qw(disabled multiple);
   $self->set_attribute('class', $self->CSS_CLASS_REQUIRED) if exists $params->{'required'};
   

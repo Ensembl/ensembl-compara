@@ -25,7 +25,7 @@ sub configure {
   
   exists $params->{'value'} and $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
 
-  exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name value size class maxlength);
+  exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name value size class maxlength style);
   $params->{$_} and $self->$_(1) for qw(disabled readonly);
 
   $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'} && !$params->{'no_asterisk'};
