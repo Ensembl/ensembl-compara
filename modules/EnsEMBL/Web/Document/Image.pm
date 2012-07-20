@@ -375,13 +375,13 @@ sub hover_labels {
       my $text = $_->{'text'};
       
       if ($_->{'current'}) {
-        $renderers .= qq{<li class="current"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /><img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>};
+        $renderers .= qq(<li class="current"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /><img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>);
       } else {
-        $renderers .= qq{<li><a href="$_->{'url'}" class="config" rel="$label->{'component'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>};
+        $renderers .= qq(<li><a href="$_->{'url'}" class="config" rel="$label->{'component'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>);
       }
     }
     
-    $html .= sprintf(qq{
+    $html .= sprintf(qq(
       <div class="hover_label floating_popup %s">
         <p class="header">%s</p>
         %s
@@ -393,17 +393,17 @@ sub hover_labels {
         <div class="config">%s</div>
         <div class="url">%s</div>
         <div class="spinner"></div>
-      </div>},
+      </div>),
       $label->{'class'},
       $label->{'header'},
-      $label->{'desc'}     ? qq{<img class="desc" src="${img_url}16/info.png" alt="Info" title="Info" />}                                  : '',
-      $renderers           ? qq{<img class="config" src="${img_url}16/setting.png" alt="Change track style" title="Change track style" />} : '',
-      $label->{'conf_url'} ? qq{<img class="url" src="${img_url}16/link.png" alt="Link" title="URL to turn this track on" />}              : '',
+      $label->{'desc'}     ? qq(<img class="desc" src="${img_url}16/info.png" alt="Info" title="Info" />)                                  : '',
+      $renderers           ? qq(<img class="config" src="${img_url}16/setting.png" alt="Change track style" title="Change track style" />) : '',
+      $label->{'conf_url'} ? qq(<img class="url" src="${img_url}16/link.png" alt="Link" title="URL to turn this track on" />)              : '',
 
       $label->{'fav'}[0]   ? ' selected' : '',
       $desc,
-      $renderers           ? qq{<p>Change track style:</p><ul>$renderers</ul>}                                                : '',
-      $label->{'conf_url'} ? qq{<p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p>} : ''
+      $renderers           ? qq(<p>Change track style:</p><ul>$renderers</ul>)                                                : '',
+      $label->{'conf_url'} ? qq(<p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p>) : ''
     );
   }
   
@@ -477,7 +477,7 @@ sub moveable_tracks {
     $top ||= $t - 3 if $h;
   }
   
-  return qq{<div class="boundaries_wrapper" style="top:${top}px"><div class="up"></div><ul class="$species boundaries">$html</ul><div class="down"></div></div>} if $html;
+  return qq(<div class="boundaries_wrapper" style="top:${top}px"><div class="up"></div><ul class="$species boundaries">$html</ul><div class="down"></div></div>) if $html;
 }
 
 sub render {
@@ -493,8 +493,7 @@ sub render {
   my $html    = $self->introduction;
   my $image   = new EnsEMBL::Web::TmpFile::Image;
   my $content = $self->drawable_container->render('png');
-  my $caption_style  = 'font-weight:bold;';
-     $caption_style .= ' text-align:center;' if $self->centred;
+  my $caption_style  = 'image-caption';
 
   $image->content($content);
   $image->save;
@@ -507,7 +506,7 @@ sub render {
     
     $self->{'hidden'}{'total_height'} = $image->height;
     
-    $image_html .= sprintf '<div style="%s">%s</div>', $caption_style, $self->caption if $self->caption;
+    $image_html .= sprintf '<div class="%s">%s</div>', $caption_style, $self->caption if $self->caption;
     
     foreach (keys %{$self->{'hidden'}}) {
       $inputs .= sprintf(
@@ -534,7 +533,7 @@ sub render {
     $self->{'counter'}++;
   } elsif ($self->button eq 'yes') {
     $html .= $self->render_image_button($image);
-    $html .= sprintf '<div style="%s">%s</div>', $caption_style, $self->caption if $self->caption;
+    $html .= sprintf '<div class="%s">%s</div>', $caption_style, $self->caption if $self->caption;
   } elsif ($self->button eq 'drag') {
     my $img = $self->render_image_tag($image);
 
@@ -576,7 +575,7 @@ sub render {
         %s
     ';
  
-    $html .= sprintf $template, $image->width, $wrapper, $self->caption ? sprintf '<div style="%s">%s</div>', $caption_style, $self->caption : '';
+    $html .= sprintf $template, $image->width, $wrapper, $self->caption ? sprintf '<div class="%s">%s</div>', $caption_style, $self->caption : '';
   
   } else {
     $html .= join('',
@@ -584,14 +583,14 @@ sub render {
       $self->imagemap eq 'yes' ? $self->render_image_map($image) : '',
       $self->moveable_tracks($image),
       $self->hover_labels,
-      $self->caption ? sprintf('<div style="%s">%s</div>', $caption_style, $self->caption) : ''
+      $self->caption ? sprintf('<div class="%s">%s</div>', $caption_style, $self->caption) : ''
     );
   }
 
   $html .= $self->tailnote;
   
   if ($self->{'image_configs'}[0]) {
-    $html .= qq{<input type="hidden" class="image_config" value="$self->{'image_configs'}[0]{'type'}" />};
+    $html .= qq(<input type="hidden" class="image_config" value="$self->{'image_configs'}[0]{'type'}" />);
     $html .= '<span class="hidden drop_upload"></span>' if $self->{'image_configs'}[0]->get_node('user_data');
   }
   
