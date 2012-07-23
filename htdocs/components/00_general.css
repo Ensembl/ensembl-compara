@@ -37,6 +37,7 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
 .page    { text-align: center; padding: 0.25em; }
 .spinner { height: 100px; display: block; border: 16px solid transparent; margin: 0 0 16px; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
 .pointer { cursor: pointer; }
+body.ie6 .spinner { background-color: [[PAGE_BG]]; border-color: [[PAGE_BG]]; height: 132px; }
 
 /*----------------------------------------------------------------------
   Manual margin settings - to override any existing margins
