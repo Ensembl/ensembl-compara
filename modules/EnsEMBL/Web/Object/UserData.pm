@@ -14,6 +14,7 @@ package EnsEMBL::Web::Object::UserData;
 ### accesses user data via the session                                                                                   
 use strict;
 
+use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::StableIdHistoryTree;

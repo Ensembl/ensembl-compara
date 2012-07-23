@@ -43,16 +43,18 @@ sub content {
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
    
-    push @columns, ({ key => 'download', title => '', width => '20px', align => 'center', sort => 'none' });
+    push @columns, ({ key => 'actions', title => 'Actions', width => '120px', align => 'center', sort => 'none' });
+   
+#    push @columns, ({ key => 'download', title => '', width => '20px', align => 'center', sort => 'none' });
  
-    if ($logins && $species_defs->SAVE_UPLOADED_DATA ne '0') {
-      push @columns, (
-        { key => 'save',  title => '', width => '22px', align => 'center', sort => 'none' },
-        { key => 'share', title => '', width => '20px', align => 'center', sort => 'none' }
-      );
-    }
+#    if ($logins && $species_defs->SAVE_UPLOADED_DATA ne '0') {
+#      push @columns, (
+#        { key => 'save',  title => '', width => '22px', align => 'center', sort => 'none' },
+#        { key => 'share', title => '', width => '20px', align => 'center', sort => 'none' }
+#      );
+#    }
     
-    push @columns, ({ key => 'delete', title => '', width => '20px', align => 'center', sort => 'none' });
+#    push @columns, ({ key => 'delete', title => '', width => '20px', align => 'center', sort => 'none' });
     
     foreach my $file (@data) {
       my $user_record = ref($file) =~ /Record/;
@@ -112,19 +114,51 @@ sub content {
   #) . $html;
 }
 
+sub _icon_inner {
+  my ($self,$params) = @_;
+
+  return qq(<span class="sprite $params->{'class'}" title="$params->{'title'}">&nbsp;</span>);
+}
+
+sub _icon {
+  my ($self,$params) = @_;
+  
+  $params->{'link'} ||= '%s';
+  $params->{$_} ||= '' for(qw(link_class link_extra class));
+  my $title = ucfirst $params->{'class'};
+  $title =~ s/_icon$//;
+  $params->{'title'} ||= $title;
+  my $inner = $self->_icon_inner($params);
+  return $inner if($params->{'no_link'});
+  return qq(
+    <a href="$params->{'link'}" class="$params->{'link_class'} icon_link"
+      $params->{'link_extra'}>$inner</a>
+  );
+}
+
+sub _no_icon {
+  return qq(<span class="sprite">&nbsp;</span>);
+}
+
 sub table_row {
   my ($self, $file, $sharers) = @_;
   my $hub          = $self->hub;
   my $img_url      = $self->img_url.'16/';
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
-  my $delete       = sprintf '<a href="%%s" class="%s icon_link"%s><div class="sprite delete" title="Delete">&nbsp;</div></a>', $delete_class, $title, $img_url;
-  my $download;
+  my $delete       = $self->_icon({ link_class => $delete_class,
+                                    link_extra => $title,
+                                    class => 'delete_icon' });
+  my $download = $self->_no_icon;
   if ($file->{'prefix'} && $file->{'prefix'} eq 'download') {
     my $format       = $file->{'format'} eq 'report' ? 'txt' : $file->{'format'};
-    $download     = sprintf '<a href="/%s/download?file=%s;prefix=download;format=%s" class="icon_link"><div class="sprite download" title="Download">&nbsp;</div></a>', $hub->species, $file->{'filename'}, $format, $img_url;
+    $download = $self->_icon({ link => sprintf("/%s/download?file=%s;prefix=download;format=%s",$hub->species,$file->{'filename'},$format),
+                               class => 'download_icon',
+                               title => 'Download' });
   }
-  my $share        = qq{<a href="%s" class="modal_link icon_link"><div class="sprite share" title="Share">&nbsp;</div></a>};
+  my $share        = $self->_icon({ link_class => 'modal_link',
+                                    class => 'share_icon' });
+
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
   my %url_params   = ( __clear => 1, source => $file->{'url'} ? 'url' : 'upload' );
@@ -133,9 +167,12 @@ sub table_row {
   if ($user_record) {
     $url_params{'id'} = $file->id;
     
-    $save = qq{<div class="icon"><img src="${img_url}dis/save.png" alt="saved" title="Saved data" /></div>};
+    $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
   } else {
-    my $save_html = qq{<a href="%s" class="modal_link icon_link"><div class="save sprite" title="%s">&nbsp;</div></a>};
+    my $save_html = $self->_icon({ link_class => 'modal_link',
+                                   class => 'save_icon',
+                                   title => '%s' });
+    
     my $save_url  = $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'save_remote' : 'save_upload', code => $file->{'code'}, __clear => 1 });
     
     $url_params{'code'} = $file->{'code'};
@@ -152,7 +189,7 @@ sub table_row {
     })
   );
   
-  if ($file->{'nearest'}) {
+  if ($file->{'nearest'} and 0) {
     $name .= sprintf(
       '<a href="%s;contigviewbottom=%s">View sample location</a><br />',
       $hub->url({
@@ -184,21 +221,20 @@ sub table_row {
     );
   
     $name .= sprintf '<a href="%s" class="modal_link">View results</a><br />', $hub->url({ species => $file->{'species'}, __clear => 1, %params });
-    $save  = '';
-    $share = '' if $file->{'filetype'} eq 'ID History Converter';
+    $save  = $self->_no_icon;
+    $share = $self->_no_icon if $file->{'filetype'} eq 'ID History Converter';
   }
   
   $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
   
+  my $share_html = sprintf($share, $hub->url({ action => 'SelectShare', %url_params }));
+  my $delete_html = sprintf($delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params }));
   return {
     type    => $file->{'url'} ? 'URL' : 'Upload',
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
-    save    => $save,
-    download => $download,
-    share   => sprintf($share, $hub->url({ action => 'SelectShare', %url_params })),
-    delete  => sprintf($delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params })),
+    actions => "$download$save$share_html$delete_html",
   };
 }
 
@@ -206,25 +242,31 @@ sub table_row_das {
   my ($self, $file, $user_record) = @_;
   my $hub     = $self->hub;
   my $img_url = $self->img_url.'16/';
-  my $link    = qq{<a href="%s" class="modal_link icon_link"><div class="sprite delete" title="%s">&nbsp;</div></a>};
+  my $link    = $self->_icon({ link_class => 'modal_link',
+                               class => 'delete_icon' });  
   my (%url_params, $save);
   
   if ($user_record) {
     %url_params = ( id => $file->id );
-    $save       = qq{<div class="icon"><img src="${img_url}dis/save.png" alt="saved" title="Saved data" /></div>};
+    $save       = self->_icon({ link_class => 'modal_link',
+                                class => 'sprite_disabled save_icon' });
   } else {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
     my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
        %url_params  = ( code => $file->logic_name );
-       $save        = sprintf $link, $save_params[0], 'save', 'save', $save_params[1];
+       $save        = $self->_icon({ link_class => 'modal_link',
+                                     class => 'save_icon',
+                                     title => $save_params[1],
+                                     link => $save_params[0] });
   }
   
+  my $none = $self->_no_icon;
+  my $delete_html = sprintf($link, $hub->url({ action => 'ModifyData', function => 'delete_remote', source => 'das', __clear => 1, %url_params }));
   return {
-    type   => 'DAS',
-    name   => { value => $file->label, class => 'wrap' },
-    date   => '<span class="hidden">-</span>-',
-    delete => sprintf($link, $hub->url({ action => 'ModifyData', function => 'delete_remote', source => 'das', __clear => 1, %url_params }), 'trash', 'Delete'),
-    save   => $save
+    type    => 'DAS',
+    name    => { value => $file->label, class => 'wrap' },
+    date    => '<span class="hidden">-</span>-',
+    actions => "$none$save$none$delete_html",
   };
 }
 
