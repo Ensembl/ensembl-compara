@@ -172,6 +172,8 @@ div.hint div        { border-color: #ccc; }
 
 .error-pad, .message-pad { padding: 16px 16px 0; }
 
+div.filter-error  { margin: 16px 16px 0;}
+
 div.error h3,
 div.warning h3,
 div.info h3,
