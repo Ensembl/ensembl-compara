@@ -102,16 +102,14 @@ sub content {
   }
 
   return qq{
-    <div class="autocenter_wrapper clear">
-      <div class="navbar autocenter">
-        <table style="width:100%">
-          <tr>
-            <td class="left" style="padding:0px 2em; vertical-align:middle;">$up_link</td>
-            <td class="center" style="padding:0px 2em; vertical-align:middle">$centre_content</td>
-            <td class="right" style="padding:0px 2em; vertical-align:middle;">$down_link</td>
-          </tr>
-        </table>
-      </div>
+    <div class="navbar clear">
+      <table style="width:100%">
+        <tr>
+          <td class="left" style="padding:0px 2em; vertical-align:middle;">$up_link</td>
+          <td class="center" style="padding:0px 2em; vertical-align:middle">$centre_content</td>
+          <td class="right" style="padding:0px 2em; vertical-align:middle;">$down_link</td>
+        </tr>
+      </table>
     </div>
   } if($self->html_format);
 }
