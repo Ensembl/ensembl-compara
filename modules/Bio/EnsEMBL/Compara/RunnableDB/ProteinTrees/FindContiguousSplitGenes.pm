@@ -79,8 +79,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->check_if_exit_cleanly;
-
     my $protein_tree_id = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
     my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($protein_tree_id) or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $protein_tree->print_tree(0.0001) if($self->debug);
@@ -94,7 +92,6 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    $self->check_if_exit_cleanly;
     $self->check_for_split_genes
 }
 
@@ -102,7 +99,6 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    $self->check_if_exit_cleanly;
     $self->store_split_genes;
 }
 

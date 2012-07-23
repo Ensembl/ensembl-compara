@@ -95,8 +95,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->check_if_exit_cleanly;
-
     $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
@@ -113,7 +111,6 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
-  $self->check_if_exit_cleanly;
   $self->run_njtree_phyml;
 }
 
@@ -121,7 +118,6 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    $self->check_if_exit_cleanly;
     $self->store_genetree($self->param('protein_tree'));
 
     if ($self->param('store_intermediate_trees')) {

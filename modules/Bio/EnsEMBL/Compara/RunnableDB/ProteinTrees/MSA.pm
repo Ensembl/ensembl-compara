@@ -94,8 +94,6 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
-  $self->check_if_exit_cleanly;
-
     if (defined $self->param('flow_other_method') and $self->param('flow_other_method') and $self->input_job->retry_count >= 3) {
         $self->dataflow_output_id($self->input_id, 2);
         $self->input_job->incomplete(0);
@@ -161,7 +159,6 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    $self->check_if_exit_cleanly;
     return if ($self->param('single_peptide_tree'));
     $self->param('msa_starttime', time()*1000);
     $self->run_msa;
@@ -181,7 +178,6 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->check_if_exit_cleanly;
     return if ($self->param('single_peptide_tree'));
     $self->parse_and_store_alignment_into_proteintree;
 
