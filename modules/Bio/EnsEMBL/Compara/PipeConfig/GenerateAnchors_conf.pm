@@ -22,11 +22,11 @@ sub default_options {
 	'password' 		=> $ENV{'ENSADMIN_PSW'},
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara3',
+		-host   => 'compara4',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_test_mammal_anchors'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_seven_mammal_anchors_'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the pairwise alignments needed to get the overlaps
 	'compara_pairwise_db' => {
@@ -40,7 +40,7 @@ sub default_options {
 	'reference_genome_db_id' => 90,
 	  # pairwise alignments from these non-ref genome_db_ids and the reference_genome_db_id will be use to build the anchors
 	  # if it's an empty string then all pairwise alignments with the reference_genome_db_id will be used
-	'non_ref_genome_db_ids' => [39,61,57,3,132,108],
+	'non_ref_genome_db_ids' => [39,61,57,3,132,108,122],
 #	'non_ref_genome_db_ids' => [],
 	  # location of species core dbs which were used in the pairwise alignments
 	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/67' ],
@@ -261,7 +261,7 @@ sub pipeline_analyses {
                 -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
                 -hive_capacity => 10, 
                 -can_be_empty => 1,
-                -rc_id => 'mem3500',
+                -rc_name => 'mem3500',
            },  
 	   {
 		-logic_name    => 'gerp_constrained_element',
