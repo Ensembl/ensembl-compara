@@ -46,12 +46,12 @@ sub new {
     _r               => undef,
     no_load          => undef,
     altered          => 0,
-    has_das          => 1,
     _core            => undef,
     _tree            => new EnsEMBL::Web::Tree,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
       storable     => 1,
+      has_das      => 1,
       image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
       margin       => 5,
       spacing      => 2,
@@ -60,7 +60,7 @@ sub new {
       slice_number => '1|1',
       toolbars     => { top => 1, bottom => 0 },
     },
-    extra_menus      => {
+    extra_menus => {
       active_tracks    => 1,
       favourite_tracks => 1,
       search_results   => 1,
