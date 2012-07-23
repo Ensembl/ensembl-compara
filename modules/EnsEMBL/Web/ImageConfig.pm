@@ -45,20 +45,20 @@ sub new {
     _useradded       => {}, # contains list of added features
     _r               => undef,
     no_load          => undef,
-    storable         => 1,
     altered          => 0,
     has_das          => 1,
     _core            => undef,
     _tree            => new EnsEMBL::Web::Tree,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
-      image_width => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
+      storable     => 1,
+      image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
       margin       => 5,
       spacing      => 2,
       label_width  => 113,
       show_labels  => 'yes',
       slice_number => '1|1',
-      toolbars     => {'top' => 1,'bottom'  => 0},
+      toolbars     => { top => 1, bottom => 0 },
     },
     extra_menus      => {
       active_tracks    => 1,
@@ -200,9 +200,9 @@ sub menus {
 sub init   {}
 sub modify {} # For plugins
 
-sub storable :lvalue { $_[0]->{'storable'}; } # Set to 1 if configuration can be altered
-sub altered  :lvalue { $_[0]->{'altered'};  } # Set to 1 if the configuration has been updated
-sub has_das  :lvalue { $_[0]->{'has_das'};  } # Set to 1 if there are DAS tracks
+sub storable :lvalue { $_[0]{'_parameters'}{'storable'}; } # Set to 1 if configuration can be altered
+sub has_das  :lvalue { $_[0]{'_parameters'}{'has_das'};  } # Set to 1 if there are DAS tracks
+sub altered  :lvalue { $_[0]{'altered'};                 } # Set to 1 if the configuration has been updated
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
