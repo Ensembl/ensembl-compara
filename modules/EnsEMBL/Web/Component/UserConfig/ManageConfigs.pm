@@ -15,9 +15,9 @@ sub content {
     <input type="hidden" class="panel_type" value="ConfigManager" />
     <div class="config_manager">
       <div class="sets">
-        <div class="notes">
-          <h4>Help</h4>
-          <p class="space-below">You change names and descriptions by clicking on them in the table</p>
+        <div class="info">
+          <h3>Help</h3>
+          <div class="message-pad"><p>You change names and descriptions by clicking on them in the table</p></div>
         </div>
         <h2>Your configurations for this page</h2>
         %s
