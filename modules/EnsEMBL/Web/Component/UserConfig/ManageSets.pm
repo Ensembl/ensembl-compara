@@ -159,7 +159,7 @@ sub new_set_form {
   
   $form->add_field({ type => 'String', name => 'name',        label => 'Configuration set name', required => 1, maxlength => 255 });
   $form->add_field({ type => 'Text',   name => 'description', label => 'Configuration set description'                           });
-  $form->add_button({ type => 'submit', value => 'Save', field_class => 'save' });
+  $form->add_button({ type => 'submit', value => 'Save', field_class => 'save_button' });
   
   return $form->render;
 }

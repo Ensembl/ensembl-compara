@@ -62,7 +62,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       
       return false;
     }).on('click', 'a.edit_record', function () {
-      var els   = $('.edit_set, form .save, a.create_set', panel.el).toggle();
+      var els   = $('.edit_set, form .save_button, a.create_set', panel.el).toggle();
       var show  = $('form', panel.el).toggleClass('edit_configs').find('[name=name]').val('editing').end().hasClass('edit_configs');
       var group = $(this).parents('.config_group');
       
