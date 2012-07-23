@@ -11,7 +11,7 @@ sub content {
   my $hub                 = $self->hub;
   my $db_adaptor          = $hub->database($hub->param('fdb'));
   my $feature_set         = $db_adaptor->get_FeatureSetAdaptor->fetch_by_name($hub->param('fs')); 
-  my $experiment          = $feature_set->get_Experiment;
+  my $input_set           = $feature_set->get_InputSet;
   my ($chr, $start, $end) = split /\:|\-/g, $hub->param('pos'); 
   my $length              = $end - $start + 1;
   my $slice               = $hub->database('core')->get_SliceAdaptor->fetch_by_region('toplevel', $chr, $start, $end);
@@ -42,14 +42,21 @@ sub content {
     label => $feature_set->display_label
   });
 
-  if ($experiment) {
+  if ($input_set) {
+    my $source_info = $input_set->source_info; warn scalar @$source_info;
+    my $experiment_link = "";
+
+    foreach my $source (@{$source_info}){ warn $source;
+      my $source_link = sprintf '<a href="%s">%s</a>',
+      $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$feature_set->name}),
+      $source->[0];
+      $experiment_link .= "$source_link";
+    }
+
     $self->add_entry({
       type        => 'Source',
-      label_html  => sprintf('<a href="%s">%s</a>',
-        $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$feature_set->name}),
-        $experiment->source_info->[0] || 'View'
-      )}
-    );
+      label_html  =>  $experiment_link
+    });
   }
 
   $self->add_entry({
