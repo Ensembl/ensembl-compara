@@ -50,11 +50,11 @@ div.column-three            { float: left; width:33.3333%;  } /* actual column f
 div.column-four             { float: left; width:25%;       } /* actual column for 4 col layout */
 div.column-padding          { margin-left: 8px; margin-right: 8px; } /* inner div for columns to provide padding */
 
-/* IE clearly doesn't understand simple mathematics */
-body.ie7 .column-two             { width:49.2%; }
-body.ie6 .column-two             { width:49.6%; }
-body.ie7 .column-three           { width:33.2%; }
-body.ie6 .column-three           { width:32.6%; }
+body.ie67 div.column-wrapper,
+body.ie67 div.column-two,
+body.ie67 div.column-three,
+body.ie67 div.column-four,
+body.ie67 div.column-padding  { zoom: 100% }
 
 table.blobs { border-spacing: 16px 0; margin: 0 -16px 16px; }
 table.blobs td { padding:10px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
