@@ -119,10 +119,9 @@ sub get_dataset_urls {
   
   foreach my $type (qw/gene transcript/) {  
     my $sth = $adaptor->prepare(
-      "SELECT gs.stable_id, g.${type}_id, cs.species_id 
-       FROM ${type} g, ${type}_stable_id gs, seq_region sr, coord_system cs
-       WHERE g.${type}_id = gs.${type}_id         
-       AND   g.seq_region_id = sr.seq_region_id   
+      "SELECT g.stable_id, g.${type}_id, cs.species_id 
+       FROM ${type} g, seq_region sr, coord_system cs
+       WHERE g.seq_region_id = sr.seq_region_id   
        AND   sr.coord_system_id = cs.coord_system_id 
        AND   g.analysis_id IN (" . join(', ', get_analysis_ids($adaptor)) . ")"
     );
@@ -134,11 +133,10 @@ sub get_dataset_urls {
       
       # generating full URL with gene, location and transcript
       my $sth = $adaptor->prepare(
-        "SELECT ts.stable_id, seq_region_start, seq_region_end, sr.name, gs.stable_id 
-         FROM seq_region sr, transcript t, transcript_stable_id ts, gene_stable_id gs 
-         WHERE gs.gene_id=t.gene_id 
+        "SELECT t.stable_id, t.seq_region_start, t.seq_region_end, sr.name, g.stable_id 
+         FROM seq_region sr, transcript t, gene g 
+         WHERE g.gene_id=t.gene_id 
          AND sr.seq_region_id=t.seq_region_id 
-         AND t.transcript_id=ts.transcript_id 
          AND t.${type}_id = ?"
       );
       $sth->execute($id);
