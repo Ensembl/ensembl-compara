@@ -115,7 +115,7 @@ sub content {
       my $filter = $class->new({hub => $self->hub});
       
       $html .= '<div class="panel print_hide">';
-      $html .= sprintf '<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
+      $html .= sprintf '<div class="error filter-error"><h3>Error</h3><div class="error-pad"><p>%s</p></div></div>', $filter->error_message($self->filter_code);
       $html .= '</div>';
       
       $content .= $html;
@@ -143,7 +143,7 @@ sub get_json {
     
     if ($class && $self->dynamic_use($class)) {
       $filter   = $class->new({hub => $self->hub});
-      $content .= sprintf "<div style='width:80%' class='error print_hide'><h3>Error</h3><div class='error-pad'>%s</div></div>", $filter->error_message($self->filter_code);
+      $content .= sprintf "<div class='error filter-error print_hide'><h3>Error</h3><div class='error-pad'><p>%s</p></div></div>", $filter->error_message($self->filter_code);
     }
   }
   
