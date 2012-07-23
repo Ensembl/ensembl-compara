@@ -18,9 +18,9 @@ div.modal_content div.species_select select { display: block; width: 100%; margi
 
 form.configuration div,
 form.configuration h2                                               { -webkit-margin-collapse: collapse; }
-form.configuration h1                                               { border-bottom: 1px solid [[PANEL_BORDER]]; display: none; margin: 0 0 6px; }
+form.configuration h1                                               { border-bottom: 1px solid [[PANEL_BORDER]]; display: none; }
 form.configuration h1,
-form.configuration div.config h2                                    { cursor: pointer; font-size: 20px; }
+form.configuration div.config h2                                    { cursor: pointer; font-size: 20px;  margin: 0 0 8px; padding-bottom: 2px; }
 form.configuration div.config h3                                    { margin: 10px 0 5px; color: [[PAGE_TEXT]]; text-decoration: underline; font-size: 14px; padding: 2px 5px; }
 form.configuration div.config h4                                    { margin: 10px 0 5px 5px; color: [[PAGE_TEXT]]; }
 form.configuration div.config img                                   { height: 17px; width: 17px; margin-right: 4px; padding: 2px; vertical-align: top; }
@@ -52,7 +52,7 @@ form.configuration div.config ul.popup_menu li img.tick             { margin: 9p
 form.configuration div.config ul.popup_menu li span                 { margin-left: 3px; }
 form.configuration div.config ul.popup_menu li span.current         { font-weight: normal; cursor: default; font-size: 0.9em; position: relative; top: 3px; }
 form.configuration div.config div.subset.first,
-form.configuration div.config div.subset.active                     { margin-top: -5px; }
+form.configuration div.config div.subset.active                     { margin-top: -4px; }
 form.configuration div.config div.subset.active h4                  { display: block; margin-top: 10px; }
 form.configuration div.config div.select_all strong:hover,
 form.configuration div.config li.track:hover,
@@ -65,8 +65,9 @@ form.configuration div.track_order span.menu_option                 { cursor: n-
 form.configuration.single div.config ul.config_menu li.hidden       { display: none!important; }
 
 form.export div.view_config h2,
-form.configuration.multi div.config h2                              { font-size: 15px; border-bottom-width: 0; color: [[MENU_LINK]]; margin-bottom: 8px; padding-bottom: 0; }
+form.configuration.multi div.config h2                              { font-size: 15px; border-bottom-width: 0; color: [[MENU_LINK]]; margin-bottom: 5px; padding-bottom: 0; }
 form.export div.view_config h2                                      { border-bottom-width: 1px; }
+form.configuration.multi div.config                                 { margin-bottom: 8px; }
 form.configuration.multi div.config h3,
 form.configuration.multi div.config h4,
 form.configuration.multi div.config div.select_all                  { display: none!important; }
@@ -74,7 +75,7 @@ form.configuration.multi div.config ul.config_menu ul.config_menu   { margin-lef
 form.configuration.multi div.favourite_tracks                       { margin-bottom: 0; }
 form.configuration.multi div.favourite_tracks img                   { margin: 0; padding: 0; width: auto; height: auto; }
 form.configuration.multi div.config div.subset.first,
-form.configuration.multi div.config div.subset.active               { margin-bottom: 8px; margin-top: 0px; }
+form.configuration.multi div.config div.subset.active               { margin-top: 0px; }
 
 body.ie6 form.configuration div.config ul.config_menu li            { height: 21px; }
 body.ie6 form.configuration div.config ul.popup_menu li             { height: auto; }
@@ -86,7 +87,7 @@ body.mac div.track_order span.menu_option                           { cursor: ns
 
 /* image config notes */
 
-div.image_config_notes                               { padding: 4px; }
+div.image_config_notes                               { padding: 4px!important; }
 div.image_config_notes .border                       { border-top: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding-top: 12px; margin-top: -8px; }
 div.image_config_notes .content div                  { float: left; margin-right: 32px; }
 div.image_config_notes ul.configuration_key          { list-style: none; padding: 0; margin-left: 4px; }
