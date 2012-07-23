@@ -26,8 +26,9 @@ use constant {
 
   HEADING_TAG             => 'h2',
   CSS_CLASS_HEADING       => '',
-  NOTES_HEADING_TAG       => 'h4',
-  CSS_CLASS_NOTES         => 'notes',
+  NOTES_HEADING_TAG       => 'h3',
+  CSS_NOTES_MESSAGE_PAD   => 'message-pad',
+  CSS_CLASS_NOTES         => 'info',
   
   _FLAG_HEAD_NOTE         => 'is_head_note',
   _FLAG_FOOT_NOTE         => 'is_foot_note',
@@ -188,6 +189,7 @@ sub add_notes {
 
   $notes->append_child({
     'node_name'   => 'div',
+    'class'       => $self->CSS_NOTES_MESSAGE_PAD,
     'inner_HTML'  => $params->{'text'}
   }) if exists $params->{'text'};
 
