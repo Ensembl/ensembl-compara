@@ -22,7 +22,7 @@ sub new {
   my $feature_type_adaptor  = $funcgen_db_adaptor->get_FeatureTypeAdaptor;
 
   my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project', 'feature_type' => 'Feature type'};
-  my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $funcgen_db_adaptor->get_ExperimentAdaptor->fetch_experiment_filter_counts;
+  my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $funcgen_db_adaptor->get_FeatureSetAdaptor->fetch_feature_set_filter_counts;
   my $feature_sets_info     = $self->{'_feature_sets_info'}     = [];
   my $feature_sets          = [];
 
@@ -64,24 +64,30 @@ sub new {
   # Get info for all feature sets and pack it in an array of hashes
   foreach my $feature_set (@$feature_sets) {
 
-    my $experiment = $feature_set->get_Experiment;
+    my $input_set = $feature_set->get_InputSet;
+
+    if (! defined $input_set) {
+      warn "Failed to get InputSet for FeatureSet:\t".$feature_set->name;
+      next;
+    }
+
+    my $experiment = $input_set->get_Experiment;
     if (!$experiment) {
-      warn "Failed to get Experiment for FeatureSet:\t".$feature_set->name;
+      warn "Failed to get Experiment for InputSet:\t".$input_set->name;
       next;
     }
 
     my $experiment_group  = $experiment->experimental_group;
     $experiment_group     = undef unless $experiment_group->is_project;
     my $project_name      = $experiment_group ? $experiment_group->name : '';
-    my $source_info       = $experiment->source_info; # returns [ source_label, source_link ]
+    my $source_info       = $experiment->source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
     my $cell_type         = $feature_set->cell_type;
     my $cell_type_name    = $cell_type->name;
     my $feature_type      = $feature_set->feature_type;
     my $evidence_label    = $feature_type->evidence_type_label;
 
     push @$feature_sets_info, {
-      'source_label'        => $source_info->[0],
-      'source_link'         => $source_info->[1],
+      'source_info'         => $source_info,
       'project_name'        => $project_name,
       'project_url'         => $experiment_group ? $experiment_group->url : '',
       'feature_set_name'    => $feature_set->name,
