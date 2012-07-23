@@ -17,7 +17,7 @@ sub content {
   my $focus = $self->focus;
   if ($self->hub->param('pop1')) {
     return $self->new_twocol(
-      $focus ? ['Focus:', $focus] : (),
+      $focus ? ['Focus:', $focus, 1] : (),
       $self->prediction_method,
       ['Populations:', $self->population_info, 1]
     )->render;
