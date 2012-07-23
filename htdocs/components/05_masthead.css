@@ -57,6 +57,8 @@ body.ie #masthead ul.tabs span.dropdown           { background: url(/i/tab_off_l
 body.ie #masthead ul.tabs li.active               { background-image: url(/i/tab_on_r.gif); }
 body.ie #masthead ul.tabs li.active a,
 body.ie #masthead ul.tabs li.active span.dropdown { background-image: url(/i/tab_on_l.gif); color: [[PAGE_TEXT]]; font-weight: bold; }
+body.ie #masthead ul.tabs li.active a.toggle      { background: none; }
+
 
 body.ie67 #masthead                               { z-index: 9999; }
 body.ie67 #masthead .tabs_holder                  { z-index: -1; }
