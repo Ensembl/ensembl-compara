@@ -69,7 +69,7 @@ span.structural-variation-allele { float: left; margin: 4px 4px 4px 0; padding: 
 
 /* Chromosome and synteny images & forms */
 div.synteny_image                                         { float: left; margin-right: 16px; }
-div.synteny_forms                                         { white-space: nowrap; float: left; margin-bottom: 6px; }
+div.synteny_forms                                         { white-space: nowrap; float: left; margin-bottom: 6px; width: 400px; }
 div.synteny_forms form                                    { margin: 0; }
 div.chromosome_image                                      { float:left; margin-right: 16px; }
 div.chromosome_stats                                      { float:left; min-width: 350px; white-space: nowrap; }
@@ -79,3 +79,7 @@ div.chromosome_stats form div.form-field div.ff-right     { text-align: right; }
 div.synteny_forms    form div.form-field select.fselect,
 div.chromosome_stats form div.form-field select.fselect   { width: 120px; }
 div.chromosome_stats form div.form-field input.fbutton    { margin-right: 0; }
+
+body.ie6 div.synteny_image                                { float: none; }
+body.ie6 div.synteny_forms                                { float: none; }
+
