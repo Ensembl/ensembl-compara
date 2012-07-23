@@ -305,15 +305,15 @@ sub set_user_settings {
   my ($self, $data) = @_;
   
   foreach my $key (keys %$data) {
-    my $node = $self->get_node($key);
+    my $node = $self->get_node($key) || $self->tree->create_node($key); # If node doesn't exist, it is a track from a different species whose configuration needs to be retained
     
     next unless $node;
     
-    my $renderers = $node->data->{'renderers'};
+    my $renderers = $node->data->{'renderers'} || [];
     my %valid     = @$renderers;
     
     foreach (keys %{$data->{$key}}) {
-      if ($_ eq 'display' && !$valid{$data->{$key}{$_}}) {
+      if ($_ eq 'display' && %valid && !$valid{$data->{$key}{$_}}) {
         $node->set_user($_, $valid{'normal'} ? 'normal' : $renderers->[2]); # index 2 contains the code for the first "on" renderer
       } else {
         $node->set_user($_, $data->{$key}{$_});
@@ -885,6 +885,7 @@ sub update_from_input {
     $diff = from_json($diff);
     
     $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
+    
     $reload        = $self->altered;
     $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
     $reload      ||= $track_reorder;
