@@ -8,7 +8,8 @@ sub new {
   return bless {'__raw__'=>$_[1],'__extra__'=>{} },$_[0];
 }
 
-sub seqname { my $self = shift; (my $T = ($self->_seqname || '')) =~s/^chr//; return $T; }
+sub _seqname { return ''; } # Override me
+sub seqname { my $self = shift; (my $T = ($self->_seqname)) =~s/^chr//; return $T; }
 sub start   { my $self = shift; return $self->{'start'}; }
 sub end     { my $self = shift; return $self->{'end'}; }
 sub strand        { return 0; }
