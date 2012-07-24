@@ -158,36 +158,31 @@ dd { margin-bottom: 16px; }
 div.error,
 div.warning,
 div.info,
-div.hint            { border: none; margin: 0 0 16px; }
-div.error div,
-div.warning div,
-div.info div,
-div.hint div        { border: 1px solid; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
-
-div.syntax-error,
-div.error           { color: #333; background-color: [[PAGE_BG]]; }
-div.error div       { border-color: #a55; }
-div.warning div     { border-color: #fd9; }
-div.info div,
-div.hint div        { border-color: #ccc; }
-
-.error-pad, .message-pad { padding: 16px 16px 0; }
-
-div.filter-error  { margin: 16px 16px 0;}
+div.hint            { margin: 0 0 16px; }
 
 div.error h3,
 div.warning h3,
 div.info h3,
-div.hint h3         { border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; margin: 0; padding: 4px 8px 2px 24px; }
+div.hint h3         { color: [[PAGE_BG]]; margin: 0; padding: 4px 8px 2px 24px; background: [[ERROR_BG]] url(/i/16/rev/alert.png) no-repeat 4px center; border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; }
+div.error h4        { color: [[PAGE_BG]]; }
+div.warning h3      { background-color: [[WARNING_BG]]; }
+div.info h3         { background-image: url(/i/16/info.png);  background-color: [[INFO_BG]]; }
+div.hint h3         { background-image: none; padding: 4px 8px 2px; background-color: [[INFO_BG]]; height: 20px; }
 
-div.error h3,
-div.warning h3,
-div.info h3                   { background-repeat: no-repeat; background-position: 4px 2px; }
-div.error h3,
-div.error h4                  { background-image: url(/i/16/rev/alert.png); background-color: #a55; color: [[PAGE_BG]]; }
-div.warning h3                { background-image: url(/i/16/rev/alert.png); background-color: #daa246; }
-div.info h3                   { background-image: url(/i/16/info.png);  background-color: #ccc; }
-div.hint h3                   { background-image: none; padding: 4px 8px 2px 8px; background-color: #ccc; height: 20px; padding-top: 8px; }
+div.error div,
+div.warning div,
+div.info div,
+div.hint div        { border: 1px solid [[ERROR_BG]]; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
+div.warning div     { border-color: [[WARNING_BG]]; }
+div.info div,
+div.hint div        { border-color: [[INFO_BG]]; }
+
+div.syntax-error    { color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; }
+
+.error-pad,
+.message-pad        { padding: 16px 16px 0; }
+
+div.filter-error    { margin: 16px 16px 0; }
 
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
