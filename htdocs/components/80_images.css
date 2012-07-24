@@ -46,6 +46,8 @@ body.ie67 div.iexport_menu a { margin-top: -16px; }
 a.icon_link          { text-decoration:none; }
 div.icon             { padding:4px 8px 4px 0; }
 div.sprite,
+div.sprite_disabled  { display:inline-block; }
+div.sprite,
 div.sprite_disabled,
 span.sprite,
 span.sprite_disabled { height:16px; width:16px; margin-top:2px; background: no-repeat top left;}
