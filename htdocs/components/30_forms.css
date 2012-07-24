@@ -1,6 +1,10 @@
 form div, form > fieldset, form h2 {
   -webkit-margin-collapse: separate; /* crome and safari fix for margins of form components */
 }
+input::-moz-focus-inner { /* Remove button padding in FF */
+  border: 0;
+  padding: 0;
+}
 
 form fieldset { border: none; padding: 0; margin: 0; }
 
@@ -110,6 +114,11 @@ input.fbutton {
   font-weight:bold;
   margin-bottom: 3px;
   cursor: pointer;
+  padding: 2px 6px;
+}
+body.ie67 input.fbutton {
+  padding: 0 2px;
+  border: 0; /* double border doesn't work on IE6 & 7 */
 }
 input.fbutton:active, input.fbutton:hover {
   background-color:[[BUTTON_BG_HOVER]];
@@ -124,6 +133,26 @@ input.fbutton.disabled, input.fbutton.disabled:active {
 .inline .ftext, .inline .ftextarea, .inline .fselect, .inline .fbutton, .inline .ffile {
   width: auto;
   margin-right: 6px;
+}
+.inline input.fbutton {
+  vertical-align: bottom;
+  height: 17px;
+  position: relative;
+  top: -1px; /* to offset outline */
+  font-size: 12px;
+  padding: 0 6px 1px;
+  border-width: 1px;
+  outline: [[BUTTON_BG]] solid 1px; /* to add a double border effect */
+}
+body.ie67 .inline input.fbutton {
+  outline: none;
+  height: 22px;
+  top: -1px;
+  border: none;
+  padding: 0 6px;
+}
+body.ie6 .inline input.fbutton {
+  height: 20px;
 }
 .ff-checklist {
   margin-right: 10px;
