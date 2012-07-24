@@ -229,8 +229,8 @@ sub form_evidence_types {
     <h1>Regulation</h1>
     <div class="toggle_tutorial"></div>
     <div class="header_wrapper">
-      <h2>%s</h2>
-      <div class="help" title="Click for more information"></div>
+      <h2>%s</h2> 
+      <div class="sprite info_icon help" title="Click for more information">&nbsp;</div>
       <div class="desc">%s</div>
     </div>
     <div class="filter_wrapper">
