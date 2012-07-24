@@ -45,6 +45,12 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     this.elLk.sites.on('click', function () {
       panel.elLk.menu.toggle();
     });
+    
+    $('form', this.el).on('submit', function () {
+      if (panel.elLk.input.val() === panel.label || panel.elLk.input.val() === '') {
+        return false;
+      }
+    });
   },
   
   updateSearch: function (type) {
