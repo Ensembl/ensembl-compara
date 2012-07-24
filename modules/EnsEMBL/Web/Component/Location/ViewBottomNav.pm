@@ -77,8 +77,8 @@ sub navbar {
             <label for="loc_r">Location:</label>
             $extra_inputs
             $g_input
-            <input name="r" id="loc_r" class="location_selector" style="width:250px" value="%s" type="text" />
-            <input value="Go" type="submit" class="go-button" />
+            <input name="r" id="loc_r" class="location_selector" value="%s" type="text" />
+            <a class="go-button" href="">Go</a>
           </form>
           <div class="js_panel" style="float: left; margin: 0">
             <input type="hidden" class="panel_type" value="AutoComplete" />
@@ -86,8 +86,8 @@ sub navbar {
               <label for="loc_q">Gene:</label>
               $extra_inputs
               <input name="g" value="" type="hidden" />
-              <input name="q" id="loc_q" class="autocomplete" style="width:250px" value="" type="text" />
-              <input value="Go" type="submit" class="go-button" />
+              <input name="q" id="loc_q" class="autocomplete" value="" type="text" />
+              <a class="go-button" href="">Go</a>
             </form>
           </div>
         </div>

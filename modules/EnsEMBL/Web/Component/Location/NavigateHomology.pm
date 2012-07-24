@@ -34,8 +34,6 @@ sub content {
   my $chr            = $object->seq_region_name; 
   my $sliceAdaptor   = $hub->get_adaptor('get_SliceAdaptor');
   my $max_index      = 15;
-  warn "<<< UPSTREAM SLICE 1 - ".($start - 1);
-  warn ">>> DNSTREAM SLICE ".($seq_region_end + 1).' - '.$chromosome_end;
   my $upstream       = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $start - 1 );
   my $downstream     = $sliceAdaptor->fetch_by_region('chromosome', $chr, $seq_region_end + 1, $chromosome_end );
   my @up_genes       = $upstream ?   reverse @{$object->get_synteny_local_genes($upstream)} : ();
@@ -103,7 +101,7 @@ sub content {
 
   return qq{
     <div class="navbar clear">
-      <table style="width:100%">
+      <table class="homology" style="width:100%">
         <tr>
           <td class="left" style="padding:0px 2em; vertical-align:middle;">$up_link</td>
           <td class="center" style="padding:0px 2em; vertical-align:middle">$centre_content</td>

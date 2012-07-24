@@ -75,15 +75,18 @@ sub content {
   
   ## Get the species in the alignment
   return sprintf(qq{
-      <div class="navbar" style="width:%spx; text-align:left">
+    <div class="js_panel">
+      <input type="hidden" class="panel_type" value="LocationNav" />
+      <div class="navbar alignment_select" style="width:%spx; text-align:left">
         <form action="%s" method="get">
           <div>
             <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
             %s
-            <input value="Go" type="submit" class="go-button" />
+            <a class="go-button" href="">Go</a>
           </div>
         </form>
-      </div>},
+      </div>
+    </div>},
     $self->image_width, 
     $url->[0],
     $options,
