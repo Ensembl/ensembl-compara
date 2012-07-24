@@ -19,9 +19,9 @@ body.static div#content { margin-left: 240px; }
 div#content div.panel { background-color:[[PANEL_BG]]; }
 */
 
-a.help-header { color: [[PAGE_HEADER]]; text-decoration: none; background: url(/i/16/swp/info.png) no-repeat 100% 1px; padding-right: 24px; height: 19px; font-size: 19px; line-height: 16px; display: inline-block; }
-body.ie7 a.help-header { line-height: 22px; } 
-a.help-header:hover { background-position: 100% -17px; }
+a.help-header                     { color: [[PAGE_HEADER]]; text-decoration: none; }
+a.help-header span.sprite         { float: none; display: inline-block; background-position: 0px -1px; vertical-align: bottom; }
+a.help-header:hover span.sprite   { background-position: 0px -18px; }
 
 .glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
 .floating_popup { 
