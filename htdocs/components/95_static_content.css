@@ -79,6 +79,8 @@ div.species-list div.species-box a    { text-decoration: none; font-weight: bold
 div.species-list div.species-box a span  { font-size: 108%; display: inline-block; }
 p.customise-species-list            { clear: both; }
 
+body.ie67 div.species-list div.species-box a    { cursor: pointer; }
+
 /*----------------------------------------------------------------------
 species page
 ----------------------------------------------------------------------*/
@@ -119,9 +121,7 @@ search-form on home page and species home page
 ----------------------------------------------------------------------*/
 form.search-form div.form-field { margin: 0; }
 
-form.search-form          label.ff-label { line-height: 22px; font-weight: normal; width: auto; }
-form.homepage-search-form label.ff-label { line-height: 20px; }
-
+form.search-form          label.ff-label { line-height: 20px; font-weight: normal; width: auto; position: relative; top: 2px; }
 form.search-form          div.ff-right,
 form.search-form          div.ff-notes { padding-left: 72px; }
 form.search-form          div.ff-notes p.search-example { margin: 0; }
