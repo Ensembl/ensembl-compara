@@ -1,18 +1,18 @@
-div.config div.funcgen_matrix_wrapper                              { position: relative; padding-top: 45px; border-top: 1px solid [[PANEL_BORDER]]; }
+div.config div.funcgen_matrix_wrapper                              { position: relative; padding-top: 45px; border-top: 1px solid transparent; }
 
-div.config div.funcgen_matrix h1                                   { display: block; }
-div.config div.funcgen_matrix h2                                   { margin: 0 4px 0 0; border: 0; float: left; font-size: 15px; }
+div.config div.funcgen_matrix h1                                   { display: block; border:0; }
+div.config div.funcgen_matrix h2                                   { margin: 0 8px 0 0; border: 0; float: left; font-size: 15px; }
 div.config div.funcgen_matrix div.header_wrapper                   { margin: 3px 0 10px 0; clear: both; }
-div.config div.funcgen_matrix div.filter_wrapper                   { position: relative; padding: 7px 0; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; clear: both; }
+div.config div.funcgen_matrix div.filter_wrapper                   { position: relative; padding: 7px 0; border: 1px solid transparent; border-width: 1px 0; clear: both; }
 div.config div.funcgen_matrix div.filter_wrapper h2                { margin: 0 18px 18px 0; }
 div.config div.funcgen_matrix div.filter_wrapper select            { width: 185px; margin-bottom: 5px; }
 div.config div.funcgen_matrix div.filter_wrapper input             { width: 180px; }
 div.config div.funcgen_matrix div.filter_wrapper .filter           { position: relative; left: 3px; display: block; }
 div.config div.funcgen_matrix input.filter                         { color: #999999; }
 div.config div.funcgen_matrix div.no_results                       { font-weight: bold; margin-top: 5px; display: none; }
-div.config div.funcgen_matrix div.help                             { background: url(/i/info_toggle.png) top left; position: relative; top: 2px; height: 17px; width: 17px; display: inline-block; cursor: pointer; }
+div.config div.funcgen_matrix div.help                             { height: 18px; width: 18px; cursor: pointer; }
 div.config div.funcgen_matrix div.help.open                        { background-position: bottom left; }
-div.config div.funcgen_matrix div.desc                             { margin: 7px 0 2px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; text-align: left; clear: both; }
+div.config div.funcgen_matrix div.desc                             { margin: 7px 0 2px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid transparent; text-align: left; clear: both; }
 
 div.config div.matrix_key                                          { margin-bottom: 0; width: 545px; height: 41px; border-bottom: 0; clear: both; }
 div.config div.matrix_key h2                                       { border: 0; width: 55px; float: left; position: relative; top: 10px; }
