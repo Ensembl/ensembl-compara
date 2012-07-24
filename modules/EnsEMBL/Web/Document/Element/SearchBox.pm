@@ -31,7 +31,7 @@ sub content {
   my @options        = $self->search_options;
   my $search_code    = lc $self->default_search_code;
      $search_code    = grep({ $_->[0] eq $search_code } @options) ? $search_code : $options[0][0];
-  my $search_options = join '', map qq(<div class="$_->[0]"><img src="${img_url}search/$_->[0].gif" alt="$_->[1]"/>$_->[1]<input type="hidden" value="$_->[2]&hellip;"></div>\n), @options;
+  my $search_options = join '', map qq(<div class="$_->[0]"><img src="${img_url}search/$_->[0].gif" alt="$_->[1]"/>$_->[1]<input type="hidden" value="$_->[2]&hellip;" /></div>\n), @options;
   my ($search_label) = map { $_->[0] eq $search_code ? "$_->[2]&hellip;" : () } @options;
 
   return qq(
