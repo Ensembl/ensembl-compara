@@ -296,17 +296,6 @@ Select Arrow and select where you want the new species to go (use ncbi taxonomy 
 Then select in the menu "Tree Edit > Add > Sister"
 Click on the empty node and edit name (add new name) and branch length
 
-The new branch lengths are computed from the protein trees
-
-Between the new species and the new ancestral node:
-\
-Between two ancestral nodes
-SELECT distance_to_parent FROM gene_tree_node_attr gtna1 JOIN gene_tree_node gtn USING (node_id) JOIN gene_tree_node_attr gtna2 ON gtna2.node_id = gtn.parent_id WHERE gtna1.taxon_id = 123370 AND gtna2.taxon_id = 186625 AND gtna2.node_type = 'speciation' AND gtna1.node_type = 'speciation' 
-
-[the median is usually fine. Have a look at the distribution to make sure]
-
-# rel.67: tilapia 0.102518
-
 The tree should appear in the Toolbox but if not, then save the tree
 Copy the new tree into
     $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/species_tree_blength.nh
