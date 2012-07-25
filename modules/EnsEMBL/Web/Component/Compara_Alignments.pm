@@ -97,7 +97,8 @@ sub content_sub_slice {
     comparison      => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',
     sub_slice_start => $start,
-    sub_slice_end   => $end
+    sub_slice_end   => $end,
+    focus_variant_feature => $hub->param('vf'),
   };
   
   for (qw(exon_display exon_ori snp_display line_numbering conservation_display codons_display region_change_display title_display align)) {

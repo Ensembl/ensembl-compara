@@ -12,6 +12,7 @@ sub get_sequence_data {
   my @consequence = $hub->param('consequence_filter');
   my (@sequence, @markup, @temp_slices, @pos);
   
+  my $focus = $config->{'focus_variant_feature'};
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if join('', @consequence) ne 'off';
   
   foreach my $sl (@$slices) {
@@ -19,6 +20,8 @@ sub get_sequence_data {
     my $slice = $sl->{'slice'};
     my $name  = $sl->{'name'};
     my $seq   = uc $slice->seq(1);
+
+    my $vfa = Bio::EnsEMBL::Registry->get_adaptor($name, 'variation', 'variationfeature');
     
     my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
     my @variation_seq = map ' ', 1..length $seq;
@@ -40,7 +43,12 @@ sub get_sequence_data {
       my $snps   = [];
       my $u_snps = {};
     
+      my $old_ifv; 
       eval {
+        if($vfa and $focus) {
+          $old_ifv = $vfa->db->include_failed_variations;
+          $vfa->db->include_failed_variations(1);
+        }
         $snps = $slice->get_all_VariationFeatures;
         $snps = [ map { my $snp = $_; grep($config->{'consequence_filter'}{$_}, @{$snp->consequence_type}) || $config->{'v'} eq $snp->variation_name ? $snp : () } @$snps ] if $snps && $config->{'consequence_filter'};
       };
@@ -66,6 +74,7 @@ sub get_sequence_data {
       foreach (@ordered_snps) {
         my $variation_name = $_->variation_name;
         my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
+        my $failed         = $_->variation ? $_->variation->is_failed : 0;
         my $dbID           = $_->dbID;
         my $start          = $_->start;
         my $end            = $_->end;
@@ -75,7 +84,11 @@ sub get_sequence_data {
         my $var            = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>};
         my $snp_type       = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$_->consequence_type} ]->[0] : undef;
            $snp_type     ||= lc $_->display_consequence;
-        
+        $snp_type = 'failed' if($failed);
+        my $focus_snp = ( $dbID == $focus and 
+                          $name eq $config->{'species'});     
+        next if $failed and not $focus_snp;
+ 
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
           my @al = split /\//, $alleles;
@@ -125,6 +138,7 @@ sub get_sequence_data {
         
         @pos = ($s..$e) if $variation_name eq $config->{'v'};
       }
+      $vfa->db->include_failed_variations($old_ifv) if(defined $old_ifv);
     }
     
     $mk->{'variations'}->{$_}->{'align'} = 1 for @pos;

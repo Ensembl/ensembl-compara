@@ -943,7 +943,8 @@ sub class_to_style {
       co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}->{'default'}" } ],
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ]
+      bold => [ $i++, { 'font-weight' => 'bold' } ],
+      failed => [ $i++, { 'background-color' => "#$styles->{'SEQ_FAILED'}->{'default'}" } ],
     );
     
     foreach (keys %$var_styles) {
