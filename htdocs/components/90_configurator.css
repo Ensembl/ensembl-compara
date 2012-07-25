@@ -32,7 +32,7 @@ form.configuration div.config ul.config_menu                        { margin: 0;
 form.configuration div.config ul.config_menu li                     { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: right; background-color: #FFF; }
 form.configuration div.config ul.config_menu li.track               { cursor: pointer; }
 form.configuration div.config ul.config_menu li div.desc            { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[PANEL_BORDER]]; }
-form.configuration div.config ul.config_menu li .controls           { float: right; margin: 2px -5px 0; height: 17px; }
+form.configuration div.config ul.config_menu li .controls           { float: right; margin: -1px -5px 0; height: 17px; }
 form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
 form.configuration div.config ul.config_menu li .controls .empty    { cursor: default; }
 form.configuration div.config ul.config_menu li .menu_help.open     { background-position: bottom left; }
@@ -77,8 +77,8 @@ body.ie6 form.configuration div.config ul.config_menu li            { height: 21
 body.ie6 form.configuration div.config ul.popup_menu li             { height: auto; }
 body.ie6 form.configuration div.config ul.popup_menu li img         { margin: 2px; }
 body.ie6 form.configuration div.config div.select_all               { margin-bottom: 4px; }
-body.ie6 form.configuration div.config ul.config_menu li .controls  { margin-top: -16px; }
-body.ie7 form.configuration div.config ul.config_menu li .controls  { margin-top: -18px; }
+body.ie6 form.configuration div.config ul.config_menu li .controls  { margin-top: -19px; }
+body.ie7 form.configuration div.config ul.config_menu li .controls  { margin-top: -22px; }
 body.mac div.track_order span.menu_option                           { cursor: ns-resize; }
 
 /* image config notes */
