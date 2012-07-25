@@ -44,10 +44,9 @@ sub records_table {
     my $adaptor  = $hub->config_adaptor;
     my $sets     = $adaptor->all_sets;
     my $img_url  = $self->img_url;
-    my $icon_url = $self->img_url.'16/';
     my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a rel="%s" href="%s" class="save"></a></div>};
     my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
-    my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}check.png" alt="use" title="Use this configuration" /></a><div class="config_used">Configuration applied</div>};
+    my $active   = qq{<a class="edit icon_link" href="%s" rel="%s"><div class="sprite use_icon" title="Use this configuration">&nbsp;</div></a><div class="config_used">Configuration applied</div>};
     my (%configs, %rows);
     
     my @columns = (
@@ -125,8 +124,8 @@ sub records_table {
         config => { value => scalar @config ? sprintf($list, join '', map qq{<li>$_->[0]: <span class="cfg">$_->[1]</span></li>}, @config) : '', class => 'wrap' },
         sets   => { value => scalar @sets   ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets)                     : '', class => 'wrap' },
         active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
-        edit   => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%spencil.png" alt="edit" title="Edit sets" /></a>', $record_id, $icon_url),
-        delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%strash.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id, $icon_url),
+        edit   => sprintf('<a class="edit_record icon_link" href="#" rel="%s"><div class="sprite edit_icon" title="Edit sets">&nbsp;</div></a>', $record_id),
+        delete => sprintf('<a class="edit icon_link" href="%s" rel="%s"><div class="sprite delete_icon" title="Delete">&nbsp;</div></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id),
       };
     }
 
