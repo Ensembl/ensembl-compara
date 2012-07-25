@@ -62,7 +62,7 @@ form.configuration.single div.config ul.config_menu li.hidden       { display: n
 
 form.export div.view_config h2,
 form.configuration.multi div.config h2                              { font-size: 15px; border-bottom-width: 0; color: [[MENU_LINK]]; margin-bottom: 5px; padding-bottom: 0; }
-form.export div.view_config h2                                      { border-bottom-width: 1px; }
+form.export div.view_config h2                                      { border-bottom-width: 1px; color: [[PAGE_HEADER]]; padding-bottom: 2px; margin-bottom: 16px; }
 form.configuration.multi div.config                                 { margin-bottom: 8px; }
 form.configuration.multi div.config h3,
 form.configuration.multi div.config h4,
