@@ -63,7 +63,7 @@ table.blobs { border-spacing: 16px 0; margin: 0 -16px 16px; }
 table.blobs td { padding:10px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 table.blobs td.twocol   { width:50%;  }
 table.blobs td.fourcol  { width:25%;  }
-img.portal  { margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
+img.portal  { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 
 /***********************************
               two column
