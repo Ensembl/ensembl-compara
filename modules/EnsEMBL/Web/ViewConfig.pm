@@ -602,7 +602,7 @@ sub build_imageconfig_menus {
     
     if ($desc) {
       $desc = qq{<div class="desc">$desc</div>};
-      $help = qq{<div class="menu_help"></div>};
+      $help = qq{<div class="sprite info_icon menu_help"></div>};
     } else {
       $help = qq{<div class="empty"></div>};
     }
