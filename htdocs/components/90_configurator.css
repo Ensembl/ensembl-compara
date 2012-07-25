@@ -35,12 +35,8 @@ form.configuration div.config ul.config_menu li div.desc            { margin: 5p
 form.configuration div.config ul.config_menu li .controls           { float: right; margin: 2px -5px 0; height: 17px; }
 form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
 form.configuration div.config ul.config_menu li .controls .empty    { cursor: default; }
-form.configuration div.config ul.config_menu li .menu_help          { background: url(/i/info_toggle.png) no-repeat 0 -1px; }
-form.configuration div.config ul.config_menu li .menu_help:hover    { background-position: 0 -18px; }
-form.configuration div.config ul.config_menu li .menu_help.open     { background-position: 0 -36px; }
-form.configuration div.config ul.config_menu li .favourite          { background: url(/i/star.png) no-repeat 0 -1px; }
-form.configuration div.config ul.config_menu li .favourite:hover    { background-position: 0 -18px; }
-form.configuration div.config ul.config_menu li.fav .favourite      { background-position: 0 -36px; }
+form.configuration div.config ul.config_menu li .menu_help.open     { background-position: bottom left; }
+form.configuration div.config ul.config_menu li.fav .fave_icon      { background-position: left bottom; }
 form.configuration div.config ul.config_menu                        { margin-left: 5px; }
 form.configuration div.config ul.config_menu li .strand             { background: url(/i/strand.png) no-repeat left top; cursor: default!important; }
 form.configuration div.config ul.config_menu li.r .strand           { background-position: bottom left; }
