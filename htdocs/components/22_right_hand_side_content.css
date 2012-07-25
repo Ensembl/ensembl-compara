@@ -19,9 +19,12 @@ body.static div#content { margin-left: 240px; }
 div#content div.panel { background-color:[[PANEL_BG]]; }
 */
 
-a.help-header                     { color: [[PAGE_HEADER]]; text-decoration: none; }
-a.help-header span.sprite         { float: none; display: inline-block; background-position: 0px -1px; vertical-align: bottom; }
-a.help-header:hover span.sprite   { background-position: 0px -18px; }
+a.help-header                       { color: [[PAGE_HEADER]]; text-decoration: none; position: relative; }
+a.help-header span                  { margin-right: 6px; display: inline-block; }
+a.help-header span.sprite           { float: none; background-position: 0px -1px; position: relative; top: 1px; }
+a.help-header:hover span.sprite     { background-position: 0px -18px; }
+body.ie67 a.help-header span.sprite { position: absolute; }
+body.ie6 a.help-header span.sprite  { width: 18px; font-size: 14px; }
 
 .glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
 .floating_popup { 
