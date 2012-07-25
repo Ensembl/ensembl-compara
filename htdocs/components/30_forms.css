@@ -136,13 +136,27 @@ input.fbutton.disabled, input.fbutton.disabled:active {
 }
 .inline input.fbutton {
   vertical-align: bottom;
-  height: 17px;
+  height: 20px;
   position: relative;
-  top: -1px; /* to offset outline */
-  font-size: 12px;
-  padding: 0 6px 1px;
+  top: -1px; /* to offset shadow */
+  font-size: 10px;
+  padding: 0 6px;
   border-width: 1px;
-  outline: [[BUTTON_BG]] solid 1px; /* to add a double border effect */
+  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]]; /* to add a double border effect */
+  -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
+  box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
+}
+body.ienew .inline input.fbutton {
+  height: 19px;
+}
+body.mac .inline input.fbutton {
+  height: 17px;
+}
+body.ie8 .inline input.fbutton {
+  border-width: 3px;
+  border-style: double;
+  height: 24px;
+  top: 1px;
 }
 body.ie67 .inline input.fbutton {
   outline: none;
