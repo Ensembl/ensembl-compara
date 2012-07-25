@@ -65,10 +65,10 @@ sub render {
   my $favourites   = $self->favourites;
   my (@group_order, %label_check);
   
-  my $html = '<div class="static_all_species">
+  my $html = '<div class="static_all_species clear">
   <form action="#">
-    <h3 class="box-header">All genomes</h3>
-    <div style="margin-top:8px;">
+    <h3>All genomes</h3>
+    <p>
     <select name="species" class="dropdown_redirect">
       <option value="/">-- Select a species --</option>
   ';
@@ -122,7 +122,7 @@ sub render {
 
   $html .= qq{
         </select>
-      </div>
+      </p>
     </form>
     <p><a href="/info/about/species.html">View full list of all $sitename species</a></p>
     </div>
