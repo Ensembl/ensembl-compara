@@ -91,12 +91,13 @@ sub render_species_list {
   return $fav_html if $fragment;
   
   # output list
-  my $html = sprintf qq{<div class="static_favourite_species"><h3>%s genomes</h3><div class="species_list_container species-list">$fav_html</div></div><p class="customise-species-list">(%s)</p>}, 
+  my $html = sprintf qq{<div class="static_favourite_species"><h3>%s genomes</h3><div class="species_list_container species-list">$fav_html</div>%s</div>}, 
     $logins && $user && scalar(@ok_faves) ? 'Favourite' : 'Popular',
     $logins
-    ? $user
-      ? '<span class="link toggle_link">Change favourites</span>'
-      : '<a href="/Account/Login" class="modal_link modal_title_Login/Register">Log in to customize this list</a>'
+      ? sprintf('<p class="customise-species-list">(%s)</p>', $user
+        ? '<span class="link toggle_link">Change favourites</span>'
+        : '<a href="/Account/Login" class="modal_link modal_title_Login/Register">Log in to customize this list</a>'
+      )
     : ''
   ;
 
