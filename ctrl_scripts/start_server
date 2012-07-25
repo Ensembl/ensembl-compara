@@ -37,8 +37,8 @@ use warnings;
 no warnings 'uninitialized';
 
 use FindBin qw($Bin);
-use File::Basename qw( dirname );
-use POSIX qw( strftime );
+use File::Basename qw(dirname);
+use POSIX qw(strftime);
 use Sys::Hostname::Long;
 use Getopt::Long;
 
@@ -58,36 +58,35 @@ use SiteDefs;
 ## same thing happens with stop_server
 ## all scripts must be perl scripts, as they are 'required'
 
-use Data::Dumper;
-
 my @start_before;
 my @start_after;
+my @T = reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
 
-my @T = reverse @{ $SiteDefs::ENSEMBL_PLUGINS || [] };
-while( my( $dir, $name ) = splice(@T,0,2)  ) {
+while(my ($dir, $name) = splice @T, 0, 2) {
   $dir = "$dir/ctrl_scripts";
+  
   if (opendir(DIR, $dir)) {
     my @files = readdir(DIR);
-    push @start_before, map {"$dir/$_"} grep {/^[0-5]?[0-9]_start/} @files;
-    push @start_after, map {"$dir/$_"} grep {/^[5-9][0-9]_start/} @files;
+    push @start_before, map "$dir/$_", grep /^[0-5]?[0-9]_start/, @files;
+    push @start_after,  map "$dir/$_", grep /^[5-9][0-9]_start/,  @files;
     closedir DIR;
   }
 }
 
 @start_before = sort @start_before;
-@start_after = sort @start_after;
+@start_after  = sort @start_after;
 
 my $confdir = 'conf';
 &GetOptions(
-  "confdir=s"       => \$confdir,
-  "rmconfig"      => \$rmconfig,
-  "r"             => \$rmconfig,
-  "flush"         => \$flush,
-  "f"             => \$flush,
-  "X"             => \$single,
-  "single"        => \$single,
-  "help"          => \$help,
-  "h"             => \$help,
+  "confdir=s" => \$confdir,
+  "rmconfig"  => \$rmconfig,
+  "r"         => \$rmconfig,
+  "flush"     => \$flush,
+  "f"         => \$flush,
+  "X"         => \$single,
+  "single"    => \$single,
+  "help"      => \$help,
+  "h"         => \$help,
 );
 
 warn "
@@ -110,21 +109,23 @@ Options:
   -X, --single    : start Apache in single server mode
   -h, --help      : print this help message
 );
-    exit;
+
+  exit;
 }
 
-if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
-  print LOG sprintf("%s [001] attempt server start (manual invocation)\n",
-              strftime("%Y-%m-%d %H:%M:%S",localtime));
+if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf "%s [001] attempt server start (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
   close LOG; 
 }
 
-my $hostname = hostname_long();
+my $hostname = hostname_long;
 
 # start the server
 if ($rmconfig) {
   warn " Removing config.packed...\n";
+  
   my $ok = unlink "$serverroot/$confdir/config.packed";
+  
   if ($ok) {
     warn " Removed config.packed....\n";
   } else {
@@ -133,34 +134,36 @@ if ($rmconfig) {
 }
 
 ## Check memcached servers version
-  warn " Checking memcached compatibility...\n";
-  my $res = system("$serverroot/ctrl_scripts/memcached version");
-  if ($res >> 8 > 0) {
-    die " failed\nPlease check www.ensembl.org/info/docs/webcode/memcached\n";
-  }
+warn " Checking memcached compatibility...\n";
 
+my $res = system("$serverroot/ctrl_scripts/memcached version");
 
-if( $flush || $rmconfig ) {
+if ($res >> 8 > 0) {
+  die " failed\nPlease check www.ensembl.org/info/docs/webcode/memcached\n";
+}
+
+if ($flush || $rmconfig) {
   # Flush memcached
   my $cmd = "$serverroot/ctrl_scripts/memcached flush_all";
   my @res = `$cmd`; chomp @res;
+  
   warn " Flushed memcached entries for this server (@res)\n";
 }
+
 warn "==============================================================================\n";
 
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
-my $cmd = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
-
-my $exe =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR."/bin/httpd");
-$cmd .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
+my $cmd  = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
+my $exe  =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR . '/bin/httpd');
+   $cmd .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf" . ($single ? ' -X &' : '');
 
 require $_ for @start_before;
+
 system($cmd) == 0 or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
+
 require $_ for @start_after;
 
-if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
-  print LOG sprintf("%s [002] server started (manual invocation)\n",
-              strftime("%Y-%m-%d %H:%M:%S",localtime));
+if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf "%s [002] server started (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
   close LOG; 
 }
-
