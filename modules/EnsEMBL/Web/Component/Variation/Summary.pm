@@ -108,7 +108,7 @@ sub variation_source {
     $source_link = $url ? qq{<a href="$url">$source$version</a>} : "$source $version";
   }
 
-  return ['Source', sprintf('<p>%s - %s</p>', $source_link, $description), 1];
+  return ['Source', sprintf('<p>%s - %s</p>', $source_link, $description)];
 }
 
 
@@ -117,7 +117,6 @@ sub co_located {
   my $hub        = $self->hub;
   my $adaptor    = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   my @variations = (@{$adaptor->fetch_all_by_Slice($feature_slice)}, @{$adaptor->fetch_all_somatic_by_Slice($feature_slice)});
-  my @row;
 
   if (@variations) {
     my $name  = $self->object->name;
@@ -149,11 +148,11 @@ sub co_located {
         $html .= join ', ', @{$by_source{$_}};
       }
 
-      push @row, 'Co-located', "<p>with $html</p>", 1;
+      return ['Co-located', "with $html"];
     }
   }
   
-  return @row ? \@row : ();
+  return ();
 }
 
 sub synonyms {
@@ -209,16 +208,15 @@ sub synonyms {
 
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
-      sprintf('<p>This feature has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+      sprintf('<p>This feature has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? '' : 'display:none',
         join('', map "<li>$_</li>", @synonyms_list)
-      ),
-      1
+      )
     ];
 
   } else {
-    return ['Synonyms', $count_sources ? "<p>$synonyms_list[0]</p>" : '<p>None currently in the database</p>', 1];
+    return ['Synonyms', $count_sources ? $synonyms_list[0] : 'None currently in the database'];
   }
 }
 
@@ -306,7 +304,7 @@ sub alleles {
     }
   }
   
-  return [ 'Alleles', qq(<div class="twocol-cell">$html</div>), 1 ];
+  return [ 'Alleles', qq(<div class="twocol-cell">$html</div>) ];
 }
 
 sub location {
@@ -315,7 +313,7 @@ sub location {
   my %mappings = %{$object->variation_feature_mapping};
   my $count    = scalar keys %mappings;
   
-  return ['Location', 'This feature has not been mapped', 1] unless $count;
+  return ['Location', 'This feature has not been mapped'] unless $count;
   
   my $hub = $self->hub;
   my $vf  = $hub->param('vf');
@@ -373,11 +371,11 @@ sub location {
         $core_params,
         $options,
         $location_link
-      ), 1],
+      )],
     );
 
   } else {
-    @rows = [ 'Location', "<p>$location$location_link</p>", 1 ];
+    @rows = [ 'Location', "$location$location_link" ];
   }
   
   return @rows;
@@ -446,7 +444,7 @@ sub validation_status {
     $html .= join ', ', sort @status_list;
   }
   
-  return ['Validation status', "<p>$html</p>", 1];
+  return ['Validation status', $html];
 }
 
 sub clinical_significance {
@@ -457,7 +455,7 @@ sub clinical_significance {
   my $c_link = $hub->get_ExtURL_link("dbSNP", "DBSNP_CLIN", '');
   return $clin_sign ? [
     {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance'},
-    qq{<p><span style="color:$colour">$clin_sign</span> (from $c_link)</p>},1
+    qq{<p><span style="color:$colour">$clin_sign</span> (from $c_link)</p>}
   ] : ();
 }
 
@@ -486,11 +484,10 @@ sub hgvs {
       sprintf(qq(<div class="twocol-cell">
         <p>This feature has $count HGVS name$s - click the plus to show</p>
         <div class="HGVS_names"><div class="toggleable" style="font-weight:normal;%s">$html</div></div>
-      </div>), $show ? '' : 'display:none'),
-      1
+      </div>), $show ? '' : 'display:none')
     ];
   } elsif ($count == 1) {
-    return ['HGVS name', "<p>$html</p>", 1];
+    return ['HGVS name', $html];
   }
 
   return ['HGVS name', 'None'];

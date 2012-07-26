@@ -30,7 +30,7 @@ sub content {
     $self->get_annotations,
     $self->location($mappings),
     $self->size($mappings),
-    $validation ? ['Validation status', "<p>$validation</p>"] : ()
+    $validation ? ['Validation status', $validation] : ()
   )->render;
 }
 
@@ -75,7 +75,7 @@ sub get_allele_types {
     }
   }
 
-  return $html ? ['Allele type(s)', $html, 1] : ();
+  return $html ? ['Allele type(s)', $html] : ();
 }
 
 
@@ -97,7 +97,7 @@ sub get_source {
   $description = $self->add_pubmed_link($description);
   $source      = "<p>$source_link - $description</p>";
 
-  return ['Source', $source, 1];
+  return ['Source', $source];
 }
 
 sub get_study {
@@ -110,7 +110,7 @@ sub get_study {
   my $study_description = $self->add_pubmed_link($object->study_description);
   my $study_line        = sprintf '<a href="%s">%s</a>', $object->study_url, $study_name;
   
-  return ['Study', "<p>$study_line - $study_description</p>", 1];
+  return ['Study', "$study_line - $study_description"];
 }
 
 # Method to add a pubmed link to the expression "PMID:xxxxxxx"
@@ -229,13 +229,13 @@ sub location {
         $core_params,
         $options,
         $location_link
-      ), 1]
+      )]
     );
   }
   
   my $current_svf = $mappings->{$svf};
 
-  return ['Location', sprintf("<p>$location$location_link%s%s</p>", $self->get_outer_coordinates($current_svf), $self->get_inner_coordinates($current_svf)), 1];
+  return ['Location', sprintf("$location$location_link%s%s", $self->get_outer_coordinates($current_svf), $self->get_inner_coordinates($current_svf))];
 } 
 
 sub get_outer_coordinates {
@@ -279,7 +279,7 @@ sub get_annotations {
     push(@strain,$sva->strain_name) if ($sva->strain_name);
   }
 
-  return scalar @strain ? ['Strain', sprintf('<p>%s</p>', join(', ', @strain)), 1] : ();
+  return scalar @strain ? ['Strain', join(', ', @strain)] : ();
 }
 
 1;

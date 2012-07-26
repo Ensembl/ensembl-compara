@@ -30,7 +30,7 @@ sub content {
     $object->thousandify( $object->seq_region_end ),
   );
 
-  $summary->add_row('Location', $location_html, 1);
+  $summary->add_row('Location', $location_html);
 
   ## TODO - use a simpler method to create simple tables
   my $table = $self->dom->create_element('table', {'cellspacing' => '0', 'children' => [
@@ -47,7 +47,7 @@ sub content {
     ]});
   }
 
-  $summary->add_row('', $table->render, 1);
+  $summary->add_row('', $table->render);
 
   return $summary->render;
 }

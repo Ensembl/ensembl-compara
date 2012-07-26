@@ -88,7 +88,7 @@ sub content {
       $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele">'.uc("$1").'<\/span>'/eg;
       $f_html =~ s/\n/\n/g;
       
-      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>", 1) unless $display_type eq 'align';
+      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>") unless $display_type eq 'align';
     }
   }
 
@@ -108,7 +108,7 @@ sub content {
       
       $f_label = "Flanking Sequence<br/>(".$object->vari->source.")";
       
-      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>", 1);
+      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>");
 
       return $table->render;
     }
@@ -318,7 +318,7 @@ sub content {
     );
   }
   
-  $table->add_row($f_label, "$warning<pre>$f_html</pre><p><em>(Variant highlighted$key)</em></p>", 1);
+  $table->add_row($f_label, "$warning<pre>$f_html</pre><p><em>(Variant highlighted$key)</em></p>");
 
   return $table->render;
 }

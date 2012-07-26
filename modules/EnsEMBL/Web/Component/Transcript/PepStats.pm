@@ -34,14 +34,9 @@ sub content {
     elsif ($stat->name =~ /residues/) {
       $stat_string .= ' aa';
     }
-    $stats_to_show .= sprintf("%s: %s<br />", $stat->name, $stat_string);
+    $stats_to_show .= sprintf("<p>%s: %s</p>", $stat->name, $stat_string);
   }
-  my $table  = $self->new_twocol;
-  unless ($stats_to_show =~/^\w/){return;}
-  $table->add_row('Statistics',
-		  "<p>$stats_to_show</p>",
-		  1 );
-  return $table->render;
+  return $stats_to_show ? $self->new_twocol(['Statistics', $stats_to_show])->render : '';
 }
 
 1;

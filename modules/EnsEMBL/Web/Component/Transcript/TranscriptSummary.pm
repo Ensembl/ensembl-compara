@@ -29,13 +29,13 @@ sub content {
   my $html         = "<strong>Exons:</strong> $exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
 
-  $table->add_row('Statistics', "<p>$html</p>", 1);
+  $table->add_row('Statistics', $html);
 
   ## add CCDS info
   if (scalar @CCDS) {
     my %T = map { $_->primary_id => 1 } @CCDS;
     @CCDS = sort keys %T;
-    $table->add_row('CCDS', sprintf('<p>This transcript is a member of the %s CCDS set: %s</p>', $sp, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS), 1);
+    $table->add_row('CCDS', sprintf('<p>This transcript is a member of the %s CCDS set: %s</p>', $sp, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
 
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
@@ -49,8 +49,8 @@ sub content {
     my $author  = $object->get_author_name;
     my $remarks = $object->retrieve_remarks;
 
-    $table->add_row('Class', qq{<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>}, 1);
-    $table->add_row('Version &amp; date', qq{<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>}, 1);
+    $table->add_row('Class', qq{<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>});
+    $table->add_row('Version &amp; date', qq{<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>});
     $table->add_row('Author', "This transcript was annotated by $author");
 
     if (@$remarks) {
@@ -61,7 +61,7 @@ sub content {
         $text .= "<p>$rem</p>";
       }
 
-      $table->add_row('Remarks', $text, 1);
+      $table->add_row('Remarks', $text);
     }
   } else { ## type for core genes
     my $type = $object->transcript_type;
@@ -91,12 +91,12 @@ sub content {
     }
   };
 
-  $table->add_row($label, "<p>$text</p>", 1);
+  $table->add_row($label, $text);
 
   ## add frameshift introns info
   my $frameshift_introns = $object->get_frameshift_introns;
 
-  $table->add_row('Frameshift introns', '<p>' . $self->glossary_mouseover('Frameshift intron', 'Frameshift introns') . " occur at intron number(s)  $frameshift_introns.</p>", 1) if $frameshift_introns;
+  $table->add_row('Frameshift introns', $self->glossary_mouseover('Frameshift intron', 'Frameshift introns') . " occur at intron number(s)  $frameshift_introns.") if $frameshift_introns;
 
   ## add stop gained/lost variation info
   my @attrib_codes = qw(StopLost StopGained);
@@ -134,7 +134,7 @@ sub content {
     }
   }
 
-  $table->add_row('Stop codons', "<p>$codons</p>", 1) if $codons =~ /^\w/;
+  $table->add_row('Stop codons', $codons) if $codons =~ /^\w/;
 
   if ($translation && $translation->dbID) {
     my $missing_evidence_attribs = $translation->get_all_Attributes('NoEvidence') || [];
@@ -142,13 +142,13 @@ sub content {
     if (@$missing_evidence_attribs) {
       my $description = lcfirst $missing_evidence_attribs->[0]->description;
       my $string = join ', ', map $_->value, @$missing_evidence_attribs;
-      $table->add_row('Evidence Removed', "<p>The following $description: $string</p>", 1);
+      $table->add_row('Evidence Removed', "The following $description: $string");
     }
   }
 
   ## add alternative transcript info
   my $alt_trans = $self->_matches('alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS', 'show_version');
-  $table->add_row('Alternative transcripts', $alt_trans, 1) if $alt_trans;
+  $table->add_row('Alternative transcripts', $alt_trans) if $alt_trans;
 
   return $table->render;
 }
