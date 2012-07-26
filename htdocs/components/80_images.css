@@ -46,10 +46,10 @@ body.ie67 div.iexport_menu a { margin-top: -16px; }
 a.icon_link                   { text-decoration: none; }
 div.icon                      { padding: 4px 8px 4px 0; }
 .sprite,
-.sprite_disabled              { display: inline-block; height: 16px; width: 16px; margin-top: 2px; background: no-repeat top left; }
-.sprite:hover                 { background-position: center left!important; }
+.sprite_disabled              { display: inline-block; height: 16px; width: 16px; background: no-repeat 0 0; cursor: pointer; }
+.sprite:hover                 { background-position: 0 -18px; }
 .sprite_disabled,
-.sprite_disabled.sprite:hover { background-position: bottom left!important; }
+.sprite_disabled.sprite:hover { background-position: 0 -36px; }
 span.sprite                   { float: left; width: 16px; margin: 2px 4px 0 4px; }
 
 /* Note that these names include the word 'icon' to distinguish them from classes associated with actions */
