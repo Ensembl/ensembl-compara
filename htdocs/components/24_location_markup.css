@@ -60,7 +60,7 @@ body.ie6 .slider .ui-slider-handle           { width: 11px; height: 20px; }
 .slider .ui-widget-content .ui-state-hover, 
 .slider .ui-state-focus,
 .slider .ui-widget-content .ui-state-focus   { border: 1px solid #CC0000; background: #DDDDDD; color: #212121; }
-.slider_label                                { position: absolute; display: none; font-weight: bold; bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
+.slider .slider_label                        { bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
 
 ul.autocomplete               { position: absolute; display: none; margin: 0; padding: 0; width: 258px; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
 ul.autocomplete li            { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; height: 14px; cursor: pointer; clear: both; }
