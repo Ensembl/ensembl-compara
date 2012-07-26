@@ -115,11 +115,15 @@ sub _calc_clusters {
                               $c->{'disp_ref_end'});              # reference size
   }
   # Calculate full space now reserved for blob
-  foreach my $c (@clusters) {
-    # extend reservations XXX cleverer nudging
-    $c->{'reserve_start'} -= $options->{'leeway'}/2/$self->scalex;
-    $c->{'reserve_end'} += $options->{'leeway'}/2/$self->scalex;
+  my @sc = sort { $a->{'reserve_start'} <=> $b->{'reserve_start'} } @clusters;
+  my @middles;
+  foreach my $i (1..$#sc) {
+    $middles[$i] = ($sc[$i-1]->{'reserve_end'} + $sc[$i]->{'reserve_start'}) / 2;
   }
+  foreach my $i (1..$#sc) {
+    $sc[$i-1]->{'reserve_end'} = $middles[$i]-1;
+    $sc[$i]->{'reserve_start'} = $middles[$i];
+  }  
   foreach my $c (@clusters) {
     # keep it on screen, truncate if just too massive
     my $lhs_limit = -$c->{'ref_to_img'};
@@ -145,23 +149,27 @@ sub _calc_clusters {
 }
 
 sub _draw_delete_blobs {
-  my ($self,$clusters,$bump_offset) = @_;
+  my ($self,$clusters,$bump_offset,$options) = @_;
   
   foreach my $c (@$clusters) {
     my $middle = $self->_blob_middle($c);
     my $start = min($c->{'disp_ref_start'},$middle-$c->{'size'}/2);
     my $end = max($c->{'disp_ref_end'},$middle+$c->{'size'}/2); 
     
+    my $zmenu_start = max($start-$options->{'relax'}/$self->scalex,$c->{'reserve_start'});
+    my $zmenu_end = min($end+$options->{'relax'}/$self->scalex,$c->{'reserve_end'});
+    
     if(@{$c->{'blobs'}} > 1) {
       # some pink will show
       $self->{'config'}->{'_difference_legend_pink'} = 1;
     }
     
+    #$self->_debug_reservations($c,20+$bump_offset);
     # pink rectangle
     $self->push($self->Rect({
       x         => $c->{'disp_ref_start'} + $c->{'ref_to_img'},
       y         => 20 + $bump_offset,
-      width     => $c->{'disp_ref_end'}-$c->{'disp_ref_start'}+1,
+      width     => $c->{'disp_ref_end'}-$c->{'disp_ref_start'},
       height    => 8,
       colour    => '#ffdddd',
       bordercolour => undef,
@@ -169,9 +177,9 @@ sub _draw_delete_blobs {
     }));    
     # rectangle for zmenu
     $self->push($self->Rect({
-      x         => $start + $c->{'ref_to_img'},
+      x         => $zmenu_start + $c->{'ref_to_img'},
       y         => 20 + $bump_offset,
-      width     => $end-$start+1,
+      width     => $zmenu_end-$zmenu_start+1,
       height    => 8,
       colour    => undef,
       bordercolour => undef,
@@ -282,7 +290,7 @@ sub _debug_reservations {
 }
 
 sub _draw_blob {
-  my ($self,$c,$y,$colour) = @_;
+  my ($self,$c,$y,$colour,$options) = @_;
 
   my $paler  = $self->colourmap->mix($colour,'white',0.5);
   my $darker = $self->colourmap->mix($colour,'black',0.5);
@@ -290,16 +298,33 @@ sub _draw_blob {
   # Is the affected reference region big enough?
   my $size = $c->{'size'};
   my $middle = $self->_blob_middle($c);
+  
+  my $start = $middle-$c->{'size'}/2;
+  my $end = $middle+$c->{'size'}/2;
+    
+  my $zmenu_start = max($start-$options->{'relax'}/$self->scalex,$c->{'reserve_start'});
+  my $zmenu_end = min($end+$options->{'relax'}/$self->scalex,$c->{'reserve_end'});
+
   $self->push($self->Rect({
-    x         => $middle - $c->{'size'}/2 + $c->{'ref_to_img'},
+    x         => $start + $c->{'ref_to_img'},
     y         => $y,
-    width     => $c->{'size'},
+    width     => $end - $start,
     height    => 8,
     colour    => $colour,
     bordercolour => $darker,
     absolutey => 1,
+  }));
+  $self->push($self->Rect({
+    x         => $zmenu_start + $c->{'ref_to_img'},
+    y         => $y,
+    width     => $zmenu_end-$zmenu_start+1,
+    height    => 18,
+    colour    => undef,
+    bordercolour => undef,
+    absolutey => 1,
     href      => $self->_cluster_zmenu($c),
   }));
+  
   # uncomment to see reserve_{start,end} on the track
   #$self->_debug_reservations($c,$y);
   if(@{$c->{'blobs'}}>1) {
@@ -319,10 +344,10 @@ sub _draw_blob {
 }
 
 sub _draw_insert_blobs {
-  my ($self,$clusters,$bump_offset) = @_;
+  my ($self,$clusters,$bump_offset,$options) = @_;
   
   foreach my $c (@$clusters) {
-    $self->_draw_blob($c,$bump_offset,'#2aa52a');
+    $self->_draw_blob($c,$bump_offset,'#2aa52a',$options);
   }
 }
 
@@ -360,7 +385,7 @@ sub _draw_insert_lines {
 }
 
 sub _add_blob {
-  my ($self,$f,$ref_start,$ref_end,$type,$length,$cigar,$i) = @_;
+  my ($self,$f,$ref_start,$ref_end,$type,$length,$cigar,$i,$options) = @_;
   
   my $midel = 0;
   my $size=$length;
@@ -373,6 +398,9 @@ sub _add_blob {
   my $blob_start = $ref_start;
   if($type eq 'I') {
     $blob_start -= $size/2; # put blob at /middle/ of insert point   
+  } else {
+    # single blobs should be in middle-ish of reservation
+    $blob_start -= $options->{'smallest_width'}->{'D'}/$self->scalex/2;
   }
   my $disp_start = $ref_start;
   # check we don't fall off LHS
@@ -415,10 +443,11 @@ sub draw_cigar_difference {
   $options ||= {};
   $options = { # set defaults: relies on later initialiazers overriding earlier.
     row_height => 40,
-    smallest_width => { 'D' => 4, 'I' => 4 }, # 8
+    smallest_width => { 'D' => 3, 'I' => 4 },
     composite_width => { 'D' => 0, 'I' => 10 }, # D = 0 because leeway is enough
-    leeway => 6, # 24
+    leeway => 4,
     skip_labels => 0,
+    relax => 4, # expand zmenu by this amount, if available
     %$options
   };
 
@@ -466,7 +495,7 @@ sub draw_cigar_difference {
         next if $ref_end+$f->start < 0 or $ref_start+$f->start > $self->{'container'}->length;
         push @{$parts{$type}},$self->_add_blob($f,$ref_start,$ref_end,
                                                $type,$length,
-                                               \@cigar,$i);
+                                               \@cigar,$i,$options);
       }
       my $rh = $options->{'row_height'};
       my $fname;
@@ -474,10 +503,10 @@ sub draw_cigar_difference {
       $self->_render_background(max(0,$f->start),min($self->{'container'}->length,$f->end),$row*$rh);
       $self->_render_fname($draw_start,$fname,$row*$rh) if $fname and not $options->{'skip_labels'};
       my $deletes = $self->_calc_clusters($parts{'D'}||[],'D',$options);
-      $self->_draw_delete_blobs($deletes,$row*$rh);
+      $self->_draw_delete_blobs($deletes,$row*$rh,$options);
       $self->_draw_delete_domains($deletes,$row*$rh);
       my $inserts = $self->_calc_clusters($parts{'I'}||[],'I',$options);
-      $self->_draw_insert_blobs($inserts,$row*$rh);
+      $self->_draw_insert_blobs($inserts,$row*$rh,$options);
       $self->_draw_insert_lines($inserts,$row*$rh);
     }
   }

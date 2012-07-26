@@ -34,13 +34,13 @@ sub _init {
       legend => 'Delete relative to reference',
       colour => 'red',
     },{
-      legend => 'Cluster of inserts at this scale (zoom to resolve)',
+      legend => 'Inserts grouped at this scale (zoom to resolve)',
       colour => '#2aa52a', 
       overlay => '..',
       border => 'black',
       test => '_difference_legend_dots',
     },{
-      legend => 'Cluster of deletes at this scale (zoom to resolve)',
+      legend => 'Deletes grouped at this scale (zoom to resolve)',
       colour => '#ffdddd',
       test => '_difference_legend_pink',
     },{
