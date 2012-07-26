@@ -21,6 +21,7 @@ GetOptions(
 
 $timeout   = qq{-timeout $timeout} if($timeout);
 $url       = qq{-url $url} if($url);
+$browser   = qq{-browser $browser} if($browser);
 my @module = split(/,/, $module) if($module);
 my $host = `host mib20062i`; #get the IP address of the selenium server which is on the macbook pro.
 $host =~ s/mib20062i.internal.sanger.ac.uk has address //;
@@ -43,7 +44,7 @@ if (-d 'test_reports') {
 }
 
 #non-species related test module....new module (non-species) can be added here.
-my @non_species_modules = qw(Generic);  
+my @non_species_modules = qw(Generic);
 
 #species related test modules .... running every thing by default, new one (species related) needs to be added here
 my @species_modules = qw(GenomeStatistics Gene Karyotype Location Regulation Transcript Variation Blat);
@@ -54,14 +55,14 @@ if(@module) {
   my @temp_array = grep { $hash{ $_ }++ } @module, @non_species_modules;
   @non_species_modules = @temp_array ? @temp_array : qw();
   
-  my @temp_array2 = grep { $hash_species{ $_ }++ } @module, @species_modules;  
+  my @temp_array2 = grep { $hash_species{ $_ }++ } @module, @species_modules;
   @species_modules = @temp_array2 ? @temp_array2 : qw();
 }
 
 foreach (@non_species_modules) {
   print "\nRunning Module $_ Test \n"; 
   my $report = $_."_report.txt";
-  my $cmd = qq{perl run_tests.pl --module "$_" $timeout $url --host $host --port $port > "test_reports/$report" 2>&1 };
+  my $cmd = qq{perl run_tests.pl --module "$_" $timeout $url $browser --host $host --port $port > "test_reports/$report" 2>&1 };
   #print "  $cmd\n";
   system $cmd;
 }
