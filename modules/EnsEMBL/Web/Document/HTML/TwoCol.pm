@@ -17,10 +17,12 @@ sub new {
 }
 
 sub add_row {
-  my ($self, $label, $value, $is_html) = @_;
+  my ($self, $label, $value, $escape_html) = @_;
+  my $dom = $self->dom;
 
-  my $lhs = $self->dom->create_element('div', ref $label ? $label : {($is_html ? 'inner_HTML' : 'inner_text') => $label});
-  my $rhs = $self->dom->create_element('div', !ref $value ? $is_html ? {'inner_HTML' => $value} : {'children' => [{'node_name' => 'p', 'inner_text' => $value}]} : $value);
+  $value  = $dom->create_element('p', {($escape_html ? 'inner_text' : 'inner_HTML') => $value})->render if $escape_html || $value !~ /^[\s\t\n]*\<(p|div|table|form|pre|ul)(\s|\>)/;
+  my $lhs = $dom->create_element('div', ref $label ? $label : {'inner_HTML' => $label});
+  my $rhs = $dom->create_element('div', ref $value ? $value : {'inner_HTML' => $value});
 
   $lhs->set_attribute('class', 'lhs');
   $rhs->set_attribute('class', 'rhs');
