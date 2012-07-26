@@ -78,6 +78,9 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content .modal_nav ul.local_context li a,
 .modal_content .modal_nav ul.local_context li .disabled           { float: left; margin-left: 19px; }
 .modal_content .modal_nav ul.local_context li .disabled           { color: [[PAGE_TEXT]]; cursor: text; }
+.modal_content .config_manager tr a.add_to_set                { display: block; width: 16px; height: 16px; background-image: url(/i/16/plus-button.png); position: absolute; right: 0; }
+.modal_content .config_manager tr.added    a.add_to_set       { background-image: url(/i/16/minus-button.png); }
+.modal_content .config_manager tr.disabled a.add_to_set       { display: none; }
 .modal_content .modal_nav ul.local_context li img                 { float: left;  margin-top: 1px; } 
 .modal_content .modal_nav ul.local_context li ul                  { clear: both; }
 .modal_content .modal_nav ul.local_context li .count              { float: right; margin: 0 3px 0 10px; color: [[MH_BORDER]]; }
