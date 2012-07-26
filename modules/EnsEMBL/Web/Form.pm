@@ -157,7 +157,7 @@ sub heading {
 
 sub add_notes {
   ## Adds notes to the form (or fieldset)
-  ## If 'location' and 'heading' key is missing, appends the notes to the last fieldset - all other keys are invalid then (see fieldset->add_notes)
+  ## If 'location' and 'heading' key is missing, appends the notes to the last fieldset (see fieldset->add_notes)
   ## @param Either a string that needs to go in the notes, OR a HashRef with the following keys
   ##  - id        Id if any for the notes div
   ##  - location  (head|foot) or head by default
@@ -187,11 +187,15 @@ sub add_notes {
     'inner_HTML'  => $params->{'heading'}
   }) if exists $params->{'heading'};
 
-  $notes->append_child({
-    'node_name'   => 'div',
-    'class'       => $self->CSS_NOTES_MESSAGE_PAD,
-    'inner_HTML'  => $params->{'text'}
-  }) if exists $params->{'text'};
+  if (exists $params->{'text'}) {
+    my $text = $params->{'text'};
+    $text    = $self->dom->create_element('p', {'inner_HTML' => $text})->render if $text !~ /^[\s\t\n]*\<(p|div|table|form|pre|ul)(\s|\>)/;
+    $notes->append_child({
+      'node_name'   => 'div',
+      'class'       => $self->CSS_NOTES_MESSAGE_PAD,
+      'inner_HTML'  => $text
+    });
+  }
 
   $notes->append_child({
     'node_name'   => $params->{'serialise'} ? 'ol' : 'ul',
