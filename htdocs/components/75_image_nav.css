@@ -30,7 +30,6 @@
 .hover_label p.header              { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; }
 .hover_label div                   { display: none; padding: 0 5px; }
 .hover_label p                     { padding: 3px 0; margin: 0; }
-.hover_label div.spinner           { height: 66px; margin: 0; }
 .hover_label div.config ul,
 .hover_label div.config li         { margin: 0; padding: 0; list-style: none; list-style-image: none; }
 .hover_label div.config li         { line-height: 22px; }

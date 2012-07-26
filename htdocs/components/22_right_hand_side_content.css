@@ -24,23 +24,7 @@ a.help-header span                  { margin-right: 6px; display: inline-block; 
 a.help-header span.sprite           { float: none; background-position: 0px -1px; position: relative; top: 1px; }
 a.help-header:hover span.sprite     { background-position: 0px -18px; }
 body.ie67 a.help-header span.sprite { position: absolute; }
-body.ie6 a.help-header span.sprite  { width: 18px; font-size: 14px; }
-
-.glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
-.floating_popup { 
-  position: absolute; 
-  display: none; 
-  background-color: [[TINT_BG]]; 
-  margin: 0;
-  border: 1px outset [[TINT_BORDER]]; 
-  z-index: 200; 
-  font-weight: bold; 
-  padding: 2px; 
-  font-size: 10px; 
-  text-align: left; 
-  width: 20em;
-  white-space: normal;
-}
+body.ie6  a.help-header span.sprite { width: 18px; font-size: 14px; }
 
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
