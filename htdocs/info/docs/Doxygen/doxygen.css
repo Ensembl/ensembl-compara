@@ -10,6 +10,7 @@
 #doxygen p,
 #doxygen dl  { font-family: Lucida Grande, Verdana, Geneva, Arial, sans-serif; font-size: 12px; color: black; }
 #doxygen pre { margin-left: 0 }
+#doxygen li  { margin: 0 0 0.5em }
 
 /* @group Heading Levels */
 
