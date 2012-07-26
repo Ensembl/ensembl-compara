@@ -53,6 +53,10 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content .panel            { padding: 0; margin: 0; }
 .modal_content .panel .content   { padding: 12px 12px 4px; margin: 0; }
 .modal_content .panel h2         { border-bottom: 1px solid [[PANEL_BORDER]]; padding-bottom: 2px; }
+.modal_content .panel div.error,
+.modal_content .panel div.warning,
+.modal_content .panel div.info,
+.modal_content .panel div.hint   { width: auto!important; }
 .modal_content p.modal_error     { color: #C33; }
 .modal_content p.modal_a         { margin: 10px 0; }
 .modal_content p.modal_a a       { background-color: [[MH_BG]]; color: #FFF; border: outset [[MH_BG]] 2px; text-decoration: none; padding: 2px 8px; }
