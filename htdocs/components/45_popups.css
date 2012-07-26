@@ -21,5 +21,5 @@ body.ie6 .info_popup span.close { background-image: url(/i/close2.gif); }
 table.zmenu                     { width: 18em; }
 table.zmenu th,                 
 table.zmenu td                  { white-space: normal; }
-table.zmenu .spinner            { height: 65px; }
+table.zmenu .spinner            { height: 66px; margin: 0; }
 table.zmenu tbody.loading       { display: none; }
