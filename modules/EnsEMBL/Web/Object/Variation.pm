@@ -23,6 +23,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Cache;
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -1516,7 +1517,7 @@ sub hgvs_url {
     $hgvs_string = substr($hgvs, length $refseq, ($max_length - length $refseq)) . (length $hgvs > $max_length ? '...' : '');
   }
   # Return an arrayref with the elements: [0] -> URL, [1] -> display_name, [2] -> the rest of the HGVS string (capped at a maximum length)
-  return [ $hub->url($p), $refseq, $hgvs_string ];
+  return [ $hub->url($p), encode_entities($refseq), encode_entities($hgvs_string) ];
 }
 
 1;
