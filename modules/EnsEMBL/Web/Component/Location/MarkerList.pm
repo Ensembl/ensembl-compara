@@ -141,7 +141,7 @@ sub render_marker_details {
 		$html .= "<h3>Marker $m_name</h3>";
 		
     # location of marker features
-		$table->add_row('Location', $self->render_location($m), 1);
+		$table->add_row('Location', $self->render_location($m));
 		
 		# synonyms
 		if (my @important_syns = @{$self->marker_synonyms($m, 1)}) {
@@ -156,7 +156,7 @@ sub render_marker_details {
 				$syn_text .= "<table><tr><td>$id ($db)</td></tr></table>";
 			}
       
-			$table->add_row('Source', $syn_text, 1);
+			$table->add_row('Source', $syn_text);
 		}
 		
 		# other synonyms (rows of $max_cols entries)
@@ -197,7 +197,7 @@ sub render_marker_details {
       
 	    $other_syn_text .= '</table>';
 	    
-	    $table->add_row('Synonyms', $other_syn_text, 1);
+	    $table->add_row('Synonyms', $other_syn_text);
 		}
 		
 		# primer details
@@ -229,7 +229,7 @@ sub render_marker_details {
 	    $primer_txt = "Marker $m_name primers are not in the database";
 		}
     
-		$table->add_row('Primers', $primer_txt, 1);
+		$table->add_row('Primers', $primer_txt);
 		
 		$html .= $table->render;
 		

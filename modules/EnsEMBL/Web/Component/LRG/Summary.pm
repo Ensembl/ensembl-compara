@@ -33,9 +33,9 @@ sub content {
   
   if ($hub->action eq 'Genome' || !$object) {
     $html =
-      'LRG (Locus Reference Genomic) sequences provide a stable genomic DNA framework ' .
+      '<p>LRG (Locus Reference Genomic) sequences provide a stable genomic DNA framework ' .
       'for reporting mutations with a permanent ID and core content that never changes. ' . 
-      'For more information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.';
+      'For more information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.</p>';
   } else {
     my $lrg         = $object->Obj;
     my $param       = $hub->param('lrg');
@@ -63,7 +63,7 @@ sub content {
     $description .= qq{ Source: <a rel="external" href="$source_url">$source</a>.} if $source_url;
     
     my $location_html = sprintf(
-      '<a href="%s">%s: %s-%s</a> %s.',
+      '<p><a href="%s">%s: %s-%s</a> %s.</p>',
       $hub->url({
         type   => 'Location',
         action => 'View',
@@ -120,9 +120,9 @@ sub content {
     });
     
     $html = $self->new_twocol(
-      ['Description', "<p>$description</p>", 1],
-      ['Location', "<p>$location_html</p>", 1],
-      [sprintf('<a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">Transcripts</a>', $hide ? 'closed' : 'open'), "There $plural_1 $count $plural_2 in this region:", 1]
+      ['Description', $description],
+      ['Location', $location_html],
+      [sprintf('<a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">Transcripts</a>', $hide ? 'closed' : 'open'), "There $plural_1 $count $plural_2 in this region:"]
     )->render.$table->render;
   }
 

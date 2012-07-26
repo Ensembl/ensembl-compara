@@ -41,7 +41,7 @@ sub content {
   $linked_display_name = $display_name if $dbname_disp =~ /^Projected/; # i.e. don't have a hyperlink
   $info_text = '';
 
-  $table->add_row('Name', "<p>$linked_display_name ($dbname_disp) $info_text</p>", 1) if $linked_display_name;
+  $table->add_row('Name', qq{<p>$linked_display_name ($dbname_disp) $info_text</p>}) if $linked_display_name;
 
   foreach my $link (@{$object->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[]}) {
     my ($key, $text) = @$link;
@@ -69,17 +69,17 @@ sub content {
         id     => $display_name,
         ftype  => 'Gene'
       });
-      $syns_html .= qq{<p>$syn [<span class="small">To view all $site_type genes linked to the name <a href="$url">click here</a>.</span>]</p></dd>};
+      $syns_html .= qq{<p>$syn [<span class="small">To view all $site_type genes linked to the name <a href="$url">click here</a>.</span>]</p>};
     }
   }
 
-  $table->add_row('Synonyms', $syns_html, 1) if $syns_html;
+  $table->add_row('Synonyms', $syns_html) if $syns_html;
 
   # add CCDS info
   if (scalar @CCDS) {
     my %temp = map { $_->primary_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
-    $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS), 1);
+    $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
 
   ## LRG info
@@ -126,7 +126,7 @@ sub content {
   }
 
   # add a row to the table
-  $table->add_row('LRG', $lrg_html, 1) if $lrg_html;
+  $table->add_row('LRG', $lrg_html) if $lrg_html;
 
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
@@ -139,16 +139,16 @@ sub content {
     my $author  = $object->get_author_name;
     my $remarks = $object->retrieve_remarks;
 
-    $table->add_row('Gene type', qq{<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>}, 1);
-    $table->add_row('Version & date', qq{<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>}, 1);
+    $table->add_row('Gene type', qq{<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>});
+    $table->add_row('Version &amp; date', qq{<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>});
     $table->add_row('Author', "This transcript was annotated by $author");
     if ( @$remarks ) {
       my $text;
       foreach my $rem (@$remarks) {
-	next unless $rem;  #ignore remarks with a value of 0
-	$text .= "<p>$rem</p>";
+      	next unless $rem;  #ignore remarks with a value of 0
+        $text .= "<p>$rem</p>";
       }
-      $table->add_row('Remarks', qq($text), 1);
+      $table->add_row('Remarks', $text);
     }
   } else {
     my $type = $object->gene_type;
@@ -167,10 +167,10 @@ sub content {
       $text = $object->gene->analysis->description;
     }
 
-    $table->add_row($label, "<p>$text</p>", 1);
+    $table->add_row($label, $text);
   };
 
-  $table->add_row('Alternative genes', "<p>$alt_genes</p>", 1) if $alt_genes; # add alternative gene info
+  $table->add_row('Alternative genes', $alt_genes) if $alt_genes; # add alternative gene info
 
   return $table->render;
 }

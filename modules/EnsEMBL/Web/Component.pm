@@ -494,7 +494,7 @@ sub _matches { ## TODO - tidy this
 
   if ($output_as_twocol) {
     $table = $self->new_twocol;
-    $table->add_row("$_->{'dbtype'}:", " $_->{'dbid'}", 1) for @rows;    
+    $table->add_row("$_->{'dbtype'}:", " $_->{'dbid'}") for @rows;    
   } elsif ($output_as_table) { # if flag is on, display datatable, otherwise a simple table
     $table = $self->new_table([
         { key => 'dbtype', align => 'left', title => 'External database' },
@@ -750,7 +750,7 @@ sub transcript_table {
       $description .= qq( <span class="small">@{[ $link ]}</span>) if $acc && $acc ne 'content';
     }
 
-    $table->add_row('Description', "<p>$description</p>", 1);
+    $table->add_row('Description', $description);
   }
   
   my $seq_region_name  = $object->seq_region_name;
@@ -830,7 +830,7 @@ sub transcript_table {
     }
   }
 
-  $table->add_row('Location', $location_html, 1);
+  $table->add_row('Location', $location_html);
 
   my $gene = $object->gene;
   
@@ -931,8 +931,7 @@ sub transcript_table {
         $hide ? 'closed' : 'open',
         $page_type eq 'gene' ? 'Transcripts' : 'Gene',
       ),
-      "<p>$gene_html</p>",
-      1
+      $gene_html
     );
 
     my $table_2 = $self->new_table(\@columns, \@rows, {

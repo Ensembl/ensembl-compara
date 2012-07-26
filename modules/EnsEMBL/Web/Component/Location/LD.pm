@@ -17,9 +17,9 @@ sub content {
   my $focus = $self->focus;
   if ($self->hub->param('pop1')) {
     return $self->new_twocol(
-      $focus ? ['Focus:', $focus, 1] : (),
+      $focus ? ['Focus:', $focus] : (),
       $self->prediction_method,
-      ['Populations:', $self->population_info, 1]
+      ['Populations:', $self->population_info]
     )->render;
   }
 
@@ -97,7 +97,7 @@ sub population_info {
     my $sub_pop   = $object->extra_pop($pop->{$name}{'PopObject'}, 'sub');
     my $html      = $self->print_pop_info($pop, 'Population');
     $html        .= $self->print_pop_info($super_pop, 'Super-population');
-    $pop_html    .= "<table>$html</table>";
+    $pop_html    .= qq(<table cellspacing="0" cellpadding="0">$html</table>);
   }
 
   return $pop_html;
@@ -124,12 +124,12 @@ sub print_pop_info {
     my $description = $pop->{$pop_name}{'Description'} || 'unknown';
     $description    =~ s/\.\s+.*|\.\,.*/\./; # descriptions are v. long. Stop after 1st "."
     
-    $row .= "<th>$label: </th><td>$display_pop &nbsp;[size: $size]</td></tr>";
-    $row .= "<tr><th>Description:</th><td>$description</td>";
+    $row .= "<th><p>$label:&nbsp;</p></th><td><p>$display_pop &nbsp;[size: $size]</p></td></tr>";
+    $row .= "<tr><th><p>Description:&nbsp;</p></th><td><p>$description</p></td>";
 
     if ($v && $label eq 'Population') {
       my $tagged = $self->tagged_snp($pop->{$pop_name}{'Name'});
-      $row .= "<tr><th>SNP in tagged set for this population:</th><td>$tagged</td>" if $tagged;
+      $row .= "<tr><th><p>SNP in tagged set for this population:&nbsp;</p></th><td><p>$tagged</p></td>" if $tagged;
     }
   }
   

@@ -19,7 +19,7 @@ sub content {
   my $label = 'Prediction Method';
   my $text  = 'Data from LRG database';
 
-  return $self->new_twocol([$label, "<p>$text</p>", 1])->render;
+  return $self->new_twocol([$label, $text])->render;
 }
 
 

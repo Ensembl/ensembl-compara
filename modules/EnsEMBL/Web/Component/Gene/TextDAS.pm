@@ -50,8 +50,8 @@ sub content {
   my $homepage = $source->homepage;
   my $table    = $self->new_twocol;
   
-  $table->add_row('Description', $desc, 1);
-  $table->add_row('Homepage', qq(<a href="$homepage">$homepage</a>), 1) if $homepage;
+  $table->add_row('Description', $desc);
+  $table->add_row('Homepage', qq(<a href="$homepage">$homepage</a>)) if $homepage;
   
   my $html = $table->render;
   my $query_object = $self->_das_query_object; 

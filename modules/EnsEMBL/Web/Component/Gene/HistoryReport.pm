@@ -70,7 +70,7 @@ sub content {
 
   push @$version_html, 'Release: ' . $latest->release . ($archive_object->is_current ? ' (current)' : ''), 'Assembly: ' . $latest->assembly, 'Database: ' . $latest->db_name;
 
-  return $self->new_twocol(['Stable ID', $id], ['Status', $status], ['Latest Version', join('', map sprintf('<p>%s</p>', $_), @$version_html), 1])->render;
+  return $self->new_twocol(['Stable ID', $id], ['Status', $status], ['Latest Version', join('', map sprintf('<p>%s</p>', $_), @$version_html)])->render;
 }
 
 
