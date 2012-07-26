@@ -26,7 +26,7 @@ sub form {
     required => 'yes',
     label    => 'Flanking region',
     name     => 'flanking',
-    shortnote => sprintf('<div>Ignored if 0 or region is larger than %sMb</div>', $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1),
+    notes    => sprintf('Ignored if 0 or region is larger than %sMb', $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1),
    });
    
   $self->add_form_element({ type => 'YesNo', name => 'show_top_panel', select => 'select', label => 'Show panel' });
