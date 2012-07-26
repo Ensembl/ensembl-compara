@@ -121,10 +121,12 @@ sub stats_table {
     my $value = $object->thousandify( $chr_stats{$stat} );
     next if !$value;
     $stat = 'Estimated length (bps)' if $stat eq 'Length (bps)' && $object->species_defs->NO_SEQUENCE;
+    # Is this really the best way to do this? -- ds23
     $stat =~ s/Raw p/P/;
     $stat =~ s/protein_coding/Protein-coding/;
     $stat =~ s/_/ /g;
     $stat =~ s/ Count$/s/;
+    $stat =~ s/SNPs/Variations/;
     $stat = ucfirst($stat) unless $stat =~ /^[a-z]+RNA/;
 
     $table->add_row({'header' => $stat, 'value' => $value}); 
