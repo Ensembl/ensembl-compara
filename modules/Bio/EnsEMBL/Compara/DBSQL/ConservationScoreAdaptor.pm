@@ -278,7 +278,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	}
 
 	#print "after slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
-
 	#if want one score per base in the alignment, use faster method 
 	#doesn't bother with any binning
 	if ($window_size == 1 && ($display_size == ($slice->end - $slice->start + 1))) {
@@ -379,8 +378,14 @@ sub fetch_all_by_GenomicAlignBlock {
     my ($self, $genomic_align_block, $start, $end, $slice_length,
 	$display_size, $display_type, $window_size) = @_;
 
-
     #print "fetch_all_by_GenomicAlignBlock start $start end $end $display_size\n";
+
+    #Check have either a GenomicAlignBlock or GenomicAlignTree object
+    unless ($genomic_align_block && ref $genomic_align_block && 
+            ($genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock") || 
+             $genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignTree"))) {
+        throw("genomic_align_block must be a Bio::EnsEMBL::Compara::GenomicAlignBlock or a Bio::EnsEMBL::Compara::GenomicAlignTree\n")
+    }
 
     my $scores = [];
 
@@ -468,14 +473,6 @@ sub fetch_all_by_GenomicAlignBlock {
 		size => $bucket_size,
 	       current => 0};
 
-
-    #make sure reference genomic align has been set. If not set, set to be
-    #first genomic_align
-    my $reference_genomic_align = $genomic_align_block->reference_genomic_align;
-    if (!$reference_genomic_align) {
-	$genomic_align_block->reference_genomic_align($genomic_align_block->get_all_GenomicAligns->[0]);
-    }
-
     #Find the genomic_align_block_id. 
     #If passing in a GenomicAlignTree, find the corresponding genomic_align_block from a genomic_align
     my $new_genomic_align_block;
@@ -485,12 +482,20 @@ sub fetch_all_by_GenomicAlignBlock {
         $new_genomic_align_block = $genomic_align_block;
     }
 
+    #make sure reference genomic align has been set. If not set, set to be
+    #first genomic_align
+    my $reference_genomic_align = $new_genomic_align_block->reference_genomic_align;
+    if (!$reference_genomic_align) {
+	$new_genomic_align_block->reference_genomic_align($new_genomic_align_block->get_all_GenomicAligns->[0]);
+    }
+
     #need this in case the dbID is not set ie if the $genomic_align_block has
     #been restricted
-    my $gab_id;    if (defined $new_genomic_align_block->{'dbID'}) {
+    my $gab_id;
+    if (defined $new_genomic_align_block->{'dbID'}) {
         $gab_id = $new_genomic_align_block->{'dbID'};
     } else {
-        $gab_id = $new_genomic_align_block->{'original_dbID'};
+        $gab_id = $new_genomic_align_block->original_dbID;
     }
 
     my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($gab_id, $window_size, $PACKED);
@@ -501,18 +506,18 @@ sub fetch_all_by_GenomicAlignBlock {
     }
 
     #need to reverse conservation scores if reference species is complemented
-    if ($genomic_align_block->get_original_strand == 0) {
+    if ($genomic_align_block->original_strand == 0) {
 	$conservation_scores = _reverse($conservation_scores);
 
     }
-    
+
     #reset _score_index for new conservation_scores
     $_score_index = 0;
 
     #print "align_start $align_start align_end $align_end start $start end $end\n";
     $scores = $self->_get_alignment_scores($conservation_scores, $align_start, 
 					   $align_end, $display_type, $window_size, 
-					   $genomic_align_block, $gab_id);
+					   $new_genomic_align_block, $gab_id);
 
     if (scalar(@$scores) == 0) {
 	return $scores;
