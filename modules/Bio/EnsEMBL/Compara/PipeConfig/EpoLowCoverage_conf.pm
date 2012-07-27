@@ -85,6 +85,8 @@ sub default_options {
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
+        'step' => 10000, #size used in ImportAlignment for selecting how many entries to copy at once
+
 	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
 	#accurate (and slow) method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
 	'quick' => 1,
@@ -280,6 +282,7 @@ sub pipeline_analyses {
 				'method_link_species_set_id'       => $self->o('high_epo_mlss_id'),
 				#'from_db_url'                      => $self->dbconn_2_url('epo_db'),
 				'from_db_url'                      => $self->o('epo_db'),
+                                'step'                             => $self->o('step'),
 			       },
 		-wait_for  => [ 'create_default_pairwise_mlss', 'make_species_tree'],
 		-flow_into => {
