@@ -227,18 +227,140 @@ sub reference_slice_strand {
   Returntype : none
   Exceptions : none
   Caller     : general
-  Status     : Stable
+  Status     : DEPRECATED, use $genomic_align_block->original_strand instead
 
 =cut
 
 sub get_original_strand {
   my ($self) = @_;
 
+  deprecate("get_original_strand should not be used. Please use the original_strand method instead");
+
   if (!defined($self->{_original_strand})) {
     $self->{_original_strand} = 1;
   }
 
   return $self->{_original_strand};
+}
+
+=head2 restricted_aln_start
+
+  Args       : none
+  Example    : my $restricted_aln_start = $genomic_align_block->restricted_aln_start();
+  Description: getter/setter of restricted_aln_start attribute. This is the position of the start in alignment coords of a 
+               restricted GenomicAlignBlock or GenomicAlignTree
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub restricted_aln_start {
+  my ($self, $restricted_aln_start) = @_;
+
+  if (defined $restricted_aln_start) {
+    $self->{_restricted_aln_start} = $restricted_aln_start;
+  }
+
+  return $self->{_restricted_aln_start};
+}
+
+=head2 restricted_aln_end
+
+  Args       : none
+  Example    : my $restricted_aln_end = $genomic_align_block->restricted_aln_end();
+  Description: getter/setter of restricted_aln_start attribute. This is the position of the end in alignment coords of a 
+               restricted GenomicAlignBlock or GenomicAlignTree
+  Returntype : none 
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub restricted_aln_end {
+  my ($self, $restricted_aln_end) = @_;
+
+  if (defined $restricted_aln_end) {
+    $self->{_restricted_aln_end} = $restricted_aln_end;
+  }
+
+  return $self->{_restricted_aln_end};
+}
+
+=head2 original_dbID
+
+  Args       : none
+  Example    : my $original_dbID = $genomic_align_block->original_dbID
+  Description: getter/setter of original_dbID attribute. When a GenomicAlignBlock or GenomicAlignTree is restricted, this attribute is set to the dbID of the original GenomicAlignBlock or GenomicAlignTree object
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub original_dbID {
+  my ($self, $original_dbID) = @_;
+
+  if (defined $original_dbID) {
+    $self->{_original_dbID} = $original_dbID;
+  }
+
+  return $self->{_original_dbID};
+}
+
+=head2 original_strand
+
+  Args       : none
+  Example    : my $original_strand = $genomic_align_block->original_strand
+  Description: getter/setter of original_strand attribute. When a GenomicAlignBlock or GenomicAlignTree is restricted, this attribute keeps track of the reverse complementing of the original GenomicAlignBlock or GenomicAlignTree object
+
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub original_strand {
+  my ($self, $original_strand) = @_;
+
+  #set
+  if (defined $original_strand) {
+    $self->{_original_strand} = $original_strand;
+  }
+
+  #initialise 
+  if (!defined($self->{_original_strand})) {
+    $self->{_original_strand} = 1;
+  }
+
+  return $self->{_original_strand};
+}
+
+
+=head2 is_restricted
+
+  Args       : none
+  Example    : my $is_restricted = $genomic_align_block->is_restricted;
+  Description: returns true if orignal_dbID is set, else returns false. original_dbID is only set if the block has been restricted.
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub is_restricted {
+  my ($self) = @_;
+
+  if (defined $self->{_original_dbID}) {
+      return 1;
+  } else {
+      return 0;
+  }
 }
 
 =head2 restrict_between_reference_positions
