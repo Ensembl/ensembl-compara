@@ -243,7 +243,7 @@ sub _info_panel {
     $class, 
     $width ? ' fixed_width' : '',
     $caption, 
-    $desc =~ /^<p>.+<\/p>$/ ? $desc : "<p>$desc</p>"
+    $desc =~ /^\s*<p>.+<\/p>\s*$/s ? $desc : "<p>$desc</p>"
   ) : '';
 }
 
