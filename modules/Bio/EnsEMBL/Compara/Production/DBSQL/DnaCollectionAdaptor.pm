@@ -1,9 +1,20 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -13,15 +24,11 @@ Bio::EnsEMBL::Compara::Production::DnaCollectionAdaptor
 
 =head1 DESCRIPTION
 
-Adpter to DnaColelction objects/tables
-DnaColelction is an object to hold a super-set of DnaFragChunk, and/or DnaFragChunkSet 
-objects.  Used in production to encapsulate particular genome/region/chunk/group DNA set
+Adpter to DnaCollection objects/tables
+DnaCollection is an object to hold a super-set of DnaFragChunkSet bjects.  
+Used in production to encapsulate particular genome/region/chunk/group DNA set
 from the others.  To allow system to blast against self, and isolate different 
 chunk/group sets of the same genome from each other.
-
-=head1 CONTACT
-
-Jessica Severin <jessica@ebi.ac.uk>
 
 =head1 APPENDIX
 
@@ -35,13 +42,13 @@ use strict;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
 
 #
 # STORE METHODS
@@ -60,108 +67,46 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 =cut
 
 sub store {
-  my ($self, $collection) = @_;
+    my ($self, $collection) = @_;
+    
+    unless($collection->isa('Bio::EnsEMBL::Compara::Production::DnaCollection')) {
+        throw("set arg must be a [Bio::EnsEMBL::Compara::Production::DnaCollection] "
+              . "not a $collection");
+    }
+    my $description = $collection->description if ($collection->description);
+    my $dump_loc = $collection->dump_loc if ($collection->dump_loc);
+    my $masking_options;
 
-  unless($collection->isa('Bio::EnsEMBL::Compara::Production::DnaCollection')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::Production::DnaCollection] "
-          . "not a $collection");
-  }
-
-  my $sth;
-  my $insertCount=0;
-  
-  #
-  # first create/get the collection->dbID (from the subset table)
-  #
-  unless($collection->dbID and $collection->adaptor) {
-    if(defined($collection->description) && defined($collection->dump_loc)) {
-      $sth = $self->prepare("INSERT ignore INTO subset (description,dump_loc) VALUES (?,?)");
-      $insertCount = $sth->execute($collection->description,$collection->dump_loc);
-    } elsif(defined($collection->description)) {
-      $sth = $self->prepare("INSERT ignore INTO subset (description) VALUES (?)");
-      $insertCount = $sth->execute($collection->description);
-    } else {
-      $sth = $self->prepare("INSERT ignore INTO subset SET description=NULL");
-      $insertCount = $sth->execute();
+    if ($collection->masking_options) {
+        if (ref($collection->masking_options)) {
+            #from masking_option_file
+            $masking_options = stringify($collection->masking_options);
+        } else {
+            $masking_options = $collection->masking_options;
+        }
     }
 
+    my $sql = "INSERT ignore INTO dna_collection (description, dump_loc, masking_options) VALUES (?, ?, ?)";
+    my $sth = $self->prepare($sql);
+
+    my $insertCount=0;
+    $insertCount = $sth->execute($description, $dump_loc, $masking_options);
+    
     if($insertCount>0) {
-      $collection->dbID( $sth->{'mysql_insertid'} );
+        $collection->dbID( $sth->{'mysql_insertid'} );
+        $sth->finish;
+    } else {
+        #INSERT ignore has failed on UNIQUE description
+        #Try getting dna_collection with SELECT
+        $sth->finish;
+        my $sth2 = $self->prepare("SELECT dna_collection_id FROM dna_collection WHERE description=?");
+        $sth2->execute($description);
+        my($id) = $sth2->fetchrow_array();
+        warn("DnaCollectionAdaptor: insert failed, but description SELECT failed too") unless($id);
+        $collection->dbID($id);
+        $sth2->finish;
     }
-    else {
-      #print("insert failed, do select\n");
-      my $sth2 = $self->prepare("SELECT subset_id FROM subset WHERE description=?");
-      $sth2->execute($collection->description);
-      my($id) = $sth2->fetchrow_array();
-      $collection->dbID($id);
-      $sth2->finish;
-    }
-    $sth->finish;
-  }
-  throw("unable to create/get collection_id\n") unless($collection->dbID);
-  #print("DnaCollectionAdaptor:store() dbID = ", $collection->dbID, "\n");
-
-  my @dna_objects = @{$collection->get_all_dna_objects};
-  $sth = $self->prepare("INSERT ignore INTO dna_collection (dna_collection_id, table_name, foreign_id) VALUES (?,?,?)");
-  foreach my $object (@dna_objects) {
-    if($object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-      $sth->execute($collection->dbID, 'dnafrag_chunk', $object->dbID);
-    }
-    if($object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-      $sth->execute($collection->dbID, 'dnafrag_chunk_set', $object->dbID);
-    }
-  }
-  $sth->finish;
-
-  $collection->adaptor($self);
-
-  return $collection->dbID;
 }
-
-
-=head2 store_link
-
-  Arg [1]    :  int $dna_collection_id
-  Arg [2]    :  int $foreign_id
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub store_link {
-  my ($self, $dna_collection_id, $foreign_id) = @_;
-
-  return unless($dna_collection_id and $foreign_id);
-
-  my $sth = $self->prepare("INSERT ignore INTO dna_collection (dna_collection_id, foreign_id) VALUES (?,?)");
-  $sth->execute($dna_collection_id, $foreign_id);
-  $sth->finish;
-}
-
-
-=head2 delete_link
-
-  Arg [1]    :  int $dna_collection_id
-  Arg [2]    :  int $foreign_id
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub delete_link {
-  my ($self, $dna_collection_id, $foreign_id) = @_;
-
-  my $sth = $self->prepare("DELETE FROM dna_collection WHERE dna_collection_id=? AND foreign_id=?");
-  $sth->execute($dna_collection_id, $foreign_id);
-  $sth->finish;
-}
-
 
 #
 # FETCH METHODS
@@ -220,14 +165,13 @@ sub fetch_by_set_description {
   }
 
   #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "s.description = '$set_description'";
+  my $constraint = "dc.description = '$set_description'";
   #print("fetch_by_set_name contraint:\n$constraint\n");
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
   return $obj;
 }
-
 
 #
 # INTERNAL METHODS
@@ -237,24 +181,23 @@ sub fetch_by_set_description {
 sub _tables {
   my $self = shift;
 
-  return (['subset', 's'], ['dna_collection', 'dc']);
+  #return (['subset', 's'], ['dna_collection', 'dc']);
+  return (['dna_collection', 'dc']);
 }
 
 sub _columns {
   my $self = shift;
 
-  return qw (s.subset_id
-             s.description
-             s.dump_loc
-             dc.dna_collection_id
-             dc.table_name
-             dc.foreign_id);
+  return qw (dc.dna_collection_id
+             dc.description
+             dc.dump_loc
+             dc.masking_options);
 }
 
 sub _default_where_clause {
   my $self = shift;
-
-  return 's.subset_id = dc.dna_collection_id';
+  return '';
+  #return 's.subset_id = dc.dna_collection_id';
 }
 
 sub _final_clause {
@@ -305,7 +248,6 @@ sub _generic_fetch {
       
   #construct a nice table string like 'table1 t1, table2 t2'
   my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
   my $sql = "SELECT $columns FROM $tablenames";
 
   my $default_where = $self->_default_where_clause;
@@ -325,9 +267,9 @@ sub _generic_fetch {
   $sql .= " $final_clause";
 
   my $sth = $self->prepare($sql);
-  $sth->execute;  
+  $sth->execute;
 
-#  print STDERR $sql,"\n";
+  #print STDERR $sql,"\n";
 
   return $self->_objs_from_sth($sth);
 }
@@ -348,22 +290,22 @@ sub _objs_from_sth {
     
     unless($collection) {
       $collection = new Bio::EnsEMBL::Compara::Production::DnaCollection
-                -dbid        => $column{'dna_collection_id'},
-                -description => $column{'description'},
+                -dbid            => $column{'dna_collection_id'},
+                -description     => $column{'description'},
+                -dump_loc        => $column{'dump_loc'},
+                -masking_options => $column{'masking_options'},
                 -adaptor     => $self;
       $collections_hash->{$collection->dbID} = $collection;
     }
 
+    if (defined($column{'description'})) {
+      $collection->description($column{'description'});
+    }
     if (defined($column{'dump_loc'})) {
       $collection->dump_loc($column{'dump_loc'});
     }
-    if($column{'table_name'} eq 'dnafrag_chunk') {
-      my $chunk = $chunkDBA->fetch_by_dbID($column{'foreign_id'});
-      $collection->add_dna_object($chunk);
-    }
-    if($column{'table_name'} eq 'dnafrag_chunk_set') {
-      my $chunk_set = $chunkSetDBA->fetch_by_dbID($column{'foreign_id'});
-      $collection->add_dna_object($chunk_set);
+    if (defined($column{'masking_options'})) {
+      $collection->masking_options($column{'masking_options'});
     }
   }
   $sth->finish;
@@ -371,13 +313,6 @@ sub _objs_from_sth {
   my @collections = values(%{$collections_hash});
 
   return \@collections;
-}
-
-
-sub _fetch_all_DnaFragChunk_by_ids {
-  my $self = shift;
-  my $chunkID_list = shift;  #list reference
-
 }
 
 1;

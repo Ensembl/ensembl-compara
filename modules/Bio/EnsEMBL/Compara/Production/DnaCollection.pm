@@ -1,9 +1,20 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -13,14 +24,10 @@ Bio::EnsEMBL::Compara::Production::DnaCollection
 
 =head1 DESCRIPTION
 
-DnaColelction is an object to hold a super-set of DnaFragChunk, and/or DnaFragChunkSet 
-objects.  Used in production to encapsulate particular genome/region/chunk/group DNA set
+DnaCollection is an object to hold a set of DnaFragChunkSet objects. 
+Used in production to encapsulate particular genome/region/chunk/group DNA set
 from the others.  To allow system to blast against self, and isolate different 
 chunk/group sets of the same genome from each other.
-
-=head1 CONTACT
-
-Jessica Severin <jessica@ebi.ac.uk>
 
 =head1 APPENDIX
 
@@ -49,11 +56,13 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $description, $adaptor) = rearrange([qw(DBID DESCRIPTION ADAPTOR)], @args);
+    my ($dbid, $description, $adaptor, $dump_loc, $masking_options) = rearrange([qw(DBID DESCRIPTION ADAPTOR DUMP_LOC MASKING_OPTIONS)], @args);
 
-    $self->dbID($dbid)               if($dbid);
-    $self->description($description) if($description);
-    $self->adaptor($adaptor)         if($adaptor);
+    $self->dbID($dbid)                       if($dbid);
+    $self->description($description)         if($description);
+    $self->adaptor($adaptor)                 if($adaptor);
+    $self->dump_loc($dump_loc)               if($dump_loc);
+    $self->masking_options($masking_options) if($masking_options);
   }
 
   return $self;
@@ -128,56 +137,48 @@ sub dump_loc {
   return $self->{'_dump_loc'};
 }
 
+=head2 masking_options
 
-sub add_dna_object {
-  my ($self, $object) = @_;
-  
-  return unless(defined($object));
-  unless($object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk') or
-         $object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet'))
-  {
-    $self->throw(
-      "arg must be a [Bio::EnsEMBL::Compara::Production::DnaFragChunk] ".
-      "or [Bio::EnsEMBL::Compara::Production::DnaFragChunk] not a [$object]");
-  }
-  if ($object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-    unless ($self->{'_dnafrag_id_hash'}->{$object->dnafrag_id}) {
-      push @{$self->{'_dnafrag_id_list'}}, $object->dnafrag_id;
-      $self->{'_dnafrag_id_hash'}->{$object->dnafrag_id} = 1;
-    }
-  }
-  if ($object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-    foreach my $dc (@{$object->get_all_DnaFragChunks}) {
-      unless ($self->{'_dnafrag_id_hash'}->{$dc->dnafrag_id}) {
-        push @{$self->{'_dnafrag_id_list'}}, $dc->dnafrag_id;
-        $self->{'_dnafrag_id_hash'}->{$dc->dnafrag_id} = 1;
-      }
-    }
-  }
-
-  push @{$self->{'_object_list'}}, $object;
-}
-
-=head2 get_all_dna_objects
-
-  Example    : @dna = @{$dnaCOllection->get_all_dna_objects};
-  Description: returns array reference to all the DnaFragChunkand DnaFragChunkSet objects in this set
-  Returntype : reference to array of Bio::EnsEMBL::Compara::Production::DnaFragChunk(DnaFragChunkSet) objects
+  Arg [1]    : string $masking_options (optional)
+  Example    :
+  Description:
+  Returntype : string
   Exceptions :
   Caller     :
 
 =cut
 
-sub get_all_dna_objects {
+sub masking_options {
   my $self = shift;
-  return $self->{'_object_list'};
+  $self->{'_masking_options'} = shift if(@_);
+  return $self->{'_masking_options'};
 }
 
+
+=head2 get_all_DnaFragChunkSets
+
+  Example    : @dna = @{$dnaCollection->get_all_DnaFragChunkSets};
+  Description: returns array reference to all the DnaFragChunkSet objects in this set
+  Returntype : reference to array of Bio::EnsEMBL::Compara::Production::DnaFragChunkSet objects
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub get_all_DnaFragChunkSets {
+  my $self = shift;
+
+  if (!$self->{'_object_list'} || !@{$self->{'_object_list'}}) {
+      $self->{'_object_list'} = $self->adaptor->db->get_DnaFragChunkSetAdaptor->fetch_all_by_DnaCollection($self);
+  }
+
+  return $self->{'_object_list'};
+}
 
 =head2 count
 
   Example    : $count = $chunkSet->count;
-  Description: returns count of DnaFragChunks in this set
+  Description: returns count of DnaFragChunkSets in this set
   Returntype : int
   Exceptions :
   Caller     :
@@ -187,21 +188,6 @@ sub get_all_dna_objects {
 sub count {
   my $self = shift;
   return scalar(@{$self->{'_object_list'}});
-}
-
-=head2 get_all_dnafrag_ids
-
-  Example    : @dnafrag_ids = @{$dnaCOllection->get_all_dnafrag_ids};
-  Description: returns array reference to all the dnafrag_ids in this set
-  Returntype : reference to array of integers
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub get_all_dnafrag_ids {
-  my $self = shift;
-  return $self->{'_dnafrag_id_list'};
 }
 
 1;
