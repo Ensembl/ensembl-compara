@@ -25,14 +25,17 @@ sub _add_object_track {
     my $key  = $image_config->get_track_key('transcript', $gene);
     my $node = $image_config->get_node(lc $key);
  
-    if($node && $node->get("display") eq 'off') { 
-      # Check user has not explicitly dimissed track in this session.
-      my $flag = $hub->session->get_data(type => 'auto_add', code => lc $key);
-      unless($flag->{'data'}) {
-        $image_config->update_track_renderer(lc $key,'transcript_label');
-        $extra .= $self->_info("Information","<p>The track containing the highlighted gene has been added to your display.</p>")."<br/>";
-        $hub->session->set_data(type => 'auto_add' , code => lc $key, data => 1); 
-        $hub->session->store();
+    if($node) {
+      my $current = $node->get('display');
+      my $default = $node->data->{'display'};
+      if($current eq 'off' and $default eq 'off') {
+        my $flag = $hub->session->get_data(type => 'auto_add', code => lc $key);
+        unless($flag->{'data'}) {             # haven't done this before
+          $image_config->update_track_renderer(lc $key,'transcript_label');
+          $extra .= $self->_info("Information","<p>The track containing the highlighted gene has been added to your display.</p>")."<br/>";
+          $hub->session->set_data(type => 'auto_add' , code => lc $key, data => 1); 
+          $hub->session->store();
+        }
       }
     }
   }
