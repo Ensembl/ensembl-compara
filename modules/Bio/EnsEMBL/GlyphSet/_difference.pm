@@ -123,7 +123,9 @@ sub _calc_clusters {
   foreach my $i (1..$#sc) {
     $sc[$i-1]->{'reserve_end'} = $middles[$i]-1;
     $sc[$i]->{'reserve_start'} = $middles[$i];
-  }  
+  }
+  $sc[0]->{'reserve_start'} = -$sc[0]->{'ref_to_img'};
+  $sc[$#sc]->{'reserve_end'} = $self->{'container'}->length - $sc[0]->{'ref_to_img'};
   foreach my $c (@clusters) {
     # keep it on screen, truncate if just too massive
     my $lhs_limit = -$c->{'ref_to_img'};
