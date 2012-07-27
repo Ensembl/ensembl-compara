@@ -502,7 +502,7 @@ sub _get_right_node_id {
   my ($this_genomic_align_node) = @_;
 
   my $use_right = 1;
-  $use_right = 1 - $use_right if (!$this_genomic_align_node->root->get_original_strand);
+  $use_right = 1 - $use_right if (!$this_genomic_align_node->root->original_strand);
 
   my $neighbour_node;
   if ($use_right) {

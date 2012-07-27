@@ -440,11 +440,10 @@ sub _fetch_by_genomic_align_block {
 
     #May have been restricted and not have a dbID. Return the original_dbID
     if (!defined $genomic_align_block_id) {
-	$genomic_align_block_id = $genomic_align_block->{'original_dbID'};
+	$genomic_align_block_id = $genomic_align_block->original_dbID;
     }
 
     return undef unless $genomic_align_block_id;
-    
     my $sql = "SELECT root_id FROM genomic_align
     LEFT JOIN genomic_align_tree USING (node_id)
     WHERE genomic_align_block_id = $genomic_align_block_id";
@@ -502,7 +501,7 @@ sub _fetch_by_genomic_align_block {
   }
 
   #if the genomic_align_block has been complemented, then complement the tree
-  if ($genomic_align_block->get_original_strand == 0) {
+  if ($genomic_align_block->original_strand == 0) {
       $genomic_align_tree->reverse_complement;
   }
 
@@ -1076,6 +1075,7 @@ sub _default_where_clause {
 
 #  return "gat.node_id = ga.node_id";
 #  return "gat.node_id = gag.node_id AND gag.genomic_align_id = ga.genomic_align_id";
+
   return "";
 }
 
@@ -1118,7 +1118,6 @@ sub _objs_from_sth {
   my $genomic_aligns = {};
 
   while(my $rowhash = $sth->fetchrow_hashref) {
-
     if (!defined($rowhash->{genomic_align_id})) {
        my $node = $self->create_instance_from_rowhash($rowhash);
        push @$node_list, $node;

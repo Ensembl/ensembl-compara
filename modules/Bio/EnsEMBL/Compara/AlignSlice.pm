@@ -297,7 +297,7 @@ sub new {
 
 	    #if the block has been restricted, need to look at original_dbID
 	    if (!defined $block_id) {
-		$block_id = $block->{original_dbID};
+		$block_id = $block->original_dbID;
 	    }
 	    my $tree_ref_ga = $tree->{reference_genomic_align};
 	    my $block_ref_ga = $block->{reference_genomic_align};
@@ -657,8 +657,8 @@ sub _get_expanded_conservation_scores {
     my $offset = 0; #the start of each gab in alignment coords
     my $prev_gab_end;
     foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
-	$this_genomic_align_block->{restricted_aln_start} = $this_genomic_align_block->{_alignslice_from};
-	$this_genomic_align_block->{restricted_aln_end} = $this_genomic_align_block->{_alignslice_to};
+	$this_genomic_align_block->restricted_aln_start($this_genomic_align_block->{_alignslice_from});
+	$this_genomic_align_block->restricted_aln_end($this_genomic_align_block->{_alignslice_to});
 
 	#Need to map the coords I get back from the conservation_score_adaptor onto the slice using the start position of the genomic_align_block
 	my $all_these_conservation_scores = $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock(
@@ -679,7 +679,7 @@ sub _get_expanded_conservation_scores {
 	}
 
 	#offset is the sum of preceding gab lengths
-	$offset += ($this_genomic_align_block->{restricted_aln_end} - $this_genomic_align_block->{restricted_aln_start} + 1);
+	$offset += ($this_genomic_align_block->restricted_aln_end - $this_genomic_align_block->restricted_aln_start + 1);
 
 	#initialise y axis min and max
 	if (!defined $y_axis_max) {
@@ -1195,10 +1195,10 @@ sub _choose_underlying_Slice {
   if ($species_order) {
     my $preset_underlying_slice = undef;
     foreach my $this_underlying_slice (@{$self->{_slices}}) {
-      if (!$this_genomic_align->{original_dbID} and $this_genomic_align->dbID) {
-        $this_genomic_align->{original_dbID} = $this_genomic_align->dbID;
+      if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
+        $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
       }
-      if (grep {$_ == $this_genomic_align->{original_dbID}}
+      if (grep {$_ == $this_genomic_align->{_original_dbID}}
           @{$this_underlying_slice->{genomic_align_ids}}) {
         $preset_underlying_slice = $this_underlying_slice;
       }

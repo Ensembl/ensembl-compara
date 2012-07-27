@@ -157,7 +157,7 @@ sub new_fast {
 sub copy {
   my $self = shift;
   my $copy;
-  $copy->{original_dbID} = $self->{dbID};
+  $copy->{_original_dbID} = $self->{dbID};
 
   #This is not a deep copy
   #$copy->{genomic_align_array} = $self->{genomic_align_array};
@@ -461,11 +461,14 @@ sub aligned_sequence {
 
   my $aligned_sequence;
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
+      #print "GAG " . $this_genomic_align->dnafrag->genome_db->name . " " . $this_genomic_align->dnafrag->name . " " . $this_genomic_align->dbID . " " . $this_genomic_align->cigar_line . "\n";
+
     if (!$aligned_sequence) {
       $aligned_sequence = $this_genomic_align->aligned_sequence;
     } else {
       my $pos = 0;
       foreach my $substr (grep {$_} split(/(\.+)/, $this_genomic_align->aligned_sequence)) {
+          #print "   substr $substr\n";
         if ($substr =~ /^\.+$/) {
           $pos += length($substr);
         } else {

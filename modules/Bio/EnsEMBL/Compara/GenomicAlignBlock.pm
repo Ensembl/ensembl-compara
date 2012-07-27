@@ -58,7 +58,7 @@ GET VALUES
   my $length = $genomic_align_block->length;
   my alignment_strings = $genomic_align_block->alignment_strings;
   my $genomic_align_block_is_on_the_original_strand =
-      $genomic_align_block->get_original_strand;
+      $genomic_align_block->original_strand;
 
 =head1 DESCRIPTION
 
@@ -221,7 +221,7 @@ sub new {
         GENOMIC_ALIGN_ARRAY STARTING_GENOMIC_ALIGN_ID UNGAPPED_GENOMIC_ALIGN_BLOCKS)],
             @args);
 
-  $self->{_original_strand} = 1;
+  $self->original_strand(1);
 
   if (defined($ungapped_genomic_align_blocks)) {
     return $self->_create_from_a_list_of_ungapped_genomic_align_blocks($ungapped_genomic_align_blocks);
@@ -1356,10 +1356,10 @@ sub get_all_ungapped_GenomicAlignBlocks {
 sub reverse_complement {
   my ($self) = @_;
 
-  if (defined($self->{_original_strand})) {
-    $self->{_original_strand} = 1 - $self->{_original_strand};
+  if (defined($self->original_strand)) {
+    $self->original_strand(1 - $self->original_strand);
   } else {
-    $self->{_original_strand} = 0;
+    $self->original_strand(0);
   }
 
   my $gas = $self->get_all_GenomicAligns;
@@ -1442,8 +1442,8 @@ sub restrict_between_alignment_positions {
           -group_id => $self->group_id,
 	  -level_id => $self->level_id,
       );
-  $genomic_align_block->{original_dbID} = ($self->dbID or $self->{original_dbID});
-  $genomic_align_block->{_original_strand} = $self->{_original_strand};
+  $genomic_align_block->original_dbID($self->dbID or $self->original_dbID);
+  $genomic_align_block->original_strand($self->original_strand);
   if ($new_reference_genomic_align) {
     $genomic_align_block->reference_genomic_align($new_reference_genomic_align);
   }

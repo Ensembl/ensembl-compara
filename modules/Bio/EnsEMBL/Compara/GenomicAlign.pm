@@ -1612,95 +1612,6 @@ sub get_Mapper {
   return $self->{$mode.'_mapper'};
 }
 
-sub get_MapperOLD {
-  my ($self, $cache, $condensed) = @_;
-  my $mapper;
-  $cache = 0 if (!defined($cache));
-  my $mode = "expanded";
-  if (defined($condensed) and $condensed) {
-    $mode = "condensed";
-  }
-
-  if (!defined($self->{$mode.'_mapper'})) {
-    if ($mode eq "condensed") {
-      $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
-      my $rel_strand = $self->dnafrag_strand;
-      my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
-      my $this_aligned_seq = $self->aligned_sequence("+FAKE_SEQ");
-
-      my $aln_pos = (eval{$self->genomic_align_block->start} or 1);
-      my $aln_seq_pos = 0;
-      my $seq_pos = 0;
-
-      my $target_cigar_pieces;
-      @$target_cigar_pieces = $self->cigar_line =~ /(\d*[GMDXI])/g;
-
-      my $insertions = 0;
-      my $array_index = 0;
-      my $this_target_pos = 0;
-      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMDX])/g) {
-        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDX])/;
-        $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
-
-	#because of 2X genomes, need different method for extracting the
-	#cigar_line
-	#my $this_piece_of_cigar_line = _get_sub_cigar_line_slow($target_cigar_pieces, $aln_seq_pos, $cig_count);
-
-	#quicker method which keeps track of how far through the 
-	#target_cigar_pieces array we are
-	my $this_piece_of_cigar_line;
-	($this_piece_of_cigar_line,$array_index, $this_target_pos) = _get_sub_cigar_line($target_cigar_pieces, $aln_seq_pos, $cig_count, $array_index, $this_target_pos);
-
-	#find number of each cigar_line mode in cigar_line
-	my $num_cigar_elements = _count_cigar_elements($this_piece_of_cigar_line);
-        if ($cig_mode eq "M") {
-
-          my $this_mapper;
-          if ($rel_strand == 1) {
-            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
-                $seq_pos + $self->dnafrag_start, 1);
-          } else {
-            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
-                $self->dnafrag_end - $seq_pos, -1);
-          }
-          $mapper->add_Mapper($this_mapper);
-          $aln_pos += $cig_count;
-
-	  $insertions = $num_cigar_elements->{"I"};
-
-	  $seq_pos += $insertions;
-        }
-	my $gaps = $num_cigar_elements->{"D"};
-	$gaps += $num_cigar_elements->{"X"};
-
-        $seq_pos -= $gaps;
-        $seq_pos += $cig_count;
-        $aln_seq_pos += $cig_count;
-      }
-
-    } else {
-      my $cigar_line = $self->cigar_line;
-      if (!$cigar_line) {
-        throw("[$self] has no cigar_line and cannot be retrieved by any means");
-      }
-      my $alignment_position = (eval{$self->genomic_align_block->start} or 1);
-      my $sequence_position = $self->dnafrag_start;
-      my $rel_strand = $self->dnafrag_strand;
-      if ($rel_strand == 1) {
-        $sequence_position = $self->dnafrag_start;
-      } else {
-        $sequence_position = $self->dnafrag_end;
-      }
-      $mapper = _get_Mapper_from_cigar_line($cigar_line, $alignment_position, $sequence_position, $rel_strand);
-    }
-
-    return $mapper if (!$cache);
-
-    $self->{$mode.'_mapper'} = $mapper;
-  }
-
-  return $self->{$mode.'_mapper'};
-}
 
 =head2 _count_cigar_elements
 
@@ -2104,7 +2015,7 @@ sub restrict {
   delete($restricted_genomic_align->{original_sequence});
   delete($restricted_genomic_align->{aligned_sequence});
   delete($restricted_genomic_align->{cigar_line});
-  $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
+  $restricted_genomic_align->{_original_dbID} = $self->dbID if ($self->dbID);
 
   # Need to calculate the original aligned sequence length myself
   if (!$aligned_seq_length) {
