@@ -16,7 +16,7 @@ sub _render_background {
   my ($self,$start,$end,$bump_offset) = @_;
 
   $self->push($self->Rect({
-    x         => $start,
+    x         => $start-1,
     y         => 20 + $bump_offset,
     width     => $end-$start+1,
     height    => 8,
@@ -408,7 +408,7 @@ sub _add_blob {
   $blob_start = max(-$f->start,$blob_start);
   my $rname = $f->seqname;
   $rname = $f->seq_region_name if $f->can('seq_region_name'); # missing from GFF
-  my $ref_to_coord = $self->{'container'}->start + $f->start;
+  my $ref_to_coord = $self->{'container'}->start + $f->start -1; # -1 cos adding two 1-based coordinates
   my $ref_span = $ref_end-$ref_start;
   return {
     ref_name  => $rname,                      # reference name
@@ -418,7 +418,7 @@ sub _add_blob {
     disp_ref_end  => $disp_start + $ref_span, # where we want to start displaying the reference (eg maybe truncated)
     int_size => $size,                        # what is the "size" of this feature (in bp)
     req_start => $blob_start,                 # where we'd ideally want our display to start
-    ref_to_img => $f->start,                  # delta from reference to image start
+    ref_to_img => $f->start-1,                # delta from reference to image start (-1 because screen bases are 0-based)
     ref_to_coord => $ref_to_coord,            # delta from reference to true coord
     midel => $midel,                          # middle ellipsis: insert too long to display in full on this scale
     type_str => { 'I' => 'insert',            # For zmenus
@@ -500,7 +500,7 @@ sub draw_cigar_difference {
       my $rh = $options->{'row_height'};
       my $fname;
       $fname = $f->display_id if $f->can('display_id');
-      $self->_render_background(max(0,$f->start),min($self->{'container'}->length,$f->end),$row*$rh);
+      $self->_render_background(max(1,$f->start),min($self->{'container'}->length,$f->end),$row*$rh);
       $self->_render_fname($draw_start,$fname,$row*$rh) if $fname and not $options->{'skip_labels'};
       my $deletes = $self->_calc_clusters($parts{'D'}||[],'D',$options);
       $self->_draw_delete_blobs($deletes,$row*$rh,$options);
