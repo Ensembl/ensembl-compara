@@ -128,6 +128,41 @@ sub write_output {
 
     my $dna_collections = $self->param('dna_collections');
 
+    #Create ChunkAndGroupDna analysis jobs
+    #Need to get all the pair_aligner dna_collection names
+    my $pair_aligner_collection_names;
+    foreach my $pair_aligner (@{$self->param('pair_aligners')}) {
+        $pair_aligner_collection_names->{$pair_aligner->{'reference_collection_name'}} = 1;
+        $pair_aligner_collection_names->{$pair_aligner->{'non_reference_collection_name'}} = 1;
+    }
+
+    foreach my $dna_collection (keys %$pair_aligner_collection_names) {
+        print "dna_collection $dna_collection\n";
+
+        #
+	#dataflow to chunk_and_group_dna
+	#
+	my $output_hash = {};
+        
+        #Set collection_name (hash key of this dna_collection)
+	$output_hash->{'collection_name'} = $dna_collection;
+	while (my ($key, $value) = each %{$dna_collections->{$dna_collection}}) {
+	    if (not ref($value)) {
+		if (defined $value) {
+		    $output_hash->{$key} = $value;
+		}
+	    } elsif ($key eq "genome_db") {
+		#genome_db_id
+		$output_hash->{'genome_db_id'} = $value->dbID;
+	    }
+	}
+	$self->dataflow_output_id($output_hash,2);
+        if (defined $dna_collections->{$dna_collection}->{'dump_loc'}) {
+	    $self->dataflow_output_id($output_hash, 9);
+        }
+
+    }
+
     #Write method_link and method_link_species_set database entries for pair_aligners
     foreach my $pair_aligner (@{$self->param('pair_aligners')}) {
 	my ($method_link_id, $method_link_type) = @{$pair_aligner->{'method_link'}};
@@ -137,7 +172,8 @@ sub write_output {
 	#If include_non_reference is in auto-detect mode (-1), need to auto-detect!
 	#Auto-detect if need to use patches ie only use patches if the non-reference species has chromosomes
 	#(because these are the only analyses that we keep up-to-date by running the patch-pipeline)
-	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} == -1) {
+	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} && 
+            $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} == -1) {
 	    if (defined $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'}) {
 		my ($coord_system_name, $name) = split ":", $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
 		if ($coord_system_name eq 'chromosome') {
@@ -157,18 +193,12 @@ sub write_output {
 	    }
 	}
 	
-	print "include_non_reference " . $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} . "\n";
-	
+        if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
+            print "include_non_reference " . $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} . "\n";
+	}
 	
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$pair_aligner->{'mlss_id'} = $mlss->dbID;
-
-	$pair_aligner->{'reference_masking_tag_name'} = "reference_masking_options";
-	$pair_aligner->{'non_reference_masking_tag_name'} = "non_reference_masking_options";
-
-	#Write masking options
-	$self->write_masking_options($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $mlss, $pair_aligner->{'reference_masking_tag_name'});
-	$self->write_masking_options($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $mlss, $pair_aligner->{'non_reference_masking_tag_name'});
 
 	#Write options and chunks entries to method_link_species_set_tag table
 	#Write parameters and dna_collection with raw mlss_id for use in downstream analyses
@@ -382,28 +412,31 @@ sub get_pair_aligner {
 	my $ref_dna_collection = $dna_collections->{$ref_collection_name};
 	my $non_ref_dna_collection = $dna_collections->{$non_ref_collection_name};
 
-	#Set default dna_collection chunking values if required
-	$self->get_chunking($ref_dna_collection, $self->param('default_chunks')->{'reference'});
-	$self->get_chunking($non_ref_dna_collection, $self->param('default_chunks')->{'non_reference'});
+        #Set default dna_collection chunking values
+        $self->get_chunking($ref_dna_collection, $self->param('default_chunks')->{'reference'});
+        $self->get_chunking($non_ref_dna_collection, $self->param('default_chunks')->{'non_reference'});
 
-	#Set default pair_aligner values
-	unless (defined $pair_aligner->{'method_link'}) {
-	    $pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
-	}
+        #Set default pair_aligner values
+        unless (defined $pair_aligner->{'method_link'}) {
+            $pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
+        }
 
 	my $params = eval($pair_aligner->{'analysis_template'}{'-parameters'});
 	print "options " . $params->{'options'} . "\n";
 	if ($params->{'options'}) {
 	    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $params->{'options'};
-	} else {
+        } else {
 	    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
-	}
+        }
 	print_conf($pair_aligner);
 	print "\n";
     }
     $self->param('pair_aligners', $pair_aligners);
 }
 
+#
+#Fill in missing information in the conf file from the default_chunk 
+#
 sub get_chunking {
    my ($self, $dna_collection, $default_chunk) = @_;
 
@@ -422,17 +455,21 @@ sub get_chunking {
        $dna_collection->{'overlap'} = $default_chunk->{'overlap'};
    }
    
-   #include_non_reference (haplotypes) and masking_options
+   #include_non_reference (haplotypes)
    unless (defined $dna_collection->{'include_non_reference'}) {
        $dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
    }
-   unless (defined $dna_collection->{'masking_options_file'}) {
-       $dna_collection->{'masking_options_file'} = $default_chunk->{'masking_options_file'};
-   }
-   unless (defined $dna_collection->{'masking_options'}) {
+
+   #set masking_option if neither masking_option_file or masking_options has been set
+   unless (defined $dna_collection->{'masking_options'} || defined $dna_collection->{'masking_options_file'}) {
        $dna_collection->{'masking_options'} = $default_chunk->{'masking_options'};
    }
    
+   #Check that only masking_options OR masking_options_file have been defined
+   if (defined $dna_collection->{'masking_options'} && defined $dna_collection->{'masking_options_file'}) {
+       throw("Both masking_options and masking_options_file have been defined. Please only define EITHER masking_options OR masking_options_file");
+   }
+
    unless (defined $dna_collection->{'dump_loc'}) {
        $dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
    }
@@ -550,8 +587,19 @@ sub parse_defaults {
     #Create a collection of pairs from the list of genome_dbs
     my $collection;
     if (@$genome_dbs > 2) {
+
+        #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
+        #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
+        foreach my $key (keys %{$self->param('default_chunks')->{'reference'}}) {
+            if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
+                throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
+            }
+        }
+
+
 	#Have a collection. Make triangular matrix, ordered by genome_db_id?
 
+        #Check the dna_collection is the same for reference and non-reference
 	my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
 	while (@ordered_genome_dbs) {
 	    my $ref_genome_db = shift @ordered_genome_dbs;
@@ -628,7 +676,6 @@ sub parse_defaults {
 	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
 	$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
 
-
 	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->name . "_nib_for_chain";
 	
 	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
@@ -677,7 +724,6 @@ sub parse_defaults {
 	push @$net_configs, $net_config;
 
     }
-
     $self->param('dna_collections', $dna_collections);
     $self->param('pair_aligners', $pair_aligners);
     $self->param('chain_configs', $chain_configs);
@@ -740,6 +786,9 @@ sub write_parameters_to_mlss_tag {
 	my $ref_collection;
 	foreach my $key (keys %$ref_dna_collection) {
 	    if (defined $ref_dna_collection->{$key} && $key ne "genome_db") {
+                #skip dump_loc
+                next if (defined $ref_dna_collection->{$key} && $key eq "dump_loc");
+
 		#Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
 		if ($key eq "masking_options_file") {
 		    my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
@@ -756,6 +805,9 @@ sub write_parameters_to_mlss_tag {
 	foreach my $key (keys %$non_ref_dna_collection) {
 	    if (defined $non_ref_dna_collection->{$key} && $key ne "genome_db") {
 		#Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
+                #skip dump_loc
+                next if (defined $non_ref_dna_collection->{$key} && $key eq "dump_loc");
+
 		if ($key eq "masking_options_file") {
 		    my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
 		    if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $non_ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
@@ -847,57 +899,6 @@ sub create_pair_aligner_dataflows {
 
 	$self->dataflow_output_id($ref_output_hash,3);
 	$self->dataflow_output_id($non_ref_output_hash,3);
-
-	#
-	#dataflow to chunk_and_group_dna
-	#
-	my $output_hash = {};
-	$output_hash->{'collection_name'} = $pair_aligner->{'reference_collection_name'};
-	$output_hash->{'method_link_species_set_id'} = $mlss_id;
-	$output_hash->{'masking_tag_name'} = $pair_aligner->{'reference_masking_tag_name'};
-
-	while (my ($key, $value) = each %{$dna_collections->{$pair_aligner->{'reference_collection_name'}}}) {
-	    if (not ref($value)) {
-		if (defined $value) {
-		    $output_hash->{$key} = $value;
-		}
-	    } elsif ($key eq "genome_db") {
-		#genome_db_id
-		$output_hash->{'genome_db_id'} = $value->dbID;
-	    }
-	}
-	$self->dataflow_output_id($output_hash,2);
-
-	$output_hash = {};
-	$output_hash->{'collection_name'} = $pair_aligner->{'non_reference_collection_name'};
-	$output_hash->{'method_link_species_set_id'} = $mlss_id;
-	$output_hash->{'masking_tag_name'} = $pair_aligner->{'non_reference_masking_tag_name'};
-	while (my ($key, $value) = each %{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}}) {
-
-	    if (not ref($value)) {
-		if (defined $value) {
-		    $output_hash->{$key} = $value;
-		}
-	    } elsif ($key eq "genome_db") {
-		#genome_db_id
-		$output_hash->{'genome_db_id'} = $value->dbID;
-	    }
-	}
-	$self->dataflow_output_id($output_hash,2);
-	
-	#
-	#dataflow to dump_dna.
-	#
-	if (defined ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'dump_loc'})) {
-	    my $dump_dna_hash;
-	    $dump_dna_hash->{"collection_name"} = $pair_aligner->{'reference_collection_name'};
-	    $self->dataflow_output_id($dump_dna_hash, 9);
-	}
-	if (defined ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'dump_loc'})) {
-	    my $dump_dna_hash;
-	    $dump_dna_hash->{"collection_name"} = $pair_aligner->{'non_reference_collection_name'};
-	    $self->dataflow_output_id($dump_dna_hash, 9);
-	}
     }
 }
 
@@ -1277,7 +1278,7 @@ sub update_genome_db {
     
     ## New genebuild!
     if ($genome_db) {
-	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =?, WHERE genome_db_id =?');
+	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =? WHERE genome_db_id =?');
 	$sth->execute($assembly, $genebuild, $genome_db->dbID());
 	$sth->finish();
 	
