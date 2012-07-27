@@ -34,6 +34,16 @@ $dbh->do(
   )'
 );
 
+if (!@ARGV) {
+  my %existing_species = map { lc $_ => 1 } @$SiteDefs::ENSEMBL_DATASETS;
+  my @delete = grep !$existing_species{$_}, @{$dbh->selectcol_arrayref('select distinct(species) from gene_autocomplete')};
+  
+  if (@delete) {
+    warn sprintf "Deleting old species: %s\n", join ', ', @delete;
+    $dbh->do(sprintf "DELETE FROM gene_autocomplete WHERE species IN ('%s')", join "', '", @delete);
+  }
+}
+
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
   warn "$dataset\n";
   
