@@ -123,6 +123,7 @@ sub filter_duplicates {
   my $overlap = $self->param('overlap');
   my $chunk_size = $self->param('chunk_size');
   my $window_size = $self->param('window_size');
+
   $self->param('overlap_count', 0);
   $self->param('identical_count', 0);
   $self->param('gab_count', 0);
@@ -176,45 +177,27 @@ sub filter_duplicates {
 	    }
 	}
     }
-    
   }
 
-  my @del_list = values(%{$self->param('delete_hash')});
+  my @del_list = keys(%{$self->param('delete_hash')});
 
-  my $sql_ga = "delete ignore from genomic_align where genomic_align_id in ";
+  my $sql_ga = "delete ignore from genomic_align where genomic_align_block_id in ";
   my $sql_gab = "delete ignore from genomic_align_block where genomic_align_block_id in ";
 
   for (my $i=0; $i < scalar @del_list; $i=$i+1000) {
-      my (@gab_ids, @ga_ids);
+      my (@gab_ids);
       for (my $j = $i; ($j < scalar @del_list && $j < $i+1000); $j++) {
-	  my $gab = $del_list[$j];
-	  push @gab_ids, $gab->dbID;
-	  foreach my $ga (@{$gab->genomic_align_array}) {
-	      push @ga_ids, $ga->dbID;
-	  }
+	  push @gab_ids, $del_list[$j];
       }
       my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
-      my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids) . ")";
-      
+      my $sql_ga_to_exec = $sql_ga . "(" . join(",", @gab_ids) . ")";
+ 
       foreach my $sql ($sql_ga_to_exec,$sql_gab_to_exec) {
  	  my $sth = $self->compara_dba->dbc->prepare($sql);
  	  $sth->execute;
  	  $sth->finish;
        }
   }
-
-#   foreach my $gab (@del_list) {
-#     #print("DELETE "); print_gab($gab);
-#     foreach my $ga (@{$gab->genomic_align_array}) {
-#       $sth_genomic_align_group->execute($ga->dbID);
-#       $sth_genomic_align->execute($ga->dbID);
-#     }
-#     $sth_genomic_align_block->execute($gab->dbID);
-#   }
-
-#   $sth_genomic_align_group->finish;
-#   $sth_genomic_align->finish;
-#   $sth_genomic_align_block->finish;
 
   printf("%d gabs to delete\n", scalar(keys(%{$self->param('delete_hash')})));
   printf("found %d equal GAB pairs\n", $self->param('identical_count'));
@@ -240,20 +223,13 @@ sub find_identical_matches {
 	printf STDERR "IDENTICAL MATCHES: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
 	      $region_start, $region_end, scalar(@$genomic_align_block_list);
 
-	if ($self->debug) {
-	    foreach my $gab (@{$genomic_align_block_list}) {
-		$self->assign_jobID_to_genomic_align_block($gab);
-	    }
-	}
-
 	my $sort_time = time();
+
 	# first sort the list for processing
 	my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
 	$self->param('gab_count', $self->param('gap_count')+scalar(@sorted_GABs));
-	
 	# remove all the equal duplicates from the list
 	$self->removed_equals_from_genomic_align_block_list(\@sorted_GABs);
-	
         $region_start = $region_end;
     }
 }
@@ -271,15 +247,8 @@ sub find_edge_artefacts {
 
        my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
         ($mlss, $dnafrag, $region_start, $region_end);
-       
        printf STDERR "EDGE ARTEFACTS: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, $region_start, $region_end, scalar(@$genomic_align_block_list);
        
-       if ($self->debug) {
-	   foreach my $gab (@{$genomic_align_block_list}) {
-	       $self->assign_jobID_to_genomic_align_block($gab);
-	   }
-       }
-
        # first sort the list for processing
        my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
        $self->param('gab_count', $self->param('gab_count')+scalar(@sorted_GABs));
@@ -310,21 +279,6 @@ sub sort_alignments{
     ($a->score <=> $b->score) ||
     ($a->dbID <=> $b->dbID);
 }
-
-
-sub assign_jobID_to_genomic_align_block {
-  my $self = shift;
-  my $gab = shift;
-
-  my $sql = "SELECT analysis_job_id FROM genomic_align_block_job_track ".
-                  "WHERE genomic_align_block_id=?";
-  my $sth = $self->compara_dba->prepare($sql);
-  $sth->execute($gab->dbID);
-  my ($job_id) = $sth->fetchrow_array();
-  $sth->finish;
-  $gab->{'analysis_job_id'} = $job_id;
-}
-
 
 sub remove_deletes_from_list {
   my $self = shift;
@@ -364,36 +318,12 @@ sub removed_equals_from_genomic_align_block_list {
       next if($self->param('delete_hash')->{$gab2->dbID}); #already deleted so skip it
 
       if(genomic_align_blocks_identical($gab1, $gab2)) {
-        if ($self->debug) {
-          if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-            printf("WARNING!!!!!! identical GABs dbID:%d,%d  SAME JOB:%d,%d\n", 
-                   $gab1->dbID, $gab2->dbID, 
-                   $gab1->{'analysis_job_id'},$gab2->{'analysis_job_id'},);
-            print("  "); print_gab($gab1);
-            print("  "); print_gab($gab2);
-          }
-        }
         if($gab1->dbID < $gab2->dbID) {
-          $self->param('delete_hash')->{$gab2->dbID} = $gab2;
+          $self->param('delete_hash')->{$gab2->dbID} = 1;
         } else {
-          $self->param('delete_hash')->{$gab1->dbID} = $gab1;
+          $self->param('delete_hash')->{$gab1->dbID} = 1;
         }
         $self->param('identical_count', $self->param('identical_count')+1);        
-        
-        if($self->debug > 1) {
-          if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-            printf("  EQUAL - SAME JOB (gab_ids %d %d) (jobs %d,%d)\n", 
-                 $gab1->dbID, $gab2->dbID, 
-                 $gab1->{'analysis_job_id'},$gab2->{'analysis_job_id'},);         
-          }
-          else {
-            printf("  EQUAL - DIFFERENT JOB (gab_ids %d %d) (jobs %d,%d)\n",
-                 $gab1->dbID, $gab2->dbID, 
-                 $gab1->{'analysis_job_id'},$gab2->{'analysis_job_id'},);         
-          }
-          print("      "); print_gab($gab1);
-          print("  del "); print_gab($gab2);
-        }
       }
     }
   }
@@ -425,12 +355,6 @@ sub remove_edge_artifacts_from_genomic_align_block_list {
 
         unless($self->process_overlap_for_chunk_edge_truncation($gab1, $gab2, $region_start, $region_end)) {
           if($self->debug) {
-            if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-              printf("SAME JOB overlaping GABs %d %d\n", $gab1->dbID, $gab2->dbID);
-            }
-            else {
-              printf("DIFFERENT JOB overlaping GABs %d %d\n", $gab1->dbID, $gab2->dbID);
-            }
             print("  "); print_gab($gab1);
             print("  "); print_gab($gab2);
           }
@@ -546,31 +470,15 @@ sub process_overlap_for_chunk_edge_truncation {
     )   
   {
     if($gab1->score > $gab2->score) {
-      $self->param('delete_hash')->{$gab2->dbID} = $gab2;
+      $self->param('delete_hash')->{$gab2->dbID} = 1;
     } else {
-      $self->param('delete_hash')->{$gab1->dbID} = $gab1;
+      $self->param('delete_hash')->{$gab1->dbID} = 1;
     }
     $self->param('truncate_count', $self->param('truncate_count')+1);  
-    if ($self->debug) {
-      if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-        printf("TRUNCATE GABs %d %d\n", $gab2->dbID, $gab1->dbID);
-        if($self->param('delete_hash')->{$gab1->dbID}) { print("  DEL ");} else{ print("      ");}
-        print_gab($gab1);
-        if($self->param('delete_hash')->{$gab2->dbID}) { print("  DEL ");} else{ print("      ");}
-        print_gab($gab2);
-      } 
-    }
   }
   else {
     $self->param('not_truncate_count', $self->param('not_truncate_count')+1);
-    if ($self->debug) {
-      if($gab1->{'analysis_job_id'} == $gab2->{'analysis_job_id'}) {
-        printf("overlaping GABs %d %d - not truncate\n", $gab2->dbID, $gab1->dbID);
-        print("      "); print_gab($gab1);
-        print("      "); print_gab($gab2);
-      }
-    }
-  }
+   }
 }
 
 1;
