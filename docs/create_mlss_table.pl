@@ -359,11 +359,13 @@ sub print_blastz_net_list {
     #then the other species in the order given in the species array which will 
     #be the species_tree if defined
     foreach my $ref_id (sort order_count_tree keys(%$ref_species)) {
-	print "<h4>" . getNameString($ref_id) . "</h4>" . "\r\n";
+	print "<h4>" . getNameString($ref_id) . "</h4>" . "\r\n<p>";
         foreach my $other_id (sort order_tree @{$ref_species->{$ref_id}}) {
             print "<a href=\"mlss/mlss_".$mlss_ids->{$ref_id}->{$other_id}.".html\">" . getNameString($other_id) . "</a><br/>" . "\r\n";
         }
+	print "</p>";
     }
+   print "<p>";
 }
 
 #order by firstly the number of mlss entries and then by the species_tree
@@ -458,6 +460,7 @@ sub print_html_list {
       }
       if (defined $species_set_name) {
             my $type = $this_method_link_species_set->method->type;
+	    print "<p>";
             print "<h4>", $this_method_link_species_set->name, "</h4>";
             print "<h5>", "(method_link_type=\"$type\" : species_set_name=\"$species_set_name\")", "</h5>";
       } else {
@@ -472,7 +475,7 @@ sub print_html_list {
       foreach my $genome_id (sort order_tree @$genome_ids) {
           print getNameString($genome_id) . "<br />" . "\n";
       }
-      print "\r\n";
+      print "\r\n</p>";
   }
 }
 
