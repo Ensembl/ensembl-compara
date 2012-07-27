@@ -34,15 +34,21 @@ use strict;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::Seq;
+use Bio::SeqIO;
+
+
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 sub new {
-  my ($class, $dnafrag, $start, $end) = @_;
+  my ($class, $dnafrag, $start, $end, $dnafrag_chunk_set_id) = @_;
   my $self = {};
   bless $self,$class;
-  $self->dnafrag($dnafrag) if($dnafrag);
-  $self->seq_start($start) if($start);
-  $self->seq_end($end)     if($end);
+
+  $self->dnafrag($dnafrag)                     if($dnafrag);
+  $self->seq_start($start)                     if($start);
+  $self->seq_end($end)                         if($end);
+  $self->dnafrag_chunk_set_id($dnafrag_chunk_set_id) if ($dnafrag_chunk_set_id);
   return $self;
 }
 
@@ -149,7 +155,6 @@ sub fetch_masked_sequence {
   #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
 
   #print STDERR "sequence length : ",$seq->length,"\n";
-
   $seq = $seq->seq;
 
   if (defined $masking_options) {
@@ -231,8 +236,6 @@ sub bioseq {
   return $seq;
 }
 
-
-
 ##########################
 #
 # getter/setter methods of data which is stored in database
@@ -298,6 +301,12 @@ sub length {
   return $self->{'seq_end'} - $self->{'seq_start'} + 1;
 }
 
+sub dnafrag_chunk_set_id {
+  my $self = shift;
+  return $self->{'dnafrag_chunk_set_id'} = shift if(@_);
+  return $self->{'dnafrag_chunk_set_id'};
+}
+
 sub sequence_id {
   my $self = shift;
   return $self->{'sequence_id'} = shift if(@_);
@@ -324,23 +333,8 @@ sub masking_options {
   my $self = shift;
   if(@_) {
     $self->{'_masking_options'} = shift;
-    $self->method_link_species_set_id(undef);
-    $self->masking_tag_name(undef);
   }
   return $self->{'_masking_options'};
-}
-
-sub method_link_species_set_id {
-  my $self = shift;
-  $self->{'_method_link_species_set_id'} = shift if(@_);
-  return $self->{'_method_link_species_set_id'};
-}
-
-sub masking_tag_name {
-    my $self = shift;
-    $self->{'_masking_tag_name'} = shift if(@_);
-    return $self->{'_masking_tag_name'};
-
 }
 
 sub dump_to_fasta_file
