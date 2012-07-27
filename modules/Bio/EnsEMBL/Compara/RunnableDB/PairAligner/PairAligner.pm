@@ -105,16 +105,13 @@ sub fetch_input {
   #
   $self->configure_defaults();
   
-  
   my $query_DnaFragChunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
   if(defined($self->param('qyChunkSetID'))) {
       my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('qyChunkSetID'));
       $query_DnaFragChunkSet = $chunkset;
-  }
-  if(defined($self->param('qyChunk'))) {
-      my $qy_chunk = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('qyChunk'));
-      $query_DnaFragChunkSet->add_DnaFragChunk($qy_chunk);
+  } else {
+      throw("Missing qyChunkSetID");
   }
   $self->param('query_DnaFragChunkSet',$query_DnaFragChunkSet);
 
@@ -123,10 +120,8 @@ sub fetch_input {
   if(defined($self->param('dbChunkSetID'))) {
       my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('dbChunkSetID'));
       $db_DnaFragChunkSet = $chunkset;
-  }
- if(defined($self->param('dbChunk'))) {
-      my $db_chunk = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('dbChunk'));
-      $db_DnaFragChunkSet->add_DnaFragChunk($db_chunk);
+  } else {
+      throw("Missing dbChunkSetID");
   }
   $self->param('db_DnaFragChunkSet',$db_DnaFragChunkSet);
 
@@ -134,10 +129,11 @@ sub fetch_input {
   #with $self->db (Hive DBAdaptor)
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
-  throw("Missing qyChunk(s)") unless($query_DnaFragChunkSet->count > 0);
-  throw("Missing dbChunk")    unless($db_DnaFragChunkSet->count > 0);
+  throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
+  throw("Missing dbChunkSet") unless($db_DnaFragChunkSet);
   throw("Missing method_link_type") unless($self->param('method_link_type'));
   
+
   my ($first_qy_chunk) = @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   my ($first_db_chunk) = @{$db_DnaFragChunkSet->get_all_DnaFragChunks};
   
@@ -255,7 +251,6 @@ sub _write_output {
   #LOCK TABLES which does an implicit commit and prevent any rollback
   $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
 
-  $DB::single = 1;
   foreach my $fp ($self->output) {
     if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
       $fp->analysis($self->analysis);
@@ -285,17 +280,19 @@ sub dumpChunkSetToWorkdir
 
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
-  #print("fastafile = '$fastafile'\n");
 
   open(OUTSEQ, ">$fastafile")
     or $self->throw("Error opening $fastafile for write");
   my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
   
+  #Masking options are stored in the dna_collection
+  my $dna_collection = $chunkSet->dna_collection;
+
   my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
   
   foreach my $chunk (@$chunk_array) {
-    #rintf("  writing chunk %s\n", $chunk->display_id);
+    $chunk->masking_options($dna_collection->masking_options);
     my $bioseq = $chunk->bioseq;
     if($chunk->sequence_id==0) {
       $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
@@ -305,7 +302,6 @@ sub dumpChunkSetToWorkdir
   }
   close OUTSEQ;
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
-
   return $fastafile
 }
 
@@ -321,9 +317,9 @@ sub dumpChunkToWorkdir
                   "chunk_" . $chunk->dbID . ".fasta";
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
-  #print("fastafile = '$fastafile'\n");
 
   if($self->debug){print("dumpChunkToWorkdir : $fastafile\n");}
+
 
   $chunk->cache_sequence;
   $chunk->dump_to_fasta_file($fastafile);
@@ -437,14 +433,6 @@ sub store_featurePair_as_genomicAlignBlock
 
   $self->compara_dba->get_GenomicAlignBlockAdaptor->store($GAB);
   
-  if ($self->debug) {
-    my $track_sql = "INSERT IGNORE INTO genomic_align_block_job_track ".
-      "(genomic_align_block_id, analysis_job_id) ".
-        "VALUES (".$GAB->dbID.",".$self->input_job->dbID.")";
-    print("$track_sql\n") if($self->debug);
-    $self->compara_dba->dbc->do($track_sql);
-  }
-
   if($self->debug > 2) { print_simple_align($GAB->get_SimpleAlign, 80);}
 
   return $GAB;

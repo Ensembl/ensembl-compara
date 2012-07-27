@@ -73,17 +73,9 @@ sub fetch_input {
     my( $self) = @_;
 
     #Convert chunkSetID into DnaFragChunkSet object
-    if(defined($self->param('chunkSetID'))) {
-	my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('chunkSetID'));
-	$self->param('dnaFragChunkSet', $chunkset);
-    }
+    my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('chunkSetID'));
+    $self->param('dnaFragChunkSet', $chunkset);
     
-    #Convert chunkID into DnaFragChunk object
-    if(defined($self->param('chunkID'))) {
-	my $chunk = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('chunkID'));
-	$self->param('dnaFragChunk', $chunk);
-    }
-   
     return 1;
 }
 
@@ -103,10 +95,13 @@ sub write_output {
   #
   if (defined $self->param('dnaFragChunkSet')) {
       my $chunkSet = $self->param('dnaFragChunkSet');
+      #Masking options are stored in the dna_collection
+      my $dna_collection = $chunkSet->dna_collection;
       my $chunk_array = $chunkSet->get_all_DnaFragChunks;
       
       #Store sequence in Sequence table
       foreach my $chunk (@$chunk_array) {
+          $chunk->masking_options($dna_collection->masking_options);
 	  my $bioseq = $chunk->bioseq;
 	  if($chunk->sequence_id==0) {
 	      $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
@@ -114,15 +109,6 @@ sub write_output {
       }
   }
 
-  if (defined $self->param('dnaFragChunk')) {
-      my $chunk = $self->param('dnaFragChunk');
-
-      #Store sequence in Sequence table
-      my $bioseq = $chunk->bioseq;
-      if($chunk->sequence_id==0) {
-	  $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
-      }
-  }
   return 1;
 }
 1;
