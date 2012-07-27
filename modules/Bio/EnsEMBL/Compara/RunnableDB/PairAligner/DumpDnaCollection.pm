@@ -199,19 +199,6 @@ sub dumpDnaFiles {
 	  $chunk->dump_to_fasta_file(">".$fastafile);
       }
     }
-  if ($self->param('DnaFragChunk')) {
-	my $dna_object = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('DnaFragChunk'));
-
-      my $name = $dna_object->dnafrag->name . "_" . $dna_object->seq_start . "_" . $dna_object->seq_end;
-
-      my $fastafile = "$dump_loc/". $name . ".fa";
-
-      if (-e $fastafile) {
-	  unlink $fastafile
-      }
-      $dna_object->dump_to_fasta_file(">".$fastafile);
-    }
-#    $dna_object = undef;
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
 

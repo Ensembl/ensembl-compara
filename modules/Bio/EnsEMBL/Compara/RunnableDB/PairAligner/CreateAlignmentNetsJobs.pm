@@ -98,7 +98,7 @@ sub print_params {
 sub createAlignmentNetsJobs {
   my $self = shift;
 
-  my $query_dna_list  = $self->param('collection')->get_all_dna_objects;
+  my $query_dnafrag_chunk_sets  = $self->param('collection')->get_all_DnaFragChunkSets;
 
   my $count=0;
 #  my $sql ="select group_id,min(dnafrag_start) as min,max(dnafrag_end) as max from genomic_align ga, genomic_align_group gag where ga.genomic_align_id=gag.genomic_align_id and ga.method_link_species_set_id = ? and ga.dnafrag_id= ? and gag.type = ? group by group_id order by min asc,max asc";
@@ -107,66 +107,68 @@ sub createAlignmentNetsJobs {
 
   my $sth = $self->compara_dba->dbc->prepare($sql);
 
-  foreach my $qy_dna_object (@{$query_dna_list}) {
-    my $qy_dnafrag_id = $qy_dna_object->dnafrag->dbID;
-    $sth->execute($self->param('method_link_species_set')->dbID, $qy_dnafrag_id);
-    my ($dnafrag_start,$dnafrag_end);
-    $sth->bind_columns(\$dnafrag_start, \$dnafrag_end);
-    my ($slice_start,$slice_end);
-    my @genomic_slices;
-    while ($sth->fetch()) {
-      unless (defined $slice_start) {
-        ($slice_start,$slice_end) = ($dnafrag_start, $dnafrag_end);
-        next;
-      }
-      if ($dnafrag_start > $slice_end) {
+  foreach my $qy_dnafrag_chunk_set (@{$query_dnafrag_chunk_sets}) {
+      foreach my $qy_dnafrag_chunk (@{$qy_dnafrag_chunk_set->get_all_DnaFragChunks()}) {
+        my $qy_dnafrag_id = $qy_dnafrag_chunk->dnafrag->dbID;
+        $sth->execute($self->param('method_link_species_set')->dbID, $qy_dnafrag_id);
+        my ($dnafrag_start,$dnafrag_end);
+        $sth->bind_columns(\$dnafrag_start, \$dnafrag_end);
+        my ($slice_start,$slice_end);
+        my @genomic_slices;
+        while ($sth->fetch()) {
+           unless (defined $slice_start) {
+               ($slice_start,$slice_end) = ($dnafrag_start, $dnafrag_end);
+               next;
+           }
+           if ($dnafrag_start > $slice_end) {
+               push @genomic_slices, [$slice_start,$slice_end];
+               ($slice_start,$slice_end) = ($dnafrag_start, $dnafrag_end);
+           } else {
+               if ($dnafrag_end > $slice_end) {
+                   $slice_end = $dnafrag_end;
+               }
+           }
+       }
+        $sth->finish;
+        
+        # Skip if no alignments are found on this slice
+        next if (!defined $slice_start || !defined $slice_end);
+        
         push @genomic_slices, [$slice_start,$slice_end];
-        ($slice_start,$slice_end) = ($dnafrag_start, $dnafrag_end);
-      } else {
-        if ($dnafrag_end > $slice_end) {
-          $slice_end = $dnafrag_end;
+        
+        my @grouped_genomic_slices;
+        undef $slice_start;
+        undef $slice_end;
+        my $max_slice_length = 500000;
+        while (my $genomic_slices = shift @genomic_slices) {
+            my ($start, $end) = @{$genomic_slices};
+            unless (defined $slice_start) {
+                ($slice_start,$slice_end) = ($start, $end);
+                next;
+            }
+            my $slice_length = $slice_end - $slice_start + 1;
+            my $length = $end - $start + 1;
+            if ($slice_length > $max_slice_length || $slice_length + $length > $max_slice_length) {
+                push @grouped_genomic_slices, [$slice_start,$slice_end];
+                  ($slice_start,$slice_end) = ($start, $end);
+            } else {
+                $slice_end = $end;
+            }
         }
-      }
-    }
-    $sth->finish;
-
-    # Skip if no alignments are found on this slice
-    next if (!defined $slice_start || !defined $slice_end);
-
-    push @genomic_slices, [$slice_start,$slice_end];
-
-    my @grouped_genomic_slices;
-    undef $slice_start;
-    undef $slice_end;
-    my $max_slice_length = 500000;
-    while (my $genomic_slices = shift @genomic_slices) {
-      my ($start, $end) = @{$genomic_slices};
-      unless (defined $slice_start) {
-        ($slice_start,$slice_end) = ($start, $end);
-        next;
-      }
-      my $slice_length = $slice_end - $slice_start + 1;
-      my $length = $end - $start + 1;
-      if ($slice_length > $max_slice_length || $slice_length + $length > $max_slice_length) {
         push @grouped_genomic_slices, [$slice_start,$slice_end];
-        ($slice_start,$slice_end) = ($start, $end);
-      } else {
-        $slice_end = $end;
-      }
-    }
-    push @grouped_genomic_slices, [$slice_start,$slice_end];
-
-    while (my $genomic_slices = shift @grouped_genomic_slices) {
-      my ($start, $end) = @{$genomic_slices};
-      my $input_hash = {};
-      $input_hash->{'start'} = $start;
-      $input_hash->{'end'} = $end;
-      $input_hash->{'DnaFragID'} = $qy_dnafrag_id;
-      $input_hash->{'input_mlss_id'} = $self->param('method_link_species_set')->dbID;
-      $input_hash->{'output_mlss_id'} = $self->param('output_mlss_id');
-
-      $self->dataflow_output_id($input_hash, 2);
-      $count++;
+        
+        while (my $genomic_slices = shift @grouped_genomic_slices) {
+            my ($start, $end) = @{$genomic_slices};
+            my $input_hash = {};
+            $input_hash->{'start'} = $start;
+            $input_hash->{'end'} = $end;
+            $input_hash->{'DnaFragID'} = $qy_dnafrag_id;
+            $input_hash->{'input_mlss_id'} = $self->param('method_link_species_set')->dbID;
+            $input_hash->{'output_mlss_id'} = $self->param('output_mlss_id');
+            
+            $self->dataflow_output_id($input_hash, 2);
+            $count++;
+        }
     }
   }
   if ($count == 0) {
@@ -174,9 +176,9 @@ sub createAlignmentNetsJobs {
       $self->input_job->autoflow(0);
       print "No jobs created\n";
   } else {
-    printf("created %d jobs for AlignmentNets\n", $count);
+      printf("created %d jobs for AlignmentNets\n", $count);
   }
-
+  
   #
   #Flow to 'set_internal_ids' and 'update_max_alignment_length_after_net' on branch 1
   #

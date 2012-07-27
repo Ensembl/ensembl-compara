@@ -95,38 +95,31 @@ sub dumpNibFilesFactory {
   my $self = shift;
 
   my $starttime = time();
-
   my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
   my $dump_loc = $dna_collection->dump_loc;
 
   unless (defined $dump_loc) {
     die("dump_loc directory is not defined, can not dump nib files\n");
   }
-
-  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {
+  foreach my $dnafrag_chunk_set (@{$dna_collection->get_all_DnaFragChunkSets}) {
       my $output_id;
+      foreach my $dnafrag_chunk (@{$dnafrag_chunk_set->get_all_DnaFragChunks}) {
+          next if ($dnafrag_chunk->length <= $self->param('dump_min_size'));
 
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-      warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
-      next;
-    }
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-      next if ($dna_object->length <= $self->param('dump_min_size'));
-
-      my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
-
-      #don't dump nibfile if it already exists
-      next if (-e $nibfile);
-
-      $output_id->{'DnaFragChunk'} = $dna_object->dbID;
-      $output_id->{'collection_name'} = $self->param('collection_name');
-      $output_id->{'dump_loc'} = $self->param('dump_loc');
-      $output_id->{'genome_db_id'} = $self->param('genome_db_id');
-
-      #Add dataflow to branch 2
-      $self->dataflow_output_id($output_id,2);
-
-    }
+          my $nibfile = "$dump_loc/". $dnafrag_chunk->dnafrag->name . ".nib";
+          
+          #don't dump nibfile if it already exists
+          next if (-e $nibfile);
+          
+          $output_id->{'DnaFragChunk'} = $dnafrag_chunk->dbID;
+          $output_id->{'collection_name'} = $self->param('collection_name');
+          $output_id->{'dump_loc'} = $self->param('dump_loc');
+          $output_id->{'genome_db_id'} = $self->param('genome_db_id');
+          
+          #Add dataflow to branch 2
+          $self->dataflow_output_id($output_id,2);
+          
+      }
   }
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
@@ -139,17 +132,16 @@ sub dumpDnaFilesFactory {
 
    my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
 
-  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {
+  foreach my $dnafrag_chunk_set (@{$dna_collection->get_all_DnaFragChunkSets}) {
       my $type;
       my $output_id;
-      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-	  $type = "DnaFragChunkSet";
-      }
-      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-	  next if ($dna_object->length <= $self->param('dump_min_size'));
-	  $type = "DnaFragChunk";
-      }
-      $output_id->{$type} = $dna_object->dbID;
+
+      #Only dump single dnafrag_chunk if it is larger than the dump_min_size - otherwise it gets stored in the database
+      my $dnafrag_chunks = $dnafrag_chunk_set->get_all_DnaFragChunks;
+      next if (@$dnafrag_chunks == 1 && $dnafrag_chunks->[0]->length <= $self->param('dump_min_size'));
+
+      $type = "DnaFragChunkSet";
+      $output_id->{$type} = $dnafrag_chunk_set->dbID;
       $output_id->{'collection_name'} = $self->param('collection_name');
 
       #Add dataflow to branch 2

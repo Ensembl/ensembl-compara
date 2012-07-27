@@ -124,8 +124,8 @@ sub createPairAlignerJobs
 {
   my $self = shift;
 
-  my $query_dna_list  = $self->param('query_collection')->get_all_dna_objects;
-  my $target_dna_list = $self->param('target_collection')->get_all_dna_objects;
+  my $query_dnafrag_chunk_set_list  = $self->param('query_collection')->get_all_DnaFragChunkSets;
+  my $target_dnafrag_chunk_set_list = $self->param('target_collection')->get_all_DnaFragChunkSets;
 
   #get dnafrag adaptors
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
@@ -133,7 +133,7 @@ sub createPairAlignerJobs
   my $dnafrag_chunk_set_adaptor = $self->compara_dba->get_DnaFragChunkSetAdaptor;
   
   my $count=0;
-  foreach my $target_dna (@{$target_dna_list}) {
+  foreach my $target_dna_chunk_set (@{$target_dnafrag_chunk_set_list}) {
     my $pairaligner_hash = {};
     
     $pairaligner_hash->{'mlss_id'} = $self->param('method_link_species_set_id');
@@ -146,35 +146,17 @@ sub createPairAlignerJobs
     #chunk and not part of a group
     my $target_dnafrag_name;
 
-    $pairaligner_hash->{'dbChunk'}      = undef;
     $pairaligner_hash->{'dbChunkSetID'} = undef;
+    $pairaligner_hash->{'dbChunkSetID'} = $target_dna_chunk_set->dbID;
 
-    if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-      $pairaligner_hash->{'dbChunk'} = $target_dna->dbID;
-      my $dnafrag_chunk = $dnafrag_chunk_adaptor->fetch_by_dbID($target_dna->dbID);
-      $target_dnafrag_name = $dnafrag_chunk->dnafrag->name;
-    }
-    if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-      $pairaligner_hash->{'dbChunkSetID'} = $target_dna->dbID;
-
-    }
-
-    foreach my $query_dna (@{$query_dna_list}) {
-      $pairaligner_hash->{'qyChunk'}      = undef
+    foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
       $pairaligner_hash->{'qyChunkSetID'} = undef;
 
       #find the query dnafrag name to check if it is MT - it can only be a 
       #chunk and not part of a group
       my $query_dnafrag_name;
 
-      if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-        $pairaligner_hash->{'qyChunk'} = $query_dna->dbID;
-	my $dnafrag_chunk = $dnafrag_chunk_adaptor->fetch_by_dbID($query_dna->dbID);
-	$query_dnafrag_name = $dnafrag_chunk->dnafrag->name;
-      }
-      if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-        $pairaligner_hash->{'qyChunkSetID'} = $query_dna->dbID;
-      }
+      $pairaligner_hash->{'qyChunkSetID'} = $query_dnafrag_chunk_set->dbID;
     
       #only allow mitochrondria chromosomes to find matches to each other
       next if (($query_dnafrag_name eq "MT" && $target_dnafrag_name ne "MT") || 

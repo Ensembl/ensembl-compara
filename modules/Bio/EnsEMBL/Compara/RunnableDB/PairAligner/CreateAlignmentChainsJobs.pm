@@ -60,6 +60,7 @@ my $DEFAULT_OUTPUT_METHOD_LINK = "LASTZ_CHAIN";
 sub fetch_input {
   my $self = shift;
 
+  
   # get DnaCollection of query
   throw("must specify 'query_collection_name' to identify DnaCollection of query") 
     unless(defined($self->param('query_collection_name')));
@@ -127,14 +128,10 @@ sub createAlignmentChainsJobs
 
   my (%qy_dna_hash, %tg_dna_hash);
 
-  foreach my $obj (@{$self->param('query_collection')->get_all_dna_objects}) {
-    my @dna_chunks;
-    if ($obj->isa("Bio::EnsEMBL::Compara::Production::DnaFragChunkSet")) {
-      push @dna_chunks, @{$obj->get_all_DnaFragChunks};
-    } else {
-      push @dna_chunks, $obj;
-    }
-    foreach my $chunk (@dna_chunks) {
+  foreach my $dnafrag_chunk_set (@{$self->param('query_collection')->get_all_DnaFragChunkSets}) {
+    my $dna_chunks = $dnafrag_chunk_set->get_all_DnaFragChunks();
+
+    foreach my $chunk (@$dna_chunks) {
       my $dnafrag = $chunk->dnafrag;
       if (not exists $qy_dna_hash{$dnafrag->dbID}) {
         $qy_dna_hash{$dnafrag->dbID} = $dnafrag;
@@ -142,14 +139,9 @@ sub createAlignmentChainsJobs
     }
   }
   my %target_dna_hash;
-  foreach my $dna_object (@{$self->param('target_collection')->get_all_dna_objects}) {
-    my @dna_chunks;
-    if ($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-      push @dna_chunks, @{$dna_object->get_all_DnaFragChunks};
-    } else {
-      push @dna_chunks, $dna_object;
-    }
-    foreach my $chunk (@dna_chunks) {
+  foreach my $dnafrag_chunk_set (@{$self->param('target_collection')->get_all_DnaFragChunkSets}) {
+    my $dna_chunks = $dnafrag_chunk_set->get_all_DnaFragChunks();
+    foreach my $chunk (@$dna_chunks) {
       my $dnafrag = $chunk->dnafrag;
       if (not exists $tg_dna_hash{$dnafrag->dbID}) {
         $tg_dna_hash{$chunk->dnafrag->dbID} = $dnafrag;

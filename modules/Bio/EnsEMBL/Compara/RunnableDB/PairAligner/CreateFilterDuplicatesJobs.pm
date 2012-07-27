@@ -134,12 +134,17 @@ sub createFilterDuplicatesJobs
   #  ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/, $region);
   #}
 
-  my $dnafrag_id_list = $dna_collection->get_all_dnafrag_ids;
+  my %dnafrag_id_list;
+  my $dnafrag_chunk_sets = $dna_collection->get_all_DnaFragChunkSets();
+  foreach my $dnafrag_chunk_set (@$dnafrag_chunk_sets) {
+      my $dnafrag_chunks = $dnafrag_chunk_set->get_all_DnaFragChunks();
+      foreach my $dnafrag_chunk (@$dnafrag_chunks) {
+          $dnafrag_id_list{$dnafrag_chunk->dnafrag_id} = 1;
+      }
+  }
 
   my $count = 0;
-  my %already_seen_dnafrag_ids;
-  foreach my $dnafrag_id (@{$dnafrag_id_list}) {
-    next if (defined $already_seen_dnafrag_ids{$dnafrag_id});
+  foreach my $dnafrag_id (keys %dnafrag_id_list) {
     my $input_hash = {};
     $input_hash->{'dnafrag_id'} = $dnafrag_id;
     #$input_hash->{'seq_region_start'} = $seq_region_start if (defined $seq_region_start);
@@ -150,7 +155,6 @@ sub createFilterDuplicatesJobs
 
     $self->dataflow_output_id($input_hash,2);
     
-    $already_seen_dnafrag_ids{$dnafrag_id} = 1;
     $count++;
   }
   printf("created %d jobs\n", $count);
