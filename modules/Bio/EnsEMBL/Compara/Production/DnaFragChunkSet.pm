@@ -1,9 +1,20 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -14,11 +25,7 @@ Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
 =head1 DESCRIPTION
 
 An object to hold a set or group of DnaFragChunk objects.  Used in production to reduce
-overhead of feeding sequences into alignment programs like blastz and exonerate.
-
-=head1 CONTACT
-
-Jessica Severin <jessica@ebi.ac.uk>
+overhead of feeding sequences into alignment programs like (b)lastz and exonerate.
 
 =head1 APPENDIX
 
@@ -40,19 +47,18 @@ sub new {
   my $self = {};
   bless $self,$class;
 
-  $self->{'_dnafrag_chunk_id_list'} = [];
   $self->{'_cached_chunk_list'} = undef;
   $self->{'_total_basepairs'} = 0;
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $description, $adaptor) = rearrange([qw(DBID NAME ADAPTOR)], @args);
+    my ($dbid, $description, $adaptor, $dna_collection_id) = rearrange([qw(DBID NAME ADAPTOR DNA_COLLECTION_ID)], @args);
 
-    $self->dbID($dbid)               if($dbid);
-    $self->description($description) if($description);
-    $self->adaptor($adaptor)         if($adaptor);
+    $self->dbID($dbid)                           if($dbid);
+    $self->description($description)             if($description);
+    $self->adaptor($adaptor)                     if($adaptor);
+    $self->dna_collection_id($dna_collection_id) if($dna_collection_id);
   }
-
   return $self;
 }
 
@@ -108,9 +114,9 @@ sub description {
   return $self->{'_description'};
 }
 
-=head2 dump_loc
+=head2 dna_collection
 
-  Arg [1]    : string $dump_loc (optional)
+  Arg [1]    :  Bio::EnsEMBL::Compara::Production::DnaCollection $dna_collection (optional)
   Example    :
   Description:
   Returntype : string
@@ -119,15 +125,24 @@ sub description {
 
 =cut
 
-sub dump_loc {
-  my $self = shift;
-  $self->{'_dump_loc'} = shift if(@_);
-  return $self->{'_dump_loc'};
+sub dna_collection {
+  my ($self, $dna_collection) = @_;
+
+  if (defined $dna_collection) {
+      $self->{'_dna_collection'} = $dna_collection;
+  } elsif (!defined ($self->{'_dna_collection'})) {
+      #Try to get from other sources...
+      if (defined ($self->{'_adaptor'}) and defined($self->{'_dna_collection_id'})) {
+          $self->{'_dna_collection'} = $self->adaptor->db->get_DnaCollectionAdaptor->fetch_by_dbID($self->dna_collection_id);
+      }
+  }
+
+  return $self->{'_dna_collection'};
 }
 
-=head2 add_dnafrag_chunk_id
+=head2 dna_collection_id
 
-  Arg [1]    : $chunk_id
+  Arg [1]    : int $dna_collection_id (optional)
   Example    :
   Description:
   Returntype :
@@ -136,21 +151,22 @@ sub dump_loc {
 
 =cut
 
-sub add_dnafrag_chunk_id {
+sub dna_collection_id {
   my $self = shift;
-  my $count=0;
-
-  if(@_) {
-    my $chunk_id = shift;
-    $count = push @{$self->{'_dnafrag_chunk_id_list'}}, $chunk_id;
-    #print("added $count element to list\n");
-    $self->{'_total_basepairs'}=0; #reset so will be recalculated
-    if(defined($self->adaptor)) {
-      $self->adaptor->store_link($self->dbID, $chunk_id);
-    }
-  }
-  return $count
+  $self->{'_dna_collection_id'} = shift if(@_);
+  return $self->{'_dna_collection_id'};
 }
+
+=head2 add_DnaFragChunk
+
+  Arg [1]    : Bio::EnsEMBL::Compara::Production::DnaFragChunk $chunk
+  Example    : $dnafrag_chunk_set->add_DnaFragChunk($chunk)
+  Description: Add a Bio::EnsEMBL::Compara::Production::DnaFragChunk object to the _cached_chunk_list parameter
+  Returntype : 
+  Exceptions : throw if $chunk is not defined or if $chunk is not a Bio::EnsEMBL::Compara::Production::DnaFragChunk
+  Caller     :
+
+=cut
 
 sub add_DnaFragChunk {
   my ($self, $chunk) = @_;
@@ -163,14 +179,11 @@ sub add_DnaFragChunk {
       "not a [$chunk]");
   }
 
-  my $count = $self->add_dnafrag_chunk_id($chunk->dbID);
-
   $self->{'_cached_chunk_list'} = []
     unless(defined($self->{'_cached_chunk_list'}));
-  
-  push @{$self->{'_cached_chunk_list'}}, $chunk;
 
-  return $count;
+  push @{$self->{'_cached_chunk_list'}}, $chunk;
+  $self->{'_total_basepairs'}=0; #reset so will be recalculated
 }
 
 =head2 get_all_DnaFragChunks
@@ -186,32 +199,16 @@ sub add_DnaFragChunk {
 
 sub get_all_DnaFragChunks {
   my $self = shift;
-  if(!defined($self->{'_cached_chunk_list'}) and
-     $self->count > 0 and defined($self->adaptor))
-  {
+
+  if(!defined($self->{'_cached_chunk_list'}) and defined($self->adaptor)) {
     #lazy load all the DnaFragChunk objects
-    $self->{'_cached_chunk_list'} =
-      $self->adaptor->_fetch_all_DnaFragChunk_by_ids($self->dnafrag_chunk_ids);
-    $self->{'_total_basepairs'}=0; #reset so it's recalculated
+    $self->{'_cached_chunk_list'} = $self->adaptor->db->get_DnaFragChunkAdaptor->fetch_all_by_DnaFragChunkSet($self);
+
+    $self->{'_total_basepairs'}=0; #reset so it's recalculated in
   }
+
   return $self->{'_cached_chunk_list'};
 }
-
-=head2 dnafrag_chunk_ids
-
-  Example    : @chunk_ids = @{$chunkSet->dnafrag_chunk_ids};
-  Description:
-  Returntype : reference to array of dnafrag_chunk_id
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub dnafrag_chunk_ids {
-  my $self = shift;
-  return $self->{'_dnafrag_chunk_id_list'};
-}
-
 
 =head2 count
 
@@ -225,7 +222,12 @@ sub dnafrag_chunk_ids {
 
 sub count {
   my $self = shift;
-  return scalar(@{$self->dnafrag_chunk_ids()});
+
+  if (!$self->{'_cached_chunk_list'}) {
+      return 0;
+  }
+
+  return scalar(@{$self->{'_cached_chunk_list'}});
 }
 
 
@@ -241,6 +243,7 @@ sub count {
 
 sub total_basepairs {
   my $self = shift;
+
   unless($self->{'_total_basepairs'}) {
     $self->{'_total_basepairs'} =0;
     if($self->get_all_DnaFragChunks) {
