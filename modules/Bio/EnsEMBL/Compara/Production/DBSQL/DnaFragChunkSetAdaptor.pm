@@ -1,3 +1,31 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
+
+=head1 SYNOPSIS
+
+=head1 APPENDIX
+
+=cut
+
 package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor;
 
 use strict;
@@ -32,94 +60,26 @@ sub store {
       "set arg must be a [Bio::EnsEMBL::Compara::Production::DnaFragChunkSet] "
     . "not a $chunkSet");
   }
+  my $description = $chunkSet->description or undef;
 
-  my $sth;
   my $insertCount=0;
 
-  if(defined($chunkSet->description)) {
-    $sth = $self->prepare("INSERT ignore INTO subset (description) VALUES (?)");
-    $insertCount = $sth->execute($chunkSet->description);
-  } else {
-    $sth = $self->prepare("INSERT ignore INTO subset SET description=NULL");
-    $insertCount = $sth->execute();
-  }
+  my $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (dna_collection_id, description) VALUES (?,?)");
+  $insertCount = $sth->execute($chunkSet->dna_collection->dbID, $description);
+  $sth->finish;
 
   if($insertCount>0) {
     $chunkSet->dbID( $sth->{'mysql_insertid'} );
   }
-  else {
-    #print("insert failed, do select\n");
-    my $sth2 = $self->prepare("SELECT subset_id FROM subset WHERE description=?");
-    $sth2->execute($chunkSet->description);
-    my($id) = $sth2->fetchrow_array();
-    $chunkSet->dbID($id);
-    $sth2->finish;
-  }
-  $sth->finish;
-  #print("DnaFragChunkSetAdaptor:store() dbID = ", $chunkSet->dbID, "\n");
-
-  my @dnafrag_chunkIds = @{$chunkSet->dnafrag_chunk_ids()};
-  $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (subset_id, dnafrag_chunk_id) VALUES (?,?)");
-  foreach my $dnafrag_chunk_id (@dnafrag_chunkIds) {
-    $sth->execute($chunkSet->dbID, $dnafrag_chunk_id) if($dnafrag_chunk_id);
-  }
-  $sth->finish;
-
-  $chunkSet->adaptor($self);
 
   return $chunkSet->dbID;
+
 }
-
-
-=head2 store_link
-
-  Arg [1]    :  int $subset_id
-  Arg [2]    :  int $dnafrag_chunk_id
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub store_link {
-  my ($self, $subset_id, $dnafrag_chunk_id) = @_;
-
-  return unless($subset_id and $dnafrag_chunk_id);
-
-  my $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (subset_id, dnafrag_chunk_id) VALUES (?,?)");
-  $sth->execute($subset_id, $dnafrag_chunk_id);
-  $sth->finish;
-}
-
-
-=head2 delete_link
-
-  Arg [1]    :  int $subset_id
-  Arg [2]    :  int $dnafrag_chunk_id
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub delete_link {
-  my ($self, $subset_id, $dnafrag_chunk_id) = @_;
-
-  my $sth = $self->prepare("DELETE FROM dnafrag_chunk_set WHERE subset_id=? AND dnafrag_chunk_id=?");
-  $sth->execute($subset_id, $dnafrag_chunk_id);
-  $sth->finish;
-}
-
 
 #
 # FETCH METHODS
 #
 ################
-
 
 =head2 fetch_by_dbID
 
@@ -153,31 +113,30 @@ sub fetch_by_dbID{
   return $obj;
 }
 
-=head2 fetch_by_set_description
+=head2 fetch_all_by_DnaCollection
 
-  Arg [1]    : string $set_description
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Arg [1]    : Bio::EnsEMBL::Compara::Production::DnaCollection $dna_collection
+  Example    : $feat = $adaptor->fetch_all_by_dna_collection(1234);
+  Description: Returns all the DnaFragChunkSets for this DnaCollection
+  Returntype : Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
+  Exceptions : thrown if $dna_collection is not defined
+  Caller     : general
 
 =cut
 
-sub fetch_by_set_description {
-  my ($self,$set_description) = @_;
+sub fetch_all_by_DnaCollection {
+    my ($self, $dna_collection) = @_;
+    
+    unless (defined $dna_collection) {
+        $self->throw("fetch_by_dna_collection must have a dna_collection");
+    }
+    my $dna_collection_id = $dna_collection->dbID;
 
-  unless(defined $set_description) {
-    $self->throw("fetch_by_set_description must have a description");
-  }
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "s.description = '$set_description'";
-  #print("fetch_by_set_name contraint:\n$constraint\n");
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
-  return $obj;
+    #construct a constraint like 't1.table1_id = 1'
+    my $constraint = "sc.dna_collection_id = '$dna_collection_id'";
+    #print("fetch_by_set_name contraint:\n$constraint\n");
+    
+    return $self->_generic_fetch($constraint);
 }
 
 =head2 fetch_all
@@ -215,7 +174,7 @@ sub fetch_all {
                contig coordinates.
   Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
   Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
+  Caller     : BaseFeatureAdaptor, DnaFragChunkSetAdaptor::_generic_fetch
 
 =cut
   
@@ -245,14 +204,13 @@ sub _generic_fetch {
       
   #construct a nice table string like 'table1 t1, table2 t2'
   my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
   my $sql = "SELECT $columns FROM $tablenames";
 
   my $default_where = $self->_default_where_clause;
   my $final_clause = $self->_final_clause;
 
   #append a where clause if it was defined
-  if($constraint) { 
+  if($constraint) {
     $sql .= " WHERE $constraint ";
     if($default_where) {
       $sql .= " AND $default_where ";
@@ -265,7 +223,7 @@ sub _generic_fetch {
   $sql .= " $final_clause";
 
   my $sth = $self->prepare($sql);
-  $sth->execute;  
+  $sth->execute;
 
 #  print STDERR $sql,"\n";
 
@@ -275,17 +233,14 @@ sub _generic_fetch {
 sub _tables {
   my $self = shift;
 
-  return (['subset', 's'], ['dnafrag_chunk_set', 'sc']);
+  return (['dnafrag_chunk_set', 'sc']);
 }
 
 sub _columns {
   my $self = shift;
 
-  return qw (s.subset_id
-             s.description
-             s.dump_loc
-             sc.subset_id
-             sc.dnafrag_chunk_id);
+  return qw (sc.dna_collection_id
+             sc.dnafrag_chunk_set_id);
 }
 
 sub _objs_from_sth {
@@ -299,62 +254,32 @@ sub _objs_from_sth {
   my %setDnaFragChunkIds;
 
   while ($sth->fetch()) {
-    my ($subset_id, $name, $dnafrag_chunk_id);
-    $subset_id = $column{'subset_id'};
-    $name = $column{'description'};
-    $dnafrag_chunk_id = $column{'dnafrag_chunk_id'};
+    my ($dna_collection_id, $dnafrag_chunk_set_id);
+    $dna_collection_id = $column{'dna_collection_id'};
+    $dnafrag_chunk_set_id = $column{'dnafrag_chunk_set_id'};
 
-    if(defined($setDnaFragChunkIds{$subset_id})) {
-      $setDnaFragChunkIds{$subset_id}->{$dnafrag_chunk_id} = $dnafrag_chunk_id;
-    }
-    else {
-      $setNames{$subset_id} = $name;
-      $setDnaFragChunkIds{$subset_id} = {};
-      $setDnaFragChunkIds{$subset_id}->{$dnafrag_chunk_id} = $dnafrag_chunk_id;
-    }
-  }
-  $sth->finish;
-
-  my @allSubsetIds = keys(%setNames);
-
-  foreach my $subset_id (@allSubsetIds) {
-    my ($chunkSet, @dnafrag_chunk_id_list, $dnafrag_chunk_id);
-
-    @dnafrag_chunk_id_list = keys(%{$setDnaFragChunkIds{$subset_id}});
-    my $count = scalar(@dnafrag_chunk_id_list);
-    # print("chunkSet id = $subset_id has $count unique dnafrag_chunk_ids\n");
-    
-    $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
-                  -dbid => $subset_id,
-                  -name => $setNames{$subset_id},
-                  -adaptor => $self;
-    # print("loading set '" . $setNames{$subset_id} . "' id=$subset_id\n");
-
-    @{$chunkSet->{'_dnafrag_chunk_id_list'}} = @dnafrag_chunk_id_list;
+    my $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
+                       -dbid => $dnafrag_chunk_set_id,
+                       -adaptor => $self,
+                       -dna_collection_id => $dna_collection_id;
 
     push @sets, $chunkSet;
+
   }
+  $sth->finish;
 
   return \@sets
 }
 
 sub _default_where_clause {
   my $self = shift;
-
-  return 's.subset_id = sc.subset_id';
+  return '';
 }
 
 sub _final_clause {
   my $self = shift;
 
   return '';
-}
-
-sub _fetch_all_DnaFragChunk_by_ids {
-  my $self = shift;
-  my $chunkID_list = shift;  #list reference
-
-  return $self->db->get_DnaFragChunkAdaptor->fetch_by_dbIDs(@$chunkID_list);
 }
 
 1;
