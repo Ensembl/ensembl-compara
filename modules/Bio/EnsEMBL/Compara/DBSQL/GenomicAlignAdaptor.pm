@@ -433,7 +433,7 @@ sub fetch_all_by_node_id {
               dnafrag_end,
               dnafrag_strand,
               cigar_line,
-              level_id,
+              visible,
               node_id
           FROM
               genomic_align
@@ -445,10 +445,10 @@ sub fetch_all_by_node_id {
   $sth->execute($incoming_node_id);
   my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
       $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
-      $level_id, $node_id);
+      $visible, $node_id);
   $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id,
       \$method_link_species_set_id, \$dnafrag_id, \$dnafrag_start, \$dnafrag_end,
-      \$dnafrag_strand, \$cigar_line, \$level_id, \$node_id);
+      \$dnafrag_strand, \$cigar_line, \$visible, \$node_id);
   while ($sth->fetchrow_arrayref()) {
     my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
             -dbID => $genomic_align_id,
@@ -460,7 +460,7 @@ sub fetch_all_by_node_id {
             -dnafrag_end => $dnafrag_end,
             -dnafrag_strand => $dnafrag_strand,
             -cigar_line => $cigar_line,
-            -level_id => $level_id,
+            -visible => $visible,
 	    -node_id => $node_id
         );
     push(@$genomic_aligns, $this_genomic_align);
