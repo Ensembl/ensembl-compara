@@ -38,13 +38,8 @@ $runnable->write_output(); #writes to DB
 =head1 DESCRIPTION
 
 This object chunks the Dna from a genome_db and creates and stores the
-chunks as DnaFragChunk objects into the compara database
-
-=cut
-
-=head1 CONTACT
-
-Describe contact details here
+chunks as DnaFragChunk objects are grouped into DnaFragChunkSets in the compara database.
+A DnaFragChunkSet contains one or more DnaFragChunk objects. A DnaFragChunkSet is a member of a DnaCollection.
 
 =cut
 
@@ -64,7 +59,6 @@ use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
-
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -123,17 +117,17 @@ sub write_output
 {  
   my $self = shift;
 
-  #Create a StoreSequence job for each DnaFragChunk or DnaFragChunkSet object 
+  #Create a StoreSequence job for each DnaFragChunkSet object 
   #to parallelise the storing of sequences in the Sequence table.
   if ($self->param('flow_to_store_sequence')) {
-      my $dna_objects = $self->param('dna_collection')->get_all_dna_objects;
+      my $dna_objects = $self->param('dna_collection')->get_all_DnaFragChunkSets;
       foreach my $dna_object (@$dna_objects) {
-            my $object_id_name = $dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')
-                ? 'chunkSetID'
-                : 'chunkID';
-
+          my $object_id_name = 'chunkSetID';
+          my $hash_output;
+            %$hash_output = ($object_id_name => $dna_object->dbID);
+            
 	    # Use branch2 to send data to StoreSequence:
-            $self->dataflow_output_id( { $object_id_name => $dna_object->dbID }, 2 );
+            $self->dataflow_output_id($hash_output, 2 );
       }
 
       #Stop flow into dump_large_nib_for_chains on branch 1?
@@ -157,21 +151,43 @@ sub create_chunks
   my $self      = shift;
 
   my $genome_db = $self->param('genome_db');
-
   my $collectionDBA = $self->compara_dba->get_DnaCollectionAdaptor;
+  my $masking_options;
+
+  #Get masking_options
+  #Check only have either masking_options_file OR masking_options set
+  if ($self->param('masking_options_file') && $self->param('masking_options')) {
+      throw("ERROR: Only 'masking_options_file' or 'masking_options' maybe defined, not both");
+  }
+  
+  #set masking_options parameter
+  if ($self->param('masking_options_file')) {
+      if (! -e $self->param('masking_options_file')) {
+          throw("ERROR: masking_options_file " . $self->param('masking_options_file') . " does not exist\n");
+      }
+      $masking_options = do($self->param('masking_options_file'));
+  } elsif ($self->param('masking_options')) {
+      $masking_options = $self->param('masking_options');
+  }
 
   if ($self->param('collection_id')) {
     $self->param('dna_collection') = $collectionDBA->fetch_by_dbID($self->param('collection_id'));
   } elsif ($self->param('collection_name')) {
+
     $self->param('dna_collection', new Bio::EnsEMBL::Compara::Production::DnaCollection);
     $self->param('dna_collection')->description($self->param('collection_name'));
     $self->param('dna_collection')->dump_loc($self->param('dump_loc')) if(defined($self->param('dump_loc')));
+    $self->param('dna_collection')->masking_options($masking_options) if(defined($masking_options));
+    $self->param('dna_collection')->adaptor($collectionDBA);
+
     $collectionDBA->store($self->param('dna_collection'));
+
   } else {
       throw("Must define either a collection_id or a collection_name");
   }
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->param('dna_collection'));
   
+
   $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   my $SliceAdaptor = $genome_db->db_adaptor->get_SliceAdaptor;
   my $dnafragDBA = $self->compara_dba->get_DnaFragAdaptor;
@@ -218,9 +234,12 @@ sub create_chunks
 
   $self->param('chunkset_counter', 1);
   $self->param('current_chunkset', new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet);
+  $self->param('current_chunkset')->dna_collection($self->param('dna_collection'));
+
+  #Not sure I need this....
   $self->param('current_chunkset')->description(sprintf("collection_id:%d group:%d",
-                                 $self->param('dna_collection')->dbID, 
-                                 $self->param('chunkset_counter')));
+                                                        $self->param('dna_collection')->dbID, 
+                                                        $self->param('chunkset_counter')));
 
   $self->param('chunkset_counter', ($self->param('chunkset_counter') + 1));
   
@@ -249,6 +268,9 @@ sub create_chunks
                       $chr->coord_system->name(), #$self->{'coordinate_system'},
                       $chr->seq_region_name)};
 
+    #Uncomment following line to prevent import of missing dnafrags
+    #next unless ($dnafrag);
+
     #if($dnafrag) { print("  already stores as dbID ", $dnafrag->dbID, "\n"); }
     unless($dnafrag) {
       #
@@ -266,27 +288,13 @@ sub create_chunks
       $dnafrag->length($chr->seq_region_length);
       $dnafragDBA->store_if_needed($dnafrag);
     }
-    $self->create_dnafrag_chunks($dnafrag, $chr->start, $chr->end);
+    $self->create_dnafrag_chunks($dnafrag, $masking_options, $chr->start, $chr->end);
     #Temporary fix to problem in core when masking haplotypes because the
     #assembly mapper is cached but shouldn't be  
     if (defined $asm) {
 	$asm->flush;
     }
   }
-
-  #save the current_chunkset if it isn't empty
-  if($self->param('current_chunkset')->count > 0) {
-    $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
-    #$self->submit_job($self->{'current_chunkset'});
-    $self->param('dna_collection')->add_dna_object($self->param('current_chunkset'));
-  } else {
-    warn "current_chunkset->count is zero => not adding it to the collection";
-  }
-
-  #
-  # finish by storing all the dna_objects of the collection 
-  #
-  $collectionDBA->store($self->param('dna_collection'));
 
   print "genome_db ",$genome_db->dbID, " : total time ", (time()-$starttime), " secs\n";
 
@@ -296,6 +304,7 @@ sub create_chunks
 sub create_dnafrag_chunks {
   my $self = shift;
   my $dnafrag = shift;
+  my $masking_options = shift;
   my $region_start = (shift or 1);
   my $region_end = (shift or $dnafrag->length);
 
@@ -335,23 +344,9 @@ sub create_dnafrag_chunks {
 	$chunk_end = $region_end;
     }
     $chunk->seq_end($chunk_end);
-
-    if($self->param('masking_options')) {
-      $chunk->masking_options($self->param('masking_options'));
-    } elsif ($self->param('method_link_species_set_id') && $self->param('masking_tag_name')) {
-	#ie have set $self->param('masking_options_file')
-
-      #These are unset by $chunk->masking_options - but why?
-      $chunk->method_link_species_set_id($self->param('method_link_species_set_id'));
-      $chunk->masking_tag_name($self->param('masking_tag_name'));
-
-      $chunk->masking_options($self->compara_dba->get_DnaFragChunkAdaptor->fetch_MaskingOptions_by_mlss_tag($chunk->method_link_species_set_id,
-														 $chunk->masking_tag_name));
-    }
-
-    #Store these to retrieve values from method_link_species_set_tag table
-    $chunk->method_link_species_set_id($self->param('method_link_species_set_id'));
-    $chunk->masking_tag_name($self->param('masking_tag_name'));
+    
+    #set chunk masking_options
+    $chunk->masking_options;
 
     #Store the sequence at this point, rather than in the blastz analysis
     #only try to store the sequence if its length is less than that
@@ -364,17 +359,22 @@ sub create_dnafrag_chunks {
 
     #print "store chunk " . $chunk->dnafrag->name . " " . $chunk->seq_start . " " . $chunk->seq_end . " " . length($chunk->bioseq->seq) . "\n";
 
-    $self->compara_dba->get_DnaFragChunkAdaptor->store($chunk);
+    my $dnafrag_chunk_set_id = $self->param('current_chunkset')->dbID;
 
     # do grouping if requested but do not group MT chr
     if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size')) and $chunk->dnafrag->name ne "MT") {
+
       if(($self->param('current_chunkset')->count > 0) and 
          (($self->param('current_chunkset')->total_basepairs + $chunk->length) > $self->param('group_set_size'))) 
       {
+          #print "Storing new chunk_set\n";
         #set has hit max, so save it
-        $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
-        $self->param('dna_collection')->add_dna_object($self->param('current_chunkset'));
-        #$self->submit_job($self->{'current_chunkset'});
+        unless ($dnafrag_chunk_set_id) {
+            $dnafrag_chunk_set_id = $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
+        }
+        $chunk->dnafrag_chunk_set_id($dnafrag_chunk_set_id);
+        $self->compara_dba->get_DnaFragChunkAdaptor->store($chunk);
+
         if($self->debug) {
           printf("created chunkSet(%d) %d chunks, %1.3f mbase\n",
                  $self->param('current_chunkset')->dbID, $self->param('current_chunkset')->count, 
@@ -384,35 +384,56 @@ sub create_dnafrag_chunks {
         $self->param('current_chunkset')->description(sprintf("collection_id:%d group:%d",
                                        $self->param('dna_collection')->dbID, 
                                        $self->param('chunkset_counter')));
+        $self->param('current_chunkset')->dna_collection($self->param('dna_collection'));
 	$self->param('chunkset_counter',($self->param('chunkset_counter') + 1)); 
-      }
+      } 
 
-      $self->param('current_chunkset')->add_DnaFragChunk($chunk);
+      #store dnafrag_chunk_set if necessary to get hold of the dnafrag_chunk_set_id
+        unless ($dnafrag_chunk_set_id) {
+            $dnafrag_chunk_set_id = $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
+        }
+        $chunk->dnafrag_chunk_set_id($dnafrag_chunk_set_id);
+        $self->param('current_chunkset')->add_DnaFragChunk($chunk);
+        $self->compara_dba->get_DnaFragChunkAdaptor->store($chunk);
+
       if($self->debug) {
         printf("chunkSet %d chunks, %1.3f mbase\n",
                $self->param('current_chunkset')->count, 
                $self->param('current_chunkset')->total_basepairs/1000000.0);
       }
-  }
-    else {
+    } else {
       #not doing grouping so put the $chunk directly into the collection
-      $self->param('dna_collection')->add_dna_object($chunk);
+
+      #Store dnafrag_chunk_set to hold of the dnafrag_chunk_set_id
+        my $dnafrag_chunk_set_id = $self->param('current_chunkset')->dbID;
+        unless ($self->param('current_chunkset')->dbID) {
+            $dnafrag_chunk_set_id = $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
+        }
+        
+      $chunk->dnafrag_chunk_set_id($dnafrag_chunk_set_id);
+      $self->param('current_chunkset')->add_DnaFragChunk($chunk);
+        $self->compara_dba->get_DnaFragChunkAdaptor->store($chunk);
+        
+
+      #Create new current_chunkset object
+      $self->param('current_chunkset', new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet);        
+      $self->param('current_chunkset')->description(sprintf("collection_id:%d group:%d",
+                                                            $self->param('dna_collection')->dbID, 
+                                                            $self->param('chunkset_counter')));
+     $self->param('current_chunkset')->dna_collection($self->param('dna_collection'));
+      $self->param('chunkset_counter',($self->param('chunkset_counter') + 1));
+
       if($self->debug) {
         printf("dna_collection : chunk (%d) %s\n",$chunk->dbID, $chunk->display_id);
       }
-    }
+  }
     
-#    $self->submit_job($chunk) if($self->{'analysis_job'});
-#    $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
 
     #This is very important, otherwise it leaks
     undef($chunk->{'_sequence'});
 
-    #These 2 don't seem to have any effect
-    #undef($chunk->{'_slice'});
-    #undef($chunk);
     $chunk_start = $chunk_end - $overlap + 1;
-  }
+ }
 
   #print "Done\n";
   #print scalar(time()-$lasttime), " secs to chunk, and store\n";
