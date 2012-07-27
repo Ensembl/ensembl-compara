@@ -116,6 +116,8 @@ sub importAlignment {
     my $analysis_id = $analysis->dbID;
     my $mlss_id = $self->param('method_link_species_set_id');
 
+    my $step = $self->param('step');
+
     ##Find min and max of the relevant internal IDs in the FROM database
     my $sth = $self->param('from_comparaDBA')->dbc->prepare("SELECT
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
@@ -162,13 +164,13 @@ sub importAlignment {
 		  "genomic_align_block",
 		  "genomic_align_block_id",
 		  $min_gab, $max_gab,
-		  "SELECT gab.* FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE ga.method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+		  "SELECT gab.* FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE ga.method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id", $step);
     } else {
 	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 		  "genomic_align_block",
 		  "genomic_align_block_id",
 		  $min_gab, $max_gab,
-		  "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
+		  "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id", $step);
     }
 
     #copy genomic_align_tree table
@@ -179,7 +181,7 @@ sub importAlignment {
 		  $min_root_id, $max_root_id,
 		  "SELECT gat.*".
 		  " FROM genomic_align_tree gat  LEFT JOIN genomic_align USING (node_id)".
-		  " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+		  " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id", $step);
 
     } else {
 	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
@@ -189,7 +191,7 @@ sub importAlignment {
 		  "SELECT gat.*".
 		  " FROM genomic_align ga".
 		  " JOIN dnafrag USING (dnafrag_id)".
-		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
+		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63", $step);
     }
     #copy genomic_align table
     if ($dnafrag_id) {
@@ -199,7 +201,7 @@ sub importAlignment {
 		  $min_ga, $max_ga,
 		  "SELECT ga.*".
 		  " FROM genomic_align ga ".
-		  " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+		  " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id", $step);
 
     } else {
 #	copy_data($self->{'from_comparaDBA'}, $self->compara_dba,
@@ -217,7 +219,7 @@ sub importAlignment {
 		  $min_ga, $max_ga,
 		  "SELECT genomic_align.*".
 		  " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
-		  " WHERE method_link_species_set_id = $mlss_id AND genome_db_id != 63");
+		  " WHERE method_link_species_set_id = $mlss_id AND genome_db_id != 63", $step);
     }
 }
 
@@ -237,7 +239,7 @@ sub importAlignment {
 =cut
 
 sub copy_data {
-  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query) = @_;
+  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step) = @_;
 
   print "Copying data in table $table_name\n";
 
@@ -257,7 +259,7 @@ sub copy_data {
   if ($binary_mode) {
     #copy_data_in_binary_mode($from_dba, $to_dba, $table_name, $query);
   } else {
-    copy_data_in_text_mode($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query);
+    copy_data_in_text_mode($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step);
   }
   $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
 }
@@ -278,7 +280,7 @@ sub copy_data {
 =cut
 
 sub copy_data_in_text_mode {
-  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query) = @_;
+  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step) = @_;
 
   my $user = $to_dba->dbc->username;
   my $pass = $to_dba->dbc->password;
@@ -287,8 +289,13 @@ sub copy_data_in_text_mode {
   my $dbname = $to_dba->dbc->dbname;
   my $use_limit = 0;
   my $start = $min_id;
-#  my $step = 100000;
-  my $step = 10000;
+  #my $step = 100000;
+  #my $step = 10000;
+
+  #Default step size.
+  if (!defined $step) {
+      $step = 10000;
+  }
 
   #If not using BETWEEN, revert back to LIMIT
   if (!defined $index_name && !defined $min_id && !defined $max_id) {
