@@ -50,32 +50,27 @@ CREATE TABLE genome_db_stats (
 --
 -- Table structure for table 'dnafrag_chunk'
 --
--- overview: This tables holds chunking information so that these
---           DNA chunks can be identified (stable_id) and cached
+-- overview: This tables holds chunking information. 
 --
 -- semantics:
---   dnafrag_chunk_id - primary key
---   dnafrag_id       - foreign key link to dnafrag table
---   stable_id        - unique string identifying chunk (to be used to
---                      extract this sequence from a flat file)
---                      (ie subset.dump_loc file linked via subset_dnafrag_chunk)
---   seq_start        - start offset in dnafrag
---   seq_end          - end offset in dnafrag
---   sequence_id      - optional use (store chunk sequence in DB)
+--   dnafrag_chunk_id     - primary key
+--   dnafrag_chunk_set_id - foreign key link to dnafrag_chunk_set table
+--   dnafrag_id           - foreign key link to dnafrag table
+--   seq_start            - start offset in dnafrag
+--   seq_end              - end offset in dnafrag
+--   sequence_id          - optional use (store chunk sequence in DB)
                        
 CREATE TABLE dnafrag_chunk (
   dnafrag_chunk_id           int(10) NOT NULL auto_increment,
+  dnafrag_chunk_set_id       int(10) NOT NULL,
   dnafrag_id                 int(10) NOT NULL DEFAULT 0,
   seq_start                  int(10) unsigned NOT NULL DEFAULT 0,
   seq_end                    int(10) unsigned NOT NULL DEFAULT 0,
-#  masking_analysis_data_id   int(10) NOT NULL DEFAULT 0,
-  method_link_species_set_id int(10) unsigned DEFAULT NULL,
-  masking_tag_name           varchar(50) DEFAULT NULL,
   sequence_id                int(10) NOT NULL DEFAULT 0,
 
   PRIMARY KEY (dnafrag_chunk_id),
-  UNIQUE KEY uniq_chunk (dnafrag_id, seq_start, seq_end, method_link_species_set_id, masking_tag_name),
-  KEY (sequence_id)
+  UNIQUE KEY uniq_chunk (dnafrag_chunk_set_id, dnafrag_id, seq_start, seq_end),
+  KEY sequence_id (sequence_id)
 ) ENGINE=InnoDB;
 
 
@@ -86,54 +81,47 @@ CREATE TABLE dnafrag_chunk (
 -- overview: This tables holds sets of dnafrag_chunk references
 --
 -- semantics:
---   subset_id        - foreign key link to subset table
---   dnafrag_chunk_id - foreign key link to dnafrag_chunk table
+--   dnafrag_chunk_set_id - primary key
+--   dna_collection_id    - foreign key link to dna_collection table
+--   description          - unique string describing this chunk_set
 
 CREATE TABLE dnafrag_chunk_set (
- subset_id          int(10) NOT NULL,
- dnafrag_chunk_id   int(10) NOT NULL,
+ dnafrag_chunk_set_id    int(10) NOT NULL auto_increment,
+ dna_collection_id       int(10) NOT NULL,
+ description             varchar(255), 
 
- UNIQUE(subset_id, dnafrag_chunk_id)
+ PRIMARY KEY (dnafrag_chunk_set_id)
 ) ENGINE=InnoDB;
+
 
 
 -- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'dna_collection'
 --
--- overview: ObjectOriented database table design where join logic is encapsulated in 
---           object adaptor not in table schema.
---           This table holds links to variable foreign dna related tables.
---           This allows for the system to create various dnafrag_chunk and
---           dnafrag_chunk_set objects and then to be able to regroup them in
---           any arbirary way.  This allows for the a chunk to be in multiple sets
---           and in multiple collections, and for collections to include both chunks
---           and sets of chunks. Object design allow system to adapt to design changes
---           without needing to alter database schema.
---
+-- overview: The dna_collection table is
+--           linked to the dnafrag_chunk_set table and the dnafrag_chunk_set table is linked to the
+--           dnafrag_chunk table. The dna_collection table holds information relevant to all the
+--           the underlying dnafrag_chunks ie dump_loc and masking_options. The description field is a unique
+--           identifier and is used to retrieve a specific dna_collection since this is known prior
+--           to storage.
 -- semantics:
---   dna_collection_id   - foreign key link to subset table, unique for a collection
---                         uses subset table to generate unique ids.
---   table_name          - name of table on which to join the foreign_id to
---   foreign_id          - foreign key link to <table_name> table
+--   dna_collection_id   - primary key
+--   description         - unique description of collection 
+--   dump_loc            - directory path to dump files
+--   masking_options     - masking options
 
 CREATE TABLE dna_collection (
- dna_collection_id      int(10) unsigned NOT NULL,
- table_name             varchar(80),
- foreign_id             int(10) NOT NULL,
+ dna_collection_id       int(10) NOT NULL auto_increment,
+ description             varchar(255),
+ dump_loc                varchar(255),
+ masking_options         mediumtext,
+
+ PRIMARY KEY (dna_collection_id),
+ UNIQUE (description)
  
- FOREIGN KEY (dna_collection_id) REFERENCES subset(subset_id),
-
- UNIQUE(dna_collection_id, table_name, foreign_id)
 ) ENGINE=InnoDB;
 
-
-CREATE TABLE genomic_align_block_job_track (
-  genomic_align_block_id  bigint unsigned NOT NULL,
-  analysis_job_id         int NOT NULL,
-
-  UNIQUE (genomic_align_block_id, analysis_job_id)
-) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------------
 --
