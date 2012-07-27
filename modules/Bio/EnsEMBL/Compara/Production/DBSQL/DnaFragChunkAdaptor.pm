@@ -61,8 +61,8 @@ sub store {
   return unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
 
   my $query = "INSERT ignore INTO dnafrag_chunk".
-              "(dnafrag_id,sequence_id,seq_start,seq_end,method_link_species_set_id, masking_tag_name) ".
-              "VALUES (?,?,?,?,?,?)";
+              "(dnafrag_id,sequence_id,seq_start,seq_end, dnafrag_chunk_set_id) ".
+              "VALUES (?,?,?,?,?)";
 
   $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence));
 
@@ -70,22 +70,18 @@ sub store {
   my $sth = $self->prepare($query);
   my $insertCount =
      $sth->execute($dfc->dnafrag_id, $dfc->sequence_id,
-                   $dfc->seq_start, $dfc->seq_end,
-                   $dfc->method_link_species_set_id,
-		  $dfc->masking_tag_name);
+                   $dfc->seq_start, $dfc->seq_end, $dfc->dnafrag_chunk_set_id);
   if($insertCount>0) {
     #sucessful insert
     $dfc->dbID( $sth->{'mysql_insertid'} );
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(dnafrag_id,seq_start,seq_end,masking_analysis_data_id) prevented insert
+    #UNIQUE(dnafrag_id,seq_start,seq_end,dnafrag_chunk_set_id) prevented insert
     #since dnafrag_chunk was already inserted so get dnafrag_chunk_id with select
     my $sth2 = $self->prepare("SELECT dnafrag_chunk_id FROM dnafrag_chunk ".
-           " WHERE dnafrag_id=? and seq_start=? and seq_end=? and method_link_species_set_id=? and masking_tag_name=?");
-    $sth2->execute($dfc->dnafrag_id, $dfc->seq_start, $dfc->seq_end,
-                   $dfc->method_link_species_set_id,
-		  $dfc->masking_tag_name);
+           " WHERE dnafrag_id=? and seq_start=? and seq_end=? and dnafrag_chunk_set_id=?");
+    $sth2->execute($dfc->dnafrag_id, $dfc->seq_start, $dfc->seq_end, $dfc->dnafrag_chunk_set_id);
     my($id) = $sth2->fetchrow_array();
     warn("DnaFragChunkAdaptor: insert failed, but dnafrag_chunk_id select failed too") unless($id);
     $dfc->dbID($id);
@@ -160,30 +156,30 @@ sub fetch_by_dbID{
   return $obj;
 }
 
-=head2 fetch_by_dbIDs
+=head2 fetch_all_by_DnaFragChunkSet
 
-  Arg [1...] : int $id (multiple)
-               the unique database identifier for the feature to be obtained
-  Example    : $dfc = $adaptor->fetch_by_dbID(1234);
-  Description: Returns an array of DnaFragChunk created from the database defined by the
-               the id $id.
+  Arg [1...] : Bio::EnsEMBL::Compara::Production::DnaFragChunkSet 
+  Example    : $dfc = $adaptor->fetch_all_by_(1234);
+  Description: Returns an array of DnaFragChunks created from the database from a DnaFragChunkSet
   Returntype : listref of Bio::EnsEMBL::Compara::Production::DnaFragChunk objects
-  Exceptions : thrown if $id is not defined
+  Exceptions : thrown if $dnafrag_chunk_set is not defined
   Caller     : general
 
 =cut
 
-sub fetch_by_dbIDs{
+sub fetch_all_by_DnaFragChunkSet {
   my $self = shift;
-  my @ids = @_;
+  my $dnafrag_chunk_set = shift;
 
-  return undef unless(scalar(@ids));
+  unless(defined $dnafrag_chunk_set) {
+    $self->throw("fetch_all_by_DnaFragChunkSet must have a DnaFragChunkSet");
+  }
 
-  my $id_string = join(",", @ids);
-  my $constraint = "dfc.dnafrag_chunk_id in ($id_string)";
-  #printf("fetch_by_dbIDs has contraint\n$constraint\n");
+  my $dnafrag_chunk_set_id = $dnafrag_chunk_set->dbID;
+  my $constraint = "dfc.dnafrag_chunk_set_id = $dnafrag_chunk_set_id";
 
-  #return first element of _generic_fetch list
+  #printf("fetch_all_by_DnaFragChunkSet has contraint\n$constraint\n");
+
   return $self->_generic_fetch($constraint);
 }
 
@@ -205,30 +201,6 @@ sub fetch_all {
   return $self->_generic_fetch();
 }
 
-=head2 fetch_all_for_genome_db_id
-
-  Arg [1]    : int $genome_db_id
-  Example    : $chunks = $adaptor->fetch_all_for_genome_db_id(1);
-  Description: Returns an array with all the DnaFragChunk objects for a given genome_db_id
-  Returntype : listref of Bio::EnsEMBL::Compara::Production::DnaFragChunk objects
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_all_for_genome_db_id{
-  my $self = shift;
-  my $genome_db_id = shift;
-
-  $self->throw() unless (defined $genome_db_id);
-  
-  my $constraint = "df.genome_db_id='$genome_db_id'";
-
-  my $join = [[['dnafrag', 'df'], 'dfc.dnafrag_id=df.dnafrag_id']];
-  
-  return $self->_generic_fetch($constraint, $join);
-}
-
 ############################
 #
 # INTERNAL METHODS
@@ -248,11 +220,10 @@ sub _columns {
   my $self = shift;
 
   return qw (dfc.dnafrag_chunk_id
+             dfc.dnafrag_chunk_set_id
              dfc.dnafrag_id
              dfc.seq_start
              dfc.seq_end
-             dfc.method_link_species_set_id
-	     dfc.masking_tag_name
              dfc.sequence_id
             );
 }
@@ -288,20 +259,8 @@ sub _objs_from_sth {
     $dfc->seq_end($column{'seq_end'});
     $dfc->sequence_id($column{'sequence_id'});
     $dfc->dnafrag_id($column{'dnafrag_id'});
-    $dfc->method_link_species_set_id($column{'method_link_species_set_id'});
-    $dfc->masking_tag_name($column{'masking_tag_name'});
+    $dfc->dnafrag_chunk_set_id($column{'dnafrag_chunk_set_id'}),
 
-    if($column{'method_link_species_set_id'} && $column{'masking_tag_name'}) {
-      $dfc->masking_options($self->fetch_MaskingOptions_by_mlss_tag($column{'method_link_species_set_id'},$column{'masking_tag_name'}));
-
-      #reset method_link_species_set_id and masking_tag_name because setting masking_options clears these fields
-      $dfc->method_link_species_set_id($column{'method_link_species_set_id'});
-      $dfc->masking_tag_name($column{'masking_tag_name'});
-
-    }
-
-    #$dfc->display_short();
-    
     push @chunks, $dfc;
 
   }
@@ -378,8 +337,8 @@ sub _generic_fetch {
   # print STDERR "sql execute finished. about to build objects\n";
 
   return $self->_objs_from_sth($sth);
-}
 
+}
 
 sub _fetch_DnaFrag_by_dbID
 {
@@ -388,24 +347,5 @@ sub _fetch_DnaFrag_by_dbID
 
   return $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);  
 }
-
-sub fetch_MaskingOptions_by_mlss_tag
-{
-  my $self    = shift;
-  my $mlss_id = shift;
-  my $tag_name= shift;
-
-  my $cache_key = $mlss_id.':'.$tag_name;
-
-  $self->{'_masking_cache'} ||= {};
-
-  unless($self->{'_masking_cache'}->{$cache_key}) {
-    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "No MLSS object with id=$mlss_id";    
-    $self->{'_masking_cache'}->{$cache_key} = $mlss->get_value_for_tag($tag_name);
-  }
-  
-  return $self->{'_masking_cache'}->{$cache_key};
-}
-
 
 1;
