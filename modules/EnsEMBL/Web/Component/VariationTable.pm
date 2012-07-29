@@ -103,6 +103,9 @@ sub render_content {
   if ($consequence_type) {
     my $consequence_label = ucfirst($consequence_type);
     $consequence_label =~ s/_/ /g;
+    if ($consequence_label !~ /variant$/) {
+      $consequence_label = $consequence_label . ' variant';
+    }
     $consequence_label .='s';
     $html = $self->toggleable_table("$consequence_label", $consequence_type, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   } else {
@@ -457,14 +460,17 @@ sub configure {
 
   my $vf_objs = [ map $_->[2], @$snps];
 
+  my $ntrans = ($object_type eq 'Transcript') ? 1 : scalar(@{$gene_object->get_all_transcripts});
+  my $count = scalar(@$snps)*$ntrans;
+
   # For stats table (no $consquence) without a set intron context ($context). Also don't try for a single transcript (because its slower)
-  if (!$consequence && !$transcript_object && $context eq 'FULL') {
+  if (!$consequence && !$transcript_object && $context eq 'FULL' && $count >= 25) {
     my $so_term_subsets = $self->create_so_term_subsets;
     $gene_object->store_ConsequenceCounts($so_term_subsets, $vf_objs);
   }
 
   # If doing subtable or can't calculate consequence counts
-  if ($consequence || !exists($gene_object->__data->{'conscounts'})) {
+  if ($consequence || !exists($gene_object->__data->{'conscounts'}) || $count < 25) {
     $gene_object->store_TransformedSNPS(\@so_terms,$vf_objs); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
   }
 
