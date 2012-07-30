@@ -18,8 +18,8 @@ sub _init {
     my $patch_start   = $self->{'container'}->get_all_AssemblyExceptionFeatures->[0]->start; 
     my $patch_end     = $self->{'container'}->get_all_AssemblyExceptionFeatures->[0]->end; 
     $patch_start      = 1 if $patch_start < 1;
-    my $patch_length  = $patch_end - $patch_start +1; warn $patch_length; warn $length;
-    $patch_length     = $length if $patch_length > $length; warn $patch_length;
+    my $patch_length  = $patch_end - $patch_start +1;
+    $patch_length     = $length if $patch_length > $length;
 
     foreach (0, 8) {
       $self->push($self->Rect({
