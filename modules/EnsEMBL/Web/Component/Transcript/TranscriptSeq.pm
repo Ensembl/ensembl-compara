@@ -265,7 +265,7 @@ sub initialize {
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
   if ($hub->param('line_numbering') ne 'off') {
-    $config->{'line_numbering'} = $hub->param('line_numbering');
+    $config->{'line_numbering'} = 'yes';
     $config->{'number'}         = 1;
   }
   

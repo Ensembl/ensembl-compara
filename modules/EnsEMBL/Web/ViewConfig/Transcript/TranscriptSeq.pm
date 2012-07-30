@@ -4,8 +4,6 @@ package EnsEMBL::Web::ViewConfig::Transcript::TranscriptSeq;
 
 use strict;
 
-use EnsEMBL::Web::Constants;
-
 use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
@@ -27,18 +25,7 @@ sub init {
 }
 
 sub form {
-  my $self   = shift;
-  my %markup = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
-  
-  $self->add_form_element({
-    type   => 'DropDown', 
-    select => 'select',
-    name   => 'display_width',
-    label  => 'Number of base pairs per row',
-    values => [
-      map {{ value => $_, name => "$_ bps" }} map $_*15, 2..12
-    ] 
-  });
+  my $self = shift;
 
   $self->add_form_element({ type => 'YesNo', name => 'exons',       select => 'select', label => 'Show exons'            });
   $self->add_form_element({ type => 'YesNo', name => 'codons',      select => 'select', label => 'Show codons'           });
@@ -47,7 +34,16 @@ sub form {
   $self->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
   $self->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features'     });
   $self->variation_options({ populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
-  $self->add_form_element($markup{'line_numbering'});
+  $self->add_form_element({
+    type   => 'DropDown', 
+    select => 'select',
+    name   => 'line_numbering',
+    label  => 'Line numbering',
+    values => [
+      { value => 'sequence', name => 'Yes' },
+      { value => 'off',      name => 'No'  },
+    ]
+  });
 }
 
 1;
