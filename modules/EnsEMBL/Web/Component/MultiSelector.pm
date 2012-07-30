@@ -64,7 +64,7 @@ sub content_ajax {
   );
   
   my $hint = qq{
-    <div class="multi_selector_hint hint">
+    <div class="multi_selector_hint info">
       <h3>Tip</h3>
       <div class="error-pad">
         <p>Click on the plus and minus buttons to select or deselect options.</p>
