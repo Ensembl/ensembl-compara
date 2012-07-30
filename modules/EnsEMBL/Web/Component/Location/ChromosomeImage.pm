@@ -113,7 +113,9 @@ sub stats_table {
   my ($stats, %chr_stats);
   my $chr = $object->Obj->{'slice'};
   foreach my $attrib (@{$chr->get_all_Attributes}) {
-    $chr_stats{$attrib->name} += $attrib->value;
+    if ($attrib->value =~ /\d+/) {
+      $chr_stats{$attrib->name} += $attrib->value;
+    }
   }
   $chr_stats{'Length (bps)'} = $chr->seq_region_length ;
 
