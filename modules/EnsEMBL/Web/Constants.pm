@@ -321,7 +321,7 @@ sub VARIATION_OPTIONS {
       'opt_missense_variant'                  =>  [ 'on', 'Missense', 12 ],
       'opt_splice_region_variant'             =>  [ 'on', 'Splice region', 13 ],
       'opt_incomplete_terminal_codon_variant' =>  [ 'on', 'Incomplete terminal codon', 14],
-      'opt_synonymous_coding'                 =>  [ 'on', 'Synonymous', 15 ],
+      'opt_synonymous_variant'                =>  [ 'on', 'Synonymous', 15 ],
       'opt_stop_retained'                     =>  [ 'on', 'Stop retained', 15 ],
       'opt_coding_sequence_variant'           =>  [ 'on', 'Coding sequence', 16 ],
       'opt_mature_mirna_variant'              =>  [ 'on', 'Mature miRNA', 17 ],
