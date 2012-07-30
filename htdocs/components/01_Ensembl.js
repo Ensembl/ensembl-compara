@@ -21,10 +21,16 @@ Ensembl.extend({
     this.hideHints       = {};
     this.initialPanels   = $('.initial_panel');
     this.minWidthEl      = $('#min_width_container');
-    this.images          = { // Store image panel details for highlighting
-      total: imagePanels.length,
-      last:  imagePanels.last()[0]
-    };
+    this.images          = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
+    
+    if (this.dynamicWidth) {
+      var width = this.imageWidth();
+      
+      if (this.width !== width) {
+        this.width = width;
+        this.cookie.set('ENSEMBL_WIDTH', width);
+      }
+    }
     
     if (hints) {
       $.each(hints.split(/:/), function () {
@@ -75,10 +81,14 @@ Ensembl.extend({
     }
   },
   
+  imageWidth: function () {
+    return Math.floor(($(window).width() - 240) / 100) * 100;
+  },
+  
   setWidth: function (w, changed) {
     var numeric = !isNaN(w);
     
-    w = numeric ? w : Math.floor(($(window).width() - 250) / 100) * 100;
+    w = numeric ? w : this.imageWidth();
     
     this.width = w < 500 ? 500 : w;
     
