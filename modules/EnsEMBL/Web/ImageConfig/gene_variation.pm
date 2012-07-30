@@ -7,12 +7,14 @@ use base qw(EnsEMBL::Web::ImageConfig);
 sub init {
   my $self = shift;
   
-  $self->{'colours'}{$_} = $self->species_defs->colour($_) for qw(variation haplotype);
+  my %colours;
+  $colours{$_} = $self->species_defs->colour($_) for qw(variation haplotype);
   
   $self->set_parameters({
-    label_width      => 100,  # width of labels on left-hand side
-    opt_halfheight   => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks => 0,    # include empty tracks
+    label_width      => 100,        # width of labels on left-hand side
+    opt_halfheight   => 0,          # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks => 0,          # include empty tracks
+    colours          => \%colours,  # colour maps
   });
   
   $self->create_menus(qw(
@@ -43,7 +45,7 @@ sub init_gene {
   my $self = shift;
   
   $self->add_tracks('variation',
-    [ 'snp_join',         '', 'snp_join',         { display => 'on',     strand => 'b', menu => 'no', tag => 0, colours => $self->{'colours'}{'variation'} }],
+    [ 'snp_join',         '', 'snp_join',         { display => 'on',     strand => 'b', menu => 'no', tag => 0, colours => $self->get_parameter('colours')->{'variation'} }],
     [ 'geneexon_bgtrack', '', 'geneexon_bgtrack', { display => 'normal', strand => 'b', menu => 'no', tag => 0, colours => 'bisque', src => 'all'          }]
   );
   
@@ -65,12 +67,13 @@ sub init_gene {
   );
 }
 
+
 sub init_transcripts_top {
   my $self = shift;
   
   $self->add_tracks('other',
     [ 'geneexon_bgtrack', '', 'geneexon_bgtrack', { display => 'normal', strand => 'f', menu => 'no', tag => 1, colours => 'bisque', src => 'all'                         }],
-    [ 'snp_join',         '', 'snp_join',         { display => 'normal', strand => 'f', menu => 'no', tag => 1, colours => $self->{'colours'}{'variation'}, context => 50 }],
+    [ 'snp_join',         '', 'snp_join',         { display => 'normal', strand => 'f', menu => 'no', tag => 1, colours => $self->get_parameter('colours')->{'variation'}, context => 50 }],
   );
   
   $self->get_node($_)->remove for qw(gsv_domain transcript);
@@ -80,7 +83,8 @@ sub init_transcript {
   my $self = shift;
   
   $self->add_tracks('other',
-    [ 'gsv_variations', '', 'gsv_variations', { display => 'on',     strand => 'r', menu => 'no', colours => $self->{'colours'}{'variation'} }],
+    [ 'gsv_variations', '', 'gsv_variations', { display => 'on',     strand => 'r', menu => 'no', colours => $self->get_parameter('colours')->{'variation'} }],
+#    [ 'gsv_variations', '', 'gsv_variations', { display => 'on',     strand => 'r', menu => 'no', colours => $self->species_defs->colour('variation') }],
     [ 'spacer',         '', 'spacer',         { display => 'normal', strand => 'r', menu => 'no', height => 10,                              }],
   );
   
@@ -97,7 +101,7 @@ sub init_transcripts_bottom {
   
   $self->add_tracks('other',
     [ 'geneexon_bgtrack', '', 'geneexon_bgtrack', { display => 'normal', strand => 'r', menu => 'no', tag => 1, colours => 'bisque', src => 'all'                         }],
-    [ 'snp_join',         '', 'snp_join',         { display => 'normal', strand => 'r', menu => 'no', tag => 1, colours => $self->{'colours'}{'variation'}, context => 50 }],
+    [ 'snp_join',         '', 'snp_join',         { display => 'normal', strand => 'r', menu => 'no', tag => 1, colours => $self->get_parameter('colours')->{'variation'}, context => 50 }],
     [ 'ruler',            '', 'ruler',            { display => 'normal', strand => 'r', menu => 'no', notext => 1, name => 'Ruler'                                        }],
     [ 'spacer',           '', 'spacer',           { display => 'normal', strand => 'r', menu => 'no', height => 50,                                                       }],
   );
@@ -115,10 +119,10 @@ sub init_snps {
   });
   
   $self->add_tracks('other',
-    [ 'snp_fake',             '', 'snp_fake',             { display => 'on',  strand => 'f', colours => $self->{'colours'}{'variation'}, tag => 2                                    }],
+    [ 'snp_fake',             '', 'snp_fake',             { display => 'on',  strand => 'f', colours => $self->get_parameter('colours')->{'variation'}, tag => 2                                    }],
     [ 'variation_legend',     '', 'variation_legend',     { display => 'on',  strand => 'r', menu => 'no', caption => 'Variation legend'                                             }],
-    [ 'snp_fake_haplotype',   '', 'snp_fake_haplotype',   { display => 'off', strand => 'r', colours => $self->{'colours'}{'haplotype'}                                              }],
-    [ 'tsv_haplotype_legend', '', 'tsv_haplotype_legend', { display => 'off', strand => 'r', colours => $self->{'colours'}{'haplotype'}, caption => 'Haplotype legend', src => 'all' }],
+    [ 'snp_fake_haplotype',   '', 'snp_fake_haplotype',   { display => 'off', strand => 'r', colours => $self->get_parameter('colours')->{'haplotype'}                                              }],
+    [ 'tsv_haplotype_legend', '', 'tsv_haplotype_legend', { display => 'off', strand => 'r', colours => $self->get_parameter('colours')->{'haplotype'}, caption => 'Haplotype legend', src => 'all' }],
   );
   
   $self->get_node($_)->remove for qw(gsv_domain transcript);
