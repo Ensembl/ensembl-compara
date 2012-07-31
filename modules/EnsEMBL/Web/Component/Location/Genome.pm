@@ -119,47 +119,49 @@ sub _render_features {
       ## Title for image - a bit messy, but we want it to be human-readable!
       my $title;
       if ($has_internal_data) { 
-        $title = 'Location';
-        $title .= 's' if $mapped_features > 1;
-        $title .= ' of ';
-        my ($data_type, $assoc_name);
-        my $ftype = $hub->param('ftype');
-        if (grep (/$ftype/, keys %$features)) {
-          $data_type = $ftype;
-        }
-        else {
-          my @A = sort keys %$features;
-          $data_type = $A[0];
-          $assoc_name = $hub->param('phenotype_name') || $hub->param('name');
-          unless ($assoc_name) {
-            $assoc_name = $xref_type.' ';
-            $assoc_name .= $id;
-            $assoc_name .= " ($xref_name)";
+        unless ($hub->param('ph')) { ## omit h3 header for phenotypes
+          $title = 'Location';
+          $title .= 's' if $mapped_features > 1;
+          $title .= ' of ';
+          my ($data_type, $assoc_name);
+          my $ftype = $hub->param('ftype');
+          if (grep (/$ftype/, keys %$features)) {
+            $data_type = $ftype;
           }
-        }
+          else {
+            my @A = sort keys %$features;
+            $data_type = $A[0];
+            $assoc_name = $hub->param('name');
+            unless ($assoc_name) {
+              $assoc_name = $xref_type.' ';
+              $assoc_name .= $id;
+              $assoc_name .= " ($xref_name)";
+            }
+          }
 
-        my %names;
-        ## De-camelcase names
-        foreach (sort keys %$features) {
-          my $pretty = $feature_display_name->{$_} || $self->decamel($_);
-          $pretty .= 's' if $mapped_features > 1;
-          $names{$_} = $pretty;
-        }
+          my %names;
+          ## De-camelcase names
+          foreach (sort keys %$features) {
+            my $pretty = $feature_display_name->{$_} || $self->decamel($_);
+            $pretty .= 's' if $mapped_features > 1;
+            $names{$_} = $pretty;
+          }
 
-        my @feat_names = sort values %names;
-        my $last_name = pop(@feat_names);
-        if (scalar @feat_names > 0) {
-          $title .= join ', ', @feat_names;
-          $title .= ' and ';
+          my @feat_names = sort values %names;
+          my $last_name = pop(@feat_names);
+          if (scalar @feat_names > 0) {
+            $title .= join ', ', @feat_names;
+            $title .= ' and ';
+          }
+          $title .= $last_name;
+          $title .= " associated with $assoc_name" if $assoc_name;
         }
-        $title .= $last_name;
-        $title .= " associated with $assoc_name" if $assoc_name;
       }
       else {
         $title = 'Location of your feature';
         $title .= 's' if $has_userdata > 1;
       }
-      $html .= "<h3>$title</h3>";        
+      $html .= "<h3>$title</h3>" if $title;        
      
       ## Create pointers for Ensembl features
       while (my ($feat_type, $set) = each (%$features)) {          
