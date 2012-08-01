@@ -100,9 +100,9 @@ Ensembl.LayoutManager.extend({
       userMessage = userMessage.split('\n');
       
       $([
-        '<div class="hint" style="margin: 10px 25%;">',
-        ' <h3><img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />', userMessage[0], '</h3>',
-        ' <p>', userMessage[1], '</p>',
+        '<div class="hint right-margin left-margin">',
+        ' <h3><img src="/i/close.png" alt="Hide" title="Hide" />', userMessage[0], '</h3>',
+        ' <div class="message-pad">', userMessage[1], '</div>',
         '</div>'
       ].join('')).prependTo('#main').find('h3 img, a').on('click', function () {
         $(this).parents('div.hint').remove();
