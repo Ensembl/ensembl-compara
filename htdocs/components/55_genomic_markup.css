@@ -78,6 +78,7 @@ div.chromosome_stats form fieldset label.ff-label         { line-height: 22px; }
 div.chromosome_stats form div.form-field div.ff-right     { text-align: right; }
 div.synteny_forms    form div.form-field select.fselect,
 div.chromosome_stats form div.form-field select.fselect   { width: 120px; }
+div.chromosome_stats form .inline input.fbutton           { margin-right: 1px; }
 
 body.ie6 div.synteny_image,
 body.ie6 div.synteny_forms,
