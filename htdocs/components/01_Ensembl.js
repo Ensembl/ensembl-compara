@@ -14,8 +14,8 @@ Ensembl.extend({
     }
     
     this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
-    this.locationMatch   = new RegExp(/[?;&]r=([^;&]+)/);
-    this.locationReplace = new RegExp(/([?;&]r=)[^;&]+((;&)?)/);
+    this.locationMatch   = new RegExp(/[#?;&]r=([^;&]+)/);
+    this.locationReplace = new RegExp(/([#?;&]r=)[^;&]+((;&)?)/);
     this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
     this.dynamicWidth    = !!this.cookie.get('DYNAMIC_WIDTH');
     this.hideHints       = {};
@@ -47,7 +47,7 @@ Ensembl.extend({
     // If there's a hash in the URL with a new location in it, and the browser supports history API,
     // update window.location.search to contain the new location.
     // Also change all ajax_load values, so panels are loaded matching the new location.
-    var removeHash = this.locationURL === 'hash' ? '' : window.location.hash.replace(/^#/, '?').match(this.locationMatch);
+    var removeHash = this.locationURL === 'hash' ? '' : window.location.hash.match(this.locationMatch);
     
     if (removeHash) {
       window.history.replaceState({}, '', window.location.search.replace(this.locationReplace, '$1' + removeHash[1] + '$2'));
@@ -102,10 +102,11 @@ Ensembl.extend({
   },
   
   setCoreParams: function () {
-    var regex = '[;&?]%s=(.+?)[;&]';
-    var url   = window.location.search + ';';
-    var hash  = window.location.hash.replace(/^#/, '?') + ';';
-    var lastR = this.coreParams ? this.coreParams.r : '';
+    var regex       = '[#?;&]%s=([^;&]+)';
+    var url         = window.location.search;
+    var hash        = window.location.hash;
+    var locationURL = this.locationURL === 'hash' ? hash : url;
+    var lastR       = this.coreParams ? this.coreParams.r : '';
     var match, m, i, r;
     
     this.hash          = hash;
@@ -118,7 +119,7 @@ Ensembl.extend({
     this.multiSpecies  = {};
     
     $('input', '#core_params').each(function () {
-      var hashMatch = hash.match(regex.replace('%s', this.name));
+      var hashMatch = locationURL.match(regex.replace('%s', this.name));
       Ensembl.coreParams[this.name] = hashMatch ? unescape(hashMatch[1]) : this.value;
     });
     
@@ -135,7 +136,7 @@ Ensembl.extend({
       }
     }
     
-    match = url.match(/s\d+=.+?[;&]/g);
+    match = url.match(/s\d+=([^;&]+)/g);
     
     if (match) {
       $.each(match, function () {

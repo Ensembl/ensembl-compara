@@ -23,7 +23,7 @@ Ensembl.LayoutManager.extend({
     
     $('#header a:not(#tabs a)').addClass('constant');
     
-    if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch)) {
+    if (window.location.hash.match(Ensembl.locationMatch)) {
       $('.ajax_load').val(function (i, val) {
         return Ensembl.urlFromHash(val);
       });
@@ -66,7 +66,7 @@ Ensembl.LayoutManager.extend({
     });
     
     function popState() {
-      if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch) || !window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) {
+      if (window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || !window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) {
         Ensembl.setCoreParams();
         Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
       }

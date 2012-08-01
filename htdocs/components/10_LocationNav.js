@@ -21,37 +21,8 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.enabled = this.params.enabled || false;
     this.reload  = false;
     
-    var match        = (window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch);
     var sliderConfig = $('span.ramp', this.el).hide().children();
     var sliderLabel  = $('.slider_label', this.el);
-    var hash, boundaries, r, l, i;
-    
-    if (match) {
-      r = match[1].split(/\W/);
-      l = r[2] - r[1] + 1;
-      
-      sliderLabel.html(l);
-      sliderConfig.removeClass('selected');
-      
-      i = sliderConfig.length;
-      
-      if (l >= parseInt(sliderConfig[i-1].name, 10)) {
-        sliderConfig.last().addClass('selected');
-      } else {
-        boundaries = $.map(sliderConfig, function (el, i) {
-          return Math.sqrt((i ? parseInt(sliderConfig[i-1].name, 10) : 0) * parseInt(el.name, 10));
-        });
-        
-        boundaries.push(1e30);
-        
-        while (i--) {
-          if (l > boundaries[i] && l <= boundaries[i+1]) {
-            sliderConfig.eq(i).addClass('selected');
-            break;
-          }
-        }
-      }
-    }
     
     $('.slider_wrapper', this.el).children().css('display', 'inline-block');
     
@@ -108,7 +79,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
           Ensembl.redirect(url);
           return false;
         } else if (Ensembl.locationURL === 'hash' && !window.location.hash.match(Ensembl.locationMatch) && window.location.search.match(Ensembl.locationMatch)[1] === r) {
-          return false;
+          return false; // when there's no hash, but the current location is the same as the new r
         } else if ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || [])[1] === r) {
           return false;
         }
