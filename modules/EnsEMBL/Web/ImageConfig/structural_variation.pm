@@ -15,9 +15,9 @@ sub init {
   });
   
   $self->create_menus(qw(
+    sequence
     transcript
     prediction
-    sequence
     variation
     somatic
     functional
