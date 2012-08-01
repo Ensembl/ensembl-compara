@@ -166,16 +166,16 @@ sub write_output {
     rmtree([$self->worker_temp_directory]);
 }
 
-sub DESTROY {
+sub post_cleanup {
   my $self = shift;
 
   if(my $protein_tree = $self->param('protein_tree')) {
-    printf("NJTREE_PHYML::DESTROY  releasing tree\n") if($self->debug);
+    printf("NJTREE_PHYML::post_cleanup  releasing tree\n") if($self->debug);
     $protein_tree->release_tree;
     $self->param('protein_tree', undef);
   }
 
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 

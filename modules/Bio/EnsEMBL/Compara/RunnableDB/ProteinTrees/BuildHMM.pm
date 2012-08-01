@@ -177,16 +177,16 @@ sub write_output {
 }
 
 
-sub DESTROY {
+sub post_cleanup {
   my $self = shift;
 
   if($self->param('protein_tree')) {
-    printf("BuildHMM::DESTROY  releasing tree\n") if($self->debug);
+    printf("BuildHMM::post_cleanup  releasing tree\n") if($self->debug);
     $self->param('protein_tree')->release_tree;
     $self->param('protein_tree', undef);
   }
 
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 

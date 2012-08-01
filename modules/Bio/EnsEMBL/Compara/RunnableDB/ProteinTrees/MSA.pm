@@ -106,7 +106,7 @@ sub fetch_input {
     $self->param('protein_tree')->preload();
   # No input specified.
   if (!defined($self->param('protein_tree'))) {
-    $self->DESTROY;
+    $self->post_cleanup;
     $self->throw("MCoffee job no input protein_tree");
   }
 
@@ -138,7 +138,7 @@ sub fetch_input {
 
   # Error writing input Fasta file.
   if (!$self->param('input_fasta')) {
-    $self->DESTROY;
+    $self->post_cleanup;
     $self->throw("MCoffee: error writing input Fasta");
   }
 
@@ -186,7 +186,7 @@ sub write_output {
 
 }
 
-sub DESTROY {
+sub post_cleanup {
     my $self = shift;
 
     if($self->param('protein_tree')) {
@@ -194,7 +194,7 @@ sub DESTROY {
         $self->param('protein_tree', undef);
     }
 
-    $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+    $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 ##########################################
@@ -224,7 +224,7 @@ sub run_msa {
     if(system($cmd)) {
         my $system_error = $!;
 
-        $self->DESTROY;
+        $self->post_cleanup;
         die "Failed to execute [$cmd]: $system_error ";
     }
 

@@ -103,16 +103,16 @@ sub write_output {
 }
 
 
-sub DESTROY {
+sub post_cleanup {
     my $self = shift;
 
     if(my $protein_tree = $self->param('protein_tree')) {
-        printf("FindContiguousSplitGenes::DESTROY  releasing tree\n") if($self->debug);
+        printf("FindContiguousSplitGenes::post_cleanup  releasing tree\n") if($self->debug);
         $protein_tree->release_tree;
         $self->param('protein_tree', undef);
     }
 
-    $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+    $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 

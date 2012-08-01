@@ -139,16 +139,16 @@ sub write_output {
                             );
 }
 
-sub DESTROY {
+sub post_cleanup {
   my $self = shift;
 
   if($self->param('nc_tree')) {
-    printf("NctreeBestMMerge::DESTROY  releasing tree\n") if($self->debug);
+    printf("NctreeBestMMerge::post_cleanup  releasing tree\n") if($self->debug);
     $self->param('nc_tree')->release_tree;
     $self->param('nc_tree', undef);
   }
 
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 

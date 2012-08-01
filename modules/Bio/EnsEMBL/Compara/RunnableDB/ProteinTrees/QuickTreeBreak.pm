@@ -155,15 +155,15 @@ sub release_tree {
     }
 }
 
-sub DESTROY {
+sub post_cleanup {
     my $self = shift;
 
-    printf("QuickTreeBreak::DESTROY releasing trees\n") if($self->debug);
+    printf("QuickTreeBreak::post_cleanup releasing trees\n") if($self->debug);
 
     $self->param('gene_tree')->release_tree;
     $self->param('max_subtree')->release_tree;
 
-    $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+    $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 

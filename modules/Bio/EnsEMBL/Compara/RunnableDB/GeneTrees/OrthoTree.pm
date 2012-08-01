@@ -172,21 +172,21 @@ sub write_output {
 }
 
 
-sub DESTROY {
+sub post_cleanup {
   my $self = shift;
 
   if($self->param('gene_tree')) {
-    printf("OrthoTree::DESTROY  releasing gene_tree\n") if($self->debug);
+    printf("OrthoTree::post_cleanup  releasing gene_tree\n") if($self->debug);
     $self->param('gene_tree')->release_tree;
     $self->param('gene_tree', undef);
   }
   if($self->param('taxon_tree')) {
-    printf("OrthoTree::DESTROY  releasing taxon_tree\n") if($self->debug);
+    printf("OrthoTree::post_cleanup  releasing taxon_tree\n") if($self->debug);
     $self->param('taxon_tree')->release_tree;
     $self->param('taxon_tree', undef);
   }
 
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 
