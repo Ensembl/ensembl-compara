@@ -11,7 +11,7 @@ use base qw(EnsEMBL::Web::Component::Location);
 sub _init {
   my $self = shift;
   $self->ajaxable(1);  # Must be ajaxable for slider/button nav stuff to work properly.
-  $self->has_image(1); # Cache key and tags depend on image width, so lie about having images so that they are correct
+  $self->has_image(2); # Cache key and tags depend on image width, so lie about having images so that they are correct. Setting has_image to something other than 1 stops the image_panel class being added
 }
 
 sub set_cache_key {

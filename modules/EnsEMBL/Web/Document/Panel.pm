@@ -382,7 +382,7 @@ sub component_content {
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
     if ($component->ajaxable && !$ajax_request && $is_html) {
       my $url   = $component->ajax_url($content_function);
-      my $class = 'initial_panel' . ($component->has_image ? ' image_panel' : ''); # classes required by the javascript
+      my $class = 'initial_panel' . ($component->has_image == 1 ? ' image_panel' : ''); # classes required by the javascript
       
       # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
       # $panel_name is the memory location of the current object, so unique for each panel.
