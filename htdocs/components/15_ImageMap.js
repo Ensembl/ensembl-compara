@@ -34,7 +34,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base();
     
     this.imageConfig      = $('input.image_config', this.el).val();
-    this.lastImage        = this.el.parents('.image_panel')[0] === Ensembl.images.last;
+    this.lastImage        = Ensembl.images.total > 1 && this.el.parents('.image_panel')[0] === Ensembl.images.last;
     this.hashChangeReload = this.lastImage || $('.hash_change_reload', this.el).length;
     
     this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
@@ -77,19 +77,24 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   hashChange: function (r) {
+    var reload = this.hashChangeReload;
+    
     this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
     
-    if (this.hashChangeReload) {
-      this.base();
-    } else if (Ensembl.images.total === 1) {
+    if (Ensembl.images.total === 1) {
       this.highlightAllImages();
     } else if (!this.multi) {
       var range = this.highlightRegions[0][0].region.range;
       r = r.split(/\W/);
       
       if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end || this.highlightRegions[0][0].region.a.href.split('|')[4] !== r[0]) {
-        this.base();
+        reload = true;
       }
+    }
+    
+    if (reload) {
+      this.elLk.exportMenu.remove();
+      this.base();
     }
     
     if (this.align) {
