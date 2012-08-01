@@ -72,6 +72,11 @@ sub init {
     { display => 'normal', menu => 'yes' }
   );
   
+  $self->modify_configs(
+    [ 'structural_variation_external' ],
+    {  menu => 'yes' }
+  );
+  
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
