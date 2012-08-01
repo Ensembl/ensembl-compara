@@ -466,25 +466,23 @@ sub hgvs {
   my $count     = 0;
   my $total     = scalar keys %$hgvs_urls;
   my $html;
-  
+ 
   # Loop over and format the URLs
   foreach my $allele (keys %$hgvs_urls) {
-    $html  .= ($count ? '<br />' : '') . "<b>Variant allele $allele</b><br />" if $total > 1;
-    $html  .= join '<br />', @{$hgvs_urls->{$allele}}, $total > 1 ? '' : ();
+    $html  .= sprintf '<p>%s</p>', join('<br />', $total > 1 ? "<b>Variant allele $allele</b>" : (), @{$hgvs_urls->{$allele}});
     $count += scalar @{$hgvs_urls->{$allele}};
   }
-  
+
   # Wrap the html
   if ($count > 1) {
     my $show = $self->hub->get_cookies('toggle_HGVS_names') eq 'open';
-    my $s    = $count > 1 ? 's' : '';
 
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
       sprintf(qq(<div class="twocol-cell">
-        <p>This feature has $count HGVS name$s - click the plus to show</p>
-        <div class="HGVS_names"><div class="toggleable" style="font-weight:normal;%s">$html</div></div>
-      </div>), $show ? '' : 'display:none')
+        <p>This feature has $count HGVS names - click the plus to show</p>
+        <div class="HGVS_names"><div class="toggleable"%s>$html</div></div>
+      </div>), $show ? '' : ' style="display:none"')
     ];
   } elsif ($count == 1) {
     return ['HGVS name', $html];
