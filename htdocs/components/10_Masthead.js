@@ -4,7 +4,6 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   constructor: function (id) {
     this.longTabs        = false;
     this.moreShown       = false;
-    this.zIndex          = 1000;
     this.recentLocations = {};
   
     this.base(id);
@@ -32,7 +31,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     this.elLk.toolMore   = $('.more', tools);
     this.elLk.toolMoreUl = $('<ul class="more_tools" />').appendTo(this.elLk.toolMore);
     this.elLk.dropdowns  = $('div.dropdown', tabsHolder).on('click', function () {
-      $(this).css('zIndex', panel.zIndex++);
+      $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     });
     
     // Cache the text on the recent location links, to stop hash changes in the URL from duplicating entries in the menu
@@ -71,7 +70,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       var dropdown = panel.elLk.dropdowns.filter(cls);
       
       panel.dropdownPosition(dropdown, $(this).parents('li'));
-      dropdown.not(':visible').css('zIndex', panel.zIndex++).end().toggle(); 
+      dropdown.not(':visible').css('zIndex', ++Ensembl.PanelManager.zIndex).end().toggle(); 
       panel.elLk.allTabs.filter(cls).find('a.toggle').html(dropdown.is(':visible') ? '&#9650;' : '&#9660;'); // Change the toggle arrow from up to down or vice versa
       dropdown.data('type', cls); // Cache the selector to find the tab for use later
       
