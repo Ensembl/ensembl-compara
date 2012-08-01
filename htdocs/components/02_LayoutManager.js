@@ -66,7 +66,11 @@ Ensembl.LayoutManager.extend({
     });
     
     function popState() {
-      if (window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || !window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) {
+      if (
+        // there is an r param in the hash/search EXCEPT WHEN the browser supports history API, and there is a hash which doesn't have an r param (ajax added content)
+        (window.location[Ensembl.locationURL].match(Ensembl.locationMatch) && !(Ensembl.locationURL === 'search' && window.location.hash && !window.location.hash.match(Ensembl.locationMatch))) ||
+        (!window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) // there is no location.hash, but Ensembl.hash (previous hash value) had an r param (going back from no hash url to hash url)
+      ) {
         Ensembl.setCoreParams();
         Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
       }

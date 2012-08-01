@@ -168,7 +168,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       var cookie = Ensembl.cookie.get('toggle_' + this.rel);
       
       if ($(this).hasClass('closed')) {
-        var regex = '[;\?]' + this.rel + '(Panel)?;'
+        var regex = '[#?;&]' + this.rel + '(Panel)?[&;]*'
         
         if (cookie === 'open' || Ensembl.hash.match(new RegExp(regex))) {
           toTrigger[this.rel] = this; 
