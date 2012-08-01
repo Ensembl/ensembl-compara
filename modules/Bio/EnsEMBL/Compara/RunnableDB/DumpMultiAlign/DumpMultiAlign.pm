@@ -51,8 +51,10 @@ sub run {
 
     #Write a temporary file to store gabs to dump
     if ($self->param('start') && $self->param('end')) {
-	$self->_write_gab_file();
-	$cmd .= " --file_of_genomic_align_block_ids " . $self->param('tmp_file');
+        my $tmp_file = $self->_write_gab_file();
+        $cmd .= " --file_of_genomic_align_block_ids " . $tmp_file;
+
+        $self->param('tmp_file', $tmp_file);
     }
 
     #substitute any hashes in analysis parameters with the correct values from analysis_job
@@ -177,8 +179,9 @@ sub _write_gab_file {
     my $sth = $self->analysis->adaptor->dbc->prepare($sql);
     $sth->execute($self->param('start'), $self->param('end'));
     
-    my $tmp_file = "/tmp/other_gab_$$.out";
-    $self->param('tmp_file', $tmp_file);
+    my $worker_temp_directory   = $self->worker_temp_directory;
+
+    my $tmp_file = $worker_temp_directory . "other_gab_$$.out";
     
     open(FILE, ">$tmp_file") || die ("Couldn't open $tmp_file for writing"); 
 
@@ -188,6 +191,8 @@ sub _write_gab_file {
     }
     close(FILE);
     $sth->finish;
+
+    return $tmp_file;
 }
 
 1;

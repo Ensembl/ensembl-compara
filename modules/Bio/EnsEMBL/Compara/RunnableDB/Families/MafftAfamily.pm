@@ -10,13 +10,10 @@ sub fetch_input {
 
     my $family_id               = $self->param('family_id')   || die "'family_id' is an obligatory parameter, please set it in the input_id hashref";
 
-    my $family = $self->compara_dba()->get_FamilyAdaptor()->fetch_by_dbID($family_id);
+    my $family = $self->compara_dba()->get_FamilyAdaptor()->fetch_by_dbID($family_id)
+                || die "family $family_id could not have been fetched by the adaptor";
 
-    $self->param('family', $family); # and save it for the future
-
-    if(!defined($family)) {
-        die "family $family_id could not have been fetched by the adaptor";
-    }
+    $self->param('family', $family); # save it for the future
 
     my $aln;
     eval {$aln = $family->get_SimpleAlign};
@@ -28,9 +25,10 @@ sub fetch_input {
 
     # otherwise prepare the files and perform the actual mafft run:
 
-    my $rand = time().rand(1000);
-    my $pep_file   = "/tmp/family_${family_id}.pep.$rand";
-    my $mafft_file = "/tmp/family_${family_id}.mafft.$rand";
+    my $worker_temp_directory   = $self->worker_temp_directory;
+
+    my $pep_file    = $worker_temp_directory . 'family_${family_id}.pep';
+    my $mafft_file  = $worker_temp_directory . 'family_${family_id}.mafft';
 
     my $pep_counter = $family->print_sequences_to_fasta($pep_file);
 

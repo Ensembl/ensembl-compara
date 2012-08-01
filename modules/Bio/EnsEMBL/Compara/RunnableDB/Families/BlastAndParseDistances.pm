@@ -152,6 +152,7 @@ sub run {
     my $blastdb_dir             = $self->param('blastdb_dir');
     my $blastdb_name            = $self->param('blastdb_name')  || die "'blastdb_name' is an obligatory parameter";
 
+    my $start_seq_id            = $self->param('sequence_id');
     my $minibatch               = $self->param('minibatch')     || 1;
 
     my $blast_bin_dir           = $self->param('blast_bin_dir') || '/software/ensembl/compara/ncbi-blast-2.2.23+/bin';
@@ -159,9 +160,10 @@ sub run {
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
 
+    my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $blast_infile  = '/tmp/family_blast.in.'.$$;     # only for debugging
-    my $blast_outfile = '/tmp/family_blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
+    my $blast_infile  = $worker_temp_directory . "blast_${start_seq_id}.in";    # only for debugging
+    my $blast_outfile = $worker_temp_directory . "blast_${start_seq_id}.out";   # looks like inevitable evil (tried many hairy alternatives and failed)
 
     if($debug) {
         open(FASTA, ">$blast_infile") || die "Could not open '$blast_infile' for writing";

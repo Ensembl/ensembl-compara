@@ -396,9 +396,10 @@ sub run {
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 20;
 
+    my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $blast_infile  = '/tmp/mercator_blast.in.'.$$;     # only for debugging
-    my $blast_outfile = '/tmp/mercator_blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
+    my $blast_infile  = $worker_temp_directory . 'mercator_blast.in.'.$$;     # only for debugging
+    my $blast_outfile = $worker_temp_directory . 'mercator_blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
     if($debug) {
         open(FASTA, ">$blast_infile") || die "Could not open '$blast_infile' for writing";
