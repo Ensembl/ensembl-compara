@@ -141,7 +141,7 @@ sub render_with_images {
     $html .= qq(
       <div class="species-box">
         <a href="$_->{'key'}/Info/Index">
-          <img src="$static_server/i/species/48/$_->{'key'}$image_type" alt="$_->{'name'}" title="Browse $_->{'name'}" height="48" width="48" />
+          <span class="sp-img"><img src="$static_server/i/species/48/$_->{'key'}$image_type" alt="$_->{'name'}" title="Browse $_->{'name'}" height="48" width="48" /></span>
           <span>$_->{'common'}</span>
         </a>
         <span>$_->{'assembly'}</span>

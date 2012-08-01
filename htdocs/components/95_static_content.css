@@ -75,6 +75,7 @@ ul#favourites_list li, ul#species_list li { cursor:move; }
 
 div.species-list div.species-box    { width: 50%; float: left; /* min-width: 250px; */ }
 div.species-list div.species-box span { font-size: 80%; padding-top: 4px; display: block; }
+div.species-list div.species-box span.sp-img { padding: 0; }
 div.species-list div.species-box a    { text-decoration: none; font-weight: bold; }
 div.species-list div.species-box a span  { font-size: 108%; display: inline-block; }
 p.customise-species-list            { clear: both; }
@@ -85,7 +86,8 @@ body.ie67 div.species-list div.species-box a    { cursor: pointer; }
 species page
 ----------------------------------------------------------------------*/
 div.species-box     { margin: 0 0 16px; overflow: hidden; }
-div.species-box img { float: left; height: 48px; margin-right: 8px; width: 48px; border: [[PANEL_BORDER]] solid 1px; border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
+div.species-box img { height: 48px; width: 48px; border-radius: 7px; -moz-border-radius: 7px; -webkit-border-radius: 7px; }
+div.species-box span.sp-img { float: left; padding: 0; margin-right: 8px; border: [[PANEL_BORDER]] solid 1px; border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; background-color: [[PANEL_BORDER]]; }
 
 /*----------------------------------------------------------------------
   Species homepages
@@ -131,7 +133,9 @@ form.homepage-search-form div.ff-notes p.search-example { margin: 0 0 16px; }
 
 form.homepage-search-form fieldset { display: inline; }
 
-form.homepage-search-form .input { width: 180px !important; }
+form.homepage-search-form .ftext   { width: 180px; }
+form.homepage-search-form .fselect { width: 182px; }
+
 form.homepage-search-form span.inp-group { white-space: nowrap; }
 
 form.search-form input.ftext { padding: 2px 0; }
