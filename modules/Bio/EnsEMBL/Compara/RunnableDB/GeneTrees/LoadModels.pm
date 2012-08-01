@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels
 
 
 =head1 SYNOPSIS
