@@ -97,7 +97,7 @@ sub redirect_to_nearest_mirror {
 
                 my $user_message =
                   qq{You've been redirected to your nearest mirror - } . $species_defs->ENSEMBL_SERVERNAME . "\n";
-                $user_message .= qq{<ul><li>Take me back to <a href="$back">$referrer</a></li></ul>};
+                $user_message .= qq{<p>Take me back to <a href="$back">$referrer</a></p>};
 
                 my $cookie = new CGI::Cookie(
                     -name    => 'user_message',
