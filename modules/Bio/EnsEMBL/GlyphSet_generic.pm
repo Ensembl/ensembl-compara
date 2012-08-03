@@ -8,6 +8,7 @@ use Data::Dumper;
 use HTML::Entities qw(encode_entities decode_entities);
 
 use Bio::EnsEMBL::Feature;
+use List::Util qw(max min);
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
@@ -139,9 +140,6 @@ sub _draw_features {
         }
       }
       
-      my ($s, $e) = ($group->{'extent_start'}, $group->{'extent_end'});
-      my $composite;
-      
       if ($composite_flag || $score_based_flag) {
         my $end;
         my ($T, $TF, $tw, $h);
@@ -160,50 +158,73 @@ sub _draw_features {
         
         $end = $group->{'end'} if $group->{'end'} > $end;
 
-        my $href = undef;
-        my $title = sprintf(
-          '%s; Start: %s; End: %s%s%s',
-          $group->{'label'} || $group->{'id'},
-          $group->{'start'} + $offset,
-          $group->{'end'}   + $offset,
-          $group->{'strand'} ? '; Strand: ' . ($group->{'strand'} > 0 ? '+' : '-') : '',
-          $group->{'count'} > 1 ? '; Features: ' . $group->{'count'} : ''
-        );
-        
-        if (@{$group->{'links'}||[]}) {
-          $href = $group->{'links'}[0]{'href'};
-        } elsif (@{$group->{'flinks'}||[]}) {
-          $href = $group->{'flinks'}[0]{'href'};
-        }
-        
-        if (@{$group->{'notes'}||[]}) {
-          $title .= join '', map { '; ' . encode_entities(decode_entities($_)) } @{$group->{'notes'}};
-        } elsif (@{$group->{'fnotes'}||[]}) {
-          $title .= join '', map { '; ' . encode_entities(decode_entities($_)) } @{$group->{'fnotes'}};
-        }
-        
-        $title .= '; Type: ' . ($group->{'type_label'} || $group->{'type'}) if $group->{'type'};
-        $title .= '; Id: '   . $group->{'id'}                               if $group->{'id'}; ### Id attribute MUST BE THE LAST thing in the title tag or z-menus won't work properly
-
         if ($group->{'extent_end'} > 0 && $group->{'extent_start'} < $seq_len) {
           my $row = $self->bump_row($group->{'start'} * $ppbp, $end * $ppbp) + $self->{'_row_offset'};
-          
+            
           $group->{'y'} = - $strand * $row * ($self->{'h'} + $fontsize + 4);
+          # subgroups is always just the group unless a pseudogroup,
+          # in which case it is all its members. For zmenus, etc.
+          my @subgroups = ($group);
+          @subgroups = @{$group->{'pg_members'}} if $group->{'pg_members'};
+
+          foreach my $i (0..$#subgroups) {
+            my $sg = $subgroups[$i];
+            my $sg_p = $i ? $subgroups[$i-1] : undef;
+            my $sg_n = $subgroups[$i+1];
+            my $href = undef;
+            my $title = sprintf(
+              '%s; Start: %s; End: %s%s%s',
+              $sg->{'label'} || $sg->{'id'},
+              $sg->{'start'} + $offset,
+              $sg->{'end'}   + $offset,
+              $sg->{'strand'} ? '; Strand: ' . ($sg->{'strand'} > 0 ? '+' : '-') : '',
+              $sg->{'count'} > 1 ? '; Features: ' . $sg->{'count'} : ''
+            );
+            
+            if (@{$sg->{'links'}||[]}) {
+              $href = $sg->{'links'}[0]{'href'};
+            } elsif (@{$sg->{'flinks'}||[]}) {
+              $href = $sg->{'flinks'}[0]{'href'};
+            }
+            
+            if (@{$sg->{'notes'}||[]}) {
+              $title .= join '', map { '; ' . encode_entities(decode_entities($_)) } @{$sg->{'notes'}};
+            } elsif (@{$sg->{'fnotes'}||[]}) {
+              $title .= join '', map { '; ' . encode_entities(decode_entities($_)) } @{$sg->{'fnotes'}};
+            }
           
-          # Just draw a composite at the moment
-          $composite =  $self->Space({
-            'absolutey'    => 1,
-            'x'            => $s - 1,
-            'width'        => $e - $s + 1,
-            'y'            => $group->{'y'},
-            'height'       => $self->{'h'},
-            'colour'       => 'darkkhaki',
-            'bordercolour' => 'green',
-            'href'         => $href,
-            'title'        => $title,
-            'class'        => $group->{'class'}
-          });
-          
+            $title .= '; Type: ' . ($sg->{'type_label'} || $sg->{'type'}) if $sg->{'type'};
+            $title .= '; Id: '   . $sg->{'id'} if $sg->{'id'}; ### Id attribute MUST BE THE LAST thing in the title tag or z-menus won't work properly
+
+            my ($s,$e) = ($sg->{'start'},$sg->{'end'});
+            if($group->{'pg_members'}) { # ie only for pseudogroups
+              # Add wiggle room for ham-fisted clicking: 8px or half-way
+              my $fudge = 8 / $self->scalex; # ie 8px
+              if(defined $sg_p) {
+                $s = max($sg->{'start'}-$fudge,($sg_p->{'end'}+$sg->{'start'})/2);
+              } else {
+                $s = $sg->{'start'}-$fudge;
+              }
+              if(defined $sg_n) {
+                $e = min($sg->{'end'}+$fudge,($sg_n->{'start'}+$sg->{'end'})/2);
+              } else {
+                $e = $sg->{'end'}+$fudge;
+              }
+            }
+            $s = max(0,$s);
+            $e = min($seq_len,$e);
+            $self->push($self->Space({
+              'absolutey'    => 1,
+              'x'            => $s - 1,
+              'width'        => $e - $s + 1,
+              'y'            => $group->{'y'},
+              'height'       => $self->{'h'},
+              'href'         => $href,
+              'title'        => $title,
+              'class'        => $group->{'class'}
+            }));
+          } 
+          my $s = $group->{'extent_start'};
           # Create a composite for the group and bump it
           $self->push($self->Text({
             'absolutey' => 1,
@@ -404,8 +425,6 @@ sub _draw_features {
           $t = $_;
         }
       }
-      
-      $self->push($composite) if $composite;
     }
   }
   
@@ -577,8 +596,8 @@ sub composite_extent_gradient {
   return if $g->{'start'} > $self->{'seq_len'} || $g->{'end'} < 1;
 
   if ($g->{'fake'}) {
-    $g->{'extent_start'} = 1;
-    $g->{'extent_end'}   = $self->{'seq_len'};
+    $g->{'extent_start'} = max(1,$g->{'start'});
+    $g->{'extent_end'}   = min($self->{'seq_len'},$g->{'end'});
   } else {
     my $gs = $g->{'start'} < 1 ? 1 : $g->{'start'};
     my $ge = $g->{'end'}   < $self->{'seq_len'} ? $g->{'end'} : $self->{'seq_len'};

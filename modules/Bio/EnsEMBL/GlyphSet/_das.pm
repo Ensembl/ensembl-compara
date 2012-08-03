@@ -138,7 +138,26 @@ sub features {
           # But do for "hacked" groups (shared feature IDs). May change this behaviour later as servers really shouldn't do this
           my $ty = $f->type_id;
           $group_styles{$logic_name}{$ty} ||= { 'style' => $pseudogroup ? $HIDDEN_GLYPH : $stylesheet->find_group_glyph('default', 'default') };
-          
+        
+          # May not be a new group but makes sense to compute it early, as
+          # it's needed in multiple places.
+          my $new_group = {
+            'fake'       => 1,
+            'strand'     => $st,
+            'count'      => 1,
+            'type'       => $ty,
+            'type_label' => $f->type_label,
+            'id'         => $g,
+            'label'      => $f->display_label,
+            'notes'      => $f->{'note'}, # Push the features notes/links and targets on
+            'links'      => $f->{'link'},
+            'targets'    => $f->{'target'},
+            'features'   => { $style_key => [ $f ] },
+            'start'      => $f->start,
+            'end'        => $f->end,
+            'class'      => sprintf "das %s$logic_name", $pseudogroup ? 'pseudogroup ' : '',
+          }; 
+          $new_group->{'pg_members'} = [] if($pseudogroup);
           if (exists $groups{$logic_name}{$g}{$st_x}) {
             # Ignore all subsequent notes, links and targets, probably should merge arrays somehow
             my $t = $groups{$logic_name}{$g}{$st_x};
@@ -150,23 +169,10 @@ sub features {
             $t->{'count'}++;
           } else {
             $c_g++;
-            
-            $groups{$logic_name}{$g}{$st_x} = {
-              'fake'       => 1,
-              'strand'     => $st,
-              'count'      => 1,
-              'type'       => $ty,
-              'type_label' => $f->type_label,
-              'id'         => $g,
-              'label'      => $f->display_label,
-              'notes'      => $f->{'note'}, # Push the features notes/links and targets on
-              'links'      => $f->{'link'},
-              'targets'    => $f->{'target'},
-              'features'   => { $style_key => [ $f ] },
-              'start'      => $f->start,
-              'end'        => $f->end,
-              'class'      => sprintf "das %s$logic_name", $pseudogroup ? 'pseudogroup ' : ''
-            };
+            $groups{$logic_name}{$g}{$st_x} = $new_group;
+          }
+          if($pseudogroup) {
+            push @{$groups{$logic_name}{$g}{$st_x}->{'pg_members'}},{ %$new_group };
           }
         }
       }
