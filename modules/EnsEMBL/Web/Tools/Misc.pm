@@ -11,7 +11,7 @@ use base qw(Exporter);
 
 use constant 'MAX_HIGHLIGHT_FILESIZE' => 1048576;  # (bytes) = 1Mb
 
-our @EXPORT = our @EXPORT_OK = qw(pretty_date get_url_content get_url_filesize style_by_filesize);
+our @EXPORT = our @EXPORT_OK = qw(pretty_date get_url_content get_url_filesize style_by_filesize champion);
 
 sub pretty_date {
   my $timestamp = shift;
@@ -19,6 +19,20 @@ sub pretty_date {
   my @days = ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
   my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
   return $days[$date[6]].' '.$date[3].' '.$months[$date[4]].', '.($date[5] + 1900);
+}
+
+# Computes given score on each member of list and returns member with highest
+sub champion(&@) {
+  my $f = shift;
+  my ($champion,$best);
+  foreach(@_) {
+    my $v = $f->($_);
+    if(!defined $best or $best < $v) {
+      $champion = $_;
+      $best = $v;
+    }
+  }
+  return $champion;
 }
 
 sub get_url_content {

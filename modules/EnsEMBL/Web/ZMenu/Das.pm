@@ -7,6 +7,7 @@ use strict;
 use HTML::Entities qw(encode_entities decode_entities);
 use XHTML::Validator;
 
+use EnsEMBL::Web::Tools::Misc qw(champion);
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 use base qw(EnsEMBL::Web::ZMenu);
@@ -81,7 +82,12 @@ sub content {
       push @feat, $nearest_feature if $nearest_feature && $nearest < 2 * ($click_end - $click_start);
     } else {
       # not grouped
-      @feat = @$objects[0];
+      # extracts closest feature
+      @feat = (champion {
+        -(abs($_->seq_region_start - $hub->param('start')) +
+         abs($_->seq_region_end - $hub->param('end'))) * 2 -
+        ($_->strand != $hub->param('strand'))
+      } @$objects);
     }
     
     foreach (@feat) {
