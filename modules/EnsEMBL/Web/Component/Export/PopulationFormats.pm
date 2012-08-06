@@ -17,7 +17,7 @@ sub content {
     output   => 'gen_var'
   };
   
-  my $view_config = $hub->get_viewconfig('TranscriptSNPTable', 'Transcript');
+  my $view_config = $hub->get_viewconfig('VariationTable', 'Transcript');
 
   foreach ($view_config->options) {
     my $option = $view_config->get($_);
