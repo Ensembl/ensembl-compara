@@ -10,7 +10,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 sub store {
   my ($self, @args) = @_;
-  my ($anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $test_mlssid, $sequence) = 
+  my ($anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequence) = 
 	rearrange([qw(ANCHOR_ID, DNAFRAG_ID, START, END, STRAND, MLSSID, SEQUENCE, LENGTH)], @args);
 
 
@@ -20,6 +20,7 @@ sub store {
   $self->dbc->do("LOCK TABLE anchor_sequence WRITE");
   my $length = length($sequence);
 
+print join(":", $anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequence,$length), "\n";
   my $sth = $self->prepare("INSERT INTO anchor_sequence (sequence, 
 	length, dnafrag_id, start, end, strand, anchor_id, method_link_species_set_id) VALUES (?,?,?,?,?,?,?,?)");	  
   $sth->execute($sequence, $length, $dnafrag_id, $start, $end, $strand, $anchor_id, $mlssid);
