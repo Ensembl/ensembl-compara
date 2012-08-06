@@ -24,15 +24,16 @@ BEGIN {
   require Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 }
 
-my $hub    = new EnsEMBL::Web::Hub;
-my $sd     = $hub->species_defs;
-my $delete = 0;
-my $dryrun = 0;
-my $level  = 0;
-my %ips    = (
-  useast => '184.73.168.172',
-  uswest => '50.18.124.65',
-  asia   => '122.248.235.79'
+my $hub        = new EnsEMBL::Web::Hub;
+my $sd         = $hub->species_defs;
+my $target_dir = '/exports/funcgen';
+my $delete     = 0;
+my $dryrun     = 0;
+my $level      = 0;
+my %ips        = (
+  useast => 'ec2-50-17-110-201.compute-1.amazonaws.com',
+  uswest => 'ec2-184-169-197-19.us-west-1.compute.amazonaws.com',
+  asia   => 'ec2-122-248-227-42.ap-southeast-1.compute.amazonaws.com'
 );
 
 my ($servers, $species, %targets);
@@ -121,6 +122,8 @@ sub set_targets {
         
         my ($files, $dir) = files($_->path);
         
+        $dir =~ s/$SiteDefs::DATAFILE_BASE_PATH/$target_dir/;
+        
         push @{$targets{$dir}}, @$files;
         
         $target_species{$sp} = 1;
@@ -140,6 +143,8 @@ sub set_targets {
         my $name  = $_->name;
         (my $file = $_->dbfile_data_dir) =~ s|//|/|;
         (my $dir  = $file) =~ s/$name//;
+        
+        $dir =~ s/$SiteDefs::DATAFILE_BASE_PATH/$target_dir/;
         
         push @{$targets{$dir}}, $file;
         
@@ -166,10 +171,10 @@ sub files {
 sub delete_unused {
   my $server        = shift;
   my $ip            = $ips{$server};
-  my $existing_dirs = `ssh $ip 'find $SiteDefs::DATAFILE_BASE_PATH -mindepth 3 -maxdepth 3 -type d -not -path "*/biomart_results*"'`;
+  my $existing_dirs = `ssh $ip 'find $target_dir -mindepth 3 -maxdepth 3 -type d -not -path "*/biomart_results*"'`;
   
   foreach (grep { !exists $targets{"$_/"} } split /\n/, $existing_dirs) {
-    (my $check = $_) =~ s|$SiteDefs::DATAFILE_BASE_PATH/||;
+    (my $check = $_) =~ s|$target_dir/||;
     
     next unless $species{ucfirst [split '/', $check]->[0]};
     
@@ -184,7 +189,7 @@ sub delete_empty {
   my $ip     = $ips{$server};
   
   for (3, 2, 1) {
-    my $empty = `ssh $ip 'find $SiteDefs::DATAFILE_BASE_PATH -mindepth $_ -maxdepth $_ -type d -empty -not -path "*/biomart_results*"'`;
+    my $empty = `ssh $ip 'find $target_dir -mindepth $_ -maxdepth $_ -type d -empty -not -path "*/biomart_results*"'`;
     
     foreach (split /\n/, $empty) {
       warn "\n$server ($ip): DELETING EMPTY DIRECTORY $_\n";
