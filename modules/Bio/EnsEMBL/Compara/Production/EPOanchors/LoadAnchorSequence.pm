@@ -40,6 +40,8 @@ sub fetch_input {
 		}
 		if($ratio < 0.2) {
 			push(@anchor, [$anchor_id, $df_id, $anc_start, $anc_end, $df_strand, $trimmed_anchor_mlssid, $anc_seq]); 
+		} else {
+			return;
 		}
 	}
 	$self->param('anchor', \@anchor);
@@ -48,6 +50,7 @@ sub fetch_input {
 sub write_output {
 	my ($self) = @_;
 	my $anchor_seq_adaptor = $self->compara_dba()->get_adaptor("AnchorSeq");
+	return unless($self->param('anchor'));
 	foreach my $this_anchor(@{ $self->param('anchor') }){
 		$anchor_seq_adaptor->store( @{ $this_anchor } );
 	}
