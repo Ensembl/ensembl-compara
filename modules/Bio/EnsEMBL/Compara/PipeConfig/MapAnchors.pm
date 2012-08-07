@@ -239,6 +239,7 @@ sub pipeline_analyses {
 		},
 		-hive_capacity => 200,
 		-failed_job_tolerance => 10,
+		-max_retry_count => 1,
 	    },		
 	    {	-logic_name     => 'remove_overlaps',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps',
