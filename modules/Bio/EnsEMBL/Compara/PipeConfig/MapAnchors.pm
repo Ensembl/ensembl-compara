@@ -22,25 +22,26 @@ sub default_options {
 	'password'              => $ENV{'ENSADMIN_PSW'},
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara3',
+		-host   => 'compara4',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_anchor_mappings'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_13_mammal_anchor_mappings'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the anchors for mapping
 	'compara_anchor_db' => {
 		-user => 'ensro',
 		-port => 3306,
-		-host => 'compara3',
+		-host => 'compara4',
 		-pass => '',
 		-group => 'compara',
-		-dbname => 'sf5_new_mammal_anchors69',
+		-dbname => 'sf5_seven_mammal_anchors_69',
 	},
 	  # genome_db_id(s) to which to map the anchors
 	'genome_db_ids_of_species_to_map' => '3,31,60,61,90,108,117,122,123,125,132,135,134',
 	  # location of species core dbs to map to
-	'core_db_urls' => [ 'mysql://ensro@ens-staging1:3306/68', 'mysql://ensro@ens-staging2:3306/68' ],
+	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/68' ],
+	# 'core_db_urls' => [ 'mysql://ensro@ens-staging1:3306/68', 'mysql://ensro@ens-staging2:3306/68' ],
 	'mapping_exe' => "/software/ensembl/compara/exonerate/exonerate",
 	'species_set_id' => 10000,
 	'anchors_mlss_id' => 10000,
@@ -61,7 +62,7 @@ sub default_options {
 	 # db to transfer the raw mappings to 
 	'compara_mapping_db' => {
 		-user => 'ensadmin',
-		-host   => 'compara3',
+		-host   => 'compara4',
 		-port   => 3306,
 		-pass   => $self->o('password'),
 	},
@@ -229,6 +230,7 @@ sub pipeline_analyses {
 		},
 		-rc_name => 'mem3500',
 		-hive_capacity => 10,
+		-max_retry_count => 10,
 	    },
 	    {	-logic_name     => 'map_anchors',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
@@ -255,7 +257,7 @@ sub pipeline_analyses {
                                2 => [ 'trim_anchor_align' ],
                               },  
 		-wait_for  => [ 'remove_overlaps' ],
-		-rc_name => 'mem7500',
+		-rc_name => 'mem3500',
             },  
 	    {   -logic_name => 'trim_anchor_align',			
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
