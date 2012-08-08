@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # This table will serve both for cafe and as a general table of families descriptions.
 use strict;
