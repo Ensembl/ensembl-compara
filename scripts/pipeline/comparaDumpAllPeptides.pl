@@ -1,12 +1,10 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Analysis;
-use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
 
@@ -69,7 +67,6 @@ unless(defined($self->{'outputFasta'})) {
 }
 
 $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
-$self->{'pipelineDBA'} = new Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
 
 #get_taxon_descriptions($self);  #creates hash from taxon_id to a description
 
@@ -151,7 +148,7 @@ sub dump_fasta {
 
   print("writing fasta to loc '$fastafile'\n");
 
-  my $sth = $self->{'comparaDBA'}->dbc->prepare( $sql );
+  my $sth = $self->{'comparaDBA'}->dbc->prepare( $sql, {mysql_use_result=>1} );
   $sth->execute();
 
   my ($sequence_id, $stable_id, $description, $sequence, $taxon_id, $source_name);
