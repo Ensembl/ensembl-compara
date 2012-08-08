@@ -231,6 +231,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			2 => [ 'map_anchors' ],
 		},
+		-wait_for  => [ 'import_dnafrags' ],
 		-rc_name => 'mem3500',
 		-hive_capacity => 10,
 		-max_retry_count => 10,
