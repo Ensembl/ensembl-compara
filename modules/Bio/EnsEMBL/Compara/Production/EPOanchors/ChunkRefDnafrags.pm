@@ -85,9 +85,9 @@ sub fetch_input {
 
 sub write_output {
 	my ($self) = @_;
-	$self->dataflow_output_id( $self->param('dnafrag_region_jobs'), 1 );
-	$self->dataflow_output_id( $self->param('method_type_genome_db_ids'), 4 );
-	$self->dataflow_output_id( $self->param('species_set'), 4 );
+	$self->dataflow_output_id( $self->param('dnafrag_region_jobs'), 4 );
+	$self->dataflow_output_id( $self->param('method_type_genome_db_ids'), 2 );
+	$self->dataflow_output_id( $self->param('species_set'), 2 );
 	$self->dataflow_output_id( { 'genome_dbs_csv' => $self->param('genome_dbs_csv'), 'table' => 'genome_db' }, 3 );
 	$self->dataflow_output_id( { 'genome_dbs_csv' => $self->param('genome_dbs_csv'), 'table' => 'dnafrag', },  3 );
 }
