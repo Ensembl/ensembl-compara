@@ -115,6 +115,7 @@ a.bigtext     { text-decoration: none;                        }
 .clear-left         { clear: left; }
 .clear-right        { clear: right; }
 .nodeco             { text-decoration: none; }
+pre.wrap            { white-space: pre-wrap; }
 
 /*----------------------------------------------------------------------
  Links 
