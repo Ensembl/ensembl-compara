@@ -64,7 +64,6 @@ sub fetch_input {
     $self->param('protein_tree', $protein_tree->root);
 }
 
-
 sub run {
     my $self = shift;
 
@@ -73,13 +72,15 @@ sub run {
     $self->map_nodes('new_tree', 'new_nodes');
 }
 
-
 sub write_output {
     my $self = shift;
 
     $self->write_tags();
+}
 
-    # cleanup
+sub post_cleanup {
+    my $self = shift;
+
     $self->param('protein_tree')->release_tree;
     $self->param('new_tree')->release_tree;
 }
