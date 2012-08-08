@@ -1,6 +1,7 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
@@ -43,6 +44,7 @@ my $ncbi_ta = $db->get_NCBITaxonAdaptor;
 
 my %taxon_ids;
 foreach my $gdb (@{$gdba->fetch_all}) {
+  next unless $gdb->taxon_id; # skip ancestral sequences
   my $taxon = $ncbi_ta->fetch_node_by_taxon_id($gdb->taxon_id);
   $taxon_ids{$taxon->ncbi_taxid} = 1;
   while (my $parent = $taxon->parent) {
