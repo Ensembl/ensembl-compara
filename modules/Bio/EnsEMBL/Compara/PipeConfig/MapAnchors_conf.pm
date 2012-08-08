@@ -1,6 +1,6 @@
 # Configuration file for mapping (using exonerate at the moment) anchors 
 
-package Bio::EnsEMBL::Compara::PipeConfig::MapAnchors;
+package Bio::EnsEMBL::Compara::PipeConfig::MapAnchors_conf;
 
 use strict;
 use warnings;
@@ -22,11 +22,11 @@ sub default_options {
 	'password'              => $ENV{'ENSADMIN_PSW'},
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara4',
+		-host   => 'compara1',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_13_mammal_anchor_mappings'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_test1_mammal_anchor_mappings'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the anchors for mapping
 	'compara_anchor_db' => {
@@ -50,7 +50,7 @@ sub default_options {
 	'mapping_mlssid' => 10000,
 	'trimmed_mapping_mlssid' => 11000,
 	 # place to dump the genome sequences
-	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_' . $self->o('release'),
+	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_test_' . $self->o('release'),
 	 # dont overwrite genome_db row if locator field is filled 
 	'dont_change_if_locator' => 1, 
 	 # dont dump the MT sequence for mapping
@@ -118,42 +118,44 @@ sub pipeline_analyses {
 	# load in the genome_db entries from the anchors db and then from the compara_master
 	    {   -logic_name     => 'load_genome_db_from_anchor_db',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-		-input_ids => [{}],
 		-parameters => {
 			'src_db_conn'   => $self->o('compara_anchor_db'),
 			'table'         => 'genome_db',
 		},
+		-input_ids => [{}],
+		-flow_into => {
+			1 => [ 'import_genome_dbs' ],
+		},
 	    },
 	    {   -logic_name => 'import_genome_dbs',
 	        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-input_ids => [{}],
     	        -parameters => {
 	            'db_conn'   => $self->o('compara_master'),
 	            'inputquery'    => 'SELECT * FROM genome_db WHERE genome_db_id IN (' . $self->o('genome_db_ids_of_species_to_map') . ')',
 		    'fan_branch_code' => 2,
 	        },
-		-wait_for => [ 'load_genome_db_from_anchor_db' ],
 		-flow_into => {
 			2 => [ 'mysql:////genome_db?insertion_method=REPLACE' ],
+			1 => [ 'load_dnafrag_from_anchor_db', 'set_genome_db_locator' ],
 		},
 	    },
 	    {    -logic_name     => 'load_dnafrag_from_anchor_db',
 		 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-		 -input_ids => [{}],
 		 -parameters => {
 			'src_db_conn'   => $self->o('compara_anchor_db'),
 			'table'         => 'dnafrag',
 		},
+		-flow_into => {
+			1 => [ 'import_dnafrags' ],
+		},
 	    },
 	    {   -logic_name => 'import_dnafrags',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-input_ids => [{}],
 		-parameters => {
 			'db_conn'   => $self->o('compara_master'),
 			'inputquery'    => 'SELECT * FROM dnafrag WHERE genome_db_id IN (' . $self->o('genome_db_ids_of_species_to_map') . ')',
 			'fan_branch_code' => 2,
 		},
-	        -wait_for => [ 'load_dnafrag_from_anchor_db' ],
 	        -flow_into => {
 			2 => [ 'mysql:////dnafrag?insertion_method=REPLACE' ],
 	        },
@@ -161,52 +163,54 @@ sub pipeline_analyses {
 	    {
 		-logic_name     => 'set_genome_db_locator',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::SetGenomeDBLocator',
-		-parameters     => { 'core_db_urls' => $self->o('core_db_urls') },
-		-input_ids => [{dont_change_if_locator => $self->o('dont_change_if_locator'),}],
-		-wait_for       => [ 'import_genome_dbs' ],
+		-parameters     => { 'core_db_urls' => $self->o('core_db_urls'), dont_change_if_locator => $self->o('dont_change_if_locator'), },
 		-flow_into => {
 				2 => [ 'mysql:////genome_db?insertion_method=REPLACE' ],
 				3 => [ 'mysql:////species_set?insertion_method=INSERT' ],
+				1 => [ 'set_assembly_default_to_zero' ],
 		},
 	    },
 	    {
 		-logic_name     => 'set_assembly_default_to_zero',
 	   	-module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-		-input_ids => [{}],
-		-wait_for       => [ 'set_genome_db_locator' ],
 		-parameters => {
 				'sql' => [ 
 					'UPDATE genome_db SET assembly_default = 0, locator = DEFAULT WHERE genome_db_id NOT IN (' .
 					$self->o('genome_db_ids_of_species_to_map') . ')',
 				],
 		},	
+		-flow_into => {
+				1 => [ 'populate_compara_tables' ],
+		},
 	    },
 	    { # this sets values in the method_link_species_set and species_set tables
 		-logic_name     => 'populate_compara_tables',
 		-module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-		-input_ids => [{}],
-		-wait_for       => [ 'set_assembly_default_to_zero' ],
 		-parameters => {
-				'sql' => [
-					# ml and mlss entries for the overlaps, pecan and gerp
-					'REPLACE INTO method_link (method_link_id, type) VALUES('. 
-					$self->o('mapping_method_link_id') . ',"' . $self->o('mapping_method_link_name')  . '")',
-					'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES('.
-					$self->o('mapping_mlssid') . ',' . $self->o('mapping_method_link_id') . ',' . $self->o('species_set_id') . ')',	
-				],
+			'sql' => [
+				# ml and mlss entries for the overlaps, pecan and gerp
+				'REPLACE INTO method_link (method_link_id, type) VALUES('. 
+				$self->o('mapping_method_link_id') . ',"' . $self->o('mapping_method_link_name')  . '")',
+				'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES('.
+				$self->o('mapping_mlssid') . ',' . $self->o('mapping_method_link_id') . ',' . $self->o('species_set_id') . ')',	
+			],
 		},
+		 -flow_into => {
+			1 => [ 'create_dump_dir' ],
+		},
+			
 	    },
 	    {   -logic_name     => 'create_dump_dir',
-		-input_ids => [{}],
 		-module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-		-wait_for  => [ 'populate_compara_tables' ],
 		-parameters => {
 			'cmd' => 'mkdir -p ' . $self->o('seq_dump_loc'),
 			},
+		-flow_into => {
+			1 => [ 'dump_genome_sequence_factory' ],
+		},
 	    },
 	    {	-logic_name     => 'dump_genome_sequence_factory',
 		-module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-input_ids  => [{}],
 		-parameters => {
 			'inputquery'    => 'SELECT genome_db_id, name AS genome_db_name, assembly AS genome_db_assembly FROM genome_db WHERE genome_db_id IN (' 
 						. $self->o('genome_db_ids_of_species_to_map') . ')',
@@ -215,7 +219,6 @@ sub pipeline_analyses {
 		-flow_into => {
 			2  => [ 'dump_genome_sequence' ],
 		},
-		-wait_for  => [ 'create_dump_dir' ],
 	    },
 	    {	-logic_name     => 'dump_genome_sequence',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence',
@@ -246,10 +249,12 @@ sub pipeline_analyses {
 		-rc_name => 'mem3500',
 		-wait_for  => [ 'map_anchors' ],
 		-input_ids  => [{}],
+		-flow_into => {
+			1 => [ 'trim_anchor_align_factory' ],
+		},
 	    },
             {   -logic_name => 'trim_anchor_align_factory',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-input_ids => [{}],
                 -parameters => {
                                 'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE anchor_status IS NULL",
                                 'fan_branch_code' => 2,
@@ -257,7 +262,6 @@ sub pipeline_analyses {
                 -flow_into => {
                                2 => [ 'trim_anchor_align' ],
                               },  
-		-wait_for  => [ 'remove_overlaps' ],
 		-rc_name => 'mem3500',
             },  
 	    {   -logic_name => 'trim_anchor_align',			
