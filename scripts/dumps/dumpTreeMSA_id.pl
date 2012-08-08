@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/env perl -w
 
 use strict;
 use Bio::EnsEMBL::Hive::URLFactory;
@@ -18,46 +18,54 @@ my $fasta_out;
 my $fasta_cds_out;
 my $nh_out;
 my $nhx_out;
-my $orthoxml_trees;
-my $orthoxml_with_poss_orthologs;
+my $orthoxml;
+my $orthoxml_possorthol;
 my $phyloxml;
 my $aa = 1;
-my $verbose = 0;
 my $dirpath;
 
 $| = 1;
 
 GetOptions('help'           => \$help,
            'tree_id_file|infile=s' => \$tree_id_file,
-           'tree_id=s'      => \$one_tree_id,
+           'tree_id=i'      => \$one_tree_id,
            'url=s'          => \$url,
            'a|aln_out=s'    => \$aln_out,
            'f|fasta_out=s'  => \$fasta_out,
            'fc|fasta_cds_out=s' => \$fasta_cds_out,
            'nh|nh_out=s'    => \$nh_out,
            'nhx|nhx_out=s'  => \$nhx_out,
-           'oxml|orthoxml_trees' => \$orthoxml_trees,
-           'oxmlp|orthoxml_poss_orthol' => \$orthoxml_with_poss_orthologs,
-           'pxml|phyloxml'  => \$phyloxml,
+           'oxml|orthoxml=s'    => \$orthoxml,
+           'oxmlp|orthoxml_possorthol=s'   => \$orthoxml_possorthol,
+           'pxml|phyloxml=s'    => \$phyloxml,
            'aa=s'           => \$aa,
-           'verbose=s'      => \$verbose,
            'dirpath=s'      => \$dirpath,
 );
 
 if ($help) {
   print "
-$0 --tree_id_file file.txt --url mysql://ensro\@compara1:3306/kb3_ensembl_compara_59
+$0 [--tree_id id | --tree_id_file file.txt] --url mysql://ensro\@compara1:3306/kb3_ensembl_compara_59
 
---tree_id_file    a file with a list of tree_ids (node_ids that are root_id=parent_id in protein_tree_node)
+--tree_id         the root_id of the tree to be dumped
+--tree_id_file    a file with a list of tree_ids
 --url string      database url location of the form,
                   mysql://username[:password]\@host[:port]/[release_version]
---aln_out string  alignment output filename (extension .emf.gz will be added)
---nh_out string   newick output filename (extension .emf.gz will be added)
---nhx_out string  extended newick output filename (extension .emf.gz will be added)
 --aa              dump alignment in amino acid (default is in DNA)
+--dirpath         where to dump the files to (default is the directory of tree_id_file)
 
-This scripts assumes that the compara db and all the core dbs related
-to it are on the same server
+The following parameters define the data that should be dumped.
+string is the filename extension. If string is 1, the default extension will be used
+
+--nh_out string   tree in newick / EMF format (nh.emf)
+--nhx_out string  tree in extended newick / EMF format (nhx.emf)
+--aln_out string        multiple alignment in EMF format (aln.emf)
+--fasta_out string      amino-acid multiple alignment in FASTA format (aa.fasta)
+--fasta_cds_out string  nucleotide multiple alignment in FASTA format (cds.fasta)
+--orthoxml string               tree in OrthoXML format (orthoxml.xml)
+--orthoxml_possorthol string   tree in OrthoXML format -including possible orthlogs- (orthoxml_possorthol.xml)
+--phyloxml string               tree in PhyloXML format (phyloxml.xml)
+
+This scripts assumes that the compara db is linked to all the core dbs
 \n";
   exit 0;
 }
@@ -93,58 +101,47 @@ unless($dirpath) {
     }
 }
 
+sub dump_if_wanted {
+    my $param = shift;
+
+    return unless $param;
+
+    my $tree_id = shift;
+    my $default_name = shift;
+
+    my $filename = ($param =~ /^\// ? sprintf('>%s.%s', $param, $tree_id) : sprintf('>%s/%s.%s', $dirpath, $tree_id, $param eq 1 ? $default_name : $param));
+    return if -s $filename;
+
+    my $fh;
+    open $fh, $filename or die "couldnt open $filename:$!\n";
+
+    my $sub = shift;
+    my $root = shift;
+    my $extra = shift;
+    &$sub($root, $fh, @$extra);
+    close $fh;
+}
+
 foreach my $tree_id (@tree_ids) {
 
   system("mkdir -p $dirpath") && die "Could not make directory '$dirpath: $!";
 
-  my $root = $adaptor->fetch_by_root_id($tree_id)->root;
+  my $tree = $adaptor->fetch_by_root_id($tree_id);
+  $tree->preload();
+  my $root = $tree->root;
 
   $tree_id = "tree.".$tree_id;
 
-  my $fh1;
-  my $fh2;
-  my $fh3;
-  my $fh4;
-  my $fh5;
-  my $fh6;
-  my $fh7;
-  my $fh8;
-
-  last if (
-           (-s "$dirpath/$tree_id.aln.emf") &&
-           (-s "$dirpath/$tree_id.nh.emf") &&
-           (-s "$dirpath/$tree_id.nhx.emf") &&
-           (-s "$dirpath/$tree_id.aa.fasta") &&
-           (-s "$dirpath/$tree_id.cds.fasta"));
-
-  if ($aln_out) { open $fh1, ">$dirpath/$tree_id.aln.emf" or die "couldnt open $dirpath/$tree_id.aln.emf:$!\n"; }
-  if ($nh_out)  { open $fh2, ">$dirpath/$tree_id.nh.emf"  or die "couldnt open $dirpath/$tree_id.nh.emf:$!\n";  }
-  if ($nhx_out) { open $fh3, ">$dirpath/$tree_id.nhx.emf" or die "couldnt open $dirpath/$tree_id.nhx.emf:$!\n"; }
-  if ($fasta_out) { open $fh4, ">$dirpath/$tree_id.aa.fasta" or die "couldnt open $dirpath/$tree_id.aa.fasta:$!\n"; }
-  if ($fasta_cds_out) { open $fh5, ">$dirpath/$tree_id.cds.fasta" or die "couldnt open $dirpath/$tree_id.cds.fasta:$!\n"; }
-  if ($orthoxml_trees) { open $fh6, ">$dirpath/$tree_id.tree.orthoxml.xml" or die "couldnt open $dirpath/$tree_id.tree.orthoxml.xml:$!\n"; }
-  if ($orthoxml_trees and $orthoxml_with_poss_orthologs) { open $fh7, ">$dirpath/$tree_id.tree_possorthol.orthoxml.xml" or die "couldnt open $dirpath/$tree_id.tree_possorthol.orthoxml.xml:$!\n"; }
-  if ($phyloxml) { open $fh8, ">$dirpath/$tree_id.tree.phyloxml.xml" or die "couldnt open $dirpath/$tree_id.tree.phyloxml.xml:$!\n"; }
-
-  dumpTreeMultipleAlignment($root, $fh1) if ($aln_out);
-  dumpNewickTree($root,$fh2,0)           if (defined $nh_out);
-  dumpNewickTree($root,$fh3,1)           if (defined $nhx_out);
-  dumpTreeFasta($root, $fh4,0)           if ($fasta_out);
-  dumpTreeFasta($root, $fh5,1)           if ($fasta_cds_out);
-  dumpTreeOrthoXML($root, $fh6, 0)       if ($orthoxml_trees);
-  dumpTreeOrthoXML($root, $fh7, 1)       if ($orthoxml_trees and $orthoxml_with_poss_orthologs);
-  dumpTreePhyloXML($root, $fh8)          if ($phyloxml);
+  dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $root, []);
+  dump_if_wanted($nh_out, $tree_id, 'nh.emf', \&dumpNewickTree, $root, [0]);
+  dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
+  dump_if_wanted($fasta_out, $tree_id, 'aa.fasta', \&dumpTreeFasta, $root, [0]);
+  dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]);
+  dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $root, [0]);
+  dump_if_wanted($orthoxml_possorthol, $tree_id, 'orthoxml_possorthol.xml', \&dumpTreeOrthoXML, $root, [1]);
+  dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $root);
 
   $root->release_tree;
-
-  close $fh1 if (defined $fh1);
-  close $fh2 if (defined $fh2);
-  close $fh3 if (defined $fh3);
-  close $fh4 if (defined $fh4);
-  close $fh5 if (defined $fh5);
-  close $fh6 if (defined $fh6);
-  close $fh7 if (defined $fh7);
-  close $fh8 if (defined $fh8);
 }
 
 sub dumpTreeMultipleAlignment {
@@ -170,8 +167,6 @@ sub dumpTreeMultipleAlignment {
       $aligned_seqs[$i] .= substr($alignment_string, $i, 1);
     }
   }
-#  $tree->release_tree;
-#  undef $tree;
 # will need to update the script when we will produce omega score for each column
 # of the alignment.
 # print "SCORE NULL\n";
@@ -203,8 +198,6 @@ sub dumpNewickTree {
     print $fh $tree->newick_simple_format;
   }
   print $fh "\n//\n\n";
-#  $tree->release_tree;
-#  undef $tree;
 }
 
 sub dumpTreeFasta {
