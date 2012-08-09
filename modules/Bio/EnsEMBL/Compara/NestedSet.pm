@@ -1520,9 +1520,9 @@ sub _recursive_get_all_sorted_leaves {
 sub get_all_leaves {
   my $self = shift;
   
-  my $leaves = {};
+  my $leaves = [];
   $self->_recursive_get_all_leaves($leaves);
-  my @leaf_list = sort {$a->node_id <=> $b->node_id} values(%{$leaves});
+  my @leaf_list = sort {$a->node_id <=> $b->node_id} @{$leaves};
   return \@leaf_list;
 }
 
@@ -1530,7 +1530,7 @@ sub _recursive_get_all_leaves {
   my $self = shift;
   my $leaves = shift;
     
-  $leaves->{$self->obj_id} = $self if($self->is_leaf);
+  push @$leaves, $self if($self->is_leaf);
 
   foreach my $child (@{$self->children}) {
      no warnings 'recursion';
