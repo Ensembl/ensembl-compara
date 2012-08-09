@@ -1,4 +1,4 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 =pod
 
@@ -41,13 +41,14 @@ Maintained by Albert Vilella <avilella@ebi.ac.uk>
 =cut
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::URLFactory;
 
 use Getopt::Long;
 use Pod::Usage;
 
-my $DEFAULT_URL = 'mysql://ensro@compara1:3306/avilella_ensembl_compara_48';
+my $DEFAULT_URL = 'mysql://ensro@127.0.0.1:4313/mm14_compara_homology_68';
 
 # Get options
 my $help=0;
