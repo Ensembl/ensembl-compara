@@ -37,33 +37,6 @@
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
-=head2 rel.63 stats
-
-    sequences to cluster:       1,198,678           [ SELECT count(*) from sequence; ]
-    reused core dbs:            48                  [ SELECT count(*) FROM analysis JOIN job USING(analysis_id) WHERE logic_name='paf_table_reuse'; ]
-    newly loaded core dbs:       5                  [ SELECT count(*) FROM analysis JOIN job USING(analysis_id) WHERE logic_name='load_fresh_members'; ]
-
-    total running time:         8.7 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM worker;  ]  # NB: stable_id mapping phase not included
-    blasting time:              1.9 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM worker JOIN analysis USING (analysis_id) WHERE logic_name='blastp_with_reuse'; ]
-
-=head2 rel.62 stats
-
-    sequences to cluster:       1,192,544           [ SELECT count(*) from sequence; ]
-    reused core dbs:            46                  [ number of 'load_reuse_members' jobs ]
-    newly loaded core dbs:       7                  [ number of 'load_fresh_members' jobs ]
-
-    total running time:         6 days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-    blasting time:              2.7 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='blastp_with_reuse'; ]
-
-=head2 rel.61 stats
-
-    sequences to cluster:       1,173,469           [ SELECT count(*) from sequence; ]
-    reused core dbs:            46                  [ number of 'load_reuse_members' jobs ]
-    newly loaded core dbs:       6                  [ number of 'load_fresh_members' jobs ]
-
-    total running time:         6 days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-    blasting time:              1.4 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name like 'blast%' or logic_name like 'SubmitPep%'; ]
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the CVS log.
@@ -98,14 +71,12 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '68',
-        'rel_suffix'            => 'h',    # an empty string by default, a letter otherwise
-        'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        #'release'               => '68',
+        #'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
-    # dependent parameters:
-        'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-        'pipeline_name'         => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+    # dependent parameters: updating 'work_dir' should be enough
+        'pipeline_name'         => 'PT',   # name the pipeline to differentiate the submitted processes
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp_with_reuse'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -121,7 +92,7 @@ sub default_options {
         'protein_members_range'     => 100000000, # highest member_id for a protein member
 
     # clustering parameters:
-        'outgroups'                     => [127],   # affects 'hcluster_dump_input_per_genome'
+        'outgroups'                     => [],      # affects 'hcluster_dump_input_per_genome'
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
@@ -134,20 +105,8 @@ sub default_options {
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
-        'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
-        'filter_high_coverage'      => 1,   # affects 'group_genomes_under_taxa'
-
-    # executable locations:
-        'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
-        'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
-        'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
-        'mafft_exe'                 => '/software/ensembl/compara/mafft-6.707/bin/mafft',
-        'mafft_binaries'            => '/software/ensembl/compara/mafft-6.707/binaries',
-        'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
-        'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
-        'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-        'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
-        'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
+        'taxlevels'                 => [],
+        'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   4,
@@ -167,69 +126,39 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
-        },
+        # Uncomment and update the database locations
 
-        'master_db' => {                        # the master database for synchronization of various ids
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'mm14_tmp_master',
-        },
+        #'pipeline_db' => {                      # the production database itself (will be created)
+        #    -host   => 'compara3',
+        #    -port   => 3306,
+        #    -user   => 'ensadmin',
+        #    -pass   => $self->o('password'),
+        #    -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
+        #},
 
-        'staging_loc1' => {                     # general location of half of the current release core databases
-            -host   => 'ens-staging',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'staging_loc2' => {                     # general location of the other half of the current release core databases
-            -host   => 'ens-staging2',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-
-        # "production mode"
-        #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
-        'prev_release'              => 68,   # 0 is the default and it means "take current release number and subtract 1"
-        'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'compara3',
-           -port   => 3306,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'mm14_compara_homology_67',
-        },
-
-        ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
-        #'reuse_core_sources_locs' => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        #'curr_core_sources_locs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        #'prev_release'            => $self->o('release'),
-        #'reuse_db' => {   # current release if we are testing after production
+        #'master_db' => {                        # the master database for synchronization of various ids
         #    -host   => 'compara1',
         #    -port   => 3306,
         #    -user   => 'ensro',
         #    -pass   => '',
-        #    -dbname => 'sf5_ensembl_compara_61',
+        #    -dbname => 'sf5_ensembl_compara_master',
         #},
+
+        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+        #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
+
+        # Add the database entries for the reused core databases and update 'reuse_db'
+        #'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+        #'reuse_db' => {   # usually previous release database on compara1
+        #   -host   => 'compara3',
+        #   -port   => 3306,
+        #   -user   => 'ensro',
+        #   -pass   => '',
+        #   -dbname => 'mm14_compara_homology_67',
+        #},
+
+        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
     };
 }
@@ -247,20 +176,6 @@ sub pipeline_create_commands {
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
     ];
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '2Gb_job'      => {'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '8Gb_job'      => {'LSF' => '-C0 -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '24Gb_job'     => {'LSF' => '-C0 -M24000000 -R"select[mem>24000] rusage[mem=24000]" -q long' },
-    };
 }
 
 

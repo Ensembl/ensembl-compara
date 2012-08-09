@@ -33,7 +33,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf');
 
 
 sub default_options {
