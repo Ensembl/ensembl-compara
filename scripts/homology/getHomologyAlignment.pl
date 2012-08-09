@@ -1,6 +1,7 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
@@ -14,17 +15,14 @@ $self->{'compara_conf'} = {};
 $self->{'compara_conf'}->{'-user'} = 'ensro';
 $self->{'compara_conf'}->{'-port'} = 3306;
 
-$self->{'speciesList'} = ();
 $self->{'removeXedSeqs'} = undef;
 $self->{'outputFasta'} = undef;
 $self->{'noSplitSeqLines'} = undef;
 
 my $aaPerLine = 60;
-my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 
 GetOptions('help'     => \$help,
-           'conf=s'   => \$conf_file,
            'dbhost=s' => \$host,
            'dbport=i' => \$port,
            'dbuser=s' => \$user,
@@ -38,8 +36,6 @@ GetOptions('help'     => \$help,
 if ($help) { usage(); }
 
 $self->{'member_stable_id'} = shift if(@_);
-
-parse_conf($self, $conf_file);
 
 if($host)   { $self->{'compara_conf'}->{'-host'}   = $host; }
 if($port)   { $self->{'compara_conf'}->{'-port'}   = $port; }
@@ -135,7 +131,6 @@ exit(0);
 sub usage {
   print "getHomologyAlignment.pl [options] <member stable_id>\n";
   print "  -help                  : print this help\n";
-  print "  -conf <path>           : config file describing compara, templates, and external genome databases\n";
   print "  -dbhost <machine>      : compara mysql database host <machine>\n";
   print "  -dbport <port#>        : compara mysql port number\n";
   print "  -dbname <name>         : compara mysql database <name>\n";
@@ -147,30 +142,6 @@ sub usage {
   print "getHomologyAlignment.pl v1.1\n";
   
   exit(1);  
-}
-
-
-sub parse_conf {
-  my $self      = shift;
-  my $conf_file = shift;
-
-  if($conf_file and (-e $conf_file)) {
-    #read configuration file from disk
-    my @conf_list = @{do $conf_file};
-
-    foreach my $confPtr (@conf_list) {
-      #print("HANDLE type " . $confPtr->{TYPE} . "\n");
-      if($confPtr->{TYPE} eq 'COMPARA') {
-        $self->{'compara_conf'} = $confPtr;
-      }
-      if($confPtr->{TYPE} eq 'BLAST_TEMPLATE') {
-        $self->{'analysis_template'} = $confPtr;
-      }
-      if($confPtr->{TYPE} eq 'SPECIES') {
-        push @{$self->{'speciesList'}}, $confPtr;
-      }
-    }
-  }
 }
 
 
