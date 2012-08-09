@@ -58,7 +58,6 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Analysis::Config::Compara;
-use Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
