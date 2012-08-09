@@ -6,8 +6,10 @@ package EnsEMBL::Web::Exceptions;
 
 ### Description:
 ### Module gives Exceptions based error handling features using try, catch, throw and exception keywords
+### Check example at the bottom of the file
 
-### 'return' inside the try or catch blocks behaves as a 'break' to the code block but does not return
+### Things to be aware of while using:
+### 'return' inside the try or catch blocks behaves as a 'break' to the code block but does not return from the wrapping function/method
 ### 'throw' inside catch always throws the exception being caught in the catch block irrespective of any argument to throw
 
 use strict;
@@ -15,10 +17,26 @@ use warnings;
 
 use EnsEMBL::Web::Exception;
 
-use Exporter qw(import);
+my %EXCEPTION_LIST;
 
-our @EXPORT = qw(try catch throw exception register_exception);
-our %EXCEPTION_LIST;
+sub import {
+  ## Imports the functions try, catch, throw & exception to the caller and registers any exceptions if provided in the arguments
+  ## @param List (hash) with key as a short string (exception is saved against this in the %EXCEPTION_LIST) and value as array/hash as arguments accepted by &exception function
+  my $class  = shift;
+  my $caller = caller;
+
+  {
+    # import functions
+    no strict qw(refs);
+    *{"${caller}::${_}"} = \&{"${class}::${_}"} for qw(try catch throw exception);
+  }
+
+  # register exceptions
+  while (@_) {
+    my ($key, $exception) = splice @_, 0, 2;
+    $EXCEPTION_LIST{"${caller}::${key}"} = [ ref $exception ? ref $exception eq 'ARRAY' ? @$exception : (map $exception->{$_}, qw(type message)) : ($exception, '') ] if $key;
+  }
+}
 
 sub try (&$) {
   ## To be used as typical 'try' keyword
@@ -47,39 +65,23 @@ sub exception {
   ## To be used as an argument to &throw
   ## Creates and returns an Exception object
   ## If one argument is provided, it should be either a registered code or message; if two, they are considered to be type and message - OR preferrably provide hashref to avoid vagueness
-  ## @param Exception code - ideally short and alphanumeric only including underscore (OR a Hashref containing keys: 'code', 'type', 'message', 'ignore')
-  ## @param Exception type - ideally alphanumeric including colon in camel case - similar to namespace
-  ## @param Exception message
-  ## @param Flag if on will ignore the immediate method that threw the exception in stack trace (useful for library methods) - defaults to false
-  my ($code, $type, $message, $ignore) = @_;
-  if (ref $code eq 'HASH') {
-    ($code, $type, $message, $ignore) = map {$code->{$_}} qw(code type message ignore);
-  }
-  else {
-    if (scalar @_ == 1) {
-      if ($code && exists $EXCEPTION_LIST{$code}) {  # if it's code
-        ($type, $message) = @{$EXCEPTION_LIST{$code}};
-      }
-      else {  # if it's message
-        ($message, $code) = @_;
-      }
+  ## @param Hashref with keys:
+  ##  - type    Exception type
+  ##  - message Exception message
+  ##  - data    Any extra data to be saved inside the exception object that needs to be retrieved while catching the exception
+  ##  OR (String) Short code that was registered with the module against a particular exception while importing it
+  ##  OR (String) Exception type
+  ## @param (String) Exception message (only if first argument is a string for exception type)
+  my ($type, $message) = @_;
+  if (scalar @_ == 1 && $type) {
+    if (ref $type eq 'HASH') {
+      ($type, $message) = map {$type->{$_}} qw(type message);
     }
-    elsif (scalar @_ == 2) {
-      ($type, $message, $code) = @_;
+    elsif (exists $EXCEPTION_LIST{$type}) {
+      ($type, $message) = @{$EXCEPTION_LIST{$type}};
     }
   }
-  return EnsEMBL::Web::Exception->_new({'code' => $code, 'type' => $type, 'message' => $message, 'ignore' => $ignore});
-}
-
-sub register_exception {
-  ## Registers an exception type and message against a code that can be provided as an argument to &exception to throw the exception with same type and message
-  ## It is not mandatory to register an exception. Registeration only makes it easy if exception with same code, message and type is thrown multiple times
-  ## Optional use only
-  ## @param Exception code
-  ## @param Exception type
-  ## @param Exception message
-  my ($code, @params) = @_;
-  $EXCEPTION_LIST{$code} = \@params;
+  return EnsEMBL::Web::Exception->_new({'type' => $type, 'message' => $message});
 }
 
 1;
@@ -90,9 +92,9 @@ sub register_exception {
 ### 
 ### use strict;
 ### 
-### use EnsEMBL::Web::Exceptions;
-### 
-### register_exception('NUMERIC_ARGUMENTS_ONLY', 'IllegalArgument::TypeMismatch', 'Arguments are expected to be numeric');
+### use EnsEMBL::Web::Exceptions (
+###   numberic_arg_exception => ['IllegalArgument', 'Arguments are expected to be numeric']
+### );
 ### 
 ### sub get_rows_per_page {
 ###   my ($self, $row_count, $page_count) = @_;
@@ -114,10 +116,10 @@ sub register_exception {
 ### sub divide {
 ###   my ($self, $a, $b) = @_;
 ###   if ($a !~ /^[0-9]+$/ || $b !~ /^[0-9]+$/) {
-###     throw exception('NUMERIC_ARGUMENTS_ONLY');
+###     throw exception('numberic_arg_exception');
 ###   }
 ###   if ($b == 0) {
-###     throw exception('DBO_DIVIDE', 'DivisionByZero', 'Division by zero');
+###     throw exception('DivisionByZero', 'Division by zero');
 ###   }
 ###   return $a / $b;
 ### }
