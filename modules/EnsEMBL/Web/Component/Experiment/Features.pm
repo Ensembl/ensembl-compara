@@ -72,7 +72,7 @@ sub content {
     $html .= sprintf('<p class="space-below">Showing %s/%s experiments</p><p class="space-below">Filters applied: %s</p>',
        $shown_experiments,
        $total_experiments,
-       join('', map sprintf('<p class="space-below"><b>%s</b>: %s</p>', $_, join_with_and(@{$display_filters->{$_}})), sort keys %$display_filters)
+       join('', map sprintf('<p class="space-below"><b>%s</b>: %s</p>', $_, $self->join_with_and(@{$display_filters->{$_}})), sort keys %$display_filters)
     );
   }
 
@@ -130,17 +130,13 @@ sub evidence_link {
 
 sub motif_links {
   my ($self, $motifs) = @_;
-  return join_with_and(map qq(<a href="http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_&amp;rm=present&amp;collection=CORE" title="View motif">$_</a>), @$motifs);
+  return $self->join_with_and(map qq(<a href="http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_&amp;rm=present&amp;collection=CORE" title="View motif">$_</a>), @$motifs);
 }
 
 sub gene_links {
   my ($self, $genes) = @_;
   my $hub = $self->hub;
-  return join_with_and(map sprintf('<a href="%s" title="View gene">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_}), $_), @$genes);
-}
-
-sub join_with_and {
-  return join(' and ', reverse (pop @_, join(', ', @_) || ()));
+  return $self->join_with_and(map sprintf('<a href="%s" title="View gene">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_}), $_), @$genes);
 }
 
 1;
