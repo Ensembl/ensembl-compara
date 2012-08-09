@@ -13,23 +13,8 @@ sub process {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
 
-  ## setting a (blank) expired cookie deletes the current one
-  my $user_cookie = new EnsEMBL::Web::Cookie({
-    host    => $species_defs->ENSEMBL_COOKIEHOST,
-    name    => $species_defs->ENSEMBL_USER_COOKIE,
-    value   => '',
-    env     => 'ENSEMBL_USER_ID',
-    hash    => {
-      offset  => $species_defs->ENSEMBL_ENCRYPT_0,
-      key1    => $species_defs->ENSEMBL_ENCRYPT_1,
-      key2    => $species_defs->ENSEMBL_ENCRYPT_2,
-      key3    => $species_defs->ENSEMBL_ENCRYPT_3,
-      expiry  => $species_defs->ENSEMBL_ENCRYPT_EXPIRY,
-      refresh => $species_defs->ENSEMBL_ENCRYPT_REFRESH
-    }
-  });
-  
-  $user_cookie->clear($self->r);
+  $hub->clear_cookie($species_defs->ENSEMBL_USER_COOKIE);
+
   $hub->redirect($hub->referer->{'absolute_url'});
 }
 

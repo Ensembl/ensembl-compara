@@ -20,22 +20,7 @@ sub process {
   
   if (!$ENV{'ENSEMBL_USER_ID'}) {
     if ($user && $user->id) {
-      my $user_cookie = new EnsEMBL::Web::Cookie({
-        host  => $species_defs->ENSEMBL_COOKIEHOST,
-        name  => $species_defs->ENSEMBL_USER_COOKIE,
-        value => '',
-        env   => 'ENSEMBL_USER_ID',
-        hash  => {
-          offset  => $species_defs->ENSEMBL_ENCRYPT_0,
-          key1    => $species_defs->ENSEMBL_ENCRYPT_1,
-          key2    => $species_defs->ENSEMBL_ENCRYPT_2,
-          key3    => $species_defs->ENSEMBL_ENCRYPT_3,
-          expiry  => $species_defs->ENSEMBL_ENCRYPT_EXPIRY,
-          refresh => $species_defs->ENSEMBL_ENCRYPT_REFRESH
-        }
-      });
-      
-      $user_cookie->create($self->r , $user->id);
+      EnsEMBL::Web::Cookie->bake($self->r, {name  => $species_defs->ENSEMBL_USER_COOKIE, value => $user->id, env   => 'ENSEMBL_USER_ID', encrypted => 1});
     }
   }
 
