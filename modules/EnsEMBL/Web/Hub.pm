@@ -16,12 +16,12 @@ use strict;
 
 use Carp;
 use CGI;
-use CGI::Cookie;
 use URI::Escape qw(uri_escape uri_unescape);
 
 use Bio::EnsEMBL::ColourMap;
 
 use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::DBSQL::ConfigAdaptor;
@@ -46,8 +46,8 @@ sub new {
   my $input        = $args->{'input'}        || new CGI;
   my $species_defs = $args->{'species_defs'} || new EnsEMBL::Web::SpeciesDefs;
   my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
-  my $cookies      = $args->{'apache_handle'} ? CGI::Cookie->parse($args->{'apache_handle'}->headers_in->{'Cookie'}) : {};
-  
+  my $cookies      = $args->{'apache_handle'} ? EnsEMBL::Web::Cookie->fetch($args->{'apache_handle'}) : {};
+
   $species_defs->{'timer'} = $args->{'timer'};
   
   my $self = {
@@ -131,34 +131,38 @@ sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub clear_problem_type { delete $_[0]{'_problem'}{$_[1]}; }
 sub clear_problems     { $_[0]{'_problem'} = {}; }
 
-# Returns the values of cookies
-# If only one cookie name is given, returns the value as a scalar
-# If more than one cookie name is given, returns a hash of name => value
-sub get_cookies {
-  my $self     = shift;
-  my %cookies  = %{$self->cookies || {}};
-  %cookies     = map { exists $cookies{$_} ? ($_ => $cookies{$_}) : () } @_ if @_;
-  $cookies{$_} = $cookies{$_}->value for grep exists $cookies{$_}, @_;
-  return scalar keys %cookies > 1 ? \%cookies : [ values %cookies ]->[0];
+
+## Cookie methods
+sub get_cookie_value {
+  my $self    = shift;
+  my $cookie  = $self->get_cookie(@_);
+  return $cookie ? $cookie->value : '';
+}
+
+sub get_cookie {
+  my ($self, $name, $is_encrypted) = @_;
+  my $cookies = $self->cookies;
+  $cookies->{$name} = EnsEMBL::Web::Cookie->retrieve($self->apache_handle, {'name' => $name, 'encrypted' => $is_encrypted}) if $cookies->{$name} && $cookies->{$name}->encrypted eq !$is_encrypted;
+  return $cookies->{$name};
 }
 
 sub set_cookie {
-  my ($self, $name, $value) = @_;
-  
-  my $cookie = new CGI::Cookie(
-    -name    => $name,
-    -value   => $value,
-    -domain  => $self->species_defs->ENSEMBL_COOKIEHOST,
-    -path    => '/',
-    -expires => 'Monday, 31-Dec-2037 23:59:59 GMT'
-  );
-  
-  $self->apache_handle->headers_out->add('Set-cookie' => $cookie);
-  $self->apache_handle->err_headers_out->add('Set-cookie' => $cookie);
-  
-  $self->cookies->{$name} = $cookie;
-  
-  return !!$cookie;
+  my ($self, $name, $value, $is_encrypted) = @_;
+  return $self->cookies->{$name} = EnsEMBL::Web::Cookie->bake($self->apache_handle, {'name' => $name, 'value' => $value, 'encrypted' => $is_encrypted});
+}
+
+sub clear_cookie {
+  my ($self, $name) = @_;
+  EnsEMBL::Web::Cookie->clear($self->apache_handle, {'name' => $name});
+  return $self->cookies->{$name} = undef;
+}
+
+sub new_cookie {
+  ## Creates a new EnsEMBL::Web::Cookie object
+  ## @param Hashref as accepted by EnsEMBL::Web::Cookie->new
+  ## @return EnsEMBL::Web::Cookie
+  my ($self, $params) = @_;
+  return EnsEMBL::Web::Cookie->new($self->apache_handle, $params);
 }
 
 sub problem {
@@ -654,7 +658,7 @@ sub get_data_from_session {
 
 sub initialize_user {
   my ($self, $cookie) = @_;
-  my $id = $cookie->get_value;
+  my $id = $cookie->value;
   
   if ($id) {
     # try to log in with user id from cookie
@@ -665,7 +669,7 @@ sub initialize_user {
     if ($@) {
       # login failed (because the connection to the used db has gone away)
       # so log the user out by clearing the cookie
-      $cookie->clear($self->apache_handle);
+      $cookie->clear;
       $self->user = undef;
     }
   }
