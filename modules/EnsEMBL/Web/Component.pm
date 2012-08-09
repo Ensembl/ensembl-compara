@@ -219,6 +219,19 @@ sub html_format {
   return $self->{'html_format'} ||= $self->format eq 'HTML';
 }
 
+sub html_encode {
+  shift;
+  return encode_entities(@_);
+}
+
+sub join_with_and {
+  ## Joins an array of strings with commas and an 'and' before the last element
+  ## ie. returns 'a, b, c and d' for qw(a b c d)
+  ## @params List of strings to be joined
+  shift;
+  return join(' and ', reverse (pop @_, join(', ', @_) || ()));
+}
+
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub caption     { return undef; }
@@ -229,7 +242,7 @@ sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but
 sub _info    { return shift->_info_panel('info',    @_ ); } # Extra information 
 sub _hint    {                                              # Extra information, hideable
   my ($self, $id, $caption, $desc, $width) = @_;
-  return if grep $_ eq $id, split /:/, $self->hub->get_cookies('ENSEMBL_HINTS');
+  return if grep $_ eq $id, split /:/, $self->hub->get_cookie_value('ENSEMBL_HINTS');
   return $self->_info_panel('hint hint_flag', $caption, $desc, $width, $id);
 } 
 
@@ -396,10 +409,12 @@ sub new_twocol {
 
 sub new_form {
   ## Creates and returns a new Form object.
-  ## @param   HashRef as accepted by Form->new
+  ## @param   HashRef as accepted by Form->new with a variation in action key
+  ##  - action: Can be a string as need by Form->new, or a hashref as accepted by hub->url
   ## @return  EnsEMBL::Web::Form object
   my ($self, $params) = @_;
-  $params->{'dom'} = $self->dom;
+  $params->{'dom'}    = $self->dom;
+  $params->{'action'} = ref $params->{'action'} ? $self->hub->url($params->{'action'}) : $params->{'action'} if $params->{'action'};
   $params->{'format'} = $self->format;  
   return new EnsEMBL::Web::Form($params);
 }
@@ -864,7 +879,7 @@ sub transcript_table {
       $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $gene_html};
     }
     
-    my $hide    = $hub->get_cookies('toggle_transcripts_table') eq 'closed';
+    my $hide    = $hub->get_cookie_value('toggle_transcripts_table') eq 'closed';
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
