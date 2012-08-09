@@ -49,7 +49,7 @@ sub new {
   my $self = {
     hub                => $hub,
     cookie             => $cookie,
-    session_id         => $cookie ? $cookie->get_value : undef,
+    session_id         => $cookie ? $cookie->value : undef,
     species            => $hub->species,
     das_parser         => $args->{'das_parser'},
     das_sources        => $args->{'das_sources'},
@@ -81,7 +81,7 @@ sub create_session_id {
   
   if (!$self->session_id) {
     my $session_id = EnsEMBL::Web::Data::Session->create_session_id;
-    $self->cookie->create($self->hub->apache_handle, $session_id);
+    $self->cookie->bake($session_id);
     $self->session_id = $session_id;
   }
   
