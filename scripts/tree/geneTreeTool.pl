@@ -1,6 +1,7 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -11,7 +12,7 @@ use Bio::EnsEMBL::Compara::NCBITaxon;
 use Bio::EnsEMBL::Compara::Graph::Algorithms;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree;
+use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Mapper::RangeRegistry; # mxe_metatranscript
 use Switch;
