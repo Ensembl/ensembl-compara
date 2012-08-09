@@ -71,7 +71,6 @@ sub copy {
   my $self = shift;
   
   my $mycopy = new Bio::EnsEMBL::Compara::Graph::CGObject;
-  bless
 
   if($self->{'_tags'}) {
     %{$mycopy->{'_tags'}} = %{$self->{'_tags'}};
