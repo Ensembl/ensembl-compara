@@ -86,7 +86,7 @@ sub content {
       $plural_2 =~ s/s$//; 
     }
     
-    my $hide    = $hub->get_cookies('toggle_transcripts_table') eq 'closed';
+    my $hide    = $hub->get_cookie_value('toggle_transcripts_table') eq 'closed';
     my @columns = (
        { key => 'name',        sort => 'string', title => 'Name'          },
        { key => 'transcript',  sort => 'html',   title => 'Transcript ID' },

@@ -8,7 +8,7 @@ use strict;
                                                                                 
 use base qw(EnsEMBL::Web::Document::Element);
 
-sub default_search_code { return $_[0]->{'_default'} ||= $_[0]->hub->get_cookies('ENSEMBL_SEARCH') || $_[0]->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl'; }
+sub default_search_code { return $_[0]->{'_default'} ||= $_[0]->hub->get_cookie_value('ENSEMBL_SEARCH') || $_[0]->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl'; }
 
 sub search_options {
   return (

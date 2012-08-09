@@ -204,7 +204,7 @@ sub synonyms {
  
   # Large text display
   if ($count_sources > 1) { # Collapsed div display 
-    my $show = $self->hub->get_cookies('toggle_variation_synonyms') eq 'open';
+    my $show = $self->hub->get_cookie_value('toggle_variation_synonyms') eq 'open';
 
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
@@ -257,7 +257,7 @@ sub alleles {
     }
     
     $alleles = join("/<br />", @l_alleles);
-    my $show = $self->hub->get_cookies('toggle_Alleles') eq 'open';
+    my $show = $self->hub->get_cookie_value('toggle_Alleles') eq 'open';
     $html = sprintf('Reference/Alternative%s: 
       <a class="toggle %s set_cookie" href="#" rel="Alleles" style="font-weight:bold;font-size:1.2em" title="Click to toggle alleles">%s</a>
       <small>Click the plus to show all of the alleles</small>%s
@@ -288,7 +288,7 @@ sub alleles {
         }
         else {
           $allele = substr($allele,0,50).'...' if (length $allele > 50);
-          my $show2 = $self->hub->get_cookies('toggle_Sequence') eq 'open';
+          my $show2 = $self->hub->get_cookie_value('toggle_Sequence') eq 'open';
           $html  .= sprintf('<em>Note</em>: The reference %s for this mutation (%s) does not match the Ensembl reference %s at this location.
                              <a class="toggle %s set_cookie" href="#" rel="Sequence" title="Click to toggle Sequence"></a><small>Click the plus to show all of the sequence</small>
                              <div class="Sequence"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
@@ -429,7 +429,7 @@ sub validation_status {
   my $html = qq{This variation is validated by };
   
   if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
-    my $show = $self->hub->get_cookies('toggle_status') eq 'open';
+    my $show = $self->hub->get_cookie_value('toggle_status') eq 'open';
     my $showed_line;
     
     foreach my $st (sort keys %main_status) {
@@ -475,7 +475,7 @@ sub hgvs {
 
   # Wrap the html
   if ($count > 1) {
-    my $show = $self->hub->get_cookies('toggle_HGVS_names') eq 'open';
+    my $show = $self->hub->get_cookie_value('toggle_HGVS_names') eq 'open';
 
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
