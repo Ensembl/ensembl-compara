@@ -7,7 +7,6 @@ use Apache2::SizeLimit;
 use Apache2::Connection;
 use Apache2::URI;
 use APR::URI;
-use CGI::Cookie;
 use Config;
 use Fcntl ':flock';
 use Sys::Hostname;
@@ -52,7 +51,8 @@ sub childInitHandler {
   my @X             = localtime;
   my $temp_hostname = hostname;
   my $temp_proc_id  = '' . reverse $$;
-  my $temp_seed     = ($temp_proc_id + $temp_proc_id << 15) & 0xffffffff;
+  my $temp_seed     = ($temp_proc_id + $temp_proc_id << 15) & 0xffffffff
+  ;
   
   while ($temp_hostname =~ s/(.{1,4})//) {
     $temp_seed = $temp_seed ^ unpack("%32L*", $1);
@@ -99,14 +99,14 @@ sub redirect_to_nearest_mirror {
                   qq{You've been redirected to your nearest mirror - } . $species_defs->ENSEMBL_SERVERNAME . "\n";
                 $user_message .= qq{<p>Take me back to <a href="$back">$referrer</a></p>};
 
-                my $cookie = new CGI::Cookie(
-                    -name    => 'user_message',
-                    -value   => uri_escape($user_message),
-                    -expires => '+1m',
-                );
+                EnsEMBL::Web::Cookie->bake($r, {
+                  'name'        => 'user_message',
+                  'value'       => uri_escape($user_message),
+                  'expires'     => '+1m',
+                  'err_headers' => 1
+                });
 
                 ## Redirecting to same page, but without redirect params in url
-                $r->err_headers_out->add( 'Set-Cookie' => $cookie );
 
                 $unparsed_uri =~ s/;?source=$referrer//;
                 $unparsed_uri =~ s/;?redirect=mirror//;
@@ -117,20 +117,18 @@ sub redirect_to_nearest_mirror {
                 return REDIRECT;
             }
 
-            my $cookie = new CGI::Cookie(
-                -name    => 'redirect',
-                -value   => 'mirror',
-                -expires => 'Thu, 31-Dec-2037 22:22:22 GMT',    ## End of time :)
-            );
-
-            $r->err_headers_out->add( 'Set-Cookie' => $cookie );
+            EnsEMBL::Web::Cookie->bake($r, {
+              'name'        => 'redirect',
+              'value'       => 'mirror',
+              'err_headers' => 1
+            });
 
             return DECLINED;
         }
         ## Check "don't redirect me" cookie
-        my %cookies = CGI::Cookie->parse( $r->headers_in->{'Cookie'} );
+        my $redirect_cookie = EnsEMBL::Web::Cookie->retrieve($r, {'name' => 'redirect'});
 
-        return DECLINED if $cookies{'redirect'} && $cookies{'redirect'}->value eq 'mirror';
+        return DECLINED if $redirect_cookie && $redirect_cookie->value eq 'mirror';
         if ( $species_defs->ENSEMBL_MIRRORS && keys %{ $species_defs->ENSEMBL_MIRRORS } ) {
             my $geo_details;
             my $record;   my $geo;
@@ -170,16 +168,11 @@ sub redirect_to_nearest_mirror {
                     return DECLINED if $mirror eq $species_defs->ENSEMBL_SERVERNAME;
 
                     ## Deleting cookie for current site
-                    my $cookie = new CGI::Cookie(
-                        -name    => 'redirect',
-                        -value   => '',
-                        -expires => '-1h',
-                    );
+                    EnsEMBL::Web::Cookie->clear($r, {'name' => 'redirect', 'err_headers' => 1});
 
                     $unparsed_uri .= $unparsed_uri =~ /\?/ ? ';redirect=mirror' : '?redirect=mirror';
                     $unparsed_uri .= ';source=' . $species_defs->ENSEMBL_SERVERNAME;
 
-                    $r->err_headers_out->add( 'Set-Cookie' => $cookie );
                     $r->headers_out->set( Location => "http://$mirror$unparsed_uri" );
 
                     return REDIRECT;
@@ -204,16 +197,16 @@ sub postReadRequestHandler {
   $ENSEMBL_WEB_REGISTRY->timer_push('Handling script', undef, 'Apache');
   
   ## Ajax cookie
-  my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
-  my $width   = $cookies{'ENSEMBL_WIDTH'} && $cookies{'ENSEMBL_WIDTH'}->value ? $cookies{'ENSEMBL_WIDTH'}->value : 0;
+  my $cookies = EnsEMBL::Web::Cookie->fetch($r);
+  my $width   = $cookies->{'ENSEMBL_WIDTH'} && $cookies->{'ENSEMBL_WIDTH'}->value ? $cookies->{'ENSEMBL_WIDTH'}->value : 0;
   
   $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $width || $ENSEMBL_IMAGE_WIDTH || 800;
-  $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies{'DYNAMIC_WIDTH'} && $cookies{'DYNAMIC_WIDTH'}->value ? 1 : $width ? 0 : 1;
-  
+  $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies->{'DYNAMIC_WIDTH'} && $cookies->{'DYNAMIC_WIDTH'}->value ? 1 : $width ? 0 : 1;
+
   $ENSEMBL_WEB_REGISTRY->timer_push('Post read request handler completed', undef, 'Apache');
   
   # Ensembl DEBUG cookie
-  $r->headers_out->add('X-MACHINE' => $ENSEMBL_SERVER) if $cookies{'ENSEMBL_DEBUG'};
+  $r->headers_out->add('X-MACHINE' => $ENSEMBL_SERVER) if $cookies->{'ENSEMBL_DEBUG'};
   
   return;
 }
@@ -251,39 +244,12 @@ sub handler {
   my $file        = $u->path;
   my $querystring = $u->query;
   
-  my $cookies = {
-    session_cookie => new EnsEMBL::Web::Cookie({
-      host    => $ENSEMBL_COOKIEHOST,
-      name    => $ENSEMBL_SESSION_COOKIE,
-      value   => '',
-      env     => 'ENSEMBL_SESSION_ID',
-      hash    => {
-        offset  => $ENSEMBL_ENCRYPT_0,
-        key1    => $ENSEMBL_ENCRYPT_1,
-        key2    => $ENSEMBL_ENCRYPT_2,
-        key3    => $ENSEMBL_ENCRYPT_3,
-        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
-        refresh => $ENSEMBL_ENCRYPT_REFRESH
-      }
-    }),
-    user_cookie => new EnsEMBL::Web::Cookie({
-      host    => $ENSEMBL_COOKIEHOST,
-      name    => $ENSEMBL_USER_COOKIE,
-      value   => '',
-      env     => 'ENSEMBL_USER_ID',
-      hash    => {
-        offset  => $ENSEMBL_ENCRYPT_0,
-        key1    => $ENSEMBL_ENCRYPT_1,
-        key2    => $ENSEMBL_ENCRYPT_2,
-        key3    => $ENSEMBL_ENCRYPT_3,
-        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
-        refresh => $ENSEMBL_ENCRYPT_REFRESH
-      }
-    })
+  my @web_cookies = EnsEMBL::Web::Cookie->retrieve($r, map {'name' => $_, 'encrypted' => 1}, $ENSEMBL_SESSION_COOKIE, $ENSEMBL_USER_COOKIE);
+  my $cookies     = {
+    'session_cookie'  => $web_cookies[0] || EnsEMBL::Web::Cookie->new($r, {'name' => $ENSEMBL_SESSION_COOKIE, 'encrypted' => 1}),
+    'user_cookie'     => $web_cookies[1] || EnsEMBL::Web::Cookie->new($r, {'name' => $ENSEMBL_USER_COOKIE,    'encrypted' => 1})
   };
-  
-  $_->retrieve($r) for values %$cookies;
-  
+
   my @raw_path = split m|/|, $file;
   shift @raw_path; # Always empty
 
