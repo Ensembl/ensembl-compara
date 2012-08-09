@@ -44,20 +44,6 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 # Factory methods
 #################################################
 
-sub init {
-  my $self = shift;
-  $self->SUPER::init;
-  return $self;
-}
-
-sub dealloc {
-  my $self = shift;
-
-  #printf("DEALLOC NestedSet refcount:%d ", $self->refcount); $self->print_node;
-  #$self->release_children;
-  return $self->SUPER::dealloc;
-}
-
 =head2 copy
 
   Overview   : creates copy of tree starting at this node going down
@@ -167,7 +153,6 @@ sub add_child {
 =head2 disavow_parent
 
   Overview   : unlink and release self from its parent
-               might cause self to delete if refcount reaches Zero.
   Example    : $self->disavow_parent
   Returntype : undef
   Caller     : general
@@ -191,7 +176,6 @@ sub disavow_parent {
 =head2 release_children
 
   Overview   : recursive releases all children
-               will cause potential deletion of children if refcount reaches Zero.
   Example    : $self->release_children
   Returntype : $self
   Exceptions : none

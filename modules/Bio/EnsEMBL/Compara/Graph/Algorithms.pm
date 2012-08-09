@@ -152,9 +152,9 @@ sub _internal_find_balanced_link
   my $stats = shift;
   my $debug = shift;
     
-  return if(defined($visited_links->{$link->obj_id}));
+  return if(defined($visited_links->{$link}));
 
-  $visited_links->{$link->obj_id} = 1;
+  $visited_links->{$link} = 1;
   
   my ($node1, $node2) = $link->get_nodes;
   
@@ -358,9 +358,9 @@ sub _internal_get_all_links
   my $link = shift;
   my $visited_links = shift;
     
-  return if(defined($visited_links->{$link->obj_id}));
+  return if(defined($visited_links->{$link}));
 
-  $visited_links->{$link->obj_id} = $link;
+  $visited_links->{$link} = $link;
   
   my ($node1, $node2) = $link->get_nodes;
   

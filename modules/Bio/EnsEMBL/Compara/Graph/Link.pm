@@ -101,7 +101,6 @@ sub dealloc {
   $self->{'_link_node1'} = undef;
   $self->{'_link_node2'} = undef;
   
-  #printf("DEALLOC link refcount:%d ", $self->refcount);
 }
 
 
@@ -181,7 +180,7 @@ sub equals {
 sub print_link {
   my $self  = shift;
   printf("link(%s): (%s)-- %1.5f --(%s)\n", 
-      $self->obj_id, 
+      $self, 
       $self->{'_link_node1'}->node_id,
       $self->distance_between,
       $self->{'_link_node2'}->node_id,

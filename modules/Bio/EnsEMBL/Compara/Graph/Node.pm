@@ -59,18 +59,6 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
 
 #new and alloc method in superclass
 
-sub init {
-  my $self = shift;
-   $self->SUPER::init;
-  return $self;
-}
-
-sub dealloc {
-  my $self = shift;
-  #$self->unlink_all_neighbors;
-  return $self->SUPER::dealloc;
-}
-
 sub copy {
   my $self = shift;
   
@@ -99,8 +87,8 @@ sub copy_graph {
   
   my $mycopy = $self->copy;
   
-  #printf("Graph::Node::copy %d", $self->obj_id);
-  #printf(" from link %s", $incoming_link->obj_id) if($incoming_link);
+  #printf("Graph::Node::copy %d", $self);
+  #printf(" from link %s", $incoming_link) if($incoming_link);
   #print("\n");
   
   foreach my $link (@{$self->links}) {
@@ -133,7 +121,7 @@ sub copy_graph {
 sub node_id {
   my $self = shift;
   $self->{'_node_id'} = shift if(@_);
-  return $self->obj_id unless(defined($self->{'_node_id'}));
+  return $self unless(defined($self->{'_node_id'}));
   return $self->{'_node_id'};
 }
 
@@ -211,21 +199,20 @@ sub _add_neighbor_link_to_hash {
   my $link = shift;
   
   $self->{'_obj_id_to_link'} = {} unless($self->{'_obj_id_to_link'});
-  $self->{'_obj_id_to_link'}->{$neighbor->obj_id} = $link;
+  $self->{'_obj_id_to_link'}->{$neighbor} = $link;
 }
 
 sub _unlink_node_in_hash {
   my $self = shift;
   my $neighbor = shift;
   
-  delete $self->{'_obj_id_to_link'}->{$neighbor->obj_id};
+  delete $self->{'_obj_id_to_link'}->{$neighbor};
 }
 
 
 =head2 unlink_neighbor
 
   Overview   : unlink and release neighbor from self if its mine
-               might cause neighbor to delete if refcount reaches Zero.
   Arg [1]    : $node Bio::EnsEMBL::Compara::Graph::Node instance
   Example    : $self->unlink_neighbor($node);
   Returntype : undef
@@ -241,7 +228,7 @@ sub unlink_neighbor {
      unless($node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
 
   my $link = $self->link_for_neighbor($node);  
-  throw($self->obj_id. " not my neighbor ". $node->obj_id) unless($link);
+  throw("$self not my neighbor $node") unless($link);
   $link->dealloc;
 
   return undef;
@@ -261,7 +248,6 @@ sub unlink_all {
 =head2 cascade_unlink
 
   Overview   : release all neighbors and clear arrays and hashes
-               will cause potential deletion of neighbors if refcount reaches Zero.
   Example    : $self->cascade_unlink
   Returntype : $self
   Exceptions : none
@@ -276,10 +262,6 @@ sub cascade_unlink {
   no warnings qw/recursion/;
 
   #printf("cascade_unlink : "); $self->print_node;
-#  if($self->refcount > $self->link_count) {
-#    printf("!!!! node is being retained - can't cascade_unlink\n");
-#    return undef;
-#  }
   
   my @neighbors;
   foreach my $link (@{$self->links}) {
@@ -341,13 +323,13 @@ sub link_for_neighbor {
   throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
      unless($node and $node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
 
-  return $self->{'_obj_id_to_link'}->{$node->obj_id};
+  return $self->{'_obj_id_to_link'}->{$node};
 }
 
 
 sub print_node {
   my $self  = shift;
-  printf("Node(%s)%s\n", $self->obj_id, $self->name);
+  printf("Node(%s)%s\n", $self, $self->name);
 }
 
 
@@ -393,7 +375,7 @@ sub like {
   my $other = shift;
   throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$other]")
         unless($other and $other->isa('Bio::EnsEMBL::Compara::Graph::Node'));
-  return 1 if($self->obj_id eq $other->obj_id);
+  return 1 if($self eq $other);
   return 0 unless($self->link_count == $other->link_count);
   foreach my $link (@{$self->links}) {
     my $node = $link->get_neighbor($self);
@@ -409,7 +391,7 @@ sub has_neighbor {
   throw "[$node] must be a Bio::EnsEMBL::Compara::Graph::Node object"
        unless ($node and $node->isa("Bio::EnsEMBL::Compara::Graph::Node"));
   
-  return 1 if(defined($self->{'_obj_id_to_link'}->{$node->obj_id}));
+  return 1 if(defined($self->{'_obj_id_to_link'}->{$node}));
   return 0;
 }
 

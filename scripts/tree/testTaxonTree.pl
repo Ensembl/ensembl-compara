@@ -172,7 +172,7 @@ sub fetch_primate_ncbi_taxa {
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
 
   my $marmoset = $taxonDBA->fetch_node_by_taxon_id(9483);
-  my $root = $marmoset->root->retain;
+  my $root = $marmoset->root;
   $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9544));
   $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9490));
   $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9516));
@@ -453,7 +453,7 @@ sub create_taxon_tree {
   my $self = shift;
 
   my $count = 1;
-  my $root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
+  my $root = Bio::EnsEMBL::Compara::NestedSet->new;
   $root->node_id($count++);
   $root->name('ROOT');
   
@@ -475,13 +475,12 @@ sub create_taxon_tree {
           $parent = $root->find_node_by_name($prev_level);
         } else { $parent=$root; }
 
-        my $new_node = Bio::EnsEMBL::Compara::NestedSet->new->retain;
+        my $new_node = Bio::EnsEMBL::Compara::NestedSet->new;
         $new_node->node_id($count++);
         $new_node->name($level_name);
         
         $parent->add_child($new_node);
 	      $new_node->distance_to_parent(0.01);
-        $new_node->release;
       }
       $prev_level = $level_name;
     }
@@ -495,11 +494,6 @@ sub create_taxon_tree {
   
 #   my $fetchTree = $self->{'comparaDBA'}->get_TreeNodeAdaptor->fetch_tree_rooted_at_node_id($root->node_id);
 #   $fetchTree->print_tree($self->{'scale'});
-
-  #cleanup memory
-  warn("ABOUT TO MANUALLY release tree\n");
-  $root->release;
-  warn("DONE\n");
 }
 
 sub parse_newick {
@@ -514,7 +508,6 @@ sub parse_newick {
 
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   $tree->print_tree($self->{'scale'});
-  $tree->release;
 
 }
 
@@ -531,11 +524,10 @@ sub reroot {
   my $new_root = $tree->find_node_by_node_id($node_id);
   return unless $new_root;
 
-  my $tmp_root = Bio::EnsEMBL::Compara::NestedSet->new->retain;
+  my $tmp_root = Bio::EnsEMBL::Compara::NestedSet->new;
   $tmp_root->merge_children($tree);
 
-  $new_root->retain->re_root;
-  $tmp_root->release;
+  $new_root->re_root;
   $tree->merge_children($new_root);
 
   $tree->build_leftright_indexing;
@@ -544,8 +536,6 @@ sub reroot {
   $treeDBA->store($tree);
   $treeDBA->delete_node($new_root);
 
-  $tree->release;
-  $new_root->release;
 }
 
 

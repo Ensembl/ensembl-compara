@@ -78,13 +78,6 @@ sub init {
   return $self;
 }
 
-sub dealloc {
-  my $self = shift;
-  #$self->unlink_all_neighbors;
-  return $self->SUPER::dealloc;
-}
-
-
 sub clear {
   my $self = shift;
     

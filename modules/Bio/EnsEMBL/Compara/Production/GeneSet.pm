@@ -65,11 +65,6 @@ sub init {
   return $self;
 }
 
-sub dealloc {
-  my $self = shift;
-  return $self->SUPER::dealloc;
-}
-
 
 sub clear {
   my $self = shift;
