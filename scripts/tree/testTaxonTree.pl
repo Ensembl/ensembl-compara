@@ -1,6 +1,7 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -107,8 +108,10 @@ unless(defined($self->{'comparaDBA'})) {
 } 
 
 if($self->{'tree_id'}) {
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  $self->{'root'} = $treeDBA->fetch_node_by_node_id($self->{'tree_id'});
+  my $treeDBA = $self->{'comparaDBA'}->get_GeneTreeAdaptor;
+  my $tree = $treeDBA->fetch_by_dbID($self->{'tree_id'});
+  $tree->preload();
+  $self->{'root'} = $tree->root;
 }
 
 if($self->{'stats'}) {
@@ -406,25 +409,7 @@ sub fetch_protein_tree {
   my $self = shift;
   my $node_id = shift;
 
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  my $tree;
-
-  switch(1) {
-    case 1 {
-      $tree = $treeDBA->fetch_node_by_node_id($node_id);
-      #$tree = $tree->parent if($tree->parent);
-    }
-
-    case 2 {
-      my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', 'ENSP00000264731');
-      my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->member_id, 68537);
-      warn ''.$aligned_member."\n";
-      $aligned_member->print_member;
-      $aligned_member->gene_member->print_member;
-      $tree = $aligned_member->root;
-      $treeDBA->fetch_all_children_for_node($tree);
-    }
-  }
+  my $tree = $self->{'root'};
 
   $tree->print_tree($self->{'scale'});
   warn("%d proteins\n", scalar(@{$tree->get_all_leaves}));
@@ -432,16 +417,6 @@ sub fetch_protein_tree {
   my $newick = $tree->newick_simple_format;
   warn("$newick\n");
 
-  $tree->release;
-  return;
-
-  $tree->flatten_tree->print_tree($self->{'scale'});
-
-  my $leaves = $tree->get_all_leaves;
-  foreach my $node (@{$leaves}) {
-    $node->print_member;
-  }
-  $tree->release;
 }
 
 sub query_ncbi_name {
@@ -463,30 +438,14 @@ sub fetch_protein_tree_with_gene {
   my $self = shift;
   my $gene_stable_id = shift;
 
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  my $tree;
-
   my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
   $member->print_member;
   $member->get_canonical_Member->print_member;
-  my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_Member->member_id);
-  warn ''.$aligned_member."\n";
-  $aligned_member->print_member;
-  $aligned_member->gene_member->print_member;
-  $tree = $aligned_member->root;
-  $treeDBA->fetch_all_children_for_node($tree);
 
+  my $treeDBA = $self->{'comparaDBA'}->get_GeneTreeAdaptor;
+  my $tree = $treeDBA->fetch_default_for_Member($member);
+  $tree->preload();
   $tree->print_tree($self->{'scale'});
-  $tree->release;
-  return;
-
-  $tree->flatten_tree->print_tree($self->{'scale'});
-
-  my $leaves = $tree->get_all_leaves;
-  foreach my $node (@{$leaves}) {
-    $node->print_member;
-  }
-  $tree->release;
 }
 
 
@@ -563,7 +522,7 @@ sub reroot {
   my $self = shift;
   my $node_id = $self->{'new_root_id'}; 
 
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $treeDBA = $self->{'comparaDBA'}->get_GeneTreeNodeAdaptor;
   my $node = $treeDBA->fetch_node_by_node_id($node_id);  
   warn "tree at ". $node->root->node_id ."\n";
   my $tree = $treeDBA->fetch_node_by_node_id($node->root->node_id);  
