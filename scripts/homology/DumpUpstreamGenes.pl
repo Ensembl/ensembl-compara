@@ -1,42 +1,29 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
+
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Registry;
 use Bio::Seq;
 use Bio::SeqIO;
 
-my $host;
-my $port;
-my $dbname;
-my $dbuser = "ensro";
-my $dbpass;
-my $conf_file;
-my $homology_id;
 my $upstream_length = 5000;
 my $taxon_id;
 
-GetOptions('host=s' => \$host,
-           'port=i' => \$port,
-	   'dbname=s' => \$dbname,
-	   'dbuser=s' => \$dbuser,
-	   'dbpass=s' => \$dbpass,
-	   'conf_file=s' => \$conf_file,
-           'upstream_length=i' => \$upstream_length,
-           'taxon_id=i' => \$taxon_id);
+GetOptions(
+        'upstream_length=i' => \$upstream_length,
+        'taxon_id=i' => \$taxon_id
+);
 
+my $reg = 'Bio::EnsEMBL::Registry';
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
-                                                     -port   => $port,
-                                                     -user   => $dbuser,
-                                                     -pass   => $dbpass,
-                                                     -dbname => $dbname,
-                                                     -conf_file => $conf_file);
+$reg->load_registry_from_db(
+        -host=>'ensembldb.ensembl.org',
+        -user=>'anonymous', 
+);
 
-my $ma = $db->get_MemberAdaptor;
-my $ha = $db->get_HomologyAdaptor;
-
-
+my $ma = $reg->get_adaptor('Multi', 'Compara', 'Member');
 
 my $members = $ma->fetch_all_by_source_taxon('ENSEMBLGENE',$taxon_id);
 
