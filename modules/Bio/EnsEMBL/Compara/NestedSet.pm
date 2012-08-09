@@ -385,7 +385,7 @@ sub sorted_children {
 
 =head2 get_all_nodes
 
-  Arg 1       : hashref $node_hash [used for recursivity, do not use it!]
+  Arg 1       : arrayref $node_array [used for recursivity, do not use it!]
   Example     : my $all_nodes = $root->get_all_nodes();
   Description : Returns this and all underlying sub nodes
   ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
@@ -397,23 +397,14 @@ sub sorted_children {
 
 sub get_all_nodes {
   my $self = shift;
-  my $node_hash = shift;
+  my $node_array = shift || [];
 
-  my $toplevel = 0;
-  unless($node_hash) {
-   $node_hash = {};
-   $toplevel =1;
-  }
-
-  $node_hash->{$self->obj_id} = $self; 
+  push @$node_array, $self;
   foreach my $child (@{$self->children}) {
-    $child->get_all_nodes($node_hash);
+    $child->get_all_nodes($node_array);
   }
 
-  if ($toplevel) {
-    return [values(%$node_hash)];
-  }
-  return undef;
+  return $node_array;
 }
 
 
@@ -447,10 +438,9 @@ sub get_all_nodes_by_tag_value {
 
 =head2 get_all_subnodes
 
-  Arg 1       : hashref $node_hash [used for recursivity, do not use it!]
-  Example     : my $all_nodes = $root->get_all_nodes();
+  Example     : my @all_subnodes = $root->get_all_subnodes();
   Description : Returns all underlying sub nodes
-  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  ReturnType  : array of Bio::EnsEMBL::Compara::NestedSet objects
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -459,20 +449,12 @@ sub get_all_nodes_by_tag_value {
 
 sub get_all_subnodes {
   my $self = shift;
-  my $node_hash = shift;
 
-  my $toplevel = 0;
-  unless($node_hash) {
-   $node_hash = {};
-   $toplevel =1;
-  }
-
+  my @array;
   foreach my $child (@{$self->children}) {
-    $node_hash->{$child->obj_id} = $child; 
-    $child->get_all_subnodes($node_hash);
+    push @array, @{$child->get_all_nodes};
   }
-  return values(%$node_hash) if($toplevel);
-  return undef;
+  return @array;
 }
 
 =head2 get_all_ancestors
