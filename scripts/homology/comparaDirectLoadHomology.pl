@@ -1,6 +1,7 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -96,17 +97,15 @@ sub load_orthos {
     }
 
     #get MethodLinkSpeciesSet
-    my $mlss = $self->{'comparaDBA'}
-                    ->get_MethodLinkSpeciesSetAdaptor
-                    ->fetch_by_method_link_type_GenomeDBs(
-                        "ENSEMBL_ORTHOLOGUES",
-                        [$gene1->genome_db,$gene2->genome_db]);
+    my $gdbs = [$gene1->genome_db];
+    push @$gdbs, $gene2->genome_db if $gene1->genome_db->dbID ne $gene2->genome_db->dbID;
+    my $mlss = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', $gdbs);
     if(!defined($mlss)) {
       # create method_link_species_set
-
-      $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-      $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
-      $mlss->species_set([$gene1->genome_db,$gene2->genome_db]);
+      $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+        -method => $self->{'comparaDBA'}->get_MethodAdaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES'),
+        -species_set_obj => $self->{'comparaDBA'}->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $gdbs )
+        );
       $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
     }
             
