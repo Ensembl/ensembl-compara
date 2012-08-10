@@ -25,7 +25,7 @@ use Text::Wrap;
 use Time::HiRes           qw(gettimeofday);
 use URI::Escape           qw(uri_escape uri_unescape);
 
-our $failed_modules;
+my %FAILED_MODULES;
 
 sub new {
   my $class = shift;
@@ -115,18 +115,25 @@ sub dynamic_use {
     my @caller = caller(0);
     my $error_message = "Dynamic use called from $caller[1] (line $caller[2]) with no classname parameter\n";
     warn $error_message;
-    $failed_modules->{$classname} = $error_message;
+    $FAILED_MODULES{$classname} = $error_message;
     return 0;
   }
   
-  return 0 if exists $failed_modules->{$classname};
+  return 0 if exists $FAILED_MODULES{$classname};
   
   my ($parent_namespace, $module) = $classname =~ /^(.*::)(.*)$/ ? ($1, $2) : ('::', $classname);
-  
-  no strict 'refs';
-  
-  return 1 if $parent_namespace->{$module.'::'} && %{$parent_namespace->{$module.'::'}||{}}; # return if already used 
-  
+
+  {
+    no strict 'refs';
+    if ($parent_namespace->{$module.'::'}) {
+      my %namespace_hash = %{$parent_namespace->{$module.'::'} || {}};
+      foreach my $key (keys %namespace_hash) {
+        $namespace_hash{$key} =~ /$_/ and delete $namespace_hash{$key} and last for keys %FAILED_MODULES;
+      }
+      return 1 if keys %namespace_hash; # return if already used 
+    }
+  }
+
   eval "require $classname";
   
   if ($@) {
@@ -135,7 +142,7 @@ sub dynamic_use {
     
     cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~ /^Can't locate $path/;
     
-    $failed_modules->{$classname} = $@ || 'Unknown failure when dynamically using module';
+    $FAILED_MODULES{$classname} = $@;
     return 0;
   }
   
@@ -156,7 +163,7 @@ sub dynamic_use_fallback {
 # Return error message cached if use previously failed
 sub dynamic_use_failure {
   my ($self, $classname) = @_;
-  return $failed_modules->{$classname};
+  return $FAILED_MODULES{$classname};
 }
 
 sub get_module_names {
