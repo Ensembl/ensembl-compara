@@ -1,8 +1,8 @@
+#!/usr/bin/env perl
 
-#use strict;
+use strict;
 use warnings;
 use Data::Dumper;
-use Bio::AlignIO;
 
 use Bio::EnsEMBL::Registry;
 
@@ -17,7 +17,7 @@ my $species_list = {"rat"=>1, "cow"=>1};
 # Auto-configure the registry
 Bio::EnsEMBL::Registry->load_registry_from_db(
 	-host=>'ensembldb.ensembl.org', -user=>'anonymous', 
-	-port=>'5306', -db_version=>'62');
+	-port=>'5306', -db_version=>'68');
 
 my $member_adaptor = Bio::EnsEMBL::Registry->get_adaptor( "Multi", "compara", "Member");
 my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "Compara", "Homology");
@@ -92,7 +92,7 @@ sub _recursive_get_orthocluster {
 
 	# Don't go further if we have already visited the gene
 	return 1 if ($tmp_set->{$gene->dbID});
-	$tmp_set->{$gene->dbID} = $gene;
+	$tmp_set->{$gene->dbID} = 1;
 
 	# Stores the current gene
 	my $name = $gdbid2name{$gene->genome_db_id};
@@ -106,7 +106,7 @@ sub _recursive_get_orthocluster {
 		next if $gene->genome_db_id eq $genome_db_id;
 
 		# list of orthologues
-		my $homologies = $homology_adaptor->fetch_all_by_Member_MethodLinkSpeciesSet($gene, $mlss_cache{$gene->genome_db_id}->{$genome_db_id});
+		my $homologies = $homology_adaptor->fetch_all_by_Member_MethodLinkSpeciesSet($gene->gene_member, $mlss_cache{$gene->genome_db_id}->{$genome_db_id});
 
 		# stop iteration if an unwanted species is found
 		return 0 if (($genomedbid_list{$gene->genome_db_id} == 0) and (scalar(@{$homologies}) != 0));
@@ -115,7 +115,7 @@ sub _recursive_get_orthocluster {
 
 			# to avoid using the same homology twice
 			next if($ortho_set->{$homology->dbID});
-			$ortho_set->{$homology->dbID} = $homology;
+			$ortho_set->{$homology->dbID} = 1;
 
 			foreach my $member (@{$homology->get_all_Members}) {
 				next if($member->dbID == $gene->dbID); #skip query gene
