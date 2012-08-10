@@ -1,20 +1,17 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use Getopt::Long;
-use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Homology;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $usage = "
 $0 options input_data_file
   [--help]                      this menu
-   --dbname string              (e.g. compara23) one of the compara database Bio::EnsEMBL::Registry aliases
-   --species string             (e.g. human) one of the species database Bio::EnsEMBL::Registry aliases
+   --species string             (e.g. human) one of the species database (GenomeDB name)
   [--method_link_type string]   the source name of the homology to be loaded (default is ENSEMBL_PARALOGUES);
   [--description string]        the description of the homology to be loaded (default is YoungParalogues)
-  [--reg_conf filepath]         the Bio::EnsEMBL::Registry configuration file. If none given, 
-                                the one set in ENSEMBL_REGISTRY will be used if defined, if not
-                                ~/.ensembl_init will be used.
 
 The format of the input file is 22 tab-separated columns. One homology per line.
 dn ds n s lnl threshold_on_ds \
@@ -39,14 +36,13 @@ my $help = 0;
 my $method_link_type = "ENSEMBL_PARALOGUES";
 my $description = "YoungParalogues";
 my $species;
-my ($dbname,$reg_conf);
+my $compara_url;
 
 GetOptions('help' => \$help,
-           'dbname=s' => \$dbname,
            'species=s' => \$species,
            'method_link_type=s' => \$method_link_type,
            'description=s' => \$description,
-           'reg_conf=s' => \$reg_conf);
+           'compara_url=s' => \$compara_url);
 
 $! = 1;
 
@@ -55,23 +51,20 @@ unless (scalar @ARGV) {
   exit 0;
 }
 
-# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
-# if no reg_conf file is given.
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url => $compara_url);
+my $ha = $compara_dba->get_HomologyAdaptor;
+my $ma = $compara_dba->get_MemberAdaptor;
+my $gdba = $compara_dba->get_GenomeDBAdaptor;
+my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-my $ha = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Homology');
-my $ma = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Member');
-my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB');
-my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet');
-
-my $Binomial = Bio::EnsEMBL::Registry->get_adaptor($species,'core','MetaContainer')->get_Species->binomial;
-my $gdb = $gdba->fetch_by_name_assembly($Binomial);
+my $gdb = $gdba->fetch_by_name_assembly($species);
 
 my $idx = 1;
 
-my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-$mlss->species_set([$gdb]);
-$mlss->method_link_type($method_link_type);
+my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+    -method => $compara_dba->get_MethodAdaptor->fetch_by_type($method_link_type),
+    -species_set_obj => $compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs([$gdb]),
+);
 $mlssa->store($mlss);
 
 while (<>) {
@@ -112,7 +105,6 @@ while (<>) {
   $idx++;
   $homology->method_link_species_set($mlss);
   $homology->stable_id($stable_id);
-  $homology->method_link_type($method_link_type);
   $homology->description($description);
   $homology->dn($dn,0);
   $homology->ds($ds,0);
