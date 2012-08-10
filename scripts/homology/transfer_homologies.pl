@@ -1,19 +1,21 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
 use Getopt::Long;
-use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-my ($method_link_species_set_id, $method_link_id, $reg_conf);
+my ($method_link_species_set_id, $method_link_id);
+my ($source_compara_url, $destination_compara_url);
 
 GetOptions('method_link_species_set_id=i' => \$method_link_species_set_id,
            'method_link_id=i' => \$method_link_id,
-           'reg_conf=s' => \$reg_conf);
+           'source=s' => \$source_compara_url,
+           'destination=s' => \$destination_compara_url,
+);
 
-Bio::EnsEMBL::Registry->load_all($reg_conf);
-
-unless (defined $reg_conf) {
-  print STDERR ("You need to specify a registry file with --reg_conf");
+unless (defined $source_compara_url and defined $destination_compara_url) {
+  print STDERR ("You need to specify the source and destination Compara URLs\n");
   exit 1;
 }
 
@@ -27,14 +29,17 @@ if (defined $method_link_id && defined $method_link_species_set_id) {
   exit 3;
 }
 
-my $source_mlssa =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','MethodLinkSpeciesSet');
-my $source_mla   =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Method');
-my $source_ha =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Homology');
-my $source_ma =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Member');
+my $source_dba      = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url => $source_compara_url);
+my $destination_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url => $destination_compara_url);
 
-my $destination_mlssa =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara','compara','MethodLinkSpeciesSet');
-my $destination_ha =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara','compara','Homology');
-my $destination_ma =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara','compara','Member');
+my $source_mlssa = $source_dba->get_MethodLinkSpeciesSetAdaptor;
+my $source_mla   = $source_dba->get_MethodAdaptor;
+my $source_ha    = $source_dba->get_HomologyAdaptor;
+my $source_ma    = $source_dba->get_MemberAdaptor;
+
+my $destination_mlssa = $destination_dba->get_MethodLinkSpeciesSetAdaptor;
+my $destination_ha    = $destination_dba->get_HomologyAdaptor;
+my $destination_ma    = $destination_dba->get_MemberAdaptor;
 
 my $mlss_aref;
 
