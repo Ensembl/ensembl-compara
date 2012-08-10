@@ -722,7 +722,7 @@ sub _normalise_arguments {
 
   # create new node if intended
   if (ref $arg1 eq 'HASH') {
-    throw exception({'type' => 'DOMException', 'message' => "Node can not be created: 'node_name' not provided for new node", 'ignore' => 1}) unless exists $arg1->{'node_name'};
+    throw exception('DOMException', "Node can not be created: 'node_name' not provided for new node") unless exists $arg1->{'node_name'};
     $arg1 = $arg1->{'node_name'} eq 'text' ? $self->dom->create_text_node($arg1->{'text'}) : $self->dom->create_element(delete $arg1->{'node_name'}, $arg1);
   }
   return ($self, $arg1);
@@ -746,7 +746,7 @@ sub _append_child {
     push @{$self->{'_child_nodes'}}, $child;
     return $child;
   }
-  throw exception({'type' => 'DOMException', 'message' => 'Node cannot be inserted at the specified point in the hierarchy. '.$reason, 'ignore' => 1});
+  throw exception('DOMException', 'Node cannot be inserted at the specified point in the hierarchy. '.$reason);
 }
 
 1;
