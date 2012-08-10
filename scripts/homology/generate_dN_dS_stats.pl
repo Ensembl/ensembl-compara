@@ -20,26 +20,21 @@ my $species_pair = shift @ARGV;
 
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
                                                      -user   => $dbuser,
+                                                     -port   => 5306,
                                                      -dbname   => $dbname);
 
-open SP, $species_pair || die "Can't open $species_pair\n";
+my @desc = qw(ortholog_one2one apparent_ortholog_one2one ortholog_one2many ortholog_many2many within_species_paralog between_species_paralog possible_ortholog);
 
-my ($taxon_id1, $taxon_id2);
-
-while (<SP>) {
-  ($taxon_id1, $taxon_id2) = split;
-}
-
-close SP;
-
-my $prefix = $taxon_id1 . "_" . $taxon_id2 . "_";
 my %pair_count;
 
-my $sql = "select \"All\" as description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\"";
+foreach my $method_link_species_set_id (@ARGV) {
+    print "**** $method_link_species_set_id ****\n";
+
+my $sql = "select \"All\" as description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where method_link_species_set_id = $method_link_species_set_id";
 my $stats = calculate_average_and_other_things($db,$sql);
 $pair_count{$stats->[0]->[0]} = $stats->[0]->[-1];
 
-$sql = "select description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\" group by description order by description desc";
+$sql = "select description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where method_link_species_set_id = $method_link_species_set_id group by description order by description desc";
 foreach my $res (@{calculate_average_and_other_things($db,$sql)}) {
   $pair_count{$res->[0]} = $res->[-1]; 
   push @{$stats}, $res;
@@ -48,39 +43,25 @@ foreach my $res (@{calculate_average_and_other_things($db,$sql)}) {
 print_stats($stats);
 
 print "\nMedian calculation for each category\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" order by ds asc";
+$sql = "select ds from homology where method_link_species_set_id = $method_link_species_set_id and ds is not null order by ds asc";
 my $median_all = calculate_median($db,$sql);
 print "All $median_all\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"SEED\" order by ds asc";
-my $median_seed = calculate_median($db,$sql);
-print "SEED $median_seed\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"PIP\" order by ds asc";
-my $median_pip = calculate_median($db,$sql);
-print "PIP $median_pip\n";
 
-my $ds_threshold = $median_all*2;
-print "\nApplying All pairs median*2 threshold, keeping pair when ds <= $ds_threshold\n";
-$sql = "select \"All\" as description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\" and ds<=$ds_threshold";
-$stats = calculate_average_and_other_things($db,$sql);
-$sql = "select description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\" and ds<=$ds_threshold group by description order by description desc";
-foreach my $res (@{calculate_average_and_other_things($db,$sql)}) {
-  push @{$stats}, $res;
+my %med = ('ALL' => $median_all);
+foreach my $cat (@desc) {
+    $sql = "select ds from homology where method_link_species_set_id = $method_link_species_set_id and ds is not null and description=\"$cat\" order by ds asc";
+    my $median_seed = calculate_median($db,$sql);
+    next unless $median_seed;
+    print "$cat $median_seed\n";
+    $med{$cat} = $median_seed;
 }
 
-print_stats($stats);
-print "\nMedian calculation for each category\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\"  and ds<=$ds_threshold order by ds asc";
-print "All ",calculate_median($db,$sql),"\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"SEED\"  and ds<=$ds_threshold order by ds asc";
-print "SEED ",calculate_median($db,$sql),"\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"PIP\"  and ds<=$ds_threshold order by ds asc";
-print "PIP ",calculate_median($db,$sql),"\n";
-
-$ds_threshold = $median_seed*2;
-print "\nApplying SEED median*2 threshold, keeping pair when ds <= $ds_threshold\n";
-$sql = "select \"All\" as description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\" and ds<=$ds_threshold";
+foreach my $catata (keys %med) {
+my $ds_threshold = $med{$catata}*2;
+print "\nApplying $catata pairs median*2 threshold, keeping pair when ds <= $ds_threshold\n";
+$sql = "select \"All\" as description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where method_link_species_set_id = $method_link_species_set_id and ds is not null and ds<=$ds_threshold";
 $stats = calculate_average_and_other_things($db,$sql);
-$sql = "select description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\" and ds<=$ds_threshold group by description order by description desc";
+$sql = "select description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where method_link_species_set_id = $method_link_species_set_id and ds is not null and ds<=$ds_threshold group by description order by description desc";
 foreach my $res (@{calculate_average_and_other_things($db,$sql)}) {
   push @{$stats}, $res;
 }
@@ -88,34 +69,20 @@ foreach my $res (@{calculate_average_and_other_things($db,$sql)}) {
 print_stats($stats);
 
 print "\nMedian calculation for each category\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\"  and ds<=$ds_threshold order by ds asc";
+$sql = "select ds from homology where method_link_species_set_id = $method_link_species_set_id and ds is not null and ds<=$ds_threshold order by ds asc";
 print "All ",calculate_median($db,$sql),"\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"SEED\"  and ds<=$ds_threshold order by ds asc";
-print "SEED ",calculate_median($db,$sql),"\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"PIP\"  and ds<=$ds_threshold order by ds asc";
-print "PIP ",calculate_median($db,$sql),"\n";
-
-$ds_threshold = $median_pip*2;
-print "\nApplying PIP pairs median*2 threshold, keeping pair when ds <= $ds_threshold\n";
-$sql = "select \"All\" as description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\" and ds<=$ds_threshold";
-$stats = calculate_average_and_other_things($db,$sql);
-$sql = "select description,min(ds) as min,max(ds) as max,sum(ds)/count(*) as mean,count(*) as count from homology where stable_id like \"$prefix%\" and ds<=$ds_threshold group by description order by description desc";
-foreach my $res (@{calculate_average_and_other_things($db,$sql)}) {
-  push @{$stats}, $res;
+foreach my $cat (@desc) {
+    $sql = "select ds from homology where method_link_species_set_id = $method_link_species_set_id and description=\"$cat\" and ds is not null and ds<=$ds_threshold order by ds asc";
+    my $median_seed = calculate_median($db,$sql);
+    print "$cat ",$median_seed,"\n" if $median_seed;
+}
 }
 
-print_stats($stats);
-print "\nMedian calculation for each category\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\"  and ds<=$ds_threshold order by ds asc";
-print "All ",calculate_median($db,$sql),"\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"SEED\"  and ds<=$ds_threshold order by ds asc";
-print "SEED ",calculate_median($db,$sql),"\n";
-$sql = "select ds from homology where stable_id like \"$prefix%\" and description=\"PIP\"  and ds<=$ds_threshold order by ds asc";
-print "PIP ",calculate_median($db,$sql),"\n";
+}
 
 sub calculate_average_and_other_things {
   my ($db, $sql) = @_;
-  my $sth = $db->prepare($sql);
+  my $sth = $db->dbc->prepare($sql);
   $sth->execute;
 
   my %column;
@@ -132,7 +99,7 @@ sub calculate_average_and_other_things {
 sub calculate_median {
   my ($db, $sql) = @_;
   
-  my $sth = $db->prepare($sql);
+  my $sth = $db->dbc->prepare($sql);
   $sth->execute;
   
   my %column;
@@ -147,6 +114,7 @@ sub calculate_median {
   
   my $median;
 
+  return unless scalar(@ds_values);
   if (scalar @ds_values%2 == 0) {
 #    print STDERR "modulo1 ",scalar @ds_values%2,"\n";
     $median = ($ds_values[scalar @ds_values/2 -1] + $ds_values[scalar @ds_values/2])/2;
