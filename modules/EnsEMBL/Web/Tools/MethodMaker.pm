@@ -61,9 +61,9 @@ sub copy_method {
 
   while (@_) {
     my ($old_method, $new_method) = splice @_, 0, 2;
-    
-    next if $class->can($old_method) && $class->can($new_method);
-    
+
+    next unless $class->can($old_method) xor $class->can($new_method); # ignore if both methods exist, or none of them exists
+
     no strict qw(refs);
     *{"${class}::${new_method}"} = \&{"${class}::${old_method}"};
   }
