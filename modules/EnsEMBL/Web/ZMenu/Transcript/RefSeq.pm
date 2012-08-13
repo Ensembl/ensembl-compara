@@ -33,7 +33,7 @@ sub content {
   });
 
   if ($translation) {
-    $self->delete_entry_by_type('Protein product');
+    $self->delete_entry_by_type('Protein');
     my $stable_id = $translation->stable_id;
     $self->add_entry({
       type     => 'RefSeq protein',

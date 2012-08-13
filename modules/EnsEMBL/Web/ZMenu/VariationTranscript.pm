@@ -38,7 +38,7 @@ sub content {
   
   if ($protein_id) {
     $self->add_entry({
-      type       => 'Protein product',
+      type       => 'Protein',
       label_html => $protein_id,
       link       => $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $trans_id })
     });

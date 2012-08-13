@@ -70,7 +70,7 @@ sub content {
   # Protein coding transcripts only
   if ($translation) {
     $self->add_entry({
-      type     => 'Protein product',
+      type     => 'Protein',
       label    => $translation->stable_id || $stable_id,
       link     => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
       position => 3
