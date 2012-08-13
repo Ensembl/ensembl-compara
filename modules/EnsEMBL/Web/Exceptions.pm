@@ -15,9 +15,12 @@ package EnsEMBL::Web::Exceptions;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Exception;
 
-my %EXCEPTION_LIST;
+my @EXPORT          = qw(try catch throw exception);
+my $EXCEPTION_BASE  = qq(EnsEMBL::Web::Exception);
+my %EXCEPTION_LIST  = ();
 
 sub import {
   ## Imports the functions try, catch, throw & exception to the caller and registers any exceptions if provided in the arguments
@@ -28,13 +31,13 @@ sub import {
   {
     # import functions
     no strict qw(refs);
-    *{"${caller}::${_}"} = \&{"${class}::${_}"} for qw(try catch throw exception);
+    *{"${caller}::${_}"} = \&{"${class}::${_}"} for @EXPORT;
   }
 
   # register exceptions
   while (@_) {
     my ($key, $exception) = splice @_, 0, 2;
-    $EXCEPTION_LIST{"${caller}::${key}"} = [ ref $exception ? ref $exception eq 'ARRAY' ? @$exception : (map $exception->{$_}, qw(type message)) : ($exception, '') ] if $key;
+    $EXCEPTION_LIST{$caller}{$key} = ref $exception ? ref $exception eq 'ARRAY' ? $exception : [ map $exception->{$_}, qw(type message) ] : [ '', $exception ] if $key;
   }
 }
 
@@ -43,7 +46,7 @@ sub try (&$) {
   my ($try, $catch) = @_;
   eval { &$try };
   if ($@) {
-    local $_ = ref $@ && UNIVERSAL::isa($@, 'EnsEMBL::Web::Exception') ? $@ : EnsEMBL::Web::Exception->_new($@);
+    local $_ = ref $@ && UNIVERSAL::isa($@, $EXCEPTION_BASE) ? $@ : $EXCEPTION_BASE->new($@);
     local $@ = undef;
     &$catch;
   }
@@ -64,24 +67,52 @@ sub throw {
 sub exception {
   ## To be used as an argument to &throw
   ## Creates and returns an Exception object
-  ## If one argument is provided, it should be either a registered code or message; if two, they are considered to be type and message - OR preferrably provide hashref to avoid vagueness
   ## @param Hashref with keys:
   ##  - type    Exception type
   ##  - message Exception message
   ##  - data    Any extra data to be saved inside the exception object that needs to be retrieved while catching the exception
-  ##  OR (String) Short code that was registered with the module against a particular exception while importing it
+  ##  OR (String) Unique code that was used for a particular exception while importing this module
   ##  OR (String) Exception type
   ## @param (String) Exception message (only if first argument is a string for exception type)
-  my ($type, $message) = @_;
+  ## @param Data (only if first argument is a string for exception type)
+  my ($type, $message, $data) = @_;
   if (scalar @_ == 1 && $type) {
+
+    # if it's a Hash - easy job
     if (ref $type eq 'HASH') {
-      ($type, $message) = map {$type->{$_}} qw(type message);
-    }
-    elsif (exists $EXCEPTION_LIST{$type}) {
-      ($type, $message) = @{$EXCEPTION_LIST{$type}};
+      ($type, $message, $data) = map {$type->{$_}} qw(type message data);
+    
+    # if not a hash, check for the registered exceptions first
+    } else {
+
+      my $caller = caller;
+
+      # if exception registered in the caller class
+      if (exists $EXCEPTION_LIST{$caller}{$type}) {
+        ($type, $message) = @{$EXCEPTION_LIST{$caller}{$type}};
+
+      # if exception not registered, look up for any exception registered with the same code in caller's parent classes
+      } else {
+        my %exception_list = %EXCEPTION_LIST;
+        for (keys %exception_list) {
+          delete $exception_list{$_} unless exists $exception_list{$_}{$type} && $caller->isa($_);
+        }
+        if (my @ancestor_classes = keys %exception_list) {
+          foreach my $ancestor_class (@ancestor_classes) {
+            $ancestor_class ne $_ and $ancestor_class->isa($_) and delete $exception_list{$_} for keys %exception_list;
+          }
+          ($type, $message) = @{$exception_list{$_}{$type}} and last for keys %exception_list;
+        } else {
+          ($type, $message) = ('', $type);
+        }
+      }
     }
   }
-  return EnsEMBL::Web::Exception->_new({'type' => $type, 'message' => $message});
+
+  my $exception_class = $EXCEPTION_BASE;
+     $exception_class = EnsEMBL::Web::Root->dynamic_use_fallback(reverse map {$exception_class = "$exception_class$_"} '', split(/(?=::)/, "::$type"));
+
+  return $exception_class->new({'type' => $type, 'message' => $message, 'data' => $data});
 }
 
 1;
