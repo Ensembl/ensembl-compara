@@ -33,9 +33,6 @@ are CAFETreeMember objects.
 
   Bio::EnsEMBL::Compara::CAFETreeNode
   +- Bio::EnsEMBL::Compara::NestedSet
-   +- Bio::EnsEMBL::Compara::Graph::Node
-    +- Bio::EnsEMBL::Compara::Graph::CGObject
-
 
 =head1 APPENDIX
 
