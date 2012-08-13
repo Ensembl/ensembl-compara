@@ -63,6 +63,13 @@ sub content {
   # Get all slices for the gene
   my ($slices, $slice_length) = $self->get_slices($slice, $align_param, $species, undef, undef, $cdb);
   
+  if (scalar @$slices == 1) {
+    $warnings = $self->_info(
+      'No alignment in this region',
+      'There is no alignment between the selected species in this region'
+    ) . $warnings;
+  }
+  
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     my $base_url = $self->ajax_url('sub_slice', { padding => $padding, length => $slice_length });
