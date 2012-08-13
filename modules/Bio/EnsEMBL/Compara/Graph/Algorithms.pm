@@ -25,14 +25,8 @@ package Bio::EnsEMBL::Compara::Graph::Algorithms;
 
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Argument;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::Compara::Graph::CGObject;
-use Bio::EnsEMBL::Compara::Graph::Node;
-use Bio::EnsEMBL::Compara::Graph::Link;
-
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
 
 ###################################################
 #

@@ -269,7 +269,7 @@ sub fetch_default_for_Member {
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     
-    return $self->generic_fetch($constraint, $join);
+    return $self->generic_fetch($constraint, $join)->[0];
 }
 
 

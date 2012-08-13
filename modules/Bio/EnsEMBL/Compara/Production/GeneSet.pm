@@ -52,16 +52,15 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::GeneSet;
 
 use strict;
-use Bio::EnsEMBL::Compara::Member;
-
-use Bio::EnsEMBL::Compara::Graph::CGObject;
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
 
 
-sub init {
-  my $self = shift;
-  $self->SUPER::init;
-  $self->clear;
+sub new {
+  my ($class, @args) = @_;
+  ## Allows to create a new object from an existing one with $object->new
+  $class = ref($class) if (ref($class));
+  my $self = {};
+  bless $self,$class;
+  $self->clear;  
   return $self;
 }
 
