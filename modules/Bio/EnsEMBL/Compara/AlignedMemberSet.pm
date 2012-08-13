@@ -261,7 +261,7 @@ sub get_SimpleAlign {
         next if(!$seqstr);
 
         # Sequence name
-        my $seqID = defined $id_type ? ($id_type eq 'SEQ' ? $member->sequence_id : $member->member_id) : $member->stable_id;
+        my $seqID = $id_type ? ($id_type eq 'SEQ' ? $member->sequence_id : $member->member_id) : $member->stable_id;
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
 
