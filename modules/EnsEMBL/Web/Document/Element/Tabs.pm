@@ -138,11 +138,11 @@ sub content {
     my $name         = encode_entities($self->strip_HTML($entry->{'caption'}));
     my ($short_name) = split /\b/, $name;
     my $constant     = $entry->{'constant'} ? ' class="constant"' : '';
-    my $short_link   = qq{<a href="$entry->{'url'}" title="$name"$constant>$short_name</a>};
-    my $long_link    = qq{<a href="$entry->{'url'}"$constant>$name</a>};
+    my $short_link   = qq(<a href="$entry->{'url'}" title="$name"$constant>$short_name</a>);
+    my $long_link    = qq(<a href="$entry->{'url'}"$constant>$name</a>);
     
     if ($entry->{'disabled'}) {
-      my $span = $entry->{'dropdown'} ? qq{<span class="disabled toggle" title="$entry->{'dropdown'}">} : '<span class="disabled">';
+      my $span = $entry->{'dropdown'} ? qq(<span class="disabled toggle" title="$entry->{'dropdown'}">) : '<span class="disabled">';
       $_ = qq{$span$name</span>} for $short_link, $long_link;
     }
     
@@ -151,11 +151,11 @@ sub content {
       # Hide the toggle arrow if there are no bookmarks or history items for it.
       my @hide = $entry->{'type'} eq 'Location' && !($self->{'history'}{'location'} || $self->{'bookmarks'}{'location'}) ? (' empty', ' style="display:none"') : ();
       $history = 1;
-      $_       = qq{<span class="dropdown$hide[0]">$_<a class="toggle" href="#" rel="$entry->{'dropdown'}"$hide[1]>&#9660;</a></span>} for $short_link, $long_link;
+      $_       = qq(<span class="dropdown$hide[0]">$_<a class="toggle" href="#" rel="$entry->{'dropdown'}"$hide[1]>&#9660;</a></span>) for $short_link, $long_link;
     }
     
-    $short_tabs .= qq{<li class="$entry->{'class'} short_tab"$style[0]>$short_link</li>};
-    $long_tabs  .= qq{<li class="$entry->{'class'} long_tab"$style[1]>$long_link</li>};
+    $short_tabs .= qq(<li class="$entry->{'class'} short_tab"$style[0]>$short_link</li>);
+    $long_tabs  .= qq(<li class="$entry->{'class'} long_tab"$style[1]>$long_link</li>);
   }
   
   $content  = $short_tabs . $long_tabs;
@@ -219,7 +219,7 @@ sub history {
     $html{$type} .= sprintf qq{<h4>%s bookmarks</h4><ul class="bookmarks">$bookmarks</ul>}, ucfirst $type;
   }
   
-  $html{$_} = qq{<div class="dropdown history $_">$html{$_}</div>} for keys %html;
+  $html{$_} = qq(<div class="dropdown history $_">$html{$_}</div>) for keys %html;
   
   $html{'location'} ||= '
     <div class="dropdown history location">
