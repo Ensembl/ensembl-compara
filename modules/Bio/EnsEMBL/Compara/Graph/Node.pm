@@ -45,25 +45,39 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::Graph::Node;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Compara::Graph::Link;
-use Bio::EnsEMBL::Compara::Graph::CGObject;
 use warnings;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument;
+
+use Bio::EnsEMBL::Compara::Graph::Link;
+
+use base ('Bio::EnsEMBL::Compara::Taggable');
+
 
 #################################################
 # creation methods
 #################################################
 
-#new and alloc method in superclass
+sub new {
+  my ($class, @args) = @_;
+  ## Allows to create a new object from an existing one with $object->new
+  $class = ref($class) if (ref($class));
+  my $self = {};
+  bless $self,$class;
+  $self->{'_node_id'} = undef;
+  $self->{'_adaptor'} = undef;
+  return $self;
+}
 
 sub copy {
   my $self = shift;
   
-  my $mycopy = $self->SUPER::copy;
-  bless $mycopy, "Bio::EnsEMBL::Compara::Graph::Node";
+  my $mycopy = new Bio::EnsEMBL::Compara::Graph::Node;
+
+  if($self->{'_tags'}) {
+    %{$mycopy->{'_tags'}} = %{$self->{'_tags'}};
+  }
   return $mycopy;
 }
 
@@ -123,6 +137,39 @@ sub node_id {
   $self->{'_node_id'} = shift if(@_);
   return $self unless(defined($self->{'_node_id'}));
   return $self->{'_node_id'};
+}
+
+=head2 adaptor
+
+  Arg [1]    : (opt.) subcalss of Bio::EnsEMBL::DBSQL::BaseAdaptor
+  Example    : my $object_adaptor = $object->adaptor();
+  Example    : $object->adaptor($object_adaptor);
+  Description: Getter/Setter for the adaptor this object uses for database
+               interaction.
+  Returntype : subclass of Bio::EnsEMBL::DBSQL::BaseAdaptor
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub adaptor {
+  my $self = shift;
+  $self->{'_adaptor'} = shift if(@_);
+  return $self->{'_adaptor'};
+}
+
+sub store {
+  my $self = shift;
+  throw("adaptor must be defined") unless($self->adaptor);
+  $self->adaptor->store($self) if $self->adaptor->can("store");
+}
+
+sub name {
+  my $self = shift;
+  my $value = shift;
+  if(defined($value)) { $self->add_tag('name', $value); }
+  else { $value = $self->get_tagvalue('name'); }
+  return $value;
 }
 
 
