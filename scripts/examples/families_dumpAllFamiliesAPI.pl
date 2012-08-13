@@ -5,7 +5,7 @@
 # It is more of an example of how to use the API to do things, but it is not optimal for dumping all and everything.
 
 use strict;
-use warnings
+use warnings;
 use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 
