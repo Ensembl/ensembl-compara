@@ -47,9 +47,8 @@ package Bio::EnsEMBL::Compara::Graph::Link;
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Compara::Graph::CGObject;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
+use base ('Bio::EnsEMBL::Compara::Taggable');
 
 #################################################
 # Factory methods
@@ -78,7 +77,7 @@ sub new {
   throw("arg2 must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node2]")
         unless(defined($node2) and $node2->isa('Bio::EnsEMBL::Compara::Graph::Node'));
 
-  my $self = $class->SUPER::new;
+  my $self = {};
   bless $self, "Bio::EnsEMBL::Compara::Graph::Link";
 
   $self->{'_link_node1'} = $node1;
