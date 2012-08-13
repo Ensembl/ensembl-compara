@@ -5,7 +5,7 @@ package EnsEMBL::Web::Exception;
 ### Description:
 ### Exception object with type, message, stack trace and some optional extra data saved inside the blessed hash
 ### If used as a string, returns all information about the Exception object in formatted string
-### Used along with EnsEMBL::Web::Exceptions module to throw and catch exceptions
+### Use this along with EnsEMBL::Web::Exceptions module to throw and catch exceptions using try catch syntax
 ### This class can be inherited, but is recommended only if the handle method needs to be overridden
 
 ### In Ideal conditions:
@@ -21,6 +21,31 @@ use overload qw("" to_string);
 
 use HTML::Entities qw(encode_entities);
 
+sub new {
+  ## @constructor
+  ## Creates a new exception object
+  ## @note Use 'throw exception' syntax provided by EnsEMBL::Web::Exceptions instead of this method to throw an exception
+  ## @param Hashref with keys: type, message and data
+  my ($class, $params) = @_;
+
+  $params = {'message' => $params} unless ref $params;
+
+  # build and save stack trace
+  my $i = 0;
+  my $stack = [];
+  while (my @caller = caller($i++)) { ## TODO - check rules followed by carp croak
+    next if $caller[0] eq 'EnsEMBL::Web::Exceptions' || $caller[3] =~ /^EnsEMBL::Web::Exceptions::/ || UNIVERSAL::isa($caller[0], __PACKAGE__);
+    push @$stack, [splice @caller, 0, 4];
+  }
+
+  return bless {
+    '_type'    => $params->{'type'}     || 'UnknownException',
+    '_message' => $params->{'message'}  || '',
+    '_data'    => $params->{'data'}     || undef,
+    '_stack'   => $stack
+  }, $class;
+}
+
 sub handle {
   ## Handles the exception in a desired way
   ## Override this in the child class to provide better exception handling
@@ -29,17 +54,17 @@ sub handle {
 }
 
 sub type {
-  ## Gets the type tags of the Exception
-  ## @return Arrayref
+  ## Gets the type of the Exception
+  ## @return String
   return shift->{'_type'};
 }
 
 sub isa {
-  ## Checks whether the exception belongs to a given type (ie. it contains the given type tag)
+  ## Checks whether the exception belongs to a given type
   ## @param Type (or class) to be checked against
-  ## @return True if the exception object contains the given type tag or if it is inherited from the given class, false otherwise
+  ## @return True if the exception object contains the given type in its type string or if it is inherited from the given class, false otherwise
   my ($self, $type) = @_;
-  $type eq $_ and return 1 for @{$self->tags};
+  return 1 if sprintf('::%s::', $self->type) =~ /::$type::/;
   return $self->SUPER::isa($type);
 }
 
@@ -74,31 +99,6 @@ sub to_string {
   ## Converts the Exception object into a human-readable string
   my $self = shift;
   return sprintf("Uncaught exception '%s' with message '%s'\n  %s", $self->{'_type'}, $self->{'_message'}, $self->stack_trace);
-}
-
-sub _new {
-  ## @private
-  ## @constructor
-  ## Creates a new exception object
-  ## Use 'throw exception' syntax provided by EnsEMBL::Web::Exceptions instead of this method
-  my ($class, $params) = @_;
-
-  $params = {'message' => $params} unless ref $params;
-
-  # build and save stack trace
-  my $i = 0;
-  my $stack = [];
-  while (my @caller = caller($i++)) { ## TODO - check rules followed by carp croak
-    next if $caller[0] eq 'EnsEMBL::Web::Exceptions' || $caller[3] =~ /^EnsEMBL::Web::Exceptions::/;
-    push @$stack, [splice @caller, 0, 4];
-  }
-
-  return bless {
-    '_type'    => $params->{'type'} ? ref $params->{'type'} ? $params->{'type'} : [ $params->{'type'} ] : ['UnknownException'],
-    '_message' => $params->{'message'}  || '',
-    '_data'    => $params->{'data'}     || undef,
-    '_stack'   => $stack
-  }, $class;
 }
 
 1;
