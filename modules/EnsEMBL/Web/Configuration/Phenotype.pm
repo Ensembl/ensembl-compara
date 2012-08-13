@@ -24,10 +24,10 @@ sub populate_tree {
   my $self = shift;
   my $hub  = $self->hub;
   
-#  $self->create_node('All', 'List of Phenotypes',
-#    [qw(all_phenotypes EnsEMBL::Web::Component::Phenotype::All )],
-#    { 'availability' => 1 },
-#  );
+  $self->create_node('All', 'List of Phenotypes',
+    [qw(all_phenotypes EnsEMBL::Web::Component::Phenotype::All )],
+    { 'availability' => 1 },
+  );
 
   my $phenotype = $self->object->get_phenotype_desc;
   $self->create_node('Locations', "Locations on genome",
