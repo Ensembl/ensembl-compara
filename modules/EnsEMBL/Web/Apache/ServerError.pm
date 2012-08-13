@@ -16,9 +16,9 @@ sub handler {
   
   $page->content->add_panel(new EnsEMBL::Web::Document::Panel(
     raw => qq{
-      <div style="padding:0 5px;">
-        <h2>Internal Server Error</h2>
-        <div class="error" style="padding:0 5px;">
+      <div class="error left-margin right-margin">
+        <h3>Internal Server Error</h3>
+        <div class="message-pad">
           <p>Sorry, an error occurred while the Ensembl server was processing your request</p>
           <p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to $admin</p>
         </div>
