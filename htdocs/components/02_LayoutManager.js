@@ -194,6 +194,8 @@ Ensembl.LayoutManager.extend({
       return;
     }
     
+    r = decodeURIComponent(r);
+    
     var text = r.split(/\W/);
         text = text[0] + ': ' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
     
