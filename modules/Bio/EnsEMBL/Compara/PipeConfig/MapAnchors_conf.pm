@@ -90,6 +90,7 @@ sub resource_classes {
 	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' },
 	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
 	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
+	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]"' },
     };  
 }
 
@@ -247,7 +248,7 @@ sub pipeline_analyses {
 	    },		
 	    {	-logic_name     => 'remove_overlaps',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps',
-		-rc_name => 'mem3500',
+		-rc_name => 'hugemem',
 		-wait_for  => [ 'map_anchors' ],
 		-input_ids  => [{}],
 		-flow_into => {
