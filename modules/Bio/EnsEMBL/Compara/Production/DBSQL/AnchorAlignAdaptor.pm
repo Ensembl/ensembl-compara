@@ -403,8 +403,14 @@ sub update_zero_strand_anchors {
 
 sub update_failed_anchor {
 	my($self, $failed_anchor_hash_ref, $analysis_id_which_failed, $test_mlssid) = @_;
-	unless (defined $failed_anchor_hash_ref && defined $analysis_id_which_failed && defined $test_mlssid) {
-		throw("update_failed_anchor must have both a failed_anchor_id and the current analysis_id");
+	unless (defined $failed_anchor_hash_ref ){
+		throw( "No failed_anchor_id : update_failed_anchor failed");
+	} 
+	unless (defined $analysis_id_which_failed){
+		throw("No analysis_id : update_failed_anchor failed");
+	}
+	unless (defined $test_mlssid) {
+		throw("No test_mlssid : update_failed_anchor failed");
 	}
 
 	my $update = qq{
