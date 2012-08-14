@@ -40,41 +40,22 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps;
 
 use strict;
 use Data::Dumper;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-sub configure_defaults {
- 	my $self = shift;
-  	return 1;
-}
-
-sub fetch_input {
-	my ($self) = @_;
-	$self->configure_defaults();
-
-	$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-	$self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-	$self->get_params($self->parameters);
-	return 1;
-}
 
 sub run {
 	my ($self) = @_;
-	my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
-	my $dnafrag_ids = $anchor_align_adaptor->fetch_all_dnafrag_ids($self->input_method_link_species_set_id);
+	my $anc_mapping_mlssid = $self->param('mapping_mlssid');
+	my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
+	my $dnafrag_ids = $anchor_align_adaptor->fetch_all_dnafrag_ids($anc_mapping_mlssid);
 	my (%Overlappping_anchors, %Anchors_2_remove, %Scores);
-	my $input_mlssid = $self->input_method_link_species_set_id;
 	foreach my $genome_db_id(sort keys %{$dnafrag_ids}) {
 		my %genome_db_dnafrags;
 		foreach my $genome_db_anchors(@{ $anchor_align_adaptor->fetch_all_anchors_by_genome_db_id_and_mlssid(
-						$genome_db_id, $input_mlssid) }) {
+						$genome_db_id, $anc_mapping_mlssid) }) {
 			push(@{ $genome_db_dnafrags{ $genome_db_anchors->[0] } }, [ @{ $genome_db_anchors }[1..4] ]);	
 		}
 		foreach my $dnafrag_id(sort keys %genome_db_dnafrags) {
@@ -118,108 +99,17 @@ sub run {
 		$flag = 1  if (scalar(keys %Scores));
 	}
 	print STDERR "anchors to remove: ", scalar(keys %Anchors_2_remove), "\n";
-	$self->overlapping_ancs_to_remove(\%Anchors_2_remove);
+	$self->param('overlapping_ancs_to_remove', \%Anchors_2_remove);
 	return 1;
 }
 
 
 sub write_output {
 	my ($self) = @_;
-	my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
-	my $Anchors_2_remove = $self->overlapping_ancs_to_remove(); 
-	my $input_mlssid = $self->input_method_link_species_set_id();
-	#set up jobs for TrimAnchorAlign
-	my $trim_anchor_align_analysis_id = $self->analysis->adaptor->fetch_by_logic_name("TrimAnchorAlign")->dbID;
-	my $current_analysis_id = $self->input_analysis_id();
-	$anchor_align_adaptor->update_failed_anchor($Anchors_2_remove, $current_analysis_id, $input_mlssid);	
-	$anchor_align_adaptor->setup_jobs_for_TrimAlignAnchor($trim_anchor_align_analysis_id, $input_mlssid) if ($trim_anchor_align_analysis_id);
-	return 1;
+	my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
+	my $Anchors_2_remove = $self->param('overlapping_ancs_to_remove'); 
+	$anchor_align_adaptor->update_failed_anchor($Anchors_2_remove, $self->analysis->dbID, $self->param('mapping_mlssid'));	
 }
-
-sub input_method_link_species_set_id {
-	my $self = shift;
-	if (@_) {
-		$self->{input_method_link_species_set_id} = shift;
-	}
-	return $self->{input_method_link_species_set_id};
-}	
-
-sub overlapping_ancs_to_remove {
-	my $self = shift;
-	if (@_) {
-		$self->{overlapping_ancs_to_remove} = shift;
-	}
-	return $self->{overlapping_ancs_to_remove};
-}
-
-sub genome_db_ids {
-	my $self = shift;
-	if (@_) {
-		$self->{genome_db_ids} = shift;
-	}
-	return $self->{genome_db_ids};
-}
-
-sub method_link_species_set_id {
-	my $self = shift;
-	if (@_) {
-		$self->{method_link_species_set_id} = shift;
-	}
-	return $self->{method_link_species_set_id};
-}
-
-sub input_analysis_id {
-	my $self = shift;
-	if (@_) {
-		$self->{input_analysis_id} = shift;
-	}
-	return $self->{input_analysis_id};
-}
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if(defined($params->{'genome_db_ids'})) {
-    $self->genome_db_ids($params->{'genome_db_ids'});
-  }
-  if(defined($params->{'input_method_link_species_set_id'})) {
-	$self->input_method_link_species_set_id($params->{'input_method_link_species_set_id'});
-  }
-  if(defined($params->{'method_link_species_set_id'})) {
-	$self->method_link_species_set_id($params->{'method_link_species_set_id'});
-  }
-  if(defined($params->{'input_analysis_id'})) {
-    $self->input_analysis_id($params->{'input_analysis_id'});
-  }
-  return 1;
-}
-
-#sub store_input {
-#  my $self = shift;
-#
-#  if (@_) {
-#    $self->{_store_input} = shift;
-#  }
-#
-#  return $self->{_store_input};
-#}
-#
-#sub store_output {
-#  my $self = shift;
-#
-#  if (@_) {
-#    $self->{_store_output} = shift;
-#  }
-#
-#  return $self->{_store_output};
-#}
 
 1;
 
