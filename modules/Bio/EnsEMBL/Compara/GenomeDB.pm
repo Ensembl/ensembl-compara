@@ -95,7 +95,7 @@ sub new {
     my $caller = shift @_;
     my $class = ref($caller) || $caller;
 
-    my $self = $class->SUPER::new(@_);      # should set -dbID and -adaptor, if defined
+    my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
     my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild) =
         rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD)], @_);
