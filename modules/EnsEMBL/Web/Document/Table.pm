@@ -105,9 +105,20 @@ sub render {
     
     $thead .= sprintf '<tr%s>%s</tr>', $head->[1], join('', @{$head->[0]});
   }
-  
-  $tbody = join '', map { sprintf '<tr%s>%s</tr>', $_->[1], join('', @{$_->[0]}) } @$body;
-  
+
+  if ($options->{'header_repeat'} && !$data_table) { ## can't use both these options together
+    my $repeat = $options->{'header_repeat'};
+    my $i = 1;
+    foreach (@$body) {
+      $tbody .= sprintf '<tr%s>%s</tr>', $_->[1], join('', @{$_->[0]});
+      $tbody .= $thead unless ($i % $repeat);
+      $i++;
+    }
+  }
+  else { 
+    $tbody = join '', map { sprintf '<tr%s>%s</tr>', $_->[1], join('', @{$_->[0]}) } @$body;
+  }
+
   $thead  = "<thead>$thead</thead>" if $thead;
   $tbody  = "<tbody>$tbody</tbody>" if $tbody;
   
