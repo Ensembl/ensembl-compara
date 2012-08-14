@@ -475,7 +475,8 @@ sub get_all_families {
     ## Explicitly set db connection, as registry is buggy!
     my $family = $self->gene;
     my $dba = $self->database('core', $self->species);
-    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new($dba);
+    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
+    $genome_db->db_adaptor( $dba );
     my $members = $family->get_all_Members;
     my $info = {'description' => $family->description};
     my $genes = [];
