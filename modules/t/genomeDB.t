@@ -99,17 +99,18 @@ my $name = "Homo sapiens";
 my $assembly = "NCBI36";
 my $genebuild = "0510Ensembl";
 
-$genome_db = new Bio::EnsEMBL::Compara::GenomeDB();
+$genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
 ok($genome_db, '/^Bio::EnsEMBL::Compara::GenomeDB/', "Testing new method");
 
-$genome_db = new Bio::EnsEMBL::Compara::GenomeDB(
-        $hs_dba,
-        $name,
-        $assembly,
-        $taxon_id,
-        $dbID,
-        $genebuild
+$genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
+    -dbID       => $dbID,
+    -db_adaptor => $hs_dba,
+    -name       => $name,
+    -assembly   => $assembly,
+    -taxon_id   => $taxon_id,
+    -genebuild  => $genebuild,
     );
+
 ok($genome_db->db_adaptor, $hs_dba, "Testing dba set in new method");
 ok($genome_db->name, $name, "Testing name set in new method");
 ok($genome_db->assembly, $assembly, "Testing assembly set in new method");

@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::GenomeDB - DESCRIPTION of Object
 
 =head1 SYNOPSIS
   use Bio::EnsEMBL::Compara::DnaFrag; 
-  my $genome_db = new Bio::EnsEMBL::Compara::GenomeDB();
+  my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
 
 SET VALUES
   $genome_db->dbID(22);
@@ -65,13 +65,17 @@ package Bio::EnsEMBL::Compara::GenomeDB;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::DBLoader;
+use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 =head2 new
 
   Example :
-    my $genome_db = new Bio::EnsEMBL::Compara::GenomeDB();
+    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dba($dba);
     $genome_db->name("Homo sapiens");
     $genome_db->assembly("NCBI36");
@@ -88,20 +92,23 @@ use Bio::EnsEMBL::DBLoader;
 =cut
 
 sub new {
-  my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
+    my $caller = shift @_;
+    my $class = ref($caller) || $caller;
 
-  my $class = ref($caller) || $caller;
-  my $self = bless({}, $class);
+    my $self = $class->SUPER::new(@_);      # should set -dbID and -adaptor, if defined
 
-  $dba       && $self->db_adaptor($dba);
-  $name      && $self->name($name);
-  $assembly  && $self->assembly($assembly);
-  $taxon_id  && $self->taxon_id($taxon_id);
-  $dbID      && $self->dbID($dbID);
-  $genebuild && $self->genebuild($genebuild);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD)], @_);
 
-  return $self;
+    $db_adaptor   && $self->db_adaptor($db_adaptor);
+    $name         && $self->name($name);
+    $assembly     && $self->assembly($assembly);
+    $taxon_id     && $self->taxon_id($taxon_id);
+    $genebuild    && $self->genebuild($genebuild);
+
+    return $self;
 }
+
 
 =head2 new_fast
 
@@ -223,50 +230,6 @@ sub short_name {
 sub get_short_name {
   my $self = shift;
   return $self->short_name;
-}
-
-
-=head2 dbID
-
-  Arg [1]    : (optional) int $value the new value of this objects database 
-               identifier
-  Example    : $dbID = $genome_db->dbID;
-  Description: Getter/Setter for the internal identifier of this GenomeDB
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub dbID{
-   my ($self,$value) = @_;
-   if( defined $value) {
-     $self->{'dbID'} = $value;
-   }
-   return $self->{'dbID'};
-}
-
-
-=head2 adaptor
-
-  Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomeDBAdaptor $adaptor
-  Example    : $adaptor = $GenomeDB->adaptor();
-  Description: Getter/Setter for the GenomeDB object adaptor used
-               by this GenomeDB for database interaction.
-  Returntype : Bio::EnsEMBL::Compara::GenomeDBAdaptor
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub adaptor{
-   my ($self,$value) = @_;
-   if( defined $value) {
-      $self->{'adaptor'} = $value;
-   }
-   return $self->{'adaptor'};
 }
 
 

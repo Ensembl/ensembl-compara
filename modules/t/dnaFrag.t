@@ -112,7 +112,7 @@ foreach my $this_species (@$species) {
 #####################################################################
 
 my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor;
-my $dummy_db = new Bio::EnsEMBL::Compara::GenomeDB;
+my $dummy_db = Bio::EnsEMBL::Compara::GenomeDB->new();
 
 ok(!$dnafrag_adaptor, "", "Checking Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object");
 ok(!$dummy_db, "", "Checking Bio::EnsEMBL::Compara::GenomeDB object");
