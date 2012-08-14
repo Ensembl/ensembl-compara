@@ -17,7 +17,7 @@ sub render {
   my $species_defs    = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $rel             = 'release-' . $species_defs->ENSEMBL_VERSION; # Always set to use the release number rather than current to get around the delay in FTP site links updating
   my $required_lookup = $self->required_types_for_species;
-  my $table           = new EnsEMBL::Web::Document::Table([], [], { data_table => 1, exportable => 0 });
+  my $table           = new EnsEMBL::Web::Document::Table([], [], { data_table => 0, exportable => 0, header_repeat => 10 });
   my $rows;
   
   my %title = (
