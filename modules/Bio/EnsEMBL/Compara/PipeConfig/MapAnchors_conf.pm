@@ -275,6 +275,7 @@ sub pipeline_analyses {
 		-failed_job_tolerance => 10,
 		-hive_capacity => 200,
 		-batch_size    => 10,
+		-max_retry_count => 1,
 	    },
     ];
 }	
