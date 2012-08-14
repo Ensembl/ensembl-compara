@@ -56,6 +56,11 @@ use Bio::EnsEMBL::Compara::Method;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
+sub object_class {
+    return 'Bio::EnsEMBL::Compara::Method';
+}
+
+
 sub _tables {
 
     return (['method_link','m'])

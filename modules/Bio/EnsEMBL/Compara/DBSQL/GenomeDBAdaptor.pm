@@ -58,6 +58,11 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
+sub object_class {
+    return 'Bio::EnsEMBL::Compara::GenomeDB';
+}
+
+
 =head2 fetch_by_dbID
 
   Arg [1]    : int $dbid
