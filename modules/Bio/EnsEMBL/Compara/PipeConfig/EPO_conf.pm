@@ -15,18 +15,18 @@ sub default_options {
         'pipeline_name' => 'compara_EPO',
 
 	   # version number of core dbs to access for sequence
-	'core_db_version' => 67,
+	'core_db_version' => 68,
 
 	   # parameters that are likely to change from execution to another:
-	'release'               => '200',
+	'release'               => '69',
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-	'species_tag' 		=> '12way',
+	'species_tag' 		=> '13way',
 
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara1',
+		-host   => 'compara4',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
@@ -35,7 +35,7 @@ sub default_options {
 	 # ancestral seqs db
 	'ancestor_db' => {
 		-user => 'ensadmin',
-		-host => 'compara3',
+		-host => 'compara4',
 		-port => 3306,
 		-pass => $self->o('password'),
 		-name => 'ancestral_sequences',
@@ -46,8 +46,8 @@ sub default_options {
 		-user => 'ensro',
 		-port => 3306,
 		-pass => '',
-		-host => 'compara3',
-		-dbname => 'sf5_compara_template_anchor_align',
+		-host => 'compara4',
+		-dbname => 'sf5_13_mammal_anchor_mappings69',
 	},
 	 # master db
 	'compara_master' => {
@@ -76,25 +76,25 @@ sub default_options {
 	],
 	# dbs thay may be on genebuild dbs etc
 	other_core_dbs => [
-		{
-			-user => 'ensro',
-			-port => 3306,
-			-dbname => 'cgg_dog_ref',
-			-species => "canis_familiaris",
-			-host => 'genebuild1',
-		},
-		{
-			-user => 'ensro',
-			-port => 3306,
-			-dbname => 'mus_musculus_core_68_38',
-			-species => "mus_musculus",
-			-host => 'ens-staging2',
-		},
+#		{
+#			-user => 'ensro',
+#			-port => 3306,
+#			-dbname => 'cgg_dog_ref',
+#			-species => "canis_familiaris",
+#			-host => 'genebuild1',
+#		},
+#		{
+#			-user => 'ensro',
+#			-port => 3306,
+#			-dbname => 'mus_musculus_core_68_38',
+#			-species => "mus_musculus",
+#			-host => 'ens-staging2',
+#		},
 	],
 	  # mlssid of mappings to use
-	'mapping_mlssid' => 13,
+	'mapping_mlssid' => 11000,
 	  # mlssid of ortheus alignments
-	'ortheus_mlssid' => 595,
+	'ortheus_mlssid' => 609,
 	  # species tree file
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 	  # data directories:
@@ -122,11 +122,12 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_; 
     return {
-         0 => { -desc => 'mem2500',  'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' },
-         1 => { -desc => 'mem3500',  'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
-         2 => { -desc => 'mem7500',  'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },  
-         3 => { -desc => 'mem14000', 'LSF' => '-C0 -M14000000 -R"select[mem>14000] rusage[mem=14000]"' },  
-	 4 => { -desc => 'mem30000', 'LSF' => '-C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]" -qhugemem' },
+	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' }, 
+	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
+	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
+	'mem14000' =>{'LSF' => '-C0 -M14000000 -R"select[mem>14000] rusage[mem=14000]"' },
+	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]"' },
     };  
 }
 
@@ -193,7 +194,7 @@ return [
 				main_core_dbs => $self->o('main_core_dbs'),
 			      },
 		-flow_into => {
-				1 => [ 'find_dnafrag_region_strand' ],
+				1 => [ 'find_dnafrag_region_strand', 'set_internal_ids', 'make_species_tree' ],
 				2 => [ 'Ortheus' ],
 			},
 	    },
@@ -203,12 +204,10 @@ return [
                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
                -parameters    => { 
                                    'mlss_id' => $self->o('ortheus_mlssid'),
+				   'blength_tree_file' => $self->o('species_tree_file'),
+				   'newick_format' => 'simple',
                                   },  
-               -input_ids     => [
-                                 { 'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
-                            ],  
                -hive_capacity => -1,   # to allow for parallelization
-               -wait_for => [ 'load_genomeDB_dnafrag_dnafragRegion' ],
                -flow_into => {
                          4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
                          },  
@@ -234,13 +233,11 @@ return [
 				bl2seq_file => $self->o('bl2seq_file'),
 			       },
 		-can_be_empty => 1,
-		-rc_id => 1,
+		-rc_name => 'mem3500',
 	   },
 
 	   {	-logic_name => 'set_internal_ids',
 		-module => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-		-input_ids => [{}],
-		-wait_for => [ 'load_genomeDB_dnafrag_dnafragRegion' ],
 		-parameters => {
 				'ortheus_mlssid' => $self->o('ortheus_mlssid'),
 				'sql'   => [
@@ -276,7 +273,7 @@ return [
 		-flow_into => {
 			-1 => [ 'Ortheus_huge_mem' ],
 		},
-		-rc_id => 3,
+		-rc_name => 'mem14000',
 	   },
 
 		# increase compute memory and java memory if previous settings fail 
@@ -288,7 +285,7 @@ return [
 		-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
 		-hive_capacity => 10,
 		-can_be_empty => 1,
-		-rc_id => 4,
+		-rc_name => 'hugemem',
 	   },
 
 	   {  -logic_name => 'update_max_alignment_length',
