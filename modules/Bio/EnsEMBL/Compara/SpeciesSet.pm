@@ -4,6 +4,7 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Compara::GenomeDB;
 
 # FIXME: add throw not implemented for those not tag related?
 use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and new() methods
@@ -50,27 +51,29 @@ sub new {
 =cut
 
 sub genome_dbs {
-  my ($self, $arg) = @_;
+    my ($self, $args) = @_;
 
-  if (defined $arg) {
-    ## Check content
-    my $genome_dbs = {};
-    foreach my $gdb (@$arg) {
-      throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n")
-        if (!defined($gdb));
-      throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n")
-        unless UNIVERSAL::isa($gdb, "Bio::EnsEMBL::Compara::GenomeDB");
+    if ($args) {
+        my $hashed_genome_dbs = {};
+        foreach my $gdb (@$args) {
+            throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($gdb));
 
-      unless (defined $genome_dbs->{$gdb->dbID}) {
-        $genome_dbs->{$gdb->dbID} = $gdb;
-      } else {
-        warn("GenomeDB (".$gdb->name."; dbID=".$gdb->dbID .
-             ") appears twice in this Bio::EnsEMBL::Compara::SpeciesSet\n");
-      }
+            if(ref($gdb) eq 'HASH') {
+                $gdb = Bio::EnsEMBL::Compara::GenomeDB->new( %$gdb ) or die "Could not automagically create a GenomeDB";
+            }
+
+            my $hash_key = join('--', $gdb->name, $gdb->assembly, $gdb->genebuild );
+        
+            if($hashed_genome_dbs->{ $hash_key }) {
+                warn("GenomeDB with hash key '$hash_key' appears twice in this Bio::EnsEMBL::Compara::SpeciesSet\n");
+            } else {
+                $hashed_genome_dbs->{ $hash_key } = $gdb;
+            }
+        }
+
+        $self->{'genome_dbs'} = [ values %{$hashed_genome_dbs} ] ;
     }
-    $self->{'genome_dbs'} = [ values %{$genome_dbs} ] ;
-  }
-  return $self->{'genome_dbs'};
+    return $self->{'genome_dbs'};
 }
 
 
