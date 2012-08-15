@@ -89,7 +89,6 @@ sub write_output {
 #
 sub _create_specific_readme {
     my ($self) = @_;
-
     #
     #Load registry
     #
@@ -116,23 +115,23 @@ sub _create_specific_readme {
 
     #If dumping conservation scores, need to find associated multiple alignment
     #mlss
-    if (($mlss->method_link_type) eq "GERP_CONSERVATION_SCORE") {
+    if (($mlss->method->type) eq "GERP_CONSERVATION_SCORE") {
 	$mlss = $mlss_adaptor->fetch_by_dbID($mlss->get_value_for_tag('msa_mlss_id'));
     }
 
     #Get tree and ordered set of genome_dbs
     my ($newick_species_tree, $species_set) = $self->_get_species_tree($mlss);
-    my $method_link = $mlss->method_link_type;
+    my $method_link = $mlss->method->type;
     my $filename = $self->param('output_dir') . "/README." . lc($method_link) . "_" . @$species_set . "_way";
 
     #Get first schema_version
     my $schema_version = $meta_container->list_value_by_key('schema_version')->[0];
 
-    if ($mlss->method_link_type eq "PECAN") {
+    if ($mlss->method->type eq "PECAN") {
 	$self->_create_specific_pecan_readme($compara_dba, $mlss, $species_set, $filename, $schema_version, $newick_species_tree);
-    } elsif ($mlss->method_link_type eq "EPO") {
+    } elsif ($mlss->method->type eq "EPO") {
 	$self->_create_specific_epo_readme($compara_dba, $mlss, $species_set, $filename, $schema_version, $newick_species_tree);
-    } elsif ($mlss->method_link_type eq "EPO_LOW_COVERAGE") {
+    } elsif ($mlss->method->type eq "EPO_LOW_COVERAGE") {
 	$self->_create_specific_epo_low_coverage_readme($compara_dba, $mlss, $species_set, $filename, $schema_version, $newick_species_tree, $mlss_adaptor);
     } 
 
@@ -166,7 +165,7 @@ sub _get_species_tree {
     my $species_tree =
       Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
 
-    my $genome_dbs = $mlss->species_set;
+    my $genome_dbs = $mlss->species_set_obj->genome_dbs;
 
     my %leaves_names;
     foreach my $genome_db (@$genome_dbs) {
@@ -190,7 +189,7 @@ sub _get_species_tree {
 	    push @$ordered_species, $leaves_names{$leaf_name};
 	}
     }
-    $newick_species_tree = $species_tree->newick_simple_format();
+    $newick_species_tree = $species_tree->newick_format("simple");
     return ($newick_species_tree, $ordered_species);
 }
 
@@ -265,7 +264,7 @@ sub _create_specific_epo_low_coverage_readme {
     my $species = $self->param('species');
     my @tree_list = split(//, $newick_species_tree);
     my $high_coverage_mlss = $mlss_adaptor->fetch_by_dbID($self->param('high_coverage_mlss_id'));
-    my $high_coverage_species_set = $high_coverage_mlss->species_set;
+    my $high_coverage_species_set = $high_coverage_mlss->species_set_obj->genome_dbs;
 
     my %high_coverage_species;
     foreach my $species (@$high_coverage_species_set) {
