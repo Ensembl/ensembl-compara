@@ -56,7 +56,7 @@ sub default_options {
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '68',
+	'release'               => '69',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
@@ -122,7 +122,10 @@ sub default_options {
 	'ref_species' => 'homo_sapiens',
 
 	#directory to dump nib files
-	'dump_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'dump_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+
+        #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
+        'include_MT' => 0,
 
 	#min length to dump dna as nib file
 	'dump_min_size' => 11500000, 
@@ -218,8 +221,8 @@ sub default_options {
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 #	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'bed_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-	'output_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
     };
 }
 
@@ -407,7 +410,9 @@ sub pipeline_analyses {
 	    },
  	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
- 	       -parameters => { },
+ 	       -parameters => { 
+                               'include_MT' => $self->o('include_MT'),
+                              },
 	       -hive_capacity => 10,
  	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna', 'dump_dna_factory', 'dump_dna'  ],
 	       -flow_into => {
