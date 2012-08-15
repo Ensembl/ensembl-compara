@@ -9,6 +9,11 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
+sub object_class {
+    return 'Bio::EnsEMBL::Compara::SpeciesSet';
+} 
+
+
 =head2 store
 
   Arg [1]     : Bio::EnsEMBL::Compara::SpeciesSet object
@@ -23,11 +28,18 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::D
 =cut
 
 sub store {
-    my ($self, $species_set) = @_;
+    my ($self, $species_set, $store_components_first) = @_;
 
         # check whether all the GenomeDB objects have genome_db_ids:
     foreach my $genome_db (@{$species_set->genome_dbs}) {
-        throw("GenomeDB ".$genome_db->toString." is missing a dbID") if (!$genome_db->dbID);
+        if( $store_components_first ) {
+            my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor();
+            $genome_db_adaptor->store( $genome_db );
+        }
+        
+        if( !$genome_db->dbID ) {
+            throw("GenomeDB ".$genome_db->toString." is missing a dbID");
+        }
     }
 
     my $dbID = $species_set->dbID;
