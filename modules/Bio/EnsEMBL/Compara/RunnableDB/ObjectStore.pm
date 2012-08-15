@@ -21,6 +21,12 @@ Bio::EnsEMBL::Compara::RunnableDB::ObjectStore
                     -arglist "[ -name => 'big_fury_animal', -assembly => 'asm1.0', -genebuild => '2012-01-EnsemblTest', -taxon_id => 9598 ]" \
                     -debug 1
 
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ObjectStore \
+                    -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2911/lg4_compara_families_66" \
+                    -object_type SpeciesSet \
+                    -arglist "[ -genome_dbs => [ {-name => 'homo_sapiens', -taxon_id => 9606, -assembly => 'GRCh37', -genebuild => '2010-07-Ensembl'}, { -name => 'big_fury_animal', -taxon_id => 9598, -assembly => 'asm1.0', -genebuild => '2012-01-EnsemblTest' } ] ]" \
+                    -debug 1
+
 =head1 DESCRIPTION
 
 This is a Compara-specific generic runnable that creates a storable object and stores it.
@@ -59,7 +65,7 @@ sub run {
 
     my $object          = $object_class->new( @$arglist ) or die "Object $object_type(".join(', ',@$arglist).") not created";
 
-    $object_adaptor->store( $object );
+    $object_adaptor->store( $object, 1 );
 
     warn "Object after storing:\n\t".$object->toString()."\n" if($self->debug());
 
