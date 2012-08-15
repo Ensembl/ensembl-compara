@@ -175,7 +175,7 @@ sub _healthcheck {
 sub _write_gab_file {
     my ($self) = @_;
 
-    my $sql = "SELECT * FROM other_gab WHERE genomic_align_block_id BETWEEN ? AND ?";
+    my $sql = "SELECT genomic_align_block_id FROM other_gab WHERE genomic_align_block_id BETWEEN ? AND ?";
     my $sth = $self->analysis->adaptor->dbc->prepare($sql);
     $sth->execute($self->param('start'), $self->param('end'));
     
@@ -184,10 +184,8 @@ sub _write_gab_file {
     my $tmp_file = $worker_temp_directory . "other_gab_$$.out";
     
     open(FILE, ">$tmp_file") || die ("Couldn't open $tmp_file for writing"); 
-
-    while (my $row = $sth->fetchrow_arrayref) {
-	print FILE $row->[0] . "\n";
-
+    while (my $row = $sth->fetchrow) {
+	print FILE $row . "\n";
     }
     close(FILE);
     $sth->finish;
