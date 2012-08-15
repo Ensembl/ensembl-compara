@@ -62,14 +62,19 @@ sub content {
       'select'  => 'select',
   );
 
-  $form->add_element( type => 'Text', name => 'id', label => 'ID(s)', 'notes' => 'Hint: to display multiple features, enter them as a comma-delimited list' );
+  $form->add_element( type => 'Text', name => 'id', label => 'ID(s)', 'notes' => 'Hint: to display multiple features, enter them on separate lines or as a comma-delimited list' );
 
+  ## Need to convert standard colours to hex colours for storing in ID file
   my @colours;
+  my $colour_scheme = $hub->species_defs->ENSEMBL_STYLE || {};
   foreach my $colour (@{$species_defs->TRACK_COLOUR_ARRAY}) {
+    next unless $colour_scheme->{'POINTER_'.uc($colour)};
     my $colourname = ucfirst($colour);
     $colourname =~ s/Dark/Dark /;
-    push @colours, {'name' => ucfirst($colourname), 'value' => $colour};
+    my $hex = $colour_scheme->{'POINTER_'.uc($colour)};
+    push @colours, {'name' => $colourname, 'value' => $hex};
   }
+
   $form->add_element(
       'type'    => 'DropDown',
       'name'    => 'colour',
@@ -79,11 +84,11 @@ sub content {
   );
 
   my @styles = (
-    {'value' => 'rharrow',   'name' => 'Arrow on lefthand side'},
-    {'value' => 'lharrow',   'name' => 'Arrow on righthand side'},
-    {'value' => 'bowtie',    'name' => 'Arrows on both sides'},
-    {'value' => 'wideline',  'name' => 'Line'},
-    {'value' => 'widebox',   'name' => 'Box'},
+    {'value' => 'highlight_lharrow',   'name' => 'Arrow on lefthand side'},
+    {'value' => 'highlight_rharrow',   'name' => 'Arrow on righthand side'},
+    {'value' => 'highlight_bowtie',    'name' => 'Arrows on both sides'},
+    {'value' => 'highlight_wideline',  'name' => 'Line'},
+    {'value' => 'highlight_widebox',   'name' => 'Box'},
   );
   $form->add_element(
       'type'    => 'DropDown',
