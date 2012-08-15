@@ -50,7 +50,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
         panel.elLk.rows.not('.' + this.value).addClass('hidden');
       }
       
-      panel.elLk.noResults[panel.elLk.rows.filter(function () { return this.style.display !== 'none' && this.className.indexOf('hidden') === -1; }).length ? 'hide' : 'show']();
+      panel.afterFilter();
     });
     
     $('input.filter', this.el).on({
@@ -413,6 +413,17 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       this.elLk.options.filter('.filter').removeClass('filter');
     }
     
-    this.elLk.noResults[this.elLk.rows.filter(function () { return this.style.display !== 'none' && this.className.indexOf('hidden') === -1; }).length ? 'hide' : 'show']();
+    this.afterFilter();
+  },
+
+  afterFilter: function () {
+    var shown = this.elLk.rows.filter(function () { return this.style.display !== 'none' && this.className.indexOf('hidden') === -1; }).length;
+    
+    if (!shown) {
+      this.elLk.menus.hide();
+    }
+    
+    this.elLk.table[shown < 4 ? 'addClass' : 'removeClass']('short');
+    this.elLk.noResults[shown ? 'hide' : 'show']();
   }
 });

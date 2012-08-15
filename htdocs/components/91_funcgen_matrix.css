@@ -9,7 +9,7 @@ div.config div.funcgen_matrix div.filter_wrapper select            { width: 185p
 div.config div.funcgen_matrix div.filter_wrapper input             { width: 180px; }
 div.config div.funcgen_matrix div.filter_wrapper .filter           { position: relative; left: 3px; display: block; }
 div.config div.funcgen_matrix input.filter                         { color: #999999; }
-div.config div.funcgen_matrix div.no_results                       { font-weight: bold; margin-top: 5px; display: none; }
+div.config div.funcgen_matrix div.no_results                       { position: relative; top: -95px; font-weight: bold; display: none; }
 div.config div.funcgen_matrix div.help                             { height: 18px; width: 18px; cursor: pointer; }
 div.config div.funcgen_matrix div.help.open                        { background-position: bottom left; }
 div.config div.funcgen_matrix div.desc                             { margin: 7px 0 2px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid transparent; text-align: left; clear: both; }
@@ -26,7 +26,8 @@ body.ie6  div.config div.matrix_key                                { width: 595p
 body.ie7  div.config div.matrix_key                                { width: 555px; }
 body.ie67 div.config div.matrix_key .key h2                        { margin-right: 0; }
 
-table.funcgen_matrix                                               { border-collapse: collapse; cursor: pointer; clear: both; }
+table.funcgen_matrix                                               { border-collapse: collapse; cursor: pointer; clear: both; margin-bottom: 16px; }
+table.funcgen_matrix.short                                         { margin-bottom: 100px; }
 table.funcgen_matrix tr                                            { height: 26px; }
 table.funcgen_matrix tr.hidden                                     { display: none!important; }
 table.funcgen_matrix tr th,                                     
