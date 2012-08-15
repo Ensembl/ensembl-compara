@@ -248,7 +248,7 @@ sub table_row_das {
   
   if ($user_record) {
     %url_params = ( id => $file->id );
-    $save       = self->_icon({ link_class => 'modal_link',
+    $save       = $self->_icon({ link_class => 'modal_link',
                                 class => 'sprite_disabled save_icon' });
   } else {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
