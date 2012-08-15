@@ -49,6 +49,9 @@ sub run {
     #
     my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
 
+    #Check existence of output_file
+    return unless (-e $output_file);
+
     my $cmd = "gzip -f -9 " . $output_file;
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
