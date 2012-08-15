@@ -577,7 +577,6 @@ sub configure_user_data {
     
     while (@track_data) {
       my ($track_type, $track) = (shift @track_data, shift @track_data);
-      
       next unless $track->{'species'} eq $species;
       
       my @nodes = grep $_, $track->{'analyses'} ? map $image_config->get_node($_), split(', ', $track->{'analyses'}) : $image_config->get_node("${track_type}_$track->{'code'}");
@@ -586,7 +585,13 @@ sub configure_user_data {
         foreach (@nodes) {
           my $renderers = $_->get('renderers');
           my %valid     = @$renderers;
-          $_->set_user('display', $vertical ? EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}) : $valid{'normal'} ? 'normal' : $renderers->[2]);
+          if ($vertical) {
+            $_->set_user('display', $track->{'style'} 
+                            || EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}));
+          }
+          else {
+            $_->set_user('display', $valid{'normal'} ? 'normal' : $renderers->[2]);
+          }
         }
         
         $image_config->{'code'} = $ic_code;
