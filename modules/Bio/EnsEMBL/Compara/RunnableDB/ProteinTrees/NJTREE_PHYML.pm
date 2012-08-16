@@ -163,7 +163,7 @@ sub write_output {
         $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $cmd) if $self->worker_temp_directory;
         system($cmd);
     }
-    rmtree([$self->worker_temp_directory]);
+    $self->cleanup_worker_temp_directory;
 }
 
 sub post_cleanup {
