@@ -5,6 +5,7 @@ package EnsEMBL::Web::Command::UserData::FviewRedirect;
 use strict;
 use warnings;
 
+use URI::Escape qw(uri_escape);
 use EnsEMBL::Web::Builder;
 
 use base qw(EnsEMBL::Web::Command::UserData);
@@ -29,21 +30,25 @@ sub process {
     $features = $object->convert_to_drawing_parameters;
   }
 
-  ## Write out features as BED file
+  ## Write out features as GFF file
   my $desc = $hub->param('name') || 'Selected '.$hub->param('ftype').'s';
   my $content = sprintf('track name=%s description="%s" useScore=1 color=%s style=%s', $hub->param('ftype'), $desc, $hub->param('colour'), $hub->param('style'));
   $content .= "\n";
 
   while (my ($type, $feat) = each (%{$features||{}})) {
     foreach my $f (@{$feat->[0]||[]}) {
-      my @A = ($f->{'region'}, $f->{'start'}, $f->{'end'}, $f->{'label'}, '.', $f->{'strand'});
-      $content .= join('  ', @A);
+      warn ">>> DESC ".$f->{'extra'}{'description'};
+      warn ">>> ENCD ".uri_escape($f->{'extra'}{'description'});
+      my $strand = $f->{'strand'} == 1 ? '+' : '-';
+      my $attribs = join('; ', 'ID='.$f->{'gene_id'}[0], 'extname='.$f->{'extname'}, 'description='.uri_escape($f->{'extra'}{'description'}));
+      $content .= join("\t", $f->{'region'}, $hub->species_defs->ENSEMBL_SITETYPE, $hub->param('ftype'),
+                              $f->{'start'}, $f->{'end'}, '.', $strand, '.', $attribs);
       $content .= "\n";
     }
   }
 
   $hub->param('text', $content);
-  $hub->param('format', 'BED');
+  $hub->param('format', 'GFF');
   $hub->param('name', $desc);
 
   ## Upload munged data
