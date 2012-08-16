@@ -43,14 +43,14 @@ sub content {
 
   foreach (@$entries) {
     if ($_->{'class'} eq 'disabled') {
-      $html .= qq{<p class="disabled $classes->{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>};
+      $html .= qq(<p class="disabled $classes->{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>);
     } else {
       my $rel   = lc $_->{'rel'};
       my $class = join ' ', map $_ || (), $_->{'class'}, $rel eq 'external' ? 'external' : '', $classes->{$_->{'caption'}};
       $class    = qq{ class="$class"} if $class;
       $rel      = qq{ rel="$rel"}     if $rel;
 
-      $html .= qq{<p><a href="$_->{'url'}"$class$rel>$_->{'caption'}</a></p>};
+      $html .= qq(<p><a href="$_->{'url'}"$class$rel>$_->{'caption'}</a></p>);
     }
   }
   
