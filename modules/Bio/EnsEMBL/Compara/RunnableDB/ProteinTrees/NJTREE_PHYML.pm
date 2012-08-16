@@ -346,6 +346,7 @@ sub fetch_or_create_other_tree {
 
     if (not exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
         my $newtree = $tree->deep_copy();
+        $newtree->stable_id(undef);
         # Reformat things
         foreach my $member (@{$newtree->get_all_Members}) {
             $member->cigar_line(undef);
