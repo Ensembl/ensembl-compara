@@ -126,7 +126,7 @@ sub create_user_pointers {
   return @pointers;
 }
 
-sub configure_UserData_table {
+sub configure_UserData_key {
   my ($self, $image_config) = @_;
   my $header       = 'Key to user tracks';
   my $column_order = [qw(colour track)];
