@@ -65,6 +65,7 @@ sub load_user_track_data {
   
   foreach my $track ($self->get_node('user_data')->nodes) {
     my $display = $track->get('display');
+    my $ftype = $track->get('ftype');
     
     next if $display eq 'off';
     
@@ -188,8 +189,9 @@ sub create_user_features {
   
   return $tracks unless $menu;
   
-  foreach my $id (map $_->get('display') ne 'off' ? $_->id : (), $menu->nodes) {
-    my $data   = $hub->fetch_userdata_by_id($id);
+  foreach ($menu->nodes) {
+    next unless $_->get('display') ne 'off'; 
+    my $data   = $hub->fetch_userdata_by_id($_->id);
     my $parser = $data->{'parser'};
     
     if ($parser) {
@@ -203,12 +205,14 @@ sub create_user_features {
             end     => $feature->rawend,
             label   => $feature->id,
             gene_id => $feature->id,
+            %{$feature->attribs},
           };
         }
         
         $track->{'config'}{'name'} = $data->{'name'};
+        $track->{'config'}{'ftype'} = $_->get('ftype');
         
-        $tracks->{$id}{$type} = {
+        $tracks->{$_->id}{$type} = {
           features => \@rows,
           config   => $track->{'config'}
         };
@@ -233,7 +237,7 @@ sub create_user_features {
           };
         }
         
-        $tracks->{$id}{$analysis} = {
+        $tracks->{$_->id}{$analysis} = {
           features => \@rows,
           config   => $track->{'config'}
         };
