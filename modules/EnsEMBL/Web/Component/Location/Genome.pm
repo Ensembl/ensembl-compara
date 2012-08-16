@@ -6,8 +6,6 @@ package EnsEMBL::Web::Component::Location::Genome;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
-
 use EnsEMBL::Web::Controller::SSI;
 
 use base qw(EnsEMBL::Web::Component::Location);
@@ -29,13 +27,14 @@ sub content {
     $config->get_node('Vannotation_status_left')->set('display', $config->get_node('Vannotation_status_right')->get('display'));
   }
 
-  ## Get features to draw
+  ## Get features from URL to draw (if any)
   if ($id) {
     my $object = $self->builder->create_objects('Feature', 'lazy');
     if ($object && $object->can('convert_to_drawing_parameters')) {
       $features = $object->convert_to_drawing_parameters;
     }
   }
+
   my $html = $self->_render_features($id, $features, $config);
   return $html;
 }
@@ -277,36 +276,13 @@ sub _render_features {
   };
 
   while (my ($feat_type, $feature_set) = each (%$features)) {
-    my $method = '_configure_'.$feat_type.'_table';
-    if ($self->can($method)) {
-      my $table_info = $self->$method($feat_type, $feature_set);
-      my $column_info = $table_info->{'custom_columns'} || $default_column_info;
-      my $columns = [];
-      my $col;
-
-      foreach $col (@{$table_info->{'column_order'}||[]}) {
-        push @$columns, { 'key' => $col, %{$column_info->{$col}} };
-      }
-
-      ## Add "extra" columns (unique to particular table types)
-      my $extras = $feature_set->[1];
-      foreach $col (@$extras) {
-        push @$columns, {
-                    'key'   => $col->{'key'}, 
-                    'title' => $col->{'title'}, 
-                    'sort'  => $col->{'sort'}
-                    }; 
-      }
-      
-      my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'} || {}} });
-      $html .= "<h3>$table_info->{'header'}</h3>";
-      $html .= $table->render;
-    }
+    $html .= $self->_feature_table($feat_type, $feature_set, $default_column_info);
   }
 
-  ## User table
+  ## User tables
   if (keys %$user_features) {
-    my $table_info  = $self->configure_UserData_table($image_config);
+    ## Colour key
+    my $table_info  = $self->configure_UserData_key($image_config);
     my $column_info = $default_column_info;
     my $columns     = [];
     my $col;
@@ -318,15 +294,61 @@ sub _render_features {
     my $table = $self->new_table($columns, $table_info->{'rows'}, { header => 'no' });
     $html .= "<h3>$table_info->{'header'}</h3>";
     $html .= $table->render;
+
+    ## Table(s) of features
+    while (my ($k, $v) = each (%$user_features)) {
+      while (my ($ftype, $data) = each (%$v)) {
+        $html .= $self->_feature_table($ftype, [$data->{'features'}, [ 
+                                        {'key'=>'description', 'title'=>'Description'}]
+                                        ], 
+                                      $default_column_info,
+                                      );
+      }
+    }
+
   }
 
-  unless (keys %$features) {
+  unless (keys %$features || keys %$user_features) {
     $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/stats_$species.html");
   }
 
   ## Done!
   return $html;
 }
+
+sub _feature_table {
+  my ($self, $feat_type, $feature_set, $default_column_info) = @_;
+  my $html;
+
+  my $method = '_configure_'.$feat_type.'_table';
+  if ($self->can($method)) {
+    my $table_info = $self->$method($feat_type, $feature_set);
+    my $column_info = $table_info->{'custom_columns'} || $default_column_info;
+    my $columns = [];
+    my $col;
+
+    foreach $col (@{$table_info->{'column_order'}||[]}) {
+      push @$columns, { 'key' => $col, %{$column_info->{$col}} };
+    }
+
+    ## Add "extra" columns (unique to particular table types)
+    my $extras = $feature_set->[1];
+    foreach $col (@$extras) {
+      push @$columns, {
+                  'key'   => $col->{'key'}, 
+                  'title' => $col->{'title'}, 
+                  'sort'  => $col->{'sort'}
+                  }; 
+    }
+      
+    my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'} || {}} });
+    $html .= "<h3>$table_info->{'header'}</h3>";
+    $html .= $table->render;
+  }
+
+  return $html;
+}
+
 
 sub _configure_Gene_table {
   my ($self, $feature_type, $feature_set) = @_;
@@ -441,7 +463,7 @@ sub add_extras {
   my ($self, $row, $feature, $extras) = @_;
   foreach my $col (@$extras) {
     my $key = $col->{'key'};
-    $row->{$key} = {'value' => $feature->{'extra'}{$key}};
+    $row->{$key} = {'value' => $feature->{'extra'}{$key} || $feature->{$key}};
   }
 }
 
@@ -458,8 +480,9 @@ sub _sort_features_by_coords {
 
 sub _location_link {
   my ($self, $f) = @_;
-  return 'Unmapped' unless $f->{'region'};
-  my $coords = $f->{'region'}.':'.$f->{'start'}.'-'.$f->{'end'};
+  my $region = $f->{'region'} || $f->{'chr'};
+  return 'Unmapped' unless $region;
+  my $coords = $region.':'.$f->{'start'}.'-'.$f->{'end'};
   my $link = sprintf(
           '<a href="%s">%s:%d-%d(%d)</a>',
           $self->hub->url({
@@ -470,7 +493,7 @@ sub _location_link {
             ph      => $self->hub->param('ph'),
             __clear => 1
           }),
-          $f->{'region'}, $f->{'start'}, $f->{'end'},
+          $region, $f->{'start'}, $f->{'end'},
           $f->{'strand'}
   );
   return $link;
@@ -478,7 +501,8 @@ sub _location_link {
 
 sub _names_link {
   my ($self, $f, $type) = @_;
-  my $coords    = $f->{'region'}.':'.$f->{'start'}.'-'.$f->{'end'};
+  my $region = $f->{'region'} || $f->{'chr'};
+  my $coords    = $region.':'.$f->{'start'}.'-'.$f->{'end'};
   my $obj_param = $type eq 'Transcript' ? 't' : 'g';
   my $params = {
     'type'      => $type, 
