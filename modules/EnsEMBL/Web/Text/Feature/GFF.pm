@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use URI::Escape qw(uri_unescape);
+
 use base qw(EnsEMBL::Web::Text::Feature);
 
 sub new {
@@ -33,7 +35,7 @@ sub new {
   $extra->{'feature_type'} = [ $args->[2] ];
   $extra->{'score'}        = [ $args->[5] ];
   $extra->{'frame'}        = [ $args->[7]];
-  my $attribs = { split(/;\s?|=/,$args->[8]) }; 
+  my $attribs = { uri_unescape(split(/;\s?|=/,$args->[8])) }; 
   return bless { '__raw__' => $args, 
                  '__extra__' => $extra, 
                  '__attribs__' => $attribs }, $class;
