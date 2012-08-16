@@ -33,7 +33,7 @@ sub new {
   $extra->{'feature_type'} = [ $args->[2] ];
   $extra->{'score'}        = [ $args->[5] ];
   $extra->{'frame'}        = [ $args->[7]];
-  my $attribs = { split(/[;=]/,$args->[8]) }; 
+  my $attribs = { split(/;\s?|=/,$args->[8]) }; 
   return bless { '__raw__' => $args, 
                  '__extra__' => $extra, 
                  '__attribs__' => $attribs }, $class;
