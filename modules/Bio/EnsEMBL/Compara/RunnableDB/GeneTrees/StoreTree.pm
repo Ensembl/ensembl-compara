@@ -269,21 +269,18 @@ sub parse_newick_into_tree {
     $leaf->member_id($member_id);
     $leaf->cigar_line($old_leaf->cigar_line);
     $leaf->node_id($old_leaf->node_id);
+    $leaf->adaptor($old_leaf->adaptor);
     $leaf->add_tag('name', $member_id);
   }
   print  "Tree with GeneTreeNode objects:\n";
   $newroot->print_tree(20) if($self->debug > 1);
 
-  foreach my $node (@{$tree->root->children}) {
-    $node->disavow_parent;
-    $node->release_tree;
-  }
-
-  foreach my $newsubroot (@{$newroot->children}) {
-    $tree->root->add_child($newsubroot, $newsubroot->distance_to_parent);
-  }
-
-  #TODO copy root tags
+  $newroot->node_id($tree->root_id);
+  $tree->root->parent->add_child($newroot) if $tree->root->parent;
+  $newroot->distance_to_parent($tree->root->distance_to_parent);
+  $newroot->adaptor($tree->root->adaptor);
+  $tree->root->release_tree;
+  $tree->{_root} = $newroot;
 
   $tree->root->print_tree if($self->debug);
   # check here on the leaf to test if they all are GeneTreeMembers as
