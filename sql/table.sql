@@ -1130,7 +1130,7 @@ CREATE TABLE CAFE_tree_attr (
 
 
 # Auto add schema version to database (this will override whatever hive puts there)
-REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '68');
+REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '69');
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
