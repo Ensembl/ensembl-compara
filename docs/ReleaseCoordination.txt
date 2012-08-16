@@ -54,7 +54,12 @@ $ time mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress 
 # rel.67: 30 sec
 # rel.68: 30 sec
 
-5.2 Update the ancestral taxon names
+5.2 Update the extant taxon names
+
+Each new species must have a 'ensembl alias name' tag. It should match the "web_name" used by
+the production team in the "species" table of their "ensembl_production" database on staging1.
+
+5.3 Update the ancestral taxon names
 
 Each new extant species is anchored to the species tree at a certain taxon.
 This taxon must be described with two fields in the ncbi_taxa_name table:
@@ -63,8 +68,9 @@ This taxon must be described with two fields in the ncbi_taxa_name table:
     the TimeTree database (http://www.timetree.org)
 
 Update the file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql to add
-the two new tags and apply the sql commands to the master database.
-The divergence date can be obtained from the TimeTree database (http://www.timetree.org)
+the two new tags
+
+5.4 Load ensembl_aliases.sql onto the master database
 
 $ mysql -u ensadmin -p${ENSADMIN_PSW} -h compara1 sf5_ensembl_compara_master < \
     $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
