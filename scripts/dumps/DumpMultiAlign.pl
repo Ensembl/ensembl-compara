@@ -326,6 +326,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::LocatableSeq;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
 use Devel::Size qw (size total_size);
 
@@ -554,7 +555,7 @@ do {
     while (<FILE>) {
 	chomp;
 	my $gab;
-	if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
+	if ($method_link_species_set->method->class =~ /GenomicAlignTree/) {
 	    $gab = $genomic_align_set_adaptor->fetch_by_genomic_align_block_id($_);
 	} else {
 	    $gab = $genomic_align_set_adaptor->fetch_by_dbID($_);
@@ -802,7 +803,7 @@ sub print_my_emf {
   } else {
     $all_genomic_aligns = $genomic_align_block->get_all_GenomicAligns()
   }
-  my $reverse = 1 - $genomic_align_block->get_original_strand;
+  my $reverse = 1 - $genomic_align_block->original_strand;
   foreach my $this_genomic_align (@{$all_genomic_aligns}) {
     next if (!defined($this_genomic_align));
 
@@ -896,20 +897,15 @@ sub print_my_emf {
     print "TREE ", $genomic_align_block->newick_format, "\n";
   }
 
-if ($conservation_score_mlss) {
+  if ($conservation_score_mlss) {
     print "SCORE ", $conservation_score_mlss->name, "\n";
 
-    my $new_genomic_align_block = $genomic_align_block;
-    if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
-      $new_genomic_align_block = $genomic_align_block->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block;
-      $new_genomic_align_block->reverse_complement if ($reverse);
-    }
     my $start = 1;
     my $end = $genomic_align_block->length;
     my $length = $end-$start+1;
 
-    my $conservation_scores = $new_genomic_align_block->adaptor->db->get_ConservationScoreAdaptor->
-        fetch_all_by_GenomicAlignBlock($new_genomic_align_block, $start, $end, $length, $length, undef, 1);
+    my $conservation_scores = $genomic_align_block->adaptor->db->get_ConservationScoreAdaptor->
+        fetch_all_by_GenomicAlignBlock($genomic_align_block, $start, $end, $length, $length, undef, 1);
 
     my $this_conservation_score = shift @$conservation_scores;
      for (my $i = 0; $i<@$aligned_seqs; $i++) {
@@ -920,8 +916,6 @@ if ($conservation_score_mlss) {
          $aligned_seqs->[$i] .= " .";
        }
      }
-    #$new_genomic_align_block = undef;
-    undef($new_genomic_align_block);
 }
   print "DATA\n";
   print join("\n", @$aligned_seqs);
@@ -961,7 +955,7 @@ sub print_my_maf {
   } else {
     $all_genomic_aligns = $genomic_align_block->get_all_GenomicAligns()
   }
-  my $reverse = 1 - $genomic_align_block->get_original_strand;
+  my $reverse = 1 - $genomic_align_block->original_strand;
   foreach my $this_genomic_align (@$all_genomic_aligns) {
     my $seq_name = $this_genomic_align->genome_db->name;
     $seq_name =~ s/(.)\w* (...)\w*/$1$2/;
