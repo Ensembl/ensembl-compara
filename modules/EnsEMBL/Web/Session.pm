@@ -586,6 +586,7 @@ sub configure_user_data {
           my $renderers = $_->get('renderers');
           my %valid     = @$renderers;
           if ($vertical) {
+            $_->set_user('ftype', $track->{'ftype'});
             $_->set_user('display', $track->{'style'} 
                             || EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}));
           }
