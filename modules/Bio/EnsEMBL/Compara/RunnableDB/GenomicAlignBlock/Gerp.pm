@@ -121,7 +121,7 @@ sub fetch_input {
 
       #decide whether to use GenomicAlignTree object or species tree.
       my $mlss = $gab->method_link_species_set;
-      my $method_link_class = $mlss->method_link_class;
+      my $method_link_class = $mlss->method->class;
 
       my $tree_string;
       if ($method_link_class =~ /GenomicAlignTree/) {
@@ -152,7 +152,7 @@ sub fetch_input {
 	      $self->param('run_gerp', 0);
 	      return 1;
 	  }
-	  $tree_string = $gat->newick_simple_format();
+	  $tree_string = $gat->newick_format("simple");
 
 	  $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);
 
@@ -489,7 +489,7 @@ sub _parse_cons_file {
 
     my $species_set;
     if (!defined $self->param('species_set')) {
-	foreach my $gdb (@{$gab->method_link_species_set->species_set}) {
+	foreach my $gdb (@{$gab->method_link_species_set->species_set_obj->genome_dbs}) {
 	    push @$species_set, $gdb->dbID;
 	}
     } else {
