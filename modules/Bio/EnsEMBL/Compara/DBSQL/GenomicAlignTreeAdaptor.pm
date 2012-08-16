@@ -505,6 +505,9 @@ sub _fetch_by_genomic_align_block {
       $genomic_align_tree->reverse_complement;
   }
 
+  #set the modern_genomic_align_block_id
+  $genomic_align_tree->modern_genomic_align_block_id($genomic_align_block->dbID);
+
   return $genomic_align_tree;
 }
 
