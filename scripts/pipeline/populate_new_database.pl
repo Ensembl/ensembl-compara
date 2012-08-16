@@ -432,7 +432,7 @@ sub get_all_default_genome_dbs {
         unless ($method_link_species_set_adaptor);
     foreach my $this_mlss_id (@$mlss_ids) {
       my $this_mlss = $method_link_species_set_adaptor->fetch_by_dbID($this_mlss_id);
-      foreach my $this_genome_db (@{$this_mlss->species_set}) {
+      foreach my $this_genome_db (@{$this_mlss->species_set_obj->genome_dbs}) {
         $all_species->{$this_genome_db->name} = $this_genome_db;
       }
     }
