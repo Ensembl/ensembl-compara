@@ -474,14 +474,13 @@ sub fetch_all_by_GenomicAlignBlock {
 	       current => 0};
 
     #Find the genomic_align_block_id. 
-    #If passing in a GenomicAlignTree, find the corresponding genomic_align_block from a genomic_align
+    #If passing in a GenomicAlignTree, find the corresponding modern genomic_align_block
     my $new_genomic_align_block;
     if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
-        $new_genomic_align_block = $genomic_align_block->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block;
+        $new_genomic_align_block = $genomic_align_block->get_modern_GenomicAlignBlock;
     } else {
         $new_genomic_align_block = $genomic_align_block;
     }
-
     #make sure reference genomic align has been set. If not set, set to be
     #first genomic_align
     my $reference_genomic_align = $new_genomic_align_block->reference_genomic_align;
@@ -506,9 +505,8 @@ sub fetch_all_by_GenomicAlignBlock {
     }
 
     #need to reverse conservation scores if reference species is complemented
-    if ($genomic_align_block->original_strand == 0) {
+    if ($new_genomic_align_block->original_strand == 0) {
 	$conservation_scores = _reverse($conservation_scores);
-
     }
 
     #reset _score_index for new conservation_scores
