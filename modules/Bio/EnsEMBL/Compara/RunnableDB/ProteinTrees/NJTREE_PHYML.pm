@@ -325,7 +325,11 @@ sub run_njtree_phyml {
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
       #parse the tree into the datastucture:
-  $self->parse_newick_into_tree( $newick_file, $self->param('protein_tree') );
+  unless ($self->parse_newick_into_tree( $newick_file, $self->param('protein_tree') )) {
+    $self->input_job->transient_error(0);
+    die 'The alignment is empty. Cannot build a tree';
+    $self->input_job->transient_error(1);
+  }
 
   my $runtime = time()*1000-$starttime;
 

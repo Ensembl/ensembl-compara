@@ -231,6 +231,7 @@ sub parse_newick_into_tree {
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
   print  "Tree loaded from file:\n";
   $newroot->print_tree(20) if($self->debug > 1);
+  return undef if $newroot->name eq '_null_';
 
   my $split_genes = $self->param('split_genes');
 
@@ -279,6 +280,7 @@ sub parse_newick_into_tree {
   $tree->root->parent->add_child($newroot) if $tree->root->parent;
   $newroot->distance_to_parent($tree->root->distance_to_parent);
   $newroot->adaptor($tree->root->adaptor);
+  $newroot->tree($tree);
   $tree->root->release_tree;
   $tree->{_root} = $newroot;
 
@@ -288,6 +290,7 @@ sub parse_newick_into_tree {
   foreach my $leaf (@{$tree->root->get_all_leaves}) {
     assert_ref($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
   }
+  return $tree;
 }
 
 sub store_tree_tags {
