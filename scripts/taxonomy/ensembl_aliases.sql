@@ -559,6 +559,10 @@ SET @this_value='Reptiles';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
+SET @this_taxon_id=32456;
+SET @this_value='Silverside fish';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 -- -- Use these to ADD new internal node aliases
 
@@ -569,6 +573,11 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 
 -- Timetree divergence times for the GeneTree internal nodes
+SET @this_taxon_id=32456;
+SET @this_value='120';
+SET @this_name_class='ensembl timetree mya';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
 SET @this_taxon_id=33553;
 SET @this_value='78.91';
 SET @this_name_class='ensembl timetree mya';
