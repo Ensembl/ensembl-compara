@@ -126,7 +126,7 @@ sub resource_classes {
 	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' }, 
 	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
 	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
-	'mem14000' =>{'LSF' => '-C0 -M14000000 -R"select[mem>14000] rusage[mem=14000]"' },
+	'mem10500' =>{'LSF' => '-C0 -M10500000 -R"select[mem>10500] rusage[mem=10500]"' },
 	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]"' },
     };  
 }
