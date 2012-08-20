@@ -56,7 +56,7 @@ sub populate_tree {
   
   
   foreach (keys %error_messages) {
-    $index->append($self->create_subnode("Error/$_", "$_ error: $error_messages{$_}->[0]",
+    $index->append($self->create_subnode("Error/$_", "Error $_",
       [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
       { availability  => 1, no_menu_entry => 1 }
     ));
