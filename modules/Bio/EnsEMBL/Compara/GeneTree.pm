@@ -263,6 +263,9 @@ sub preload {
         delete $gtn_adaptor->{'_ref_tree'};
     }
 
+    # Loads all the tags in one go
+    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple(@{$self->root->get_all_nodes});
+
     # Loads all the gene members in one go
     my %leaves;
     foreach my $pm (@{$self->root->get_all_leaves}) {
