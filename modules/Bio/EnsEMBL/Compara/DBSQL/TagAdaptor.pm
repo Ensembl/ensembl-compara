@@ -117,6 +117,56 @@ sub _load_tagvalues {
 }
 
 
+=head2 _load_tagvalues_multiple
+
+  Description: similar to _load_tagvalues, but applies on a whole list
+               of objects (assumed to be all of the same type)
+  Arg [1..n] : <scalar> reference object
+  Example    : $genetreenode_adaptor->_load_tagvalues_multiples($node1, $node2);
+  Returntype : none
+  Exceptions : none
+  Caller     : internal
+
+=cut
+
+sub _load_tagvalues_multiple {
+    my $self = shift;
+
+    # Assumes that all the objects have the same type
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($_[0]);
+
+    map {$_->{'_tags'} = {}} (grep {not exists $_->{'_tags'}} @_);
+
+    my %perl_keys = map {$_->$perl_keyname => $_} @_;
+    my $where_constraint = join(',', keys %perl_keys);
+
+    # Tags (multiple values are allowed)
+    my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable WHERE $db_keyname IN ($where_constraint)");
+    $sth->execute();
+    while (my ($obj_id, $tag, $value) = $sth->fetchrow_array()) {
+        $perl_keys{$obj_id}->add_tag($tag, $value, 1);
+        warn "adding $value to $tag of $obj_id";
+    }
+    $sth->finish;
+   
+    # Attributes ?
+    if (defined $db_attrtable) {
+        $sth = $self->prepare("SELECT * FROM $db_attrtable WHERE $db_keyname IN ($where_constraint)");
+        $sth->execute();
+        # Retrieve data
+        while (my $attrs = $sth->fetchrow_hashref()) {
+            my $object = $perl_keys{$attrs->{$db_keyname}};
+            foreach my $key (keys %$attrs) {
+                if (($key ne $db_keyname) and defined(${$attrs}{$key})) {
+                    $object->add_tag($key, ${$attrs}{$key});
+                }
+            }
+        }
+        $sth->finish;
+    }
+}
+
+
 =head2 _read_attr_list
 
   Description: retrieves the column names of an attribute table
