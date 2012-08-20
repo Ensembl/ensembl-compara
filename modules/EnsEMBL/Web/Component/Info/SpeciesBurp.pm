@@ -16,9 +16,13 @@ sub _init {
 sub content {
   my $self           = shift;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
-  my $error_text     = $error_messages{$self->hub->function}->[1];
-  
-  return "<p>$error_text</p><br>" . EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, '/ssi/species/ERROR_4xx.html');
+  my $error_text     = $error_messages{$self->hub->function};
+
+  return sprintf '<div class="error"><h3>%s</h3><div class="error-pad"><p>%s</p>%s</div></div>',
+    $error_text->[0],
+    $error_text->[1],
+    EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, '/ssi/species/ERROR_4xx.html')
+  ;
 }
 
 1;
