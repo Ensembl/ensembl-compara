@@ -41,12 +41,14 @@ sub configure {
   ##  - values          ArrayRef of either string values, or Hashrefs with following keys (for each option, checkbox or radio)
   ##    - id            Id attribute for the option
   ##    - value         Value of the option
+  ##    - selected      Flag if on, will keep this option selected
   ##    - name          name attribute incase of checkboxes. This will override the default name attribute (the one for the whole list)
   ##    - caption       Text string (or hashref set of attributes including inner_HTML or inner_text) for <option> OR <label> for checkboxes and radio buttons
   ##    - class         Class attribute for the option/checkbox/radio button
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
   ##    - label_first   Flag if on, keeps the label to the left of the checkbox/radiobutton (off by default)
   ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
+  ##  - is_binary       Flag kept on if values for a 'yesno' dropdown, the values to the option are 1 and 0 for Yes and No respectively instead of default 'yes' and 'no'
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
   ##  - class           Class attribute (space seperated string for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
