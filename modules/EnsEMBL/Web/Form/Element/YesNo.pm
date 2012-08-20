@@ -8,21 +8,15 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
 
-  $params->{'multiple'} = 0;
-  $params->{'value'} = exists $params->{'value'} && ref($params->{'value'}) eq 'ARRAY'
-    ? shift @{ $params->{'value'} }
-    : $params->{'value'} || '';
-  
-  $params->{'values'} = [{
-    'value'     => 'yes',
-    'caption'   => 'Yes',
-    'selected'  => $params->{'value'} eq 'yes' ? 1 : 0,
-  },{
-    'value'     => 'no',
-    'caption'   => 'No',
-    'selected'  => $params->{'value'} eq 'no' ? 1 : 0,
-  }];
-  $self->SUPER::configure($params);
+  my $options = delete $params->{'is_binary'} ? {0 => 'No', 1 => 'Yes'} : {'no' => 'No', 'yes' => 'Yes'};
+
+  $self->SUPER::configure({%$params,
+    'multiple'  => 0,
+    'values'    => [ map {
+      'value'     => $_,
+      'caption'   => $options->{$_},
+    }, sort keys %$options ]
+  });
 }
 
 1;
