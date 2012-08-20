@@ -145,7 +145,7 @@ sub _load_tagvalues_multiple {
     $sth->execute();
     while (my ($obj_id, $tag, $value) = $sth->fetchrow_array()) {
         $perl_keys{$obj_id}->add_tag($tag, $value, 1);
-        warn "adding $value to $tag of $obj_id";
+        #warn "adding $value to $tag of $obj_id";
     }
     $sth->finish;
    
