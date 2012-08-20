@@ -118,7 +118,6 @@ sub fetch_input {
     $gene_tree->preload();
     $self->param('gene_tree', $gene_tree->root);
 
-    #if ($self->input_job->retry_count > 0) {
     $self->delete_old_homologies;
     $self->delete_old_orthotree_tags;
     $self->fill_easy_values;
@@ -131,8 +130,19 @@ sub fetch_input {
         $self->throw("undefined GeneTree as input\n");
     }
     $self->param('taxon_tree', $self->load_species_tree_from_string( $self->get_species_tree_string ) );
+
+    # Loads all the homology MLSSs in order to save DB queries later
     my %mlss_hash;
     $self->param('mlss_hash', \%mlss_hash);
+    foreach my $mlss (@{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all}) {
+        my $mlss_type = $mlss->method->type;
+        next if ($mlss_type ne 'ENSEMBL_PARALOGUES' and $mlss_type ne 'ENSEMBL_ORTHOLOGUES');
+        my $gdbs = $mlss->species_set_obj->genome_dbs;
+        # This should be unique to a pair of genome_db_ids, and equal if we switch the two genome_dbs
+        # WARNING: This trick is valid for genome_db_id up to 10000
+        my $mlss_key = sprintf("%s_%d", $mlss_type, $gdbs->[0]->dbID * $gdbs->[-1]->dbID + 100000000*($gdbs->[0]->dbID + $gdbs->[-1]->dbID));
+        $mlss_hash{$mlss_key} = $mlss;
+    }
 }
 
 
@@ -906,7 +916,7 @@ sub store_gene_link_as_homology {
   $homology->subtype($subtype);
   $homology->ancestor_node_id($ancestor->node_id);
   $homology->tree_node_id($tree_node_id);
-  $homology->method_link_species_set_id($mlss->dbID);
+  $homology->method_link_species_set($mlss);
   
   $homology->add_Member($gene1);
   $homology->add_Member($gene2);
