@@ -26,18 +26,20 @@ sub handler {
   $page->title->set("$error_number error: $error_subject");
   
   $page->content->add_panel(new EnsEMBL::Web::Document::Panel(
-    raw => qq{
-      <h2>$error_number error: $error_subject</h2>
-      <p>$error_text</p>
-      <p>
-        Please check that you have typed in the correct URL or else use the site search
-        facility to try and locate information you require.
-      </p>
-      <p>
-        If you think an error has occurred please send email to the server administrator 
-        using the link below.
-      </p>
-    }
+    raw => qq{<div class="error left-margin right-margin">
+      <h3>$error_number error: $error_subject</h3>
+      <div class="error-pad">
+        <p>$error_text</p>
+        <p>
+          Please check that you have typed in the correct URL or else use the site search
+          facility to try and locate information you require.
+        </p>
+        <p>
+          If you think an error has occurred please send email to the server administrator 
+          using the link below.
+        </p>
+      </div>
+    </div>}
   ));
   
   $controller->render_page;
