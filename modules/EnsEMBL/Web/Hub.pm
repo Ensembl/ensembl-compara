@@ -244,6 +244,28 @@ sub data_species {
   return $species;
 }
 
+# TODO: Needs moving to viewconfig so we don't have to work it out each time
+sub otherspecies {
+  my $self         = shift;
+
+  return $self->param('otherspecies') if $self->param('otherspecies');
+  return $self->param('species') if $self->param('species');
+
+  my $species_defs = $self->species_defs;
+  my $species      = $self->species;
+  my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+  my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
+  my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+
+  return $primary_sp if  ($synteny{$species}->{$primary_sp});
+
+  return $secondary_sp if  ($synteny{$species}->{$secondary_sp});
+
+  my @has_synteny  = sort keys %{$synteny{$species}};
+  return $has_synteny[0];
+}
+
+
 # Does an ordinary redirect
 sub redirect {
   my ($self, $url) = @_;
