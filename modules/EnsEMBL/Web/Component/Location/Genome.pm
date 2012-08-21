@@ -298,11 +298,16 @@ sub _render_features {
     ## Table(s) of features
     while (my ($k, $v) = each (%$user_features)) {
       while (my ($ftype, $data) = each (%$v)) {
-        $html .= $self->_feature_table($ftype, [$data->{'features'}, [ 
-                                        {'key'=>'description', 'title'=>'Description'}]
-                                        ], 
-                                      $default_column_info,
-                                      );
+        my $extra_columns = $ftype eq 'Gene' ?
+                            [{'key'=>'description', 'title'=>'Description'}]
+                            : [
+                              {'key' => 'align',    'title' => 'Alignment length'},
+                              {'key' => 'ori',      'title' => 'Rel ori'},
+                              {'key' => 'id',       'title' => '%id'},
+                              {'key' => 'score',    'title' => 'Score'},
+                              {'key' => 'p-value',  'title' => 'p-value'},
+                              ]; 
+        $html .= $self->_feature_table($ftype, [$data->{'features'}, $extra_columns], $default_column_info);
       }
     }
 
