@@ -13,9 +13,10 @@ use base qw(Bio::EnsEMBL::GlyphSet::sequence);
 
 # We have to create fake features in the features call
 sub features {
-  my ($self) = @_;
-  my $seq    = $self->{'container'}->subseq(-2, $self->{'container'}->length + 4);
-  my $strand = $self->strand;
+  my $self        = shift;
+  my $seq         = $self->{'container'}->subseq(-2, $self->{'container'}->length + 4);
+  my $strand      = $self->strand;
+  my $codon_table = ($self->{'container'}->get_all_Attributes('codon_table')->[0] || {})->{'value'};
   my @features;
   
   foreach my $phase (0..2) {
@@ -28,7 +29,7 @@ sub features {
     
     my $bioseq = new Bio::Seq(-seq => $string, -moltype => 'dna');
     
-    $string = $bioseq->translate->seq;
+    $string = $bioseq->translate(undef, undef, undef, $codon_table)->seq;
     $string = reverse $string if $strand == -1;
     
     my $start = $phase - 5;
