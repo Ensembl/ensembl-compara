@@ -100,7 +100,7 @@ sub run {
 		}
 	}
 	my $genomic_align_block_adaptor = $self->param('compara_dba')->get_GenomicAlignBlockAdaptor;
-	my $this_method_link_species_set_id = $self->param('method_link_species_set_id');
+	my $this_method_link_species_set_id = $self->param('overlaps_mlssid');
 	foreach my $coord_pair( @$reference_positions ){
 		my $ref_sub_slice =  $self->param('ref_slice_adaptor')->fetch_by_region(
 					$self->param('ref_dnafrag')->coord_system_name,
