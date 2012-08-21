@@ -658,8 +658,8 @@ CREATE TABLE gene_tree_node (
   node_id                         int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   parent_id                       int(10) unsigned,
   root_id                         int(10) unsigned,
-  left_index                      int(10) NOT NULL,
-  right_index                     int(10) NOT NULL,
+  left_index                      int(10) NOT NULL DEFAULT 0,
+  right_index                     int(10) NOT NULL DEFAULT 0,
   distance_to_parent              double default 1.0 NOT NULL,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
