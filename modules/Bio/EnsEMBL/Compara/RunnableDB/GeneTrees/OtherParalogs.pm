@@ -80,7 +80,7 @@ sub param_defaults {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_homologies;
+    $self->SUPER::write_output;
     if ($self->param('dataflow_subclusters')) {
         foreach my $child (@{$self->param('children')}) {
             $self->dataflow_output_id({'protein_tree_id' => $child->node_id}, 2);
