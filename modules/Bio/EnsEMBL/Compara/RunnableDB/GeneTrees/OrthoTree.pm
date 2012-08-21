@@ -107,7 +107,6 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift @_;
-    $self->db->dbc->disconnect_when_inactive(1);
 
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
@@ -142,7 +141,6 @@ sub fetch_input {
         $mlss_hash{$mlss_key} = $mlss;
     }
     $self->param('taxon_hash', []);
-    $self->db->dbc->disconnect_when_inactive(0);
 }
 
 
@@ -159,9 +157,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    $self->db->dbc->disconnect_when_inactive(1);
     $self->run_analysis;
-    $self->db->dbc->disconnect_when_inactive(0);
 }
 
 
@@ -180,10 +176,8 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->db->dbc->disconnect_when_inactive(1);
     $self->store_taxon_names unless $self->param('_readonly');
     $self->store_homologies;
-    $self->db->dbc->disconnect_when_inactive(0);
 }
 
 
@@ -202,7 +196,6 @@ sub post_cleanup {
   }
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
 }
 
 
