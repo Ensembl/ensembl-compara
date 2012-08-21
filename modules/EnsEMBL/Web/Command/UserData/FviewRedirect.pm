@@ -37,12 +37,29 @@ sub process {
 
   while (my ($type, $feat) = each (%{$features||{}})) {
     foreach my $f (@{$feat->[0]||[]}) {
-      warn ">>> DESC ".$f->{'extra'}{'description'};
-      warn ">>> ENCD ".uri_escape($f->{'extra'}{'description'});
       my $strand = $f->{'strand'} == 1 ? '+' : '-';
-      my $attribs = join('; ', 'ID='.$f->{'gene_id'}[0], 'extname='.$f->{'extname'}, 'description='.uri_escape($f->{'extra'}{'description'}));
+      my @attribs;
+      if ($hub->param('ftype') eq 'Gene') {
+        @attribs = (
+                    'ID='.$f->{'gene_id'}[0], 
+                    'extname='.$f->{'extname'}, 
+                    'description='.uri_escape($f->{'extra'}{'description'})
+                    );
+      }
+      else {
+        @attribs = (
+                    'length='   .$f->{'length'},
+                    'label='    .uri_escape($f->{'label'}),
+                    'align='    .$f->{'extra'}{'align'},
+                    'ori='      .$f->{'extra'}{'ori'},
+                    'id='       .$f->{'extra'}{'id'},
+                    'score='    .$f->{'extra'}{'score'},
+                    'p-value='  .$f->{'extra'}{'p-value'},
+                    );
+      }
+      my $attrib_string = join('; ', @attribs);
       $content .= join("\t", $f->{'region'}, $hub->species_defs->ENSEMBL_SITETYPE, $hub->param('ftype'),
-                              $f->{'start'}, $f->{'end'}, '.', $strand, '.', $attribs);
+                              $f->{'start'}, $f->{'end'}, '.', $strand, '.', $attrib_string);
       $content .= "\n";
     }
   }
