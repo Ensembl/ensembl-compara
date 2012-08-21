@@ -21,8 +21,8 @@ sub _configure_display {
   );
 }
 
-# TODO: Needs moving to viewconfig so we don't have to work it out each time
 sub default_otherspecies {
+## DEPRECATED - use Hub::otherspecies instead
   my $self         = shift;
   my $object       = $self->object;
   my $species_defs = $object->species_defs;
