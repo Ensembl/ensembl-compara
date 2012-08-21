@@ -1095,7 +1095,7 @@ sub get_synteny_matches {
   my ($self, $other_species) = @_;
 
   my @data;
-  $other_species ||= $self->param('otherspecies') || $self->param('species') || $self->_default_otherspecies;
+  $other_species ||= $self->hub->otherspecies;
   my $gene2_adaptor = $self->database('core', $other_species)->get_GeneAdaptor;
   my $localgenes    = $self->get_synteny_local_genes;
   my $offset        = $self->seq_region_start;
@@ -1168,16 +1168,6 @@ sub get_synteny_local_genes {
 
   my @sorted = sort { $a->start <=> $b->start } @localgenes;
   return \@sorted;
-}
-
-#ek : this function will not work if the current species dont have synteny data with  primary or secondary data ..
-# if you need a default other species - use the logic from E:W:C:Location:SyntenyMatches
-sub _default_otherspecies {
-  my $self         = shift;
-  my $species_defs = $self->species_defs;
-  my $species      = $self->species;
-  
-  return $species eq $species_defs->ENSEMBL_PRIMARY_SPECIES ? $species_defs->ENSEMBL_SECONDARY_SPECIES : $species_defs->ENSEMBL_PRIMARY_SPECIES;
 }
 
 ######## LDVIEW CALLS ################################################

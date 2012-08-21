@@ -23,7 +23,7 @@ sub content {
   my $self        = shift;
   my $hub         = $self->hub;
   my $species     = $hub->species;
-  my $other       = $hub->param('otherspecies') || $hub->param('species') || $self->default_otherspecies;
+  my $other       = $hub->otherspecies;
   my $data        = $self->object->get_synteny_matches($other);
   (my $sp_tidy    = $species) =~ s/_/ /; 
   (my $other_tidy = $other)   =~ s/_/ /; 

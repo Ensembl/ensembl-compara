@@ -28,7 +28,7 @@ sub content {
   ## Don't show this component if the slice covers or exceeds the whole chromosome!
   return if $chromosome->length < 1e6 || ($hub->param('r') =~ /:/ && $start < 2 && $end > ($chromosome_end - 1));
   
-  my $other_species  = $hub->param('otherspecies') || $hub->param('species');
+  my $other_species  = $hub->otherspecies;
   my $max_len        = $end < 1e6 ? $end : 1e6;
   my $seq_region_end = $hub->param('r') =~ /:/ ? $object->seq_region_end : $max_len;
   my $chr            = $object->seq_region_name; 
