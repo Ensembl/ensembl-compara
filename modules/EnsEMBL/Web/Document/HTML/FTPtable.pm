@@ -8,13 +8,14 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Document::Table;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self            = shift;
-  my $species_defs    = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $hub             = new EnsEMBL::Web::Hub;
+  my $species_defs    = $hub->species_defs;
   my $rel             = 'release-' . $species_defs->ENSEMBL_VERSION; # Always set to use the release number rather than current to get around the delay in FTP site links updating
   my $required_lookup = $self->required_types_for_species;
   my $table           = new EnsEMBL::Web::Document::Table([], [], { data_table => 0, exportable => 0, header_repeat => 10 });
@@ -59,14 +60,37 @@ sub render {
     { key => 'files',   title => 'Data files',                   align => 'center', width => '10%', sort => 'html' },
     { key => 'bam',     title => 'BAM',                          align => 'center', width => '10%', sort => 'html' },
   );
-  
-  foreach my $spp (sort @{$species_defs->ENSEMBL_DATASETS}) {
-    (my $sp_name  = $spp) =~ s/_/ /;
-    my $sp_dir    = lc $spp;
-    my $sp_var    = lc $spp . '_variation';
+ 
+
+  ## We want favourite species at the top of the table, 
+  ## then everything else alphabetically by common name
+  my $all_species = [];
+  my %fave_check = map {$_ => 1} @{$hub->get_favourite_species};
+  foreach (@{$hub->get_favourite_species}) {
+    push @$all_species, {
+                          'dir'         => lc($_), 
+                          'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
+                          'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+                        };
+  }
+
+  my @other_species;
+  foreach ($species_defs->valid_species) {
+    push @other_species, {
+                          'dir'         => lc($_), 
+                          'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
+                          'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+                        }
+            unless $fave_check{$_};
+  }
+  push @$all_species, sort {$a->{'common_name'} cmp $b->{'common_name'}} @other_species;
+
+  foreach my $sp (@$all_species) {
+    my $sp_dir    = $sp->{'dir'};
+    my $sp_var    = $sp_dir. '_variation';
 
     $table->add_row({
-      species => sprintf('<strong><i>%s</i></strong> (%s)', $sp_name, $species_defs->get_config($spp, 'DISPLAY_NAME')),
+      species => sprintf('<b>%s</b><br /><i>%s</i>', $sp->{'common_name'}, $sp->{'sci_name'}),
       dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'},    $rel, $sp_dir),
       ncrna   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a>', $title{'rna'},     $rel, $sp_dir),
