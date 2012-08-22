@@ -86,6 +86,7 @@ body.ie67 div.species-list div.species-box a    { cursor: pointer; }
 species page
 ----------------------------------------------------------------------*/
 div.species-box     { margin: 0 0 16px; overflow: hidden; }
+img.species-img,
 div.species-box img { height: 48px; width: 48px; border-radius: 7px; -moz-border-radius: 7px; -webkit-border-radius: 7px; }
 div.species-box span.sp-img { float: left; padding: 0; margin-right: 8px; border: [[PANEL_BORDER]] solid 1px; border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; background-color: [[PANEL_BORDER]]; }
 

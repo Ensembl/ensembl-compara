@@ -1,5 +1,5 @@
 #main { margin-left: 224px; border: 0; position: relative; padding: 16px 0 0; }
-
+#widemain, 
 body.static #main { margin-left: 0; }
 
 @media print {
@@ -69,10 +69,11 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 
 .plain-box, .tinted-box,
 .info-box,  .round-box,
-.alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom: 16px; border-width: 1px; border-style: solid; overflow: hidden; }
+.alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
 .plain-box                { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
+.unbordered   { border:none; padding:16px 8px 0 16px; margin-bottom:0; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
 .info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[ALERT_BORDER]]; }
@@ -85,6 +86,7 @@ body.ie67 .plain-box      { zoom: 100%; }
 .float-left   { float:left; margin: 0 16px 16px 0; }
 .float-right  { float:right; margin: 0 0 16px 16px; }
 .unpadded { margin:0 1%; padding:0; }
+.half-padded { padding:8px 8px 0; }
 .noclear { clear:none; }
 
 /************************************
