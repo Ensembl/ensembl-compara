@@ -43,6 +43,10 @@ sub fetch_changelog {
   my ($sql, $sql2);
   my @args = ($criteria->{'release'});
 
+  my $filter = $criteria->{'limit'} ?
+                'ORDER BY c.priority DESC LIMIT '.$criteria->{'limit'}
+                : 'ORDER BY c.team, c.priority DESC';
+
   if ($criteria->{'species'}) {
     $sql = qq(
       SELECT
@@ -61,9 +65,7 @@ sub fetch_changelog {
         AND c.status = 'handed_over'
         AND c.release_id = ?
         AND (s.url_name = ? OR s.url_name IS NULL)
-      ORDER BY
-        c.team,
-        c.priority DESC
+      $filter
     );
     push @args, $criteria->{'species'};
   }
@@ -78,9 +80,7 @@ sub fetch_changelog {
         AND c.title != ''
         AND c.content != ''
         AND c.status = 'handed_over'
-      ORDER BY
-        c.team,
-        c.priority DESC
+      $filter
     );
   }
 
