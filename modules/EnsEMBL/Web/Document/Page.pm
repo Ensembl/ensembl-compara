@@ -448,6 +448,7 @@ sub html_template {
   my $footer_id           = 'wide-footer';
   my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
   my $main_holder         = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
+  my $main_class          = $self->include_navigation ? 'main' : 'widemain';
   my $nav;
   
   if ($self->include_navigation) {
@@ -483,7 +484,7 @@ sub html_template {
       </div>
       $main_holder
         $nav
-        <div id="main">
+        <div id="$main_class">
           $elements->{'breadcrumbs'}
           $elements->{'message'}
           $elements->{'content'}
