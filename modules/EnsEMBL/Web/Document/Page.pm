@@ -448,7 +448,7 @@ sub html_template {
   my $footer_id           = 'wide-footer';
   my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
   my $main_holder         = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
-  my $main_class          = $self->include_navigation ? 'main' : 'widemain';
+  my $main_class          = $self->isa('EnsEMBL::Web::Document::Page::Fluid') ? 'widemain' : 'main';
   my $nav;
   
   if ($self->include_navigation) {
