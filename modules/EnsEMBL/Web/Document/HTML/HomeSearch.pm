@@ -33,11 +33,10 @@ sub render {
   my $species_defs        = $self->species_defs;
   my $page_species        = $self->species;
   my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->DISPLAY_NAME;
-     $species_name        = "<i>$species_name</i>" if $species_name =~ /\./;
   my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/psychic";
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
   my $is_home_page        = $page_species eq 'Multi';
-  my $input_size          = $is_home_page ? 30 : 50;
+  my $input_size          = $is_home_page ? 30 : 40;
   my $favourites          = $self->favourites;
   my $q                   = $self->{'query'};
 
@@ -65,7 +64,9 @@ sub render {
   }
 
   # form field
-  my $field = $form->add_field({'label' => $is_home_page ? 'Search' : 'Search for', 'notes' => $examples});
+  my $search_label = $is_home_page ? 'Search' : "Search $species_name";
+  $search_label .= '&hellip;';
+  my $field = $form->add_field({'value' => $search_label, 'notes' => $examples});
 
   # species dropdown
   if ($page_species eq 'Multi') {
