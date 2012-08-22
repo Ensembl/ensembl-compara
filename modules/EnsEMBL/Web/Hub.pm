@@ -269,6 +269,7 @@ sub otherspecies {
 # Does an ordinary redirect
 sub redirect {
   my ($self, $url) = @_;
+  $url = $self->url($url) if $url && ref $url;
   $self->input->redirect($url || $self->current_url);
 }
 
