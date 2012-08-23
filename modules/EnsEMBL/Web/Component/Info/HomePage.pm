@@ -207,7 +207,7 @@ sub _genebuild_text {
   my $sample_data     = $species_defs->SAMPLE_DATA;
   my $ensembl_version = $species_defs->ENSEMBL_VERSION;
 
-  my $html = '<h2>Gene annotation</h2>
+  my $html = '
 <div class="homepage-icon">
   <div class="center">
   ';
@@ -231,7 +231,8 @@ sub _genebuild_text {
 </div>
 ';
 
-  $html .= '<p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>';
+  $html .= '<h2>Gene annotation</h2>
+<p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>';
 
   $html .= qq(<p><img src="/i/24/info.png" alt="" style="vertical-align:middle" /> More about <a href="/$species/Info/Annotation/#genebuild">this genebuild</p>);
 
@@ -255,7 +256,7 @@ sub _compara_text {
   my $sample_data     = $species_defs->SAMPLE_DATA;
   my $ensembl_version = $species_defs->ENSEMBL_VERSION;
 
-  my $html = '<h2>Comparative genomics</h2>
+  my $html = '
 <div class="homepage-icon">
   <div class="center">
   ';
@@ -270,7 +271,8 @@ sub _compara_text {
 </div>
 ';
 
-  $html .= '<p><strong>What can I find?</strong>  Homologues, gene trees, and whole genome alignments across multiple species.</p>';
+  $html .= '<h2>Comparative genomics</h2>
+<p><strong>What can I find?</strong>  Homologues, gene trees, and whole genome alignments across multiple species.</p>';
   $html .= '<p><img src="/i/24/info.png" alt="" style="vertical-align:middle" /> More about <a href="/info/docs/compara/">comparative analysis</a></li>'; 
 
   if ($species_defs->ENSEMBL_FTP_URL) {
@@ -290,7 +292,7 @@ sub _variation_text {
   my $sample_data     = $species_defs->SAMPLE_DATA;
   my $ensembl_version = $species_defs->ENSEMBL_VERSION;
 
-  my $html = '<h2>Variation</h2>
+  my $html = '
 <div class="homepage-icon">
   <div class="center">
     ';
@@ -315,7 +317,8 @@ sub _variation_text {
 </div>
 ';
 
-  $html .= '<p><strong>What can I find?</strong> Short sequence variants, such as SNPs from dbSNP, mutations from the COSMIC project, longer structural variants from dGVA.  Population frequencies from the 1000 Genomes project, disease and phenotypes associated with variants.</p>';
+  $html .= '<h2>Variation</h2>
+<p><strong>What can I find?</strong> Short sequence variants, such as SNPs from dbSNP, mutations from the COSMIC project, longer structural variants from dGVA.  Population frequencies from the 1000 Genomes project, disease and phenotypes associated with variants.</p>';
 
   my $site = $species_defs->ENSEMBL_SITETYPE;
   $html .= qq(<p><img src="/i/24/info.png" alt="" style="vertical-align:middle" /> More about <a href="/info/docs/variation/">variation in $site</p>);
