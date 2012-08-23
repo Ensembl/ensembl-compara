@@ -124,9 +124,9 @@ search-form on home page and species home page
 ----------------------------------------------------------------------*/
 form.search-form div.form-field { margin: 0; }
 
-form.search-form          label.ff-label { line-height: 20px; font-weight: normal; width: auto; position: relative; top: 2px; }
+form.search-form          label.ff-label { line-height: 20px; font-weight: normal; width: auto;}
 form.search-form          div.ff-right,
-form.search-form          div.ff-notes { padding-left: 72px; }
+form.search-form          div.ff-notes { padding-left: 16px; }
 form.search-form          div.ff-notes p.search-example { margin: 0; }
 form.homepage-search-form div.ff-right,
 form.homepage-search-form div.ff-notes { padding-left: 50px; text-align: left; }
