@@ -64,7 +64,9 @@ sub render {
   }
 
   # form field
-  my $field = $form->add_field({'label' => $is_home_page ? 'Search' : '', 'notes' => $examples});
+  my $f_params = {'notes' => $examples};
+  $f_params->{'label'} = 'Search' if $is_home_page;
+  my $field = $form->add_field($f_params);
 
   # species dropdown
   if ($page_species eq 'Multi') {
