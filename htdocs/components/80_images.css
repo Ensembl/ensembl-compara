@@ -6,6 +6,7 @@ img.float-left  { float:left;  margin: 0 16px 16px 0; padding: 0; }
 img.float-right { float:right; margin: 0 0 16px 16px; padding: 0; }
 
 div.homepage-icon { float:right; margin:0 8px; }
+div.homepage-icon p { margin-top:2px; }
 
 /* Equivalents for imported WordPress feed */
 img.alignleft { float:left;  margin-right: 10px; }

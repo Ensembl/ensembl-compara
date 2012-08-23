@@ -73,7 +73,7 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 .plain-box                { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
-.unbordered   { border:none; padding:16px 8px 0 16px; margin-bottom:0; }
+.unbordered   { border:none; padding:8px 12px 0 12px; margin-bottom:0; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
 .info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[ALERT_BORDER]]; }
