@@ -64,9 +64,7 @@ sub render {
   }
 
   # form field
-  my $search_label = $is_home_page ? 'Search' : "Search $species_name";
-  $search_label .= '&hellip;';
-  my $field = $form->add_field({'value' => $search_label, 'notes' => $examples});
+  my $field = $form->add_field({'label' => $is_home_page ? 'Search' : '', 'notes' => $examples});
 
   # species dropdown
   if ($page_species eq 'Multi') {
@@ -89,7 +87,10 @@ sub render {
   }
 
   # search input box & submit button
-  $field->add_element({'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 'input'}, 1);
+  my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 
+'input'};
+  $q_params->{'value'} = "Search $species_name..." unless $is_home_page;
+  $field->add_element($q_params, 1);
   $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
   my $elements_wrapper = $field->elements->[0];
