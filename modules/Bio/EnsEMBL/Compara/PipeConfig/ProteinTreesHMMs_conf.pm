@@ -111,8 +111,8 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
 
     # dump parameters:
-        'dump_table_list'       => '#updated_tables#',  # probably either '#updated_tables#' or '' (to dump everything)
-        'dump_exclude_ehive'    => 1,
+        'dump_table_list'       => '',  # probably either '#updated_tables#' or '' (to dump everything)
+        'dump_exclude_ehive'    => 0,
 
     # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
