@@ -27,6 +27,12 @@ Bio::EnsEMBL::Compara::RunnableDB::ObjectStore
                     -arglist "[ -genome_dbs => [ {-name => 'homo_sapiens', -taxon_id => 9606, -assembly => 'GRCh37', -genebuild => '2010-07-Ensembl'}, { -name => 'big_fury_animal', -taxon_id => 9598, -assembly => 'asm1.0', -genebuild => '2012-01-EnsemblTest' } ] ]" \
                     -debug 1
 
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ObjectStore \
+                    -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2911/lg4_compara_families_66" \
+                    -object_type MethodLinkSpeciesSet \
+                    -arglist "[ -name => 'foo_mlss', -method => { -type => 'BLASTZ_NET', -class => 'GenomicAlignBlock.pairwise_alignment' }, -species_set_obj => { -genome_dbs => [ {-name => 'homo_sapiens', -taxon_id => 9606, -assembly => 'GRCh37', -genebuild => '2010-07-Ensembl'}, { -name => 'big_fury_animal', -taxon_id => 9598, -assembly => 'asm1.0', -genebuild => '2012-01-EnsemblTest' } ] } ]" \
+                    -debug 1
+
 =head1 DESCRIPTION
 
 This is a Compara-specific generic runnable that creates a storable object and stores it.
