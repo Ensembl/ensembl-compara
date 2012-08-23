@@ -30,43 +30,29 @@ sub content {
   <div class="column-two">
     <div class="column-padding no-left-margin">';
 
-  $html .= qq(<img src="/i/species/48/$species.png" class="species-img float-left" alt="" />);
+  $html .= qq(<img src="/i/species/64/$species.png" class="species-img float-left" style="width:64px;height:64px" alt="" />);
   if ($common_name =~ /\./) {
     $html .= qq(<h1>$display_name</h1>);
   }
   else {
-    $html .= qq(<h1 style="margin-bottom:0;">$common_name</h1><p><i>$display_name</i></p>);
+    $html .= qq(<h1 style="font-size:2em;margin-bottom:0;">$common_name</h1><p><i>$display_name</i></p>);
   }
-  $html .= '
-    </div>
-  </div>
-  <div class="column-two">
-    <div class="column-padding">';
-
+  $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
   my $search = EnsEMBL::Web::Document::HTML::HomeSearch->new($hub);
   $html .= $search->render;
-
-  $html .= '
-    </div>
-  </div>
-</div>';
-
-
-  $html .= '
-<div class="column-wrapper">  
-  <div class="column-two">
-    <div class="column-padding no-left-margin">';
 
   $html .= '<div class="round-box tinted-box unbordered">'.$self->_assembly_text.'</div>';
 
   $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
 
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) { 
-    $html .= '<div class="round-box tinted-box unbordered">'.$self->_whatsnew_text.'</div>';  
-    $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
-  }
+  $html .= '<div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div>';  
 
-  if ($hub->database('funcgen')) {
+  $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
+
+  ## Only show regulation box if we have a full regulatory build 
+  ## (most funcgen dbs only contain oligoprobe data) 
+  my $sample_data = $species_defs->SAMPLE_DATA;
+  if ($sample_data->{'REGULATION_PARAM'}) {
     $html .= '<div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div>';
   }
 
@@ -75,13 +61,14 @@ sub content {
   </div>
   <div class="column-two">
     <div class="column-padding">';
- 
+
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) { 
+    $html .= '<div class="round-box tinted-box unbordered">'.$self->_whatsnew_text.'</div>';  
+    $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
+  }
+
   $html .= '<div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div>';  
  
-  $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
-
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div>';  
-
   $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
 
   if ($hub->database('variation')) {
@@ -103,8 +90,7 @@ sub _whatsnew_text {
   my $species         = $hub->species;
   my $adaptor         = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
 
-  my $html = sprintf(qq(<h2><img src="/i/32/announcement.png" style="vertical-align:middle" alt="" /> What's New in %s %s release %s</h2>),
-                        $species_defs->ENSEMBL_SITETYPE, 
+  my $html = sprintf(qq(<h2><img src="/i/32/announcement.png" style="vertical-align:middle" alt="" /> What's New in %s release %s</h2>),
                         $species_defs->SPECIES_COMMON_NAME,
                         $species_defs->ENSEMBL_VERSION,
                     );
@@ -121,8 +107,7 @@ sub _whatsnew_text {
       my $record_url = $news_url.'#change_'.$record->{'id'};
       $html .= sprintf('<li><a href="%s">%s</a></li>', $record_url, $record->{'title'});
     }
-
-    $html .= qq(</ul><p><a href="$news_url">More release news &gt;&gt;</a></p>);
+    $html .= qq(</ul><p class="right"><a href="$news_url">More release news &gt;&gt;</a></p>);
   }
 
   return $html;
@@ -158,7 +143,8 @@ sub _assembly_text {
   }
 
   my $region_text = $sample_data->{'LOCATION_TEXT'};
-  my $region_url  = $hub->url({'type'=>'Location','action'=>'View','r'=>$sample_data->{'LOCATION_PARAM'}});
+  my $region_url  = $species_defs->species_path.'/Location/View?r='.$sample_data->{'LOCATION_PARAM'};
+
   $html .= qq{
     <a href="$region_url"><img src="$img_url/96/region.png" class="bordered" /></a>
     <p><a href="$region_url" class="nodeco">Example region<br />($region_text)</a></p>
@@ -231,14 +217,14 @@ sub _genebuild_text {
   ';
 
   my $gene_text = $sample_data->{'GENE_TEXT'}; 
-  my $gene_url  = $hub->url({'type'=>'Gene','action'=>'Summary','g'=>$sample_data->{'GENE_PARAM'}});
+  my $gene_url  = $species_defs->species_path.'/Gene/Summary?g='.$sample_data->{'GENE_PARAM'};
   $html .= qq{
     <a href="$gene_url"><img src="$img_url/96/gene.png" class="bordered" /></a>
     <p><a href="$gene_url" class="nodeco">Example gene<br />($gene_text)</a></p>
   };
 
   my $trans_text = $sample_data->{'TRANSCRIPT_TEXT'}; 
-  my $trans_url  = $hub->url({'type'=>'Transcript','action'=>'Summary','t'=>$sample_data->{'TRANSCRIPT_PARAM'}});
+  my $trans_url  = $species_defs->species_path.'/Transcript/Summary?g='.$sample_data->{'TRANSCRIPT_PARAM'};
   $html .= qq{
     <a href="$trans_url"><img src="$img_url/96/transcript.png" class="bordered" /></a>
     <p><a href="$trans_url" class="nodeco">Example transcript<br />($trans_text)</a></p>
@@ -279,7 +265,7 @@ sub _compara_text {
   <div class="center">
   ';
   my $tree_text = $sample_data->{'GENE_TEXT'}; 
-  my $tree_url  = $hub->url({'type'=>'Gene','action'=>'Compara_Tree','g'=>$sample_data->{'GENE_PARAM'}});
+  my $tree_url  = $species_defs->species_path.'/Gene/Compara_Tree?g='.$sample_data->{'GENE_PARAM'};
   $html .= qq{
     <a href="$tree_url"><img src="$img_url/96/compara.png" class="bordered" /></a>
     <p><a href="$tree_url" class="nodeco">Example gene tree<br />($tree_text)</a></p>
@@ -315,7 +301,7 @@ sub _variation_text {
   <div class="center">
     ';
 
-  my $var_url  = $hub->url({'type'=>'Variation','action'=>'Explore','v'=>$sample_data->{'VARIATION_PARAM'}});
+  my $var_url  = $species_defs->species_path.'/Variation/Explore?v='.$sample_data->{'VARIATION_PARAM'};
   $html .= qq{
     <a href="$var_url"><img src="$img_url/96/variation.png" class="bordered" /></a>
     <p><a href="$var_url" class="nodeco">Example variant</a></p>
@@ -323,7 +309,7 @@ sub _variation_text {
 
   if ($sample_data->{'PHENOTYPE_PARAM'}) {
     my $phen_text = $sample_data->{'PHENOTYPE_TEXT'}; 
-    my $phen_url  = $hub->url({'type'=>'Phenotype','action'=>'Locations','ph'=>$sample_data->{'PHENOTYPE_PARAM'}});
+    my $phen_url  = $species_defs->species_path.'/Phenotype/Locations?ph='.$sample_data->{'PHENOTYPE_PARAM'};
     $html .= qq{
       <a href="$phen_url"><img src="$img_url/96/phenotype.png" class="bordered" /></a>
       <p><a href="$phen_url" class="nodeco">Example phenotype<br />($phen_text)</a></p>
@@ -365,7 +351,7 @@ sub _funcgen_text {
 <div class="homepage-icon">
   <div class="center">
   ';
-  my $reg_url  = $hub->url({'type'=>'Regulation','action'=>'Cell_line','db'=>'funcgen','rf'=>$sample_data->{'REGULATION_PARAM'}});
+  my $reg_url  = $species_defs->species_path.'/Regulation/Cell_line?db=funcgen;rf='.$sample_data->{'REGULATION_PARAM'};
   $html .= qq{
     <a href="$reg_url"><img src="$img_url/96/regulation.png" class="bordered" /></a>
     <p><a href="$reg_url" class="nodeco">Example regulatory feature</a></p>
@@ -376,7 +362,7 @@ sub _funcgen_text {
 ';
 
   $html .= '<h2>Regulation</h2>';
-  $html .= '<p><strong>What can I find?</strong> DNA methylation, Transcription Factor binding sites, Histone modifications, and Regulatory Features based on ENCODE data.  Check out our segmentation tracks, which are regions of the genome implicated as promoters, enhancers, repressors, transcribed regions, etc.</p>';
+  $html .= '<p><strong>What can I find?</strong> DNA methylation, Transcription Factor binding sites, Histone modifications, and Regulatory Features based on ENCODE data. Segmentation tracks show regions of the genome implicated as promoters, enhancers, repressors, transcribed regions, etc.</p>';
 
   my $site = $species_defs->ENSEMBL_SITETYPE;
   $html .= qq(<p><strong>Learn more</strong> about the <a href="/info/docs/funcgen/">$site regulatory build</li>);
