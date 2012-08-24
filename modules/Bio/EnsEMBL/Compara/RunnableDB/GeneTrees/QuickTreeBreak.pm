@@ -40,7 +40,7 @@ so look at the history of that file in case you want to access previous versions
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $quicktreebreak = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak->new
+my $quicktreebreak = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak->new
   (
    -db         => $db,
    -input_id   => $input_id,
