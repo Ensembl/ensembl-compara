@@ -123,6 +123,7 @@ sub default_options {
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
+        'HMMer_classify_capacity'   => 100,
 
     # connection parameters to various databases:
 
@@ -214,9 +215,34 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'genome_reuse_factory' ],
-                'A->1'  => [ 'backbone_fire_allvsallblast' ],
+                'A->1'  => [ $self->o('hmm_clustering') ? 'backbone_fire_hmmClassify' : 'backbone_fire_allvsallblast' ],
             },
         },
+
+            {
+             -logic_name => 'backbone_fire_hmmClassify',
+             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+             -parameters => {
+                             'updated_tables' => 'sequence sequence_cds sequence_exon_bounded member subset subset_member peptide_align_feature%',
+                             'filename'       => 'snapshot_before_hmmClassify.sql',
+                             'output_file'     => $self->o('dump_dir') .'/#filename#',
+                            },
+            -flow_into  => {
+                            '1->A' => [ 'load_models' ],
+                            'A->1' => [ 'backbone_fire_tree_building' ],
+                           },
+            },
+
+### For hmmalign instead of mcoffee
+#             {
+#              -logic_name => 'backbone_fire_hmmAlign',
+#              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+#              -parameters => {
+#                              'updated_tables' => 'gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_node_tag gene_tree_node_attr gene_tree_member',
+#                              'filename'       => 'snapshot_before_hmmalign.sql',
+#                              'output_file'    => $self->o('dump_dir') . '/#filename#',
+#                             }
+#             },
 
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
@@ -247,7 +273,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_tree_building',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'updated_tables'    => 'meta gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_member',
+                'updated_tables'    => 'meta gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_member hmm_profile',
                 'filename'          => 'snapshot_before_tree_building.sql',
                 'output_file'       => $self->o('dump_dir').'/#filename#',
             },
@@ -445,7 +471,7 @@ sub pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'sequence_table_reuse' ],
                 'A->1' => [ 'genome_loadfresh_factory' ],
-                2 => [ 'paf_table_reuse' ],
+                 $self->o('hmm_clustering') ? () : (2 => [ 'paf_table_reuse' ]),
             },
         },
 
@@ -555,7 +581,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -flow_into => {
-                2 => [ 'load_fresh_members', 'paf_create_empty_table' ],
+                2 => [ 'load_fresh_members', $self->o('hmm_clustering') ? () : ('paf_create_empty_table') ],
                 1 => [ 'genome_loadfresh_fromfile_factory' ],
             },
         },
@@ -568,7 +594,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -flow_into => {
-                2 => [ 'load_fresh_members_fromfile', 'paf_create_empty_table' ],
+                2 => [ 'load_fresh_members_fromfile', $self->o('hmm_clustering') ? () : ('paf_create_empty_table') ],
             },
         },
 
@@ -598,6 +624,77 @@ sub pipeline_analyses {
             -batch_size     =>  100,  # they can be really, really short
             -hive_capacity  => -1,
         },
+
+#----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
+            {
+             -logic_name => 'load_models',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels',
+             -parameters => {
+                             'cm_file_or_directory' => $self->o('cm_file_or_directory'),
+                             'hmmer_path'           => $self->o('hmmer_path'), # For hmmemit (in case it is necessary to get the consensus for each model to create the blast db)
+                             'pantherScore_path'    => $self->o('pantherScore_path'),
+                            },
+             -flow_into  => {
+                             '1->A' => [ 'dump_models' ],
+                             'A->1' => [ 'HMMer_factory' ],
+                            },
+
+            },
+
+            {
+             -logic_name => 'dump_models',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels',
+             -parameters => {
+                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'blast_path'          => $self->o('blast_path'),  ## For creating the blastdb (formatdb or mkblastdb)
+                             'pantherScore_path'    => $self->o('pantherScore_path'),
+                            },
+            },
+
+            {
+             -logic_name  => 'HMMer_factory',
+             -module      => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+             -parameters  => {
+                              'call_list'            => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all' ],
+                              'column_names2getters' => { 'genome_db_id' => 'dbID' },
+                              'fan_branch_code'      => 2,
+                             },
+             -flow_into  => {
+                             '2->A' => [ 'HMMer_classify' ],
+                             'A->1' => [ 'HMM_clusterize' ]
+                            },
+            },
+
+            {
+             -logic_name => 'HMMer_classify',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify',
+             -parameters => {
+                             'blast_path'          => $self->o('blast_path'),
+                             'pantherScore_path'   => $self->o('pantherScore_path'),
+                             'hmmer_path'          => $self->o('hmmer_path'),
+                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'cluster_dir'         => $self->o('cluster_dir'),
+                            },
+             -hive_capacity => $self->o('HMMer_classify_capacity'),
+             -rc_name => '8Gb_job',
+            },
+
+            {
+             -logic_name => 'HMM_clusterize',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
+             -parameters => {
+                             'cluster_dir'        => $self->o('cluster_dir'),
+                             'mlss_id'            => $self->o('mlss_id'),
+                            },
+             -hive_capacity => -1,
+             -rc_name => '8Gb_job',
+             -flow_into => {
+                            1 => {
+                                  'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
+                                  'mysql:////meta' => { 'meta_key' => 'clusterset_id', 'meta_value' => '#clusterset_id#' },
+                                 },
+                           },
+            },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
