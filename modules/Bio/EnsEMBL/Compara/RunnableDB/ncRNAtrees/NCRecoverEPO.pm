@@ -75,9 +75,9 @@ sub fetch_input {
   return if ($self->param('skip'));
 
   $self->input_job->transient_error(0);
-  my $mlss_id    = $self->param('mlss_id')    || die "'mlss_id' is an obligatory numeric parameter\n";
-  my $epo_db     = $self->param('epo_db')     || die "'epo_db' is an obligatory hash parameter\n";
-  my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
+  my $mlss_id    = $self->param('mlss_id')      || die "'mlss_id' is an obligatory numeric parameter\n";
+  my $epo_db     = $self->param('epo_db')       || die "'epo_db' is an obligatory hash parameter\n";
+  my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
   $self->input_job->transient_error(1);
 
 
@@ -178,7 +178,7 @@ sub run_ncrecoverepo {
   
   # Find absent gdbs
   foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
-    $present_gdbs{$leaf->genome_db_id}++;
+      $present_gdbs{$leaf->genome_db_id}++;
   }
   foreach my $present_gdb (keys %present_gdbs) {
     if (defined($self->param('epo_gdb')->{$present_gdb})) {
@@ -329,7 +329,7 @@ sub run_low_coverage_best_in_alignment {
   $self->param('epo_low_cov_gdbs', {});
 
   my $epo_low_mlss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')->[0];
-  foreach my $genome_db (@{$epo_low_mlss->species_set}) {
+  foreach my $genome_db (@{$epo_low_mlss->species_set_obj->genome_dbs()}) {
     $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
   }
 
@@ -445,10 +445,11 @@ sub run_low_coverage_best_in_alignment {
 
 sub remove_low_cov_predictions {
   my $self = shift;
-  my $root_id = $self->param('nc_tree')->root_id;
+  my $nc_tree = $self->param('nc_tree');
+  my $root_id = $nc_tree->root_id;
 
   # Remove low cov members that are not best in alignment
-  foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
+  foreach my $leaf (@{$nc_tree->get_all_leaves}) {
     if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id}) {
       print STDERR "removing low_cov prediction $removed_stable_id\n" if($self->debug);
       my $removed_genome_db_id = $leaf->genome_db_id;
@@ -466,8 +467,17 @@ sub remove_low_cov_predictions {
     }
   }
   #calc residue count total
-  my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
-  $self->param('nc_tree')->store_tag('gene_count', $leafcount);
+  my $leafcount = scalar(@{$nc_tree->get_all_leaves});
+
+  ## Remove the tree if now it is too small
+  if ($leafcount < 2) {
+      my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
+      $gene_tree_adaptor->delete_tree($nc_tree);
+
+      $self->input_job->incomplete(0);
+      die ("$root_id tree has become too short ($leafcount leaf/ves)\n");
+  }
+  $nc_tree->store_tag('gene_count', $leafcount);
 
   return 1;
 }
