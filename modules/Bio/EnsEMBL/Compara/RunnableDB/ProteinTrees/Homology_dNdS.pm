@@ -50,6 +50,8 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS;
 
 use strict;
+use Statistics::Descriptive;
+
 use Bio::Tools::Run::Phylo::PAML::Codeml;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -58,7 +60,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $homology_ids      = $self->param('ids') || die "'ids' is an obligatory parameter";
+    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 
     if(my $codeml_parameters_file = $self->param('codeml_parameters_file')) {
         if(-r $codeml_parameters_file) {
@@ -71,13 +73,9 @@ sub fetch_input {
         or die "Either 'codeml_parameters' or 'codeml_parameters_file' has to be correctly defined";  # let it break immediately if no codeml_parameters
 
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
-    my @homologies = ();
+    my $homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_id);
 
-    foreach my $homology_id (@$homology_ids) {
-        push @homologies, $homology_adaptor->fetch_by_dbID($homology_id);
-    }
-
-    $self->param('homologies', \@homologies);
+    $self->param('homologies', $homologies);
 }
 
 
@@ -87,9 +85,28 @@ sub run {
     my $homologies        = $self->param('homologies');
     my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
 
+    my $stats = new Statistics::Descriptive::Full;
+
     foreach my $homology (@$homologies) {
         # other_paralogs are not aligned together (they lie in different alignments)
         $self->calc_genetic_distance($homology, $codeml_parameters) unless $homology->description eq 'other_paralog';
+        $stats->add_data($homology->dS);
+    }
+
+    my $median = $stats->median;
+    print STDERR "median: $median; 2\*median: ",2*$median;
+
+    if($median >1.0) {
+        print STDERR "  threshold exceeds 2.0 - to distant -> set to 2\n";
+        $median = 1.0;
+    }
+    if($median <1.0) {
+        print STDERR "  threshold below 1.0 -> set to 1\n";
+        $median = 0.5;
+    }
+    my $threshold = 2 * $median;
+    foreach my $homology (@$homologies) {
+        $homology->threshold_on_ds($threshold);
     }
 }
 

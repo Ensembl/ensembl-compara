@@ -62,24 +62,22 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $species_sets      = $self->param('species_sets') or die "'species_sets' is an obligatory parameter";
+    my $species_set       = $self->param('species_set') or die "'species_set' is an obligatory parameter";
     my $method_link_types = $self->param('method_link_types');
 
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
     my @mlss_ids = ();
-    foreach my $species_set (@$species_sets) {
-        while (my $genome_db_id1 = shift @{$species_set}) {
-            foreach my $mlt (@$method_link_types) {
-                if(my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($mlt,[$genome_db_id1])) {
-                    push @mlss_ids, $mlss->dbID;
-                }
+    while (my $genome_db_id1 = shift @{$species_set}) {
+        foreach my $mlt (@$method_link_types) {
+            if(my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($mlt,[$genome_db_id1])) {
+                push @mlss_ids, $mlss->dbID;
             }
-            foreach my $genome_db_id2 (@{$species_set}) {
-                foreach my $mlt (@$method_link_types) {
-                    if(my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($mlt,[$genome_db_id1,$genome_db_id2])) {
-                        push @mlss_ids, $mlss->dbID;
-                    }
+        }
+        foreach my $genome_db_id2 (@{$species_set}) {
+            foreach my $mlt (@$method_link_types) {
+                if(my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($mlt,[$genome_db_id1,$genome_db_id2])) {
+                    push @mlss_ids, $mlss->dbID;
                 }
             }
         }

@@ -797,7 +797,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
             },
-            -rc_name => '24Gb_job',
+            -rc_name => '24Gb_long_job',
         },
 
         {   -logic_name => 'hcluster_parse_output',
@@ -1125,16 +1125,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -flow_into => {
-                2 => [ 'homology_factory' ],
-            },
-        },
-
-        {   -logic_name => 'homology_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
-            -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -flow_into => {
-                'A->1' => [ 'threshold_on_dS' ],
-                '2->A' => [ 'homology_dNdS' ],
+                2 => [ 'homology_dNdS' ],
             },
         },
 
@@ -1146,12 +1137,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('homology_dNdS_capacity'),
             -failed_job_tolerance => 2,
-            -rc_name => '500Mb_job',
-        },
-
-        {   -logic_name => 'threshold_on_dS',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
-            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name => '500Mb_long_job',
         },
 
     ];

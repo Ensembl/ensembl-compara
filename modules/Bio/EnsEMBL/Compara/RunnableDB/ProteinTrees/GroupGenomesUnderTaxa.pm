@@ -38,8 +38,7 @@ sub fetch_input {
                         or die "'mlss_id' is an obligatory parameter";
 
     my $mlss        = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
-    my $species_set = $mlss->species_set_obj->genome_dbs();
-    my $genome_dbs  = (ref($species_set) eq 'ARRAY') ? $species_set : $species_set->genome_dbs();
+    my $genome_dbs  = $mlss->species_set_obj->genome_dbs();
 
     my $filter_high_coverage = $self->param('filter_high_coverage');
 
@@ -85,7 +84,9 @@ sub write_output {      # dataflow the results
 
     my $species_sets = $self->param('species_sets');
 
-    $self->dataflow_output_id( { 'species_sets' => $species_sets }, 2);
+    foreach my $ss (@$species_sets) {
+        $self->dataflow_output_id( { 'species_set' => $ss }, 2);
+    }
 }
 
 
