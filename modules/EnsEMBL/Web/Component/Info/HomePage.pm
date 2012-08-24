@@ -342,7 +342,20 @@ sub _variation_text {
 ';
 
   $html .= '<h2>Variation</h2>
-<p><strong>What can I find?</strong> Short sequence variants, such as SNPs from dbSNP, mutations from the COSMIC project, longer structural variants from dGVA.  Population frequencies from the 1000 Genomes project, disease and phenotypes associated with variants.</p>';
+<p><strong>What can I find?</strong> Short sequence variants';
+
+  my $dbsnp = $species_defs->databases->{'DATABASE_VARIATION'}{'dbSNP_VERSION'};
+  if ($dbsnp) {
+    $html .= " (e.g. from dbSNP $dbsnp)";
+  }
+
+  if ($species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
+    $html .= ' and longer structural variants';
+  }
+  if ($sample_data->{'PHENOTYPE_PARAM'}) {
+    $html .= '; disease and other phenotypes';
+  }
+  $html .= '.</p>';
 
   my $site = $species_defs->ENSEMBL_SITETYPE;
   $html .= qq(<p><a href="info/docs/variation/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/variation/">More about variation in $site</p>);
@@ -382,7 +395,7 @@ sub _funcgen_text {
 ';
 
   $html .= '<h2>Regulation</h2>
-<p><strong>What can I find?</strong> DNA methylation, Transcription Factor binding sites, Histone modifications, and Regulatory Features based on ENCODE data. Segmentation tracks show regions of the genome implicated as promoters, enhancers, repressors, transcribed regions, etc.</p>';
+<p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors.</p>';
 
   my $site = $species_defs->ENSEMBL_SITETYPE;
   $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/funcgen/">More about the $site regulatory build</li>);
