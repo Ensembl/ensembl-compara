@@ -78,7 +78,10 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::D
              : MethodLinkSpeciesSet or int: either the object or its dbID
                NB: It currently gives the same partition of the data as member_type
   Arg [-CLUSTERSET_ID] (opt)
-             : string: the name of the clusterset (default is "default")
+             : string: the name of the clusterset (use "default" to get the default
+               trees). Currently, there is a clusterset for the default trees, one for
+               each phylogenetic model used in the protein tree pipeline, and one for
+               the multiple alignment of super-trees.
   Example    : $all_trees = $genetree_adaptor->fetch_all();
   Description: Fetches from the database all the gene trees
   Returntype : arrayref of Bio::EnsEMBL::Compara::GeneTree
