@@ -60,10 +60,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'sort_clusters'       => 1,
-            'immediate_dataflow'  => 1,
-            'member_type'         => 'protein',
-            'input_id_prefix'     => 'protein',
             'hmmer_cutoff'        => 0.001,
            };
 }
@@ -114,7 +110,6 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-#    $self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
 }
 
 
@@ -189,7 +184,6 @@ sub run_HMM_search {
     while (<$pipe>) {
         chomp;
         my ($seq_id, $hmm_id, $eval) = split /\s+/, $_, 4;
-        next if ($hmm_id =~ /:SF\d+/); ## Needed?
         print STDERR "Writting [$seq_id, $hmm_id, $eval] to file $cluster_dir/${genome_db_id}.hmmres\n" if ($self->debug());
         print $hmm_res join "\t", ($seq_id, $hmm_id, $eval);
         print $hmm_res "\n";
