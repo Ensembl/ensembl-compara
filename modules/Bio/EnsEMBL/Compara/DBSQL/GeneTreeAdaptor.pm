@@ -31,6 +31,7 @@ with the GeneTreeNodeAdaptor).
   +- Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor
   `- Bio::EnsEMBL::Compara::DBSQL::TagAdaptor
 
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the CVS log.
@@ -53,7 +54,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor;
 
 use strict;
-
+use Data::Dumper;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::GeneTree;
@@ -364,7 +365,7 @@ sub fetch_all_linked_trees {
 
 
 #
-# STORE methods
+# STORE/DELETE methods
 ###########################
 
 sub store {
@@ -388,6 +389,29 @@ sub store {
     $tree->adaptor($self);
 
     return $root_id;
+}
+
+sub delete_tree {
+    my ($self, $tree) = @_;
+
+    unless($tree->isa('Bio::EnsEMBL::Compara::GeneTree')) {
+        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTree] not a $tree");
+    }
+
+    # Remove all the nodes but the root
+    my $gene_tree_node_Adaptor = $tree->root->adaptor;
+    for my $node (@{$tree->get_all_nodes}) {
+        next if ($node->node_id() == $tree->root->node_id());
+        $gene_tree_node_Adaptor->delete_node($node);
+    }
+
+    # Then remove the tree
+    my $root_id = $tree->root->node_id;
+    $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
+    $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $root_id");
+
+    # Finally remove the root node
+    $gene_tree_node_Adaptor->delete_node($tree->root);
 }
 
 
