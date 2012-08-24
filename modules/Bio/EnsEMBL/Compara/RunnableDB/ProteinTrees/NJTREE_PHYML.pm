@@ -26,8 +26,8 @@ This Analysis/RunnableDB is designed to take ProteinTree as input
 This must already have a multiple alignment run on it. It uses that alignment
 as input into the NJTREE PHYML program which then generates a phylogenetic tree
 
-input_id/parameters format eg: "{'protein_tree_id'=>1234}"
-    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
+input_id/parameters format eg: "{'gene_tree_id'=>1234}"
+    gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
 =head1 SYNOPSIS
 
@@ -98,9 +98,9 @@ sub fetch_input {
     $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
-    my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
+    my $protein_tree_id     = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $protein_tree_id )
-                                        or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
+                                        or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
     $protein_tree->preload();
     $protein_tree->print_tree(10) if($self->debug);
 
@@ -131,7 +131,7 @@ sub write_output {
             my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
             $self->parse_newick_into_tree($filename, $newtree);
             $self->store_genetree($newtree);
-            $self->dataflow_output_id({'protein_tree_id' => $newtree->root_id}, 2);
+            $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
             $newtree->release_tree;
         }
     }
@@ -159,7 +159,7 @@ sub write_output {
     }
 
     if (defined $self->param('output_dir')) {
-        my $cmd = sprintf('zip -r -9 %s/%d.zip', $self->param('output_dir'), $self->param('protein_tree_id'));
+        my $cmd = sprintf('zip -r -9 %s/%d.zip', $self->param('output_dir'), $self->param('gene_tree_id'));
         $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $cmd) if $self->worker_temp_directory;
         system($cmd);
     }

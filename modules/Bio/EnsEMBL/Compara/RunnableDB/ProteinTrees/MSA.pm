@@ -26,9 +26,9 @@ This Analysis/RunnableDB is designed to take a protein_tree cluster as input
 Run an MCOFFEE multiple alignment on it, and store the resulting alignment
 back into the protein_tree_member table.
 
-input_id/parameters format eg: "{'protein_tree_id'=>726093}"
-    protein_tree_id       : use family_id to run multiple alignment on its members
-    options               : commandline options to pass to the 'mcoffee' program
+input_id/parameters format eg: "{'gene_tree_id'=>726093}"
+    gene_tree_id       : use family_id to run multiple alignment on its members
+    options            : commandline options to pass to the 'mcoffee' program
 
 =head1 SYNOPSIS
 
@@ -102,8 +102,9 @@ sub fetch_input {
 
 
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
-    $self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param('protein_tree_id')));
+    $self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param('gene_tree_id')));
     $self->param('protein_tree')->preload();
+
   # No input specified.
   if (!defined($self->param('protein_tree'))) {
     $self->post_cleanup;
@@ -126,7 +127,7 @@ sub fetch_input {
     # Redo - take previously existing alignment - post-process it
     my $redo_sa = $self->param('protein_tree')->get_SimpleAlign(-id_type => 'MEMBER');
     $redo_sa->set_displayname_flat(1);
-    $self->param('redo_alnname', $self->worker_temp_directory . $self->param('protein_tree_id').'.fasta' );
+    $self->param('redo_alnname', $self->worker_temp_directory . $self->param('gene_tree_id').'.fasta' );
     my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'),
                                      -format => "fasta");
     $alignout->write_aln( $redo_sa );

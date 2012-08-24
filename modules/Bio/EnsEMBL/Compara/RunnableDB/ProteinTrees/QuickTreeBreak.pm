@@ -31,8 +31,8 @@ simple phylogenetic tree to be broken down into 2 pieces.
 Google QuickTree to get the latest tar.gz from the Sanger.
 Google sreformat to get the sequence reformatter that switches from fasta to stockholm.
 
-input_id/parameters format eg: "{'protein_tree_id'=>1234,'clusterset_id'=>1}"
-    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
+input_id/parameters format eg: "{'gene_tree_id'=>1234,'clusterset_id'=>1}"
+    gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
 =head1 SYNOPSIS
 
@@ -70,7 +70,6 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak;
 
 use strict;
-
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -100,13 +99,16 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEM
 sub fetch_input {
     my $self = shift @_;
 
-    my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
-                                        or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
-    $protein_tree->preload();
-    $self->param('gene_tree', $protein_tree);
+    my $tree_id = $self->param('gene_tree_id');
+    die "'gene_tree_id' must be defined" unless ($tree_id);
+    $self->param('tree_id', $tree_id);
+    my $tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $tree_id )
+        or die "Could not fetch gene_tree with gene_tree_id='$tree_id'";
+    $self->param('gene_tree', $tree);
 
     $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+
+    ## 'tags_to_copy' can also be set
 }
 
 
@@ -132,7 +134,7 @@ sub run {
 
     Title   :   write_output
     Usage   :   $self->write_output
-    Function:   stores proteintree
+    Function:   stores tree
     Returns :   none
     Args    :   none
 
@@ -182,7 +184,7 @@ sub run_quicktreebreak {
 
   $self->param('original_leafcount', scalar(@{$gene_tree->get_all_leaves}) );
   if($self->param('original_leafcount')<3) {
-    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $gene_tree->root_id);
+    printf(STDERR "tree cluster %d has <3 members (proteins or ncRNAs) - can not build a tree\n", $gene_tree->root_id);
     return;
   }
   my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $gene_tree->root, 1 );
@@ -219,7 +221,7 @@ sub run_quicktreebreak {
 
 ########################################################
 #
-# ProteinTree input/output section
+# Tree input/output section
 #
 ########################################################
 
@@ -235,22 +237,33 @@ sub store_supertree {
   $self->param('original_cluster')->root->store_tag('node_type', 'speciation');
 
   foreach my $cluster (@{$self->param('subclusters')}) {
-    my $node_id = $cluster->root_id;
+      my $node_id = $cluster->root_id;
 
     #calc residue count total
-    my $leafcount = scalar(@{$cluster->root->get_all_leaves});
-    $cluster->store_tag('gene_count', $leafcount);
-    print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
+      my $leafcount = scalar(@{$cluster->root->get_all_leaves});
+      $cluster->store_tag('gene_count', $leafcount);
+      print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
-    # Dataflow clusters
-    # This will create a new MSA alignment job for each of the newly generated clusters
-    #$self->dataflow_output_id({'protein_tree_id' => $node_id}, 2);
-    print STDERR "Created new cluster $node_id\n";
+      #We replicate needed tags into the children
+      if (defined $self->param('tags_to_copy')) {
+          my @tags = @{$self->param('tags_to_copy')};
+          for my $tag (@tags) {
+              print STDERR "Stored tag $tag in $node_id\n" if ($self->debug);
+              my $value = $self->param('original_cluster')->get_tagvalue($tag);
+              $self->throw("$tag tag not found in " . $self->param('original_cluster')->root->node_id) unless (defined $value);
+              $cluster->store_tag($tag, $value);
+          }
+      }
+
+      # Dataflow clusters
+      # This will create a new MSA alignment job for each of the newly generated clusters
+      #$self->dataflow_output_id({'gene_tree_id' => $node_id}, 2);
+      print STDERR "Created new cluster $node_id\n";
   }
   my $super_align_clusterset = $self->fetch_or_create_clusterset('super-align');
-# compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
+  # compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
   $self->store_tree_into_clusterset($self->param('super_align_tree'), $super_align_clusterset);
-  $self->param('super_align_tree')->store_tag('other_tree_root_id', $self->param('protein_tree_id'));
+  $self->param('super_align_tree')->store_tag('other_tree_root_id', $self->param('tree_id'));
   $self->param('original_cluster')->store_tag('other_tree_root_id', $self->param('super_align_tree')->root_id, 1);
 }
 
