@@ -85,9 +85,9 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '68',
-        'rel_suffix'            => 'i',    # an empty string by default, a letter otherwise
-        'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        'release'               => '69',
+        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
+        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # dependent parameters: updating 'work_dir' should be enough
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -134,7 +134,7 @@ sub default_options {
 
         # Uncomment and update the database locations
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -164,7 +164,8 @@ sub default_options {
             -pass   => '',
         },
 
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the reused core databases and update 'reuse_db'
@@ -178,11 +179,11 @@ sub default_options {
         #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'compara3',
+           -host   => 'livemirror',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'mm14_compara_homology_67',
+           -dbname => 'ensembl_compara_68',
         },
         #'reuse_db' => {   # current release if we are testing after production
         #    -host   => 'compara1',
