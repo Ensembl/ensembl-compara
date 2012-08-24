@@ -61,9 +61,9 @@ use List::Util qw[min max];
 sub fetch_input {
   my $self = shift @_; 
 
-  my $protein_tree_id  = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
+  my $protein_tree_id  = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
       # if fetch_node_by_node_id is insufficient, try fetch_tree_at_node_id
-  my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($protein_tree_id)->root or die "Could not fetch protein_tree by id=$protein_tree_id";
+  my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($protein_tree_id)->root or die "Could not fetch gene_tree by id=$protein_tree_id";
   $self->param('protein_tree', $protein_tree);
   $self->dbc->disconnect_when_inactive(1);
 }

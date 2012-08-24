@@ -26,9 +26,9 @@ This Analysis/RunnableDB is designed to take a protein_tree cluster as input
 Run an MCOFFEE multiple alignment on it, and store the resulting alignment
 back into the protein_tree_member table.
 
-input_id/parameters format eg: "{'protein_tree_id'=>726093}"
-    protein_tree_id       : use family_id to run multiple alignment on its members
-    options               : commandline options to pass to the 'mcoffee' program
+input_id/parameters format eg: "{'gene_tree_id'=>726093}"
+    gene_tree_id       : use family_id to run multiple alignment on its members
+    options            : commandline options to pass to the 'mcoffee' program
 
 =head1 SYNOPSIS
 
@@ -91,7 +91,7 @@ sub fetch_input {
     my( $self) = @_;
 
     # Getting parameters and objects from the database
-    my $protein_tree_id = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
+    my $protein_tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
 
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($protein_tree_id);
     die "Unfetchable tree root_id=$protein_tree_id\n" unless $tree;

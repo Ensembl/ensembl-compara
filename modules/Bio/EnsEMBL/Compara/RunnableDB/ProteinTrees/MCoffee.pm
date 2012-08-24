@@ -26,8 +26,8 @@ This Analysis/RunnableDB is designed to take a protein_tree cluster as input
 Run an MCOFFEE multiple alignment on it, and store the resulting alignment
 back into the protein_tree_member table.
 
-input_id/parameters format eg: "{'protein_tree_id'=>726093}"
-    protein_tree_id       : use family_id to run multiple alignment on its members
+input_id/parameters format eg: "{'gene_tree_id'=>726093}"
+    gene_tree_id       : use family_id to run multiple alignment on its members
     options               : commandline options to pass to the 'mcoffee' program
 
 =head1 SYNOPSIS
@@ -93,7 +93,7 @@ sub write_output {
     # Alignment redo mapping.
     my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
     my $redo_tag = "MCoffee_redo_".$from_clusterset_id."_".$to_clusterset_id;
-    $self->param('protein_tree')->tree->store_tag("$redo_tag",$self->param('protein_tree_id')) if ($self->param('redo'));
+    $self->param('protein_tree')->tree->store_tag("$redo_tag",$self->param('gene_tree_id')) if ($self->param('redo'));
 }
 
 sub parse_and_store_alignment_into_proteintree {

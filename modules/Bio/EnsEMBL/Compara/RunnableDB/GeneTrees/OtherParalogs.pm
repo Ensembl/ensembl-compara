@@ -83,7 +83,7 @@ sub write_output {
     $self->SUPER::write_output;
     if ($self->param('dataflow_subclusters')) {
         foreach my $child (@{$self->param('children')}) {
-            $self->dataflow_output_id({'protein_tree_id' => $child->node_id}, 2);
+            $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2);
         }
     }
 }

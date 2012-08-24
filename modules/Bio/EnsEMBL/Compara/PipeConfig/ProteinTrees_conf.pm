@@ -764,7 +764,7 @@ sub pipeline_analyses {
         {   -logic_name => 'cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT root_id AS protein_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
@@ -922,7 +922,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
-                'tree_id_str'       => 'protein_tree_id',
+                'tree_id_str'       => 'gene_tree_id',
                 'tag_split_genes'   => 1,
                 'mlss_id'           => $self->o('mlss_id'),
             },
@@ -935,7 +935,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
-                'tree_id_str'       => 'protein_tree_id',
+                'tree_id_str'       => 'gene_tree_id',
                 'tag_split_genes'   => 1,
                 'mlss_id'           => $self->o('mlss_id'),
                 'store_homologies'  => 0,
@@ -985,7 +985,7 @@ sub pipeline_analyses {
             -parameters     => {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'dataflow_subclusters' => 1,
-                'tree_id_str'       => 'protein_tree_id',
+                'tree_id_str'       => 'gene_tree_id',
                 'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
@@ -1000,7 +1000,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'merge_supertrees',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SuperTreeMerge',
             -parameters     => {
-                'tree_id_str'       => 'protein_tree_id',
+                'tree_id_str'       => 'gene_tree_id',
             },
             -hive_capacity  => $self->o('merge_supertrees_capacity'),
             -priority       => 40,

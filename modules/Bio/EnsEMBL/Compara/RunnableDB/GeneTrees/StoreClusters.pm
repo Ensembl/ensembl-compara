@@ -210,7 +210,7 @@ sub add_cluster {
 
     # Dataflows immediately or keep it for later
     if ($self->param('immediate_dataflow')) {
-        $self->dataflow_output_id({ $self->param('input_id_prefix').'_tree_id' => $cluster->root_id, }, 2);
+        $self->dataflow_output_id({ 'gene_tree_id' => $cluster->root_id, }, 2);
     }
 
     # Frees memory
@@ -264,7 +264,7 @@ sub dataflow_clusters {
 
     # Loop on all the clusters that haven't been dataflown yet
     foreach my $tree_id (@$root_ids) {
-        $self->dataflow_output_id({ $self->param('input_id_prefix').'_tree_id' => $tree_id, }, 2);
+        $self->dataflow_output_id({ 'gene_tree_id' => $tree_id, }, 2);
     }
     $self->dataflow_output_id({ 'clusterset_id' => $clusterset->clusterset_id }, 1);
 }

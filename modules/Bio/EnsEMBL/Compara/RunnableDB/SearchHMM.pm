@@ -77,9 +77,9 @@ sub fetch_input {
 
   $self->param('max_evalue', 0.05);
 
-  if(defined($self->param('protein_tree_id'))) {
-    $self->param('tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('protein_tree_id')));
-    printf("  protein_tree_id : %d\n", $self->param('protein_tree_id')) if ($self->debug);
+  if(defined($self->param('gene_tree_id'))) {
+    $self->param('tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')));
+    printf("  gene_tree_id : %d\n", $self->param('gene_tree_id')) if ($self->debug);
   }
 
   # Fetch hmm_profile

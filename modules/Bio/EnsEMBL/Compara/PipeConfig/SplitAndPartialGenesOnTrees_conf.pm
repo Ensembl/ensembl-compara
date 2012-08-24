@@ -138,8 +138,8 @@ sub pipeline_analyses {
             -parameters => {
                 'compara_db'            => $self->o('source_db'),
                 'call_list'             => [ 'compara_dba', 'get_GeneTreeAdaptor', ['fetch_all', '-tree_type', 'tree']],
-                'column_names2getters'  => { 'protein_tree_id' => 'root_id' },
-                'input_id' => { 'protein_tree_id' => '#protein_tree_id#', 'compara_db' => '#compara_db#', },
+                'column_names2getters'  => { 'gene_tree_id' => 'root_id' },
+                'input_id' => { 'gene_tree_id' => '#gene_tree_id#', 'compara_db' => '#compara_db#', },
                 'fan_branch_code' => 2,
             },
             -input_ids => [
@@ -149,7 +149,7 @@ sub pipeline_analyses {
               2 => ['find_split_genes_on_tree','find_partial_genes_on_tree','coverage_on_core_region_length','find_single_genes_on_tree'],
             },
         },
-# ---------------------------------------------[Looking for possible split genes on each protein tree id]-----------------------------------------------------------------------
+# ---------------------------------------------[Looking for possible split genes on each gene tree id]-----------------------------------------------------------------------
 
         {   -logic_name => 'find_split_genes_on_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindSplitGenesOnTree',
