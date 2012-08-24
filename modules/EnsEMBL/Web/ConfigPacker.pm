@@ -780,11 +780,12 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_ARCHIVES'}->{$row->[0]}{$row->[1]}=$row->[2];
   }
 
-  $t_aref = $dbh->selectall_arrayref('select name, common_name, code from species');
+  $t_aref = $dbh->selectall_arrayref('select name, common_name, code, vega from species');
   foreach my $row ( @$t_aref ) {
     $self->db_tree->{'ALL_WEB_SPECIES'}{$row->[0]}    = 1;
     $self->db_tree->{'ALL_WEB_SPECIES'}{lc $row->[1]} = 1;
     $self->db_tree->{'ALL_WEB_SPECIES'}{$row->[2]}    = 1;
+    $self->db_tree->{'ENSEMBL_VEGA'}{$row->[0]}       = $row->[3] eq 'Y' ? 1 : 0;
   }
 
   $dbh->disconnect();
