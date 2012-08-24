@@ -155,5 +155,32 @@ sub generic_fetch {
 }
 
 
+=head2 generic_fetch_one
+  Arguments  : Same arguments as construct_sql_query()
+  Example    : $obj = $a->generic_fetch_one($constraint, $join, $final_clause);
+  Description: Performs a database fetch and returns the first newly created object
+  Returntype : object
+  Exceptions : none
+  Caller     : various adaptors' specific fetch_ subroutines
+=cut
+ 
+sub generic_fetch_one {
+    my ($self, $constraint, $join, $final_clause) = @_;
+
+    if (not defined $final_clause) {
+        $final_clause = ' LIMIT 1';
+    } elsif ($final_clause !~ m/ limit /i) {
+        $final_clause .= ' LIMIT 1';
+    }
+
+    my $arr = $self->generic_fetch($constraint, $join, $final_clause);
+    if (scalar(@$arr)) {
+        return $arr->[0];
+    } else {
+        return undef;
+    }
+}
+
+
 1;
 
