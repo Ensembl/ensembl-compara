@@ -189,12 +189,24 @@ sub _assembly_text {
     $previous = $assemblies{$release};
   }
 
+  ## Combine archives and pre
+  my $other_assemblies;
   if (@old_archives) {
-    $html .= sprintf('
-      <h3 style="color:#808080">Previous assemblies</h3>
-      <ul>%s</ul>
-    ', join '', map qq{<li><a href="$_->{'url'}">$_->{'assembly'}</a> $_->{'release'}</li>}, @old_archives);
+    $other_assemblies .= join '', map qq{<li><a href="$_->{'url'}">$_->{'assembly'}</a> $_->{'release'}</li>}, @old_archives;
   }
+
+  my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
+  if ($pre_species->{$species}) {
+    $other_assemblies .= sprintf('<li><a href="http://pre.ensembl.org/%s/">%s</a> (Ensembl pre)</li>', $species, $pre_species->{$species}[1]);
+  }
+
+  if ($other_assemblies) {
+    $html .= qq(
+      <h3 style="color:#808080;padding-top:8px">Other assemblies</h3>
+      <ul>$other_assemblies</ul>
+      );
+  }
+
   return $html;
 }
 
@@ -206,6 +218,8 @@ sub _genebuild_text {
   my $img_url         = $self->img_url;
   my $sample_data     = $species_defs->SAMPLE_DATA;
   my $ensembl_version = $species_defs->ENSEMBL_VERSION;
+  my $vega            = $species_defs->get_config('MULTI', 'ENSEMBL_VEGA');
+  my $has_vega        = $vega->{$species};
 
   my $html = '
 <div class="homepage-icon">
@@ -243,6 +257,15 @@ sub _genebuild_text {
   }
   my $im_url = $hub->url({'type'=>'UserData','action'=>'UploadStableIDs'});
   $html .= qq(<p><a href="$im_url" class="modal_link"><img src="/i/24/tool.png" style="vertical-align:middle" /></a> <a href="$im_url" class="modal_link">Update your old Ensembl IDs</a></p>);
+
+  if ($has_vega) {
+    $html .= qq(
+  <a href="http://vega.sanger.ac.uk/$species/">
+  <img src="/img/vega_small.gif" alt="Vega logo" style="float:left;margin-right:8px;width:83px;height:30px;vertical-align:center" title="Vega - Vertebrate Genome Annotation database" /></a>
+<p>
+  Additional manual annotation can be found in <a href="http://vega.sanger.ac.uk/$species/">Vega</a>
+</p>);
+  }
 
   return $html;
 }
@@ -350,7 +373,7 @@ sub _funcgen_text {
   my $reg_url  = $species_defs->species_path.'/Regulation/Cell_line?db=funcgen;rf='.$sample_data->{'REGULATION_PARAM'};
   $html .= qq{
     <a href="$reg_url"><img src="$img_url/96/regulation.png" class="bordered" /></a>
-    <p><a href="$reg_url" class="nodeco">Example regulatory feature</a></p>
+    <p><a href="$reg_url" class="nodeco">Example regulatory<br />feature</a></p>
   };
   $html .= '
   </div>
