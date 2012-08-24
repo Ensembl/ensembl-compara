@@ -52,7 +52,6 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor;
 
 use strict;
-no strict 'refs';
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -374,6 +373,7 @@ sub delete_node {
   $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_member WHERE node_id = $node_id");
+  $self->dbc->do("UPDATE gene_tree_node SET root_id = NULL WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 
@@ -515,23 +515,25 @@ sub _default_member_type {
 #
 ###############################################################################
 
-foreach my $func_name (qw(
-        fetch_all_children_for_node fetch_parent_for_node fetch_all_leaves_indexed
-        fetch_subtree_under_node fetch_subroot_by_left_right_index fetch_root_by_node
-        fetch_first_shared_ancestor_indexed
-    )) {
-    my $full_name = "Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor::$func_name";
-    my $super_name = "SUPER::$func_name";
-    *$full_name = sub {
-        my $self = shift;
-        $self->{'_ref_tree'} = $_[0]->{'_tree'};
-        my $ret = $self->$super_name(@_);
-        delete $self->{'_ref_tree'};
-        return $ret;
-    };
-    #print "REDEFINE $func_name\n";
+{
+    no strict 'refs';
+    foreach my $func_name (qw(
+                                 fetch_all_children_for_node fetch_parent_for_node fetch_all_leaves_indexed
+                                 fetch_subtree_under_node fetch_subroot_by_left_right_index fetch_root_by_node
+                                 fetch_first_shared_ancestor_indexed
+                            )) {
+        my $full_name = "Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor::$func_name";
+        my $super_name = "SUPER::$func_name";
+        *$full_name = sub {
+            my $self = shift;
+            $self->{'_ref_tree'} = $_[0]->{'_tree'};
+            my $ret = $self->$super_name(@_);
+            delete $self->{'_ref_tree'};
+            return $ret;
+        };
+        #print "REDEFINE $func_name\n";
+    }
 }
-
 
 
 1;

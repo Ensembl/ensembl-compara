@@ -60,7 +60,6 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use strict;
-no strict 'refs';
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet', 'Bio::EnsEMBL::Compara::Taggable');
 
@@ -418,21 +417,23 @@ sub add_Member {
 ########
 
 # Dynamic definition of functions to allow NestedSet methods work with GeneTrees
-foreach my $func_name (qw(get_all_nodes get_all_leaves get_all_sorted_leaves
-                          find_leaf_by_node_id find_leaf_by_name find_node_by_node_id
-                          find_node_by_name remove_nodes build_leftright_indexing flatten_tree
-                          newick_format nhx_format string_tree print_tree
-                          release_tree
-                        )) {
-    my $full_name = "Bio::EnsEMBL::Compara::GeneTree::$func_name";
-    *$full_name = sub {
-        my $self = shift;
-        my $ret = $self->root->$func_name(@_);
-        return $ret;
-    };
-#    print STDERR "REDEFINE $func_name\n";
+{
+    no strict 'refs';
+    foreach my $func_name (qw(get_all_nodes get_all_leaves get_all_sorted_leaves
+                              find_leaf_by_node_id find_leaf_by_name find_node_by_node_id
+                              find_node_by_name remove_nodes build_leftright_indexing flatten_tree
+                              newick_format nhx_format string_tree print_tree
+                              release_tree
+                            )) {
+        my $full_name = "Bio::EnsEMBL::Compara::GeneTree::$func_name";
+        *$full_name = sub {
+            my $self = shift;
+            my $ret = $self->root->$func_name(@_);
+            return $ret;
+        };
+        #    print STDERR "REDEFINE $func_name\n";
+    }
 }
-
 
 1;
 
