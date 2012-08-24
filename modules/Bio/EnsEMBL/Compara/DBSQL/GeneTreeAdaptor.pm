@@ -136,7 +136,7 @@ sub fetch_by_stable_id {
     my ($self, $stable_id) = @_;
 
     $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
-    return $self->generic_fetch('gtr.stable_id = ?')->[0];
+    return $self->generic_fetch_one('gtr.stable_id = ?');
 }
 
 
@@ -156,7 +156,7 @@ sub fetch_by_root_id {
     my ($self, $root_id) = @_;
 
     $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
-    return $self->generic_fetch('gtr.root_id = ?')->[0];
+    return $self->generic_fetch_one('gtr.root_id = ?');
 }
 
 
@@ -176,7 +176,7 @@ sub fetch_by_dbID {
     my ($self, $root_id) = @_;
 
     $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
-    return $self->generic_fetch('gtr.root_id = ?')->[0];
+    return $self->generic_fetch_one('gtr.root_id = ?');
 }
 
 
@@ -197,7 +197,7 @@ sub fetch_by_node_id {
 
     $self->bind_param_generic_fetch($node_id, SQL_INTEGER);
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id']];
-    return $self->generic_fetch('gtn.node_id = ?', $join)->[0];
+    return $self->generic_fetch_one('gtn.node_id = ?', $join);
 }
 
 
@@ -272,7 +272,7 @@ sub fetch_default_for_Member {
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     
-    return $self->generic_fetch($constraint, $join)->[0];
+    return $self->generic_fetch_one($constraint, $join);
 }
 
 
@@ -296,7 +296,7 @@ sub fetch_parent_tree {
     my $constraint = "(gtn2.root_id = gtn2.node_id) AND (gtn2.root_id = ?)";
     
     $self->bind_param_generic_fetch($tree_id, SQL_INTEGER);
-    return $self->generic_fetch($constraint, $join)->[0];
+    return $self->generic_fetch_one($constraint, $join);
 }
 
 
