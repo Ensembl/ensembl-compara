@@ -73,7 +73,7 @@ sub fetch_input {
   my( $self) = @_;
 
     # Fetch sequences:
-  $self->param('nc_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('nc_tree_id')) );
+  $self->param('nc_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')) );
 
   $self->load_input_trees;
 

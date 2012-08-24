@@ -79,7 +79,7 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
+    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
     $self->input_job->transient_error(1);
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
@@ -144,7 +144,7 @@ sub run_ncrecoversearch {
   die "Cannot execute '$cmsearch_exe'" unless(-x $cmsearch_exe);
 
   my $worker_temp_directory = $self->worker_temp_directory;
-  my $root_id = $self->param('nc_tree_id');
+  my $root_id = $self->param('gene_tree_id');
 
   my $input_fasta = $worker_temp_directory . $root_id . ".db";
   open FILE,">$input_fasta" or die "$!\n";

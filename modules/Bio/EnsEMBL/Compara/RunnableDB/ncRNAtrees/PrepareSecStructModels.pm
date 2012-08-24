@@ -83,7 +83,7 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
+    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
     $self->input_job->transient_error(1);
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
@@ -109,17 +109,17 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     # First check the size of the alignents to compute:
     if ($self->param('tag_residue_count') > 150000) {
         $self->dataflow_output_id (
                                    {
-                                    'nc_tree_id' => $nc_tree_id,
+                                    'gene_tree_id' => $nc_tree_id,
                                    }, -1
                                   );
         $self->dataflow_output_id (
                                    {
-                                    'nc_tree_id' => $nc_tree_id,
+                                    'gene_tree_id' => $nc_tree_id,
                                    }, 1
                                   );
         # Should we die here? Nothing more to do in the Runnable
@@ -148,7 +148,7 @@ sub write_output {
     # Run RAxML with all selected secondary structure substitution models
     # $self->_run_ncsecstructtree;
 
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $models = $self->param('models');
     my $bootstrap_num = $self->param('bootstrap_num');
     print STDERR "Bootstrap_num: $bootstrap_num\n" if ($self->debug());
@@ -156,7 +156,7 @@ sub write_output {
     for my $model (@$models) {
         $self->dataflow_output_id ( {
                                      'model' => $model,
-                                     'nc_tree_id' => $nc_tree_id,
+                                     'gene_tree_id' => $nc_tree_id,
                                      'bootstrap_num' => $bootstrap_num
                                     }, 2); # fan
     }

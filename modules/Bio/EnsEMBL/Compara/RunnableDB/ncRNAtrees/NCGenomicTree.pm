@@ -10,7 +10,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my ($self) = @_;
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->param('nc_tree', $nc_tree);
     my $alignment_id = $self->param('alignment_id');
@@ -38,7 +38,7 @@ sub write_output {
 sub run_ncgenomic_tree {
     my ($self, $method) = @_;
     my $cluster = $self->param('nc_tree');
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $input_aln = $self->param('aln_input');
     print STDERR "INPUT ALN: $input_aln\n";
     die "$input_aln doesn't exist" unless (-e $input_aln);
@@ -79,7 +79,7 @@ sub run_ncgenomic_tree {
             if (/low memory/) {
                 $self->dataflow_output_id (
                                            {
-                                            'nc_tree_id' => $self->param('nc_tree_id'),
+                                            'gene_tree_id' => $self->param('gene_tree_id'),
                                             'method' => $self->param('method'),
                                             'alignement_id' => $self->param('alignment_id'),
                                            }, -1
@@ -116,7 +116,7 @@ sub store_newick_into_protein_tree_tag_string {
 sub _load_and_dump_alignment {
     my ($self) = @_;
 
-    my $root_id = $self->param('nc_tree_id');
+    my $root_id = $self->param('gene_tree_id');
     my $alignment_id = $self->param('alignment_id');
     my $file_root = $self->worker_temp_directory. "nctree_" . $root_id;
     my $aln_file = $file_root . ".aln";

@@ -88,7 +88,7 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
+    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
     $self->input_job->transient_error(1);
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
@@ -211,7 +211,7 @@ sub dump_sequences_to_workdir {
   }
   close(OUTSEQ);
   unless (keys %{$self->param('model_id_hash')}) {
-      die "No Accs found for nc_tree_id $root_id : ", join ",",@no_acc_members;
+      die "No Accs found for gene_tree_id $root_id : ", join ",",@no_acc_members;
   }
 
 
@@ -247,7 +247,7 @@ sub run_infernal {
   my $self = shift;
 
   my $stk_output = $self->worker_temp_directory . "output.stk";
-  my $nc_tree_id = $self->param('nc_tree_id');
+  my $nc_tree_id = $self->param('gene_tree_id');
 
   my $cmalign_exe = $self->param('cmalign_exe')
     or die "'cmalign_exe' is an obligatory parameter";

@@ -72,7 +72,7 @@ sub fetch_input {
     my ($self) = @_;
 
     $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory parameter\n";
+    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory parameter\n";
     $self->input_job->transient_error(1);
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
@@ -338,7 +338,7 @@ sub _store_newick_into_nc_tree_tag_string {
 sub _load_and_dump_alignment {
     my ($self) = @_;
 
-    my $root_id = $self->param('nc_tree_id');
+    my $root_id = $self->param('gene_tree_id');
     my $alignment_id = $self->param('alignment_id');
     my $file_root = $self->worker_temp_directory. "nctree_" . $root_id;
     my $aln_file = $file_root . ".aln";

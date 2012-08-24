@@ -10,10 +10,10 @@ use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 # We should receive:
-# nc_tree_id
+# gene_tree_id
 sub fetch_input {
     my ($self) = @_;
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
@@ -24,7 +24,7 @@ sub fetch_input {
 
 sub run {
     my ($self) = @_;
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     if ($self->param('single_peptide_tree')) {
         $self->input_job->incomplete(0);
         die "single peptide tree\n";
@@ -43,7 +43,7 @@ sub run {
 
         $self->dataflow_output_id (
                                    {
-                                    'nc_tree_id' => $self->param('nc_tree_id'),
+                                    'gene_tree_id' => $self->param('gene_tree_id'),
                                     'fastTreeTag' => "ftga_IT_nj",
                                     'raxmlLightTag' => "ftga_IT_ml",
                                     'alignment_id' => $self->param('alignment_id'),
@@ -57,7 +57,7 @@ sub run {
     if (($self->param('tag_residue_count') > 40000) && $self->param('inhugemem') != 1) { ## Big family -- queue in hugemem
         $self->dataflow_output_id (
                                    {
-                                    'nc_tree_id' => $self->param('nc_tree_id'),
+                                    'gene_tree_id' => $self->param('gene_tree_id'),
                                     'alignment_id' => $self->param('alignment_id'),
                                     'inhugemem' => 1,
                                    }, -1
@@ -82,14 +82,14 @@ sub write_output {
 #     if ($self->param("MEMLIMIT")) { ## We had a problem in RAxML -- re-schedule in hugemem
 #         $self->dataflow_output_id (
 #                                    {
-#                                     'nc_tree_id' => $self->param('nc_tree_id')
+#                                     'gene_tree_id' => $self->param('gene_tree_id')
 #                                    }, -1
 #                                   );
 #     } else {
         for my $method (qw/phyml nj/) {
             $self->dataflow_output_id (
                                        {
-                                        'nc_tree_id'   => $self->param('nc_tree_id'),
+                                        'gene_tree_id'   => $self->param('gene_tree_id'),
                                         'method'       => $method,
                                         'alignment_id' => $self->param('alignment_id'),
                                        }, 2
@@ -161,7 +161,7 @@ sub run_mafft {
     my ($self) = @_;
 
 #    return if ($self->param('too_few_sequences') == 1); # return? die? $self->throw?
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $input_fasta = $self->param('input_fasta');
     my $mafft_output = $self->worker_temp_directory . "/mafft_".$nc_tree_id . ".msa";
     $self->param('mafft_output',$mafft_output);
@@ -190,7 +190,7 @@ sub run_RAxML {
     my ($self) = @_;
 
 #    return if ($self->param('too_few_sequences') == 1);  # return? die? $self->throw? This has been checked before
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $aln_file = $self->param('phylip_output');
     return unless (defined $aln_file);
 
@@ -227,7 +227,7 @@ sub run_RAxML {
             if (/malloc_aligned/) {
                 $self->dataflow_output_id (
                                            {
-                                            'nc_tree_id' => $self->param('nc_tree_id'),
+                                            'gene_tree_id' => $self->param('gene_tree_id'),
                                            }, -1
                                           );
                 $self->input_job->incomplete(0);
@@ -265,7 +265,7 @@ sub run_prank {
     my ($self) = @_;
 
 #    return if ($self->param('too_few_sequences') == 1);  # return? die? $self->throw? This has been checked before
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $input_fasta = $self->param('input_fasta');
     my $tree_file = $self->param('raxml_output');
 #    return unless (defined $tree_file);
@@ -306,7 +306,7 @@ sub fasta2phylip {
     my ($self) = @_;
 #    return 1 if ($self->param('too_few_sequences') == 1); # This has been checked before
     my $fasta_in = $self->param('mafft_output');
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $phylip_out = $self->worker_temp_directory . "/mafft_${nc_tree_id}.phylip";
     my %seqs;
     open my $msa, "<", $fasta_in or $self->throw("I can not open the prank msa file $fasta_in : $!\n");
@@ -348,7 +348,7 @@ sub fasta2phylip {
 sub store_fasta_alignment {
     my ($self, $param) = @_;
 
-    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree_id = $self->param('gene_tree_id');
     my $uniq_alignment_id = "$param" . "_" . $self->input_job->dbID ;
     my $aln_file = $self->param($param);
 
