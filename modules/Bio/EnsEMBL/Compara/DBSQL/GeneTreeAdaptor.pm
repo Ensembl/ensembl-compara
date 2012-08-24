@@ -223,7 +223,7 @@ sub fetch_all_by_Member {
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
     # Discard the UNIPROT members
-    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['gene_tree_member', 'gtm'], 'gtn.node_id = gtm.node_id'], [['member', 'm'], 'gtm.member_id = m.member_id']];
     my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
@@ -263,7 +263,7 @@ sub fetch_default_for_Member {
     my ($self, $member) = @_;
 
     # Discard the UNIPROT members
-    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['gene_tree_member', 'gtm'], 'gtn.node_id = gtm.node_id'], [['member', 'm'], 'gtm.member_id = m.member_id']];
     my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?)) AND (gtr.clusterset_id = "default")';
@@ -377,6 +377,7 @@ sub store {
 
     # Secondly, the tree itself
     my $sth;
+    # Make sure that the variables are in the same order
     if ($has_root_id) {
         $sth = $self->prepare('UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?'),
     } else {
