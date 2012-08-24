@@ -89,8 +89,11 @@ sub _whatsnew_text {
   my $species_defs    = $hub->species_defs;
   my $species         = $hub->species;
   my $adaptor         = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
+    
+  my $news_url = $hub->url({'action'=>'WhatsNew'});
 
-  my $html = sprintf(qq(<h2><img src="/i/24/announcement.png" style="vertical-align:middle" alt="" /> What's New in %s release %s</h2>),
+  my $html = sprintf(qq(<h2><a href="%s"><img src="/i/24/announcement.png" style="vertical-align:middle" alt="" /></a> What's New in %s release %s</h2>),
+                        $news_url,
                         $species_defs->SPECIES_COMMON_NAME,
                         $species_defs->ENSEMBL_VERSION,
                     );
@@ -100,8 +103,6 @@ sub _whatsnew_text {
     my @changes = @{$adaptor->fetch_changelog($params)};
 
     $html .= '<ul>';
-
-    my $news_url = $hub->url({'action'=>'WhatsNew'});
 
     foreach my $record (@changes) {
       my $record_url = $news_url.'#change_'.$record->{'id'};
@@ -248,7 +249,7 @@ sub _genebuild_text {
   $html .= '<h2>Gene annotation</h2>
 <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>';
 
-  $html .= qq(<p><img src="/i/24/info.png" alt="" style="vertical-align:middle" /> More about <a href="/$species/Info/Annotation/#genebuild">this genebuild</p>);
+  $html .= qq(<p><a href="/$species/Info/Annotation/#genebuild"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/$species/Info/Annotation/#genebuild">More about this genebuild</p>);
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
@@ -296,7 +297,7 @@ sub _compara_text {
 
   $html .= '<h2>Comparative genomics</h2>
 <p><strong>What can I find?</strong>  Homologues, gene trees, and whole genome alignments across multiple species.</p>';
-  $html .= '<p><img src="/i/24/info.png" alt="" style="vertical-align:middle" /> More about <a href="/info/docs/compara/">comparative analysis</a></li>'; 
+  $html .= '<p><a href="/info/docs/compara/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/compara/">More about comparative analysis</a></li>'; 
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/emf/ensembl-compara/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version;
@@ -344,7 +345,7 @@ sub _variation_text {
 <p><strong>What can I find?</strong> Short sequence variants, such as SNPs from dbSNP, mutations from the COSMIC project, longer structural variants from dGVA.  Population frequencies from the 1000 Genomes project, disease and phenotypes associated with variants.</p>';
 
   my $site = $species_defs->ENSEMBL_SITETYPE;
-  $html .= qq(<p><img src="/i/24/info.png" alt="" style="vertical-align:middle" /> More about <a href="/info/docs/variation/">variation in $site</p>);
+  $html .= qq(<p><a href="info/docs/variation/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/variation/">More about variation in $site</p>);
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
@@ -384,7 +385,7 @@ sub _funcgen_text {
 <p><strong>What can I find?</strong> DNA methylation, Transcription Factor binding sites, Histone modifications, and Regulatory Features based on ENCODE data. Segmentation tracks show regions of the genome implicated as promoters, enhancers, repressors, transcribed regions, etc.</p>';
 
   my $site = $species_defs->ENSEMBL_SITETYPE;
-  $html .= qq(<p><img src="/i/24/info.png" alt="" style="vertical-align:middle" /> More about the <a href="/info/docs/funcgen/">$site regulatory build</li>);
+  $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/funcgen/">More about the $site regulatory build</li>);
 
   $html .= '</ul>';
 
