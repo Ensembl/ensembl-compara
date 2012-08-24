@@ -88,8 +88,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->check_if_exit_cleanly;
-
     my $protein_tree_id     = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
