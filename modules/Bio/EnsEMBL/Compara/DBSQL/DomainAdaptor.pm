@@ -151,13 +151,14 @@ sub _objs_from_sth {
   my @domains = ();
   
   while ($sth->fetch()) {
-    push @domains, Bio::EnsEMBL::Compara::Domain->new_fast
-      ({'_dbID' => $domain_id,
-       '_stable_id' => $stable_id,
-       '_description' => $description,
-       '_source_id' => $source_id,
-       '_source_name' => $source_name,
-       '_adaptor' => $self});
+    push @domains, Bio::EnsEMBL::Compara::Domain->new_fast({
+            '_adaptor'      => $self,       # field name NOT in sync with Bio::EnsEMBL::Storable
+            '_dbID'         => $domain_id,  # field name NOT in sync with Bio::EnsEMBL::Storable
+            '_stable_id'    => $stable_id,
+            '_description'  => $description,
+            '_source_id'    => $source_id,
+            '_source_name'  => $source_name,
+       });
   }
   
   return \@domains;  

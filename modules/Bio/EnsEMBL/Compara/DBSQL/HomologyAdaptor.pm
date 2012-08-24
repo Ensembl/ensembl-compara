@@ -685,21 +685,22 @@ sub _objs_from_sth {
   my @homologies = ();
   
   while ($sth->fetch()) {
-    push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast
-      ({'_dbID' => $homology_id,
-       '_description' => $description,
-       '_method_link_species_set_id' => $method_link_species_set_id,
-       '_subtype' => $subtype,
-       '_dn' => $dn,
-       '_ds' => $ds,
-       '_n' => $n,
-       '_s' => $s,
-       '_lnl' => $lnl,
-       '_threshold_on_ds' => $threshold_on_ds,
-       '_adaptor' => $self,
-       '_this_one_first' => $self->{'_this_one_first'},
-       '_ancestor_node_id' => $ancestor_node_id,
-       '_tree_node_id' => $tree_node_id});
+    push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast({
+            '_adaptor'                      => $self,           # field name NOT in sync with Bio::EnsEMBL::Storable
+            '_dbID'                         => $homology_id,    # field name NOT in sync with Bio::EnsEMBL::Storable
+            '_description'                  => $description,
+            '_method_link_species_set_id'   => $method_link_species_set_id,
+            '_subtype'                      => $subtype,
+            '_dn'                           => $dn,
+            '_ds'                           => $ds,
+            '_n'                            => $n,
+            '_s'                            => $s,
+            '_lnl'                          => $lnl,
+            '_threshold_on_ds'              => $threshold_on_ds,
+            '_this_one_first'               => $self->{'_this_one_first'},
+            '_ancestor_node_id'             => $ancestor_node_id,
+            '_tree_node_id'                 => $tree_node_id,
+       });
   }
   
   return \@homologies;  

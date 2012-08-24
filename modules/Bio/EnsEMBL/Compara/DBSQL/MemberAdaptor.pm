@@ -636,7 +636,8 @@ sub create_instance_from_rowhash {
 	my ($self, $rowhash) = @_;
 	
 	return Bio::EnsEMBL::Compara::Member->new_fast({
-		_dbID           => $rowhash->{member_id},
+		_adaptor        => $self,                   # field name NOT in sync with Bio::EnsEMBL::Storable
+		_dbID           => $rowhash->{member_id},   # field name NOT in sync with Bio::EnsEMBL::Storable
 		_stable_id      => $rowhash->{stable_id},
 		_version        => $rowhash->{version},
 		_taxon_id       => $rowhash->{taxon_id},
@@ -650,7 +651,6 @@ sub create_instance_from_rowhash {
 		_source_name    => $rowhash->{source_name},
 		_display_label  => $rowhash->{display_label},
 		_gene_member_id => $rowhash->{gene_member_id},
-		_adaptor        => $self
 	});
 }
 

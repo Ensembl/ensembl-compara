@@ -197,14 +197,15 @@ sub _objs_from_sth {
   my @families = ();
   
   while ($sth->fetch()) {
-    push @families, Bio::EnsEMBL::Compara::Family->new_fast
-      ({'_dbID'                      => $family_id,
-       '_stable_id'                  => $stable_id,
-       '_version'                    => $version,
-       '_description'                => $description,
-       '_description_score'          => $description_score,
-       '_method_link_species_set_id' => $method_link_species_set_id,
-       '_adaptor'                    => $self});
+    push @families, Bio::EnsEMBL::Compara::Family->new_fast({
+            '_adaptor'                      => $self,       # field name NOT in sync with Bio::EnsEMBL::Storable
+            '_dbID'                         => $family_id,  # field name NOT in sync with Bio::EnsEMBL::Storable
+            '_stable_id'                    => $stable_id,
+            '_version'                      => $version,
+            '_description'                  => $description,
+            '_description_score'            => $description_score,
+            '_method_link_species_set_id'   => $method_link_species_set_id,
+       });
   }
   
   return \@families;  

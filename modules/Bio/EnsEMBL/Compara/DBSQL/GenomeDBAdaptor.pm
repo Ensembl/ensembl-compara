@@ -448,9 +448,9 @@ sub cache_all {
         while ($sth->fetch()) {
 
             my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
+                'adaptor'   => $self,           # field name in sync with Bio::EnsEMBL::Storable
+                'dbID'      => $dbid,           # field name in sync with Bio::EnsEMBL::Storable
                 'name'      => $name,
-                'dbID'      => $dbid,
-                'adaptor'   => $self,
                 'assembly'  => $assembly,
                 'assembly_default' => $assembly_default,
                 'genebuild' => $genebuild,
