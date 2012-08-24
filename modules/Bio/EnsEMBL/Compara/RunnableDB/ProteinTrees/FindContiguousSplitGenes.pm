@@ -33,7 +33,7 @@ be true:
 =head1 SYNOPSIS
 
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes \
- -compara_db mysql://server/mm14_compara_homology_67 -protein_tree_id 267568
+ -compara_db mysql://server/mm14_compara_homology_67 -gene_tree_id 267568
 
 =head1 AUTHORSHIP
 
@@ -79,8 +79,10 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $protein_tree_id = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($protein_tree_id) or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
+    $self->check_if_exit_cleanly;
+
+    my $gene_tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch protein_tree with gene_tree_id='$gene_tree_id'";
     $protein_tree->print_tree(0.0001) if($self->debug);
     $protein_tree->preload();
 
@@ -251,7 +253,7 @@ sub store_split_genes {
     my $holding_node = $connected_split_genes->holding_node;
 
     my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ?');
-    $sth0->execute($self->param('protein_tree_id'));
+    $sth0->execute($self->param('gene_tree_id'));
     $sth0->finish;
 
     my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id) VALUES (?)');
