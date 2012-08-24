@@ -411,6 +411,15 @@ sub _summarise_variation_db {
     my ($version) = @$_;
     $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'dbSNP_VERSION'} = $version;   
   }
+
+#--------- Does this species have structural variants?
+ my $sv_aref = $dbh->selectall_arrayref('select count(*) from structural_variation');
+ foreach (@$sv_aref){
+    my ($count) = @$_;
+    warn ">>> COUNT $count";
+    $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'} = $count;   
+ }
+
 #---------- Add in information about the display type from the sample table
    my $d_aref = $dbh->selectall_arrayref( "select name, display from sample where display not like 'UNDISPLAYABLE'" );
    my (@default, $reference, @display, @ld);
