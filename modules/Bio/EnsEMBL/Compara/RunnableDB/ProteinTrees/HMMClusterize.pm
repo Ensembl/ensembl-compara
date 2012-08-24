@@ -47,6 +47,13 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
+sub param_defaults {
+    return {
+            'sort_clusters'         => 1,
+            'immediate_dataflow'    => 1,
+            'member_type'           => 'protein',
+    };
+}
 
 sub fetch_input {
     my $self = shift @_;
