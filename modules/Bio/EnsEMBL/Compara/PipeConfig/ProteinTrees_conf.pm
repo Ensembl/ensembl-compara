@@ -1064,7 +1064,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'quick_tree_break',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
             -parameters => {
                 'mlss_id'           => $self->o('mlss_id'),
                 'quicktree_exe'     => $self->o('quicktree_exe'),
