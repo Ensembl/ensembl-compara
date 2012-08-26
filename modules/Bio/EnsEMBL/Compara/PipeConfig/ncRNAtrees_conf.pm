@@ -31,9 +31,9 @@ sub default_options {
         %{$self->SUPER::default_options},
 
             # parameters that are likely to change from execution to another:
-            # 'mlss_id'             => 40084,
-            'release'               => '68',
-            'rel_suffix'            => 'st',    # an empty string by default, a letter or string otherwise
+            # 'mlss_id'             => 40086,
+            'release'               => '69',
+            'rel_suffix'            => '',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
@@ -77,7 +77,7 @@ sub default_options {
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
 
             # tree break
-            'treebreak_gene_count'     => 400,
+            'treebreak_gene_count'     => 700,
             'treebreak_tags_to_copy'   => ['clustering_id'],
 
 
@@ -89,7 +89,7 @@ sub default_options {
             # connection parameters
             'pipeline_db' => {
                               -driver => 'mysql',
-                              -host   => 'compara4',
+                              -host   => 'compara2',
                               -port   => 3306,
                               -user   => 'ensadmin',
                               -pass   => $self->o('password'),
@@ -467,7 +467,7 @@ sub pipeline_analyses {
             },
 
             {   -logic_name => 'quick_tree_break',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
                 -parameters => {
                                 'mlss_id'           => $self->o('mlss_id'),
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
