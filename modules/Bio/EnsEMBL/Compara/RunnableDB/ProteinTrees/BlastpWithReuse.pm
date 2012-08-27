@@ -109,8 +109,7 @@ sub fetch_input {
 
     my $mlss_id         = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
     my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
-    my $species_set     = $mlss->species_set;
-    my $genome_db_list  = (ref($species_set) eq 'ARRAY') ? $species_set : $species_set->genome_dbs();
+    my $genome_db_list  = $mlss->species_set_obj->genome_dbs;
 
     print STDERR "Found ", scalar(@$genome_db_list), " genomes to blast this member against.\n" if ($self->debug);
     $self->param('genome_db_list', $genome_db_list);
