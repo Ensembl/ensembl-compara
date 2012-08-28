@@ -204,7 +204,7 @@ sub resource_classes {
          '2Gb_job'      => {'LSF' => '-q production -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '8Gb_job'      => {'LSF' => '-q production -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '500Mb_long_job'    => {'LSF' => '-q production -M500   -R"select[mem>500]   rusage[mem=500]"' },
-         '24Gb_long_job'     => {'LSF' => '-q production -M24000 -R"select[mem>24000] rusage[mem=24000]"' },
+         'urgent_hcluster'     => {'LSF' => '-q production -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          'mcoffee'      => {'LSF' => '-q production -W 24:00' },
          'mcoffee_himem'    => {'LSF' => '-q production -M 32768 -R "rusage[mem=32768]" -W 24:00' },
   };

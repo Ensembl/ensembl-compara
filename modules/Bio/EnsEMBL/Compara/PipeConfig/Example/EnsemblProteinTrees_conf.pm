@@ -164,8 +164,8 @@ sub default_options {
             -pass   => '',
         },
 
-        #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the reused core databases and update 'reuse_db'
@@ -179,7 +179,7 @@ sub default_options {
         #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'livemirror',
+           -host   => 'ens-livemirror',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
@@ -209,7 +209,7 @@ sub resource_classes {
          '8Gb_job'      => {'LSF' => '-C0 -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
          '500Mb_long_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]" -q long' },
-         '24Gb_long_job'     => {'LSF' => '-C0 -M24000000 -R"select[mem>24000] rusage[mem=24000]" -q long' },
+         'urgent_hcluster'   => {'LSF' => '-C0 -M32000000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
     };
 }
 
