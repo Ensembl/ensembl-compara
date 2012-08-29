@@ -17,10 +17,10 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 # The majority of core databases live on two staging servers:
 
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging1/68');
+  'mysql://ensro@ens-staging1/69');
 
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging2/68');
+  'mysql://ensro@ens-staging2/69');
 
 
 # Extra core databases that live on genebuilders' servers:
@@ -54,7 +54,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
-    -dbname => 'mm14_ensembl_compara_67',
+    -dbname => 'mm14_ensembl_compara_68',
 );
 
 # Curr
@@ -64,16 +64,16 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_curr',
-    -dbname => 'mm14_ensembl_compara_68',
+    -dbname => 'sf5_ensembl_compara_69',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MERGE
-    -host => 'compara4',
+    -host => 'compara1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_homology_merged',
-    -dbname => 'mm14_compara_homology_merged_68',
+    -dbname => 'mm14_compara_homology_merged_69',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
@@ -82,7 +82,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_staging',
-    -dbname => 'ensembl_compara_68',
+    -dbname => 'ensembl_compara_69',
 );
 
 1;
