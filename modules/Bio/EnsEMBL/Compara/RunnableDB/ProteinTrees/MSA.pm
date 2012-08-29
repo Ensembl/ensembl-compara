@@ -76,7 +76,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'use_exon_boundaries'   => 0,                       # careful: 0 and undef have different meanings here
-        #'output_table'          => 'protein_tree_member',   # uncomment to output results to a different table
     };
 }
 
@@ -376,7 +375,7 @@ sub parse_and_store_alignment_into_proteintree {
     #print "The cigar_line of $id is: ", $align_hash{$id}, "\n";
   }
 
-  if (defined($self->param('redo')) and (not defined $self->param('output_table'))) {
+  if (defined($self->param('redo'))) {
     # We clone the tree, attach it to the new clusterset_id, then store it.
     # protein_tree_member is now linked to the new one
     my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
@@ -416,22 +415,11 @@ sub parse_and_store_alignment_into_proteintree {
         $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
       }
 
-      my $table_name = $self->param('output_table');
-      unless (defined $table_name) {
         #
         # We can use the default store method for the $member.
           ##print "UPDATING "; $member->print_member;
           $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
-      } else {
-        #
-        # Do a manual insert into the correct output table.
-        #
-        printf("Updating $table_name %s : %s\n",$member->stable_id,$member->cigar_line) if ($self->debug);
-        my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
-                               (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
-        $sth->execute($member->node_id,$member->member_id,$member->method_link_species_set_id,$member->cigar_line);
-        $sth->finish;
-      }
+      
   }
 }
 
@@ -462,13 +450,6 @@ sub _store_aln_tags {
 
     print "Storing Alignment tags...\n";
 
-    #
-    # Retrieve a tree with the "correct" cigar lines.
-    #
-    if (defined $self->param('output_table')) {
-        $tree = $self->_get_alternate_alignment_tree($self->compara_dba->get_GeneTreeNodeAdaptor, $tree->root_id, $self->param('output_table'));
-    }
-
     my $sa = $tree->get_SimpleAlign;
 
     # Alignment percent identity.
@@ -493,32 +474,5 @@ sub _store_aln_tags {
 
 }
 
-sub _get_alternate_alignment_tree {
-    my $self = shift;
-    my $pta = shift;
-    my $node_id = shift;
-    my $table = shift;
-
-    my $tree = $pta->fetch_node_by_node_id($node_id);
-
-    foreach my $leaf (@{$tree->get_all_leaves}) {
-        # "Release" the stored / cached values for the alignment strings.
-        undef $leaf->{'cdna_alignment_string'};
-        undef $leaf->{'alignment_string'};
-
-        # Grab the correct cigar line for each leaf node.
-        my $id = $leaf->member_id;
-        my $sql = "SELECT cigar_line FROM $table where member_id=? LIMIT 1;";
-        my $sth = $pta->prepare($sql);
-        $sth->execute($id);
-        my $data = $sth->fetchrow_hashref();
-        $sth->finish();
-        my $cigar = $data->{'cigar_line'};
-
-        die "No cigar line for member $id!\n" unless ($cigar);
-        $leaf->cigar_line($cigar);
-    }
-    return $tree;
-}
 
 1;
