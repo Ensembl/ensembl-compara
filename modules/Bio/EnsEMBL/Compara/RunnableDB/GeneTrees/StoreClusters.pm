@@ -65,7 +65,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
                branch 2.
   Arg [1]    : clusterset_id of the new clusterset
   Arg [2]    : hashref of hashref with at least a 'members' key
-  Parameters : member_type, immediate_dataflow, input_id_prefix, sort_clusters
+  Parameters : member_type, immediate_dataflow, sort_clusters
   Returntype : none
   Exceptions : none
   Caller     : general
@@ -155,7 +155,7 @@ sub fetch_or_create_clusterset {
 
   Description: Create a new cluster (a root node linked to many leafes) and
                store it in the database.
-  Parameters : member_type, immediate_dataflow, input_id_prefix
+  Parameters : member_type, immediate_dataflow 
   Arg [1]    : clusterset to attach the new cluster to
   Arg [2]    : cluster definition (hash reference with a 'members' key and other tags)
   Returntype : GeneTree: the created cluster
@@ -248,7 +248,7 @@ sub finish_store_clusterset {
 
   Description: Creates one job per cluster into branch 2.
                Flows into branch 1 with the clusterset_id of the new clusterset
-  Parameters : input_id_prefix
+  Parameters : (none)
   Arg [1]    : clusterset
   Arg [2]    : array reference of root_id
   Returntype : none
