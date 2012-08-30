@@ -122,14 +122,17 @@ sub fetch_input {
     # The extra option at the end adds the exon markers
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree'), $self->param('use_exon_boundaries')) );
 
-  if (defined($self->param('redo')) && $self->param('method') eq 'unalign') {
+  if ($self->param('redo')) {
     # Redo - take previously existing alignment - post-process it
-    my $redo_sa = $self->param('protein_tree')->get_SimpleAlign(-id_type => 'MEMBER');
-    $redo_sa->set_displayname_flat(1);
-    $self->param('redo_alnname', $self->worker_temp_directory . $self->param('gene_tree_id').'.fasta' );
-    my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'),
-                                     -format => "fasta");
-    $alignout->write_aln( $redo_sa );
+    my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($self->param('protein_tree'));
+    my ($other_tree) = grep {$_->clusterset_id eq $self->param('redo')} @$other_trees;
+    if ($other_tree) {
+        my $redo_sa = $other_tree->get_SimpleAlign(-id_type => 'MEMBER');
+        $redo_sa->set_displayname_flat(1);
+        $self->param('redo_alnname', $self->worker_temp_directory . $self->param('gene_tree_id').'.fasta' );
+        my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'), -format => "fasta");
+        $alignout->write_aln( $redo_sa );
+    }
   }
 
   #
@@ -182,7 +185,7 @@ sub write_output {
     $self->parse_and_store_alignment_into_proteintree;
 
     # Store various alignment tags:
-    $self->_store_aln_tags($self->param('protein_tree')) unless ($self->param('redo'));
+    $self->_store_aln_tags($self->param('protein_tree'));
 
 }
 
@@ -373,24 +376,6 @@ sub parse_and_store_alignment_into_proteintree {
     # Call the method to do the actual conversion
     $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
     #print "The cigar_line of $id is: ", $align_hash{$id}, "\n";
-  }
-
-  if (defined($self->param('redo'))) {
-    # We clone the tree, attach it to the new clusterset_id, then store it.
-    # protein_tree_member is now linked to the new one
-    my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
-    $self->throw("malformed redo option: ". $self->param('redo')." should be like 1:1000000")
-      unless (defined($from_clusterset_id) && defined($to_clusterset_id));
-    $self->throw('This funtionality does not work with the new API, yet.');
-    my $clone_tree = $self->param('protein_tree')->root->copy;
-    my $clusterset = $self->param('tree_adaptor')->fetch_by_dbID($to_clusterset_id);
-    $clusterset->add_child($clone_tree);
-    $self->param('tree_adaptor')->store($clone_tree);
-    # Maybe rerun indexes - restore
-    # $self->param('tree_adaptor')->sync_tree_leftright_index($clone_tree);
-    $self->_store_aln_tags($clone_tree);
-    # Point $tree object to the new tree from now on
-    $tree->release_tree; $tree = $clone_tree;
   }
 
   #

@@ -85,17 +85,6 @@ sub param_defaults {
 # Redefined methods from the base class (MSA)
 ########################################################
 
-sub write_output {
-    my $self = shift @_;
-
-    $self->SUPER::write_output(@_);
-
-    # Alignment redo mapping.
-    my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
-    my $redo_tag = "MCoffee_redo_".$from_clusterset_id."_".$to_clusterset_id;
-    $self->param('protein_tree')->tree->store_tag("$redo_tag",$self->param('gene_tree_id')) if ($self->param('redo'));
-}
-
 sub parse_and_store_alignment_into_proteintree {
     my $self = shift;
 
@@ -177,10 +166,11 @@ sub get_msa_command_line {
     } elsif ($self->param('method') eq 'prank') {
         # PRANK: phylogeny-aware alignment.
         $method_string .= "prank_msa";
-    } elsif (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {
+    } elsif ($self->param('redo_alnname') and ($self->param('method') eq 'unalign') ) {
         my $cutoff = $self->param('cutoff') || 2;
         # Unalign module
         $method_string = " -other_pg seq_reformat -in " . $self->param('redo_alnname') ." -action +aln2overaln unalign 2 30 5 15 0 1>$msa_output";
+        $self->param('mcoffee_scores', undef); #these wont have scores
     } else {
         throw ("Improper method parameter: ".$self->param('method'));
     }
@@ -228,12 +218,12 @@ sub get_msa_command_line {
     die "Cannot execute '$mcoffee_exe'" unless(-x $mcoffee_exe);
 
     $cmd = $mcoffee_exe;
-    $cmd .= ' '.$input_fasta unless ($self->param('redo'));
-    $cmd .= ' '. $self->param('options');
-    if (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {
-        $self->param('mcoffee_scores', undef); #these wont have scores
+    if ($self->param('redo_alnname') and ($self->param('method') eq 'unalign') ) {
+        $cmd .= ' '. $self->param('options');
         $cmd .= ' '. $method_string;
     } else {
+        $cmd .= ' '.$input_fasta;
+        $cmd .= ' '. $self->param('options');
         $cmd .= " -parameters=$paramsfile";
     }
 
