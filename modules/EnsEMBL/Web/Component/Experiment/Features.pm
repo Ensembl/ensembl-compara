@@ -53,10 +53,10 @@ sub content {
   my $shown_experiments = @$feature_sets_info;
   my $html              = sprintf('<a name="%s"></a>', $object->URL_ANCHOR);
   if ($object->is_single_feature_view) {
-    $html = "Showing a single experiment out of $total_experiments experiments";
+    $html = "<p>Showing a single experiment out of $total_experiments experiments</p>";
   }
   elsif ($total_experiments == $shown_experiments) {
-    $html .= "Showing all  $total_experiments experiments";
+    $html .= "<p>Showing all $total_experiments experiments</p>";
   }
   else {
     my $applied_filters = $object->applied_filters;
@@ -69,10 +69,10 @@ sub content {
       ), @{$applied_filters->{$filter_key}} ];
     }
 
-    $html .= sprintf('<p class="space-below">Showing %s/%s experiments</p><p class="space-below">Filters applied: %s</p>',
+    $html .= sprintf('<p>Showing %s/%s experiments</p><div class="tinted-box"><p class="half-margin">Filters applied:</p><ul>%s</ul></div>',
        $shown_experiments,
        $total_experiments,
-       join('', map sprintf('<p class="space-below"><b>%s</b>: %s</p>', $_, $self->join_with_and(@{$display_filters->{$_}})), sort keys %$display_filters)
+       join('', map sprintf('<li><b>%s</b>: %s</li>', $_, $self->join_with_and(@{$display_filters->{$_}})), sort keys %$display_filters)
     );
   }
 
