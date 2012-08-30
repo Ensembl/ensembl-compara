@@ -77,7 +77,7 @@ sub store_and_dataflow_clusterset {
     my $clusterset_id = shift;
     my $allclusters = shift;
     
-    my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
+    my $clusterset = $self->create_clusterset($clusterset_id);
     print STDERR "STORING AND DATAFLOWING THE CLUSTERSET\n" if ($self->debug());
     for my $cluster_name (keys %$allclusters) {
         print STDERR "$cluster_name has ", scalar @{$allclusters->{$cluster_name}{members}} , " members (leaves)\n";
@@ -102,10 +102,9 @@ sub store_and_dataflow_clusterset {
 }
 
 
-=head2 fetch_or_create_clusterset
+=head2 create_clusterset
 
-  Description: Create an empty clusterset and store it in the database if not
-                present yet. Otherwise, return the existing object
+  Description: Create an empty clusterset and store it in the database.
   Parameters : mlss_id, member_type
   Arg [1]    : clusterset_id of the new clusterset
   Returntype : GeneTree: the created clusterset
@@ -114,39 +113,23 @@ sub store_and_dataflow_clusterset {
 
 =cut
 
-sub fetch_or_create_clusterset {
+sub create_clusterset {
     my $self = shift;
     my $clusterset_id = shift;
 
     my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 
-    my %params = (
+    # Create the clusterset and associate mlss
+    my $clusterset = new Bio::EnsEMBL::Compara::GeneTree(
         -member_type => $self->param('member_type'),
         -tree_type => 'clusterset',
         -method_link_species_set_id => $mlss_id,
         -clusterset_id => $clusterset_id,
     );
 
-    # Tries to get it from the database
-    my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);
-    return $clusterset->[0] if scalar(@$clusterset);
-
-    $self->compara_dba->dbc->do('LOCK TABLES gene_tree_root WRITE, gene_tree_root AS gtr READ, gene_tree_node WRITE');
-
-    # In case someone has meanwhile created the clusterset
-    $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);
-   
-    if (scalar(@$clusterset)) {
-        $clusterset = $clusterset->[0];
-    } else {
-        # Create the clusterset and associate mlss
-        $clusterset = new Bio::EnsEMBL::Compara::GeneTree(%params);
-        # Assumes a root node will be automatically created
-        $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
-        print STDERR "Clusterset '$clusterset_id' created with root_id=", $clusterset->root_id, "\n" if $self->debug;
-    }
-
-    $self->compara_dba->dbc->do('UNLOCK TABLES');
+    # Assumes a root node will be automatically created
+    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
+    print STDERR "Clusterset '$clusterset_id' created with root_id=", $clusterset->root_id, "\n" if $self->debug;
     return $clusterset;
 }
 

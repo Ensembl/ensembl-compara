@@ -127,7 +127,7 @@ sub write_output {
             next if $clusterset_id eq 'mmerge';
             next if $clusterset_id eq 'phyml';
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
-            my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
+            my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
             my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
             $self->parse_newick_into_tree($filename, $newtree);
             $self->store_genetree($newtree);
