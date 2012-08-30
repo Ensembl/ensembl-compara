@@ -764,7 +764,6 @@ CREATE TABLE gene_tree_node_tag (
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
   KEY node_id_tag (node_id, tag),
-  KEY tag_node_id (tag, node_id),
   KEY (node_id),
   KEY (tag)
 
@@ -790,7 +789,6 @@ CREATE TABLE gene_tree_root_tag (
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
 
   KEY root_id_tag (root_id, tag),
-  KEY tag_root_id (tag, root_id),
   KEY (root_id),
   KEY (tag)
 
