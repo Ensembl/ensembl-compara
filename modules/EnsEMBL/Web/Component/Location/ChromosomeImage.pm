@@ -76,8 +76,9 @@ sub content {
     %s
     <h3>Chromosome Statistics</h3>
     %s
+    %s
   </div>',
-  $image_html, 2 + ($image->{'width'} || 348),  $self->chromosome_form('Vmapview')->render, $self->stats_table->render);
+  $image_html, 2 + ($image->{'width'} || 348),  $self->chromosome_form('Vmapview')->render, $self->stats_table->render, $self->legend);
 
   return $html;
 }
@@ -135,6 +136,11 @@ sub stats_table {
   }
 
   return $table;
+}
+
+sub legend {
+  my $self = shift;
+  return;
 }
 
 1;
