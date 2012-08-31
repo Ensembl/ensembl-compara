@@ -196,6 +196,8 @@ sub parse_newick_into_tree
       }
     }
   }
+  # Tags of the root node are lost otherwise
+  $root->{_tags} = $node->{_tags} unless $root eq $node;
   return $root;
 }
 
