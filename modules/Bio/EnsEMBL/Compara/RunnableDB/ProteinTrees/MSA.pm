@@ -18,29 +18,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take a protein_tree cluster as input
-Run an MCOFFEE multiple alignment on it, and store the resulting alignment
-back into the protein_tree_member table.
+This module is an abstract RunnableDB used to run a multiple alignment on a
+gene tree. It is currently implemented in Mafft and MCoffee.
 
-input_id/parameters format eg: "{'gene_tree_id'=>726093}"
-    gene_tree_id       : use family_id to run multiple alignment on its members
-    options            : commandline options to pass to the 'mcoffee' program
-
-=head1 SYNOPSIS
-
-my $db     = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $mcoffee = Bio::EnsEMBL::Compara::RunnableDB::Mcoffee->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id,
-                                                    -analysis   => $analysis );
-$mcoffee->fetch_input(); #reads from DB
-$mcoffee->run();
-$mcoffee->output();
-$mcoffee->write_output(); #writes to DB
+The parameter 'gene_tree_id' is obligatory.
 
 =head1 AUTHORSHIP
 
@@ -76,6 +61,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'use_exon_boundaries'   => 0,                       # careful: 0 and undef have different meanings here
+        'escape_branch'         => -1,
     };
 }
 
@@ -93,10 +79,12 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
-    if (defined $self->param('flow_other_method') and $self->param('flow_other_method') and $self->input_job->retry_count >= 3) {
-        $self->dataflow_output_id($self->input_id, 2);
-        $self->input_job->incomplete(0);
-        die "The MSA failed 3 times. Trying another method.\n";
+    if (defined $self->param('escape_branch') and $self->input_job->retry_count >= 3) {
+        my $jobs = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+        if (scalar(@$jobs)) {
+            $self->input_job->incomplete(0);
+            die "The MSA failed 3 times. Trying another method.\n";
+        }
     }
 
 
@@ -182,7 +170,20 @@ sub write_output {
     my $self = shift @_;
 
     return if ($self->param('single_peptide_tree'));
-    $self->parse_and_store_alignment_into_proteintree;
+    my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
+
+    unless ($aln_ok) {
+        # Probably an ongoing MEMLIMIT
+        # We have 10 seconds to dataflow and exit;
+        my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+        if (scalar(@$new_job)) {
+            $self->input_job->incomplete(0);
+            $self->input_job->lethal_for_worker(1);
+            die 'Probably not enough memory. Switching to the _himem analysis.';
+        } else {
+            die 'Error in the alignment but cannot switch to an analysis with more memory.';
+        }
+    }
 
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
@@ -224,7 +225,9 @@ sub run_msa {
     $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     print STDERR "Running:\n\t$cmd\n" if ($self->debug);
-    if(system($cmd)) {
+    my $ret = system("cd $tempdir; $cmd");
+    print STDERR "Exit status: $ret\n" if $self->debug;
+    if($ret) {
         my $system_error = $!;
 
         $self->post_cleanup;
@@ -330,7 +333,6 @@ sub dumpProteinTreeToWorkdir {
 sub parse_and_store_alignment_into_proteintree {
   my $self = shift;
 
-  return if ($self->param('single_peptide_tree'));
   my $msa_output =  $self->param('msa_output');
   my $format = 'fasta';
   my $tree = $self->param('protein_tree');
@@ -338,7 +340,7 @@ sub parse_and_store_alignment_into_proteintree {
   if (2 == $self->param('use_exon_boundaries')) {
     $msa_output .= ".overaln";
   }
-  return unless($msa_output and -e $msa_output);
+  return 0 unless($msa_output and -e $msa_output);
 
   #
   # Read in the alignment using Bioperl.
@@ -384,7 +386,9 @@ sub parse_and_store_alignment_into_proteintree {
   foreach my $member (@{$tree->get_all_leaves}) {
       # Redo alignment is member_id based, new alignment is sequence_id based
       if ($align_hash{$member->sequence_id} eq "" && $align_hash{$member->member_id} eq "") {
-        $self->throw("empty cigar_line for ".$member->stable_id."\n");
+        #$self->throw("empty cigar_line for ".$member->stable_id."\n");
+        $self->warning("empty cigar_line for ".$member->stable_id."\n");
+        return 0;
       }
       # Redo alignment is member_id based, new alignment is sequence_id based
       $member->cigar_line($align_hash{$member->sequence_id} || $align_hash{$member->member_id});
@@ -406,6 +410,7 @@ sub parse_and_store_alignment_into_proteintree {
           $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
       
   }
+  return 1;
 }
 
 # Converts the given alignment string to a cigar_line format.
