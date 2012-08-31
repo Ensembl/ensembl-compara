@@ -445,7 +445,7 @@ sub get_ancestor_species_hash
     if ($is_dup) {
         my $original_node_type = $node->get_tagvalue('node_type');
         if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
-            print "fixing node_type of ", $node->node_id, "\n";
+            $self->warning(sprintf("fixing node_type of %d\n", $node->node_id));
             $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
         }
     }
