@@ -18,29 +18,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take a protein_tree cluster as input
-Run an MCOFFEE multiple alignment on it, and store the resulting alignment
-back into the protein_tree_member table.
-
-input_id/parameters format eg: "{'gene_tree_id'=>726093}"
-    gene_tree_id       : use family_id to run multiple alignment on its members
-    options            : commandline options to pass to the 'mcoffee' program
-
-=head1 SYNOPSIS
-
-my $db     = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $mcoffee = Bio::EnsEMBL::Compara::RunnableDB::Mcoffee->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id,
-                                                    -analysis   => $analysis );
-$mcoffee->fetch_input(); #reads from DB
-$mcoffee->run();
-$mcoffee->output();
-$mcoffee->write_output(); #writes to DB
+This RunnableDB implements Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA
+by calling Mafft. It needs the following pararameters:
+ - mafft_exe
+ - mafft_binaries
 
 =head1 AUTHORSHIP
 
