@@ -110,7 +110,7 @@ sub fetch_input {
 
 sub run {
   my $self = shift;
-
+  $self->cleanup_worker_temp_directory;
   $self->run_njtree_phyml;
 }
 
@@ -163,7 +163,6 @@ sub write_output {
         $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $cmd) if $self->worker_temp_directory;
         system($cmd);
     }
-    $self->cleanup_worker_temp_directory;
 }
 
 sub post_cleanup {
