@@ -192,6 +192,8 @@ Ensembl.extend({
   },
   
   updateLocation: function (r) {
+    this.historyReady = true;
+    
     if (this.locationURL === 'hash') {
       window.location.hash = 'r=' + r;
     } else {
