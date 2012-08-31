@@ -134,11 +134,12 @@ sub get_species_tree_string {
 }
 
 
-=head2
+=head2 _slurp
 
 Reads the whole content of a file and returns it as a string
 
 =cut
+
 sub _slurp {
   my ($self, $file_name) = @_;
   my $slurped;
