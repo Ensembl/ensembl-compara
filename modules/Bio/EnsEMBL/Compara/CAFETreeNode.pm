@@ -73,12 +73,12 @@ sub species_tree {
 sub get_node_with_genome_db_id {
     my ($self, $genome_db_id) = @_;
     $self->throw("genome_db_id is not set") unless (defined $genome_db_id);
-    return undef unless ($self->is_leaf);
     my $GenomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
     my $genomeDB = $GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     my $taxon_id = $genomeDB->taxon_id();
     my $node;
     for my $leaf (@{$self->get_all_leaves}) {
+        print STDERR $leaf->taxon_id, "\n";
         if ($leaf->taxon_id == $taxon_id) {
             $node = $leaf;
             last;
