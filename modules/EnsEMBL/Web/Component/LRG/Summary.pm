@@ -63,7 +63,7 @@ sub content {
     $description .= qq{ Source: <a rel="external" href="$source_url">$source</a>.} if $source_url;
     
     my $location_html = sprintf(
-      '<p><a href="%s">%s: %s-%s</a> %s.</p>',
+      '<p><a href="%s" class="constant">%s: %s-%s</a> %s.</p>',
       $hub->url({
         type   => 'Location',
         action => 'View',

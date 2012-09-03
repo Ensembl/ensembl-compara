@@ -590,7 +590,7 @@ sub _sort_similarity_links {
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
 
       if ($link) {
-        $text = qq{<a href="$link">$word</a>};
+        $text = qq{<a href="$link" class="constant">$word</a>};
       } else {
         $text = $word;
       }
@@ -773,7 +773,7 @@ sub transcript_table {
   my $seq_region_end   = $object->seq_region_end;
 
   my $location_html = sprintf(
-    '<a href="%s">%s: %s-%s</a> %s.',
+    '<a href="%s" class="constant">%s: %s-%s</a> %s.',
     $hub->url({
       type   => 'Location',
       action => 'View',
@@ -804,7 +804,7 @@ sub transcript_table {
       
       $location_html .= ' [<span class="small">This corresponds to ';
       $location_html .= sprintf(
-        '<a href="%s" target="external">%s-%s</a>',
+        '<a href="%s" target="external" class="constant">%s-%s</a>',
         $hub->ExtURL->get_url('VEGA_CONTIGVIEW', $l),
         $self->thousandify($alt_slices->[0]->start),
         $self->thousandify($alt_slices->[0]->end)
@@ -833,7 +833,7 @@ sub transcript_table {
         my ($altchr, $altstart, $altend, $altseqregion) = @$loc;
         
         $location_html .= sprintf('
-          <li><a href="/%s/Location/View?l=%s:%s-%s">%s : %s-%s</a></li>', 
+          <li><a href="/%s/Location/View?l=%s:%s-%s" class="constant">%s : %s-%s</a></li>', 
           $species, $altchr, $altstart, $altend, $altchr,
           $self->thousandify($altstart),
           $self->thousandify($altend)

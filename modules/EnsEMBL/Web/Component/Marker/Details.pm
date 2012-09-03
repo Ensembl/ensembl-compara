@@ -36,10 +36,9 @@ sub content {
       foreach my $syn (@important_syns) {
         my $db  = $syn->source;
         my $id  = $syn->name;
-        my $url = $hub->get_ExtURL($db, $id);
+        my $url = $hub->get_ExtURL_link($id, $db, $id);
         
-        $id = qq{<a href="$url">$id</a>} if $url;
-        $syn_text .= "<table><tr><td>$id ($db)</td></tr></table>";
+        $syn_text .= "<table><tr><td>$url ($db)</td></tr></table>";
       }
       
       $table->add_row('Source', $syn_text);
@@ -201,7 +200,7 @@ sub render_location {
         my $url     = $hub->url({ type => 'Location', action => 'View', r => "$sr_name:$start-$end", m => $name, contigviewbottom => 'marker_core_marker=normal' }); # Force markers to be on
         my $extra   = $m->priority < $priority ? " [Note that for reasons of clarity this marker is not shown on 'Region in detail']" : '';
         
-        $html .= sprintf '<tr><td>%s%s <a href="%s">%s:%s-%s</a>%s</td></tr>', $c > 1 ? '&nbsp;' : '', $mf->coord_system_name, $url, $sr_name, $start, $end, $extra;
+        $html .= sprintf '<tr><td>%s%s <a href="%s" class="constant">%s:%s-%s</a>%s</td></tr>', $c > 1 ? '&nbsp;' : '', $mf->coord_system_name, $url, $sr_name, $start, $end, $extra;
       }
     }
   }

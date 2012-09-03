@@ -57,7 +57,7 @@ sub content {
     my $up_end    = @up_sample ? $up_sample[0]->end : 0;
 
     $up_link = sprintf('
-      <a href="%s"><img src="%sback2.png" alt="&lt;&lt;" style="vertical-align:middle" /> %s upstream %s</a>',
+      <a href="%s" class="constant"><img src="%sback2.png" alt="&lt;&lt;" style="vertical-align:middle" /> %s upstream %s</a>',
       $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$up_start-$up_end" }), $img_url, $up_count, $gene_text
     );
   } else {
@@ -80,7 +80,7 @@ sub content {
     my $down_end   = @down_sample ? $down_sample[-1]->end + $seq_region_end : 0;
  
     $down_link = sprintf('
-      <a href="%s">%s downstream %s <img src="%sforward2.png" alt="&gt; &gt;" style="vertical-align:middle" /></a>',
+      <a href="%s" class="constant">%s downstream %s <img src="%sforward2.png" alt="&gt; &gt;" style="vertical-align:middle" /></a>',
       $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text, $img_url
     );
   } else {
@@ -96,7 +96,7 @@ sub content {
                   ? $gene->seq_region_end + $padding : $chromosome_end;
     my $gene_neighbourhood = sprintf('%s:%d-%d', $chr, $start, $end);
 
-    $centre_content = sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => $gene_neighbourhood }), 'Centre on gene '.$gene->Obj->external_name);
+    $centre_content = sprintf('<a href="%s" class="constant">%s</a>', $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => $gene_neighbourhood }), 'Centre on gene '.$gene->Obj->external_name);
   }
 
   return qq{

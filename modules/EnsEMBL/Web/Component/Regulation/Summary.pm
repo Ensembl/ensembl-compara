@@ -23,7 +23,7 @@ sub content {
     'r'      => $object->seq_region_name.':'.$object->bound_start.'-'.$object->bound_end
   });
 
-  my $location_html = sprintf('<p><a href="%s">%s: %s-%s</a></p>',
+  my $location_html = sprintf('<p><a href="%s" class="constant">%s: %s-%s</a></p>',
     $url,
     $object->neat_sr_name( $object->seq_region_type, $object->seq_region_name ),
     $object->thousandify( $object->seq_region_start ),

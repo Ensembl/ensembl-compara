@@ -78,7 +78,7 @@ sub variation_source {
   }
   
   ## parse description for links
-  (my $description = $object->source_description) =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2">$1<\/a>/; 
+  (my $description = $object->source_description) =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2" class="constant">$1<\/a>/; 
   
   # Source link
   if ($source eq 'dbSNP') {
@@ -105,7 +105,7 @@ sub variation_source {
   } elsif ($source =~ /LSDB/) {
     $source_link = $hub->get_ExtURL_link($source . ($version ? " ($version)" : ''), $source, $name);
   } else {
-    $source_link = $url ? qq{<a href="$url">$source$version</a>} : "$source $version";
+    $source_link = $url ? qq{<a href="$url" class="constant">$source$version</a>} : "$source $version";
   }
 
   return ['Source', sprintf('<p>%s - %s</p>', $source_link, $description)];
@@ -329,7 +329,7 @@ sub location {
        $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
-      ' | <a href="%s">View in location tab</a>',
+      ' | <a href="%s" class="constant">View in location tab</a>',
       $hub->url({
         type             => 'Location',
         action           => 'View',

@@ -49,7 +49,7 @@ sub content {
     my $author  = $object->get_author_name;
     my $remarks = $object->retrieve_remarks;
 
-    $table->add_row('Class', qq{<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>});
+    $table->add_row('Class', qq{<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external" class="constant">Definition</a>]</p>});
     $table->add_row('Version &amp; date', qq{<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>});
     $table->add_row('Author', "This transcript was annotated by $author");
 

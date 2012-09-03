@@ -108,7 +108,7 @@ sub get_study {
   return unless $study_name;
   
   my $study_description = $self->add_pubmed_link($object->study_description);
-  my $study_line        = sprintf '<a href="%s">%s</a>', $object->study_url, $study_name;
+  my $study_line        = sprintf '<a href="%s" class="constant">%s</a>', $object->study_url, $study_name;
   
   return ['Study', "$study_line - $study_description"];
 }
@@ -156,7 +156,7 @@ sub location {
        $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings->{$svf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
-      ' | <a href="%s">View in location tab</a>',
+      ' | <a href="%s" class="constant">View in location tab</a>',
       $hub->url({
         type              => 'Location',
         action            => 'View',
@@ -195,7 +195,7 @@ sub location {
         
             
         my $loc_link = sprintf(
-          '<a href="%s">%s</a>',
+          '<a href="%s" class="constant">%s</a>',
             $hub->url({
               type              => 'Location',
               action            => 'View',

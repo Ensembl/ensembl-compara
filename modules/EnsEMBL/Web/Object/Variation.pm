@@ -1433,7 +1433,7 @@ sub get_hgvs_names_url {
   foreach my $allele (keys %$hgvs_hash) {
     foreach my $hgvs (@{$hgvs_hash->{$allele}}) {
       my $url = $self->hgvs_url($display_all,$hgvs);
-      push @{$url{$allele}}, $url ? qq{<a href="$url->[0]">$url->[1]</a>$url->[2]} : $hgvs;
+      push @{$url{$allele}}, $url ? qq{<a href="$url->[0]" class="constant">$url->[1]</a>$url->[2]} : $hgvs;
     }
   }
   
