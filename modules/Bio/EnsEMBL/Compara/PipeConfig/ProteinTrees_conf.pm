@@ -111,7 +111,7 @@ sub default_options {
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
         'njtree_phyml_capacity'     => 400,
-        'ortho_tree_capacity'       => 100,
+        'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
@@ -912,7 +912,7 @@ sub pipeline_analyses {
             -rc_name => '500Mb_job',
             -priority => 30,
             -flow_into => {
-                '2->A' => [ 'mcoffee_cmcoffee' ],
+                '2->A' => [ 'mcoffee' ],
                 '3->A' => [ 'mafft' ],
                 'A->1' => [ 'split_genes' ],
                 '4->B' => [ 'mafft' ],
@@ -920,39 +920,19 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'mcoffee_cmcoffee',
+        {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
                 'method'                => 'cmcoffee',
                 'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
                 'mcoffee_exe'           => $self->o('mcoffee_exe'),
-                'flow_other_method'     => 1,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => '2Gb_job',
             -priority => 30,
             -flow_into => {
-               -1 => [ 'mcoffee_cmcoffee_himem' ],  # MEMLIMIT
+               -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
-                2 => [ 'mcoffee_fmcoffee' ],
-            },
-        },
-
-        {   -logic_name => 'mcoffee_fmcoffee',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
-            -parameters => {
-                'method'                => 'fmcoffee',
-                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
-                'mcoffee_exe'           => $self->o('mcoffee_exe'),
-                'flow_other_method'     => 1,
-            },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => '2Gb_job',
-            -priority => 30,
-            -flow_into => {
-               -1 => [ 'mcoffee_fmcoffee_himem' ],  # MEMLIMIT
-               -2 => [ 'mafft' ],
-                2 => [ 'mafft' ],
             },
         },
 
@@ -971,37 +951,19 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'mcoffee_cmcoffee_himem',
+        {   -logic_name => 'mcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
                 'method'                => 'cmcoffee',
                 'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
                 'mcoffee_exe'           => $self->o('mcoffee_exe'),
-                'flow_other_method'     => 1,
+                'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => '8Gb_job',
             -priority => 30,
             -flow_into => {
                -2 => [ 'mafft_himem' ],
-                2 => [ 'mcoffee_fmcoffee_himem' ],
-            },
-        },
-
-        {   -logic_name => 'mcoffee_fmcoffee_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
-            -parameters => {
-                'method'                => 'fmcoffee',
-                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
-                'mcoffee_exe'           => $self->o('mcoffee_exe'),
-                'flow_other_method'     => 1,
-            },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => '8Gb_job',
-            -priority => 30,
-            -flow_into => {
-               -2 => [ 'mafft_himem' ],
-                2 => [ 'mafft_himem' ],
             },
         },
 
