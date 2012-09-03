@@ -150,15 +150,6 @@ sub write_output {
     $self->store_supertree;
 }
 
-sub release_tree {
-    my $self       = shift @_;
-    my $tree_param = shift @_;
-
-    if(my $root = $self->param($tree_param)) {
-        $root->release_tree;
-        $self->param($tree_param, undef);
-    }
-}
 
 sub post_cleanup {
     my $self = shift;
