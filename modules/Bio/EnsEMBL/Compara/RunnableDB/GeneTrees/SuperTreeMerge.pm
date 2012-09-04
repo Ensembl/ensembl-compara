@@ -81,8 +81,7 @@ sub fetch_input {
 
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeNodeAdaptor);
 
-    $self->param('tree_id_str') or die "tree_id_str is an obligatory parameter";
-    my $tree_id = $self->param($self->param('tree_id_str')) or die "'*_tree_id' is an obligatory parameter";
+    my $tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
     my $tree = $self->param('tree_adaptor')->fetch_node_by_node_id($tree_id) or die "Could not fetch tree with tree_id='$tree_id'";
     $self->param('tree', $tree);
 

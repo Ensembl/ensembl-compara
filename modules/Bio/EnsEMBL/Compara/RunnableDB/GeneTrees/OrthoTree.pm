@@ -110,8 +110,7 @@ sub fetch_input {
 
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
-    $self->param('tree_id_str') or die "tree_id_str is an obligatory parameter";
-    my $tree_id = $self->param($self->param('tree_id_str')) or die "'*_tree_id' is an obligatory parameter";
+    my $tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
     my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
     $gene_tree->preload();
     $self->param('gene_tree', $gene_tree->root);

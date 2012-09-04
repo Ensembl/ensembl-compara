@@ -1013,7 +1013,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
-                'tree_id_str'       => 'gene_tree_id',
                 'tag_split_genes'   => 1,
                 'mlss_id'           => $self->o('mlss_id'),
             },
@@ -1026,7 +1025,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
-                'tree_id_str'       => 'gene_tree_id',
                 'tag_split_genes'   => 1,
                 'mlss_id'           => $self->o('mlss_id'),
                 'store_homologies'  => 0,
@@ -1077,7 +1075,6 @@ sub pipeline_analyses {
             -parameters     => {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'dataflow_subclusters' => 1,
-                'tree_id_str'       => 'gene_tree_id',
                 'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
@@ -1091,9 +1088,6 @@ sub pipeline_analyses {
 
         {   -logic_name     => 'merge_supertrees',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SuperTreeMerge',
-            -parameters     => {
-                'tree_id_str'       => 'gene_tree_id',
-            },
             -hive_capacity  => $self->o('merge_supertrees_capacity'),
             -priority       => 40,
         },
