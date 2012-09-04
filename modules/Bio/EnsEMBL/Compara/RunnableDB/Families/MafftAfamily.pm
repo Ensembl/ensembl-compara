@@ -27,8 +27,8 @@ sub fetch_input {
 
     my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $pep_file    = $worker_temp_directory . 'family_${family_id}.pep';
-    my $mafft_file  = $worker_temp_directory . 'family_${family_id}.mafft';
+    my $pep_file    = $worker_temp_directory . "family_${family_id}.pep";
+    my $mafft_file  = $worker_temp_directory . "family_${family_id}.mafft";
 
     my $pep_counter = $family->print_sequences_to_fasta($pep_file);
 
