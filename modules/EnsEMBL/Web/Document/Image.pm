@@ -70,13 +70,12 @@ sub render_toolbar {
 
   ## Config panel link
   if (grep $_->storable, @{$self->{'image_configs'}}) {
-    my $config_url = $self->hub->url('Config', {
-      action   => $self->component,
-      function => undef,
-    });
+    my $hub        = $self->hub;
+    my $config_url = $hub->url('Config', { action => $self->component, function => undef });
+    my $data_url   = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
 
     $toolbar .= sprintf '<a href="%s" class="config modal_link force" title="%s" rel="modal_config_%s"></a>', $config_url, $icon_mapping->{'config'}{'title'}, lc $self->component;
-    $toolbar .= sprintf '<a href="/UserData/ManageData" class="data modal_link" title="%s" rel="modal_user_data"></a>', $icon_mapping->{'userdata'}{'title'};
+    $toolbar .= qq{<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>};
   }
   ## Image export popup menu
   if ($self->{'export'}) {
