@@ -599,7 +599,7 @@ sub freqs {
     next if $data{$pop_id}{$ssid}{pop_info};
     $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
     $data{$pop_id}{$ssid}{ssid} = $allele_obj->subsnp();
-    $data{$pop_id}{$ssid}{submitter} = $allele_obj->subsnp_handle();
+    $data{$pop_id}{$ssid}{submitter} = $allele_obj->frequency_subsnp_handle($pop_obj);
   }
   
   # Add genotype data;
@@ -1216,7 +1216,7 @@ sub transcript_variation {
               tv  =>              $tvari_obj,
               vf  =>              $vari_feature,
               hgvs_genomic =>     $tva_obj->hgvs_genomic,
-              hgvs_coding =>      $tva_obj->hgvs_coding,
+              hgvs_transcript =>  $tva_obj->hgvs_transcript,
               hgvs_protein =>     $tva_obj->hgvs_protein,
       });
     }
@@ -1434,6 +1434,7 @@ sub get_hgvs_names_url {
     foreach my $hgvs (@{$hgvs_hash->{$allele}}) {
       my $url = $self->hgvs_url($display_all,$hgvs);
       push @{$url{$allele}}, $url ? qq{<a href="$url->[0]" class="constant">$url->[1]</a>$url->[2]} : $hgvs;
+
     }
   }
   
@@ -1461,7 +1462,7 @@ sub hgvs_url {
   my $max_length  = 40;
   
   # Split the HGVS string into components. We are mainly interested in 1) Reference sequence, 2) Version (optional), 3) Notation type (optional) and 4) The rest of the description 
-  my ($refseq, $version, $type, $description) = $hgvs =~ m/^((?:ENS[A-Z]*[GTP]\d+)|(?:LRG_\d+[^\.]*)|(?:[^\:]+?))(\.\d+)?\:(?:([mrcgp])\.)?(.*)$/;
+  my ($refseq, $version, $type, $description) = $hgvs =~ m/^((?:ENS[A-Z]*[GTP]\d+)|(?:LRG_\d+[^\.]*)|(?:[^\:]+?))(\.\d+)?\:(?:([mrcngp])\.)?(.*)$/;
 
   # Return undef if the HGVS could not be properly parsed (i.e. if the refseq and the description could not be obtained)
   return undef unless $refseq && $description;
