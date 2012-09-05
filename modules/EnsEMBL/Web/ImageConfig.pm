@@ -786,7 +786,9 @@ sub _add_flat_file_track {
   return unless $menu;
  
   my ($strand, $renderers) = $self->_user_track_settings($options{'style'},$options{'format'});
-
+  
+  $key =~ s/\W/_/g;
+  
   my $track = $self->create_track($key, $name, {
     display     => 'off',
     strand      => $strand,
@@ -826,6 +828,9 @@ sub _add_file_format_track {
       encode_entities($args{'source'}{'source_url'})
     );
   }
+  
+  $args{'key'} =~ s/\W/_/g;
+  
   my $track = $self->create_track($args{'key'}, $args{'source'}{'source_name'}, {
     display     => 'off',
     strand      => 'f',
@@ -2287,32 +2292,29 @@ sub add_sequence_variations_meta {
   foreach my $menu_item(@{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} eq 'sv_set'; # sv_set type
     
+    (my $key = $menu_item->{'key'}) =~ s/\W/_/g;
     my $node;
     
     if ($menu_item->{'type'} eq 'menu') { # just a named submenu
-      $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
+      $node = $self->create_submenu($key, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
-      my $temp_name     = $menu_item->{'long_name'};
-         $temp_name     =~ s/ variants$//;
-      my $other_sources = $menu_item->{'long_name'} =~ /all other sources/;
+      (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
+      (my $other_sources = $menu_item->{'long_name'}) =~ /all other sources/;
       
-      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+      $node = $self->create_track($key, $menu_item->{'long_name'}, {
         %$options,
         caption     => $menu_item->{'long_name'},
         sources     => $other_sources ? undef : [ $temp_name ],
         description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
       });
     } elsif ($menu_item->{'type'} eq 'set') { # set type
-      my $temp_name = $menu_item->{'key'};
-         $temp_name =~ s/^variation_set_//;
-      my $caption   = $menu_item->{'long_name'};
-         $caption   =~ s/1000 Genomes/1KG/; # shorten name for side of image
-      my $set_name  = $menu_item->{'long_name'};
-         $set_name  =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
+      (my $temp_name = $menu_item->{'key'})       =~ s/^variation_set_//;
+      (my $caption   = $menu_item->{'long_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
+      (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
       next if $set_name =~ /HapMap.+/;
       
-      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+      $node = $self->create_track($key, $menu_item->{'long_name'}, {
         %$options,
         caption     => $caption,
         sources     => undef,
