@@ -275,6 +275,10 @@ sub store_intermediate_tree {
     my ($self, $filename, $clusterset_id) = @_;
     print STDERR "Found file $filename for clusterset $clusterset_id\n";
     my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
+    if (not defined $clusterset) {
+        $self->warning("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
+        return;
+    }
     my $newtree = $self->fetch_or_create_other_tree($clusterset);
     $self->parse_newick_into_tree($filename, $newtree);
     $self->store_genetree($newtree);
