@@ -142,7 +142,7 @@ sub add_element {
   else {
     $div->append_child($element);
   }
-  $div->set_attribute('class', $self->CSS_CLASS_ELEMENT_DIV);
+  $div->set_attribute('class', [ $self->CSS_CLASS_ELEMENT_DIV, $params->{'element_class'} || () ]);
   $div->set_flag($self->_FLAG_ELEMENT);
   return $div;
 }
