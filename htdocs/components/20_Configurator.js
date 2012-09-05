@@ -70,6 +70,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.imageConfig        = {};
     this.viewConfig         = {};
     this.subPanels          = [];
+    this.searchCache        = [];
     
     // Move user data to below the multi entries (active tracks, favourites, search)
     if (this.elLk.configDivs.first().not('.user_data').length) {
@@ -251,17 +252,18 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.search.on({
       keyup: function () {
+        var value = this.value.toLowerCase(); 
+        
         if (this.value.length < 2) {
-          panel.lastQuery = this.value;
+          panel.lastQuery = value;
         }
         
-        if (this.value !== panel.lastQuery) {
+        if (value !== panel.lastQuery) {
           if (panel.searchTimer) {
             clearTimeout(panel.searchTimer);
           }
           
-          panel.query = this.value;
-          panel.regex = new RegExp(this.value, 'i');
+          panel.query = value;
           
           panel.searchTimer = setTimeout(function () {
             panel.elLk.links.removeClass('active');
@@ -852,68 +854,100 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   
   // Filtering from the search box
   search: function () {
-    var panel     = this;
-    var lis       = [];
-    var added     = false;
-    var noResults = 'show';
-    var div, show, menu, tracks, track, trackName, i, j, match, type, subset;
+    var panel       = this;
+    var added       = false;
+    var noResults   = 'show';
+    var els         = { show: $(), hide : $(), showDesc: [] };
+    var searchCache = $.extend([], this.searchCache);
+    var div, divs, show, menu, ul, lis, tracks, track, trackName, i, j, match, type, subset;
     
-    function search(n, li) {
-      match = li.children('span.menu_option').text().match(panel.regex);
+    function search(n, name, desc, li) {
+      match = name.indexOf(panel.query) !== -1;
       
-      if (match || li.children('div.desc').text().match(panel.regex)) {
-        if (panel.imageConfig[n]) {
-          li.show().parents('li').show();
-        } else {
-          menu.append(li.show()).parents('li').show();
+      if (match || desc.indexOf(panel.query) !== -1) {
+        if (!panel.imageConfig[n]) {
+          li                   = $(li).appendTo(menu);
+          subset               = li[0].className.match(/\s*subset_(\w+)\s*/) || false;
+          added                = true;
           panel.imageConfig[n] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][n] };
+          
           panel.externalFavourite(n, li);
-          added  = true;
-          subset = li[0].className.match(/\s*subset_(\w+)\s*/) || false;
-       
+          
           li.data('links', [
             'a.' + type,
             'a.' + (subset ? subset[1] : type + '-' + menu.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')) 
           ].join(', '));
         }
         
+        if (!match) {
+          els.showDesc.push(li[0]);
+        }
+        
+        panel.searchCache.push([ n, name, desc, li, type ]);
+        
+        els.show  = els.show.add(li, li.parents('li'));
         show      = true;
         noResults = 'hide';
-        
-        if (!match) {
-          lis.push(li[0]);
-        }
-      } else if (panel.imageConfig[trackName]) {
-        li.hide().find('div.desc').hide();
+      } else if (panel.imageConfig[n]) {
+        els.hide = els.hide.add(li, li.find('div.desc'));
       }
+      
+      li = null;
     }
     
-    this.elLk.configDivs.hide().children('.subset').hide();
+    this.searchCache = [];
     
-    for (type in this.params.tracks) {
-      div    = this.elLk.configDivs.filter('.' + type);
-      show   = false;
-      tracks = this.params.tracks[type];
-      i      = tracks.length;
+    if (this.lastQuery.length >= 2 && this.query.indexOf(this.lastQuery) !== -1) {
+      i = searchCache.length;
+      
+      divs = {};
       
       while (i--) {
-        menu = div.find('ul.config_menu').eq(i);
+        type = searchCache[i][4];
+        show = false;
         
-        for (j in tracks[i]) {
-          track     = tracks[i][j];
-          trackName = track[0];
-          
-          search(trackName, this.imageConfig[trackName] ? menu.find('li.' + trackName) : $(track[1]));
+        if (typeof divs[type] === 'undefined') {
+          divs[type] = false;
         }
         
-        menu = null;
+        search.apply(this, searchCache[i]);
+        
+        if (show) {
+          divs[type] = true;
+        }
       }
       
-      if (show) {
-        div.show().children('.subset').show();
+      for (type in divs) {
+        if (!divs[type]) {
+          els.hide = els.hide.add(this.elLk.configDivs.filter('.' + type));
+        }
       }
+    } else {
+      els.hide = els.hide.add(this.elLk.configDivs, this.elLk.configDivs.children('.subset'));
       
-      div = null;
+      var ul;
+      
+      for (type in this.params.tracks) {
+        show   = false;
+        div    = this.elLk.configDivs.filter('.' + type);
+        ul     = div.find('ul.config_menu');
+        tracks = this.params.tracks[type];
+        i      = tracks.length;
+        
+        while (i--) {
+          menu = ul.eq(i);
+          lis  = menu.find('li');
+          
+          for (j in tracks[i]) {
+            track = tracks[i][j];
+            search(track[0], track[4], track[5], this.imageConfig[track[0]] ? lis.filter('.' + track[0]) : track[1]);
+          }
+        }
+        
+        if (show) {
+          els.show = els.show.add(div, div.children('.subset'));
+        }
+      }
     }
     
     if (added) {
@@ -921,38 +955,41 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     this.lastQuery = this.query;
-    this.toggleDescription(lis, 'show');
+    
+    els.hide.hide();
+    els.show.show();
+    
+    this.toggleDescription(els.showDesc, 'show');
     this.elLk.noSearchResults[noResults]();
     
-    lis = null;
+    els = div = menu = ul = lis = null;
   },
   
   toggleDescription: function (els, action) {
-    var desc, button, i;
+    var desc   = [];
+    var button = [];
     
     if (typeof els.length === 'undefined') {
       els = [ els ];
     }
     
-    i = els.length;
+    var i = els.length;
     
     while (i--) {
       switch (els[i].nodeName) {
-        case 'LI' : desc = $(els[i]).children('div.desc'); button = $('.menu_help', els[i]); break;
-        case 'DIV': desc = $(els[i]).parent().siblings('div.desc'); button = $(els[i]); break;
-        default   : return;
+        case 'LI' : desc.push($(els[i]).children('div.desc')[0]);          button.push($('.menu_help', els[i])[0]); break;
+        case 'DIV': desc.push($(els[i]).parent().siblings('div.desc')[0]); button.push($(els[i])[0]);               break;
+        default   : break;
       }
-      
-      switch (action) {
-        case 'hide': desc.hide(); break;
-        case 'show': desc.show(); break;
-        default    : desc.toggle();
-      }
-      
-      button.toggleClass('open').attr('title', function () { return desc.is(':visible') ? 'Hide information' : 'Click for more information'; });
-      
-      desc = button = null;
     }
+    
+    switch (action) {
+      case 'hide': $(desc).hide();   $(button).removeClass('open'); break;
+      case 'show': $(desc).show();   $(button).addClass('open');    break;
+      default    : $(desc).toggle(); $(button).toggleClass('open');
+    }
+    
+    $(button).attr('title', function () { return $(this).hasClass('open') ? 'Hide information' : 'Click for more information'; });
   }, 
   
   changeFavourite: function (trackName, selected, type, id) {
