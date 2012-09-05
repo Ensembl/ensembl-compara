@@ -91,6 +91,7 @@ sub fetch_input {
     my $protein_tree_id     = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
+    $protein_tree->preload;
     $self->param('protein_tree', $protein_tree);
 
     my $hmm_type = $self->param('cdna') ? 'dna' : 'aa';
