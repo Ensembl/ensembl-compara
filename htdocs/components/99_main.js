@@ -10,6 +10,21 @@ if (!('console' in window)) {
       window.console[names[i]] = $.noop;
     }
   })();
+} else {
+  (function () {
+    if (!window.console.time) {
+      window._timerCache = {};
+      
+      window.console.time = function (key) {
+        window._timerCache[key] = new Date().getTime();
+      };
+      
+      window.console.timeEnd = function (key) {
+        console.log(key + ': ' + (new Date().getTime() - window._timerCache[key]) + 'ms');
+        delete window._timerCache[key];
+      }
+    }
+  })();
 }
 
 // Interface between old and new javascript models - old plugins will still work
