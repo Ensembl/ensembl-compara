@@ -232,6 +232,31 @@ sub join_with_and {
   return join(' and ', reverse (pop @_, join(', ', @_) || ()));
 }
 
+sub join_with_or {
+  ## Joins an array of strings with commas and an 'or' before the last element
+  ## ie. returns 'a, b, c or d' for qw(a b c d)
+  ## @params List of strings to be joined
+  shift;
+  return join(' or ', reverse (pop @_, join(', ', @_) || ()));
+}
+
+sub wrap_in_p_tag {
+  ## Wraps an HTML string in <p> if allowed
+  ## @param HTML (or text)
+  ## @param Flag if on, will do an html encoding the text
+  my ($self, $text, $do_encode) = @_;
+
+  return sprintf '<p>%s</p>', encode_entities($text) if $do_encode;
+  return $text if $text =~ /^[\s\t\n]*\<(p|div|table|form|pre|ul)(\s|\>)/;
+  return "<p>$text</p>";
+}
+
+sub append_s_to_plural {
+  ## Appends an 's' to the string in case the flag is on
+  my ($self, $string, $flag) = @_;
+  return $flag ? "${string}s" : $string;
+}
+
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub caption     { return undef; }
@@ -250,13 +275,13 @@ sub _info_panel {
   my ($self, $class, $caption, $desc, $width, $id) = @_;
   
   return $self->html_format ? sprintf(
-    '<div%s style="width:%s" class="%s%s"><h3>%s</h3><div class="error-pad">%s</div></div>',
+    '<div%s style="width:%s" class="%s%s"><h3>%s</h3><div class="message-pad">%s</div></div>',
     $id ? qq{ id="$id"} : '',
     $width || $self->image_width . 'px', 
     $class, 
     $width ? ' fixed_width' : '',
     $caption, 
-    $desc =~ /^\s*<p>.+<\/p>\s*$/s ? $desc : "<p>$desc</p>"
+    $self->wrap_in_p_tag($desc)
   ) : '';
 }
 
