@@ -281,6 +281,7 @@ sub url {
   ## @param Extra string that goes in the url path just after Species name and before type (optional)
   ## @param Hashref of new params that will be added, or will override the existing params in the current url - can have following keys:
   ##  - species, type, action, funtion: Overrides the existing corresponding values in the url path
+  ##  - __species: Will add a 'species' GET param to the url (since 'species' key is reserved)
   ##  - __clear: Flag if on, prevents the core params to be added to the url
   ##  - any other keys: will get serialised and joined to the url as query string
   ## @param Flag if on, returns url as an arrayref [url path, hashref of name-value pair of GET params] - off by default
@@ -324,7 +325,7 @@ sub url {
     next if $_ =~ /^(species|type|action|function)$/;
 
     if (defined $params->{$_}) {
-      $pars{$_} = $params->{$_};
+      $pars{$_ eq '__species' ? 'species' : $_} = $params->{$_};
     } else {
       delete $pars{$_};
     }
