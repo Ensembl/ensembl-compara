@@ -17,7 +17,7 @@ sub search_options {
     [ 'ensembl',          'Ensembl search this species',  'Search ' . $_[0]->species_defs->SPECIES_COMMON_NAME ] : (),
     [ 'ensembl_all',      'Ensembl search all species',   'Search all species'                                 ],
     [ 'ensembl_genomes',  'Ensembl genomes search',       'Search Ensembl genomes'                             ],
-    [ 'vega',             'Vega search',                  'Search vega'                                        ],
+    [ 'vega',             'Vega search',                  'Search Vega'                                        ],
     [ 'ebi',              'EBI search',                   'Search EBI'                                         ],
     [ 'sanger',           'Sanger search',                'Search Sanger'                                      ]
   );
