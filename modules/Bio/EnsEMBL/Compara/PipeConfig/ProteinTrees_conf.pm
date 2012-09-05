@@ -1041,6 +1041,7 @@ sub pipeline_analyses {
                 'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
+            -batch_size           => 10,
             -rc_name => '500Mb_job',
         },
 
@@ -1052,6 +1053,7 @@ sub pipeline_analyses {
                 'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
+            -batch_size           => 10,
             -rc_name => '500Mb_job',
         },
 
