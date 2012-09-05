@@ -602,7 +602,7 @@ sub build_imageconfig_menus {
     
     if ($desc) {
       $desc = qq{<div class="desc">$desc</div>};
-      $help = qq{<div class="sprite info_icon menu_help"></div>};
+      $help = qq{<div class="sprite info_icon menu_help" title="Click for more information"></div>};
     } else {
       $help = qq{<div class="empty"></div>};
     }
@@ -639,7 +639,7 @@ sub build_imageconfig_menus {
     $self->{'menu_count'}{$menu_class} ||= 0;
     $self->{'menu_order'}{$parent}       = $self->{'menu_count'}{$menu_class}++ unless defined $self->{'menu_order'}{$parent};
     
-    push @{$self->{'tracks'}{$menu_class}[$self->{'menu_order'}{$parent}]}, [ $id, $child->render, $self->{'favourite_tracks'}{$id}, $display ];
+    push @{$self->{'tracks'}{$menu_class}[$self->{'menu_order'}{$parent}]}, [ $id, $child->render, $self->{'favourite_tracks'}{$id}, $display, lc $name, lc $self->strip_HTML($desc) ];
   }
 }
 
