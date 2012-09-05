@@ -90,7 +90,7 @@ sub run {
     foreach my $homology (@$homologies) {
         # other_paralogs are not aligned together (they lie in different alignments)
         $self->calc_genetic_distance($homology, $codeml_parameters) unless $homology->description eq 'other_paralog';
-        $stats->add_data($homology->dS);
+        $stats->add_data($homology->ds);
     }
 
     my $median = $stats->median;
