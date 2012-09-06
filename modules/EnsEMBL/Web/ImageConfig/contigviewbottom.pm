@@ -10,6 +10,17 @@ sub init_user           { return $_[0]->load_user_tracks; }
 sub get_sortable_tracks { return grep { $_->get('sortable') && ($_->get('menu') ne 'no' || $_->id eq 'blast') } @{$_[0]->glyphset_configs}; } # Add blast to the sortable tracks
 sub load_user_tracks    { return $_[0]->SUPER::load_user_tracks($_[1]) unless $_[0]->code eq 'set_evidence_types'; } # Stops unwanted cache tags being added for the main page (not the component)
 
+sub glyphset_configs {
+  my $self = shift;
+  
+  if (!$self->{'ordered_tracks'}) {
+    $self->get_node('user_data')->after($_) for grep $_->get('datahub'), $self->tree->nodes;
+    $self->SUPER::glyphset_configs;
+  }
+  
+  return $self->{'ordered_tracks'};
+}
+
 sub init {
   my $self = shift;
   
@@ -41,7 +52,6 @@ sub init {
     variation
     somatic
     functional
-    encode
     multiple_align
     conservation
     pairwise_blastz
