@@ -586,7 +586,11 @@ sub build_imageconfig_menus {
       $menu .= qq{<li class="$renderer"><img title="$label" alt="$label" src="${img_url}render/$renderer.gif" class="$menu_class" />$html</li>};
       
       my $p = $node;
-      $self->{'track_renderers'}{$p->id}{$renderer}++ while $p = $p->parent_node;
+      
+      while ($p = $p->parent_node) {
+        $self->{'track_renderers'}{$p->id}{$renderer}++;
+        last if $external;
+      }
     }
     
     if ($display ne 'off') {
@@ -645,16 +649,17 @@ sub add_select_all {
   
   return if $node->get('menu') eq 'hidden';
   
-  my $parent      = $node->parent_node;
-  my $single_menu = !$parent->get('node_type') || scalar @{$parent->child_nodes} == 1; # If there are 0 or 1 submenus
-  my @child_nodes = @{$node->child_nodes};
-  my $external    = scalar grep $_->get('external'), @child_nodes;
-  my $caption     = $node->get('caption');
+  my $parent            = $node->parent_node;
+  my $single_menu       = !$parent->get('node_type') || scalar @{$parent->child_nodes} == 1; # If there are 0 or 1 submenus
+  my @child_nodes       = @{$node->child_nodes};
+  my $external_children = scalar grep $_->get('external'), @child_nodes;
+  my $external          = $node->get('external');
+  my $caption           = $node->get('caption');
   
   # Don't add a select all if there is only one child
   if (scalar @child_nodes == 1) {
     # Add an h3 caption if there isn't going to be a select all for this menu (submenus will have select all)
-    $menu->before('h3', { inner_HTML => $caption }) if $caption && !$single_menu && (($external == 1 && $node->get('external')) || $external != 1);
+    $menu->before('h3', { inner_HTML => $caption }) if $caption && !$single_menu && (($external_children == 1 && $external) || $external_children != 1);
     
     return;
   }
@@ -662,12 +667,12 @@ sub add_select_all {
   my $child_tracks = scalar grep $_->get('node_type') ne 'menu', @child_nodes;
   
   # Add a select all if there is more than one non menu child (node_type can be track or option), or if there is one child track and some non external menus
-  if ($child_tracks > 1 || $child_tracks == 1 && scalar(@child_nodes) - $external > 1) {
+  if ($child_tracks > 1 || $child_tracks == 1 && scalar(@child_nodes) - $external_children > 1) {
     my $img_url = $self->img_url;
     my %counts  = reverse %{$self->{'track_renderers'}{$id}};
     my $popup;
     
-    $caption = $node->get('external') ? $parent->get('caption') : 'tracks' if $single_menu;
+    $caption = $external ? $parent->get('caption') : 'tracks' if $single_menu;
     
     if (scalar keys %counts != 1) {
       $popup .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$id" /><span>$_->[1]</span></li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
@@ -685,7 +690,7 @@ sub add_select_all {
         <strong class="menu_option">Enable/disable all $caption</strong>
       }
     });
-  } elsif ($caption && !$node->get('external')) {
+  } elsif ($caption && !$external) {
     $menu->before('h3', { inner_HTML => $caption });
   }
 }
