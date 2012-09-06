@@ -169,9 +169,6 @@ sub menus {
     # Regulation
     functional          => 'Regulation',
     
-    # Encode (data hub)
-    encode              => 'ENCODE data',
-    
     # Compara
     compara             => 'Comparative genomics',
     pairwise_blastz     => [ 'BLASTz/LASTz alignments',    'compara' ],
@@ -314,7 +311,6 @@ sub set_user_settings {
     
     foreach (keys %{$data->{$key}}) {
       if ($_ eq 'display' && %valid && !$valid{$data->{$key}{$_}}) {
-        #my $style = 
         $node->set_user($_, $valid{'normal'} ? 'normal' : $renderers->[2]); # index 2 contains the code for the first "on" renderer
       } else {
         $node->set_user($_, $data->{$key}{$_});
