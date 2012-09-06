@@ -44,7 +44,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis;
 use strict;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Compara::CAFETreeNode;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
