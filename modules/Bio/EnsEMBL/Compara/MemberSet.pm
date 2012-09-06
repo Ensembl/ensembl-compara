@@ -433,14 +433,9 @@ sub get_all_Members {
   
     unless (defined $self->{'_member_array'}) {
 
+        $self->clear;
         my $am_adaptor = $self->adaptor->db->get_MemberAdaptor();
         my $members = $am_adaptor->fetch_all_by_MemberSet($self);
-
-        $self->{'_member_array'} = [];
-        $self->{'_members_by_source'} = {};
-        $self->{'_members_by_source_taxon'} = {};
-        $self->{'_members_by_source_genome_db'} = {};
-        $self->{'_members_by_genome_db'} = {};
         foreach my $member (@{$members}) {
             $self->add_Member($member);
         }
@@ -448,6 +443,23 @@ sub get_all_Members {
     return $self->{'_member_array'};
 }
 
+
+=head2 clear
+
+  Arg [1]    : None
+  Description: Clears the list of members
+
+=cut
+
+sub clear {
+    my $self = shift;
+    
+    $self->{'_member_array'} = [];
+    $self->{'_members_by_source'} = {};
+    $self->{'_members_by_source_taxon'} = {};
+    $self->{'_members_by_source_genome_db'} = {};
+    $self->{'_members_by_genome_db'} = {};
+} 
 
 
 =head2 get_all_GeneMember
