@@ -1047,85 +1047,134 @@ values
 
 # ---------------------------------- CAFE tables --------------------------------
 
-#
-# Table structure for CAFE_analysis
-#
-# CAFE_Analysis specifies the type of analysis done for a specific method_link_species_set
-#
-
-# CREATE TABLE CAFE_analysis (
-#        method_link_species_set_id int(10) unsigned NOT NULL,
-#        species_tree               mediumtext,
-#        lambdas                    varchar(100),
-
-#        FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id)
-
-# ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 #
-# Table CAFE_tree_node
+# Table structure for species_tree_node
 #
-# CAFE_tree_node stores per-node information of the CAFE_tree
-# 
-
-CREATE TABLE CAFE_tree_node (
-       node_id             int(10) unsigned NOT NULL AUTO_INCREMENT,
-       parent_id           int(10) unsigned NOT NULL,
-       root_id             int(10) unsigned NOT NULL,
-       left_index          int(10) NOT NULL,
-       right_index         int(10) NOT NULL,
-       distance_to_parent  double default 1.0,
-
-       PRIMARY KEY (node_id),
-       KEY (parent_id),
-       KEY (root_id, left_index),
-       KEY (root_id, right_index)
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
+# species_tree_node holds the information for each node of the species_tree
 #
-# Table structure for CAFE_tree
-#
-# CAFE_tree stores information about the final species tree
-# (global information for the tree).
-#
+# For information of each field see the gene_tree_node table 
 
-CREATE TABLE CAFE_tree (
-       root_id                    int(10) unsigned NOT NULL AUTO_INCREMENT,
-       method_link_species_set_id int(10) unsigned NOT NULL,
-       species_tree               mediumtext NOT NULL,
-       lambdas                    varchar(100),
-       p_value_lim                double(5,4),
+CREATE TABLE `species_tree_node` (
+  `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int(10) unsigned,
+  `root_id` int(10) unsigned,
+  `left_index` int(10) NOT NULL DEFAULT 0,
+  `right_index` int(10) NOT NULL DEFAULT 0,
+  `distance_to_parent` double DEFAULT '1',
 
-       PRIMARY KEY (root_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+  PRIMARY KEY (`node_id`),
+  KEY `parent_id` (`parent_id`),
+  KEY `root_id` (`root_id`,`left_index`),
+  KEY `root_id_2` (`root_id`,`right_index`)
+) ENGINE=InnoDB AUTO_INCREMENT=100000157 DEFAULT CHARSET=latin1;
 
 
 #
-# Table structure for table CAFE_tree_attr
+# Table structure for species_tree_root
 #
-# CAFE_tree_attr store per-node values for each family represented by a CAFE_tree:
+# species_tree_root is a header table for species_tree_node
 #
-# node_id    -- node_id foreign key from CAFE_tree_node table
-# fam_id     -- family for this record
-# taxon_id   -- taxon_id foreign key from ncbi_taxa_node
-# n_members  -- number of member for the given species in the family
-# p_value    -- the p_value for a contraction (<0) or expansion (>0) for the family in that node of the tree
-# avg_pvalue -- avg_pvalue for the family
+# root_id                    -- The root_id of the species_tree
+# method_link_species_set_id -- Links to method_link_species_set table
+# species_tree               -- The whole tree in newick format
+# pvalue_lim                 -- The pvalue threshold used in the CAFE analysis
+#
 
-CREATE TABLE CAFE_tree_attr (
-       node_id           int(10) unsigned NOT NULL,
-       fam_id            int(10) unsigned NOT NULL,
-       taxon_id          int(10) unsigned,
-       n_members         int(4) unsigned NOT NULL,
-       p_value           double(5,4), # signed by default?
-       avg_pvalue        double(5,4),  # only for root nodes (node_id = root_id)
+CREATE TABLE `species_tree_root` (
+  `root_id` int(10) unsigned NOT NULL,
+  `method_link_species_set_id` int(10) unsigned NOT NULL,
+  `species_tree` mediumtext,
+  `pvalue_lim` double(5,4) DEFAULT NULL,
 
-       FOREIGN KEY (node_id) REFERENCES CAFE_tree_node(node_id),
- #      FOREIGN KEY (fam_id) REFERENCES gene_tree_root(root_id),
-       UNIQUE KEY node_id(node_id, fam_id)
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+  FOREIGN KEY (root_id) REFERENCES species_tree_node(node_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
+  PRIMARY KEY (root_id)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+#
+# Table structure for species_tree_node_tag
+#
+# species_tree_node_tag stores additional information for each species_tree_node
+#
+# For information on each fied see any other *_tag table
+#
+
+CREATE TABLE `species_tree_node_tag` (
+  `node_id` int(10) unsigned NOT NULL,
+  `tag` varchar(50) NOT NULL,
+  `value` mediumtext NOT NULL,
+
+  FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
+
+  KEY `node_id_tag` (`node_id`,`tag`),
+  KEY `tag_node_id` (`tag`,`node_id`),
+  KEY `node_id` (`node_id`),
+  KEY `tag` (`tag`)
+  
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+#
+# Table structure for CAFE_gene_family
+#
+# CAFE_gene_family holds information about each CAFE gene family
+#
+# cafe_gene_family_id    -- Primary key for linking with CAFE_species_gene
+# root_id                -- Links to root_ids in the species_tree_root table
+# lca_id                 -- Links to node_ids in the species_tree_node table
+#                           Refers to the actual lowest common ancestor for the family
+# gene_tree_root_id      -- Links to the gene_tree_root table
+# pvalue_avg             -- The average pvalue for the gene family as reported by CAFE
+# lambdas                -- The lambda/s values reported/used by CAFE
+
+CREATE TABLE `CAFE_gene_family` (
+  `cafe_gene_family_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `root_id` int(10) unsigned NOT NULL,
+  `lca_id` int(10) unsigned NOT NULL,
+  `gene_tree_root_id` int(10) unsigned NOT NULL,
+  `pvalue_avg` double(5,4) DEFAULT NULL,
+  `lambdas` varchar(100) DEFAULT NULL,
+
+  FOREIGN KEY (root_id) REFERENCES species_tree_root(root_id),
+  FOREIGN KEY (lca_id) REFERENCES species_tree_node(node_id),
+  FOREIGN KEY (gene_tree_root_id) REFERENCES gene_tree_root(root_id),
+
+  PRIMARY KEY (`cafe_gene_family_id`),
+  KEY `root_id` (`root_id`),
+  KEY `gene_tree_root_id` (`gene_tree_root_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+
+
+#
+# Table structure for CAFE_species_gene
+#
+# CAFE_species_gene stores per species_tree_node information about for each gene_family
+#
+# cafe_gene_family_id  -- Links to CAFE_gene_family
+# node_id              -- Links to species_tree_node. The species_tree_node this entry refers to
+# taxon_id             -- The taxon_id for this node
+# n_members            -- The number of members for the node as reported by CAFE
+# pvalue               -- The pvalue of the node as reported by CAFE
+
+CREATE TABLE `CAFE_species_gene` (
+  `cafe_gene_family_id` int(10) unsigned NOT NULL,
+  `node_id` int(10) unsigned NOT NULL,
+  `taxon_id` int(10) unsigned DEFAULT NULL,
+  `n_members` int(4) unsigned NOT NULL,
+  `pvalue` double(5,4) DEFAULT NULL,
+
+  FOREIGN KEY (cafe_gene_family_id) REFERENCES CAFE_gene_family(cafe_gene_family_id),
+  FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
+
+  KEY `cafe_gene_family_id` (`cafe_gene_family_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+
+# ------------------------ End of CAFE tables --------------------------------------
 
 # Auto add schema version to database (this will override whatever hive puts there)
 REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '69');
