@@ -209,7 +209,7 @@ sub parse_cafe_output {
     my $tree_line = <$fh>;
     my $tree_str = substr($tree_line, 5, length($tree_line) - 6);
     $tree_str .= ";";
-    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str, "Bio::EnsEMBL::Compara::CAFETreeNode");
+    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str, "Bio::EnsEMBL::Compara::CAFEGeneFamily");
     print STDERR "CAFE TREE: $tree_str\n" if ($self->debug);
 
     my $lambda_line = <$fh>;
