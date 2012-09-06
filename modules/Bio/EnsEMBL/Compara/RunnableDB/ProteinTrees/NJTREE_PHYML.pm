@@ -231,6 +231,7 @@ sub run_treebest_best {
             print STDERR "$full_cmd\n";
             my $logfile = $self->_slurp("$input_aln.treebest.err");
             $logfile =~ s/^Large distance.*$//mg;
+            $logfile =~ s/\n\n*/\n/g;
             if (($logfile =~ /NNI/) || ($logfile =~ /Optimize_Br_Len_Serie/) || ($logfile =~ /Optimisation failed/) || ($logfile =~ /Brent failed/))  {
                 # Increase the tolerance max_diff_lk in the computation
                 my $max_diff_lk_value = $self->param('max_diff_lk') ?  $self->param('max_diff_lk') : 1e-5;
