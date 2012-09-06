@@ -73,9 +73,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.searchCache        = [];
     
     // Move user data to below the multi entries (active tracks, favourites, search)
-    if (this.elLk.configDivs.first().not('.user_data').length) {
-      this.elLk.links.has('.user_data').insertAfter(this.elLk.links.has('[rel=multi]').last());
-      this.elLk.configDivs.filter('.user_data').insertBefore(this.elLk.configDivs.first());
+    if (this.elLk.configDivs.first().not('.move_to_top').length) {
+      this.elLk.links.filter('.move_to_top').insertAfter(this.elLk.links.has('[rel=multi]').last());
+      this.elLk.configDivs.filter('.move_to_top').insertBefore(this.elLk.configDivs.first());
     }
     
     for (type in this.params.tracks) {
@@ -183,7 +183,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var updated = {};
       
       if (track.hasClass('select_all')) {
-        track = track.next().find('li.track:not(.hidden, .external)');
+        track = track.next().find('li.track:not(.hidden)');
         
         if (val === 'all_on') {
           // First li is off, so use the second (index 1) as default on setting.
