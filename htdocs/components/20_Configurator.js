@@ -107,7 +107,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         'a.' + (subset ? subset[1] : type + '-' + $(this).parents('.subset').attr('class').replace(/subset|active|first|\s/g, ''))
       ].join(', '));
       
-      panel.imageConfig[input.name] = { renderer: input.value, favourite: $(this).hasClass('fav') };
+      panel.imageConfig[input.name] = { renderer: input.value, favourite: $(this).hasClass('fav'), el: $(this) };
       
       input = null;
     });
@@ -378,7 +378,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     function setConfig(trackName) {
       if (!panel.imageConfig[trackName]) {
-        panel.imageConfig[trackName] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][trackName] };
+        panel.imageConfig[trackName] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][trackName], el: li };
       }
       
       panel.externalFavourite(trackName, li);
@@ -479,7 +479,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
               'a.' + (subset ? subset[1] : type + '-' + li.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')) 
             ].join(', '));
             
-            panel.imageConfig[trackName] = { renderer: 'off', favourite: 1 };
+            panel.imageConfig[trackName] = { renderer: 'off', favourite: 1, el: li };
             added = true;
           }
           
@@ -857,9 +857,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var panel       = this;
     var added       = false;
     var noResults   = 'show';
-    var els         = { show: $(), hide : $(), showDesc: [] };
+    var els         = { show: [], hide : [], showDesc: [] };
     var searchCache = $.extend([], this.searchCache);
-    var div, divs, show, menu, ul, lis, tracks, track, trackName, i, j, match, type, subset;
+    var div, divs, show, menu, ul, tracks, track, trackName, i, j, match, type, subset;
     
     function search(n, name, desc, li) {
       match = name.indexOf(panel.query) !== -1;
@@ -869,7 +869,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           li                   = $(li).appendTo(menu);
           subset               = li[0].className.match(/\s*subset_(\w+)\s*/) || false;
           added                = true;
-          panel.imageConfig[n] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][n] };
+          panel.imageConfig[n] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][n], el: li };
           
           panel.externalFavourite(n, li);
           
@@ -884,12 +884,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
         
         panel.searchCache.push([ n, name, desc, li, type ]);
+        els.show.push.apply(els.show, li);
+        els.show.push.apply(els.show, li.parents('li'));
         
-        els.show  = els.show.add(li, li.parents('li'));
         show      = true;
         noResults = 'hide';
       } else if (panel.imageConfig[n]) {
-        els.hide = els.hide.add(li, li.find('div.desc'));
+        els.hide.push.apply(els.hide, li);
+        els.hide.push.apply(els.hide, li.find('div.desc'));
       }
       
       li = null;
@@ -919,13 +921,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       for (type in divs) {
         if (!divs[type]) {
-          els.hide = els.hide.add(this.elLk.configDivs.filter('.' + type));
+          els.hide.push.apply(els.hide, this.elLk.configDivs.filter('.' + type));
         }
       }
     } else {
-      els.hide = els.hide.add(this.elLk.configDivs, this.elLk.configDivs.children('.subset'));
-      
-      var ul;
+      els.hide.push.apply(els.hide, this.elLk.configDivs);
+      els.hide.push.apply(els.hide, this.elLk.configDivs.children('.subset'));
       
       for (type in this.params.tracks) {
         show   = false;
@@ -936,16 +937,16 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         while (i--) {
           menu = ul.eq(i);
-          lis  = menu.find('li');
           
           for (j in tracks[i]) {
             track = tracks[i][j];
-            search(track[0], track[4], track[5], this.imageConfig[track[0]] ? lis.filter('.' + track[0]) : track[1]);
+            search(track[0], track[4], track[5], this.imageConfig[track[0]] ? this.imageConfig[track[0]].el : track[1]);
           }
         }
         
         if (show) {
-          els.show = els.show.add(div, div.children('.subset'));
+          els.show.push.apply(els.show, div);
+          els.show.push.apply(els.show, div.children('.subset'));
         }
       }
     }
@@ -956,13 +957,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.lastQuery = this.query;
     
-    els.hide.hide();
-    els.show.show();
+    $(els.hide).hide();
+    $(els.show).show();
     
     this.toggleDescription(els.showDesc, 'show');
     this.elLk.noSearchResults[noResults]();
     
-    els = div = menu = ul = lis = null;
+    els = div = menu = ul = null;
   },
   
   toggleDescription: function (els, action) {
