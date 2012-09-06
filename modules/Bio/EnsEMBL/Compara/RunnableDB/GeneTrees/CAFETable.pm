@@ -67,9 +67,6 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-#     unless ( $self->param('cafe_tree_string_mlss_tag') ) {
-#         die ('cafe_species_tree_mlss_tag needs to be defined to get the speciestree from the method_link_species_tree_tag table');
-#     }
     $self->param('cafe_tree_string', $self->get_tree_string_from_mlss_tag());
     $self->get_cafe_tree_from_string();
 
@@ -110,7 +107,7 @@ sub run {
         $self->param('lambda', $self->get_lambda($table));
     }
     print STDERR "FINAL LAMBDA IS ", $self->param('lambda'), "\n";
-    if (!defined $self->param('perFamTable')) {
+    if (!defined $self->param('perFamTable') || $self->param('perFamTable') == 0) {
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
         $sth->execute(1, $self->param('cafe_tree_string'), $table);
         $sth->finish();
@@ -127,7 +124,7 @@ sub write_output {
     my $lambda = $self->param('lambda');
     for my $fam_id (@$all_fams) {
 
-        print STDERR "FIRING FAM: $fam_id\n";
+        print STDERR "FIRING FAM: $fam_id\n" if($self->debug);
 
         $self->dataflow_output_id (
                                    {
@@ -145,7 +142,6 @@ sub write_output {
 
 sub get_tree_string_from_mlss_tag {
     my ($self) = @_;
-#    my $cafe_tree_string_mlss_tag = $self->param('cafe_tree_string_mlss_tag');
     my $mlss_id = $self->param('mlss_id');
 
     my $sql = "SELECT value FROM method_link_species_set_tag WHERE tag = 'cafe_tree_string' AND method_link_species_set_id = ?";
@@ -185,7 +181,7 @@ sub get_full_cafe_table_from_db {
     my $table = "FAMILY_DESC\tFAMILY\t" . join("\t", @$species);
     $table .= "\n";
 
-    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree');
+    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree', -clusterset_id => 'default');
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
     for my $tree (@$all_trees) {
@@ -327,7 +323,8 @@ sub get_name {
     my ($self, $tree) = @_;
     my $name;
     if ($self->param('type') eq 'nc') {
-        $name = $tree->get_tagvalue('model_name');
+#        $name = $tree->get_tagvalue('clustering_id');
+        $name = $tree->root_id();
     } else {
         $name = $tree->root_id();
     }
