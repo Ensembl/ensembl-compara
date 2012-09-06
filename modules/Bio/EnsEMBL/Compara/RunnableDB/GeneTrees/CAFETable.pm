@@ -223,7 +223,7 @@ sub get_per_family_cafe_table_from_db {
     my $sp_tree = $self->param('cafe_tree');
     my $mlss_id = $self->param('mlss_id');
 
-    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree');
+    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree', -clusterset_id => 'default');
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
     my @all_fams;
