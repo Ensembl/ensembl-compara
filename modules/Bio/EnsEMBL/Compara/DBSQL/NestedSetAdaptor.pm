@@ -145,7 +145,7 @@ sub fetch_all_leaves_indexed {
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
   my $root_id = $node->_root_id;
-  my $constraint = "($table.root_id = $root_id) AND (($table.right_index - $table.left_index) = 1) AND ($table.left_index > $left_index) AND ($table.right_index < $right_index)";
+  my $constraint = "($table.root_id = $root_id) AND (($table.right_index - $table.left_index) = 1) AND ($table.left_index BETWEEN $left_index AND $right_index)";
   return $self->generic_fetch($constraint);
 }
 
@@ -167,7 +167,7 @@ sub fetch_subtree_under_node {
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
   my $root_id = $node->_root_id;
-  my $constraint = "($alias.root_id = $root_id) AND ($alias.left_index >= $left_index) AND ($alias.right_index <= $right_index)";
+  my $constraint = "($alias.root_id = $root_id) AND ($alias.left_index BETWEEN $left_index AND $right_index)";
   my $all_nodes = $self->generic_fetch($constraint);
   push @{$all_nodes}, $node;
   $self->_build_tree_from_nodes($all_nodes);
