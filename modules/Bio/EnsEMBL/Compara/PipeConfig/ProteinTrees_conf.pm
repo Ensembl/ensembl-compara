@@ -286,7 +286,16 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'backbone_pipeline_finished',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [
+                    'INSERT INTO protein_tree_hmmprofile SELECT root_id, "aa", value FROM gene_tree_root_tag WHERE tag = "hmm_aa";',
+                    'INSERT INTO protein_tree_hmmprofile SELECT root_id, "dna", value FROM gene_tree_root_tag WHERE tag = "hmm_dna";',
+                    'DELETE FROM gene_tree_root_tag WHERE tag IN ("hmm_aa", "hmm_dna");',
+                    'INSERT INTO protein_tree_member_score SELECT node_id, member_id, value FROM gene_tree_node_tag JOIN gene_tree_member USING (node_id)  WHERE tag = "aln_score";',
+                    'DELETE FROM gene_tree_node_tag WHERE tag = "aln_score";',
+                ],
+            },
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------
@@ -994,7 +1003,7 @@ sub pipeline_analyses {
                 'cdna'                      => 1,
                 'bootstrap'                 => 1,
                 'store_intermediate_trees'  => 1,
-                'store_filtered_align'      => 1,
+                'store_filtered_align'      => 0,
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'mlss_id'                   => $self->o('mlss_id'),
