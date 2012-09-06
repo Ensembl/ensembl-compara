@@ -51,6 +51,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'tree_fmt' => '%{n}%{":"d}',
+            'pvalue_lim' => 0.05,
            };
 }
 
@@ -74,6 +75,10 @@ sub fetch_input {
     my $NCBItaxon_Adaptor = $self->compara_dba->get_NCBITaxon(); # Adaptor??
     $self->param('NCBItaxon_Adaptor', $NCBItaxon_Adaptor);
 
+    my $CAFETree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor();
+    $self->param('cafeTree_Adaptor', $CAFETree_Adaptor);
+    print STDERR $CAFETree_Adaptor;
+
     my $species_tree_meta_key = $self->param('species_tree_meta_key');
 
     my $full_species_tree = $self->get_species_tree_string($species_tree_meta_key);
@@ -84,7 +89,7 @@ sub fetch_input {
     die "mlss_id is an obligatory parameter\n" unless (defined $self->param('mlss_id'));
 
     my $cafe_species = $self->param('cafe_species');
-    if ((not defined $cafe_species) or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
+    if ((not defined $cafe_species) or ($cafe_species eq '') or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
 #        die "No species for the CAFE tree";
         print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
         $self->param('cafe_species', undef);
@@ -99,6 +104,7 @@ sub run {
     my $species = $self->param('cafe_species');
     my $fmt = $self->param('tree_fmt');
     my $mlss_id = $self->param('mlss_id');
+    my $pvalue_lim = $self->param('pvalue_lim');
     print STDERR Dumper $species if ($self->debug());
     my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
 
@@ -127,17 +133,25 @@ sub run {
 #     if ($self->debug) {
 #         $self->check_tree($cafeTree);
 #     }
+
+
+    # Store the tree
+    my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');
     my $cafeTreeStr = $cafeTree->newick_format('ryo', $fmt);
+    print STDERR "Tree to store:\n$cafeTreeStr\n" if ($self->debug);
 
-    my $cafe_tree_string_mlss_tag = 'cafe_tree_string';
-    print STDERR "$cafeTreeStr\n" if ($self->debug());
-    print STDERR "cafe_tree_string_mlss_tag => $cafe_tree_string_mlss_tag\n" if ($self->debug());
-    my $sql = "INSERT into method_link_species_set_tag (method_link_species_set_id, tag, value) values (?,?,?);";
+    # The tree is inserted in the method_link_species_set_tag table
+    my $sql = "INSERT INTO method_link_species_set_tag VALUES(?,?,?)";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('mlss_id'), $cafe_tree_string_mlss_tag, $cafeTreeStr);
-    $sth->finish();
+    $sth->execute($mlss_id, 'cafe_tree_string', $cafeTreeStr);
+    $sth->finish;
 
-    $self->param('cafe_tree_string_mlss_tag', $cafe_tree_string_mlss_tag);
+    # The tree is stored as a CAFEGeneFamily
+    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($cafeTreeStr, 'Bio::EnsEMBL::Compara::CAFEGeneFamily');
+    $tree->species_tree($cafeTreeStr);
+    $tree->pvalue_lim($pvalue_lim);
+    $tree->method_link_species_set_id($mlss_id);
+    $cafeTree_Adaptor->store_tree($tree);
 }
 
 sub write_output {
@@ -168,20 +182,6 @@ sub get_species_tree_string {
     my ($species_tree_string) = $sth->fetchrow_array;
     $sth->finish;
     return $species_tree_string;
-}
-
-
-# Not used for now
-sub get_tree_from_db {
-    my ($self) = @_;
-    my $sql1 = "select value from gene_tree_root_tag where tag='CAFE_species_tree_string'";
-    my $sth1 = $self->compara_dba->dbc->prepare($sql1);
-    $sth1->execute();
-    my $species_tree_string = $sth1->fetchrow_hashref;
-    $sth1->finish;
-
-    $self->param('species_tree', $species_tree_string->{value});
-    return $species_tree_string->{value};
 }
 
 sub get_taxon_id_from_dbID {

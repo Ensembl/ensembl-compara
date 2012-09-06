@@ -72,15 +72,6 @@ sub fetch_input {
         die ('fam_id is not set');
     }
 
-#     unless ( $self->param('cafe_tree_string_meta_key') ) {
-#         die ('cafe_species_tree_meta_key can not be found');
-#     }
-#     $self->param('cafe_tree_string', $self->get_tree_string_from_meta());
-
-#     unless ( $self->param('cafe_table_file') ) {
-#         die ('cafe_table_file must be set');
-#     }
-
     unless ( $self->param('mlss_id') ) {
         die ('mlss_id must be set')
     }
@@ -89,7 +80,7 @@ sub fetch_input {
         die ('lambda is an obligatory parameter');
     }
 
-    my $cafetree_Adaptor = $self->compara_dba->get_CAFETreeAdaptor;
+    my $cafetree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor;
     $self->param('cafeTree_Adaptor', $cafetree_Adaptor);
 
     my $genomeDB_Adaptor = $self->compara_dba->get_GenomeDBAdaptor;
@@ -199,10 +190,6 @@ sub get_tree_and_table_from_db {
     my $sth = $self->compara_dba->dbc->prepare("SELECT tree, tabledata FROM CAFE_data WHERE fam_id = ?");
     $sth->execute($fam_id);
     my ($tree, $table) = $sth->fetchrow_array();
-    print STDERR "TREE READ FROM CAFE_data:\n" if ($self->debug());
-    print STDERR "$tree\n" if ($self->debug());
-    print STDERR "TABLE READ FROM CAFE_data:\n" if ($self->debug());
-    print STDERR "$table\n" if ($self->debug());
     return ($tree, $table);
 }
 
@@ -210,7 +197,7 @@ sub parse_cafe_output {
     my ($self) = @_;
     my $fmt = '%{-n}%{":"o}';
 
-    my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');
+    my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');  # A CAFEGeneFamilyAdaptor
     my $mlss_id = $self->param('mlss_id');
     my $pvalue_lim = $self->param('pvalue_lim');
     my $cafe_out_file = $self->param('cafe_out_file') . ".cafe";
@@ -253,11 +240,6 @@ sub parse_cafe_output {
 
 
 # Store the tree
-    $tree->method_link_species_set_id($mlss_id);
-    $tree->species_tree($ids_tree_str);
-    $tree->lambdas($lambda);
-    $tree->pvalue_lim($pvalue_lim);
-    $cafeTree_Adaptor->store($tree);
 
     while (<$fh>) {
         last if $. == 10; # We skip several lines and go directly to the family information.
@@ -267,15 +249,11 @@ sub parse_cafe_output {
     while (my $fam_line = <$fh>) {
         print STDERR "FAM_LINE:\n", $fam_line, "\n";
         my @flds = split/\s+/, $fam_line;
-        my $fam_id = $flds[0];
+        my $gene_tree_root_id = $flds[0];
         my $fam_tree_str = $flds[1];
-        my $avg_pvalue = $flds[2];
+        my $pvalue_avg = $flds[2];
         my $pvalue_pairs = $flds[3];
 
-        #print "FAM_PVALUE:$avg_pvalue VS PVALUE_LIM:$pvalue_lim\n";
-
-#        next if ($avg_pvalue >= $pvalue_lim);
-#        print STDERR "FAM_ID:$fam_id\n";
 
         my $fam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($fam_tree_str . ";");
 
@@ -286,7 +264,6 @@ sub parse_cafe_output {
             $n_members = 0 if (! defined $n_members); ## It may be absent from the orig data (but in the tree)
             $name =~ s/_\d+//;
             $name =~ s/\./_/g;
-            $info_by_nodes{$name}{'gene_tree_root_id'} = $fam_id;
             $info_by_nodes{$name}{'n_members'} = $n_members;
 
             my $taxon_id;
@@ -315,23 +292,41 @@ sub parse_cafe_output {
             $name1 =~ s/\./_/g;
             $name2 =~ s/\./_/g;
 
-            $info_by_nodes{$name1}{'p_value'} = $val_fst;
-            $info_by_nodes{$name2}{'p_value'} = $val_snd;
+            $info_by_nodes{$name1}{'pvalue'} = $val_fst;
+            $info_by_nodes{$name2}{'pvalue'} = $val_snd;
 
         }
 
         $tree->print_tree(0.2) if ($self->debug());
+
+        my $sth2 = $self->compara_dba->dbc->prepare("SELECT root_id FROM species_tree_root WHERE method_link_species_set_id = ?");
+        $sth2->execute($self->param('mlss_id'));
+        my ($root_id) = $sth2->fetchrow_array();
+        print STDERR "ROOT_ID is $root_id\n" if ($self->debug());
+
+        my $lca_name = $tree->root->name;
+        print STDERR "LCA name is $lca_name\n" if ($self->debug);
+        my $sth = $self->compara_dba->dbc->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag = 'taxon_id' AND value = ?");
+        $sth->execute($lca_name);
+        my ($lca_id) = $sth->fetchrow_array();
+        my $cafe_gene_family_id = $cafeTree_Adaptor->store_gene_family($root_id, $lca_id, $gene_tree_root_id, $pvalue_avg, $lambda);
+
 
         # We store the attributes
         for my $node (@{$tree->get_all_nodes()}) {
             my $n = $node->name();
             $n =~ s/\./_/g;
 
-            my $fam_id = $info_by_nodes{$n}{gene_tree_root_id};
             my $taxon_id = $info_by_nodes{$n}{taxon_id};
             my $n_members = $info_by_nodes{$n}{n_members};
-            my $p_value = $info_by_nodes{$n}{p_value};
-            $cafeTree_Adaptor->store_tagvalues($node, $fam_id, $taxon_id, $n_members, $p_value, $avg_pvalue);
+            my $pvalue = $info_by_nodes{$n}{pvalue};
+
+            print STDERR "Retrieving node_id for taxon $taxon_id\n" if ($self->debug);
+            my $sth = $self->compara_dba->dbc->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag = 'taxon_id' AND value = ?");
+            $sth->execute($taxon_id);
+            my ($species_tree_node_id) = $sth->fetchrow_array();
+
+            $cafeTree_Adaptor->store_species_gene($cafe_gene_family_id, $species_tree_node_id, $taxon_id, $n_members, $pvalue);
         }
     }
     return
