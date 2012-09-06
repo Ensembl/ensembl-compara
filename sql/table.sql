@@ -557,7 +557,7 @@ CREATE TABLE peptide_align_feature (
 #  KEY hmember_id  (hmember_id),
 #  KEY hmember_qgenome  (hmember_id, qgenome_db_id),
 #  KEY qmember_hgenome  (qmember_id, hgenome_db_id)
-) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 100000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 #
@@ -764,8 +764,7 @@ CREATE TABLE gene_tree_node_tag (
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
   KEY node_id_tag (node_id, tag),
-  KEY (node_id),
-  KEY (tag)
+  KEY (node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -789,8 +788,7 @@ CREATE TABLE gene_tree_root_tag (
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
 
   KEY root_id_tag (root_id, tag),
-  KEY (root_id),
-  KEY (tag)
+  KEY (root_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
