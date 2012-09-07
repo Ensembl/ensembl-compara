@@ -19,7 +19,7 @@ Remember that compara has one additional day after the declaration of intentions
 3. Set up a web page with intentions in the Confluence wiki system to
 allow easy tracking of the progress.
 
-Note: The current (rel.68) compara_master database is sf5_ensembl_compara_master on compara1 
+Note: The current (rel.69) compara_master database is sf5_ensembl_compara_master on compara1 
 
 #============================================================================
 # Important environment variables to be set
@@ -53,6 +53,7 @@ $ time mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress 
 # rel.66: 47 sec
 # rel.67: 30 sec
 # rel.68: 30 sec
+# rel.69: 35 sec
 
 5.2 Update the extant taxon names
 
@@ -201,7 +202,7 @@ Record the MLSSids in the confluence page.
 
 $ rm -rf $MLSS_DIR
 
-## ,otherwise *PANIC*
+## ,otherwise make yourself a nice cup of tea and then *PANIC*
 
 
 7.2. Update the species_set_tags.
@@ -278,6 +279,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_datab
 # rel.66:   4.8h
 # rel.67:   2.1h (launched from compara3)
 # rel.68:   1h40m (run on compara3)
+# rel.69:   2.5h
 
 If new method_link_species_sets are added in the master after this, you use this
 script again to copy the new relevant data. In such case, you will have to:
@@ -287,7 +289,7 @@ script again to copy the new relevant data. In such case, you will have to:
 $ $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl \
     --reg-conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --master compara_master --new compara_curr
 
-# 8.1. Copy the species_set_tag table -- CAREFUL: this may have generated the species_set_tag mess we had in rel.63!
+# 8.1. Copy the species_set_tag table 
 # This needs to be added to the populate_new_database script and not just copied from the master where all old tags need to be deleted.
 # But copy from master till this is done.
 # INSERT INTO species_set_tag SELECT * FROM sf5_ensembl_compara_master.species_set_tag;
@@ -311,6 +313,7 @@ cvs commit
 ## rel.66 -- Added Latimeria chalumnae (Coelacanth)
 ## Also included 'ensembl timetree mya' in ncbi_taxa_name for
 ## taxon_id: 8287 -- value: 414.9 in the master and final database.
+## rel.69 added Xiphophorus_maculatus and Mustela_putorius_furo
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
@@ -539,6 +542,9 @@ $ bsub -q yesterday -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
 # rel.68
 #  a few minutes to copy the database and ~1 hour to build the indexes
 
+# rel.69
+# several hours to copy from the pipeline databases and re-build the indexes
+
 10.1.1 Human patches for high coverage blastz-net alignments
 ## Make sure that all the pairwise alignment are in the database
 before loading these (TRANSLATED_BLAT_NET and BlastZ-Net).
@@ -596,11 +602,13 @@ $ init_pipeline.pl AncestralMerge_conf.pm -password $ENSADMIN_PSW
 > SELECT left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 FROM seq_region GROUP BY na;
 
     If everything is ok, drop hive-specific tables:
+    You may need to remove a foreign key in analysis_description before that.
+
+> ALTER TABLE analysis_description DROP FOREIGN KEY analysis_description_ibfk_1;
 > CALL drop_hive_tables;
 > TRUNCATE analysis; TRUNCATE analysis_description;
 
     Make sure all tables are turned into myISAM.
-    You may need to remove a foreign key in analysis_description before that.
 
 # rel.67  20min
 
@@ -743,9 +751,17 @@ You can use "--compara_db compara_curr" if it is run on the final merged db,
 
 Remove all the .class files and recompile
 
+$ cd ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck
+$ find build -name '*.class' -delete
+$ export JAVA_HOME=/software/jdk1.6.0_01
+$ ant
+
+# BUILD SUCCESSFUL
+# Total time: 9 seconds
+
 13.1 Run the healthchecks for ancestral database:
 
-$ time ./run-healthcheck.sh -d mm14_ensembl_ancestral_68 compara-ancestral
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_ancestral_69 compara-ancestral
 # rel.62: 4sec, all successful
 # rel.63: 14sec, all successful after analyzing 3 tables
 # rel.65: 13sec, all successful after analyzing the tables.
@@ -754,7 +770,7 @@ $ time ./run-healthcheck.sh -d mm14_ensembl_ancestral_68 compara-ancestral
 
 13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
 
-$ time ./run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -repair Meta
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -repair Meta
 # rel.61: 6m30, "no repair needed" (probably after Stephen has already done it)
 # rel.63: 8m (full repair)
 # rel.65: 9m "No repair needed"
@@ -762,7 +778,7 @@ $ time ./run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -repair Met
 
 13.3 Now run the remaining healthchecks:
 
-$ time ./run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -d2 .+_core_68_.+ compara_external_foreign_keys
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -d2 .+_core_68_.+ compara_external_foreign_keys
 # in rel.56 everything passed apart from CheckTaxon - according to Javier in this particular case it was not a problem
 # in rel.pre57 it took 20 minutes (all passed).
 # in rel.57 it took ?? minutes ('genbank common name' for 4 species had to be copied from their 'ensembl common name' in ncbi_taxa_name table)
@@ -773,7 +789,7 @@ $ time ./run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -d2 .+_core
 # rel.66:   12m, 1 failure ( taeniopygia_guttata_core_66_1: common_name::zebra finch is not in mp12_ensembl_compara_66 )
 
 
-$ time ./run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara compara_genomic
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara compara_genomic
 # rel.58:   47m, 7 failures
 # rel.61:   51m, 3 failures
 # rel.63:   84m, (2.5 errors that are "ok")
@@ -781,7 +797,7 @@ $ time ./run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara compara_gen
 # rel.66:   23m, (4 errors that are "ok")
 
 
-$ time ./run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara compara_homology
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara compara_homology
 # rel.58:   14m, 5 failures
 # rel.61:   30m, 3 failures
 # rel.62:   3m, 1 failure (CheckSpeciesSetTag, ok?)
