@@ -200,7 +200,7 @@ sub run {
       eval { $runnable->run(); };
       ## Catch errors if any
       if ($@) {
-        printf(STDERR ref($self->runnable)." threw exception:\n$@$_");
+        print STDERR ref($runnable)." threw exception:\n$@$_";
         if($@ =~ /"VOID"/) {
           print STDERR "this is OK: member_id='$member_id' doesn't have sufficient structure for a search\n";
         } else {
