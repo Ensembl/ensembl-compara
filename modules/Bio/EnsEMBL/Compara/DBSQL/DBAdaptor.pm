@@ -178,7 +178,7 @@ sub get_available_adaptors {
         'GeneTreeNode'          => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor',
         'ProteinTree'           => 'Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor',
         'NCTree'                => 'Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor',
-        'CAFETree'              => 'Bio::EnsEMBL::Compara::DBSQL::CAFETreeAdaptor',
+        'CAFEGeneFamily'        => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor',
 
             # obsolete:
         'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
