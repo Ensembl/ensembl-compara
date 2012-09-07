@@ -54,7 +54,6 @@ sub run {
 sub write_output {
     my $self = shift @_;
     my $reg = "Bio::EnsEMBL::Registry";
-    my $output_ids;
 
     #
     #Load registry and get compara database adaptor
@@ -125,7 +124,7 @@ sub write_output {
     #
     foreach my $gab (sort {$a->dbID <=> $b->dbID} @$skip_genomic_align_blocks) {
 	my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
-	my $dump_sth = $self->analysis->adaptor->dbc->prepare($sql_cmd);
+	my $dump_sth = $self->compara_dba->dbc->prepare($sql_cmd);
 	$dump_sth->execute($gab->dbID);
 	$dump_sth->finish();
 
@@ -149,14 +148,20 @@ sub write_output {
 	    $dump_output_file =~ s/\.$format/$this_suffix/;
 
 	    #Write out cmd from DumpMultiAlign
-	    my $dump_cmd = "\"output_file\"=> \"$output_file\", \"extra_args\" => \" --skip_species $species --chunk_num $chunk\", \"num_blocks\"=>\"$this_num_blocks\", \"dumped_output_file\"=>\"$dump_output_file\"";
 
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
-	    my $output_ids = "{\"start\"=>\"$start_gab_id\", \"end\"=>\"$end_gab_id\", $dump_cmd}";
+	    my $output_id = {
+            'start'                 =>  $start_gab_id,
+            'end'                   =>  $end_gab_id,
+	        'output_file'           =>  $output_file,
+            'extra_args'            =>  " --skip_species $species --chunk_num $chunk",
+            'num_blocks'            =>  $this_num_blocks,
+            'dumped_output_file'    =>  $dump_output_file,
+        };
 
-	    #print "skip $output_ids\n";
-	    $self->dataflow_output_id($output_ids, 2);
+	    #print "skip $output_id\n";
+	    $self->dataflow_output_id($output_id, 2);
 	    undef($start_gab_id);
 	    $chunk++;
 	}
