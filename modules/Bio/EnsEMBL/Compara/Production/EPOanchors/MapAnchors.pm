@@ -1,10 +1,10 @@
-#Ensembl module for Bio::EnsEMBL::Compara::Production::EPOanchors::ExonerateAnchors
+#Ensembl module for Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors
 # You may distribute this module under the same terms as perl itself
 #
 # POD documentation - main docs before the code
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::EPOanchors::ExonerateAnchors 
+Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub configure_defaults {
  	my $self = shift;
-	$self->param('mapping_exe', [ "/usr/local/ensembl/bin/exonerate-1.0.0" ]) unless $self->param('mapping_exe');
+	$self->param('mapping_exe', "/usr/local/ensembl/bin/exonerate-1.0.0" ) unless $self->param('mapping_exe');
 	$self->param('mapping_params', { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", })
 		unless $self->param('mapping_params');
 }
