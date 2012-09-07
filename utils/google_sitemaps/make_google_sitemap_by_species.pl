@@ -133,9 +133,15 @@ sub get_dataset_urls {
       
       # generating full URL with gene, location and transcript
       my $sth = $adaptor->prepare(
+<<<<<<< make_google_sitemap_by_species.pl
+        "SELECT t.stable_id, t.seq_region_start, t.seq_region_end, sr.name, g.stable_id 
+         FROM seq_region sr, transcript t, gene g
+         WHERE g.gene_id=t.gene_id 
+=======
         "SELECT t.stable_id, t.seq_region_start, t.seq_region_end, sr.name, g.stable_id 
          FROM seq_region sr, transcript t, gene g 
          WHERE g.gene_id=t.gene_id 
+>>>>>>> 1.6
          AND sr.seq_region_id=t.seq_region_id 
          AND t.${type}_id = ?"
       );
