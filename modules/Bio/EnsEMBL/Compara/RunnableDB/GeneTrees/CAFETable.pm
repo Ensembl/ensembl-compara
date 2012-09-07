@@ -185,6 +185,7 @@ sub get_full_cafe_table_from_db {
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
     for my $tree (@$all_trees) {
+        $tree->preload();
         my $root_id = $tree->root_id;
         my $name = $self->get_name($tree);
         my $tree_members = $tree->get_all_leaves();
@@ -228,6 +229,7 @@ sub get_per_family_cafe_table_from_db {
     my $ok_fams = 0;
     my @all_fams;
     for my $tree (@$all_trees) {
+        $tree->preload();
         my $root_id = $tree->root_id();
         print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
         my $name = $self->get_name($tree);
