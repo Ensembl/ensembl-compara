@@ -390,6 +390,9 @@ sub draw_wiggle_plot {
 sub draw_wiggle_points { 
   my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset) = @_;
   my $hrefs = $parameters->{'hrefs'};
+
+  my $P_MAX           = $parameters->{'max_score'} > 0 ? $parameters->{'max_score'} : undef; 
+
   foreach my $f (@$features) { 
     my $href = '';
     if (ref($f) ne 'HASH' && $f->can('id')){
@@ -419,14 +422,21 @@ sub draw_wiggle_points {
       }
     }
 
+    my $drawn_score;
+    if ($P_MAX && $score > $P_MAX) {
+      $drawn_score = $P_MAX;
+    } else {
+      $drawn_score = $score;
+    }
+
     my ($y, $height);
     if ($parameters->{'graph_type'} eq 'points') {
-      $y = -$score * $pix_per_score;
+      $y = -$drawn_score * $pix_per_score;
       $height = 0; 
     }
     else {
-      $y = $score < 0 ? 0 : -$score * $pix_per_score;
-      $height = $score;
+      $y = $drawn_score < 0 ? 0 : -$drawn_score * $pix_per_score;
+      $height = $drawn_score;
     }
     $height *= $pix_per_score;
     my $this_colour = $colour;
@@ -442,15 +452,16 @@ sub draw_wiggle_points {
       'x'         => $START-1,
       'width'     => $END - $START+1,
       'absolutey' => 1,
-      'title'     => sprintf("%.2f", $score),
       'colour'    => $this_colour,
     };
     $dets->{'href'} = $href if $href;
+    $dets->{'title'} = sprintf("%.2f", $score) if (!exists($parameters->{'no_titles'}));
+
     $self->push($self->Rect($dets));
+
     if ($min_score){
       my $y = $score < 0 ? 0 : -$min_score * $pix_per_score;
       $self->push($self->Rect({
-
         'y'         => $offset + $red_line_offset + $y,
         'height'    => abs( $min_score * $pix_per_score ),
         'x'         => $START-1,
@@ -461,7 +472,8 @@ sub draw_wiggle_points {
       }));
     }
   }
-return 1;
+
+  return 1;
 } 
 
 sub draw_wiggle_points_as_line {
