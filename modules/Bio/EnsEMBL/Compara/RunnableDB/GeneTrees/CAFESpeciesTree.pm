@@ -294,7 +294,7 @@ sub include_names {
         $taxon_id =~ s/\*//g;
         my $genomeDB = $genomeDB_Adaptor->fetch_by_taxon_id($taxon_id);
         my $name = $genomeDB->name();
-        $name =~ s/_/\./;
+        $name =~ s/_/\./g;
         $leaf->name($name);
     }
 }

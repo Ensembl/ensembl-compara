@@ -199,7 +199,7 @@ sub store_node {
     $node->adaptor($self);
     if ($node->is_leaf) {
         my $name = $node->name;
-         $name =~ s/\./_/;
+         $name =~ s/\./_/g;
          my $genomeDB_Adaptor = $self->db->get_GenomeDBAdaptor;
          my $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($name);
          my $taxon_id = $genomeDB->taxon_id();
