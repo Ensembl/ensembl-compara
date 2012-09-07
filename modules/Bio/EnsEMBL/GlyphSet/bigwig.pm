@@ -4,8 +4,10 @@ use strict;
 
 use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 use Data::Dumper;
+use Bio::EnsEMBL::SimpleFeature;
+use Bio::EnsEMBL::Analysis;
 
-use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment  Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
 sub my_helplink { return "bigwig"; }
 
@@ -34,13 +36,7 @@ sub wiggle_features {
     for (my $i=0; $i<$bins; $i++) {
       my $s = $summary_e->[$i];
       my $mean = $s->{validCount} > 0 ? $s->{sumData}/$s->{validCount} : 0;
-      #print STDERR "bin $i: min=$s->{minVal} max=$s->{maxVal} sum=$s->{sumData} mean=$mean\n";
-#      my $feat = Bio::EnsEMBL::Feature->new_fast( {
-#                         'start' => ($i*$binwidth+1),
-#                         'end' => (($i+1)*$binwidth),
-#                         'strand' => 1,
-#                         'score' => $mean,
-#                        } );
+
       my $feat = {
         start => $flip ? $flip - (($i+1)*$binwidth) : ($i*$binwidth+1),
         end   => $flip ? $flip - ($i*$binwidth+1)   : (($i+1)*$binwidth),
@@ -53,27 +49,19 @@ sub wiggle_features {
     $self->{_cache}->{wiggle_features} = \@features;
   }
 
-
   return $self->{_cache}->{wiggle_features};
 }
 
 sub draw_features {
-
   my ($self, $wiggle)= @_;  
+
   my $drawn_wiggle_flag = $wiggle ? 0: "wiggle"; 
-  #print STDERR "!!!!!!!!!!!!!!!!!!!!!!!! BIGWIG !!!!!!!!!!!!!!!\n";
 
   my $slice = $self->{'container'};
 
   my $feature_type = $self->my_config('caption');
 
   my $colour = $self->my_config('colour');
-
-  #print STDERR "COLOUR = $colour\n";
-
-  #my $colour = $self->my_colour($fset_cell_line) || 'steelblue';
-  #my $colour = 'steelblue';
-
 
   # render wiggle if wiggle
   if ($wiggle) { 
@@ -82,26 +70,42 @@ sub draw_features {
       $max_bins = $slice->length;
     }
 
-    #print STDERR "max bins = $max_bins\n";
     my $features =  $self->wiggle_features($max_bins);
     $drawn_wiggle_flag = "wiggle";
 
-    my $min_score = $features->[0]->{score};
-    my $max_score = $features->[0]->{score};
-    foreach my $feature (@$features) { 
-      my $fscore = $feature->{score};
-      if ($fscore < $min_score) { $min_score = $fscore };
-      if ($fscore > $max_score) { $max_score = $fscore };
+    my $min_score;
+    my $max_score;
+
+    my $viewLimits = $self->my_config('viewLimits');
+
+    if (defined($viewLimits)) {
+      ($min_score,$max_score) = split ":",$viewLimits;
+    } else {
+      $min_score = $features->[0]->{score};
+      $max_score = $features->[0]->{score};
+      foreach my $feature (@$features) { 
+        my $fscore = $feature->{score};
+        if ($fscore < $min_score) { $min_score = $fscore };
+        if ($fscore > $max_score) { $max_score = $fscore };
+      }
     }
 
-      # render wiggle plot        
+    my $no_titles = $self->my_config('no_titles');
+
+    my $params = { 'min_score'    => $min_score, 
+                   'max_score'    => $max_score, 
+                   'description'  =>  $self->my_config('caption'),
+                   'score_colour' =>  $colour,
+                 };
+
+    if (defined($no_titles)) {
+      $params->{'no_titles'} = 1;
+    }
+
+    # render wiggle plot        
     $self->draw_wiggle_plot(
           $features,                      ## Features array
-          { 'min_score'    => $min_score, 
-            'max_score'    => $max_score, 
-            'description'  =>  $self->my_config('caption'),
-            'score_colour' =>  $colour,
-          },
+          $params
           #[$colour],
           #[$feature_type],
         );
@@ -114,6 +118,41 @@ sub draw_features {
 
   my $error = $self->draw_error_tracks($drawn_wiggle_flag);
   return 1;
+}
+
+sub features {
+  my $self = shift;
+  my $slice = $self->{'container'};
+
+  my $max_bins = $self->{'config'}->image_width();
+  if ($max_bins > $slice->length) {
+    $max_bins = $slice->length;
+  }
+
+  my $feats =  $self->wiggle_features($max_bins);
+
+  my @features;
+
+  my $fake_anal = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
+  foreach my $feat (@$feats) {
+    my $f = Bio::EnsEMBL::SimpleFeature->new(-start => $feat->{start}, 
+                                             -end => $feat->{end}, 
+                                             -slice => $slice, 
+                                             -strand => 1, 
+                                             -score => $feat->{score}, 
+                                             -analysis => $fake_anal);
+    push @features,$f;
+  }
+
+  my $config = {};
+
+  $config->{'useScore'}        = 1;
+  $config->{'implicit_colour'} = 1;
+  $config->{'greyscale_max'}   = 100;
+
+  return(
+    'url' => [ \@features, $config ],
+  );
 }
 
 sub draw_error_tracks {
@@ -129,7 +168,6 @@ sub draw_error_tracks {
   return $error;
 }
 
-
 sub render_text {
   my ($self, $wiggle) = @_;
   
@@ -138,9 +176,18 @@ sub render_text {
 
   warn("No text render implemented for bigwig\n");
   
-  
   return '';
 }
 
+sub render_compact {
+  my $self = shift;
+  $self->{'renderer_no_join'} = 1;
+  $self->SUPER::render_normal(8, 0);
+}
+
+sub feature_title {
+  my ($self, $f, $db_name) = @_;
+  return undef;
+}
 
 1;
