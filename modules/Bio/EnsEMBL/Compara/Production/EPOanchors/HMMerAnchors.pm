@@ -48,13 +48,15 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+	return {
+		'nhmmer'   => '/software/ensembl/compara/hmmer3.1_nhmmer_beta2/src/nhmmer',
+		'hmmbuild' => '/software/ensembl/compara/hmmer3.1_nhmmer_beta2/src/hmmbuild',
+	};
+}
 
 sub fetch_input {
 	my ($self) = @_;
-
-	my $nhmmer = "/software/ensembl/compara/hmmer3.1_nhmmer_beta2/src/nhmmer";
-	my $hmmbuild = "/software/ensembl/compara/hmmer3.1_nhmmer_beta2/src/hmmbuild";
-	$self->analysis->program("{ nhmmer=>\"$nhmmer\", hmmbuild=>\"$hmmbuild\" }") unless $self->analysis->program;
 
 	$self->compara_dba->dbc->disconnect_if_idle();
 
@@ -79,10 +81,8 @@ sub fetch_input {
 	print F "//\n";
 	close(F);
 	#build the hmm from the stockholm format file
-	my $hmm_programs = eval $self->analysis->program;
-	$self->param('nhmmer', $hmm_programs->{nhmmer});
 	my $hmmbuild_outfile = $self->worker_temp_directory . "$genomic_align_block_id.hmm";
-	my $hmmbuild = $hmm_programs->{hmmbuild}; 
+	my $hmmbuild = $self->param('hmmbuild'); 
 	my $hmmbuild_command = "$hmmbuild --dna $hmmbuild_outfile $stockholm_file";
 	system($hmmbuild_command);
 	$self->param('query_file', $hmmbuild_outfile);
