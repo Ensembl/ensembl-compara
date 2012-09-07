@@ -116,35 +116,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       panel.viewConfig[this.name] = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.type === 'select-multiple' ? $('option:selected', this).map(function () { return this.value; }).toArray() : this.value;
     });
     
-    $(this.elLk.viewConfigs).on('change', ':input', function () {
-      var value, attr;
-      
-      if (this.type === 'checkbox') {
-        value = this.checked;
-        attr  = 'checked';
-      } else {
-        value = this.value;
-        attr  = 'value';
-      }
-      
-      Ensembl.EventManager.trigger('syncViewConfig', panel.id, $(this).parents('.config')[0].className.replace(/ /g, '.'), this.name, attr, value);
-    });
-    
     if (this.sortable) {
       this.makeSortable();
     }
-    
-    this.elLk.configDivs.on('click', '.menu_help', function () { panel.toggleDescription(this); });
-    
-    this.elLk.configDivs.on('click', '.favourite', function () {
-      Ensembl.EventManager.trigger(
-        'changeFavourite', 
-        $(this).parent().siblings('input.track_name')[0].name,
-        $(this).parents('li.track').hasClass('fav') ? 0 : 1,
-        $(this).parents('div.config')[0].className.replace(/config /, ''),
-        panel.id
-      );
-    });
     
     this.elLk.configDivs.on('click', 'ul.config_menu > li.track', function (e) {
       if (e.target === this) {
@@ -242,12 +216,40 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       menu = track = img = li = null;
     });
     
-    this.elLk.configDivs.on('click', '.popup_menu li.header', function (e) {
-      if (e.target.className === 'close') {
-        $(this).parent().hide();
+    this.elLk.configDivs.on('click', '.popup_menu .header .close', function (e) {
+      $(this).parents('.popup_menu').hide();
+    });
+    
+    // Header on search results and active tracks sections will act like the links on the left
+    this.elLk.configDivs.on('click', '.config_header', function () {
+      var link = $(this).parent().attr('class').replace(/\s*config\s*/, '');
+      $('a.' + link, panel.elLk.links).trigger('click');
+    });
+    
+    this.elLk.configDivs.on('click', '.favourite', function () {
+      Ensembl.EventManager.trigger(
+        'changeFavourite', 
+        $(this).parent().siblings('input.track_name')[0].name,
+        $(this).parents('li.track').hasClass('fav') ? 0 : 1,
+        $(this).parents('div.config')[0].className.replace(/config /, ''),
+        panel.id
+      );
+    });
+    
+    this.elLk.configDivs.on('click', '.menu_help', function () { panel.toggleDescription(this); });
+    
+    this.elLk.viewConfigs.on('change', ':input', function () {
+      var value, attr;
+      
+      if (this.type === 'checkbox') {
+        value = this.checked;
+        attr  = 'checked';
+      } else {
+        value = this.value;
+        attr  = 'value';
       }
       
-      return false;
+      Ensembl.EventManager.trigger('syncViewConfig', panel.id, $(this).parents('.config')[0].className.replace(/ /g, '.'), this.name, attr, value);
     });
     
     this.elLk.search.on({
@@ -285,12 +287,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           this.style.color = '#999';
         }
       }
-    });
-    
-    // Header on search results and active tracks sections will act like the links on the left
-    $(this.elLk.configDivs).on('click', '.config_header', function () {
-      var link = $(this).parent().attr('class').replace(/\s*config\s*/, '');
-      $('a.' + link, panel.elLk.links).trigger('click');
     });
     
     $('select.species', this.el).on('change', function () {
@@ -374,7 +370,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var configs  = this.elLk.configDivs.filter('.' + type).find('ul.config_menu');
     var existing = [];
     var i        = tracks.length;
-    var j, track, li, link;
+    var j, track, li, div, link;
     
     function setConfig(trackName) {
       if (!panel.imageConfig[trackName]) {
@@ -398,11 +394,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     while (i--) {
       j    = tracks[i].length;
-      link = $(configs[i]).parents('.subset').attr('class').replace(/subset|active|first|\s/g, '');
+      div  = configs.eq(i);
+      link = div.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '');
+      
+      var prepend = [];
       
       while (j--) {
         track = tracks[i][j];
-        li    = $(existing[i][track[0]] || track[1]);
+        li    = existing[i][track[0]] ? existing[i][track[0]] : $(track[1]);
         
         if (track[1].match('config_menu')) {
           $('input.track_name', track[1]).each(function () {
@@ -416,12 +415,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           setConfig(track[0]);
         }
         
-        $(configs[i]).prepend(li);
+        prepend.unshift(li[0]);
       }
       
-      $(configs[i]).find('.track').each(function () {
+      div.prepend(prepend);
+      
+      div.find('.track').each(function () {
         var subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
-
+        
         $(this).data('links', [
           'a.' + type,
           'a.' + (subset ? subset[1] : type + '-' + link) 
@@ -429,14 +430,27 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       });
     }
     
-    this.updateElLk();
+    this.updateElLk(type);
     this.populated[type] = 1;
+    
+    configs = div = li = null;
   },
   
-  updateElLk: function () {
-    this.elLk.help    = $('.menu_help',        this.elLk.configDivs);
-    this.elLk.menus   = $('.popup_menu',       this.elLk.configDivs);
-    this.elLk.configs = $('.config_menu > li', this.elLk.configDivs);
+  updateElLk: function (type) {
+    if (type) {
+      type = this.elLk.configDivs.filter('.' + type);
+      
+      this.elLk.help    = this.elLk.help.add('.menu_help',           type);
+      this.elLk.menus   = this.elLk.menus.add('.popup_menu',         type);
+      this.elLk.configs = this.elLk.configs.add('.config_menu > li', type);
+      
+      type = null;
+    } else {
+      this.elLk.help    = $('.menu_help',        this.elLk.configDivs);
+      this.elLk.menus   = $('.popup_menu',       this.elLk.configDivs);
+      this.elLk.configs = $('.config_menu > li', this.elLk.configDivs);
+    }
+    
     this.elLk.tracks  = this.elLk.configs.filter('.track');
   },
   
@@ -548,7 +562,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
       
       if (tracks.length) {
-        panel.updateElLk();
+        panel.updateElLk('track_order');
       }
       
       panel.elLk.trackOrder.show().find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).show();
@@ -647,24 +661,24 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
       default:
         this.addTracks(active);
-        configDiv = this.elLk.configDivs.filter('.' + active).show();
+        configDiv = this.elLk.configDivs.filter('.' + active).css('display', 'block');
         
         if (subset) {
-          subset = configDiv.children('.' + subset).addClass('active').show();
-          configDiv.children(':not(.config_header)').not(subset).removeClass('active').hide();
+          subset = configDiv.children('.' + subset).addClass('active').css('display', 'block');
+          configDiv.children(':not(.config_header)').not(subset).removeClass('active').css('display', 'none');
           subset = null;
         } else {
-          configDiv.children().removeClass('active').show();
+          configDiv.children().removeClass('active').css('display', 'block');
         }
         
         if (url && !configDiv.children().length) {
           this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
           addSection(configDiv);
         } else {
-          configDiv.find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).show();
+          configDiv.find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).css('display', 'block');
         }
         
-        this.elLk.imageConfigExtras[configDiv.hasClass('view_config') ? 'hide' : 'show']();
+        this.elLk.imageConfigExtras.css('display', configDiv.hasClass('view_config') ? 'none' : 'block');
     }
   },
   
@@ -859,7 +873,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var noResults   = 'show';
     var els         = { show: [], hide : [], showDesc: [] };
     var searchCache = $.extend([], this.searchCache);
-    var div, divs, show, menu, ul, tracks, track, trackName, i, j, match, type, subset;
+    var div, divs, show, menu, ul, tracks, track, i, j, match, type, subset;
     
     function search(n, name, desc, li) {
       match = name.indexOf(panel.query) !== -1;
@@ -884,14 +898,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
         
         panel.searchCache.push([ n, name, desc, li, type ]);
-        els.show.push.apply(els.show, li);
-        els.show.push.apply(els.show, li.parents('li'));
+        els.show.push(li[0], li.parents('li').toArray());
         
         show      = true;
         noResults = 'hide';
       } else if (panel.imageConfig[n]) {
-        els.hide.push.apply(els.hide, li);
-        els.hide.push.apply(els.hide, li.find('div.desc'));
+        els.hide.push(li[0], li.find('div.desc').toArray());
       }
       
       li = null;
@@ -921,12 +933,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       for (type in divs) {
         if (!divs[type]) {
-          els.hide.push.apply(els.hide, this.elLk.configDivs.filter('.' + type));
+          els.hide.push(this.elLk.configDivs.filter('.' + type).toArray());
         }
       }
     } else {
-      els.hide.push.apply(els.hide, this.elLk.configDivs);
-      els.hide.push.apply(els.hide, this.elLk.configDivs.children('.subset'));
+      els.hide.push(this.elLk.configDivs.toArray(), this.elLk.configDivs.children('.subset').toArray());
       
       for (type in this.params.tracks) {
         show   = false;
@@ -945,8 +956,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
         
         if (show) {
-          els.show.push.apply(els.show, div);
-          els.show.push.apply(els.show, div.children('.subset'));
+          els.show.push(div[0], div.children('.subset').toArray());
         }
       }
     }
@@ -957,8 +967,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.lastQuery = this.query;
     
-    $(els.hide).hide();
-    $(els.show).show();
+    $([].concat.apply([], els.hide)).css('display', 'none');
+    $([].concat.apply([], els.show)).css('display', 'block');
     
     this.toggleDescription(els.showDesc, 'show');
     this.elLk.noSearchResults[noResults]();
@@ -985,8 +995,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     switch (action) {
-      case 'hide': $(desc).hide();   $(button).removeClass('open'); break;
-      case 'show': $(desc).show();   $(button).addClass('open');    break;
+      case 'hide': $(desc).css('display', 'none');  $(button).removeClass('open'); break;
+      case 'show': $(desc).css('display', 'block'); $(button).addClass('open');    break;
       default    : $(desc).toggle(); $(button).toggleClass('open');
     }
     
