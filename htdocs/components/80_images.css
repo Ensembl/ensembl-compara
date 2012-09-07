@@ -65,4 +65,5 @@ span.sprite                   { float: left; width: 16px; margin: 2px 4px 0 4px;
 .add_icon      { background-image: url(/i/16/swp/add.png);      }
 .edit_icon     { background-image: url(/i/16/swp/pencil.png);   }
 .use_icon      { background-image: url(/i/16/swp/check.png);    }
+.stop_icon     { background-image: url(/i/16/swp/stop.png);     }
 
