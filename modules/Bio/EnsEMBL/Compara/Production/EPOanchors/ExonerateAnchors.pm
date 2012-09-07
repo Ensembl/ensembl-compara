@@ -48,11 +48,15 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+	return {
+		'mapping_exe' => "/usr/local/ensembl/bin/exonerate-1.0.0",
+	};
+}
+
 
 sub fetch_input {
 	my ($self) = @_;
-
-	$self->analysis->program("/usr/local/ensembl/bin/exonerate-1.0.0") unless $self->analysis->program;
 
     $self->param('exonerate_options', $self->parameters
         ? eval($self->parameters)
@@ -78,7 +82,7 @@ sub fetch_input {
 
 sub run {
 	my ($self) = @_;
-	my $program = $self->analysis->program;
+	my $program = $self->param('mapping_exe');
 	my $query_file = $self->param('query_file');
 	my $target_file = $self->param('target_file');
 	my $option_st;
