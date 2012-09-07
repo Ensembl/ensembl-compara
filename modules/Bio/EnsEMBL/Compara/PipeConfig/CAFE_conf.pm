@@ -28,8 +28,8 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
     ++ For rel68 in ncRNA pipeline it has been run with the following command:
     init_pipeline.pl modules/Bio/EnsEMBL/Compara/PipeConfig/CAFE_conf.pm -mlss_id 40084 -work_dir /nfs/users/nfs_m/mp12/ensembl_main/ncrna_trees_68 -analysis_topup  -wait_for db_snapshot_after_Rfam_classify -per_family_table 0 -type nc -pipeline_name compara_nctrees_68 -host compara2
 
-    ++ For rel68 in proteinTree pipeline it has benn run with the following command:
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40085 -work_dir `pwd` -analysis_topup  -per_family_table 1 -type prot -pipeline_name mm14_compara_homology_69 -host compara1 -wait_for quick_tree_break 
+    ++ For rel69 in proteinTree pipeline it has benn run with the following command:
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40085 -work_dir `pwd` -analysis_topup  -per_family_table 1 -type prot -pipeline_name mm14_compara_homology_69 -host compara1 -wait_for quick_tree_break -cafe_species ''
 
 =head1 CONTACT
 
