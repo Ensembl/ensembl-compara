@@ -13,13 +13,11 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},
         'pipeline_name' => 'compara_MapAnchors',
-	'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 	   # parameters that are likely to change from execution to another:
 	'release'               => '69',
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-	'password'              => $ENV{'ENSADMIN_PSW'},
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
 		-host   => 'compara1',
