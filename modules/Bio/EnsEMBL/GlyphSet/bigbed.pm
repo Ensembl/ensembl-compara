@@ -37,30 +37,64 @@ sub format {
     );
 }
 
+# Switched to using score for features rather than coverage - coverage tends to be 1, with a score 
+# indicating the height
+#
+#sub wiggle_features {
+#  my ($self,$bins) = @_;
+#
+#  return $self->{'_cache'}->{'wiggle_features'} if exists $self->{'_cache'}->{'wiggle_features'};
+# 
+#  my $slice = $self->{'container'}; 
+#  my $summary_e = $self->bigbed_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
+#  my $binwidth = $slice->length/$bins;
+#  my $flip = ($slice->strand == 1) ? ($slice->length + 1) : undef;
+#  my @features;
+#
+#  for(my $i=0; $i<$bins; $i++) {
+#    my $s = $summary_e->[$i];
+#    my $mean = 0;
+#    $mean = $s->{'sumData'}/$s->{'validCount'} if $s->{'validCount'} > 0;
+#    my ($a,$b) = ($i*$binwidth+1, ($i+1)*$binwidth);
+#    push @features,{
+#      start => $flip ? $flip - $b : $a,
+#      end => $flip ? $flip - $a : $b,
+#      score => $mean,
+#    };
+#  }
+#  
+#  return $self->{'_cache'}->{'wiggle_features'} = \@features;
+#}
+
 sub wiggle_features {
   my ($self,$bins) = @_;
 
   return $self->{'_cache'}->{'wiggle_features'} if exists $self->{'_cache'}->{'wiggle_features'};
  
   my $slice = $self->{'container'}; 
-  my $summary_e = $self->bigbed_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
-  my $binwidth = $slice->length/$bins;
-  my $flip = ($slice->strand == 1) ? ($slice->length + 1) : undef;
-  my @features;
+  my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end);
+  $_->map($slice) for @$features;
 
-  for(my $i=0; $i<$bins; $i++) {
-    my $s = $summary_e->[$i];
-    my $mean = 0;
-    $mean = $s->{'sumData'}/$s->{'validCount'} if $s->{'validCount'} > 0;
-    my ($a,$b) = ($i*$binwidth+1, ($i+1)*$binwidth);
-    push @features,{
+  my $flip = ($slice->strand == -1) ? ($slice->length + 1) : undef;
+  my @block_features;
+
+  for(my $i=0; $i<scalar(@$features); $i++) {
+    my $f = $features->[$i];
+    #print STDERR "f = $f start = " . $f->start . " end =  " . $f->end . "\n";
+
+    my ($a,$b) = ($f->start, $f->end);
+
+    push @block_features,{
       start => $flip ? $flip - $b : $a,
       end => $flip ? $flip - $a : $b,
-      score => $mean,
+      score => $f->score,
+#      score => $f->extra_data->{thick_start}->[0],
     };
+    #print STDERR "block feature $a $b " . $f->extra_data->{thick_start}->[0] . "\n";
+    #print STDERR "block feature $a $b " . $f->score . "\n";
   }
   
-  return $self->{'_cache'}->{'wiggle_features'} = \@features;
+  return $self->{'_cache'}->{'wiggle_features'} = \@block_features;
 }
 
 sub _draw_wiggle {
@@ -107,7 +141,6 @@ sub feature_title {
   return join("; ",map { join(': ',@$_) } grep { $_->[1] } @title);
 }
 
-
 # XXX  WRONG
 sub href {
   # Links to /Location/Genome
@@ -133,15 +166,21 @@ sub features {
   # WORK OUT HOW TO CONFIGURE FEATURES FOR ENDERING
   # Explicit: Check if mode is specified on trackline
   my $style = $format->style;
-  
+
   if($style eq 'score') {
     $config->{'useScore'} = 1;
     $config->{'implicit_colour'} = 1;
   } elsif($style eq 'colour') {
     $config->{'useScore'} = 2;
+ 
+    # Instead of using default_colour if colour not present, use black
+    #my ($r, $g, $b) =  $self->{'config'}->colourmap->rgb_by_name($self->{'_default_colour'},1);
+    #my $default_rgb_string = "$r,$g,$b";
+    my $default_rgb_string = "0,0,0";
+    
     foreach (@$features) {
-      next if defined $_->external_data->{'item_colour'};
-      $_->external_data->{'item_colour'} = $self->{'_default_colour'};
+      next if (defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d*,\d*,\d*$/);
+      $_->external_data->{'item_colour'}[0] = $default_rgb_string;
     }
     $config->{'itemRgb'} = 'on';    
   }
@@ -157,8 +196,10 @@ sub features {
 sub draw_features {
   my ($self,$wiggle) = @_;
 
+
   my @error;
   if($wiggle) {
+    $self->{'height'} = 30;
     push @error,$self->_draw_wiggle();
   }
   return 0 unless @error;
@@ -182,9 +223,7 @@ sub render_labels {
   $self->render_normal(@_);
 }
 
-
 sub render_text { warn "No text renderer for bigbed\n"; return ''; }
-
 
 sub my_colour {
   my ($self, $k, $v) = @_;
