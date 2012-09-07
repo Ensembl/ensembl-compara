@@ -193,7 +193,7 @@ sub render_normal {
     
     next unless keys %id;
     
-    my @greyscale      = qw(cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000);
+    my @greyscale      = qw(ffffff d8d8d8 cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000);
     my $colour_key     = $self->colour_key($feature_key);
     my $feature_colour = $self->my_colour($colour_key);
     my $label_colour   = $feature_colour;
@@ -219,6 +219,12 @@ sub render_normal {
       @colour_gradient = $self->{'config'}->colourmap->build_linear_gradient($cg_grades, \@cg_colours);
     }
     
+    my $ngreyscale = scalar(@greyscale);
+    my $greyscale_max = 1000;
+    if ($config && exists($config->{'greyscale_max'}) && $config->{'greyscale_max'} > 0) {
+      $greyscale_max = $config->{'greyscale_max'};
+    }
+
     foreach my $i (sort { $id{$a}[0][3] <=> $id{$b}[0][3] || $id{$b}[-1][4] <=> $id{$a}[-1][4] } keys %id) {
       my @feat       = @{$id{$i}};
       my $db_name    = $feat[0][5];
@@ -233,8 +239,8 @@ sub render_normal {
         # during parsing and some stronger indication, such as the presence 
         # of scores, should override those assignments. -- ds23
         if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
-          my $index          = int(($f->score * scalar @greyscale) / 1000);
-             $index          = min(scalar(@greyscale) - 1, $index);
+          my $index          = int(($f->score * $ngreyscale) / $greyscale_max);
+             $index          = min($ngreyscale - 1, $index);
              $feature_colour = $greyscale[$index];
              $label_colour   = '#333333';
         } elsif ($config->{'useScore'} == 2) {
