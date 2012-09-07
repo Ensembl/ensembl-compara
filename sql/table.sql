@@ -550,7 +550,7 @@ CREATE TABLE peptide_align_feature (
 #  FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
 #  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 
-  PRIMARY KEY (peptide_align_feature_id),
+  PRIMARY KEY (peptide_align_feature_id)
 #  KEY hmember_hit (hmember_id, hit_rank)
 
 #  KEY qmember_id  (qmember_id),
@@ -1065,7 +1065,7 @@ CREATE TABLE `species_tree_node` (
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`,`left_index`),
   KEY `root_id_2` (`root_id`,`right_index`)
-) ENGINE=InnoDB AUTO_INCREMENT=100000157 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
 #
