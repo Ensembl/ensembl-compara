@@ -283,12 +283,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         helptip[0].className = 'helptip'; // this removes any 'helptip-left' or 'helptip-top' class added previously
         var pos = {x: e.pageX, y: e.pageY};
 
-        if ($(window).height() < (e.pageY * 2)) {
+        if ($(window).height() < ((e.pageY - $(window).scrollTop()) * 2)) {
           helptip.addClass('helptip-top');
           pos.y -= helptip.height();
         }
 
-        if ($(window).width() < (e.pageX * 2)) {
+        if ($(window).width() < ((e.pageX - $(window).scrollLeft()) * 2)) {
           helptip.addClass('helptip-left');
           pos.x -= helptip.width();
         }
