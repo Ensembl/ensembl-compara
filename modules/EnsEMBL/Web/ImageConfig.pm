@@ -590,6 +590,8 @@ sub load_user_tracks {
         source   => $url_sources{$code},
         external => 'user'
       );
+    } elsif (lc($url_sources{$code}{'format'}) eq 'datahub') {
+      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'});
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
@@ -647,32 +649,147 @@ sub load_user_tracks {
   $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 
+sub _add_datahub {
+  my ($self, $menu_name, $url) = @_;
+  
+  my $parser = new Bio::EnsEMBL::ExternalData::DataHub::SourceParser({
+    timeout => 10,
+    proxy   => $self->hub->species_defs->ENSEMBL_WWW_PROXY,
+  });
+
+  my $base_url = $url;
+  my $hub_file = 'hub.txt';
+
+  if ($url =~ /.txt$/) {
+    $base_url =~ s/(.*\/).*/$1/;
+    ($hub_file = $url) =~ s/.*\/(.*)/$1/;
+  }
+
+  ## Do we have data for this species?
+  my $hub_info = $parser->get_hub_info($base_url, $hub_file);
+    
+  if ($hub_info->{'error'}) {
+    warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
+  } else {
+    my $source_list = $hub_info->{$self->hub->species_defs->UCSC_GOLDEN_PATH};
+    
+    return unless scalar @$source_list;
+    
+    ## Get tracks from hub
+    my $datahub_config = $parser->parse($base_url . $self->hub->species_defs->UCSC_GOLDEN_PATH, $source_list);
+    
+    ## Create Ensembl-style tracks from the datahub configuration
+    ## TODO - implement track grouping!
+    foreach my $dataset (@$datahub_config) {
+      if ($dataset->{'error'}) {
+        warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
+      } else {
+        (my $key = $menu_name) =~ s/\W/_/g;
+        my $menu_key = $key;  
+
+        if ($dataset->{'config'}{'subsets'}) {
+          foreach (@{$dataset->{'tracks'}}) {
+            $self->_add_datahub_tracks($_, $menu_name, $menu_key, $dataset->{'config'}{'description_url'});
+          }
+        }
+        else {
+          $self->_add_datahub_tracks($dataset, $menu_name, $menu_key);
+        }
+      }
+    }
+  }
+}
+
+sub _add_datahub_tracks {
+  my ($self, $dataset, $name, $menu_key, $desc_url) = @_;
+  my %sources_by_type;
+
+  my $options = {
+                  menu_key     => $menu_key,
+                  menu_name    => $name,
+                  submenu_key  => $dataset->{'config'}{'track'},
+                  submenu_name => $dataset->{'config'}{'shortLabel'},
+                  desc_url     => $desc_url || $dataset->{'config'}{'description_url'},
+                  view         => $dataset->{'config'}{'view'},
+                };
+
+  foreach my $track (@{$dataset->{'tracks'}}) {
+    my $link = ' <a href="'.$options->{'desc_url'}.'" rel="external">Go to track description on datahub</a>';
+    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
+    (my $source_name = $track->{'longLabel'}) =~ s/_/ /g;
+    my $source = {
+      'name'          => $track->{'track'},
+      'source_name'   => $source_name,
+      'description'   => $track->{'longLabel'}.$link,
+      'source_url'    => $track->{'bigDataUrl'},
+      'datahub'       => 1,
+      %$options
+    };
+
+    $source->{'colour'} = $track->{'color'} if (exists($track->{'color'}));
+
+    my $type = ref($track->{'type'}) eq 'HASH' ? uc($track->{'type'}{'format'}) : uc($track->{'type'});
+
+    if (exists($track->{'viewLimits'})) {
+      $source->{'viewLimits'} = $track->{'viewLimits'};
+    } elsif (exists($track->{'autoscale'}) && $track->{'autoscale'} eq 'off') {
+      $source->{'viewLimits'} = '0:127';
+    }
+    if (exists($track->{'maxHeightPixels'})) {
+      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
+    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
+      $source->{'maxHeightPixels'} = '64:32:16';
+    }
+
+    if ($type eq 'BIGWIG') {
+      # To improve browser speed don't display a zmenu for bigwigs 
+      $source->{'no_titles'} = 1;
+    }
+
+    $sources_by_type{$type}{$track->{'track'}} = $source;
+  }
+
+  foreach my $format (keys(%sources_by_type)) {
+    $self->load_file_format(lc($format), \%{$sources_by_type{$format}});
+  }
+}
+
 sub load_configured_bam    { shift->load_file_format('bam');    }
 sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
 
 sub load_file_format {
-  my ($self, $format)  = @_;
-  my $internal_sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {}; # get the internal sources from config
+  my ($self, $format, $sources)  = @_;
   my $function         = "_add_${format}_track";
 
-  foreach my $source_name (sort keys %$internal_sources) {
+  if (!defined($sources)) {
+    $sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {}; # get the internal sources from config
+  }
+
+  foreach my $source_name (sort keys %$sources) {
     # get the target menu 
-    my $menu = $self->get_node($internal_sources->{$source_name});
+    my $menu = $self->get_node($sources->{$source_name});
     my ($source, $view);
     
     if ($menu) {
       $source = $self->sd_call($source_name);
     } else {
       ## Probably an external datahub source
-      $source           = $internal_sources->{$source_name};
+      $source           = $sources->{$source_name};
       $view             = $source->{'view'},
       my $menu_key      = $source->{'menu_key'};
       my $menu_name     = $source->{'menu_name'};
       my $submenu_key   = $source->{'submenu_key'};
       my $submenu_name  = $source->{'submenu_name'};
-      my $main_menu     = $self->get_node($menu_key)    || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name));
+
+      my $options = {};
+      if (exists($source->{'datahub'})) {
+        $options->{datahub} = 1;
+      }
+
+      #print STDERR "Source name $source_name view $view menu_key $menu_key menu_name $menu_name submenu_key $submenu_key submenu_name $submenu_name datahub " . exists($source->{'datahub'}) . " \n";
+      my $main_menu     = $self->get_node($menu_key)    || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name, $options));
          $menu          = $self->get_node($submenu_key) || $main_menu->append_child($self->create_submenu($submenu_key, $submenu_name));
     }
     
@@ -728,6 +845,8 @@ sub _add_bigbed_track {
     push @$renderers, ('tiling', 'Wiggle plot');
   } 
 
+  $options = $self->_add_datahub_extras_to_options($options, %args);
+
   $self->_add_file_format_track(
     format      => 'BigBed',
     description => 'Bigbed file',
@@ -740,19 +859,45 @@ sub _add_bigbed_track {
 sub _add_bigwig_track {
   my ($self, %args) = @_;
   
+  my $options = {
+      external => 'external',
+      sub_type => 'bigwig',
+      colour   => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
+  };
+
+  $options = $self->_add_datahub_extras_to_options($options, %args);
+
   $self->_add_file_format_track(
     format    => 'BigWig', 
     renderers =>  [
       'off',    'Off',
       'tiling', 'Wiggle plot',
+      'compact', 'Compact',
     ], 
-    options => {
-      external => 'external',
-      sub_type => 'bigwig',
-      colour   => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
-    },
+    options => $options,
     %args
   );
+}
+
+sub _add_datahub_extras_to_options {
+  my ($self,$options,%args) = @_;
+
+  if (exists($args{'menu'}{'viewLimits'}) || exists($args{'source'}{'viewLimits'})) {
+    $options->{'viewLimits'} = $args{'menu'}{'viewLimits'} || $args{'source'}{'viewLimits'};
+  }
+  if (exists($args{'menu'}{'maxHeightPixels'}) || exists($args{'source'}{'maxHeightPixels'})) {
+    $options->{'maxHeightPixels'} = $args{'menu'}{'maxHeightPixels'} || $args{'source'}{'maxHeightPixels'};
+
+    (my $default_height = $options->{'maxHeightPixels'}) =~ s/^.*:([0-9]*):.*$/$1/;
+
+    if ($default_height > 0) {
+      $options->{'height'} = $default_height;
+    }
+  }
+  if (exists($args{'menu'}{'no_titles'}) || exists($args{'source'}{'no_titles'})) {
+    $options->{'no_titles'} = $args{'menu'}{'no_titles'} || $args{'source'}{'no_titles'};
+  }
+  return $options; 
 }
 
 sub _add_vcf_track {
@@ -824,9 +969,9 @@ sub _add_file_format_track {
       encode_entities($args{'source'}{'source_url'})
     );
   }
-  
+
   $args{'key'} =~ s/\W/_/g;
-  
+
   my $track = $self->create_track($args{'key'}, $args{'source'}{'source_name'}, {
     display     => 'off',
     strand      => 'f',
@@ -937,6 +1082,7 @@ sub update_from_url {
       
       if ($type eq 'url') {
         my $format      = $hub->param('format');
+        my $menu_name   = $hub->param('menu');
         my $all_formats = $hub->species_defs->DATA_FORMAT_INFO;
         
         if (!$format) {
@@ -951,12 +1097,26 @@ sub update_from_url {
               last;
             }  
           }
+          if (!$format) {
+            # Didn't match format name - now try checking format extensions
+            while (my ($name, $info) = each (%$all_formats)) {
+              if ($ext eq $info->{'ext'}) {
+                $format = $name;
+                last;
+              }  
+            }
+          }
         }
 
         my $style = $all_formats->{lc($format)}{'display'} eq 'graph' ? 'wiggle' : $format;
         my $code  = md5_hex("$species:$p");
-        my $n     = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
-        
+        my $n;
+        if ($menu_name) {
+          $n = $menu_name;
+        } else {
+          $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+        }
+
         # We have to create a URL upload entry in the session
         $session->set_data(
           type    => 'url',
@@ -976,13 +1136,18 @@ sub update_from_url {
         );
         
         # We then have to create a node in the user_config
-        $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-          sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
-          url   => $p,
-          style => $style
-        );
-        
-        $self->update_track_renderer("url_$code", $renderer);
+        if (uc($format) ne 'DATAHUB') {
+          $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
+            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
+            url   => $p,
+            style => $style
+          );
+
+          $self->update_track_renderer("url_$code", $renderer);
+        } else {
+          # print STDERR "Handling DATAHUB url request\n";
+          $self->_add_datahub($n, $p);
+        }        
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
         
@@ -1462,18 +1627,21 @@ sub add_dna_align_features {
       }
       
       my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
-
-      if ($data->{$key_2}{'display'} && $data->{$key_2}{'display'} eq 'simple'){
+      my $glyphset = '_alignment';
+      my $strand = 'b';
+      if ($key_2 eq 'alt_seq_mapping'){
         $display = 'simple';
-        $alignment_renderers = ['off', 'Off', 'simple', 'On'];  
+        $alignment_renderers = ['off', 'Off', 'normal', 'On'];  
+        $glyphset = 'patch_ref_alignment';
+        $strand = 'f';
       }
       $self->generic_add($menu, $key, "dna_align_${key}_$key_2", $data->{$key_2}, {
-        glyphset  => '_alignment',
+        glyphset  => $glyphset,
         sub_type  => lc $k,
         colourset => 'feature',
         display   => $display,
         renderers => $alignment_renderers,
-        strand    => 'b',
+        strand    => $strand,
       });
     }
   }
