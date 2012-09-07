@@ -82,7 +82,7 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-            'cafe_default' => { 'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+            'cafe_default' => { 'LSF' => '-S 1024 -C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
             'cafe' => { 'LSF' => '-S 1024 -q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
            };
 }
