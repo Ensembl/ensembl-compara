@@ -88,16 +88,15 @@ sub run {
     my $stats = new Statistics::Descriptive::Full;
 
     foreach my $homology (@$homologies) {
-        eval {
-            # other_paralogs are not aligned together (they lie in different alignments)
-            $self->calc_genetic_distance($homology, $codeml_parameters) unless $homology->description eq 'other_paralog';
-            $stats->add_data($homology->ds);
-        };
-        if ($@) {
-            $self->warning($@);
+        # other_paralogs are not aligned together (they lie in different alignments)
+        next if $homology->description eq 'other_paralog';
+        unless ($homology->ds) {
+            eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
+            $self->warning($@) if $@;
+            # To save memory
+            $homology->clear;
         }
-        # To save memory
-        $homology->clear;
+        $stats->add_data($homology->ds);
     }
 
     my $median = $stats->median;
