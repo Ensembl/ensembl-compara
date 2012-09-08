@@ -720,6 +720,7 @@ sub _add_datahub_tracks {
     my $source = {
       'name'          => $track->{'track'},
       'source_name'   => $source_name,
+      'caption'       => $track->{'shortLabel'},
       'description'   => $track->{'longLabel'}.$link,
       'source_url'    => $track->{'bigDataUrl'},
       'datahub'       => 1,
@@ -979,7 +980,7 @@ sub _add_file_format_track {
     glyphset    => $type,
     colourset   => $type,
     renderers   => $args{'renderers'},
-    caption     => $args{'source'}{'source_name'},
+    caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
     url         => $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}

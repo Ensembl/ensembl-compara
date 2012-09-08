@@ -416,7 +416,6 @@ sub _summarise_variation_db {
  my $sv_aref = $dbh->selectall_arrayref('select count(*) from structural_variation');
  foreach (@$sv_aref){
     my ($count) = @$_;
-    warn ">>> COUNT $count";
     $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'} = $count;
  }
 
@@ -1338,6 +1337,7 @@ sub _add_datahub_tracks {
     my $source = {
       'name'          => $track->{'track'},
       'source_name'   => $source_name,
+      'caption'       => $track->{'shortLabel'},
       'description'   => $track->{'longLabel'}.$link,
       'source_url'    => $track->{'bigDataUrl'},
       'datahub'       => 1,
