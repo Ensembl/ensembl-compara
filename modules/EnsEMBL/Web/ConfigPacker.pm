@@ -1333,11 +1333,13 @@ sub _add_datahub_tracks {
   foreach my $track (@{$dataset->{'tracks'}}) {
     my $link = ' <a href="'.$options->{'desc_url'}.'" rel="external">Go to track description on datahub</a>';
     # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
+    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
+    # means the short label can be very non specific, because the header gives context of what type of     # track it is. For Ensembl we need to have all the information in the track name / caption
     (my $source_name = $track->{'longLabel'}) =~ s/_/ /g;
     my $source = {
       'name'          => $track->{'track'},
       'source_name'   => $source_name,
-      'caption'       => $track->{'shortLabel'},
+#      'caption'       => $track->{'shortLabel'},
       'description'   => $track->{'longLabel'}.$link,
       'source_url'    => $track->{'bigDataUrl'},
       'datahub'       => 1,
