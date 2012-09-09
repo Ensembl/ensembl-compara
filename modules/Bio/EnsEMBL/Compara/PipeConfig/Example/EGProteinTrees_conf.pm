@@ -99,6 +99,23 @@ sub default_options {
     tree_dir                =>  $self->o('ensembl_cvs_root_dir').'/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
 #    species_tree_input_file =>  $self->o('tree_dir').'/'.$self->o('division_name').'.peptide.nh',
 
+    # hive_capacity values for some analyses:
+        'reuse_capacity'            =>   4,
+        'blast_factory_capacity'    =>  50,
+        'blastp_capacity'           => 900,
+        'mcoffee_capacity'          => 600,
+        'split_genes_capacity'      => 600,
+        'njtree_phyml_capacity'     => 400,
+        'ortho_tree_capacity'       => 200,
+        'ortho_tree_annot_capacity' => 300,
+        'quick_tree_break_capacity' => 100,
+        'build_hmm_capacity'        => 200,
+        'merge_supertrees_capacity' => 100,
+        'other_paralogs_capacity'   => 100,
+        'homology_dNdS_capacity'    => 200,
+        'qc_capacity'               =>   4,
+        'HMMer_classify_capacity'   => 100,
+
     #DNDS
     codeml_parameters_file  => $self->o('ensembl_cvs_root_dir').'/EGCompara/config/prod/configs/Release'.$self->o('eg_release').'/codeml.ctl.hash',
     taxlevels               => ['cellular organisms'],
@@ -199,6 +216,7 @@ sub resource_classes {
   my ($self) = @_;
   return {
          'default'      => {'LSF' => '-q production' },
+         '250Mb_job'    => {'LSF' => '-q production -M250   -R"select[mem>250]   rusage[mem=250]"' },
          '500Mb_job'    => {'LSF' => '-q production -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-q production -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-q production -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },

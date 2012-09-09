@@ -129,6 +129,21 @@ sub default_options {
             'hmmer_path'           => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
     # hive_capacity values for some analyses:
+        'reuse_capacity'            =>   4,
+        'blast_factory_capacity'    =>  50,
+        'blastp_capacity'           => 900,
+        'mcoffee_capacity'          => 600,
+        'split_genes_capacity'      => 600,
+        'njtree_phyml_capacity'     => 400,
+        'ortho_tree_capacity'       => 200,
+        'ortho_tree_annot_capacity' => 300,
+        'quick_tree_break_capacity' => 100,
+        'build_hmm_capacity'        => 200,
+        'merge_supertrees_capacity' => 100,
+        'other_paralogs_capacity'   => 100,
+        'homology_dNdS_capacity'    => 200,
+        'qc_capacity'               =>   4,
+        'HMMer_classify_capacity'   => 100,
 
     # connection parameters to various databases:
 
@@ -203,6 +218,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
+         '250Mb_job'    => {'LSF' => '-C0 -M250000   -R"select[mem>250]   rusage[mem=250]"' },
          '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]"' },

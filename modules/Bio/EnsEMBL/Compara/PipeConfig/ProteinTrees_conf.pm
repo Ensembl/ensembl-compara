@@ -105,21 +105,21 @@ sub default_options {
         'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
     # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   4,
-        'blast_factory_capacity'    =>  50,
-        'blastp_capacity'           => 450,
-        'mcoffee_capacity'          => 600,
-        'split_genes_capacity'      => 600,
-        'njtree_phyml_capacity'     => 400,
-        'ortho_tree_capacity'       => 200,
-        'ortho_tree_annot_capacity' => 300,
-        'quick_tree_break_capacity' => 100,
-        'build_hmm_capacity'        => 200,
-        'merge_supertrees_capacity' => 100,
-        'other_paralogs_capacity'   => 100,
-        'homology_dNdS_capacity'    => 200,
-        'qc_capacity'               =>   4,
-        'HMMer_classify_capacity'   => 100,
+        #'reuse_capacity'            =>   4,
+        #'blast_factory_capacity'    =>  50,
+        #'blastp_capacity'           => 900,
+        #'mcoffee_capacity'          => 600,
+        #'split_genes_capacity'      => 600,
+        #'njtree_phyml_capacity'     => 400,
+        #'ortho_tree_capacity'       => 200,
+        #'ortho_tree_annot_capacity' => 300,
+        #'quick_tree_break_capacity' => 100,
+        #'build_hmm_capacity'        => 200,
+        #'merge_supertrees_capacity' => 100,
+        #'other_paralogs_capacity'   => 100,
+        #'homology_dNdS_capacity'    => 200,
+        #'qc_capacity'               =>   4,
+        #'HMMer_classify_capacity'   => 100,
 
     # connection parameters to various databases:
 
@@ -775,7 +775,7 @@ sub pipeline_analyses {
                 'wublastp_exe'              => $self->o('wublastp_exe'),
             },
             -batch_size    => 40,
-            -rc_name       => '500Mb_job',
+            -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blastp_capacity'),
         },
 
@@ -991,7 +991,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'split_genes',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '500Mb_job',
+            -rc_name        => '250Mb_job',
             -batch_size     => 20,
             -priority       => 20,
             -flow_into      => [ 'njtree_phyml' ],
@@ -1051,7 +1051,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 10,
-            -rc_name => '500Mb_job',
+            -rc_name => '250Mb_job',
         },
 
         {   -logic_name => 'build_HMM_cds',
@@ -1089,7 +1089,7 @@ sub pipeline_analyses {
                 'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '500Mb_job',
+            -rc_name        => '250Mb_job',
             -priority       => 40,
             -flow_into => {
                 '2->A' => [ 'msa_chooser' ],
