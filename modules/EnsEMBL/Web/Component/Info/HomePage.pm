@@ -88,7 +88,6 @@ sub _whatsnew_text {
   my $hub             = $self->hub;
   my $species_defs    = $hub->species_defs;
   my $species         = $hub->species;
-  my $adaptor         = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
     
   my $news_url = $hub->url({'action'=>'WhatsNew'});
 
@@ -98,7 +97,8 @@ sub _whatsnew_text {
                         $species_defs->ENSEMBL_VERSION,
                     );
 
-  if ($adaptor) {
+  if ($species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
+    my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
     my $params = {'release' => $species_defs->ENSEMBL_VERSION, 'species' => $species, 'limit' => 3};
     my @changes = @{$adaptor->fetch_changelog($params)};
 
