@@ -278,7 +278,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       },
       focus: function () {
-        this.value = '';
+        if (this.value === this.defaultValue) {
+          this.value = '';
+        }
+        
         this.style.color = '#000';
       },
       blur: function () {
@@ -655,7 +658,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     switch (active) {
       case 'search_results':
-        this.elLk.search.val(this.query);
+        this.elLk.search.val(this.query).css('color', '#000');
         this.search();
         break;
         
@@ -989,8 +992,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.lastQuery = this.query;
     
-    $([].concat.apply([], els.hide)).css('display', 'none');
-    $([].concat.apply([], els.show)).css('display', 'block');
+    $([].concat.apply([], els.hide)).filter(function () { return this.style.display !== 'none'; }).css('display', 'none');
+    $([].concat.apply([], els.show)).filter(function () { return this.style.display === 'none'; }).css('display', 'block');
     
     this.toggleDescription(els.showDesc, 'show');
     this.elLk.noSearchResults[noResults]();
