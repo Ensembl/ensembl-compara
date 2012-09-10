@@ -240,7 +240,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'sequence sequence_cds sequence_exon_bounded member subset subset_member',
+                'table_list'    => '',
                 'filename'      => 'snapshot_2_before_allvsallblast.sql',
             },
             -flow_into  => {
@@ -264,7 +264,8 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_tree_building',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'meta gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_member hmm_profile',
+                'table_list'    => 'peptide_align_feature_%',
+                'exclude_list'  => 1,
                 'filename'      => 'snapshot_4_before_tree_building.sql',
             },
             -flow_into  => {
@@ -276,7 +277,8 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_dnds',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_member gene_tree_node_attr gene_tree_node_tag homology homology_member',
+                'table_list'    => 'peptide_align_feature_%',
+                'exclude_list'  => 1,
                 'filename'      => 'snapshot_5_before_dnds.sql',
             },
             -flow_into  => {
