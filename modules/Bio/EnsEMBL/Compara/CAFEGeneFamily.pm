@@ -138,7 +138,7 @@ sub is_tree_significant {
 
 sub is_node_significant {
     my ($self) = @_;
-    return $self->pvalue < $self->root->pvalue_lim;
+    return $self->pvalue < $self->pvalue_lim;
 }
 
 sub get_contractions {
@@ -181,13 +181,21 @@ sub is_contraction {
 
 #################################
 
-sub genome_db_id {
+sub genome_db {
+    my ($self) = @_;
+    return undef unless ($self->is_leaf);
+    $self->throw("taxon_id is not in this node") unless ($self->taxon_id);
+    my $GenomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
+    
+}
+
+sub genome_db {
     my ($self) = @_;
     return undef unless ($self->is_leaf);
     $self->throw("taxon_id is not set in this node") unless ($self->taxon_id);
     my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
     my $genomeDB = $genomeDBAdaptor->fetch_by_taxon_id($self->taxon_id);
-    return $genomeDB->dbID();
+    return $genomeDB;
 }
 
 sub get_leaf_with_genome_db_id {
