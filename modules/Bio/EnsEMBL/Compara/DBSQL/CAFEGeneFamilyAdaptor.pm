@@ -72,7 +72,7 @@ sub fetch_by_gene_tree_root_id {
     unless (defined $gene_tree_root_id) {
         throw("gene_tree_root_id must be defined");
     }
-    my $constraint = "csg.gene_tree_root_id = $gene_tree_root_id AND str.root_id = stn.root_id";
+    my $constraint = "cgf.gene_tree_root_id = $gene_tree_root_id AND str.root_id = stn.root_id";
     my $trees = $self->generic_fetch($constraint);
 
     if (scalar @$trees > 1) {
