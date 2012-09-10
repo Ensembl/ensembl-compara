@@ -41,8 +41,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.configDivs        = $('div.config', this.elLk.form);
     this.elLk.configs           = $('ul.config_menu > li', this.elLk.configDivs);
     this.elLk.tracks            = this.elLk.configs.filter('.track');
-    this.elLk.help              = $('.menu_help',  this.elLk.configDivs);
-    this.elLk.menus             = $('.popup_menu', this.elLk.configDivs);
+    this.elLk.help              = $('.menu_help',  this.elLk.configs);
+    this.elLk.menus             = $('.popup_menu', this.elLk.configs);
     this.elLk.favouritesMsg     = this.elLk.configDivs.filter('.favourite_tracks');
     this.elLk.noSearchResults   = this.elLk.configDivs.filter('.no_search');
     this.elLk.trackOrder        = this.elLk.configDivs.filter('.track_order');
@@ -216,7 +216,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       menu = track = img = li = null;
     });
     
-    this.elLk.configDivs.on('click', '.popup_menu .header .close', function (e) {
+    this.elLk.configDivs.on('click', '.popup_menu .header .close', function () {
       $(this).parents('.popup_menu').hide();
     });
     
@@ -365,63 +365,40 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    var panel    = this;
-    var tracks   = this.params.tracks[type];
-    var configs  = this.elLk.configDivs.filter('.' + type).find('ul.config_menu');
-    var existing = [];
-    var i        = tracks.length;
-    var j, track, li, div, link;
-    
-    function setConfig(trackName) {
-      if (!panel.imageConfig[trackName]) {
-        panel.imageConfig[trackName] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][trackName], el: li };
-      }
-      
-      panel.externalFavourite(trackName, li);
-    }
-    
-    configs.each(function (k) {
-      if (!existing[k]) {
-        existing[k] = {};
-      }
-      
-      $(this).children('.track').each(function () {
-        $('input.track_name', this).each(function () {
-          existing[k][this.name] = $(this).parent('li');
-        });
-      }).detach();
-    });
+    var tracks       = this.params.tracks[type];
+    var configs      = this.elLk.configDivs.filter('.' + type).find('ul.config_menu');
+    var i            = tracks.length;
+    var imageConfigs = [];
+    var j, track, li, ul, link, html, subset;
     
     while (i--) {
-      j    = tracks[i].length;
-      div  = configs.eq(i);
-      link = div.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '');
-      
-      var prepend = [];
+      j               = tracks[i].length;
+      ul              = configs.eq(i);
+      link            = ul.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '');
+      html            = [];
+      imageConfigs[i] = [];
       
       while (j--) {
         track = tracks[i][j];
-        li    = existing[i][track[0]] ? existing[i][track[0]] : $(track[1]);
         
-        if (track[1].match('config_menu')) {
-          $('input.track_name', track[1]).each(function () {
-            if (existing[i][this.name]) {
-              li.find('.' + this.name).replaceWith(existing[i][this.name]);
-            } else {
-              setConfig(this.name);
-            }
-          });
+        if (this.imageConfig[track[0]]) {
+          ul.children('.' + track[0]).remove();
+          html.unshift(this.imageConfig[track[0]].el[0].outerHTML || [ '<li class="', this.imageConfig[track[0]].el[0].className , '">', this.imageConfig[track[0]].el[0].innerHTML, '</li>' ].join(''));
         } else {
-          setConfig(track[0]);
+          html.unshift(track[1]);
         }
         
-        prepend.unshift(li[0]);
+        imageConfigs[i][j] = track[0];
       }
       
-      div.prepend(prepend);
+      if (ul[0].innerHTML) {
+        html.push(ul[0].innerHTML);
+      }
       
-      div.find('.track').each(function () {
-        var subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
+      ul[0].innerHTML = html.join('');
+      
+      ul.children('.track').each(function () {
+        subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
         
         $(this).data('links', [
           'a.' + type,
@@ -430,28 +407,48 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       });
     }
     
+    i = imageConfigs.length;
+    
+    while (i--) {
+      ul = configs.eq(i).children();
+      j  = imageConfigs[i].length;
+      
+      while (j--) {
+        li    = ul.eq(j);
+        track = imageConfigs[i][j];
+        
+        if (this.imageConfig[track]) {
+          this.imageConfig[track].el = li;
+        } else {
+          this.imageConfig[track] = { renderer: 'off', favourite: !!this.favourites[type] && this.favourites[type][track], el: li };
+        }
+        
+        this.externalFavourite(track, li);
+      }
+    }
+    
     this.updateElLk(type);
     this.populated[type] = 1;
     
-    configs = div = li = null;
+    configs = ul = li = null;
   },
   
   updateElLk: function (type) {
-    if (type) {
-      type = this.elLk.configDivs.filter('.' + type);
+    if (type) { // FIXME: dead elements are left behind      
+      var configs = this.elLk.configDivs.filter('.' + type).find('ul.config_menu > li');
       
-      this.elLk.help    = this.elLk.help.add('.menu_help',           type);
-      this.elLk.menus   = this.elLk.menus.add('.popup_menu',         type);
-      this.elLk.configs = this.elLk.configs.add('.config_menu > li', type);
+      this.elLk.configs = this.elLk.configs.add(configs);
+      this.elLk.help    = this.elLk.help.add(configs.children('.controls').children('.menu_help'));
+      this.elLk.menus   = this.elLk.menus.add(configs.children('.popup_menu'));
       
-      type = null;
+      configs = null;
     } else {
-      this.elLk.help    = $('.menu_help',        this.elLk.configDivs);
-      this.elLk.menus   = $('.popup_menu',       this.elLk.configDivs);
-      this.elLk.configs = $('.config_menu > li', this.elLk.configDivs);
+      this.elLk.configs = this.elLk.configDivs.find('ul.config_menu > li');
+      this.elLk.help    = this.elLk.configs.children('.controls').children('.menu_help');
+      this.elLk.menus   = this.elLk.configs.children('.popup_menu');
     }
     
-    this.elLk.tracks  = this.elLk.configs.filter('.track');
+    this.elLk.tracks = this.elLk.configs.filter('.track');
   },
   
   show: function (active) {
@@ -518,11 +515,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var i, trackName, order, li;
       
       panel.elLk.tracks.filter('.on').each(function () {
-        trackName = $(this).children('input.track_name')[0].name;
+        var el    = $(this);
+        trackName = el.children('input.track_name')[0].name;
         order     = panel.params.order[trackName];
         
         if (typeof order !== 'undefined' && !lis.filter('.' + trackName).length) {
-          tracks.push([ order, $(this), trackName ]);
+          tracks.push([ order, el, trackName ]);
           return;
         }
         
@@ -530,9 +528,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           order = panel.params.order[trackName + '.' + strand[i]];
           
           if (typeof order !== 'undefined' && !lis.filter('.' + trackName + '.' + strand[i]).length) {
-            tracks.push([ order, $(this), trackName + ' ' + strand[i], '<div class="strand" title="' + (strand[i] === 'f' ? 'Forward' : 'Reverse') + ' strand"></div>' ]);
+            tracks.push([ order, el, trackName + ' ' + strand[i] + (el.hasClass('fav') ? ' fav' : ''), '<div class="strand" title="' + (strand[i] === 'f' ? 'Forward' : 'Reverse') + ' strand"></div>' ]);
           }
         }
+        
+        el = null;
       });
       
       tracks = tracks.sort(function (a, b) { return a[0] - b[0]; });
@@ -615,6 +615,18 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       });
     }
     
+    function show() {
+      if (this.style.display === 'none') {
+        this.style.display = 'block';
+      }
+    }
+    
+    function findActive() {
+      if ((' ' + this.className + ' ').indexOf(' active ') !== -1) {
+        return this;
+      }
+    }
+    
     this.el.animate({ scrollTop: 0 }, 0);
     
     if (active.rel === 'multi' ^ this.elLk.form.hasClass('multi')) {
@@ -661,24 +673,34 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
       default:
         this.addTracks(active);
-        configDiv = this.elLk.configDivs.filter('.' + active).css('display', 'block');
+        
+        configDiv = this.elLk.configDivs.filter('.' + active).each(show);
         
         if (subset) {
-          subset = configDiv.children('.' + subset).addClass('active').css('display', 'block');
-          configDiv.children(':not(.config_header)').not(subset).removeClass('active').css('display', 'none');
-          subset = null;
+          configDiv.children('.' + subset).addClass('active').each(show).siblings(':not(.config_header)').map(function () {
+            if (this.style.display !== 'none') {
+              this.style.display = 'none';
+            }
+            
+            return findActive.call(this);
+          }).removeClass('active');
         } else {
-          configDiv.children().removeClass('active').css('display', 'block');
+          configDiv.children().map(function () {
+            show.call(this);
+            return findActive.call(this);
+          }).removeClass('active');
         }
         
         if (url && !configDiv.children().length) {
           this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
           addSection(configDiv);
         } else {
-          configDiv.find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).css('display', 'block');
+          configDiv.find('ul.config_menu > li').each(show);
         }
         
         this.elLk.imageConfigExtras.css('display', configDiv.hasClass('view_config') ? 'none' : 'block');
+        
+        configDiv = null;
     }
   },
   
