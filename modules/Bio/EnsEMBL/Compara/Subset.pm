@@ -31,11 +31,9 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::Subset;
 
 use strict;
-use Bio::Species;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
-use Data::Dumper;
 
 sub new {
   my ($class, @args) = @_;
