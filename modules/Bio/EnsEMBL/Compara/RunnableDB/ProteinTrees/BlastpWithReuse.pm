@@ -56,6 +56,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable::Blast;
 use Bio::EnsEMBL::Analysis::Tools::BPliteWrapper;
 use Bio::EnsEMBL::Analysis::Tools::FilterBPlite;
@@ -144,6 +145,8 @@ sub run {
     die "Cannot execute '$wublastp_exe'" unless(-x $wublastp_exe);
 
     my $blast_tmp_dir     = $self->param('blast_tmp_dir');
+    
+    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
     my %cross_pafs = ();
 
@@ -187,7 +190,7 @@ sub run {
          -query     => $query,
          -database  => $cross_genome_dbfile,
          -program   => $wublastp_exe,
-         -analysis  => $self->analysis,
+         -analysis  => $fake_analysis,
          -options   => $blast_options,
          -parser    => $parser,
          -filter    => undef,
@@ -215,7 +218,6 @@ sub run {
           #The returned FeaturePair objects thus need to be reset to the real analysis object
       foreach my $feature (@{$runnable->output}) {
         if($feature->isa('Bio::EnsEMBL::FeaturePair')) {
-          $feature->analysis($self->analysis);
           $feature->{null_cigar} = 1 if ($self->param('null_cigar'));
         }
         push @{$cross_pafs{$genome_db->dbID}}, $feature;
