@@ -44,7 +44,7 @@ sub content {
   $form->add_element(type => 'Hidden', name => 'nonpositional', value => 1);
   $form->add_element(type => 'SubHeader',                       value => 'Upload file');
   $form->add_element(type => 'String', name => 'name', label => 'Name for this upload (optional)');
-  $form->add_element(type => 'Text',   name => 'text', label => 'Paste file');
+  $form->add_element(type => 'Text',   name => 'text', label => 'Paste data');
   $form->add_element(type => 'File',   name => 'file', label => 'Upload file');
   $form->add_element(type => 'URL',    name => 'url',  label => 'or provide file URL', size => 30);
  
