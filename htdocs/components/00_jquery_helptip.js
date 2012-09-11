@@ -9,11 +9,7 @@
     tip,      // text to be displayed on hover
     options   // options - delay, width, static (TODO)
   ) {
-    if (arguments.length === 2 && typeof tip === 'object') {
-      options = tip;
-      tip = '';
-    }
-    
+  
     el = $(el);
     
     if (typeof tip === 'undefined' || tip === '') {
@@ -70,8 +66,14 @@
   };
 
   $.fn.helptip = function (tip, options) {
+
+    if (typeof tip === 'object') {
+      options = tip;
+      tip = '';
+    }
+
     options = $.extend({ 'static': $(document.body).hasClass('ie67') }, options || {});
-    
+
     return this.each(function() {
       new $.helptip(this, tip, options);
     });
