@@ -49,7 +49,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_homology_merged_68',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_69',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara4',
@@ -71,7 +71,7 @@ sub default_options {
 
         'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
 
-            'prevrel_db' => 'mysql://ensro@compara3/mm14_ensembl_compara_67',
+            'prevrel_db' => 'mysql://ensro@compara3/mm14_ensembl_compara_68',
 #         'prevrel_db' => {
 #             -host   => 'compara4',
 #             -port   => 3306,
@@ -82,7 +82,7 @@ sub default_options {
 
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
-            'genetrees_db' => 'mysql://ensro@compara3/mm14_compara_homology_68',
+            'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_69',
 #         'genetrees_db' => {
 #             -host   => 'compara2',
 #             -port   => 3306,
@@ -94,7 +94,7 @@ sub default_options {
         'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded' ],
         'genetrees_merge_tables' => [ 'subset', 'subset_member', 'stable_id_history', 'homology', 'homology_member', 'method_link_species_set_tag', 'CAFE_tree', 'CAFE_tree_node', 'CAFE_tree_attr' ],
 
-            'families_db' => 'mysql://ensro@compara4/lg4_compara_families_68',
+            'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',
 #         'families_db' => {
 #             -host   => 'compara1',
 #             -port   => 3306,
@@ -105,7 +105,7 @@ sub default_options {
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'subset', 'subset_member', 'stable_id_history' ],
 
-            'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_68',
+            'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_69a',
 #         'nctrees_db' => {
 #             -host   => 'compara4',
 #             -port   => 3306,
