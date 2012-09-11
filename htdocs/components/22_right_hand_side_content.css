@@ -121,8 +121,8 @@ form.data_table_export { display: none; }
 /***********************************
            helptip stuff
 ***********************************/
-div.-helptip                    { position: absolute; z-index: 999999999999; max-width: 250px; display: none; border-left: 8px solid [[PAGE_TEXT]]; border-top: 8px solid transparent; margin: 20px 0 0 10px; }
-div.-helptip div.-ht-inner      { background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px 8px 8px 0; line-height: 16px; }
-div.-helptip-top                { border-bottom: 8px solid transparent; border-top-width: 0; margin-top: -20px; }
-div.-helptip-left               { border-right: 8px solid [[PAGE_TEXT]]; border-left-width: 0; margin-left: -10px; }
-div.-helptip-left div.-ht-inner { padding-left: 8px; padding-right: 0; }
+div.helptip                   { position: absolute; z-index: 999999999999; max-width: 250px; display: none; border-left: 8px solid [[PAGE_TEXT]]; border-top: 8px solid transparent; margin: 20px 0 0 10px; }
+div.helptip div.ht-inner      { background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px 8px 8px 0; line-height: 16px; }
+div.helptip-top               { border-bottom: 8px solid transparent; border-top-width: 0; margin-top: -20px; }
+div.helptip-left              { border-right: 8px solid [[PAGE_TEXT]]; border-left-width: 0; margin-left: -10px; }
+div.helptip-left div.ht-inner { padding-left: 8px; padding-right: 0; }
