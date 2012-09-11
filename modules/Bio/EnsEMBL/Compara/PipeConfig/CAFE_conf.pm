@@ -25,11 +25,18 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
 
     The PipeConfig file for CAFE pipeline. It is used as an analysis_topup pipeline.
 
-    ++ For rel68 in ncRNA pipeline it has been run with the following command:
-    init_pipeline.pl modules/Bio/EnsEMBL/Compara/PipeConfig/CAFE_conf.pm -mlss_id 40084 -work_dir /nfs/users/nfs_m/mp12/ensembl_main/ncrna_trees_68 -analysis_topup  -wait_for db_snapshot_after_Rfam_classify -per_family_table 0 -type nc -pipeline_name compara_nctrees_68 -host compara2
+=head1 HISTORY
 
-    ++ For rel69 in proteinTree pipeline it has benn run with the following command:
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40085 -work_dir `pwd` -analysis_topup  -per_family_table 1 -type prot -pipeline_name mm14_compara_homology_69 -host compara1 -wait_for quick_tree_break -cafe_species ''
+
+  Release 68:
+
+  ncRNAtrees pipeline:
+  init_pipeline.pl modules/Bio/EnsEMBL/Compara/PipeConfig/CAFE_conf.pm -mlss_id 40084 -work_dir /nfs/users/nfs_m/mp12/ensembl_main/ncrna_trees_68 -analysis_topup  -wait_for db_snapshot_after_Rfam_classify -per_family_table 0 -type nc -pipeline_name compara_nctrees_68 -host compara2
+
+  Release 69:
+
+  ncRNAtrees pipeline:
+  init_pipeline.pl modules/Bio/EnsEMBL/Compara/PipeConfig/CAFE_conf.pm -mlss_id 40083 -work_dir /nfs/users/nfs_m/mp12/ncrna_trees_68CAFEtest  -analysis_topup -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_name mp12_compara_nctrees_68st -host compara4
 
 =head1 CONTACT
 
@@ -82,8 +89,8 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-            'cafe_default' => { 'LSF' => '-S 1024 -C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
-            'cafe' => { 'LSF' => '-S 1024 -q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
+            'cafe_default' => { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
+            'cafe' => { 'LSF' => '-S 1024 -C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
            };
 }
 
