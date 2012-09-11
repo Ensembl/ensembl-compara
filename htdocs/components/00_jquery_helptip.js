@@ -9,8 +9,23 @@
     tip,      // text to be displayed on hover
     options   // options - delay, width, static (TODO)
   ) {
-
-    el = $(el).on({
+    if (arguments.length === 2 && typeof tip === 'object') {
+      options = tip;
+      tip = '';
+    }
+    
+    el = $(el);
+    
+    if (typeof tip === 'undefined' || tip === '') {
+      tip = el[0].title;
+      el.removeAttr('title');
+      
+      if (!tip) {
+        return;
+      }
+    }
+    
+    el.on({
       mouseover: function(e) {
         var el      = $(this);
         var helptip = el.data('helptip');
@@ -42,7 +57,7 @@
       }
     });
 
-    if (!options.static) {
+    if (!options['static']) {
       el.on({
         mousemove: function(e) {
           var el = $(this);
@@ -54,18 +69,11 @@
   };
 
   $.fn.helptip = function (tip, options) {
-
-    if (typeof(tip) !== 'undefined' && tip !== '') {
-
-      options = options || {};
-
-      this.each(function() {
-        new $.helptip(this, tip, options);
-      });
-
-    }
-
-    return this;
+    options = $.extend({ 'static': $(document.body).hasClass('ie67') }, options || {});
+    
+    return this.each(function() {
+      new $.helptip(this, tip, options);
+    });
   };
 
 })(jQuery);

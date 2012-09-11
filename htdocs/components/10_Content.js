@@ -169,7 +169,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       var cookie = Ensembl.cookie.get('toggle_' + this.rel);
       
       if ($(this).hasClass('closed')) {
-        var regex = '[#?;&]' + this.rel + '(Panel)?[&;]*'
+        var regex = '[#?;&]' + this.rel + '(Panel)?[&;]*';
         
         if (cookie === 'open' || Ensembl.hash.match(new RegExp(regex))) {
           toTrigger[this.rel] = this; 
@@ -224,7 +224,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.elLk.hideHints.each(function () {
       var div = $(this);
       
-      $('<img src="/i/close.png" alt="Hide" />').on('click', function () {
+      $('<img src="/i/close.png" alt="Hide" title="" />').on('click', function () {
         var tmp = [];
         
         div.hide();
@@ -236,7 +236,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
         
         Ensembl.cookie.set('ENSEMBL_HINTS', tmp.join(':'));
-      }).prependTo(this.firstChild).helptip('Hide this panel', {static: $(document.body).hasClass('ie67')});
+      }).prependTo(this.firstChild).helptip('Hide this panel');
     });
   },
   
@@ -265,9 +265,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
 
   helpTips: function () {
-
-    this.elLk.helpTips.each(function() {
-      $(this).helptip(this.title, {static: $(document.body).hasClass('ie67')}).removeAttr('title');
-    });
+    this.elLk.helpTips.helptip();
   }
 });
