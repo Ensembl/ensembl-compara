@@ -281,9 +281,9 @@ sub url {
   ## @param Extra string that goes in the url path just after Species name and before type (optional)
   ## @param Hashref of new params that will be added, or will override the existing params in the current url - can have following keys:
   ##  - species, type, action, funtion: Overrides the existing corresponding values in the url path
-  ##  - __species: Will add a 'species' GET param to the url (since 'species' key is reserved)
+  ##  - __species, __action, __type, __function: Will add 'species', 'action', 'type', 'function' GET param to the url (since these keys are reserved)
   ##  - __clear: Flag if on, prevents the core params to be added to the url
-  ##  - any other keys: will get serialised and joined to the url as query string
+  ##  - any other keys (not starting with __): will get serialised and joined to the url as query string
   ## @param Flag if on, returns url as an arrayref [url path, hashref of name-value pair of GET params] - off by default
   ## @param Flag if on, adds existing GET params to the new given GET params - off by default
   ## @return URL string or ArrayRef of path and params
@@ -303,9 +303,8 @@ sub url {
   if ($all_params) {
     # Parse the existing query string to get params if flag is on
     push @{$pars{$_->[0]}}, $_->[1] for map { /^time=/ || /=$/ ? () : [ split /=/ ]} split /;|&/, uri_unescape($self->input->query_string);
-  } elsif ($params->{'__clear'}) {
-    delete $params->{'__clear'}; # Skip adding the core params if clear flag is on
-  } else {
+
+  } elsif (!$params->{'__clear'}) { # add the core params only if clear flag is not on
     %pars = %{$self->core_params};
 
     # Remove any unused params
@@ -322,10 +321,13 @@ sub url {
 
   # add the requested GET params to the query string
   foreach (keys %$params) {
-    next if $_ =~ /^(species|type|action|function)$/;
+    $_ =~ /^(__)?(species|type|action|function)?(.*)$/;
+
+    # ignore keys 'species|type|action|function' or any key starting with __ but is not __(species|type|action|function)
+    next if $1 && $3 || $1 && !$2 || !$1 && $2 && !$3;
 
     if (defined $params->{$_}) {
-      $pars{$_ eq '__species' ? 'species' : $_} = $params->{$_};
+      $pars{$1 ? $2 : $_} = $params->{$_}; # remove '__' from any param like '__species', '__type' etc
     } else {
       delete $pars{$_};
     }
