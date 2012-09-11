@@ -236,7 +236,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
         
         Ensembl.cookie.set('ENSEMBL_HINTS', tmp.join(':'));
-      }).prependTo(this.firstChild).helptip('Hide this panel');
+      }).prependTo(this.firstChild).helptip('Hide this panel', {static: $(document.body).hasClass('ie67')});
     });
   },
   
@@ -267,7 +267,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   helpTips: function () {
 
     this.elLk.helpTips.each(function() {
-      $(this).helptip(this.title).removeAttr('title');
+      $(this).helptip(this.title, {static: $(document.body).hasClass('ie67')}).removeAttr('title');
     });
   }
 });
