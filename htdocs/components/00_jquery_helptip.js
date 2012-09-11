@@ -27,12 +27,20 @@
     
     el.on({
       mouseover: function(e) {
-        var el      = $(this);
+        var el = $(this);
         var helptip = el.data('helptip');
 
         if (!helptip) {
           helptip = $('<div class="helptip"><div class="ht-inner">' + tip + '</div></div>').appendTo(document.body);
           el.data('helptip', helptip);
+
+          if (!options['static']) {
+            el.on({mousemove: function(e) {
+              var el = $(this);
+              var offset = el.data('helptip_offset');
+              el.data('helptip').css({left: (offset.x + e.pageX) + 'px', top: (offset.y + e.pageY) + 'px'});
+            }});
+          }
         }
 
         helptip[0].className = 'helptip'; // this removes any 'helptip-left' or 'helptip-top' class added previously
@@ -49,23 +57,16 @@
         }
 
         helptip.css({left: pos.x + 'px', top: pos.y + 'px'}).show();
-        el.data('helptip_offset', {x: pos.x - e.pageX, y: pos.y - e.pageY});
+
+        if (!options['static']) {
+          el.data('helptip_offset', {x: pos.x - e.pageX, y: pos.y - e.pageY});
+        }
       },
 
       mouseout: function() {
         $(this).data('helptip').hide();
       }
     });
-
-    if (!options['static']) {
-      el.on({
-        mousemove: function(e) {
-          var el = $(this);
-          var offset = el.data('helptip_offset');
-          el.data('helptip').css({left: (offset.x + e.pageX) + 'px', top: (offset.y + e.pageY) + 'px'});
-        }
-      });
-    }
   };
 
   $.fn.helptip = function (tip, options) {
