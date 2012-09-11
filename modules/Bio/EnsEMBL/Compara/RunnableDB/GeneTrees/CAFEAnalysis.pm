@@ -314,6 +314,7 @@ sub parse_cafe_output {
         # We store the attributes
         for my $node (@{$tree->get_all_nodes()}) {
             my $n = $node->name();
+            print STDERR "Storing node name $n\n" if ($self->debug);
             $n =~ s/\./_/g;
 
             my $taxon_id = $info_by_nodes{$n}{taxon_id};
@@ -321,12 +322,16 @@ sub parse_cafe_output {
             my $pvalue = $info_by_nodes{$n}{pvalue};
 
             print STDERR "Retrieving node_id for taxon $taxon_id\n" if ($self->debug);
+            print STDERR "Storing TAXON_ID: $taxon_id, N_MEMBERS: $n_members, PVALUE: $pvalue\n\n" if ($self->debug);
             my $sth = $self->compara_dba->dbc->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag = 'taxon_id' AND value = ?");
             $sth->execute($taxon_id);
-            my ($species_tree_node_id) = $sth->fetchrow_array();
-
-            $cafeTree_Adaptor->store_species_gene($cafe_gene_family_id, $species_tree_node_id, $taxon_id, $n_members, $pvalue);
+            while (my ($species_tree_node_id) = $sth->fetchrow_array()) {
+#            my ($species_tree_node_id) = $sth->fetchrow_array();
+                $cafeTree_Adaptor->store_species_gene($cafe_gene_family_id, $species_tree_node_id, $taxon_id, $n_members, $pvalue);
+            }
+            $sth->finish();
         }
+        $sth->finish();
     }
     return
 }
