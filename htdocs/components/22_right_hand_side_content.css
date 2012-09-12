@@ -121,6 +121,7 @@ form.data_table_export { display: none; }
 /***********************************
            helptip stuff
 ***********************************/
+img.helptip-icon                  { vertical-align: middle; }
 div.helptip                       { position: absolute; z-index: 999999999999; max-width: 250px; display: none; border-left: 8px solid [[PAGE_TEXT]]; border-top: 8px solid transparent; margin: 20px 0 0 10px; border-radius: 0 0 0 4px; }
 div.helptip div.ht-inner          { background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px 8px 8px 0; line-height: 16px; border-radius: 0 4px 4px 0; }
 div.helptip-top                   { border-bottom: 8px solid transparent; border-top-width: 0; margin-top: -20px; border-radius: 4px 0 0 0; }
