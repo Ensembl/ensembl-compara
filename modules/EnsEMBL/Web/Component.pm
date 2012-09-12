@@ -257,6 +257,14 @@ sub append_s_to_plural {
   return $flag ? "${string}s" : $string;
 }
 
+sub helptip {
+  ## Returns html for an info icon which displays the given helptip when hovered
+  ## @param Tip text (TODO - make it HTML compatiable)
+  ## @param Optional - icon name to override the default info icon
+  my ($self, $tip, $icon) = @_;
+  return sprintf '<img src="%s/i/16/%s.png" alt="(?)" class="_ht helptip-icon" title="%s" />', $self->static_server, $icon || 'info', $tip;
+}
+
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub caption     { return undef; }
