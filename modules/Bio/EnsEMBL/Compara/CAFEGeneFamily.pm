@@ -237,7 +237,7 @@ sub lca_reroot {
     my $lca_id = $self->lca_id();
     for my $node (@{$self->get_all_nodes}) {
         if ($node->node_id == $lca_id) {
-            my $lca_tree = $self->adaptor->fetch_lca_tree($node)->[0];
+            my $lca_tree = $self->adaptor->fetch_lca_tree($node);
             return $lca_tree;
         }
     }
