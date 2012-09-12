@@ -1,6 +1,6 @@
 /***********************************************************************
 **
-** Generic styles.
+** "TEMPLATE" for static content, plus specific styles for top-level pages 
 **
 ***********************************************************************/
 
@@ -24,34 +24,6 @@ body.static h3     { color: [[CONTRAST_HEADER]]; }
 body.static h4     { color: [[CONTRAST_HEADER]]; }
 
 body.static form   { margin-bottom:16px; }
-
-/*----------------------------------------------------------------------
-  References, footnotes, etc
-----------------------------------------------------------------------*/
-
-.ref-author { font-weight:bold; }
-.ref-pub { font-style:italic; }
-
-/* for arrows and other non-text links */
-a.notext { text-decoration:none; }
-/* footnote */
-a.fn-link { vertical-align:super; font-size:0.7em; text-decoration:none; } 
-div.footnotes { margin-top:2em; }
-div.footnotes ol li { font-size:0.9em; }
-
-/*----------------------------------------------------------------------
-  Code examples
-----------------------------------------------------------------------*/
-
-code { font: 1em andale mono, sans-serif; font-weight: bold; }
-
-.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; padding: 8px !important; }
-
-.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, sans-serif; color: [[CONTRAST_BG]] }
-.code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
-.code pre { display: inline-block; }
-
-kbd.line { display:block; margin-left:20px; }
 
 /***********************************************************************
 **
