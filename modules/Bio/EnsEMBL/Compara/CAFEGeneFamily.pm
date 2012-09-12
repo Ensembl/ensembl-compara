@@ -131,6 +131,14 @@ sub pvalue {
     return $self->{'_pvalue'};
 }
 
+sub cafe_gene_family_id {
+    my ($self, $cafe_gene_family_id) = @_;
+    if (defined $cafe_gene_family_id) {
+        $self->{'_cafe_gene_family_id'} = $cafe_gene_family_id;
+    }
+    return $self->{'_cafe_gene_family_id'};
+}
+
 sub is_tree_significant {
     my ($self) = @_;
     return $self->pvalue_avg < $self->pvalue_lim;
@@ -229,8 +237,8 @@ sub lca_reroot {
     my $lca_id = $self->lca_id();
     for my $node (@{$self->get_all_nodes}) {
         if ($node->node_id == $lca_id) {
-            my $old_tree = $self->re_root($node);
-            return $old_tree;
+            my $lca_tree = $self->adaptor->fetch_lca_tree($node)->[0];
+            return $lca_tree;
         }
     }
     $self->throw("Problem getting re-rooting the tree by lca");
