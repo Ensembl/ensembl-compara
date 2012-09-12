@@ -43,17 +43,42 @@ use Bio::EnsEMBL::Compara::CAFEGeneFamily;
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
 
 sub fetch_all {
-    my ($self, $lca) = @_;
+    my ($self) = @_;
 
     my $constraint = "stn.node_id = str.root_id";
+    return $self->generic_fetch($constraint);
+}
 
-    if (defined $lca) {
-        my $sth = $self->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag ='taxon_id' AND value = ?");
-        $sth->execute($lca);
-        my ($lca_id) = $sth->fetchrow_array();
-        $constraint .= " AND cgf.lca_id = $lca_id";
+sub fetch_all_lca_trees {
+    my ($self) = @_;
+    my $constraint = "stn.node_id = cgf.lca_id";
+    return $self->generic_fetch($constraint);
+}
+
+sub fetch_all_with_lca {
+    my ($self, $lca) = @_;
+    unless (defined $lca) {
+        throw("lca should be defined");
     }
+    my $constraint = "stn.node_id = str.root_id";
+    my $sth = $self->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag ='taxon_id' AND value = ?");
+    $sth->execute($lca);
+    my ($lca_id) = $sth->fetchrow_array();
+    $sth->finish;
+    $constraint .= " AND cgf.lca_id = $lca_id";
+    return $self->generic_fetch($constraint);
+}
 
+sub fetch_lca_tree {
+    my ($self, $cafeTree) = @_;
+
+    unless ($cafeTree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
+        throw("set arg must be a [Bio::EnsEMBL::Compara::CAFEGeneFamily] not a $cafeTree");
+    }
+    my $lca = $cafeTree->lca_id();
+#    my $gene_tree_root_id = $cafeTree->gene_tree_root_id;
+    my $cafe_gene_family_id = $cafeTree->cafe_gene_family_id;
+    my $constraint = "stn.node_id = cgf.lca_id AND cgf.cafe_gene_family_id = $cafe_gene_family_id";
     return $self->generic_fetch($constraint);
 }
 
@@ -93,15 +118,6 @@ sub fetch_all_children_for_node {
 
     return $node;
 }
-
-
-# sub fetch_all_children_for_node {
-#     my ($self, $node) = @_;
-#     my $gene_tree_root_id = $node->gene_tree_root_id();
-
-#     ## Falta algo aqui
-#     my $constraint = "cgf.gene_family_id = csg.gene_family_id";
-# }
 
 
 ## Stores a family gene
@@ -276,6 +292,7 @@ sub init_instance_from_rowhash {
     # SUPER is NestedSetAdaptor
     $self->SUPER::init_instance_from_rowhash($node, $rowhash);
 
+    $node->cafe_gene_family_id($rowhash->{cafe_gene_family_id});
     $node->method_link_species_set_id($rowhash->{method_link_species_set_id});
     $node->species_tree($rowhash->{species_tree});
     $node->pvalue_lim($rowhash->{pvalue_lim});
