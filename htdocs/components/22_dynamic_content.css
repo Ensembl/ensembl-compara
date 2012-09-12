@@ -1,10 +1,3 @@
-#main { margin-left: 224px; border: 0; position: relative; padding: 16px 0 0; }
-#widemain, 
-body.static #main { margin-left: 0; }
-
-@media print {
-   #main { margin-left: 0; }
-}
 
 
 /* The CSS for the panel headings */
@@ -27,9 +20,6 @@ body.ie67 a.help-header span.sprite { position: absolute; }
 body.ie6  a.help-header span.sprite { width: 18px; font-size: 14px; }
 
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
-
-/* Columns for static content */
-#static    { margin: 0 16px; }
 
 /* Variation "icons" */
 img.portal  { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
