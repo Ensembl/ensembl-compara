@@ -403,7 +403,6 @@ sub _funcgen_text {
     $html = '
 <div class="homepage-icon">
   <div class="center">
-    <h2>Regulation</h2>
   ';
 
     my $reg_url  = $species_defs->species_path.'/Regulation/Cell_line?db=funcgen;rf='.$sample_data->{'REGULATION_PARAM'};
@@ -413,6 +412,11 @@ sub _funcgen_text {
   };
 
     $html .= '
+  </div>
+</div>
+';
+
+    $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>';
 
     $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/funcgen/">More about the $site regulatory build</a> and <a href="/info/docs/microarry_probe_set_mapping.html">microarray annotation</a></li>);
@@ -424,10 +428,6 @@ sub _funcgen_text {
       $html   .= qq{
 <p><a href=$ftp_url"><img src="/i/24/download.png" alt="" style="vertical-align:middle" /></a> <a href="$ftp_url">Download all regulatory features</a> (GFF)</p>};
     } 
-    $html .= '
-  </div>
-</div>
-';
   }
   else {
     $html .= '<h2>Regulation</h2>
