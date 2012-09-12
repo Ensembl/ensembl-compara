@@ -59,7 +59,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.modalClose        = this.el.siblings('.modal_title').children('.modal_close');
     this.elLk.menus             = $();
     this.elLk.help              = $();
-    this.elLk.subPanelTracks    = $();
     
     this.component          = $('input.component', this.elLk.form).val();
     this.sortable           = !!this.elLk.trackOrder.length;
@@ -207,17 +206,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       menu.hide();
       
-      if (panel.sortable || panel.elLk.subPanelTracks.length) {
-        $.each(updated, function (trackName, attrs) {
-          $.each([panel.elLk.tracks, panel.elLk.trackOrderList.children(), panel.elLk.subPanelTracks], function () {
-            $(this).filter('.' + trackName).not(li).children('img.menu_option').attr({ 
-              src:   '/i/render/' + attrs[0] + '.gif', 
-              alt:   attrs[1],
-              title: attrs[1]
-            }).siblings('input.track_name').val(attrs[0]).parent()[attrs[0] === 'off' ? 'removeClass' : 'addClass']('on');
-          });
-        });
-      }
+      $.each(updated, function (trackName, attrs) {
+        panel.imageConfig[trackName].el.add(panel.imageConfig[trackName].linked).not(li).children('img.menu_option').attr({ 
+          src:   '/i/render/' + attrs[0] + '.gif', 
+          alt:   attrs[1],
+          title: attrs[1]
+        }).siblings('input.track_name').val(attrs[0]).parent()[attrs[0] === 'off' ? 'removeClass' : 'addClass']('on');
+      });
       
       menu = track = img = li = null;
       
@@ -577,11 +572,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             li.insertBefore(lis[0]);
           }
           
+          panel.imageConfig[this[2].split(' ')[0]].linked = (panel.imageConfig[this[2].split(' ')[0]].linked || $()).add(li);
+          
           li = null;
         });
       } else {
         $.each(tracks, function () {
-          this[1].clone(true).data('order', this[0]).removeClass().addClass(this[2]).children('.controls').prepend(this[3]).end().appendTo(ul).children('.popup_menu').hide();
+          panel.imageConfig[this[2].split(' ')[0]].linked = (panel.imageConfig[this[2].split(' ')[0]].linked || $()).add(
+            this[1].clone(true).data('order', this[0]).removeClass().addClass(this[2]).children('.controls').prepend(this[3]).end().appendTo(ul).children('.popup_menu').hide().end()
+          );
         });
       }
       
@@ -610,7 +609,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, { links: [ panel.elLk.links.filter('.active').parent().siblings('a').attr('class'), active ] });
             panel.subPanels.push(panelDiv[0].id);
             
-            panel.elLk.subPanelTracks = panel.elLk.subPanelTracks.add($('input.track_name', panelDiv).each(function () {
+            $('input.track_name', panelDiv).each(function () {
               var track = panel.elLk.tracks.filter('.' + this.name);
               var val   = track.children('input.track_name').val();
               
@@ -625,8 +624,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
                 }
               }
               
+              panel.imageConfig[this.name].linked = (panel.imageConfig[this.name].linked || $()).add(this.parentNode);
+              
               track = null;
-            }).parent());
+            });
           } else {
             panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
             panel.setSelectAll();
