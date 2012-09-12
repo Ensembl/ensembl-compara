@@ -74,7 +74,7 @@ sub default_options {
         'merged_tables'     => [ 'method_link_species_set_tag' ],
         'skipped_tables'    => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
                               'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
-                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class' ],
+                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class', @{$self->o('merged_tables')} ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
