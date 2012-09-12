@@ -112,7 +112,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'         => $self->o('merged_homology_db'),
-                'skipped_tables'  => [$self->o('skipped_tables'), $self->o('merged_tables')],
+                'skipped_tables'  => $self->o('skipped_tables'),
                 'fan_branch_code' => 2,
             },
             -input_ids => [
