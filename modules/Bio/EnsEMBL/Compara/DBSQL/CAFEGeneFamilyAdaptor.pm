@@ -84,7 +84,14 @@ sub fetch_lca_tree {
 #    my $gene_tree_root_id = $cafeTree->gene_tree_root_id;
     my $cafe_gene_family_id = $cafeTree->cafe_gene_family_id;
     my $constraint = "stn.node_id = cgf.lca_id AND cgf.cafe_gene_family_id = $cafe_gene_family_id";
-    return $self->generic_fetch($constraint);
+
+    my $trees = $self->generic_fetch($constraint);
+    if (scalar @{$trees} > 1) {
+        throw("too many trees fetched by fetch_lca_tree: Only 1 expected but ", scalar @{$trees}, " obtained\n");
+    }
+    my $tree = $trees->[0];
+    $tree->disavow_parent();
+    return $tree;
 }
 
 sub fetch_by_GeneTree {
