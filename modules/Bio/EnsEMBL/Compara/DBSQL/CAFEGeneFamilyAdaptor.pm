@@ -52,7 +52,12 @@ sub fetch_all {
 sub fetch_all_lca_trees {
     my ($self) = @_;
     my $constraint = "stn.node_id = cgf.lca_id";
-    return $self->generic_fetch($constraint);
+    my $trees = $self->generic_fetch($constraint);
+    # We need to fix the roots:
+    for my $tree (@{$trees}) {
+        $tree->disavow_parent()
+    }
+    return $trees;
 }
 
 sub fetch_all_with_lca {
