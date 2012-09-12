@@ -1,0 +1,45 @@
+/* TEXT STYLING AND LAYOUT */
+
+/*----------------------------------------------------------------------
+  Additional fonts 
+----------------------------------------------------------------------*/
+.serif        { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
+span.sequence { font-family: Courier New, Courier, monospace; }
+.latin        { font-style: italic;                           }
+.normal       { font-style: normal; font-weight: normal;      }
+.small        { font-size: 80%;                               }
+.bigtext      { font-size: 14px; font-weight: bold;           }
+a.bigtext     { text-decoration: none;                        }
+
+/*----------------------------------------------------------------------
+  Text layout & styling
+----------------------------------------------------------------------*/
+
+.nowrap             { white-space: nowrap;    }
+.left               { text-align: left;       }
+.right, .more       { text-align: right;      }
+.center             { text-align: center;     }
+.middle             { vertical-align: middle; }
+.bottom             { vertical-align: bottom; }
+.autocenter_wrapper { text-align: center;     }
+.autocenter         { text-align: left; margin: 0 auto; }
+.bold               { font-weight: bold; }
+.italic             { font-style: italic; }
+.clear              { clear: both; }
+.clear-left         { clear: left; }
+.clear-right        { clear: right; }
+.nodeco             { text-decoration: none; }
+.spaced             { line-height: 20px !important; }
+pre.wrap            { white-space: pre-wrap; }
+
+/*----------------------------------------------------------------------
+  Colours and backgrounds
+----------------------------------------------------------------------*/
+
+/* TO REVISIT? - NUMBERS DON'T CORRESPOND 1:1 WITH TEMPLATE ONES! */
+.bg1    { background: [[PAGE_BG]];         }
+.bg2    { background: [[TINT_BG]];         }
+.bg3    { background: [[NEUTRAL_BG]];      }
+.bg4    { background: [[CONTRAST_BG]];     }
+.hilite { background: [[CONTRAST_BORDER]]; }
+.red    { color: #933;
