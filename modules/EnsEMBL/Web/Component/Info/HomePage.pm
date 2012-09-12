@@ -419,7 +419,7 @@ sub _funcgen_text {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>';
 
-    $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/funcgen/">More about the $site regulatory build</a> and <a href="/info/docs/microarry_probe_set_mapping.html">microarray annotation</a></li>);
+    $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/funcgen/">More about the $site regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html">microarray annotation</a></li>);
 
     $html .= '</ul>';
 
@@ -432,7 +432,7 @@ sub _funcgen_text {
   else {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> Microarray annotations.</p>';
-    $html .= qq(<p><a href="/info/docs/microarry_probe_set_mapping.html"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/microarry_probe_set_mapping.html">More about the $site microarray annotation strategy</li>);
+    $html .= qq(<p><a href="/info/docs/microarray_probe_set_mapping.html"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/microarray_probe_set_mapping.html">More about the $site microarray annotation strategy</li>);
   }
 
   return $html;
