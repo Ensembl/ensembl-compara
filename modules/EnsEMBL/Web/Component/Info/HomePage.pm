@@ -341,8 +341,8 @@ sub _variation_text {
       my $phen_text = $sample_data->{'PHENOTYPE_TEXT'}; 
       my $phen_url  = $species_defs->species_path.'/Phenotype/Locations?ph='.$sample_data->{'PHENOTYPE_PARAM'};
       $html .= qq{
-        <a href="$phen_url"><img src="$img_url/96/phenotype.png" class="bordered" /></a>
-        <p><a href="$phen_url" class="nodeco">Example phenotype<br />($phen_text)</a></p>
+        <a href="$phen_url" title="$phen_text"><img src="$img_url/96/phenotype.png" class="bordered" /></a>
+        <p><a href="$phen_url" class="nodeco" title="$phen_text">Example phenotype</a></p>
     };
   }
 
