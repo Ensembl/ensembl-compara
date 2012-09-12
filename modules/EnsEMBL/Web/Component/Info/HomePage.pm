@@ -80,9 +80,7 @@ sub content {
  
   $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
 
-  if ($hub->database('variation')) {
-    $html .= '<div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div>';
-  }
+  $html .= '<div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div>';
 
   $html .= '
     </div>
@@ -325,57 +323,66 @@ sub _variation_text {
   my $sample_data     = $species_defs->SAMPLE_DATA;
   my $ensembl_version = $species_defs->ENSEMBL_VERSION;
 
-  my $html = '
+  my $html;
+
+  if ($hub->database('variation')) {
+    $html .= '
 <div class="homepage-icon">
   <div class="center">
     ';
 
-  my $var_url  = $species_defs->species_path.'/Variation/Explore?v='.$sample_data->{'VARIATION_PARAM'};
-  $html .= qq{
-    <a href="$var_url"><img src="$img_url/96/variation.png" class="bordered" /></a>
-    <p><a href="$var_url" class="nodeco">Example variant</a></p>
-  };
-
-  if ($sample_data->{'PHENOTYPE_PARAM'}) {
-    my $phen_text = $sample_data->{'PHENOTYPE_TEXT'}; 
-    my $phen_url  = $species_defs->species_path.'/Phenotype/Locations?ph='.$sample_data->{'PHENOTYPE_PARAM'};
+    my $var_url  = $species_defs->species_path.'/Variation/Explore?v='.$sample_data->{'VARIATION_PARAM'};
     $html .= qq{
-      <a href="$phen_url"><img src="$img_url/96/phenotype.png" class="bordered" /></a>
-      <p><a href="$phen_url" class="nodeco">Example phenotype<br />($phen_text)</a></p>
+      <a href="$var_url"><img src="$img_url/96/variation.png" class="bordered" /></a>
+      <p><a href="$var_url" class="nodeco">Example variant</a></p>
+    };
+
+    if ($sample_data->{'PHENOTYPE_PARAM'}) {
+      my $phen_text = $sample_data->{'PHENOTYPE_TEXT'}; 
+      my $phen_url  = $species_defs->species_path.'/Phenotype/Locations?ph='.$sample_data->{'PHENOTYPE_PARAM'};
+      $html .= qq{
+        <a href="$phen_url"><img src="$img_url/96/phenotype.png" class="bordered" /></a>
+        <p><a href="$phen_url" class="nodeco">Example phenotype<br />($phen_text)</a></p>
     };
   }
 
-  $html .= '
+    $html .= '
   </div>
 </div>
 ';
 
-  $html .= '<h2>Variation</h2>
+    $html .= '<h2>Variation</h2>
 <p><strong>What can I find?</strong> Short sequence variants';
 
-  my $dbsnp = $species_defs->databases->{'DATABASE_VARIATION'}{'dbSNP_VERSION'};
-  if ($dbsnp) {
-    $html .= " (e.g. from dbSNP $dbsnp)";
-  }
+    my $dbsnp = $species_defs->databases->{'DATABASE_VARIATION'}{'dbSNP_VERSION'};
+    if ($dbsnp) {
+      $html .= " (e.g. from dbSNP $dbsnp)";
+    }
 
-  if ($species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
-    $html .= ' and longer structural variants';
-  }
-  if ($sample_data->{'PHENOTYPE_PARAM'}) {
-    $html .= '; disease and other phenotypes';
-  }
-  $html .= '.</p>';
+    if ($species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
+      $html .= ' and longer structural variants';
+    }
+    if ($sample_data->{'PHENOTYPE_PARAM'}) {
+      $html .= '; disease and other phenotypes';
+    }
+    $html .= '.</p>';
 
-  my $site = $species_defs->ENSEMBL_SITETYPE;
-  $html .= qq(<p><a href="info/docs/variation/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/variation/">More about variation in $site</p>);
+    my $site = $species_defs->ENSEMBL_SITETYPE;
+    $html .= qq(<p><a href="info/docs/variation/"><img src="/i/24/info.png" alt="" style="vertical-align:middle" /></a> <a href="/info/docs/variation/">More about variation in $site</p>);
 
-  if ($species_defs->ENSEMBL_FTP_URL) {
-    my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
-    $html   .= qq{
+    if ($species_defs->ENSEMBL_FTP_URL) {
+      my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
+      $html   .= qq{
 <p><a href=$ftp_url"><img src="/i/24/download.png" alt="" style="vertical-align:middle" /></a> <a href="$ftp_url">Download all variants</a> (GVF)</p>};
+    }
   }
-  my $vep_url = $hub->url({'type'=>'UserData','action'=>'UploadVariations'});
-  $html .= qq(<p><a href="$vep_url" class="modal_link"><img src="$img_url/24/tool.png" style="vertical-align:middle" /></a> <a href="$vep_url" class="modal_link">Variant Effect Predictor</a> <a href="$vep_url" class="modal_link"><img src="$img_url/vep_logo_sm.png" style="vertical-align:middle" /></a></p>);
+  else {
+    $html .= '<h2>Variation</h2>
+<p>This species currently has no variation database. However you can process your own variants using the Variant Effect Predictor:</p>';
+  }
+
+   my $vep_url = $hub->url({'type'=>'UserData','action'=>'UploadVariations'});
+    $html .= qq(<p><a href="$vep_url" class="modal_link"><img src="$img_url/24/tool.png" style="vertical-align:middle" /></a> <a href="$vep_url" class="modal_link">Variant Effect Predictor</a> <a href="$vep_url" class="modal_link"><img src="$img_url/vep_logo_sm.png" style="vertical-align:middle" /></a></p>);
 
   return $html;
 }
