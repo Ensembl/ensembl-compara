@@ -69,7 +69,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
 sub param_defaults {
     return {
             'type'  => 'infernal',
-            'url' => 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/10.1/',
+            'url' => 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/11.0/',
             'remote_file' => 'Rfam.cm.gz',
             'expanded_basename' => 'Rfam.cm',
             'expander' => 'gunzip ',
@@ -125,9 +125,11 @@ sub write_output {
     my $self = shift @_;
 
     $self->store_hmmprofile;
-    $self->clean_directory();
 }
 
+sub post_cleanup {
+    $self->clean_directory();
+}
 
 1;
 
