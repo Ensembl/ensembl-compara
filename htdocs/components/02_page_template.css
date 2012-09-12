@@ -1,3 +1,20 @@
+/* BASIC PAGE FRAMEWORK: MAJOR TEMPLATE COMPONENTS & GLOBAL NAVIGATION  */
+
+/* Basic page divisions */
+
+#main { margin-left: 224px; border: 0; position: relative; padding: 16px 0 0; }
+#widemain,
+body.static #main { margin-left: 0; }
+
+/* WHY IS THIS DIFFERENT FROM .static ? */
+#static    { margin: 0 16px; }
+
+@media print {
+   #main { margin-left: 0; }
+}
+
+
+/* Masthead */
 #masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 80px; position: relative; }
 #masthead div                             { background-color: [[MH_BG]]; }
 #masthead a,
@@ -6,28 +23,24 @@
 #masthead span.disabled.toggle:hover      { color: [[MH_HOVER]] !important; }
 #masthead ul                              { list-style: none; margin: 0; padding: 0 }
 #masthead li                              { list-style: none; float: left; text-align: center; white-space: nowrap; }
-#masthead .mh                             { float: left; }
-#masthead ul.tools                        { margin: 19px 0 0 -5px; height: 16px; overflow: hidden; }
+#masthead .mh                             { float: left; }#masthead ul.tools                        { margin: 19px 0 0 -5px; height: 16px; overflow: hidden; }
 #masthead ul.tools li                     { padding: 0 10px; border-right: 1px solid [[MH_TEXT]]; margin: 0; }
-#masthead ul.tools li.last                { border: 0; }
-#masthead ul.tabs                         { margin: 0; padding: 0; width: 100%; }
+#masthead ul.tools li.last                { border: 0; }#masthead ul.tabs                         { margin: 0; padding: 0; width: 100%; }
 #masthead ul.tabs li                      { background: [[MH_TAB]]; margin: 0 5px 0 2px; padding: 0; border-radius: 10px 10px 0 0; -moz-border-radius: 10px 10px 0 0; -webkit-border-radius: 10px 10px 0 0; }
-#masthead ul.tabs li.active               { background: [[MH_TAB_ACTIVE]] }
-#masthead ul.tabs li.long_tab             { display: none; }
+#masthead ul.tabs li.active               { background: [[MH_TAB_ACTIVE]] }#masthead ul.tabs li.long_tab             { display: none; }
 #masthead ul.tabs a,
 #masthead ul.tabs span.dropdown           { display: block; text-decoration: none; padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.dropdown           { padding-left:  0; }
 #masthead ul.tabs span.dropdown.empty     { padding-right: 0; }
 #masthead ul.tabs li.active a,
-#masthead ul.tabs li.active span.dropdown { color: [[PAGE_TEXT]]; font-weight: bold; }
-#masthead ul.tabs span.dropdown a         { display: inline; }
-#masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 11px; line-height: 11px; background-image: none; }
-#masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
-#masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
+#masthead ul.tabs li.active span.dropdown { color: [[PAGE_TEXT]]; font-weight: bold; }#masthead ul.tabs span.dropdown a         { display: inline; }
+#masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 11px; line-height: 11px; background-
+image: none; }#masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }#masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
 #masthead div.dropdown                    { position: absolute; top: 21px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[TINT_BORDER]]; padding-bottom: 5px; }
-#masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; border-bottom: 1px solid [[TINT_BORDER]]; }
-#masthead div.dropdown ul                 { padding-top: 4px; }
-#masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; float: none; }
+#masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; border-bottom: 1px solid [[
+TINT_BORDER]]; }#masthead div.dropdown ul                 { padding-top: 4px; }
+#masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; floa
+t: none; }
 #masthead div.dropdown ul li a            { color: [[PAGE_LINK]]; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 #masthead div.dropdown.species            { width: 505px; }
@@ -56,7 +69,6 @@ body.ie #masthead ul.tabs li.active               { background-color: [[MH_TAB_A
 body.ie #masthead ul.tabs a,
 body.ie #masthead ul.tabs span.dropdown           { background: url(/i/tab_on_l.gif) no-repeat left top; }
 body.ie #masthead ul.tabs li.active a.toggle      { background: none; }
-
 body.ie67 #masthead                               { z-index: 9999; }
 body.ie67 #masthead .tabs_holder                  { z-index: -1; }
 body.ie67 #masthead div.more a.open               { margin-top: -2px; }
@@ -73,3 +85,14 @@ body.ie6 #masthead div.search_holder              { width: 320px; left: 100%; ma
   #masthead   { background: #ffffff; }
   #masthead a { color: #000000; }
 }
+
+/* Footer */
+
+#footer, #wide-footer         { clear: both; text-align: center; font-size: 0.9em; margin: 0 16px; }
+#footer                       { margin-left: 240px; }
+@media print {
+  #footer                     { margin-left: 16px; }
+}
+#footer img, #wide-footer img { vertical-align: middle; height: 20px }
+#footer p,   #wide-footer p   { padding: 0; margin: 16px 0; }
+
