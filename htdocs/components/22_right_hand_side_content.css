@@ -71,6 +71,7 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 .info-box,  .round-box,
 .alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
 .plain-box                { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
+.shadow-box               { box-shadow: 2px 2px 4px [[PANEL_BORDER]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
 .unbordered   { border:none; padding:8px 12px 0 12px; margin-bottom:0; }
