@@ -1,3 +1,5 @@
+/* BASE CLASSES TO TWEAK DEFAULT BROWSER RENDERING AND STYLE OVERALL SITE */
+
 /*----------------------------------------------------------------------
   General font sizes and styles...
 ----------------------------------------------------------------------*/
@@ -73,50 +75,7 @@ h4              { font-size: 1em;   }
 body.mac h1,
 body.mac h2     { padding-top: 4px; }
 
-/*----------------------------------------------------------------------
-  Colours and backgrounds
-----------------------------------------------------------------------*/
-
-/* TO REVISIT? - NUMBERS DON'T CORRESPOND 1:1 WITH TEMPLATE ONES! */
-.bg1    { background: [[PAGE_BG]];         }
-.bg2    { background: [[TINT_BG]];         } 
-.bg3    { background: [[NEUTRAL_BG]];      } 
-.bg4    { background: [[CONTRAST_BG]];     } 
-.hilite { background: [[CONTRAST_BORDER]]; }
-.red    { color: #933;                     }
-
-/*----------------------------------------------------------------------
-  Additional fonts 
-----------------------------------------------------------------------*/
-.serif        { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
-span.sequence { font-family: Courier New, Courier, monospace; }
-.latin        { font-style: italic;                           }
-.normal       { font-style: normal; font-weight: normal;      }
-.small        { font-size: 80%;                               }
-.bigtext      { font-size: 14px; font-weight: bold;           }
-a.bigtext     { text-decoration: none;                        }
-
-/*----------------------------------------------------------------------
-  Text layout & styling
-----------------------------------------------------------------------*/
-
-.nowrap             { white-space: nowrap;    }
-.left               { text-align: left;       }
-.right, .more       { text-align: right;      }
-.center             { text-align: center;     }
-.middle             { vertical-align: middle; }
-.bottom             { vertical-align: bottom; }
-.autocenter_wrapper { text-align: center;     }
-.autocenter         { text-align: left; margin: 0 auto; }
-.bold               { font-weight: bold; }
-.italic             { font-style: italic; }
 .invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
-.clear              { clear: both; }
-.clear-left         { clear: left; }
-.clear-right        { clear: right; }
-.nodeco             { text-decoration: none; }
-.spaced             { line-height: 20px !important; }
-pre.wrap            { white-space: pre-wrap; }
 
 /*----------------------------------------------------------------------
  Links 
