@@ -118,15 +118,15 @@ sub default_options {
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
 
-            # HMM specific parameters
-            'hmm_clustering'       => 0, ## by default run blastp clustering
-            'cm_file_or_directory' => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-#            'cm_file_or_directory' => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii', ## Panther DB
-            'hmm_library_basedir'  => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-#            'hmm_library_basedir'  => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
-            'blast_path'           => '/software/ensembl/compara/ncbi-blast-2.2.26+/bin/',
-            'pantherScore_path'    => '/software/ensembl/compara/pantherScore1.03',
-            'hmmer_path'           => '/software/ensembl/compara/hmmer-2.3.2/src/',
+    # HMM specific parameters
+        'hmm_clustering'            => 0, ## by default run blastp clustering
+        'cm_file_or_directory'      => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        #'cm_file_or_directory'      => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii', ## Panther DB
+        #'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
+        'blast_path'                => '/software/ensembl/compara/ncbi-blast-2.2.26+/bin/',
+        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   4,

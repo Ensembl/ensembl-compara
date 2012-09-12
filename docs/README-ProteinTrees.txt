@@ -2,23 +2,23 @@ This document describes how to run ensembl-compara ProteinTrees pipeline.
 
 1. Necessary software components:
 
-	* MySQL 5.1		(or higher)
-	* Perl 5.6		(or higher)
-	* Perl DBI API 1.6	(or higher)
+	* MySQL 5.1          (or higher)
+	* Perl 5.8           (or higher)
+	* Perl DBI API 1.6   (or higher)
 
 EnsEMBL and BioPerl software:
-	* bioperl-live		- (bioperl-1-2-3)
-	* bioperl-run		- (1.4) for the CodeML runnable/parser
-	* ensembl		- core API on which the rest of ensembl APIs are based
-	* ensembl-compara	- Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
-	* ensembl-analysis	- some of the pipeline runnables live here
-	* ensembl-hive		- the system to run pipelines
+	* bioperl-live        - (bioperl-1-2-3 or higher)
+	* bioperl-run         - (1.2 or higher) for the CodeML runnable/parser
+	* ensembl             - core API on which the rest of ensembl APIs are based
+	* ensembl-compara     - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
+	* ensembl-analysis    - some of the pipeline runnables live here
+	* ensembl-hive        - the system to run pipelines
 
 Refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
 	http://www.ensembl.org/info/docs/eHive/installation.html
 
-Any compiled binaries mentioned in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/ProteinTrees_conf.pm
+Any compiled binaries mentioned in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblProteinTrees_conf.pm
 ( if running outside of Sanger farm you might need to compile your own versions and point at them ) :
 
         'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
@@ -32,138 +32,172 @@ Any compiled binaries mentioned in ensembl-compara/modules/Bio/EnsEMBL/Compara/P
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
 
-
-2. Configuration of the pipeline
-
-	Nearly all of the pipeline configuration now lives in a single "PipeConfig" file, which is a Perl module:
-		ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/ProteinTrees_conf.pm
-
-	It contains the following subroutines:
-		* default_options		    - defines customizable options and their default values.
-                                    In the majority of cases you will only need to modify some of these.
-                                    Do not rush to run your favourite text editor, as you may also change
-                                    any of these options from the command line.
-
-		* pipeline_create_commands	- defines a list of specific shell commands needed to create a pipeline database.
-                                    It is unlikely you will need to change it.
-
-		* resource_classes		    - defines a list of resource classes and corresponding farm-specific parameters for each class.
-                                    You may need to adjust some of these if running the pipeline on your own farm.
-
-		* pipeline_analyses		    - defines the structure of the pipeline itself - which tasks to run, in which order, etc.
-                                    These are the very guts of the pipeline, so make sure you know what you are doing
-                                    if you are planning to change anything.
-
-	Since our "PipeConfig" files are Perl modules, they use inheritance to avoid code duplication.
-	Specific Compara "PipeConfig" files inherit from ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/ComparaGeneric_conf.pm ,
-	which in turn inherits from ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm .
-
-	Various groups in EBI and Sanger that use their own "flavours" of the ProteinTrees pipeline have their own subclasses of it here:
-	ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/ .
-
-3. ProteinTree pipeline-specific parameters (in progress)
-
-        * master_db         - it is a hash of connection parameters to your master database.
-                            At the moment ProteinTree pipeline requires a presence of a master database,
-                            which has to contain information about your species and species_sets.
-                            Refer to ensembl-compara/docs/README-master_database in order to create and correctly set up your own.
-                            (We normally maintain one master database thoughout many releases, so it can be a one-off time investment.)
+The pipeline must connect to "master" database to initialize. Please refer to the file "README-master_database" to correctly
+set it up. You have to import all the genome_dbs (the species on which you want to run the pipeline) and create a method_link_species_set
+with scripts/pipeline/create_mlss.pl using --method_link_type PROTEIN_TREES
 
 
-4. Initialization of the pipeline database
+2. General structure of the pipeline
 
-	Each of Compara pipelines (being a Hive pipeline) runs off a MySQL database.
-	The pipeline database contains both static information
-	(general definition of analyses, associated runnables, parameters and resources, dependency rules, etc)
-	and runtime information about states of single jobs running on the farm or locally.
+You can refer to docs/pipeline_diagrams/ProteinTrees.png for a visual description of the pipeline.
 
-	By initialization we mean a short step of converting a "PipeConfig" file into such a pipeline database.
-	This is done by feeding the ProteinTrees_conf.pm file to ensembl-hive/scripts/init_pipeline.pl script.
-	At this stage you can also override any of the options mentioned in the default_options.
+The main structure is given by some backbone analysis. Each one of them will dump the current state of the database (for a backup) and 
+fire the next step of the pipeline.
+The pipeline will follow one of the two paths (A or B). 'A' is a clustering based on all-vs-all blastp. 'B' is a HMM-based clustering.
+The option is selected by the hmm_clustering flag.
 
-	For example:
-		init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password "my_mysql_password" -mlss_id 12345
-	(it sets both 'password' and 'mlss_id' options).
-	In the same way you can set any other "scalar" parameters.
+   2.1. db_prepare
 
-	If you need to modify second-level values of a "hash option" (such as the '-user' or '-host' of the 'pipeline_db' option),
-	the syntax is the following (follows the extended syntax of Getopt::Long) :
-		init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -pipeline_db -host=myhost -pipeline_db -user=readonly
+At this step, the pipeline will make sure that all the tables are running with the MySQL InnoDB database engine. This ensures that foreign keys
+will be checked throughout the pipeline. It will also copy over from the master database some core tables:
+ ncbi_taxa_node, ncbi_taxa_name, method_link, species_set, method_link_species_set
+These tables should be not-empty. If they are, have a look at the file "README-master_database" to populate them.
 
-	Normally, one run of init_pipeline.pl should create you a pipeline database.
-	If anything goes wrong and the process does not complete successfully,
-	you will need to drop the partially created database in order to try again.
+   2.2. species_list_prepare
 
-	If the process completes successfully, it will print the recommended command lines
-		* to connect to the database (if you want to monitor the progress)
-		* to "sync" the database (more about it later) and
-		* to run the pipeline
+At this step, the pipeline will load and check all the species on which you want to run the pipeline. This includes:
+ - checking that the connections to each core database are available
+ - checking some species-specific data can be reused from a reference Compara database (to save some time at the later stages of the pipeline)
+ - building the default species tree (using the NCBI taxonomy)
 
-	Please remember that these command lines are for use only with a particular pipeline database,
-	and are likely to be different next time you run the pipeline. Moreover, they will contain a sensitive password!
-	So don't write them down.
+   2.3. genome_load
 
+At this step, the pipeline will actually load all the data related to the species:
+ - the list of members (genes and peptides)
+ - the peptide sequences
+ - the list of canonical transcripts (in case of alternative splicing: which isoform -which sequence- should be used in the pipeline)
 
-5. Synchronizing ("sync"-ing) the pipeline database
+   2.4. (path A) allvsallblast
 
-	In order to function properly (to monitor the progress, block and unblock analyses and send correct number of workers to the farm)
-	the Hive system needs to maintain certain number of job counters. These counters and associated analysis states are updated
-	in the process of "synchronization" (or "sync"). This has to be done once before running the pipeline, and normally the pipeline
-	will take care of synchronization by itself and will trigger the 'sync' process automatically.
-	However sometimes things go out of sync. Especially when people try to outsmart the scheduler by manually stopping and running jobs :)
-	This is when you might want to re-sync the database. It is done by running the ensembl-hive/scripts/beekeeper.pl in "sync" mode:
+At this step, the pipeline will run the all-vs-all blastp comparisons. Some hits can be "reused" from the reference compara database, which
+can save several weeks of computation
 
-		beekeeper.pl -url <url-of-your-pipeline-database> -sync
+   2.5. (path A) hcluster
 
+At this step, the pipeline will run hcluster_sg on the graph based on the blast hits. The resulting clusters contain similar genes and will
+map to individual gene-trees.
 
-6. Running the pipeline in automatic mode
+   2.6. (path B) hmmClassify
 
-	As mentioned previously, the usual lifecycle of a Hive pipeline is revolving around the pipeline database.
-	There are several "Worker" processes that run on the farm.
-	The Workers pick suitable tasks from the database, run them, and report back to the database.
-	There is also one "Beekeeper" process that normally loops on a head node of the farm,
-	monitors the progress of Workers and whenever needed submits more Workers to the farm
-	(since Workers die from time to time for natural and not-so-natural reasons, Beekeeper maintains the correct load).
+At this step, the pipeline will load all the HMM profiles defined in the library, and classify all the genes from all the species into them.
+Each profile will naturally define a cluster.
 
-	So to "run the pipeline" all you have to do is to run the Beekeeper:
-		beekeeper.pl -url <url-of-your-pipeline-database> -loop
+   2.7. tree_building
 
-	In order to make sure this process doesn't die when you disconnect, it is normally run in a "screen session".
+At this step, the pipeline will actually compute the trees with the
+ - multiple alignment (Mcoffee if the cluster has less than 250 genes, Mafft otherwise)
+ - tree reconstruction with TreeBest
+ - homology inference
 
-	If your Beekeeper process gets killed for some reason, don't worry - you can re-sync and start another Beekeeper process.
-	It will pick up from where the previous Beekeeper left it.
+To prevent computation issues, the largest clusters (more than 400 genes) are recursively split into halves (until they fall until the limit size)
+with the QuickTree program (after an alignment with Mafft)
+
+  2.8. dnds
+
+At this step, the pipeline will compute dN/dS values on all the homologies (this can be parametrized)
 
 
-7. Monitoring the progress in a MySQL session
+3. Pipeline configuration
 
-	There is a "progress" view from which you can select and see how your jobs are doing:
-		SELECT * from progress;
+The pipeline structure (analysis work-flow) is defined in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/ProteinTrees_conf.pm but the actual
+parameters used by the various groups at the Genome Campus are defined in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/*ProteinTrees_conf.pm
+They mainly include custom:
+ - paths to executables
+ - database connection parameters
+ - more general parameters (pipeline-related)
+ - beekeeper parameters
 
-	If you see jobs in 'FAILED' state or jobs with retry_count>0 (which means they have failed at least once and had to be retried),
-	you may need to look at the "msg" view in order to find out the reason for the failures:
-		SELECT * FROM msg WHERE job_id=1234;	# a specific job
-	or
-		SELECT * FROM msg WHERE analysis_id=15;	# jobs of a specific analysis
-	or
-		SELECT * FROM msg;	# show me all messages
-	Some of the messages indicate temporary errors (such as temporary lack of connectivity with a database or file),
-	but some others may be critical (wrong path to a binary) that will eventually make all jobs of an analysis fail.
-	If the "is_error" flag of a message is false, it may be just a diagnostic message which is not critical.
+To configure the pipeline, you can:
+ - either edit PipeConfig/ProteinTrees_conf.pm (uncomment and update the commented parameters)
+ - or copy and update one of the example configuration files
+
+Here follows a description of each category of parameters
+
+   3.1. Path to executables
+
+As stated in the first section of this document, the pipeline relies on some external programs to do the computation.
+Make sure that all the necessary software are installed and properly configured.
+All the *_exe parameters must point to their correct locations
+
+   3.2 Database connections
+
+The configuration file must contain at least the two following entries:
+ - pipeline_db: where the pipeline will create the data
+ - master_db: the master database that contains the list of species you want to run the pipeline on and the method_link_species_set object for the current run.
+
+The pipeline relies on some Ensembl core (species) databases to provide the species-specific data. This can be configured with the 'curr_core_sources_locs'
+parameter, which is a list of database connections. It should contain the same server list as you have used when running scripts/pipeline/update_genome.pl
+
+If you are going to use Ensembl data, you may want to add the following database description:
+'ensembl_srv' => {
+	-host   => 'ensembldb.ensembl.org',
+	-port   => 5306,
+	-user   => 'anonymous',
+	-pass   => '',
+},
+'curr_core_sources_locs' => [ $self->o('ensembl_srv') ],
+
+If you are going to run the pipeline on species that are not in Ensembl, you have to define the "curr_file_sources_locs" parameter with a list
+of JSON file of the following format:
+
+[
+{
+        "production_name" : "nomascus_leucogenys",
+        "taxonomy_id"     : "61853",
+        "assembly"        : "Nleu2.0",
+        "genebuild"       : "2011-05",
+        "prot_fasta"      : "proteins.fasta",
+        "cds_fasta"       : "transcripts.fasta",
+        "gene_coord_gff"  : "annotation.gff",
+}
+]
+
+If you want to use a Compara database as a reference (for example, to reuse the results of the all-vs-all blastp), you can configure the 'reuse_db' parameter: 
+'reuse_db' => {
+	-host   => 'ensembldb.ensembl.org',
+	-port   => 5306,
+	-user   => 'anonymous',
+	-pass   => '',
+	-dbname => 'ensembl_compara_XXXX',
+},
+Then, you will have to update the 'reuse_core_sources_locs' parameter. It is equivalent to 'curr_core_sources_locs', but refers to the core databases
+linked to 'reuse_db'. Again, on Ensembl data, you can define: 'reuse_core_sources_locs' => [ $self->o('ensembl_srv') ] 
+Please make sure that 'prev_release' contains the version number of the reuse database.
+
+   3.3. More general parameters (pipeline-related)
+
+ - mlss_id: the method_link_species_set_id created by scripts/pipeline/create_mlss.pl
+   This defines the instance of the pipeline (which species to work on)
+
+ - release: the API version of your CVS checkout
+
+ - rel_suffix: any string (defaults to "") to distinguish between several runs on the same API version
+
+ - work_dir: where to store temporary files
+   The pipeline will create there 3 folders:
+    - blast_db: the blast databases for the all-vs-all blastp
+    - cluster: files used by hcluster_sg
+    - dumps: SQL dumps (checkpoints) of the database
+
+ - outgroups: the list of genome_db_ids of the outgroup species.
+   This is used by hcluster_sg to produce more relevant clusters. In the Ensembl run, we define S.cerevisae as the outgroup of all the animals (Metazoa)
+
+ - taxlevels: on which clades should the pipeline try to compute dN/dS values.
+   Those values are only available for close enough species and it is genereally not a good idea to use very large clades (like Metazoa).
+   We only use mammals, some birds and some fish.
+
+   3.4. beekeeper parameters
+
+All the *_capacity parameters are tuned to fit the capacity of our MySQL servers. You migh want to initially reduce them, and gradually increase
+them "as long as the database holds" :) The relative proportion of each analysis should probably stay the same
+
+The "resource_classes" of the configuration file defined how beekeeper should run each category of job. These are LSF parameters that you may only
+want to change if you don't have a LSF installation
+
+4. Run the pipeline
+
+The pipeline is now ready to be run.
+You can swith to the file "README-beekeeper", which explains how to run beekeeper :)
 
 
-8. Monitoring the progress on a pipeline graph
-
-	Most Compara pipelines have rather complex dependency graphs that guide their execution.
-	You may get a better picture if you generate a snapshot of the graph.
-	You can do it at any moment after the pipeline database has been initialized and sync'ed:
-
-		generate_graph.pl -url <url-of-your-pipeline-database> -output pt_snapshot.png
-
-	Legend:
-		a green oval or octagon is a done analysis
-		a yellow one is in progress
-		a grey one is blocked (until something else is done)
-		a red one is failed (normally a Beekeeper will exit if it encounters a failed analysis)
-		a blue arrow is a "dataflow rule" (that generates new jobs)
-		a red arrow is a "control rule" (that blocks another analysis until the controlling analysis is done)
 

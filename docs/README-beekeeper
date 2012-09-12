@@ -1,5 +1,33 @@
 This document describes how to run the the compara pipelines using the beekeeper.
 
+0. Configuration of the pipeline
+
+	Nearly all of the pipeline configurations now lives in some "PipeConfig" files, which are Perl modules, and
+	locate in :
+		ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/
+		ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Examples
+
+	They contain the following subroutines:
+		* default_options   - defines customizable options and their default values.
+		                      In the majority of cases you will only need to modify some of these.
+		                      Do not rush to run your favourite text editor, as you may also change
+		                      any of these options from the command line.
+
+		* pipeline_create_commands   - defines a list of specific shell commands needed to create a pipeline database.
+		                             It is unlikely you will need to change it.
+
+		* resource_classes   - defines a list of resource classes and corresponding farm-specific parameters for each class.
+		                     You may need to adjust some of these if running the pipeline on your own farm.
+
+		* pipeline_analyses   - defines the structure of the pipeline itself - which tasks to run, in which order, etc.
+		                      These are the very guts of the pipeline, so make sure you know what you are doing
+		                      if you are planning to change anything.
+
+	Since our "PipeConfig" files are Perl modules, they use inheritance to avoid code duplication.
+	Specific Compara "PipeConfig" files inherit from ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/ComparaGeneric_conf.pm ,
+	which in turn inherits from ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm .
+
+
 1. Initialization of the pipeline database
 
 	Each of Compara pipelines (being a Hive pipeline) runs off a MySQL database.
@@ -80,7 +108,7 @@ This document describes how to run the the compara pipelines using the beekeeper
 	If the "is_error" flag of a message is false, it may be just a diagnostic message which is not critical.
 
 
-8. Monitoring the progress on a pipeline graph
+5. Monitoring the progress on a pipeline graph
 
 	Most Compara pipelines have rather complex dependency graphs that guide their execution.
 	You may get a better picture if you generate a snapshot of the graph.
