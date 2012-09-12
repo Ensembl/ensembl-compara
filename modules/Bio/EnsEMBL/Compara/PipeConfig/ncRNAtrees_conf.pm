@@ -33,7 +33,7 @@ sub default_options {
             # parameters that are likely to change from execution to another:
             # 'mlss_id'             => 40086,
             'release'               => '69',
-            'rel_suffix'            => '',    # an empty string by default, a letter or string otherwise
+            'rel_suffix'            => 'a',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
@@ -48,6 +48,7 @@ sub default_options {
 
             # capacity values for some analysis:
             'quick_tree_break_capacity'       => 100,
+            'msa_chooser_capacity'            => 100,
             'other_paralogs_capacity'         => 100,
             'merge_supertrees_capacity'       => 100,
             'aligner_for_tree_break_capacity' => 200,
@@ -142,8 +143,9 @@ sub resource_classes {
     return {
             'default'   => { 'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
             'himem'     => { 'LSF' => '-q basement -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
-            '1Gb_job'   => { 'LSF' => '-C0 -M1000000   -R"select[mem>1000]   rusage[mem=1000]"' },
-            '8Gb_job'   => { 'LSF' => '-C0 -M8000000   -R"select[mem>8000]   rusage[mem=8000]"' },
+            '1Gb_job'   => { 'LSF' => '-C0         -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
+            '8Gb_job'   => { 'LSF' => '-C0         -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
+            '4Gb_job'   => { 'LSF' => '-C0         -M4000000  -R"select[mem>4000]  rusage[mem=4000]"' },
            };
 }
 
@@ -407,7 +409,8 @@ sub pipeline_analyses {
         {   -logic_name    => 'rfam_classify',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
             -parameters    => {
-                'mlss_id'        => $self->o('mlss_id'),
+                'mlss_id'                   => $self->o('mlss_id'),
+                'additional_clustersets'    => [qw(super-align)],
             },
             -flow_into => {
                            2 => [ 'recover_epo' ],
@@ -439,20 +442,21 @@ sub pipeline_analyses {
 #         },
 
 
-            {   -logic_name => 'msa_chooser',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::MSAChooser',
-                -parameters => {
-                                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
-                               },
-                -batch_size => 10,
-                -rc_name => '1Gb_job',
-                -priority => 30,
-                -flow_into => {
-                               '1->A' => [ 'genomic_alignment', 'infernal' ],
-                               'A->1' => [ 'treebest_mmerge' ],
-                               '3->B' => [ 'aligner_for_tree_break' ],
-                               'B->4' => [ 'quick_tree_break' ],
-                              },
+            {   -logic_name    => 'msa_chooser',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::MSAChooser',
+                -parameters    => {
+                                   'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
+                                  },
+                -batch_size    => 10,
+                -rc_name       => '1Gb_job',
+                -priority      => 30,
+                -hive_capacity => $self->o('msa_chooser_capacity'),
+                -flow_into     => {
+                                   '1->A' => [ 'genomic_alignment', 'infernal' ],
+                                   'A->1' => [ 'treebest_mmerge' ],
+                                   '3->B' => [ 'aligner_for_tree_break' ],
+                                   'B->4' => [ 'quick_tree_break' ],
+                                  },
             },
 
             {   -logic_name    => 'aligner_for_tree_break',
@@ -474,9 +478,10 @@ sub pipeline_analyses {
                                 'sreformat_exe'     => $self->o('sreformat_exe'),
                                 'store_super_align' => 1,
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
+                                'member_type'       => 'ncrna',   ## In principle this is only needed for create additional clustersets (super-align), but these are now created by RFAM_classify, so in principle this option can be deleted
                                },
                 -hive_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '1Gb_job',
+                -rc_name        => '4Gb_job',
                 -priority       => 50,
                 -flow_into      => [ 'other_paralogs' ],
             },
