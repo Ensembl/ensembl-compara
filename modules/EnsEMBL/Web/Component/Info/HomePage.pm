@@ -66,7 +66,7 @@ sub content {
 
   $html .= '<div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div>';  
 
-  if ($hub->database('regulation')) {
+  if ($hub->database('funcgen')) {
     $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
 
     $html .= '<div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div>';
