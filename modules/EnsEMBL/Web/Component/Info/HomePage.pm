@@ -66,9 +66,11 @@ sub content {
 
   $html .= '<div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div>';  
 
-  $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
+  if ($hub->database('regulation')) {
+    $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
 
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div>';
+    $html .= '<div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div>';
+  }
 
   $html .= '
     </div>
@@ -354,10 +356,10 @@ sub _variation_text {
     $html .= '<h2>Variation</h2>
 <p><strong>What can I find?</strong> Short sequence variants';
 
-    my $dbsnp = $species_defs->databases->{'DATABASE_VARIATION'}{'dbSNP_VERSION'};
-    if ($dbsnp) {
-      $html .= " (e.g. from dbSNP $dbsnp)";
-    }
+    #my $dbsnp = $species_defs->databases->{'DATABASE_VARIATION'}{'dbSNP_VERSION'};
+    #if ($dbsnp) {
+    #  $html .= " (e.g. from dbSNP $dbsnp)";
+    #}
 
     if ($species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
       $html .= ' and longer structural variants';
