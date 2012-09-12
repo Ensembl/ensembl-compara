@@ -122,12 +122,13 @@ sub run {
 
 
 sub write_output {
-    my $self = shift @_;
+    my ($self) = @_;
 
     $self->store_hmmprofile;
 }
 
 sub post_cleanup {
+    my ($self) = @_;
     $self->clean_directory();
 }
 
