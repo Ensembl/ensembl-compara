@@ -98,7 +98,7 @@ sub store_hmmprofile {
         if ($line =~ /NAME/) {
             my ($tag, $this_name) = split(/\s+/,$line);
             $name = defined $hmm_name ? $hmm_name : $this_name;
-        } elsif ($line =~ /ACCESSION/) {
+        } elsif ($line =~ /^ACC/) {
             my ($tag, $accession) = split(/\s+/,$line);
             $model_id = defined $hmm_name ? $hmm_name : $accession;
         } elsif ($line =~ /^\/\//) {
