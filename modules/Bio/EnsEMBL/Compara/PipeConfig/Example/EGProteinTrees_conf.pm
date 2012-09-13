@@ -92,11 +92,11 @@ sub default_options {
 
     # HMM specific parameters
    'hmm_clustering'            => 0, ## by default run blastp clustering
-   'cm_file_or_directory'      => '',
-   'hmm_library_basedir'       => '',
-   'blast_path'                => '',
-   'pantherScore_path'         => '',
-   'hmmer_path'                => '',
+   'cm_file_or_directory'      => '/nfs/production/panda/ensemblgenomes/data/PANTHER7.2/',
+   'hmm_library_basedir'       => '/nfs/production/panda/ensemblgenomes/data/PANTHER7.2/',
+   'blast_path'                => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.2.23+-x86_64-Linux/bin/',
+   'pantherScore_path'         => '/nfs/panda/ensemblgenomes/data/pantherScore1.03/',
+   'hmmer_path'                => '/nfs/panda/ensemblgenomes/external/hmmer-2.3.2-x86_64-Linux/src/',
 
 
     #Clustering
