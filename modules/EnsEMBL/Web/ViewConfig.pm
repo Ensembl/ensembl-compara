@@ -250,10 +250,14 @@ sub update_from_url {
     }
   }
   
-  my @values  = split /,/, $input->param($image_config);
+  my @values = split /,/, $input->param($image_config);
+  
+  $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
+  
+  $session->store;
   
   if (@values) {
-    $input->delete($image_config); 
+    $input->delete($image_config, 'format', 'menu'); 
     $params_removed = 1;
   }
   
@@ -262,10 +266,6 @@ sub update_from_url {
     $params_removed = 1;
   }
   
-  $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
-  
-  $session->store;
-
   return $params_removed;
 }
 
