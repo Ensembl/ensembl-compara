@@ -19,11 +19,12 @@ sub init {
   $self->create_menus('other');
 
   $self->add_tracks('other',
-    [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r' }],
-    [ 'genetree_legend', 'Legend', 'genetree_legend', { on => 'on', strand => 'r' }],
+    [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no' }],
+    [ 'genetree_legend', 'Legend', 'genetree_legend', { on => 'on', strand => 'r', menu => 'no' }],
   );
   
   $self->storable = 0;
+  $self->{extra_menus} = {'display_options' => 1};
 }
 
 1;
