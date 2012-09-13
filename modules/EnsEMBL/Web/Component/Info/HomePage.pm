@@ -244,7 +244,7 @@ sub _genebuild_text {
   };
 
   my $trans_text = $sample_data->{'TRANSCRIPT_TEXT'}; 
-  my $trans_url  = $species_defs->species_path.'/Transcript/Summary?g='.$sample_data->{'TRANSCRIPT_PARAM'};
+  my $trans_url  = $species_defs->species_path.'/Transcript/Summary?t='.$sample_data->{'TRANSCRIPT_PARAM'};
   $html .= qq{
     <a href="$trans_url" title="$trans_text"><img src="$img_url/96/transcript.png" class="bordered" /></a>
     <p><a href="$trans_url" class="nodeco" title="$trans_text">Example transcript</a></p>
