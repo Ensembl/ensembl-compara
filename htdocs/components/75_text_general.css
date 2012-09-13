@@ -42,7 +42,7 @@ pre.wrap            { white-space: pre-wrap; }
 .bg3    { background: [[NEUTRAL_BG]];      }
 .bg4    { background: [[CONTRAST_BG]];     }
 .hilite { background: [[CONTRAST_BORDER]]; }
-.red    { color: #933;
+.red    { color: #933; }
 
 /*----------------------------------------------------------------------
   Columns and boxes 
