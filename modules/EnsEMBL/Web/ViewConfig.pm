@@ -494,7 +494,7 @@ sub build_imageconfig_form {
           }));
         }
       } else {
-        my $parent = $div->append_child('div', { class => 'subset' . (scalar @child_nodes > 1 ? ' first' : '') })->append_child('ul', { class => 'config_menu' }); # Add a subset div to keep the HTML consistent
+        my $parent = $div->append_child('div', { class => 'subset' . (scalar @child_nodes > 1 ? ' first' : '') })->append_child('ul', { class => "config_menu $section" }); # Add a subset div to keep the HTML consistent
         
         $self->build_imageconfig_menus($_, $parent, $section) for @child_nodes;
         $self->add_select_all($node, $parent, $section);
@@ -550,7 +550,7 @@ sub build_imageconfig_menus {
     if (!scalar(grep $_->get('node_type') ne 'menu', @{$node->child_nodes}) && scalar(grep !$_->get('external'), @{$node->child_nodes})) {
       $element = $parent->append_child('div', { class => $menu_type eq 'hidden' ? ' hidden' : '' });
     } else {
-      $element = $parent->append_child('ul', { class => 'config_menu' . ($menu_type eq 'hidden' ? ' hidden' : '') });
+      $element = $parent->append_child('ul', { class => "config_menu $menu_class" . ($menu_type eq 'hidden' ? ' hidden' : '') });
     }
     
     $self->build_imageconfig_menus($_, $element, $menu_class) for @{$node->child_nodes};
