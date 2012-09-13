@@ -382,7 +382,7 @@ sub content {
   if ($flag) {
     $html .=
       ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
-      ($reg_table->has_rows ? '<h2>Regulatory consequences</h2>'.$reg_table->render : '<h3>No Regulatory consequences</h3>');
+      ($reg_table->has_rows ? '<h2>Regulatory consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>');
     
     return $html;
   } else { 
