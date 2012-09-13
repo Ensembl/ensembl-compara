@@ -486,7 +486,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   updateElLk: function (arg, configMenus) {
-    if (configMenus) {
+    if (configMenus && configMenus.length) {
       this.elLk.configMenus = this.elLk.configMenus.add(configMenus.find('ul.config_menu')).filter(function () { return $(this).parents('body').length; });
     }
     
