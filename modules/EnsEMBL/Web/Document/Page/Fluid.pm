@@ -28,6 +28,7 @@ sub initialize_HTML {
     tools            EnsEMBL::Web::Document::Element::ToolLinks
     tabs             EnsEMBL::Web::Document::Element::Tabs
     content          EnsEMBL::Web::Document::Element::Content
+    modal            EnsEMBL::Web::Document::Element::Modal
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
@@ -72,6 +73,7 @@ sub initialize_error {
     tools            EnsEMBL::Web::Document::Element::ToolLinks
     tabs             EnsEMBL::Web::Document::Element::Tabs
     content          EnsEMBL::Web::Document::Element::Content
+    modal            EnsEMBL::Web::Document::Element::Modal
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
