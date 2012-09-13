@@ -33,7 +33,7 @@ sub configure {
   ##  - name            Name attribute
   ##  - value           Value attribute for text type field or a checkbox; selected/checked value for checklist/radiolist/dropdown -  can be an ArrayRef for multiple values
   ##  - is_encoded      Flag kept on if the value does not need htmlencoding before being set as value attribute in case of String drived element or NoEdit
-  ##  - shortnote       A short text to go just right the text/password/file or select.
+  ##  - shortnote       A short text to go just right the text/password/file or select, or checkbox element.
   ##  - inline          Flag stating whether checkbox/radio buttons are to be disaplayed in a horizontal line in case of checklist/radiolist
   ##  - size            Size attribute for text input, password input or select.
   ##  - style           Style attribute works for string based input, textarea and select dropdpwn
