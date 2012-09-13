@@ -20,12 +20,10 @@ sub init {
   my $referer = $hub->referer;
   
   # Set action of component to be the same as the action of the referer page - needed for view configs to be correctly created
-  $ENV{'ENSEMBL_ACTION'} = $referer->{'ENSEMBL_ACTION'};
-  $hub->action           = $ENV{'ENSEMBL_ACTION'};
+  $hub->action = $ENV{'ENSEMBL_ACTION'} = $hub->param('force_action') || $referer->{'ENSEMBL_ACTION'};
   
   if (!$ENV{'ENSEMBL_FUNCTION'}) {
-    $ENV{'ENSEMBL_FUNCTION'} = $referer->{'ENSEMBL_FUNCTION'};
-    $hub->function           = $ENV{'ENSEMBL_FUNCTION'};
+    $hub->function = $ENV{'ENSEMBL_FUNCTION'} = $hub->param('force_function') || $referer->{'ENSEMBL_FUNCTION'};
   }
   
   $self->builder->create_objects;
@@ -35,7 +33,7 @@ sub init {
   
   if ($object) {
     $object->__data->{'_action'}   = $ENV{'ENSEMBL_ACTION'};
-    $object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'} unless $ENV{'ENSEMBL_FUNCTION'};
+    $object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'};
   }
   
   if ($hub->user) {
