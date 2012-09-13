@@ -82,10 +82,10 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
-#   $tree_node->append($self->create_node('SpeciesTree', 'Gain/Loss Tree',
-#       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
-#       { 'availability' => 'gene database:compara core has_gene_tree' }
-#     ));
+  $tree_node->append($self->create_node('SpeciesTree', 'Gene Gain/Loss Tree',
+      [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
+      { 'availability' => 'gene database:compara core has_gene_tree' }
+    ));
   
   $compara_menu->append($tree_node);
     
