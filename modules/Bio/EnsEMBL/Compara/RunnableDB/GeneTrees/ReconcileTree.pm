@@ -55,20 +55,20 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $protein_tree_id = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $protein_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
-                                        or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
-    $protein_tree->preload();
-    $protein_tree->print_tree(10) if $self->debug;
+    my $gene_tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $gene_tree_id )
+                                        or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    $gene_tree->preload();
+    $gene_tree->print_tree(10) if $self->debug;
 
-    $self->param('protein_tree', $protein_tree->root);
+    $self->param('gene_tree', $gene_tree->root);
 }
 
 sub run {
     my $self = shift;
 
     $self->run_treebest_sdi;
-    $self->map_nodes('protein_tree', 'ini_nodes');
+    $self->map_nodes('gene_tree', 'ini_nodes');
     $self->map_nodes('new_tree', 'new_nodes');
 }
 
@@ -81,7 +81,7 @@ sub write_output {
 sub post_cleanup {
     my $self = shift;
 
-    $self->param('protein_tree')->release_tree;
+    $self->param('gene_tree')->release_tree;
     $self->param('new_tree')->release_tree;
 }
 
@@ -93,7 +93,7 @@ sub post_cleanup {
 sub run_treebest_sdi {
     my $self = shift;
 
-    my $tree = $self->param('protein_tree');
+    my $tree = $self->param('gene_tree');
     my $tree_str = $tree->newick_format('member_id_taxon_id');
     my $species_tree_file = $self->get_species_tree_file();
 
