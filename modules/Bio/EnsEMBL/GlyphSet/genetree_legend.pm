@@ -23,18 +23,23 @@ sub render_normal {
   my $th = $res[3];
   my $pix_per_bp = $self->scalex;
 
-  my @branches = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? (['N number of members', 'blue', undef]) :(
+  my @branches = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? (['N number of members', 'blue', undef],['Expansion', '#800000', undef],['Contraction', '#008000', undef],['No signifance', 'blue', undef]) :(
+    ['Branch Length','header'],
     ['x1 branch length', 'blue', undef],
     ['x10 branch length', 'blue', 1],
     ['x100 branch length', 'red', 1]
   );
-  my @nodes = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ?  (
-    ['Expansion Event', 'red'],
-    ['Contraction Event', 'Green'],
-    ['Contraction Event with 0 members', 'LightGreen'],
-    ['No Signifance Event', 'black'],
-    ['No Signifance Event with 0 members', 'Grey'],
+  my @nodes = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ?  (
+    ['Nodes with 0 members ', 'grey'],
+    ['Nodes with 1-5 members', '#FEE391'],
+    ['Nodes with 6-10 members', '#FEC44F'],
+    ['Nodes with 11-15 members', '#FE9929'],
+    ['Nodes with 16-20 members', '#EC7014'],
+    ['Nodes with 21-25 members', '#CC4C02'],
+    ['Nodes with >25 members', '#8C2D04'],
   ): (
+    ['Nodes','header'],
+    ['gene node', 'white', 'border'],
     ['speciation node', 'navyblue'],
     ['duplication node', 'red3'],
     ['ambiguous node', 'turquoise'],
@@ -43,38 +48,48 @@ sub render_normal {
   if ($highlight_ancestor) {
     push(@nodes, ['ancestor node', '444444', "bold"]);
   }
-  my @orthos = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? [] :(
-    ['current gene', 'red', 'Gene ID'],
+  my @orthos = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? ["current gene's species", 'red', 'Species Name'] :(
+    ['Genes','header'],
+    ['gene of interest', 'red', 'Gene ID'],
     ['within-sp. paralog', 'blue', 'Gene ID'],
   );
   if ($other_gene) {
     @orthos = (
-      ['current gene', 'red', 'Gene ID', 'white'],
+      ['Genes','header'],
+      ['gene of interest', 'red', 'Gene ID', 'white'],
       ['within-sp. paralog', 'blue', 'Gene ID', 'white'],
       ['other gene', 'black', 'Gene ID', 'ff6666'],
       ['other within-sp. paralog', 'black', 'Gene ID', 'white'],
     );
   }
-  my @polys = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? [] :(
-    ['collapsed sub-tree', 'grey'], 
-    ['collapsed (current gene)', 'red' ],
-    ['collapsed (paralog)', 'royalblue'],
-  );
-   
+  
   my $alphabet = "AA";
   if (UNIVERSAL::isa($vc, "Bio::EnsEMBL::Compara::NCTree")) {
     $alphabet = "Nucl.";
-  }
+  }  
+  
+  my @polys = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? [] :(
+    ['Collapsed Nodes','header'],
+    ['collapsed sub-tree', 'grey'], 
+    ['collapsed (gene of interest)', 'red' ],
+    ['collapsed (paralog)', 'royalblue'],    
+  );
+  
+  my @collapsed_boxes = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? [] : (
+    ['Collapsed Alignments','header'],
+    ["0 - 33% Aligned $alphabet",'white', 'darkgreen'],
+    ["33 - 66% Aligned $alphabet",'yellowgreen', 'darkgreen'],
+    ["66 - 100% Aligned $alphabet",'darkgreen','darkgreen'],
+  );
   
   #no alignments legend required for cafetree/speciestree
-  my @boxes = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? [] : (
-    ["$alphabet alignment match/mismatch",   'yellowgreen', 'yellowgreen'],
-    ["$alphabet consensus > 66% (mis)match",      'darkgreen',   'darkgreen'],
-    ["$alphabet consensus > 33% (mis)match",      'yellowgreen',   'darkgreen'],
-    ["$alphabet alignment gap",              'white',       'yellowgreen'],
-               );
+  my @boxes = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? [] : (
+    ['Expanded Alignments','header'],
+    ["Gap",   'white', 'yellowgreen'],
+    ["Aligned $alphabet", 'yellowgreen',   'yellowgreen'],
+  );
 
-  my ($legend, $colour, $style, $border, $label, $text);
+  my ($legend, $colour, $style, $border, $label, $text, $box_border);
 
   $self->push($self->Text({
         'x'         => 0,
@@ -92,159 +107,228 @@ sub render_normal {
   }));
 
 
-  my ($x,$y) = (0, 0);
-  if($vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
+  my ($x,$y) = (0, 0.7);
+  if($vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
     foreach my $branch (@branches) {
       ($legend, $colour, $style) = @$branch;
-      
-      $self->_draw_symbol($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend, $colour, $style) if ($legend =~ /N number/);       #function to draw the symbol for n numbers, only be called for this specific legend
+      if ($legend =~ /N number/) {
+        $self->_draw_symbol($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend, $colour, $style);       #function to draw the symbol for n numbers, only be called for this specific legend        
+      } else {
+        if($legend eq 'Expansion' || $legend eq 'Contraction') {
+          $self->push($self->Rect({
+                'x'         => $im_width * $x/$NO_OF_COLUMNS,
+                'y'         => $y * ( $th + 3 ) + 32 + $th,
+                'width'     => 20,
+                'height'    => 1,
+                'bordercolour' => $colour,
+              })
+            );
+        } else {
+          $self->push($self->Line({
+            'x'         => $im_width * $x/$NO_OF_COLUMNS,
+            'y'         => $y * ( $th + 3 ) + 32 + $th,
+            'width'     => 20,
+            'height'    => 0,
+            'colour'    => $colour,
+            'dotted'    => $style,
+            })
+          );  
+        }
+      }      
       $label = $self->_create_label($im_width, $x, $y + 2, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
+      
+      $y = 1.5 if ($legend =~ /N number/);
       $self->push($label);
-      $y++;
-    }    
+      $y+=1.2;      
+    }
   } else {
     foreach my $branch (@branches) {
       ($legend, $colour, $style) = @$branch;  
-      $self->push($self->Line({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 8 + $th,
-        'width'     => 20,
-        'height'    => 0,
-        'colour'    => $colour,
-        'dotted'    => $style,
-        })
-      );
-      $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
-      $self->push($label);
-      $y++;
+      if($colour eq 'header') {       
+        $label = $self->_create_label($im_width, ($x-0.05), $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize+0.6, $fontname, $legend);
+        $self->push($label);
+        $y = $y + 1.5;
+        $x = 0.02;
+      } else {
+        $self->push($self->Line({
+          'x'         => $im_width * $x/$NO_OF_COLUMNS,
+          'y'         => $y * ( $th + 3 ) + 8 + $th,
+          'width'     => 20,
+          'height'    => 0,
+          'colour'    => $colour,
+          'dotted'    => $style,
+          })
+        );
+        $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
+        $self->push($label);
+        $y+=1.2;
+      }
     }
   }
   
-  ($x, $y) = (1, 0);
+  ($x, $y) = (0.7, 0.7);
   foreach my $ortho (@orthos) {
     my $bold_colour;
     ($legend, $colour, $text, $bold_colour) = @$ortho;
-    my $txt = $self->Text({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS - 0,
-        'y'         => $y * ( $th + 3 ) + $th,
-        'height'    => $th,
-        'valign'    => 'center',
-        'halign'    => 'left',
-        'ptsize'    => $fontsize,
-        'font'      => $fontname,
-        'colour'   =>  $colour,
-        'text'      => $text,
-        'absolutey' => 1,
-        'absolutex' => 1,
-        'absolutewidth'=>1
-
-        });
-    if ($bold_colour) {
-      for (my $delta_x = -1; $delta_x <= 1; $delta_x++) {
-        for (my $delta_y = -1; $delta_y <= 1; $delta_y++) {
-          next if ($delta_x == 0 and $delta_y == 0);
-          my %txt2 = %$txt;
-          bless(\%txt2, ref($txt));
-          $txt2{x} += $delta_x;
-          $txt2{y} += $delta_y;
-          $self->push(\%txt2);
+    if($colour eq 'header') {       
+      $label = $self->_create_label($im_width, ($x-0.07), $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize+0.6, $fontname, $legend);
+      $self->push($label);
+      $y = $y + 1.5;            
+    } else {
+      my $txt = $self->Text({
+          'x'         => $im_width * $x/$NO_OF_COLUMNS - 0,
+          'y'         => $y * ( $th + 3 ) + $th,
+          'height'    => $th,
+          'valign'    => 'center',
+          'halign'    => 'left',
+          'ptsize'    => $fontsize,
+          'font'      => $fontname,
+          'colour'   =>  $colour,
+          'text'      => $text,
+          'absolutey' => 1,
+          'absolutex' => 1,
+          'absolutewidth'=>1
+  
+          });
+      if ($bold_colour) {
+        for (my $delta_x = -1; $delta_x <= 1; $delta_x++) {
+          for (my $delta_y = -1; $delta_y <= 1; $delta_y++) {
+            next if ($delta_x == 0 and $delta_y == 0);
+            my %txt2 = %$txt;
+            bless(\%txt2, ref($txt));
+            $txt2{x} += $delta_x;
+            $txt2{y} += $delta_y;
+            $self->push(\%txt2);
+          }
         }
+        $txt->{colour} = $bold_colour;
       }
-      $txt->{colour} = $bold_colour;
+      $self->push($txt);
+      $x = '0.82' if($vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily'));
+      $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH + 20, $th, $fontsize, $fontname, $legend);
+      $self->push($label);
+      $y+=1.2;
     }
-    $self->push($txt);
-    $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH + 20, $th, $fontsize, $fontname, $legend);
-    $self->push($label);
-    $y++;
   }
 
-  ($x, $y) = ($vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? 1 : 2, 0);
+  ($x, $y) = (1.5, 0.7);
   foreach my $node (@nodes) {
     my $modifier;
     ($legend, $colour, $modifier) = @$node;
     my $bold = (defined $modifier and ($modifier eq 'bold'));
-    $self->push($self->Rect({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS - $bold,
-        'y'         => $y * ( $th + 3 ) + $th - $bold,
-        'width'     => 5 + 2 * $bold,
-        'height'    => 5 + 2 * $bold,
-        'colour'    => $colour,
-        })
-      );
-    if ($bold) {
+    if($colour eq 'header') {       
+      $label = $self->_create_label($im_width, ($x-0.07), $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize+0.6, $fontname, $legend);
+      $self->push($label);
+      $y = $y + 1.5;            
+    } else {
+      $x = 1.7 if($vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily'));
       $self->push($self->Rect({
-            'x'         => $im_width * $x/$NO_OF_COLUMNS,
-            'y'         => $y * ( $th + 3 ) + $th,
-            'width'     => 5,
-            'height'    => 5,
-            'bordercolour' => "white",
+          'x'         => $im_width * $x/$NO_OF_COLUMNS - $bold,
+          'y'         => $y * ( $th + 3 ) + $th - $bold,
+          'width'     => 5 + 2 * $bold,
+          'height'    => 5 + 2 * $bold,
+          'colour'    => $colour,
+          'bordercolour' => "black",
           })
         );
+      if ($bold) {
+        $self->push($self->Rect({
+              'x'         => $im_width * $x/$NO_OF_COLUMNS,
+              'y'         => $y * ( $th + 3 ) + $th,
+              'width'     => 5,
+              'height'    => 5,
+              'bordercolour' => "white",
+            })
+          );
+      }
+      if (defined $modifier and ($modifier eq 'border')) {
+        $self->push($self->Rect({
+              'x'         => $im_width * $x/$NO_OF_COLUMNS - $bold,
+              'y'         => $y * ( $th + 3 ) + $th - $bold,
+              'width'     => 5 + 2 * $bold,
+              'height'    => 5 + 2 * $bold,
+              'bordercolour' => 'navyblue',
+            })
+          );
+      }
+      $label = $self->_create_label($im_width, $x, $y - 4 / ($th+3), $NO_OF_COLUMNS, $BOX_WIDTH - 20, $th, $fontsize, $fontname, $legend);
+      $self->push($label);
+      $y+=1.2;
     }
-    if (defined $modifier and ($modifier eq 'border')) {
-      $self->push($self->Rect({
-            'x'         => $im_width * $x/$NO_OF_COLUMNS - $bold,
-            'y'         => $y * ( $th + 3 ) + $th - $bold,
-            'width'     => 5 + 2 * $bold,
-            'height'    => 5 + 2 * $bold,
-            'bordercolour' => 'navyblue',
-          })
-        );
-    }
-    $label = $self->_create_label($im_width, $x, $y - 4 / ($th+3), $NO_OF_COLUMNS, $BOX_WIDTH - 20, $th, $fontsize, $fontname, $legend);
-    $self->push($label);
-    $y++;
   }
 
-  ($x, $y) = (3, 0);
-  foreach my $poly (@polys) {
-    ($legend, $colour) = @$poly;
+  ($x, $y) = (2.2, 0.7);  
+  foreach my $poly (@polys) {    
+    ($legend, $colour, $box_border) = @$poly;
     my $px = $im_width * $x/$NO_OF_COLUMNS;
     my $py = $y * ( $th + 3 ) + 8 + $th;
     my($width,$height) = (12,12);
-    $self->push($self->Poly({
-      'points' => [ $px, $py,
-                    $px + $width, $py - ($height / 2 ),
-                    $px + $width, $py + ($height / 2 ) ],
-      'colour'   => $colour,
-    }) );
-    $label = $self->_create_label
-        ($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, 
-         $fontsize, $fontname, $legend);
-    $self->push($label);
-    $y++;
+
+    # a hack to get a header for each column in the legend    
+    if($colour eq 'header') {
+      $label = $self->_create_label($im_width, ($x-0.1), $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize+0.6, $fontname, $legend);
+      $self->push($label);
+      $y = $y + 1.5;
+    } else {      
+      #draw the triangles and label
+      $self->push($self->Poly({
+        'points' => [ $px, $py,
+                      $px + $width, $py - ($height / 2 ),
+                      $px + $width, $py + ($height / 2 ) ],
+        'colour'   => $colour,
+      }) );
+      $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize, $fontname, $legend);
+      $self->push($label);
+      $y+=1.2;
+    }
+  }
+  
+  ($x, $y) = (3.05, 0.7);
+  foreach my $collapsed_box (@collapsed_boxes) {
+    ($legend, $colour, $box_border) = @$collapsed_box;
+    my $px = $im_width * $x/$NO_OF_COLUMNS;
+    my $py = $y * ( $th + 3 ) + 8 + $th;
+    my($width,$height) = (12,12);
+
+    # a hack to get a header for each column in the legend    
+    if($colour eq 'header') {
+      $label = $self->_create_label($im_width, ($x-0.1), $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize+0.6, $fontname, $legend);
+      $self->push($label);
+      $y = $y + 1.5;
+    } else {
+      $self->draw_box($im_width, $x, $y, $NO_OF_COLUMNS, $th, undef, undef, $box_border, $colour);
+      $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize, $fontname, $legend);
+      $self->push($label);
+      $y+=1.5;       
+    }    
   }
 
-  ($x, $y) = (4, 0);
+  ($x, $y) = (3.8, 0.7);  
   foreach my $box (@boxes) {
     ($legend, $colour, $border) = @$box;
-    $self->push($self->Rect({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 1 + $th,
-        'width'     => 10,
-        'height'    => 0,
-        'colour'    => $border,
-        })
-      );
-    $self->push($self->Rect({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 2 + $th,
-        'width'     => 10,
-        'height'    => 8,
-        'colour'    => $colour,
-        })
-      );
-    $self->push($self->Rect({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 10 + $th,
-        'width'     => 10,
-        'height'    => 0,
-        'colour'    => $border,
-        })
-      );
-    $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 10, $th, $fontsize, $fontname, $legend);
-    $self->push($label);
-    $y++;
+    if($colour eq 'header') {
+#       #one off drawing of a box next to the label
+#       $self->push($self->Rect({
+#           'x'         => $x+1370,
+#           'y'         => $y+21,
+#           'width'     => 7,
+#           'height'    => 7,
+#           'bordercolour' => 'navyblue',
+#          })
+#       );    
+      $label = $self->_create_label($im_width, ($x-0.1), $y, $NO_OF_COLUMNS, $BOX_WIDTH - 10, $th, $fontsize+0.6, $fontname, $legend);
+      $self->push($label);      
+      $y = $y + 1.5;
+    } else {     
+      #Drawing boxes if border present, else can draw something else      
+      if($border) {          
+          $self->draw_box($im_width, $x, $y, $NO_OF_COLUMNS, $th, undef, undef, $border, $colour);
+          $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 10, $th, $fontsize, $fontname, $legend);
+          $self->push($label);
+          $y+=1.5;          
+      }
+    }
+
   }
 }
 
@@ -266,6 +350,59 @@ sub _create_label {
     });
 }
 
+#function to draw boxes in legend
+sub draw_box {
+  my ($self, $im_width, $x, $y, $NO_OF_COLUMNS, $th, $width, $height, $border, $colour) = @_;
+  
+  if($border) {
+    #top horizontal line for border
+    $self->push($self->Rect({
+      'x'         => $im_width * $x/$NO_OF_COLUMNS,
+      'y'         => $y * ( $th + 3 ) + 1 + $th,
+      'width'     => 10,
+      'height'    => 0,
+      'colour'    => $border,
+      })
+    );
+    #left vertical line for border
+    $self->push($self->Rect({
+      'x'         => $im_width * ($x-0.005)/$NO_OF_COLUMNS, #the lower the value, the more to the left (<-) it is
+      'y'         => $y * ( $th + 3 ) + 1 + $th, # the lower the value, the higher up it is
+      'width'     => 0,
+      'height'    => 10,
+      'colour'    => $border,
+      })
+    );  
+    #right vertical line for border
+    $self->push($self->Rect({
+      'x'         => $im_width * ($x+0.0325)/$NO_OF_COLUMNS,
+      'y'         => $y * ( $th + 3 ) + 1 + $th, 
+      'width'     => 0,
+      'height'    => 10,
+      'colour'    => $border,
+      })
+    );
+    #bottom horizontal line for border
+    $self->push($self->Rect({
+      'x'         => $im_width * $x/$NO_OF_COLUMNS,
+      'y'         => ($y+0.08) * ( $th + 3 ) + 10 + $th,
+      'width'     => 10,
+      'height'    => 0,
+      'colour'    => $border,
+      })
+    );    
+  }
+  #drawing middle square with fill colour
+  $self->push($self->Rect({
+    'x'         => $im_width * $x/$NO_OF_COLUMNS,
+    'y'         => $y * ( $th + 3 ) + 2 + $th,
+    'width'     => 10,
+    'height'    => 8,
+    'colour'    => $colour,
+    })
+  );
+}
+        
 #function to draw the n members symbol
 sub _draw_symbol {
   my ($self,$im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend, $colour, $style) = @_;
@@ -301,7 +438,7 @@ sub _draw_symbol {
   );
 
 # Draw N as a label
-  my $n_label = $self->_create_label($im_width, '0', '2', '1', '2', $th, '7', $fontname, 'N');
+  my $n_label = $self->_create_label($im_width, '0', '2.7', '1', '2', $th, '7', $fontname, 'N');
   $self->push($n_label);      
   
   $self->push($self->Line({
