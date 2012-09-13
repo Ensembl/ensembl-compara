@@ -27,6 +27,7 @@ our $MEMD = new EnsEMBL::Web::Cache;
 
 sub availability {
   my $self = shift;
+  my ($database_synonym) = @_;
   
   if (!$self->{'_availability'}) {
     my $availability = $self->_availability;
@@ -39,11 +40,16 @@ sub availability {
       my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
       my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
       
-      my $gene_tree_sub = sub {
-        my ($database_synonym) = @_;
+      my $gene_tree_sub = sub {        
         my $gene_tree = $self->get_GeneTree($database_synonym);
         my $has_gene_tree = $gene_tree ? 1 : 0;
         return $has_gene_tree;
+      };
+      
+      my $species_tree_sub = sub {        
+        my $species_tree = $self->get_SpeciesTree($database_synonym);
+        my $has_species_tree = $species_tree ? 1 : 0;
+        return $has_species_tree;
       };
       
       $availability->{'history'}       = !!$rows;
@@ -53,6 +59,7 @@ sub availability {
       $availability->{'regulation'}    = !!$funcgen_res; 
       $availability->{'family'}        = !!$counts->{families};
       $availability->{'has_gene_tree'} = $gene_tree_sub->('compara');
+      $availability->{'has_species_tree'} = $species_tree_sub->('compara');
       $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
       ## TODO - e63 hack - may need rewriting for subsequent releases
       $availability->{'not_patch'}     = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1;
@@ -793,22 +800,27 @@ sub get_gene_slices {
 
 # Function to call compara API to get the species Tree
 sub get_SpeciesTree {
-  my $self       = shift;
+  my $self       = shift;  
   my $compara_db = shift || 'compara';
-  my $cache_key  = "_species_tree_$compara_db";
-  my $database   = $self->database($compara_db);
-  
+
+  my $hub            = $self->hub;  
+  my $collapsability = $hub->param('collapsability');
+  my $cache_key      = "_species_tree_".$collapsability."_".$compara_db;
+  my $database       = $self->database($compara_db);
+
   if (!$self->{$cache_key}) {
-    my $cafeTree_Adaptor = $database->get_CAFETreeAdaptor();
+    my $cafeTree_Adaptor = $database->get_CAFEGeneFamilyAdaptor();
     my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();    
 
-    my $member   = $self->get_compara_Member($compara_db)           || return;
+    my $member   = $self->get_compara_Member($compara_db)           || return;        
     my $geneTree = $geneTree_Adaptor->fetch_all_by_Member($member)->[0];
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);
-    
+    my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);    
+    $cafeTree    = $cafeTree->lca_reroot() if($collapsability eq 'part'); 
+      
     $self->{$cache_key} = $cafeTree;
   }
-
+  
   return $self->{$cache_key};
 }
 
