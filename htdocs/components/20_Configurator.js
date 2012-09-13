@@ -1045,7 +1045,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.lastQuery = this.query;
     
     $([].concat.apply([], els.hide)).filter(function () { return this.style.display !== 'none'; }).css('display', 'none');
-    $([].concat.apply([], els.show)).filter(function () { return this.style.display === 'none'; }).css('display', 'block');
+    $([].concat.apply([], els.show)).filter(function () { return !this.style.display || this.style.display === 'none'; }).css('display', 'block');
     
     this.toggleDescription(els.showDesc, 'show');
     this.elLk.noSearchResults[noResults]();
