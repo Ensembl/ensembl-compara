@@ -90,6 +90,15 @@ sub default_options {
     buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
     codeml_exe      =>  $self->o('exe_dir').'/codeml',
 
+    # HMM specific parameters
+   'hmm_clustering'            => 0, ## by default run blastp clustering
+   'cm_file_or_directory'      => '',
+   'hmm_library_basedir'       => '',
+   'blast_path'                => '',
+   'pantherScore_path'         => '',
+   'hmmer_path'                => '',
+
+
     #Clustering
     outgroups => [],
 
