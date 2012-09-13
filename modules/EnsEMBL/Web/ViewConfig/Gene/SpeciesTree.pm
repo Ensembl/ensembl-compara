@@ -10,12 +10,13 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
+  my $hash = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {}; 
   
-  my $hash     = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {};
   my $defaults = {
     collapsability => 'gene',
   };
-  
+     
+  #getting the clade colour for each species type (tree background colour based on the species type)
   foreach my $name (grep $hash->{$_}{'genetree_display'}, keys %$hash) {
     while (my ($key, $value) = each %{$hash->{$name}}) {
       $key   =~ s/^genetree_//;
@@ -25,15 +26,15 @@ sub init {
   }
   
   $self->set_defaults($defaults);
-  
-  $self->code  = join '::', grep $_, 'Gene::SpeciesTree', $self->hub->referer->{'ENSEMBL_FUNCTION'};
+  $self->add_image_config('speciestreeview', 'nodas');
+  $self->code  = join '::', grep $_, 'Gene::SpeciesTree', $self->hub->referer->{'ENSEMBL_FUNCTION'};  
   $self->title = 'Species Tree';
 }
 
 sub form {
   my $self = shift;
   
-    $self->add_fieldset('Image options');
+    $self->add_fieldset('Display options');
 
     $self->add_form_element({
       type   => 'DropDown',
@@ -41,10 +42,10 @@ sub form {
       name   => 'collapsability',
       label  => 'Viewing options for tree image',
       values => [ 
-        { value => 'gene',         name => 'View current gene only' },
-        { value => 'all',          name => 'View fully expanded tree' }
+        { value => 'all',          name => 'View full species tree' },
+        { value => 'part',         name => 'View minimal species tree' }
       ]
-    });
+    });    
 }
 
 1;

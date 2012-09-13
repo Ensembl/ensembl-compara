@@ -36,7 +36,7 @@ sub init {
   }
   
   $self->set_defaults($defaults);
-  
+  $self->add_image_config('genetreeview', 'nodas');
   $self->code  = join '::', grep $_, 'Gene::ComparaTree', $self->hub->referer->{'ENSEMBL_FUNCTION'};
   $self->title = 'Gene Tree';
 }
@@ -102,7 +102,7 @@ sub form {
       values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
     });
   } else {
-    $self->add_fieldset('Image options');
+    $self->add_fieldset('Display options');
 
     $self->add_form_element({
       type   => 'DropDown',
@@ -152,7 +152,7 @@ sub form {
         ]
       });
     }
-  }
+  }  
 }
 
 
