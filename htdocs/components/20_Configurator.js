@@ -248,6 +248,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return false;
     });
     
+    
     this.elLk.viewConfigs.on('change', ':input', function () {
       var value, attr;
       
@@ -378,53 +379,82 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    var tracks       = this.params.tracks[type];
-    var configs      = this.elLk.configDivs.filter('.' + type).find('ul.config_menu');
-    var i            = tracks.length;
-    var html         = [];
-    var imageConfigs = [];
-    var configMenus  = $();
+    var tracks      = this.params.tracks[type];
+    var configs     = this.elLk.configDivs.filter('.' + type).find('ul.config_menu').each(function (i) { $.data(this, 'index', i); });
+    var i           = tracks.length;
+    var configMenus = $();
+    var data        = { imageConfigs: [], html: [], submenu: [] };
     var j, track, li, ul, lis, link, subset;
     
     while (i--) {
-      j               = tracks[i].length;
-      ul              = configs.eq(i);
-      html[i]         = [];
-      imageConfigs[i] = [];
+      j  = tracks[i].length;
+      ul = configs.eq(i);
+      
+      data.html[i]         = [];
+      data.imageConfigs[i] = [];
+      data.submenu[i]      = false;
       
       while (j--) {
         track = tracks[i][j];
         
         if (this.imageConfig[track[0]]) {
           ul.children('.' + track[0]).remove();
-          html[i].unshift(this.imageConfig[track[0]].el[0].outerHTML || [ '<li class="', this.imageConfig[track[0]].el[0].className , '">', this.imageConfig[track[0]].el[0].innerHTML, '</li>' ].join(''));
+          data.html[i].unshift(this.imageConfig[track[0]].el[0].outerHTML || [ '<li class="', this.imageConfig[track[0]].el[0].className , '">', this.imageConfig[track[0]].el[0].innerHTML, '</li>' ].join(''));
         } else {
-          html[i].unshift(track[1]);
+          data.html[i].unshift(track[1]);
         }
         
-        imageConfigs[i][j] = track[0];
+        data.imageConfigs[i][j] = track[0];
       }
       
       if (ul[0].innerHTML) {
-        if (ul.has('ul.config_menu').length) {
+        ul.children().each(function () {
+          data.html[i].push('<li class="', this.className, '">');
+          
+          $.each(this.childNodes, function () {
+            var index = $.data(this, 'index');
+            var innerHTML;
+            
+            if (typeof index === 'undefined') {
+              innerHTML = this.innerHTML;
+            } else {
+              innerHTML        = data.html[index];
+              data.html[index] = '';
+              data.submenu[i]  = true;
+            }
+            
+            data.html[i].push('<', this.nodeName, ' class="', this.className , '">', innerHTML, '</', this.nodeName, '>');
+          });
+          
+          data.html[i].push('</li>');
+        });
+        
+        if (data.submenu[i]) {
           configMenus.push(ul[0]);
         }
-        
-        html[i].push(ul[0].innerHTML);
+      }
+      
+      data.html[i] = data.html[i].join('');
+    }
+    
+    i = tracks.length;
+    
+    while (i--) {
+      if (data.html[i]) {
+        configs[i].innerHTML = data.html[i];
       }
     }
     
     // must loop forwards here, since parent uls will write the content of child uls 
     for (i = 0; i < tracks.length; i++) {
-      ul = configs.eq(i);
-      
-      ul[0].innerHTML = html[i].join('');
-      
-      lis  = ul.children();
+      ul   = configs.eq(i);
+      j    = data.imageConfigs[i].length;
       link = ul.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '');
-      j    = imageConfigs[i].length;
+      lis  = ul.children();
       
-      lis.children('ul.config_menu').each(function (k) { configs[i + k + 1] = this; }); // alter the configs entry for all child uls after adding the content
+      if (data.submenu[i]) {
+        lis.children('ul.config_menu').each(function (k) { configs[i + k + 1] = this; }); // alter the configs entry for all child uls after adding the content
+      }
       
       lis.filter('.track').each(function () {
         subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
@@ -437,7 +467,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       while (j--) {
         li    = lis.eq(j);
-        track = imageConfigs[i][j];
+        track = data.imageConfigs[i][j];
         
         if (this.imageConfig[track]) {
           this.imageConfig[track].el = li;
