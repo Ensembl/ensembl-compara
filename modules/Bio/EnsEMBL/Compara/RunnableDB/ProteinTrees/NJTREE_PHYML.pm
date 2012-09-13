@@ -90,6 +90,7 @@ sub fetch_input {
     if ($self->param('store_intermediate_trees')) {
         my %other_trees;
         foreach my $tree (@{$self->param('tree_adaptor')->fetch_all_linked_trees($protein_tree)}) {
+            $tree->preload();
             $other_trees{$tree->clusterset_id} = $tree;
         }
         $self->param('other_trees', \%other_trees);
@@ -320,6 +321,7 @@ sub fetch_or_create_other_tree {
         foreach my $member (@{$newtree->get_all_Members}) {
             $member->cigar_line(undef);
             $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
+            $member->{'_children_loaded'} = 1;
         }
         $self->store_tree_into_clusterset($newtree, $clusterset);
         $newtree->store_tag('merged_tree_root_id', $tree->root_id);

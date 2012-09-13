@@ -250,7 +250,7 @@ sub parse_newick_into_tree {
         $newnode->add_child($othernode);
         $newnode->add_child($node);
         $newnode->add_tag('gene_split', 1);
-        $newnode->print_tree(10);
+        $newnode->print_tree(10) if $self->debug;
     }
   }
   print  "Tree after split_genes insertions:\n";
@@ -272,6 +272,7 @@ sub parse_newick_into_tree {
     $leaf->node_id($old_leaf->node_id);
     $leaf->adaptor($old_leaf->adaptor);
     $leaf->add_tag('name', $member_id);
+    $leaf->{'_children_loaded'} = 1;
   }
   print  "Tree with GeneTreeNode objects:\n";
   $newroot->print_tree(20) if($self->debug > 1);
@@ -282,7 +283,7 @@ sub parse_newick_into_tree {
   $newroot->adaptor($tree->root->adaptor);
   $newroot->tree($tree);
   $tree->root->release_tree;
-  $tree->{_root} = $newroot;
+  $tree->{'_root'} = $newroot;
 
   $tree->root->print_tree if($self->debug);
   # check here on the leaf to test if they all are GeneTreeMembers as
