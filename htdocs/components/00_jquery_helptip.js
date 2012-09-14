@@ -35,7 +35,9 @@
           helptip = $('<div class="helptip"><div class="ht-inner">' + tip + '</div></div>').appendTo(document.body);
           el.data('helptip', helptip);
 
-          if (!options['static']) {
+          if (options['static']) {
+            helptip.addClass('helptip-static');
+          } else {
             el.on('mousemove', function (e) {
               var el     = $(this);
               var offset = el.data('helptipPos');
@@ -44,7 +46,7 @@
           }
         }
         
-        helptip[0].className = 'helptip'; // this removes any 'helptip-left' or 'helptip-top' class added previously
+        helptip.removeClass('helptip-left helptip-top');
         
         if ($(window).height() < ((pos.y - $(window).scrollTop()) * 2)) {
           helptip.addClass('helptip-top');
