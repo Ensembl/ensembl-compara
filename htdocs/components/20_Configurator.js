@@ -125,7 +125,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         $(this).children('img.menu_option').trigger('click');
       }
       
-      return false;
+      return e.target.nodeName === 'A';
     });
     
     // Popup menus - displaying
