@@ -32,11 +32,12 @@ BEGIN{
   import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic %COORD_MAPPINGS %TYPE_MAPPINGS %AUTHORITY_MAPPINGS %NON_GENOMIC_COORDS);
 }
 
-my ($force_update,$check_registry,$site) = (0,0,'');
+my ($force_update,$check_registry,$site,$xml) = (0,0,'',0);
 GetOptions(
   "force",  \$force_update,
   "check",  \$check_registry,
   "site=s", \$site,
+  "xml", \$xml,
 );
 
 my $permalink_base = $site || $SiteDefs::ENSEMBL_BASE_URL;
@@ -191,7 +192,7 @@ foreach my $sp (@$species) {
   }
   
   print STDERR "[INFO]  Parsing species $sp at ".gmtime()."\n";
-
+  unless ($xml) {
   # Must have these coordinates for all species (though we don't create sources for them yet):
   for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
     unless (exists $das_coords->{$sp}{$coord_type}) {
@@ -202,7 +203,7 @@ foreach my $sp (@$species) {
       }
     }
   }
-
+}
   # Get top level slices from the database
   my $dbh = $db->dbc->db_handle;
   my $toplevel_slices   = $dbh->selectall_arrayref( q(
@@ -230,7 +231,14 @@ foreach my $sp (@$species) {
     # Set up the coordinate system details
     $_->[6] ||= ''; # version
     if (!$coords{$_->[5]}{$_->[6]}) {
+	if ($xml) {
+	    my $txml = _coord_system_as_xml(ucfirst($_->[5]), $_->[6], $sp, $taxid), ucfirst($_->[5])." $_->[6]";
+	    $coords{$_->[5]}{$_->[6]} = $txml;
+	    next;
+        }
       my $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
+
+
       if (!$cs_xml) {
         $_->[6] = $type;
         $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
@@ -447,11 +455,13 @@ sub _coord_system_as_xml {
           goto CREATE;
         }
       } else {
-        print STDERR '[WARN] Skipping $NON_GENOMIC_COORDS{'.$type.'}{'.$authority.'} (Value not defined)'."\n";
+#        print STDERR '[WARN] Skipping $NON_GENOMIC_COORDS{'.$type.'}{'.$authority.'} (Value not defined)'."\n";
       }
     }
   }
-  ($authority, $version) = $cs_version =~ m/([^\d]+)([\d\.]*)/;
+
+  ($authority, $version) = $cs_version =~ m/([^\d]+)([\d\.\w]*)/;
+
 
   my %reverse_types = map { $TYPE_MAPPINGS{$_} => $_ } keys %TYPE_MAPPINGS;
   my %reverse_auths = map { $AUTHORITY_MAPPINGS{$_} => $_ } keys %AUTHORITY_MAPPINGS;
@@ -522,6 +532,7 @@ sub _get_das_coords {
 }
 
 sub publish_multi_species_sources {
+    return;
 # Now Multi species sources, e.g EnsemblGene Id etc
     my $sp = $species_defs->ENSEMBL_PRIMARY_SPECIES;
 
