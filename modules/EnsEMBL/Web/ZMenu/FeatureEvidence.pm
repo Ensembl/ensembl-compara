@@ -59,9 +59,12 @@ sub content {
     });
   }
 
+  my $loc_link = sprintf '<a href="%s">%s</a>', 
+                          $hub->url({'type'=>'Location','action'=>'View','r'=> $hub->param('pos')}),
+                          $hub->param('pos');
   $self->add_entry({
-    type  => 'bp',
-    label => $hub->param('pos')
+    type        => 'bp',
+    label_html  => $loc_link,
   });
 
   if ($hub->param('ps') !~ /undetermined/) {
