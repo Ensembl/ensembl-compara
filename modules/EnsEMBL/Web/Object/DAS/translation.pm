@@ -23,7 +23,7 @@ sub Types {
 ###gets features on a slice, and adds to those any other features / groups requested
 ### -the format od the DSN is very similar transcripts:
 ###
-###> {species}.ASSEMBLY[-{coordinate_system}]/translation[-{database}[-{logicname}]*]
+###> {species}.ASSEMBLY[--{coordinate_system}]/translation[-{database}[-{logicname}]*]
 ###
 ### If database is missing assumes core, if logicname is missing assumes all
 ###
@@ -75,7 +75,7 @@ sub Features {
 	};
 
 	#coordinate system on which features are to be returned
-	my ($assembly,$cs_wanted) = split '-', $ENV{'ENSEMBL_DAS_ASSEMBLY'};
+	my ($assembly,$cs_wanted) = split '--', $ENV{'ENSEMBL_DAS_ASSEMBLY'};
 
 	my %projection_mappings;
 	#all features on the requested slices...

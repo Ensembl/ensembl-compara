@@ -51,7 +51,7 @@ sub Features {
   ###
   ### For transcripts the format is:
   ###
-  ###> {species}.ASSEMBLY[-{coordinate_system}]/[enhanced_]transcript[-{database}[-{logicname}]*]
+  ###> {species}.ASSEMBLY[--{coordinate_system}]/[enhanced_]transcript[-{database}[-{logicname}]*]
   ###
   ### If database is missing assumes core, if logicname is missing assumes all
   ### transcript features
@@ -109,7 +109,7 @@ sub Features {
   ###%projection_mappings hash.
   
   #coordinate system on which features are to be returned
-  my ($assembly,$cs_wanted) = split '-', $ENV{'ENSEMBL_DAS_ASSEMBLY'};
+  my ($assembly,$cs_wanted) = split '--', $ENV{'ENSEMBL_DAS_ASSEMBLY'};
 
   #identify coordinates of the wanted slice on the requested coordinate system
   my %projection_mappings;
