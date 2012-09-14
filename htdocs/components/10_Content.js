@@ -241,21 +241,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   glossary: function () {
-    this.elLk.glossary.on({
-      mouseover: function () {
-        var el         = $(this);
-        var popup      = el.children('.floating_popup');
-        var position   = el.position();
-        position.top  -= popup.height() - (0.25 * el.height());
-        position.left += 0.75 * el.width();
-        
-        popup.show().css(position);
-        
-        popup = el = null;
-      },
-      mouseout: function () {
-        $(this).children('.floating_popup').hide();
-      }
+    this.elLk.glossary.each(function() {
+      var el  = $(this);
+      el.helptip(el.children('.floating_popup').remove().html());
     });
   },
   
