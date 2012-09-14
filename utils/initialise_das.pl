@@ -155,14 +155,15 @@ my $hash = $species_defs;
 
 my $das_coords = _get_das_coords();
 
-my $species = $SiteDefs::ENSEMBL_DATASETS || [];
+my @species = $species_defs->valid_species();
+
 my $shash;
 $| = 1;
 
 publish_multi_species_sources() unless $species_defs->ENSEMBL_SITETYPE eq 'Vega';
 
 SPECIES:
-foreach my $sp (@$species) {
+foreach my $sp (@species) {
   print STDERR "[INFO]  Parsing species $sp at ".gmtime()."\n";
 
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
