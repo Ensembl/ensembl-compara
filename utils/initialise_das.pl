@@ -163,6 +163,8 @@ publish_multi_species_sources() unless $species_defs->ENSEMBL_SITETYPE eq 'Vega'
 
 SPECIES:
 foreach my $sp (@$species) {
+  print STDERR "[INFO]  Parsing species $sp at ".gmtime()."\n";
+
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
   (my $vsp = $sp) =~ s/\_/ /g;
   $species_info->{$sp}->{'species'}  = $vsp;
@@ -179,7 +181,12 @@ foreach my $sp (@$species) {
   my $meta = $db->get_MetaContainer();
   my $taxid = $meta->get_taxonomy_id();
   my $csa = $db->get_CoordSystemAdaptor();
-  my $type = $csa->fetch_by_rank(1)->version()  || die "[FATAL] Rank 1 coordinate system has no version for $sp";
+
+  my $hcs = $csa->fetch_all()->[0];
+  my $rank = $hcs->rank;
+  die "[FATAL] Cannot find a coordinate system .." unless $hcs;
+
+  my $type = $hcs->version()  || die "[FATAL] Rank $rank coordinate system has no version for $sp";
   my $mapmaster = sprintf("%s.%s.reference", $sp, $type);
 
   if (-e "$docroot/htdocs/das/$mapmaster/entry_points") {
@@ -191,7 +198,6 @@ foreach my $sp (@$species) {
     }
   }
   
-  print STDERR "[INFO]  Parsing species $sp at ".gmtime()."\n";
   unless ($xml) {
   # Must have these coordinates for all species (though we don't create sources for them yet):
   for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
@@ -460,7 +466,7 @@ sub _coord_system_as_xml {
     }
   }
 
-  ($authority, $version) = $cs_version =~ m/([^\d]+)([\d\.\w]*)/;
+  ($authority, $version) = $cs_version =~ m/([^\d]+)([\d\.\w\-]*)/;
 
 
   my %reverse_types = map { $TYPE_MAPPINGS{$_} => $_ } keys %TYPE_MAPPINGS;
