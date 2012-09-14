@@ -362,6 +362,19 @@ sub render_Text {
   print $self->clean_HTML(shift->{'content'});
 }
 
+sub _json_html_strip {
+  my ($self,$in) = @_;
+  
+  if($in =~ /^(.*?)([\[{].*[\]}])(.*?)/s) {
+    my ($pre,$data,$post) = ($1,$2,$3);
+    return $self->strip_HTML($pre).
+           $data.
+           $self->strip_HTML($post);
+  } else {
+    return $in;
+  }
+}
+
 sub render_JSON {
   my $self = shift;
   
@@ -375,7 +388,12 @@ sub render_JSON {
   # so we need to check each line to see if it is a JSON, and throw away the ones which aren't.
   # A better way would be to rewrite the way we render all content so that, say, components return
   # content in the required format.
-  foreach (split /\n/, $self->strip_HTML(shift->{'content'})) {
+
+  # We want to strip outer HTML from the JSON but not any 
+  # embedded HTML within the JSON. So we strip only HTML before the first { or [
+  # (if any) and after the last } ], if any.
+
+  foreach (split /\n/, $self->_json_html_strip(shift->{'content'})) {
     s/^\s+//;
     eval { from_json($_); };
     push @content, $_ unless $@;

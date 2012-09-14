@@ -118,7 +118,7 @@ sub render {
   else { 
     $tbody = join '', map { sprintf '<tr%s>%s</tr>', $_->[1], join('', @{$_->[0]}) } @$body;
   }
-
+   
   $thead  = "<thead>$thead</thead>" if $thead;
   $tbody  = "<tbody>$tbody</tbody>" if $tbody;
   
@@ -173,6 +173,15 @@ sub render_Text {
   return $output;
 }
 
+sub _strip_outer_HTML {
+  my $self = shift;
+  local $_ = shift;
+  
+  s/^\s*<.*?>//;
+  s/<.*?>\s*$//;
+  return $_;
+}
+
 sub render_JSON {
   my $self = shift;
   
@@ -182,7 +191,7 @@ sub render_JSON {
   my @json;
   
   foreach my $row ([ @$head ], @$body) {
-    push @json, [ map $self->strip_HTML($_), @{$row->[0]} ];
+    push @json, [ map $self->_strip_outer_HTML($_), @{$row->[0]} ];
   }
   
   return to_json(\@json);
