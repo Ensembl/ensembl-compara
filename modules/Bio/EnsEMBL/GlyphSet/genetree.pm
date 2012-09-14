@@ -131,6 +131,13 @@ sub _init {
     my ($node_colour, $label_colour, $collapsed_colour, $bold);
     my $bold_colour = "white";
     
+    if ($f->{_node_type} eq 'duplication') {
+      $node_colour = 'red3';
+    } elsif ($f->{_node_type} eq 'dubious') {
+      $node_colour = 'turquoise';
+    } elsif ($f->{_node_type} eq 'gene_split') {
+      $node_colour = 'SandyBrown';
+    } 
     #node colour categorisation for cafetree/speciestree/gainloss tree
     if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {      
       $border_colour = 'black';
@@ -273,7 +280,7 @@ sub _init {
             'width'     => 5 + 2 * $bold,
             'height'    => 5 + 2 * $bold,
             'colour'    => $node_colour,
-            'bordercolour' => 'black',            
+            'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? 'black' : $node_colour,            
             'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
             'href'      => $node_href
           });
@@ -318,7 +325,7 @@ sub _init {
             'width'     => 5,
             'height'    => 5,
             'colour'    => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? $node_colour : 'white',
-            'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? "black" : $node_colour,
+            'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? "black" : $bordercolour,
             'zindex'    => -20,
             'href'      => $node_href,
           });
