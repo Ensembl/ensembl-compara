@@ -228,7 +228,7 @@ sub render_normal {
           'width'     => 5 + 2 * $bold,
           'height'    => 5 + 2 * $bold,
           'colour'    => $colour,
-          'bordercolour' => "black",
+          'bordercolour' => ($vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) ? "black" : $colour,
           })
         );
       if ($bold) {
