@@ -132,7 +132,7 @@ sub fetch_or_store_gene {
                 -description    => Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::fasta_description(undef, $gene, $transcript),
                 -translate      => ($transcript->translation ? 'yes' : 'ncrna'),
                 );
-        $trans_member->gene_member($gene_member);
+        $trans_member->gene_member_id($gene_member->dbID);
         print "NEW: $trans_member "; $trans_member->print_member();
         $member_adaptor->store($trans_member) unless $no_store;
         $member_adaptor->store_gene_peptide_link($gene_member->dbID, $trans_member->dbID) unless $no_store;
