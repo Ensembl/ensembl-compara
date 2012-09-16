@@ -734,11 +734,13 @@ sub _add_datahub_tracks {
 
     my $type = ref($track->{'type'}) eq 'HASH' ? uc($track->{'type'}{'format'}) : uc($track->{'type'});
 
+    # Graph range - Track Hub default is 0-127
     if (exists($track->{'viewLimits'})) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif (exists($track->{'autoscale'}) && $track->{'autoscale'} eq 'off') {
+    } elsif (!exists($track->{'autoscale'}) || $track->{'autoscale'} eq 'off') {
       $source->{'viewLimits'} = '0:127';
     }
+
     if (exists($track->{'maxHeightPixels'})) {
       $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
     } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
