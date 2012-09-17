@@ -189,13 +189,6 @@ sub is_contraction {
 
 #################################
 
-sub genome_db {
-    my ($self) = @_;
-    return undef unless ($self->is_leaf);
-    $self->throw("taxon_id is not in this node") unless ($self->taxon_id);
-    my $GenomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
-    
-}
 
 sub genome_db {
     my ($self) = @_;
