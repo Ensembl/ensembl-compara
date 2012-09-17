@@ -15,7 +15,6 @@ sub render {
   (my $location         = $ENV{'SCRIPT_NAME'}) =~ s/index\.html$//;
   my @toplevel_sections = map { ref $tree->{$_} eq 'HASH' ? $_ : () } keys %$tree;
   my %html              = ( left => '', middle => '', right => '' );
-  my $column            = 'left';  
 
   my @section_order = sort {
     $tree->{$a}{'_order'} <=> $tree->{$b}{'_order'} ||
@@ -24,7 +23,8 @@ sub render {
   } @toplevel_sections;
   
   foreach my $dir (grep { !/^_/ && keys %{$tree->{$_}} } @section_order) {
-    my $section      = $tree->{$dir};
+    my $column      = 'left';  
+    my $section     = $tree->{$dir};
     if ($dir eq 'about') {
       $column = 'middle';
     }
