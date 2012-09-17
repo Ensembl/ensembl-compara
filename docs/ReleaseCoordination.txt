@@ -743,6 +743,7 @@ You can use "--compara_db compara_curr" if it is run on the final merged db,
 # rel.65    24m
 # rel.66    5m
 # rel.67    5m
+# rel.69    10m
 
 
 13. Run the healthchecks:
