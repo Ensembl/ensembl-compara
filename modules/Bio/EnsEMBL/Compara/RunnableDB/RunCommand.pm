@@ -46,7 +46,7 @@ sub run_command {
     my $runCmd = Command->new($cmd);
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     $runCmd->run();
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
     return $runCmd;
 }
 
