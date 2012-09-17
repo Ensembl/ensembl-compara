@@ -435,7 +435,7 @@ sub _create_RegulatoryFactor {
    "VISTA" => 'VISTA enhancer set'
   );
 
-  if ($analysis eq 'RegulatoryRegion'){
+  if ($analysis eq 'Regulatory_Build'){
     my $regfeat_adaptor = $efg_db->get_RegulatoryFeatureAdaptor;
     my $feature = $regfeat_adaptor->fetch_by_stable_id($id);
     push (@$feats, $feature);

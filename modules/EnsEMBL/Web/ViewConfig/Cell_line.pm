@@ -27,7 +27,7 @@ sub init {
   my $evidence_features = $funcgen_tables->{'feature_type'}{'ids'};
   
   $self->{'feature_type_ids'}  = $funcgen_tables->{'regbuild_string'}{'feature_type_ids'};
-  $self->{'type_descriptions'} = $funcgen_tables->{'feature_set'}{'analyses'}{'RegulatoryRegion'}{'desc'};
+  $self->{'type_descriptions'} = $funcgen_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'};
   
   my $defaults;
   

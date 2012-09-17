@@ -2235,7 +2235,7 @@ sub add_regulation_features {
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
   
-  foreach my $key_2 (sort grep { !/RegulatoryRegion|seg_/ } @$keys_1, @$keys_2) {
+  foreach my $key_2 (sort grep { !/Regulatory_Build|seg_/ } @$keys_1, @$keys_2) {
     my $type = $fg_data{$key_2}{'type'};
     
     next if !$type || $type eq 'ctcf';
@@ -2288,7 +2288,7 @@ sub add_regulation_builds {
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
   my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}->{'tables'};
-  my $key_2             = 'RegulatoryRegion';
+  my $key_2             = 'Regulatory_Build';
   my $type              = $fg_data{$key_2}{'type'};
   
   return unless $type;
