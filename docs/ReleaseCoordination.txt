@@ -872,11 +872,11 @@ $ bash
 
 16.2. Create a file that will contain one line with the source/destination parameters, like this:
 
-$ cat <<EOF >/tmp/mm14_ensembl_compara_68.copy_options
+$ cat <<EOF >/tmp/mm14_ensembl_compara_69.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara3        3306        mm14_ensembl_compara_68      ens-staging     3306        ensembl_compara_68
-compara3        3306        mm14_ensembl_ancestral_68    ens-staging     3306        ensembl_ancestral_68
+compara3        3306        sf5_ensembl_compara_69      ens-staging     3306        ensembl_compara_69
+compara3        3306        sf5_ensembl_ancestral_69    ens-staging     3306        ensembl_ancestral_69
 EOF
 
 16.3. Set the password into the environment variable
@@ -890,7 +890,7 @@ $ export ENSADMIN_PSW='...'
 You should check whether there is enough space on the disk before starting the copy.
 
 $ time perl ~mm14/workspace/cvs/head/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW \
-    -noflush /tmp/mm14_ensembl_compara_68.copy_options > /tmp/mm14_ensembl_compara_68.copy.err 2>&1
+    -noflush /tmp/mm14_ensembl_compara_69.copy_options > /tmp/mm14_ensembl_compara_69.copy.err 2>&1
 
 # copying of rel_56 took 2 hours (SUCCESSFUL for both databases - you should check the output file)
 # copying of ensembl_compara_pre57 took 2 hours (SUCCESSFUL)
@@ -909,11 +909,11 @@ $ time perl ~mm14/workspace/cvs/head/ensembl/misc-scripts/CopyDBoverServer.pl -p
 
 $ ssh mysqlens@ens-staging2
 $ bash
-$ cat <<EOF >/tmp/mm14_ensembl_compara_68.copy_options
+$ cat <<EOF >/tmp/mm14_ensembl_compara_69.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara3        3306        mm14_ensembl_compara_68      ens-staging2     3306        ensembl_compara_68
-compara3        3306        mm14_ensembl_ancestral_68    ens-staging2     3306        ensembl_ancestral_68
+compara3        3306        sf5_ensembl_compara_69      ens-staging2     3306        ensembl_compara_69
+compara3        3306        sf5_ensembl_ancestral_69    ens-staging2     3306        ensembl_ancestral_69
 EOF
 
 16.5. Set the password into the environment variable
@@ -922,7 +922,7 @@ $ export ENSADMIN_PSW='...'
 16.6. Run the script to actually copy the data:
 
 $ time perl ~mm14/workspace/cvs/head/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW \
-    -noflush /tmp/mm14_ensembl_compara_68.copy_options > /tmp/mm14_ensembl_compara_68.copy.err 2>&1
+    -noflush /tmp/mm14_ensembl_compara_69.copy_options > /tmp/mm14_ensembl_compara_69.copy.err 2>&1
 
 # copying of ensembl_compara_58 took 1:15h
 # copying of ensembl_compara_62 took 1:34h
