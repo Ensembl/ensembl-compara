@@ -91,7 +91,7 @@ sub default_options {
 #             -dbname => 'mm14_compara_homology_66',
 #         },
 
-        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded' ],
+        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'protein_tree_member_score', 'protein_tree_hmmprofile' ],
         'genetrees_merge_tables' => [ 'subset', 'subset_member', 'stable_id_history', 'homology', 'homology_member', 'method_link_species_set_tag', 'species_tree_root', 'species_tree_node', 'species_tree_node_tag', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
             'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',
@@ -113,7 +113,7 @@ sub default_options {
 #             -pass   => $self->o('password'),
 #             -dbname => 'mp12_compara_nctrees_66c',
 #         },
-        'nctrees_copy_tables'  => [  ],
+        'nctrees_copy_tables'  => [ 'hmm_profile' ],
         'nctrees_merge_tables' => [ 'subset', 'subset_member', 'member', 'sequence', 'homology', 'homology_member', 'method_link_species_set_tag', 'species_tree_root', 'species_tree_node', 'species_tree_node_tag', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
