@@ -454,7 +454,7 @@ map { print "\t" . $descriptions{$_} . " variations failed because " . $_ . "\n"
 </pre>
 
 <p>
-	Note that some fetch methods are unaffected by the include_failed_variations flag in DBAdaptor. These are methods that
+	<span style="color:red;font-weight:bold">NOTE: </span>some fetch methods are unaffected by the include_failed_variations flag in DBAdaptor. These are methods that
 	return data related to specific variations, rather than a general batch fetch. For example, the fetch_by_dbID and
 	fetch_all_by_VariationFeatures methods in TranscriptVariationAdaptor will not be affected by the flag whereas the
 	fetch_all_by_Transcripts method will be.
@@ -552,13 +552,21 @@ foreach my $va (@{$va_adaptor->fetch_all_by_phenotype_description_source_name($p
 
 <br />
 <h2 id="variation_sets">Variation sets</h2>
-
 <p>
-	Variation sets provide functionality for grouping sets of variation that share some property. For example, we have grouped the variations identified in the three different
-	1000 genomes pilot studies into separate variation sets. The sets can be further subdivided into supersets and subsets to reflect hierarchical relationships between them. In the case
-	of the 1000 genomes pilot sets, these are divided into subsets based on population. For example, the set representing variations identified in the first 1000 genomes pilot study is named 
-	'1000 genomes - Low coverage' and has three subsets: '1000 genomes - Low coverage - CEU', '1000 genomes - Low coverage - CHB+JPT' and '1000 genomes - Low coverage - YRI'. 
+	Variation sets <b>group variations that share some properties</b> i.e. from the same project/study, individual, phenotype, chip, to make it easier to retrieve these for analysis.<br />
+	<i>> For example, all the variations identified in the 1000 Genomes - phase 1 study have been grouped into one variation set ('1000 Genomes - All').</i>
 </p>
+<p>
+	Sets can be be part of supersets or divided into subsets depending on the  hierarchical relationships between them.<br />
+	<i>> For example, the set representing variations identified in the 1000 Genomes - phase 1 study is named 
+	'1000 genomes - All' and has 4 subsets based on population: '1000 Genomes - EUR', '1000 Genomes - ASN', '1000 Genomes - AMR', '1000 Genomes - AFR'.</i>
+</p>
+<p>
+	A list of all the variation sets with their description is available on the <a href="/info/docs/variation/data_description.html#variation_sets">Variation Data Description</a> page.
+  <br /><span style="color:red;font-weight:bold">NOTE: </span>The variation sets and the populations are differents! e.g. The variation set associated with the European 1000 Genomes data
+	is "1000 Genomes - EUR", whereas the associated population is "1000GENOMES:phase_1_EUR".
+</p>
+
 <p>
 	In the Ensembl Variation API, variation sets are handled by the module <a href="/info/docs/Doxygen/variation-api/classBio_1_1EnsEMBL_1_1Variation_1_1VariationSet.html">VariationSet</a>, and the accompanying 
 	adaptor module, <a href="/info/docs/Doxygen/variation-api/classBio_1_1EnsEMBL_1_1Variation_1_1DBSQL_1_1VariationSetAdaptor.html">VariationSetAdaptor</a>, that interfaces with the underlying database. A VariationSet has
