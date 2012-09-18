@@ -32,12 +32,15 @@ sub content {
     $index{$initial}++;
   } 
 
-  my $html = '<p style="margin:16px">'.join(' | ', sort @toc).'</p>';
+  my $html = '<p id="toc_top" style="margin:16px">'.join(' | ', sort @toc).'</p>';
+  my $started = 0;
   foreach my $i (sort keys %list) {
+    $html .= '<p style="text-align:right"><a href="#toc_top">Top</a></p>' if $started;
     $html .= sprintf('<h2 id="phenotypes-%s" style="margin-top:16px">%s</h2>', $i, $i);
     foreach my $j (sort keys %{$list{$i}}) {
       $html .= $list{$i}{$j};
     }
+    $started = 1;
   }
   return $html;
 }
