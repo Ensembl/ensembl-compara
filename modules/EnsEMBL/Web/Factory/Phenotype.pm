@@ -29,51 +29,52 @@ sub createObjects {
   ## Accept both parameters for now, to avoid breaking links from elsewhere in code 
   my $id         = $self->param('ph') || $self->param('id');   
 
-  return $self->problem('fatal', 'No ID', $self->_help) unless $id;
-  my $dbc        = $self->hub->database('variation');
-  return unless $dbc;
-	$dbc->include_failed_variations(1);
+  return $self->problem('fatal', 'No ID', $self->_help) if (!$id && $self->hub->action ne 'All');
+  if ($id) {
+    my $dbc        = $self->hub->database('variation');
+    return unless $dbc;
+	  $dbc->include_failed_variations(1);
 
-  my $variations = [];
-  my $genes = [];
-  my $adaptor    = $dbc->get_adaptor('VariationFeature');
+    my $variations = [];
+    my $genes = [];
+    my $adaptor    = $dbc->get_adaptor('VariationFeature');
 
-  push @$variations, @{$adaptor->fetch_all_with_annotation(undef, undef, $id) || []};
-  push @$variations, @{$adaptor->fetch_all_somatic_with_annotation(undef, undef, $id) || []};
+    push @$variations, @{$adaptor->fetch_all_with_annotation(undef, undef, $id) || []};
+    push @$variations, @{$adaptor->fetch_all_somatic_with_annotation(undef, undef, $id) || []};
 
-  if ($variations and scalar @$variations > 0) {
-    $features->{'Variation'} = EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations);
+    if ($variations and scalar @$variations > 0) {
+      $features->{'Variation'} = EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations);
 
-    ## Get associated genes
-    my $vardb        = $self->hub->database('variation');
-    my $vaa          = $vardb->get_adaptor('VariationAnnotation');
+      ## Get associated genes
+      my $vardb        = $self->hub->database('variation');
+      my $vaa          = $vardb->get_adaptor('VariationAnnotation');
 
-    my %associated_gene;
+      my %associated_gene;
   
-    foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($variations) || []}) {
-      if ($va->{'_phenotype_id'} eq $id) {
-        # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
-        foreach my $gene_id (grep $_, split /,/, $va->{'associated_gene'}) {
-          $gene_id =~ s/\s//g;
-          next if $gene_id =~ /intergenic/i;
-          my $gene_objects = $self->_create_Gene('core', $gene_id);
-          unless ($associated_gene{$gene_id}) {
-            $associated_gene{$gene_id} = $gene_objects;
+      foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($variations) || []}) {
+        if ($va->{'_phenotype_id'} eq $id) {
+          # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
+          foreach my $gene_id (grep $_, split /,/, $va->{'associated_gene'}) {
+            $gene_id =~ s/\s//g;
+            next if $gene_id =~ /intergenic/i;
+            my $gene_objects = $self->_create_Gene('core', $gene_id);
+            unless ($associated_gene{$gene_id}) {
+              $associated_gene{$gene_id} = $gene_objects;
+            }
+          }
+        }
+      } 
+      if (keys %associated_gene) {
+        my %seen;
+        while (my ($gene_id, $gene_objects) = each(%associated_gene)) {
+          foreach (@{$gene_objects || []}) {
+            next if $seen{$_->stable_id};
+            push @$genes, $_; 
+            $seen{$_->stable_id}++;
           }
         }
       }
-    } 
-    if (keys %associated_gene) {
-      my %seen;
-      while (my ($gene_id, $gene_objects) = each(%associated_gene)) {
-        foreach (@{$gene_objects || []}) {
-          next if $seen{$_->stable_id};
-          push @$genes, $_; 
-          $seen{$_->stable_id}++;
-        }
-      }
     }
-  }
 
 ## TODO - Get genes with no associated variation 
 =pod
@@ -82,8 +83,10 @@ sub createObjects {
     $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
   }
 =cut
+  }
 
   my $object = $self->new_object('Phenotype', $features, $self->__data);
+  $object->phenotype_id($id);
 
   $self->DataObjects($object);
 }

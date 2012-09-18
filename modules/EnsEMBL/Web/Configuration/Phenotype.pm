@@ -17,7 +17,8 @@ sub set_default_action {
 
 sub tree_cache_key {
   my $self = shift;
-  return join '::', $self->SUPER::tree_cache_key(@_), $self->object->get_phenotype_desc;
+  my $desc = $self->object ? $self->object->get_phenotype_desc : 'All phenotypes';
+  return join '::', $self->SUPER::tree_cache_key(@_), $desc;
 }
 
 sub populate_tree {
@@ -29,10 +30,11 @@ sub populate_tree {
     { 'availability' => 1 },
   );
 
-  my $phenotype = $self->object->get_phenotype_desc;
+  my $avail = ($self->object && $self->object->phenotype_id) ? 1 : 0;
+  my $title = $self->object ? $self->object->long_caption : '';
   $self->create_node('Locations', "Locations on genome",
     [qw(locations EnsEMBL::Web::Component::Phenotype::Locations )],
-    { 'availability' => 1, 'concise' => "Locations of variants associated with $phenotype" },
+    { 'availability' => $avail, 'concise' => $title },
   );
 
 }
