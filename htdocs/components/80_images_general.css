@@ -16,6 +16,8 @@ img.alignright { float:right;  margin-left: 10px; }
 div.homepage-icon { float:right; width:112px; margin:8px 0 0 8px; }
 div.homepage-icon p { margin-top:2px; }
 
+img.homepage-link { height:24px; width:24px; vertical-align:middle; margin-right:8px; }
+
 img.karyomap   { text-align: center; margin: auto; }
 img.flash      { margin: 20px auto; }
 
