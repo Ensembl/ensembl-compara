@@ -67,7 +67,8 @@ sub content {
   
   my $leaves               = $tree->get_all_leaves;  
   my $image_config         = $hub->get_imageconfig('genetreeview');
-  my $image_width          = $self->image_width       || 800;
+  
+  my $image_width          = $hub->param('image_width') || $self->image_width || 800;
   my $colouring            = $hub->param('colouring') || 'background'; 
 
 #add collapsability param in image config to get it in the drawing code    
