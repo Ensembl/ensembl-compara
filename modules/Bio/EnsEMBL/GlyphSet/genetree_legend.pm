@@ -23,7 +23,7 @@ sub render_normal {
   my $th = $res[3];
   my $pix_per_bp = $self->scalex;
 
-  my @branches = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? (['N number of members', 'blue', undef],['Expansion', '#800000', undef],['Contraction', '#008000', undef],['No signifance', 'blue', undef]) :(
+  my @branches = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? (['N number of members', 'blue', undef],['Expansion', '#800000', undef],['Contraction', '#008000', undef],['No significant change', 'blue', undef]) :(
     ['Branch Length','header'],
     ['x1 branch length', 'blue', undef],
     ['x10 branch length', 'blue', 1],
@@ -48,7 +48,7 @@ sub render_normal {
   if ($highlight_ancestor) {
     push(@nodes, ['ancestor node', '444444', "bold"]);
   }
-  my @orthos = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? ["current gene's species", 'red', 'Species Name'] :(
+  my @orthos = $vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? ( ["Species of interest", 'red', 'Species'], ["Species with no genes", 'grey', 'Species'] ):(
     ['Genes','header'],
     ['gene of interest', 'red', 'Gene ID'],
     ['within-sp. paralog', 'blue', 'Gene ID'],
@@ -166,7 +166,7 @@ sub render_normal {
     }
   }
   
-  ($x, $y) = (0.7, 0.7);
+  ($x, $y) = (1, 0.7);
   foreach my $ortho (@orthos) {
     my $bold_colour;
     ($legend, $colour, $text, $bold_colour) = @$ortho;
@@ -203,15 +203,14 @@ sub render_normal {
         }
         $txt->{colour} = $bold_colour;
       }
-      $self->push($txt);
-      $x = '0.82' if($vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily'));
+      $self->push($txt);      
       $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH + 20, $th, $fontsize, $fontname, $legend);
       $self->push($label);
       $y+=1.2;
     }
   }
 
-  ($x, $y) = (1.5, 0.7);
+  ($x, $y) = (2, 0.7);
   foreach my $node (@nodes) {
     my $modifier;
     ($legend, $colour, $modifier) = @$node;
@@ -221,7 +220,7 @@ sub render_normal {
       $self->push($label);
       $y = $y + 1.5;            
     } else {
-      $x = 1.7 if($vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily'));
+      $x = 2.5 if($vc->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily'));
       $self->push($self->Rect({
           'x'         => $im_width * $x/$NO_OF_COLUMNS - $bold,
           'y'         => $y * ( $th + 3 ) + $th - $bold,
@@ -257,7 +256,7 @@ sub render_normal {
     }
   }
 
-  ($x, $y) = (2.2, 0.7);  
+  ($x, $y) = (2.7, 0.7);  
   foreach my $poly (@polys) {    
     ($legend, $colour, $box_border) = @$poly;
     my $px = $im_width * $x/$NO_OF_COLUMNS;
@@ -283,7 +282,7 @@ sub render_normal {
     }
   }
   
-  ($x, $y) = (3.05, 0.7);
+  ($x, $y) = (3.55, 0.7);
   foreach my $collapsed_box (@collapsed_boxes) {
     ($legend, $colour, $box_border) = @$collapsed_box;
     my $px = $im_width * $x/$NO_OF_COLUMNS;
@@ -303,7 +302,7 @@ sub render_normal {
     }    
   }
 
-  ($x, $y) = (3.8, 0.7);  
+  ($x, $y) = (4.37, 0.7);  
   foreach my $box (@boxes) {
     ($legend, $colour, $border) = @$box;
     if($colour eq 'header') {
