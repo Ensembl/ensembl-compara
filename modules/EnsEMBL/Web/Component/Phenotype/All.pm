@@ -27,7 +27,6 @@ sub content {
     ## so we need to be able to sort them in a case-insensitive manner
     unless ($index{$initial}) {
       push @toc, sprintf('<a href="#phenotypes-%s">%s</a>', $initial, $initial);
-      $list{$initial}{uc($desc)} .= sprintf('<h2 id="phenotypes-%s" style="margin-top:16px">%s</h2>', $initial, $initial);
     }
     $list{$initial}{uc($desc)} .= sprintf('<p><a href="/%s/Phenotype/Locations?ph=%s">%s</a></p>', $self->hub->species, $phen->id, ucfirst($desc));
     $index{$initial}++;
@@ -35,6 +34,7 @@ sub content {
 
   my $html = '<p style="margin:16px">'.join(' | ', sort @toc).'</p>';
   foreach my $i (sort keys %list) {
+    $html .= sprintf('<h2 id="phenotypes-%s" style="margin-top:16px">%s</h2>', $i, $i);
     foreach my $j (sort keys %{$list{$i}}) {
       $html .= $list{$i}{$j};
     }
