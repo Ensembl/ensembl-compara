@@ -238,7 +238,7 @@ sub store {
 sub delete {
     my ($self, $method_link_species_set_id) = @_;
 
-    my $method_link_species_set_sql = 'DELETE mlsst, mlss FROM method_link_species_set mlss LEFT JOIN method_link_species_set_tag mlsst WHERE method_link_species_set_id = ?';
+    my $method_link_species_set_sql = 'DELETE mlsst, mlss FROM method_link_species_set mlss LEFT JOIN method_link_species_set_tag mlsst USING (method_link_species_set_id) WHERE method_link_species_set_id = ?';
     my $sth = $self->prepare($method_link_species_set_sql);
     $sth->execute($method_link_species_set_id);
     $sth->finish();
