@@ -229,7 +229,6 @@ sub data_table_config {
   my $col_count = scalar @{$self->{'columns'}};
   
   return unless $code && scalar @{$self->{'rows'}} && $col_count;
-  
   my $i            = 0;
   my %columns      = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
   my $session_data = $self->session ? $self->session->get_data(type => 'data_table', code => $code) : {};
@@ -276,7 +275,9 @@ sub process {
   my (@head, @body);
   
   foreach my $col (@$columns) {
-    my $label = exists $col->{'title'} ? $col->{'title'} : $col->{'key'};
+    my $label = exists $col->{'label'} ? $col->{'label'} 
+                : exists $col->{'title'} ? $col->{'title'} : $col->{'key'};
+    warn ">>> HEADER $label";
     my %style = $col->{'style'} ? ref $col->{'style'} eq 'HASH' ? %{$col->{'style'}} : map { s/(^\s+|\s+$)//g; split ':' } split ';', $col->{'style'} : ();
     
     $style{'text-align'} ||= $col->{'align'} if $col->{'align'};
