@@ -58,7 +58,7 @@ sub write_output {
   my ($self) = @_;
 
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param('mlss_id'));
-  my $gdbs = $mlss->species_set;
+  my $gdbs = $mlss->species_set_obj->genome_dbs;
   my @genome_db_ids;
   foreach my $gdb (@$gdbs) {
       push @genome_db_ids, $gdb->dbID;
