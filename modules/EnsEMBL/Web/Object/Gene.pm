@@ -47,7 +47,7 @@ sub availability {
       };
       
       my $species_tree_sub = sub {        
-        my $species_tree = $self->get_SpeciesTree($database_synonym);
+        my $species_tree = $self->get_SpeciesTree($database_synonym);        
         my $has_species_tree = $species_tree ? 1 : 0;
         return $has_species_tree;
       };
@@ -58,7 +58,7 @@ sub availability {
       $availability->{'alt_allele'}    = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}    = !!$funcgen_res; 
       $availability->{'family'}        = !!$counts->{families};
-      $availability->{'has_gene_tree'} = $gene_tree_sub->('compara');
+      $availability->{'has_gene_tree'} = $gene_tree_sub->('compara');      
       $availability->{'has_species_tree'} = $species_tree_sub->('compara');
       $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
       ## TODO - e63 hack - may need rewriting for subsequent releases
@@ -813,9 +813,8 @@ sub get_SpeciesTree {
     my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();    
 
     my $member   = $self->get_compara_Member($compara_db)           || return;        
-    my $geneTree = $geneTree_Adaptor->fetch_all_by_Member($member)->[0];
+    my $geneTree = $geneTree_Adaptor->fetch_all_by_Member($member)->[0] || return;
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);
-    my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);    
     $cafeTree    = $cafeTree->lca_reroot() if($collapsability eq 'part'); 
       
     $self->{$cache_key} = $cafeTree;
