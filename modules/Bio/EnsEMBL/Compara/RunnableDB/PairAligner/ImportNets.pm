@@ -104,7 +104,7 @@ sub fetch_input {
   #Check if doing self_alignment where the species_set will contain only one
   #entry
   my $self_alignment = 0;
-  if (@{$mlss->species_set} == 1) {
+  if (@{$mlss->species_set_obj->genome_dbs} == 1) {
       $self_alignment = 1;
   }
   
@@ -119,7 +119,7 @@ sub fetch_input {
   
   #Check if need to delete alignments. This shouldn't be needed if using transactions
   if ($self->input_job->retry_count > 0) {
-    print STDERR "Deleting alignments as it is a rerun\n";
+    $self->warning("Deleting alignments as it is a rerun");
     $self->delete_alignments($out_mlss,
                              $ref_dnafrag,
                              $self->param('start'),
