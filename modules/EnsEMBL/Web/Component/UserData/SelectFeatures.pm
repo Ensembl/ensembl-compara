@@ -80,7 +80,7 @@ sub content {
     );
 
     ## Check for uploaded data for this species
-    my @data = grep { $_->{'species'} eq $species } map { $user ? $user->$_ : (), $session->get_data(type => substr $_, 0, -1) } qw(uploads urls);
+    my @data = grep { $_->{'species'} eq $species } map { $user ? $user->get_records($_) : (), $session->get_data(type => substr $_, 0, -1) } qw(uploads urls);
   
     if (scalar @data) {
       $form->add_element(type => 'SubHeader', value => 'Select existing upload(s)');

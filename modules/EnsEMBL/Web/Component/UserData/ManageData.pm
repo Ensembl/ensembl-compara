@@ -31,7 +31,7 @@ sub content {
   my @temp_data = map $session->get_data('type' => $_), qw(upload url nonpositional);
   push @temp_data, values %{$session->get_all_das};
   
-  push @data, map $user->$_, qw(uploads urls dases) if $user;
+  push @data, map $user->get_records($_), qw(uploads urls dases) if $user;
   push @data, @temp_data;
   
   if (scalar @data) {

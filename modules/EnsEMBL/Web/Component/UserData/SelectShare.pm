@@ -54,8 +54,8 @@ sub content {
   $form->add_element(type => 'SubHeader', value => 'Data to share');
   
   if ($user) {
-    push @values, { name => "Saved upload: $_->{'name'}", value => $_->id } for $user->uploads;
-    push @values, { name => "Saved URL: $_->{'name'}",    value => $_->id } for $user->urls;
+    push @values, { name => "Saved upload: $_->{'name'}", value => $_->id } for $user->get_records('uploads');
+    push @values, { name => "Saved URL: $_->{'name'}",    value => $_->id } for $user->get_records('urls');
   }
   
   push @values, { name => "Temporary upload: $_->{'name'}", value => $_->{'code'} } for $session->get_data(type => 'upload');

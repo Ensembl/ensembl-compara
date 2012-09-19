@@ -48,6 +48,12 @@ __PACKAGE__->add_has_many(
 
 __PACKAGE__->has_many(_groups => ['EnsEMBL::Web::Data::Membership' => 'webgroup']);
 
+### Temporary stuff to maintain compatibility while new user code is under development
+sub get_records {
+  my ($self, $record_name) = @_;
+  return $self->$record_name;
+}
+
 sub groups {
   my $self = shift;
 
