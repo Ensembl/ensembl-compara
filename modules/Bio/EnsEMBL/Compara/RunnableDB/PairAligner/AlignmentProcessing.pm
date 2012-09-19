@@ -529,6 +529,8 @@ sub delete_alignments {
   my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
   my $sql_ga = "delete from genomic_align where genomic_align_id in ";
 
+  $self->warning("Deleting $nb_gabs genomic_align_blocks");
+
   for (my $i=0; $i < scalar @gabs; $i=$i+20000) {
     my (@gab_ids, @ga1_ids, @ga2_ids);
     for (my $j = $i; ($j < scalar @gabs && $j < $i+20000); $j++) {
