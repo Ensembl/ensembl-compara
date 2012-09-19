@@ -96,6 +96,7 @@ sub fetch_lca_tree {
 
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
+    return undef unless (defined $geneTree);
     unless ($geneTree->isa('Bio::EnsEMBL::Compara::GeneTree')) {
         throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTree] not a $geneTree");
     }
