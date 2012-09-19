@@ -89,9 +89,9 @@ sub fetch_input {
   
   #Create and store Chain method_link_species_set
   if ($ref_gdb->dbID == $non_ref_gdb->dbID) {
-    $out_mlss->species_set([$ref_gdb]);
+    $out_mlss->species_set_obj->genome_dbs([$ref_gdb]);
   } else {
-    $out_mlss->species_set([$ref_gdb, $non_ref_gdb]);
+    $out_mlss->species_set_obj->genome_dbs([$ref_gdb, $non_ref_gdb]);
   }
   $mlssa->store($out_mlss);
 
