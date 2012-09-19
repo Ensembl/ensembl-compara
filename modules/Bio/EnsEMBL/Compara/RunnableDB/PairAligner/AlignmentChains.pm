@@ -70,6 +70,7 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -141,7 +142,7 @@ sub fetch_input {
   print STDERR "start fetching at time: ",scalar(localtime),"\n";
 
   if ($self->input_job->retry_count > 0) {
-    print STDERR "Deleting alignments as it is a rerun\n";
+    $self->warning("Deleting alignments as it is a rerun");
     $self->delete_alignments($out_mlss,$self->param('query_dnafrag'),$self->param('target_dnafrag'));
   }
 
@@ -181,7 +182,7 @@ sub fetch_input {
   
   print STDERR scalar @{$features}," features at time: ",scalar(localtime),"\n";
 
-  my %parameters = (-analysis             => $self->analysis,
+  my %parameters = (-analysis             => $fake_analysis,
                     -query_slice          => $query_slice,
                     -target_slices        => {$self->param('target_dnafrag')->name => $target_slice},
                     -query_nib_dir        => undef,
