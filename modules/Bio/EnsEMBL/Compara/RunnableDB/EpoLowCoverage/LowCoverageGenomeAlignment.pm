@@ -115,6 +115,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #check that have genomic_aligns (may not have if removed some because they
   #consist entirely of Ns)
@@ -123,7 +124,7 @@ sub run
   print "tmp " . $self->worker_temp_directory . " mfa=" . $self->param('multi_fasta_file') . " tree=" . $self->tree_string . " taxon=" . $self->get_taxon_tree . "\n" if $self->debug;
 
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment(
-      -analysis => $self->analysis,
+      -analysis => $fake_analysis,
       -workdir => $self->worker_temp_directory,
       -multi_fasta_file => $self->param('multi_fasta_file'),
       -tree_string => $self->tree_string,

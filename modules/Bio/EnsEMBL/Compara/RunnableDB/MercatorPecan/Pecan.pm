@@ -145,6 +145,8 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
   unless (-x $self->param('exonerate')) {
       throw("Pecan: Unable to execute " . $self->param('exonerate'));
@@ -155,7 +157,7 @@ sub run
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
       -tree_string => $self->param('pecan_tree_string'),
-      -analysis => $self->analysis,
+      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
       -exonerate => $self->param('exonerate'),
       -jar_file => $self->param('jar_file'),
@@ -830,6 +832,8 @@ sub _update_tree {
 sub _run_ortheus {
     my ($self) = @_;
 
+    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
     my $options = " -y";
     my $ortheus_runnable = new Bio::EnsEMBL::Analysis::Runnable::Ortheus(
@@ -838,7 +842,7 @@ sub _run_ortheus {
       #-tree_string => $self->tree_string,
       -species_tree => $self->get_species_tree->newick_simple_format,
       -species_order => $self->param('species_order'),
-      -analysis => $self->analysis,
+      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
       -options => $options,
       );
