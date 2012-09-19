@@ -70,6 +70,7 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -97,7 +98,7 @@ sub fetch_input {
   #Check if doing self_alignment where the species_set will contain only one
   #entry
   my $self_alignment = 0;
-  if (@{$mlss->species_set} == 1) {
+  if (@{$mlss->species_set_obj->genome_dbs} == 1) {
       $self_alignment = 1;
   }
   
@@ -105,7 +106,7 @@ sub fetch_input {
   
   if (!$out_mlss) {
       #Try old pipeline
-      $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'), $mlss->species_set);
+      $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'), $mlss->species_set_obj->genome_dbs);
    }
 
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))
@@ -115,7 +116,7 @@ sub fetch_input {
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
   
   if ($self->input_job->retry_count > 0) {
-    print STDERR "Deleting alignments as it is a rerun\n";
+    $self->warning("Deleting alignments as it is a rerun");
     $self->delete_alignments($out_mlss,
                              $query_dnafrag,
                              $self->param('start'),
@@ -174,7 +175,7 @@ sub fetch_input {
   foreach my $nm (keys %{$self->param('target_DnaFrag_hash')}) {
     $target_lengths{$nm} = $self->param('target_DnaFrag_hash')->{$nm}->length;
   }
-  my %parameters = (-analysis             => $self->analysis, 
+  my %parameters = (-analysis             => $fake_analysis, 
                     -query_lengths        => \%query_lengths,
                     -target_lengths       => \%target_lengths,
                     -chains               => [ map {$features_by_group{$_}} sort {$group_score{$b} <=> $group_score{$a}} keys %group_score ],
