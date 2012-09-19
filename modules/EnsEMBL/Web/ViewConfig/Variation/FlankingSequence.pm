@@ -4,15 +4,16 @@ package EnsEMBL::Web::ViewConfig::Variation::FlankingSequence;
 
 use strict;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
   
   $self->set_defaults({
     flank_size      => 400,
-    show_mismatches => 'yes',
-    display_type    => 'align'
+    snp_display     => 'yes',
+    line_numbering  => 'sequence',
+    select_sequence => 'both',
   });
 
   $self->title = 'Flanking sequence';
@@ -36,24 +37,24 @@ sub form {
       { value => '1000', name => '1000bp' },
     ]
   });  
-  
+
   $self->add_form_element({
-    type   => 'DropDown',
-    select =>, 'select',
-    label  => 'Type of display when flanking sequence differs from reference',
-    name   => 'display_type',
+    type   => 'DropDown', 
+    select => 'select',
+    name   => 'select_sequence',
+    label  => 'Sequence selection',
     values => [
-      { value => 'align',  name => 'NW alignment' },
-      { value => 'basic',  name => 'Basic' },
+      { value => 'both',  name => "Upstream and downstream sequences"   },
+      { value => 'up',   name => "Upstream sequence only (5')"   },
+      { value => 'down', name => "Downstream sequence only (3')" },
     ]
   });
   
-  $self->add_form_element({
-    type  => 'CheckBox',
-    label => 'Highlight differences between source and reference flanking sequences',
-    name  => 'show_mismatches',
-    value => 'yes',
-    raw   => 1,
+  $self->add_form_element({ 
+    type   => 'YesNo', 
+    name   => 'snp_display', 
+    select => 'select', 
+    label  => 'Show variations'
   });
 }
 
