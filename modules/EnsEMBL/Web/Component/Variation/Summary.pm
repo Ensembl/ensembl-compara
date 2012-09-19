@@ -95,12 +95,12 @@ sub variation_source {
     my $asso_gene   = $va->associated_gene;
        $source_link = $hub->get_ExtURL_link("View in $source", 'HGMD', { ID => $asso_gene, ACC => $name });
   } elsif ($source =~ /ESP/) {
-	  if ($name =~ /^TMP_ESP_(\d+)_(\d+)/) {
-		  $source_link = $hub->get_ExtURL_link("View in $source", $source, { CHR => $1 , START => $2, END => $2});
-		}
-		else {
-		  $source_link = $hub->get_ExtURL_link("View in $source", "${source}_HOME");
-		}
+    if ($name =~ /^TMP_ESP_(\d+)_(\d+)/) {
+      $source_link = $hub->get_ExtURL_link("View in $source", $source, { CHR => $1 , START => $2, END => $2});
+    }
+    else {
+      $source_link = $hub->get_ExtURL_link("View in $source", "${source}_HOME");
+    }
   } elsif ($source =~ /LSDB/) {
     $version = ($version) ? " ($version)" : '';
     $source_link = $hub->get_ExtURL_link("View in $source", $source, $name);
@@ -456,7 +456,7 @@ sub clinical_significance {
   my ($clin_sign,$colour) = $object->clinical_significance;
   my $c_link = $hub->get_ExtURL_link("View explanation", "DBSNP_CLIN", '');
   return $clin_sign ? [
-    {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance - option 1'},
+    {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance'},
     qq{<p><span style="color:$colour">$clin_sign</span> (from dbSNP) | $c_link</p>}
   ] : ();
 }
