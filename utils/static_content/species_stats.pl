@@ -647,6 +647,9 @@ foreach my $spp (@valid_spp) {
     close(STATS);
   }
   print STDERR "...$spp done.\n";
+
+  $db->dbc->db_handle->disconnect; # prevent too many connections
+
 } # end of species
 
 
