@@ -269,10 +269,22 @@ sub pipeline_analyses {
 				 },
 	       -wait_for  => [ 'innodbise_table' ],
 	       -flow_into => {
-			      1 => [ 'set_internal_ids' ],
+			      1 => [ 'set_mlss_tag' ],
 			     },
 		-rc_name => '1Gb',
 	    },
+
+# -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------
+            { -logic_name => 'set_mlss_tag',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+              -parameters => {
+                              'sql' => [ 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('cs_mlss_id') . ', "msa_mlss_id", ' . $self->o('mlss_id') . ')' ],
+                             },
+              -flow_into => {
+                             1 => [ 'set_internal_ids' ],
+                            },
+              -rc_name => '100Mb',
+            },
 
 # ------------------------------------------------------[Set internal ids ]---------------------------------------------------------------
 	    {   -logic_name => 'set_internal_ids',
