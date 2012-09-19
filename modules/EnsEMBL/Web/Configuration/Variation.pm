@@ -41,7 +41,11 @@ sub populate_tree {
     [qw( summary EnsEMBL::Web::Component::Variation::Mappings )],
     { 'availability' => 'variation has_transcripts', 'concise' => 'Genes and regulation' }
   ));
-    
+  $context_menu->append($self->create_node('Sequence', 'Flanking sequence',
+    [qw( flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
+    { 'availability' => 'variation' }
+  ));  
+		
   $self->create_node('Population', 'Population genetics ([[counts::populations]])',
     [qw( 
       graphs  EnsEMBL::Web::Component::Variation::PopulationGraphs
@@ -76,13 +80,6 @@ sub populate_tree {
       summary  EnsEMBL::Web::Component::Variation::Compara_Alignments
     )],
     { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
-  );
-	
-	$self->create_node('Sequence', 'Flanking sequence',
-    [qw(
-      flanking EnsEMBL::Web::Component::Variation::FlankingSequence
-    )],
-    { 'availability' => 'variation' }
   );
 	
   # External Data tree, including non-positional DAS sources
