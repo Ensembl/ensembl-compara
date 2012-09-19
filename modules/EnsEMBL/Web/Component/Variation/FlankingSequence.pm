@@ -3,20 +3,21 @@ package EnsEMBL::Web::Component::Variation::FlankingSequence;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Variation);
+use base qw(EnsEMBL::Web::Component::Variation EnsEMBL::Web::Component::TextSequence);
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(align_seqs);
-
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->ajaxable( 1 );
 }
 
 sub content {
   my $self    = shift;
   my $object  = $self->object;
   my $table   = $self->new_twocol;
+  my $hub     = $self->hub;
+  my @consequence = $hub->param('consequence_filter');
   
   ## first check we have uniquely determined variation
   return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
@@ -26,7 +27,10 @@ sub content {
 
   ## Add flanking sequence
   my $f_label;
-  my $f_html ;
+  my $f_html;
+  my $if_fs_diff = qq{It differs from the flanking sequence submitted to <a href....>dbSNP</a>*};
+  
+  my $f_info = $self->_info('Flanking sequence', '<p>The sequence below is from the <b>reference genome</b> flanking the variant location.The variant is shown in <span class="alt_allele"><u>red</u></span> text. Neighbouring variants are shown with highlighted letters and ambiguity codes</p>', 'auto');
 
   my $status   = 'status_ambig_sequence';
 
@@ -35,6 +39,16 @@ sub content {
     $ambig_code = "[".$object->alleles."]";
   }
   
+  my $config = { 
+    display_width   => $hub->param('display_width') || 60,
+    species         => $hub->species,
+    maintain_colour => 1,
+    snp_display     => $hub->param('snp_display'),
+    select_sequence => $hub->param('select_sequence') || 'both',
+  };
+  
+  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+
   # first determine correct SNP location 
   my %mappings = %{ $object->variation_feature_mapping }; 
   my $loc;
@@ -44,283 +58,199 @@ sub content {
     $loc = $mappings{$object->param('vf')};
   }
   
+  # check if the flanking sequences match the reference sequence
+  my $align_info;
+  my $vf = $object->vari->get_VariationFeature_by_dbID($object->param('vf'));
+  my $align_quality = $vf->flank_match;
+  if (defined($align_quality) && $align_quality < 1) {
+    my $source_link = $hub->get_ExtURL_link("here", uc($object->source), $object->param('v')."#submission");
+    $source_link =~ s/%23/#/;
+    $align_info = $self->_warning('Alignment quality', "<p>The longest flanking sequence submitted to dbSNP for this variant doesn't match the reference sequence displayed below.<br />For more information about the submitted sequences, please click on the dbSNP link $source_link.</p>", 'auto');
+  }
+  
+  my $flank_size = $object->param('flank_size') || 400;
+  $flank_size ++;
   # get a slice adaptor
   my $sa = $object->vari->adaptor->db->dnadb->get_SliceAdaptor(); 
   
+  my $chr_slice = $sa->fetch_by_region(undef,$loc->{Chr});
+  my $chr_end = $chr_slice->end;
   
-  ## FLANKING SEQUENCE  
-  my ($up_slice, $down_slice, $up_ref, $down_ref, $up_align, $down_align, $vfs, $diffs);
-  
-  my $flank_size = $object->param('flank_size') || 400;
-  my $show_mismatches = $object->param('show_mismatches') || 1;
-  my $display_type = $object->param('display_type') || 'align';
-  my ($up_trimmed, $down_trimmed) = ("", "");
-  my $trim_size = 500;
-  
-  if(defined($sa) && $mapping_count) {
-    # get up slice
-    $up_slice = $sa->fetch_by_region(
+  my $slice_start = ($loc->{start} - $flank_size > 1) ? $loc->{start} - $flank_size : 1;
+  my $slice_end   = ($loc->{end} + $flank_size > $chr_end) ? $chr_end : $loc->{end} + $flank_size;
+
+  # get slice
+  my $slice = $sa->fetch_by_region(
       undef,
       $loc->{Chr},
-      $loc->{start} - $flank_size,
-      $loc->{start} - 1,
+      $slice_start,
+      $slice_end,
       $loc->{strand}
-    );
-    
-    # get down slice
-    $down_slice = $sa->fetch_by_region(
+  );
+  
+  # get up slice
+  my $up_end = ($loc->{start} - 1 > 1) ? $loc->{start} - 1 : 1;
+  my $up_slice = $sa->fetch_by_region(
       undef,
       $loc->{Chr},
-      $loc->{end} + 1,
-      $loc->{end} + $flank_size,
+      $slice_start,
+      $up_end,
       $loc->{strand}
-    );
+  );
     
-    # switch if on reverse strand
-    ($up_slice, $down_slice) = ($down_slice, $up_slice) unless $loc->{strand} == 1;
-    
-    $f_label = "Flanking Sequence<br/>(reference".($object->vari->{flank_flag} ? "" : " and ".$object->vari->source).")";
-    
-    # make HTML if we got slices OK
-    if(defined($up_slice) && defined($down_slice)) {
-      $f_html = uc( $up_slice->seq ) .lc( $ambig_code ).uc( $down_slice->seq );
-      $f_html =~ s/(.{60})/$1\n/g;
-      $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele">'.uc("$1").'<\/span>'/eg;
-      $f_html =~ s/\n/\n/g;
-      
-      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>") unless $display_type eq 'align';
-    }
-  }
+  # get down slice
+  my $down_start = ($loc->{end} + 1 > $chr_end) ? $chr_end : $loc->{end} + 1;
+  my $down_slice = $sa->fetch_by_region(
+      undef,
+      $loc->{Chr},
+      $down_start,
+      $slice_end,
+      $loc->{strand}
+  );
+  
+  my $mk = {};
+  my @markup;
+  my @sequence;
+  
+  my @reference_seq;
+  my @reference_seq_up   = map {{ letter => $_ }} split //, $up_slice->seq;
+  my @reference_seq_down = map {{ letter => $_ }} split //, $down_slice->seq;
 
-  #  my $ambiguity_seq = $object->ambiguity_flank;
-  # genomic context with ambiguities
   
-  if($object->vari->{flank_flag} || !defined($up_slice) || !defined($down_slice) || !defined($sa)) {
-    
-    my ($up_source, $down_source) = ($object->flanking_seq("up"), $object->flanking_seq("down"));
-    
-    if($display_type eq 'basic') {
-      
-      $f_html = uc( $up_source ) .lc( $ambig_code ).uc( $down_source );
-      $f_html =~ s/(.{60})/$1\n/g;
-      $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele">'.uc("$1").'<\/span>'/eg;
-      $f_html =~ s/\n/\n/g;
-      
-      $f_label = "Flanking Sequence<br/>(".$object->vari->source.")";
-      
-      $table->add_row($f_label, "<pre>$f_html</pre><p><em>(Variant highlighted)</em></p>");
+  my $v_name = $object->param('v');
+  my $v_dbID = $object->param('vf');
+  
+  if ($config->{'snp_display'} eq 'yes') {
 
-      return $table->render;
+    # Upstream sequence
+    if ($config->{'select_sequence'} ne 'down') {
+      @reference_seq = @reference_seq_up;
+      $self->find_variations(0, $up_slice, $mk);
+    }
+    # Variation
+    my $length = @reference_seq;
+    foreach my $v_letter (split //, $ambig_code) {
+      push @reference_seq, {letter => $v_letter, is_main_variation => 1};
+      $mk->{'variations'}->{$length}->{'alleles'}   .= ($mk->{'variations'}->{$_}->{'alleles'} ? ', ' : '') . $ambig_code;
+      $mk->{'variations'}->{$length}->{'ambigcode'} = $v_letter;
+      $length++;
     }
     
-    # trim sequences if necessary
-    if(length($up_source) > $trim_size) {
-      $up_source = substr($up_source, length($up_source) - $trim_size, $trim_size);
-      $up_trimmed = '...';
+    # Downstream sequence
+    if ($config->{'select_sequence'} ne 'up'){
+  
+     foreach my $down (@reference_seq_down) {
+       push @reference_seq, $down;
+     }
+     $self->find_variations($length, $down_slice, $mk);
     }
-    if(length($down_source) > $trim_size) {
-      $down_source = substr($down_source, 0, $trim_size);
-      $down_trimmed = '...';
-    }
-    
-    # reset f_html
-    $f_html = '';
-    
-    # get expanded (or retracted!) up and down reference sequences
-    $up_slice = $up_slice->expand(length($up_source) - $up_slice->length());# if length($up_source) > $up_slice->length;
-    $down_slice = $down_slice->expand(undef, length($down_source) - $down_slice->length());# if length($down_source) > $down_slice->length;
-    ($up_ref, $down_ref) = ($up_slice->seq, $down_slice->seq);
-    
-    # do the alignments using method from variation API
-    $up_align = align_seqs($up_ref, $up_source);
-    $down_align = align_seqs($down_ref, $down_source);
-    
-    # copy aligned seqs to variables
-    ($up_ref, $up_source) = @$up_align;
-    ($down_ref, $down_source) = @$down_align;
-    
-    # replace - with * (formatting)
-    $_ =~ tr/\-/\*/ for ($up_ref, $down_ref, $up_source, $down_source);
-    
-    # code to highlight differences between reference and source flanking sequence
-    if(defined($up_slice) && defined($down_slice) && $show_mismatches eq 'yes') {
-      
-      # compare up seq
-      for my $i(0..(length($up_ref)-1)) {
-        if(substr($up_ref, $i, 1) ne substr($up_source, $i, 1)) {
-          $diffs->{$i} = 1;
-          
-          my $letter = uc(substr($up_source, $i, 1));
-          $letter =~ tr/ACGTN/\!\£\$\%\@/; # this encoding is used later to colour the sequence
-          substr($up_source, $i, 1) = $letter;
-          
-          $letter = uc(substr($up_ref, $i, 1));
-          $letter =~ tr/ACGTN/\!\£\$\%\@/;
-          substr($up_ref, $i, 1) = $letter;
-        }
-      }
-      
-      my $added_length = length($up_ref.$ambig_code);
-      
-      # compare down seq
-      for my $i(0..(length($down_ref)-1)) {
-        if(substr($down_ref, $i, 1) ne substr($down_source, $i, 1)) {
-          $diffs->{$i + $added_length} = 1;
-          
-          my $letter = uc(substr($down_source, $i, 1));
-          $letter =~ tr/ACGTN/\!\£\$\%\@/;
-          substr($down_source, $i, 1) = $letter;
-          
-          $letter = uc(substr($down_ref, $i, 1));
-          $letter =~ tr/ACGTN/\!\£\$\%\@/;
-          substr($down_ref, $i, 1) = $letter;
-        }
-      }
-      
-      # get VFs
-      $vfs->{$_->start - 1} = $_ foreach @{$up_slice->get_all_VariationFeatures};
-      $vfs->{$_->start + $added_length - 1} = $_ foreach @{$down_slice->get_all_VariationFeatures};
-    }
-    
-    # #create complete aligned sequences with variant
-    #my ($ref_seq, $source_seq, $ref_seq_final, $source_seq_final, $final_length);
-    #
-    #$ref_seq = $up_ref.$ambig_code.$down_ref;
-    #$source_seq = $up_source.$ambig_code.$down_source;
-    #
-    #for my $i(0..(length($ref_seq)-1)) {
-    #  
-    #  if($i == length($up_ref) - 1) {
-    #    $ref_seq_final .= '<span style="color:red;">'.$ambig_code.'</span>';
-    #    $source_seq_final .= '<span style="color:red;">'.$ambig_code.'</span>';
-    #    $i += length($ambig_code);
-    #  }
-    #  
-    #  else {
-    #    my $style;
-    #    
-    #    if($diffs->{$i}) {
-    #      $style .= 'color:blue;';
-    #    }
-    #    
-    #    if($vfs->{$i}) {
-    #      $style .= 'background:yellow;';
-    #    }
-    #    
-    #    if($style) {
-    #      $ref_seq_final .= '<span style="'.$style.'">'.substr($ref_seq, $i, 1).'</span>';
-    #      $source_seq_final .= '<span style="'.$style.'">'.substr($source_seq, $i, 1).'</span>';
-    #    }
-    #    else {
-    #      $ref_seq_final .= substr($ref_seq, $i, 1);
-    #      $source_seq_final .= substr($source_seq, $i, 1);
-    #    }
-    #  }
-    #}
-    #
-    #$f_html .= $ref_seq_final."\n".$source_seq_final;
-    
-    my $ref_seq =
-      $up_trimmed.
-      uc($up_ref).
-      lc($ambig_code).
-      uc($down_ref).
-      $down_trimmed;
-      
-    my $source_seq =
-      $up_trimmed.
-      uc($up_source).
-      lc($ambig_code).
-      uc($down_source).
-      $down_trimmed;
-    
-    # now format for display
-    my $width = 60;
-    my $pad = 3;
-    my $source_name = $object->vari->source;
-    my $ref_name = 'Reference';
-    my $ref_pos = $up_slice->start;
-    my $source_pos = 1;
-    my ($ref_pad, $source_pad);
-    
-    # fit onto lines of width 60bp
-    while(length($ref_seq) > 0) {
-      
-      #my $lr = length($ref_pos) + length($ref_name);
-      #my $ls = length($source_pos) + length($source_name);
-      my $lr = length($ref_name);
-      my $ls = length($source_name);
-      
-      # pad sequence names
-      if($ls > $lr) {
-        $ref_pad = ' ' x ($pad + ($ls - $lr));
-        $source_pad .= ' ' x $pad;
-      }
-      else {
-        $source_pad = ' ' x ($pad + ($lr - $ls));
-        $ref_pad = ' ' x $pad;
-      }
-      
-      
-      # encode sequence names as ?? and ?
-      $f_html .=
-        #"\?\?".$ref_pad.$ref_pos.'   '.
-        "\?\?".$ref_pad.'   '.
-        substr($ref_seq, 0, $width)."\n".
-        #'   '.($ref_pos + $width - 1)."\n".
-        
-        #"\?".$source_pad.$source_pos.'   '.
-        "\?".$source_pad.'   '.
-        substr($source_seq, 0, $width)."\n\n";
-        #'   '.($source_pos + $width - 1)."\n\n";
-      
-      last if $width > length($ref_seq) || $width > length($source_seq);
-      
-      $ref_seq = substr($ref_seq, $width);
-      $source_seq = substr($source_seq, $width);
-      
-      $ref_pos += $width;
-      $source_pos += $width;
-    }
-    
-    # colour variant red
-    $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele">'.uc("$1").'<\/span>'/eg;
-    
-    # colour differences blue
-    $f_html =~ s/([\!\£\$\%\@\*]+)/'<span style="color:blue">'.uc("$1").'<\/span>'/eg;
-    
-    # turn encoded bases back to original base
-    $f_html =~ tr/\!\£\$\%\@\*/ACGTN\-/;
-    
-    # reinstate sequence names
-    $f_html =~ s/\?\?/$ref_name/eg;
-    $f_html =~ s/\?/$source_name/eg;
-    
-    $f_label = 'Flanking Sequence<br />('.$object->vari->source.' aligned to reference)';
-  }
-  
-  my $key;
-  
-  if($show_mismatches eq 'yes' && $object->vari->{flank_flag}) {
-    $key = ' in red, differences highlighted in blue'
-  }
-  
-  my $warning = '';
-  
-  # warn if we trimmed up or down seq
-  if($up_trimmed or $down_trimmed) {
-    $warning = $self->_warning(
-      'Flanking sequence trimmed',
-      '<p>The flanking sequence shown below has been trimmed to '.
-      $trim_size.
-      'bp each side of the variant position, as indicated by the \'...\' marks</p>',
-      '50%',
-    );
-  }
-  
-  $table->add_row($f_label, "$warning<pre>$f_html</pre><p><em>(Variant highlighted$key)</em></p>");
+    push @sequence, \@reference_seq;
+    push @markup, $mk;
 
-  return $table->render;
+    $self->markup_variation(\@sequence, \@markup, $config); 
+    $f_html .= $self->tool_buttons($slice->seq, $config->{'species'});
+    $f_html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
+    $f_html .= $self->build_sequence(\@sequence, $config);
+  
+  }
+  elsif(defined($up_slice) && defined($down_slice)) {
+    $f_html .= uc( $up_slice->seq ) if ($config->{'select_sequence'} ne 'down');
+    $f_html .= lc( $ambig_code );
+    $f_html .= uc( $down_slice->seq ) if ($config->{'select_sequence'} ne 'up');
+
+    $f_html =~ s/(.{60})/$1\n/g;
+    $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele"><u>'.uc("$1").'<\/u><\/span>'/eg;
+    $f_html =~ s/\n/\n/g;
+  }
+  return  qq{$f_info\n$align_info\n<pre>$f_html</pre>};
 }
 
+
+sub markup_variation {
+  my $self = shift;
+  my ($sequence, $markup, $config) = @_;
+
+  my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
+  my $hub = $self->hub;
+  my $i   = 0;
+  
+  my $class = {
+    snp    => 'sn',
+    insert => 'si',
+    delete => 'sd'
+  };
+
+  foreach my $data (@$markup) {
+    $seq = $sequence->[$i];
+    
+    foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
+      $variation  = $data->{'variations'}->{$_};
+      my $ambigcode = $variation->{ambigcode};
+      
+      if ($seq->[$_]->{'is_main_variation'}) {
+        my $letter = $seq->[$_]->{'letter'};
+        $seq->[$_]->{'letter'} = qq{<span class="alt_allele"><u>$letter</u></span>};
+        $seq->[$_]->{'class'} = undef;
+      }
+      else {
+        $seq->[$_]->{'letter'} = $ambigcode if $ambigcode;
+        #$seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
+        $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
+        $seq->[$_]->{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
+        $seq->[$_]->{'href'}   = $hub->url($variation->{'href'});
+        $seq->[$_]->{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
+     
+        $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1 if ($variation->{'type'});
+      }
+    }
+    $i++;
+  }
+}
+
+
+sub find_variations {
+  my $self   = shift;
+  my $length = shift;
+  my $slice  = shift;
+  my $mk     = shift;
+  
+  my $hub = $self->hub;
+  
+  foreach my $var (reverse @{$slice->get_all_VariationFeatures()}) {
+    my $dbID           = $var->dbID;
+    my $variation_name = $var->variation_name;
+    my $alleles        = $var->allele_string;
+    my $ambigcode      = $var->ambig_code || undef;
+    my $start          = $var->start - 1 + $length; # -1 because of the sequence index starts at 0
+    my $end            = $var->end - 1 + $length;   # -1 because of the sequence index starts at 0 
+    my $type           = lc($var->display_consequence);
+    if ($var) {
+      if ($var->strand == -1) {
+        $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+        $alleles   =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+      }
+    }
+      
+    # Variation is an insert if start > end
+    ($start, $end) = ($end, $start) if $start > $end;
+      
+    foreach ($start..$end) {
+      $mk->{'variations'}->{$_}->{'alleles'}   .= ($mk->{'variations'}->{$_}->{'alleles'} ? ', ' : '') . $alleles;
+      $mk->{'variations'}->{$_}->{'url_params'} = { v => $variation_name, vf => $dbID, vdb => 'variation' };
+      $mk->{'variations'}->{$_}->{'ambigcode'} = $ambigcode;
+        
+      my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $hub->url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
+        
+      $mk->{'variations'}->{$_}->{'type'} = $type;
+      $mk->{'variations'}->{$_}->{'href'} ||= {
+         type        => 'ZMenu',
+         action      => 'TextSequence',
+         factorytype => 'Location'
+      };
+        
+      push @{$mk->{'variations'}->{$_}->{'href'}->{'v'}},  $variation_name;
+      push @{$mk->{'variations'}->{$_}->{'href'}->{'vf'}}, $dbID;
+    }
+  }
+}
 1;
