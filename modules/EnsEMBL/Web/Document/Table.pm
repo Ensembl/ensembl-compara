@@ -277,7 +277,6 @@ sub process {
   foreach my $col (@$columns) {
     my $label = exists $col->{'label'} ? $col->{'label'} 
                 : exists $col->{'title'} ? $col->{'title'} : $col->{'key'};
-    warn ">>> HEADER $label";
     my %style = $col->{'style'} ? ref $col->{'style'} eq 'HASH' ? %{$col->{'style'}} : map { s/(^\s+|\s+$)//g; split ':' } split ';', $col->{'style'} : ();
     
     $style{'text-align'} ||= $col->{'align'} if $col->{'align'};
