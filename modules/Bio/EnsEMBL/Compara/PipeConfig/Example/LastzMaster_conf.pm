@@ -18,15 +18,15 @@ sub default_options {
 	    'pipeline_name'         => 'LASTZ_TEST_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
-	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_66', #Use a release database for the test only.
-	    'mlss_id'   => 410,
+	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_68', #Use a release database for the test only.
+	    'mlss_id'   => 601,
 
 	    'livemirror_loc' => {
 				 -host   => 'ens-livemirror',
 				 -port   => 3306,
 				 -user   => 'ensro',
 				 -pass   => '',
-				 -db_version => 66,
+				 -db_version => 68,
 				},
 	    
 	    'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ], 

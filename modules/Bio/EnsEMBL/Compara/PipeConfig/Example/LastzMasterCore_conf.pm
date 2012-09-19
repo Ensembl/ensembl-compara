@@ -19,22 +19,22 @@ sub default_options {
 	    'pipeline_name'         => 'LASTZ_TEST_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
-	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_66', #Use a release database for the test only.
-	    'mlss_id'   => 410,
+	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_68', #Use a release database for the test only.
+	    'mlss_id'   => 601,
 
 	    #Must define location of core dbs if no master
  	    'reference' => {
  		       -host           => "ens-livemirror",
  		       -port           => 3306,
  		       -user           => "ensro",
- 		       -dbname         => "homo_sapiens_core_66_37",
+ 		       -dbname         => "homo_sapiens_core_68_37",
 		       -species        => "homo_sapiens"
  		      },
  	    'non_reference' => {
  		       '-host'           => "ens-livemirror",
  		       '-port'           => 3306,
  		       '-user'           => "ensro",
- 		       '-dbname'         => "mus_musculus_core_66_37",
+ 		       '-dbname'         => "mus_musculus_core_68_38",
  		       '-species'        => "mus_musculus"
  		      },
 	    'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
