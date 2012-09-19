@@ -18,8 +18,7 @@ sub render {
   my $species_defs    = $hub->species_defs;
   my $rel             = 'release-' . $species_defs->ENSEMBL_VERSION; # Always set to use the release number rather than current to get around the delay in FTP site links updating
   my $required_lookup = $self->required_types_for_species;
-  my $table           = new EnsEMBL::Web::Document::Table([], [], { data_table => 0, exportable => 0, header_repeat => 10 });
-  my $rows;
+  my ($columns, $rows);
   
   my %title = (
     dna       => 'Masked and unmasked genome sequences associated with the assembly (contigs, chromosomes etc.)',
@@ -43,7 +42,9 @@ sub render {
   
   $title{$_} = encode_entities($title{$_}) for keys %title;
   
-  $table->add_columns(
+  $columns = [
+    { key => 'fave',    title => 'Favourite',                    align => 'left',   width => '5%',  sort => 'html',
+                        label => '<img src="/i/16/star.png" />'},
     { key => 'species', title => 'Species',                      align => 'left',   width => '10%', sort => 'html' },
     { key => 'dna',     title => 'DNA (FASTA)',                  align => 'center', width => '10%', sort => 'none' },
     { key => 'cdna',    title => 'cDNA (FASTA)',                 align => 'center', width => '10%', sort => 'none' },
@@ -59,9 +60,8 @@ sub render {
     { key => 'funcgen', title => 'Regulation (GFF)',             align => 'center', width => '10%', sort => 'html' },
     { key => 'files',   title => 'Data files',                   align => 'center', width => '10%', sort => 'html' },
     { key => 'bam',     title => 'BAM',                          align => 'center', width => '10%', sort => 'html' },
-  );
+  ];
  
-
   ## We want favourite species at the top of the table, 
   ## then everything else alphabetically by common name
   my $all_species = [];
@@ -71,6 +71,7 @@ sub render {
                           'dir'         => lc($_), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+                          'favourite'   => 1,
                         };
   }
 
@@ -80,6 +81,7 @@ sub render {
                           'dir'         => lc($_), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+                          'favourite'   => 0,
                         }
             unless $fave_check{$_};
   }
@@ -89,7 +91,8 @@ sub render {
     my $sp_dir    = $sp->{'dir'};
     my $sp_var    = $sp_dir. '_variation';
 
-    $table->add_row({
+    push @$rows, {
+      fave    => $sp->{'favourite'} ? 'Y' : '',
       species => sprintf('<b>%s</b><br /><i>%s</i>', $sp->{'common_name'}, $sp->{'sci_name'}),
       dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'},    $rel, $sp_dir),
@@ -105,18 +108,14 @@ sub render {
       funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $rel, $sp_dir) : '-',
       bam     => $required_lookup->{'bam'}{$sp_dir}     ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bam/%s/">BAM</a>',                          $title{'bam'},     $rel, $sp_dir) : '-',
       files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
-    });
+    };
   }
-  
-  return sprintf(qq{
-    <h3>Multi-species data</h3>
-    %s
-    <div class="js_panel" id="ftp-table">
-      <input type="hidden" class="panel_type" value="Content">
-      <h3>Single species data</h3>
-      %s
-    </div>
-  }, new EnsEMBL::Web::Document::Table([
+
+  my $main_table           = new EnsEMBL::Web::Document::Table($columns, $rows, { data_table => 1, exportable => 0 });
+  $main_table->code        = 'FTPtable::'.scalar(@$rows);
+  $main_table->{'options'}{'data_table_config'} = {iDisplayLength => 10};
+ 
+  my $multi_table          = new EnsEMBL::Web::Document::Table([
     { key => 'database',  title => 'Database' },
     { key => 'mysql',     title => '', align => 'center' },
     { key => 'emf',       title => '', align => 'center' },
@@ -137,7 +136,21 @@ sub render {
     bed       => '-',
     xml       => '-',
     ancestral => '-',
-  }], { cellpadding => 4, cellspacing => 2, id => 'ftp-table1' })->render, $table->render);
+  }], { cellpadding => 4, cellspacing => 2, id => 'ftp-table1' });
+ 
+  my $fave_text = $hub->user ? 'Your favourite species are listed first.' 
+                  : 'Popular species are listed first. You can customise this list via our <a href="/">home page</a>.'; 
+
+  return sprintf(qq{
+    <h3>Multi-species data</h3>
+    %s
+    <div class="js_panel" id="ftp-table">
+      <input type="hidden" class="panel_type" value="Content">
+      <h3>Single species data</h3>
+      <p>%s</p>
+      %s
+    </div>
+  }, $multi_table->render, $fave_text, $main_table->render);
 }
 
 # Lookup for the types we need for species
