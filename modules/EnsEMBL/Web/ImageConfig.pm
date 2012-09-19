@@ -2679,6 +2679,8 @@ sub add_copy_number_variant_probes {
   }
 }
 
+
+
 sub add_somatic_mutations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('somatic');
@@ -2696,23 +2698,47 @@ sub add_somatic_mutations {
     colourset  => 'variation',
     display    => 'off',
   );
+	
+	# All sources
+	$somatic->append($self->create_track("somatic_mutation_all", "Somatic variants (all sources)", {
+    %options,
+    caption     => 'Somatic variants (all sources)',
+    description => 'Somatic variants from all sources'
+  }));
   
+	 
+  # Mixed source(s)
+  foreach my $key_1 (keys(%{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}})) {
+		if ($self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_1}{'none'}) {
+			(my $k = $key_1) =~ s/\W/_/g;
+		  $somatic->append($self->create_track("somatic_mutation_$k", "$key_1 somatic variants", {
+        %options,
+        caption     => "$key_1 somatic variants",
+				source      => $key_1,
+        description => "Somatic variants from $key_1"
+      }));
+	  }
+	}
+	
+	# Somatic source(s)
   foreach my $key_2 (sort grep { $hashref->{'source'}{'somatic'}{$_} == 1 } keys %{$hashref->{'source'}{'somatic'}}) {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
     
-    my $description  = $hashref->{'source'}{'descriptions'}{$key_2};
-    (my $k = $key_2) =~ s/\W/_/g;
+		(my $k = $key_2) =~ s/\W/_/g;
     
-    $somatic->append($self->create_track("somatic_mutation_$k", "Somatic variants (all sources)", {
-      %options,
-      caption     => 'Somatic variants (all sources)',
-      description => 'Somatic variants from all sources'
-    }));
+		$somatic->append($self->create_track("somatic_mutation_$k", "$key_2 somatic mutations (all)", {
+       %options,
+       caption     => "$key_2 somatic mutations (all)",
+			 source      => $key_2,
+       description => "All somatic variants from $key_2"
+     }));
 
     ## Add tracks for each tumour site
     my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}};
-    
+		
     foreach my $description (sort  keys %tumour_sites) {
+			next if ($description eq 'none');
+			
       my $phenotype_id           = $tumour_sites{$description};
       my ($source, $type, $site) = split /\:/, $description;
       my $formatted_site         = $site;
@@ -2730,6 +2756,7 @@ sub add_somatic_mutations {
   
   $menu->append($somatic);
 }
+
 
 sub add_somatic_structural_variations {
   my ($self, $key, $hashref) = @_;

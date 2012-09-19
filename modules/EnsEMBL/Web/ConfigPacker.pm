@@ -544,17 +544,26 @@ sub _summarise_variation_db {
 
 #--------- Add in somatic mutation information
   my %somatic_mutations;
+	# Somatic source(s)
   my $sm_aref =  $dbh->selectall_arrayref(  
     'select distinct(p.description), va.phenotype_id, s.name 
      from phenotype p, variation_annotation va, source s, study st
      where p.phenotype_id=va.phenotype_id and va.study_id = st.study_id
      and st.source_id=s.source_id and s.somatic_status = "somatic"'
   );
-  
   foreach (@$sm_aref){ 
     $somatic_mutations{$_->[2]}->{$_->[0]} = $_->[1] ;
   } 
   
+	# Mixed source(s)
+	my $mx_aref = $dbh->selectall_arrayref(
+	  'select distinct(s.name) from variation v, source s 
+		 where v.source_id=s.source_id and s.somatic_status = "mixed"'
+	);
+	foreach (@$mx_aref){ 
+    $somatic_mutations{$_->[0]}->{'none'} = 'none' ;
+  } 
+	
   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'} = \%somatic_mutations;
   $dbh->disconnect();
 }
