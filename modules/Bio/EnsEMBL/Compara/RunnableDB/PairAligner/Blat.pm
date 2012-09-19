@@ -90,6 +90,8 @@ sub configure_defaults {
 sub configure_runnable {
   my $self = shift;
 
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+
   my (@db_chunk) = @{$self->param('db_DnaFragChunkSet')->get_all_DnaFragChunks};
 
   #
@@ -153,7 +155,7 @@ sub configure_runnable {
 	-database   => $dbChunkFile,
 	-options    => $options,
 	-program    => $program,
-	-analysis   => $self->analysis,
+	-analysis   => $fake_analysis,
        );
   
   $self->runnable($runnable);

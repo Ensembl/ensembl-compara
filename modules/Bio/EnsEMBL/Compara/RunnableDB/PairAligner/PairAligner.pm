@@ -246,6 +246,7 @@ sub write_output {
 
 sub _write_output {
     my ($self) = @_;
+    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
   #LOCK TABLES which does an implicit commit and prevent any rollback
@@ -253,7 +254,7 @@ sub _write_output {
 
   foreach my $fp ($self->output) {
     if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
-      $fp->analysis($self->analysis);
+      $fp->analysis($fake_analysis);
 
       $self->store_featurePair_as_genomicAlignBlock($fp);
     }
