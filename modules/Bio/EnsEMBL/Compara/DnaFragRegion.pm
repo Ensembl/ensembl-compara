@@ -89,7 +89,7 @@ use Bio::EnsEMBL::Utils::Exception;
 #our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 
-=head2 new_fast
+=head2 new
 
   Arg         : possible keys: ADAPTOR, SYNTENY_REGION_ID, DNAFRAG_ID,
                 DNAFRAG_START, DNAFRAG_END, DNAFRAG_STRAND
