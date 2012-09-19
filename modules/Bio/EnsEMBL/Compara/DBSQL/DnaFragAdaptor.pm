@@ -464,10 +464,10 @@ sub is_already_stored {
    my ($self,$dnafrag) = @_;
 
    if( !defined $dnafrag ) {
-       $self->throw("Must store $dnafrag object");
+       $self->throw("Must have dnafrag object");
    }
 
-   if( !defined $dnafrag || !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
+   if( !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
        $self->throw("Must have dnafrag arg [$dnafrag]");
    }
 
