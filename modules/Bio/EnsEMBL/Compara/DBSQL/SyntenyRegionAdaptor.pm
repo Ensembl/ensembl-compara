@@ -144,6 +144,7 @@ sub fetch_by_dbID{
    my ($synteny_region_id, $method_link_species_set_id) = $sth->fetchrow_array();
 
    my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion;
+   $sr->adaptor($self);
    $sr->dbID($synteny_region_id);
    $sr->method_link_species_set_id($method_link_species_set_id);
 
@@ -181,7 +182,6 @@ sub store{
 
    $sth->execute($sr->method_link_species_set_id);
    my $synteny_region_id = $sth->{'mysql_insertid'};
-
    $sr->dbID($synteny_region_id);
    $sr->adaptor($self);
 
