@@ -2135,6 +2135,8 @@ sub add_alignments {
       
       $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label"};
       $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
+
+      warn ">>> ROW ".$row->{'id'};
       
       $alignments->{$menu_key}{$row->{'id'}} = {
         db                         => $key,
@@ -2177,7 +2179,7 @@ sub add_alignments {
           name               => "Conservation score for $row->{'name'}",
           caption            => "$n_species way $program scores",
           order              => sprintf('%12d::%s::%s', 1e12-$n_species*10, $row->{'type'}, $row->{'name'}),
-          display            => $row->{'id'} == 352 ? 'tiling' : 'off',
+          display            => 'off',
           renderers          => [ 'off', 'Off', 'tiling', 'Tiling array' ],
         };
         
@@ -2187,7 +2189,7 @@ sub add_alignments {
           name                => "Constrained elements for $row->{'name'}",
           caption            => "$n_species way $program elements",
           order               => sprintf('%12d::%s::%s', 1e12-$n_species*10+1, $row->{'type'}, $row->{'name'}),
-          display             => $row->{'id'} == 352 ? 'compact' : 'off',
+          display             => 'off',
           renderers           => [ 'off', 'Off', 'compact', 'On' ],
         };
       }
