@@ -68,13 +68,11 @@ sub variation_source {
   my $source  = $object->source;
   my $version = $object->source_version;
   my $url     = $object->source_url;
-  my ($source_link, $home_link, $sname);
+  my ($source_link, $sname);
   
   # Date version
   if ($version =~ /^(20\d{2})(\d{2})/) {
-    $version = " ($2/$1)";
-  } elsif ($version) {
-    $version = " $version";
+    $version = "$2/$1";
   }
   
   ## parse description for links
@@ -83,32 +81,36 @@ sub variation_source {
   # Source link
   if ($source eq 'dbSNP') {
     $sname       = 'DBSNP';
-    $source_link = $hub->get_ExtURL_link("$source$version", $sname, $name);
-    $home_link   = $hub->get_ExtURL_link($source, "${sname}_HOME", $name);
-    $description =~ s/$sname/$home_link/i;
+    $source_link = $hub->get_ExtURL_link("View in $source", $sname, $name);
   } elsif ($source =~ /SGRP/) {
-    $source_link = $hub->get_ExtURL_link("$source$version", 'SGRP', $name);
+    $source_link = $hub->get_ExtURL_link("View in $source", 'SGRP', $name);
   } elsif ($source =~ /COSMIC/) {
     $sname       = 'COSMIC';
-    $source_link = $hub->get_ExtURL_link("$source$version", "${sname}_ID", $name);
-    $home_link   = $hub->get_ExtURL_link($source, $sname, $name);
-    $description =~ s/$sname/$home_link/i;
+    my $cname = ($name =~ /^COSM(\d+)/) ? $1 : $name;
+    $source_link = $hub->get_ExtURL_link("View in $source", "${sname}_ID", $cname);
   } elsif ($source =~ /HGMD/) {
     $version =~ /(\d{4})(\d+)/;
-    $version = " ($1.$2)";
+    $version = "$1.$2";
     my $va          = ($hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
     my $asso_gene   = $va->associated_gene;
-       $sname       = 'HGMD-PUBLIC';
-       $source_link = $hub->get_ExtURL_link("$source$version", 'HGMD', { ID => $asso_gene, ACC => $name });
-       $home_link   = $hub->get_ExtURL_link($source, $sname, $name);
-       $description =~ s/$sname/$home_link/i;
+       $source_link = $hub->get_ExtURL_link("View in $source", 'HGMD', { ID => $asso_gene, ACC => $name });
+  } elsif ($source =~ /ESP/) {
+	  if ($name =~ /^TMP_ESP_(\d+)_(\d+)/) {
+		  $source_link = $hub->get_ExtURL_link("View in $source", $source, { CHR => $1 , START => $2, END => $2});
+		}
+		else {
+		  $source_link = $hub->get_ExtURL_link("View in $source", "${source}_HOME");
+		}
   } elsif ($source =~ /LSDB/) {
-    $source_link = $hub->get_ExtURL_link($source . ($version ? " ($version)" : ''), $source, $name);
+    $version = ($version) ? " ($version)" : '';
+    $source_link = $hub->get_ExtURL_link("View in $source", $source, $name);
   } else {
-    $source_link = $url ? qq{<a href="$url" class="constant">$source$version</a>} : "$source $version";
+    $source_link = $url ? qq{<a href="$url" class="constant">View in $source</a>} : "$source $version";
   }
-
-  return ['Source', sprintf('<p>%s - %s</p>', $source_link, $description)];
+  
+  $version = ($version) ? " (release $version)" : '';
+  
+  return ['Original source', sprintf('<p>%s%s | %s</p>', $description, $version, $source_link)];
 }
 
 
@@ -452,10 +454,10 @@ sub clinical_significance {
   my $object = $self->object;
   my $hub    = $self->hub; 
   my ($clin_sign,$colour) = $object->clinical_significance;
-  my $c_link = $hub->get_ExtURL_link("dbSNP", "DBSNP_CLIN", '');
+  my $c_link = $hub->get_ExtURL_link("View explanation", "DBSNP_CLIN", '');
   return $clin_sign ? [
-    {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance'},
-    qq{<p><span style="color:$colour">$clin_sign</span> (from $c_link)</p>}
+    {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance - option 1'},
+    qq{<p><span style="color:$colour">$clin_sign</span> (from dbSNP) | $c_link</p>}
   ] : ();
 }
 
@@ -480,9 +482,9 @@ sub hgvs {
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
       sprintf(qq(<div class="twocol-cell">
-        <p>This feature has $count HGVS names - click the plus to show</p>
+        <p>This feature has <strong>%s</strong> HGVS names - click the plus to show</p>
         <div class="HGVS_names"><div class="toggleable"%s>$html</div></div>
-      </div>), $show ? '' : ' style="display:none"')
+      </div>), $count, $show ? '' : ' style="display:none"')
     ];
   } elsif ($count == 1) {
     return ['HGVS name', $html];
@@ -506,10 +508,26 @@ sub sets{
     push @genotyping_sets_list,  $vs;
   }
 
-  return scalar @genotyping_sets_list
-    ? ['Genotyping chips', sprintf('This variation has assays on: %s', join(', ', @genotyping_sets_list))]
-    : ()
-  ;
+  my $count = scalar @genotyping_sets_list;  
+  
+  if ($count > 3) {
+    my $show = $self->hub->get_cookie_value('toggle_variation_sets') eq 'open';
+  
+    return [
+      sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_sets" title="Click to toggle sets names">Genotyping chips</a>', $show ? 'open' : 'closed'),
+      sprintf('<p>This variation has assays on <strong>%s</strong> chips - click the plus to show</p><div class="variation_sets twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+        $count,
+        $show ? '' : 'display:none',
+        join('', map "<li>$_</li>", @genotyping_sets_list)
+      )
+    ];
+  }
+  else {
+    return scalar @genotyping_sets_list
+      ? ['Genotyping chips', sprintf('This variation has assays on: %s', join(', ', @genotyping_sets_list))]
+      : ()
+    ;
+  }
 }
 
 
