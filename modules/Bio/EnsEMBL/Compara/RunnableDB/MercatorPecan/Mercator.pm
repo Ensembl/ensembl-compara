@@ -63,7 +63,7 @@ sub fetch_input {
 
   if (!defined $self->param('genome_db_ids')) {
       my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param('mlss_id'));
-      my $species_set = $mlss->species_set;
+      my $species_set = $mlss->species_set_obj->genome_dbs;
       my $gdb_ids;
       foreach my $gdb (@$species_set) {
 	    push @$gdb_ids, $gdb->dbID;
@@ -77,6 +77,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   unless (defined $self->param('output_dir')) {
     my $output_dir = $self->worker_temp_directory . "/output_dir";
@@ -89,7 +90,7 @@ sub run
     (-input_dir => $self->param('input_dir'),
      -output_dir => $self->param('output_dir'),
      -genome_names => $self->param('genome_db_ids'),
-     -analysis => $self->analysis,
+     -analysis => $fake_analysis,
      -program => $self->param('mercator_exe'));
   $self->param('runnable', $runnable);
   $runnable->run_analysis;
