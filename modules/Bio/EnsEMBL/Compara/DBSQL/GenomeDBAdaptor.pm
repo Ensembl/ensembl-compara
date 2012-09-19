@@ -158,10 +158,10 @@ sub fetch_by_taxon_id {
     my ($self, $taxon_id) = @_;
 
     throw("taxon_id argument is required") unless($taxon_id);
-
     my $found_gdb;
     foreach my $gdb (@{ $self->fetch_all }) {
-        if( ($gdb->taxon_id == $taxon_id) and $gdb->assembly_default ) {
+        #Must test for $gdb->taxon_id since ancestral_sequences do not have a taxon_id
+        if( ($gdb->taxon_id and  $gdb->taxon_id == $taxon_id) and $gdb->assembly_default ) {
             if($found_gdb) {
                 warning("Multiple matches found for taxon_id '$taxon_id', returning the first one");
             } else {
