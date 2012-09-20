@@ -55,7 +55,39 @@ sub failed {
   } else {
     $html = "<p>$descs[0]</p>";
   }
-  
+
+  my $hub       = $self->hub;
+  my $vf        = $hub->param('vf');
+  my $id        = $self->object->name;
+  my $params    = $hub->core_params;
+  my @locations = ({ value => 'null', name => 'None selected' });
+    
+  # add locations for each mapping
+  my %mappings = %{$self->object->variation_feature_mapping};
+  my $count    = scalar keys %mappings;
+  foreach (sort { $mappings{$a}{'Chr'} cmp $mappings{$b}{'Chr'} || $mappings{$a}{'start'} <=> $mappings{$b}{'start'}} keys %mappings) {
+    my $region = $mappings{$_}{'Chr'}; 
+    my $start  = $mappings{$_}{'start'};
+    my $end    = $mappings{$_}{'end'};
+    my $str    = $mappings{$_}{'strand'};
+      
+    push @locations, {
+      value    => $_,
+      name     => sprintf('%s (%s strand)', ($start == $end ? "$region:$start" : "$region:$start-$end"), ($str > 0 ? 'forward' : 'reverse')),
+      selected => $vf == $_ ? ' selected' : ''
+    };
+  }
+    
+  # ignore vf and region as we want them to be overwritten
+  my $core_params = join '', map $params->{$_} && $_ ne 'vf' && $_ ne 'r' ? qq(<input name="$_" value="$params->{$_}" type="hidden" />) : (), keys %$params;
+  my $options     = join '', map qq(<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>), @locations;
+
+  $html .= sprintf('<form action="%s" method="get"><b>Select a location:</b> %s<select name="vf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>',
+                  $hub->url({ vf => undef, v => $id, source => $self->object->source }),
+                  $core_params,
+                  $options,
+                );
+
   return $self->_warning('This variation has been flagged as failed', $html, '50%');
 }
 
@@ -328,7 +360,8 @@ sub location {
     my $region   = $mappings{$vf}{'Chr'}; 
     my $start    = $mappings{$vf}{'start'};
     my $end      = $mappings{$vf}{'end'};
-       $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
+
+    $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
       ' | <a href="%s" class="constant">View in location tab</a>',
@@ -343,44 +376,11 @@ sub location {
       })
     );
   }
-  
-  if ($count > 1) {
-    my $params    = $hub->core_params;
-    my @locations = ({ value => 'null', name => 'None selected' });
-    
-    # add locations for each mapping
-    foreach (sort { $mappings{$a}{'Chr'} cmp $mappings{$b}{'Chr'} || $mappings{$a}{'start'} <=> $mappings{$b}{'start'}} keys %mappings) {
-      my $region = $mappings{$_}{'Chr'}; 
-      my $start  = $mappings{$_}{'start'};
-      my $end    = $mappings{$_}{'end'};
-      my $str    = $mappings{$_}{'strand'};
-      
-      push @locations, {
-        value    => $_,
-        name     => sprintf('%s (%s strand)', ($start == $end ? "$region:$start" : "$region:$start-$end"), ($str > 0 ? 'forward' : 'reverse')),
-        selected => $vf == $_ ? ' selected' : ''
-      };
-    }
-    
-    # ignore vf and region as we want them to be overwritten
-    my $core_params = join '', map $params->{$_} && $_ ne 'vf' && $_ ne 'r' ? qq(<input name="$_" value="$params->{$_}" type="hidden" />) : (), keys %$params;
-    my $options     = join '', map qq(<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>), @locations;
-
-    @rows = (
-      ['Location', "This feature maps to $count genomic locations"],
-      ['Selected location', sprintf('<form action="%s" method="get">%s<select name="vf" class="fselect">%s</select><input value="Go" class="fbutton" type="submit">%s</form>',
-        $hub->url({ vf => undef, v => $id, source => $object->source }),
-        $core_params,
-        $options,
-        $location_link
-      )],
-    );
-
-  } else {
-    @rows = [ 'Location', "$location$location_link" ];
+  else {
+    $location = "This feature maps to $count genomic locations; <b>None selected</b>";
   }
   
-  return @rows;
+  return [ 'Location', "$location$location_link" ];
 }
 
 
