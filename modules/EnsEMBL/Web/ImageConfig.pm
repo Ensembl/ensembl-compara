@@ -2154,8 +2154,6 @@ sub add_alignments {
       $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label"};
       $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
 
-      warn ">>> ROW ".$row->{'id'};
-      
       $alignments->{$menu_key}{$row->{'id'}} = {
         db                         => $key,
         glyphset                   => '_alignment_pairwise',
