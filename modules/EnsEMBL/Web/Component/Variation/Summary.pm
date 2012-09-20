@@ -38,6 +38,8 @@ sub content {
 sub failed {
   my ($self, $feature_slice) = @_;
   my @descs = @{$self->object->Obj->get_all_failed_descriptions};
+  my %mappings = %{$self->object->variation_feature_mapping};
+  my $count    = scalar keys %mappings;
   my $html;
   
   if ($feature_slice) {
@@ -47,7 +49,14 @@ sub failed {
       $descs[$_] =~ s/reference allele/reference allele ($seq)/ if $descs[$_] =~ /match.+reference allele/ && $feature_slice;
     }
   }
-  
+ 
+  ## Do a bit of user-friendly munging
+  foreach (@descs) {
+    if ($_ eq 'Variation maps to more than one genomic location') {
+      $_ = "Variation maps to $count genomic locations"; 
+    }
+  }
+ 
   if (scalar @descs > 1) {
     $html  = '<p><ul>';
     $html .= "<li>$_</li>" foreach @descs;
@@ -63,8 +72,6 @@ sub failed {
   my @locations = ({ value => 'null', name => 'None selected' });
     
   # add locations for each mapping
-  my %mappings = %{$self->object->variation_feature_mapping};
-  my $count    = scalar keys %mappings;
   foreach (sort { $mappings{$a}{'Chr'} cmp $mappings{$b}{'Chr'} || $mappings{$a}{'start'} <=> $mappings{$b}{'start'}} keys %mappings) {
     my $region = $mappings{$_}{'Chr'}; 
     my $start  = $mappings{$_}{'start'};
