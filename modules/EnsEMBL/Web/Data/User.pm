@@ -53,6 +53,22 @@ sub get_records {
   my ($self, $record_name) = @_;
   return $self->$record_name;
 }
+sub get_record {
+  return undef;
+}
+sub get_groups {
+  return ();
+}
+sub get_group {
+  return undef;
+}
+sub get_group_records {
+  return ();
+}
+sub find_admin_groups {
+  return ();
+}
+### Temporary stuff ends
 
 sub groups {
   my $self = shift;
