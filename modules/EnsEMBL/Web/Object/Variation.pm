@@ -736,6 +736,7 @@ sub pop_info {
   $data{Description}        = $self->pop_description($pop_obj);
   $data{"Super-Population"} = $self->extra_pop($pop_obj,"super");
   $data{"Sub-Population"}   = $self->extra_pop($pop_obj,"sub");
+
   return \%data;
 }
 
@@ -826,10 +827,10 @@ sub extra_pop {
   return {} unless $pop_obj;
   my $call = "get_all_$type" . "_Populations";
   my @populations = @{ $pop_obj->$call};
-
+  
   my %extra_pop;
   foreach my $pop ( @populations ) {
-    my $id = $self->pop_id($pop_obj);
+    my $id = $self->pop_id($pop);
     $extra_pop{$id}{Name}       = $self->pop_name($pop);
     $extra_pop{$id}{Size}       = $self->pop_size($pop);
     $extra_pop{$id}{PopLink}    = $self->pop_links($pop);
