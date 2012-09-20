@@ -2001,8 +2001,26 @@ sub add_simple_features {
   
   return unless $menu;
   
-  my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
-  $self->generic_add($menu, $key, "simple_${key}_$_", $data->{$_}, { glyphset => '_simple', colourset => 'simple', strand => 'r' }) for grep !$data->{$_}{'transcript_associated'}, @$keys;
+  my ($keys, $data) = $self->_merge($hashref->{'simple_feature'}); 
+  for ( grep !$data->{$_}{'transcript_associated'}, @$keys ){  
+
+    # Allow override of default glyphset, menu etc.
+    $menu = $self->get_node($data->{$_}->{'menu'}) if $data->{$_}->{'menu'}; 
+    return unless $menu;
+    my $glyphset = $data->{$_}->{'glyphset'} ? $data->{$_}->{'glyphset'}: '_simple';
+      
+    my %options = (
+      glyphset => $glyphset,
+      colourset => 'simple',
+      strand => 'r',
+    );
+
+    foreach my $opt ( 'renderers', 'height'){
+      $options{$opt} = $data->{$_}->{$opt} if $data->{$_}->{$opt};
+    }
+
+    $self->generic_add($menu, $key, "simple_${key}_$_", $data->{$_}, \%options);
+  } 
 }
 
 sub add_decorations {
