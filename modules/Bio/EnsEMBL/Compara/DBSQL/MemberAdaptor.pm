@@ -346,7 +346,7 @@ sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
 
   $self->throw("all args are required") 
-    unless($source_name && $taxon_id && $chr_name && $chr_start && $chr_end && $chr_strand);
+      unless($source_name && $taxon_id && $chr_start && $chr_end && $chr_strand && defined ($chr_name));
 
   my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
                     and m.chr_name = '$chr_name' 
