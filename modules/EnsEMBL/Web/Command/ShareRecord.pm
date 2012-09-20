@@ -31,7 +31,7 @@ sub process {
       type     => 'Account',
       action   => 'Groups',
       function => 'View',
-      id       => $group->group_id,
+      id       => $group->id,
     );
   } else {
     %url_params = (
