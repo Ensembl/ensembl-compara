@@ -11,18 +11,19 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self       = shift;
   my $hub        = $self->hub;
+  my $user       = $hub->user;
   my $object     = $self->object;
   my $session    = $hub->session;
   my $group_id   = $hub->param('webgroup_id');
+  my $group      = $user && $group_id ? $user->get_group($group_id) : undef;
   my @share_ids  = $hub->param('share_id');
   my $url_params = { __clear => 1 };
   my $param;
   
-  if ($group_id) { ## Share with group
+  if ($group) { ## Share with group
     ## Check if it is already shared
-    my $group         = new EnsEMBL::Web::Data::Group($group_id);
-    my %group_records = map { $_->cloned_from => 1 } $group->records;
-    my @shareables    = map { $_ && $group_records{$_} ? () : $_ } @share_ids;
+    my %group_records = map { $_->cloned_from => 1 } $user->get_group_records($group);
+    my @shareables    = grep { $_ && !$group_records{$_} } @share_ids;
     
     if (scalar @shareables) {
       $url_params->{'action'}      = 'ShareRecord';

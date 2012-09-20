@@ -87,31 +87,28 @@ sub content {
     $html = $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
   }
   
-#  $html  .= $self->group_shared_data; # DOESN'T WORK YET
+  $html  .= $self->group_shared_data;
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html ||= '<p class="space-below">You have no custom data.</p>';
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
-  
+
+  my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups
+    ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>'
+    : '';
+
   return qq{
     <div class="info">
       <h3>Help</h3>
       <div class="message-pad">
         <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
         <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+        $group_sharing_info
       </div>
     </div>
     <h2 class="legend">Your data</h2>
     $html
   };
-  
-  # GROUP SHARING DOESN'T WORK YET
-  #return sprintf('
-  #  <div class="notes"><h4>%s</h4>%s</div>
-  #  <h2 class="legend">Your data</h2>
-  #', scalar @temp_data && $user && $user->find_administratable_groups ?
-  #  ( 'Sharing with groups', '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' ) :
-  #  ( 'Help',                '<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>' )
-  #) . $html;
+
 }
 
 sub _icon_inner {
@@ -271,12 +268,11 @@ sub table_row_das {
 }
 
 sub group_shared_data {
-  my $self = shift;
-  my $hub  = $self->hub;
-  my $user = $hub->user;
-  
-  return unless $user;
-  
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $user    = $hub->user        or return;
+  my @groups  = $user->get_groups or return;
+
   my @columns = (
     { key => 'type',    title => 'Type',         width => '10%', align => 'left'                  },
     { key => 'name',    title => 'Source',       width => '39%', align => 'left', class => 'wrap' },
@@ -287,8 +283,8 @@ sub group_shared_data {
   
   my ($html, @rows);
   
-  foreach my $group ($user->groups) {
-    foreach (grep $_, $group->uploads, $group->urls) {
+  foreach my $group (@groups) {
+    foreach (grep $_, $user->get_group_records($group, 'uploads'), $user->get_group_records($group, 'urls')) {
       push @rows, {
         %{$self->table_row($_)},
         share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->id, __clear => 1 }))

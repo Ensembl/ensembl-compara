@@ -1,11 +1,10 @@
 # $Id$
 
+# this will only work for new user code as old user code will return undef for user->get_group
+
 package EnsEMBL::Web::Command::ShareRecord;
 
 use strict;
-
-use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::Data::Record;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -13,26 +12,26 @@ sub process {
   my $self  = shift;
   my $hub   = $self->hub;
   my $user  = $hub->user;
-  my $group = new EnsEMBL::Web::Data::Group($hub->param('webgroup_id'));
+  my $group = $user->get_group($hub->param('webgroup_id'));
   my %url_params;
 
-  if ($group && $user->is_administrator_of($group)) {
+  if ($group && $user->is_admin_of($group)) {
     foreach (grep $_, $hub->param('id')) {
-      my $user_record = new EnsEMBL::Web::Data::Record(owner => 'user', id => $_);
-      
-      next unless $user_record && $user_record->user_id == $user->id;
+      my $user_record = $user->get_record($_);
+
+      next unless $user_record;
       
       my $clone = $user_record->clone;
       
       $clone->owner($group);
-      $clone->save;
+      $clone->save('user' => $user);
     }
     
     %url_params = (
       type     => 'Account',
-      action   => 'Group',
-      function => 'List',
-      id       => $group->id,
+      action   => 'Groups',
+      function => 'View',
+      id       => $group->group_id,
     );
   } else {
     %url_params = (

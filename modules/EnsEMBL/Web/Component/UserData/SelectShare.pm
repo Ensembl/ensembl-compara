@@ -19,8 +19,7 @@ sub content {
   my $form     = $self->modal_form('share', $hub->url({ action => 'CheckShare', __clear => 1 }), { wizard => 1, back_button => 0 });
   my $session  = $hub->session;
   my $user     = $hub->user;
-  #my @groups   = $user && !$hub->param('code') ? $user->find_administratable_groups : (); ## Can't share temp data (code) with group
-  my @groups; # GROUP SHARING ISN'T WORKING
+  my @groups   = $user && !$hub->param('code') ? $user->find_admin_groups : (); ## Can't share temp data (code) with group
   my ($info_text, @values);
   
   if (scalar @groups) {
