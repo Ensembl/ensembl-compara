@@ -7,6 +7,7 @@ use warnings;
 
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Cache;
+use Encode qw(encode decode);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -24,13 +25,26 @@ sub render {
   my $html = '<h3>Latest blog posts</h3>';
    
   my $blog_url  = $hub->species_defs->ENSEMBL_BLOG_URL;
-  my $items = $MEMD && $MEMD->get('::BLOG') || [];
-  
+  my $items = [];
+
+  if ($MEMD && $MEMD->get('::BLOG')) {
+    my @posts = @{$MEMD->get('::BLOG')};
+    ## unencode cached content (see below)
+    foreach (@posts) {
+      push @$items, decode($_);
+    }
+  }
+ 
   unless ($items && @$items && $MEMD) {
     $items = $self->get_rss_feed($hub, $rss_url, 3);
 
+    ## encode items before caching, in case Wordpress has inserted any weird characters
     if ($items && @$items && $MEMD) {
-      $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG));
+      my $encoded = [];
+      foreach (@$items) {
+        push @$encoded, encode($_);
+      }
+      $MEMD->set('::BLOG', $encoded, 3600, qw(STATIC BLOG));
     }
   }
     
