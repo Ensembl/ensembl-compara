@@ -16,9 +16,9 @@ sub draw_features {
   my $cell_line = $self->my_config('cell_line'); 
   my $object_type = 'Regulation';
   if ($Config->isa('EnsEMBL::Web::ImageConfig::contigviewbottom')){ $object_type = 'Location'; }
-  my $type = $self->my_config('type');  
+  my $set = $self->my_config('set');  
   my $data = $Config->{'data_by_cell_line'}; 
-  my $label = $type eq 'core' ? 'TFBS & Dnase1' : 'Hists & Pols';
+  my $label = $set eq 'core' ? 'TFBS & Dnase1' : 'Hists & Pols';
   if (!$Config->{'colours'}){ $Config->{'colours'} = $self->get_colours; }
   my $colours = $Config->{'colours'};
   my $display_style = $self->my_config('display');
@@ -35,28 +35,28 @@ sub draw_features {
 
   # First draw block features
   if ($peaks){
-    if ($data->{$cell_line}{$type}{'block_features'} && $peaks){   
+    if ($data->{$cell_line}{$set}{'block_features'} && $peaks){   
       my $tracks_on = undef;
-      if ($data->{$cell_line}{$type}{'configured'}){
-        my $configured_tracks = scalar @{$data->{$cell_line}{$type}{'configured'}}; 
-        my $available_tracks =  scalar @{$data->{$cell_line}{$type}{'available' }}; 
+      if ($data->{$cell_line}{$set}{'configured'}){
+        my $configured_tracks = scalar @{$data->{$cell_line}{$set}{'configured'}}; 
+        my $available_tracks =  scalar @{$data->{$cell_line}{$set}{'available' }}; 
         $tracks_on = "$configured_tracks/$available_tracks features turned on";  
       }
-      my $feature_set_data = $Config->{'data_by_cell_line'}{$cell_line}{$type}{'block_features'}; 
+      my $feature_set_data = $Config->{'data_by_cell_line'}{$cell_line}{$set}{'block_features'}; 
       $self->draw_blocks($feature_set_data, "$label $cell_line", undef, $colours, $tracks_on);
       $drawn_data = 1;
     } else {
-      $self->display_error_message($cell_line, $type, 'peaks');
+      $self->display_error_message($cell_line, $set, 'peaks');
     }
   }
   # Then draw wiggle features
   if ($wiggle) { 
-    if ($Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'} && $wiggle){   
-      my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'}}; 
-      $self->process_wiggle_data(\%wiggle_data, $colours, [ "$label $cell_line" ], $cell_line, $type, $object_type);
+    if ($Config->{'data_by_cell_line'}{$cell_line}{$set}{'wiggle_features'} && $wiggle){   
+      my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$set}{'wiggle_features'}}; 
+      $self->process_wiggle_data(\%wiggle_data, $colours, [ "$label $cell_line" ], $cell_line, $set, $object_type);
       $drawn_data =1;
     } else {
-      $self->display_error_message($cell_line, $type, 'wiggle'); 
+      $self->display_error_message($cell_line, $set, 'wiggle'); 
     }
   } 
 
@@ -65,7 +65,7 @@ sub draw_features {
     # do not draw on contig view
     return if ($object_type eq 'Location');
     unless (exists $data->{$cell_line}->{'last_cell_line'}){
-      if ($type eq 'core') { 
+      if ($set eq 'core') { 
         return if $Config->get_node('functional')->get_node('reg_feats_other_'.$cell_line);
       }
       $self->draw_separating_line;
@@ -111,7 +111,7 @@ sub draw_wiggle {
 }
 
 sub process_wiggle_data {
-  my ($self, $wiggle_data, $colour_keys, $labels, $cell_line, $type, $object_type) = @_; 
+  my ($self, $wiggle_data, $colour_keys, $labels, $cell_line, $set, $object_type) = @_; 
   my $slice = $self->{'container'}; 
 
   my $max_bins = $self->image_width(); 
@@ -173,7 +173,7 @@ sub process_wiggle_data {
     } 
     $self->{'config'}->{'fg_multi_wiggle_legend'} = {'priority' => 1030, 'legend' => [], 'colours' => $legend_colours };
   } else {
-    $self->display_error_message($cell_line, $type, 'wiggle');
+    $self->display_error_message($cell_line, $set, 'wiggle');
   }    
 }
 
@@ -258,25 +258,25 @@ sub get_colours {
 }
 
 sub display_error_message {
-  my ($self, $cell_line, $focus, $type) = @_;
+  my ($self, $cell_line, $set, $type) = @_;
   my $Config = $self->{'config'}; 
-  my $number_available = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$focus}{'available'}};
-  my $number_configured  = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$focus}{'configured'}};
+  my $number_available = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$set}{'available'}};
+  my $number_configured  = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$set}{'configured'}};
   return unless $Config->get_option('opt_empty_tracks') == 1; 
   my ($class,  $display_style); 
    
   if ($type eq 'peaks'){
-    if ($focus eq 'core') {
+    if ($set eq 'core') {
       $class = 'Evidence';
     } else {
-      $focus = 'Hists & Pols';
+      $set = 'Hists & Pols';
     }
   } elsif ($type eq 'wiggle') {
     $class = 'Support';
   }  
 
   my $error_message = "$number_configured/$number_available available feature sets turned on";
-  $self->draw_track_name(join(' ', grep $_, ucfirst $focus, $class, $cell_line), 'black', -118,  2, 1);
+  $self->draw_track_name(join(' ', grep $_, ucfirst $set, $class, $cell_line), 'black', -118,  2, 1);
   $self->display_no_data_error($error_message);
     
   return 1;
