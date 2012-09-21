@@ -367,7 +367,8 @@ sub hover_labels {
   foreach my $label (map values %{$_->{'hover_labels'} || {}}, @{$self->{'image_configs'}}) {
     next if $done{$label->{'class'}};
     
-    my $desc = join '', map "<p>$_</p>", split /; /, $label->{'desc'};
+    my $desc   = join '', map "<p>$_</p>", split /; /, $label->{'desc'};
+    my $subset = $label->{'subset'};
     my $renderers;
     
     foreach (@{$label->{'renderers'}}) {
@@ -380,7 +381,8 @@ sub hover_labels {
       }
     }
     
-    $html .= sprintf(qq(
+    $renderers .= qq{<li class="subset subset_$subset->[0]"><a class="modal_link" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>} if $subset;
+    $html      .= sprintf(qq(
       <div class="hover_label floating_popup %s">
         <p class="header">%s</p>
         %s
