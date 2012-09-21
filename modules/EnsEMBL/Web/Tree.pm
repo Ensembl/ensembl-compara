@@ -64,6 +64,7 @@ sub create_node {
   ### Node is always created as a "root" node - needs to be appended to another node to make it part of another tree.
   
   my ($self, $id, $data) = @_;
+  $id     =~ s/[^\w-]/_/g;
   $id   ||= $self->generate_unique_id;
   $data ||= {};
   
