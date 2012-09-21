@@ -389,7 +389,7 @@ sub hover_labels {
         %s
         %s
         <a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>
-        <a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}16/delete.png" alt="Turn track off" title="Turn track off" /></a>
+        <a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}16/cross.png" alt="Turn track off" title="Turn track off" /></a>
         <div class="desc">%s</div>
         <div class="config">%s</div>
         <div class="url">%s</div>
