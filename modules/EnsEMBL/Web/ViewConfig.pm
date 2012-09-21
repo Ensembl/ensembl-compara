@@ -593,6 +593,8 @@ sub build_imageconfig_menus {
       }
     }
     
+    $menu .= sprintf '<li class="subset subset_%s"><img src="%s16/setting.png" /><a href="#">Configure track options</a></li>', $node->get('subset'), $img_url if $node->get('subset');
+    
     if ($display ne 'off') {
       $self->{'enabled_tracks'}{$menu_class}++;
       $self->{'enabled_tracks'}{$id} = 1;
@@ -611,7 +613,6 @@ sub build_imageconfig_menus {
     push @classes, 'fav'            if $self->{'favourite_tracks'}{$id};
     push @classes, 'hidden'         if $menu_type eq 'hidden';
     push @classes, "subset_$subset" if $subset;
-    
     
     my $child = $parent->append_child('li', {
       class      => join(' ', @classes),
