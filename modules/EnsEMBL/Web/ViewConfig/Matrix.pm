@@ -64,7 +64,7 @@ sub set_columns {
   foreach (grep $_->data->{'label_x'}, $tree->nodes) {
     my $set       = $_->data->{'set'};
     my $label_x   = $_->data->{'label_x'};
-    my $menu      = $_->data->{'menu_key'};
+    my $menu      = $tree->clean_id($_->data->{'menu_key'});
     my $renderers = $_->get('renderers');
     my %renderers = @$renderers;
     my $conf      = $self->{'matrix_config'}{$menu}{$set} ||= {
