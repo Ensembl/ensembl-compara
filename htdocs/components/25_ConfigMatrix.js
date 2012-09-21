@@ -1,6 +1,6 @@
 // $Revision$
 
-Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
+Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
@@ -18,7 +18,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.imageConfig = {};
     this.viewConfig  = {};
     
-    this.elLk.table = $('table.funcgen_matrix', this.el);
+    this.elLk.table = $('table.config_matrix', this.el);
     
     var colClasses = $.map(this.elLk.table[0].rows[0].cells, function (el) { return el.className; });
     var linkData   = $.map(this.params.links, function (link) { return 'a.' + link; }).join(', ');
@@ -29,12 +29,16 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.elLk.rows       = $('tbody tr',              this.elLk.table);
     this.elLk.trackNames = $('.track_name',           this.elLk.renderers).each(function () { panel.imageConfig[this.name] = { renderer: this.value }; });
     this.elLk.menus      = $('.popup_menu',           this.elLk.renderers);
-    this.elLk.options    = $('.option',               this.elLk.rows).each(function () {      
-      this.configCode  = 'opt_cft_' + this.title; // configCode is used to set the correct values for the ViewConfig
-      this.searchTerms = $.trim(this.parentNode.className + ' ' + colClasses[$(this).index()]).toLowerCase(); // Do this here so we don't have to look up the header row for every cell
+    this.elLk.options    = $('.option',               this.elLk.rows).each(function () {
+      this.configCode  = 'opt_matrix_' + panel.id + '_' + this.title; // configCode is used to set the correct values for the ViewConfig
+      this.searchTerms = $.trim(this.parentNode.className + ' ' + colClasses[$(this).index()] + ' ' + this.title).toLowerCase(); // Do this here so we don't have to look up the header row for every cell
       panel.viewConfig[this.configCode] = $(this).hasClass('on') ? 'on' : 'off';
     }).on('click', function () {
       panel.resetSelectAll($(this).toggleClass('on'));
+    });
+    
+    this.elLk.scroller = $('.config_matrix_scroller, .config_matrix_wrapper', this.el).on('scroll', function () {
+      panel.elLk.scroller.not(this).scrollLeft(this.scrollLeft);
     });
     
     $('.help', this.el).on('click', function () {
@@ -151,7 +155,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     });
     
     this.elLk.renderers.filter('.select_all').find('.popup_menu li').on('click', function () {
-      $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li.' + this.className).trigger('click');
+      $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li' + (this.className === 'all_on' ? ':not(.header):eq(1)' : '.' + this.className)).trigger('click');
       return false;
     });
     
@@ -169,19 +173,20 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
   tutorial: function () {
     var panel = this;
     
-    this.showTutorial = Ensembl.cookie.get('funcgen_matrix_tutorial') !== 'off';
+    this.showTutorial = Ensembl.cookie.get('config_matrix_tutorial') !== 'off';
     
-    var col = panel.elLk.headers.length > 4 ? panel.elLk.headers.length < 12 ? -1 : 11 : 3;
+    var col = panel.elLk.headers.length > 4 ? panel.elLk.headers.length < 12 ? -1 : 11 : panel.elLk.headers.length - 1;
+    var height;
     
     this.elLk.tutorial = $('div.tutorial', this.el)[this.showTutorial ? 'show' : 'hide']().each(function () {
       var css, pos, tmp;
       
       switch (this.className.replace(/tutorial /, '')) {
-        case 'track':     css = { top: panel.elLk.renderers.eq(1).position().top - 73 }; break;
+        case 'track'    : css = { top: panel.elLk.renderers.eq(1).position().top - 73, marginLeft: panel.elLk.headers.eq(0).outerWidth(true) - 90 }; break;
         case 'all_track': pos = panel.elLk.renderers.first().position(); css = { top: pos.top + 25, left: pos.left + 50 }; break;
-        case 'col':       css = { top: panel.elLk.rows.eq(5).find('th').position().top + 15 }; break;
-        case 'row':       tmp = panel.elLk.headers.eq(col); pos = tmp.position(); css = { top: pos.top - 50, left: pos.left + tmp.width() }; break;
-        case 'drag':      tmp = panel.elLk.rows.eq(4); css = { top: tmp.position().top, left: tmp.children().eq(col).position().left + 10 }; break;
+        case 'col'      : css = { top: panel.elLk.rows.eq(Math.min(panel.elLk.rows.length, 5)).find('th').position().top + 15 }; height = css.top + $(this).height(); break;
+        case 'row'      : tmp = panel.elLk.headers.eq(col); pos = tmp.position(); css = { top: pos.top - 50, left: pos.left + tmp.width() }; break;
+        case 'drag'     : tmp = panel.elLk.rows.eq(Math.min(panel.elLk.rows.length - 1, 4)); css = { top: tmp.position().top, left: tmp.children().eq(col).position().left + 10 }; break;
         default:          return;
       }
       
@@ -190,11 +195,14 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       tmp = null;
     });
     
+    this.elLk.scroller.eq(1).height(function (i, h) { return Math.max(h, height); }).filter(function () { return panel.elLk.table.width() > panel.el.width(); }).addClass('wide');
+    this.elLk.scroller.eq(0).children().width(this.elLk.scroller[1].scrollWidth);
+    
     $('.toggle_tutorial', this.el).on('click', function () {
       panel.showTutorial = !panel.showTutorial;
       panel.elLk.tutorial.toggle();
       $(this)[panel.showTutorial ? 'addClass' : 'removeClass']('on');
-      Ensembl.cookie.set('funcgen_matrix_tutorial', panel.showTutorial ? 'on' : 'off');
+      Ensembl.cookie.set('config_matrix_tutorial', panel.showTutorial ? 'on' : 'off');
     })[panel.showTutorial ? 'addClass' : 'removeClass']('on');
   },
   
