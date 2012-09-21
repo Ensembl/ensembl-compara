@@ -282,95 +282,15 @@ sub bound_location_string {
   return sprintf '%s:%s-%s', $self->seq_region_name, $start, $end;
 }
 
-################ Calls for Feature in Detail Cell line view ###########################
-sub get_configured_tracks {
-  my $self              = shift;
-  my $hub               = $self->hub;
-  my $tables            = $hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
-  my %cell_lines        = %{$tables->{'cell_type'}{'ids'}};
-  my %evidence_features = %{$tables->{'feature_type'}{'ids'}};
-  my %focus_set_ids     = %{$tables->{'regbuild_string'}{'focus_feature_set_ids'}};
-  my %feature_type_ids  = %{$tables->{'regbuild_string'}{'feature_type_ids'}};
-  my %available_feature_sets;
-
-  $cell_lines{'MultiCell'} = 1;
-  
-  foreach my $cell_line (keys %cell_lines) {
-    $cell_line =~ s/\:\d*//;
-    
-    my $cell = $cell_line eq 'MultiCell' ? 'core' : $cell_line;
-    
-    $available_feature_sets{$cell_line} = {};
-    
-    foreach my $evidence_feature (keys %evidence_features) {
-      my ($feature_name, $feature_id) = split /\:/, $evidence_feature; 
-      
-      if (exists $feature_type_ids{$cell}{$feature_id}) {
-        if (!exists $available_feature_sets{$cell_line}{'available'}) { 
-           $available_feature_sets{$cell_line}{'available'}{'focus'}      = []; 
-           $available_feature_sets{$cell_line}{'available'}{'non_focus'}  = [];
-           $available_feature_sets{$cell_line}{'configured'}{'focus'}     = [];
-           $available_feature_sets{$cell_line}{'configured'}{'non_focus'} = [];  
-        }
-        
-        my $focus_flag = $cell eq 'core' || exists $focus_set_ids{$cell}{$feature_id} ? 'focus' : 'non_focus';
-        
-        push @{$available_feature_sets{$cell_line}{'available'}{$focus_flag}}, $feature_name;
-        
-        # add to configured features if turned on
-        push @{$available_feature_sets{$cell_line}{'configured'}{$focus_flag}}, $feature_name if $hub->param("opt_cft_$cell_line:$feature_name") eq 'on';
-      }
-    }
-  }
-  
-  return \%available_feature_sets;
-}
-
-sub get_multicell_evidence_data {
-  my ($self, $slice, $param_all_on) = @_;
-  my $hub    = $self->hub;
-  my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
-  my %data;
-
-  foreach my $regf_fset (@{$fset_a->fetch_all_by_type('regulatory')}) {
-    next unless $regf_fset->cell_type->name =~/MultiCell/i;
-    
-    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
-    
-    foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){
-      my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
-      my @sset          = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
-      
-      throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @sset > 1; # There should only be one
-
-      my $reg_attr_rset         = $sset[0];
-      my $focus_flag            = $reg_attr_fset->is_focus_set ? 'focus' : 'non_focus';
-      my @block_features        = @{$reg_attr_fset->get_Features_by_Slice($slice)};
-      my $unique_feature_set_id = 'MultiCell:' . $reg_attr_fset->feature_type->name;
-      my $name                  = "opt_cft_$unique_feature_set_id";
-      $unique_feature_set_id   .= ':' . $reg_attr_fset->cell_type->name;
-      
-      if ($hub->param($name) eq 'on' || $param_all_on) {
-        if (@block_features) {
-          $data{'MultiCell'}{$focus_flag}{'block_features'}{$unique_feature_set_id} = \@block_features;
-          $reg_attr_fset->get_Features_by_Slice($slice);
-        }
-      } 
-    }
-  }
-  
-  return \%data;
-}
-
 sub get_evidence_data {
   my ($self, $slice, $param_all_on) = @_;
   my $hub    = $self->hub;
   my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
+  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
   my %data;
 
   foreach my $regf_fset (@{$fset_a->fetch_all_by_type('regulatory')}) {
+    my $multicell     = $regf_fset->cell_type->name eq 'MultiCell' ? 'MultiCell' : '';
     my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
     
     foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
@@ -379,41 +299,19 @@ sub get_evidence_data {
 
       throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @sset > 1; # There should only be one
       
-      my $reg_attr_rset         = $sset[0];
       my $cell_type             = $reg_attr_fset->cell_type->name;
-      $data{$cell_type}         = {} unless exists $data{$cell_type};
-      my $focus_flag            = $reg_attr_fset->is_focus_set ? 'focus' : 'non_focus';    
-      my @block_features        = @{$reg_attr_fset->get_Features_by_Slice($slice)};
-      my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ': '. $reg_attr_fset->feature_type->name; 
-      my $name                  = "opt_cft_$unique_feature_set_id";
-
-      if ($hub->param($name) eq 'on' || $param_all_on) {
-        $data{$cell_type}{$focus_flag}{'block_features'}{$unique_feature_set_id}  = \@block_features if @block_features;
-        $data{$cell_type}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset   if scalar @sset; 
-      }
+      my $feature_type          = $reg_attr_fset->feature_type->name;
+      my $block_features        = $reg_attr_fset->get_Features_by_Slice($slice);
+      my $set                   = $multicell || $reg_attr_fset->is_focus_set ? 'core' : 'other';
+      my $key                   = $multicell || $cell_type;
+      my $unique_feature_set_id = join ':', $key, $feature_type, $multicell ? $cell_type : ();
+      my $name                  = "opt_matrix_regulatory_features_${set}_$key:$feature_type";
+      
+      $data{$key}{$set}{'block_features'}{$unique_feature_set_id} = $block_features if scalar @$block_features && ($param_all_on || $hub->param($name) eq 'on');
     }
   }
   
   return \%data;
-}
-
-sub get_all_cell_line_features {
-  my $self              = shift;
-  my $tables            = $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
-  my %cell_lines        = %{$tables->{'cell_type'}{'ids'}};
-  my %evidence_features = %{$tables->{'feature_type'}{'ids'}};
-  my %all_cell_feature_combinations;
-
-  foreach my $cell_type (keys %cell_lines) {
-    $cell_type =~ s/\:\d+//;
-    foreach my $feature_type (keys %evidence_features) {
-      $feature_type =~ s/\:\d+//;
-      my $key = "$feature_type:$cell_type";
-      $all_cell_feature_combinations{$key} = 1;
-    }
-  }
-  
-  return  \%all_cell_feature_combinations;
 }
 
 ################ Calls for Feature in Detail view ###########################

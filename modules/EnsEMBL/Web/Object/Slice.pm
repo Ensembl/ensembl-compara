@@ -323,30 +323,30 @@ sub get_cell_line_data {
   
   # First work out which tracks have been turned on in image_config
   my %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  my @types      = ('core', 'other');  
-  my %data;
+  my @sets       = qw(core other);  
+  my $data;
 
-  foreach my $cell_line (keys %cell_lines){ 
-    $cell_line =~ s/\:\d*//;   
+  foreach my $cell_line (keys %cell_lines) { 
+    $cell_line =~ s/:\w*//;
     
-    foreach my $type (@types) {
-      my $node = $image_config->get_node('functional')->get_node("reg_feats_${type}_$cell_line");
+    foreach my $set (@sets) {
+      my $node = $image_config->get_node('functional')->get_node("reg_feats_${set}_$cell_line");
       
       next unless $node;
       
       my $display = $node->get('display');
-      $data{$cell_line}{$type}{'renderer'} = $display if $display ne 'off';
+      $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
     }
   }
 
-  %data = %{$self->get_configured_tracks($image_config, \%data)}; 
-  %data = %{$self->get_data(\%data)};
+  $data = $self->get_configured_tracks($data); 
+  $data = $self->get_data($data);
 
-  return \%data;
+  return $data;
 }
 
 sub get_configured_tracks {
-  my ($self, $image_config, $data) = @_;
+  my ($self, $data) = @_;
   my $hub               = $self->hub;
   my $tables            = $hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
   my %cell_lines        = %{$tables->{'cell_type'}{'ids'}};
@@ -355,23 +355,25 @@ sub get_configured_tracks {
   my %feature_type_ids  = %{$tables->{'regbuild_string'}{'feature_type_ids'}};
   
   foreach my $cell_line (keys %cell_lines) { 
-    $cell_line =~ s/\:\d*//; 
-    next if !exists $data->{$cell_line};    
+    $cell_line =~ s/:\w*//;
+    
+    next unless exists $data->{$cell_line};    
 
     foreach my $evidence_feature (keys %evidence_features) { 
-      my ($feature_name, $feature_id) = split /\:/, $evidence_feature; 
+      my ($feature_name, $feature_id) = split /:/, $evidence_feature; 
       
-      if (exists $feature_type_ids{$cell_line}{$feature_id}) {  
-        my $focus_flag = $cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id} ? 'core' : 'other';
-        next if ! exists $data->{$cell_line}->{$focus_flag};
+      if (exists $feature_type_ids{$cell_line}{$feature_id}) {
+        my $set = $cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id} ? 'core' : 'other';
         
-        if (!exists $data->{$cell_line}{$focus_flag}{'available'}) {
-           $data->{$cell_line}{$focus_flag}{'available'}   = [];
-           $data->{$cell_line}{$focus_flag}{'configured'}  = [];
+        next unless exists $data->{$cell_line}{$set};
+        
+        if (!exists $data->{$cell_line}{$set}{'available'}) {
+           $data->{$cell_line}{$set}{'available'}   = [];
+           $data->{$cell_line}{$set}{'configured'}  = [];
         }
         
-        push @{$data->{$cell_line}{$focus_flag}{'available'}},  $feature_name; 
-        push @{$data->{$cell_line}{$focus_flag}{'configured'}}, $feature_name if $hub->param("opt_cft_$cell_line:$feature_name") eq 'on'; # add to configured features if turned on
+        push @{$data->{$cell_line}{$set}{'available'}},  $feature_name; 
+        push @{$data->{$cell_line}{$set}{'configured'}}, $feature_name if $hub->param("opt_matrix_regulatory_features_${set}_$cell_line:$feature_name") eq 'on'; # add to configured features if turned on
       }
     }
   }
@@ -399,15 +401,15 @@ sub get_data {
 
     foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
       my $feature_type_name     = $reg_attr_fset->feature_type->name;
-      my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name; 
-      my $name                  = $cell_line eq 'MultiCell' ? "opt_cft_$cell_line:$feature_type_name" : "opt_cft_$unique_feature_set_id";
+      my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name;
+      my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'other';
+      my $name                  = $cell_line eq 'MultiCell' ? "opt_matrix_regulatory_features_core_$cell_line:$feature_type_name" : "opt_matrix_regulatory_features_${focus_flag}_$unique_feature_set_id";
       
       $count++;
       
       next unless $hub->param($name) eq 'on';
       
-      my $type          = $reg_attr_fset->is_focus_set ? 'core' : 'other';
-      my $display_style = $data->{$cell_line}{$type}{'renderer'};
+      my $display_style = $data->{$cell_line}{$focus_flag}{'renderer'};
       
       $feature_sets_on{$feature_type_name} = 1;
       
@@ -419,7 +421,7 @@ sub get_data {
           @block_features = grep $obj->has_attribute($_->dbID, 'annotated'), @block_features
         }
         
-        $data->{$cell_line}{$type}{'block_features'}{"$unique_feature_set_id:$count"} = \@block_features if scalar @block_features;
+        $data->{$cell_line}{$focus_flag}{'block_features'}{"$unique_feature_set_id:$count"} = \@block_features if scalar @block_features;
       }
       
       if ($display_style eq 'tiling' || $display_style eq 'tiling_feature') {
@@ -431,7 +433,7 @@ sub get_data {
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
           
           push @result_sets, $sset->[0];
-          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id .":". $sset->[0]->dbID} = 1;
+          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = 1;
         }
       }
     }

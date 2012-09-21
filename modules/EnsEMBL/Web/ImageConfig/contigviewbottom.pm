@@ -176,19 +176,8 @@ sub init {
   my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
   
   foreach my $cell_line (@cell_lines) {
-    $cell_line =~ s/\:\d*//;
+    $cell_line =~ s/:\w*//;
     
-    # Turn on menus for core and supporting evidence track
-    $self->modify_configs(
-      [ "reg_feats_core_$cell_line" ],
-      { menu => 'hidden', subset => 'Regulatory_evidence_core' }
-    );
-
-    $self->modify_configs(
-      [ "reg_feats_other_$cell_line" ],
-      { menu => 'hidden', subset => 'Regulatory_evidence_other' }
-    );
-       
     # Turn off segmentation track
     $self->modify_configs(
       [ "seg_$cell_line"],
