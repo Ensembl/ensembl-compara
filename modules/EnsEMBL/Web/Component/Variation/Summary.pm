@@ -89,8 +89,11 @@ sub failed {
   my $core_params = join '', map $params->{$_} && $_ ne 'vf' && $_ ne 'r' ? qq(<input name="$_" value="$params->{$_}" type="hidden" />) : (), keys %$params;
   my $options     = join '', map qq(<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>), @locations;
 
-  $html .= sprintf('<form action="%s" method="get"><b>Select a location:</b> %s<select name="vf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>',
+  my $label = $vf ? 'Selected location' : 'Select a location';
+
+  $html .= sprintf('<form action="%s" method="get"><b></b>: %s<select name="vf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>',
                   $hub->url({ vf => undef, v => $id, source => $self->object->source }),
+                  $label,
                   $core_params,
                   $options,
                 );
