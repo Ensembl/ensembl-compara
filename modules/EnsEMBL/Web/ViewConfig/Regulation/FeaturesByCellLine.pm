@@ -9,10 +9,12 @@ use base qw(EnsEMBL::Web::ViewConfig::Cell_line);
 sub init {
   my $self = shift;
   
-  $self->add_image_config('regulation_view'); 
+  $self->title         = 'Details by cell line';
+  $self->{'form_func'} = 'form_context';
+  
+  $self->add_image_config('regulation_view');
   $self->SUPER::init;
   $self->set_defaults({ opt_highlight => 'yes', context => 200 });
-  $self->title = 'Details by cell line';
 }
 
 sub form_context {
