@@ -65,6 +65,7 @@ sub set_columns {
       caption      => $set eq 'core' ? 'Open chromatin & TFBS' : 'Histones & polymerases',
       header       => $set eq 'core' ? 'Open chromatin & Transcription Factor Binding Sites' : 'Histones & Polymerases',
       description  => $funcgen_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
+      axes         => { x => 'cell', y => 'evidence type' },
     };
     
     push @{$conf->{'columns'}}, { display => $_->get('display'), renderers => $renderers, x => $cell_line };
