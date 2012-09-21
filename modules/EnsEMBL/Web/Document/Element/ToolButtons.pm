@@ -6,6 +6,8 @@ package EnsEMBL::Web::Document::Element::ToolButtons;
 
 use strict;
 
+use URI::Escape qw(uri_escape);
+
 use base qw(EnsEMBL::Web::Document::Element);
 
 sub entries {
@@ -127,7 +129,7 @@ sub init {
         __clear   => 1,
         name      => $title->get,
         shortname => $title->get_short,
-        url       => $hub->species_defs->ENSEMBL_BASE_URL . $hub->url
+        url       => uri_escape($hub->species_defs->ENSEMBL_BASE_URL . $hub->url)
       })
     });
   } else {
