@@ -8,7 +8,7 @@ sub render {
   ## @overrides
   my $self = shift;
 
-  $self->get_elements_by_class_name($self->CSS_CLASS_INNER_WRAPPER)->[0]->append_HTML($self->render_shortnote(@_));
+  $self->get_elements_by_class_name($self->CSS_CLASS_INNER_WRAPPER)->[0]->append_child($self->shortnote);
 
   return $self->SUPER::render(@_);
 }
