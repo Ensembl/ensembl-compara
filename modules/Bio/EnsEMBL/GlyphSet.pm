@@ -211,6 +211,7 @@ sub init_label {
   if ($hover) {
     my $fav       = $config->get_favourite_tracks->{$track};
     my @renderers = @{$node->get('renderers') || []};
+    my $subset    = $node->get('subset');
     my @r;
     
     my $url = $hub->url('Config', {
@@ -235,7 +236,8 @@ sub init_label {
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
       off       => "$url;$track=off",
-      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : ''
+      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
+      subset    => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
     };
   }
   
