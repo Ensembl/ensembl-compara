@@ -1,79 +1,14 @@
-#!/usr/local/ensembl/bin/perl -w
-
-#
-# Test script for Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor module
-#
-# Written by Javier Herrero (jherrero@ebi.ac.uk)
-#
-# Copyright (c) 1999-2012. EnsEMBL Team
-#
-# You may distribute this module under the same terms as perl itself
-
-=head1 NAME
-
-dnaFragAdaptor.t
-
-=head1 INSTALLATION
-
-*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
-
-YOU MUST EDIT THE <MultiTestDB.conf> FILE BEFORE USING THIS TEST SCRIPT!!!
-
-*_*_*_*_*_*_*_*_*_*_*_*_*_*_   W A R N I N G  _*_*_*_*_*_*_*_*_*_*_*_*_*_*
-
-Please, read the README file for instructions.
-
-=head1 SYNOPSIS
-
-For running this test only:
-perl -w ../../../ensembl-test/scripts/runtests.pl dnaFragAdaptor.t
-
-For running all the test scripts:
-perl -w ../../../ensembl-test/scripts/runtests.pl
-
-For running all the test scripts and cleaning the database afterwards:
-perl -w ../../../ensembl-test/scripts/runtests.pl -c
-
-=head1 DESCRIPTION
-
-This script uses a small compara database build following the specifitions given in the MultiTestDB.conf file.
-
-This script (as far as possible) tests all the methods defined in the
-Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor module.
-
-This script includes 40 tests.
-
-=head1 AUTHOR
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2012. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
-
-=cut
-
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
 
+use Test::More;
+use Test::Exception;
+
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
-
-BEGIN {
-  $| = 1;
-  use Test;
-  plan tests => 48;
-}
+use Bio::EnsEMBL::Compara::GenomicAlign;
 
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
@@ -81,157 +16,217 @@ BEGIN {
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
-
-my $species = [
-        "homo_sapiens",
-        "mus_musculus",
-        "rattus_norvegicus",
-        "gallus_gallus",
-	"bos_taurus",
-	"canis_familiaris",
-	"macaca_mulatta",
-	"monodelphis_domestica",
-	"ornithorhynchus_anatinus",
-	"pan_troglodytes",	     
-    ];
-
-## Connect to core DB specified in the MultiTestDB.conf file
-foreach my $this_species (@$species) {
-  my $species_db = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
-  my $species_db_adaptor = $species_db->get_DBAdaptor('core');
-  my $species_gdb = $genome_db_adaptor->fetch_by_name_assembly(
-          $species_db_adaptor->get_MetaContainer->get_Species->binomial,
-          $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version
-      );
-  $species_gdb->db_adaptor($species_db_adaptor);
-}
+my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor();
 
 ##
 #####################################################################
 
 my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
-ok($dnafrag_adaptor, '/^Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor/',
-    "Getting the adaptor");
+isa_ok($dnafrag_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor', "Getting the adaptor");
 
     
 #####################################################################
 ## Values matching entries in the test DB
 
-my @species_names = ("Homo sapiens", "Mus musculus", "Rattus norvegicus", "Gallus gallus", "Bos taurus", "Canis familiaris", "Macaca mulatta", "Monodelphis domestica", "Ornithorhynchus anatinus", "Pan troglodytes");
+my $ref_species = "homo_sapiens";
+
+my $sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
+      DISTINCT(gdb.name)
+    FROM dnafrag df join genome_db gdb using (genome_db_id)");
+
+$sth->execute();
+my @species_names;
+while (my $row = $sth->fetchrow_array) {
+    push @species_names, $row;
+}
+$sth->finish();
+
 
 ##
 #####################################################################
-
-my $sth;
 $sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
       dnafrag_id, length, df.name, df.genome_db_id, coord_system_name
-    FROM dnafrag df left join genome_db gdb using (genome_db_id)
-    WHERE df.name = \"16\" and gdb.name = \"$species_names[0]\"");
+    FROM dnafrag df left join genome_db gdb USING (genome_db_id)
+    WHERE gdb.name = \"$ref_species\" LIMIT 1");
 $sth->execute();
 my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) =
-    $sth->fetchrow_array();
+  $sth->fetchrow_array();
 $sth->finish();
 
-my $dnafrag;
-my $dnafrags;
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor fetch_by_dbID($dnafrag_id) method", sub {
 
+    my $dnafrag;
+    my $dnafrags;
 
+    $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
+    isa_ok($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching by dbID");
+    is($dnafrag->dbID, $dnafrag_id, "Fetching by dbID. Checking dbID");
+    is($dnafrag->length, $dnafrag_length, "Fetching by dbID. Checking length");
+    is($dnafrag->name, $dnafrag_name, "Fetching by dbID. Checking name");
+    is($dnafrag->genome_db_id, $genome_db_id, "Fetching by dbID. Checking genome_db_id");
+    is($dnafrag->coord_system_name, $coord_system_name, "Fetching by dbID. Checking coord_system_name");
+    
+    $dnafrag = eval { $dnafrag_adaptor->fetch_by_dbID(-$dnafrag_id) };
+    is($dnafrag, undef, "Fetching by dbID with wrong dbID");
 
-$dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
-ok($dnafrag, '/^Bio::EnsEMBL::Compara::DnaFrag/', "Fetching by dbID");
-ok($dnafrag->dbID, $dnafrag_id, "Fetching by dbID. Checking dbID");
-ok($dnafrag->length, $dnafrag_length, "Fetching by dbID. Checking length");
-ok($dnafrag->name, $dnafrag_name, "Fetching by dbID. Checking name");
-ok($dnafrag->genome_db_id, $genome_db_id, "Fetching by dbID. Checking genome_db_id");
-ok($dnafrag->coord_system_name, $coord_system_name, "Fetching by dbID. Checking coord_system_name");
-
-$dnafrag = eval { $dnafrag_adaptor->fetch_by_dbID(-$dnafrag_id) };
-ok($dnafrag, undef, "Fetching by dbID with wrong dbID");
-
-$dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db_id, $dnafrag_name);
-ok($dnafrag, '/^Bio::EnsEMBL::Compara::DnaFrag/', "Fetching by GenomeDB and name");
-ok($dnafrag->dbID, $dnafrag_id, "Fetching by GenomeDB and name. Checking dbID");
-ok($dnafrag->length, $dnafrag_length, "Fetching by GenomeDB and name. Checking length");
-ok($dnafrag->name, $dnafrag_name, "Fetching by GenomeDB and name. Checking name");
-ok($dnafrag->genome_db_id, $genome_db_id, "Fetching by GenomeDB and name. Checking genome_db_id");
-ok($dnafrag->coord_system_name, $coord_system_name, "Fetching by GenomeDB and name. Checking coord_system_name");
-
-$dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db_id, $dnafrag_name);
-ok($dnafrag, '/^Bio::EnsEMBL::Compara::DnaFrag/', "Fetching by GenomeDB and name");
-ok($dnafrag->dbID, $dnafrag_id, "Fetching by GenomeDB and name. Checking dbID");
-ok($dnafrag->length, $dnafrag_length, "Fetching by GenomeDB and name. Checking length");
-ok($dnafrag->name, $dnafrag_name, "Fetching by GenomeDB and name. Checking name");
-ok($dnafrag->genome_db_id, $genome_db_id, "Fetching by GenomeDB and name. Checking genome_db_id");
-ok($dnafrag->coord_system_name, $coord_system_name, "Fetching by GenomeDB and name. Checking coord_system_name");
-
-$dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
-        $genome_db_adaptor->fetch_by_dbID($genome_db_id),
-        $dnafrag_name
-    );
-ok($dnafrag, '/^Bio::EnsEMBL::Compara::DnaFrag/', "Fetching by GenomeDB and name (2)");
-ok($dnafrag->dbID, $dnafrag_id, "Fetching by GenomeDB and name (2). Checking dbID");
-ok($dnafrag->length, $dnafrag_length, "Fetching by GenomeDB and name (2). Checking length");
-ok($dnafrag->name, $dnafrag_name, "Fetching by GenomeDB and name (2). Checking name");
-ok($dnafrag->genome_db_id, $genome_db_id, "Fetching by GenomeDB and name (2). Checking genome_db_id");
-ok($dnafrag->coord_system_name, $coord_system_name, "Fetching by GenomeDB and name (2). Checking coord_system_name");
-
-$dnafrag = eval { $dnafrag_adaptor->fetch_by_GenomeDB_and_name(-$genome_db_id, $dnafrag_name) };
-ok($dnafrag, undef, "Fetching by GenomeDB and name with a wrong genome_db_id");
-
-$dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
-        $genome_db_adaptor->fetch_by_dbID($genome_db_id),
-        $coord_system_name,
-        $dnafrag_name
-    );
-ok(@$dnafrags, 1);
-ok($dnafrags->[0], '/^Bio::EnsEMBL::Compara::DnaFrag/', "Fetching all by GenomeDB and region");
-ok($dnafrags->[0]->dbID, $dnafrag_id, "Fetching all by GenomeDB and region. Checking dbID");
-ok($dnafrags->[0]->length, $dnafrag_length, "Fetching all by GenomeDB and region. Checking length");
-ok($dnafrags->[0]->name, $dnafrag_name, "Fetching all by GenomeDB and region. Checking name");
-ok($dnafrags->[0]->genome_db_id, $genome_db_id, "Fetching all by GenomeDB and region. Checking genome_db_id");
-ok($dnafrags->[0]->coord_system_name, $coord_system_name, "Fetching all by GenomeDB and region. Checking coord_system_name");
-
-my $num_of_dnafrags = 0;
-
-foreach my $this_species_name (@species_names) {
-  $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
-          $genome_db_adaptor->fetch_by_name_assembly($this_species_name)
-    );
-  my $fail = "";
-  if (!(@$dnafrags >= 1)) {
-    $fail .= "At least 1 DnaFrag was expected for species $this_species_name";
-  }
-  $num_of_dnafrags += @$dnafrags;
-  foreach my $dnafrag (@$dnafrags) {
-    if (!($dnafrag->dbID>0)) {
-      $fail .= "Found unexpected dnafrag_id (".$dnafrag->dbID.") for species $this_species_name";
-      next;
-    }
-    if (!($dnafrag->length>0)) {
-      $fail .= "Found unexpected dnafrag_length (".$dnafrag->length.") for DnaFrag(".$dnafrag->dbID.")";
-    }
-  }
-  ok($fail, "", "Fetching all by GenomeDB and region");
+    done_testing();
 };
 
-$dnafrags = $dnafrag_adaptor->fetch_all();
-ok(@$dnafrags, $num_of_dnafrags, "Fetching all");
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_GenomeDB_and_name method", sub {
 
-$dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
-$multi->hide("compara", "dnafrag");
+    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db_id, $dnafrag_name);
+    isa_ok($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching by GenomeDB and name");
+    is($dnafrag->dbID, $dnafrag_id, "Fetching by GenomeDB and name. Checking dbID");
+    is($dnafrag->length, $dnafrag_length, "Fetching by GenomeDB and name. Checking length");
+    is($dnafrag->name, $dnafrag_name, "Fetching by GenomeDB and name. Checking name");
+    is($dnafrag->genome_db_id, $genome_db_id, "Fetching by GenomeDB and name. Checking genome_db_id");
+    is($dnafrag->coord_system_name, $coord_system_name, "Fetching by GenomeDB and name. Checking coord_system_name");
 
-$dnafrags = $dnafrag_adaptor->fetch_all();
-ok(@$dnafrags, 0, "Fetching all after hiding table");
+    $dnafrag = eval { $dnafrag_adaptor->fetch_by_GenomeDB_and_name(-$genome_db_id, $dnafrag_name) };
+    is($dnafrag, undef, "Fetching by GenomeDB and name with a wrong genome_db_id");
 
-#
-$dnafrag->genome_db;
-$dnafrag->{adaptor} = undef;
-$dnafrag_adaptor->store($dnafrag);
-$dnafrags = $dnafrag_adaptor->fetch_all();
-ok(@$dnafrags, 1, "Fetching all after hiding table");
-$dnafrag->{adaptor} = undef;
-$dnafrag_adaptor->store_if_needed($dnafrag);
-$dnafrags = $dnafrag_adaptor->fetch_all();
-ok(@$dnafrags, 1, "Fetching all after hiding table");
+    done_testing();
+};
 
-$multi->restore("compara", "dnafrag");
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region method", sub {
+
+    my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
+                                                                  $genome_db_adaptor->fetch_by_dbID($genome_db_id),
+                                                                  $coord_system_name,
+                                                                  $dnafrag_name
+                                                                 );
+    is(@$dnafrags, 1);
+    isa_ok($dnafrags->[0], 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching all by GenomeDB and region");
+    is($dnafrags->[0]->dbID, $dnafrag_id, "Fetching all by GenomeDB and region. Checking dbID");
+    is($dnafrags->[0]->length, $dnafrag_length, "Fetching all by GenomeDB and region. Checking length");
+    is($dnafrags->[0]->name, $dnafrag_name, "Fetching all by GenomeDB and region. Checking name");
+    is($dnafrags->[0]->genome_db_id, $genome_db_id, "Fetching all by GenomeDB and region. Checking genome_db_id");
+    is($dnafrags->[0]->coord_system_name, $coord_system_name, "Fetching all by GenomeDB and region. Checking coord_system_name");
+
+};
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region method (all genomes) and fetch_all method", sub {
+
+    my $num_of_dnafrags = 0;
+
+    foreach my $this_species_name (@species_names) {
+        my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
+                                                                   $genome_db_adaptor->fetch_by_name_assembly($this_species_name)
+                                                                  );
+        my $fail = "";
+        if (!(@$dnafrags >= 1)) {
+            $fail .= "At least 1 DnaFrag was expected for species $this_species_name";
+        }
+        $num_of_dnafrags += @$dnafrags;
+        foreach my $dnafrag (@$dnafrags) {
+            if (!($dnafrag->dbID>0)) {
+                $fail .= "Found unexpected dnafrag_id (".$dnafrag->dbID.") for species $this_species_name";
+                next;
+            }
+            if (!($dnafrag->length>0)) {
+                $fail .= "Found unexpected dnafrag_length (".$dnafrag->length.") for DnaFrag(".$dnafrag->dbID.")";
+            }
+        }
+        is($fail, "", "Fetching all by GenomeDB and region");
+    };
+
+    #Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all
+    my $dnafrags = $dnafrag_adaptor->fetch_all();
+    is(@$dnafrags, $num_of_dnafrags, "Fetching all");
+
+    done_testing();
+};
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_Slice", sub {
+    
+    my $sth = $compara_db_adaptor->dbc->prepare("SELECT
+      genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
+      dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, visible, node_id
+    FROM genomic_align JOIN dnafrag USING (dnafrag_id) JOIN genome_db gdb USING (genome_db_id) WHERE gdb.name = '$ref_species' AND dnafrag_id = ? LIMIT 1");
+    $sth->execute($dnafrag_id);
+    my ($dbID, $genomic_align_block_id, $method_link_species_set_id, $dnafrag_id,
+        $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line, $visible, $node_id) =
+          $sth->fetchrow_array();
+    $sth->finish();
+
+    my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(-adaptor => $genomic_align_adaptor,
+                                                                -dbID => $dbID);
+    my $slice = $genomic_align->get_Slice();
+    my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
+
+    isa_ok($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching all by GenomeDB and region");
+    is($dnafrag->dbID, $dnafrag_id, "Fetching all by GenomeDB and region. Checking dbID");
+    is($dnafrag->length, $dnafrag_length, "Fetching all by GenomeDB and region. Checking length");
+    is($dnafrag->name, $dnafrag_name, "Fetching all by GenomeDB and region. Checking name");
+    is($dnafrag->genome_db_id, $genome_db_id, "Fetching all by GenomeDB and region. Checking genome_db_id");
+    is($dnafrag->coord_system_name, $coord_system_name, "Fetching all by GenomeDB and region. Checking coord_system_name");
+
+    done_testing();
+};
+
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::is_already_stored", sub {
+
+    throws_ok { $dnafrag_adaptor->is_already_stored() } qr/Must have dnafrag object/, 'no argument passed';
+    throws_ok { $dnafrag_adaptor->is_already_stored($dnafrag_id) } qr/Must have dnafrag arg \[.+\]/, 'invalid dnafrag object';
+
+    my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
+    my $stored_dnafrag_id = $dnafrag_adaptor->is_already_stored($dnafrag);
+    is($stored_dnafrag_id, $dnafrag_id, "already stored");
+
+    my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
+                                                         -length => 12345,
+                                                         -name => "F",
+                                                         -genome_db  => $dnafrag->genome_db,
+                                                         -genome_db_id  => $dnafrag->genome_db_id,
+                                                         -coord_system_name => "chromosome");
+    
+    is($dnafrag_adaptor->is_already_stored($new_dnafrag), 0, 'not stored');
+
+    done_testing();
+};
+
+
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::store", sub {
+
+    my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
+    $multi->hide("compara", "dnafrag");
+    
+    my $dnafrags = $dnafrag_adaptor->fetch_all();
+    is(@$dnafrags, 0, "Fetching all after hiding table");
+
+    #
+    $dnafrag->genome_db;
+    $dnafrag->{adaptor} = undef;
+    $dnafrag_adaptor->store($dnafrag);
+    $dnafrags = $dnafrag_adaptor->fetch_all();
+    is(@$dnafrags, 1, "Fetching all after hiding table");
+    $dnafrag->{adaptor} = undef;
+    $dnafrag_adaptor->store_if_needed($dnafrag);
+    $dnafrags = $dnafrag_adaptor->fetch_all();
+    is(@$dnafrags, 1, "Fetching all after hiding table");
+
+    my $new_dnafrag = $dnafrags->[0];
+    is($new_dnafrag->length, $dnafrag_length, "store length");
+
+    #alter length
+    $new_dnafrag->length(12345);
+    $dnafrag_adaptor->update($new_dnafrag);
+
+    $dnafrags = $dnafrag_adaptor->fetch_all();
+    is($dnafrags->[0]->length, 12345, "updated length");
+
+    #New dnafrag
+    $new_dnafrag->{adaptor} = undef;
+    $new_dnafrag->name("Z");
+    $dnafrag_adaptor->update($new_dnafrag);
+    $dnafrags = $dnafrag_adaptor->fetch_all();
+    is(@$dnafrags, 2, "Fetching all after update to store new dnafrag");
+
+    $multi->restore("compara", "dnafrag");
+
+    done_testing();
+};
+
+done_testing();
