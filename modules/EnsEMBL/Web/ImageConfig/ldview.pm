@@ -10,6 +10,8 @@ sub _menus {
   return (qw(
     ld_population
     transcript
+    simple
+    misc_feature
     prediction
     variation
     somatic
@@ -46,7 +48,17 @@ sub init {
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
   );
-  
+ 
+  $self->modify_configs(
+    ['simple', 'misc_feature'],
+    { display => 'off', menu => 'no'}
+  );
+
+  $self->modify_configs(
+    ['simple_otherfeatures_human_1kg_hapmap_phase_2'],
+    {'display' => 'tiling', menu => 'yes'}
+  );
+ 
   $self->modify_configs(
     [ 'variation_feature_variation' ],
     { display => 'normal', caption => 'Variations', strand => 'r' }
