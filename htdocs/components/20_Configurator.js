@@ -30,7 +30,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.base();
     
     if (this.params.hash) {
-      this.elLk.links.removeClass('active').has('.' + this.params.hash).addClass('active');
+      this.elLk.links.removeClass('active').children('.' + this.params.hash).parent().addClass('active');
       delete this.params.hash;
     }
     
@@ -153,11 +153,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     // Popup menus - setting values
     this.elLk.configDivs.on('click', '.popup_menu li:not(.header)', function () {
-      var li      = $(this);
+      var li     = $(this);
+      var val    = this.className;
+      var menu   = li.parents('.popup_menu');
+      var subset = val.match(/\s*subset_(\w+)\s*/) || false;
+      
+      if (subset) {
+        menu.hide();
+        panel.elLk.links.children('a.' + subset[1]).trigger('click');
+        return false;
+      }
+      
       var img     = li.children('img');
-      var menu    = li.parents('.popup_menu');
       var track   = menu.parent();
-      var val     = li.attr('class');
       var change  = 0;
       var updated = {};
       
@@ -640,16 +648,17 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             panel.subPanels.push(panelDiv[0].id);
             
             $('input.track_name', panelDiv).each(function () {
-              var track = panel.elLk.tracks.filter('.' + this.name);
-              var val   = track.children('input.track_name').val();
+              var track  = panel.elLk.tracks.filter('.' + this.name);
+              var val    = this.value;
+              var newVal = track.children('input.track_name').val();
               
-              if (this.value !== val) {
-                $(this).siblings('.popup_menu').children('.' + val).trigger('click');
+              if (val !== newVal) {
+                $(this).siblings('.popup_menu').children('.' + newVal).trigger('click');
                 
                 // triggering the click above will cause counts to be changed twice, so compensate for that
-                if (val === 'off' || this.value === 'off') {
+                if (val === 'off' || newVal === 'off') {
                   panel.elLk.links.children(track.data('links')).siblings('.count').children('.on').html(function (i, html) {
-                    return parseInt(html, 10) + (val === 'off' ? 1 : -1);
+                    return parseInt(html, 10) + (newVal === 'off' ? 1 : -1);
                   });
                 }
               }
