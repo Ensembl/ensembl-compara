@@ -37,6 +37,7 @@ sub _flush_tree { $_[0]->{'user_data'} = {};          } # TODO: rename to flush_
 
 sub get_node {
   my ($self, $id) = @_;
+  $id =~ s/[^\w-]/_/g;
   return $self->tree_ids->{$id};
 }
 
