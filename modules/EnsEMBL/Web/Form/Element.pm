@@ -107,13 +107,11 @@ sub map_element_class {
   });
 }
 
-sub render_shortnote {
-  ## Renders a shortnote for a given element
-  ## @param As expected by render method
-  ## @return HTML string
+sub shortnote {
+  ## Returns a shortnote element for a given element
+  ## @return Node object (span element if shornote found, an empty text node otherwise)
   my $self = shift;
-
-  return exists $self->{'__shortnote'} ? $self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}})->render(@_) : '';
+  return exists $self->{'__shortnote'} ? $self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}}) : $self->dom->create_text_node;
 }
 
 sub new {

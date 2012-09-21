@@ -17,7 +17,7 @@ use constant {
 sub render {
   ## @overrides
   my $self = shift;
-  return $self->SUPER::render(@_).$self->render_shortnote(@_);
+  return $self->SUPER::render(@_).$self->shortnote->render(@_);
 }
 
 sub configure {
