@@ -91,7 +91,7 @@ sub failed {
 
   my $label = $vf ? 'Selected location' : 'Select a location';
 
-  $html .= sprintf('<form action="%s" method="get"><b></b>: %s<select name="vf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>',
+  $html .= sprintf('<form action="%s" method="get"><b>%s</b>: %s<select name="vf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>',
                   $hub->url({ vf => undef, v => $id, source => $self->object->source }),
                   $label,
                   $core_params,
