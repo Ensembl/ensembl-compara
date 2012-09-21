@@ -21,24 +21,24 @@ sub new {
   return $self;
 }
 
-sub id          { return $_[0]->{'id'};               }
-sub data        { return $_[0]->{'data'};             }
-sub user_data   { return $_[0]->{'user_data'};        }
-sub tree_ids    { return $_[0]->{'tree_ids'};         }
-sub parent_key  { return $_[0]->parent_node->id;      }
-sub nodes       { return @{$_[0]->get_all_nodes};     }
-sub descendants { return $_[0]->nodes;                }
-sub is_leaf     { return !$_[0]->has_child_nodes;     }
-sub previous    { return $_[0]->previous_sibling;     }
-sub next        { return $_[0]->next_sibling;         }
-sub append      { return $_[0]->append_child($_[1]);  }
-sub prepend     { return $_[0]->prepend_child($_[1]); }
-sub _flush_tree { $_[0]->{'user_data'} = {};          } # TODO: rename to flush_tree - called on Configuration tree in Document::Element::Configurator
+sub id          { return $_[0]->{'id'};                }
+sub data        { return $_[0]->{'data'};              }
+sub user_data   { return $_[0]->{'user_data'};         }
+sub tree_ids    { return $_[0]->{'tree_ids'};          }
+sub parent_key  { return $_[0]->parent_node->id;       }
+sub nodes       { return @{$_[0]->get_all_nodes};      }
+sub descendants { return $_[0]->nodes;                 }
+sub is_leaf     { return !$_[0]->has_child_nodes;      }
+sub previous    { return $_[0]->previous_sibling;      }
+sub next        { return $_[0]->next_sibling;          }
+sub append      { return $_[0]->append_child($_[1]);   }
+sub prepend     { return $_[0]->prepend_child($_[1]);  }
+sub _flush_tree { $_[0]->{'user_data'} = {};           } # TODO: rename to flush_tree - called on Configuration tree in Document::Element::Configurator
+sub clean_id    { $_[1] =~ s/[^\w-]/_/g; return $_[1]; }
 
 sub get_node {
   my ($self, $id) = @_;
-  $id =~ s/[^\w-]/_/g;
-  return $self->tree_ids->{$id};
+  return $self->tree_ids->{$self->clean_id($id)};
 }
 
 sub flush_user {
@@ -65,8 +65,7 @@ sub create_node {
   ### Node is always created as a "root" node - needs to be appended to another node to make it part of another tree.
   
   my ($self, $id, $data) = @_;
-  $id     =~ s/[^\w-]/_/g;
-  $id   ||= $self->generate_unique_id;
+  $id     = $id ? $self->clean_id($id) : $self->generate_unique_id;
   $data ||= {};
   
   if (exists $self->tree_ids->{$id}) {
