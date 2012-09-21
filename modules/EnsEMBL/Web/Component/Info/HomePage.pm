@@ -24,13 +24,14 @@ sub content {
 
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
   my $display_name      = $species_defs->SPECIES_SCIENTIFIC_NAME;
+  my $sound             = $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'};
 
   my $html = '
 <div class="column-wrapper">  
   <div class="column-two">
     <div class="column-padding no-left-margin">';
 
-  $html .= qq(<img src="/i/species/64/$species.png" class="species-img float-left" style="width:64px;height:64px" alt="" />);
+  $html .= qq(<img src="/i/species/64/$species.png" class="species-img float-left" style="width:64px;height:64px" alt=""title="$sound" />);
   if ($common_name =~ /\./) {
     $html .= qq(<h1>$display_name</h1>);
   }
