@@ -534,7 +534,7 @@ sub build_imageconfig_menus {
   my $external = $node->get('external');
   
   if ($node->get('node_type') eq 'menu') {
-    my $caption  = $node->get('caption');
+    my $caption = $node->get('caption');
     
     if ($parent->node_name eq 'ul') {
       if ($external) {
@@ -556,20 +556,19 @@ sub build_imageconfig_menus {
     $self->build_imageconfig_menus($_, $element, $menu_class) for @{$node->child_nodes};
     $self->add_select_all($node, $element, $id) if $element->node_name eq 'ul';
   } else {
-    my $img_url  = $self->img_url;
-    my @states   = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'On' ]};
-    my %valid    = @states;
-    my $display  = $node->get('display') || 'off';
-       $display  = $valid{'normal'} ? 'normal' : $states[2] unless $valid{$display};
-    my $desc     = $node->get('description');
-    my $controls = $node->get('controls');
-    my $subset   = $node->get('subset');
-    my $name     = encode_entities($node->get('name'));
-    my $icon     = $external ? sprintf '<img src="%strack-%s.gif" style="width:48px;height:16px" alt="%s" />', $img_url, lc $external, $external : ''; # Exernal data icons, etc
-    my @classes  = ($id, 'track');
-    my ($selected, $menu, $help);
-    
+    my $img_url     = $self->img_url;
+    my @states      = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'On' ]};
+    my %valid       = @states;
+    my $display     = $node->get('display') || 'off';
+       $display     = $valid{'normal'} ? 'normal' : $states[2] unless $valid{$display};
+    my $desc        = $node->get('description');
+    my $controls    = $node->get('controls');
+    my $subset      = $node->get('subset');
+    my $name        = encode_entities($node->get('name'));
+    my $icon        = $external ? sprintf '<img src="%strack-%s.gif" style="width:48px;height:16px" alt="%s" />', $img_url, lc $external, $external : ''; # Exernal data icons, etc
+    my @classes     = ($id, 'track');
     my $menu_header = scalar @states > 4 ? qq{<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>} : '';
+    my ($selected, $menu, $help);
     
     while (my ($renderer, $label) = splice @states, 0, 2) {
       my $html;
@@ -593,7 +592,7 @@ sub build_imageconfig_menus {
       }
     }
     
-    $menu .= sprintf '<li class="subset subset_%s"><img src="%s16/setting.png" /><a href="#">Configure track options</a></li>', $node->get('subset'), $img_url if $node->get('subset');
+    $menu .= sprintf '<li class="subset subset_%s"><img src="%s16/setting.png" /><a href="#">Configure track options</a></li>', $subset, $img_url if $subset;
     
     if ($display ne 'off') {
       $self->{'enabled_tracks'}{$menu_class}++;
