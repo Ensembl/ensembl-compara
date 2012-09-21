@@ -19,8 +19,9 @@ directory and then to  'mysql'.
 <h2>The MySQL data</h2>
 <p>Each database directory contains a data file for each table in that database an SQL file that contains the SQL commands necessary to build that database's table structure and a checksum file (using a UNIX "sum" utility) so you can verify that the data has downloaded correctly.</p>
 
-<p>Regardless of which species you choose to install, for a full installation you will probably want to install
-the multi-species databases as well. i.e. compara, ensembl_website and ensembl_web_user_db_[[SPECIESDEFS::ENSEMBL_VERSION]].</p>
+<p>Regardless of which species you choose to install, you will also need ensembl_ontology_[[SPECIESDEFS::ENSEMBL_VERSION]], ensembl_website_[[SPECIESDEFS::ENSEMBL_VERSION]] and an empty copy of ensembl_web_user_db - even if you do not use logins, this latter db is needed for session data, e.g. image configurations.</p>
+
+<p>You may optionally want to install the comparative genomics databases as well: ensembl_compara_[[SPECIESDEFS::ENSEMBL_VERSION]] and ensembl_ancestral_[[SPECIESDEFS::ENSEMBL_VERSION]]</p> 
 
 <p>NB: The FTP site will ideally be laid out as described. If, however, for reasons of space or
 maintainability, files are not located as described then check the ftp site for README files which should
