@@ -1,0 +1,4 @@
+1	1	chromosome	UMD3.1	1	default_version
+2	1	scaffold	UMD3.1	2	default_version
+3	1	contig	\N	3	default_version,sequence_level
+12	1	chromosome	Btau_4.0	4	

@@ -1,0 +1,234 @@
+1	dust	dust	Dust	N
+2	AluY	SINE/Alu	Type I Transposons/SINE	N
+3	MIR	SINE/MIR	Type I Transposons/SINE	N
+4	L1MC5	LINE/L1	Type I Transposons/LINE	N
+5	L4	LINE/RTE	Type I Transposons/LINE	N
+6	AT_rich	Low_complexity	Low complexity regions	N
+7	(A)n	Simple_repeat	Simple repeats	A
+8	L2	LINE/L2	Type I Transposons/LINE	N
+10	MIRb	SINE/MIR	Type I Transposons/SINE	N
+13	AluSg/x	SINE/Alu	Type I Transposons/SINE	N
+15	AluSx	SINE/Alu	Type I Transposons/SINE	N
+19	(CTG)n	Simple_repeat	Simple repeats	CTG
+20	(CAGAGA)n	Simple_repeat	Simple repeats	CAGAGA
+24	AluSq	SINE/Alu	Type I Transposons/SINE	N
+25	AluSp	SINE/Alu	Type I Transposons/SINE	N
+26	L1PA16	LINE/L1	Type I Transposons/LINE	N
+31	(CA)n	Simple_repeat	Simple repeats	CA
+33	MADE1	DNA/Mariner	Type II Transposons	N
+35	CT-rich	Low_complexity	Low complexity regions	N
+38	5S	rRNA	RNA repeats	N
+39	AluSg	SINE/Alu	Type I Transposons/SINE	N
+41	L1P3	LINE/L1	Type I Transposons/LINE	N
+42	AluSc	SINE/Alu	Type I Transposons/SINE	N
+43	Tigger1	DNA/MER2_type	Type II Transposons	N
+45	(TA)n	Simple_repeat	Simple repeats	TA
+47	Charlie2	DNA/MER1_type	Type II Transposons	N
+49	Charlie1	DNA/MER1_type	Type II Transposons	N
+50	Alu	SINE/Alu	Type I Transposons/SINE	N
+51	L1M5	LINE/L1	Type I Transposons/LINE	N
+52	AluJb	SINE/Alu	Type I Transposons/SINE	N
+53	AluSq/x	SINE/Alu	Type I Transposons/SINE	N
+54	MER44B	DNA/MER2_type	Type II Transposons	N
+55	L1ME3B	LINE/L1	Type I Transposons/LINE	N
+57	MIR3	SINE/MIR	Type I Transposons/SINE	N
+58	AluJo	SINE/Alu	Type I Transposons/SINE	N
+59	FRAM	SINE/Alu	Type I Transposons/SINE	N
+61	L3	LINE/CR1	Type I Transposons/LINE	N
+62	GC_rich	Low_complexity	Low complexity regions	N
+63	MIRm	SINE/MIR	Type I Transposons/SINE	N
+64	L1ME1	LINE/L1	Type I Transposons/LINE	N
+66	L1MC3	LINE/L1	Type I Transposons/LINE	N
+67	(TG)n	Simple_repeat	Simple repeats	TG
+73	trf	trf	Tandem repeats	T
+75	trf	trf	Tandem repeats	CA
+80	trf	trf	Tandem repeats	TG
+81	trf	trf	Tandem repeats	TC
+95	trf	trf	Tandem repeats	A
+100	trf	trf	Tandem repeats	AT
+123	(CAAAA)n	Simple_repeat	Simple repeats	CAAAA
+124	(CAAA)n	Simple_repeat	Simple repeats	CAAA
+142	trf	trf	Tandem repeats	CT
+158	trf	trf	Tandem repeats	TTTTC
+176	trf	trf	Tandem repeats	GT
+205	(TTTA)n	Simple_repeat	Simple repeats	TTTA
+206	FLAM_A	SINE/Alu	Type I Transposons/SINE	N
+210	ERVL-E	LTR/ERVL	LTRs	N
+214	(TC)n	Simple_repeat	Simple repeats	TC
+223	L1MB7	LINE/L1	Type I Transposons/LINE	N
+224	Kanga1	DNA/Tc2	Type II Transposons	N
+226	MSTA	LTR/MaLR	LTRs	N
+227	MLT1C	LTR/MaLR	LTRs	N
+280	trf	trf	Tandem repeats	CAAAAAA
+306	AluJo/FLAM	SINE/Alu	Type I Transposons/SINE	N
+310	MER5B	DNA/MER1_type	Type II Transposons	N
+316	(TTTC)n	Simple_repeat	Simple repeats	TTTC
+317	C-rich	Low_complexity	Low complexity regions	N
+318	(T)n	Simple_repeat	Simple repeats	T
+319	(GA)n	Simple_repeat	Simple repeats	GA
+325	trf	trf	Tandem repeats	TA
+365	trf	trf	Tandem repeats	AG
+370	(TTA)n	Simple_repeat	Simple repeats	TTA
+371	(TTTTG)n	Simple_repeat	Simple repeats	TTTTG
+372	FAM	SINE/Alu	Type I Transposons/SINE	N
+433	trf	trf	Tandem repeats	AAAT
+441	trf	trf	Tandem repeats	TTTTG
+478	(CAA)n	Simple_repeat	Simple repeats	CAA
+479	MLT1B	LTR/MaLR	LTRs	N
+487	trf	trf	Tandem repeats	TTTA
+495	(TAAA)n	Simple_repeat	Simple repeats	TAAA
+513	trf	trf	Tandem repeats	CAAAA
+522	trf	trf	Tandem repeats	AAAAAAG
+525	AluJo/FRAM	SINE/Alu	Type I Transposons/SINE	N
+528	LTR16C	LTR/ERVL	LTRs	N
+563	trf	trf	Tandem repeats	AAAAC
+595	trf	trf	Tandem repeats	TAAA
+610	trf	trf	Tandem repeats	ATTT
+733	L1M1	LINE/L1	Type I Transposons/LINE	N
+739	trf	trf	Tandem repeats	AAAAATAA
+740	trf	trf	Tandem repeats	CAAA
+775	(CATATA)n	Simple_repeat	Simple repeats	CATATA
+776	L1PA5	LINE/L1	Type I Transposons/LINE	N
+896	MLT1D	LTR/MaLR	LTRs	N
+935	AluSp/q	SINE/Alu	Type I Transposons/SINE	N
+961	trf	trf	Tandem repeats	TAAAA
+1016	AluS	SINE/Alu	Type I Transposons/SINE	N
+1051	trf	trf	Tandem repeats	AAAAAC
+1056	L1M4	LINE/L1	Type I Transposons/LINE	N
+1138	L1MB2	LINE/L1	Type I Transposons/LINE	N
+1139	(TTTG)n	Simple_repeat	Simple repeats	TTTG
+1184	L1M2	LINE/L1	Type I Transposons/LINE	N
+1187	L1ME3A	LINE/L1	Type I Transposons/LINE	N
+1190	A-rich	Low_complexity	Low complexity regions	N
+1200	AluSg1	SINE/Alu	Type I Transposons/SINE	N
+1239	trf	trf	Tandem repeats	GAG
+1371	trf	trf	Tandem repeats	ATT
+1408	trf	trf	Tandem repeats	TCCA
+1457	trf	trf	Tandem repeats	TGA
+1488	(GGGTG)n	Simple_repeat	Simple repeats	GGGTG
+1493	trf	trf	Tandem repeats	TTGT
+1600	L1ME2	LINE/L1	Type I Transposons/LINE	N
+1611	MER5A	DNA/MER1_type	Type II Transposons	N
+1617	MSTB1	LTR/MaLR	LTRs	N
+1625	(GAA)n	Simple_repeat	Simple repeats	GAA
+1626	MER94	DNA/AcHobo	Type II Transposons	N
+1634	L1MA7	LINE/L1	Type I Transposons/LINE	N
+1650	L1MB3	LINE/L1	Type I Transposons/LINE	N
+1651	FLAM_C	SINE/Alu	Type I Transposons/SINE	N
+1653	G-rich	Low_complexity	Low complexity regions	N
+1688	L1MC4	LINE/L1	Type I Transposons/LINE	N
+1704	MLT1J	LTR/MaLR	LTRs	N
+1712	MLT1H1	LTR/MaLR	LTRs	N
+1796	MER104	DNA/Tc2	Type II Transposons	N
+2032	MER91A	DNA/Tip100	Type II Transposons	N
+2172	L1ME3	LINE/L1	Type I Transposons/LINE	N
+2223	MLT1A	LTR/MaLR	LTRs	N
+2225	(TTG)n	Simple_repeat	Simple repeats	TTG
+2236	L1MC	LINE/L1	Type I Transposons/LINE	N
+2248	L1MD3	LINE/L1	Type I Transposons/LINE	N
+2249	L1MEd	LINE/L1	Type I Transposons/LINE	N
+2250	MLT1G1	LTR/MaLR	LTRs	N
+2251	L1PA15	LINE/L1	Type I Transposons/LINE	N
+2461	trf	trf	Tandem repeats	TTTGT
+2564	L1MA8	LINE/L1	Type I Transposons/LINE	N
+2759	(TAAAA)n	Simple_repeat	Simple repeats	TAAAA
+3099	AluYg	SINE/Alu	Type I Transposons/SINE	N
+3113	L1MB5	LINE/L1	Type I Transposons/LINE	N
+3119	MLT1H	LTR/MaLR	LTRs	N
+3344	MER5A1	DNA/MER1_type	Type II Transposons	N
+3392	MSTD	LTR/MaLR	LTRs	N
+3786	trf	trf	Tandem repeats	ATTG
+3865	Charlie4a	DNA/MER1_type	Type II Transposons	N
+4209	MER30	DNA/MER1_type	Type II Transposons	N
+4210	(TTCA)n	Simple_repeat	Simple repeats	TTCA
+4576	MER46C	DNA/MER2_type	Type II Transposons	N
+4580	MLT1I	LTR/MaLR	LTRs	N
+4643	trf	trf	Tandem repeats	AAAAATA
+4975	LTR5_Hs	LTR/ERVK	LTRs	N
+4991	(TCCA)n	Simple_repeat	Simple repeats	TCCA
+4993	MER45	DNA/Tip100	Type II Transposons	N
+4995	(GGCTG)n	Simple_repeat	Simple repeats	GGCTG
+5703	(ATG)n	Simple_repeat	Simple repeats	ATG
+5704	L1MC4a	LINE/L1	Type I Transposons/LINE	N
+5885	(TGGGGG)n	Simple_repeat	Simple repeats	TGGGGG
+5907	LTR23	LTR/ERV1	LTRs	N
+6205	(CATA)n	Simple_repeat	Simple repeats	CATA
+6731	MER39	LTR/ERV1	LTRs	N
+6994	trf	trf	Tandem repeats	ACAAA
+7117	AluJ/FLAM	SINE/Alu	Type I Transposons/SINE	N
+8315	AluYd8	SINE/Alu	Type I Transposons/SINE	N
+8681	trf	trf	Tandem repeats	TGAGGAGTTGATGGGTGC
+8931	L1MB4	LINE/L1	Type I Transposons/LINE	N
+8941	(GGA)n	Simple_repeat	Simple repeats	GGA
+9473	MLT2C1	LTR/ERVL	LTRs	N
+10046	(TCC)n	Simple_repeat	Simple repeats	TCC
+10744	(CAG)n	Simple_repeat	Simple repeats	CAG
+11102	(ATTG)n	Simple_repeat	Simple repeats	ATTG
+11805	trf	trf	Tandem repeats	GAAGAG
+12028	trf	trf	Tandem repeats	GGGCT
+12155	MER90a	LTR/ERV1	LTRs	N
+12398	(CCCCAG)n	Simple_repeat	Simple repeats	CCCCAG
+13642	(TGGG)n	Simple_repeat	Simple repeats	TGGG
+14108	MER91B	DNA/Tip100	Type II Transposons	N
+14646	(CCG)n	Simple_repeat	Simple repeats	CCG
+14748	(CACCC)n	Simple_repeat	Simple repeats	CACCC
+14791	(CGG)n	Simple_repeat	Simple repeats	CGG
+14995	(GGGGA)n	Simple_repeat	Simple repeats	GGGGA
+15030	(CCCCAA)n	Simple_repeat	Simple repeats	CCCCAA
+15268	HY1	scRNA	RNA repeats	N
+17799	(CAGGG)n	Simple_repeat	Simple repeats	CAGGG
+18000	LTR5	LTR/ERVK	LTRs	N
+19525	LTR36	LTR/ERV1	LTRs	N
+19873	MER66C	LTR/ERV1	LTRs	N
+20137	LTR7B	LTR/ERV1	LTRs	N
+22356	HY3	scRNA	RNA repeats	N
+25520	trf	trf	Tandem repeats	GCCCTGGGGGGATCGTTGTGTCTGGAGCAG
+27068	AluYb9	SINE/Alu	Type I Transposons/SINE	N
+28237	LTR24B	LTR/ERV1	LTRs	N
+28440	FRAM/FAM	SINE/Alu	Type I Transposons/SINE	N
+33647	(CCCTG)n	Simple_repeat	Simple repeats	CCCTG
+33715	LTR3A	LTR/ERVK	LTRs	N
+42027	trf	trf	Tandem repeats	CCGCCA
+64218	trf	trf	Tandem repeats	GGCTGCTGTGGCAG
+82112	trf	trf	Tandem repeats	AATAAAT
+126672	trf	trf	Tandem repeats	CCCTGAGTGA
+129404	trf	trf	Tandem repeats	AAAAATACAAAAAATCAGCCAGGCACGGTGGCGGGCGCCTGTAGTCCCAGCTACTCCGGAGGCTGAGGCAGGAGAATGGCGTAAACCCAGGAGGCGGAGCTTGCAGTGAGCCGAGATCGCACCACTGCACTCCAGCCTGGGCAACAGAGCAAGACTCCGTCTCAAAAAACAAAAACAAAAACAAAAAC
+129405	trf	trf	Tandem repeats	GCCCGGCCAATTTTTTGTATTTTTTAGTAGAGACGGAGTTTCACCGTGTCAGCCAGGATGGTCTCGAGCTCCTAACCTCGTGATCCGCCCGTCTCGGCCTCCCAAAGTGCTGGGATCACAGGCGTGAGCCACCGT
+171213	trf	trf	Tandem repeats	GGGGGCGGGGGGCAGCC
+190276	trf	trf	Tandem repeats	GATCGGGAGCGG
+190277	trf	trf	Tandem repeats	CGGGATCGGGACAGAGAT
+190278	trf	trf	Tandem repeats	GGGATC
+203425	trf	trf	Tandem repeats	TATGTAATGTTTACATACTACCAATATGTAAACA
+203426	trf	trf	Tandem repeats	TGGGGTTGAGGTCTTTCAGCATCACCACTGCGAGGGAAAAGAAGTTCACATGACCA
+245950	trf	trf	Tandem repeats	GTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGTGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCAAACATGGTGAAACCCCATCTCTATTAAAAATACAAAATTAGGACAGGCCGG
+245951	trf	trf	Tandem repeats	AAAAATACAAAAAATTAGCAGGGCACGGTGGCGGGCGCCTGTAGTCCCAGCTACTCAGGAGGCAGAGGCAGGAGAATGGCGTAAACCCAGGAGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCATAGGCGACAGAGCAAGACTCCATCTAAAAAAACAACAACAACAAAAA
+262266	trf	trf	Tandem repeats	GAAGAAGAGGAG
+304717	trf	trf	Tandem repeats	CTGCC
+315757	trf	trf	Tandem repeats	GGTGCAAAATTGATGACTTTGGAGACCACCAAAGT
+340130	trf	trf	Tandem repeats	GGGGAGGCGGGGTGAA
+365533	trf	trf	Tandem repeats	TCCCCTCATCAGTTTC
+377292	trf	trf	Tandem repeats	CCTAGCAGGGATTCCA
+377294	trf	trf	Tandem repeats	AAAAAAAGTAGCCGGGCATGGTGGCAGGCACCTGTAGTCCCAGCTACTAGGGAGCCCGAGGCAGGAGAATGGCATGAACCGAGAAGGCAGAGCTTGCAGTGAGCAGAGATGGCACCACTGCACTCCAGCCTGGGTGACAGAGCAAGACTCTGTCTCAAAA
+377295	trf	trf	Tandem repeats	ATATATACCCAAAAGAAATGAA
+379252	trf	trf	Tandem repeats	CTCTCTTCTCT
+384145	trf	trf	Tandem repeats	CTGTGTCCTGCCCTCGCTCTGTGCCCCGTGG
+384146	trf	trf	Tandem repeats	CTGTGTCCTGCCCTCGCT
+392853	trf	trf	Tandem repeats	GTGATCCACCCGCCTCGGCCTCCCAAAGTGCTGGGATTACAGGTGTGAGCCACTGTGCCTGGCCCCATTTTTATATTTTTAGTAGAGATGGAGTTTCACCATGTTGACCAGGCTAGTCTCGAACTCCTGACCTCAA
+409296	trf	trf	Tandem repeats	CCGCCACCG
+409297	trf	trf	Tandem repeats	CCACCGCCGCCA
+439992	trf	trf	Tandem repeats	GCTCACTGCAACCTCTG
+439993	trf	trf	Tandem repeats	TTTATTTATTAAA
+440698	trf	trf	Tandem repeats	GTGGCTCATACCTGTAATCCCAGCACTTTCGGAGGCCGAAATGGGCAGATCACCTGAGCTCAGGAGTTCGACACCAGCCTGGCCAACATAGCAAAACCTCATCTCTACTAAAAATACAAAAAATTAGGCCGGGTGTA
+476520	trf	trf	Tandem repeats	CACCTGCATCATA
+481627	trf	trf	Tandem repeats	TGTTCCTGCGA
+481628	trf	trf	Tandem repeats	TCATCTCTCCTTATCTCCC
+531366	trf	trf	Tandem repeats	CCCATGTT
+531367	trf	trf	Tandem repeats	CCACCAATCAAGTTCTCCTTCTC
+533605	trf	trf	Tandem repeats	CCAGTTTAGGGTCCAGCTGTC
+558755	trf	trf	Tandem repeats	GGAACTCCTGGACACAAGCAATCATCCCTCAGCCACCCAAAATGTTGGAATTACAGGCGTGAGCCATGGTCT
+558756	trf	trf	Tandem repeats	TTTTTTGATATATAGTTTTGTGATT
+558757	trf	trf	Tandem repeats	AGTGTCCCCAGCAC
+558758	trf	trf	Tandem repeats	TCAGAGAGGGACAGAGAGAGCAG
+600987	trf	trf	Tandem repeats	GCTGCAGGCCTGA
+600989	trf	trf	Tandem repeats	TTATTTAGTAAAGACGGGGTCTCAG
+600990	trf	trf	Tandem repeats	CCCTCAGGCTGGGGAGCCCCCTCACTACAACCCCACCACTTCACAGTCT

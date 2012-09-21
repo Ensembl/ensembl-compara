@@ -1,0 +1,10 @@
+gene	3	1269545
+exon	3	17106
+dna_align_feature	3	985282
+protein_align_feature	3	1269382
+transcript	3	1269545
+repeat_feature	3	513023
+prediction_transcript	3	836982
+prediction_exon	3	17106
+simple_feature	3	91944
+density_feature	3	1530049

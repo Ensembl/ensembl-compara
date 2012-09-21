@@ -1,0 +1,428 @@
+503421	AT_rich	Low_complexity	Low complexity regions	N
+503428	B1_Rn	SINE/Alu	Type I Transposons/SINE	N
+503430	B4	SINE/B4	Type I Transposons/SINE	N
+503431	(TATG)n	Simple_repeat	Simple repeats	TATG
+503433	CT-rich	Low_complexity	Low complexity regions	N
+503437	L1_Rn	LINE/L1	Type I Transposons/LINE	N
+503439	ZP3AR	Satellite	Satellite repeats	N
+503440	BC1_Rn	scRNA	RNA repeats	N
+503444	Lx2	LINE/L1	Type I Transposons/LINE	N
+503449	L1M5	LINE/L1	Type I Transposons/LINE	N
+503451	B2_Rat4	SINE/B2	Type I Transposons/SINE	N
+503452	(GA)n	Simple_repeat	Simple repeats	GA
+503454	(TG)n	Simple_repeat	Simple repeats	TG
+503456	ORR1E	LTR/MaLR	LTRs	N
+503457	B3A	SINE/B2	Type I Transposons/SINE	N
+503459	(TA)n	Simple_repeat	Simple repeats	TA
+503461	ID	SINE/ID	Type I Transposons/SINE	N
+503462	B1F	SINE/Alu	Type I Transposons/SINE	N
+503463	B1F2	SINE/Alu	Type I Transposons/SINE	N
+503464	T-rich	Low_complexity	Low complexity regions	N
+503465	MTD	LTR/MaLR	LTRs	N
+503469	B3	SINE/B2	Type I Transposons/SINE	N
+503472	MTE2b	LTR/MaLR	LTRs	N
+503473	L1M3	LINE/L1	Type I Transposons/LINE	N
+503474	MTC	LTR/MaLR	LTRs	N
+503476	(TTTC)n	Simple_repeat	Simple repeats	TTTC
+503477	(CA)n	Simple_repeat	Simple repeats	CA
+503478	RSINE1	SINE/B4	Type I Transposons/SINE	N
+503481	(TGG)n	Simple_repeat	Simple repeats	TGG
+503485	ID_B1	SINE/B4	Type I Transposons/SINE	N
+503486	B2_Rat1	SINE/B2	Type I Transposons/SINE	N
+503487	ORR1B2	LTR/MaLR	LTRs	N
+503489	ORR1B2-int	LTR/MaLR	LTRs	N
+503490	PB1D10	SINE/Alu	Type I Transposons/SINE	N
+503492	MTE2a	LTR/MaLR	LTRs	N
+503494	ORR1C2	LTR/MaLR	LTRs	N
+503495	(TC)n	Simple_repeat	Simple repeats	TC
+503497	ORR1D1	LTR/MaLR	LTRs	N
+503499	(CATA)n	Simple_repeat	Simple repeats	CATA
+503500	Lx9	LINE/L1	Type I Transposons/LINE	N
+503501	L1M4	LINE/L1	Type I Transposons/LINE	N
+503502	(TTG)n	Simple_repeat	Simple repeats	TTG
+503503	ID4_	SINE/ID	Type I Transposons/SINE	N
+503506	ID_Rn2	SINE/ID	Type I Transposons/SINE	N
+503514	B1_Mur1	SINE/Alu	Type I Transposons/SINE	N
+503515	GA-rich	Low_complexity	Low complexity regions	N
+503517	Lx8	LINE/L1	Type I Transposons/LINE	N
+503523	L1_Rod	LINE/L1	Type I Transposons/LINE	N
+503526	URR1A	DNA/MER1_type	Type II Transposons	N
+503527	B1F1	SINE/Alu	Type I Transposons/SINE	N
+503529	(TCTCTG)n	Simple_repeat	Simple repeats	TCTCTG
+503533	B4A	SINE/B4	Type I Transposons/SINE	N
+503536	(TATATG)n	Simple_repeat	Simple repeats	TATATG
+503537	PB1	SINE/Alu	Type I Transposons/SINE	N
+503539	(CAT)n	Simple_repeat	Simple repeats	CAT
+503540	RMER19A	LTR/ERVK	LTRs	N
+503542	URR1B	DNA/MER1_type	Type II Transposons	N
+503544	(TAA)n	Simple_repeat	Simple repeats	TAA
+503545	RMER4B	LTR/ERVK	LTRs	N
+503548	ID4	SINE/ID	Type I Transposons/SINE	N
+503551	RCHARR1	DNA/MER1_type	Type II Transposons	N
+503552	MIR	SINE/MIR	Type I Transposons/SINE	N
+503553	ID2	SINE/ID	Type I Transposons/SINE	N
+503557	RMER15	LTR/ERVL	LTRs	N
+503558	MTEa	LTR/MaLR	LTRs	N
+503559	(TTTG)n	Simple_repeat	Simple repeats	TTTG
+503560	B1_Mur3	SINE/Alu	Type I Transposons/SINE	N
+503562	(TCC)n	Simple_repeat	Simple repeats	TCC
+503565	L1ME3A	LINE/L1	Type I Transposons/LINE	N
+503571	(CAAA)n	Simple_repeat	Simple repeats	CAAA
+503572	ID_Rn1	SINE/ID	Type I Transposons/SINE	N
+503578	B2_Rat2	SINE/B2	Type I Transposons/SINE	N
+503583	L2	LINE/L2	Type I Transposons/LINE	N
+503586	MLT1A1	LTR/MaLR	LTRs	N
+503589	L1M2	LINE/L1	Type I Transposons/LINE	N
+503591	(TTTTG)n	Simple_repeat	Simple repeats	TTTTG
+503602	PB1D7	SINE/Alu	Type I Transposons/SINE	N
+503605	PB1D9	SINE/Alu	Type I Transposons/SINE	N
+503611	(TTA)n	Simple_repeat	Simple repeats	TTA
+503612	A-rich	Low_complexity	Low complexity regions	N
+503619	(A)n	Simple_repeat	Simple repeats	A
+503626	L3	LINE/CR1	Type I Transposons/LINE	N
+503627	(CAG)n	Simple_repeat	Simple repeats	CAG
+503629	(CAGA)n	Simple_repeat	Simple repeats	CAGA
+503630	MTEb	LTR/MaLR	LTRs	N
+503632	MLT1I	LTR/MaLR	LTRs	N
+503633	MER31A	LTR/ERV1	LTRs	N
+503636	B2_Rat3	SINE/B2	Type I Transposons/SINE	N
+503637	MT2B	LTR/ERVL	LTRs	N
+503638	Lx5	LINE/L1	Type I Transposons/LINE	N
+503639	B1_Mur4	SINE/Alu	Type I Transposons/SINE	N
+503640	ORR1A3	LTR/MaLR	LTRs	N
+503643	RLTR42-int	LTR/ERVK	LTRs	N
+503644	L1MC	LINE/L1	Type I Transposons/LINE	N
+503649	L1MA4A	LINE/L1	Type I Transposons/LINE	N
+503652	RLTR18B	LTR/ERVK	LTRs	N
+503665	(TTTTTG)n	Simple_repeat	Simple repeats	TTTTTG
+503667	MLT1A0	LTR/MaLR	LTRs	N
+503674	MIRm	SINE/MIR	Type I Transposons/SINE	N
+503680	MIRb	SINE/MIR	Type I Transposons/SINE	N
+503683	L1MA5	LINE/L1	Type I Transposons/LINE	N
+503685	L3_Mars	LINE/CR1	Type I Transposons/LINE	N
+503686	B1_Mur2	SINE/Alu	Type I Transposons/SINE	N
+503691	(TTTA)n	Simple_repeat	Simple repeats	TTTA
+503694	(CCA)n	Simple_repeat	Simple repeats	CCA
+503708	MIR_Mars	SINE/MIR	Type I Transposons/SINE	N
+503711	RMER17C	LTR/ERVK	LTRs	N
+503712	G-rich	Low_complexity	Low complexity regions	N
+503714	B2_Rn2	SINE/B2	Type I Transposons/SINE	N
+503717	GC_rich	Low_complexity	Low complexity regions	N
+503722	RMER4A	LTR/ERVK	LTRs	N
+503724	B2_Rn	SINE/B2	Type I Transposons/SINE	N
+503725	B2_Rn1	SINE/B2	Type I Transposons/SINE	N
+503726	(T)n	Simple_repeat	Simple repeats	T
+503727	Charlie1	DNA/MER1_type	Type II Transposons	N
+503728	MER5A	DNA/MER1_type	Type II Transposons	N
+503730	(TCTG)n	Simple_repeat	Simple repeats	TCTG
+503733	ORR1B1	LTR/MaLR	LTRs	N
+503734	Tigger7	DNA/MER2_type	Type II Transposons	N
+503738	Tigger5	DNA/MER2_type	Type II Transposons	N
+503741	(GGA)n	Simple_repeat	Simple repeats	GGA
+503742	L1MB7	LINE/L1	Type I Transposons/LINE	N
+503743	4.5SRNA	scRNA	RNA repeats	N
+503750	RMER6B	LTR/ERVK	LTRs	N
+503760	(CCAA)n	Simple_repeat	Simple repeats	CCAA
+503761	tRNA-Ala-GCY_	tRNA	RNA repeats	N
+503762	MER21B	LTR/ERV1	LTRs	N
+503764	(TGAA)n	Simple_repeat	Simple repeats	TGAA
+503765	MT2B2	LTR/ERVL	LTRs	N
+503766	U6	snRNA	RNA repeats	N
+503768	ORR1B1-int	LTR/MaLR	LTRs	N
+503778	(CAAAC)n	Simple_repeat	Simple repeats	CAAAC
+503786	(TTCC)n	Simple_repeat	Simple repeats	TTCC
+503788	RMER12	LTR/ERVK	LTRs	N
+503793	B2_RnY	SINE/B2	Type I Transposons/SINE	N
+503796	(TAAA)n	Simple_repeat	Simple repeats	TAAA
+503800	LTR33	LTR/ERVL	LTRs	N
+503802	L1MD3	LINE/L1	Type I Transposons/LINE	N
+503803	MLT1A	LTR/MaLR	LTRs	N
+503807	AluG_3	SINE/Alu	Type I Transposons/SINE	N
+503822	L1MC4a	LINE/L1	Type I Transposons/LINE	N
+503835	MurSatRep1	Unknown	Unknown	N
+503838	THER1_MD	SINE/MIR	Type I Transposons/SINE	N
+503853	(GAAAA)n	Simple_repeat	Simple repeats	GAAAA
+503854	polypurine	Low_complexity	Low complexity regions	N
+503870	(CACG)n	Simple_repeat	Simple repeats	CACG
+503888	RLTR18	LTR/ERVK	LTRs	N
+503891	7SK	RNA	RNA repeats	N
+503927	LTR48	LTR/ERV1	LTRs	N
+503950	LTR31	LTR/ERV1	LTRs	N
+503962	(CCG)n	Simple_repeat	Simple repeats	CCG
+503999	(GGGTG)n	Simple_repeat	Simple repeats	GGGTG
+504039	(CCCCCG)n	Simple_repeat	Simple repeats	CCCCCG
+504082	(CACCC)n	Simple_repeat	Simple repeats	CACCC
+504179	(CTGGGG)n	Simple_repeat	Simple repeats	CTGGGG
+504186	Kanga2_a	DNA/Tc2	Type II Transposons	N
+504223	(G)n	Simple_repeat	Simple repeats	G
+504225	(GAGTG)n	Simple_repeat	Simple repeats	GAGTG
+504247	(CAGCT)n	Simple_repeat	Simple repeats	CAGCT
+504697	dust	dust	Dust	N
+504705	trf	trf	Tandem repeats	A
+504708	trf	trf	Tandem repeats	T
+504709	trf	trf	Tandem repeats	AC
+504713	trf	trf	Tandem repeats	CA
+504715	trf	trf	Tandem repeats	CAAA
+504721	trf	trf	Tandem repeats	GT
+504725	trf	trf	Tandem repeats	AG
+504747	trf	trf	Tandem repeats	TA
+504767	trf	trf	Tandem repeats	AAT
+504771	trf	trf	Tandem repeats	ACAC
+504798	trf	trf	Tandem repeats	GTTTTT
+504805	trf	trf	Tandem repeats	TG
+504839	trf	trf	Tandem repeats	CT
+504845	trf	trf	Tandem repeats	AT
+504857	trf	trf	Tandem repeats	AAAAACA
+504867	trf	trf	Tandem repeats	TTG
+504898	trf	trf	Tandem repeats	TTTA
+504920	trf	trf	Tandem repeats	AAAAG
+504933	trf	trf	Tandem repeats	TC
+504948	trf	trf	Tandem repeats	AAAAAAG
+504956	trf	trf	Tandem repeats	ATTT
+504972	trf	trf	Tandem repeats	TGTGTG
+504987	trf	trf	Tandem repeats	GTTT
+504992	trf	trf	Tandem repeats	CACACA
+504993	trf	trf	Tandem repeats	CACACACACA
+504994	trf	trf	Tandem repeats	TCTT
+505017	trf	trf	Tandem repeats	TTTTTTG
+505063	trf	trf	Tandem repeats	TTTCT
+505071	trf	trf	Tandem repeats	GA
+505078	trf	trf	Tandem repeats	AAAT
+505119	trf	trf	Tandem repeats	AAAGA
+505122	trf	trf	Tandem repeats	ATAC
+505156	trf	trf	Tandem repeats	AAACAA
+505179	trf	trf	Tandem repeats	AGAGAGAGAC
+505180	trf	trf	Tandem repeats	TTAT
+505194	trf	trf	Tandem repeats	TTTTC
+505241	trf	trf	Tandem repeats	TACA
+505242	trf	trf	Tandem repeats	AAACA
+505254	trf	trf	Tandem repeats	TTCTTTT
+505270	trf	trf	Tandem repeats	ACACACAG
+505271	trf	trf	Tandem repeats	GAAT
+505278	trf	trf	Tandem repeats	TATT
+505282	trf	trf	Tandem repeats	TGT
+505359	trf	trf	Tandem repeats	TTA
+505440	trf	trf	Tandem repeats	TGTT
+505453	trf	trf	Tandem repeats	TGTG
+505536	trf	trf	Tandem repeats	CACACACACACACA
+505537	trf	trf	Tandem repeats	CACACACACACACACACA
+505546	trf	trf	Tandem repeats	GAG
+505577	trf	trf	Tandem repeats	GAGGCA
+505631	trf	trf	Tandem repeats	AAACAAAACAAAC
+505659	trf	trf	Tandem repeats	CACACACACACA
+505694	trf	trf	Tandem repeats	GGGAGA
+505702	trf	trf	Tandem repeats	ATGA
+505720	trf	trf	Tandem repeats	CTC
+505725	trf	trf	Tandem repeats	TCC
+505973	trf	trf	Tandem repeats	GAAAAAAA
+505974	trf	trf	Tandem repeats	AAAAAG
+506016	trf	trf	Tandem repeats	AGC
+506094	trf	trf	Tandem repeats	TGTCTGTC
+506279	trf	trf	Tandem repeats	GACA
+506424	trf	trf	Tandem repeats	AACC
+506536	trf	trf	Tandem repeats	CCT
+506963	trf	trf	Tandem repeats	TTTTTG
+507029	trf	trf	Tandem repeats	TAA
+507544	trf	trf	Tandem repeats	TCCTCC
+507557	trf	trf	Tandem repeats	TGAA
+508152	trf	trf	Tandem repeats	TTTCTTTT
+508614	trf	trf	Tandem repeats	GAGGA
+508777	trf	trf	Tandem repeats	CCCTC
+509685	trf	trf	Tandem repeats	TTTGTTT
+509946	trf	trf	Tandem repeats	TTATTTA
+510027	trf	trf	Tandem repeats	CCCCTG
+510465	trf	trf	Tandem repeats	TGTGTGTGTGCA
+510912	trf	trf	Tandem repeats	CTTTTTTTT
+512591	trf	trf	Tandem repeats	AAAAAAATAA
+512841	trf	trf	Tandem repeats	TCTTTCTTTTT
+512875	trf	trf	Tandem repeats	TTTCTTTTT
+513121	trf	trf	Tandem repeats	ACCACCATCACC
+513224	trf	trf	Tandem repeats	G
+513413	trf	trf	Tandem repeats	CCAAA
+513736	trf	trf	Tandem repeats	AAAAAAACAAAAAAAAA
+515891	trf	trf	Tandem repeats	AAAAAGA
+517041	trf	trf	Tandem repeats	CTCCTCTTCCTCCTC
+519309	trf	trf	Tandem repeats	GAGAGAGACAGAGACA
+519589	trf	trf	Tandem repeats	CCTGCC
+520502	trf	trf	Tandem repeats	GCCCCG
+522752	trf	trf	Tandem repeats	TTTTTGTTTTTGT
+522884	trf	trf	Tandem repeats	GGGGTGG
+523007	trf	trf	Tandem repeats	GAAAAAAAGAAAA
+523328	trf	trf	Tandem repeats	CGCCCC
+523892	trf	trf	Tandem repeats	TCATCG
+524671	trf	trf	Tandem repeats	GTTTTTTTTTTTT
+526654	trf	trf	Tandem repeats	AAAAAAAAAGG
+529168	trf	trf	Tandem repeats	TGTGTGTGTGCATA
+530700	trf	trf	Tandem repeats	AAAAAAAAAAACA
+533892	trf	trf	Tandem repeats	ACAAACAGAAGCACAGACAC
+533896	trf	trf	Tandem repeats	ACACACAGAGACAC
+533899	trf	trf	Tandem repeats	TGTTAC
+533902	trf	trf	Tandem repeats	TTGTTACTGTTG
+533904	trf	trf	Tandem repeats	AAAAAAAAAAAGA
+533905	trf	trf	Tandem repeats	TGCAGGTGTGTGCTGCTGTGACTGTGAGTGCAGGTGTGTGCTGCTGTGACTGAGTACAGGTGTGTGCTGCTGTCACTGTGAGTGCAGGTGTGCGCTGCTGTCACTGCGAGTACAGGTGTGCGCTGCTGTGACCGTGAG
+533906	trf	trf	Tandem repeats	TGCAGGTGTGTGCTGCTGTGACTGTGAG
+533907	trf	trf	Tandem repeats	TCATCATCATCATCG
+533908	trf	trf	Tandem repeats	GGCAGCTCAATGGTCAAGAGCACAG
+533918	trf	trf	Tandem repeats	GATAGACAGACAACAT
+533920	trf	trf	Tandem repeats	TGTGTATGTACATATTATATACATG
+533925	trf	trf	Tandem repeats	GGAGATAA
+533926	trf	trf	Tandem repeats	GAGTGGATCGGGG
+533930	trf	trf	Tandem repeats	AGGAGGATG
+533934	trf	trf	Tandem repeats	ATGTGTGTGTGTGTATGTGTGT
+533935	trf	trf	Tandem repeats	GTGTGTATGTGTATGTGTGTGTATGTGTGTGTGT
+533937	trf	trf	Tandem repeats	GTGTGTGTGTATGTGTGTGTATGTATGTGTGTGTGTGTGTGTGTATGTGTGTATGTGTATGTGTGCATGTATGTGTGTGTTG
+533940	trf	trf	Tandem repeats	GTGTGTATGTGTATGTGTGTGTGTATGTGTGTGTATGTATGTGTGTGTGT
+533941	trf	trf	Tandem repeats	AAAAAGAAAAAAGAAAAG
+533942	trf	trf	Tandem repeats	TGAGATCCAGAACAGCCAGGGCTACACAG
+533945	trf	trf	Tandem repeats	GGGCGGGGCCAGC
+533949	trf	trf	Tandem repeats	AAAAAAAAAAAAGAAAAA
+533950	trf	trf	Tandem repeats	CTTTCTTTTTTTT
+533953	trf	trf	Tandem repeats	CTTTTTTTTTTTTCTTT
+533955	trf	trf	Tandem repeats	CCGACACAGTGGCTC
+533958	trf	trf	Tandem repeats	TTTTGTTTGTTTCG
+533962	trf	trf	Tandem repeats	CACATGTGCT
+533964	trf	trf	Tandem repeats	CTCTCTTTTTTTTTTTTTTCTTCTTTTTCTTTTTTTCGGAGCTGGGGACCGAACCCAGGGCCTTGCGCTTGCTAGGCAAGCGCTCTACCACTGAGCTAAATCCCAACCCC
+533965	trf	trf	Tandem repeats	CCCCGCCCCTCTCTCCT
+533968	trf	trf	Tandem repeats	AAAATAAAAATAAAT
+533970	trf	trf	Tandem repeats	CGCCATCCGC
+533972	trf	trf	Tandem repeats	TCCCCATAGCCCTGTCTTTCCTCTTTAC
+533974	trf	trf	Tandem repeats	TTTTTCTATTTCTT
+533977	trf	trf	Tandem repeats	AAGAGGGTCCTGAACCTACCAG
+533979	trf	trf	Tandem repeats	ACCACCCAAGAAGGA
+533981	trf	trf	Tandem repeats	GGCGGTGGTGGCAAGACT
+533983	trf	trf	Tandem repeats	TTTTTGTTTGGGTTTT
+533984	trf	trf	Tandem repeats	ATGTACCA
+533985	trf	trf	Tandem repeats	AGGAGGTGGAGGGGG
+533986	trf	trf	Tandem repeats	TGGAGGAGGAGGAGGGGG
+533989	trf	trf	Tandem repeats	GGGGGTGGA
+533990	trf	trf	Tandem repeats	GGCCGGAGCTGG
+533992	trf	trf	Tandem repeats	GGCCGG
+533995	trf	trf	Tandem repeats	CCAGCCCTTACTGTAGTCCTGGACCTCAGCAGCCC
+533996	trf	trf	Tandem repeats	CCACACAC
+534000	trf	trf	Tandem repeats	TGTTTTCCGTTTGTTTT
+534001	trf	trf	Tandem repeats	TTTGTTTTTGTTT
+534011	trf	trf	Tandem repeats	GTGCTAGGATTGAAAAAAT
+534013	trf	trf	Tandem repeats	GACAGACAGACAGATA
+534016	trf	trf	Tandem repeats	AGACAGATAGACAGATAG
+534019	trf	trf	Tandem repeats	GACAGACAGACAGATGAGAGAGACA
+534024	trf	trf	Tandem repeats	TTTCTTTTCTTTTT
+534028	trf	trf	Tandem repeats	CTGAGGCCACCTCAC
+534029	trf	trf	Tandem repeats	CCCCTCACCCCAGCTGGCC
+534030	trf	trf	Tandem repeats	CACGAC
+534033	trf	trf	Tandem repeats	TATGTGTGTGTATGTGTGTGAGTGTGTGTATA
+534036	trf	trf	Tandem repeats	GTGTGAGTGTATGTGTGAGTGTATGTATATAAGCGAGTGTGTATGT
+534039	trf	trf	Tandem repeats	ATATATAATAAAAAAAAAAA
+534043	trf	trf	Tandem repeats	CTCACTATGCAGACCAGGCCGACCTCAAA
+534044	trf	trf	Tandem repeats	ATAATG
+534047	trf	trf	Tandem repeats	TTCCTCTTCCTCCTCCCC
+534049	trf	trf	Tandem repeats	TGCATGTGTGTGATG
+534050	trf	trf	Tandem repeats	TGCATGTGTGTGATGTGCATGTGTGTGATTTGCACGCGTGCATCCATATTTGCACGTGTGTGACATGCATGTATGTGATA
+534053	trf	trf	Tandem repeats	TGCATGTGTGTGATGTGCACGTGTGTGATGTGCACGTGTGTGATG
+534054	trf	trf	Tandem repeats	TGCATGTGTGTGATGTGCACATGTGTGATGTGCACGTGTGTGATGTGCATATGTGTGGTG
+534056	trf	trf	Tandem repeats	TGTGTGTGTGCATATGTGTGTGTGCA
+534064	trf	trf	Tandem repeats	TTCCTATTTTCTTGTGTTTTTT
+534067	trf	trf	Tandem repeats	GTGAAGGAACAGTCA
+534069	trf	trf	Tandem repeats	GATGATGTCATACAGTGAGCATTCC
+534072	trf	trf	Tandem repeats	CTGATTCACTCCCGCCTCTCTG
+534076	trf	trf	Tandem repeats	CAGAGCCACGCCCCCTCTAGCCAGGTACTAGGGGTCT
+534078	trf	trf	Tandem repeats	CCTTGTGATCACAGCCGTGTCT
+534081	trf	trf	Tandem repeats	AAAAAAATAAA
+534082	trf	trf	Tandem repeats	ACACATAGACACACACACACACACAG
+534086	trf	trf	Tandem repeats	AAGGAGAAGGAGAAGGAAAAG
+534093	trf	trf	Tandem repeats	ATATATATATATGTATGC
+534096	trf	trf	Tandem repeats	TATATATGTGTCCATATACATAT
+534101	trf	trf	Tandem repeats	AGACAGAGAACATGGCTTCTACATATATGTGC
+534103	trf	trf	Tandem repeats	TTTTTATTTTACTTA
+534106	trf	trf	Tandem repeats	TTTTGTTTTTTGGG
+534109	trf	trf	Tandem repeats	TTTCTTTCTTTCTTTGTTTTTTCTTA
+534110	trf	trf	Tandem repeats	CTTTCTTTCTTTTTTCTTTGTTTTTTCTTATCT
+534113	trf	trf	Tandem repeats	CTGGGCATGGGGACC
+534118	trf	trf	Tandem repeats	CAGTCA
+534119	trf	trf	Tandem repeats	AGGGAGAGGGAGGACTGCCTCACAC
+534122	trf	trf	Tandem repeats	GGAGGACTGCCTCACACAGGGA
+534124	trf	trf	Tandem repeats	GCAGGATAAGAGGGAGGG
+534126	trf	trf	Tandem repeats	GGAGCACTGTGAGGCAGAGTGG
+534128	trf	trf	Tandem repeats	GGGGAGCACTGCGAGGCAGAGTGGGGAG
+534131	trf	trf	Tandem repeats	TGAGGCAGAGTGGGGAGCAC
+534132	trf	trf	Tandem repeats	TGCCCACCCGCTGCAGCCCACCCCACACC
+534134	trf	trf	Tandem repeats	CTGCCCACCCGCTGCAGCCCACCCCACACCTGCCCACCCGCTG
+534137	trf	trf	Tandem repeats	CTGCCCACCCGCTGCAGCCCACCCCACAC
+534139	trf	trf	Tandem repeats	TGCCCACCCGCTGCTGCCCACCCGCTGCAGCCCACCCCACACCTGCCCACCCACAGC
+534140	trf	trf	Tandem repeats	TGCCCACCCGCTGCAGCCCACCCCACACCTGCCCACCCGCTGCAGCCCACCCCACACCTGCCCACCCGCTGC
+534141	trf	trf	Tandem repeats	GCCCACCCACAGCAGCCCACCCGCTGCTGCCCACCCGCTGCA
+534147	trf	trf	Tandem repeats	TTGGCCACCCAACTCAATGCCA
+534151	trf	trf	Tandem repeats	CCAAACCAAA
+534153	trf	trf	Tandem repeats	TGGGTCAGCTGTGAGGAGCAC
+534156	trf	trf	Tandem repeats	ACCTATAGGGGAATCGG
+534157	trf	trf	Tandem repeats	ACCTGGCCCCTGAGTGACAG
+534243	trf	trf	Tandem repeats	GGCAGG
+534248	trf	trf	Tandem repeats	TTTTCTTTTCTTTACTTTTTTTT
+534250	trf	trf	Tandem repeats	GTGTGGTATGTGCAT
+534251	trf	trf	Tandem repeats	TGTATGTGTGTGAGGTATGTGCATGTGTGTGTGGTATATGTGTGTGT
+534254	trf	trf	Tandem repeats	GTGTGTATGTGTGTGTTGTATGTGTGTGTGTGT
+534256	trf	trf	Tandem repeats	ATGTGTGGTATATGC
+534258	trf	trf	Tandem repeats	ACAGGGGGAGGAGGC
+534261	trf	trf	Tandem repeats	AGGAGGAGGAGCCACAGGAAA
+534262	trf	trf	Tandem repeats	CAGGAGGTGGAGCCACAGGAAGAGGAGGAGAGCCACAGGAAGAGGAGGAGAAGC
+534263	trf	trf	Tandem repeats	GAGGAGGAGCCACAGGAAGAGGAGGAGAAGCCAGGAGGTGGAGCCACAGGAAAAG
+534265	trf	trf	Tandem repeats	AGGAGGAGGAGCCACAGGAAGAGAAGGAGAAGCC
+534266	trf	trf	Tandem repeats	CCACACACAC
+534269	trf	trf	Tandem repeats	ACCACCATC
+534271	trf	trf	Tandem repeats	ACCACCACCACCATCACCACC
+534272	trf	trf	Tandem repeats	ACCACCATCACCACCACAACACCACCACC
+534274	trf	trf	Tandem repeats	ACCACCATCACCATCATCACCACCACCACCACCACCACCACCATCAACACC
+534279	trf	trf	Tandem repeats	CCCGCCCCTCCCCT
+534281	trf	trf	Tandem repeats	GCCCCTCCCCTCCCGCCCC
+534283	trf	trf	Tandem repeats	ACACACAACAGTGCACAACTC
+534293	trf	trf	Tandem repeats	CACACATGCACA
+534295	trf	trf	Tandem repeats	AAAGAAAAAAAAAGA
+534299	trf	trf	Tandem repeats	TCAAAACCA
+534301	trf	trf	Tandem repeats	CATCCT
+534302	trf	trf	Tandem repeats	GTTTTTTTTTTTTTTTGCTT
+534304	trf	trf	Tandem repeats	TTTTTTTTTTTTTGTTGTTTT
+534306	trf	trf	Tandem repeats	TCTCTCTGTAGACCAGGCTGGCCTCGAAC
+534309	trf	trf	Tandem repeats	CGGCTAA
+534315	trf	trf	Tandem repeats	CAAAAAAAAAAAAAAC
+534317	trf	trf	Tandem repeats	AAAACAAAAAAAAACCAA
+534320	trf	trf	Tandem repeats	ACACACATGCACTCACAATACACGT
+534322	trf	trf	Tandem repeats	CATATACATGTACACACACGCACTCA
+534324	trf	trf	Tandem repeats	ACACTCACACACACACATACACTTACACAT
+534325	trf	trf	Tandem repeats	ACATGCACACACACACACACACTCAC
+534328	trf	trf	Tandem repeats	GTTTTTTTTTTGTTTTGTTTTGTTTT
+534333	trf	trf	Tandem repeats	CACACACACAGGCA
+534339	trf	trf	Tandem repeats	TCCCGGTCCCTGTCTCTG
+534340	trf	trf	Tandem repeats	GTCTCTGTCCCGGTCCCGGTCTCT
+534341	trf	trf	Tandem repeats	TCTCTGTCCCGATCCCGGTCTCTGTCTCGGTCTTTGTCCCGT
+534343	trf	trf	Tandem repeats	TCTCTGTCCCGATCCCGGTCTCTGTCCCGT
+534345	trf	trf	Tandem repeats	CGGTCCCGGTCTCGGTCTCTGTCC
+534348	trf	trf	Tandem repeats	TCCCGGTCTCTGTCTCGGTCTTTGTCCCGGTCCCTATCTCGA
+534352	trf	trf	Tandem repeats	TTTTTTTTTTGTTTTTTG
+534355	trf	trf	Tandem repeats	CTGCCCGCCATCAGT
+534359	trf	trf	Tandem repeats	CAAAAAAAAAAAAAAAAAAAAAA
+534361	trf	trf	Tandem repeats	CAGAGGACAGGCTGGGGAGCA
+534365	trf	trf	Tandem repeats	TGAGGG
+534368	trf	trf	Tandem repeats	TTTCTTTTTTCTTTTT
+534372	trf	trf	Tandem repeats	CCAGCCCC
+534374	trf	trf	Tandem repeats	CCAGCCCCCAGCCCC
+534376	trf	trf	Tandem repeats	CCAGCCCCCCAGACCCCCCAGCCC
+534379	trf	trf	Tandem repeats	GAGAAGAGGAGAGGA
+534381	trf	trf	Tandem repeats	GTGTTTTATGTGTGTGGGAGCATGCAGACATGCTGCAGTGCATGTATGTCCCAGGACCC
+534383	trf	trf	Tandem repeats	ACACACACACGCACACACACTCATACACAGACACACACAAACAT
+534385	trf	trf	Tandem repeats	GCACATGTAC
+534388	trf	trf	Tandem repeats	CACACAAACACACATGCACGCA
+534390	trf	trf	Tandem repeats	ACACACATGCATGAC
+534392	trf	trf	Tandem repeats	CACACATGCATGCACACA
+534394	trf	trf	Tandem repeats	ACACACATGCATGCAC
+542254	trf	trf	Tandem repeats	CACACACACC
+556975	trf	trf	Tandem repeats	TCCTGCCTCCAGGT
+557077	trf	trf	Tandem repeats	AGGAAGGAG
+582576	trf	trf	Tandem repeats	GCTCA
+614934	trf	trf	Tandem repeats	CACACCCA
+684436	trf	trf	Tandem repeats	TGAACGAATGAACAAAGGAA
+684439	trf	trf	Tandem repeats	CACACACCCACACC
+684442	trf	trf	Tandem repeats	CACACCCACACACACCCACACACC
+684460	trf	trf	Tandem repeats	GTCTCTTTACCTG
+684470	trf	trf	Tandem repeats	TTTTTTGTTTGTTCTG
+684474	trf	trf	Tandem repeats	TTTCTTTTCCTTTTTTCTT
+684481	trf	trf	Tandem repeats	ACAAAAACCAACCAACCAAAAAA
+684487	trf	trf	Tandem repeats	TTCCTGCTCCAGCACCTGCTCCCA

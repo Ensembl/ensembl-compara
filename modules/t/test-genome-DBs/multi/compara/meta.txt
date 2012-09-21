@@ -1,0 +1,2 @@
+1	\N	schema_version	68
+2	1	schema_type	compara

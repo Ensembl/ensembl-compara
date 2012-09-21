@@ -1,0 +1,17 @@
+repeat_feature	3	49237
+simple_feature	3	74225
+repeat_feature	2	43933
+simple_feature	2	43132
+prediction_transcript	3	414788
+prediction_exon	3	20458
+prediction_transcript	2	255570
+prediction_exon	2	4112
+dna_align_feature	3	1174185
+protein_align_feature	3	1298883
+marker_feature	3	750
+gene	3	1299022
+exon	3	11583
+transcript	3	1298883
+density_feature	3	1238921
+repeat_feature	1	78148
+simple_feature	1	107

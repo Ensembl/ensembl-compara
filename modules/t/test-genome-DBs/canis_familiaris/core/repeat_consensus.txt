@@ -1,0 +1,456 @@
+2	rnd-4_family-60	LINE/L1	Type I Transposons/LINE	N
+3	rnd-1_family-18	SINE/tRNA-Lys	Type I Transposons/SINE	N
+4	rnd-1_family-158	LTR/ERVL	LTRs	N
+6	rnd-4_family-725	DNA/MuDR	Type II Transposons	N
+8	rnd-4_family-212	LINE/L1	Type I Transposons/LINE	N
+9	rnd-6_family-145	LINE/L1	Type I Transposons/LINE	N
+11	rnd-4_family-182	LINE/L1	Type I Transposons/LINE	N
+14	rnd-1_family-94	LTR/ERV1	LTRs	N
+17	rnd-6_family-16	LINE/L1	Type I Transposons/LINE	N
+18	rnd-1_family-20	SINE/tRNA-Lys	Type I Transposons/SINE	N
+20	rnd-5_family-39	SINE/MIR	Type I Transposons/SINE	N
+21	rnd-1_family-21	SINE/tRNA-Lys	Type I Transposons/SINE	N
+22	rnd-1_family-7	SINE/tRNA-Lys	Type I Transposons/SINE	N
+23	rnd-1_family-14	LINE/L1	Type I Transposons/LINE	N
+24	rnd-1_family-22	SINE/tRNA-Lys	Type I Transposons/SINE	N
+25	rnd-2_family-3	SINE/tRNA-Lys	Type I Transposons/SINE	N
+26	rnd-1_family-4	SINE/tRNA-Lys	Type I Transposons/SINE	N
+29	rnd-1_family-81	LINE/L1	Type I Transposons/LINE	N
+30	rnd-1_family-79	LINE/L1	Type I Transposons/LINE	N
+31	rnd-5_family-16	SINE/tRNA-Lys	Type I Transposons/SINE	N
+32	rnd-6_family-26	SINE/MIR	Type I Transposons/SINE	N
+33	rnd-4_family-342	SINE/MIR	Type I Transposons/SINE	N
+34	rnd-5_family-1168	LINE/L1	Type I Transposons/LINE	N
+36	rnd-4_family-92	LINE/L1	Type I Transposons/LINE	N
+38	rnd-6_family-1358	LTR/ERVL-MaLR	LTRs	N
+39	rnd-6_family-1042	LINE/L1	Type I Transposons/LINE	N
+40	rnd-1_family-111	LTR/ERVL-MaLR	LTRs	N
+41	rnd-4_family-225	Unknown	Unknown	N
+44	rnd-1_family-64	LINE/L1	Type I Transposons/LINE	N
+45	rnd-1_family-15	LINE/L1	Type I Transposons/LINE	N
+47	rnd-4_family-94	Simple_repeat	Simple repeats	rnd-4_family-94
+51	rnd-1_family-11	SINE/tRNA-Lys	Type I Transposons/SINE	N
+54	rnd-4_family-41	LINE/L1	Type I Transposons/LINE	N
+56	rnd-6_family-888	LINE/L1	Type I Transposons/LINE	N
+57	rnd-1_family-54	SINE/tRNA-Lys	Type I Transposons/SINE	N
+58	rnd-1_family-87	LINE/L1	Type I Transposons/LINE	N
+59	rnd-4_family-213	LINE/L1	Type I Transposons/LINE	N
+60	rnd-3_family-88	SINE/MIR	Type I Transposons/SINE	N
+61	rnd-1_family-41	SINE/tRNA-Lys	Type I Transposons/SINE	N
+63	rnd-1_family-95	LINE/L1	Type I Transposons/LINE	N
+73	rnd-3_family-59	LINE/L2	Type I Transposons/LINE	N
+76	rnd-4_family-26	LINE/L1	Type I Transposons/LINE	N
+77	rnd-4_family-40	LTR/ERVL-MaLR	LTRs	N
+78	rnd-4_family-196	DNA/hAT-Charlie	Type II Transposons	N
+85	rnd-1_family-83	LINE/L1	Type I Transposons/LINE	N
+87	rnd-4_family-189	LINE/L1	Type I Transposons/LINE	N
+88	rnd-1_family-58	SINE/tRNA-Lys	Type I Transposons/SINE	N
+89	rnd-4_family-160	LINE/L1	Type I Transposons/LINE	N
+96	rnd-1_family-24	SINE/tRNA-Lys	Type I Transposons/SINE	N
+98	rnd-1_family-65	SINE/tRNA-Lys	Type I Transposons/SINE	N
+99	rnd-4_family-222	LTR/ERVL-MaLR	LTRs	N
+100	rnd-6_family-23	LTR/ERVL-MaLR	LTRs	N
+102	rnd-5_family-1236	LINE/L1	Type I Transposons/LINE	N
+103	rnd-5_family-475	LINE/L1	Type I Transposons/LINE	N
+107	rnd-1_family-74	SINE/tRNA-Lys	Type I Transposons/SINE	N
+110	rnd-2_family-21	LINE/L1	Type I Transposons/LINE	N
+118	rnd-1_family-99	LINE/L1	Type I Transposons/LINE	N
+120	rnd-4_family-64	LTR/ERVL	LTRs	N
+121	rnd-1_family-100	SINE/tRNA-Lys	Type I Transposons/SINE	N
+125	rnd-4_family-972	LINE/L1	Type I Transposons/LINE	N
+126	rnd-5_family-92	LINE/L1	Type I Transposons/LINE	N
+127	rnd-5_family-378	LINE/L1	Type I Transposons/LINE	N
+128	rnd-4_family-795	LINE/L1	Type I Transposons/LINE	N
+129	rnd-4_family-99	SINE/MIR	Type I Transposons/SINE	N
+132	rnd-5_family-347	LINE/L1	Type I Transposons/LINE	N
+133	rnd-1_family-78	SINE/tRNA-Lys	Type I Transposons/SINE	N
+134	rnd-4_family-469	LINE/L2	Type I Transposons/LINE	N
+138	rnd-1_family-101	LTR/ERV1	LTRs	N
+140	rnd-6_family-947	LTR/ERVL-MaLR	LTRs	N
+143	rnd-1_family-92	LINE/L1	Type I Transposons/LINE	N
+147	rnd-1_family-63	SINE/tRNA-Lys	Type I Transposons/SINE	N
+152	rnd-5_family-220	LINE/L2	Type I Transposons/LINE	N
+153	rnd-1_family-6	SINE/tRNA-Lys	Type I Transposons/SINE	N
+159	rnd-1_family-12	SINE/tRNA-Lys	Type I Transposons/SINE	N
+161	rnd-4_family-50	LINE/L1	Type I Transposons/LINE	N
+169	rnd-1_family-106	SINE/MIR	Type I Transposons/SINE	N
+172	rnd-5_family-99	LTR/ERVL-MaLR	LTRs	N
+174	rnd-1_family-168	LTR/ERV1	LTRs	N
+178	rnd-6_family-358	DNA/hAT-Charlie	Type II Transposons	N
+184	rnd-4_family-366	LTR/ERV1	LTRs	N
+187	rnd-1_family-13	SINE/tRNA-Lys	Type I Transposons/SINE	N
+189	rnd-1_family-102	LINE/L1	Type I Transposons/LINE	N
+191	rnd-6_family-105	LINE/L1	Type I Transposons/LINE	N
+197	rnd-5_family-4038	DNA/hAT-Charlie	Type II Transposons	N
+208	rnd-1_family-9	SINE/tRNA-Lys	Type I Transposons/SINE	N
+211	rnd-5_family-198	DNA/MuDR	Type II Transposons	N
+219	rnd-4_family-48	DNA/TcMar-Tigger	Type II Transposons	N
+223	rnd-1_family-48	SINE/tRNA-Lys	Type I Transposons/SINE	N
+228	rnd-5_family-208	LINE/L2	Type I Transposons/LINE	N
+235	rnd-5_family-1149	LINE/L1	Type I Transposons/LINE	N
+239	rnd-5_family-351	LINE/L1	Type I Transposons/LINE	N
+247	rnd-1_family-97	LINE/L1	Type I Transposons/LINE	N
+265	rnd-5_family-360	LINE/L1	Type I Transposons/LINE	N
+266	rnd-5_family-398	LINE/L2	Type I Transposons/LINE	N
+279	rnd-6_family-795	DNA/hAT-Charlie	Type II Transposons	N
+287	rnd-6_family-1024	LINE/L2	Type I Transposons/LINE	N
+297	rnd-5_family-113	DNA/TcMar-Tigger	Type II Transposons	N
+301	rnd-5_family-134	LTR/ERVL-MaLR	LTRs	N
+302	rnd-1_family-188	LTR/ERV1	LTRs	N
+312	rnd-4_family-603	DNA/hAT-Blackjack	Type II Transposons	N
+319	rnd-1_family-35	SINE/tRNA-Lys	Type I Transposons/SINE	N
+320	rnd-4_family-613	LTR/ERVL-MaLR	LTRs	N
+332	rnd-6_family-488	DNA/hAT-Charlie	Type II Transposons	N
+337	rnd-5_family-67	LTR/ERVL-MaLR	LTRs	N
+347	rnd-6_family-113	LINE/L2	Type I Transposons/LINE	N
+361	rnd-5_family-3412	LTR/ERV1	LTRs	N
+369	rnd-5_family-209	LINE/L1	Type I Transposons/LINE	N
+372	rnd-5_family-73	LINE/L1	Type I Transposons/LINE	N
+373	rnd-1_family-224	LINE/L2	Type I Transposons/LINE	N
+376	rnd-5_family-105	DNA/hAT-Charlie	Type II Transposons	N
+377	rnd-5_family-288	LTR/ERVL	LTRs	N
+416	rnd-1_family-69	SINE/tRNA-Lys	Type I Transposons/SINE	N
+417	rnd-1_family-85	SINE/tRNA-Lys	Type I Transposons/SINE	N
+430	rnd-1_family-16	SINE/tRNA-Lys	Type I Transposons/SINE	N
+502	L2c	LINE/L2	Type I Transposons/LINE	N
+505	L1_Carn7	LINE/L1	Type I Transposons/LINE	N
+506	SINEC_c1	SINE/tRNA-Lys	Type I Transposons/SINE	N
+507	L1_Canid_	LINE/L1	Type I Transposons/LINE	N
+509	L1_Carn2	LINE/L1	Type I Transposons/LINE	N
+510	L1_Cf	LINE/L1	Type I Transposons/LINE	N
+511	SINEC_Cf	SINE/tRNA-Lys	Type I Transposons/SINE	N
+512	SINEC_a1	SINE/tRNA-Lys	Type I Transposons/SINE	N
+514	SINEC_b1	SINE/tRNA-Lys	Type I Transposons/SINE	N
+515	SINEC_c2	SINE/tRNA-Lys	Type I Transposons/SINE	N
+516	SINEC_old	SINE/tRNA-Lys	Type I Transposons/SINE	N
+521	L1_Canis1	LINE/L1	Type I Transposons/LINE	N
+526	MIRb	SINE/MIR	Type I Transposons/SINE	N
+527	SINEC_Cf2	SINE/tRNA-Lys	Type I Transposons/SINE	N
+529	SINEC_b2	SINE/tRNA-Lys	Type I Transposons/SINE	N
+531	MIR	SINE/MIR	Type I Transposons/SINE	N
+532	MIRc	SINE/MIR	Type I Transposons/SINE	N
+533	SINEC_Cf3	SINE/tRNA-Lys	Type I Transposons/SINE	N
+534	MIR3	SINE/MIR	Type I Transposons/SINE	N
+535	L2b	LINE/L2	Type I Transposons/LINE	N
+538	MER5A	DNA/hAT-Charlie	Type II Transposons	N
+539	L2a	LINE/L2	Type I Transposons/LINE	N
+542	L1MB7	LINE/L1	Type I Transposons/LINE	N
+545	L1M4	LINE/L1	Type I Transposons/LINE	N
+546	SINEC_a2	SINE/tRNA-Lys	Type I Transposons/SINE	N
+548	L1_Carn3	LINE/L1	Type I Transposons/LINE	N
+552	L1MB3	LINE/L1	Type I Transposons/LINE	N
+555	L1MEg	LINE/L1	Type I Transposons/LINE	N
+556	MLT1F1	LTR/ERVL-MaLR	LTRs	N
+561	CarLTR1B1	LTR/ERV1	LTRs	N
+562	L2	LINE/L2	Type I Transposons/LINE	N
+563	MLT1L	LTR/ERVL-MaLR	LTRs	N
+567	MLT1D	LTR/ERVL-MaLR	LTRs	N
+569	tRNA-Lys-AAG	tRNA	RNA repeats	N
+571	L1MC4	LINE/L1	Type I Transposons/LINE	N
+573	L1ME2z	LINE/L1	Type I Transposons/LINE	N
+576	L1MC	LINE/L1	Type I Transposons/LINE	N
+579	MER53	DNA/hAT	Type II Transposons	N
+581	Charlie1a	DNA/hAT-Charlie	Type II Transposons	N
+582	L1MB2	LINE/L1	Type I Transposons/LINE	N
+585	Tigger7	DNA/TcMar-Tigger	Type II Transposons	N
+586	L1ME3C	LINE/L1	Type I Transposons/LINE	N
+587	L1MEf	LINE/L1	Type I Transposons/LINE	N
+590	L3	LINE/CR1	Type I Transposons/LINE	N
+591	L1M2	LINE/L1	Type I Transposons/LINE	N
+597	L1ME4a	LINE/L1	Type I Transposons/LINE	N
+598	L1M5	LINE/L1	Type I Transposons/LINE	N
+601	L1MD	LINE/L1	Type I Transposons/LINE	N
+602	LTR16A	LTR/ERVL	LTRs	N
+607	MLT1I	LTR/ERVL-MaLR	LTRs	N
+609	MLT1C	LTR/ERVL-MaLR	LTRs	N
+610	MER112	DNA/hAT-Charlie	Type II Transposons	N
+614	L1MC4a	LINE/L1	Type I Transposons/LINE	N
+615	L1MB5	LINE/L1	Type I Transposons/LINE	N
+616	MLT1N2	LTR/ERVL-MaLR	LTRs	N
+617	MER91A	DNA/hAT-Tip100	Type II Transposons	N
+621	L1ME2	LINE/L1	Type I Transposons/LINE	N
+622	MER5B	DNA/hAT-Charlie	Type II Transposons	N
+628	L1ME3E	LINE/L1	Type I Transposons/LINE	N
+631	L1ME3A	LINE/L1	Type I Transposons/LINE	N
+632	L1ME3B	LINE/L1	Type I Transposons/LINE	N
+633	L1MC5	LINE/L1	Type I Transposons/LINE	N
+634	MLT1J	LTR/ERVL-MaLR	LTRs	N
+647	L1_Carn5	LINE/L1	Type I Transposons/LINE	N
+651	Tigger2a_Car	DNA/TcMar-Tigger	Type II Transposons	N
+653	MLT1G3	LTR/ERVL-MaLR	LTRs	N
+672	LTR16E1	LTR/ERVL	LTRs	N
+678	L1MC2	LINE/L1	Type I Transposons/LINE	N
+682	MamRep38	DNA/hAT	Type II Transposons	N
+685	MLT1B	LTR/ERVL-MaLR	LTRs	N
+692	L1MA10	LINE/L1	Type I Transposons/LINE	N
+705	L1ME3D	LINE/L1	Type I Transposons/LINE	N
+712	Kanga1c	DNA/TcMar-Tc2	Type II Transposons	N
+722	Charlie2b	DNA/hAT-Charlie	Type II Transposons	N
+734	MER46C	DNA/TcMar-Tigger	Type II Transposons	N
+735	SINEC_Fc2	SINE/tRNA-Lys	Type I Transposons/SINE	N
+745	L1ME3	LINE/L1	Type I Transposons/LINE	N
+746	L1ME3F	LINE/L1	Type I Transposons/LINE	N
+754	L1M4c	LINE/L1	Type I Transposons/LINE	N
+766	Charlie7	DNA/hAT-Charlie	Type II Transposons	N
+775	MER5A1	DNA/hAT-Charlie	Type II Transposons	N
+782	MLT2C2	LTR/ERVL	LTRs	N
+793	MER58A	DNA/hAT-Charlie	Type II Transposons	N
+794	MER94	DNA/hAT-Blackjack	Type II Transposons	N
+810	CarLTR1B2	LTR/ERV1	LTRs	N
+811	CarLTR2	LTR/ERV1	LTRs	N
+817	MADE2	DNA/TcMar-Mariner	Type II Transposons	N
+819	LTR16C	LTR/ERVL	LTRs	N
+835	Kanga2_a	DNA/TcMar-Tc2	Type II Transposons	N
+859	MER96B	DNA/hAT	Type II Transposons	N
+861	MER45A	DNA/hAT-Tip100	Type II Transposons	N
+865	MER91B	DNA/hAT-Tip100	Type II Transposons	N
+872	L1ME5	LINE/L1	Type I Transposons/LINE	N
+875	CarLTR8y	LTR/ERV1	LTRs	N
+891	Charlie2a	DNA/hAT-Charlie	Type II Transposons	N
+893	CarERV2b1_LTR	LTR/ERV1	LTRs	N
+907	L1M7	LINE/L1	Type I Transposons/LINE	N
+913	MamRep1879	DNA/hAT-Tip100?	Type II Transposons	N
+941	MamRep137	DNA/TcMar?	Type II Transposons	N
+989	Arthur1C	DNA/hAT-Tip100	Type II Transposons	N
+1083	LTR39	LTR/ERV1	LTRs	N
+1084	MamRep488	DNA/hAT-Tip100	Type II Transposons	N
+1256	dust	dust	Dust	N
+1274	trf	trf	Tandem repeats	CAGAGAGAGAGG
+1275	trf	trf	Tandem repeats	AG
+1278	trf	trf	Tandem repeats	CTGCCTCTCTCT
+1279	trf	trf	Tandem repeats	CT
+1280	trf	trf	Tandem repeats	TG
+1290	trf	trf	Tandem repeats	ATAA
+1294	trf	trf	Tandem repeats	AAT
+1316	trf	trf	Tandem repeats	GA
+1317	trf	trf	Tandem repeats	GT
+1325	trf	trf	Tandem repeats	TC
+1330	trf	trf	Tandem repeats	A
+1331	trf	trf	Tandem repeats	AC
+1336	trf	trf	Tandem repeats	AGAGAGAGAGGC
+1366	trf	trf	Tandem repeats	T
+1389	trf	trf	Tandem repeats	AAAAT
+1400	trf	trf	Tandem repeats	CTCTGCCTGTGT
+1403	trf	trf	Tandem repeats	AT
+1436	trf	trf	Tandem repeats	TCTCCCTCTCCCTGTCTC
+1454	trf	trf	Tandem repeats	AGACACACAGACAGAGGC
+1455	trf	trf	Tandem repeats	TATT
+1460	trf	trf	Tandem repeats	ATGA
+1508	trf	trf	Tandem repeats	GAAT
+1552	trf	trf	Tandem repeats	TTTTTTA
+1555	trf	trf	Tandem repeats	AGAGAGGCAGAG
+1566	trf	trf	Tandem repeats	AGAGACACAGACAGAGGC
+1614	trf	trf	Tandem repeats	ATG
+1701	trf	trf	Tandem repeats	TTTA
+1702	trf	trf	Tandem repeats	GAGAGAGAGGCA
+1730	trf	trf	Tandem repeats	TGAA
+1809	trf	trf	Tandem repeats	ACAGAGAG
+1834	trf	trf	Tandem repeats	TTAT
+1835	trf	trf	Tandem repeats	ATTT
+1861	trf	trf	Tandem repeats	AAAC
+1888	trf	trf	Tandem repeats	TAAA
+1898	trf	trf	Tandem repeats	TCTGCCTCTCTC
+1901	trf	trf	Tandem repeats	AATA
+1902	trf	trf	Tandem repeats	CTTT
+1904	trf	trf	Tandem repeats	AAAAC
+1909	trf	trf	Tandem repeats	AAAT
+2003	trf	trf	Tandem repeats	TTTTATT
+2014	trf	trf	Tandem repeats	AAATA
+2149	trf	trf	Tandem repeats	CAGAGAGAGAAG
+2163	trf	trf	Tandem repeats	TAAAAAAAT
+2226	trf	trf	Tandem repeats	TTTTAT
+2241	trf	trf	Tandem repeats	TA
+2253	trf	trf	Tandem repeats	AGAG
+2289	trf	trf	Tandem repeats	TTTTTATT
+2303	trf	trf	Tandem repeats	TTTATTTTTA
+2454	trf	trf	Tandem repeats	TTTTTTTA
+2461	trf	trf	Tandem repeats	AAAAG
+2482	trf	trf	Tandem repeats	AAAG
+2504	trf	trf	Tandem repeats	TCTCTCTCTGTC
+3711	trf	trf	Tandem repeats	TTTCTTT
+3897	trf	trf	Tandem repeats	TCTCCCTCTCCCTGTGTC
+3899	trf	trf	Tandem repeats	GAGAGACA
+3900	trf	trf	Tandem repeats	CTCTCTCTGCCT
+3929	trf	trf	Tandem repeats	TTTAT
+3937	trf	trf	Tandem repeats	TCTA
+3941	trf	trf	Tandem repeats	AAAAAATT
+4399	trf	trf	Tandem repeats	TAAAAAAAAAT
+4406	trf	trf	Tandem repeats	CTGTCTCT
+4658	trf	trf	Tandem repeats	GGAGG
+4730	trf	trf	Tandem repeats	AGAGAC
+4823	trf	trf	Tandem repeats	GAGAGAGACA
+4865	trf	trf	Tandem repeats	TTTTTTTTAT
+4960	trf	trf	Tandem repeats	ATTC
+4982	trf	trf	Tandem repeats	CAC
+5040	trf	trf	Tandem repeats	TTTTATTTTT
+5328	trf	trf	Tandem repeats	TTTATTTTTTT
+5414	trf	trf	Tandem repeats	AAATAAATAA
+5797	trf	trf	Tandem repeats	C
+5853	trf	trf	Tandem repeats	GAGAGAGAGACA
+5886	trf	trf	Tandem repeats	CCTCC
+5900	trf	trf	Tandem repeats	CTGCCT
+5901	trf	trf	Tandem repeats	CTCTGCCTCTCT
+6104	trf	trf	Tandem repeats	GTTTTTTT
+6293	trf	trf	Tandem repeats	TTTCTTTT
+6388	trf	trf	Tandem repeats	TCTCTCTCTCCC
+6403	trf	trf	Tandem repeats	TTTTATTTA
+6501	trf	trf	Tandem repeats	AGACAG
+6512	trf	trf	Tandem repeats	AGAGACACAGGC
+6567	trf	trf	Tandem repeats	CCCACC
+6568	trf	trf	Tandem repeats	CTCTGCCTGTCT
+6596	trf	trf	Tandem repeats	GGGGTG
+6655	trf	trf	Tandem repeats	GAGAGACAGGCA
+6698	trf	trf	Tandem repeats	TCT
+6721	trf	trf	Tandem repeats	TTTTTTTTTTA
+6728	trf	trf	Tandem repeats	GCG
+6784	trf	trf	Tandem repeats	AGAC
+6799	trf	trf	Tandem repeats	AAAAAG
+6864	trf	trf	Tandem repeats	CCGCC
+6866	trf	trf	Tandem repeats	GGGGGC
+6912	trf	trf	Tandem repeats	TAAAAAAATAAAA
+7047	trf	trf	Tandem repeats	TTTATTTTTTATTTTT
+7062	trf	trf	Tandem repeats	GGGGC
+7306	trf	trf	Tandem repeats	AATAA
+7466	trf	trf	Tandem repeats	TTTTTTTATTTTTATT
+7547	trf	trf	Tandem repeats	AAAACAA
+7602	trf	trf	Tandem repeats	TGTGTG
+7604	trf	trf	Tandem repeats	TGTG
+7824	trf	trf	Tandem repeats	AAAAATT
+7878	trf	trf	Tandem repeats	CTTTT
+7956	trf	trf	Tandem repeats	TTGTTT
+7992	trf	trf	Tandem repeats	GAG
+8454	trf	trf	Tandem repeats	AGAGACACAGAAAGAGAGAGAAGC
+8820	trf	trf	Tandem repeats	AAATAAA
+9663	trf	trf	Tandem repeats	GAAAA
+9665	trf	trf	Tandem repeats	GAAAAGAAAAGAA
+9763	trf	trf	Tandem repeats	AAAACAAA
+12327	trf	trf	Tandem repeats	TCTCTCTT
+12352	trf	trf	Tandem repeats	CTGCCTCTCCTGTCT
+13219	trf	trf	Tandem repeats	AAAAAAATTAAAAA
+13229	trf	trf	Tandem repeats	AAATAAATAAA
+13463	trf	trf	Tandem repeats	AAAAAAACAAAC
+13819	trf	trf	Tandem repeats	CTG
+14633	trf	trf	Tandem repeats	AATAAATAA
+15205	trf	trf	Tandem repeats	CCCGC
+16458	trf	trf	Tandem repeats	CTGCCTCTCCCTCTCCCTGGGTCT
+17524	trf	trf	Tandem repeats	CCCCCCA
+17817	trf	trf	Tandem repeats	AATAAATAAATAA
+21083	trf	trf	Tandem repeats	CTCTGCCTCTAT
+21299	trf	trf	Tandem repeats	TTCCTC
+21867	trf	trf	Tandem repeats	TAATAT
+22575	trf	trf	Tandem repeats	GCA
+22729	trf	trf	Tandem repeats	AAAATAAAAA
+22921	trf	trf	Tandem repeats	ATTTTTATTT
+24369	trf	trf	Tandem repeats	TTTTTAAGA
+25963	trf	trf	Tandem repeats	AAAAAAAAATTAAAA
+25991	trf	trf	Tandem repeats	AAATAATAAAATA
+26802	trf	trf	Tandem repeats	GGCGGG
+27118	trf	trf	Tandem repeats	TTTTTTTTTTTTTCA
+37863	trf	trf	Tandem repeats	TCAGGATC
+38652	trf	trf	Tandem repeats	AATAAAAAATAAAAAAA
+40262	trf	trf	Tandem repeats	AAATAATTA
+40294	trf	trf	Tandem repeats	GTGGGG
+40347	trf	trf	Tandem repeats	TATCTATATATC
+41492	trf	trf	Tandem repeats	CACCCCCAC
+43184	trf	trf	Tandem repeats	GAGACATAGACAGAGAGAGAAGCA
+44540	trf	trf	Tandem repeats	ATTTTATTTTATTTTATT
+45388	trf	trf	Tandem repeats	TTTTCTG
+53289	trf	trf	Tandem repeats	GCCCCCGCA
+53585	trf	trf	Tandem repeats	AAATAAAATCTTTAA
+54592	trf	trf	Tandem repeats	TTCTCCCTCTGCCTATGT
+75878	trf	trf	Tandem repeats	ATAAAAAAATAAATAA
+86753	trf	trf	Tandem repeats	AAAAAAAAAACCAAAA
+88238	trf	trf	Tandem repeats	CCGCCCCGC
+100803	trf	trf	Tandem repeats	AGAGACACAGAGACAGAGAGAGAAGC
+107692	trf	trf	Tandem repeats	AAAACAAACAAACAA
+119036	trf	trf	Tandem repeats	GGCGGGGGC
+119625	trf	trf	Tandem repeats	TGCTGGG
+125010	trf	trf	Tandem repeats	ATTTATATATAT
+130792	trf	trf	Tandem repeats	AAAATCTTTTTTA
+170793	trf	trf	Tandem repeats	TTATTTATTAT
+175240	trf	trf	Tandem repeats	CGCCCGCCC
+181177	trf	trf	Tandem repeats	AAATAAATAAAAATAAAATA
+181632	trf	trf	Tandem repeats	TTTTATTATTTTTTA
+204842	trf	trf	Tandem repeats	GAAAGAAAAAAAAAAA
+219282	trf	trf	Tandem repeats	AATAAGTAAATA
+274259	trf	trf	Tandem repeats	AAATAAATACATA
+275220	trf	trf	Tandem repeats	TATATATATATTTA
+279486	trf	trf	Tandem repeats	AAAATAAATAAAAAAT
+320623	trf	trf	Tandem repeats	AATAAATAAATAAAAAAAATAAAA
+345360	trf	trf	Tandem repeats	GCGTGTGTGTGT
+352127	trf	trf	Tandem repeats	TTTTTTTTTTTTCATT
+372311	trf	trf	Tandem repeats	AGAATCTTA
+378580	trf	trf	Tandem repeats	TCTCTACC
+378581	trf	trf	Tandem repeats	TTTATTTTATTTTTTT
+378582	trf	trf	Tandem repeats	TTTTTTAATTTTATTTATTT
+378583	trf	trf	Tandem repeats	GTCACTTTCTTTTCT
+378584	trf	trf	Tandem repeats	ATTTGTTAGAGCGTATAAATGTAA
+378585	trf	trf	Tandem repeats	GTGTGTATGTATATG
+378586	trf	trf	Tandem repeats	TGTGTGTGTAGTAAGTAAATACAGGAGGCGTGCACGTG
+378587	trf	trf	Tandem repeats	GTGTATGTGTGGGATG
+432292	trf	trf	Tandem repeats	ATATATATATATATATATATATACACAC
+432293	trf	trf	Tandem repeats	ATATATATATATATATATATATACACACAC
+432294	trf	trf	Tandem repeats	ATATATATGTATATATATATATACACACACAC
+432295	trf	trf	Tandem repeats	CTCATTTATTAAATGTGAGTTACAATTTTCCA
+432296	trf	trf	Tandem repeats	CAGTTTATCTACC
+432297	trf	trf	Tandem repeats	TAAAAAATAAATAAAATAAATAAAA
+432298	trf	trf	Tandem repeats	ATAAAACCAACAGCAAACAAAAC
+432299	trf	trf	Tandem repeats	AATAAATAAATAAAAGAA
+432300	trf	trf	Tandem repeats	AAAATGGGGCCAAAAAA
+432301	trf	trf	Tandem repeats	TTAGATTTGAGTTAGGGTTGAG
+432302	trf	trf	Tandem repeats	TTTGAAGCTAATGTTCAAG
+432303	trf	trf	Tandem repeats	AAAATCATATTTTA
+432304	trf	trf	Tandem repeats	TGAGAAGAGAGATAAGGAAATA
+432305	trf	trf	Tandem repeats	CGTAGGCCTGAGGT
+432306	trf	trf	Tandem repeats	AGGATGAGCAGG
+432307	trf	trf	Tandem repeats	GGTGGCTCAGTT
+432308	trf	trf	Tandem repeats	TCCCGACGGGCAGAGGAGCCTGGG
+432309	trf	trf	Tandem repeats	CCAGGCCCTGCCGGCC
+432310	trf	trf	Tandem repeats	TTTTTTTTTTTTTTATTTAAATTTTTT
+432311	trf	trf	Tandem repeats	TTTTTTTTTTTTTTTTTTTAAATTTTT
+432312	trf	trf	Tandem repeats	TCGGTGGCC
+432313	trf	trf	Tandem repeats	CTCTGAGTTATCTGGTGATTT
+432314	trf	trf	Tandem repeats	AAAAAGAAAAAGAAAAAAAG
+432315	trf	trf	Tandem repeats	TTTATTTTGTTTAATTTTTATTTA
+432316	trf	trf	Tandem repeats	TGTCATCATTGCAGTGAC
+432317	trf	trf	Tandem repeats	TATTTATTTTTATAATATT
+432318	trf	trf	Tandem repeats	AAAAGAAAAAAAAGAAAGAA
+432319	trf	trf	Tandem repeats	AAAAAAAAAAAAGAAAGAAAAAAG
+432320	trf	trf	Tandem repeats	AAGATAAGGCAAAAAACA
+432321	trf	trf	Tandem repeats	AATAAAAAAAGTAAAAAAAA
+432322	trf	trf	Tandem repeats	TGCCTCAACC
+432323	trf	trf	Tandem repeats	TAAAAAAATAAAATAAAAAAAAA
+432324	trf	trf	Tandem repeats	AAAAAAAGAAAAGAAAAACCA
+432325	trf	trf	Tandem repeats	ATAAAAAATAAAAATAAAAAAAAATAAAATAA
+432326	trf	trf	Tandem repeats	AAATAAAAATAAAATA
+432327	trf	trf	Tandem repeats	TAAAAATAAAATCTTGGGATCCCTGGGTGGCGCAGCGGTTTGGCACCTGCCTTTGGCCCAGGGCGCGATCCTGGAGACCCAGGATCAAATCCCACGTCGGGCCTCCGGTACATGGAGCCTGCTTCTCCCTCTGCCTGTGTCTCTGCCTCTCTCTCTCTCTCTCTGTGACTATCATAAATAAAAAAAAATAAAAAAAAAATAAAATAAAAAAAAATAAAAAAAATAAAATAAAATAAAA
+432328	trf	trf	Tandem repeats	TAAAAAAACAAAATCT
+432329	trf	trf	Tandem repeats	AATCATCTAC
+432330	trf	trf	Tandem repeats	AAGTCTTTAAAAACAAATAAATAAA
+432331	trf	trf	Tandem repeats	CCTCCAGCCCTGCCAGCC
+432332	trf	trf	Tandem repeats	CCTCCAGCC
+432333	trf	trf	Tandem repeats	TTTTTAAAATATATGTATA
+432334	trf	trf	Tandem repeats	CCCCCGCGCCCCCGCAC
+432335	trf	trf	Tandem repeats	GCCCCCGCGCCCCCGCACCCCCGCA
+432336	trf	trf	Tandem repeats	GGCTGGCAGG
+432337	trf	trf	Tandem repeats	CCCGGGGAGGCGGGGAGT
+432338	trf	trf	Tandem repeats	CCAGCCCCAACTCCCCAAAAGACC
+432339	trf	trf	Tandem repeats	CGTGAGTACATG
+432340	trf	trf	Tandem repeats	CCCAGGCTGCCCCCCGCC
+432341	trf	trf	Tandem repeats	AGAGAGAGGCAGAAACATAGGCAGAGGGAGAAGCAGGCTCCATGCAGGGAGCCCGACGTGGGACTCGATCCCGGGACCCGGGATCATGCCCTGAGCTAAAGGCAGATACTCAACCGCTGAGCCACCCAGCTGTTCCCTACATTCCCATTCTTTTTTTTTTTTTTTTAAGATTTTATTTATTTATTCATGAGAGACACAC
+432342	trf	trf	Tandem repeats	TTCTTTTTTTTTTTTTTTAAGATTTTATTTATTTATTCATGAGAGACACACAGAGAGAGGCAGAAATATAGGCAGAGGGAGAAGCAGGCTCCATGCAGGGAGCCTGATGTGGGACTCGATCCCAGAACCCCGGGATCACGACCTGAGCCAAAGGCAAATACTCAACCACTGAGCCACCCAGCGCTTCCCTACATTCCCA
+432343	trf	trf	Tandem repeats	ATTATTTATTTT
+432344	trf	trf	Tandem repeats	GTGGATAGCAGGGCACTGCT
+432345	trf	trf	Tandem repeats	TGATGCGGTGCTTGA
+432346	trf	trf	Tandem repeats	TTTATCATTTATTCGTTTGATATT
+432347	trf	trf	Tandem repeats	AAACTTTTTATATTTT
+432348	trf	trf	Tandem repeats	TTTTATATTTTAACA
+432349	trf	trf	Tandem repeats	TTTATTTTTTAAAAACATCTTA
+432350	trf	trf	Tandem repeats	CTCTCTCTCCCTGTCTCTCTGA
+432351	trf	trf	Tandem repeats	AGAGACACACACAGAGAGAGAAGAAGGC
+432352	trf	trf	Tandem repeats	GGAACAGTGTAT
+432353	trf	trf	Tandem repeats	AAAAAAAAAAAAAAAACTTCA
+432354	trf	trf	Tandem repeats	CGATCGCGGTCCCTGTCC
+432355	trf	trf	Tandem repeats	TTTCTTTCTTTTTTTTATCCAAACTGAGT
+432356	trf	trf	Tandem repeats	CAAACATGCCCACACATCAGGGGC
+432357	trf	trf	Tandem repeats	TTCACTTAGCATACA

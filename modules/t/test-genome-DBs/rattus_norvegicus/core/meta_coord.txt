@@ -1,0 +1,15 @@
+repeat_feature	2	58715
+marker_feature	2	1000
+prediction_transcript	2	900871
+prediction_exon	2	19566
+oligo_feature	2	25
+protein_align_feature	2	1865069
+dna_align_feature	2	844542
+gene	2	1865486
+exon	2	12160
+transcript	2	1865072
+qtl_feature	2	97614851
+simple_feature	2	7739
+density_feature	2	1786073
+karyotype	2	37804412
+splicing_event	2	817532
