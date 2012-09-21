@@ -31,7 +31,7 @@ sub render {
     my @posts = @{$MEMD->get('::BLOG')};
     ## unencode cached content (see below)
     foreach (@posts) {
-      push @$items, decode($_);
+      push @$items, decode('utf8', $_);
     }
   }
  
@@ -42,7 +42,7 @@ sub render {
     if ($items && @$items && $MEMD) {
       my $encoded = [];
       foreach (@$items) {
-        push @$encoded, encode($_);
+        push @$encoded, encode('utf8', $_);
       }
       $MEMD->set('::BLOG', $encoded, 3600, qw(STATIC BLOG));
     }
