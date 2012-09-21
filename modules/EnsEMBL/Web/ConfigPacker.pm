@@ -6,7 +6,6 @@ no warnings qw(uninitialized);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
-use Data::Dumper;
 
 use base qw(EnsEMBL::Web::ConfigPacker_base);
 
@@ -126,6 +125,22 @@ sub _summarise_core_tables {
   push @{ $self->db_tree->{'core_like_databases'} }, $db_name;
 
   $self->_summarise_generic( $db_name, $dbh );
+
+## Get chromosomes in order (replacement for array in ini files)
+  my $s_aref = $dbh->selectall_arrayref(
+    'select s.name 
+    from seq_region s, seq_region_attrib sa, attrib_type a 
+    where sa.seq_region_id = s.seq_region_id 
+      and sa.attrib_type_id = a.attrib_type_id 
+      and a.code = "karyotype_rank" 
+    order by abs(sa.value)'
+  );
+  my $chrs = [];
+  foreach my $row (@$s_aref) {
+    push @$chrs, $row->[0];
+  }
+  $self->db_tree->{'ENSEMBL_CHROMOSOMES'} = $chrs;
+
 ##
 ## Grab each of the analyses - will use these in a moment...
 ##
@@ -874,7 +889,7 @@ sub _summarise_compara_db {
     }
     
     $species =~ tr/ /_/;
-    
+   
     $self->db_tree->{$db_name}{$key}{$id}{'id'}                = $id;
     $self->db_tree->{$db_name}{$key}{$id}{'name'}              = $name;
     $self->db_tree->{$db_name}{$key}{$id}{'type'}              = $type;
@@ -1758,7 +1773,8 @@ sub _configure_blast {
         $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $file, 'label' => $source_label};
       }
     }
-#    warn "TREE $blast_type = ".Dumper($tree->{$blast_type.'_DATASOURCES'});
+#   use Data::Dumper;
+#   warn "TREE $blast_type = ".Dumper($tree->{$blast_type.'_DATASOURCES'});
   }
 }
 
