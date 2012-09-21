@@ -15,10 +15,11 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
  rubberband2 - drag region - bottom and left
 **/
 
-.redbox2, .rubberband, .rubberband2, .redbox { position:absolute; z-index: 99; }
+.redbox2,.rubberband, .rubberband2, .redbox                  { position:absolute; z-index: 99; }
 .redbox2 img, .rubberband2 img, .rubberband img, .redbox img { height: 1px; width: 1px; }
 .rubberband  { background-image: url(/i/redants.gif); }
-.rubberband2 { background-image: url(/i/redants2.gif); }.redbox      { background-image: url(/i/red.gif); }
+.rubberband2 { background-image: url(/i/redants2.gif); }
+.redbox      { background-image: url(/i/red.gif); }
 .redbox2     { background-color: red; }
 
 /**
@@ -26,28 +27,28 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 
 .drag_select { cursor: pointer; position: relative; }
 
-.hover_label                       { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: n
-one; text-align: left; width: auto; cursor: default; }
+.hover_label                              { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
 .hover_label img,
-.hover_label a.favourite           { margin: 0 4px; }
-.hover_label a.favourite           { display: inline-block; width: 16px; height: 16px; background: url(/i/16/swp/star.png) no-repeat 0 0; }
+.hover_label a.favourite                  { margin: 0 4px; }
+.hover_label a.favourite                  { display: inline-block; width: 16px; height: 16px; background: url(/i/16/swp/star.png) no-repeat 0 0; }
 .hover_label img.config,
 .hover_label img.url,
-.hover_label img.desc              { cursor: pointer; }
-.hover_label a.config              { text-decoration: none; }
-.hover_label a.favourite:hover     { background-position: 0 -18px; }
-.hover_label a.favourite.selected  { background-position: 0 -36px; }
-.hover_label p.header              { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF;
- }
-.hover_label div                   { display: none; padding: 0 5px; }
-.hover_label p                     { padding: 3px 0; margin: 0; }
+.hover_label img.desc                     { cursor: pointer; }
+.hover_label a.config                     { text-decoration: none; }
+.hover_label a.favourite:hover            { background-position: 0 -18px; }
+.hover_label a.favourite.selected         { background-position: 0 -36px; }
+.hover_label p.header                     { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; }
+.hover_label div                          { display: none; padding: 0 5px; }
+.hover_label p                            { padding: 3px 0; margin: 0; }
 .hover_label div.config ul,
-.hover_label div.config li         { margin: 0; padding: 0; list-style: none; list-style-image: none; }
-.hover_label div.config li         { line-height: 22px; }
-.hover_label div.config li.current { font-weight: normal; }
-.hover_label div.config a          { font-size: 11px; color: #000; }
-.hover_label div.config img        { vertical-align: top; padding: 2px 0; margin-left: 0; }
-.hover_label div.config img.tick   { margin: 9px 0 0 -11px; }
+.hover_label div.config li                { margin: 0; padding: 0; list-style: none; list-style-image: none; }
+.hover_label div.config li                { line-height: 22px; }
+.hover_label div.config li.current        { font-weight: normal; }
+.hover_label div.config a                 { font-size: 11px; color: #000; }
+.hover_label div.config li.subset a       { color: [[PAGE_LINK]]; }
+.hover_label div.config li.subset a:hover { color: [[PAGE_HOVER]]; }
+.hover_label div.config img               { vertical-align: top; padding: 2px 0; margin-left: 0; }
+.hover_label div.config img.tick          { margin: 9px 0 0 -11px; }
 
 body.ie6 .hover_label div.config li { margin: 5px 0 0; }
 body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; }
