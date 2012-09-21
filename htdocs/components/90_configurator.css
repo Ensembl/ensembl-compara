@@ -42,9 +42,11 @@ form.configuration div.config ul.popup_menu                         { position: 
 form.configuration div.config ul.popup_menu li                      { background-color: [[TINT_BG]]!important; color: #000; padding: 1px 6px 1px 0; margin: 0; font-weight: bold; list-style: none; list-style-image: none; }
 form.configuration div.config ul.popup_menu li.header               { background-color: [[BUTTON_BG]]!important; color: #FFF; text-align: center; padding: 2px 10px; border-bottom: 1px solid [[PAGE_TEXT]]; }
 form.configuration div.config ul.popup_menu li.header img           { position: absolute; top: -10px; right: -10px; border: 0; padding: 0; height: 20px; width: 20px; margin: 0; }
+form.configuration div.config ul.popup_menu li.subset img           { height: 16px; width: 16px; padding: 3px; margin-right: 3px; }
 form.configuration div.config ul.popup_menu li img.tick             { margin: 9px 0 0 -11px!important; padding: 2px 0; margin-left: 0; height: 11px; width: 11px; }
-form.configuration div.config ul.popup_menu li span                 { margin-left: 3px; }
-form.configuration div.config ul.popup_menu li span.current         { font-weight: normal; cursor: default; font-size: 0.9em; position: relative; top: 3px; }
+form.configuration div.config ul.popup_menu li span,
+form.configuration div.config ul.popup_menu li a                    { position: relative; top: 3px; margin-left: 3px; }
+form.configuration div.config ul.popup_menu li span.current         { font-weight: normal; cursor: default; font-size: 0.9em; }
 form.configuration div.config div.subset.first,
 form.configuration div.config div.subset.active                     { margin-top: -4px; }
 form.configuration div.config div.subset.active h4                  { display: block; margin-top: 10px; }
