@@ -84,7 +84,7 @@ sub sets_table {
     };
   }
 
-  return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+  return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable heightwrap_inside' })->render;
 }
 
 

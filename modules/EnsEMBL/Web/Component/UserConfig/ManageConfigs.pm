@@ -136,7 +136,7 @@ sub records_table {
           %s
         </div>',
         $configs{$_}{'title'} ? qq{<h4>Configurations for $configs{$_}{'title'}</h4>} : '',
-        $self->new_table(\@columns, $rows{$_}, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render,
+        $self->new_table(\@columns, $rows{$_}, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable heightwrap_inside' })->render,
       );
     }
   }

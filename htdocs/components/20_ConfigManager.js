@@ -3,22 +3,18 @@
 Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   constructor: function (id, params) {
     this.base(id, params);
-
-    Ensembl.EventManager.register('modalPanelResize', this, this.wrapping);
   },
 
   init: function () {
     var panel = this;
     
     this.base();
+    Ensembl.EventManager.register('modalPanelResize', this, this.update_height_wrapping);
+
     
     this.editing = false;
     
-    $('<span class="toggle"/>').insertAfter($('.heightWrap',this.el));    
-    this.el.on('click', 'span.toggle', function () {
-      $(this).toggleClass('open').siblings('.heightWrap').toggleClass('open');
-      return false;
-    }).on('click', 'a.edit', function (e) {
+    this.el.on('click', 'a.edit', function (e) {
       e.preventDefault();
       
       $.ajax({
@@ -54,7 +50,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       $('form', panel.el).find('fieldset > div')[func]().find('[name=name], [name=description]').val('').removeClass('valid');
       
       if (func === 'show') {
-        panel.wrapping(els.find('.heightWrap'));
+        panel.update_height_wrapping(els.find('.heightWrap'));
         panel.editing = false;
       }
       
@@ -71,7 +67,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       }
       
       if (show) {
-        panel.wrapping(els.find('.heightWrap'));
+        panel.update_height_wrapping(els.find('.heightWrap'));
         panel.editing = this.rel;
       }
       
@@ -84,12 +80,12 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       return false;
     });
     
-    this.wrapping();
+    this.update_height_wrapping();
   },
   
   initialize: function () {
     this.base();
-    this.wrapping();
+    this.update_height_wrapping();
     
     if (this.dataTables) {
       $.each(this.dataTables, function () {
@@ -99,43 +95,13 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     tr = null;
   },
-  
-  wrapping: function (els) {
-    (els || $('.heightWrap', this.el)).each(function () {
-      var el    = $(this);
-      var open  = el.hasClass('open');
-      var val   = el.children();
-      var empty = val.text() === '';
-      
-      if (open) {
-        el.removeClass('open');
-      }
-      
-      val[empty ? 'addClass' : 'removeClass']('empty');
-      
-      // check if content is hidden by overflow: hidden
-      el.next('span.toggle')[el.height() < val.height() ? 'show' : 'hide']();
-      
-      if (open) {
-        el.addClass('open');
-        
-        if (empty) {
-          el.siblings('span.toggle').trigger('click');
-        }
-      }
-      
-      el = null;
-    });
     
-    els = null;
-  },
-  
   saveEdit: function (input, value) {
     var param    = input.attr('name');
     var save     = input.siblings('a.save');
     var configId = save.attr('rel');
     
-    this.wrapping(input.siblings('.heightWrap'));
+    this.update_height_wrapping(input.siblings('.heightWrap'));
     
     $.ajax({
       url: save.attr('href'),
