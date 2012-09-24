@@ -14,9 +14,9 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     this.editing = false;
     
-    this.el.on('click', 'img.toggle', function () {
-      this.src = this.src.match(/closed/) ? '/i/open2.gif' : '/i/closed2.gif';
-      $(this).siblings('.heightWrap').toggleClass('open');
+    $('<span class="toggle"/>').insertAfter($('.heightWrap',this.el));    
+    this.el.on('click', 'span.toggle', function () {
+      $(this).toggleClass('open').siblings('.heightWrap').toggleClass('open');
       return false;
     }).on('click', 'a.edit', function (e) {
       e.preventDefault();
@@ -114,13 +114,13 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       val[empty ? 'addClass' : 'removeClass']('empty');
       
       // check if content is hidden by overflow: hidden
-      el.next('img.toggle')[el.height() < val.height() ? 'show' : 'hide']();
+      el.next('span.toggle')[el.height() < val.height() ? 'show' : 'hide']();
       
       if (open) {
         el.addClass('open');
         
         if (empty) {
-          el.siblings('img.toggle').trigger('click');
+          el.siblings('span.toggle').trigger('click');
         }
       }
       

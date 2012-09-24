@@ -25,6 +25,13 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 img.portal  { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 
 /************************************
+             table stuff
+ ************************************/
+
+.data_table .toggle { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 4px; top: 2px; }
+.data_table .toggle.open { background: url(/i/open2.gif); }
+
+/************************************
              other stuff
 *************************************/
 

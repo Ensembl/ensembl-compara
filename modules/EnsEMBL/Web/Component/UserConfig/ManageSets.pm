@@ -47,8 +47,8 @@ sub sets_table {
   my $configs  = $adaptor->all_configs;
   my $img_url  = $self->img_url;
   my $icon_url = $img_url . '16/';
-  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};
-  my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
+  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div>%s<a href="%s" class="save"></a></div>};
+  my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div></div>};
   my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}dis/save.png" alt="use" title="Use this configuration set" /></a><div class="config_used">Configuration set applied</div>};
   my @rows;
   
@@ -93,7 +93,7 @@ sub records_table {
   my $hub     = $self->hub;
   my $img_url = $self->img_url;
   my $add     = '<div><a class="add_to_set" href="#" rel="%s" title="Add to set"></a><input type="hidden" name="record_id" class="update" value="%s" /></div>';
-  my $wrap    = qq{<div><div class="heightWrap"><div>%s</div></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
+  my $wrap    = qq{<div><div class="heightWrap"><div>%s</div></div></div>};
   my (%configs, %entries, @rows);
   
   my @columns = (
