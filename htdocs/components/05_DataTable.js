@@ -48,7 +48,7 @@ Ensembl.DataTable = {
       if(table.hasClass('heightwrap_inside')) {
         Ensembl.EventManager.register('modalPanelResize', panel, panel.update_height_wrapping);
         $('<span class="toggle-img"/>').insertAfter($('.heightWrap',table));
-        table.on('click', 'span.toggle', function () {
+        table.on('click', 'span.toggle-img', function () {
           $(this).toggleClass('open').siblings('.heightWrap').toggleClass('open');
           return false;
         });
@@ -57,7 +57,8 @@ Ensembl.DataTable = {
       
       panel.dataTables = panel.dataTables || [];
       panel.dataTables.push(dataTable);
-            
+
+
       table = dataTable = null;
     });
     
@@ -435,13 +436,13 @@ Ensembl.DataTable = {
       val[empty ? 'addClass' : 'removeClass']('empty');
       
       // check if content is hidden by overflow: hidden
-      el.next('span.toggle')[el.height() < val.height() ? 'show' : 'hide']();
+      el.next('span.toggle-img')[el.height() < val.height() ? 'show' : 'hide']();
       
       if (open) {
         el.addClass('open');
         
         if (empty) {
-          el.siblings('span.toggle').trigger('click');
+          el.siblings('span.toggle-img').trigger('click');
         }
       }
       
