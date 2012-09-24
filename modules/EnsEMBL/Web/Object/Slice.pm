@@ -294,13 +294,13 @@ sub get_individuals {
     warn "Error getting individual adaptor off variation adaptor " . $self->variation_adaptor;
     return ();
   }
-
+  
   if ($options eq 'default') {
     return sort  @{$individual_adaptor->get_default_strains};
   } elsif ($options eq 'reseq') {
     return @{$individual_adaptor->fetch_all_strains_with_coverage};
   } elsif ($options eq 'reference') {
-    return $individual_adaptor->get_reference_strain_name;
+    return $individual_adaptor->get_reference_strain_name || $self->species;
   }
 
   my %default_pops;
