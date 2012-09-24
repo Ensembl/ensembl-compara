@@ -210,6 +210,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {
                 'include_nonreference'  => 1,
+                'include_patches'       => 1,
                 'include_reference'     => 0,
             },
             -hive_capacity => -1,
