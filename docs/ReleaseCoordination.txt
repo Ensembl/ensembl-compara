@@ -349,7 +349,7 @@ $ ant
 
 Now you can run the compara-compara_external_foreign_keys healthchecks:
 
-$ time ./run-healthcheck.sh -d mp12_ensembl_compara_68 -type compara -d2 .+_core_68_.+ compara_external_foreign_keys
+$ time ./run-healthcheck.sh -d mp12_ensembl_compara_68 -type compara -d2 .+_core_69_.+ compara_external_foreign_keys
 
 ...and correct mismatches if any!
 
@@ -752,7 +752,7 @@ You can use "--compara_db compara_curr" if it is run on the final merged db,
 
 Remove all the .class files and recompile
 
-$ cd ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck
+$ cd $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck
 $ find build -name '*.class' -delete
 $ export JAVA_HOME=/software/jdk1.6.0_01
 $ ant
@@ -771,7 +771,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_
 
 13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
 
-$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -repair Meta
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_compara_69 -type compara -repair Meta
 # rel.61: 6m30, "no repair needed" (probably after Stephen has already done it)
 # rel.63: 8m (full repair)
 # rel.65: 9m "No repair needed"
@@ -779,7 +779,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl
 
 13.3 Now run the remaining healthchecks:
 
-$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara -d2 .+_core_68_.+ compara_external_foreign_keys
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_compara_69 -type compara -d2 .+_core_69_.+ compara_external_foreign_keys
 # in rel.56 everything passed apart from CheckTaxon - according to Javier in this particular case it was not a problem
 # in rel.pre57 it took 20 minutes (all passed).
 # in rel.57 it took ?? minutes ('genbank common name' for 4 species had to be copied from their 'ensembl common name' in ncbi_taxa_name table)
@@ -790,7 +790,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl
 # rel.66:   12m, 1 failure ( taeniopygia_guttata_core_66_1: common_name::zebra finch is not in mp12_ensembl_compara_66 )
 
 
-$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara compara_genomic
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_compara_69 -type compara compara_genomic
 # rel.58:   47m, 7 failures
 # rel.61:   51m, 3 failures
 # rel.63:   84m, (2.5 errors that are "ok")
@@ -798,7 +798,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl
 # rel.66:   23m, (4 errors that are "ok")
 
 
-$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d mm14_ensembl_compara_68 -type compara compara_homology
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_compara_69 -type compara compara_homology
 # rel.58:   14m, 5 failures
 # rel.61:   30m, 3 failures
 # rel.62:   3m, 1 failure (CheckSpeciesSetTag, ok?)
@@ -823,7 +823,7 @@ and check their data.
 # So if you (suspect that you) have changed anything in the database, do run these two commands just in case -
 # a dry run of each doesn't even take a minute.
 
-$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mm14_ensembl_compara_68
+$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_compara_69
 
 # rel.56    12min
 # rel.pre57 30+105min
@@ -835,7 +835,7 @@ $ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmi
 # rel.65    21m
 # rel.66     9m
 
-$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mm14_ensembl_compara_68
+$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_compara_69
 # rel.56    2.5 hours
 # rel.pre57 : took several iterations (not all tables were MyISAM initially), last one 132min.
 # rel.57    2+1.6 hours
@@ -845,14 +845,14 @@ $ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadm
 # rel.65    3h
 # rel.66    2h
 
-$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mm14_ensembl_ancestral_68
+$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_ancestral_69
 # rel.57    took seconds to complete
 # rel.62    1sec
 # rel.63    3sec
 # rel.65    1sec
 # rel.66    4sec
 
-$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mm14_ensembl_ancestral_68
+$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_ancestral_69
 # rel.57    took seconds to complete
 # rel.62
 # rel.63    14m
@@ -873,6 +873,7 @@ $ bash
 16.2. Create a file that will contain one line with the source/destination parameters, like this:
 
 $ cat <<EOF >/tmp/mm14_ensembl_compara_69.copy_options
+
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
 compara3        3306        sf5_ensembl_compara_69      ens-staging     3306        ensembl_compara_69
@@ -943,7 +944,7 @@ $ time perl ~mm14/workspace/cvs/head/ensembl/misc-scripts/CopyDBoverServer.pl -p
 The patch should include at least an update of the schema_version in the meta table!
 
 $ mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table mp12_ensembl_compara_67 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
-$ mysqldump --defaults-group-suffix=_compara3 --no-data --skip-add-drop-table mm14_ensembl_compara_68 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
+$ mysqldump --defaults-group-suffix=_compara3 --no-data --skip-add-drop-table sf5_ensembl_compara_69 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
 $ sdiff -b old_schema.sql new_schema.sql | less
 
 Create the sql/patch_67_68.sql file by hand
@@ -962,8 +963,8 @@ $ sdiff -w 200 -bs patched_old_schema.sql new_schema.sql | less
 18. Update the files in the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql directory:
 
 $ cd $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/
-$ mysql -hcompara3 -uensro -N -e "SELECT * FROM genome_db order by genome_db_id asc" mm14_ensembl_compara_68 > genome_db.txt
-$ mysql -hcompara3 -uensro -N -e "SELECT * FROM method_link order by method_link_id asc" mm14_ensembl_compara_68 > method_link.txt
+$ mysql -hcompara3 -uensro -N -e "SELECT * FROM genome_db order by genome_db_id asc" sf5_ensembl_compara_69 > genome_db.txt
+$ mysql -hcompara3 -uensro -N -e "SELECT * FROM method_link order by method_link_id asc" sf5_ensembl_compara_69 > method_link.txt
 
 You will have to change the default schema_version in the table.sql file (last line of the file)
 CVS commit these files.
