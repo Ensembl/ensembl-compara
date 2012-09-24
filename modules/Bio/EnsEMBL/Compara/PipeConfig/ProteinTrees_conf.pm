@@ -758,7 +758,8 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into  => {
-                '2'  => [ 'dump_subset_create_blastdb' ],
+                '2->A'  => [ 'dump_subset_create_blastdb' ],
+                'A->1'  => [ 'blast_species_factory' ],
             },
         },
 
@@ -769,8 +770,18 @@ sub pipeline_analyses {
             },
             -batch_size    =>  20,  # they can be really, really short
             -hive_capacity => -1,
-            -flow_into => {
-                1 => [ 'blast_factory' ],
+        },
+
+        {   -logic_name => 'blast_species_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                'fan_branch_code'       => 2,
+            },
+            -flow_into  => {
+                '2'  => [ 'blast_factory' ],
             },
         },
 
