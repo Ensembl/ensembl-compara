@@ -27,10 +27,11 @@ sub content {
   my $hub            = $self->hub;
   my $species_defs   = $hub->species_defs;
   my $original_slice = $object->slice;
-  $original_slice    = $original_slice->invert if $hub->param('strand') == -1;
+     $original_slice = $original_slice->invert if $hub->param('strand') == -1;
   my $ref_slice      = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
   my $ref_slice_obj  = $ref_slice->Obj;
   my $var_db         = $species_defs->databases->{'DATABASE_VARIATION'};
+  my $strain         = $species_defs->translate('strain') || 'strain';
   my @individuals;
   my $html;
     
@@ -95,19 +96,19 @@ sub content {
     $html  = $self->build_sequence($sequence, $config);
     $html .= $self->_hint(
       'strain_config', 
-      'Strain / Individual configuration', 
-      '<p>You can choose which strains to display from the "<b>Resequenced individuals</b>" section of the configuration panel, accessible via the "<b>Configure this page</b>" link to the left.</p>'
+      ucfirst "$strain configuration",
+      qq{<p>You can choose which ${strain}s to display from the "<b>Resequenced ${strain}s</b>" section of the configuration panel, accessible via the "<b>Configure this page</b>" link to the left.</p>}
     );
   } else {
-    my $strains = ($species_defs->translate('strain') || 'strain') . 's';
+    $strain .= 's';
     
     if ($ref_slice->get_individuals('reseq')) {
       $html = $self->_info(
-        'No strains specified', 
-        qq{<p>Please select $strains to display from the "<b>Resequenced individuals</b>" section of the configuration panel, accessible via "<b>Configure this page</b>" link to the left.</p>}
+        "No $strain specified", 
+        qq{<p>Please select $strain to display from the "<b>Resequenced $strain</b>" section of the configuration panel, accessible via "<b>Configure this page</b>" link to the left.</p>}
       );
     } else {
-      $html = $self->_warning('No strains available', "<p>No resequenced $strains available for this species</p>");
+      $html = $self->_warning("No $strain available", "<p>No resequenced $strain available for this species</p>");
     }
   }
   

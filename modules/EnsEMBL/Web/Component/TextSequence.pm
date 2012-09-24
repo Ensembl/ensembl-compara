@@ -988,8 +988,9 @@ sub get_key {
   
   my $hub            = $self->hub;
   my $class_to_style = $self->class_to_style;
-  my $var_styles     = $hub->species_defs->colour('variation');
   my $image_config   = $hub->get_imageconfig('text_seq_legend');
+  my $var_styles     = $hub->species_defs->colour('variation');
+  my $strain         = $hub->species_defs->translate('strain') || 'strain';
   
   my $exon_type;
      $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
@@ -1020,12 +1021,12 @@ sub get_key {
   
   foreach my $type (keys %key) {
     if ($key{$type}{'class'}) {
-      my $style = $class_to_style->{$key{$type}{'class'}}->[1];
+      my $style = $class_to_style->{$key{$type}{'class'}}[1];
       $key{$type}{'default'} = $style->{'background-color'};
       $key{$type}{'label'}   = $style->{'color'};
     } else {
       foreach (values %{$key{$type}}) {
-        my $style = $class_to_style->{$_->{'class'}}->[1];
+        my $style = $class_to_style->{$_->{'class'}}[1];
         
         $_->{'default'} = $style->{'background-color'};
         $_->{'label'}   = $style->{'color'};
@@ -1036,22 +1037,22 @@ sub get_key {
   $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
   
   foreach my $type (keys %{$config->{'key'}}) {
-    if (ref $config->{'key'}->{$type} eq 'HASH') {
-      $image_config->{'legend'}->{$type}->{$_} = $key{$type}{$_} for grep $config->{'key'}->{$type}->{$_}, keys %{$config->{'key'}->{$type}};
-    } elsif ($config->{'key'}->{$type}) {
-      $image_config->{'legend'}->{$type} = $key{$type};
+    if (ref $config->{'key'}{$type} eq 'HASH') {
+      $image_config->{'legend'}{$type}{$_} = $key{$type}{$_} for grep $config->{'key'}{$type}{$_}, keys %{$config->{'key'}{$type}};
+    } elsif ($config->{'key'}{$type}) {
+      $image_config->{'legend'}{$type} = $key{$type};
     }
   }
   
   $image_config->image_width(650);
   
   my $key_html;
-     $key_html .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"             if $config->{'population_filter'};
-     $key_html .= '<li>Variations are filtered by consequence type</li>',                                                                                if $config->{'consequence_filter'};
-     $key_html .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                           if $config->{'key'}->{'conservation'};
-     $key_html .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>' if $config->{'alignment_numbering'};
-     $key_html .= '<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</li>'  if $config->{'match_display'};
-     $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                         if $config->{'resequencing'};
+     $key_html .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"                if $config->{'population_filter'};
+     $key_html .= '<li>Variations are filtered by consequence type</li>',                                                                                   if $config->{'consequence_filter'};
+     $key_html .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                              if $config->{'key'}{'conservation'};
+     $key_html .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'    if $config->{'alignment_numbering'};
+     $key_html .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary ${strain}s matching the reference $strain are replaced with dots</li>" if $config->{'match_display'};
+     $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                            if $config->{'resequencing'};
      $key_html  = "<ul>$key_html</ul>" if $key_html;
   
   return '<h4>Key</h4>' . $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render . $key_html;
