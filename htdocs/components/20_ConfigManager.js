@@ -9,8 +9,6 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     var panel = this;
     
     this.base();
-    Ensembl.EventManager.register('modalPanelResize', this, this.update_height_wrapping);
-
     
     this.editing = false;
     
@@ -50,7 +48,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       $('form', panel.el).find('fieldset > div')[func]().find('[name=name], [name=description]').val('').removeClass('valid');
       
       if (func === 'show') {
-        panel.update_height_wrapping(els.find('.heightWrap'));
+        panel.update_height_wrapping(els);
         panel.editing = false;
       }
       
@@ -67,7 +65,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       }
       
       if (show) {
-        panel.update_height_wrapping(els.find('.heightWrap'));
+        panel.update_height_wrapping(els);
         panel.editing = this.rel;
       }
       
@@ -78,14 +76,11 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       els = group = null;
       
       return false;
-    });
-    
-    this.update_height_wrapping();
+    });    
   },
   
   initialize: function () {
     this.base();
-    this.update_height_wrapping();
     
     if (this.dataTables) {
       $.each(this.dataTables, function () {
@@ -101,7 +96,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     var save     = input.siblings('a.save');
     var configId = save.attr('rel');
     
-    this.update_height_wrapping(input.siblings('.heightWrap'));
+    this.update_height_wrapping(input.parent());
     
     $.ajax({
       url: save.attr('href'),

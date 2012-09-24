@@ -46,11 +46,13 @@ Ensembl.DataTable = {
       }
       
       if(table.hasClass('heightwrap_inside')) {
+        Ensembl.EventManager.register('modalPanelResize', panel, panel.update_height_wrapping);
         $('<span class="toggle"/>').insertAfter($('.heightWrap',table));
         table.on('click', 'span.toggle', function () {
           $(this).toggleClass('open').siblings('.heightWrap').toggleClass('open');
           return false;
         });
+        panel.update_height_wrapping(table);
       }
       
       panel.dataTables = panel.dataTables || [];
@@ -420,7 +422,7 @@ Ensembl.DataTable = {
   },
   
   update_height_wrapping: function (els) {
-    (els || $('.heightWrap', this.el)).each(function () {
+    $('.heightWrap', els || this.el).each(function () {
       var el    = $(this);
       var open  = el.hasClass('open');
       var val   = el.children();
