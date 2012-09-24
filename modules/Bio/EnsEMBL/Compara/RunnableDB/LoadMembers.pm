@@ -132,16 +132,19 @@ sub run {
                     ? $unfiltered_slices
                     : [ grep { not $_->is_reference() } @$unfiltered_slices ];
 
-    if(scalar(@$slices)) {
+  my $final_slices = ( ! $self->param('include_patches') ) ?
+                       [ grep { $_->assembly_exception_type() !~ /PATCH/ } @$slices ]
+                       : [ @$slices ];
 
-        $self->loadMembersFromCoreSlices( $slices );
+    if(scalar(@$final_slices)) {
+
+        $self->loadMembersFromCoreSlices( $final_slices );
 
     } else {
 
         $self->warning("No suitable toplevel slices found in ".$core_dba->dbc->dbname());
     }
 }
-
 
 sub write_output {
     my $self = shift @_;
