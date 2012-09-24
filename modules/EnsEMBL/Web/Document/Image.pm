@@ -381,7 +381,7 @@ sub hover_labels {
       }
     }
     
-    $renderers .= qq{<li class="subset subset_$subset->[0]"><a class="modal_link" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>} if $subset;
+    $renderers .= qq{<li class="subset subset_$subset->[0]"><a class="modal_link force" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>} if $subset;
     $html      .= sprintf(qq(
       <div class="hover_label floating_popup %s">
         <p class="header">%s</p>
