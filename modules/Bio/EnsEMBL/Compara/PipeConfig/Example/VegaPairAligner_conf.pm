@@ -65,7 +65,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120611_'.$self->o('release').'_2',
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120611_'.$self->o('release').'_4',
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -103,7 +103,7 @@ sub default_options {
 	#Default pairaligner config
 	#
     'skip_pairaligner_stats' => 0, #skip this module if set to 1
-    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_2',
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
 #    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_67_testing',
     };
 }
@@ -145,7 +145,7 @@ sub pipeline_analyses {
                                               master_db
                                             );
 
-  #get all analyses that we know about 
+  #get all analyses that we know about
   my @e_analyses = @{&e_analyses};
 
   #remove analyses that we know we don't want to use / prompt when new ones from e! are found
@@ -184,10 +184,26 @@ sub pipeline_analyses {
         }
       }
     }
+    # for Vega 49 had to manually add filter duplicate high memory jobs into the basement. This should be fixed
+    # by Kathryn for next time, but if not then the code below should do it. However note this is not tested at all
+
+    ##Create a new analysis for filter duplicates_highmem where jobs are passed to the basement queue
+#    if ($name eq 'filter_duplicates_himem') {
+#      my $himem_basement = { %$analysis };
+#      $analyses->[$i]{'-flow_into'}->{-2} = ['filter_duplicates_himem_basement'];
+#      $analyses->[$i]{'-flow_into'}->{-1} = ['filter_duplicates_himem_basement'];
+#      warn Data::Dumper::Dumper($analysis);
+##
+#
+#      $himem_basement->{'-rc_name'} = 'basement';
+#      $himem_basement->{'-logic_name'} = 'filter_duplicates_himem_basment';
+#      warn Data::Dumper::Dumper($himem_basement); exit;
+#      push @$analyses,$himem_basement; 
+ #   }
   }
   if (@new_analyses) {
     foreach my $name (@new_analyses) {
-      print "Ensembl analysis \'$name\' is not known to us in Vega- review and decide what to do with it\n";
+      print "Ensembl analysis \'$name\' is not known to us in Vega - review and decide what to do with it\n";
     }
     exit;
   }
