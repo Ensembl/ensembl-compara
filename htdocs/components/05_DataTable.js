@@ -47,7 +47,7 @@ Ensembl.DataTable = {
       
       if(table.hasClass('heightwrap_inside')) {
         Ensembl.EventManager.register('modalPanelResize', panel, panel.update_height_wrapping);
-        $('<span class="toggle"/>').insertAfter($('.heightWrap',table));
+        $('<span class="toggle-img"/>').insertAfter($('.heightWrap',table));
         table.on('click', 'span.toggle', function () {
           $(this).toggleClass('open').siblings('.heightWrap').toggleClass('open');
           return false;
@@ -57,7 +57,7 @@ Ensembl.DataTable = {
       
       panel.dataTables = panel.dataTables || [];
       panel.dataTables.push(dataTable);
-      
+            
       table = dataTable = null;
     });
     

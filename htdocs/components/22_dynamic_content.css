@@ -28,8 +28,8 @@ img.portal  { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; bor
              table stuff
  ************************************/
 
-.data_table .toggle { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 4px; top: 2px; }
-.data_table .toggle.open { background: url(/i/open2.gif); }
+.data_table .toggle-img { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 4px; top: 2px; }
+.data_table .toggle-img.open { background: url(/i/open2.gif); }
 
 /************************************
              other stuff
