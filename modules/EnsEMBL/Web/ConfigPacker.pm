@@ -58,7 +58,7 @@ sub munge_config_tree {
   $self->_munge_file_formats;
 
   # Internal flatfile data sources
-  $self->_summarise_datahubs;
+  #$self->_summarise_datahubs;
 
   # parse the BLAST configuration
   $self->_configure_blast;
@@ -127,19 +127,22 @@ sub _summarise_core_tables {
   $self->_summarise_generic( $db_name, $dbh );
 
 ## Get chromosomes in order (replacement for array in ini files)
-  my $s_aref = $dbh->selectall_arrayref(
-    'select s.name 
-    from seq_region s, seq_region_attrib sa, attrib_type a 
-    where sa.seq_region_id = s.seq_region_id 
-      and sa.attrib_type_id = a.attrib_type_id 
-      and a.code = "karyotype_rank" 
-    order by abs(sa.value)'
-  );
-  my $chrs = [];
-  foreach my $row (@$s_aref) {
-    push @$chrs, $row->[0];
+## Only need to do this once!
+  if ($db_name eq 'DATABASE_CORE') {
+    my $s_aref = $dbh->selectall_arrayref(
+      'select s.name 
+      from seq_region s, seq_region_attrib sa, attrib_type a 
+      where sa.seq_region_id = s.seq_region_id 
+        and sa.attrib_type_id = a.attrib_type_id 
+        and a.code = "karyotype_rank" 
+      order by abs(sa.value)'
+    );
+    my $chrs = [];
+    foreach my $row (@$s_aref) {
+      push @$chrs, $row->[0];
+    }
+   $self->db_tree->{'ENSEMBL_CHROMOSOMES'} = $chrs;
   }
-  $self->db_tree->{'ENSEMBL_CHROMOSOMES'} = $chrs;
 
 ##
 ## Grab each of the analyses - will use these in a moment...
