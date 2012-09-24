@@ -144,14 +144,14 @@ sub get_valid_action {
   
   $self->{'availability'} = $object->availability if $object;
   
-  return $node_key if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
+  return $node->id if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
   
   foreach ($self->default_action, 'Idhistory', 'Chromosome', 'Genome') {
     $node = $tree->get_node($_);
     
     if ($node && $self->is_available($node->get('availability'))) {
       $hub->problem('redirect', $hub->url({ action => $_ }));
-      return $_;
+      return $node->id;
     }
   }
   
