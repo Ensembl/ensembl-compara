@@ -344,7 +344,7 @@ sub write_transcript_gtf {
               "." . "\t". 
               $strand . "\t". 
               "." . "\t";
-    print_attribs($fh,$gene,$biotype_display,$transcript,$count,'exon');
+    print_attribs($fh,$gene,$biotype_display,$transcript,$count,'exon', $exon);
     print $fh "\n";
 
     if ($intrans) {
@@ -497,6 +497,9 @@ sub print_attribs {
   if ($type eq 'CDS') {
     print $fh ' protein_id "' . get_translation_id($transcript->translation) . '";';
   }
+  if ($exon) { 
+    printf $fh ' exon_id "%s";', get_id_from_obj($exon); 
+  } 
 }
 
 
