@@ -330,7 +330,10 @@ sub source_link {
     } elsif ($url =~/hgmd/) {
       $url =~ s/###ID###/$gname/;
       $url =~ s/###ACC###/$vname/;
-    } else {
+    } elsif ($url =~/cosmic/) {
+	    my $cname = ($vname =~ /^COSM(\d+)/) ? $1 : $vname;
+			$url =~ s/###ID###/$cname/;
+		} else {
       $url =~ s/###ID###/$vname/;
     }
   } 
