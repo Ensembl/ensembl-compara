@@ -45,6 +45,12 @@ sub init {
 sub form {
   my $self = shift;
   
+  my $tree = $self->hub->core_objects->{'gene'}->get_GeneTree;
+  my $adaptor = $self->hub->database('compara')->get_adaptor('GeneTree');
+  my %other_clustersets = map {$_->clusterset_id => 1} @{$adaptor->fetch_all_linked_trees($tree->tree)};
+  $other_clustersets{$tree->tree->clusterset_id} = 1;
+  delete $other_clustersets{default};
+
   # The groups are defined in the compara.species_set_tag tables. We want those that have
   # a genetree_display tag. The groups are sorted by size first and then by name.
   my $hash     = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {};
@@ -123,10 +129,9 @@ sub form {
       select => 'select',
       name   => 'clusterset_id',
       label  => 'Model used for the tree reconstruction',
-      values => [ 
-        map { 
-          { value => $_, name => ($_ eq 'default' ? 'Final (merged) tree' : $_) }
-        } @{$self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'CLUSTERSET_IDS'}},
+      values => [
+        { value => 'default', name => 'Final (merged) tree' },
+        map {{ value => $_, name => $_ }} sort keys %other_clustersets,
       ]
     });
 
