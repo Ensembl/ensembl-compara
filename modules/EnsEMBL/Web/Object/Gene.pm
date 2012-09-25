@@ -784,6 +784,7 @@ sub get_GeneTree {
     }
     return unless $tree;
     
+    $tree->preload;
     $self->{$cache_key} = $tree->root;
     $self->{"_member_$compara_db"} = $member;
 
