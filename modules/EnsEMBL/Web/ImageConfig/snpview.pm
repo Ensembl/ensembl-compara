@@ -70,7 +70,7 @@ sub init {
   );
   
   $self->modify_configs(
-    ['somatic_mutation_COSMIC'],
+    ['somatic'],
     { display => 'normal', style => 'box', depth => 100000 }
   );
   
