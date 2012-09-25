@@ -944,6 +944,7 @@ sub transcript_table {
       my $protein           = 'No protein product';
       my $protein_length    = '-';
       my $ccds              = '-';
+      my $cds_tag           = '-';
       my $url               = $hub->url({ %url_params, t => $tsi });
       
       if ($_->translation) {
@@ -989,6 +990,7 @@ sub transcript_table {
         aa_length  => $protein_length,
         biotype    => $self->glossary_mouseover(ucfirst $biotype),
         ccds       => $ccds,
+        cds_tag    => $cds_tag,
         options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' }
       };
       
