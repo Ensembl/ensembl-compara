@@ -67,16 +67,18 @@ sub render_toolbar {
   return unless $icon_mapping;
 
   my ($toolbar, $export, $top, $bottom);
-
+  my $hub       = $self->hub;
+  my $component = $self->component;
+  
   ## Config panel link
-  if (grep $_->storable, @{$self->{'image_configs'}}) {
-    my $hub        = $self->hub;
-    my $config_url = $hub->url('Config', { action => $self->component, function => undef });
+  if ($hub->get_viewconfig($component)) {
+    my $config_url = $hub->url('Config', { action => $component, function => undef });
     my $data_url   = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
-
-    $toolbar .= sprintf '<a href="%s" class="config modal_link force" title="%s" rel="modal_config_%s"></a>', $config_url, $icon_mapping->{'config'}{'title'}, lc $self->component;
-    $toolbar .= qq{<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>};
+    
+    $toolbar .= sprintf '<a href="%s" class="config modal_link force" title="%s" rel="modal_config_%s"></a>', $config_url, $icon_mapping->{'config'}{'title'}, lc $component;
+    $toolbar .= qq{<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>} if $self->{'image_configs'}[0]->get_node('user_data');
   }
+  
   ## Image export popup menu
   if ($self->{'export'}) {
     my @formats = (
