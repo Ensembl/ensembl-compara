@@ -66,7 +66,7 @@ sub content {
   return $tree if $hub->param('g') && !$is_speciestree && !defined $member;  
   
   my $leaves               = $tree->get_all_leaves;  
-  my $image_config         = $hub->get_imageconfig('genetreeview');
+  my $image_config         = $hub->get_imageconfig('speciestreeview');
   
   my $image_width          = $hub->param('image_width') || $self->image_width || 800;
   my $colouring            = $hub->param('colouring') || 'background'; 
@@ -104,7 +104,6 @@ sub content {
 #       #push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => $node_id};
 #     }
 #   }
-
   my $image = $self->new_image($tree, $image_config, \@highlights);
 
   return $html if $self->_export_image($image, 'no_text');
