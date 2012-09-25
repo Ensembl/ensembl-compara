@@ -1007,6 +1007,18 @@ sub _summarise_compara_db {
   ###################################################################
 
   ###################################################################
+  ## Section for storing the list of clusterset_ids
+  $res_aref = $dbh->selectall_arrayref('SELECT DISTINCT clusterset_id FROM gene_tree_root');
+  my %ignored = ( 'super-align' => 1 );
+
+  $self->db_tree->{$db_name}{'CLUSTERSET_IDS'} = [];
+  foreach my $row (@$res_aref) {
+    my ($clusterset_id) = @$row;
+    push @{$self->db_tree->{$db_name}{'CLUSTERSET_IDS'}}, $clusterset_id unless $ignored{$clusterset_id};
+  }
+  ###################################################################
+
+  ###################################################################
   ## Section for storing the genome_db_ids <=> species_name
   $res_aref = $dbh->selectall_arrayref('SELECT genome_db_id, name, assembly FROM genome_db WHERE assembly_default = 1');
   

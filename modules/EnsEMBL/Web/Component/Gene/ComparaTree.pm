@@ -80,6 +80,24 @@ sub content {
     ['Number of gene split events', $self->get_num_nodes_with_tag($tree, 'node_type', 'gene_split')   ]
   )->render;
 
+  if ($hub->type eq 'Gene') {
+    if ($tree->tree->clusterset_id ne $object->hub->param('clusterset_id')) {
+      $html .= $self->_info('Phylogenetic model selection',
+        sprintf(
+          'The phylogenetic model <I>%s</I> is not available for this tree. Showing the default (consensus) tree instead.',
+          $object->hub->param('clusterset_id')
+          )
+      );
+    } elsif ($object->hub->param('clusterset_id') ne 'default') {
+      $html .= $self->_info('Phylogenetic model selection',
+        sprintf(
+          'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses.',
+          $object->hub->param('clusterset_id')
+          )
+      );
+    }
+  }
+
   if ($highlight_gene) {
     my $highlight_gene_display_label;
     

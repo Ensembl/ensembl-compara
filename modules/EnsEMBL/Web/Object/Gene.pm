@@ -772,16 +772,22 @@ sub get_compara_Member {
 sub get_GeneTree {
   my $self       = shift;
   my $compara_db = shift || 'compara';
-  my $cache_key  = "_protein_tree_$compara_db";
+  my $clusterset_id = $self->hub->param('clusterset_id') || 'default';
+  my $cache_key  = sprintf('_protein_tree_%s_%s', $compara_db, $clusterset_id);
 
   if (!$self->{$cache_key}) {
     my $member  = $self->get_compara_Member($compara_db)           || return;
     my $adaptor = $member->adaptor->db->get_adaptor('GeneTree')    || return;
-    my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => 'default')->[0];
+    my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id)->[0];
+    unless ($tree) {
+        $tree = $adaptor->fetch_default_for_Member($member);
+    }
     return unless $tree;
     
     $self->{$cache_key} = $tree->root;
     $self->{"_member_$compara_db"} = $member;
+
+    $tree->attach_alignment('default') if ($tree->clusterset_id ne 'default');
   }
   return $self->{$cache_key};
 }

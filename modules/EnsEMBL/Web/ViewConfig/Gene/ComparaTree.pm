@@ -18,6 +18,7 @@ sub init {
   my $hash     = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {};
   my $defaults = {
     collapsability => 'gene',
+    clusterset_id  => 'default',
     colouring      => 'background',
     exons          => 'on',
     text_format    => 'msf',
@@ -114,6 +115,18 @@ sub form {
         { value => 'paralogs',     name => 'View paralogs of current gene' },
         { value => 'duplications', name => 'View all duplication nodes' },
         { value => 'all',          name => 'View fully expanded tree' }
+      ]
+    });
+
+    $self->add_form_element({
+      type   => 'DropDown',
+      select => 'select',
+      name   => 'clusterset_id',
+      label  => 'Model used for the tree reconstruction',
+      values => [ 
+        map { 
+          { value => $_, name => ($_ eq 'default' ? 'Final (merged) tree' : $_) }
+        } @{$self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'CLUSTERSET_IDS'}},
       ]
     });
 
