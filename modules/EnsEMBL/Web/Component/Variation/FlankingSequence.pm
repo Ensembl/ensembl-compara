@@ -28,9 +28,17 @@ sub content {
   ## Add flanking sequence
   my $f_label;
   my $f_html;
-  my $if_fs_diff = qq{It differs from the flanking sequence submitted to <a href....>dbSNP</a>*};
   
-  my $f_info = $self->_info('Flanking sequence', '<p>The sequence below is from the <b>reference genome</b> flanking the variant location.The variant is shown in <span class="alt_allele"><u>red</u></span> text. Neighbouring variants are shown with highlighted letters and ambiguity codes</p>', 'auto');
+  my $f_info_msg = qq{ 
+    <p>
+      The sequence below is from the <b>reference genome</b> flanking the variant location.
+      The variant is shown in <span class="alt_allele"><u>red</u></span> text.
+      Neighbouring variants are shown with highlighted letters and ambiguity codes.<br />
+      To change the display of the flanking sequence (e.g. hide the other variants, change the length of the flanking sequence), 
+      use the "<b>Configure this page</b>" link on the left.
+    </p>
+  };
+  my $f_info = $self->_info('Flanking sequence', $f_info_msg, 'auto');
 
   my $status   = 'status_ambig_sequence';
 
