@@ -38,7 +38,7 @@ sub populate_tree {
   );
 	
   $context_menu->append($self->create_node('Mappings', 'Genes and regulation ([[counts::transcripts]])',
-    [qw( summary EnsEMBL::Web::Component::Variation::Mappings )],
+    [qw( mappings EnsEMBL::Web::Component::Variation::Mappings )],
     { 'availability' => 'variation has_transcripts', 'concise' => 'Genes and regulation' }
   ));
   $context_menu->append($self->create_node('Sequence', 'Flanking sequence',
@@ -55,29 +55,32 @@ sub populate_tree {
   );
   
   $self->create_node('Populations', 'Sample information ([[counts::populations]])',
-    [qw( summary EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
+    [qw( population EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
     { 'availability' => 'variation has_populations is_somatic', 'concise' => 'Sample information', 'no_menu_entry' => !$somatic }
   );
   
   $self->create_node('Individual', 'Individual genotypes ([[counts::individuals]])',
-    [qw( summary EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
+    [qw( individual EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
     { 'availability' => 'variation has_individuals not_somatic', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
   ); 
   
   $self->create_node('HighLD', 'Linkage disequilibrium',
-    [qw( summary EnsEMBL::Web::Component::Variation::HighLD )],
+    [qw( highld EnsEMBL::Web::Component::Variation::HighLD )],
     { 'availability' => 'variation has_ldpops variation has_individuals not_somatic', 'concise' => 'Linkage disequilibrium', 'no_menu_entry' => $somatic }
   );
     
   $self->create_node('Phenotype', 'Phenotype Data ([[counts::ega]])',
-    [qw( summary EnsEMBL::Web::Component::Variation::Phenotype )],
+    [qw( 
+        phenotype EnsEMBL::Web::Component::Variation::Phenotype 
+        genes     EnsEMBL::Web::Component::Variation::LocalGenes
+    )],
     { 'availability' => 'variation has_ega', 'concise' => 'Phenotype Data' }
   );
   
   $self->create_node('Compara_Alignments', 'Phylogenetic Context ([[counts::alignments]])',
     [qw(
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
-      summary  EnsEMBL::Web::Component::Variation::Compara_Alignments
+      alignment EnsEMBL::Web::Component::Variation::Compara_Alignments
     )],
     { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
   );
