@@ -49,7 +49,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist;
 
 use strict;
 use Data::Dumper;
