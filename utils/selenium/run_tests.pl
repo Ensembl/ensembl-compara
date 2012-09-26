@@ -21,6 +21,7 @@ my $module;
 my $url = 'http://test.ensembl.org';
 my $host = `host mib20062i`; #get the IP address of the selenium server which is on the macbook pro.
 $host =~ s/mib20062i.internal.sanger.ac.uk has address //;#'172.20.11.204';
+#$host = '172.20.10.187';
 my $port = '4444';
 my $browser = '*firefox';
 my $test;
