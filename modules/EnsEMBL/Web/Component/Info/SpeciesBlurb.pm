@@ -65,7 +65,7 @@ sub content {
   $html .= '<h2>Statistics</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file);
 
-  my $interpro = $self->hub->url({'action' => 'IPTop500'});
+  my $interpro = $self->hub->url({'action' => 'IPtop500'});
   $html .= qq(<h3>InterPro Hits</h3>
 <ul>
   <li><a href="$interpro">Table of top 500 InterPro hits</li>
