@@ -33,7 +33,7 @@ sub default_options {
             # parameters that are likely to change from execution to another:
             # 'mlss_id'             => 40086,
             'release'               => '69',
-            'rel_suffix'            => 'a',    # an empty string by default, a letter or string otherwise
+            'rel_suffix'            => 'b',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
@@ -124,7 +124,7 @@ sub default_options {
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'mm14_ensembl_compara_68',
+                         -dbname => 'sf5_ensembl_compara_69',
                         },
            };
 }
@@ -462,7 +462,6 @@ sub pipeline_analyses {
             {   -logic_name    => 'aligner_for_tree_break',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
                 -hive_capacity => $self->o('aligner_for_tree_break_capacity'),
-                -failed_job_tolerance => 10,    # that many per cent jobs are allowed to fail
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
@@ -511,7 +510,6 @@ sub pipeline_analyses {
             {   -logic_name    => 'infernal',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
                 -hive_capacity => $self->o('infernal_capacity'),
-                -failed_job_tolerance => 10,    # that many per cent jobs are allowed to fail
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
@@ -558,7 +556,6 @@ sub pipeline_analyses {
             -parameters => {
                             'raxml_exe' => $self->o('raxml_exe'),
                            },
-            -failed_job_tolerance => 3,
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_himem' ],
                            -2 => [ 'sec_struct_model_tree_himem' ],
@@ -573,7 +570,6 @@ sub pipeline_analyses {
          -parameters => {
                          'raxml' => $self->o('raxml_exe'),
                         },
-         -failed_job_tolerance => 3,
          -can_be_empty => 1,
          -rc_name => 'himem',
         },
@@ -587,7 +583,6 @@ sub pipeline_analyses {
                             'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                            },
-            -failed_job_tolerance => 5,    # that many per cent jobs are allowed to fail
             -flow_into => {
                            -2 => ['genomic_alignment_long'],
                            -1 => ['genomic_alignment_long'],
@@ -620,7 +615,6 @@ sub pipeline_analyses {
                             'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                            },
-         -failed_job_tolerance => 5,
          -can_be_empty => 1,
          -rc_name => 'himem',
          -flow_into => {
@@ -661,8 +655,9 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
                             'mlss_id' => $self->o('mlss_id'),
+                            'member_type' => 'ncrna', # For creating additional 
+                            'store_intermediate_trees' => 1,
                            },
-            -failed_job_tolerance => 5,
             -flow_into => {
                            2 => [ 'orthotree', 'ktreedist' ],
                            -1 => [ 'treebest_mmerge_himem' ],
@@ -679,7 +674,6 @@ sub pipeline_analyses {
                          'treebest_exe' => $self->o('treebest_exe'),
                          'mlss_id' => $self->o('mlss_id'),
                         },
-         -failed_job_tolerance => 5,
          -flow_into => {
                         2 => [ 'orthotree', 'ktreedist' ],
                        },
@@ -708,19 +702,17 @@ sub pipeline_analyses {
                          'tag_split_genes'   => 0,
                          'mlss_id' => $self->o('mlss_id'),
          },
-         -failed_job_tolerance => 5,
          -rc_name => 'himem',
         },
 
         {   -logic_name    => 'ktreedist',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist',
             -hive_capacity => -1,
             -parameters => {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                             'mlss_id' => $self->o('mlss_id'),
                            },
-            -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
             -flow_into => {
                            -1 => [ 'ktreedist_himem' ],
                           },
@@ -736,7 +728,6 @@ sub pipeline_analyses {
                          'ktreedist_exe' => $self->o('ktreedist_exe'),
                          'mlss_id' => $self->o('mlss_id'),
                         },
-         -failed_job_tolerance => 5,
          -rc_name => 'himem',
         },
 
