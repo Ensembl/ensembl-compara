@@ -4,8 +4,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use Data::Dumper;
-
 use List::Util qw(min max);
 
 sub colourmap {
@@ -480,7 +478,10 @@ sub draw_cigar_difference {
         warn "no cigar";
         next;
       }
-      my @cigar = $f->cigar_string =~ /(\d*\D)/g;
+      my @cigar;
+      # Flipped cigar string, data is in this format in e69.
+      $cigar =~ s/(\D)(\d+)/$2$1/g if($cigar =~ /\d$/);
+      my @cigar = $cigar =~ /(\d*\D)/g;
       my $draw_start = max(0,$f->start);
       my $bump_start = $draw_start*$self->scalex;
       my $draw_end = min($self->{'container'}->length,$f->end);
