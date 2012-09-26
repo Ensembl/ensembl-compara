@@ -433,7 +433,7 @@ foreach my $spp (@valid_spp) {
   ##--------------------------- OUTPUT STATS TABLE -----------------------------
     print STDERR "...writing stats file...\n";
 
-    print STATS qq(<div class="twocol-left">
+    print STATS qq(
   <h3>Summary</h3>
 
   <table class="ss tint species-stats">
@@ -482,13 +482,12 @@ foreach my $spp (@valid_spp) {
           $row, $k, $v)
           if $v;
       }
-      print STATS qq(</table></div>);
+      print STATS qq(</table>);
 
 ######################
 ######################
  
       print STATS qq(
-  <div class="twocol-right">
   <h3>Gene counts</h3>
   <table class="ss tint species-stats">
   );
@@ -558,14 +557,12 @@ foreach my $spp (@valid_spp) {
           <td class="value">$transcripts</td>
       </tr>
   </table>
-  </div>
       );
     }
 
     next unless ($genpept || $genfpept || $fgenpept || $snps || $strucvar || $coordsys );
 
     print STATS qq(
-  <div class="twocol-right">
   <h3>Other</h3>
   <table class="ss tint species-stats">
   );
@@ -621,7 +618,7 @@ foreach my $spp (@valid_spp) {
           </tr>);
     }
 
-    print STATS '</table></div>';
+    print STATS '</table>';
     
     if($coordsys){
       print STATS $b_coordsys;
@@ -784,7 +781,6 @@ sub do_interpro {
 
 
   if (! keys %$domain) {
-      nohits2html($PLUGIN_ROOT, "IPtop40.html", $species);
       nohits2html($PLUGIN_ROOT, "IPtop500.html", $species);
       print STDERR "no hits, done\n" if $DEBUG;
       return 0;
@@ -809,12 +805,6 @@ sub do_interpro {
   }
 
   my @hits;
-
-  my ($number, $file, $bigtable);
-  $number = 40;
-  $file = "IPtop40.html";
-  $bigtable = 0;
-  hits2html($PLUGIN_ROOT, $domain, $number, $file, $bigtable, $species);
 
   $number = 500;
   $file = "IPtop500.html";
@@ -850,8 +840,8 @@ sub hits2html {
 
   my @domids = sort { ($domain->{$b}{genes} || 0) <=> ($domain->{$a}{genes} || 0)} keys %$domain;
 
-  print qq(<table class="ss tint">\n);
-  print qq(<tr>
+  print qq(<table class="ss tint data_table">\n);
+  print qq(<thead><tr>
             <th>No.</th>
             <th>InterPro name</th>
             <th>Number of genes</th>
@@ -860,7 +850,8 @@ sub hits2html {
             <th>InterPro name</th>
             <th>Number of genes</th>
             <th>Number of Ensembl hits</th>
-         </tr>
+         </tr></thead>
+         <tbody>
   );
 
   my @classes = ('class="bg2"', 'class="bg1"');
@@ -896,7 +887,7 @@ sub hits2html {
   );
   }
 
-  print("</table>");
+  print("</tbody></table>");
 
   close(HTML);
 }
