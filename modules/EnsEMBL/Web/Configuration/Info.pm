@@ -74,11 +74,6 @@ sub populate_tree {
     { availability => 1 }
   ));
   
-  $stats_menu->append($self->create_node('IPtop40', 'Top 40 InterPro hits',
-    [qw(ip40  EnsEMBL::Web::Component::Info::IPtop40)],
-    { availability => 1}
-  ));
-  
   $stats_menu->append($self->create_node('IPtop500', 'Top 500 InterPro hits',
     [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)],
     { availability => 1 }
