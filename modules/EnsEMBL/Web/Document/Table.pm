@@ -25,6 +25,8 @@ sub new {
   };
   
   bless $self, $class;
+  $self->preprocess_widths();
+  return $self;
 }
 
 sub session    :lvalue { $_[0]{'session'};    }
@@ -34,6 +36,40 @@ sub export_url :lvalue { $_[0]{'export_url'}; }
 sub filename   :lvalue { $_[0]{'filename'};   }
 
 sub has_rows { return !!@{$_[0]{'rows'}}; }
+
+sub preprocess_widths {
+  my ($self) = @_;
+  
+  my $perc_remaining = 100;
+  my $units_used = 0;
+  my @unitcols;
+  foreach my $column (@{$self->{'columns'}}) {
+          local $_ = $column->{'width'};
+          my $units = -1;
+          if(/(\d+)%/) {
+                  $perc_remaining -= $1;
+          } elsif(/(\d+)px/) {
+                  return;
+          } elsif(/(\d+)u/) {
+                  $units_used += $1;
+                  push @unitcols,{ units => $1, column => $column, percent => 0 };
+          }
+  }
+  return unless $units_used;
+  # careful alg. to avoid 99%, 101% tables due to rounding.
+  my $perc_per_unit = $perc_remaining / $units_used;
+  my $total = -0.5; # correct for rounding bias
+  foreach (@unitcols) {
+          $_->{'total'} = $_->{'units'}*$perc_per_unit + $total;
+          $total += $_->{'units'}*$perc_per_unit;
+  }
+  my $col = 0;
+  for(my $i=0;$i<$perc_remaining;$i++) {
+          $col++ if($i>$unitcols[$col]->{'total'} && $col < @unitcols);
+          $unitcols[$col]->{'percent'}++;
+  }       
+  $_->{'column'}->{'width'} = $_->{'percent'}."%" for (@unitcols);
+}
 
 sub export_options {
   my $self = shift;
@@ -273,6 +309,9 @@ sub process {
   my $columns     = $self->{'columns'};
   my @row_colours = $self->{'options'}{'data_table'} ? () : exists $self->{'options'}{'rows'} ? @{$self->{'options'}{'rows'}} : ('bg1', 'bg2');
   my (@head, @body);
+  
+  # Allow unit style widths
+  
   
   foreach my $col (@$columns) {
     my $label = exists $col->{'label'} ? $col->{'label'} 
