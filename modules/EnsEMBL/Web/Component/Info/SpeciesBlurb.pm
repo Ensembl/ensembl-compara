@@ -20,6 +20,7 @@ sub content {
   my $hub               = $self->hub;
   my $species_defs      = $hub->species_defs;
   my $species           = $hub->species;
+  my $path              = $hub->species_path;
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
   my $display_name      = $species_defs->SPECIES_SCIENTIFIC_NAME;
   my $ensembl_version   = $species_defs->ENSEMBL_VERSION;
@@ -35,8 +36,8 @@ sub content {
 <div class="column-wrapper">  
   <div class="column-one">
     <div class="column-padding no-left-margin">
-      <img src="/i/species/48/$species.png" class="species-img float-left" alt="" />
-      <h1 style="margin-bottom:0">$common_name Assembly and Gene Annotation</p>
+      <a href="$path"><img src="/i/species/48/$species.png" class="species-img float-left" alt="" /></a>
+      <h1 style="margin-bottom:0">$common_name assembly and gene annotation</p>
     </div>
   </div>
 </div>
