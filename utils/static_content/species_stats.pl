@@ -806,6 +806,7 @@ sub do_interpro {
 
   my @hits;
 
+  my ($number, $file, $bigtable);
   $number = 500;
   $file = "IPtop500.html";
   $bigtable = 1;
