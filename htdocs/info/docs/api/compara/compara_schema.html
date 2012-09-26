@@ -9,7 +9,7 @@
 
 
 <p>
-This document refers to the schema of EnsEMBL Compara version <strong>66</strong>.
+This document refers to the schema of EnsEMBL Compara version <strong>69</strong>.
 </p>
 
 
@@ -99,6 +99,11 @@ secondary structure and genomic alignments.
       <li><a href="#gene_tree_member">gene_tree_member</a></li>
       <li><a href="#protein_tree_member_score">protein_tree_member_score</a></li>
       <li><a href="#sitewise_aln">sitewise_aln</a></li>
+      <li><a href="#CAFE_gene_family">CAFE_gene_family</a></li>
+      <li><a href="#CAFE_species_gene">CAFE_species_gene</a></li>
+      <li><a href="#species_tree_node">species_tree_node</a></li>
+      <li><a href="#species_tree_node_tag">species_tree_node_tag</a></li>
+      <li><a href="#species_tree_root">species_tree_root</a></li>
 
       <li><a href="#mapping_session">mapping_session</a></li>
       <li><a href="#stable_id_history">stable_id_history</a></li>
@@ -4027,6 +4032,69 @@ to allow protein trees have trackable stable_ids
   </tbody>
 </table>
 
+<!--
+#####################################################################
+New tables for 69
+#####################################################################</body>
+-->                                                                  
+<h4 id="CAFE_gene_family">CAFE_gene_family</h4>
+<pre>
+  `cafe_gene_family_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `root_id` int(10) unsigned NOT NULL,
+  `lca_id` int(10) unsigned NOT NULL,
+  `gene_tree_root_id` int(10) unsigned NOT NULL,
+  `pvalue_avg` double(5,4) DEFAULT NULL,
+  `lambdas` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`cafe_gene_family_id`),
+  KEY `lca_id` (`lca_id`),
+  KEY `root_id` (`root_id`),
+  KEY `gene_tree_root_id` (`gene_tree_root_id`)
+</pre>
 
-</body>
+<h4 id="CAFE_species_gene">CAFE_species_gene</h4>
+<pre>
+  `cafe_gene_family_id` int(10) unsigned NOT NULL,
+  `node_id` int(10) unsigned NOT NULL,
+  `taxon_id` int(10) unsigned DEFAULT NULL,
+  `n_members` int(4) unsigned NOT NULL,
+  `pvalue` double(5,4) DEFAULT NULL,
+  KEY `node_id` (`node_id`),
+  KEY `cafe_gene_family_id` (`cafe_gene_family_id`)
+</pre>
+<p>
+<h4 id="species_tree_node">species_tree_node</h4>
+<pre>
+  `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int(10) unsigned DEFAULT NULL,
+  `root_id` int(10) unsigned DEFAULT NULL,
+  `left_index` int(10) NOT NULL DEFAULT '0',
+  `right_index` int(10) NOT NULL DEFAULT '0',
+  `distance_to_parent` double DEFAULT '1',
+  PRIMARY KEY (`node_id`),
+  KEY `parent_id` (`parent_id`),
+  KEY `root_id` (`root_id`,`left_index`),
+  KEY `root_id_2` (`root_id`,`right_index`)
+</pre>
+<p>
+<h4 id="species_tree_node">species_tree_node_tag</h4>
+<pre>
+  `node_id` int(10) unsigned NOT NULL,
+  `tag` varchar(50) NOT NULL,
+  `value` mediumtext NOT NULL,
+  KEY `node_id_tag` (`node_id`,`tag`),
+  KEY `tag_node_id` (`tag`,`node_id`),
+  KEY `node_id` (`node_id`),
+  KEY `tag` (`tag`)
+</pre>
+<p>
+<h4 id="species_tree_node">species_tree_root</h4>
+<pre>
+  `root_id` int(10) unsigned NOT NULL,
+  `method_link_species_set_id` int(10) unsigned NOT NULL,
+  `species_tree` mediumtext,
+  `pvalue_lim` double(5,4) DEFAULT NULL,
+  PRIMARY KEY (`root_id`),
+  KEY `method_link_species_set_id` (`method_link_species_set_id`)
+</pre>
+
 </html>
