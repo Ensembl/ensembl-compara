@@ -78,7 +78,7 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 
 .plain-box, .tinted-box,
 .info-box,  .round-box,
-.alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
+.alert-box, .embedded-box { color:[[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
 .plain-box                { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
 .shadow-box               { box-shadow: 2px 2px 4px [[PANEL_BORDER]]; }
 body.ie67 .plain-box      { zoom: 100%; }
@@ -87,7 +87,7 @@ body.ie67 .plain-box      { zoom: 100%; }
 .unbordered p { margin-bottom:8px; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
 .info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
-.alert-box    { background-color:[[ALERT_BG]]; border-color:[ALERT_BORDER]]; }
+.alert-box    { background-color:[[ALERT_BG]]; border-color:[[ALERT_BORDER]]; }
 .embedded-box { margin:16px 0; padding:8px; }
 .round-box    { -moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px; }
 
