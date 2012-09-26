@@ -411,7 +411,7 @@ sub _funcgen_text {
     my $reg_url  = $species_defs->species_path.'/Regulation/Cell_line?db=funcgen;rf='.$sample_data->{'REGULATION_PARAM'};
     $html .= qq{
     <a href="$reg_url"><img src="$img_url/96/regulation.png" class="bordered" /></a>
-    <p><a href="$reg_url" class="nodeco">Example regulatory<br />feature</a></p>
+    <p style="width:112px"><a href="$reg_url" class="nodeco">Example regulatory feature</a></p>
   };
 
     $html .= '
