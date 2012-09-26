@@ -898,15 +898,6 @@ sub hits2html {
 
   print("</table>");
 
-  my $interpro_path = "/$species/Info";
-  if($isbig == 0){
-    # the Top40 page
-    print qq{<p><a href="$interpro_path/IPtop500">View top 500 InterPro hits (large table)</a></p>};
-  }
-  else{
-    # >top40  page
-    print qq(<p><a href="$interpro_path/IPtop40">View top 40 InterPro hits</a></p>);
-  }
   close(HTML);
 }
 
