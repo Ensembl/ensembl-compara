@@ -1024,6 +1024,8 @@ $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql:/
 $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/lg4_compara_families_68 -output Families.png
 $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_pecan_19way_68 -output MercatorPecan.png
 $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/sf5_epo_35way_68 -output EpoLowCoverage.png
+$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/sf5_compara_epo_13way_69 -output Epo.png
+
 
 CVS commit these files.
 
