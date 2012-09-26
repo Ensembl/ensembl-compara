@@ -208,7 +208,7 @@ foreach my $spp (@valid_spp) {
       $genetypes .= sprintf(", '%s'",$authority);
     }
 
-    my ($pseudo, $rna, $ig_segments, $exons, $transcripts, $snps, $statuses);  
+    my ($coding, $noncoding, $pseudo, $exons, $transcripts, $snps);  
    
     my %glossary = $SD->multiX('ENSEMBL_GLOSSARY');
  
@@ -224,50 +224,46 @@ foreach my $spp (@valid_spp) {
     unless ($pre) { 
 ###
      
-      ($statuses) = &query_status( $db,
-        "select status, count(*)
-        from gene
-           join seq_region using (seq_region_id)
-           join coord_system using (coord_system_id)
+      ($coding) = &query( $db,
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
         where species_id=$spp_id
-        and biotype = 'protein_coding'
-        and status is not null
-        group by status
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'coding_cnt'
         ");
+      print STDERR "Coding:$coding\n" if $DEBUG;
+
+
+###
+
+      ($noncoding) = &query( $db,
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
+        where species_id=$spp_id
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'noncoding_cnt'
+        ");
+      print STDERR "Non coding:$noncoding\n" if $DEBUG;
 
 ###
 
       ( $pseudo ) = &query( $db,
-        "select count(*)
-        from gene
-           join seq_region using (seq_region_id)
-           join coord_system using (coord_system_id)
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
         where species_id=$spp_id
-        and biotype like '%pseudogene' 
-        or biotype = 'retrotransposed'
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'pseudogene_cnt'
         ");    
       print STDERR "Pseudogenes:$pseudo\n" if $DEBUG;
-
-      ( $rna ) = &query( $db,
-        'select count(*)
-        from gene
-           join seq_region using (seq_region_id)
-           join coord_system using (coord_system_id)
-        where species_id=' . $spp_id . ' 
-        and biotype regexp "[\w]*RNA$" 
-        ');
-      print STDERR "RNA genes:$rna\n" if $DEBUG;
-
-      ( $ig_segments )= &query( $db,
-        "select count(distinct g.gene_id)
-        from gene g, analysis a, seq_region sr, coord_system cs
-        where g.seq_region_id = sr.seq_region_id
-        and sr.coord_system_id = cs.coord_system_id
-        and cs.species_id=$spp_id
-        and g.analysis_id = a.analysis_id
-        and a.logic_name in ('ensembl_ig_gene','havana_ig_gene')
-        ");
-      print STDERR "Segments:$ig_segments\n" if $DEBUG;
 
     } #unlss pre
 
@@ -497,24 +493,33 @@ foreach my $spp (@valid_spp) {
   <table class="ss tint species-stats">
   );
       $rowcount = 0;
-   
-      if (scalar @$statuses){
-        foreach my $status_c (@$statuses) {
-          my $status = $status_c->[0];           
-          my $count  = $status_c->[1];
-          my $term = $glossary_lookup{lc($status)};
-          my $text = $glossary{$term};
-          $status =~ s/_/ /g;
-          $status = ucfirst(lc($status));
-	        $count = thousandify($count);
-	        $rowcount++;
-          my $header = $term ? qq{<span class="glossary_mouseover">$status genes<span class="floating_popup">$text</span></span>} : "$status genes";
-	        $row = stripe_row($rowcount);
-          print STATS qq($row
-            <td class="data">$header:</td>
-            <td class="value">$count</td>
-           </tr> );
-        }
+
+      if ($coding) {
+        $coding = thousandify($coding);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        my $term = $glossary_lookup{'coding'};
+        my $text = $glossary{$term};
+        my $header = $term ? qq{<span class="glossary_mouseover">Coding genes<span class="floating_popup">$text</span></span>} : "Coding genes";
+        print STATS qq($row
+          <td class="data">$header:</td>
+          <td class="value">$coding</td>
+      </tr>
+      );
+      }   
+
+      if ($noncoding) {
+        $noncoding = thousandify($noncoding);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        my $term = $glossary_lookup{'noncoding'};
+        my $text = $glossary{$term};
+        my $header = $term ? qq{<span class="glossary_mouseover">Non coding genes<span class="floating_popup">$text</span></span>} : "Non coding genes";
+        print STATS qq($row
+          <td class="data">$header:</td>
+          <td class="value">$noncoding</td>
+      </tr>
+      );
       }
 
       if ($pseudo) {
@@ -527,28 +532,6 @@ foreach my $spp (@valid_spp) {
         print STATS qq($row
           <td class="data">$header:</td>
           <td class="value">$pseudo</td>
-      </tr>
-      );
-      }
-
-      if ($rna) {
-        $rna = thousandify($rna);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        print STATS qq($row
-          <td class="data">RNA genes:</td>
-          <td class="value">$rna</td>
-      </tr>
-      );
-      }
-
-      if ($ig_segments) {
-        $ig_segments = thousandify($ig_segments);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        print STATS qq($row
-          <td class="data">Immunoglobulin/T-cell receptor gene segments:</td>
-          <td class="value">$ig_segments</td>
       </tr>
       );
       }
