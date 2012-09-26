@@ -1621,8 +1621,10 @@ sub add_dna_align_features {
     my $menu = ($k =~ /rnaseq|simple/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
     
     if ($menu) {
-      my $alignment_renderers = [ @{$self->{'alignment_renderers'}} ];
-      #push @$alignment_renderers,'difference','Differences';
+      my $alignment_renderers = ['off','Off'];
+      
+      $alignment_renderers = [ @{$self->{'alignment_renderers'}} ] unless($data->{$key_2}{'no_default_renderers'});
+            
       if (my @other_renderers = @{$data->{$key_2}{'additional_renderers'} || [] }) {
         my $i = 0;
         while ($i < scalar(@other_renderers)) {
