@@ -16,7 +16,6 @@ use warnings;
 use Carp;
 use Data::Dumper qw( Dumper );
 
-
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
 
@@ -40,7 +39,7 @@ BEGIN{
                'coordsys' => \$coordsys,
                'pan_c_sp' => \$pan_comp_species,
                'ena' => \$ena
-	     );
+  );
 
   pod2usage(-verbose => 2) if $info;
   pod2usage(1) if $help;
@@ -63,7 +62,7 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use constant STATS_PATH       => qq(%s/htdocs/ssi/species/);
+use constant STATS_PATH => qq(%s/htdocs/ssi/species/);
 
 use Bio::EnsEMBL::DBLoader;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -73,12 +72,12 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Document::Table;
 
-my $SD = EnsEMBL::Web::SpeciesDefs->new();
-my $pre = $PLUGIN_ROOT =~ m#sanger-plugins/pre# ? 1 : 0;
+my $SD      = EnsEMBL::Web::SpeciesDefs->new();
+my $pre     = $PLUGIN_ROOT =~ m#sanger-plugins/pre# ? 1 : 0;
 $NOINTERPRO = 1 if $pre;
 
 # get a list of valid species for this release
-my $release_id = $SD->ENSEMBL_VERSION;
+my $release_id  = $SD->ENSEMBL_VERSION;
 my @release_spp = $SD->valid_species;
 my %species_check;
 foreach my $sp (@release_spp) {
@@ -86,20 +85,18 @@ foreach my $sp (@release_spp) {
   print STDERR "$sp\n" if($list);
 }
 exit if ($list);
-                                                                                
+
 # check validity of user-provided species
 my @valid_spp;
 if (@user_spp) {
-    foreach my $sp (@user_spp) {
-        if ($species_check{$sp}) {
-            push (@valid_spp, $sp);
-        }
-        else {
-            carp "Species $sp is not configured for release $release_id - omitting!\n";
-        }
+  foreach my $sp (@user_spp) {
+    if ($species_check{$sp}) {
+      push (@valid_spp, $sp);
+    } else {
+      carp "Species $sp is not configured for release $release_id - omitting!\n";
     }
-}
-else {
+  }
+} else {
   @valid_spp = @release_spp;
 }
 
@@ -110,13 +107,13 @@ else {
 my $dbconn = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SD);
 
 if($pan_comp_species) {
-    do_pan_compara_species();
+  do_pan_compara_species();
 }
 
 my ($count_spp,$total_spp) = (0,scalar @valid_spp);
 foreach my $spp (@valid_spp) {
 
-## CONNECT TO APPROPRIATE DATABASES
+  ## CONNECT TO APPROPRIATE DATABASES
   my $db;
   eval {
     my $databases = $dbconn->get_databases_species($spp, "core");
@@ -135,11 +132,9 @@ foreach my $spp (@valid_spp) {
     $var_db =  $databases->{'variation'} || undef;
   };
 
-
   if ($NOSUMMARY) {
     do_interpro($db, $spp);
-  }
-  else {
+  } else {
 
     ## PREPARE TO WRITE TO OUTPUT FILE
     $count_spp++;
@@ -171,30 +166,25 @@ foreach my $spp (@valid_spp) {
         $acc = sprintf('INSDC Assembly <a href="http://www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc);
         $a_id .= ", $acc"; 
       }
-    }                    
+    }
 
-    my $a_date  = $SD->get_config($spp, 'ASSEMBLY_DATE') || '';
-    $a_date || warn "[ERROR] $spp missing SpeciesDefs->ASSEMBLY_DATE!";
-    my $b_start  = $SD->get_config($spp, 'GENEBUILD_START') || '';
-    $b_start || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_START!";
-    my $b_release  = $SD->get_config($spp, 'GENEBUILD_RELEASE') || '';
-    $b_release || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_RELEASE!";
-    my $b_latest  = $SD->get_config($spp, 'GENEBUILD_LATEST') || '';
-    $b_latest || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_LATEST!";
-    my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY') || '';
-    $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!" unless $pre;
-    my $b_version  = $SD->get_config($spp, 'GENEBUILD_VERSION') || '';
+    my $a_date    = $SD->get_config($spp, 'ASSEMBLY_DATE')      || '' or warn "[ERROR] $spp missing SpeciesDefs->ASSEMBLY_DATE!";
+    my $b_start   = $SD->get_config($spp, 'GENEBUILD_START')    || '' or warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_START!";
+    my $b_release = $SD->get_config($spp, 'GENEBUILD_RELEASE')  || '' or warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_RELEASE!";
+    my $b_latest  = $SD->get_config($spp, 'GENEBUILD_LATEST')   || '' or warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_LATEST!";
+    my $b_id      = $SD->get_config($spp, 'GENEBUILD_BY')       || '' or $pre or warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!";
+    my $b_version = $SD->get_config($spp, 'GENEBUILD_VERSION') || '';
     #my $b_method  = ucfirst($SD->get_config($spp, 'GENEBUILD_METHOD')) || '';
-    my @A = @{$meta_container->list_value_by_key('genebuild.method')};
+    my @A         = @{$meta_container->list_value_by_key('genebuild.method')};
     my $b_method  = ucfirst($A[0]) || '';
-    $b_method =~ s/_/ /g;
-    $b_method   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_METHOD!" unless $pre;
+    $b_method     =~ s/_/ /g;
+    $b_method || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_METHOD!" unless $pre;
 
-    my $data_version = $SD->get_config($spp, 'SPECIES_RELEASE_VERSION');
-    my $db_id = $release_id;
-		$db_id .= '.'.$data_version unless $pre;
+    my $data_version  = $SD->get_config($spp, 'SPECIES_RELEASE_VERSION');
+    my $db_id         = $release_id;
+		$db_id           .= '.'.$data_version unless $pre;
     #print "Version $data_version\n";
-    my $strucvar;
+
 ##----------------------- NASTY RAW SQL STUFF! ------------------------------
 
     ## logicnames for valid genes
@@ -208,11 +198,15 @@ foreach my $spp (@valid_spp) {
       $genetypes .= sprintf(", '%s'",$authority);
     }
 
-    my ($coding, $noncoding, $pseudo, $exons, $transcripts, $snps);  
-   
-    my %glossary = $SD->multiX('ENSEMBL_GLOSSARY');
+    my (%gene_stats, %other_stats);
+
+    my @gene_stats_keys   = qw(coding noncoding pseudogene exon transcript);
+
+    my @other_stats_keys  = qw(genpept genfpept fgenpept snps strucvar);
+
+    my %glossary          = $SD->multiX('ENSEMBL_GLOSSARY');
  
-    my %glossary_lookup = (
+    my %glossary_lookup   = (
       'known'               => 'Known gene',
       'novel'               => 'Novel gene',
       'known_by_projection' => 'Projected gene (or known by_projection)',
@@ -221,10 +215,26 @@ foreach my $spp (@valid_spp) {
       'transcript'          => 'Transcript',
     );
 
+    my %gene_title        = (
+      'coding'              => 'Coding genes',
+      'noncoding'           => 'Non coding genes',
+      'pseudogene'          => 'Pseudogenes',
+      'exon'                => 'Gene exons',
+      'transcript'          => 'Gene transcripts'
+    );
+
+    my %other_title       = (
+      'genpept'             => 'Genscan gene predictions',
+      'genfpept'            => 'Genefinder gene predictions',
+      'fgenpept'            => 'FGENESH gene predictions',
+      'snps'                => 'Short Variants (SNPs, indels, somatic mutations)',
+      'strucvar'            => 'Structural variants'
+    );
+
     unless ($pre) { 
 ###
-     
-      ($coding) = &query( $db,
+
+      ($gene_stats{'coding'}) = &query( $db,
         "select sum(value)
         from seq_region_attrib sa, attrib_type at,
              seq_region s, coord_system cs
@@ -234,12 +244,12 @@ foreach my $spp (@valid_spp) {
         and cs.coord_system_id = s.coord_system_id
         and code = 'coding_cnt'
         ");
-      print STDERR "Coding:$coding\n" if $DEBUG;
+      print STDERR "Coding:$gene_stats{'coding'}\n" if $DEBUG;
 
 
 ###
 
-      ($noncoding) = &query( $db,
+      ($gene_stats{'noncoding'}) = &query( $db,
         "select sum(value)
         from seq_region_attrib sa, attrib_type at,
              seq_region s, coord_system cs
@@ -249,11 +259,11 @@ foreach my $spp (@valid_spp) {
         and cs.coord_system_id = s.coord_system_id
         and code = 'noncoding_cnt'
         ");
-      print STDERR "Non coding:$noncoding\n" if $DEBUG;
+      print STDERR "Non coding:$gene_stats{'noncoding'}\n" if $DEBUG;
 
 ###
 
-      ( $pseudo ) = &query( $db,
+      ( $gene_stats{'pseudogene'} ) = &query( $db,
         "select sum(value)
         from seq_region_attrib sa, attrib_type at,
              seq_region s, coord_system cs
@@ -263,12 +273,12 @@ foreach my $spp (@valid_spp) {
         and cs.coord_system_id = s.coord_system_id
         and code = 'pseudogene_cnt'
         ");    
-      print STDERR "Pseudogenes:$pseudo\n" if $DEBUG;
+      print STDERR "Pseudogenes:$gene_stats{'pseudogene'}\n" if $DEBUG;
 
-    } #unlss pre
+    } #unless pre
 
     ## DO OTHER RAW QUERIES
-    my( $genpept ) = &query( $db,
+    ( $other_stats{'genpept'} ) = &query( $db,
     "select count( distinct p.prediction_transcript_id )
       from prediction_transcript p, analysis a, seq_region sr, coord_system cs
       where p.seq_region_id = sr.seq_region_id
@@ -277,9 +287,9 @@ foreach my $spp (@valid_spp) {
       and p.analysis_id = a.analysis_id
       and a.logic_name = 'Genscan'
     ");
-    print STDERR "Genscans:$genpept\n" if $DEBUG;
+    print STDERR "Genscans:$other_stats{'genpept'}\n" if $DEBUG;
 
-    my( $genfpept ) = &query( $db,
+    ( $other_stats{'genfpept'} ) = &query( $db,
     "select count( distinct p.prediction_transcript_id )
       from prediction_transcript p, analysis a, seq_region sr, coord_system cs
       where p.seq_region_id = sr.seq_region_id
@@ -288,9 +298,9 @@ foreach my $spp (@valid_spp) {
       and p.analysis_id = a.analysis_id
       and a.logic_name = 'Genefinder'
     ");
-    print STDERR "Genefinder:$genfpept\n" if $DEBUG;
+    print STDERR "Genefinder:$other_stats{'genfpept'}\n" if $DEBUG;
 
-    my( $fgenpept ) = &query( $db,
+    ( $other_stats{'fgenpept'} ) = &query( $db,
     "select count( distinct p.prediction_transcript_id )
       from prediction_transcript p, analysis a, seq_region sr, coord_system cs
       where p.seq_region_id = sr.seq_region_id
@@ -299,85 +309,81 @@ foreach my $spp (@valid_spp) {
       and p.analysis_id = a.analysis_id
       and a.logic_name like '%fgenesh%'
     ");
-    print STDERR "Fgenesh:$fgenpept\n" if $DEBUG;
+    print STDERR "Fgenesh:$other_stats{'fgenpept'}\n" if $DEBUG;
 
     unless ($pre) {
-	if ($allgenetypes) {
-	    ( $transcripts )= &query( $db,
-				      "select count(distinct t.transcript_id)
-        from transcript t, gene g, analysis a, seq_region sr, coord_system cs
-        where t.seq_region_id = sr.seq_region_id
-        and sr.coord_system_id = cs.coord_system_id
-        and cs.species_id=$spp_id
-        and t.gene_id = g.gene_id
-        and g.analysis_id = a.analysis_id
-        ");
-	} else {
-	    ( $transcripts )= &query( $db,
-				      "select count(distinct t.transcript_id)
-        from transcript t, gene g, analysis a, seq_region sr, coord_system cs
-        where t.seq_region_id = sr.seq_region_id
-        and sr.coord_system_id = cs.coord_system_id
-        and cs.species_id=$spp_id
-        and t.gene_id = g.gene_id
-        and g.analysis_id = a.analysis_id
-        and a.logic_name in ($genetypes)
-        ");
-	}
-      print STDERR "Transcripts:$transcripts\n" if $DEBUG;
-	if ($allgenetypes) {
-	    ( $exons )= &query( $db,
-				"select count(distinct et.exon_id)
-      from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
-      where et.transcript_id = t.transcript_id
-      and t.seq_region_id = sr.seq_region_id
-      and sr.coord_system_id = cs.coord_system_id
-      and cs.species_id=$spp_id
-      and t.gene_id = g.gene_id
-      and g.analysis_id = a.analysis_id
-      ");
-	} else {
-	    ( $exons )= &query( $db,
-				"select count(distinct et.exon_id)
-      from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
-      where et.transcript_id = t.transcript_id
-      and t.seq_region_id = sr.seq_region_id
-      and sr.coord_system_id = cs.coord_system_id
-      and cs.species_id=$spp_id
-      and t.gene_id = g.gene_id
-      and g.analysis_id = a.analysis_id
-      and a.logic_name in ($genetypes)
-      ");
-	}
-	    print STDERR "Exons:$exons\n" if $DEBUG;
+      if ($allgenetypes) {
+        ( $gene_stats{'transcript'} )= &query( $db,
+          "select count(distinct t.transcript_id)
+          from transcript t, gene g, analysis a, seq_region sr, coord_system cs
+          where t.seq_region_id = sr.seq_region_id
+          and sr.coord_system_id = cs.coord_system_id
+          and cs.species_id=$spp_id
+          and t.gene_id = g.gene_id
+          and g.analysis_id = a.analysis_id"
+        );
+      } else {
+        ( $gene_stats{'transcript'} )= &query( $db,
+				  "select count(distinct t.transcript_id)
+          from transcript t, gene g, analysis a, seq_region sr, coord_system cs
+          where t.seq_region_id = sr.seq_region_id
+          and sr.coord_system_id = cs.coord_system_id
+          and cs.species_id=$spp_id
+          and t.gene_id = g.gene_id
+          and g.analysis_id = a.analysis_id
+          and a.logic_name in ($genetypes)"
+        );
+      }
+      print STDERR "Transcripts:$gene_stats{'transcript'}\n" if $DEBUG;
+      if ($allgenetypes) {
+        ( $gene_stats{'exon'} )= &query( $db,
+          "select count(distinct et.exon_id)
+          from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
+          where et.transcript_id = t.transcript_id
+          and t.seq_region_id = sr.seq_region_id
+          and sr.coord_system_id = cs.coord_system_id
+          and cs.species_id=$spp_id
+          and t.gene_id = g.gene_id
+          and g.analysis_id = a.analysis_id"
+        );
+      } else {
+        ( $gene_stats{'exon'} )= &query( $db,
+          "select count(distinct et.exon_id)
+          from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
+          where et.transcript_id = t.transcript_id
+          and t.seq_region_id = sr.seq_region_id
+          and sr.coord_system_id = cs.coord_system_id
+          and cs.species_id=$spp_id
+          and t.gene_id = g.gene_id
+          and g.analysis_id = a.analysis_id
+          and a.logic_name in ($genetypes)"
+        );
+      }
+      print STDERR "Exons:$gene_stats{'exon'}\n" if $DEBUG;
 
-      $snps = 0;
-      $strucvar = 0;
+      $other_stats{'snps'}      = 0;
+      $other_stats{'strucvar'}  = 0;
       if ($var_db) {
-       ($snps) = &query ( $var_db,
-         "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
-         );
-       print STDERR "SNPs, etc:$snps\n" if $DEBUG;
-        ($strucvar) = &query ( $var_db,
-          "SELECT COUNT(DISTINCT structural_variation_id) FROM structural_variation",
-          );
-        print STDERR "Structural variations:$strucvar\n" if $DEBUG;
+        ($other_stats{'snps'}) = &query ( $var_db, "SELECT COUNT(DISTINCT variation_id) FROM variation_feature");
+        print STDERR "SNPs, etc:$other_stats{'snps'}\n" if $DEBUG;
+        ($other_stats{'strucvar'}) = &query ( $var_db, "SELECT COUNT(DISTINCT structural_variation_id) FROM structural_variation");
+        print STDERR "Structural variations:$other_stats{'strucvar'}\n" if $DEBUG;
       }
     }
 
-  ## Total number of base pairs
+    ## Total number of base pairs
 
     my ( $bp ) = &query( $db,
       "select sum(length(sequence))
       from dna 
-         join seq_region using (seq_region_id)
-         join coord_system using (coord_system_id)
-      where species_id=$spp_id
-      ");    
+        join seq_region using (seq_region_id)
+        join coord_system using (coord_system_id)
+      where species_id=$spp_id"
+    );
 
     print STDERR "Total base pairs: $bp.\n" if $DEBUG;
 
-  ## Golden path length
+    ## Golden path length
 
     my ( $gpl ) = &query( $db,
       "SELECT sum(length) 
@@ -396,70 +402,70 @@ foreach my $spp (@valid_spp) {
     print STDERR "Golden path length: $gpl.\n" if $DEBUG;
 
 
-  ##-----------------------List all coord systems region counts----------------
-  my $b_coordsys="";
-  if($coordsys){
-    $b_coordsys=qq{<h3>Coordinate Systems</h3>\n<table class="ss tint species-stats">};
-    my $sa = $db_adaptor->get_adaptor('slice');
-    my $csa = $db_adaptor->get_adaptor('coordsystem');
-    my $row_count=0;
-    foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all}){
-      my @regions = @{$sa->fetch_all($cs->name)};
-      my $count_regions = scalar @regions;
-      my $regions_html;
-      if(!$row_count && $count_regions < 1000){
-        $regions_html = regions_table($spp,$cs->name,\@regions);
+    ##-----------------------List all coord systems region counts----------------
+    my $b_coordsys="";
+    if($coordsys){
+      $b_coordsys=qq{<h3>Coordinate Systems</h3>\n<table class="ss tint species-stats">};
+      my $sa = $db_adaptor->get_adaptor('slice');
+      my $csa = $db_adaptor->get_adaptor('coordsystem');
+      my $row_count=0;
+      foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all}){
+        my @regions = @{$sa->fetch_all($cs->name)};
+        my $count_regions = scalar @regions;
+        my $regions_html;
+        if(!$row_count && $count_regions < 1000){
+          $regions_html = regions_table($spp,$cs->name,\@regions);
+        }
+        else{
+          $regions_html = sprintf("%d %s",$count_regions,($count_regions>1)?"sequences":"sequence");
+        }
+        $row_count++;
+        $b_coordsys .= sprintf(qq{
+          %s 
+          <td class="data">%s</td>
+          <td class="value">%s</td>
+          </tr>},
+          stripe_row($row_count),
+          $cs->name,
+          $regions_html);
       }
-      else{
-        $regions_html = sprintf("%d %s",$count_regions,($count_regions>1)?"sequences":"sequence");
-      }
-      $row_count++;
-      $b_coordsys .= sprintf(qq{
-        %s 
-        <td class="data">%s</td>
-        <td class="value">%s</td>
-        </tr>},
-        stripe_row($row_count),
-        $cs->name,
-        $regions_html);
+      $b_coordsys .= "</table>\n";
     }
-    $b_coordsys .= "</table>\n";
-  }
     
-  ##--------------------------- DO INTERPRO STATS -----------------------------
+    ##--------------------------- DO INTERPRO STATS -----------------------------
 
     my $ip_tables = do_interpro($db, $spp) unless $NOINTERPRO;
 
-  ##--------------------------- OUTPUT STATS TABLE -----------------------------
+    ##--------------------------- OUTPUT STATS TABLE -----------------------------
     print STDERR "...writing stats file...\n";
 
     print STATS qq(
-  <h3>Summary</h3>
-
-  <table class="ss tint species-stats">
-      <tr class="bg2">
+      <h3>Summary</h3>
+    
+      <table class="ss tint species-stats">
+        <tr class="bg2">
           <td class="data">Assembly:</td>
           <td class="value">$a_id, $a_date</td>
-      </tr>
-      <tr>
+        </tr>
+        <tr>
           <td class="data">Database version:</td>
           <td class="value">$db_id</td>
-      </tr>
-  );
+        </tr>
+      );
 
     my $row;
     my $rowcount = 1; ## use this to alternate white and coloured rows
 
-    $bp = thousandify($bp);
-    $row = stripe_row($rowcount);
+    $bp   = thousandify($bp);
+    $row  = stripe_row($rowcount);
     print STATS qq($row
           <td class="data">Base Pairs:</td>
           <td class="value">$bp</td>
       </tr>);
 
     $rowcount++;
-    $gpl = thousandify($gpl);
-    $row = stripe_row($rowcount);
+    $gpl  = thousandify($gpl);
+    $row  = stripe_row($rowcount);
     print STATS qq($row
           <td class="data">Golden Path Length:</td>
           <td class="value">$gpl</td>
@@ -488,138 +494,54 @@ foreach my $spp (@valid_spp) {
 ######################
  
       print STATS qq(
-  <h3>Gene counts</h3>
-  <table class="ss tint species-stats">
-  );
+        <h3>Gene counts</h3>
+        <table class="ss tint species-stats">
+      );
       $rowcount = 0;
 
-      if ($coding) {
-        $coding = thousandify($coding);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        my $term = $glossary_lookup{'coding'};
-        my $text = $glossary{$term};
-        my $header = $term ? qq{<span class="glossary_mouseover">Coding genes<span class="floating_popup">$text</span></span>} : "Coding genes";
-        print STATS qq($row
-          <td class="data">$header:</td>
-          <td class="value">$coding</td>
-      </tr>
-      );
-      }   
-
-      if ($noncoding) {
-        $noncoding = thousandify($noncoding);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        my $term = $glossary_lookup{'noncoding'};
-        my $text = $glossary{$term};
-        my $header = $term ? qq{<span class="glossary_mouseover">Non coding genes<span class="floating_popup">$text</span></span>} : "Non coding genes";
-        print STATS qq($row
-          <td class="data">$header:</td>
-          <td class="value">$noncoding</td>
-      </tr>
-      );
+      for (@gene_stats_keys) {
+        if ($gene_stats{$_}) {
+          $gene_stats{$_} = thousandify($gene_stats{$_});
+          $rowcount++;
+          $row = stripe_row($rowcount);
+          my $term = $glossary_lookup{$_};
+          my $header = $term ? qq(<span class="glossary_mouseover">$gene_title{$_}<span class="floating_popup">$glossary{$term}</span></span>) : $gene_title{$_};
+          print STATS qq($row
+            <td class="data">$header:</td>
+            <td class="value">$gene_stats{'coding'}</td>
+            </tr>
+          );
+        }
       }
 
-      if ($pseudo) {
-        $pseudo = thousandify($pseudo);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        my $term = $glossary_lookup{'pseudogene'};
-        my $text = $glossary{$term};
-        my $header = $term ? qq{<span class="glossary_mouseover">Pseudogenes<span class="floating_popup">$text</span></span>} : "Pseudogenes";
-        print STATS qq($row
-          <td class="data">$header:</td>
-          <td class="value">$pseudo</td>
-      </tr>
-      );
-      }
-
-      $rowcount++;
-      $exons = thousandify($exons);
-      $row = stripe_row($rowcount);
-      my $term = $glossary_lookup{'exon'};
-      my $text = $glossary{$term};
-      my $header = $term ? qq{<span class="glossary_mouseover">Gene exons<span class="floating_popup">$text</span></span>} : "Gene exons";
-      print STATS qq($row
-          <td class="data">$header:</td>
-          <td class="value">$exons</td>
-      </tr>);
-
-      $rowcount++;
-      $transcripts = thousandify($transcripts);
-      $row = stripe_row($rowcount);
-      $term = $glossary_lookup{'transcript'};
-      $text = $glossary{$term};
-      $header = $term ? qq{<span class="glossary_mouseover">Gene transcripts<span class="floating_popup">$text</span></span>} : "Gene transcriptss";
-      print STATS qq($row
-          <td class="data">$header:</td>
-          <td class="value">$transcripts</td>
-      </tr>
-  </table>
+      print STATS qq(
+        </table>
       );
     }
 
-    next unless ($genpept || $genfpept || $fgenpept || $snps || $strucvar || $coordsys );
+    next unless $coordsys || grep $other_stats{$_}, @other_stats_keys;
 
     print STATS qq(
-  <h3>Other</h3>
-  <table class="ss tint species-stats">
-  );
+      <h3>Other</h3>
+      <table class="ss tint species-stats">
+    );
     $rowcount = 0;
 
-    if ($genpept){
-      $genpept = thousandify($genpept);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
-    <td class="data">Genscan gene predictions:</td>
-    <td class="value">$genpept</td>
-  </tr>);
-    }
-
-    if ($genfpept){
-      $genfpept = thousandify($genfpept);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
-    <td class="data">Genefinder gene predictions:</td>
-    <td class="value">$genfpept</td>
-  </tr>);
-    }
-
-    if ($fgenpept){
-      $fgenpept = thousandify($fgenpept);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
-    <td class="data">FGENESH gene predictions:</td>
-    <td class="value">$fgenpept</td>
-  </tr>);
-    }
-
-    if ($snps) {
-      $rowcount++;
-      $snps = thousandify($snps);
-      $row = stripe_row($rowcount);
-      print STATS qq($row
-          <td class="data">Short Variants (SNPs, indels, somatic mutations):</td>
-          <td class="value">$snps</td>
-          </tr>);
-    }
-
-    if ($strucvar) {
-      $rowcount++;
-      $strucvar = thousandify($strucvar);
-      $row = stripe_row($rowcount);
-      print STATS qq($row
-          <td class="data">Structural variants:</td>
-          <td class="value">$strucvar</td>
-          </tr>);
+    for (@other_stats_keys) {
+      if ($other_stats{$_}) {
+        $other_stats{$_} = thousandify($other_stats{$_});
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        print STATS qq($row
+          <td class="data">$other_title{$_}:</td>
+          <td class="value">$other_stats{$_}</td>
+          </tr>
+        );
+      }
     }
 
     print STATS '</table>';
-    
+
     if($coordsys){
       print STATS $b_coordsys;
     }
