@@ -212,6 +212,8 @@ sub _init {
 #    warn $vc_band_end - $vc_band_start;
     ##hack to make zfish annotated regions look wider on the ideogram
     next if ( ($vc_band_end - $vc_band_start) < 280000) ;
+    ##hack to make pig annotated regions look wider on the ideogram
+#    next if ( ($vc_band_end - $vc_band_start) < 150000) ;
     my $stain          = $band->stain();
     my $R              = $vc_band_start;
     my $T              = $bpperpx * ( (int $vc_band_end/$bpperpx) - (int $vc_band_start/$bpperpx) );
