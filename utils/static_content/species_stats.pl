@@ -763,7 +763,7 @@ sub hits2html {
 
   my @domids = sort { ($domain->{$b}{genes} || 0) <=> ($domain->{$a}{genes} || 0)} keys %$domain;
 
-  print qq(<table class="ss tint fixed data_table">
+  print qq(<table class="ss tint fixed data_table no_col_toggle">
   <colgroup>
     <col width="10%" />
     <col width="50%" />
