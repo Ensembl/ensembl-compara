@@ -2655,7 +2655,7 @@ sub add_structural_variations {
     next if $menu_item->{'type'} ne 'sv_set';
     
     my $temp_name = $menu_item->{'key'};
-       $temp_name =~ s/^structural_variation_set_//;
+       $temp_name =~ s/^sv_set_//;
     my $node_name = "$menu_item->{'long_name'} (structural variants)";
       
     $structural_variation->append($self->create_track($menu_item->{'key'}, $node_name, {
@@ -2664,7 +2664,7 @@ sub add_structural_variations {
       sources     => undef,
       sets        => [ $menu_item->{'long_name'} ],
       set_name    => $menu_item->{'long_name'},
-      description => $hashref->{'structural_variation_set'}{'descriptions'}{$temp_name},
+      description => $hashref->{'variation_set'}{'descriptions'}{$temp_name},
     }));
   }
   
@@ -2679,6 +2679,8 @@ sub add_copy_number_variant_probes {
   
   $menu = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
   
+	my $cnv_probe_menu = $self->create_submenu('cnv_probe','Copy number variant probes');
+	
   my %options = (
     db         => $key,
     glyphset   => 'cnv_probes',
@@ -2689,7 +2691,7 @@ sub add_copy_number_variant_probes {
     display    => 'off'
   );
   
-  $menu->append($self->create_track('variation_feature_cnv', 'Copy number variant probes (all sources)', {   
+  $cnv_probe_menu->append($self->create_track('variation_feature_cnv', 'Copy number variant probes (all sources)', {   
     %options,
     caption     => 'CNV probes',
     sources     => undef,
@@ -2698,7 +2700,7 @@ sub add_copy_number_variant_probes {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'} || {}}) {   
-    $menu->append($self->create_track("variation_feature_cnv_$key_2", "$key_2", {
+    $cnv_probe_menu->append($self->create_track("variation_feature_cnv_$key_2", "$key_2", {
       %options,
       caption     => $key_2,
       source      => $key_2,
@@ -2706,6 +2708,8 @@ sub add_copy_number_variant_probes {
       description => $hashref->{'source'}{'descriptions'}{$key_2}
     }));  
   }
+	
+	$menu->append($cnv_probe_menu);
 }
 
 
