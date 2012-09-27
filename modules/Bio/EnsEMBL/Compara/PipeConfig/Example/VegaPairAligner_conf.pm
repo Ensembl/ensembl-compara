@@ -53,7 +53,7 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
-    'release'               => '67',
+    'release'               => '68',
     #'dbname'               => '', #Define on the command line via the conf_file
 
     # dependent parameters:
@@ -65,10 +65,10 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_genomicalignment_20120319_'.$self->o('release').'_testing',
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120611_'.$self->o('release').'_4',
     },
 
-    #nmeed to overwrite the value from ../Lastz_conf.pm
+    #need to overwrite the value from ../Lastz_conf.pm
     'masking_options_file' => '',
 
 	#Set for single pairwise mode
@@ -103,226 +103,157 @@ sub default_options {
 	#Default pairaligner config
 	#
     'skip_pairaligner_stats' => 0, #skip this module if set to 1
-    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_'.$self->o('release'),
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
 #    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_67_testing',
     };
 }
 
-#same as e! but adds a basement queue option in case this is needed (added manually if it is)
+#inherits from e! and adds two more
 sub resource_classes {
-    my ($self) = @_;
-    return {
-	 0 => { -desc => 'v low, 8h',      'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
-	 1 => { -desc => 'low, 8h',        'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
-	 2 => { -desc => 'default, 8h',    'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },
-         3 => { -desc => 'himem1, 8h',     'LSF' => '-C0 -M3500000 -R"select[mem>3600] rusage[mem=3600]"' },
-         4 => { -desc => 'himem2, 8h',     'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
-         5 => { -desc => 'himem3, notime', 'LSF' => '-C0 -M17000000 -R"select[mem>17000] rusage[mem=17000]" -q "basement"' },
-    };
+  my ($self) = @_;
+  my $resources = $self->SUPER::resource_classes;
+  $resources->{'7.5Gb'}    = { -desc => 'himem2, 8h',     'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' };
+  $resources->{'basement'} = { -desc => 'himem3, notime', 'LSF' => '-C0 -M17000000 -R"select[mem>17000] rusage[mem=17000]" -q "basement"' };
+  return $resources;
 }
 
-#same as e! but excludes (i) populate_new_database (ii) all jobs to do with netting and chaining,
-
+#grab hold of the e! analyses and modify them for our use
 sub pipeline_analyses {
-    my ($self) = @_;
+  my ($self) = @_;
+  my $analyses = $self->SUPER::pipeline_analyses;
 
-    return [
-	    {   -logic_name => 'innodbise_table_factory',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-parameters => {
-				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
-				'fan_branch_code' => 2,
-			       },
-		-input_ids => [{}],
-		-flow_into => {
-			       2 => [ 'innodbise_table'  ],
-			       1 => [ 'get_species_list' ],
-			      },
-	       -rc_id => 0,
-	    },
+  # we know these are not needed for Vega
+  my %analyses_to_ignore = map { $_ => 1 } qw(
+                                              populate_new_database
+                                              no_chunk_and_group_dna
+                                              dump_large_nib_for_chains_factory
+                                              dump_large_nib_for_chains
+                                              dump_large_nib_for_chains_himem
+                                              create_alignment_chains_jobs
+                                              alignment_chains
+                                              alignment_chains_himem
+                                              remove_inconsistencies_after_chain
+                                              update_max_alignment_length_after_chain
+                                              create_alignment_nets_jobs
+                                              set_internal_ids
+                                              alignment_nets
+                                              alignment_nets_himem
+                                              remove_inconsistencies_after_net
+                                              update_max_alignment_length_after_net
+                                              healthcheck
+                                              pairaligner_stats
+                                              master_db
+                                            );
 
-	    {   -logic_name    => 'innodbise_table',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-		-parameters    => {
-				   'sql'         => "ALTER TABLE #table_name# ENGINE='InnoDB'",
-				  },
-		-hive_capacity => 1,
-		-can_be_empty  => 1,
- 	        -rc_id => 0,
-	    },
+  #get all analyses that we know about
+  my @e_analyses = @{&e_analyses};
 
-	    {   -logic_name    => 'get_species_list',
-		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf',
-		-parameters    => {
-				  'conf_file' => $self->o('conf_file'),
-				  'get_species_list' => 1,
-				  }, 
-		-wait_for  => [ 'innodbise_table' ],
-		-flow_into      => {
-				    1 => ['parse_pair_aligner_conf'],
-				   },
-	       -rc_id => 0,
-	    },
+  #remove analyses that we know we don't want to use / prompt when new ones from e! are found
+  my @new_analyses;
+  for (my $i = @$analyses; $i >= 0; --$i) {
+    my $analysis = $analyses->[$i];
+    my $name = $analysis->{'-logic_name'};
+    if ($name && ! grep {$name eq $_} @e_analyses) {
+      push @new_analyses, $name;
+    }
+    if ($analyses_to_ignore{$name}) {
+      splice @$analyses, $i, 1
+    }
 
-	    #Need a conf_file that defines the location of the core dbs
-            #Could try enabling the chain and netting...
-  	    {   -logic_name    => 'parse_pair_aligner_conf',
-  		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf',
-  		-parameters    => { 
-  				  'conf_file' => $self->o('conf_file'),
-  				  'default_chunks' => $self->o('default_chunks'),
-  				  'default_pair_aligner' => $self->o('pair_aligner_method_link'),
-  				  'default_parameters' => $self->o('pair_aligner_options'),
-#  				  'default_chain_output' => $self->o('chain_output_method_link'),
-#  				  'default_net_output' => $self->o('net_output_method_link'),
-#  				  'default_chain_input' => $self->o('chain_input_method_link'),
-#  				  'default_net_input' => $self->o('net_input_method_link'),
-				  'mlss_id' => $self->o('mlss_id'),
-  				  }, 
-		-flow_into => {
-			       1 => [ 'create_pair_aligner_jobs'],
-			       2 => [ 'chunk_and_group_dna' ], 
-			       3 => [ 'create_filter_duplicates_jobs' ],
-			       4 => [ 'no_chunk_and_group_dna' ],
-			       5 => [ 'create_alignment_chains_jobs' ],
-			       6 => [ 'create_alignment_nets_jobs' ],
-			       7 => [ 'pairaligner_stats' ],
-			       8 => [ 'healthcheck' ],
-			       9 => [ 'dump_dna_factory' ],
-			      },
-	       -rc_id => 0,
-  	    },
+    #modify get_species_list
+    if ($name eq 'get_species_list') {
+      foreach (qw(master_db reg_conf core_dbs)) {
+        print "removed parameter for $_\n";
+        delete $analyses->[$i]{'-parameters'}{$_};
+      }
+      print "modifying flow into parameter for $name\n";
+      $analyses->[$i]{'-flow_into'} = { 1 => [ 'parse_pair_aligner_conf' ] };
+    }
 
- 	    {  -logic_name => 'chunk_and_group_dna',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
- 	       -parameters => {
-			       'flow_to_store_sequence' => 1,
-			      },
- 	       -flow_into => {
- 	          2 => [ 'store_sequence' ],
- 	       },
-	       -rc_id => 2,
- 	    },
- 	    {  -logic_name => 'store_sequence',
- 	       -hive_capacity => 100,
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
- 	       -parameters => { },
-	       -flow_into => {
- 	          -1 => [ 'store_sequence_again' ],
- 	       },
-	       -rc_id => 2,
-  	    },
-	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
- 	    {  -logic_name => 'store_sequence_again',
- 	       -hive_capacity => 100,
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
- 	       -parameters => { }, 
-	       -can_be_empty  => 1, 
-	       -rc_id => 2,
-  	    },
-	    {  -logic_name => 'dump_dna_factory',
-	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
-	       -parameters => {
-			       'dump_dna'=>1,
-			       'dump_min_size'=>1,
-			       },
-	       -can_be_empty  => 1, 
-	       -wait_for => [ 'store_sequence', 'store_sequence_again' ],
-	       -rc_id => 1,
-	       -flow_into => {
- 	          2 => [ 'dump_dna' ],
- 	       },
-	    },
-	    {  -logic_name => 'dump_dna',
-	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
-	       -parameters => {
-			       'dump_dna'=>1,
-			       },
-	       -can_be_empty  => 1, 
-	       -hive_capacity => 10,
-	       -rc_id => 1,
-	    },
- 	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
- 	       -parameters => { },
-	       -hive_capacity => 10,
- 	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna', 'dump_dna_factory', 'dump_dna'  ],
-	       -flow_into => {
-			       1 => [ 'remove_inconsistencies_after_pairaligner' ],
-			       2 => [ $self->o('pair_aligner_logic_name')  ],
-			   },
-	       -rc_id => 1,
- 	    },
- 	    {  -logic_name => $self->o('pair_aligner_logic_name'),
- 	       -module     => $self->o('pair_aligner_module'),
- 	       -hive_capacity => $self->o('pair_aligner_hive_capacity'),
- 	       -batch_size => $self->o('pair_aligner_batch_size'),
-	       -parameters => { 
-			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
-			      },
-	       -flow_into => {
-			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
-			     },
-	       -rc_id => 2,
-	    },
-	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
- 	       -module     => $self->o('pair_aligner_module'),
- 	       -hive_capacity => $self->o('pair_aligner_hive_capacity'),
-	       -parameters => { 
-			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
-			      },
- 	       -batch_size => $self->o('pair_aligner_batch_size'),
- 	       -program    => $self->o('pair_aligner_program'), 
-	       -can_be_empty  => 1, 
-	       -rc_id => 3,
-	    },
-	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
-               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
-	       -parameters => { },
- 	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
-	       -flow_into => {
-			      1 => [ 'update_max_alignment_length_before_FD' ],
-			     },
-	       -rc_id => 0,
-	    },
- 	    {  -logic_name => 'update_max_alignment_length_before_FD',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
- 	       -parameters => { 
-			       'quick' => $self->o('quick'),
-			      },
-	       -flow_into => {
-			      1 => [ 'update_max_alignment_length_after_FD' ],
-			     },
-	       -rc_id => 0,
- 	    },
- 	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
- 	       -parameters => { },
- 	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
-	        -flow_into => {
-			       2 => [ 'filter_duplicates' ], 
-			     },
-	       -rc_id => 1,
- 	    },
- 	     {  -logic_name   => 'filter_duplicates',
- 	       -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
- 	       -parameters    => { 
-				  'window_size' => $self->o('window_size') 
-				 },
-	       -hive_capacity => 50,
-	       -batch_size    => 3,
-	       -rc_id => 2,
- 	    },
- 	    {  -logic_name => 'update_max_alignment_length_after_FD',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
- 	       -parameters => {
-			       'quick' => $self->o('quick'),
-			      },
- 	       -wait_for =>  [ 'filter_duplicates' ],
-	       -rc_id => 0,
- 	    },
-          ];
+    #modify parse_pair_aligner_conf
+    if ($name eq 'parse_pair_aligner_conf') {
+      foreach (qw(default_chain_output default_net_output default_chain_input default_net_input registry_dbs master_db do_compare_to_previous_db)) {
+        print "removed parameter for $_\n";
+        delete $analyses->[$i]{'-parameters'}{$_};
+      }
+      my @unwanted_flows = qw(create_alignment_nets_jobs healthcheck create_alignment_chains_jobs no_chunk_and_group_dna pairaligner_stats;);
+      foreach my $flow (keys %{$analyses->[$i]{'-flow_into'}}) {
+        if (grep {$analyses->[$i]{'-flow_into'}{$flow}[0] eq $_} @unwanted_flows) {
+          print "removed flow control rule for ".$analyses->[$i]{'-flow_into'}{$flow}[0] . "\n";
+          delete $analyses->[$i]{'-flow_into'}{$flow};
+        }
+      }
+    }
+    # for Vega 49 had to manually add filter duplicate high memory jobs into the basement. This should be fixed
+    # by Kathryn for next time, but if not then the code below should do it. However note this is not tested at all
+
+    ##Create a new analysis for filter duplicates_highmem where jobs are passed to the basement queue
+#    if ($name eq 'filter_duplicates_himem') {
+#      my $himem_basement = { %$analysis };
+#      $analyses->[$i]{'-flow_into'}->{-2} = ['filter_duplicates_himem_basement'];
+#      $analyses->[$i]{'-flow_into'}->{-1} = ['filter_duplicates_himem_basement'];
+#      warn Data::Dumper::Dumper($analysis);
+##
+#
+#      $himem_basement->{'-rc_name'} = 'basement';
+#      $himem_basement->{'-logic_name'} = 'filter_duplicates_himem_basment';
+#      warn Data::Dumper::Dumper($himem_basement); exit;
+#      push @$analyses,$himem_basement; 
+ #   }
   }
-
+  if (@new_analyses) {
+    foreach my $name (@new_analyses) {
+      print "Ensembl analysis \'$name\' is not known to us in Vega - review and decide what to do with it\n";
+    }
+    exit;
+  }
+  return $analyses;
+}
 
 1;
+
+sub e_analyses {
+  my $txt;
+  my $analyses = [qw(
+                     LastZ
+                     LastZ_himem1
+                     create_pair_aligner_jobs
+                     chunk_and_group_dna
+                     pairaligner_stats
+                     alignment_chains
+                     remove_inconsistencies_after_chain
+                     innodbise_table_factory
+                     create_alignment_nets_jobs
+                     alignment_nets_himem
+                     update_max_alignment_length_after_FD
+                     update_max_alignment_length_after_net
+                     alignment_nets
+                     update_max_alignment_length_before_FD
+                     dump_dna
+                     no_chunk_and_group_dna
+                     populate_new_database
+                     dump_large_nib_for_chains
+                     filter_duplicates
+                     parse_pair_aligner_conf
+                     alignment_chains_himem
+                     remove_inconsistencies_after_net
+                     dump_large_nib_for_chains_himem
+                     remove_inconsistencies_after_pairaligner
+                     get_species_list
+                     set_internal_ids
+                     store_sequence_again
+                     dump_dna_factory
+                     create_filter_duplicates_jobs
+                     subst pair_aligner_logic_name:
+                     update_max_alignment_length_after_chain
+                     create_alignment_chains_jobs
+                     healthcheck
+                     subst pair_aligner_logic_name
+                     dump_large_nib_for_chains_factory
+                     filter_duplicates_himem
+                     innodbise_table
+                     store_sequence)];
+  push @$analyses, '#:subst pair_aligner_logic_name:#_himem1';
+  push @$analyses, '#:subst pair_aligner_logic_name:#';
+  return $analyses;
+}
