@@ -175,7 +175,7 @@ sub _assembly_text {
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/dna/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
        $html   .= qq{
-<p><a href=$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download DNA sequence</a> (FASTA)</p>};
+<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download DNA sequence</a> (FASTA)</p>};
   }
   ## Link to assembly mapper
   my $mappings = $species_defs->ASSEMBLY_MAPPINGS;
@@ -264,7 +264,7 @@ sub _genebuild_text {
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
     $html   .= qq{
-<p><a href=$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>};
+<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>};
   }
   my $im_url = $hub->url({'type'=>'UserData','action'=>'UploadStableIDs'});
   $html .= qq(<p><a href="$im_url" class="modal_link"><img src="/i/24/tool.png" class="homepage-link" />Update your old Ensembl IDs</a></p>);
@@ -312,7 +312,7 @@ sub _compara_text {
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/emf/ensembl-compara/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version;
     $html   .= qq{
-<p><a href=$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download alignments</a> (EMF)</p>};
+<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download alignments</a> (EMF)</p>};
   }
   return $html;
 }
@@ -376,7 +376,7 @@ sub _variation_text {
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
       $html   .= qq{
-<p><a href=$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download all variants</a> (GVF)</p>};
+<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download all variants</a> (GVF)</p>};
     }
   }
   else {
@@ -429,7 +429,7 @@ sub _funcgen_text {
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/regulation/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
       $html   .= qq{
-<p><a href=$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download all regulatory features</a> (GFF)</p>};
+<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download all regulatory features</a> (GFF)</p>};
     } 
   }
   else {
