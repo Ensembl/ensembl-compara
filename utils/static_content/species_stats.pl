@@ -508,7 +508,7 @@ foreach my $spp (@valid_spp) {
           my $header = $term ? qq(<span class="glossary_mouseover">$gene_title{$_}<span class="floating_popup">$glossary{$term}</span></span>) : $gene_title{$_};
           print STATS qq($row
             <td class="data">$header:</td>
-            <td class="value">$gene_stats{'coding'}</td>
+            <td class="value">$gene_stats{$_}</td>
             </tr>
           );
         }
