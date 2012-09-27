@@ -842,53 +842,40 @@ sub hits2html {
   my @domids = sort { ($domain->{$b}{genes} || 0) <=> ($domain->{$a}{genes} || 0)} keys %$domain;
 
   print qq(<table class="ss tint data_table">\n);
-  print qq(<thead><tr>
-            <th>No.</th>
-            <th>InterPro name</th>
-            <th>Number of genes</th>
-            <th>Number of Ensembl hits</th>
-            <th>No.</th>
-            <th>InterPro name</th>
-            <th>Number of genes</th>
-            <th>Number of Ensembl hits</th>
-         </tr></thead>
-         <tbody>
-  );
+  print qq(<thead>
+  <tr>
+    <th class="sorting sort_numeric">No.</th>
+    <th class="sorting sort_html">InterPro name</th>
+    <th class="sorting sort_position_html">Number of genes</th>
+    <th class="sorting sort_numeric">Number of Ensembl hits</th>
+  </tr>
+</thead>
+<tbody>);
 
-  my @classes = ('class="bg2"', 'class="bg1"');
-  for (my $i = 0; $i< $number/2; $i++){
-    my $tmpdom1 = $domain->{$domids[$i]};
-    my $tmpdom2 = $domain->{$domids[$i + $number/2]};
-
-    my $name1  = $domids[$i];
-    my $gene1  = $tmpdom1->{genes} || "";
-    my $count1 = $tmpdom1->{count};
-    my $descr1 = $tmpdom1->{descr} || '&nbsp;';
-
-    my $name2  = $domids[$i + $number/2];
-    my $gene2  = $tmpdom2->{genes} || "";
-    my $count2 = $tmpdom2->{count};
-    my $descr2 = $tmpdom2->{descr} || '&nbsp;';
-
-    my $order1 = $i+1 || 0;
-    my $order2 = $i+($number/2)+1 || 0;
-    my $class = $classes[$i % 2];
+  my @classes = qw(bg1 bg2);
+  for (my $i = 0; $i < $number; $i++){
+    my $tmpdom  = $domain->{$domids[$i]};
+    my $name    = $domids[$i];
+    my $gene    = $tmpdom->{genes} || "";
+    my $count   = $tmpdom->{count};
+    my $descr   = $tmpdom->{descr} || '&nbsp;';
+    my $order   = $i+1 || 0;
+    @classes    = reverse @classes;
 
   print qq(
-<tr $class>
-  <td><b>$order1</b></td>
-  <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name1">$name1</a><br />$descr1</td>
-  <td><a href="/$species/Location/Genome?ftype=Domain;id=$name1">$gene1</a></td>
-  <td>$count1</td>
-  <td><b>$order2</b></td>
-  <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name2">$name2</a><br />$descr2</td>
-  <td><a href="/$species/Location/Genome?ftype=Domain;id=$name2">$gene2</a></td>
-  <td>$count2</td>
+<tr class="$classes[0]">
+  <td><b>$order</b></td>
+  <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name">$name</a><br />$descr</td>
+  <td><a href="/$species/Location/Genome?ftype=Domain;id=$name">$gene</a></td>
+  <td>$count</td>
 </tr>
   );
   }
 
-  print("</tbody></table>");
+  print qq(
+</tbody>
+</table>
+<form class="data_table_config" action="#"><input type="hidden" name="iDisplayLength" value="25" /></form>);
 
   close(HTML);
 }
