@@ -841,16 +841,22 @@ sub hits2html {
 
   my @domids = sort { ($domain->{$b}{genes} || 0) <=> ($domain->{$a}{genes} || 0)} keys %$domain;
 
-  print qq(<table class="ss tint data_table">\n);
-  print qq(<thead>
-  <tr>
-    <th class="sorting sort_numeric">No.</th>
-    <th class="sorting sort_html">InterPro name</th>
-    <th class="sorting sort_position_html">Number of genes</th>
-    <th class="sorting sort_numeric">Number of Ensembl hits</th>
-  </tr>
-</thead>
-<tbody>);
+  print qq(<table class="ss tint fixed data_table">
+  <colgroup>
+    <col width="10%" />
+    <col width="50%" />
+    <col width="20%" />
+    <col width="20%" />
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="sorting sort_numeric">No.</th>
+      <th class="sorting sort_html">InterPro name</th>
+      <th class="sorting sort_position_html">Number of genes</th>
+      <th class="sorting sort_numeric">Number of Ensembl hits</th>
+    </tr>
+  </thead>
+  <tbody>);
 
   my @classes = qw(bg1 bg2);
   for (my $i = 0; $i < $number; $i++){
@@ -862,20 +868,20 @@ sub hits2html {
     my $order   = $i+1 || 0;
     @classes    = reverse @classes;
 
-  print qq(
-<tr class="$classes[0]">
-  <td class="bold">$order</td>
-  <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name">$name</a><br />$descr</td>
-  <td><a href="/$species/Location/Genome?ftype=Domain;id=$name">$gene</a></td>
-  <td>$count</td>
-</tr>
-  );
+    print qq(
+    <tr class="$classes[0]">
+      <td class="bold">$order</td>
+      <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name">$name</a><br />$descr</td>
+      <td><a href="/$species/Location/Genome?ftype=Domain;id=$name">$gene</a></td>
+      <td>$count</td>
+    </tr>
+    );
   }
 
   print qq(
-</tbody>
+  </tbody>
 </table>
-<form class="data_table_config" action="#"><input type="hidden" name="iDisplayLength" value="25" /></form>);
+<form class="data_table_config" action="#"><input type="hidden" name="iDisplayLength" value="25" /></form>\n);
 
   close(HTML);
 }
