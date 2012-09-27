@@ -130,7 +130,7 @@ sub content_ensembl {
     
     foreach my $species (sort { $a->binomial cmp $b->binomial } @taxa) {
       my $display_species = $species->binomial || $species->name;
-      (my $species_key    = $display_species) =~ s/\s+/_/;
+      (my $species_key    = $display_species) =~ s/\s+/_/g;
        
       if ($hub->param('species_' . lc $species_key) ne 'yes') {
         push @member_skipped_species, $display_species;
