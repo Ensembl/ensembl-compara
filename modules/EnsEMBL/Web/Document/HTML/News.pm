@@ -159,11 +159,11 @@ sub render {
           my @names;
           foreach my $sp (@species) {
             next unless $sp->{'id'} > 0;
-            if ($sp->{'web_name'} =~ /\./) { ## No common name, only Latin
-              push @names, '<i>'.$sp->{'web_name'}.'</i>';
+            if ($sp->{'common_name'} =~ /\./) { ## No common name, only Latin
+              push @names, '<i>'.$sp->{'common_name'}.'</i>';
             }
             else {
-              push @names, $sp->{'web_name'};
+              push @names, $sp->{'common_name'};
             }
           }
           $sp_text = join(', ', @names);

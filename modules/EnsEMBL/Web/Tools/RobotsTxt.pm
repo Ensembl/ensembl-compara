@@ -57,9 +57,16 @@ sub create {
       /Multi/  /biomart/  /Account/  /ExternalData/  /UserAnnotation/
       */Ajax/  */Config/  */blastview/  */Export/  */Experiment/  
       */Location/  */LRG/  */Phenotype/  */Regulation/  */Search/
-      */UserConfig/  */UserData/  */Variation/      
+      */UserConfig/  */UserData/  */Variation/
     ));
-    
+
+    #old views
+    print FH _lines("Disallow",qw(*/*view));
+
+    #other misc views google bot hits
+    print FH _lines("Disallow",qw(/id/));
+    print FH _lines("Disallow",qw(/*/psychic));
+
     foreach my $row (('A'..'Z','a'..'z')){
       next if lc $row eq 's';
       print FH _lines("Disallow","*/Gene/$row*","*/Transcript/$row*");
@@ -83,12 +90,14 @@ sub create {
     }
     print FH _lines("User-agent","W3C-checklink");
     print FH _lines("Allow","/info");
-    print FH _lines("User-agent","Sanger Search Bot/Nutch-1.1 (Nutch Spider; http://www.sanger.ac.uk; webmaster at sanger dot ac dot uk)");
-    print FH _lines("Allow",qw(/info/* /index.html));
-    # Limit Blekkobot's crawl rate to only one page every 20 seconds.
-    print FH _lines("User-agent","Blekkobot");
-    print FH _lines("Crawl-delay","20");
   }
+  # stop Nutch indexing Doxygen pages
+  print FH _lines("User-agent","Sanger Search Bot/Nutch-1.1 (Nutch Spider; http://www.sanger.ac.uk; webmaster at sanger dot ac dot uk)");
+  print FH _lines("Disallow",qw(/info/docs/Doxygen));
+  print FH _lines("Allow",qw(/info/* /index.html /info/docs/Doxygen/index.html));
+  # Limit Blekkobot's crawl rate to only one page every 20 seconds.
+  print FH _lines("User-agent","Blekkobot");
+  print FH _lines("Crawl-delay","20");
   close FH;
   return;
 }

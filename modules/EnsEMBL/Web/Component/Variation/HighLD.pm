@@ -146,12 +146,6 @@ sub summary_table {
   
   my $html = '<h2>Links to linkage disequilibrium data by population</h2>';
   
-  $html .= $self->_hint(
-    '1KGtag',
-    'Tagging information',
-    qq{<p>NB: For release 67, tagged data has not been calculated for the 1000 Genomes phase 1 data.</p>},
-  );
-  
   if ($table_with_no_rows) {
     $html .= $self->_hint('HighLD', 'Linked variation information', qq{
       <p>A variation may have no LD data in a given population for the following reasons:</p>

@@ -13,6 +13,7 @@ sub content {
   my $id           = $hub->param('id');
   my $db           = $hub->param('db') || 'core';
   my $object_type  = $hub->param('ftype');
+  my $logic_name   = $hub->param('ln');
   my $db_adaptor   = $hub->database(lc($db));
   my $adaptor_name = "get_${object_type}Adaptor";
   my $feat_adap    = $db_adaptor->$adaptor_name;
@@ -39,19 +40,21 @@ sub content {
       __clear => 1
     })
   });  
-
+=cut
   $self->add_entry({
     label => 'View all hits',
     link  => $hub->url({
       type    => 'Location',
       action  => 'Genome',
-      ftype   => $object_type,
-      id      => $ref_seq_name,
-      filter  => $feature->slice->seq_region_name,
+      ftype   => 'PatchAlignFeature',
+      filter      => $ref_seq_name,
+      id  => $feature->slice->seq_region_name,
+      exdb  => $hit_db_name,
       db      => $db,
       __clear => 1
     })
   });
+=cut
 }
 
 1;
