@@ -599,7 +599,12 @@ sub freqs {
     next if $data{$pop_id}{$ssid}{pop_info};
     $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
     $data{$pop_id}{$ssid}{ssid} = $allele_obj->subsnp();
-    $data{$pop_id}{$ssid}{submitter} = $allele_obj->frequency_subsnp_handle($pop_obj);
+    
+    ## If frequency data is available, show frequency data submitter, else show observation submitter
+    $data{$pop_id}{$ssid}{submitter}  = $allele_obj->frequency_subsnp_handle($pop_obj);
+    unless (defined $data{$pop_id}{$ssid}{submitter} ){
+	$data{$pop_id}{$ssid}{submitter}  = $allele_obj->subsnp_handle() ;
+    }
   }
   
   # Add genotype data;
