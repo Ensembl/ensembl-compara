@@ -124,7 +124,7 @@ sub write_output {
     #
     foreach my $gab (sort {$a->dbID <=> $b->dbID} @$skip_genomic_align_blocks) {
 	my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
-	my $dump_sth = $self->compara_dba->dbc->prepare($sql_cmd);
+	my $dump_sth = $self->db->dbc->prepare($sql_cmd);
 	$dump_sth->execute($gab->dbID);
 	$dump_sth->finish();
 
