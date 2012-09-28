@@ -115,9 +115,7 @@ sub _help {
 
   my %sample    = %{$self->species_defs->SAMPLE_DATA || {}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url       = $self->hub->url({ __clear => 1, action => 'Locations', 
-                                    id => $sample{'PHENOTYPE_ID'}, 
-                                    name => encode_entities($sample{'PHENOTYPE_NAME'}) });
+  my $url       = $self->hub->url({ __clear => 1, action => 'Locations', ph => $sample{'PHENOTYPE_PARAM'}});
 
   $help_text .= sprintf('
   <p>
@@ -126,7 +124,7 @@ sub _help {
   <blockquote class="space-below"><a href="%s">%s</a> (%s)</blockquote>',
     encode_entities($url),
     encode_entities($self->species_defs->ENSEMBL_BASE_URL . $url),
-    $sample{'PHENOTYPE_NAME'}
+    $sample{'PHENOTYPE_TEXT'}
   );
 
   return $help_text;
