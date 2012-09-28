@@ -233,7 +233,7 @@ sub update_user_history {
   
   if ($referer_type && $param) {
     my @type_history = grep $_->{'object'} eq $referer_type, $user->histories;
-    my $value        = shift || $referer->{'params'}->{$param}->[0];
+    my $value        = shift || $referer->{'params'}->{$param}->[0] or return;
     my $name         = $self->species_defs->get_config($referer_species, 'SPECIES_COMMON_NAME');
     
     if ($referer_type =~ /^(Gene|Transcript)$/) {
@@ -245,7 +245,7 @@ sub update_user_history {
       
       $name .= ': ' . ($display_xref ? $display_xref->display_id : $value);
     } elsif ($referer_type eq 'Phenotype') {
-      $name .= ': ' . $hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_phenotype_description_by_id($value);
+      $name .= ': ' . $hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation', $referer_species)->fetch_phenotype_description_by_id($value);
     } elsif ($referer_type eq 'Experiment') {
       $value = $value eq 'all' ? 'All' : join(', ', grep !/(cell_type|evidence_type|project|name)/, split chop $value, $value) unless $value =~ s/^name-//;     
       $name .= ": $value";
