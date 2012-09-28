@@ -44,8 +44,8 @@ sub fetch_changelog {
   my @args = ($criteria->{'release'});
 
   my $filter = $criteria->{'limit'} ?
-                'ORDER BY c.priority DESC LIMIT '.$criteria->{'limit'}
-                : 'ORDER BY c.team, c.priority DESC';
+                'ORDER BY s.species_id DESC, c.priority DESC LIMIT '.$criteria->{'limit'}
+                : 'ORDER BY c.team, s.species_id DESC, c.priority DESC';
 
   if ($criteria->{'species'}) {
     $sql = qq(
