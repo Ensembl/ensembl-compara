@@ -139,7 +139,6 @@ sub _assembly_text {
 
   my $html = '
 <div class="homepage-icon">
-  <div class="center">
   ';
 
   if (@{$species_defs->ENSEMBL_CHROMOSOMES || []}) {
@@ -158,7 +157,6 @@ sub _assembly_text {
   );
 
   $html .= '
-  </div>
 </div>
 ';
 
@@ -230,7 +228,6 @@ sub _genebuild_text {
 
   my $html = '
 <div class="homepage-icon">
-  <div class="center">
   ';
 
   my $gene_text = $sample_data->{'GENE_TEXT'}; 
@@ -248,7 +245,6 @@ sub _genebuild_text {
   );
 
   $html .= '
-  </div>
 </div>
 ';
 
@@ -288,7 +284,6 @@ sub _compara_text {
 
   my $html = '
 <div class="homepage-icon">
-  <div class="center">
   ';
   my $tree_text = $sample_data->{'GENE_TEXT'}; 
   my $tree_url  = $species_defs->species_path.'/Gene/Compara_Tree?g='.$sample_data->{'GENE_PARAM'};
@@ -297,7 +292,6 @@ sub _compara_text {
     <p><a href="$tree_url" class="nodeco" title="$tree_text">Example gene tree</a></p>
   );
   $html .= '
-  </div>
 </div>
 ';
 
@@ -327,7 +321,6 @@ sub _variation_text {
   if ($hub->database('variation')) {
     $html .= '
 <div class="homepage-icon">
-  <div class="center">
     ';
 
     my $var_url  = $species_defs->species_path.'/Variation/Explore?v='.$sample_data->{'VARIATION_PARAM'};
@@ -346,7 +339,6 @@ sub _variation_text {
   }
 
     $html .= '
-  </div>
 </div>
 ';
 
@@ -401,7 +393,6 @@ sub _funcgen_text {
   if ($sample_data->{'REGULATION_PARAM'}) {
     $html = '
 <div class="homepage-icon">
-  <div class="center">
   ';
 
     my $reg_url  = $species_defs->species_path.'/Regulation/Cell_line?db=funcgen;rf='.$sample_data->{'REGULATION_PARAM'};
@@ -411,7 +402,6 @@ sub _funcgen_text {
   );
 
     $html .= '
-  </div>
 </div>
 ';
 
