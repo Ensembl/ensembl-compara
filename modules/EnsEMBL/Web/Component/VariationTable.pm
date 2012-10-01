@@ -67,12 +67,12 @@ sub make_table {
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
     { key => 'ID',       width => '12u', sort => 'html'                                                                                         },
-    { key => 'chr' ,     width => '8u', sort => 'position', title => 'Chr: bp'                                                                 },
-    { key => 'Alleles',  width => '20u', sort => 'string',                          align => 'center'                                           },
+    { key => 'chr' ,     width => '10u', sort => 'position', title => 'Chr: bp'                                                                 },
+    { key => 'Alleles',  width => '16u', sort => 'string',                          align => 'center'                                           },
     { key => 'class',    width => '11u', sort => 'string',   title => 'Class',      align => 'center'                                           },
     { key => 'Source',   width => '8u',  sort => 'string'                                                                                       },
     { key => 'status',   width => '6u', sort => 'string',   title => 'Validation', align => 'center', help => $glossary->{'Validation status'} },
-    { key => 'snptype',  width => '15u', sort => 'string',   title => 'Type',                                                                   },
+    { key => 'snptype',  width => '12u', sort => 'string',   title => 'Type',                                                                   },
     { key => 'aachange', width => '6u',  sort => 'string',   title => 'Amino Acid', align => 'center'                                           },
     { key => 'aacoord',  width => '6u',  sort => 'position', title => 'AA coord',   align => 'center'                                           },
   ];
@@ -331,7 +331,7 @@ sub variation_table {
           my $trans_url            = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
           my $vf_allele            = $tva->variation_feature_seq;
           my $allele_string        = $snp->allele_string;
-             $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 20) if length $allele_string > 20; # Check allele string size (for display issues)
+             $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 10) if length $allele_string > 10; # Check allele string size (for display issues)
              $allele_string        =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//; # highlight variant allele in allele string
           
           # sort out consequence type string
