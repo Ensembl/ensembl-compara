@@ -33,7 +33,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::VegaProteinTrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf');
 
 use Storable qw(dclone);
 
