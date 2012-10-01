@@ -13,8 +13,9 @@ img.alignright { float:right;  margin-left: 10px; }
 
 /* Specific styles */
 
-div.homepage-icon { float:right; width:112px; margin:8px 0 0 8px; }
-div.homepage-icon p { margin-top:2px; }
+div.homepage-icon { text-align: center; float:right; width:112px; margin: 8px 0 0 8px; }
+div.homepage-icon a { display: block; margin-bottom: 8px; }
+div.homepage-icon a span { display: block; line-height: 16px; margin-top: 4px; }
 
 img.homepage-link { height:24px; width:24px; vertical-align:middle; margin-right:8px; }
 
