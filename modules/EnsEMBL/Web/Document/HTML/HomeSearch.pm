@@ -41,7 +41,7 @@ sub render {
   my $q                   = $self->{'query'};
 
   # form
-  my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'validate' => 0, 'class' => [ $is_home_page ? 'homepage-search-form' : (), 'search-form' ]});
+  my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'validate' => 0, 'class' => [ $is_home_page ? 'homepage-search-form' : (), 'search-form', 'clear' ]});
   $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
 
   # examples
