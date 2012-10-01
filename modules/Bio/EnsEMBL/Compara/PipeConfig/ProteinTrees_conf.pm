@@ -972,7 +972,7 @@ sub pipeline_analyses {
                 'mcoffee_exe'           => $self->o('mcoffee_exe'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => '2Gb_job',
+            -rc_name => 'msa',
             -priority => 30,
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
@@ -988,7 +988,7 @@ sub pipeline_analyses {
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => '2Gb_job',
+            -rc_name => 'msa',
             -priority => 30,
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
@@ -1004,7 +1004,7 @@ sub pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => '8Gb_job',
+            -rc_name => 'msa_himem',
             -priority => 30,
             -flow_into => {
                -2 => [ 'mafft_himem' ],
@@ -1020,7 +1020,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -priority => 35,
-            -rc_name => '8Gb_job',
+            -rc_name => 'msa_himem',
         },
 
         {   -logic_name     => 'split_genes',
