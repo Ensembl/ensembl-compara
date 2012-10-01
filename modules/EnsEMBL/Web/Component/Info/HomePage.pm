@@ -21,6 +21,7 @@ sub content {
   my $hub               = $self->hub;
   my $species_defs      = $hub->species_defs;
   my $species           = $hub->species;
+  my $img_url           = $self->img_url;
 
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
   my $display_name      = $species_defs->SPECIES_SCIENTIFIC_NAME;
@@ -32,7 +33,7 @@ sub content {
     <div class="column-padding no-left-margin">
       <div class="species-badge">';
 
-  $html .= qq(<img src="/i/species/64/$species.png" alt="" title="$sound" />);
+  $html .= qq(<img src="${img_url}species/64/$species.png" alt="" title="$sound" />);
   if ($common_name =~ /\./) {
     $html .= qq(<h1>$display_name</h1>);
   }
@@ -93,11 +94,11 @@ sub _whatsnew_text {
   my $hub             = $self->hub;
   my $species_defs    = $hub->species_defs;
   my $species         = $hub->species;
-    
-  my $news_url = $hub->url({'action'=>'WhatsNew'});
+  my $news_url        = $hub->url({'action'=>'WhatsNew'});
 
-  my $html = sprintf(qq(<h2><a href="%s" title="More release news"><img src="/i/24/announcement.png" style="vertical-align:middle" alt="" /></a> What's New in %s release %s</h2>),
+  my $html = sprintf(qq(<h2><a href="%s" title="More release news"><img src="%s24/announcement.png" style="vertical-align:middle" alt="" /></a> What's New in %s release %s</h2>),
                         $news_url,
+                        $self->img_url,
                         $species_defs->SPECIES_COMMON_NAME,
                         $species_defs->ENSEMBL_VERSION,
                     );
@@ -143,7 +144,7 @@ sub _assembly_text {
 
   if (@{$species_defs->ENSEMBL_CHROMOSOMES || []}) {
     $html .= qq(
-    <a href="/$species/Location/Genome"><img src="$img_url/96/karyotype.png" class="bordered" /></a>
+    <a href="/$species/Location/Genome"><img src="${img_url}96/karyotype.png" class="bordered" /></a>
     <p><a href="/$species/Location/Genome" class="nodeco">View karyotype</a></p>
     );
   }
@@ -151,10 +152,10 @@ sub _assembly_text {
   my $region_text = $sample_data->{'LOCATION_TEXT'};
   my $region_url  = $species_defs->species_path.'/Location/View?r='.$sample_data->{'LOCATION_PARAM'};
 
-  $html .= qq{
-    <a href="$region_url" title="$region_text"><img src="$img_url/96/region.png" class="bordered" /></a>
+  $html .= qq(
+    <a href="$region_url" title="$region_text"><img src="${img_url}96/region.png" class="bordered" /></a>
     <p><a href="$region_url" class="nodeco" title="$region_text">Example region</a></p>
-  };
+  );
 
   $html .= '
   </div>
@@ -164,19 +165,19 @@ sub _assembly_text {
   my $assembly = $species_defs->ASSEMBLY_NAME;
   $html .= "<h2>Genome assembly: $assembly</h2>";
 
-  $html .= qq(<p><a href="/$species/Info/Annotation/#assembly"><img src="/i/24/info.png" alt="" class="homepage-link" />More information and statistics</a></p>);
+  $html .= qq(<p><a href="/$species/Info/Annotation/#assembly"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More information and statistics</a></p>);
   
   ## Link to FTP site
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/dna/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
-       $html   .= qq{
-<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download DNA sequence</a> (FASTA)</p>};
+       $html   .= qq(
+<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download DNA sequence</a> (FASTA)</p>);
   }
   ## Link to assembly mapper
   my $mappings = $species_defs->ASSEMBLY_MAPPINGS;
   if ($mappings && ref($mappings) eq 'ARRAY') {
     my $am_url = $hub->url({'type'=>'UserData','action'=>'SelectFeatures'});
-    $html .= qq(<p><a href="$am_url" class="modal_link"><img src="/i/24/tool.png" class="homepage-link" />Convert your data to $assembly coordinates</a></p>);
+    $html .= qq(<p><a href="$am_url" class="modal_link"><img src="${img_url}24/tool.png" class="homepage-link" />Convert your data to $assembly coordinates</a></p>);
   }
 
   ## PREVIOUS ASSEMBLIES
@@ -198,7 +199,7 @@ sub _assembly_text {
   ## Combine archives and pre
   my $other_assemblies;
   if (@old_archives) {
-    $other_assemblies .= join '', map qq{<li><a href="$_->{'url'}">$_->{'assembly'}</a> $_->{'release'}</li>}, @old_archives;
+    $other_assemblies .= join '', map qq(<li><a href="$_->{'url'}">$_->{'assembly'}</a> $_->{'release'}</li>), @old_archives;
   }
 
   my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
@@ -234,17 +235,17 @@ sub _genebuild_text {
 
   my $gene_text = $sample_data->{'GENE_TEXT'}; 
   my $gene_url  = $species_defs->species_path.'/Gene/Summary?g='.$sample_data->{'GENE_PARAM'};
-  $html .= qq{
-    <a href="$gene_url" title="$gene_text"><img src="$img_url/96/gene.png" class="bordered" /></a>
+  $html .= qq(
+    <a href="$gene_url" title="$gene_text"><img src="${img_url}96/gene.png" class="bordered" /></a>
     <p><a href="$gene_url" class="nodeco" title="$gene_text">Example gene</a></p>
-  };
+  );
 
   my $trans_text = $sample_data->{'TRANSCRIPT_TEXT'}; 
   my $trans_url  = $species_defs->species_path.'/Transcript/Summary?t='.$sample_data->{'TRANSCRIPT_PARAM'};
-  $html .= qq{
-    <a href="$trans_url" title="$trans_text"><img src="$img_url/96/transcript.png" class="bordered" /></a>
+  $html .= qq(
+    <a href="$trans_url" title="$trans_text"><img src="${img_url}96/transcript.png" class="bordered" /></a>
     <p><a href="$trans_url" class="nodeco" title="$trans_text">Example transcript</a></p>
-  };
+  );
 
   $html .= '
   </div>
@@ -254,15 +255,15 @@ sub _genebuild_text {
   $html .= '<h2>Gene annotation</h2>
 <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>';
 
-  $html .= qq(<p><a href="/$species/Info/Annotation/#genebuild"><img src="/i/24/info.png" alt="" class="homepage-link" />More about this genebuild</a></p>);
+  $html .= qq(<p><a href="/$species/Info/Annotation/#genebuild"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about this genebuild</a></p>);
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
-    $html   .= qq{
-<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>};
+    $html   .= qq(
+<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>);
   }
   my $im_url = $hub->url({'type'=>'UserData','action'=>'UploadStableIDs'});
-  $html .= qq(<p><a href="$im_url" class="modal_link"><img src="/i/24/tool.png" class="homepage-link" />Update your old Ensembl IDs</a></p>);
+  $html .= qq(<p><a href="$im_url" class="modal_link"><img src="${img_url}24/tool.png" class="homepage-link" />Update your old Ensembl IDs</a></p>);
 
   if ($has_vega) {
     $html .= qq(
@@ -291,10 +292,10 @@ sub _compara_text {
   ';
   my $tree_text = $sample_data->{'GENE_TEXT'}; 
   my $tree_url  = $species_defs->species_path.'/Gene/Compara_Tree?g='.$sample_data->{'GENE_PARAM'};
-  $html .= qq{
-    <a href="$tree_url" title="$tree_text"><img src="$img_url/96/compara.png" class="bordered" /></a>
+  $html .= qq(
+    <a href="$tree_url" title="$tree_text"><img src="${img_url}96/compara.png" class="bordered" /></a>
     <p><a href="$tree_url" class="nodeco" title="$tree_text">Example gene tree</a></p>
-  };
+  );
   $html .= '
   </div>
 </div>
@@ -302,12 +303,12 @@ sub _compara_text {
 
   $html .= '<h2>Comparative genomics</h2>
 <p><strong>What can I find?</strong>  Homologues, gene trees, and whole genome alignments across multiple species.</p>';
-  $html .= '<p><a href="/info/docs/compara/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about comparative analysis</a></p>'; 
+  $html .= qq(<p><a href="/info/docs/compara/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about comparative analysis</a></p>); 
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/emf/ensembl-compara/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version;
-    $html   .= qq{
-<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download alignments</a> (EMF)</p>};
+    $html   .= qq(
+<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download alignments</a> (EMF)</p>);
   }
   return $html;
 }
@@ -330,18 +331,18 @@ sub _variation_text {
     ';
 
     my $var_url  = $species_defs->species_path.'/Variation/Explore?v='.$sample_data->{'VARIATION_PARAM'};
-    $html .= qq{
-      <a href="$var_url"><img src="$img_url/96/variation.png" class="bordered" /></a>
+    $html .= qq(
+      <a href="$var_url"><img src="${img_url}96/variation.png" class="bordered" /></a>
       <p><a href="$var_url" class="nodeco">Example variant</a></p>
-    };
+    );
 
     if ($sample_data->{'PHENOTYPE_PARAM'}) {
       my $phen_text = $sample_data->{'PHENOTYPE_TEXT'}; 
       my $phen_url  = $species_defs->species_path.'/Phenotype/Locations?ph='.$sample_data->{'PHENOTYPE_PARAM'};
-      $html .= qq{
-        <a href="$phen_url" title="$phen_text"><img src="$img_url/96/phenotype.png" class="bordered" /></a>
+      $html .= qq(
+        <a href="$phen_url" title="$phen_text"><img src="${img_url}96/phenotype.png" class="bordered" /></a>
         <p><a href="$phen_url" class="nodeco" title="$phen_text">Example phenotype</a></p>
-    };
+    );
   }
 
     $html .= '
@@ -366,12 +367,12 @@ sub _variation_text {
     $html .= '.</p>';
 
     my $site = $species_defs->ENSEMBL_SITETYPE;
-    $html .= qq(<p><a href="info/docs/variation/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about variation in $site</a></p>);
+    $html .= qq(<p><a href="info/docs/variation/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about variation in $site</a></p>);
 
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
-      $html   .= qq{
-<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download all variants</a> (GVF)</p>};
+      $html   .= qq(
+<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download all variants</a> (GVF)</p>);
     }
   }
   else {
@@ -380,7 +381,7 @@ sub _variation_text {
   }
 
    my $vep_url = $hub->url({'type'=>'UserData','action'=>'UploadVariations'});
-    $html .= qq(<p><a href="$vep_url" class="modal_link"><img src="$img_url/24/tool.png" class="homepage-link" />Variant Effect Predictor<img src="$img_url/vep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>);
+    $html .= qq(<p><a href="$vep_url" class="modal_link"><img src="${img_url}24/tool.png" class="homepage-link" />Variant Effect Predictor<img src="${img_url}vep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>);
 
   return $html;
 }
@@ -404,10 +405,10 @@ sub _funcgen_text {
   ';
 
     my $reg_url  = $species_defs->species_path.'/Regulation/Cell_line?db=funcgen;rf='.$sample_data->{'REGULATION_PARAM'};
-    $html .= qq{
-    <a href="$reg_url"><img src="$img_url/96/regulation.png" class="bordered" /></a>
+    $html .= qq(
+    <a href="$reg_url"><img src="${img_url}96/regulation.png" class="bordered" /></a>
     <p style="width:112px"><a href="$reg_url" class="nodeco">Example regulatory feature</a></p>
-  };
+  );
 
     $html .= '
   </div>
@@ -417,18 +418,18 @@ sub _funcgen_text {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>';
 
-    $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about the $site regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html">microarray annotation</a></p>);
+    $html .= qq(<p><a href="/info/docs/funcgen/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about the $site regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html">microarray annotation</a></p>);
 
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/regulation/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
-      $html   .= qq{
-<p><a href="$ftp_url"><img src="/i/24/download.png" alt="" class="homepage-link" />Download all regulatory features</a> (GFF)</p>};
+      $html   .= qq(
+<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download all regulatory features</a> (GFF)</p>);
     } 
   }
   else {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> Microarray annotations.</p>';
-    $html .= qq(<p><a href="/info/docs/microarray_probe_set_mapping.html"><img src="/i/24/info.png" alt="" class="homepage-link" />More about the $site microarray annotation strategy</a></p>);
+    $html .= qq(<p><a href="/info/docs/microarray_probe_set_mapping.html"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about the $site microarray annotation strategy</a></p>);
   }
 
   return $html;
