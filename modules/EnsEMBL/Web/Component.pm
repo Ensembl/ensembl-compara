@@ -1243,7 +1243,7 @@ sub trim_large_string {
   unless(ref($truncator)) {
     my $len = $truncator || 25;
     $truncator = sub {
-      local $_ = shift;
+      local $_ = $self->strip_HTML(shift);
       return $_ if(length $_ < $len);      
       return substr($_,0,$len)."...";
     };
