@@ -3,7 +3,7 @@ package EnsEMBL::Web::Component::VariationTable;
 use strict;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
   my $self = shift;

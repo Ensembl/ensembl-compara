@@ -4,7 +4,7 @@ package EnsEMBL::Web::Component::Transcript::ProteinVariations;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Transcript);
+use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::Variation);
 
 sub _init {
   my $self = shift;
