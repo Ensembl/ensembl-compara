@@ -327,8 +327,24 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('blast_capacity'),
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
+                -1 => 'blast_himem',
             },
             -rc_name => 'LongBlast',
+        },
+
+        {   -logic_name    => 'blast_himem',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::BlastAndParseDistances',
+            -parameters    => {
+                'blastdb_dir'   => $self->o('blastdb_dir'),
+                'blastdb_name'  => $self->o('blastdb_name'),
+                'blast_params'  => $self->o('blast_params'),
+                'idprefixed'    => 1,
+            },
+            -hive_capacity => $self->o('blast_capacity'),
+            -flow_into => {
+                3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
+            },
+            -rc_name => '4GigMem',
         },
 
         {   -logic_name => 'snapshot_after_blast',
