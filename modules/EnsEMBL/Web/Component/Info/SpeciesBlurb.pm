@@ -37,7 +37,7 @@ sub content {
   <div class="column-one">
     <div class="column-padding no-left-margin">
       <a href="$path"><img src="/i/species/48/$species.png" class="species-img float-left" alt="" /></a>
-      <h1 style="margin-bottom:0">$common_name assembly and gene annotation</p>
+      <h1 class="no-bottom-margin">$common_name assembly and gene annotation</h1>
     </div>
   </div>
 </div>
