@@ -68,6 +68,10 @@ div.species-box span.sp-img { float: left; padding: 0; margin-right: 8px; border
   Species homepages
 ----------------------------------------------------------------------*/
 
+div.species-badge img { border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; float: left; height: 64px; width: 64px; margin: 0 16px 16px 0; }
+div.species-badge h1  { font-size: 24px; margin-bottom: 0; }
+div.species-badge p   { font-style: italic; }
+
 table.species-stats td.data {  font-weight:bold; width:25%; }
 table.species-stats td.value { text-align:left; }
 
