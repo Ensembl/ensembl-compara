@@ -28,13 +28,15 @@ sub bigbed_adaptor {
 sub format {
   my $self = shift;
 
-  return $self->{'_cache'}->{'format'} ||=
+  my $format = $self->{'_cache'}->{'format'} ||=
     Bio::EnsEMBL::ExternalData::AttachedFormat::BIGBED->new(
       $self->{'config'}->hub,
       "BIGBED",
       $self->my_config('url'),
       $self->my_config('style'), # contains trackline
     );
+  $format->_bigbed_adaptor($self->bigbed_adaptor);
+  return $format;
 }
 
 # Switched to using score for features rather than coverage - coverage tends to be 1, with a score 
@@ -179,7 +181,7 @@ sub features {
     my $default_rgb_string = "0,0,0";
     
     foreach (@$features) {
-      next if (defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d*,\d*,\d*$/);
+      next if (defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d+,\d+,\d+$/);
       $_->external_data->{'item_colour'}[0] = $default_rgb_string;
     }
     $config->{'itemRgb'} = 'on';    
