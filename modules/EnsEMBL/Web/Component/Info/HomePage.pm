@@ -78,8 +78,6 @@ sub content {
 
   $html .= '<div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div>';
  
-  $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
-
   $html .= '<div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div>';
 
   $html .= '
