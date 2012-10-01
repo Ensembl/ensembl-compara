@@ -44,11 +44,11 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 68,                                              # current release number
+        'rel'               => 69,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
         # Commented out to make sure people define it on the command line
-        'member_type'       => 'ncrna',                                       # either 'protein' or 'ncrna'
+        'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
 
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
@@ -67,7 +67,7 @@ sub default_options {
         'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('member_type'),                              # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',                                      # where the template README files are
-        'target_dir'  => '/lustre/scratch103/ensembl/'.$self->o('ENV', 'USER').'/dumps/'.$self->o('pipeline_name'),     # where the final dumps will be stored
+        'target_dir'  => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/compara69_dumps/prot_trees'.$self->o('pipeline_name'),     # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
     };
 }
@@ -207,8 +207,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'query'                 => sprintf 'SELECT root_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
-                'input_id'              => { 'tree_id' => '#root_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
+                'query'                 => sprintf 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
+                'input_id'              => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
                 'fan_branch_code'       => 2,
             },
             -input_ids => [
