@@ -29,13 +29,10 @@ sub content {
     my $codons = $snp->{'codons'} || '-';
     
     if ($codons ne '-') {
-      if (length($codons)>25) {
-        my $display_codons = substr($codons,0,25).'...';
-           $display_codons =~ s/([ACGT])/<b>$1<\/b>/g;
-           $display_codons =~ tr/acgt/ACGT/;
-           $codons =~ tr/acgt/ACGT/;
-            $display_codons .= $self->trim_large_string($codons,'codons_'.$snp->{'snp_id'});
-        $codons = $display_codons;
+      if (length($codons)>8) {
+        $codons =~ s/([ACGT])/<b>$1<\/b>/g;
+        $codons =~ tr/acgt/ACGT/;
+        $codons = $self->trim_large_string($codons,'codons_'.$snp->{'snp_id'},8);
       }
       else {
         $codons =~ s/([ACGT])/<b>$1<\/b>/g;
@@ -47,9 +44,8 @@ sub content {
     my $var_allele = $tva->variation_feature_seq;
     
     # Check allele size (for display issues)
-    if (length($allele)>20) {
-      my $display_allele = $self->trim_large_allele_string($allele,'allele_'.$snp->{'snp_id'},20);
-      $allele = $display_allele;
+    if (length($allele)>10) {
+      $allele = $self->trim_large_allele_string($allele,'allele_'.$snp->{'snp_id'},10);
     }
     $allele =~ s/$var_allele/<b>$var_allele<\/b>/ if $allele =~ /\//;
     
@@ -94,7 +90,7 @@ sub content {
     { key => 'poly',   title => 'PolyPhen',           width => '15%', align => 'center', sort => 'position_html'  }
   ) if $hub->species =~ /homo_sapiens/i;
   
-  my $html = $self->new_table($columns, \@data, { data_table => 1, sorting => [ 'res asc' ] })->render;
+  my $html = $self->new_table($columns, \@data, { data_table => 1, sorting => [ 'res asc' ], class => 'cellwrap_inside fast_fixed_table' })->render;
   
   $html .= $self->_info('Information','<p><span style="color:red;">*</span> SO terms are shown when no NCBI term is available</p>', '50%') if $cons_format eq 'ncbi';
   
