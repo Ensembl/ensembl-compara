@@ -41,20 +41,17 @@ sub content {
   }
   
   $html .= '</div>'; #close species-badge
-  
-  $html .= '<p style="height:1px;clear:both;padding:0;margin:0">&nbsp;</p>';
-  my $search = EnsEMBL::Web::Document::HTML::HomeSearch->new($hub);
-  $html .= $search->render;
+
+  $html .= EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
 
   $html .= '
     </div>
   </div>
   <div class="column-two">
-    <div class="column-padding">';
+    <div class="column-padding no-right-margin">';
 
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) { 
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
     $html .= '<div class="round-box tinted-box unbordered">'.$self->_whatsnew_text.'</div>';  
-    $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
   }
 
   $html .= '
@@ -67,13 +64,9 @@ sub content {
 
   $html .= '<div class="round-box tinted-box unbordered">'.$self->_assembly_text.'</div>';
 
-  $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
-
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div>';  
+  $html .= '<div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div>';
 
   if ($hub->database('funcgen')) {
-    $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
-
     $html .= '<div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div>';
   }
 
@@ -81,9 +74,9 @@ sub content {
     </div>
   </div>
   <div class="column-two">
-    <div class="column-padding">';
+    <div class="column-padding no-right-margin">';
 
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div>';  
+  $html .= '<div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div>';
  
   $html .= '<p style="height:1px;clear:both">&nbsp;</p>';
 
