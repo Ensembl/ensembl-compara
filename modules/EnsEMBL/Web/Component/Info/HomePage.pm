@@ -254,7 +254,7 @@ sub _genebuild_text {
   $html .= '<h2>Gene annotation</h2>
 <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>';
 
-  $html .= qq(<p><a href="/$species/Info/Annotation/#genebuild"><img src="/i/24/info.png" alt="" class="homepage-link" />More about this genebuild</p>);
+  $html .= qq(<p><a href="/$species/Info/Annotation/#genebuild"><img src="/i/24/info.png" alt="" class="homepage-link" />More about this genebuild</a></p>);
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
@@ -302,7 +302,7 @@ sub _compara_text {
 
   $html .= '<h2>Comparative genomics</h2>
 <p><strong>What can I find?</strong>  Homologues, gene trees, and whole genome alignments across multiple species.</p>';
-  $html .= '<p><a href="/info/docs/compara/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about comparative analysis</a></li>'; 
+  $html .= '<p><a href="/info/docs/compara/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about comparative analysis</a></p>'; 
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/emf/ensembl-compara/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version;
@@ -366,7 +366,7 @@ sub _variation_text {
     $html .= '.</p>';
 
     my $site = $species_defs->ENSEMBL_SITETYPE;
-    $html .= qq(<p><a href="info/docs/variation/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about variation in $site</p>);
+    $html .= qq(<p><a href="info/docs/variation/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about variation in $site</a></p>);
 
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
@@ -417,9 +417,7 @@ sub _funcgen_text {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>';
 
-    $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about the $site regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html">microarray annotation</a></li>);
-
-    $html .= '</ul>';
+    $html .= qq(<p><a href="/info/docs/funcgen/"><img src="/i/24/info.png" alt="" class="homepage-link" />More about the $site regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html">microarray annotation</a></p>);
 
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/regulation/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
@@ -430,7 +428,7 @@ sub _funcgen_text {
   else {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> Microarray annotations.</p>';
-    $html .= qq(<p><a href="/info/docs/microarray_probe_set_mapping.html"><img src="/i/24/info.png" alt="" class="homepage-link" />More about the $site microarray annotation strategy</li>);
+    $html .= qq(<p><a href="/info/docs/microarray_probe_set_mapping.html"><img src="/i/24/info.png" alt="" class="homepage-link" />More about the $site microarray annotation strategy</a></p>);
   }
 
   return $html;
