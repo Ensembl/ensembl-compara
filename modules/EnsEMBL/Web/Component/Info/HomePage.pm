@@ -29,15 +29,19 @@ sub content {
   my $html = '
 <div class="column-wrapper">  
   <div class="column-two">
-    <div class="column-padding no-left-margin">';
+    <div class="column-padding no-left-margin">
+      <div class="species-badge">';
 
-  $html .= qq(<img src="/i/species/64/$species.png" class="species-img float-left" style="width:64px;height:64px" alt=""title="$sound" />);
+  $html .= qq(<img src="/i/species/64/$species.png" alt="" title="$sound" />);
   if ($common_name =~ /\./) {
     $html .= qq(<h1>$display_name</h1>);
   }
   else {
-    $html .= qq(<h1 style="font-size:2em;margin-bottom:0;">$common_name</h1><p><i>$display_name</i></p>);
+    $html .= qq(<h1>$common_name</h1><p>$display_name</p>);
   }
+  
+  $html .= '</div>'; #close species-badge
+  
   $html .= '<p style="height:1px;clear:both;padding:0;margin:0">&nbsp;</p>';
   my $search = EnsEMBL::Web::Document::HTML::HomeSearch->new($hub);
   $html .= $search->render;
