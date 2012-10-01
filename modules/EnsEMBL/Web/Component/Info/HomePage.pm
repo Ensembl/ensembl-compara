@@ -143,8 +143,7 @@ sub _assembly_text {
 
   if (@{$species_defs->ENSEMBL_CHROMOSOMES || []}) {
     $html .= qq(
-    <a href="/$species/Location/Genome"><img src="${img_url}96/karyotype.png" class="bordered" /></a>
-    <p><a href="/$species/Location/Genome" class="nodeco">View karyotype</a></p>
+    <a class="nodeco" href="/$species/Location/Genome"><img src="${img_url}96/karyotype.png" class="bordered" /><span>View karyotype</span></a>
     );
   }
 
@@ -152,8 +151,7 @@ sub _assembly_text {
   my $region_url  = $species_defs->species_path.'/Location/View?r='.$sample_data->{'LOCATION_PARAM'};
 
   $html .= qq(
-    <a href="$region_url" title="$region_text"><img src="${img_url}96/region.png" class="bordered" /></a>
-    <p><a href="$region_url" class="nodeco" title="$region_text">Example region</a></p>
+    <a class="nodeco _ht" href="$region_url" title="$region_text"><img src="${img_url}96/region.png" class="bordered" /><span>Example region</span></a>
   );
 
   $html .= '
@@ -233,15 +231,13 @@ sub _genebuild_text {
   my $gene_text = $sample_data->{'GENE_TEXT'}; 
   my $gene_url  = $species_defs->species_path.'/Gene/Summary?g='.$sample_data->{'GENE_PARAM'};
   $html .= qq(
-    <a href="$gene_url" title="$gene_text"><img src="${img_url}96/gene.png" class="bordered" /></a>
-    <p><a href="$gene_url" class="nodeco" title="$gene_text">Example gene</a></p>
+    <a class="nodeco _ht" href="$gene_url" title="$gene_text"><img src="${img_url}96/gene.png" class="bordered" /><span>Example gene</span></a>
   );
 
   my $trans_text = $sample_data->{'TRANSCRIPT_TEXT'}; 
   my $trans_url  = $species_defs->species_path.'/Transcript/Summary?t='.$sample_data->{'TRANSCRIPT_PARAM'};
   $html .= qq(
-    <a href="$trans_url" title="$trans_text"><img src="${img_url}96/transcript.png" class="bordered" /></a>
-    <p><a href="$trans_url" class="nodeco" title="$trans_text">Example transcript</a></p>
+    <a class="nodeco _ht" href="$trans_url" title="$trans_text"><img src="${img_url}96/transcript.png" class="bordered" /><span>Example transcript</span></a>
   );
 
   $html .= '
@@ -288,8 +284,7 @@ sub _compara_text {
   my $tree_text = $sample_data->{'GENE_TEXT'}; 
   my $tree_url  = $species_defs->species_path.'/Gene/Compara_Tree?g='.$sample_data->{'GENE_PARAM'};
   $html .= qq(
-    <a href="$tree_url" title="$tree_text"><img src="${img_url}96/compara.png" class="bordered" /></a>
-    <p><a href="$tree_url" class="nodeco" title="$tree_text">Example gene tree</a></p>
+    <a class="nodeco _ht" href="$tree_url" title="$tree_text"><img src="${img_url}96/compara.png" class="bordered" /><span>Example gene tree</span></a>
   );
   $html .= '
 </div>
@@ -325,16 +320,14 @@ sub _variation_text {
 
     my $var_url  = $species_defs->species_path.'/Variation/Explore?v='.$sample_data->{'VARIATION_PARAM'};
     $html .= qq(
-      <a href="$var_url"><img src="${img_url}96/variation.png" class="bordered" /></a>
-      <p><a href="$var_url" class="nodeco">Example variant</a></p>
+      <a class="nodeco" href="$var_url"><img src="${img_url}96/variation.png" class="bordered" /><span>Example variant</span></a>
     );
 
     if ($sample_data->{'PHENOTYPE_PARAM'}) {
       my $phen_text = $sample_data->{'PHENOTYPE_TEXT'}; 
       my $phen_url  = $species_defs->species_path.'/Phenotype/Locations?ph='.$sample_data->{'PHENOTYPE_PARAM'};
       $html .= qq(
-        <a href="$phen_url" title="$phen_text"><img src="${img_url}96/phenotype.png" class="bordered" /></a>
-        <p><a href="$phen_url" class="nodeco" title="$phen_text">Example phenotype</a></p>
+        <a class="nodeco _ht" href="$phen_url" title="$phen_text"><img src="${img_url}96/phenotype.png" class="bordered" /><span>Example phenotype</span></a>
     );
   }
 
@@ -397,8 +390,7 @@ sub _funcgen_text {
 
     my $reg_url  = $species_defs->species_path.'/Regulation/Cell_line?db=funcgen;rf='.$sample_data->{'REGULATION_PARAM'};
     $html .= qq(
-    <a href="$reg_url"><img src="${img_url}96/regulation.png" class="bordered" /></a>
-    <p style="width:112px"><a href="$reg_url" class="nodeco">Example regulatory feature</a></p>
+    <a class="nodeco" href="$reg_url"><img src="${img_url}96/regulation.png" class="bordered" /><span>Example regulatory feature</span></a>
   );
 
     $html .= '
