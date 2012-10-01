@@ -7,16 +7,16 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {
   my $self = shift; 
   my $hub  = $self->hub;
-  my $v_id = $hub->param('sv');
+  my $sv_id = $hub->param('sv');
   
-  return unless $v_id;
+  return unless $sv_id;
   
   my $db_adaptor      = $hub->database('variation');
   my $var_adaptor     = $db_adaptor->get_StructuralVariation;
-  my $variation       = $var_adaptor->fetch_by_name($v_id); 
+  my $variation       = $var_adaptor->fetch_by_name($sv_id); 
   my $svf             = $variation->get_all_StructuralVariationFeatures();
   my $max_length      = ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1) * 1e6; 
-  my $class            = $variation->var_class;
+  my $class           = $variation->var_class;
   my $vstatus         = $variation->get_all_validation_states;
   my $pubmed_link     = '';
   my $location_link;
@@ -52,14 +52,17 @@ sub content {
   } elsif ($end > $start) {
     $position = "$seq_region:$start-$end";
   }
-  
-  $is_breakpoint = " (breakpoint)" if ($start == $end && defined($feature->breakpoint_order));
-  
+	
+	
   if (! $description) {
     $description = $variation->source_description;
   }
   
-  if ($length > $max_length) {
+	if ($start == $end && defined($feature->breakpoint_order)) {
+	  $is_breakpoint = " (breakpoint)";
+	  $position = $self->get_locations($sv_id);
+	
+	} elsif ($length > $max_length) {
     my $track_name = $variation->is_somatic ? 'somatic_sv_feature' : 'variation_feature_structural';  
     $location_link = $hub->url({
       type     => 'Location',
@@ -96,14 +99,14 @@ sub content {
   if ($class eq 'CNV_PROBE') {
     $sv_caption = 'CNV probe: ';
   }
-  $self->caption($sv_caption . $v_id);
+  $self->caption($sv_caption . $sv_id);
 
   $self->add_entry({
-    label_html => $v_id.' properties',
+    label_html => $sv_id.' properties',
     link       => $hub->url({
       type     => 'StructuralVariation',
       action   => 'Summary',
-      sv       => $v_id,
+      sv       => $sv_id,
     })
   });
 
@@ -147,10 +150,67 @@ sub content {
     });    
   }
 
-  $self->add_entry({
-    type  => 'Location',
-    label => $position.$is_breakpoint,
-    link  => $location_link,
-  });
+  if ($is_breakpoint) {
+	 $self->add_entry({
+      type  => 'Location',
+      label_html => $position,
+    });
+	} else {
+    $self->add_entry({
+      type  => 'Location',
+      label => $position.$is_breakpoint,
+      link  => $location_link,
+    });
+	}
 }
+
+
+sub get_locations {
+  my $self  = shift;
+	my $sv_id = shift;
+	my $hub   = $self->hub;
+	my $mappings = $self->object->variation_feature_mapping;
+	
+  my $params    = $hub->core_params;
+  my @locations = ({ value => 'null', name => 'None selected' });
+    
+  my $location_info;
+    
+  # add locations for each mapping
+  foreach (sort { $mappings->{$a}{'Chr'} cmp $mappings->{$b}{'Chr'} || $mappings->{$a}{'start'} <=> $mappings->{$b}{'start'}} keys %$mappings) {
+    my $region   = $mappings->{$_}{'Chr'}; 
+    my $start    = $mappings->{$_}{'start'};
+    my $end      = $mappings->{$_}{'end'};
+    my $str      = $mappings->{$_}{'strand'};
+    my $bp_order = $mappings->{$_}{'breakpoint_order'};
+       
+    if (defined($bp_order)) {
+      
+      my $loc_text = '<b>'.($start == $end ? "$region:$start" : "$region:$start-$end"). '</b>';
+            
+      my $loc_link = sprintf(
+          '<a href="%s" class="constant">%s</a>',
+            $hub->url({
+              type              => 'Location',
+              action            => 'View',
+              r                 => $region . ':' . ($start - 500) . '-' . ($end + 500),
+              sv                => $sv_id,
+              svf               => $_,
+              contigviewbottom  => 'somatic_sv_feature=normal'
+          }), $loc_text
+      );
+      $loc_link .= '<br />('.($str > 0 ? 'forward' : 'reverse').' strand)';
+        
+      if (!defined($location_info)) {
+        $location_info = "Breakpoints<br />FROM $loc_link";
+      } else {
+        $location_info .= "<br />TO $loc_link";
+      }  
+        
+    }
+  }
+    
+  return $location_info;
+}
+
 1;
