@@ -13,7 +13,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     this.activeLink = false;
     
     this.base();
-    
+        
     this.elLk.content = $('.modal_wrapper', this.el);
     
     $('a', this.elLk.links).on('click', function () {
@@ -60,6 +60,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       this.dataTableInit();
     }
     
+    this.el.togglewrap();
     Ensembl.EventManager.trigger('validateForms', this.el);
     
     this.addSubPanel();

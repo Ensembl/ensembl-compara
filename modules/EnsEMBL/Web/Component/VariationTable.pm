@@ -63,36 +63,38 @@ sub make_table {
   my $hub      = $self->hub;
   my $glossary = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->fetch_glossary_text_lookup;
 
+  # Using explicit wdiths speeds things up and makes layout more predictable
+  # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
-    { key => 'ID',       sort => 'html'                                                                                         },
-    { key => 'chr' ,     sort => 'position', title => 'Chr: bp'                                                                 },
-    { key => 'Alleles',  sort => 'string',                          align => 'center'                                           },
-    { key => 'class',    sort => 'string',   title => 'Class',      align => 'center'                                           },
-    { key => 'Source',   sort => 'string'                                                                                       },
-    { key => 'status',   sort => 'string',   title => 'Validation', align => 'center', help => $glossary->{'Validation status'} },
-    { key => 'snptype',  sort => 'string',   title => 'Type',                                                                   },
-    { key => 'aachange', sort => 'string',   title => 'Amino Acid', align => 'center'                                           },
-    { key => 'aacoord',  sort => 'position', title => 'AA coord',   align => 'center'                                           },
+    { key => 'ID',       width => '12u', sort => 'html'                                                                                         },
+    { key => 'chr' ,     width => '8u', sort => 'position', title => 'Chr: bp'                                                                 },
+    { key => 'Alleles',  width => '20u', sort => 'string',                          align => 'center'                                           },
+    { key => 'class',    width => '11u', sort => 'string',   title => 'Class',      align => 'center'                                           },
+    { key => 'Source',   width => '8u',  sort => 'string'                                                                                       },
+    { key => 'status',   width => '6u', sort => 'string',   title => 'Validation', align => 'center', help => $glossary->{'Validation status'} },
+    { key => 'snptype',  width => '15u', sort => 'string',   title => 'Type',                                                                   },
+    { key => 'aachange', width => '6u',  sort => 'string',   title => 'Amino Acid', align => 'center'                                           },
+    { key => 'aacoord',  width => '6u',  sort => 'position', title => 'AA coord',   align => 'center'                                           },
   ];
 
   # HGVS
-  splice @$columns, 3, 0, { key => 'HGVS', sort => 'string', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
+  splice @$columns, 3, 0, { key => 'HGVS', width => '10u', sort => 'string', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
 
   # add GMAF, SIFT and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', title => 'SIFT',     align => 'center', help => $glossary->{'SIFT'}     },
-      { key => 'polyphen', sort => 'position_html', title => 'PolyPhen', align => 'center', help => $glossary->{'PolyPhen'} },
+      { key => 'sift',     sort => 'position_html', width => '6u', title => 'SIFT',     align => 'center', help => $glossary->{'SIFT'}     },
+      { key => 'polyphen', sort => 'position_html', width => '6u', title => 'PolyPhen', align => 'center', help => $glossary->{'PolyPhen'} },
     );
 
-    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', title => 'Global MAF', align => 'center', help => $glossary->{'Global MAF'} };
+    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', title => 'Global MAF', align => 'center', help => $glossary->{'Global MAF'} };
   }
  
   if ($self->hub->type ne 'Transcript'){
-   push @$columns, { key => 'Transcript', sort => 'string' };
+   push @$columns, { key => 'Transcript', sort => 'string', width => '11u' };
   }
 
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table" });
+  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
 }
 
 sub render_content {
@@ -498,24 +500,11 @@ sub get_hgvs {
   my $hgvs;
 
   if ($hgvs_c) {
-    if (length $hgvs_c > 35) {
-      my $display_hgvs_c  = substr($hgvs_c, 0, 35) . '...';
-         $display_hgvs_c .= $self->trim_large_string($hgvs_c, 'hgvs_c_' . $tva->dbID);
-
-      $hgvs_c = $display_hgvs_c;
-    }
-
-    $hgvs .= $hgvs_c;
+    $hgvs .= $self->trim_large_string($hgvs_c, 'hgvs_c_' . $tva->dbID);
   }
 
   if ($hgvs_p) {
-    if (length $hgvs_p > 35) {
-      my $display_hgvs_p  = substr($hgvs_p, 0, 35) . '...';
-         $display_hgvs_p .= $self->trim_large_string($hgvs_p, 'hgvs_p_'. $tva->dbID);
-
-      $hgvs_p = $display_hgvs_p;
-    }
-
+    $hgvs_p = $self->trim_large_string($hgvs_p, 'hgvs_p_' . $tva->dbID);
     $hgvs .= "<br />$hgvs_p";
   }
 

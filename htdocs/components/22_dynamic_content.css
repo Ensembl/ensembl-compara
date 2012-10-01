@@ -28,8 +28,30 @@ img.portal  { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; bor
              table stuff
  ************************************/
 
-.data_table .toggle-img { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 4px; top: 2px; }
-.data_table .toggle-img.open { background: url(/i/open2.gif); }
+.toggle_img { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 4px; top: 2px; }
+.toggle_img.open { background: url(/i/open2.gif); }
+.toggle_img.limpet { display: inline-block; position: static; vertical-align: -2px; margin-left: 4px; }
+
+.toggle_div { position: relative; padding-right: 16px; }
+.toggle_summary { display: inline; }
+.toggle_summary { position: static; visibility: visible; } /* experiment */
+body.ie .cell_detail { position: static; visibility: visible; display: none; } /* works */
+.cell_detail { position: absolute; visibility: hidden; } /* experiment */
+.open .cell_detail { position: static; visibility: visible; } /* experiment */
+
+.fast_fixed_table { table-layout: fixed; }
+
+.summary_trunc { display: block; word-wrap: normal; overflow-wrap: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+body.ie .open .toggle_summary { position: static; visibility: visible; display: none; } /* works */
+.open .toggle_summary { position: absolute; visibility: hidden; } /* experiment */
+.open .cell_detail { display: inline; }
+
+.cell_detail { word-wrap: break-word; overflow-wrap: break-word; }
+.data_table { word-wrap: break-word; overflow-wrap: break-word; }
+
+body.ie .dataTables_wrapper { zoom: 1; }
+body.ie .open .cell_detail { display: block; }
 
 /************************************
              other stuff

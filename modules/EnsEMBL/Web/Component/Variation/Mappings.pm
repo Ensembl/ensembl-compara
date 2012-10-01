@@ -98,7 +98,7 @@ sub content {
   
   push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
   
-  my $table         = $self->new_table(\@columns, [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'] });
+  my $table         = $self->new_table(\@columns, [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'], class => 'cellwrap_inside' });
   my $gene_adaptor  = $hub->get_adaptor('get_GeneAdaptor');
   my $trans_adaptor = $hub->get_adaptor('get_TranscriptAdaptor');
   my $max_length    = 20;
@@ -108,14 +108,14 @@ sub content {
   my @reg_columns = (
     { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
     { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
-    { key => 'allele',   title => 'Allele',                    sort => 'string',        width => '7%'     },
+    { key => 'allele',   title => 'Allele',                    sort => 'string',                          },
     { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
     { key => 'matrix',   title => 'Motif name',                sort => 'string',                          },
     { key => 'pos',      title => 'Motif position',            sort => 'numeric'                          },
     { key => 'high_inf', title => 'High information position', sort => 'string'                           },
     { key => 'score',    title => 'Motif score change',        sort => 'position_html', align => 'center' },
   );
-  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc']});
+  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
   
   
   foreach my $varif_id (grep $_ eq $hub->param('vf'), keys %mappings) {
@@ -226,19 +226,14 @@ sub content {
       my $html_full_tr_allele;
       
       unless ($transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/) {
-        my $tr_allele = $transcript_data->{'tr_allele'};
-        if (length($tr_allele) > $max_length) {
-          $tr_allele = substr($tr_allele,0,$max_length).'...';
-          
-          my $full_tr_allele = $transcript_data->{'tr_allele'};
-          $html_full_tr_allele = $self->trim_large_string($full_tr_allele,'tr_'.$transcript_data->{transcriptname});
-          
-          $allele .= '<br />';
-          
-        } else { 
-          $allele .= ' ';
-        }
-        $allele .= "(<small>$tr_allele</small>)$html_full_tr_allele";
+        my $tr_allele = sprintf "(%s)",$transcript_data->{'tr_allele'};
+        $allele .= " <small>".$self->trim_large_string($tr_allele,'tr_'.$transcript_data->{transcriptname},sub {
+          # trim to 20 but include the brackets
+          local $_ = shift;
+          return $_ if(length $_ < 20);
+          s/^.//; s/.$//;
+          return "(".substr($_,0,20)."...)";
+        })."</small>";
       }
       
       my $row = {
@@ -295,12 +290,7 @@ sub content {
           $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$rfva->get_all_OverlapConsequences};
         }
         
-        my $r_allele = $rfva->variation_feature_seq;
-        if (length($r_allele)>25) {
-          my $display_r_allele  = substr($r_allele,0,25).'...';
-             $display_r_allele .= $self->trim_large_string($r_allele,'rfva_'.$rfv->regulatory_feature->stable_id);
-          $r_allele = $display_r_allele;
-        }
+        my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
         
         my $row = {
           rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
@@ -355,12 +345,7 @@ sub content {
           $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$mfva->get_all_OverlapConsequences};
         }
         
-        my $m_allele = $mfva->variation_feature_seq;
-        if (length($m_allele)>25) {
-          my $display_m_allele  = substr($m_allele,0,25).'...';
-             $display_m_allele .= $self->trim_large_string($m_allele,'mfva_'.$rf->stable_id);
-          $m_allele = $display_m_allele;
-        }
+        my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$rf->stable_id,25);
         
         my $row = {
           rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
@@ -491,37 +476,18 @@ sub detail_panel {
     
     my $prot_id = $tr->translation ? $tr->translation->stable_id : undef; 
     
-    # allele
-    if (length($allele)>50) {
-      my $display_allele = substr($allele,0,50).'...';
-      $display_allele .= $self->trim_large_string($allele,'allele_'.$t_data->{transcriptname});
-      $allele = $display_allele;
-    }
-    # t_allele
-    if (length($t_allele)>50) {
-      my $display_allele = substr($t_allele,0,50).'...';
-      $display_allele .= $self->trim_large_string($t_allele,'t_allele_'.$t_data->{transcriptname});
-      $t_allele = $display_allele;
-    }
-    
+    my $display_allele = $self->trim_large_string($allele,'allele_'.$t_data->{transcriptname},50);
+    $t_allele = $self->trim_large_string($t_allele,'t_allele_'.$t_data->{transcriptname},50);
+        
     # HGVS
-    my $hgvs_c = $tva->hgvs_transcript;
-    if (length($hgvs_c)>60) {
-      my $display_hgvs_c = substr($hgvs_c,0,60).'...';
-      $display_hgvs_c .= $self->trim_large_string($hgvs_c,'hgvs_c_'.$t_data->{transcriptname});
-      $hgvs_c = $display_hgvs_c;
-    }
-    my $hgvs_p = $tva->hgvs_protein;
-    if (length($hgvs_p)>60) {
-      my $display_hgvs_p = substr($hgvs_p,0,60).'...';
-      $display_hgvs_p .= $self->trim_large_string($hgvs_p,'hgvs_p_'.$t_data->{transcriptname});
-      $hgvs_p = $display_hgvs_p;
-    }
+    my $hgvs_c = $self->trim_large_string($tva->hgvs_transcript,'hgvs_c_'.$t_data->{transcriptname},60);
+    my $hgvs_p = $self->trim_large_string($tva->hgvs_protein,'hgvs_p_'.$t_data->{transcriptname},60);
+
     
     my %ens_term = map { $_->display_term => 1 } @$ocs;
     
     my %data = (
-      allele     => $allele,
+      allele     => $display_allele,
       t_allele   => $t_allele,
       name       => $object->name,
       gene       => qq{<a href="$gene_url">$gene_id</a>},
@@ -630,7 +596,7 @@ sub detail_panel {
       { context    => 'Context'                    },
     );
     
-    my $table = $self->new_table([{ key => 'name' }, { key => 'value' }], [], { header => 'no' });
+    my $table = $self->new_table([{ key => 'name' }, { key => 'value'}], [], { header => 'no', class => 'cellwrap_inside' });
     
     foreach my $row (@rows) {
       my ($key, $name) = %$row;

@@ -12,6 +12,10 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     this.editing = false;
     
+    Ensembl.EventManager.register('modalPanelResize', panel,function() {
+      this.el.togglewrap('update');
+    });
+    
     this.el.on('click', 'a.edit', function (e) {
       e.preventDefault();
       
@@ -48,7 +52,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       $('form', panel.el).find('fieldset > div')[func]().find('[name=name], [name=description]').val('').removeClass('valid');
       
       if (func === 'show') {
-        panel.update_height_wrapping(els);
+        els.togglewrap('update');
         panel.editing = false;
       }
       
@@ -65,7 +69,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       }
       
       if (show) {
-        panel.update_height_wrapping(els);
+        els.togglewrap('update');
         panel.editing = this.rel;
       }
       
@@ -96,7 +100,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     var save     = input.siblings('a.save');
     var configId = save.attr('rel');
     
-    this.update_height_wrapping(input.parent());
+    input.parent().togglewrap('update');
     
     $.ajax({
       url: save.attr('href'),

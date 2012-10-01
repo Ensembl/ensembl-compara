@@ -44,20 +44,9 @@ Ensembl.DataTable = {
       if (table.hasClass('editable')) {
         panel.makeEditable(table);
       }
-      
-      if(table.hasClass('heightwrap_inside')) {
-        Ensembl.EventManager.register('modalPanelResize', panel, panel.update_height_wrapping);
-        $('<span class="toggle-img"/>').insertAfter($('.heightWrap',table));
-        table.on('click', 'span.toggle-img', function () {
-          $(this).toggleClass('open').siblings('.heightWrap').toggleClass('open');
-          return false;
-        });
-        panel.update_height_wrapping(table);
-      }
-      
+              
       panel.dataTables = panel.dataTables || [];
       panel.dataTables.push(dataTable);
-
 
       table = dataTable = null;
     });
@@ -420,35 +409,5 @@ Ensembl.DataTable = {
     });
     
     filters = null;
-  },
-  
-  update_height_wrapping: function (els) {
-    $('.heightWrap', els || this.el).each(function () {
-      var el    = $(this);
-      var open  = el.hasClass('open');
-      var val   = el.children();
-      var empty = val.text() === '';
-      
-      if (open) {
-        el.removeClass('open');
-      }
-      
-      val[empty ? 'addClass' : 'removeClass']('empty');
-      
-      // check if content is hidden by overflow: hidden
-      el.next('span.toggle-img')[el.height() < val.height() ? 'show' : 'hide']();
-      
-      if (open) {
-        el.addClass('open');
-        
-        if (empty) {
-          el.siblings('span.toggle-img').trigger('click');
-        }
-      }
-      
-      el = null;
-    });
-    
-    els = null;
   }
 };

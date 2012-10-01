@@ -11,7 +11,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       hideHints: $('.hint', this.el),
       glossary:  $('.glossary_mouseover', this.el),
       dataTable: $('table.data_table', this.el),
-      helpTips:  $('._ht', this.el)
+      helpTips:  $('._ht', this.el),
+      wrapping:  $('table.cellwrap_inside,table.heightwrap_inside',this.el)
     };
     
     if (this.el.hasClass('ajax')) {
@@ -254,5 +255,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
 
   helpTips: function () {
     this.elLk.helpTips.helptip();
+  },
+  
+  wrapping: function () {
+    this.elLk.wrapping.togglewrap();
   }
 });

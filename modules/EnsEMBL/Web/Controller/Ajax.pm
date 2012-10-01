@@ -126,6 +126,8 @@ sub table_export {
   my $data  = from_json($hub->param('data'));
   my $clean = sub {
     my ($str,$opts) = @_;
+    # Remove summaries, ugh.
+    $str =~ s!<div class="toggle_summary">.*?</div>!!g;
     # split multiline columns
     for (2..$opts->{'split_newline'}) {
       unless($str =~ s/<br.*?>/\0/) {

@@ -1232,25 +1232,41 @@ sub render_sift_polyphen {
   };
 }
 
+
 sub trim_large_string {
   my $self        = shift;
   my $string      = shift;
   my $cell_prefix = shift;
+  my $truncator = shift;
+  my $options = shift || {};
   
-  my $full_allele = $string;
-     $full_allele =~ s/(.{60})/$1<br \/>/g;
-     $full_allele =~ s/,/,<br \/>/g;
-            
-  my $cell_name = $cell_prefix.substr($string,0,10);
-     $cell_name =~ s/\.//g;
-     $cell_name =~ s/://g;
-  my $html_full_allele = sprintf('<a class="toggle closed" href="#" rel="%s" title="Click to show the full allele"></a>  <div class="%s">
-                                  <div class="toggleable" style="font-weight:normal;display:none"><pre>%s</pre></div></div>',
-        $cell_name,
-        $cell_name,
-        $full_allele
-  );
-  return $html_full_allele;
+  unless(ref($truncator)) {
+    my $len = $truncator || 25;
+    $truncator = sub {
+      local $_ = shift;
+      return $_ if(length $_ < $len);      
+      return substr($_,0,$len)."...";
+    };
+  }
+  my $truncated = $truncator->($string);
+
+  # Allow ... on wrapping summaries unless explicitly prohibited
+  my @summary_classes = ('toggle_summary');
+  push @summary_classes,'summary_trunc' unless($options->{'no-summary-trunc'});
+  
+  # Don't truncate very short strings
+  my $short = $options->{'short'} || 5;
+  $short = undef if($options->{'short'} == 0);
+  $truncated = undef if(length($truncated)<$short);
+  
+  return $string unless defined $truncated;
+  return sprintf(qq(
+    <div class="toggle_div">
+      <span class="%s">%s</span>
+      <span class="cell_detail">%s</span>
+      <span class="toggle_img"/>
+    </div>),
+      join(" ",@summary_classes),$truncated,$string);  
 }
 
 sub trim_large_allele_string {
@@ -1260,27 +1276,19 @@ sub trim_large_allele_string {
   my $length      = shift;
   
   $length ||= 50;
-   my $large_allele = 0;
-  my $display_alleles;
-  my @l_alleles  = split '/', $allele;
-  foreach my $string_allele (@l_alleles) {
-    $display_alleles .= '/' if ($display_alleles);
-    $display_alleles .= substr($string_allele,0,$length);
-    if (length($string_allele) > $length) {
-      $large_allele += 1;
-      $display_alleles .= '...';
-    }
-  }
-  if ($large_allele != 1) {
-     $display_alleles = substr($allele,0,$length).'...';
-    $large_allele = 1;
-  }
-  
-  if ($large_allele) {
-    $display_alleles .= $self->trim_large_string($allele,$cell_prefix);
-  }
-  
-  return $display_alleles;
+  return $self->trim_large_string($allele,$cell_prefix,sub {
+    # how to trim an allele string...
+    my $trimmed = 0;
+    my @out = map {
+      if(length $_ > $length) {
+        $trimmed = 1;
+        $_ = substr($_,0,$length)."...";
+      }
+      $_;
+    } (split m!/!,$_[0]);
+    $out[-1] .= "..." unless $trimmed;
+    return join("/",@out);
+  });
 }
 
 1;
