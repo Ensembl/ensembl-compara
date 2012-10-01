@@ -631,7 +631,7 @@ sub freqs {
   }
 
   if ($allele_missing == 1){
-    %data = %{ $self->calculate_allele_freqs_from_genotype($variation_feature, \%data) }; 
+    #%data = %{ $self->calculate_allele_freqs_from_genotype($variation_feature, \%data) }; 
   }
 
   return \%data;
@@ -719,7 +719,7 @@ sub pop_genotypes {
   ### Returns String
 
   my ($self, $pop_genotype_obj)  = @_;
-  return $pop_genotype_obj->genotype_string;
+  return $pop_genotype_obj->genotype_string(1);
 }
 
 
