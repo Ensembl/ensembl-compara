@@ -126,9 +126,9 @@ sub content {
       my $id_link = qq{<a href="$link">$id</a>}; 
 
       if ($code eq 'StopLost') {
-        $description = "This transcript has a variant, $id_link, that causes a stop codon to be lost in at least 10% of HapMap population(s) $population_string.";
+        $description = "This transcript has a variant, $id_link, that causes a stop codon to be lost in at least 10% of HapMap or 1000 Genome population(s) $population_string.";
       } elsif ($code eq 'StopGained') {
-        $description = "This transcript has a variant, $id_link, that causes a stop codon to be gained in at least 10% of HapMap population(s) $population_string.";
+        $description = "This transcript has a variant, $id_link, that causes a stop codon to be gained in at least 10% of HapMap or 1000 Genome population(s) $population_string.";
       }
       $codons .= "$description<br />";
     }
