@@ -106,12 +106,12 @@ sub content {
   $form->add_element('type' => 'SubHeader', 'value' => 'Options');
   
   $form->add_element(
-      'type'    => 'DropDown',
+      'type'    => 'RadioGroup',
       'name'    => 'core_type',
       'label'   => "Transcript database to use",
       'values'  => [
-        { value => 'core',          name => 'Ensembl'                     },
-        { value => 'otherfeatures', name => 'Otherfeatures (inc. RefSeq)' },
+        { value => 'core',          name => 'Ensembl transcripts'          },
+        { value => 'otherfeatures', name => 'RefSeq and other transcripts' },
       ],
       'value'   => 'core',
       'select'  => 'select',
