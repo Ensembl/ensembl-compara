@@ -55,7 +55,7 @@ sub fetch_by_dbID {
         throw("cafe_gene_family_id must be defined");
     }
     my $constraint = "cgf.cafe_gene_family_id = $cafe_gene_family_id";
-    return $self->generict_fetch($constraint);
+    return $self->generic_fetch($constraint);
 }
 
 sub fetch_all_lca_trees {
