@@ -40,7 +40,7 @@ sub cache_tags { return $_[0]{'cache_tags'}; }
 sub session_id { return $_[0]{'session_id'} ||= $_[0]->hub->session->session_id; }
 
 sub dbh {
-  return $DBH if $DBH;
+  return $DBH if $DBH and $DBH->ping;
   
   my $self = shift;
   my $sd   = $self->hub->species_defs;
@@ -50,7 +50,7 @@ sub dbh {
     $DBH = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),        $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS) ||
            DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT_BACKUP), $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS);
   };
-  
+  EnsEMBL::Web::Controller->disconnect_on_request_finish($DBH);
   return $DBH || undef;
 }
 

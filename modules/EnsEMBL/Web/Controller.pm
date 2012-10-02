@@ -6,6 +6,7 @@ use strict;
 
 use Apache2::RequestUtil;
 use CGI;
+use Class::DBI;
 
 use Bio::EnsEMBL::Registry;
 
@@ -399,6 +400,18 @@ sub _use {
   return ($module, $error);
 }
 
-sub DESTROY { Bio::EnsEMBL::Registry->disconnect_all; }
+my @handles_to_disconnect;
+sub disconnect_on_request_finish {
+  my ($class,$handle) = @_;
+  return unless $SiteDefs::TIDY_USERDB_CONNECTIONS;
+  push @handles_to_disconnect,$handle;
+}
+
+sub DESTROY {
+  Bio::EnsEMBL::Registry->disconnect_all;
+  for(@handles_to_disconnect) {
+    $_->disconnect || warn $_->errstr;
+  }
+ }
 
 1;
