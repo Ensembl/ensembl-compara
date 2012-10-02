@@ -67,7 +67,7 @@ sub default_options {
         'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('member_type'),                              # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',                                      # where the template README files are
-        'target_dir'  => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/compara69_dumps/prot_trees'.$self->o('pipeline_name'),     # where the final dumps will be stored
+        'target_dir'  => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
     };
 }
@@ -188,17 +188,19 @@ sub pipeline_analyses {
                 'compara_db'            => $self->o('rel_db'),
                 'name_root'             => $self->o('name_root'),
                 'target_dir'            => $self->o('target_dir'),
+                'tree_type'             => 'tree',
+                'member_type'           => $self->o('member_type'),
+                'file'                  => '#target_dir#/xml/#name_root#.alltrees#filesuffix#.orthoxml.xml',
             },
             -input_ids => [
-                {'tree_type' => 'tree', 'member_type' => $self->o('member_type'), 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml'},
-                {'tree_type' => 'tree', 'member_type' => $self->o('member_type'), 'file' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', 'possible_orth' => 1},
+                {'filesuffix' => ''},
+                {'filesuffix' => '_possorthol', 'possible_orth' => 1},
             ],
             -hive_capacity => -1,
             -rc_name => '1Gb_job',
             -flow_into => {
                 1 => {
-                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
-                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', },
+                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees#filesuffix#.orthoxml.xml' },
                     }
             },
         },
@@ -208,7 +210,7 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
                 'query'                 => sprintf 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
-                'input_id'              => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
+                'input_id'              => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($tree_id))expr#' },
                 'fan_branch_code'       => 2,
             },
             -input_ids => [
@@ -271,11 +273,11 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'name_root'         => $self->o('name_root'),
-                'protein_tree_list' => [ 'tree.orthoxml.xml', 'tree_possorthol.orthoxml.xml', 'tree.phyloxml.xml' ],
-                'ncrna_tree_list'   => [ 'tree.orthoxml.xml', 'tree_possorthol.orthoxml.xml', 'tree.phyloxml.xml' ],
+                'protein_tree_list' => [ 'orthoxml.xml', 'orthoxml_possorthol.xml', 'phyloxml.xml' ],
+                'ncrna_tree_list'   => [ 'orthoxml.xml', 'orthoxml_possorthol.xml', 'phyloxml.xml' ],
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
-                'input_id'          => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'},
+                'input_id'          => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'},
                 'fan_branch_code'   => 2,
             },
             -hive_capacity => -1,
