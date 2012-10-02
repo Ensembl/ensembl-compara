@@ -49,6 +49,15 @@ sub fetch_all {
     return $self->generic_fetch($constraint);
 }
 
+sub fetch_by_dbID {
+    my ($self, $cafe_gene_family_id) = @_;
+    unless (defined $cafe_gene_family_id) {
+        throw("cafe_gene_family_id must be defined");
+    }
+    my $constraint = "cgf.cafe_gene_family_id = $cafe_gene_family_id";
+    return $self->generict_fetch($constraint);
+}
+
 sub fetch_all_lca_trees {
     my ($self) = @_;
     my $constraint = "stn.node_id = cgf.lca_id";
@@ -63,7 +72,7 @@ sub fetch_all_lca_trees {
 sub fetch_all_with_lca {
     my ($self, $lca) = @_;
     unless (defined $lca) {
-        throw("lca should be defined");
+        throw("lca must be defined");
     }
     my $constraint = "stn.node_id = str.root_id";
     my $sth = $self->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag ='taxon_id' AND value = ?");
