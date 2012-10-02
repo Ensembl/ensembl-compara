@@ -400,7 +400,7 @@ sub _decode_homology {
   my $query;
   my $target;
   
-  foreach my $member (@{$self->get_all_Members}) {
+  foreach my $member (@{$homology->get_all_Members}) {
     if($member->genome_db()->dbID() == $self->genome_db()->dbID()) {
       $query = $member;
     }
