@@ -42,11 +42,13 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run_command {
     my ($self, $cmd) = @_;
 
-    print STDERR "COMMAND: $cmd\n\n" if ($self->debug);
+    print STDERR "COMMAND: $cmd\n" if ($self->debug);
     my $runCmd = Command->new($cmd);
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     $runCmd->run();
     $self->compara_dba->dbc->disconnect_when_inactive(0);
+    print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($self->debug);
+    print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($self->debug);
     return $runCmd;
 }
 
@@ -60,7 +62,6 @@ use Symbol qw/gensym/;
 use IPC::Open3;
 use Data::Dumper;
 
-#use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub new {
     my ($class, $cmd) = @_;
