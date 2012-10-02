@@ -6,8 +6,6 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Experiment);
 
-sub caption       { 'Experimental Meta Data' }
-sub short_caption { 'Experimental Meta Data' }
 
 sub content {
   my $self    = shift;
@@ -69,10 +67,10 @@ sub content {
       ), @{$applied_filters->{$filter_key}} ];
     }
 
-    $html .= sprintf('<p>Showing %s/%s experiments</p><div class="tinted-box"><p class="half-margin">Filters applied:</p><ul>%s</ul></div>',
+    $html .= sprintf('<p>Showing %s/%s experiments</p><div class="tinted-box"><p class="half-margin">Filters applied: %s</p></div>',
        $shown_experiments,
        $total_experiments,
-       join('', map sprintf('<li><b>%s</b>: %s</li>', $_, $self->join_with_and(@{$display_filters->{$_}})), sort keys %$display_filters)
+       join('; ', map sprintf('%s', join '; ', (@{$display_filters->{$_}})), sort keys %$display_filters)
     );
   }
 
@@ -130,7 +128,7 @@ sub evidence_link {
 
 sub motif_links {
   my ($self, $motifs) = @_;
-  return $self->join_with_and(map qq(<a href="http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_&amp;rm=present&amp;collection=CORE" title="View motif">$_</a>), @$motifs);
+  return join ' ', map qq(<a href="http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_&amp;rm=present&amp;collection=CORE" title="View motif">$_</a>), @$motifs;
 }
 
 sub gene_links {

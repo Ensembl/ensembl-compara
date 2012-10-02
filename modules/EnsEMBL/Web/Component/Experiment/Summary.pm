@@ -6,8 +6,6 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Experiment);
 
-sub caption       { 'Experiment Sources Summary' }
-sub short_caption { 'Experiment Sources Summary' }
 
 sub content {
   my $self    = shift;
@@ -56,7 +54,7 @@ sub content {
     }
   }
 
-  return '<p class="space-below">A summary of experimental meta data for sources used in the Ensembl regulation views.</p>'.$table->render;
+  return '<p class="space-below">A summary of experimental sources used in the Ensembl regulation views.</p>'.$table->render;
 }
 
 1;
