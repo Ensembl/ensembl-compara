@@ -71,10 +71,10 @@ sub make_table {
     { key => 'Alleles',  width => '16u', sort => 'string',                          align => 'center'                                           },
     { key => 'class',    width => '11u', sort => 'string',   title => 'Class',      align => 'center'                                           },
     { key => 'Source',   width => '8u',  sort => 'string'                                                                                       },
-    { key => 'status',   width => '6u', sort => 'string',   title => 'Validation', align => 'center', help => $glossary->{'Validation status'} },
+    { key => 'status',   width => '6u', sort => 'string',   title => 'Validation', align => 'center', help => $glossary->{'Validation status'}  },
     { key => 'snptype',  width => '12u', sort => 'string',   title => 'Type',                                                                   },
-    { key => 'aachange', width => '6u',  sort => 'string',   title => 'Amino Acid', align => 'center'                                           },
-    { key => 'aacoord',  width => '6u',  sort => 'position', title => 'AA coord',   align => 'center'                                           },
+    { key => 'aachange', width => '6u',  sort => 'string',   title => 'AA', align => 'center', help => 'Amino Acid'                             },
+    { key => 'aacoord',  width => '6u',  sort => 'position', title => 'AA coord',   align => 'center', help => "Amino Acid Co-ordinate"         },
   ];
 
   # HGVS
