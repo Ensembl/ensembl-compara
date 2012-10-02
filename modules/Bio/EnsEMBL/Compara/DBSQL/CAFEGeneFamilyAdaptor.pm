@@ -54,8 +54,12 @@ sub fetch_by_dbID {
     unless (defined $cafe_gene_family_id) {
         throw("cafe_gene_family_id must be defined");
     }
-    my $constraint = "cgf.cafe_gene_family_id = $cafe_gene_family_id";
-    return $self->generic_fetch($constraint);
+    my $constraint = "stn.node_id = str.root_id AND cgf.cafe_gene_family_id = $cafe_gene_family_id";
+    my $tree = $self->generic_fetch($constraint);
+    if (scalar @$tree > 1) {
+        throw("too many trees returned by fetch_by_dbID: Only 1 expected by ", scalar @$tree, " obtained\n");
+    }
+    return $tree->[0];
 }
 
 sub fetch_all_lca_trees {
