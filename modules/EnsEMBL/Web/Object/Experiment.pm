@@ -108,7 +108,7 @@ sub new {
 }
 
 sub short_caption   { 'Experiment'  }
-sub caption         { 'Experiment'  }
+sub caption         { 'Experiment Sources Summary'  }
 sub default_action  { 'Sources'     }
 
 sub get_grouped_feature_sets {
