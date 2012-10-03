@@ -317,7 +317,7 @@ sub content {
   if (!$self->{'omit_header'}) {
 
     my $caption = '';
-    if (exists $self->{'caption'}) {
+    if ($self->{'caption'}) {
       my $summary = $self->{'code'} eq 'summary_panel' ? 1 : 0;
       if ($summary) {
         $caption = $self->_caption_h1;
