@@ -257,7 +257,7 @@ sub update_user_history {
     my $name_check = grep { $_->{'name'} eq $name } @type_history;
     
     if ($value && !$name_check && !($referer_type eq $self->type && $hub->param($param) eq $value)) {
-      my $history = new EnsEMBL::Web::Data::Record::History::User({ user_id => $user->id });
+      my $history = EnsEMBL::Web::Data::Record::History::User->new({ user_id => $user->id });
       $history->name($name);
       $history->species($referer_species);
       $history->object($referer_type);
