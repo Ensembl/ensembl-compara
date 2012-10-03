@@ -325,15 +325,15 @@ sub content {
       else {
         $caption = $self->_caption_h2_with_helplink;
       }
+
+      $content = qq{
+        <div class="nav-heading">
+          $caption
+          <p class="invisible">.</p>
+        </div>
+        $content
+      };
     }
-    
-    $content = qq{
-      <div class="nav-heading">
-        $caption
-        <p class="invisible">.</p>
-      </div>
-      $content
-    };
   }
   
   return qq{
