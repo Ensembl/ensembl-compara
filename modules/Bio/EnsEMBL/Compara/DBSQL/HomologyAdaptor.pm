@@ -432,7 +432,7 @@ sub fetch_all_by_genome_pair {
 
 sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
     my ($self, $method_link_species_set, $orthology_type) = @_;
-    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type) instead');
+    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type) instead. fetch_all_by_MethodLinkSpeciesSet_orthology_type() will be removed in release 70.');
     return $self->fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type);
 }
 
@@ -445,7 +445,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
 
 sub fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype {
     my ($self, $method_link_species_set, $orthology_type, $subtype) = @_;
-    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype) instead');
+    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype) instead. fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype() will be removed in release 70.');
     return $self->fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype);
 }
 

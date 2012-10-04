@@ -992,17 +992,17 @@ sub get_Translation {
 
 sub gene {
   my $self = shift;
-  deprecate('Use get_Gene() instead');
+  deprecate('Use get_Gene() instead. gene() will be removed in release 70.');
   return $self->get_Gene;
 }
 sub transcript {
   my $self = shift;
-  deprecate('Use get_Transcript() instead');
+  deprecate('Use get_Transcript() instead. transcript() will be removed in release 70.');
   return $self->get_Transcript;
 }
 sub translation {
   my $self = shift;
-  deprecate('Use get_Translation() instead');
+  deprecate('Use get_Translation() instead. translation() will be removed in release 70.');
   return $self->get_Translation();
 }
 
@@ -1056,7 +1056,7 @@ sub get_canonical_Member {
 sub get_canonical_peptide_Member {
     my $self = shift;
 
-    deprecate('Use get_canonical_Member() instead');
+    deprecate('Use get_canonical_Member() instead. get_canonical_peptide_Member() will be removed in release 70.');
     return $self->get_canonical_Member(@_);
 }
 
@@ -1070,7 +1070,7 @@ sub get_canonical_peptide_Member {
 sub get_canonical_transcript_Member {
     my $self = shift;
 
-    deprecate('Use get_canonical_Member() instead');
+    deprecate('Use get_canonical_Member() instead. get_canonical_transcript_Member() will be removed in release 70.');
     return $self->get_canonical_Member(@_);
 }
 

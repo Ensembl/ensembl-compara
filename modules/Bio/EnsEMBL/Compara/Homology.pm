@@ -341,7 +341,7 @@ sub print_homology {
 
 sub get_all_PeptideAlignFeature {
 
-    deprecated("Homologies don't have PeptideAlignFeatures any more. Use DBSQL::PeptideAlignFeatureAdaptor::fetch_all_by_qmember_id_hmember_id() instead");
+    deprecate("Homologies don't have PeptideAlignFeatures any more. Use DBSQL::PeptideAlignFeatureAdaptor::fetch_all_by_qmember_id_hmember_id() instead. get_all_PeptideAlignFeature() will be removed in release 70");
     return [];
 }
 
