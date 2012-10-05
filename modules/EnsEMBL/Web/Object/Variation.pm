@@ -516,7 +516,8 @@ sub clinical_significance {
                     'begnin'         => '#090',
                     'pathogenic'     => '#FF0000',
                     'probable-non-pathogenic'  => '#FF9000',
-                    'probable-pathogenic'     => '#FF9000');                  
+                    'probable-pathogenic'     => '#FF9000',
+                    'drug-response'  => '#22F');                  
   my $cs = $self->vari->clinical_significance;
   my $colour = $cs_colours{$cs} ? $cs_colours{$cs} : '#779';
   return $cs,$colour;
@@ -603,7 +604,7 @@ sub freqs {
     ## If frequency data is available, show frequency data submitter, else show observation submitter
     $data{$pop_id}{$ssid}{submitter}  = $allele_obj->frequency_subsnp_handle($pop_obj);
     unless (defined $data{$pop_id}{$ssid}{submitter} ){
-	$data{$pop_id}{$ssid}{submitter}  = $allele_obj->subsnp_handle() ;
+  $data{$pop_id}{$ssid}{submitter}  = $allele_obj->subsnp_handle() ;
     }
   }
   
@@ -898,6 +899,7 @@ sub individual_table {
         
         push (@{$data{$ind_id}{Population}}, {
           Name => $self->pop_name($pops{$pop_id}),
+          Size => $self->pop_size($pops{$pop_id}),
           Link => $pop_links{$pop_id},
           ID   => $pop_id
         });
