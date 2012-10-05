@@ -45,11 +45,14 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub compara_dba {
     my $self = shift @_;
 
-    if(@_ or !$self->{'comparaDBA'}) {
-        $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( shift @_ || $self->param('compara_db') || $self );
+    my $given_compara_db = shift @_ || $self->param('compara_db') || $self;
+
+    if( !$self->{'_cached_compara_db'} or $self->{'_cached_compara_db'}!=$given_compara_db ) {
+        $self->{'_cached_compara_db'} = $given_compara_db;
+        $self->{'_cached_compara_dba'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $given_compara_db );
     }
 
-    return $self->{'comparaDBA'};
+    return $self->{'_cached_compara_dba'};
 }
 
 
