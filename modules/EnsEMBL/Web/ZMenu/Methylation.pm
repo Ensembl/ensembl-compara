@@ -10,7 +10,8 @@ use base qw(EnsEMBL::Web::ZMenu);
 use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
 
 sub summary_zmenu {
-  my ($self,$id,$r,$s,$e,$strand,$scalex,$called_from_single) = @_;
+  # Way too many args, make OO.
+  my ($self,$id,$r,$s,$e,$strand,$scalex,$width,$called_from_single) = @_;
 
   # Widen to incldue a few pixels around
   my $fudge = max(1,4/$scalex);
@@ -60,8 +61,7 @@ sub summary_zmenu {
                        label => "This track has no features near this point"});
   } elsif($num==1 and not $called_from_single) {
     # One feature
-    warn "single\n";
-    $self->single_base_zmenu($id,$r,$astart,$strand,$scalex);
+    $self->single_base_zmenu($id,$r,$astart,$strand,$width,$scalex);
   } else {
     # Multiple features
   
@@ -69,11 +69,13 @@ sub summary_zmenu {
     $self->add_entry({  type => "Overview",
                        label => "Too zoomed out to view methylation of individual bases"});
     my ($chr,) = split(/:/,$r);
+    my $zoom_fudge = max($width/5,20);
+    my ($zs,$ze) = map { int $_ } ($mid-$zoom_fudge/2,$mid+$zoom_fudge/2);
     $self->add_entry({
       type  => 'Zoom',
       label => "zoom here",
       link => $self->hub->url({
-        r => "$chr:$s-$e",
+        r => "$chr:$zs-$ze",
       }),
     });
     $self->add_entry({  type => "Summary",
@@ -89,7 +91,7 @@ sub summary_zmenu {
 }
 
 sub single_base_zmenu {
-  my ($self,$id,$r,$s,$strand,$scalex) = @_;
+  my ($self,$id,$r,$s,$strand,$scalex,$width) = @_;
   
   # how far off can a user be due to scale? 8px or 1bp.
   my $fudge = max(1,8/$scalex);
@@ -115,7 +117,7 @@ sub single_base_zmenu {
   });
   unless(@bigbedrow) {
     # user must have clicked on blank area
-    $self->summary_zmenu($id,$r,$s,$s+1,$strand,$scalex,1);
+    $self->summary_zmenu($id,$r,$s,$s+1,$strand,$scalex,$width,1);
     return;
   }
   my $s = $bigbedrow[1]+1;
@@ -174,13 +176,14 @@ sub content {
   my $strand = $hub->param('strand');
   my $r      = $hub->param('r');
   my $scalex = $hub->param('scalex');
+  my $width  = $hub->param('width');
 
   $r =~ s/:.*$/:$s-$e/;
   $s++ if($e==$s+2); # js quirk
   if($e>$s+1) {
-    $self->summary_zmenu($id,$r,$s,$e,$strand,$scalex,0);
+    $self->summary_zmenu($id,$r,$s,$e,$strand,$scalex,$width,0);
   } else {
-    $self->single_base_zmenu($id,$r,$s,$strand,$scalex);
+    $self->single_base_zmenu($id,$r,$s,$strand,$scalex,$width);
   }
 
 }
