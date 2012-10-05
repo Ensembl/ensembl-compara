@@ -73,6 +73,11 @@ sub param_defaults {
 sub run {
     my $self = shift @_;
 
+    if ($self->param('cm_file_or_directory')) {
+        $self->param('profiles_already_there', 1);
+        return;
+    }
+
     $self->download_models;
 }
 
@@ -90,6 +95,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
+    return if $self->param('profiles_already_there');
     $self->get_profiles();
     $self->clean_directory();
 }
