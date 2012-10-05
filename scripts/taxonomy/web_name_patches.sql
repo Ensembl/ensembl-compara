@@ -13,6 +13,5 @@ UPDATE ncbi_taxa_name SET name = 'Metatheria'               WHERE taxon_id = 926
 
 -- these species were renamed by WormBase:
 
-UPDATE ncbi_taxa_name SET name = 'Caenorhabditis angaria'   WHERE taxon_id = 96668  AND name_class = 'scientific name';
 UPDATE ncbi_taxa_name SET name = 'Caenorhabditis csp11'     WHERE taxon_id = 886184 AND name_class = 'scientific name';
 
