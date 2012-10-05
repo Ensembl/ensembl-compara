@@ -132,6 +132,7 @@ sub render_normal {
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $dep             = @_ ? shift : ($self->my_config('dep') || 6);
+     $dep = 0 if $self->my_config('nobump');
   my $gap             = $h < 2 ? 1 : 2;   
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');

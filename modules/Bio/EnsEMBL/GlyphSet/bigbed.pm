@@ -14,13 +14,12 @@ use Bio::EnsEMBL::ExternalData::AttachedFormat::BIGBED;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
-use Carp qw(cluck);
-
 sub my_helplink { return "bigbed"; }
 
 sub bigbed_adaptor {
-  my $self = shift;
+  my ($self,$in) = @_;
 
+  $self->{'_cache'}->{'_bigbed_adaptor'} = $in if defined $in;
   my $url = $self->my_config('url');
   return $self->{'_cache'}->{'_bigbed_adaptor'} ||= Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($url);
 }
@@ -149,13 +148,14 @@ sub href {
 
   my ($self,$f) = @_;
 
+  return unless $f;
   my $href = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'url'};
   $href =~ s/\$\$/$f->id/e;
   return $href;
 }
 
 sub features {
-  my ($self) = @_;
+  my ($self,$options) = @_;
 
   my $format = $self->format;
 
@@ -167,11 +167,13 @@ sub features {
 
   # WORK OUT HOW TO CONFIGURE FEATURES FOR ENDERING
   # Explicit: Check if mode is specified on trackline
-  my $style = $format->style;
+  my $style = $options->{'style'} || $format->style;
 
   if($style eq 'score') {
     $config->{'useScore'} = 1;
     $config->{'implicit_colour'} = 1;
+  } elsif($style eq 'colouredscore') {
+    $config->{'useScore'} = 2;    
   } elsif($style eq 'colour') {
     $config->{'useScore'} = 2;
  
@@ -189,6 +191,20 @@ sub features {
 
   my $trackline = $format->parse_trackline($format->trackline);
   $config = { %$config, %$trackline };
+
+  if($options->{'addhiddenbgd'}) {
+    # Useful to keep zmenus working on blank regions
+    $self->push($self->Composite({
+      x         => 1,
+      y         => 0,
+      width     => $self->{'container'}->length,
+      height    => 8,
+      # no colour key, ie transparent
+      absolutey => 1,
+      href      => $self->href,
+      class => 'group',
+    }));        
+  }
 
   return( 
     'url' => [ $features, $config ],
