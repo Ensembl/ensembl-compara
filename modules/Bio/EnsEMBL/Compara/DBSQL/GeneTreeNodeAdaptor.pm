@@ -299,7 +299,7 @@ sub store_node {
 
     my $new_node = 0;
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $node->adaptor eq $self)) {
-        my $sth = $self->prepare("INSERT INTO gene_tree_node VALUES ()");
+        my $sth = $self->prepare("INSERT INTO gene_tree_node (left_index,right_index) VALUES (0,0)");
         $sth->execute();
         $node->node_id( $sth->{'mysql_insertid'} );
         $new_node = 1;
