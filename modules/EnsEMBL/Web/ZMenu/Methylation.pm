@@ -14,7 +14,7 @@ sub summary_zmenu {
   my ($self,$id,$r,$s,$e,$strand,$scalex,$width,$called_from_single) = @_;
 
   # Widen to incldue a few pixels around
-  my $fudge = max(1,4/$scalex);
+  my $fudge = max(1,8/$scalex);
   
   # Round fudge to 1sf
   my $mult = "1"."0"x(length(int $fudge)-1);
@@ -34,7 +34,7 @@ sub summary_zmenu {
   my $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
   
   # Summarize features
-  my ($astart,$num,$tot_meth,$tot_read,$most_meth_perc,$least_meth_perc) = (0,0,0,-1,-1);
+  my ($astart,$astrand,$num,$num_this_strand,$tot_meth,$tot_read,$most_meth_perc,$least_meth_perc) = (0,0,0,0,0,-1,-1);
   my ($label);
   $bba->fetch_rows($slice->seq_region_name,$s,$e,sub {
     my @row = @_;
@@ -44,24 +44,26 @@ sub summary_zmenu {
       -FILE_DATA => \@row, 
         -ADAPTOR => $ch3fa
     );
-    next unless($strand == $row[5]."1");
     my $p = $f->percent_methylation;
     $most_meth_perc = $p if($most_meth_perc==-1 or $most_meth_perc<$p);
     $least_meth_perc = $p if($least_meth_perc==-1 or $least_meth_perc>$p);
     $tot_meth += $f->methylated_reads;
     $tot_read += $f->total_reads;    
     $label = $f->display_label;
-    $astart = $_[1]+1;
+    my $right_strand = ($strand == $_[5]."1");
+    $astart = $_[1]+1 if($right_strand or not $astart);
+    $astrand = $_[5]."1" if($right_strand or not $astrand);
     $num++;
+    $num_this_strand++ if($right_strand);
   });
   if($num==0) {
     # No features
     $self->caption("$label No features"); # XXX or zero
     $self->add_entry({  type => "Overview",
                        label => "This track has no features near this point"});
-  } elsif($num==1 and not $called_from_single) {
+  } elsif($num_this_strand==1 and not $called_from_single) {
     # One feature
-    $self->single_base_zmenu($id,$r,$astart,$strand,$width,$scalex);
+    $self->single_base_zmenu($id,$r,$astart,$astrand,$width,$scalex);
   } else {
     # Multiple features
   

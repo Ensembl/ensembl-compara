@@ -2306,14 +2306,15 @@ sub add_regulation_features {
   my $m = $db_tables->{'methylation'};
   foreach my $k (sort { $m->{$a} cmp $m->{$b} } keys %$m) {
     $ch3->append($self->create_track("methylation_$k",$m->{$k}->{'name'}, {
-      data_id     => $k,
-      description => $m->{$k}->{'description'},
-      strand      => 'b',
-      nobump      => 1,
-      display     => 'off',
-      renderers   => [ qw(off Off compact On) ],
-      glyphset    => 'fg_methylation',
-      colourset   => 'seq',
+      data_id      => $k,
+      description  => $m->{$k}->{'description'},
+      strand       => 'r',
+      strandbump   => 1,
+      addhiddenbgd => 1,
+      display      => 'off',
+      renderers    => [ qw(off Off compact On) ],
+      glyphset     => 'fg_methylation',
+      colourset    => 'seq',
     }));
   }
   
