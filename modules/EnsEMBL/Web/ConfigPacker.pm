@@ -720,6 +720,32 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 2;
   }
 
+  foreach my $row (@{$dbh->selectall_arrayref(qq(
+    select rs.result_set_id, a.display_label, a.description, c.name, 
+           IF(min(g.is_project) = 0 or count(g.name)>1,null,min(g.name))
+      from result_set rs 
+      join analysis_description a using (analysis_id)
+      join cell_type c using (cell_type_id)
+      join result_set_input using (result_set_id)
+      join input_set on input_set_id = table_id
+      join experiment using (experiment_id) 
+      join experimental_group g using (experimental_group_id) 
+     where feature_class = 'dna_methylation' 
+       and table_name = 'input_set'
+  group by rs.result_set_id;
+  ))}) {
+    my ($id,$a_name,$a_desc,$c_desc,$group) = @$row;
+    
+    my $name = "$c_desc $a_name";
+    $name .= " $group" if $group;
+    my $desc = "$c_desc cell line: $a_desc";
+    $desc .= " ($group group)." if $group;    
+    $self->db_details($db_name)->{'tables'}{'methylation'}{$id} = {
+      name => $name,
+      description => $desc
+    };
+  }
+
   my $ft_aref =  $dbh->selectall_arrayref(
     'select ft.name, ft.feature_type_id from feature_type ft, feature_set fs, data_set ds, feature_set fs1, supporting_set ss 
       where fs1.type="regulatory" and fs1.feature_set_id=ds.feature_set_id and ds.data_set_id=ss.data_set_id 

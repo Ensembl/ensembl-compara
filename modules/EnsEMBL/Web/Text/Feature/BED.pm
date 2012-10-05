@@ -39,6 +39,8 @@ sub strand   { my $self = shift;
 sub rawstart { my $self = shift; return $self->{'__raw__'}[1]+1; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
 sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
+ # so can be rendered on strands by _alignment: always +ve wrt $self->strand, ie same strand
+sub hstrand  { return 1; }
 
 sub _raw_score    { 
   my $self = shift;

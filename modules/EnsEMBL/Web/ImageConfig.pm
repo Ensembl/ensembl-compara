@@ -2251,7 +2251,8 @@ sub add_regulation_features {
   
   my $reg_regions = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
   
-  $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
+  my $ch3 = $self->create_submenu('functional_dna_methylation', 'DNA Methylation');
+  $reg_regions->before($ch3);
   
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
@@ -2298,6 +2299,24 @@ sub add_regulation_features {
       }));
     }
   }
+  
+  # Add internal methylation tracks
+  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}->{'tables'};
+
+  my $m = $db_tables->{'methylation'};
+  foreach my $k (sort { $m->{$a} cmp $m->{$b} } keys %$m) {
+    $ch3->append($self->create_track("methylation_$k",$m->{$k}->{'name'}, {
+      data_id     => $k,
+      description => $m->{$k}->{'description'},
+      strand      => 'b',
+      nobump      => 1,
+      display     => 'off',
+      renderers   => [ qw(off Off compact On) ],
+      glyphset    => 'fg_methylation',
+      colourset   => 'seq',
+    }));
+  }
+  
 }
 
 sub add_regulation_builds {
@@ -2398,7 +2417,7 @@ sub add_regulation_builds {
         'compact',        'Peaks', 
         'tiling',         'Signal', 
         'tiling_feature', 'Both' 
-      ],         
+      ],
     );
     
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
