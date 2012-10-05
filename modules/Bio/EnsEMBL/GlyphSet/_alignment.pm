@@ -97,7 +97,7 @@ sub render_histogram {
       
       # artificially set score to the max allowed score if it's greater than that
       $f->score($self->{'max_score'}) if $f->score > $self->{'max_score'};
-
+      
       # sort into canonical and non-canonical
       if ($f->display_id =~ /non canonical$/) {
         push @$sorted_non_can_feats, $f;
@@ -123,6 +123,32 @@ sub render_histogram {
   }
 }
 
+sub _render_hidden_bgd {
+  my ($self,$h) = @_;
+  
+  # Needs to be first to capture clicks
+  # Useful to keep zmenus working on blank regions
+  # only useful in nobump or strandbump modes
+  my %off = ( 0 => undef );
+  if($self->my_config('strandbump')) {
+    $off{$h} = undef;
+  }
+  foreach my $y (keys %off) { 
+    my $href;
+    $href = $self->href_bgd($y?-1:1) if $self->can('href_bgd');
+    $self->push($self->Composite({
+      x         => 0,
+      y         => $y,
+      width     => $self->{'container'}->length,
+      height    => $h,
+      # no colour key, ie transparent
+      absolutey => 1,
+      href      => $href,
+      class     => 'group',
+    }));
+  }
+}
+
 sub render_normal {
   my $self = shift;
   
@@ -132,7 +158,7 @@ sub render_normal {
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $dep             = @_ ? shift : ($self->my_config('dep') || 6);
-     $dep = 0 if $self->my_config('nobump');
+     $dep = 0 if $self->my_config('nobump') or $self->my_config('strandbump');
   my $gap             = $h < 2 ? 1 : 2;   
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');
@@ -151,6 +177,7 @@ sub render_normal {
   my $label_h         = 0;
   my ($fontname, $fontsize);
   
+  $self->_render_hidden_bgd($h) if($self->my_config('addhiddenbgd'));  
   my $join = ($self->{'my_config'}{'data'}{'join'} ne 'off' && !$self->{'renderer_no_join'});
   if ($self->{'show_labels'}) {
     ($fontname, $fontsize) = $self->get_font_details('outertext');
@@ -274,11 +301,12 @@ sub render_normal {
       # and width 10 as (100,100)-(110,110), ie actually 11x11. -- ds23
       $y_pos = $y_offset - $row * int($h + 1 + $gap * $label_h) * $strand;
       
+      my $strand_y = ($self->my_config('strandbump') and $feat[0][2]->strand == -1)?$h:0;
       my $composite = $self->Composite({
         href  => $self->href($feat[0][2]),
         x     => $feat[0][0] > 1 ? $feat[0][0] - 1 : 0,
         width => 0,
-        y     => 0,
+        y     => $strand_y,
         title => $self->feature_title($feat[0][2], $db_name),
         class => 'group',
       });
@@ -314,7 +342,8 @@ sub render_normal {
             feature_colour => $feature_colour, 
             label_colour   => $label_colour,
             delete_colour  => 'black', 
-            scalex         => $pix_per_bp
+            scalex         => $pix_per_bp,
+            y              => $strand_y,
           });
         } else {
           my $start = $s < 1 ? 1 : $s;
@@ -323,7 +352,7 @@ sub render_normal {
           
           $composite->push($self->Rect({
             x            => $start - 1,
-            y            => 0,
+            y            => $strand_y,
             width        => $end - $start + 1,
             height       => $h,
             colour       => $feature_colour,

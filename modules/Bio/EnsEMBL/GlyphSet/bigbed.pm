@@ -192,20 +192,6 @@ sub features {
   my $trackline = $format->parse_trackline($format->trackline);
   $config = { %$config, %$trackline };
 
-  if($options->{'addhiddenbgd'}) {
-    # Useful to keep zmenus working on blank regions
-    $self->push($self->Composite({
-      x         => 1,
-      y         => 0,
-      width     => $self->{'container'}->length,
-      height    => 8,
-      # no colour key, ie transparent
-      absolutey => 1,
-      href      => $self->href,
-      class => 'group',
-    }));        
-  }
-
   return( 
     'url' => [ $features, $config ],
   );

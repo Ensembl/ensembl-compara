@@ -41,7 +41,6 @@ sub features {
 
   return $self->SUPER::features({
     style => 'colouredscore',
-    addhiddenbgd => 1,
   });
 }
 
@@ -52,8 +51,9 @@ sub render_normal {
 }
 sub render_compact { shift->render_normal(@_); }
 
-sub href {
-  my ($self, $f) = @_;
+sub href { return undef; } # tie to background
+sub href_bgd {
+  my ($self, $strand) = @_;
   
   return $self->_url({
     action   => 'Methylation',
@@ -62,7 +62,7 @@ sub href {
     species  => $self->species,
     fdb      => 'funcgen',
     scalex   => $self->scalex,
-    strand   => $self->strand,
+    strand   => $strand,
     width    => $self->{'container'}->length,
   });
 }

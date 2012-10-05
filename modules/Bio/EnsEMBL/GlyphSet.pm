@@ -470,7 +470,7 @@ sub draw_cigar_feature {
     
     $composite->push($self->Rect({
       x         => $s - 1,
-      y         => 0,
+      y         => $params->{'y'} || 0,
       width     => $e - $s + 1,
       height    => $h,
       colour    => $match_colour,
@@ -544,7 +544,7 @@ sub draw_cigar_feature {
       
       my $box = $self->Rect({
         x         => $s - 1,
-        y         => 0,
+        y         => $params->{'y'} || 0,
         width     => $e - $s + 1,
         height    => $h,
         colour    => $match_colour,
@@ -565,7 +565,7 @@ sub draw_cigar_feature {
         
         $self->join_tag($box, $tag, {
           x     => $x,
-          y     => $strand == -1 ? 1 : 0,
+          y     => $strand == -1 ? 1 : 0 + ($params->{'y'} || 0),
           z     => $params->{'join_z'},
           col   => $params->{'join_col'},
           style => 'fill'
@@ -573,7 +573,7 @@ sub draw_cigar_feature {
         
         $self->join_tag($box, $tag, {
           x     => !$x,
-          y     => $strand == -1 ? 1 : 0,
+          y     => $strand == -1 ? 1 : 0 + ($params->{'y'} || 0),
           z     => $params->{'join_z'},
           col   => $params->{'join_col'},
           style => 'fill'
@@ -585,7 +585,7 @@ sub draw_cigar_feature {
       if($inverted && $last_e != -1) {
         $composite->push($self->Rect({
           x         => $last_e,
-          y         => 0,
+          y         => $params->{'y'} || 0,
           width     => $s - $last_e + 1,
           height    => $h,
           colour    => $params->{'feature_colour'},
@@ -608,7 +608,7 @@ sub draw_cigar_feature {
   foreach (@delete) {
     $composite->push($self->Rect({
       x         => $_,
-      y         => 0,
+      y         => $params->{'y'} || 0,
       width     => 0,
       height    => $h,
       colour    => $params->{'delete_colour'},
