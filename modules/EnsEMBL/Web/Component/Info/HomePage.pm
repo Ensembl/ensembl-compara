@@ -352,7 +352,7 @@ sub _variation_text {
     $html .= '.</p>';
 
     my $site = $species_defs->ENSEMBL_SITETYPE;
-    $html .= qq(<p><a href="info/docs/variation/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about variation in $site</a></p>);
+    $html .= qq(<p><a href="/info/docs/variation/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about variation in $site</a></p>);
 
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
