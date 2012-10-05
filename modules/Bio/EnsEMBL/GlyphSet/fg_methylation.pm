@@ -63,6 +63,7 @@ sub href {
     fdb      => 'funcgen',
     scalex   => $self->scalex,
     strand   => $self->strand,
+    width    => $self->{'container'}->length,
   });
 }
 
