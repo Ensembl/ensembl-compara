@@ -2,9 +2,6 @@
 
 UPDATE ncbi_taxa_name SET name = 'Canis familiaris'         WHERE taxon_id = 9615   AND name_class = 'scientific name'  AND name = 'Canis lupus familiaris';
 UPDATE ncbi_taxa_name SET name = 'Canis lupus familiaris'   WHERE taxon_id = 9615   AND name_class = 'synonym'          AND name = 'Canis familiaris';
-UPDATE ncbi_taxa_name SET name = 'Vicugna pacos'            WHERE taxon_id = 30538  AND name_class = 'scientific name'  AND name = 'Lama pacos';
-UPDATE ncbi_taxa_name SET name = 'Lama pacos'               WHERE taxon_id = 30538  AND name_class = 'synonym'          AND name = 'Vicugna pacos';
-UPDATE ncbi_taxa_name SET name = 'Vicugna'                  WHERE taxon_id=9839                                         AND name ='Lama';
 
 UPDATE ncbi_taxa_name SET name = 'Xenopus tropicalis'       WHERE taxon_id = 8364   AND name_class = 'scientific name'  AND name = 'Xenopus (Silurana) tropicalis';
 UPDATE ncbi_taxa_name SET name = 'Xenopus (Silurana) tropicalis' WHERE taxon_id = 8364 AND name_class = 'synonym'       AND name = 'Xenopus tropicalis';
