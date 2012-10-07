@@ -621,7 +621,8 @@ sub _recursive_get_orthocluster {
 
   return if($member_set->{$gene->dbID});
 
-  $gene->print_member("query gene\n") if($debug);
+  print "query gene: " if ($debug);
+  $gene->print_member() if($debug);
   $member_set->{$gene->dbID} = $gene;
 
   my $homologies = $self->fetch_all_by_Member($gene);

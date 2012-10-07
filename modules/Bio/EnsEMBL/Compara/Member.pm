@@ -875,8 +875,7 @@ sub gene_member {
 
 =head2 print_member
 
-  Arg[1]     : string to be prrinted instead of "\n"
-  Example    : $member->print_member("BRH");
+  Example    : $member->print_member;
   Description: used for debugging, prints out key descriptive elements
                of member
   Returntype : none
@@ -889,12 +888,9 @@ sub print_member
 
 {
   my $self = shift;
-  my $postfix = shift;
 
-  printf("   %s %s(%d)\t%s : %d-%d",$self->source_name, $self->stable_id,
+  printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
          $self->dbID,$self->chr_name,$self->chr_start, $self->chr_end);
-  if($postfix) { print(" $postfix"); }
-  else { print("\n"); }
 }
 
 
