@@ -56,10 +56,10 @@ sub render_normal {
   if ($other_gene) {
     @orthos = (
       ['Genes','header'],
-      ['gene of interest', 'red', 'Gene ID', 'white'],
-      ['within-sp. paralog', 'blue', 'Gene ID', 'white'],
-      ['other gene', 'black', 'Gene ID', 'ff6666'],
-      ['other within-sp. paralog', 'black', 'Gene ID', 'white'],
+      ['gene of interest', 'darkgreen', 'Gene ID', 1],
+      ['within-sp. paralog', 'blue', 'Gene ID', 1],
+      ['other gene', 'red', 'Gene ID', 1],
+      ['other within-sp. paralog', 'black', 'Gene ID', 1],
     );
   }
   
@@ -168,8 +168,8 @@ sub render_normal {
   
   ($x, $y) = (1, 0.7);
   foreach my $ortho (@orthos) {
-    my $bold_colour;
-    ($legend, $colour, $text, $bold_colour) = @$ortho;
+    my $bold;
+    ($legend, $colour, $text, $bold) = @$ortho;
     if($colour eq 'header') {       
       $label = $self->_create_label($im_width, ($x-0.07), $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, $fontsize+0.6, $fontname, $legend);
       $self->push($label);
@@ -190,21 +190,11 @@ sub render_normal {
           'absolutewidth'=>1
   
           });
-      if ($bold_colour) {
-        for (my $delta_x = -1; $delta_x <= 1; $delta_x++) {
-          for (my $delta_y = -1; $delta_y <= 1; $delta_y++) {
-            next if ($delta_x == 0 and $delta_y == 0);
-            my %txt2 = %$txt;
-            bless(\%txt2, ref($txt));
-            $txt2{x} += $delta_x;
-            $txt2{y} += $delta_y;
-            $self->push(\%txt2);
-          }
-        }
-        $txt->{colour} = $bold_colour;
+      if ($bold) {
+        $txt->{'font'} = 'MediumBold';
       }
       $self->push($txt);      
-      $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH + 20, $th, $fontsize, $fontname, $legend);
+      $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH + 20, $th, $fontsize, $fontname, ' '.$legend);
       $self->push($label);
       $y+=1.2;
     }

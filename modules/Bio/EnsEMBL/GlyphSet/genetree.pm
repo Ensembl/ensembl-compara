@@ -129,7 +129,6 @@ sub _init {
 
     # Node glyph, coloured for for duplication/speciation
     my ($node_colour, $label_colour, $collapsed_colour, $bold);
-    my $bold_colour = "white";
     
     if ($f->{_node_type} eq 'duplication') {
       $node_colour = 'red3';
@@ -154,11 +153,11 @@ sub _init {
     if ($f->{label}) {
       if( $f->{_genes}->{$other_gene} ){
         $bold = 1;
-        $bold_colour = "ff6666";
+        $label_colour = "red";
       } elsif( $f->{_genome_dbs}->{$other_genome_db_id} ){
         $bold = 1;
       } elsif( $f->{_genes}->{$current_gene} ){
-        $label_colour     = 'red';
+        $label_colour     = 'darkgreen';
         $collapsed_colour = 'red';
         $node_colour = "royalblue";
         $bold = defined($other_genome_db_id);
@@ -349,19 +348,7 @@ sub _init {
             'zindex' => 40,
 	  });
 
-      if ($bold) {
-        for (my $delta_x = -1; $delta_x <= 1; $delta_x++) {
-          for (my $delta_y = -1; $delta_y <= 1; $delta_y++) {
-            next if ($delta_x == 0 and $delta_y == 0);
-            my %txt2 = %$txt;
-            bless(\%txt2, ref($txt));
-            $txt2{x} += $delta_x;
-            $txt2{y} += $delta_y;
-            push(@labels, \%txt2);
-          }
-        }
-        $txt->{colour} = $bold_colour;
-      }
+      $txt->{'font'} = 'MediumBold' if($bold);
       
       if ($f->{'_gene'}) {
         $txt->{'href'} = $self->_url({
