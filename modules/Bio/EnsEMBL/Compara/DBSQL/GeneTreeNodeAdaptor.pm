@@ -256,7 +256,7 @@ sub fetch_all_AlignedMember_by_root_id {
 
 sub fetch_by_stable_id {
     my $self = shift;
-    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_by_stable_id instead. fetch_by_stable_id() will be removed in release 71.');
+    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_by_stable_id instead. fetch_by_stable_id() will be removed in release 70.');
     my $tree = $self->db->get_GeneTreeAdaptor->fetch_by_stable_id(@_);
     return $tree->root if (not defined $self->_default_member_type) or ($tree->member_type eq $self->_default_member_type);
 }
