@@ -519,7 +519,7 @@ sub _default_member_type {
     no strict 'refs';
     foreach my $func_name (qw(
                                  fetch_all_children_for_node fetch_parent_for_node fetch_all_leaves_indexed
-                                 fetch_subtree_under_node fetch_subroot_by_left_right_index fetch_root_by_node
+                                 fetch_subtree_under_node fetch_root_by_node
                                  fetch_first_shared_ancestor_indexed
                             )) {
         my $full_name = "Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor::$func_name";

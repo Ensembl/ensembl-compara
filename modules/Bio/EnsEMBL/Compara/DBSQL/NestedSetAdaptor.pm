@@ -211,23 +211,6 @@ sub fetch_tree_by_root_id {
 
 
 
-sub fetch_subroot_by_left_right_index {
-  deprecate('fetch_subroot_by_left_right_index() should not be used and will be removed in release 70.
-  If you are using it, please contact the dev mailing-list dev@ensembl.org');
-  my ($self,$node) = @_;
-
-  unless ($node->left_index && $node->right_index) {
-    warning("fetch_subroot_by_left_right_index subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case.\n");
-  }
-  my $left_index = $node->left_index;
-  my $right_index = $node->right_index;
-  my $root_id = $node->_root_id;
-
-  my $constraint = "parent_id = $root_id AND left_index<=$left_index AND right_index>=$right_index";
-  return $self->generic_fetch($constraint)->[0];
-}
-
-
 =head2 fetch_root_by_node
 
   Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $node
