@@ -127,8 +127,7 @@ sub single_base_zmenu {
   $r =~ s/:.*$/:$s-$e/;
   $slice = $sa->fetch_by_toplevel_location($r);
 
-  #
-  warn "got ".join(' ',@bigbedrow)."\n";
+  # warn "got ".join(' ',@bigbedrow)."\n";
   my $f = Bio::EnsEMBL::Funcgen::DNAMethylationFeature->new( 
         -SLICE => $slice, 
           -SET => $rs, 
