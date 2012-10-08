@@ -152,11 +152,6 @@ sub fetch_node_by_node_id {
 #
 ##################################
 
-sub _get_starting_lr_index {
-    return 1;
-}
-
-
 sub _tables {
   return (['ncbi_taxa_node', 't'],
           ['ncbi_taxa_name', 'n']

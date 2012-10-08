@@ -300,10 +300,6 @@ sub _left_join {
     return (['CAFE_gene_family', 'cgf.root_id = str.root_id'], ['CAFE_species_gene', 'csg.cafe_gene_family_id=cgf.cafe_gene_family_id']);
 }
 
-sub _get_starting_lr_index {
-    return 1;
-}
-
 sub create_instance_from_rowhash {
     my ($self, $rowhash) = @_;
     my $node = new Bio::EnsEMBL::Compara::CAFEGeneFamily;

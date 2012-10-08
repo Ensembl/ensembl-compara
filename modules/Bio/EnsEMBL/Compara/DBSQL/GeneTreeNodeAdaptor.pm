@@ -439,10 +439,6 @@ sub _left_join {
     );
 }
 
-sub _get_starting_lr_index {
-    return 1;
-}
-
 
 sub create_instance_from_rowhash {
   my $self = shift;

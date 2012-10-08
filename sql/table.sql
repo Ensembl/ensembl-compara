@@ -303,8 +303,7 @@ CREATE TABLE genomic_align_tree (
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
   KEY root_id (root_id),
-  KEY left_index (left_index),
-  KEY right_index (right_index)
+  KEY left_index (root_id_left_index),
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -666,9 +665,9 @@ CREATE TABLE gene_tree_node (
   FOREIGN KEY (parent_id) REFERENCES gene_tree_node(node_id),
 
   PRIMARY KEY (node_id),
-  KEY (parent_id),
-  KEY (root_id,left_index),
-  KEY (root_id,right_index)
+  KEY parent_id (parent_id),
+  KEY root_id (root_id),
+  KEY root_id_left_index (root_id,left_index),
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1014,33 +1013,6 @@ CREATE TABLE protein_tree_hmmprofile (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-#
-# Table structure for table 'lr_index_offset'
-#
-# overview:
-#   Used to store the current maximum left right index for a given table. Table
-#   name is unique and lr_index should be equal to the SQL statement
-#   select max(right_index) from table_name
-# semantics:
-#   lr_index_offset_id -- id of the row since this is an InnoDB table
-#   table_name      -- name of the table this lr_index corresponds to
-#   lr_index        -- max right index for the given table
-
-CREATE TABLE lr_index_offset (
-  lr_index_offset_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-  table_name  varchar(64) NOT NULL,
-  lr_index int(10) unsigned DEFAULT 0,
-  PRIMARY KEY (lr_index_offset_id),
-  UNIQUE KEY (table_name)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-# Auto-populate lr_index_offset with all tables
-INSERT INTO lr_index_offset (table_name, lr_index) 
-values 
-  ('genomic_align_tree', 0);
-
-
 
 # ---------------------------------- CAFE tables --------------------------------
 
@@ -1063,7 +1035,6 @@ CREATE TABLE `species_tree_node` (
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`,`left_index`),
-  KEY `root_id_2` (`root_id`,`right_index`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
