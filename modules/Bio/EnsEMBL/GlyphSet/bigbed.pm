@@ -157,6 +157,9 @@ sub href {
 sub features {
   my ($self,$options) = @_;
 
+  my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore style);
+  $options = { %config_in, %$options };
+
   my $format = $self->format;
 
   my $slice = $self->{'container'};
@@ -165,7 +168,7 @@ sub features {
   $_->map($slice) for @$features;
   my $config = {};
 
-  # WORK OUT HOW TO CONFIGURE FEATURES FOR ENDERING
+  # WORK OUT HOW TO CONFIGURE FEATURES FOR RENDERING
   # Explicit: Check if mode is specified on trackline
   my $style = $options->{'style'} || $format->style;
 
