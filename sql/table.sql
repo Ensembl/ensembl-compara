@@ -42,8 +42,8 @@ CREATE TABLE ncbi_taxa_node (
   rank                            char(32) default '' NOT NULL,
   genbank_hidden_flag             tinyint(1) default 0 NOT NULL,
 
-  left_index                      int(10) NOT NULL,
-  right_index                     int(10) NOT NULL,
+  left_index                      int(10) DEFAULT 0 NOT NULL,
+  right_index                     int(10) DEFAULT 0 NOT NULL,
   root_id                         int(10) default 1 NOT NULL,
 
   PRIMARY KEY (taxon_id),
@@ -1038,7 +1038,6 @@ CREATE TABLE lr_index_offset (
 # Auto-populate lr_index_offset with all tables
 INSERT INTO lr_index_offset (table_name, lr_index) 
 values 
-  ('ncbi_taxa_node', 0), 
   ('genomic_align_tree', 0);
 
 

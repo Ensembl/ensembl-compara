@@ -85,8 +85,8 @@ sub pipeline_create_commands {
               rank                            CHAR(32) DEFAULT \"\" NOT NULL,
               genbank_hidden_flag             TINYINT(1) DEFAULT 0 NOT NULL,
 
-              left_index                      INT(10) NOT NULL,
-              right_index                     INT(10) NOT NULL,
+              left_index                      INT(10) DEFAULT 0 NOT NULL,
+              right_index                     INT(10) DEFAULT 0 NOT NULL,
               root_id                         INT(10) DEFAULT 1 NOT NULL,
 
               PRIMARY KEY (taxon_id),
