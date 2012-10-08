@@ -162,9 +162,10 @@ sub bigbed {
   my @parts = split(m!/!,$bigbed_file);
   $bigbed_file = join("/",$self->hub->species_defs->DATAFILE_BASE_PATH,
                           @parts[-5..-1]);
-  
-  # Find nearest feature
-  return Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file);
+
+  return ( $self->{'_cache'}->{'bigbed_adaptor'}->{$bigbed_file} ||=
+    Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file)
+  );
 }
 
 sub content {
