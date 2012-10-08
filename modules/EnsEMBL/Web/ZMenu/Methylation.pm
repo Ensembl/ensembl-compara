@@ -143,7 +143,7 @@ sub single_base_zmenu {
   $self->add_entry({ type => "Context", label => $f->context}); 
   $self->add_entry({ type => "Cell type", label => $f->cell_type->name}); 
   $self->add_entry({ type => "Feature type", label => $f->feature_type->name}); 
-  $self->add_entry({ type => "Analysis method", label => $f->analysis->logic_name}); 
+  $self->add_entry({ type => "Analysis method", label => $f->analysis->description}); 
 
 
 }
