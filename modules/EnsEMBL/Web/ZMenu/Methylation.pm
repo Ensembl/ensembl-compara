@@ -23,7 +23,6 @@ sub summary_zmenu {
   $s = $mid - $fudge/2;
   $e = $mid + $fudge/2;
   
-
   my $fgh = $self->hub->database('funcgen');
   my $rsa = $fgh->get_ResultSetAdaptor;
   my $rs = $rsa->fetch_by_dbID($id);
@@ -34,7 +33,8 @@ sub summary_zmenu {
   my $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
   
   # Summarize features
-  my ($astart,$astrand,$num,$num_this_strand,$tot_meth,$tot_read,$most_meth_perc,$least_meth_perc) = (0,0,0,0,0,-1,-1);
+  my ($astart,$astrand,$num,$num_this_strand,$tot_meth,$tot_read,$most_meth_perc,$least_meth_perc) = 
+     (0,      0,       0,   0,               0,        0,        -1,             -1);
   my ($label);
   $bba->fetch_rows($slice->seq_region_name,$s,$e,sub {
     my @row = @_;
@@ -58,7 +58,7 @@ sub summary_zmenu {
   });
   if($num==0) {
     # No features
-    $self->caption("$label No features"); # XXX or zero
+    $self->caption("$label No features");
     $self->add_entry({  type => "Overview",
                        label => "This track has no features near this point"});
   } elsif($num_this_strand==1 and not $called_from_single) {
@@ -66,8 +66,7 @@ sub summary_zmenu {
     $self->single_base_zmenu($id,$r,$astart,$astrand,$width,$scalex);
   } else {
     # Multiple features
-  
-    $self->caption("$label multiple features"); # XXX or zero
+    $self->caption("$label multiple features");
     $self->add_entry({  type => "Overview",
                        label => "Too zoomed out to view methylation of individual bases"});
     my ($chr,) = split(/:/,$r);
@@ -111,8 +110,8 @@ sub single_base_zmenu {
   my @bigbedrow;
   my $closest = -1;
   $bba->fetch_rows($slice->seq_region_name,$s-$fudge,$s+1+$fudge,sub {
-    my $dist = abs($_[1]+1-$s);
-    if($strand == $_[5]."1" and ($closest == -1 or $dist < $closest)) {
+    my $dist = abs($_[1]+1-$s) + 0.5 * ($strand != $_[5]."1");
+    if($closest == -1 or $dist < $closest) {
       @bigbedrow = @_;
       $closest = $dist;
     }
@@ -124,8 +123,7 @@ sub single_base_zmenu {
   }
   my $s = $bigbedrow[1]+1;
   my $e = $s+1;
-  $r =~ s/:.*$/:$s-$e/;
-  $slice = $sa->fetch_by_toplevel_location($r);
+  $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
 
   # warn "got ".join(' ',@bigbedrow)."\n";
   my $f = Bio::EnsEMBL::Funcgen::DNAMethylationFeature->new( 
@@ -141,7 +139,7 @@ sub single_base_zmenu {
                                      $f->methylated_reads,
                                      $f->total_reads,
                                      $f->percent_methylation)});
-  $self->add_entry({ type => "Strand", label => $strand>0?'+ve':'-ve'});
+  $self->add_entry({ type => "Strand", label => $f->strand>0?'+ve':'-ve'});
   $self->add_entry({ type => "Context", label => $f->context}); 
   $self->add_entry({ type => "Cell type", label => $f->cell_type->name}); 
   $self->add_entry({ type => "Feature type", label => $f->feature_type->name}); 
