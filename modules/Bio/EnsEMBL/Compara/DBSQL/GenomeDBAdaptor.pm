@@ -254,9 +254,7 @@ sub fetch_all_by_ancestral_taxon_id {
   unless($taxon_id) {
     throw('taxon_id argument is required');
   }
-  my $all_genome_dbs = $self->fetch_all; # loads the cache
-
-  my $sth;
+  my $all_genome_dbs = $self->cache_all; # loads the cache
 
   my $sql = "SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb
     WHERE ntn1.taxon_id = ? AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index
@@ -265,22 +263,9 @@ sub fetch_all_by_ancestral_taxon_id {
     $sql .= " AND gdb.default_assembly = 1";
   }
 
-  $sth = $self->prepare($sql);
+  my $sth = $self->prepare($sql);
   $sth->execute($taxon_id);
-  my $genome_db_id;
-  $sth->bind_columns(\$genome_db_id);
-
-  # Create a string of dbIDs separated by colons for quick search
-  my $genome_db_id_string = ":";
-  while ($sth->fetch) {
-    $genome_db_id_string .= $genome_db_id.":";
-  }
-  $sth->finish;
-
-  # Run the quick search
-  my $these_genome_dbs = [grep {index($genome_db_id_string, ":".$_->dbID.":") > -1} @$all_genome_dbs];
-  
-  return $these_genome_dbs;
+  return [map {$all_genome_dbs->{$_->[0]}} @{$sth->fetchall_arrayref}];
 }
 
 
