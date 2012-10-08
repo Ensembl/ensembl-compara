@@ -37,7 +37,9 @@ sub features {
   my @parts = split(m!/!,$bigbed_file);
   $bigbed_file = join("/",$self->{'config'}->hub->species_defs->DATAFILE_BASE_PATH,
                           @parts[-5..-1]);
-  my $bba = $self->bigbed_adaptor(Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file));
+  my $bba = ( $self->{'container'}->{'_cache'}->{'bigbed_adaptor'}->{$bigbed_file} ||=
+    $self->bigbed_adaptor(Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file))
+  );
 
   return $self->SUPER::features({
     style => 'colouredscore',
