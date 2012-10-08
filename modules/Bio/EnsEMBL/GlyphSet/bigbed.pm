@@ -180,11 +180,13 @@ sub features {
   } elsif($style eq 'colour') {
     $config->{'useScore'} = 2;
  
-    # Instead of using default_colour if colour not present, use black
-    #my ($r, $g, $b) =  $self->{'config'}->colourmap->rgb_by_name($self->{'_default_colour'},1);
-    #my $default_rgb_string = "$r,$g,$b";
     my $default_rgb_string = "0,0,0";
-    
+    if($options->{'fallbackcolour'}) {
+      my $colour = $options->{'fallbackcolour'};
+      $colour = $self->{'_default_colour'} if($colour eq 'default');
+      my ($r, $g, $b) =  $self->{'config'}->colourmap->rgb_by_name($colour,1);
+      $default_rgb_string = "$r,$g,$b";
+    }
     foreach (@$features) {
       next if (defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d+,\d+,\d+$/);
       $_->external_data->{'item_colour'}[0] = $default_rgb_string;
