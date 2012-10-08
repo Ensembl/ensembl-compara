@@ -39,8 +39,12 @@ sub content {
     $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
     
     my $start       = $location->seq_region_start;
-    my $end         = $location->seq_region_end;         
-    my $vega_slices = $hub->get_adaptor('get_SliceAdaptor', 'vega')->fetch_by_region('chromosome', $chromosome, $start, $end, 1, 'GRCh37')->project('chromosome', $alt_assemblies->[0]);
+    my $end         = $location->seq_region_end;
+        
+    my $e_assembly = $hub->get_adaptor('get_CoordSystemAdaptor')
+                         ->fetch_by_name('chromosome')->version;
+             
+    my $vega_slices = $hub->get_adaptor('get_SliceAdaptor', 'vega')->fetch_by_region('chromosome', $chromosome, $start, $end, 1,$e_assembly)->project('chromosome', $alt_assemblies->[0]);
     my $base_url    = $hub->ExtURL->get_url('VEGA') . "$species/$referer->{'ENSEMBL_TYPE'}/$referer->{'ENSEMBL_ACTION'}";
     
     foreach my $segment (@$vega_slices) {
