@@ -514,31 +514,6 @@ sub fetch_canonical_member_for_gene_member_id {
 }
 
 
-=head2 fetch_canonical_peptide_member_for_gene_member_id
-
-  Description: DEPRECATED. Use fetch_canonical_member_for_gene_member_id() instead.
-
-=cut
-
-sub fetch_canonical_peptide_member_for_gene_member_id {
-    my $self = shift;
-    deprecate("Use fetch_canonical_member_for_gene_member_id() instead. fetch_canonical_peptide_member_for_gene_member_id() will be removed in release 70.");
-    return $self->fetch_canonical_member_for_gene_member_id(@_);
-}
-
-
-=head2 fetch_canonical_transcript_member_for_gene_member_id
-
-  Description: DEPRECATED. Use fetch_canonical_member_for_gene_member_id() instead.
-
-=cut
-
-sub fetch_canonical_transcript_member_for_gene_member_id {
-    my $self = shift;
-    deprecate("Use fetch_canonical_member_for_gene_member_id() instead. fetch_canonical_transcript_member_for_gene_member_id() will be removed in release 70.");
-    return $self->fetch_canonical_member_for_gene_member_id(@_);
-}
-
 
 #
 # INTERNAL METHODS
