@@ -23,10 +23,11 @@ sub content {
   my $translation  = $transcript->translation;
   my $db           = $object->get_db;
   my $exons        = @{$transcript->get_all_Exons};
+  my $coding_exons = @{$transcript->get_all_translateable_Exons};
   my $basepairs    = $self->thousandify($transcript->seq->length);
   my $residues     = $translation ? $self->thousandify($translation->length) : 0;
   my @CCDS         = grep $_->dbname eq 'CCDS', @{$transcript->get_all_DBLinks};
-  my $html         = "<strong>Exons:</strong> $exons <strong>Transcript length:</strong> $basepairs bps";
+  my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
 
   $table->add_row('Statistics', $html);
