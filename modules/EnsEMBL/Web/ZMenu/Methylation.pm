@@ -35,7 +35,7 @@ sub summary_zmenu {
   # Summarize features
   my ($astart,$astrand,$num,$num_this_strand,$tot_meth,$tot_read,$most_meth_perc,$least_meth_perc) = 
      (0,      0,       0,   0,               0,        0,        -1,             -1);
-  my ($label);
+  my ($label,@percmeth);
   $bba->fetch_rows($slice->seq_region_name,$s,$e,sub {
     my @row = @_;
     my $f = Bio::EnsEMBL::Funcgen::DNAMethylationFeature->new( 
@@ -47,6 +47,7 @@ sub summary_zmenu {
     my $p = $f->percent_methylation;
     $most_meth_perc = $p if($most_meth_perc==-1 or $most_meth_perc<$p);
     $least_meth_perc = $p if($least_meth_perc==-1 or $least_meth_perc>$p);
+    push @percmeth,$p;
     $tot_meth += $f->methylated_reads;
     $tot_read += $f->total_reads;    
     $label = $f->display_label;
@@ -56,6 +57,8 @@ sub summary_zmenu {
     $num++;
     $num_this_strand++ if($right_strand);
   });
+  @percmeth = sort { $a <=> $b } @percmeth;
+  
   if($num==0) {
     # No features
     $self->caption("$label No features widthin ${fudge}bp");
@@ -82,10 +85,11 @@ sub summary_zmenu {
                        label => $num });
     $self->add_entry({ type => "Methylated Reads",
                        label => sprintf("%d/%d",$tot_meth,$tot_read) });
-    $self->add_entry({ type => "Min Methylation",
-                       label => sprintf("%d%%",$least_meth_perc) });
-    $self->add_entry({ type => "Max Methylation",
-                       label => sprintf("%d%%",$most_meth_perc) });
+    $self->add_entry({ type => "Min/Median/Max Methylation",
+                       label => sprintf("%d%%/%d%%/%d%%",
+                                        $percmeth[0],
+                                        $percmeth[int($#percmeth/2)],
+                                        $percmeth[$#percmeth]) });
   }
 }
 
