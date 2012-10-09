@@ -141,7 +141,6 @@ sub _render_hidden_bgd {
       y         => $y,
       width     => $self->{'container'}->length,
       height    => $h,
-      #colour    => $y?'red':'green',
       # no colour key, ie transparent
       absolutey => 1,
       href      => $href,
