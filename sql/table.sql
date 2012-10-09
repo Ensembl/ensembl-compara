@@ -303,7 +303,7 @@ CREATE TABLE genomic_align_tree (
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
   KEY root_id (root_id),
-  KEY left_index (root_id_left_index),
+  KEY left_index (root_id, left_index)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -667,7 +667,7 @@ CREATE TABLE gene_tree_node (
   PRIMARY KEY (node_id),
   KEY parent_id (parent_id),
   KEY root_id (root_id),
-  KEY root_id_left_index (root_id,left_index),
+  KEY root_id_left_index (root_id,left_index)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1034,7 +1034,7 @@ CREATE TABLE `species_tree_node` (
 
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
-  KEY `root_id` (`root_id`,`left_index`),
+  KEY `root_id` (`root_id`,`left_index`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
