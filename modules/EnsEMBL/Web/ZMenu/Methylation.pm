@@ -61,7 +61,7 @@ sub summary_zmenu {
     $self->caption("$label No features");
     $self->add_entry({  type => "Overview",
                        label => "This track has no features near this point"});
-  } elsif($num_this_strand==1 and not $called_from_single) {
+  } elsif($num==1 and not $called_from_single) {
     # One feature
     $self->single_base_zmenu($id,$r,$astart,$astrand,$width,$scalex);
   } else {
