@@ -50,6 +50,7 @@ sub features {
 sub render_normal {
   my $self = shift;
   $self->{'renderer_no_join'} = 1;
+  $self->{'config'}->{'_meth_legend'} = 1; # instruct to draw legend
   $self->SUPER::render_normal(8, 0);  
 }
 sub render_compact { shift->render_normal(@_); }
