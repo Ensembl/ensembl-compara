@@ -8,6 +8,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     var full       = $('.full_species', this.el);
     var favourites = $('.favourites', this.el);
     var container  = $('.species_list_container', this.el);
+    var dropdown   = $('.dropdown_redirect',this.el);
     
     if (!reorder.length || !full.length || !favourites.length) {
       return;
@@ -25,9 +26,10 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
         $.ajax({
           url: '/Account/SaveFavourites',
           data: { favourites: favourites.sortable('toArray').join(',').replace(/(favourite|species)-/g, '') },
-          dataType: 'html',
-          success: function (html) {
-            container.html(html);
+          dataType: 'json',
+          success: function (data) {
+            container.html(data.list);
+            dropdown.html(data.dropdown);
           }
         });
       }

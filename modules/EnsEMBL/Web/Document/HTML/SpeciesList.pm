@@ -58,6 +58,7 @@ sub modify_species_info {}
 
 sub render {
   my $self      = shift;
+  my $fragment  = shift eq 'fragment';
   my $species_defs = $self->species_defs;
   my $sitename     = $species_defs->ENSEMBL_SITETYPE;
   my $species_info = $self->species_info;
@@ -65,10 +66,11 @@ sub render {
   my $favourites   = $self->favourites;
   my (@group_order, %label_check);
   
-  my $html = '<div class="static_all_species clear">
+  my $html_before = '<div class="static_all_species clear">
   <form action="#">
     <h3>All genomes</h3>
-    <p>
+    <p>';
+  my $html = '
     <select name="species" class="dropdown_redirect">
       <option value="/">-- Select a species --</option>
   ';
@@ -119,14 +121,17 @@ sub render {
       $optgroup = 0;
     }
   }
+  $html .= "</select>";
 
-  $html .= qq{
+  my $html_after .= qq{
         </select>
       </p>
     </form>
     <p><a href="/info/about/species.html">View full list of all $sitename species</a></p>
     </div>
   };
+  
+  $html = $html_before.$html.$html_after unless $fragment;
   
   return $html;
 }

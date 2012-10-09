@@ -4,8 +4,11 @@ package EnsEMBL::Web::Command::Account::SaveFavourites;
 
 use strict;
 
+use JSON qw(from_json to_json);
+
 use EnsEMBL::Web::Data::Record::SpeciesList;
 use EnsEMBL::Web::Document::HTML::FavouriteSpecies;
+use EnsEMBL::Web::Document::HTML::SpeciesList;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -21,7 +24,10 @@ sub process {
   $species_list->user_id($user->id);
   $species_list->save;
 
-  print new EnsEMBL::Web::Document::HTML::FavouriteSpecies($hub)->render('fragment');
+  print to_json({
+    list => EnsEMBL::Web::Document::HTML::FavouriteSpecies->new($hub)->render('fragment'),
+    dropdown => EnsEMBL::Web::Document::HTML::SpeciesList->new($hub)->render('fragment'),
+  });
 }
 
 1;
