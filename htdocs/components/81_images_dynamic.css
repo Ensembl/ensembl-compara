@@ -90,6 +90,8 @@ div.image_toolbar a      { float: left; width: 16px; height: 16px; display: bloc
 div.image_toolbar a.config { background-image: url(/i/16/rev/setting.png);   }
 div.image_toolbar a.data   { background-image: url(/i/16/rev/page-user.png); }
 div.image_toolbar a.export { background-image: url(/i/16/rev/picture.png);   }
+div.image_toolbar a.big    { background-image: url(/i/16/rev/image_big.png);   }
+div.image_toolbar a.small  { background-image: url(/i/16/rev/image_small.png);  }
 
 /* Below is the image export CSS code */
 
