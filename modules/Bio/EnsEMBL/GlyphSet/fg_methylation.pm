@@ -43,6 +43,7 @@ sub features {
 
   return $self->SUPER::features({
     style => 'colouredscore',
+    adaptor => $bba,
   });
 }
 

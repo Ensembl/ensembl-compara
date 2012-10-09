@@ -160,11 +160,13 @@ sub features {
   my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore style);
   $options = { %config_in, %$options };
 
+  my $bba = $options->{'adaptor'} || $self->bigbed_adaptor;
+
   my $format = $self->format;
 
   my $slice = $self->{'container'};
   $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
-  my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end);
+  my $features = $bba->fetch_features($slice->seq_region_name,$slice->start,$slice->end);
   $_->map($slice) for @$features;
   my $config = {};
 
