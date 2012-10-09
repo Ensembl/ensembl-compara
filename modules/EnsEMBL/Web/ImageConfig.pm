@@ -2319,7 +2319,7 @@ sub add_regulation_features {
       colourset    => 'seq',
     }));
   }
-  
+  $self->add_track('information', 'meth_legend',   'Methylation Legend', 'meth_legend', { strand => 'r' });        
 }
 
 sub add_regulation_builds {
