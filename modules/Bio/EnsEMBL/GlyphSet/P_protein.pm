@@ -4,6 +4,14 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
+sub _obp {
+  return "" if(defined($_[1]) and $_[0]==$_[1]);
+  return ("(1st base)","(2nd base)","(3rd base)")[$_[0]];
+}
+sub _trisect {
+  return sprintf("%d%s",$_[0]/3,(""," 1/3"," 2/3")[$_[0]%3]);
+}
+
 sub _init {
   my ($self) = @_;
   
@@ -13,30 +21,49 @@ sub _init {
   my $protein    = $self->{'container'};	
   my $pep_splice = $self->cache('image_splice');
 
-  my $x          = 0;
   my $h          = $self->my_config('height') || 4; 
   my $flip       = 0;
   my @colours    = ($self->my_colour('col1'), $self->my_colour('col2'));
-  my $start_phase = 1;
+  my $o_offset  = 0;
   if( $pep_splice ){
     for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
       my $colour = $colours[$flip];
       my $exon_id = $pep_splice->{$exon_offset}{'exon'};
       next unless $exon_id;
 
+      # This code brought to you by the number 3.
+      # We could have made this easier for ourselves by using cdna-bp co-ordinates throughout...
+      my $n_offset = ($exon_offset) * 3 - (3-$pep_splice->{$exon_offset}{'phase'})%3;
+      # zero-based offset and phase, semi-open
+      my ($aa_s,$p_s,$aa_e,$p_e,$aa_l,$p_l) = 
+          (int($o_offset/3),$o_offset%3,
+           int($n_offset/3),$n_offset%3,
+           int(($n_offset-1)/3),($n_offset-1)%3);           
+
+      my $full_aa = $aa_e - $aa_s;
+      $full_aa-- if($p_s);
+
+      my @narrate;
+      push @narrate,sprintf("%dbp at start from previous codon",3-$p_s) if($p_s);
+      push @narrate,sprintf("%d full codons (%dbp)",$full_aa,$full_aa*3);
+      push @narrate,sprintf("%dbp at end in next codon",$p_e) if($p_e);
+
+      my $length = sprintf("%dbp, %s aa",$n_offset-$o_offset,_trisect($n_offset-$o_offset));
+
       $self->push( $self->Rect({
-        'x'        => $x,
+        'x'        => $aa_s,
         'y'        => 0,
-        'width'    => $exon_offset - $x,
+        'width'    => $aa_e - $aa_s + 1,
         'height'   => $h,
         'colour'   => $colour,
-        'title'    => sprintf 'Exon: %s; Start phase: %d; End phase: %d; Length: %d',
-	                $exon_id, $start_phase, $pep_splice->{$exon_offset}{'phase'} +1,
-			$exon_offset - $x
+        'title'    => sprintf 'Exon: %s; First aa: %d %s; Last aa: %d %s; Length: %s; Description: %s',
+	                $exon_id,
+                  $aa_s+1,_obp($p_s,0),$aa_l+1,_obp($p_l,2),
+                  $length,
+                  join(" + ",@narrate),
       }));
-      $x           = $exon_offset ;
-      $start_phase = ($pep_splice->{$exon_offset}{'phase'} +1) ;
       $flip        = 1-$flip;
+      $o_offset = $n_offset;
     }
   } else {
     $self->push( $self->Rect({
