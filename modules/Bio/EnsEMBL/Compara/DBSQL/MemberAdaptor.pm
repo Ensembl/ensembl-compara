@@ -14,12 +14,10 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 
-sub fetch_by_dbIDs {
-  my $self = shift;
-
-  my $ids = join(',' , @_);
-  my $constraint = "m.member_id in ($ids)";
-  return $self->generic_fetch($constraint);
+sub fetch_by_dbIDs {    # DEPRECATED
+    my $self = shift;
+    deprecate("fetch_by_dbIDs() is deprecated and will be removed in release 72. Use fetch_all_by_dbID_list() instead");
+    return $self->fetch_all_by_dbID_list([@_]);
 }
 
 
