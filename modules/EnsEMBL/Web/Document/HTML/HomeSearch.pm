@@ -89,8 +89,7 @@ sub render {
   }
 
   # search input box & submit button
-  my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 
-'input'};
+  my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 'query input'};
   $q_params->{'value'} = "Search $species_name..." unless $is_home_page;
   $field->add_element($q_params, 1);
   $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
@@ -98,7 +97,7 @@ sub render {
   my $elements_wrapper = $field->elements->[0];
   $elements_wrapper->append_child('span', {'class' => 'inp-group', 'children' => [ splice @{$elements_wrapper->child_nodes}, 0, 2 ]})->after({'node_name' => 'wbr'}) for (0..1);
 
-  return $form->render;
+  return sprintf '<div id="SpeciesSearch" class="js_panel"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
 }
 
 1;
