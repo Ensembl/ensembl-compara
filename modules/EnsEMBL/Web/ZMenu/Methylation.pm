@@ -20,8 +20,8 @@ sub summary_zmenu {
   my $mult = "1"."0"x(length(int $fudge)-1);
   $fudge = int(($fudge/$mult)+0.5)*$mult;  
   my $mid = ($s+$e)/2;
-  $s = $mid - $fudge/2;
-  $e = $mid + $fudge/2;
+  $s = int($mid - $fudge/2);
+  $e = int($mid + $fudge/2);
   
   my $fgh = $self->hub->database('funcgen');
   my $rsa = $fgh->get_ResultSetAdaptor;
@@ -58,36 +58,34 @@ sub summary_zmenu {
   });
   if($num==0) {
     # No features
-    $self->caption("$label No features");
+    $self->caption("$label No features widthin ${fudge}bp");
     $self->add_entry({  type => "Overview",
                        label => "This track has no features near this point"});
+  } elsif($num_this_strand==1 and not $called_from_single) {
+    # One feature
+    $self->single_base_zmenu($id,$r,$astart,$astrand,$width,$scalex);
   } elsif($num==1 and not $called_from_single) {
     # One feature
     $self->single_base_zmenu($id,$r,$astart,$astrand,$width,$scalex);
   } else {
     # Multiple features
-    $self->caption("$label multiple features");
-    $self->add_entry({  type => "Overview",
-                       label => "Too zoomed out to view methylation of individual bases"});
+    $self->caption("$label ${fudge}bp summary");
     my ($chr,) = split(/:/,$r);
     my $zoom_fudge = max($width/5,20);
     my ($zs,$ze) = map { int $_ } ($mid-$zoom_fudge/2,$mid+$zoom_fudge/2);
-    $self->add_entry({
-      type  => 'Zoom',
-      label => "zoom here",
-      link => $self->hub->url({
-        r => "$chr:$zs-$ze",
-      }),
-    });
-    $self->add_entry({  type => "Summary",
-                       label => sprintf(qq(
-                          Region around cursor of size %dbp contains
-                          %d bases with methylation data, totalling
-                          %d reads in all, of which %d are methylated. The
-                          lowest methylated read rate is %d%% 
-                          and the highest %d%%),
-                            $e-$s,$num,$tot_read,$tot_meth,
-                            $least_meth_perc,$most_meth_perc)});
+    $self->add_entry({ type => "Region Summary",
+                       label => "Zoom using link below for individual feature details" });
+    $self->add_entry({ type => "Location",
+                       label => "$chr:$s-$e",
+                       link => { r => "$chr:$s-$e" }});
+    $self->add_entry({ type => "Feature Count",
+                       label => $num });
+    $self->add_entry({ type => "Methylated Reads",
+                       label => sprintf("%d/%d",$tot_meth,$tot_read) });
+    $self->add_entry({ type => "Min Methylation",
+                       label => sprintf("%d%%",$least_meth_perc) });
+    $self->add_entry({ type => "Max Methylation",
+                       label => sprintf("%d%%",$most_meth_perc) });
   }
 }
 
@@ -142,8 +140,7 @@ sub single_base_zmenu {
   $self->add_entry({ type => "Strand", label => $f->strand>0?'+ve':'-ve'});
   $self->add_entry({ type => "Context", label => $f->context}); 
   $self->add_entry({ type => "Cell type", label => $f->cell_type->name}); 
-  $self->add_entry({ type => "Feature type", label => $f->feature_type->name}); 
-  $self->add_entry({ type => "Analysis method", label => $f->analysis->description}); 
+  $self->add_entry({ type => "Analysis method", label => $f->analysis->display_label}); 
 
 
 }
