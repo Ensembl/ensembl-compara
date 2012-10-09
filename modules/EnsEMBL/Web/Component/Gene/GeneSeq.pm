@@ -98,12 +98,10 @@ sub content_sub_slice {
   
   my ($sequence, $config) = $self->initialize($slice, $start, $end);
   
-  if ($start == 1) {
-    $config->{'html_template'} = qq{<pre class="text_sequence" style="margin-bottom:0">&gt;} . $hub->param('name') . "\n%s</pre>";
-  } elsif ($end && $end == $length) {
+  if ($end && $end == $length) {
     $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
-    $config->{'html_template'} = '<pre class="text_sequence" style="margin:0 0 0 1em">%s</pre>';
+    $config->{'html_template'} = sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
   } else {
     $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . '<pre class="text_sequence">&gt;' . $slice->name . "\n%s</pre>";
   }
