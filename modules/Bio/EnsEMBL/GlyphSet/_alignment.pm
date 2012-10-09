@@ -136,11 +136,12 @@ sub _render_hidden_bgd {
   foreach my $y (keys %off) { 
     my $href;
     $href = $self->href_bgd($y?-1:1) if $self->can('href_bgd');
-    $self->push($self->Composite({
+    $self->push($self->Rect({
       x         => 0,
       y         => $y,
       width     => $self->{'container'}->length,
       height    => $h,
+      #colour    => $y?'red':'green',
       # no colour key, ie transparent
       absolutey => 1,
       href      => $href,
@@ -306,7 +307,8 @@ sub render_normal {
         href  => $self->href($feat[0][2]),
         x     => $feat[0][0] > 1 ? $feat[0][0] - 1 : 0,
         width => 0,
-        y     => $strand_y,
+        y     => 0,
+        height => $h,
         title => $self->feature_title($feat[0][2], $db_name),
         class => 'group',
       });
