@@ -162,6 +162,7 @@ sub new {
       if ($gw > 0) {
         ########## and convert it to pels
         $gw = $config->texthelper->width('Small');
+        my $gh = $config->texthelper->height('Small');
         
         ########## If the '_label' position is not 'above' move the labels below the image
         my $label_x  = $config->get_parameter('label') eq 'above' ? 0 : $config->get_parameter('image_height');
@@ -169,19 +170,26 @@ sub new {
         my $label_y  = ($glyphset->maxy + $glyphset->miny - $gw) / 2;
         my $colour_1 = $glyphset->my_config('colour')   || ($feature_type_1 ? $glyphset->my_colour($feature_type_1, 'label') : undef);
         my $colour_2 = $glyphset->my_config('colour_2') || ($feature_type_2 ? $glyphset->my_colour($feature_type_2, 'label') : undef);
-        
+
+        my $chr = $glyphset->{'chr'};
+        my $href = $self->{'config'}->hub->url({'type' => 'Location',
+                                                'action' => 'Chromosome', 
+                                                '__clear' => 1,
+                                                'r' => $chr});         
         if ($label_1) {
           my $chr_colour_key = $config->get_parameter('chr_colour_key');
-          my $chr = $glyphset->{'chr'};
           $colour_1 = $chr_colour_key->{$chr}->{'label'} if $chr_colour_key && $chr_colour_key->{$chr};
           $glyphset->push($glyphset->Text({
             x         => $label_x / $scalex,
             y         => ($glyphset->maxy + $glyphset->miny - length($label_1) * $gw) / 2,
             height    => $gw * length($label_1),
+            width     => $gh / $scalex,
             font      => 'Small',
             text      => $label_1,
             absolutey => 1,
-            colour    => $colour_1
+            colour    => $colour_1,
+            href      => $href,
+            title     => "$chr: Chromosome Summary",
           }));
         }
         
@@ -190,10 +198,13 @@ sub new {
             x         => ($label_x + 2 + $config->texthelper->height('Tiny')) / $scalex,
             y         => ($glyphset->maxy + $glyphset->miny - length($label_2) * $gw) / 2,
             height    => $gw * length($label_2),
+            width     => $gh / $scalex,
             font      => 'Small',
             text      => $label_2,
             absolutey => 1,
-            colour    => $colour_2
+            colour    => $colour_2,
+            href      => $href,
+            title     => "$chr: Chromosome Summary",
           }));
         }
       }
