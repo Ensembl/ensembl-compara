@@ -64,6 +64,8 @@ sub fetch_features {
       
       if ($self->my_config('filter')) { 
         @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_with_annotation(undef, undef, $self->my_config('filter')) || []};
+      } elsif ($self->my_config('source')) {
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source')) || []};
       } else { 
         @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures || []};
       }
@@ -81,7 +83,7 @@ sub fetch_features {
         my $track_set            = $self->my_config('set_name');
         my $variation_db_adaptor = $slice->adaptor->db->get_db_adaptor('variation');
         my $set_object           = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
-		
+    
         # Enable the display of failed variations in order to display the failed variation track
         my $failed_variations_track_name = 'Failed';
         my $orig_failed_flag             = $variation_db_adaptor->include_failed_variations;
