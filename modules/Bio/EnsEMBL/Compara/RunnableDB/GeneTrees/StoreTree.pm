@@ -182,11 +182,13 @@ sub store_node_tags
         my $n_lost = $node->get_tagvalue("E");
         $n_lost =~ s/.{2}//;        # get rid of the initial $-
         my @lost_taxa = split('-', $n_lost);
+        my $topup = 0;   # is used to delete all the pre-existing lost_taxon_id
         foreach my $taxon (@lost_taxa) {
             if ($self->debug) {
                 printf("store lost_taxon_id : $taxon "); $node->print_node;
             }
-            $node->store_tag('lost_taxon_id', $taxon, 1);
+            $node->store_tag('lost_taxon_id', $taxon, $topup);
+            $topup = 1;
         }
     }
 
