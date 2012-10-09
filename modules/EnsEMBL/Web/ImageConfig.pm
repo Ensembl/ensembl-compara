@@ -46,13 +46,15 @@ sub new {
     _r               => undef,
     no_load          => undef,
     altered          => 0,
-    _core            => undef,
+    _core            => undef,    
     _tree            => new EnsEMBL::Web::Tree,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
-      storable     => 1,
+      storable     => 1,      
       has_das      => 1,
       image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
+      image_resize => 0,
+      user_data    => 1,
       margin       => 5,
       spacing      => 2,
       label_width  => 113,
@@ -197,9 +199,10 @@ sub menus {
 sub init   {}
 sub modify {} # For plugins
 
-sub storable :lvalue { $_[0]{'_parameters'}{'storable'}; } # Set to 1 if configuration can be altered
-sub has_das  :lvalue { $_[0]{'_parameters'}{'has_das'};  } # Set to 1 if there are DAS tracks
-sub altered  :lvalue { $_[0]{'altered'};                 } # Set to 1 if the configuration has been updated
+sub storable     :lvalue { $_[0]{'_parameters'}{'storable'}; } # Set to 1 if configuration can be altered
+sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
+sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};  } # Set to 1 if there are DAS tracks
+sub altered      :lvalue { $_[0]{'altered'};                 } # Set to 1 if the configuration has been updated
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
