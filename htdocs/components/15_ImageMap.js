@@ -53,7 +53,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.makeImageMap(); 
     this.makeHoverLabels(); 
-    
+
     if (this.elLk.boundaries.length) {
       Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);
       
@@ -74,7 +74,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       panel.elLk.exportMenu.css({ top: $(this).parent().hasClass('bottom') ? $(this).parent().offset().top - panel.elLk.exportMenu.outerHeight() : panel.elLk.img.offset().top }).toggle();
       return false;
     });
+    
+    $('a.image_resize', this.el).on('click', function () {      
+      panel.params.updateURL = panel.params.updateURL.replace(/;image_width=\d+$/, '') + ';image_width=' + ($('.imagemap',this.el).width() + (100 *($(this).hasClass('big') ? 1 : -1)));
+      panel.getContent();
+      return false;      
+    });
   },
+  
   
   hashChange: function (r) {
     var reload = this.hashChangeReload;
