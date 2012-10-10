@@ -129,13 +129,14 @@ sub _render_hidden_bgd {
   # Needs to be first to capture clicks
   # Useful to keep zmenus working on blank regions
   # only useful in nobump or strandbump modes
-  my %off = ( 0 => undef );
+  my %off = ( 0 => 0 );
   if($self->my_config('strandbump')) {
-    $off{$h} = undef;
+    $off{0} =  -1;
+    $off{$h} = 1;
   }
   foreach my $y (keys %off) { 
     my $href;
-    $href = $self->href_bgd($y?-1:1) if $self->can('href_bgd');
+    $href = $self->href_bgd($off{$y}) if $self->can('href_bgd');
     $self->push($self->Rect({
       x         => 0,
       y         => $y,
