@@ -117,6 +117,7 @@ sub write_output {
     my $self = shift @_;
 
     $self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
+    $self->create_additional_clustersets();
 }
 
 
