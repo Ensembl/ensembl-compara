@@ -4,10 +4,10 @@ package EnsEMBL::Web::Document::HTML::Blog;
 
 use strict;
 use warnings;
+use utf8;
 
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Cache;
-use Encode qw(encode decode);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -28,23 +28,21 @@ sub render {
   my $items = [];
 
   if ($MEMD && $MEMD->get('::BLOG')) {
-    my @posts = @{$MEMD->get('::BLOG')};
-    ## unencode cached content (see below)
-    foreach (@posts) {
-      push @$items, decode('utf8', $_);
-    }
+    $items = $MEMD->get('::BLOG');
   }
- 
-  unless ($items && @$items && $MEMD) {
+
+  unless ($items && @$items) {
     $items = $self->get_rss_feed($hub, $rss_url, 3);
 
     ## encode items before caching, in case Wordpress has inserted any weird characters
     if ($items && @$items && $MEMD) {
-      my $encoded = [];
       foreach (@$items) {
-        push @$encoded, encode('utf8', $_);
+        while (my($k, $v) = each (%$_)) {
+          utf8::encode($v);
+          $_->{$k} = $v;
+        }
       }
-      $MEMD->set('::BLOG', $encoded, 3600, qw(STATIC BLOG));
+      $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG));
     }
   }
     
