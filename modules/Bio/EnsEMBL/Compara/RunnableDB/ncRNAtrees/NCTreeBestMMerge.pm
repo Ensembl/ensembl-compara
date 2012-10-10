@@ -323,31 +323,5 @@ sub load_input_trees {
   return 1;
 }
 
-sub fetch_or_create_other_tree {
-    my ($self, $clusterset, $tree) = @_;
-
-    if (! defined $self->param('other_trees')) {
-        my %other_trees;
-        for my $tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
-            $other_trees{$tree->clusterset_id} = $tree;
-        }
-        $self->param('other_trees', \%other_trees);
-    }
-
-    if (! exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
-        my $newtree = $tree->deep_copy();
-        $newtree->stable_id(undef);
-        # Reformat things
-        for my $member (@{$newtree->get_all_Members}) {
-            $member->cigar_line(undef);
-            $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genome_db_id') ? $member->genome_db_id : $member->taxon_id));
-        }
-        $self->store_tree_into_clusterset($newtree, $clusterset);
-        $newtree->store_tag('merged_tree_root_id', $tree->root_id);
-        $tree->store_tag('other_tree_root_id', $newtree->root_id, 1);
-        ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
-    }
-    return ${$self->param('other_trees')}{$clusterset->clusterset_id};
-}
 
 1;

@@ -87,14 +87,6 @@ sub fetch_input {
 
     $self->param('protein_tree', $protein_tree);
 
-    if ($self->param('store_intermediate_trees')) {
-        my %other_trees;
-        foreach my $tree (@{$self->param('tree_adaptor')->fetch_all_linked_trees($protein_tree)}) {
-            $tree->preload();
-            $other_trees{$tree->clusterset_id} = $tree;
-        }
-        $self->param('other_trees', \%other_trees);
-    }
 }
 
 
@@ -281,7 +273,7 @@ sub store_intermediate_tree {
         $self->warning("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
         return;
     }
-    my $newtree = $self->fetch_or_create_other_tree($clusterset);
+    my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
     $self->parse_newick_into_tree($filename, $newtree);
     $self->store_genetree($newtree);
     $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
@@ -308,30 +300,6 @@ sub store_filtered_align {
         $member_hash{$1}->store_tag('filtered_alignment', $seq->seq());
     }
 }
-
-
-sub fetch_or_create_other_tree {
-    my ($self, $clusterset) = @_;
-
-    if (not exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
-        my $tree = $self->param('protein_tree');
-        my $newtree = $tree->deep_copy();
-        $newtree->stable_id(undef);
-        # Reformat things
-        foreach my $member (@{$newtree->get_all_Members}) {
-            $member->cigar_line(undef);
-            $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
-            $member->{'_children_loaded'} = 1;
-        }
-        $self->store_tree_into_clusterset($newtree, $clusterset);
-        $newtree->store_tag('merged_tree_root_id', $tree->root_id);
-        $tree->store_tag('other_tree_root_id', $newtree->root_id, 1);
-        ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
-    }
-
-    return ${$self->param('other_trees')}{$clusterset->clusterset_id};
-}
-
 
 
 1;
