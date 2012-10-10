@@ -36,13 +36,13 @@ sub render {
     $items = $self->get_rss_feed($hub, $rss_url, 3);
 
     ## encode items before caching, in case Wordpress has inserted any weird characters
-    if ($items && @$items && $MEMD) {
+    if ($items && @$items) {
       foreach (@$items) {
         while (my($k, $v) = each (%$_)) {
           $_->{$k} = encode_utf8($v);
         }
       }
-      $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG));
+      $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG)) if $MEMD;
     }
   }
     
