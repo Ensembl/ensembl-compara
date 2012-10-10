@@ -203,6 +203,7 @@ sub default_options {
         #
 	'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
         'net_output_method_link' => [16, 'LASTZ_NET'],
+        'net_ref_species' => $self->o('ref_species'),  #default to ref_species
   	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
   	'net_batch_size' => 1,
   	'net_hive_capacity' => 20,
@@ -338,6 +339,7 @@ sub pipeline_analyses {
   				  'default_net_output' => $self->o('net_output_method_link'),
   				  'default_chain_input' => $self->o('chain_input_method_link'),
   				  'default_net_input' => $self->o('net_input_method_link'),
+				  'net_ref_species' => $self->o('net_ref_species'),
 				  'mlss_id' => $self->o('mlss_id'),
 				  'registry_dbs' => $self->o('curr_core_sources_locs'),
 				  'core_dbs' => $self->o('curr_core_dbs_locs'),
