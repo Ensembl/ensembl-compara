@@ -142,6 +142,11 @@ sub createPairAlignerJobs
 	$pairaligner_hash->{'target_fa_dir'} = $self->param('target_collection')->dump_loc;
     }
 
+    #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job 
+    #instead of reading from the mlss_tag table
+    if ($self->param('options')) {
+        $pairaligner_hash->{'options'} = $self->param('options');
+    }
 
     $pairaligner_hash->{'dbChunkSetID'} = undef;
     $pairaligner_hash->{'dbChunkSetID'} = $target_dnafrag_chunk_set->dbID;
