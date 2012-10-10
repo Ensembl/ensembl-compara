@@ -44,11 +44,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree;
 use strict;
 use Time::HiRes qw(time);                          # Needed *
 use Bio::EnsEMBL::Compara::Graph::NewickParser;    # Needed *
-use IPC::Open3;
-use File::Spec;
-use Symbol qw/gensym/;
+#use Bio::EnsEMBL::Compara::RunnableDB::RunCommand;
+#use IPC::Open3;
+#use File::Spec;
+#use IO::File;
+#use Symbol qw/gensym/;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -90,6 +92,7 @@ sub run {
     my $root_id = $nc_tree->root_id;
 
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
+    $self->param('raxml_tag', $raxml_tag);
 
     my $raxml_exe = $self->param('raxml_exe')
         or die "'raxml_exe' is an obligatory parameter";
@@ -120,25 +123,23 @@ sub run {
     $cmd .= " -A $model";
     $cmd .= " -n $raxml_tag.$model";
     $cmd .= " -N ".$bootstrap_num if (defined $bootstrap_num);
-#    $cmd .= " 2> $raxml_err_file";
-#     my $error_file = $worker_temp_directory."/RAxML_bestTree.$raxml_tag.$model.err";
-#     $cmd .= ">& $error_file";
 
+    my $command = $self->run_command("cd $worker_temp_directory; $cmd");
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    my $starttime = time()*1000;
-    print STDERR "$cmd\n" if ($self->debug);
-#    unless(system("cd $worker_temp_directory; $cmd") == 0) {
+    # Inspect output
+    if ($command->out =~ /(Empirical base frequency for state number \d+ is equal to zero in DNA data partition)/) {
+        # This can happen when there is not one of the nucleotides in one of the DNA data partition (RAxML-7.2.8)
+        # RAxML will refuse to run this, we can safely skip this model (the rest of the models for this cluster will also fail).
+        $self->input_job->incomplete(0);
+        die "$1\n";
+    }
+
+    # Inspect error
+    my $err_msg = $command->err;
     # Assuming that if RAxML runs without problems, no stderr output will be generated.
     # We are reading STDERR to get if RAxML fails and the error reported.
     # If the error is an assertion error. We report, but no error is raised to msg table.
-    open (NULL, ">", File::Spec->devnull);
-    my $pid = open3(gensym, ">&NULL", \*PH, "cd $worker_temp_directory; $cmd");
-    my $err_msg = "";
-    while (<PH>) {
-        $err_msg .= $_;
-    }
-    if ($err_msg ne "") {
+    if ($err_msg) {
         print STDERR "We have a problem running RAxML -- Inspecting error file\n";
         if ($err_msg =~ /Assertion(.+)failed/) {
             my $assertion_failed = $1;
@@ -148,19 +149,37 @@ sub run {
             $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n$err_msg\n");
         }
     }
-    my $runtime_msec = int(time()*1000-$starttime);
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
+
+    print STDERR "RAxML runtime_msec: ", $command->runtime_msec, "\n";
 
     my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree.$raxml_tag.$model";
     $self->_store_newick_into_protein_tree_tag_string($tag,$raxml_output);
     my $model_runtime = "${model}_runtime_msec";
-    $nc_tree->store_tag($model_runtime,$runtime_msec);
+    $nc_tree->store_tag($model_runtime,$command->runtime_msec);
 
-    #Unlink run files
-    my $temp_regexp = $worker_temp_directory."*$raxml_tag.$model.RUN.*";
-    system ("rm -f $temp_regexp");
+#    $self->clean_up();
+
     return 1;
 }
+
+
+sub cleanup {
+    my ($self) = @_;
+    my $raxml_tag = $self->param('raxml_tag');
+    my $model = $self->param('model');
+    my $tmp_regexp = $self->worker_temp_directory."*$raxml_tag.$model.RUN.*";
+    my $cmd = $self->run_command("rm -f $tmp_regexp");
+    $cmd->run();
+    if ($cmd->exit_code) {
+        $self->throw($cmd->cmd , " gave exit status ", $cmd->exit_code);
+    }
+    return 1;
+}
+
+# sub post_cleanup {
+#     my ($self) = @_;
+#     $self->pre_cleanup;
+# }
 
 sub write_output {
     my $self= shift @_;
@@ -180,7 +199,7 @@ sub _store_newick_into_protein_tree_tag_string {
   my $newick_file = shift;
 
   my $newick = '';
-#  print("load from file $newick_file\n") if($self->debug);
+  print STDERR "load from file $newick_file\n" if($self->debug);
   open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
   while(<FH>) {
     chomp $_;
