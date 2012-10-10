@@ -3,7 +3,6 @@ package EnsEMBL::Web::ZMenu::Methylation;
 use strict;
 
 use List::Util qw(min max);
-use List::MoreUtils qw(pairwise);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -14,7 +13,7 @@ sub summary_zmenu {
   my ($self,$id,$r,$s,$e,$strand,$scalex,$width,$called_from_single) = @_;
 
   # Widen to incldue a few pixels around
-  my $fudge = max(20,8/$scalex);
+  my $fudge = max(80,8/$scalex);
   
   # Round fudge to 1sf
   my $mult = "1"."0"x(length(int $fudge)-1);
@@ -33,9 +32,9 @@ sub summary_zmenu {
   my $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
   
   # Summarize features
-  my ($astart,$astrand,$num,$num_this_strand,$tot_meth,$tot_read,$most_meth_perc,$least_meth_perc) = 
-     (0,      0,       0,   0,               0,        0,        -1,             -1);
-  my ($label,@percmeth);
+  my ($num,$num_this_strand,$tot_meth,$tot_read) = (0,0,0,0);
+  my ($label,@percmeth,@rows);
+  my $maxmult = 2; # show multiple zmenus if this many results or fewer
   $bba->fetch_rows($slice->seq_region_name,$s,$e,sub {
     my @row = @_;
     my $f = Bio::EnsEMBL::Funcgen::DNAMethylationFeature->new( 
@@ -45,15 +44,13 @@ sub summary_zmenu {
         -ADAPTOR => $ch3fa
     );
     my $p = $f->percent_methylation;
-    $most_meth_perc = $p if($most_meth_perc==-1 or $most_meth_perc<$p);
-    $least_meth_perc = $p if($least_meth_perc==-1 or $least_meth_perc>$p);
     push @percmeth,$p;
     $tot_meth += $f->methylated_reads;
     $tot_read += $f->total_reads;    
     $label = $f->display_label;
     my $right_strand = ($strand == $_[5]."1");
-    $astart = $_[1]+1 if($right_strand or not $astart);
-    $astrand = $_[5]."1" if($right_strand or not $astrand);
+    my ($tstart,$tstrand) = ($_[1]+1,$_[5]."1");
+    push @rows,[$tstart,$tstrand] if @rows < $maxmult;
     $num++;
     $num_this_strand++ if($right_strand);
   });
@@ -64,17 +61,13 @@ sub summary_zmenu {
     $self->caption("$label No features widthin ${fudge}bp");
     $self->add_entry({  type => "Overview",
                        label => "This track has no features near this point"});
-  } elsif($num_this_strand==1 and not $called_from_single) {
-    # One feature
-    $self->single_base_zmenu($id,$r,$astart,$astrand,$width,$scalex);
-  } elsif($num==1 and not $called_from_single) {
-    # One feature
-    $self->single_base_zmenu($id,$r,$astart,$astrand,$width,$scalex);
+  } elsif(($num<=$maxmult or $num_this_strand==1) and not $called_from_single) {
+    # Multiple singles
+    $self->single_base_zmenu($id,$r,$_->[0],$_->[1],$width,$scalex) for(@rows);
   } else {
     # Multiple features
     $self->caption("$label ${fudge}bp summary");
     my ($chr,) = split(/:/,$r);
-    my $zoom_fudge = max($width/5,20);
 
     $self->add_entry({ type => "Region Summary",
                        label => "Zoom using link below for individual feature details" });
@@ -127,26 +120,30 @@ sub single_base_zmenu {
   my $e = $s+1;
   $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
 
-  # warn "got ".join(' ',@bigbedrow)."\n";
+  #warn "got ".join(' ',@bigbedrow)."\n";
   my $f = Bio::EnsEMBL::Funcgen::DNAMethylationFeature->new( 
         -SLICE => $slice, 
           -SET => $rs, 
     -FILE_DATA => \@bigbedrow, 
       -ADAPTOR => $ch3fa
   );
-
-  $self->caption($f->display_label." ".$r);
+  
+  my ($chr,) = split(/:/,$r);
+  if($self->{'_sent_caption'}) {
+    $self->add_subheader($f->display_label." $chr:$s");
+  } else {
+    $self->caption($f->display_label." $chr:$s");
+    $self->add_entry({ type => "Context", label => $f->context}); 
+    $self->add_entry({ type => "Cell type", label => $f->cell_type->name}); 
+    $self->add_entry({ type => "Analysis method", label => $f->analysis->display_label}); 
+    $self->{'_sent_caption'} = 1;
+  }
   $self->add_entry({ type => "Methylated Reads", 
                     label => sprintf("%d/%d (%d%%)\n",
                                      $f->methylated_reads,
                                      $f->total_reads,
                                      $f->percent_methylation)});
   $self->add_entry({ type => "Strand", label => $f->strand>0?'+ve':'-ve'});
-  $self->add_entry({ type => "Context", label => $f->context}); 
-  $self->add_entry({ type => "Cell type", label => $f->cell_type->name}); 
-  $self->add_entry({ type => "Analysis method", label => $f->analysis->display_label}); 
-
-
 }
 
 sub bigbed {
