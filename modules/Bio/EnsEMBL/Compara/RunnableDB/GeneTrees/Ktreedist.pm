@@ -80,7 +80,7 @@ sub fetch_input {
       die "Ktreedist.pm: All members have the same sequence.";
   }
 
-  $self->load_input_trees;
+  $self->load_input_trees_bk;
 
   my $ktreedist_exe = $self->param('ktreedist_exe')
       or die "'ktreedist_exe' is an obligatory parameter";
@@ -120,7 +120,7 @@ sub run {
 
 sub write_output {
   my $self = shift;
-  $self->store_ktreedist_score;
+  $self->store_ktreedist_score_bk;
 }
 
 
