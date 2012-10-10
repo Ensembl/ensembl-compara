@@ -7,7 +7,7 @@ use Time::HiRes qw /time/;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 # We should receive:
 # gene_tree_id
@@ -31,8 +31,8 @@ sub run {
     }
 
     if ($self->param('tag_gene_count') > 1000) { ## Too much
-        $self->input_job->incomplete(0);
         my $tag_gene_count = $self->param('tag_gene_count');
+        $self->input_job->incomplete(0);
         die "family $nc_tree_id has too many member ($tag_gene_count). No genomic alignments will be computed\n";
     }
 
@@ -66,36 +66,32 @@ sub run {
         my $tag_residue_count = $self->param('tag_residue_count');
         $self->input_job->incomplete(0);
         die "Re-scheduled in hugemem queue ($tag_residue_count bps)\n";
+
+    }
+
+    if ($self->param('tag_gene_count') < 4) { # RAxML would fail for families with < 4 members
+        $self->run_prank;
     } else {
         $self->run_mafft;
         $self->fasta2phylip;
-        ## FIXME -- RAxML will fail for families with < 4 members.
         $self->run_RAxML;
         $self->run_prank;
-#    $self->run_ncgenomic_tree('phyml');
-#    $self->run_ncgenomic_tree('nj'); # Useful for 3-membered trees
     }
+    return;
 }
 
 sub write_output {
     my ($self) = @_;
-#     if ($self->param("MEMLIMIT")) { ## We had a problem in RAxML -- re-schedule in hugemem
-#         $self->dataflow_output_id (
-#                                    {
-#                                     'gene_tree_id' => $self->param('gene_tree_id')
-#                                    }, -1
-#                                   );
-#     } else {
-        for my $method (qw/phyml nj/) {
-            $self->dataflow_output_id (
-                                       {
-                                        'gene_tree_id'   => $self->param('gene_tree_id'),
-                                        'method'       => $method,
-                                        'alignment_id' => $self->param('alignment_id'),
-                                       }, 2
-                                      );
-        }
-#    }
+    $self->store_fasta_alignment("prank_output");
+    for my $method (qw/phyml nj/) {
+        $self->dataflow_output_id (
+                                   {
+                                    'gene_tree_id'   => $self->param('gene_tree_id'),
+                                    'method'       => $method,
+                                    'alignment_id' => $self->param('alignment_id'),
+                                   }, 2
+                                  );
+    }
 }
 
 sub dump_sequences_to_workdir {
@@ -179,11 +175,11 @@ sub run_mafft {
     my $cmd = "$mafft_exe --auto $input_fasta > $mafft_output";
     print STDERR "Running mafft\n$cmd\n" if ($self->debug);
     print STDERR "mafft_output has been set to " . $self->param('mafft_output') . "\n" if ($self->debug);
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-    unless ((my $err = system($cmd)) == 0) {
-        $self->throw("problem running command $cmd: $err\n");
+
+    my $command = $self->run_command($cmd);
+    if ($command->exit_code) {
+        $self->throw("problem running command $cmd: ", $command->err ,"\n");
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
 }
 
 sub run_RAxML {
@@ -206,40 +202,30 @@ sub run_RAxML {
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
     my $bootstrap_num = 10;  ## Should be soft-coded?
-    my $raxml_err_file = $self->worker_temp_directory . "raxml.err";
     my $cmd = $raxml_exe;
     $cmd .= " -T 2";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -N $bootstrap_num";
     $cmd .= " -n $raxml_outfile";
-    $cmd .= " 2> $raxml_err_file";
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-#    my $bootstrap_starttime = time() * 1000;
+#    $cmd .= " 2> $raxml_err_file";
 
-    print STDERR "$cmd\n" if ($self->debug);
-    unless (system("cd $raxml_outdir; $cmd") == 0) {
+    my $command = $self->run_command("cd $raxml_outdir; $cmd");
+    if ($command->exit_code) {
+        print STDERR "We have a problem running RAxML -- Inspecting error\n";
         # memory problem?
-        print STDERR "We have a problem running RAxML -- Inspecting $raxml_err_file\n";
-        open my $raxml_err_fh, "<", $raxml_err_file or die $!;
-        while (<$raxml_err_fh>) {
-            chomp;
-            if (/malloc_aligned/) {
-                $self->dataflow_output_id (
-                                           {
-                                            'gene_tree_id' => $self->param('gene_tree_id'),
-                                           }, -1
-                                          );
-                $self->input_job->incomplete(0);
-                die "RAXML ERROR: $_";
-            }
+        if ($command->err =~ /malloc_aligned/) {
+            $self->dataflow_output_id (
+                                       {
+                                        'gene_tree_id' => $self->param('gene_tree_id'),
+                                       }, -1
+                                      );
+            $self->input_job->incomplete(0);
+            die "RAXML ERROR: Problem allocating memory. Re-scheduled with more memory";
         }
-        close($raxml_err_fh);
+        die "RAXML ERROR: ", $command->err, "\n";
     }
 
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-#    my $boostrap_msec = int(time() * 1000-$bootstrap_starttime);
-#    $self->_get_bootstraps($bootstrap_msec,$bootstrap_num);  # Don't needed -- we don't run the second RAxML for now
     return
 }
 
@@ -264,20 +250,18 @@ sub _get_bootstraps {
 sub run_prank {
     my ($self) = @_;
 
-#    return if ($self->param('too_few_sequences') == 1);  # return? die? $self->throw? This has been checked before
     my $nc_tree_id = $self->param('gene_tree_id');
     my $input_fasta = $self->param('input_fasta');
     my $tree_file = $self->param('raxml_output');
-#    return unless (defined $tree_file);
-    $self->throw("$tree_file does not exist\n") unless (-e $tree_file);
+#    $self->throw("$tree_file does not exist\n") unless (-e $tree_file);
+    print STDERR "Tree file is not given. Prank will generate its own tree (and we have ", $self->param('tag_gene_count'), " genes)\n" if ($self->debug);
 
     ## FIXME -- The alignment has to be passed to NCGenomicTree. We have several options:
     # 1.- Store the alignments in the database
     # 2.- Store the alignments in a shared filesystem (i.e. lustre)
-    # 3.- Pass it in memory as a string.
+    # 3.- Pass it in memory as a string (but it may surpass the input_id text limit!)
     # For now, we will be using #1
     my $prank_output = $self->worker_temp_directory . "/prank_${nc_tree_id}.prank";
-#    my $prank_output = "/lustre/scratch103/ensembl/mp12/ncRNA_pipeline/prank_${nc_tree_id}.prank";
 
     my $prank_exe = $self->param('prank_exe')
         or die "'prank_exe' is an obligatory parameter";
@@ -287,19 +271,18 @@ sub run_prank {
     my $cmd = $prank_exe;
     # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast -t=/tmp/worker.904/cluster17438/RAxML.tree
     $cmd .= " -noxml -notree -once -f=Fasta";
-    $cmd .= " -t=$tree_file";
+    $cmd .= " -t=$tree_file" if (defined $tree_file);
     $cmd .= " -o=$prank_output";
     $cmd .= " -d=$input_fasta";
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    print("$cmd\n") if($self->debug);
-    unless ((my $err = system ($cmd)) == 0) {
-        $self->throw("problem running prank $cmd: $err\n");
+    my $command = $self->run_command($cmd);
+    if ($command->exit_code) {
+        $self->throw("problem running prank $cmd: " , $command->err , "\n");
     }
 
     # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree
     print STDERR "Prank output : ${prank_output}.1.fas\n" if ($self->debug);
     $self->param('prank_output',"${prank_output}.1.fas");
-    $self->store_fasta_alignment("prank_output");
+    return;
 }
 
 sub fasta2phylip {
@@ -327,12 +310,6 @@ sub fasta2phylip {
 
     my $nseqs = scalar(keys %seqs);
     my $length = length($seqs{$header});
-
-    if ($nseqs < 4) {
-#        $self->param('too_few_sequences',1);
-        $self->input_job->incomplete(0);
-        die "Too few sequences (< 4), we can not compute RAxML tree";
-    }
 
     open my $phy, ">", $phylip_out or $self->throw("I can not open the phylip output file $phylip_out : $!\n");
     print $phy "$nseqs $length\n";
