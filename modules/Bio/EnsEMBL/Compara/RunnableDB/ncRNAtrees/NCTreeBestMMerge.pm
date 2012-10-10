@@ -146,7 +146,7 @@ sub write_output {
        for my $filename (glob(sprintf('%s/%s*.rooted', $self->worker_temp_directory, $self->param('intermediate_prefix')))) {
           $filename =~ /\.([^\.]*)\.rooted$/;
           my $clusterset_id = $1;
-          my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
+          my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
           my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('nc_tree'));
           $self->parse_newick_into_tree($filename, $newtree);
           $self->store_genetree($newtree);

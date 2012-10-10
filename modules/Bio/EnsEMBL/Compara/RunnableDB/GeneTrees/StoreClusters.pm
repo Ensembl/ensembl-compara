@@ -256,7 +256,7 @@ sub create_additional_clustersets {
     my ($self) =  @_;
     if (defined $self->param('additional_clustersets')) {
         foreach my $clusterset_id (@{$self->param('additional_clustersets')}) {
-            $self->fetch_or_create_clusterset($clusterset_id);
+            $self->create_clusterset($clusterset_id);
         }
     }
 }
