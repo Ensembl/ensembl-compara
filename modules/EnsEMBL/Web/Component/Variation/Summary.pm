@@ -58,9 +58,9 @@ sub failed {
   }
  
   if (scalar @descs > 1) {
-    $html  = '<p><ul>';
+    $html  = '<ul>';
     $html .= "<li>$_</li>" foreach @descs;
-    $html .= '</ul></p>';
+    $html .= '</ul>';
   } else {
     $html = "<p>$descs[0]</p>";
   }
