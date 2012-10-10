@@ -669,7 +669,7 @@ sub _run_blast_ticket {
 
 sub _get_loads {
   return {
-    blast => &$LOAD_COMMAND('blast'),
+    blast => &$LOAD_COMMAND('parse_blast.pl'),
     httpd => &$LOAD_COMMAND('httpd')
   };
 }
