@@ -2306,7 +2306,8 @@ sub add_regulation_features {
   my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}->{'tables'};
 
   my $m = $db_tables->{'methylation'};
-  foreach my $k (sort { $m->{$a} cmp $m->{$b} } keys %$m) {
+  foreach my $k (sort { $m->{$a}->{'description'} cmp 
+                        $m->{$b}->{'description'}     } keys %$m) {
     $ch3->append($self->create_track("methylation_$k",$m->{$k}->{'name'}, {
       data_id      => $k,
       description  => $m->{$k}->{'description'},
