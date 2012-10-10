@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use LWP::UserAgent;
+use Encode qw(encode_utf8);
 
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Cache;
@@ -33,8 +34,9 @@ sub render {
   unless (@$tips && $rss_url) {
     $tips = $self->get_rss_feed($hub, $rss_url);
 
-    if ($tips && @$tips && $MEMD) {
-      $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS));
+    if ($tips && @$tips) {
+      $_->{'content'} = encode_utf8($_->{'content'}) for @$tips;
+      $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
     }
   }
 
