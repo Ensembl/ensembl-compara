@@ -2311,7 +2311,7 @@ sub add_regulation_features {
       data_id      => $k,
       description  => $m->{$k}->{'description'},
       strand       => 'r',
-      strandbump   => 1,
+      nobump       => 1,
       addhiddenbgd => 1,
       display      => 'off',
       renderers    => [ qw(off Off compact On) ],

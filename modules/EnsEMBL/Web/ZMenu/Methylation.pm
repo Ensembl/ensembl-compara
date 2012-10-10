@@ -2,7 +2,7 @@ package EnsEMBL::Web::ZMenu::Methylation;
 
 use strict;
 
-use List::Util qw(max);
+use List::Util qw(min max);
 use List::MoreUtils qw(pairwise);
 
 use base qw(EnsEMBL::Web::ZMenu);
@@ -14,7 +14,7 @@ sub summary_zmenu {
   my ($self,$id,$r,$s,$e,$strand,$scalex,$width,$called_from_single) = @_;
 
   # Widen to incldue a few pixels around
-  my $fudge = max(1,8/$scalex);
+  my $fudge = max(20,8/$scalex);
   
   # Round fudge to 1sf
   my $mult = "1"."0"x(length(int $fudge)-1);
@@ -75,12 +75,12 @@ sub summary_zmenu {
     $self->caption("$label ${fudge}bp summary");
     my ($chr,) = split(/:/,$r);
     my $zoom_fudge = max($width/5,20);
-    my ($zs,$ze) = map { int $_ } ($mid-$zoom_fudge/2,$mid+$zoom_fudge/2);
+
     $self->add_entry({ type => "Region Summary",
                        label => "Zoom using link below for individual feature details" });
     $self->add_entry({ type => "Location",
                        label => "$chr:$s-$e",
-                       link => { r => "$chr:$s-$e" }});
+                       link => $self->hub->url({ r => "$chr:$s-$e" })});
     $self->add_entry({ type => "Feature Count",
                        label => $num });
     $self->add_entry({ type => "Methylated Reads",
