@@ -4,7 +4,8 @@ package EnsEMBL::Web::Document::HTML::Blog;
 
 use strict;
 use warnings;
-use utf8;
+
+use Encode qw(encode_utf8);
 
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Cache;
@@ -38,8 +39,7 @@ sub render {
     if ($items && @$items && $MEMD) {
       foreach (@$items) {
         while (my($k, $v) = each (%$_)) {
-          utf8::encode($v);
-          $_->{$k} = $v;
+          $_->{$k} = encode_utf8($v);
         }
       }
       $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG));
