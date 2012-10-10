@@ -177,7 +177,13 @@ sub content {
   my $width  = $hub->param('width');
 
   $r =~ s/:.*$/:$s-$e/;
-  $s++ if($e==$s+2); # js quirk
+  # We need to defeat js-added fuzz to see if it was an on-target click.
+  if($e-$s+1<2*$scalex) { # range within 1px, assume click.
+    # fuzz added is symmetric
+    $s = ($s+$e-1)/2;
+    $e = $s+1;
+  }
+  
   if($e>$s+1) {
     $self->summary_zmenu($id,$r,$s,$e,$strand,$scalex,$width,0);
   } else {
