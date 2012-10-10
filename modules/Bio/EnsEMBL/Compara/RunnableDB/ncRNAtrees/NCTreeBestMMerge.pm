@@ -59,8 +59,13 @@ use strict;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
+sub param_defaults {
+    return {
+            'intermediate_prefix' => 'interm',
+           };
+}
 
 
 =head2 fetch_input
@@ -78,13 +83,15 @@ sub fetch_input {
   my( $self) = @_;
 
   my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id'));
-  if (scalar @{$nc_tree->get_all_leaves()} < 4) {
-      # We don't have enough data to create the trees
-      my $msg = sprintf "Tree cluster %d has <4 genes\n", $self->param('gene_tree_id');
-      print STDERR $msg if ($self->debug());
-      $self->input_job->incomplete(0);
-      die $msg;
-  }
+
+  # We now have genomic_trees for them
+#   if (scalar @{$nc_tree->get_all_leaves()} < 4) {
+#       # We don't have enough data to create the trees
+#       my $msg = sprintf "Tree cluster %d has <4 genes\n", $self->param('gene_tree_id');
+#       print STDERR $msg if ($self->debug());
+#       $self->input_job->incomplete(0);
+#       die $msg;
+#   }
 
       # Fetch sequences:
   $self->param('nc_tree', $nc_tree);
@@ -93,7 +100,6 @@ sub fetch_input {
 
   my $treebest_exe = $self->param('treebest_exe')
           or die "'treebest_exe' is an obligatory parameter";
-                  
   die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
 }
 
@@ -131,12 +137,26 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+  my ($self) = @_;
 
   $self->store_genetree($self->param('nc_tree')) if (defined($self->param('inputtrees_unrooted')));
+
+  if ($self->param('store_intermediate_trees')) {
+       print STDERR "LOOKING AT: ", $self->worker_temp_directory, "/", $self->param('intermediate_prefix'), "*.rooted\n";
+       for my $filename (glob(sprintf('%s/%s*.rooted', $self->worker_temp_directory, $self->param('intermediate_prefix')))) {
+          $filename =~ /\.([^\.]*)\.rooted$/;
+          my $clusterset_id = $1;
+          my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
+          my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('nc_tree'));
+          $self->parse_newick_into_tree($filename, $newtree);
+          $self->store_genetree($newtree);
+          $newtree->release_tree;
+      }
+   }
+
   $self->dataflow_output_id (
-                             $self->input_id, 2
-                            );
+                            $self->input_id, 2
+                           );
 }
 
 sub post_cleanup {
@@ -176,11 +196,9 @@ sub run_treebest_mmerge {
   close FILE;
 
   my $cmd = "$treebest_exe mmerge -s $species_tree_file $mmergefilename > $mmerge_output_filename";
-  print("$cmd\n") if($self->debug);
-  $DB::single=1;1;#??
-  unless(system("$cmd") == 0) {
-    print("$cmd\n");
-    $self->throw("error running treebest mmerge, $!\n");
+  my $runCmd = $self->run_command($cmd);
+  if ($runCmd->exit_code) {
+      $self->throw("error running treebest mmerge:", $runCmd->exit_code , "\n");
   }
 
   $self->param('mmerge_output', $mmerge_output_filename);
@@ -216,12 +234,13 @@ sub calculate_branch_lengths {
   $cmd .= " -s $species_tree_file";
   $cmd .= " $input_aln";
   $cmd .= " > $tree_with_blengths";
-#  my $cmd = "$treebest_exe nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
-  print STDERR +("$cmd\n") if($self->debug);
 
-  unless(system("$cmd") == 0) {
-    print("$cmd\n");
-    $self->throw("error running treebest nj, $!\n");
+#  my $cmd = "$treebest_exe nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
+
+  my $runCmd = $self->run_command($cmd);
+
+  if ($runCmd->exit_code) {
+      $self->throw("error running treebest nj, ", $runCmd->exit_code , "\n");
   }
 
   $self->param('mmerge_blengths_output', $tree_with_blengths);
@@ -244,7 +263,7 @@ sub reroot_inputtrees {
   foreach my $method (keys %{$self->param('inputtrees_unrooted')}) {
     my $cmd = $template_cmd;
     my $unrootedfilename = $temp_directory . $root_id . "." . $method . ".unrooted";
-    my $rootedfilename = $temp_directory . $root_id . "." . $method . ".rooted";
+    my $rootedfilename = $temp_directory . $self->param('intermediate_prefix') . $root_id . "." . $method . ".rooted";
     my $inputtree = $self->param('inputtrees_unrooted')->{$method};
     open FILE,">$unrootedfilename" or die $!;
     print FILE $inputtree;
@@ -253,10 +272,9 @@ sub reroot_inputtrees {
     $cmd .= " $unrootedfilename";
     $cmd .= " > $rootedfilename";
 
-    print("$cmd\n") if($self->debug);
-    $DB::single=1;1;
-    unless(system("$cmd") == 0) {
-      print("$cmd\n");
+    my $runCmd =  $self->run_command($cmd);
+
+    if ($runCmd->exit_code) {
       $self->throw("error running treebest sdi, $!\n");
     }
 
@@ -305,5 +323,31 @@ sub load_input_trees {
   return 1;
 }
 
+sub fetch_or_create_other_tree {
+    my ($self, $clusterset, $tree) = @_;
+
+    if (! defined $self->param('other_trees')) {
+        my %other_trees;
+        for my $tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+            $other_trees{$tree->clusterset_id} = $tree;
+        }
+        $self->param('other_trees', \%other_trees);
+    }
+
+    if (! exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
+        my $newtree = $tree->deep_copy();
+        $newtree->stable_id(undef);
+        # Reformat things
+        for my $member (@{$newtree->get_all_Members}) {
+            $member->cigar_line(undef);
+            $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genome_db_id') ? $member->genome_db_id : $member->taxon_id));
+        }
+        $self->store_tree_into_clusterset($newtree, $clusterset);
+        $newtree->store_tag('merged_tree_root_id', $tree->root_id);
+        $tree->store_tag('other_tree_root_id', $newtree->root_id, 1);
+        ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
+    }
+    return ${$self->param('other_trees')}{$clusterset->clusterset_id};
+}
 
 1;
