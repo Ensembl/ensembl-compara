@@ -33,7 +33,7 @@ sub default_options {
             # parameters that are likely to change from execution to another:
             # 'mlss_id'             => 40086,
             'release'               => '69',
-            'rel_suffix'            => 'b',    # an empty string by default, a letter or string otherwise
+            'rel_suffix'            => 'c',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
@@ -135,6 +135,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         'mkdir -p '.$self->o('work_dir'),
+        'mkdir -p '.$self->o('dump_dir'),
     ];
 }
 
@@ -407,7 +408,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
             -parameters    => {
                 'mlss_id'                   => $self->o('mlss_id'),
-                'additional_clustersets'    => [qw(super-align)],
+                'additional_clustersets'    => [qw(super-align pg_it_nj ml_it_10 pg_it_phyml ss_it_s16 ss_it_s6a ss_it_s16a ss_it_s6b ss_it_s16b ss_it_s6c ss_it_s6d ss_it_s6e ss_it_s7a ss_it_s7b ss_it_s7c ss_it_s7d ss_it_s7e ss_it_s7f)],
             },
             -flow_into => {
                            2 => [ 'recover_epo' ],
