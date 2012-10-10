@@ -161,9 +161,6 @@ sub content_sub_slice {
 sub get_slices {
   my $self = shift;
   my ($slice, $align, $species, $start, $end, $cdb) = @_;
-  
-  my $species_defs = $self->hub->species_defs;
-  my $vega_compara = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
   my (@slices, @formatted_slices, $length);
 
   if ($align) {
@@ -173,14 +170,13 @@ sub get_slices {
   }
   
   foreach (@slices) {
-    my $name         = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
-    my $display_name = $vega_compara ? $self->get_full_name($_) : $species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME') || 'Ancestral sequences';
+    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
     
     push @formatted_slices, { 
       slice             => $_,
-      underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
+      underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [ $_ ],
       name              => $name,
-      display_name      => $display_name
+      display_name      => $self->get_slice_display_name($name, $_)
     };
     
     $length ||= $_->length; # Set the slice length value for the reference slice only
@@ -358,21 +354,9 @@ sub markup_region_change {
 }
 
 # get full name of seq-region from which the alignment comes
-sub get_full_name {
-  my $self  = shift;
-  my $slice = shift;
-  my $id;  
-  
-  if (ref $slice eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
-    my $species_name = $slice->seq_region_name;
-    my $chr_name     = $slice->get_all_Slice_Mapper_pairs(1)->[0]->{'slice'}->{'seq_region_name'};
-    
-    $id = "$species_name:$chr_name";
-  } else {
-    $id = $self->hub->species;
-  }
-
-  return $id;
+sub get_slice_display_name {
+  my ($self, $name) = @_;
+  return $self->hub->species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME') || 'Ancestral sequences';
 }
 
 1;
