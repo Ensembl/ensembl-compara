@@ -63,7 +63,7 @@ use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::Member;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
@@ -294,13 +294,11 @@ sub run_infernal {
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $self->param('input_fasta');
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  $DB::single=1;1;
-  unless(system($cmd) == 0) {
-    $self->throw("error running infernal, $!\n");
+#  $DB::single=1;1; ## What for?
+  my $command = $self->run_command($cmd);
+  if ($command->exit_code) {
+      $self->throw("error running infernal, $!\n");
   }
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   # cmbuild --refine the alignment
   ######################
@@ -331,19 +329,20 @@ sub run_infernal {
   $cmd .= " --refine $refined_stk_output";
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
 
-  unless(system($cmd) == 0) {
-    $self->throw("error running cmbuild refine, $!\n");
+  $command = $self->run_command($cmd);
+  if ($command->exit_code) {
+      $self->throw("error running cmbuild refine, $!\n");
   }
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   $self->param('stk_output', $refined_stk_output);
+
   # Reformat with sreformat
   my $fasta_output = $self->worker_temp_directory . "output.fasta";
   my $cmd = "/usr/local/ensembl/bin/sreformat a2m $refined_stk_output > $fasta_output";
-  unless( system("$cmd") == 0) {
-    print("$cmd\n");
+  $command = $self->run_command($cmd);
+  if($command->exit_code) {
+    print STDERR "$cmd\n";
     $self->throw("error running sreformat, $!\n");
   }
 
