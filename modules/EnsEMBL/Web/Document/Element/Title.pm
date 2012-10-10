@@ -39,18 +39,18 @@ sub init {
     my $object       = $controller->object;
     my $hub          = $self->hub;
     my $species_defs = $hub->species_defs;
+    my $title        = $node->data->{'title'} || $node->data->{'concise'} || $node->data->{'caption'};
+       $title        =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
     my $caption;
+    
     if ($object) {
-      if (ref($object->caption) eq 'ARRAY') {
-        $caption = $object->caption->[0];
-        $caption .= ' ('.$object->caption->[1].')' if $object->caption->[1];
-      }
-      else {
+      if (ref $object->caption eq 'ARRAY') {
+        $caption  = $object->caption->[0];
+        $caption .= ' (' . $object->caption->[1] . ')' if $object->caption->[1];
+      } else {
         $caption = $object->caption;
       }
     }
-    my $title        = $node->data->{'concise'} || $node->data->{'caption'};
-    $title           =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
     
     $self->set(sprintf '%s %s: %s - %s%s', $species_defs->ENSEMBL_SITE_NAME, $species_defs->SITE_RELEASE_VERSION || $species_defs->ENSEMBL_VERSION, $species_defs->SPECIES_BIO_NAME, $title, ($caption ? " - $caption" : ''));
     
