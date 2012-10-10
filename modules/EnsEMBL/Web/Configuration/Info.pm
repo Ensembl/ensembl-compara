@@ -46,7 +46,7 @@ sub populate_tree {
 
   my $index = $self->create_node('Index', '',
     [qw(homepage EnsEMBL::Web::Component::Info::HomePage)],
-    { availability => 1 }
+    { availability => 1, title => 'Description' }
   );
  
   my $index = $self->create_node('Annotation', '',
