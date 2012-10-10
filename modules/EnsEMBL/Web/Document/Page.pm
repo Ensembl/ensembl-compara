@@ -437,7 +437,6 @@ sub render_HTML {
   
   $r->content_type('text/html; charset=utf-8') unless $r->content_type;
 
-  binmode STDOUT, ":utf8"; 
   print  $content;
   return $content;
 }
