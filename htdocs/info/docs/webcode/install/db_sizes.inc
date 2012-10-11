@@ -1,282 +1,290 @@
 
-<table class="ss autocenter" style="width:50%;margin:0 25%" cellspacing="0">
+<table class="ss autocenter" style="width:400px">
  <tbody>
   <tr class="ss_header">
-   <th class="bottom-border left-border">Species</th>
-   <th class="bottom-border right-border">Data size (Gb)</th>
+   <th>Species</th>
+   <th class="right">Data size (Gb)</th>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Ailuropoda melanoleuca          </td>
-   <td class="right-border" style="text-align:right">7.7        </td>
+  <tr class="bg1">
+   <td>Ailuropoda melanoleuca          </td>
+   <td class="right">7.2        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Anolis carolinensis             </td>
-   <td class="right-border" style="text-align:right">7.8        </td>
+  <tr class="bg2">
+   <td>Anolis carolinensis             </td>
+   <td class="right">7.7        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Bos taurus                      </td>
-   <td class="right-border" style="text-align:right">16.7       </td>
+  <tr class="bg1">
+   <td>Bos taurus                      </td>
+   <td class="right">15.2       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Caenorhabditis elegans          </td>
-   <td class="right-border" style="text-align:right">2.8        </td>
+  <tr class="bg2">
+   <td>Caenorhabditis elegans          </td>
+   <td class="right">2.8        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Callithrix jacchus              </td>
-   <td class="right-border" style="text-align:right">8.4        </td>
+  <tr class="bg1">
+   <td>Callithrix jacchus              </td>
+   <td class="right">8.3        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Canis familiaris                </td>
-   <td class="right-border" style="text-align:right">14.3       </td>
+  <tr class="bg2">
+   <td>Canis familiaris                </td>
+   <td class="right">13.6       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Cavia porcellus                 </td>
-   <td class="right-border" style="text-align:right">7.5        </td>
+  <tr class="bg1">
+   <td>Cavia porcellus                 </td>
+   <td class="right">7.3        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Choloepus hoffmanni             </td>
-   <td class="right-border" style="text-align:right">4.3        </td>
+  <tr class="bg2">
+   <td>Choloepus hoffmanni             </td>
+   <td class="right">4.2        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Ciona intestinalis              </td>
-   <td class="right-border" style="text-align:right">4.5        </td>
+  <tr class="bg1">
+   <td>Ciona intestinalis              </td>
+   <td class="right">4.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Ciona savignyi                  </td>
-   <td class="right-border" style="text-align:right">2.8        </td>
+  <tr class="bg2">
+   <td>Ciona savignyi                  </td>
+   <td class="right">2.8        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Danio rerio                     </td>
-   <td class="right-border" style="text-align:right">11.5       </td>
+  <tr class="bg1">
+   <td>Danio rerio                     </td>
+   <td class="right">10.9       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Dasypus novemcinctus            </td>
-   <td class="right-border" style="text-align:right">5.7        </td>
+  <tr class="bg2">
+   <td>Dasypus novemcinctus            </td>
+   <td class="right">5.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Dipodomys ordii                 </td>
-   <td class="right-border" style="text-align:right">10.5       </td>
+  <tr class="bg1">
+   <td>Dipodomys ordii                 </td>
+   <td class="right">10.4       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Drosophila melanogaster         </td>
-   <td class="right-border" style="text-align:right">11.2       </td>
+  <tr class="bg2">
+   <td>Drosophila melanogaster         </td>
+   <td class="right">9.7        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Echinops telfairi               </td>
-   <td class="right-border" style="text-align:right">6.0        </td>
+  <tr class="bg1">
+   <td>Echinops telfairi               </td>
+   <td class="right">5.9        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Equus caballus                  </td>
-   <td class="right-border" style="text-align:right">8.6        </td>
+  <tr class="bg2">
+   <td>Equus caballus                  </td>
+   <td class="right">8.3        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Erinaceus europaeus             </td>
-   <td class="right-border" style="text-align:right">7.6        </td>
+  <tr class="bg1">
+   <td>Erinaceus europaeus             </td>
+   <td class="right">7.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Felis catus                     </td>
-   <td class="right-border" style="text-align:right">6.4        </td>
+  <tr class="bg2">
+   <td>Felis catus                     </td>
+   <td class="right">6.3        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Gadus morhua                    </td>
-   <td class="right-border" style="text-align:right">5.2        </td>
+  <tr class="bg1">
+   <td>Gadus morhua                    </td>
+   <td class="right">5.1        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Gallus gallus                   </td>
-   <td class="right-border" style="text-align:right">7.1        </td>
+  <tr class="bg2">
+   <td>Gallus gallus                   </td>
+   <td class="right">6.7        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Gasterosteus aculeatus          </td>
-   <td class="right-border" style="text-align:right">5.0        </td>
+  <tr class="bg1">
+   <td>Gasterosteus aculeatus          </td>
+   <td class="right">5.0        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Gorilla gorilla                 </td>
-   <td class="right-border" style="text-align:right">8.5        </td>
+  <tr class="bg2">
+   <td>Gorilla gorilla                 </td>
+   <td class="right">8.2        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Homo sapiens                    </td>
-   <td class="right-border" style="text-align:right">536.4      </td>
+  <tr class="bg1">
+   <td>Homo sapiens                    </td>
+   <td class="right">588.5      </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Ictidomys tridecemlineatus      </td>
-   <td class="right-border" style="text-align:right">8.1        </td>
+  <tr class="bg2">
+   <td>Ictidomys tridecemlineatus      </td>
+   <td class="right">8.0        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Latimeria chalumnae             </td>
-   <td class="right-border" style="text-align:right">8.9        </td>
+  <tr class="bg1">
+   <td>Latimeria chalumnae             </td>
+   <td class="right">8.8        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Loxodonta africana              </td>
-   <td class="right-border" style="text-align:right">7.8        </td>
+  <tr class="bg2">
+   <td>Loxodonta africana              </td>
+   <td class="right">7.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Macaca mulatta                  </td>
-   <td class="right-border" style="text-align:right">9.4        </td>
+  <tr class="bg1">
+   <td>Macaca mulatta                  </td>
+   <td class="right">9.2        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Macropus eugenii                </td>
-   <td class="right-border" style="text-align:right">6.1        </td>
+  <tr class="bg2">
+   <td>Macropus eugenii                </td>
+   <td class="right">6.0        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Meleagris gallopavo             </td>
-   <td class="right-border" style="text-align:right">4.4        </td>
+  <tr class="bg1">
+   <td>Meleagris gallopavo             </td>
+   <td class="right">4.3        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Microcebus murinus              </td>
-   <td class="right-border" style="text-align:right">5.6        </td>
+  <tr class="bg2">
+   <td>Microcebus murinus              </td>
+   <td class="right">5.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Monodelphis domestica           </td>
-   <td class="right-border" style="text-align:right">10.4       </td>
+  <tr class="bg1">
+   <td>Monodelphis domestica           </td>
+   <td class="right">11.5       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Mus musculus                    </td>
-   <td class="right-border" style="text-align:right">53.0       </td>
+  <tr class="bg2">
+   <td>Mus musculus                    </td>
+   <td class="right">52.0       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Myotis lucifugus                </td>
-   <td class="right-border" style="text-align:right">7.0        </td>
+  <tr class="bg1">
+   <td>Mustela putorius                </td>
+   <td class="right">13.7       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Nomascus leucogenys             </td>
-   <td class="right-border" style="text-align:right">8.2        </td>
+  <tr class="bg2">
+   <td>Myotis lucifugus                </td>
+   <td class="right">6.9        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Ochotona princeps               </td>
-   <td class="right-border" style="text-align:right">9.3        </td>
+  <tr class="bg1">
+   <td>Nomascus leucogenys             </td>
+   <td class="right">8.1        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Oreochromis niloticus           </td>
-   <td class="right-border" style="text-align:right">11.8       </td>
+  <tr class="bg2">
+   <td>Ochotona princeps               </td>
+   <td class="right">9.2        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Ornithorhynchus anatinus        </td>
-   <td class="right-border" style="text-align:right">8.1        </td>
+  <tr class="bg1">
+   <td>Oreochromis niloticus           </td>
+   <td class="right">11.8       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Oryctolagus cuniculus           </td>
-   <td class="right-border" style="text-align:right">8.8        </td>
+  <tr class="bg2">
+   <td>Ornithorhynchus anatinus        </td>
+   <td class="right">8.6        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Oryzias latipes                 </td>
-   <td class="right-border" style="text-align:right">4.4        </td>
+  <tr class="bg1">
+   <td>Oryctolagus cuniculus           </td>
+   <td class="right">8.2        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Otolemur garnettii              </td>
-   <td class="right-border" style="text-align:right">7.8        </td>
+  <tr class="bg2">
+   <td>Oryzias latipes                 </td>
+   <td class="right">4.4        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Pan troglodytes                 </td>
-   <td class="right-border" style="text-align:right">12.8       </td>
+  <tr class="bg1">
+   <td>Otolemur garnettii              </td>
+   <td class="right">7.7        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Pelodiscus sinensis             </td>
-   <td class="right-border" style="text-align:right">8.5        </td>
+  <tr class="bg2">
+   <td>Pan troglodytes                 </td>
+   <td class="right">12.2       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Petromyzon marinus              </td>
-   <td class="right-border" style="text-align:right">4.0        </td>
+  <tr class="bg1">
+   <td>Pelodiscus sinensis             </td>
+   <td class="right">8.4        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Pongo abelii                    </td>
-   <td class="right-border" style="text-align:right">15.1       </td>
+  <tr class="bg2">
+   <td>Petromyzon marinus              </td>
+   <td class="right">4.0        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Procavia capensis               </td>
-   <td class="right-border" style="text-align:right">5.8        </td>
+  <tr class="bg1">
+   <td>Pongo abelii                    </td>
+   <td class="right">15.1       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Pteropus vampyrus               </td>
-   <td class="right-border" style="text-align:right">5.9        </td>
+  <tr class="bg2">
+   <td>Procavia capensis               </td>
+   <td class="right">5.6        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Rattus norvegicus               </td>
-   <td class="right-border" style="text-align:right">17.0       </td>
+  <tr class="bg1">
+   <td>Pteropus vampyrus               </td>
+   <td class="right">5.8        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Saccharomyces cerevisiae        </td>
-   <td class="right-border" style="text-align:right">0.5        </td>
+  <tr class="bg2">
+   <td>Rattus norvegicus               </td>
+   <td class="right">18.2       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Sarcophilus harrisii            </td>
-   <td class="right-border" style="text-align:right">9.3        </td>
+  <tr class="bg1">
+   <td>Saccharomyces cerevisiae        </td>
+   <td class="right">0.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Sorex araneus                   </td>
-   <td class="right-border" style="text-align:right">5.6        </td>
+  <tr class="bg2">
+   <td>Sarcophilus harrisii            </td>
+   <td class="right">9.0        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Sus scrofa                      </td>
-   <td class="right-border" style="text-align:right">10.7       </td>
+  <tr class="bg1">
+   <td>Sorex araneus                   </td>
+   <td class="right">5.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Taeniopygia guttata             </td>
-   <td class="right-border" style="text-align:right">6.9        </td>
+  <tr class="bg2">
+   <td>Sus scrofa                      </td>
+   <td class="right">10.5       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Takifugu rubripes               </td>
-   <td class="right-border" style="text-align:right">4.6        </td>
+  <tr class="bg1">
+   <td>Taeniopygia guttata             </td>
+   <td class="right">6.8        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Tarsius syrichta                </td>
-   <td class="right-border" style="text-align:right">5.8        </td>
+  <tr class="bg2">
+   <td>Takifugu rubripes               </td>
+   <td class="right">4.6        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Tetraodon nigroviridis          </td>
-   <td class="right-border" style="text-align:right">4.5        </td>
+  <tr class="bg1">
+   <td>Tarsius syrichta                </td>
+   <td class="right">5.6        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Tupaia belangeri                </td>
-   <td class="right-border" style="text-align:right">6.7        </td>
+  <tr class="bg2">
+   <td>Tetraodon nigroviridis          </td>
+   <td class="right">4.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Tursiops truncatus              </td>
-   <td class="right-border" style="text-align:right">6.4        </td>
+  <tr class="bg1">
+   <td>Tupaia belangeri                </td>
+   <td class="right">6.5        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Vicugna pacos                   </td>
-   <td class="right-border" style="text-align:right">4.5        </td>
+  <tr class="bg2">
+   <td>Tursiops truncatus              </td>
+   <td class="right">6.3        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Xenopus tropicalis              </td>
-   <td class="right-border" style="text-align:right">11.0       </td>
+  <tr class="bg1">
+   <td>Vicugna pacos                   </td>
+   <td class="right">4.4        </td>
+  </tr>
+  <tr class="bg2">
+   <td>Xenopus tropicalis              </td>
+   <td class="right">10.9       </td>
+  </tr>
+  <tr class="bg1">
+   <td>Xiphophorus maculatus           </td>
+   <td class="right">10.9       </td>
   </tr>
   <tr>
-   <th class="left-border">Sub-total</th>
-   <th class="right-border" style="text-align:right">1031.4     </th>
+   <th>Sub-total</th>
+   <th class="right">1098.4     </th>
   </tr>
 
   <tr>
-   <th class="left-border">Multi-species</th>
-   <th class="right-border">&nbsp;</th>
+   <th>Multi-species</th>
+   <th></th>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Ancestral                       </td>
-   <td class="right-border" style="text-align:right">35.3       </td>
+  <tr class="bg2">
+   <td>Ancestral                       </td>
+   <td class="right">36.3       </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Compara                         </td>
-   <td class="right-border" style="text-align:right">223.2      </td>
+  <tr class="bg1">
+   <td>Compara                         </td>
+   <td class="right">238.6      </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Mart                            </td>
-   <td class="right-border" style="text-align:right">526.3      </td>
+  <tr class="bg2">
+   <td>Mart                            </td>
+   <td class="right">594.1      </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Ontology                        </td>
-   <td class="right-border" style="text-align:right">0.1        </td>
+  <tr class="bg1">
+   <td>Ontology                        </td>
+   <td class="right">0.1        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg2">
-   <td class="left-border">Production                      </td>
-   <td class="right-border" style="text-align:right">0.0        </td>
+  <tr class="bg2">
+   <td>Production                      </td>
+   <td class="right">0.0        </td>
   </tr>
-  <tr style="vertical-align:top" class="bg1">
-   <td class="left-border">Website                         </td>
-   <td class="right-border" style="text-align:right">0.1        </td>
+  <tr class="bg1">
+   <td>Website                         </td>
+   <td class="right">0.1        </td>
   </tr>
   <tr>
-   <th class="left-border">Total</th>
-   <th class="right-border" style="text-align:right">1816.5     </th>
+   <th>Total</th>
+   <th class="right">1967.6     </th>
   </tr>
  </tbody>
 </table>
