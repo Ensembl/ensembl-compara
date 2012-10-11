@@ -54,7 +54,7 @@ sub form {
     type   => 'YesNo', 
     name   => 'snp_display', 
     select => 'select', 
-    label  => 'Show variations'
+    label  => 'Show variations in flanking sequence'
   });
 }
 
