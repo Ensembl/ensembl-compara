@@ -11,7 +11,7 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 sub init {
   my $self       = shift;
   my $sp         = $self->species;
-  my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'}||{};
+  my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'} || {};
   my $ref        = $variations->{'REFERENCE_STRAIN'};
   my %strains;
   
@@ -53,11 +53,11 @@ sub form {
   $self->add_form_element($general_markup_options{'exon_ori'});
 
   $self->add_form_element({
-    type     => 'DropDown', 
-    select   => 'select',   
-    name     => 'match_display',
-    label    => 'Matching basepairs',
-    values   => [
+    type   => 'DropDown', 
+    select => 'select',   
+    name   => 'match_display',
+    label  => 'Matching basepairs',
+    values => [
       { value => 'off', name => 'Show all' },
       { value => 'dot', name => 'Replace matching bp with dots' }
     ]
@@ -68,12 +68,14 @@ sub form {
   $self->add_form_element($other_markup_options{'codons_display'});
   $self->add_form_element($other_markup_options{'title_display'});
   
-  $self->add_form_element({
-    type  => 'NoEdit',
-    name  => 'reference_individual',
-    label => "Reference $strains",
-    value => $ref
-  });
+  if ($ref) {
+    $self->add_form_element({
+      type  => 'NoEdit',
+      name  => 'reference_individual',
+      label => "Reference $strains",
+      value => $ref
+    });
+  }
   
   $strains .= 's';
 
