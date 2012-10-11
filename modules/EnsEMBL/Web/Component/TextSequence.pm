@@ -25,337 +25,408 @@ sub new {
   return $self;
 }
 
+sub _init {
+  my ($self, $subslice_length) = @_;
+  $self->cacheable(1);
+  $self->ajaxable(1);
+  
+  if ($subslice_length) {
+    my $hub = $self->hub;
+    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || 60);
+  }
+}
+
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
   my ($self, $slices, $config) = @_;
-  my $hub = $self->hub;
-  my (@sequence, @markup, %consequence_types, $population);
+  my $hub      = $self->hub;
+  my $sequence = [];
+  my @markup;
   
-  if ($config->{'snp_display'}) {
-    my @consequence       = $hub->param('consequence_filter');
-    my $pop_filter        = $hub->param('population_filter');
-       %consequence_types = map { $_ => 1 } @consequence if join('', @consequence) ne 'off';
-    
-    $config->{'consequence_filter'} = \@consequence if %consequence_types;
-    
-    if ($pop_filter && $pop_filter ne 'off') {
-      $population = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($pop_filter);
-      
-      $config->{'min_frequency'}     = $hub->param('min_frequency');
-      $config->{'population_filter'} = $pop_filter;
-    }
-  }
+  $self->set_variation_filter($config) if $config->{'snp_display'};
+  
+  $config->{'length'} ||= $slices->[0]{'slice'}->length;
   
   foreach my $sl (@$slices) {
-    my $mk    = {};
-    my $slice = $sl->{'slice'};
-    my $name  = $sl->{'name'};
-    my $seq   = uc($sl->{'seq'} || $slice->seq(1));
+    my $mk  = {};
+    my $seq = uc($sl->{'seq'} || $sl->{'slice'}->seq(1));
     
-    my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
-    
-    $config->{'length'} ||= $slice_length;
-    
-    if ($config->{'match_display'}) {
-      if ($name eq $config->{'ref_slice_name'}) {
-        push @sequence, [ map {{ letter => $_ }} @{$config->{'ref_slice_seq'}} ];
-      } else {
-        my $i = 0;
-        my @cmp_seq = map {{ letter => ($config->{'ref_slice_seq'}->[$i++] eq $_ ? '.' : $_) }} split //, $seq;
-
-        while ($seq =~ m/([^~]+)/g) {
-          my $reseq_length = length $1;
-          my $reseq_end    = pos $seq;
-          
-          $mk->{'comparisons'}->{$reseq_end-$_}->{'resequencing'} = 1 for 1..$reseq_length;
-        }
-        
-        push @sequence, \@cmp_seq;
-      }
-    } else {
-      push @sequence, [ map {{ letter => $_ }} split //, $seq ];
-    }
-    
-    if ($config->{'region_change_display'} && $name ne $config->{'species'}) {
-      my $s = 0;
-      
-      # We don't want to mark the very end of the sequence, so don't loop for the last element in the array
-      for (0..scalar(@{$sl->{'underlying_slices'}})-2) {
-        my $end_region   = $sl->{'underlying_slices'}->[$_];
-        my $start_region = $sl->{'underlying_slices'}->[$_+1];
-        
-        $s += length $end_region->seq(1);
-        
-        $mk->{'region_change'}->{$s-1} = $end_region->name   . ' END';
-        $mk->{'region_change'}->{$s}   = $start_region->name . ' START';
-
-        for ($s-1..$s) {
-          $mk->{'region_change'}->{$_} = "GAP $1" if $mk->{'region_change'}->{$_} =~ /.*gap.* (\w+)/;
-        }
-      }
-    }
-    
-    # Markup inserts on comparisons
-    if ($config->{'align'}) {
-      while ($seq =~  m/(\-+)[\w\s]/g) {
-        my $ins_length = length $1;
-        my $ins_end    = pos($seq) - 1;
-        
-        $mk->{'comparisons'}->{$ins_end-$_}->{'insert'} = "$ins_length bp" for 1..$ins_length;
-      }
-    }
-    
-    # Get variations
-    if ($config->{'snp_display'}) {
-      my $snps   = [];
-      my $u_snps = {};
-      
-      eval {
-        # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
-        # This isn't a problem, however, since filtering by population is disabled for now anyway.
-        $snps = $population ? $slice->get_all_VariationFeatures_by_Population($population, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures($config->{'consequence_filter'}, 1);
-      };
-      
-      if (scalar @$snps) {
-        foreach my $u_slice (@{$sl->{'underlying_slices'}||[]}) {
-          next if $u_slice->seq_region_name eq 'GAP';
-          
-          if (!$u_slice->adaptor) {
-            my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
-            $u_slice->adaptor($slice_adaptor);
-          }
-          
-          eval {
-            map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
-          };
-        }
-      }
-      
-      # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
-      # Also prioritize shorter variations over longer ones so they don't get hidden
-      my @ordered_snps = map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
-      
-      foreach (@ordered_snps) {
-        my $variation_name = $_->variation_name;
-        my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
-        my $dbID           = $_->dbID;
-        my $start          = $_->start;
-        my $end            = $_->end;
-        my $alleles        = $_->allele_string;
-        my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
-           $snp_type       = lc [ grep $consequence_types{$_}, @{$_->consequence_type} ]->[0] if %consequence_types;
-        
-        # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
-        if ($slice_strand < 0) {
-          my @al = split /\//, $alleles;
-          
-          $alleles  = '';
-          $alleles .= reverse($_) . '/' for @al;
-          $alleles  =~ s/\/$//;
-        }
-      
-        # If the variation is on reverse strand, flip the bases
-        $alleles =~ tr/ACGTacgt/TGCAtgca/ if $_->strand < 0;
-        
-        # Use the variation from the underlying slice if we have it.
-        my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
-        
-        # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
-        my $seq_region_start = $snp->seq_region_start;
-        my $seq_region_end   = $snp->seq_region_end;
-        
-        # If it's a mapped slice, get the coordinates for the variation based on the reference slice
-        if ($config->{'mapper'}) {
-          # Constrain region to the limits of the reference slice
-          $start = $seq_region_start < $config->{'ref_slice_start'} ? $config->{'ref_slice_start'} : $seq_region_start;
-          $end   = $seq_region_end   > $config->{'ref_slice_end'}   ? $config->{'ref_slice_end'}   : $seq_region_end;
-          
-          my $func            = $seq_region_start > $seq_region_end ? 'map_indel' : 'map_coordinates';
-          my ($mapped_coords) = $config->{'mapper'}->$func($snp->seq_region_name, $start, $end, $snp->seq_region_strand, 'ref_slice');
-          
-          # map_indel will fail if the strain slice is the same as the reference slice, and there's currently no way to check if this is the case beforehand. Stupid API.
-          ($mapped_coords) = $config->{'mapper'}->map_coordinates($snp->seq_region_name, $start, $end, $snp->seq_region_strand, 'ref_slice') if $func eq 'map_indel' && !$mapped_coords;
-          
-          $start = $mapped_coords->start;
-          $end   = $mapped_coords->end;
-        }
-        
-        # Co-ordinates relative to the sequence - used to mark up the variation's position
-        my $s = $start - 1;
-        my $e = $end   - 1;
-        
-        # Co-ordinates to be used in link text - will use $start or $seq_region_start depending on line numbering style
-        my ($snp_start, $snp_end);
-        
-        if ($config->{'line_numbering'} eq 'slice') {
-          $snp_start = $seq_region_start;
-          $snp_end   = $seq_region_end;
-        } else {
-          $snp_start = $start;
-          $snp_end   = $end;
-        }
-        
-        if ($var_class =~ /in-?del|insertion/ && $seq_region_start > $seq_region_end) {
-          # Neither of the following if statements are guaranteed by $seq_region_start > $seq_region_end.
-          # It is possible to have inserts for compara alignments which fall in gaps in the sequence, where $s <= $e,
-          # and $snp_start only equals $s if $config->{'line_numbering'} is not 'slice';
-          $snp_start = $snp_end if $snp_start > $snp_end;
-          ($s, $e)   = ($e, $s) if $s > $e;
-        }
-        
-        # Add the sub slice start where necessary - makes the label for the variation show the correct position relative to the sequence
-        $snp_start += $config->{'sub_slice_start'} - 1 if $config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice';
-        
-        # Add the chromosome number for the link text if we're doing species comparisons or resequencing.
-        $snp_start = $snp->seq_region_name . ":$snp_start" if scalar keys %$u_snps && $config->{'line_numbering'} eq 'slice';
-        
-        my $url = $hub->url({
-          species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
-          type    => 'Variation',
-          action  => 'Summary',
-          v       => $variation_name,
-          vf      => $dbID,
-          vdb     => 'variation'
-        });
-        
-        my $link_text = qq{ <a href="$url">$snp_start: $variation_name $alleles</a>;};
-        
-        for ($s..$e) {
-          # Don't mark up variations when the secondary strain is the same as the sequence.
-          # $sequence[-1] is the current secondary strain, as it is the last element pushed onto the array
-          next if defined $config->{'match_display'} && $sequence[-1]->[$_]->{'letter'} =~ /[\.~$sequence[0]->[$_]->{'letter'}]/;
-          
-          $mk->{'variations'}->{$_}->{'type'}     = $snp_type;
-          $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
-          
-          unshift @{$mk->{'variations'}->{$_}->{'link_text'}}, $link_text if $_ == $s;
-
-          $mk->{'variations'}->{$_}->{'href'} ||= {
-            species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
-            type        => 'ZMenu',
-            action      => 'TextSequence',
-            factorytype => 'Location'
-          };
-          
-          push @{$mk->{'variations'}->{$_}->{'href'}->{'v'}},  $variation_name;
-          push @{$mk->{'variations'}->{$_}->{'href'}->{'vf'}}, $dbID;
-        }
-      }
-    }
-     
-    # Get exons
-    if ($config->{'exon_display'}) {
-      my $exontype = $config->{'exon_display'};
-      my @exons;
-      
-      if ($exontype eq 'Ab-initio') {
-        @exons = grep { $_->seq_region_start <= $slice_end && $_->seq_region_end >= $slice_start } map @{$_->get_all_Exons}, @{$slice->get_all_PredictionTranscripts};
-      } elsif ($exontype eq 'vega' || $exontype eq 'est') {
-        @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes('', $exontype)};
-      } else {
-        @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes};
-      }
-      
-      # Values of parameter should not be fwd and rev - this is confusing.
-      if ($config->{'exon_ori'} eq 'fwd') {
-        @exons = grep { $_->strand > 0 } @exons; # Only exons in same orientation 
-      } elsif ($config->{'exon_ori'} eq 'rev') {
-        @exons = grep { $_->strand < 0 } @exons; # Only exons in opposite orientation
-      }
-      
-      my @all_exons = map [ $config->{'comparison'} ? 'compara' : 'other', $_ ], @exons;
-      
-      if ($config->{'exon_features'}) {
-        push @all_exons, [ 'gene', $_ ] for @{$config->{'exon_features'}};
-        
-        if ($config->{'exon_features'} && $config->{'exon_features'}->[0] && $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon')) {
-          $config->{'gene_exon_type'} = 'exons';
-        } else {
-          $config->{'gene_exon_type'} = 'features';
-        }
-      }
-      
-      foreach (@all_exons) {
-        my $type = $_->[0];
-        my $exon = $_->[1];
-        
-        next unless $exon->seq_region_start && $exon->seq_region_end;
-        
-        my $start = $exon->start - ($type eq 'gene' ? $slice_start : 1);
-        my $end   = $exon->end   - ($type eq 'gene' ? $slice_start : 1);
-        my $id    = $exon->can('stable_id') ? $exon->stable_id : '';
-        
-        ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $type eq 'gene' && $slice_strand < 0 && $exon->strand < 0;
-        
-        next if $end < 0 || $start >= $slice_length;
-        
-        $start = 0 if $start < 0;
-        $end   = $slice_length - 1 if $end >= $slice_length;
-        
-        for ($start..$end) {          
-          push @{$mk->{'exons'}->{$_}->{'type'}}, $type;          
-          $mk->{'exons'}->{$_}->{'id'} .= ($mk->{'exons'}->{$_}->{'id'} ? '; ' : '') . $id unless $mk->{'exons'}->{$_}->{'id'} =~ /$id/;
-        }
-      }
-    }
-    
-    # Get codons
-    if ($config->{'codons_display'}) {
-      my @transcripts = map @{$_->get_all_Transcripts}, @{$slice->get_all_Genes};
-      
-      if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-        foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-          next unless defined $t->translation;
-          
-          my @codons;
-          
-          # FIXME: all_end_codon_mappings sometimes returns $_ as undefined for small subslices. This eval stops the error, but the codon will still be missing.
-          # Awaiting a fix from the compara team.
-          eval {
-            push @codons, map {{ start => $_->start, end => $_->end, label => 'START' }} @{$t->translation->all_start_codon_mappings || []}; # START codons
-            push @codons, map {{ start => $_->start, end => $_->end, label => 'STOP'  }} @{$t->translation->all_end_codon_mappings   || []}; # STOP codons
-          };
-          
-          my $id = $t->stable_id;
-         
-          foreach my $c (@codons) {
-            my ($start, $end) = ($c->{'start'}, $c->{'end'});
-            
-            # FIXME: Temporary hack until compara team can sort this out
-            $start = $start - 2 * ($slice_start - 1);
-            $end   = $end   - 2 * ($slice_start - 1);
-            
-            next if $end < 1 || $start > $slice_length;
-            
-            $start = 1 unless $start > 0;
-            $end   = $slice_length unless $end < $slice_length;
-            
-            $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . "$c->{'label'}($id)" for $start-1..$end-1;
-          }
-        }
-      } else { # Normal Slice
-        foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-          my ($start, $stop, $id, $strand) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id, $t->strand);
-          
-          # START codons
-          if ($start >= 1) {
-            my $label = ($strand == 1 ? 'START' : 'STOP') . "($id)";
-            $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . $label for $start-1..$start+1;
-          }
-          
-          # STOP codons
-          if ($stop <= $slice_length) {
-            my $label = ($strand == 1 ? 'STOP' : 'START') . "($id)";
-            $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . $label for $stop-3..$stop-1;
-          }
-        }
-      }
-    }
+    $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
+    $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
+    $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
+    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
+    $self->set_codons($sl, $mk)                         if $config->{'codons_display'};
     
     push @markup, $mk;
   }
   
-  return (\@sequence, \@markup);
+  return ($sequence, \@markup);
+}
+
+sub set_sequence {
+  my ($self, $config, $sequence, $markup, $seq, $name) = @_;
+  
+  if ($config->{'match_display'}) {
+    if ($name eq $config->{'ref_slice_name'}) {
+      push @$sequence, [ map {{ letter => $_ }} @{$config->{'ref_slice_seq'}} ];
+    } else {
+      my $i       = 0;
+      my @cmp_seq = map {{ letter => ($config->{'ref_slice_seq'}[$i++] eq $_ ? '.' : $_) }} split '', $seq;
+
+      while ($seq =~ m/([^~]+)/g) {
+        my $reseq_length = length $1;
+        my $reseq_end    = pos $seq;
+        
+        $markup->{'comparisons'}{$reseq_end - $_}{'resequencing'} = 1 for 1..$reseq_length;
+      }
+      
+      push @$sequence, \@cmp_seq;
+    }
+  } else {
+    push @$sequence, [ map {{ letter => $_ }} split '', $seq ];
+  }
+}
+
+sub set_alignments {
+  my ($self, $config, $slice_data, $markup, $seq) = @_;
+  
+  if ($config->{'region_change_display'} && $slice_data->{'name'} ne $config->{'species'}) {
+    my $s = 0;
+    
+    # We don't want to mark the very end of the sequence, so don't loop for the last element in the array
+    for (0..scalar(@{$slice_data->{'underlying_slices'}}) - 2) {
+      my $end_region   = $slice_data->{'underlying_slices'}[$_];
+      my $start_region = $slice_data->{'underlying_slices'}[$_+1];
+      
+      $s += length $end_region->seq(1);
+      
+      $markup->{'region_change'}{$s-1} = $end_region->name   . ' END';
+      $markup->{'region_change'}{$s}   = $start_region->name . ' START';
+
+      for ($s-1..$s) {
+        $markup->{'region_change'}{$_} = "GAP $1" if $markup->{'region_change'}{$_} =~ /.*gap.* (\w+)/;
+      }
+    }
+  }
+  
+  while ($seq =~  m/(\-+)[\w\s]/g) {
+    my $ins_length = length $1;
+    my $ins_end    = pos($seq) - 1;
+    
+    $markup->{'comparisons'}{$ins_end - $_}{'insert'} = "$ins_length bp" for 1..$ins_length;
+  }
+}
+
+sub set_variation_filter {
+  my ($self, $config) = @_;
+  my $hub = $self->hub;
+  
+  my @consequence       = $hub->param('consequence_filter');
+  my $pop_filter        = $hub->param('population_filter');
+  my %consequence_types = map { $_ => 1 } @consequence if join('', @consequence) ne 'off';
+  
+  if (%consequence_types) {
+    $config->{'consequence_types'}  = \%consequence_types;
+    $config->{'consequence_filter'} = \@consequence;
+  }
+  
+  if ($pop_filter && $pop_filter ne 'off') {
+    $config->{'population'}        = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($pop_filter);
+    $config->{'min_frequency'}     = $hub->param('min_frequency');
+    $config->{'population_filter'} = $pop_filter;
+  }
+}
+
+sub set_variations {
+  my ($self, $config, $slice_data, $markup, $sequence, $focus_snp_only) = @_;
+  my $hub    = $self->hub;
+  my $name   = $slice_data->{'name'};
+  my $strand = $slice_data->{'slice'}->strand;
+  my $focus  = $name eq $config->{'species'} ? $config->{'focus_variant'} : undef;
+  my $snps   = [];
+  my $u_snps = {};
+  my ($adaptor, $include_failed);
+  
+  if ($config->{'failed_variant'}) {
+    $adaptor        = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+    $include_failed = $adaptor->db->include_failed_variations;
+    
+    $adaptor->db->include_failed_variations(1);
+  }
+  
+  if ($focus_snp_only) {
+    push @$snps, $focus_snp_only;
+  } else {
+    eval {
+      # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
+      # This isn't a problem, however, since filtering by population is disabled for now anyway.
+      $snps = $config->{'population'} ? 
+        $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) :
+        $slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1);
+    };
+  }
+  
+  if (scalar @$snps) {
+    foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
+      next if $u_slice->seq_region_name eq 'GAP';
+      
+      if (!$u_slice->adaptor) {
+        my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
+        $u_slice->adaptor($slice_adaptor);
+      }
+      
+      eval {
+        map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
+      };
+    }
+  }
+  
+  # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
+  # Also prioritize shorter variations over longer ones so they don't get hidden
+  # Prioritize focus (from the URL) variations over all others 
+  my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ $_->dbID == $focus, $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
+  
+  foreach (@ordered_snps) {
+    my $dbID   = $_->dbID;
+    my $failed = $_->variation ? $_->variation->is_failed : 0;
+    
+    next if $failed && $dbID != $focus;
+    warn $_->start if $dbID == $focus;
+    my $variation_name = $_->variation_name;
+    my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
+    my $start          = $_->start;
+    my $end            = $_->end;
+    my $alleles        = $_->allele_string;
+    my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
+       $snp_type       = lc [ grep $config->{'consequence_types'}{$_}, @{$_->consequence_type} ]->[0] if $config->{'consequence_types'};
+       $snp_type       = 'failed' if $failed;
+    my $ambigcode;
+    
+    if ($config->{'variation_sequence'}) {
+      my $url = $hub->url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
+      
+      $ambigcode = $var_class =~ /in-?del|insertion|deletion/ ? '*' : $_->ambig_code;
+      $ambigcode = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>} if $ambigcode;
+    }
+    
+    # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
+    if ($strand < 0) {
+      my @al = split '/', $alleles;
+      
+      $alleles  = '';
+      $alleles .= reverse($_) . '/' for @al;
+      $alleles  =~ s/\/$//;
+    }
+  
+    # If the variation is on reverse strand, flip the bases
+    $alleles =~ tr/ACGTacgt/TGCAtgca/ if $_->strand < 0;
+    
+    # Use the variation from the underlying slice if we have it.
+    my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
+    
+    # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
+    my $seq_region_start = $snp->seq_region_start;
+    my $seq_region_end   = $snp->seq_region_end;
+    
+    # If it's a mapped slice, get the coordinates for the variation based on the reference slice
+    if ($config->{'mapper'}) {
+      # Constrain region to the limits of the reference slice
+      $start = $seq_region_start < $config->{'ref_slice_start'} ? $config->{'ref_slice_start'} : $seq_region_start;
+      $end   = $seq_region_end   > $config->{'ref_slice_end'}   ? $config->{'ref_slice_end'}   : $seq_region_end;
+      
+      my $func            = $seq_region_start > $seq_region_end ? 'map_indel' : 'map_coordinates';
+      my ($mapped_coords) = $config->{'mapper'}->$func($snp->seq_region_name, $start, $end, $snp->seq_region_strand, 'ref_slice');
+      
+      # map_indel will fail if the strain slice is the same as the reference slice, and there's currently no way to check if this is the case beforehand. Stupid API.
+      ($mapped_coords) = $config->{'mapper'}->map_coordinates($snp->seq_region_name, $start, $end, $snp->seq_region_strand, 'ref_slice') if $func eq 'map_indel' && !$mapped_coords;
+      
+      $start = $mapped_coords->start;
+      $end   = $mapped_coords->end;
+    }
+    
+    # Co-ordinates relative to the sequence - used to mark up the variation's position
+    my $s = $start - 1;
+    my $e = $end   - 1;
+    
+    # Co-ordinates to be used in link text - will use $start or $seq_region_start depending on line numbering style
+    my ($snp_start, $snp_end);
+    
+    if ($config->{'line_numbering'} eq 'slice') {
+      $snp_start = $seq_region_start;
+      $snp_end   = $seq_region_end;
+    } else {
+      $snp_start = $start;
+      $snp_end   = $end;
+    }
+    
+    if ($var_class =~ /in-?del|insertion/ && $seq_region_start > $seq_region_end) {
+      # Neither of the following if statements are guaranteed by $seq_region_start > $seq_region_end.
+      # It is possible to have inserts for compara alignments which fall in gaps in the sequence, where $s <= $e,
+      # and $snp_start only equals $s if $config->{'line_numbering'} is not 'slice';
+      $snp_start = $snp_end if $snp_start > $snp_end;
+      ($s, $e)   = ($e, $s) if $s > $e;
+    }
+    
+    $s = 0 if $s < 0;
+    $e = $config->{'length'} if $e > $config->{'length'};
+    
+    # Add the sub slice start where necessary - makes the label for the variation show the correct position relative to the sequence
+    $snp_start += $config->{'sub_slice_start'} - 1 if $config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice';
+    
+    # Add the chromosome number for the link text if we're doing species comparisons or resequencing.
+    $snp_start = $snp->seq_region_name . ":$snp_start" if scalar keys %$u_snps && $config->{'line_numbering'} eq 'slice';
+    
+    my $url = $hub->url({
+      species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
+      type    => 'Variation',
+      action  => 'Summary',
+      v       => $variation_name,
+      vf      => $dbID,
+      vdb     => 'variation'
+    });
+    
+    my $link_text = qq{ <a href="$url">$snp_start: $variation_name $alleles</a>;};
+    
+    for ($s..$e) {
+      # Don't mark up variations when the secondary strain is the same as the sequence.
+      # $sequence->[-1] is the current secondary strain, as it is the last element pushed onto the array
+      next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.~$sequence->[0][$_]{'letter'}]/;
+      
+      $markup->{'variations'}{$_}{'type'}     = $snp_type;
+      $markup->{'variations'}{$_}{'alleles'} .= ($markup->{'variations'}{$_}{'alleles'} ? '; ' : '') . $alleles;
+      
+      unshift @{$markup->{'variations'}{$_}{'link_text'}}, $link_text if $_ == $s;
+
+      $markup->{'variations'}{$_}{'href'} ||= {
+        species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
+        type        => 'ZMenu',
+        action      => 'TextSequence',
+        factorytype => 'Location'
+      };
+      
+      push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
+      push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+      
+      $sequence->[$_] = $ambigcode if $config->{'variation_sequence'} && $ambigcode;
+    }
+    
+    $config->{'focus_position'} = [ $s..$e ] if $variation_name eq $config->{'v'};
+  }
+  
+  $adaptor->db->include_failed_variations($include_failed) if $adaptor && defined $include_failed;
+}
+
+sub set_exons {
+  my ($self, $config, $slice_data, $markup) = @_;
+  my $slice    = $slice_data->{'slice'};
+  my $exontype = $config->{'exon_display'};
+  my ($slice_start, $slice_end, $slice_length, $slice_strand) = map $slice->$_, qw(start end length strand);
+  my @exons;
+  
+  if ($exontype eq 'Ab-initio') {
+    @exons = grep { $_->seq_region_start <= $slice_end && $_->seq_region_end >= $slice_start } map @{$_->get_all_Exons}, @{$slice->get_all_PredictionTranscripts};
+  } elsif ($exontype eq 'vega' || $exontype eq 'est') {
+    @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes('', $exontype)};
+  } else {
+    @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes};
+  }
+  
+  # Values of parameter should not be fwd and rev - this is confusing.
+  if ($config->{'exon_ori'} eq 'fwd') {
+    @exons = grep { $_->strand > 0 } @exons; # Only exons in same orientation 
+  } elsif ($config->{'exon_ori'} eq 'rev') {
+    @exons = grep { $_->strand < 0 } @exons; # Only exons in opposite orientation
+  }
+  
+  my @all_exons = map [ $config->{'comparison'} ? 'compara' : 'other', $_ ], @exons;
+  
+  if ($config->{'exon_features'}) {
+    push @all_exons, [ 'gene', $_ ] for @{$config->{'exon_features'}};
+    
+    if ($config->{'exon_features'} && $config->{'exon_features'}->[0] && $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon')) {
+      $config->{'gene_exon_type'} = 'exons';
+    } else {
+      $config->{'gene_exon_type'} = 'features';
+    }
+  }
+  
+  foreach (@all_exons) {
+    my $type = $_->[0];
+    my $exon = $_->[1];
+    
+    next unless $exon->seq_region_start && $exon->seq_region_end;
+    
+    my $start = $exon->start - ($type eq 'gene' ? $slice_start : 1);
+    my $end   = $exon->end   - ($type eq 'gene' ? $slice_start : 1);
+    my $id    = $exon->can('stable_id') ? $exon->stable_id : '';
+    
+    ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $type eq 'gene' && $slice_strand < 0 && $exon->strand < 0;
+    
+    next if $end < 0 || $start >= $slice_length;
+    
+    $start = 0 if $start < 0;
+    $end   = $slice_length - 1 if $end >= $slice_length;
+    
+    for ($start..$end) {          
+      push @{$markup->{'exons'}{$_}{'type'}}, $type;          
+      $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? '; ' : '') . $id unless $markup->{'exons'}{$_}{'id'} =~ /$id/;
+    }
+  }
+}
+
+sub set_codons {
+  my ($self, $slice_data, $markup) = @_;
+  my $slice       = $slice_data->{'slice'};
+  my @transcripts = map @{$_->get_all_Transcripts}, @{$slice->get_all_Genes};
+  my ($slice_start, $slice_length) = map $slice->$_, qw(start length);
+  
+  if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
+    foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+      next unless defined $t->translation;
+      
+      my @codons;
+      
+      # FIXME: all_end_codon_mappings sometimes returns $_ as undefined for small subslices. This eval stops the error, but the codon will still be missing.
+      # Awaiting a fix from the compara team.
+      eval {
+        push @codons, map {{ start => $_->start, end => $_->end, label => 'START' }} @{$t->translation->all_start_codon_mappings || []}; # START codons
+        push @codons, map {{ start => $_->start, end => $_->end, label => 'STOP'  }} @{$t->translation->all_end_codon_mappings   || []}; # STOP codons
+      };
+      
+      my $id = $t->stable_id;
+     
+      foreach my $c (@codons) {
+        my ($start, $end) = ($c->{'start'}, $c->{'end'});
+        
+        # FIXME: Temporary hack until compara team can sort this out
+        $start = $start - 2 * ($slice_start - 1);
+        $end   = $end   - 2 * ($slice_start - 1);
+        
+        next if $end < 1 || $start > $slice_length;
+        
+        $start = 1 unless $start > 0;
+        $end   = $slice_length unless $end < $slice_length;
+        
+        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? '; ' : '') . "$c->{'label'}($id)" for $start-1..$end-1;
+      }
+    }
+  } else { # Normal Slice
+    foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+      my ($start, $stop, $id, $strand) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id, $t->strand);
+      
+      # START codons
+      if ($start >= 1) {
+        my $label = ($strand == 1 ? 'START' : 'STOP') . "($id)";
+        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? '; ' : '') . $label for $start-1..$start+1;
+      }
+      
+      # STOP codons
+      if ($stop <= $slice_length) {
+        my $label = ($strand == 1 ? 'STOP' : 'START') . "($id)";
+        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? '; ' : '') . $label for $stop-3..$stop-1;
+      }
+    }
+  }
 }
 
 sub markup_exons {
@@ -437,21 +508,23 @@ sub markup_variation {
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
-    foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
-      $variation  = $data->{'variations'}->{$_};
+    foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {
+      $variation  = $data->{'variations'}{$_};
       ($ambiguity = ambiguity_code($variation->{'alleles'}) || undef) =~ s/-//g;
 
-      $seq->[$_]->{'letter'} = $ambiguity if $ambiguity && !$config->{'transcript'};
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
-      $seq->[$_]->{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
-      $seq->[$_]->{'href'}   = $hub->url($variation->{'href'});
-      $seq->[$_]->{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
+      $seq->[$_]{'letter'} = $ambiguity if $ambiguity && $config->{'ambiguity'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
+      $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
+      $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
+      $seq->[$_]{'class'} .= 'var '  if grep $config->{'v'} eq $_, @{$variation->{'href'}{'v'}}; # The page's variation
+      $seq->[$_]{'href'}   = $hub->url($variation->{'href'});
+      $seq->[$_]{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
 
       $snps    = 1 if $variation->{'type'} eq 'snp';
       $inserts = 1 if $variation->{'type'} =~ /insert/;
       $deletes = 1 if $variation->{'type'} eq 'delete';
       
-      $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1;
+      $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'};
     }
     
     $i++;
@@ -547,7 +620,9 @@ sub markup_line_numbers {
     my $align_slice = 0;
     my @numbering;
     
-    if ($config->{'line_numbering'} eq 'slice') {
+    if (!$slice) {
+      @numbering = ({});
+    } elsif ($config->{'line_numbering'} eq 'slice') {
       my $start_pos = 0;
       
       if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
@@ -601,7 +676,7 @@ sub markup_line_numbers {
       });
     }
     
-    my $data = shift @numbering unless $config->{'numbering'} && !$config->{'numbering'}->[$n];
+    my $data = shift @numbering;
     
     my $s = 0;
     my $e = $config->{'display_width'} - 1;
@@ -660,36 +735,6 @@ sub markup_line_numbers {
         }
 
         $s = $e + 1;
-      } elsif ($config->{'numbering'}) { # Transcript sequence
-        my $seq_length = 0;
-        my $segment = '';
-        
-        # Build a segment containing the current line of sequence        
-        for ($s..$e) {
-          # Check the array element exists - must be done so we don't create new elements and mess up the padding at the end of the last line
-          if ($seq->[$_]) {
-            $seq_length++ if $config->{'line_numbering'} eq 'slice' || $seq->[$_]->{'letter'} =~ /\w/;
-            $segment .= $seq->[$_]->{'letter'};
-          }
-        }
-        
-        # Reference sequence starting with N or NN means the transcript begins mid-codon, so reduce the sequence length accordingly.
-        $seq_length -= length $1 if $segment =~ /^(N+)\w/;
-        
-        $end = $e < $config->{'length'} ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
-        
-        $start = $row_start if $seq_length;
-        
-        # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
-        $start-- if $start > $data->{'start'} && $segment =~ /^([=-]{2})/;
-        
-        # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
-        $row_start = $end + $data->{'dir'} if $start && $end;
-        
-        # Remove the line number if the sequence doesn't start at the beginning of the line
-        $start = '' if $segment =~ /^(\.|N+\w)/;
-        
-        $s = $e + 1;
       } else { # Single species
         $end = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'display_width'}) - $data->{'dir'} : $data->{'end'};
         
@@ -701,12 +746,12 @@ sub markup_line_numbers {
       
       my $label      = $start && $config->{'comparison'} ? $data->{'label'} : '';
       my $post_label = $shift && $label && $data->{'old_label'} ? $label : '';
-      $label         = $data->{'old_label'} if $post_label;
+         $label      = $data->{'old_label'} if $post_label;
       
-      push @{$config->{'line_numbers'}->{$n}}, { start => $start, end => $end, label => $label, post_label => $post_label };
+      push @{$config->{'line_numbers'}{$n}}, { start => $start, end => $end || undef, label => $label, post_label => $post_label };
       
       # Increase padding amount if required
-      $config->{'padding'}->{'number'} = length $start if length $start > $config->{'padding'}->{'number'};
+      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
       
       $e += $config->{'display_width'};
     }
@@ -714,7 +759,7 @@ sub markup_line_numbers {
     $n++;
   }
   
-  $config->{'padding'}->{'pre_number'}++ if $config->{'padding'}->{'pre_number'}; # Compensate for the : after the label
+  $config->{'padding'}{'pre_number'}++ if $config->{'padding'}{'pre_number'}; # Compensate for the : after the label
  
   $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} eq 'slice' && $config->{'align'};
 }
@@ -944,7 +989,6 @@ sub class_to_style {
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'label'}" } ],
       bold => [ $i++, { 'font-weight' => 'bold' } ],
-      failed => [ $i++, { 'background-color' => "#$styles->{'SEQ_FAILED'}->{'default'}" } ],
     );
     
     foreach (keys %$var_styles) {
@@ -955,7 +999,7 @@ sub class_to_style {
       $class_to_style{$_} = [ $i++, $style ];
     }
     
-    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}" } ];
+    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}", 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
     
     $self->{'class_to_style'} = \%class_to_style;
   }
