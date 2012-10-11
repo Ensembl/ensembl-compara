@@ -623,6 +623,7 @@ sub fetch_by_method_link_type_species_set_name {
       }
   }
   warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
+  return undef;
 }
 
 
