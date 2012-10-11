@@ -4,7 +4,7 @@ First, we need to re-scale the tree in order to improve the readability.
 We use a log-scale and make internal branches slightly smaller than final
 ones:
 
-more ../scripts/pipeline/species_tree_blength.nh | \
+more ../../scripts/pipeline/species_tree_blength.nh | \
   perl -e '$_ =~ s/\)\w+/\)/g;
     $_ =~ s/\?\w+/XXXXXXXXXXX/g;
     my @a = split(/([\)\,])/, $_);
@@ -16,7 +16,7 @@ more ../scripts/pipeline/species_tree_blength.nh | \
       } else {
         print $a;
       }
-    }' -n > rescaled_tree.nw
+    }' -n > species_tree.nw
 
 Open Dendroscope. Load the file and select the Radial Phylogram (Ctrl+7).
 - In the view menu, deselect "Sparse labels" and choose "Radial labels".
