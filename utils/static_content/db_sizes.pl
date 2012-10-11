@@ -29,8 +29,8 @@ my $F = 1;
 foreach ( sort keys %X ) {
   printf qq(
   <tr class="bg$F">
-   <td>%-32.32s</td>
-   <td class="right">%-11.11s</td>
+   <td>%s</td>
+   <td class="right">%s</td>
   </tr>),
   $_, sprintf( "%0.1f",$X{$_}/1024/1024);
   $F = 3-$F;
@@ -38,7 +38,7 @@ foreach ( sort keys %X ) {
 printf qq(
   <tr>
    <th>Sub-total</th>
-   <th class="right">%-11.11s</th>
+   <th class="right">%s</th>
   </tr>
 ), sprintf( "%0.1f", $T2/1024/1024);
 print qq(
@@ -49,8 +49,8 @@ print qq(
 foreach ( sort keys %Y ) {
   printf qq(
   <tr class="bg$F">
-   <td>%-32.32s</td>
-   <td class="right">%-11.11s</td>
+   <td>%s</td>
+   <td class="right">%s</td>
   </tr>),
   $_, sprintf( "%0.1f",$Y{$_}/1024/1024);
   $F = 3-$F;
@@ -58,7 +58,7 @@ foreach ( sort keys %Y ) {
 printf qq(
   <tr>
    <th>Total</th>
-   <th class="right">%-11.11s</th>
+   <th class="right">%s</th>
   </tr>
  </tbody>
 </table>
