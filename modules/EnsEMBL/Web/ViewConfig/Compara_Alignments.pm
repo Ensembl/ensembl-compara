@@ -18,7 +18,7 @@ sub init {
     foreach (keys %{$alignments->{$key}{'species'}}) {
       my @name = split '_', $alignments->{$key}{'name'};
       my $n    = shift @name;
-      $defaults{lc "species_${key}_$_"} = [ join(' ', $n, map(lc, @name), '-', $species_defs->get_config($_, 'SPECIES_COMMON_NAME')), /ancestral/ ? 'off' : 'yes' ];
+      $defaults{lc "species_${key}_$_"} = [ join(' ', $n, map(lc, @name), '-', $species_defs->get_config($_, 'SPECIES_COMMON_NAME') || 'Ancestral sequences'), /ancestral/ ? 'off' : 'yes' ];
     }
   }
   
@@ -98,6 +98,11 @@ sub form {
     $self->add_form_element($other_markup_options{'title_display'});
   }
   
+  $self->alignment_options; 
+}
+
+sub alignment_options {
+  my $self         = shift;
   my $species      = $self->hub->referer->{'ENSEMBL_SPECIES'};
   my $species_defs = $self->species_defs;
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
