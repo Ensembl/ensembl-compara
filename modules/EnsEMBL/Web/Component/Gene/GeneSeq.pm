@@ -6,15 +6,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
-sub _init {
-  my $self = shift;
-  my $hub  = $self->hub;
-  
-  $self->cacheable(1);
-  $self->ajaxable(1);
-  
-  $self->{'subslice_length'} = $hub->param('force') || 5000 * ($hub->param('display_width') || 60);
-}
+sub _init { $_[0]->SUPER::_init(5000); }
 
 sub initialize {
   my ($self, $slice, $start, $end) = @_;
@@ -28,7 +20,8 @@ sub initialize {
     species         => $hub->species,
     title_display   => 'yes',
     sub_slice_start => $start,
-    sub_slice_end   => $end
+    sub_slice_end   => $end,
+    ambiguity       => 1,
   };
 
   for (qw(exon_display exon_ori snp_display line_numbering)) {
@@ -36,12 +29,8 @@ sub initialize {
   }
   
   $config->{'exon_features'} = $object->Obj->get_all_Exons;
-  $config->{'slices'} = [{ slice => $slice, name => $config->{'species'} }];
-
-  if ($config->{'line_numbering'}) {
-    $config->{'end_number'} = 1;
-    $config->{'number'} = 1;
-  }
+  $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
+  $config->{'end_number'}    = $config->{'number'} = 1 if $config->{'line_numbering'};
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
 

@@ -6,12 +6,6 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
 
-sub _init {
-  my $self = shift;
-  $self->cacheable(1);
-  $self->ajaxable(1);
-}
-
 sub initialize {
   my ($self, $export) = @_;
   my $hub         = $self->hub;

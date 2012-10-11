@@ -4,12 +4,6 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
-sub _init {
-  my $self = shift;
-  $self->cacheable(1);
-  $self->ajaxable(1);
-}
-
 sub get_sequence_data {
   my ($self, $translation, $config) = @_;
   my $object   = $self->object;

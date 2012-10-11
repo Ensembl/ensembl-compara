@@ -9,12 +9,6 @@ use Bio::EnsEMBL::DBSQL::StrainSliceAdaptor;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Location);
 
-sub _init {
-  my $self = shift;
-  $self->cacheable(1);
-  $self->ajaxable(1);
-}
-
 sub content_key { return shift->SUPER::content_key({ resequencing => 1 }); }
 
 sub content {
@@ -29,11 +23,9 @@ sub content {
   my $original_slice = $object->slice;
      $original_slice = $original_slice->invert if $hub->param('strand') == -1;
   my $ref_slice      = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
-  my $ref_slice_obj  = $ref_slice->Obj;
   my $var_db         = $species_defs->databases->{'DATABASE_VARIATION'};
   my $strain         = $species_defs->translate('strain') || 'strain';
-  my @individuals;
-  my $html;
+  my (@individuals, $html);
     
   my $config = {
     display_width  => $hub->param('display_width') || 60,
@@ -44,7 +36,7 @@ sub content {
     ref_slice_name => $ref_slice->get_individuals('reference')
   };
   
-  foreach ('exon_ori', 'match_display', 'snp_display', 'line_numbering', 'codons_display', 'title_display') {
+  foreach (qw(exon_ori match_display snp_display line_numbering codons_display title_display)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
@@ -52,21 +44,17 @@ sub content {
   # Can be deleted once we get the correct set of variations from the API 
   # (there are currently variations returned when the resequenced individuals match the reference)
   $config->{'match_display'} ||= 0;  
-  $config->{'exon_display'} = 'selected' if $config->{'exon_ori'};
+  $config->{'exon_display'}    = 'selected' if $config->{'exon_ori'};
+  $config->{'end_number'}      = $config->{'number'} = 1 if $config->{'line_numbering'};
   
-  if ($config->{'line_numbering'}) {
-    $config->{'end_number'} = 1;
-    $config->{'number'}     = 1;
-  }
-  
-  foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS') {
+  foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
     foreach my $ind (@{$var_db->{$_}}) {
       push @individuals, $ind if $hub->param($ind) eq 'yes';
     }
   }
   
   if (scalar @individuals) {
-    $config->{'slices'} = $self->get_slices($ref_slice_obj, \@individuals, $config);
+    $config->{'slices'} = $self->get_slices($ref_slice->Obj, \@individuals, $config);
     
     my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
     
@@ -79,9 +67,8 @@ sub content {
     
     my $slice_name = $original_slice->name;
     
-    my (undef, undef, $region, $start, $end) = split /:/, $slice_name;
-    my $url = $hub->url({ action => 'View', r => "$region:$start-$end" });
-    
+    my (undef, undef, $region, $start, $end) = split ':', $slice_name;
+    my $url   = $hub->url({ action => 'View', r => "$region:$start-$end" });
     my $table = qq{
       <table>
         <tr>
@@ -116,25 +103,23 @@ sub content {
 }
 
 sub get_slices {
-  my $self = shift;
-  my ($ref_slice_obj, $individuals, $config) = @_;
-  
+  my ($self, $ref_slice_obj, $individuals, $config) = @_;
   my $hub = $self->hub;
   
   # Chunked request
   if (!defined $individuals) {
     my $var_db = $hub->species_defs->databases->{'DATABASE_VARIATION'};
     
-    foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS', 'DISPLAYBLE') {
+    foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS DISPLAYBLE)) {
       foreach my $ind (@{$var_db->{$_}}) {
         push @$individuals, $ind if $hub->param($ind) eq 'yes';
       }
     }
   }
   
-  my $msc = new Bio::EnsEMBL::MappedSliceContainer(-SLICE => $ref_slice_obj, -EXPANDED => 1);
+  my $msc = Bio::EnsEMBL::MappedSliceContainer->new(-SLICE => $ref_slice_obj, -EXPANDED => 1);
   
-  $msc->set_StrainSliceAdaptor(new Bio::EnsEMBL::DBSQL::StrainSliceAdaptor($ref_slice_obj->adaptor->db));
+  $msc->set_StrainSliceAdaptor(Bio::EnsEMBL::DBSQL::StrainSliceAdaptor->new($ref_slice_obj->adaptor->db));
   $msc->attach_StrainSlice($_) for @$individuals;
   
   my @slices = ({ 
@@ -143,7 +128,7 @@ sub get_slices {
   });
   
   foreach (@{$msc->get_all_MappedSlices}) {
-    my $slice = $_->get_all_Slice_Mapper_pairs->[0]->[0];
+    my $slice = $_->get_all_Slice_Mapper_pairs->[0][0];
     
     push @slices, { 
       name  => $slice->can('display_Slice_name') ? $slice->display_Slice_name : $config->{'species'}, 
@@ -154,7 +139,7 @@ sub get_slices {
   
   $config->{'ref_slice_start'} = $ref_slice_obj->start;
   $config->{'ref_slice_end'}   = $ref_slice_obj->end;
-  $config->{'ref_slice_seq'}   = [ split //, $msc->seq(1) ];
+  $config->{'ref_slice_seq'}   = [ split '', $msc->seq(1) ];
   $config->{'mapper'}          = $msc->mapper;
   
   return \@slices;

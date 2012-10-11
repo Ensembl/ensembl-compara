@@ -8,15 +8,7 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
-sub _init {
-  my $self = shift;
-  my $hub  = $self->hub;
-  
-  $self->cacheable(1);
-  $self->ajaxable(1);
-  
-  $self->{'subslice_length'} = $hub->param('force') || 100 * ($hub->param('display_width') || 60);
-}
+sub _init { $_[0]->SUPER::_init(100); }
 
 sub content {
   my $self      = shift;
@@ -88,8 +80,8 @@ sub content_sub_slice {
   
   my $hub          = $self->hub;
   my $object       = $self->object;
-  $slice         ||= $object->slice;
-  $slice           = $slice->invert if !$_[0] && $hub->param('strand') == -1;
+     $slice      ||= $object->slice;
+     $slice        = $slice->invert if !$_[0] && $hub->param('strand') == -1;
   my $species_defs = $hub->species_defs;
   my $start        = $hub->param('subslice_start');
   my $end          = $hub->param('subslice_end');
@@ -102,10 +94,10 @@ sub content_sub_slice {
     species         => $hub->species,
     display_species => $species_defs->SPECIES_SCIENTIFIC_NAME,
     comparison      => 1,
+    ambiguity       => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',
     sub_slice_start => $start,
     sub_slice_end   => $end,
-    focus_variant_feature => $hub->param('vf'),
   };
   
   for (qw(exon_display exon_ori snp_display line_numbering conservation_display codons_display region_change_display title_display align)) {
