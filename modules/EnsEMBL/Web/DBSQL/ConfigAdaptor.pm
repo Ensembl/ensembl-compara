@@ -8,6 +8,7 @@ use Data::Dumper;
 use DBI;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
+use EnsEMBL::Web::Controller;
 
 my $DBH; # package database handle for persistence
 
