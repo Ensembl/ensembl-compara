@@ -18,47 +18,47 @@ while(<STDIN>) {
   ;
 }
 
-print qq(
-<table class="ss autocenter" style="width:50%;margin:0 25%" cellspacing="0">
+print qq{
+<table class="ss autocenter" style="width:400px">
  <tbody>
   <tr class="ss_header">
-   <th class="bottom-border left-border">Species</th>
-   <th class="bottom-border right-border">Data size (Gb)</th>
-  </tr>);
+   <th>Species</th>
+   <th class="right">Data size (Gb)</th>
+  </tr>};
 my $F = 1;
 foreach ( sort keys %X ) {
   printf qq(
-  <tr style="vertical-align:top" class="bg$F">
-   <td class="left-border">%-32.32s</td>
-   <td class="right-border" style="text-align:right">%-11.11s</td>
+  <tr class="bg$F">
+   <td>%-32.32s</td>
+   <td class="right">%-11.11s</td>
   </tr>),
   $_, sprintf( "%0.1f",$X{$_}/1024/1024);
   $F = 3-$F;
 }
 printf qq(
   <tr>
-   <th class="left-border">Sub-total</th>
-   <th class="right-border" style="text-align:right">%-11.11s</th>
+   <th>Sub-total</th>
+   <th class="right">%-11.11s</th>
   </tr>
 ), sprintf( "%0.1f", $T2/1024/1024);
 print qq(
   <tr>
-   <th class="left-border">Multi-species</th>
-   <th class="right-border">&nbsp;</th>
+   <th>Multi-species</th>
+   <th></th>
   </tr>);
 foreach ( sort keys %Y ) {
   printf qq(
-  <tr style="vertical-align:top" class="bg$F">
-   <td class="left-border">%-32.32s</td>
-   <td class="right-border" style="text-align:right">%-11.11s</td>
+  <tr class="bg$F">
+   <td>%-32.32s</td>
+   <td class="right">%-11.11s</td>
   </tr>),
   $_, sprintf( "%0.1f",$Y{$_}/1024/1024);
   $F = 3-$F;
 }
 printf qq(
   <tr>
-   <th class="left-border">Total</th>
-   <th class="right-border" style="text-align:right">%-11.11s</th>
+   <th>Total</th>
+   <th class="right">%-11.11s</th>
   </tr>
  </tbody>
 </table>
