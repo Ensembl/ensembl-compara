@@ -3,7 +3,6 @@ package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use strict; 
 use warnings;
 use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
@@ -318,52 +317,6 @@ sub get_source_taxon_count {
 }
 
 
-=head2 fetch_all_by_relation
-
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub fetch_all_by_relation {
-  my ($self, $relation) = @_;
-
-  my $join;
-  my $constraint;
-
-  throw() 
-    unless (defined $relation && ref $relation);
-  
-  if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    my $family_id = $relation->dbID;
-    $constraint = "fm.family_id = $family_id";
-    my $extra_columns = [qw(fm.family_id
-                            fm.member_id
-                            fm.cigar_line)];
-    $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
-  }
-  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-    my $homology_id = $relation->dbID;
-    $constraint .= "hm.homology_id = $homology_id";
-    my $extra_columns = [qw(hm.homology_id
-                            hm.member_id
-                            hm.cigar_line
-                            hm.perc_cov
-                            hm.perc_id
-                            hm.perc_pos)];
-    $join = [[['homology_member', 'hm'], 'm.member_id = hm.member_id', $extra_columns]];
-  }
-  else {
-    throw();
-  }
-
-  return $self->generic_fetch($constraint, $join);
-}
-
 sub fetch_all_by_Domain {
     my ($self, $domain) = @_;
     assert_ref($domain, 'Bio::EnsEMBL::Compara::Domain');
@@ -572,12 +525,6 @@ sub _objs_from_sth {
         bless $member, 'Bio::EnsEMBL::Compara::MemberDomain';
         $member->member_start($rowhash->{member_start});
         $member->member_end($rowhash->{member_end});
-      } else {
-        $attribute = new Bio::EnsEMBL::Compara::Attribute;
-        $attribute->member_id($rowhash->{'member_id'});
-        foreach my $autoload_method (keys %$rowhash) {
-          next if (grep /$autoload_method/,  @_columns);
-          $attribute->$autoload_method($rowhash->{$autoload_method});
         }
       }
     }
