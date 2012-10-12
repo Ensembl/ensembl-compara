@@ -4,7 +4,7 @@ package EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
+use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
 sub initialize {
   my ($self, $export) = @_;

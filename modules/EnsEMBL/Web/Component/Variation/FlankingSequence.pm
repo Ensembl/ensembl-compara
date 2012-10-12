@@ -4,7 +4,7 @@ package EnsEMBL::Web::Component::Variation::FlankingSequence;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Variation EnsEMBL::Web::Component::TextSequence);
+use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Variation);
 
 sub content {
   my $self   = shift;
