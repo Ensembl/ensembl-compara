@@ -37,7 +37,6 @@ use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 
 use Bio::TreeIO;
 use Bio::EnsEMBL::Compara::Graph::Node;
-use Bio::EnsEMBL::Compara::Member;
 our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
 #################################################
