@@ -419,25 +419,26 @@ sub validation_status {
       } elsif ($_ ne 'failed') {
         $st = $_ eq 'freq' ? 'frequency' : $_;
       }
-      
       push @status_list, $st;
-    }
-  }
-  
-  if (!$main_status{'HapMap'} && !$main_status{'1000 Genomes'}) {
-    foreach my $vs (@variation_sets) {
-      if ($vs =~ /1000 Genomes/i && !$main_status{'1000 Genomes'}) {
-        $main_status{'1000 Genomes'} = 1;
-      } elsif ($vs =~ /hapmap/i && !$main_status{'HapMap'}) {
-        $main_status{'HapMap'} = 1;
-      }
     }
   }
   
   my $status_count = scalar @status_list;
   
-  return unless $status_count;
+  if (!$main_status{'HapMap'} && !$main_status{'1000 Genomes'}) {
+    foreach my $vs (@variation_sets) {
+      if ($vs =~ /1000 Genomes/i && !$main_status{'1000 Genomes'}) {
+        $main_status{'1000 Genomes'} = 1;
+        $status_count ++;
+      } elsif ($vs =~ /hapmap/i && !$main_status{'HapMap'}) {
+        $main_status{'HapMap'} = 1;
+        $status_count ++;
+      }
+    }
+  }
   
+  return unless $status_count;
+
   my $html = qq{This variation is validated by };
   
   if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
