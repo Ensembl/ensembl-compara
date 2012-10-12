@@ -516,8 +516,7 @@ sub _objs_from_sth {
   my @members = ();
 
   while(my $rowhash = $sth->fetchrow_hashref) {
-    my ($member,$attribute);
-    $member = $self->create_instance_from_rowhash($rowhash);
+    my $member = $self->create_instance_from_rowhash($rowhash);
     
     my @_columns = $self->_columns;
     if (scalar keys %{$rowhash} > scalar @_columns) {
@@ -525,14 +524,9 @@ sub _objs_from_sth {
         bless $member, 'Bio::EnsEMBL::Compara::MemberDomain';
         $member->member_start($rowhash->{member_start});
         $member->member_end($rowhash->{member_end});
-        }
       }
     }
-    if (defined $attribute) {
-      push @members, [$member, $attribute];
-    } else {
-      push @members, $member;
-    } 
+    push @members, $member;
   }
   $sth->finish;
   return \@members
