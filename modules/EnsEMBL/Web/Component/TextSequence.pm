@@ -4,9 +4,7 @@ package EnsEMBL::Web::Component::TextSequence;
 
 use strict;
 
-use HTTP::Request;
 use RTF::Writer;
-use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
@@ -191,7 +189,7 @@ sub set_variations {
     my $failed = $_->variation ? $_->variation->is_failed : 0;
     
     next if $failed && $dbID != $focus;
-    warn $_->start if $dbID == $focus;
+    
     my $variation_name = $_->variation_name;
     my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
     my $start          = $_->start;
@@ -430,11 +428,9 @@ sub set_codons {
 }
 
 sub markup_exons {
-  my $self = shift;
-  my ($sequence, $markup, $config) = @_;
-  
-  my (%exon_types, $exon, $type, $s, $seq);
+  my ($self, $sequence, $markup, $config) = @_;
   my $i = 0;
+  my (%exon_types, $exon, $type, $s, $seq);
   
   my $class = {
     exon0   => 'e0',
@@ -449,11 +445,11 @@ sub markup_exons {
     $seq = $sequence->[$i];
     
     foreach (sort { $a <=> $b } keys %{$data->{'exons'}}) {
-      $exon = $data->{'exons'}->{$_};
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $exon->{'id'} if $config->{'title_display'};
+      $exon = $data->{'exons'}{$_};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $exon->{'id'} if $config->{'title_display'};
       
       foreach $type (@{$exon->{'type'}}) {
-        $seq->[$_]->{'class'} .= "$class->{$type} " unless $seq->[$_]->{'class'} =~ /\b$class->{$type}\b/;
+        $seq->[$_]{'class'} .= "$class->{$type} " unless $seq->[$_]{'class'} =~ /\b$class->{$type}\b/;
         $exon_types{$type} = 1;
       }
     }
@@ -461,29 +457,27 @@ sub markup_exons {
     $i++;
   }
   
-  $config->{'key'}->{'exons'}->{$_} = 1 for keys %exon_types;
+  $config->{'key'}{'exons'}{$_} = 1 for keys %exon_types;
 }
 
 sub markup_codons {
-  my $self = shift;
-  my ($sequence, $markup, $config) = @_;
-
-  my ($class, $seq);
+  my ($self, $sequence, $markup, $config) = @_;
   my $i = 0;
+  my ($class, $seq);
 
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
     foreach (sort { $a <=> $b } keys %{$data->{'codons'}}) {
-      $class = $data->{'codons'}->{$_}->{'class'} || 'co';
+      $class = $data->{'codons'}{$_}{'class'} || 'co';
       
-      $seq->[$_]->{'class'} .= "$class ";
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $data->{'codons'}->{$_}->{'label'} if $config->{'title_display'};
+      $seq->[$_]{'class'} .= "$class ";
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $data->{'codons'}{$_}{'label'} if $config->{'title_display'};
       
       if ($class eq 'cu') {
-        $config->{'key'}->{'utr'} = 1;
+        $config->{'key'}{'utr'} = 1;
       } else {
-        $config->{'key'}->{'codons'}->{$class} = 1;
+        $config->{'key'}{'codons'}{$class} = 1;
       }
     }
     
@@ -492,12 +486,10 @@ sub markup_codons {
 }
 
 sub markup_variation {
-  my $self = shift;
-  my ($sequence, $markup, $config) = @_;
-
-  my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
+  my ($self, $sequence, $markup, $config) = @_;
   my $hub = $self->hub;
   my $i   = 0;
+  my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
   
   my $class = {
     snp    => 'sn',
@@ -532,9 +524,7 @@ sub markup_variation {
 }
 
 sub markup_comparisons {
-  my $self = shift;
-  my ($sequence, $markup, $config) = @_;
-  
+  my ($self, $sequence, $markup, $config) = @_;
   my $name_length = length($config->{'ref_slice_name'} || $config->{'species'});
   my $max_length  = $name_length;
   my $padding     = '';
@@ -559,17 +549,17 @@ sub markup_comparisons {
   
   foreach (@{$config->{'seq_order'}}) {
     $pad = ' ' x ($max_length - length $_);
-    $config->{'padded_species'}->{$_} = $_ . $pad;
+    $config->{'padded_species'}{$_} = $_ . $pad;
   }
   
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
     foreach (sort {$a <=> $b} keys %{$data->{'comparisons'}}) {
-      $comparison = $data->{'comparisons'}->{$_};
+      $comparison = $data->{'comparisons'}{$_};
       
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
-      $seq->[$_]->{'class'} .= 'res ' if $comparison->{'resequencing'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
+      $seq->[$_]{'class'} .= 'res ' if $comparison->{'resequencing'};
     }
     
     $i++;
@@ -579,34 +569,29 @@ sub markup_comparisons {
 }
 
 sub markup_conservation {
-  my $self = shift;
-  my ($sequence, $config) = @_;
-
-  # Regions where more than 50% of bps match considered "conserved"
-  my $cons_threshold = int((scalar(@$sequence) + 1) / 2);
+  my ($self, $sequence, $config) = @_;
+  my $cons_threshold = int((scalar(@$sequence) + 1) / 2); # Regions where more than 50% of bps match considered "conserved"
+  my $conserved      = 0;
   
-  my $conserved = 0;
-  
-  for my $i (0..$config->{'length'}-1) {
+  for my $i (0..$config->{'length'} - 1) {
     my %cons;
-    map $cons{$_->[$i]->{'letter'}}++, @$sequence;
+    map $cons{$_->[$i]{'letter'}}++, @$sequence;
     
     my $c = join '', grep { $_ !~ /~|[-.N]/ && $cons{$_} > $cons_threshold } keys %cons;
     
     foreach (@$sequence) {
-      next unless $_->[$i]->{'letter'} eq $c;
+      next unless $_->[$i]{'letter'} eq $c;
       
-      $_->[$i]->{'class'} .= 'con ';
+      $_->[$i]{'class'} .= 'con ';
       $conserved = 1;
     }
   }
   
-  $config->{'key'}->{'conservation'} = 1 if $conserved;
+  $config->{'key'}{'conservation'} = 1 if $conserved;
 }
 
 sub markup_line_numbers {
-  my $self = shift;
-  my ($sequence, $config) = @_;
+  my ($self, $sequence, $config) = @_;
  
   # Keep track of which element of $sequence we are looking at
   my $n = 0;
@@ -648,7 +633,7 @@ sub markup_line_numbers {
             };
             
             # Padding to go before the label
-            $config->{'padding'}->{'pre_number'} = length $sl_seq_region_name if length $sl_seq_region_name > $config->{'padding'}->{'pre_number'};
+            $config->{'padding'}{'pre_number'} = length $sl_seq_region_name if length $sl_seq_region_name > $config->{'padding'}{'pre_number'};
           }
           
           $start_pos += length $sl_seq;
@@ -676,47 +661,40 @@ sub markup_line_numbers {
       });
     }
     
-    my $data = shift @numbering;
-    
-    my $s = 0;
-    my $e = $config->{'display_width'} - 1;
-    
+    my $data      = shift @numbering;
+    my $s         = 0;
+    my $e         = $config->{'display_width'} - 1;
     my $row_start = $data->{'start'};
+    my $loop_end  = $config->{'length'} + $config->{'display_width'}; # One line longer than the sequence so we get the last line's numbers generated in the loop
     my ($start, $end);
-    
-    # One line longer than the sequence so we get the last line's numbers generated in the loop
-    my $loop_end = $config->{'length'} + $config->{'display_width'};
     
     while ($e < $loop_end) {
       my $shift = 0; # To check if we've got a new element from @numbering
-      
-      $start = '';
-      $end   = '';
+         $start = '';
+         $end   = '';
       
       # Comparison species
       if ($align_slice) {
         # Build a segment containing the current line of sequence
-        my $segment = substr $slice->{'seq'}, $s, $config->{'display_width'};
+        my $segment         = substr $slice->{'seq'}, $s, $config->{'display_width'};
         (my $seq_length_seg = $segment) =~ s/\.//g;
-        my $seq_length = length $seq_length_seg; # The length of the sequence which does not consist of a .
-    
-        my $first_bp_pos = 0; # Position of first letter character
-        my $last_bp_pos  = 0; # Position of last letter character
-
+        my $seq_length      = length $seq_length_seg; # The length of the sequence which does not consist of a .
+        my $first_bp_pos    = 0; # Position of first letter character
+        my $last_bp_pos     = 0; # Position of last letter character
+        my $old_label       = '';
+        
         if ($segment =~ /\w/) {
           $segment      =~ /(^\W*).*\b(\W*$)/;
           $first_bp_pos = 1 + length $1 unless length($1) == length $segment;
           $last_bp_pos  = $2 ? length($segment) - length($2) : length $segment;
         }
         
-        my $old_label = '';
-        
         # Get the data from the next slice if we have passed the end of the current one
-        while (scalar @numbering && $e >= $numbering[0]->{'start_pos'}) {          
+        while (scalar @numbering && $e >= $numbering[0]{'start_pos'}) {          
           $old_label ||= $data->{'label'} if ($data->{'end_pos'} > $s); # Only get the old label for the first new slice - the one at the start of the line
-          $shift = 1;
-
-          $data = shift @numbering;
+          $shift       = 1;
+          $data        = shift @numbering;
+          
           $data->{'old_label'} = $old_label;
           
           # Only set $row_start if the line begins with a .
@@ -725,23 +703,17 @@ sub markup_line_numbers {
         }
         
         if ($seq_length && $last_bp_pos) {
-          # This is NOT necessarily the same as $end + $data->{'dir'}, as bits of sequence could be hidden
-          (undef, $row_start) = $slice->get_original_seq_region_position($s + $first_bp_pos);
+          (undef, $row_start) = $slice->get_original_seq_region_position($s + $first_bp_pos); # This is NOT necessarily the same as $end + $data->{'dir'}, as bits of sequence could be hidden
+          (undef, $end)       = $slice->get_original_seq_region_position($e + 1 + $last_bp_pos - $config->{'display_width'}); # For AlignSlice display the position of the last meaningful bp
           
           $start = $row_start;
-
-          # For AlignSlice display the position of the last meaningful bp
-          (undef, $end) = $slice->get_original_seq_region_position($e + 1 + $last_bp_pos - $config->{'display_width'});
         }
 
         $s = $e + 1;
       } else { # Single species
-        $end = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'display_width'}) - $data->{'dir'} : $data->{'end'};
-        
-        $start = $row_start;
-                
-        # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
-        $row_start = $end + $data->{'dir'} if $end;
+        $end       = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'display_width'}) - $data->{'dir'} : $data->{'end'};
+        $start     = $row_start;
+        $row_start = $end + $data->{'dir'} if $end; # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
       }
       
       my $label      = $start && $config->{'comparison'} ? $data->{'label'} : '';
@@ -765,13 +737,10 @@ sub markup_line_numbers {
 }
 
 sub build_sequence {
-  my $self = shift;
-  my ($sequence, $config) = @_;
-  
+  my ($self, $sequence, $config) = @_;
   my $line_numbers = $config->{'line_numbers'};
-  my $s = 0;
-  my $html; 
-  my @output;
+  my $s            = 0;
+  my ($html, @output);
   
   # Temporary patch because Firefox doesn't copy/paste anything but inline styles
   # If we remove this patch, look at version 1.79 for the correct code to revert to
@@ -779,18 +748,18 @@ sub build_sequence {
   my $single_line    = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
   
   foreach my $lines (@$sequence) {
-    my ($row, $pre, $post, $count, $i);
-    
     my %current  = ( tag => 'span', class=> '', title => '', href => '' );
     my %previous = ( tag => 'span', class=> '', title => '', href => '' );
     my %new_line = ( tag => 'span', class=> '', title => '', href => '' );
+    my ($row, $pre, $post, $count, $i);
     
     foreach my $seq (@$lines) {
-      $previous{$_} = $current{$_} for keys %current;
+      my $style;
       
+      $previous{$_}     = $current{$_} for keys %current;
       $current{'title'} = $seq->{'title'}  ? qq{title="$seq->{'title'}"} : '';
-      $current{'href'}  = $seq->{'href'}   ? qq{href="$seq->{'href'}"}  : '';;
-      $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"' : 'span';
+      $current{'href'}  = $seq->{'href'}   ? qq{href="$seq->{'href'}"}   : '';;
+      $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
       
       if ($seq->{'class'}) {
         $current{'class'} = $seq->{'class'};
@@ -807,13 +776,11 @@ sub build_sequence {
       
       $post .= $seq->{'post'};
       
-      my $style;
-      
       if ($current{'class'}) {
         my %style_hash;
         
-        foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $current{'class'}) {
-          my $st = $class_to_style{$_}->[1];
+        foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } split ' ', $current{'class'}) {
+          my $st = $class_to_style{$_}[1];
           map $style_hash{$_} = $st->{$_}, keys %$st;
         }
         
@@ -846,8 +813,8 @@ sub build_sequence {
           } elsif ($new_line{'class'}) {
             my %style_hash;
             
-            foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $new_line{'class'}) {
-              my $st = $class_to_style{$_}->[1];
+            foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } split ' ', $new_line{'class'}) {
+              my $st = $class_to_style{$_}[1];
               map $style_hash{$_} = $st->{$_}, keys %$st;
             }
             
@@ -859,7 +826,7 @@ sub build_sequence {
         
         if ($config->{'comparison'}) {
           if (scalar keys %{$config->{'padded_species'}}) {
-            $pre = $config->{'padded_species'}->{$config->{'seq_order'}->[$s]} || $config->{'display_species'};
+            $pre = $config->{'padded_species'}{$config->{'seq_order'}[$s]} || $config->{'display_species'};
           } else {
             $pre = $config->{'display_species'};
           }
@@ -886,28 +853,28 @@ sub build_sequence {
     my $y = 0;
     
     foreach (@output) {
-      my $line = $_->[$x]->{'line'};
+      my $line = $_->[$x]{'line'};
       my $num  = shift @{$line_numbers->{$y}};
       
       if ($config->{'number'}) {
-        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'label'});
-        my $pad2 = ' ' x ($config->{'padding'}->{'number'}     - length $num->{'start'});
+        my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
+        my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
 
         $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
       }
       
-      $line .= ' ' x ($config->{'display_width'} - $_->[$x]->{'length'}) if $x == $length && ($config->{'end_number'} || $_->[$x]->{'post'});
+      $line .= ' ' x ($config->{'display_width'} - $_->[$x]{'length'}) if $x == $length && ($config->{'end_number'} || $_->[$x]{'post'});
       
       if ($config->{'end_number'}) {
         my $n    = $num->{'post_label'} || $num->{'label'};
-        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $n);
-        my $pad2 = ' ' x ($config->{'padding'}->{'number'}     - length $num->{'end'});
+        my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $n);
+        my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'end'});
         
         $line .= $config->{'h_space'} . sprintf ' %6s', "$pad1$n$pad2$num->{'end'}";
       }
      
-      $line = "$_->[$x]->{'pre'}$line" if $_->[$x]->{'pre'};
-      $line .= $_->[$x]->{'post'}      if $_->[$x]->{'post'};
+      $line = "$_->[$x]{'pre'}$line" if $_->[$x]{'pre'};
+      $line .= $_->[$x]{'post'}      if $_->[$x]{'post'};
       $html .= "$line\n";
       
       $y++;
@@ -921,11 +888,11 @@ sub build_sequence {
   
   if ($config->{'sub_slice_start'}) {
     my $partial_key;
-    $partial_key->{$_} = $config->{$_} for grep $config->{$_},          @{$self->{'key_params'}};
-    $partial_key->{$_} = 1             for grep $config->{'key'}->{$_}, @{$self->{'key_types'}};
+    $partial_key->{$_} = $config->{$_} for grep $config->{$_},        @{$self->{'key_params'}};
+    $partial_key->{$_} = 1             for grep $config->{'key'}{$_}, @{$self->{'key_types'}};
     
-    foreach my $type (grep $config->{'key'}->{$_}, qw(exons variations)) {
-      $partial_key->{$type}->{$_} = 1 for keys %{$config->{'key'}->{$type}};
+    foreach my $type (grep $config->{'key'}{$_}, qw(exons variations)) {
+      $partial_key->{$type}{$_} = 1 for keys %{$config->{'key'}{$type}};
     }
     
     $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
@@ -936,9 +903,7 @@ sub build_sequence {
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly
 sub chunked_content {
-  my $self = shift;
-  my ($total_length, $chunk_length, $base_url) = @_;
-
+  my ($self, $total_length, $chunk_length, $base_url) = @_;
   my $hub = $self->hub;
   my $i   = 1;
   my $j   = $chunk_length;
@@ -992,9 +957,9 @@ sub class_to_style {
     );
     
     foreach (keys %$var_styles) {
-      my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}->{'default'}) };
+      my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}{'default'}) };
       
-      $style->{'color'} = $colourmap->hex_by_name($var_styles->{$_}->{'label'}) if $var_styles->{$_}->{'label'};
+      $style->{'color'} = $colourmap->hex_by_name($var_styles->{$_}{'label'}) if $var_styles->{$_}{'label'};
       
       $class_to_style{$_} = [ $i++, $style ];
     }
@@ -1018,10 +983,10 @@ sub content_key {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
-  $config->{'key'}->{$_} = $hub->param($_) for @{$self->{'key_types'}};
+  $config->{'key'}{$_} = $hub->param($_) for @{$self->{'key_types'}};
   
   for my $p (grep $hub->param($_), qw(exons variations)) {
-    $config->{'key'}->{$p}->{$_} = 1 for $hub->param($p);
+    $config->{'key'}{$p}{$_} = 1 for $hub->param($p);
   }
 
   return $self->get_key($config);
@@ -1029,7 +994,6 @@ sub content_key {
 
 sub get_key {
   my ($self, $config, $k) = @_;
-  
   my $hub            = $self->hub;
   my $class_to_style = $self->class_to_style;
   my $image_config   = $hub->get_imageconfig('text_seq_legend');
@@ -1103,9 +1067,7 @@ sub get_key {
 }
 
 sub export_sequence {
-  my $self = shift;
-  my ($sequence, $config, $filename, $block_mode) = @_;
-  
+  my ($self, $sequence, $config, $filename, $block_mode) = @_;
   my @colours        = (undef);
   my $class_to_style = $self->class_to_style;
   my $spacer         = $config->{'v_space'} ? ' ' x $config->{'display_width'} : '';
@@ -1114,14 +1076,14 @@ sub export_sequence {
   my $j              = 0;
   my @output;
   
-  foreach my $class (sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } keys %$class_to_style) {
+  foreach my $class (sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } keys %$class_to_style) {
     my $rtf_style = {};
     
-    $rtf_style->{'\cf' . $c++}      = substr $class_to_style->{$class}->[1]->{'color'}, 1            if $class_to_style->{$class}->[1]->{'color'};
-    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}->[1]->{'background-color'}, 1 if $class_to_style->{$class}->[1]->{'background-color'};
-    $rtf_style->{'\b'}              = 1                                                              if $class_to_style->{$class}->[1]->{'font-weight'} eq 'bold';
+    $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1            if $class_to_style->{$class}[1]{'color'};
+    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}[1]{'background-color'}, 1 if $class_to_style->{$class}[1]{'background-color'};
+    $rtf_style->{'\b'}              = 1                                                          if $class_to_style->{$class}[1]{'font-weight'} eq 'bold';
     
-    $class_to_style->{$class}->[1] = $rtf_style;
+    $class_to_style->{$class}[1] = $rtf_style;
     
     push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
   }
@@ -1129,7 +1091,7 @@ sub export_sequence {
   foreach my $lines (@$sequence) {
     my ($section, $class, $previous_class, $count);
     
-    $lines->[-1]->{'end'} = 1;
+    $lines->[-1]{'end'} = 1;
     
     foreach my $seq (@$lines) {
       if ($seq->{'class'}) {
@@ -1144,19 +1106,19 @@ sub export_sequence {
         $class = '';
       }
       
-      $class = join ' ', sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } split /\s+/, $class;
+      $class = join ' ', sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } split /\s+/, $class;
       
       $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/ if $seq->{'url'};
       
       if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
-        my $style = join '', map keys %{$class_to_style->{$_}->[1]}, split / /, $previous_class;
+        my $style = join '', map keys %{$class_to_style->{$_}[1]}, split ' ', $previous_class;
         
         $section .= $seq->{'letter'} if $seq->{'end'};
         
         if (!scalar @{$output[$i][$j] || []} && $config->{'number'}) {
-          my $num  = shift @{$config->{'line_numbers'}->{$i}};
-          my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'label'});
-          my $pad2 = ' ' x ($config->{'padding'}->{'number'}     - length $num->{'start'});
+          my $num  = shift @{$config->{'line_numbers'}{$i}};
+          my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
+          my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
           
           push @{$output[$i][$j]}, [ \'', $config->{'h_space'} . sprintf '%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}" ];
         }
@@ -1171,7 +1133,7 @@ sub export_sequence {
         $section = '';
       }
       
-      $section .= $seq->{'letter'};
+      $section       .= $seq->{'letter'};
       $previous_class = $class;
       $count++;
     }
