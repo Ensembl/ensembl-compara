@@ -209,6 +209,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   getSequenceKey: function () {
     Ensembl.EventManager.unregister('ajaxComplete', this);
-    return JSON.parse($('.sequence_key_json', this.el).html());
+    return JSON.parse($('.sequence_key_json', this.el).html() || false);
   }
 });
