@@ -313,10 +313,12 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [
+                    # We move HMM profiles
                     'INSERT INTO protein_tree_hmmprofile SELECT root_id, "aa", value FROM gene_tree_root_tag WHERE tag = "hmm_aa";',
                     'INSERT INTO protein_tree_hmmprofile SELECT root_id, "dna", value FROM gene_tree_root_tag WHERE tag = "hmm_dna";',
                     'DELETE FROM gene_tree_root_tag WHERE tag IN ("hmm_aa", "hmm_dna");',
-                    'INSERT INTO protein_tree_member_score SELECT node_id, member_id, value FROM gene_tree_node_tag JOIN gene_tree_member USING (node_id)  WHERE tag = "aln_score";',
+                    # We move mcoffee scores
+                    'INSERT INTO protein_tree_member_score SELECT node_id, value FROM gene_tree_node_tag WHERE tag = "aln_score";',
                     'DELETE FROM gene_tree_node_tag WHERE tag = "aln_score";',
                 ],
             },

@@ -646,12 +646,15 @@ CREATE TABLE gene_tree_node (
   left_index                      int(10) NOT NULL DEFAULT 0,
   right_index                     int(10) NOT NULL DEFAULT 0,
   distance_to_parent              double default 1.0 NOT NULL,
+  member_id                       int(10) unsigned,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
   FOREIGN KEY (parent_id) REFERENCES gene_tree_node(node_id),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
 
   PRIMARY KEY (node_id),
   KEY parent_id (parent_id),
+  KEY member_id (member_id),
   KEY root_id (root_id),
   KEY root_id_left_index (root_id,left_index)
 
@@ -700,19 +703,15 @@ CREATE TABLE gene_tree_root (
 #   to allow certain nodes (leaves) to have aligned members attached to them
 # semantics:
 #    node_id                  -- the id of node associated with this name
-#    member_id                -- link to member.member_id in many-1 relation (single member per node)
 #    cigar_line               -- compressed alignment information
 
 CREATE TABLE gene_tree_member (
   node_id                     int(10) unsigned NOT NULL,
-  member_id                   int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
 
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
 
-  PRIMARY KEY (node_id),
-  KEY (member_id)
+  PRIMARY KEY (node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 

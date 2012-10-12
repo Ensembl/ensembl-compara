@@ -97,7 +97,7 @@ sub run {
     print $HANDLE "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     print $HANDLE "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
 
-    my $sql = 'SELECT member.taxon_id, name, member_id, stable_id, assembly, genebuild,source_name FROM gene_tree_member JOIN member USING (member_id) JOIN genome_db USING (genome_db_id) ORDER BY taxon_id, member_id';
+    my $sql = 'SELECT member.taxon_id, name, member_id, stable_id, assembly, genebuild,source_name FROM gene_tree_node JOIN member USING (member_id) JOIN genome_db USING (genome_db_id) ORDER BY taxon_id, member_id';
     my $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
     $sth->execute;
     my $last;

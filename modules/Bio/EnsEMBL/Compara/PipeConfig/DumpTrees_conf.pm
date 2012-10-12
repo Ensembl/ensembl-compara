@@ -143,8 +143,7 @@ sub pipeline_analyses {
                     FROM
                         gene_tree_root gtr
                         JOIN gene_tree_node gtn ON (gtn.root_id = gtr.root_id)
-                        JOIN gene_tree_member gtm ON (gtn.node_id = gtm.node_id)
-                        JOIN member m on (gtm.member_id = m.member_id)
+                        JOIN member m on (gtn.member_id = m.member_id)
                         JOIN member gm on (m.gene_member_id = gm.member_id)
                         JOIN member pm on (gm.member_id = pm.gene_member_id)
                     WHERE

@@ -310,17 +310,17 @@ sub store_node {
     my $root_id = $node->root->node_id;
     #print "inserting new_noe=$new_node parent_id=$parent_id, root_id=$root_id\n";
 
-    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?  WHERE node_id=?");
+    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, member_id =  WHERE node_id=?");
     #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
-    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $node->node_id);
+    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $node->node_id, $node->member_id);
     $sth->finish;
 
     $node->adaptor($self);
 
     if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
         if ($new_node) {
-            $sth = $self->prepare("INSERT INTO gene_tree_member (node_id, member_id, cigar_line)  VALUES (?,?,?)");
-            $sth->execute($node->node_id, $node->member_id, $node->cigar_line);
+            $sth = $self->prepare("INSERT INTO gene_tree_member (node_id, cigar_line)  VALUES (?,?)");
+            $sth->execute($node->node_id, $node->cigar_line);
             $sth->finish;
         } else {
             $sth = $self->prepare('UPDATE gene_tree_member SET cigar_line=? WHERE node_id = ?');
@@ -358,7 +358,6 @@ sub delete_flattened_leaf {
   my $node_id = $node->node_id;
   $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from gene_tree_member WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 
@@ -372,7 +371,6 @@ sub delete_node {
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
   $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from gene_tree_member WHERE node_id = $node_id");
   $self->dbc->do("UPDATE gene_tree_node SET root_id = NULL WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
@@ -435,7 +433,7 @@ sub _tables {
 sub _left_join {
     return (
         ['gene_tree_member', 't.node_id = tm.node_id'],
-        ['member', 'tm.member_id = m.member_id'],
+        ['member', 't.member_id = m.member_id'],
     );
 }
 

@@ -33,8 +33,7 @@ CREATE TEMPORARY TABLE tmp_ntrees
 		SUM(gene_tree_node_attr.taxon_id IS NOT NULL AND gene_tree_node_attr.taxon_id != member.taxon_id) AS nb_pep_anctree
 	FROM
 		member
-		JOIN gene_tree_member USING (member_id)
-		JOIN gene_tree_node USING (node_id)
+		JOIN gene_tree_node USING (member_id)
 		JOIN gene_tree_root USING (root_id)
 		JOIN gene_tree_node_attr ON (gene_tree_node.root_id = gene_tree_node_attr.node_id)
 	WHERE
@@ -84,9 +83,8 @@ CREATE TEMPORARY TABLE tmp_root_properties
 		COUNT(member_id) AS nb_pep,
 		COUNT(DISTINCT member.taxon_id) AS nb_spec
 	FROM
-		gene_tree_member
-		JOIN member USING (member_id)
-		JOIN gene_tree_node USING (node_id)
+		member
+		JOIN gene_tree_node USING (member_id)
 		JOIN gene_tree_root USING (root_id)
 		JOIN gene_tree_node_attr ON gene_tree_node_attr.node_id=gene_tree_node.root_id
 	WHERE

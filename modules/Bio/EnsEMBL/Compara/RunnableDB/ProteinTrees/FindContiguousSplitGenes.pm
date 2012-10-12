@@ -250,7 +250,7 @@ sub store_split_genes {
     my $connected_split_genes = $self->param('connected_split_genes');
     my $holding_node = $connected_split_genes->holding_node;
 
-    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ?');
+    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ?');
     $sth0->execute($self->param('gene_tree_id'));
     $sth0->finish;
 

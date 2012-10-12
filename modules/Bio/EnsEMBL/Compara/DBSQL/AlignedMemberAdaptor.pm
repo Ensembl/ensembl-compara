@@ -160,7 +160,7 @@ sub fetch_all_by_GeneTree {
     assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree');
 
     my $extra_columns = ['gtm.cigar_line'];
-    my $join = [[['gene_tree_member', 'gtm'], 'm.member_id = gtm.member_id', $extra_columns], [['gene_tree_node', 'gtn'], 'gtm.node_id = gtn.node_id']];
+    my $join = [[['gene_tree_member', 'gtm'], 'm.member_id = gtn.member_id', $extra_columns], [['gene_tree_node', 'gtn'], 'gtm.node_id = gtn.node_id']];
     my $constraint = 'gtn.root_id = ?';
 
     $self->bind_param_generic_fetch($tree->root_id, SQL_INTEGER);

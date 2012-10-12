@@ -173,7 +173,7 @@ sub fetch_groupset {        # see Bio::EnsEMBL::Compara::StableId::Adaptor::load
   my $default_noname = 'NoName';
   my $dataset;
 
-  my $sql = "SELECT gtn.root_id, m2.stable_id FROM gene_tree_node gtn, gene_tree_member gtm, member m1, member m2 WHERE gtm.member_id=m1.member_id AND m1.gene_member_id=m2.member_id AND gtn.node_id = gtm.node_id";
+  my $sql = "SELECT gtn.root_id, m2.stable_id FROM gene_tree_node gtn, member m1, member m2 WHERE gtn.member_id=m1.member_id AND m1.gene_member_id=m2.member_id";
 
   my $sth = $given_compara_dba->dbc->prepare($sql);
   $sth->execute();

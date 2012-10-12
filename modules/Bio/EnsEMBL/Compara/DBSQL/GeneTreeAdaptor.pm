@@ -226,7 +226,7 @@ sub fetch_all_by_Member {
     # Discard the UNIPROT members
     return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
-    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['gene_tree_member', 'gtm'], 'gtn.node_id = gtm.node_id'], [['member', 'm'], 'gtm.member_id = m.member_id']];
+    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['member', 'm'], 'gtn.member_id = m.member_id']];
     my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
     
     my $member_id = (ref($member) ? $member->dbID : $member);
@@ -266,7 +266,7 @@ sub fetch_default_for_Member {
     # Discard the UNIPROT members
     return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
-    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['gene_tree_member', 'gtm'], 'gtn.node_id = gtm.node_id'], [['member', 'm'], 'gtm.member_id = m.member_id']];
+    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['member', 'm'], 'gtm.member_id = m.member_id']];
     my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?)) AND (gtr.clusterset_id = "default")';
     
     my $member_id = (ref($member) ? $member->dbID : $member);
