@@ -428,35 +428,6 @@ sub fetch_all_by_subset_id {
 }
 
 
-=head2 fetch_gene_for_peptide_member_id
-
-  Arg [1]    : int member_id of a peptide member
-  Example    : $geneMember = $memberAdaptor->fetch_gene_for_peptide_member_id($peptide_member_id);
-  Description: given a member_id of a peptide member,
-               does a join to a copy of member table to extract a member for its gene
-  Returntype : Bio::EnsEMBL::Compara::Member object
-  Exceptions :
-  Caller     : general
-
-=cut
-
-sub fetch_gene_for_peptide_member_id {
-  my ($self, $peptide_member_id) = @_;
-
-  throw() unless (defined $peptide_member_id);
-
-  my $constraint = "pepm.member_id = '$peptide_member_id'";
-
-  my $join = [[['member', 'pepm'], 'm.member_id = pepm.gene_member_id']];
-
-  my $obj = undef;
-  eval {
-    ($obj) = @{$self->generic_fetch($constraint, $join)};
-  };
-  return $obj;
-}
-
-
 =head2 fetch_all_peptides_for_gene_member_id
 
   Arg [1]    : int member_id of a gene member
