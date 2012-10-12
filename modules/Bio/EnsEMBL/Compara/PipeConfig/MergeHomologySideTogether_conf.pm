@@ -91,7 +91,7 @@ sub default_options {
 #             -dbname => 'mm14_compara_homology_66',
 #         },
 
-        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'protein_tree_member_score', 'protein_tree_hmmprofile' ],
+        'genetrees_copy_tables'  => [ 'protein_tree_member_score', 'protein_tree_hmmprofile' ],
         'genetrees_merge_tables' => [ 'subset', 'subset_member', 'stable_id_history', 'homology', 'homology_member', 'method_link_species_set_tag', 'species_tree_root', 'species_tree_node', 'species_tree_node_tag', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
             'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',

@@ -132,7 +132,7 @@ sub write_output {
 
             if (exists $cds_seq->{$sequence->id}) {
                 $pep_member->sequence_cds( $cds_seq->{$sequence->id}->seq );
-                $self->param('sequence_adaptor')->store_sequence_cds($pep_member);
+                $self->param('sequence_adaptor')->store_other_sequence($pep_member, $cds_seq->{$sequence->id}->seq, 'cds');
             }
       };
 

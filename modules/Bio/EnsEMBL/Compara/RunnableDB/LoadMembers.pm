@@ -336,9 +336,9 @@ sub store_gene_and_all_transcripts {
     my $stable_id = $pep_member->stable_id;
     $member_adaptor->store($pep_member);
     if ($self->param('store_related_pep_sequences')) {
-        $sequence_adaptor->store_sequence_cds($pep_member);
+        $sequence_adaptor->store_other_sequence($pep_member, $pep_member->sequence_cds, 'cds');
         $pep_member->sequence_cds('');
-        $sequence_adaptor->store_sequence_exon_bounded($pep_member);
+        $sequence_adaptor->store_other_sequence($pep_member, $pep_member->sequence_exon_bounded, 'exon_bounded');
         $pep_member->sequence_exon_bounded('');
     }
 

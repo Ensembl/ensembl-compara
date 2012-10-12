@@ -467,34 +467,20 @@ CREATE TABLE subset_member (
 
 
 #
-# Table structure for table 'sequence_exon_bounded' (holds the sequence exon boundaries information)
+# Table structure for table 'other_member_sequence' (holds any other member-related sequences)
 #
 
-CREATE TABLE sequence_exon_bounded (
+CREATE TABLE other_member_sequence (
   member_id                   int(10) unsigned NOT NULL, # unique internal id
+  seq_type                    VARCHAR(40) NOT NULL,
   length                      int(10) NOT NULL,
-  sequence_exon_bounded       longtext NOT NULL,
+  sequence                    longtext NOT NULL,
 
   FOREIGN KEY (member_id) REFERENCES member(member_id),
 
-  PRIMARY KEY (member_id),
-  KEY sequence_exon_bounded (sequence_exon_bounded(18))
-) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-#
-# Table structure for table 'sequence_cds' ( holds the sequence cds information )
-#
-
-CREATE TABLE sequence_cds (
-  member_id                   int(10) unsigned NOT NULL, # unique internal id
-  length                      int(10) NOT NULL,
-  sequence_cds                longtext NOT NULL,
-
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
-
-  PRIMARY KEY (member_id),
-  KEY sequence_cds (sequence_cds(64))
+  PRIMARY KEY (member_id, seq_type),
+  KEY (seq_type, member_id),
+  KEY sequence (sequence(18))
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 

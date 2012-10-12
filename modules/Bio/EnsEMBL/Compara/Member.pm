@@ -635,7 +635,7 @@ sub sequence_exon_bounded {
   }
 
   if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_SequenceAdaptor->fetch_sequence_exon_bounded_by_member_id($self->member_id);
+    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded');
   }
 
   if(!defined($self->{'_sequence_exon_bounded'})) {
@@ -698,7 +698,7 @@ sub sequence_cds {
   }
 
   if(!defined($self->{'_sequence_cds'})) {
-    $self->{'_sequence_cds'} = $self->adaptor->db->get_SequenceAdaptor->fetch_sequence_cds_by_member_id($self->member_id);
+    $self->{'_sequence_cds'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'cds');
   }
 
   if(!defined($self->{'_sequence_cds'})) {

@@ -522,7 +522,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
-                1 => [ 'subset_table_reuse', 'sequence_cds_table_reuse', 'sequence_exon_bounded_table_reuse' ],
+                1 => [ 'subset_table_reuse', 'other_sequence_reuse' ],
             },
         },
 
@@ -553,31 +553,17 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'sequence_cds_table_reuse',
+        {   -logic_name => 'other_sequence_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT s.member_id, s.length, s.sequence_cds FROM sequence_cds s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
+                            'inputquery' => 'SELECT s.member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '500Mb_job',
+            -rc_name => '1Gb_job',
             -flow_into => {
-                2 => [ 'mysql:////sequence_cds' ],
-            },
-        },
-
-        {   -logic_name => 'sequence_exon_bounded_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                            'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT s.member_id, s.length, s.sequence_exon_bounded FROM sequence_exon_bounded s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
-                            'fan_branch_code' => 2,
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '500Mb_job',
-            -flow_into => {
-                2 => [ 'mysql:////sequence_exon_bounded' ],
+                2 => [ 'mysql:////other_member_sequence' ],
             },
         },
 

@@ -3,7 +3,7 @@ package Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -19,28 +19,30 @@ sub fetch_by_dbID {
   return $sequence;
 }
 
+sub fetch_other_sequence_by_member_id_type {
+  my ($self, $member_id, $type) = @_;
+
+  my $sql = "SELECT sequence FROM other_member_sequence WHERE member_id = ? AND seq_type = ?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($member_id, $type);
+
+  my ($seq) = $sth->fetchrow_array();
+  $sth->finish();
+  return $seq;
+}
+
+
 sub fetch_sequence_exon_bounded_by_member_id {
   my ($self, $member_id) = @_;
-
-  my $sql = "SELECT sequence_exon_bounded.sequence_exon_bounded FROM sequence_exon_bounded WHERE member_id = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($member_id);
-
-  my ($sequence_exon_bounded) = $sth->fetchrow_array();
-  $sth->finish();
-  return $sequence_exon_bounded;
+  deprecate('fetch_sequence_exon_bounded_by_member_id() is deprecated and will be removed in e72. Use fetch_other_sequence_by_member_id_type($member_id, "exon_bounded") instead.');
+  return $self->fetch_other_sequence_by_member_id_type($member_id, 'exon_bounded');
 }
 
 sub fetch_sequence_cds_by_member_id {
   my ($self, $member_id) = @_;
 
-  my $sql = "SELECT sequence_cds.sequence_cds FROM sequence_cds WHERE member_id = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($member_id);
-
-  my ($sequence_cds) = $sth->fetchrow_array();
-  $sth->finish();
-  return $sequence_cds;
+  deprecate('fetch_sequence_cds_by_member_id() is deprecated and will be removed in e72. Use fetch_other_sequence_by_member_id_type($member_id, "cds") instead.');
+  return $self->fetch_other_sequence_by_member_id_type($member_id, 'cds');
 }
 
 
@@ -85,25 +87,13 @@ sub store {
   return $seqID;
 }
 
-sub store_sequence_cds {
-    my ($self, $member) = @_;
-    my $seq_cds = $member->sequence_cds;
-    my $sth = $self->prepare("REPLACE INTO sequence_cds (member_id, length, sequence_cds) VALUES (?,?,?)");
-    return $sth->execute($member->dbID, length($seq_cds), $seq_cds);
+sub store_other_sequence {
+    my ($self, $member, $seq, $type) = @_;
+    my $sth = $self->prepare("REPLACE INTO other_member_sequence (member_id, seq_type, length, sequence) VALUES (?,?,?)");
+    return $sth->execute($member->dbID, $type, length($seq), $seq);
 }
-
-sub store_sequence_exon_bounded {
-    my ($self, $member) = @_;
-    my $seq_eb = $member->sequence_exon_bounded;
-    my $sth = $self->prepare("REPLACE INTO sequence_exon_bounded (member_id, length, sequence_exon_bounded) VALUES (?,?,?)");
-    return $sth->execute($member->dbID, length($seq_eb), $seq_eb);
-}
-
 
 
 1;
-
-
-
 
 
