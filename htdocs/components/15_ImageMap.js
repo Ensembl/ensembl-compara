@@ -76,7 +76,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
     
     $('a.image_resize', this.el).on('click', function () {      
-      panel.params.updateURL = panel.params.updateURL.replace(/;image_width=\d+$/, '') + ';image_width=' + ($('.imagemap',this.el).width() + (100 *($(this).hasClass('big') ? 1 : -1)));
+      panel.params.updateURL = panel.params.updateURL.replace(/;image_width=\d+$/, '') + ';image_width=' + ($('.imagemap',panel.el).width() + (100 *($(this).hasClass('big') ? 1 : -1)));
       panel.getContent();
       return false;      
     });
