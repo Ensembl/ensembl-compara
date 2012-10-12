@@ -29,6 +29,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     }).on('click', '.info_popup .close', function () {
       $(this).parent().hide();
     }).on('click', 'pre a.sequence_info', function (e) {
+        e.preventDefault();
+        
         var el    = $(this);
         var data  = el.data();
         var popup = data.link.data('popup');
@@ -59,8 +61,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         
         el    = null;
         popup = null;
-        
-        return false;
     });
   },
   
