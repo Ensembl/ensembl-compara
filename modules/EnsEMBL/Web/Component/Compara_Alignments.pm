@@ -40,7 +40,7 @@ sub content {
     my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
     
     $html .= sprintf(
-      '<p style="padding:0.5em 0 1.5em"><strong><a href="%s">Go to a graphical view</a> (Genomic align slice) of this alignment</strong></p>',
+      '<p style="font-weight:bold"><a href="%s">Go to a graphical view of this alignment</a></p>',
       $hub->url({
         type   => 'Location',
         action => 'Compara_Alignments/Image',
