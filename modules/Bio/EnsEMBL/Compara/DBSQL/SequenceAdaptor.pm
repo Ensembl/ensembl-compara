@@ -89,7 +89,7 @@ sub store {
 
 sub store_other_sequence {
     my ($self, $member, $seq, $type) = @_;
-    my $sth = $self->prepare("REPLACE INTO other_member_sequence (member_id, seq_type, length, sequence) VALUES (?,?,?)");
+    my $sth = $self->prepare("REPLACE INTO other_member_sequence (member_id, seq_type, length, sequence) VALUES (?,?,?,?)");
     return $sth->execute($member->dbID, $type, length($seq), $seq);
 }
 
