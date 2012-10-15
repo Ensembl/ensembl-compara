@@ -6,8 +6,6 @@ use strict;
 
 use RTF::Writer;
 
-use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
-
 use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::TmpFile::Text;
 
@@ -194,7 +192,7 @@ sub set_variations {
     my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
     my $start          = $_->start;
     my $end            = $_->end;
-    my $alleles        = $_->allele_string;
+    my $allele_string  = $self->get_allele_string($_, $strand);
     my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
        $snp_type       = lc [ grep $config->{'consequence_types'}{$_}, @{$_->consequence_type} ]->[0] if $config->{'consequence_types'};
        $snp_type       = 'failed' if $failed;
@@ -206,18 +204,6 @@ sub set_variations {
       $ambigcode = $var_class =~ /in-?del|insertion|deletion/ ? '*' : $_->ambig_code;
       $ambigcode = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>} if $ambigcode;
     }
-    
-    # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
-    if ($strand < 0) {
-      my @al = split '/', $alleles;
-      
-      $alleles  = '';
-      $alleles .= reverse($_) . '/' for @al;
-      $alleles  =~ s/\/$//;
-    }
-  
-    # If the variation is on reverse strand, flip the bases
-    $alleles =~ tr/ACGTacgt/TGCAtgca/ if $_->strand < 0;
     
     # Use the variation from the underlying slice if we have it.
     my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
@@ -283,15 +269,18 @@ sub set_variations {
       vdb     => 'variation'
     });
     
-    my $link_text = qq{ <a href="$url">$snp_start: $variation_name $alleles</a>;};
+    my $link_text  = qq{ <a href="$url">$snp_start: $variation_name $allele_string</a>;};
+    (my $ambiguity = $config->{'ambiguity'} ? $_->ambig_code : '') =~ s/-//g;
     
     for ($s..$e) {
       # Don't mark up variations when the secondary strain is the same as the sequence.
       # $sequence->[-1] is the current secondary strain, as it is the last element pushed onto the array
       next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.~$sequence->[0][$_]{'letter'}]/;
       
-      $markup->{'variations'}{$_}{'type'}     = $snp_type;
-      $markup->{'variations'}{$_}{'alleles'} .= ($markup->{'variations'}{$_}{'alleles'} ? '; ' : '') . $alleles;
+      $markup->{'variations'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
+      $markup->{'variations'}{$_}{'type'}      = $snp_type;
+      $markup->{'variations'}{$_}{'ambiguity'} = $ambiguity;
+      $markup->{'variations'}{$_}{'alleles'}  .= ($markup->{'variations'}{$_}{'alleles'} ? '; ' : '') . $allele_string;
       
       unshift @{$markup->{'variations'}{$_}{'link_text'}}, $link_text if $_ == $s;
 
@@ -308,11 +297,31 @@ sub set_variations {
       $sequence->[$_] = $ambigcode if $config->{'variation_sequence'} && $ambigcode;
     }
     
-    $config->{'focus_position'} = [ $s..$e ] if $variation_name eq $config->{'v'};
+    $config->{'focus_position'} = [ $s..$e ] if $dbID eq $config->{'focus_variant'};
   }
   
   $adaptor->db->include_failed_variations($include_failed) if $adaptor && defined $include_failed;
 }
+
+sub get_allele_string {
+  my ($self, $variation_feature, $strand) = @_;
+  my $allele_string = $variation_feature->allele_string;
+  
+  # If slice is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
+  if ($strand < 0) {
+    my @al = split '/', $allele_string;
+    
+    $allele_string  = '';
+    $allele_string .= reverse($_) . '/' for @al;
+    $allele_string  =~ s/\/$//;
+  }
+
+  # If the variation is on reverse strand, flip the bases
+  $allele_string =~ tr/ACGTacgt/TGCAtgca/ if $variation_feature->strand < 0;
+  
+  return $allele_string;
+}
+
 
 sub set_exons {
   my ($self, $config, $slice_data, $markup) = @_;
@@ -489,34 +498,29 @@ sub markup_variation {
   my ($self, $sequence, $markup, $config) = @_;
   my $hub = $self->hub;
   my $i   = 0;
-  my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
+  my ($seq, $variation);
   
   my $class = {
     snp    => 'sn',
     insert => 'si',
     delete => 'sd'
   };
-
+  
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
     foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {
-      $variation  = $data->{'variations'}{$_};
-      ($ambiguity = ambiguity_code($variation->{'alleles'}) || undef) =~ s/-//g;
-
-      $seq->[$_]{'letter'} = $ambiguity if $ambiguity && $config->{'ambiguity'};
+      $variation = $data->{'variations'}{$_};
+      
+      $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
-      $seq->[$_]{'class'} .= 'var '  if grep $config->{'v'} eq $_, @{$variation->{'href'}{'v'}}; # The page's variation
+      $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
       $seq->[$_]{'href'}   = $hub->url($variation->{'href'});
       $seq->[$_]{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
-
-      $snps    = 1 if $variation->{'type'} eq 'snp';
-      $inserts = 1 if $variation->{'type'} =~ /insert/;
-      $deletes = 1 if $variation->{'type'} eq 'delete';
       
-      $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'};
+      $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
     }
     
     $i++;
@@ -964,7 +968,7 @@ sub class_to_style {
       $class_to_style{$_} = [ $i++, $style ];
     }
     
-    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}", 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
+    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}", 'background-color' => 'transparent', 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
     
     $self->{'class_to_style'} = \%class_to_style;
   }
@@ -1054,16 +1058,19 @@ sub get_key {
   
   $image_config->image_width(650);
   
-  my $key_html;
-     $key_html .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"                if $config->{'population_filter'};
-     $key_html .= '<li>Variations are filtered by consequence type</li>',                                                                                   if $config->{'consequence_filter'};
-     $key_html .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                              if $config->{'key'}{'conservation'};
-     $key_html .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'    if $config->{'alignment_numbering'};
-     $key_html .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary ${strain}s matching the reference $strain are replaced with dots</li>" if $config->{'match_display'};
-     $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                            if $config->{'resequencing'};
-     $key_html  = "<ul>$key_html</ul>" if $key_html;
+  my $key_img = $image_config->{'legend'} ? $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render : '';
   
-  return '<h4>Key</h4>' . $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render . $key_html;
+  my $key_list;
+     $key_list .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"                if $config->{'population_filter'};
+     $key_list .= '<li>Variations are filtered by consequence type</li>',                                                                                   if $config->{'consequence_filter'};
+     $key_list .= sprintf '<li style="%s">Focus variant</li>', join ';', map "$_:$class_to_style->{'var'}[1]{$_}", keys %{$class_to_style->{'var'}[1]}      if $config->{'focus_variant'};
+     $key_list .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                              if $config->{'key'}{'conservation'};
+     $key_list .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'    if $config->{'alignment_numbering'};
+     $key_list .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary ${strain}s matching the reference $strain are replaced with dots</li>" if $config->{'match_display'};
+     $key_list .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                            if $config->{'resequencing'};
+     $key_list  = "<ul>$key_list</ul>" if $key_list;
+  
+  return "<h4>Key</h4>$key_img$key_list" if $key_img || $key_list;
 }
 
 sub export_sequence {
