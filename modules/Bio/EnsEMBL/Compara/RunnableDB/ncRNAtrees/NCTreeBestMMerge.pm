@@ -59,13 +59,7 @@ use strict;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
-
-sub param_defaults {
-    return {
-            'intermediate_prefix' => 'interm',
-           };
-}
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 
 =head2 fetch_input
@@ -96,11 +90,11 @@ sub fetch_input {
       # Fetch sequences:
   $self->param('nc_tree', $nc_tree);
 
+  $self->param('inputtrees_unrooted', {});
+  $self->param('inputtrees_rooted', {});
+  
   $self->load_input_trees;
 
-  my $treebest_exe = $self->param('treebest_exe')
-          or die "'treebest_exe' is an obligatory parameter";
-  die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
 }
 
 
@@ -117,11 +111,15 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
-  if (defined($self->param('inputtrees_unrooted'))) {
     $self->reroot_inputtrees;
-    $self->run_treebest_mmerge;
-    $self->calculate_branch_lengths;
-  }
+    my $input_trees = [values  %{$self->param('inputtrees_rooted')}];
+    my $merged_tree = $self->run_treebest_mmerge($input_trees);
+
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree')->root);
+    my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
+    $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree) if ($leafcount >= 3);
+    
+    $self->parse_newick_into_tree($merged_tree, $self->param('nc_tree'));
 }
 
 
@@ -142,13 +140,10 @@ sub write_output {
   $self->store_genetree($self->param('nc_tree')) if (defined($self->param('inputtrees_unrooted')));
 
   if ($self->param('store_intermediate_trees')) {
-       print STDERR "LOOKING AT: ", $self->worker_temp_directory, "/", $self->param('intermediate_prefix'), "*.rooted\n";
-       for my $filename (glob(sprintf('%s/%s*.rooted', $self->worker_temp_directory, $self->param('intermediate_prefix')))) {
-          $filename =~ /\.([^\.]*)\.rooted$/;
-          my $clusterset_id = $1;
-          my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
+       foreach my $clusterset_id (keys %{$self->param('inputtrees_rooted')}) {
+          my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
           my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('nc_tree'));
-          $self->parse_newick_into_tree($filename, $newtree);
+          $self->parse_newick_into_tree($self->param('inputtrees_rooted')->{$clusterset_id}, $newtree);
           $self->store_genetree($newtree);
           $newtree->release_tree;
       }
@@ -178,123 +173,18 @@ sub post_cleanup {
 #
 ##########################################
 
-sub run_treebest_mmerge {
-  my $self = shift;
-
-  my $root_id = $self->param('nc_tree')->root_id;
-  my $species_tree_file = $self->get_species_tree_file();
-  my $treebest_exe = $self->param('treebest_exe');
-  my $temp_directory = $self->worker_temp_directory;
-
-  my $mmergefilename = $temp_directory . $root_id . ".mmerge";
-  my $mmerge_output_filename = $mmergefilename . ".output";
-  open FILE,">$mmergefilename" or die $!;
-  foreach my $method (keys %{$self->param('inputtrees_rooted')}) {
-    my $inputtree = $self->param('inputtrees_rooted')->{$method};
-    print FILE "$inputtree\n";
-  }
-  close FILE;
-
-  my $cmd = "$treebest_exe mmerge -s $species_tree_file $mmergefilename > $mmerge_output_filename";
-  my $runCmd = $self->run_command($cmd);
-  if ($runCmd->exit_code) {
-      $self->throw("error running treebest mmerge:", $runCmd->exit_code , "\n");
-  }
-
-  $self->param('mmerge_output', $mmerge_output_filename);
-
-  return 1;
-}
-
-sub calculate_branch_lengths {
-  my $self = shift;
-
-  $self->param('input_aln', $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree')->root) );
-
-  my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
-  if($leafcount<3) {
-    printf(STDERR "tree cluster %d has <3 genes - can not build a tree\n", 
-           $self->param('nc_tree')->root_id);
-    $self->param('mmerge_blengths_output', $self->param('mmerge_output'));
-    $self->parse_newick_into_tree($self->param('mmerge_blengths_output'), $self->param('nc_tree'));
-    return;
-  }
-
-  my $treebest_exe = $self->param('treebest_exe');
-  my $constrained_tree = $self->param('mmerge_output');
-  my $tree_with_blengths = $self->param('mmerge_output') . ".blengths.nh";
-  my $input_aln = $self->param('input_aln');
-  my $species_tree_file = $self->get_species_tree_file();
-  my $cmd = $treebest_exe;
-  $cmd .= " nj";
-  if ($treebest_exe =~ /tracking/) {
-      $cmd .= " -I";
-  }
-  $cmd .= " -c $constrained_tree";
-  $cmd .= " -s $species_tree_file";
-  $cmd .= " $input_aln";
-  $cmd .= " > $tree_with_blengths";
-
-#  my $cmd = "$treebest_exe nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
-
-  my $runCmd = $self->run_command($cmd);
-
-  if ($runCmd->exit_code) {
-      $self->throw("error running treebest nj, ", $runCmd->exit_code , "\n");
-  }
-
-  $self->param('mmerge_blengths_output', $tree_with_blengths);
-
-  #parse the tree into the datastucture
-  $self->parse_newick_into_tree($self->param('mmerge_blengths_output'), $self->param('nc_tree'));
-  return 1;
-}
 
 sub reroot_inputtrees {
   my $self = shift;
 
-  my $root_id = $self->param('nc_tree')->root_id;
-  my $species_tree_file = $self->get_species_tree_file;
-  my $treebest_exe = $self->param('treebest_exe');
-
-  my $temp_directory = $self->worker_temp_directory;
-  my $template_cmd = "$treebest_exe sdi -rs $species_tree_file";
-
   foreach my $method (keys %{$self->param('inputtrees_unrooted')}) {
-    my $cmd = $template_cmd;
-    my $unrootedfilename = $temp_directory . $root_id . "." . $method . ".unrooted";
-    my $rootedfilename = $temp_directory . $self->param('intermediate_prefix') . $root_id . "." . $method . ".rooted";
     my $inputtree = $self->param('inputtrees_unrooted')->{$method};
-    open FILE,">$unrootedfilename" or die $!;
-    print FILE $inputtree;
-    close FILE;
-
-    $cmd .= " $unrootedfilename";
-    $cmd .= " > $rootedfilename";
-
-    my $runCmd =  $self->run_command($cmd);
-
-    if ($runCmd->exit_code) {
-      $self->throw("error running treebest sdi, $!\n");
-    }
 
     # Parse the rooted tree string
-    my $rootedstring;
-    open (FH, $rootedfilename) or $self->throw("Couldnt open rooted file [$rootedfilename]");
-    while(<FH>) {
-      chomp $_;
-      $rootedstring .= $_;
-    }
-    close(FH);
+    my $rootedstring = $self->run_treebest_sdi($inputtree, 1);
 
-      # manual vivification needed:
-    unless($self->param('inputtrees_rooted')) {
-        $self->param('inputtrees_rooted', {});
-    }
     $self->param('inputtrees_rooted')->{$method} = $rootedstring;
   }
-
-  return 1;
 }
 
 sub load_input_trees {
@@ -305,22 +195,15 @@ sub load_input_trees {
     next unless $tag =~ m/_it_/;
     my $inputtree_string = $tree->get_value_for_tag($tag);
 
-    my $eval_inputtree;
+    # Checks that the tree can be parsed
     eval {
-      $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string);
+      my $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string);
       my @leaves = @{$eval_inputtree->get_all_leaves};
     };
     unless ($@) {
-        # manual vivification needed:
-      unless($self->param('inputtrees_unrooted')) {
-          $self->param('inputtrees_unrooted', {});
-      }
-
-      $self->param('inputtrees_unrooted')->{$tag} = $inputtree_string;
+        $self->param('inputtrees_unrooted')->{$tag} = $inputtree_string;
     }
   }
-
-  return 1;
 }
 
 

@@ -36,7 +36,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 ###########################
@@ -95,54 +95,9 @@ sub run_treebest_sdi {
 
     my $tree = $self->param('gene_tree');
     my $tree_str = $tree->newick_format('member_id_taxon_id');
-    my $species_tree_file = $self->get_species_tree_file();
-
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-    my $treebest_exe = $self->param('treebest_exe') or die "'treebest_exe' is an obligatory parameter";
-    die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
-
-    my $basedir = $self->worker_temp_directory;
-    my $treefile_in = $basedir.'tree.in';
-    open(OUTGENETREE, ">$treefile_in");
-    print OUTGENETREE $tree_str;
-    close OUTGENETREE;
-    my $treefile_out = $basedir.'tree.out';
-
-    my $cmd = sprintf('%s sdi -s %s %s > %s', $treebest_exe, $species_tree_file, $treefile_in, $treefile_out);
-
-    my $full_cmd = defined $basedir ? "cd $basedir; $cmd" : $cmd;
-    print STDERR "Running:\n\t$full_cmd\n" if $self->debug;
-
-    if(my $rc = system($full_cmd)) {
-        my $system_error = $!;
-
-        if(my $segfault = (($rc != -1) and ($rc & 127 == 11))) {
-            $self->throw("segfault when running $full_cmd\n");
-        }
-        $self->throw("error '$system_error' when running $full_cmd\n");
-    }
-
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-    #parse the tree into the datastucture:
-    $self->parse_newick_into_tree( $treefile_out );
-    # Make sure we don't propagate the file to the next job
-    unlink $treefile_out;
-}
-
-
-sub parse_newick_into_tree {
-    my $self = shift;
-    my $newick_file = shift;
 
     #parse newick into a new tree object structure
-    my $newick = '';
-    print "load from file $newick_file\n" if $self->debug;
-    open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
-    while(<FH>) { $newick .= $_;  }
-    close(FH);
-
+    my $newick = $self->run_treebest_sdi($tree_str, 0);
     my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, 'Bio::EnsEMBL::Compara::GeneTreeNode');
     $newroot->print_tree(20) if($self->debug > 1);
     $self->param('new_tree', $newroot);

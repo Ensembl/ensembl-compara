@@ -213,9 +213,10 @@ sub store_node_tags
 
 sub parse_newick_into_tree {
   my $self = shift;
-  my $newick_file = shift;
+  my $newick = shift;
   my $tree = shift;
   
+  return undef if $newick =~ /^_null_/;
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
   my %leaves;
@@ -223,17 +224,9 @@ sub parse_newick_into_tree {
     $leaves{$node->member_id} = $node if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
   }
 
-  #parse newick into a new tree object structure
-  my $newick = '';
-  print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
-  while(<FH>) { $newick .= $_;  }
-  close(FH);
-
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
   print  "Tree loaded from file:\n";
   $newroot->print_tree(20) if($self->debug > 1);
-  return undef if $newroot->name eq '_null_';
 
   my $split_genes = $self->param('split_genes');
 
@@ -266,7 +259,7 @@ sub parse_newick_into_tree {
     my $old_leaf = $leaves{$member_id};
     if (not $old_leaf) {
       $leaf->print_node;
-      die "unable to find node in newick for member $member_id";
+      die "unable to find member '$member_id' (from newick '$newick')";
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $leaf->member_id($member_id);

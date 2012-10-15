@@ -55,7 +55,7 @@ use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 =head2 fetch_input
@@ -254,52 +254,15 @@ sub check_distances_to_parent {
 sub reroot_inputtrees {
   my $self = shift;
 
-  my $root_id = $self->param('gene_tree')->root_id;
-  my $species_tree_file = $self->get_species_tree_file();
-
-  my $treebest_exe = $self->param('treebest_exe')
-    or die "'treebest_exe' is an obligatory parameter";
-
-  die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
-
-  my $temp_directory = $self->worker_temp_directory;
-  my $template_cmd = "$treebest_exe sdi -rs $species_tree_file";
-
+  $self->param('inputtrees_rooted', {});
   foreach my $method (keys %{$self->param('inputtrees_unrooted')}) {
-    my $cmd = $template_cmd;
-    my $unrootedfilename = $temp_directory . $root_id . "." . $method . ".unrooted";
-    my $rootedfilename = $temp_directory . $root_id . "." . $method . ".rooted";
     my $inputtree = $self->param('inputtrees_unrooted')->{$method};
-    open FILE,">$unrootedfilename" or die $!;
-    print FILE $inputtree;
-    close FILE;
-
-    $cmd .= " $unrootedfilename";
-    $cmd .= " > $rootedfilename";
-
-    my $command = $self->run_command($cmd);
-    if ($command->exit_code) {
-      print STDERR "$cmd\n";
-      $self->throw("error running treebest sdi, $!\n");
-    }
 
     # Parse the rooted tree string
-    my $rootedstring;
-    open (FH, $rootedfilename) or $self->throw("Couldnt open rooted file [$rootedfilename]");
-    while(<FH>) {
-      chomp $_;
-      $rootedstring .= $_;
-    }
-    close(FH);
+    my $rootedstring = $self->run_treebest_sdi($inputtree, 1);
 
-      # manual vivification needed:
-    unless($self->param('inputtrees_rooted')) {
-        $self->param('inputtrees_rooted', {});
-    }
     $self->param('inputtrees_rooted')->{$method} = $rootedstring;
   }
-
-  return 1;
 }
 
 sub store_ktreedist_score {

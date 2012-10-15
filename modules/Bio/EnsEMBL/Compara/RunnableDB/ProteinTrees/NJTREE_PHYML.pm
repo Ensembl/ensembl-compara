@@ -56,7 +56,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
 use File::Glob;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {
@@ -73,11 +73,6 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
-
-    my $treebest_exe = $self->param('treebest_exe')
-        or die "'treebest_exe' is an obligatory parameter";
-
-    die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
 
     my $protein_tree_id     = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $protein_tree_id )
@@ -146,7 +141,7 @@ sub run_njtree_phyml {
     my $self = shift;
 
     my $protein_tree = $self->param('protein_tree');
-    my $newick_file;
+    my $newick;
 
     my $starttime = time()*1000;
     
@@ -155,7 +150,7 @@ sub run_njtree_phyml {
 
         warn "Number of elements: 2 leaves, N/A split genes\n";
         my @goodgenes = map {sprintf("%d_%d", $_->member_id, $self->param('use_genomedb_id') ? $_->genome_db_id : $_->taxon_id)} @{$protein_tree->root->get_all_leaves};
-        $newick_file = $self->run_treebest_sdi(@goodgenes);
+        $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
     } else {
 
@@ -169,99 +164,21 @@ sub run_njtree_phyml {
         if ($genes_for_treebest == 2) {
 
             my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {sprintf("%d_%d", $_->member_id, $self->param('use_genomedb_id') ? $_->genome_db_id : $_->taxon_id)} @{$protein_tree->root->get_all_leaves});
-            $newick_file = $self->run_treebest_sdi(@goodgenes);
+            $newick = $self->run_treebest_sdi_genepair(@goodgenes);
 
         } else {
 
-            $self->compara_dba->dbc->disconnect_when_inactive(1);
-            $newick_file = $self->run_treebest_best($input_aln);
-            $self->compara_dba->dbc->disconnect_when_inactive(0);
+            $newick = $self->run_treebest_best($input_aln);
         }
     }
 
     #parse the tree into the datastucture:
-    unless ($self->parse_newick_into_tree( $newick_file, $self->param('protein_tree') )) {
+    unless ($self->parse_newick_into_tree( $newick, $self->param('protein_tree') )) {
         $self->input_job->transient_error(0);
         $self->throw('The filtered alignment is empty. Cannot build a tree');
     }
 
     $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', time()*1000-$starttime);
-}
-
-
-sub run_treebest_best {
-    my ($self, $input_aln) = @_;
-
-    my $newick_file = $input_aln . "_njtree_phyml_tree.txt ";
-    my $species_tree_file = $self->get_species_tree_file();
-    while (1) {
-
-        my $cmd = $self->param('treebest_exe');
-        $cmd .= " best ";
-        if(my $max_diff_lk = $self->param('max_diff_lk')) {
-            $cmd .= " -Z $max_diff_lk";
-        }
-        $cmd .= " -f ". $species_tree_file;
-        $cmd .= " ".(defined $self->param('filt_cmdline') ? "prog-filtalign.fa" : $input_aln);
-        $cmd .= " -p ".$self->param('intermediate_prefix');
-        $cmd .= " -o " . $newick_file;
-        if ($self->param('extra_args')) {
-            $cmd .= " ".($self->param('extra_args')).' ';
-        }
-        $cmd .= " 1> $input_aln.treebest.log 2>$input_aln.treebest.err";
-
-        $cmd = sprintf($self->param('filt_cmdline'), $input_aln, 'prog-filtalign.fa')." ; $cmd" if defined $self->param('filt_cmdline');
-
-        my $full_cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $cmd);
-        print STDERR "Running:\n\t$full_cmd\n" if $self->debug;
-
-        if(my $rc = system($full_cmd)) {
-            my $system_error = $!;
-
-            if(my $segfault = (($rc != -1) and ($rc & 127 == 11))) {
-                $self->throw("'$full_cmd' resulted in a segfault");
-            }
-            print STDERR "$full_cmd\n";
-            my $logfile = $self->_slurp("$input_aln.treebest.err");
-            $logfile =~ s/^Large distance.*$//mg;
-            $logfile =~ s/\n\n*/\n/g;
-            if (($logfile =~ /NNI/) || ($logfile =~ /Optimize_Br_Len_Serie/) || ($logfile =~ /Optimisation failed/) || ($logfile =~ /Brent failed/))  {
-                # Increase the tolerance max_diff_lk in the computation
-                my $max_diff_lk_value = $self->param('max_diff_lk') ?  $self->param('max_diff_lk') : 1e-5;
-                $max_diff_lk_value *= 10;
-                $self->param('max_diff_lk', $max_diff_lk_value);
-            } else {
-                $self->throw("error running njtree phyml: $system_error\n$logfile");
-            }
-        } else {
-            return $newick_file;
-        }
-    }
-
-}
-
-sub run_treebest_sdi {
-    my ($self, $gene1, $gene2) = @_;
-
-    # Input Newick file (with only 2 genes)
-    my $input_newick = $self->worker_temp_directory.'input_newick';
-    open(OUTGENETREE, ">$input_newick");
-    print OUTGENETREE sprintf('(%s,%s);', $gene1, $gene2);
-    close OUTGENETREE;
-
-
-    my $cmd = sprintf(
-        'cd %s; %s sdi -s %s %s > output_newick 2> log',
-        $self->worker_temp_directory, $self->param('treebest_exe'), $self->get_species_tree_file(), $input_newick
-    );
-
-    print "$cmd\n"  if $self->debug ;
-    if (system($cmd)) {
-        my $system_error = $!;
-        $self->throw("Error running $cmd : $system_error");
-    }
-    return $self->worker_temp_directory.'output_newick';
-
 }
 
 
@@ -274,7 +191,7 @@ sub store_intermediate_tree {
         return;
     }
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
-    $self->parse_newick_into_tree($filename, $newtree);
+    $self->parse_newick_into_tree($self->_slurp($filename), $newtree);
     $self->store_genetree($newtree);
     $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
     $newtree->release_tree;
