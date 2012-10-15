@@ -58,7 +58,7 @@ sub summary_zmenu {
   
   if($num==0) {
     # No features
-    $self->caption("$label No features widthin ${fudge}bp");
+    $self->caption("$label No features within ${fudge}bp");
     $self->add_entry({  type => "Overview",
                        label => "This track has no features near this point"});
   } elsif(($num<=$maxmult or $num_this_strand==1) and not $called_from_single) {
