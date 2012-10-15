@@ -78,6 +78,7 @@ foreach (@species_modules) {
   $species    = qq{--species "homo_sapiens"} if ($_ eq 'Variation'); #Variation test module needs to be run for human only  
   
   $cmd = qq{perl run_tests.pl --module "$_" $species $timeout $url --host $host --port $port > "test_reports/$report" 2>&1 };
+  $cmd =~ s/\n//g;
   #print "  $cmd\n";
   system $cmd;  
 }
