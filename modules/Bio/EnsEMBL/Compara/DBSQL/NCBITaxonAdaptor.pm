@@ -22,6 +22,7 @@ package Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor;
 use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NCBITaxon;
+use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
@@ -45,12 +46,14 @@ sub fetch_node_by_taxon_id {
     throw ("taxon_id is not defined");
   }
 
-  my $constraint = "t.taxon_id = $taxon_id";
-  my ($node) = @{$self->generic_fetch($constraint)};
+  my $constraint = 't.taxon_id = ?';
+  $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
+  my $node = $self->generic_fetch_one($constraint);
+
   unless ($node) {
     my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = "merged_taxon_id" AND t.taxon_id = n2.taxon_id']];
-    $constraint = "n2.name = $taxon_id";
-    ($node) = @{$self->generic_fetch($constraint, $join)};
+    $constraint = 'n2.name = ?';
+    $node = $self->generic_fetch_one($constraint, $join);
     if ($node) {
       warning("The given taxon_id=$taxon_id is now deprecated and has been merged with taxon_id=".$node->taxon_id."\n");
     }
@@ -79,9 +82,9 @@ sub fetch_node_by_name {
     throw ("name is undefined");
   }
 
-  my $constraint = "n.name = '$name'";
-  my ($node) = @{$self->generic_fetch($constraint)};
-  return $node;
+  my $constraint = 'n.name = ?';
+  $self->bind_param_generic_fetch($name, SQL_VARCHAR);
+  return $self->generic_fetch_one($constraint);
 }
 
 
@@ -105,9 +108,10 @@ sub fetch_node_by_genome_db_id {
   }
 
   my $join = [[['genome_db', 'gdb'], 't.taxon_id = gdb.taxon_id']];
-  my $constraint = "gdb.genome_db_id=$gdbID";
-  my ($node) = @{$self->generic_fetch($constraint, $join)};
-  return $node;
+  my $constraint = 'gdb.genome_db_id = ?';
+
+  $self->bind_param_generic_fetch($gdbID, SQL_INTEGER);
+  return $self->generic_fetch_one($constraint, $join);
 }
 
 
@@ -234,21 +238,10 @@ sub update {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $parent_id = 0;
-  if($node->parent) {
-    $parent_id = $node->parent->node_id ;
-  }
-  my $root_id = $node->root->node_id;
-
   my $table= ($self->_tables)[0]->[0];
-  my $sql = "UPDATE $table SET ".
-               "parent_id=$parent_id".
-               ",root_id=$root_id".
-               ",left_index=" . $node->left_index .
-               ",right_index=" . $node->right_index .
-             " WHERE $table.taxon_id=". $node->node_id;
+  my $sth = $self->dbc->prepare("UPDATE $table SET parent_id = ?, root_id = ?, left_index = ?, right_index = ? WHERE taxon_id = ?");
 
-  $self->dbc->do($sql);
+  $sth->execute($node->parent ? $node->parent->node_id : undef, $node->root->node_id, $node->left_index, $node->right_index, $node->node_id);
 }
 
 
