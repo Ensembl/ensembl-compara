@@ -61,7 +61,12 @@ sub summary_zmenu {
     $self->caption("$label No features within ${fudge}bp");
     $self->add_entry({  type => "Overview",
                        label => "This track has no features near this point"});
-  } elsif(($num<=$maxmult or $num_this_strand==1) and not $called_from_single) {
+    # 1. never do this if called from single (avoid infinite loop);
+    # 2. if only one on this strand show single for this strand;
+    # 3. if there's only a few and we're zoomed out, show stacked.
+  } elsif((($num<=$maxmult and $scalex<8) 
+            or $num_this_strand==1) 
+          and not $called_from_single) {
     # Multiple singles
     $self->single_base_zmenu($id,$r,$_->[0],$_->[1],$width,$scalex) for(@rows);
   } else {
