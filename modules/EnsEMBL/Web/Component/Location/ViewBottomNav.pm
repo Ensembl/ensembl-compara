@@ -51,9 +51,22 @@ sub content {
   
   my $ramp = $self->ramp($ramp_entries, $wd, $cp);
   
-  unshift @$values, $ramp if $self->{'update'};
+  if ($self->{'update'}) {
+    my $i = 0;
+    my @ramp_values;
+    
+    foreach (@$ramp) {
+      push @ramp_values, $_->[1];
+      unshift @$values, $i if $_->[3];
+      $i++;
+    }
+    
+    splice @$values, 6, 0, @ramp_values;
+    
+    return $self->jsonify($values);
+  }
 
-  return $self->{'update'} ? $self->jsonify($values) : $self->navbar($ramp, $wd, $values);
+  return $self->navbar($ramp, $wd, $values);
 }
 
 sub navbar {
@@ -116,7 +129,7 @@ sub ramp {
   
   my $scale = $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1;
   my $x     = 0;
-  my ($ramp, @mp);
+  my (@ramp, @mp);
   
   foreach (@$ramp_entries) {
     $_->[1] *= $scale;
@@ -128,40 +141,24 @@ sub ramp {
   
   my $l = shift @mp;
   
-  if ($self->{'update'}) {
-    $ramp = 0;
+  my $img_url = $self->img_url;
+  
+  foreach (@$ramp_entries) {
+    my $r = shift @mp; 
     
-    for (0..$#$ramp_entries) {
-      my $r = shift @mp;
-      
-      if ($wd > $l && $wd <= $r) {
-        $ramp = $_;
-        last;
-      }
-      
-      $l = $r;
-    }
-  } else {
-    my $img_url = $self->img_url;
+    push @ramp, [
+      '<a href="%s" name="%d" class="ramp%s" title="%d bp" style="height:%dpx"></a>',
+      $self->ramp_url($_->[1], @url_params),
+      $_->[1], 
+      $wd > $l && $wd <= $r ? ' selected' : '',
+      $_->[1],
+      $_->[0]
+    ];
     
-    foreach (@$ramp_entries) {
-      my $r = shift @mp; 
-      
-      $ramp .= sprintf(
-        '<a href="%s" name="%d" class="ramp%s" title="%d bp" style="height:%dpx"></a>',
-        $self->ramp_url($_->[1], @url_params),
-        $_->[1], 
-        $wd > $l && $wd <= $r ? ' selected' : '',
-        $_->[1],
-        $_->[0]
-      );
-      
-      
-      $l = $r;
-    }
+    $l = $r;
   }
   
-  return $ramp;
+  return $self->{'update'} ? \@ramp : join '', map { sprintf shift @$_, @$_ } @ramp;
 }
 
 sub ramp_url {
