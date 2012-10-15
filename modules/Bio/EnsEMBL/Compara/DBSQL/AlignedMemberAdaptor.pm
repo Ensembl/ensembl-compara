@@ -168,6 +168,20 @@ sub fetch_all_by_GeneTree {
 }
 
 
+sub store_all_by_GeneTree {
+    my ($self, $tree) = @_;
+    assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree');
+
+    my $sth = $self->prepare("REPLACE INTO gene_tree_member (node_id, cigar_line) VALUES (?,?)");
+
+    foreach my $member (@{$tree->get_all_Members}) {
+        $sth->execute($member->node_id, $member->cigar_line);
+    }
+
+    $sth->finish;
+}
+
+
 #
 # Redirections to MemberAdaptor
 ################################

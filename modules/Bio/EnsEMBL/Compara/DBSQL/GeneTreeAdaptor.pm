@@ -373,7 +373,7 @@ sub store {
 
     # Firstly, store the nodes
     my $has_root_id = (exists $tree->{'_root_id'} ? 1 : 0);
-    my $root_id = $self->db->get_GeneTreeNodeAdaptor->store($tree->root);
+    my $root_id = $self->db->get_GeneTreeNodeAdaptor->store_nodes_rec($tree->root);
     $tree->{'_root_id'} = $root_id;
 
     # Secondly, the tree itself

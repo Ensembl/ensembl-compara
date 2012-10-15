@@ -110,18 +110,18 @@ sub fetch_input {
     # The extra option at the end adds the exon markers
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree'), $self->param('use_exon_boundaries')) );
 
-  if ($self->param('redo')) {
-    # Redo - take previously existing alignment - post-process it
-    my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($self->param('protein_tree'));
-    my ($other_tree) = grep {$_->clusterset_id eq $self->param('redo')} @$other_trees;
-    if ($other_tree) {
-        my $redo_sa = $other_tree->get_SimpleAlign(-id_type => 'MEMBER');
-        $redo_sa->set_displayname_flat(1);
-        $self->param('redo_alnname', $self->worker_temp_directory . $self->param('gene_tree_id').'.fasta' );
-        my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'), -format => "fasta");
-        $alignout->write_aln( $redo_sa );
-    }
-  }
+#  if ($self->param('redo')) {
+#    # Redo - take previously existing alignment - post-process it
+#    my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($self->param('protein_tree'));
+#    my ($other_tree) = grep {$_->clusterset_id eq $self->param('redo')} @$other_trees;
+#    if ($other_tree) {
+#        my $redo_sa = $other_tree->get_SimpleAlign(-id_type => 'MEMBER');
+#        $redo_sa->set_displayname_flat(1);
+#        $self->param('redo_alnname', $self->worker_temp_directory . $self->param('gene_tree_id').'.fasta' );
+#        my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'), -format => "fasta");
+#        $alignout->write_aln( $redo_sa );
+#    }
+#  }
 
   #
   # Ways to fail the job before running.
@@ -169,7 +169,10 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    return if ($self->param('single_peptide_tree'));
+    if ($self->param('single_peptide_tree')) {
+        $self->compara_dba->get_AlignedMemberAdaptor->store_all_by_GeneTree($self->param('protein_tree'));
+        return;
+    }
     my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
 
     unless ($aln_ok) {
@@ -185,6 +188,7 @@ sub write_output {
         }
     }
 
+    $self->compara_dba->get_AlignedMemberAdaptor->store_all_by_GeneTree($self->param('protein_tree'));
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
 
@@ -247,11 +251,10 @@ sub update_single_peptide_tree {
   my $self   = shift;
   my $tree   = shift;
 
-  foreach my $member (@{$tree->get_all_leaves}) {
+  foreach my $member (@{$tree->get_all_Members}) {
     next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     next unless($member->sequence);
     $member->cigar_line(length($member->sequence)."M");
-    $self->compara_dba->get_GeneTreeNodeAdaptor->store($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
   }
 }
@@ -272,9 +275,9 @@ sub dumpProteinTreeToWorkdir {
 
   my $seq_id_hash = {};
   my $residues = 0;
-  my $member_list = $tree->get_all_leaves;
+  my $member_list = $tree->get_all_Members;
 
-  $self->param('tag_gene_count', scalar(@{$member_list}) );
+#  $self->param('tag_gene_count', scalar(@{$member_list}) );
   my $has_canonical_issues = 0;
   foreach my $member (@{$member_list}) {
 
@@ -291,14 +294,7 @@ sub dumpProteinTreeToWorkdir {
       my $canonical_stable_id = $canonical_member->stable_id;
       $tree->store_tag('canon.'.$clustered_stable_id."_".$canonical_stable_id,1);
       $has_canonical_issues++;
-#       $member->disavow_parent;
-#       $self->param('tree_adaptor')->delete_flattened_leaf($member);
-#       my $updated_gene_count = scalar(@{$tree->get_all_leaves});
-#       $tree->adaptor->delete_tag($tree->node_id,'gene_count');
-#       $tree->store_tag('gene_count', $updated_gene_count);
-#       next;
     }
-    ####
 
       return undef unless ($member->isa("Bio::EnsEMBL::Compara::GeneTreeMember"));
       next if($seq_id_hash->{$member->sequence_id});
@@ -346,7 +342,7 @@ sub parse_and_store_alignment_into_proteintree {
   # Read in the alignment using Bioperl.
   #
   use Bio::AlignIO;
-  my $alignio = Bio::AlignIO->new(-file => "$msa_output", -format => "$format");
+  my $alignio = Bio::AlignIO->new(-file => $msa_output, -format => $format);
   my $aln = $alignio->next_aln();
   my %align_hash;
   foreach my $seq ($aln->each_seq) {
@@ -383,7 +379,7 @@ sub parse_and_store_alignment_into_proteintree {
   #
   # Align cigar_lines to members and store
   #
-  foreach my $member (@{$tree->get_all_leaves}) {
+  foreach my $member (@{$tree->get_all_Members}) {
       # Redo alignment is member_id based, new alignment is sequence_id based
       if ($align_hash{$member->sequence_id} eq "" && $align_hash{$member->member_id} eq "") {
         #$self->throw("empty cigar_line for ".$member->stable_id."\n");
@@ -403,12 +399,6 @@ sub parse_and_store_alignment_into_proteintree {
         print $member_sequence."\n".$member->cigar_line."\n" if ($self->debug);
         $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
       }
-
-        #
-        # We can use the default store method for the $member.
-          ##print "UPDATING "; $member->print_member;
-          $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
-      
   }
   return 1;
 }

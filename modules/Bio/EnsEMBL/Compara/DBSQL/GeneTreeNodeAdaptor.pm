@@ -268,7 +268,7 @@ sub fetch_by_stable_id {
 # STORE methods
 ###########################
 
-sub store {
+sub store_nodes_rec {
     my ($self, $node) = @_;
 
     my $children = $node->children;
@@ -279,7 +279,7 @@ sub store {
     foreach my $child_node (@$children) {
         # Store the GeneTreeNode or the new GeneTree if different
         if ((not defined $child_node->tree) or ($child_node->root eq $node->root)) {
-            $self->store($child_node);
+            $self->store_nodes_rec($child_node);
         } else {
             $self->db->get_GeneTreeAdaptor->store($child_node->tree);
         }
@@ -317,18 +317,6 @@ sub store_node {
 
     $node->adaptor($self);
 
-    if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-        if ($new_node) {
-            $sth = $self->prepare("INSERT INTO gene_tree_member (node_id, cigar_line)  VALUES (?,?)");
-            $sth->execute($node->node_id, $node->cigar_line);
-            $sth->finish;
-        } else {
-            $sth = $self->prepare('UPDATE gene_tree_member SET cigar_line=? WHERE node_id = ?');
-            $sth->execute($node->cigar_line, $node->node_id);
-            $sth->finish;
-        }
-    }
-    
     return $node->node_id;
 }
 

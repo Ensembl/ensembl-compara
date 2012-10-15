@@ -180,7 +180,7 @@ sub add_cluster {
     }
 
     # Stores the cluster
-    $self->compara_dba->get_GeneTreeNodeAdaptor->store($clusterset_leaf);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
     $cluster->store_tag('gene_count', $cluster_root->get_child_count);
     print STDERR "cluster root_id=", $cluster->root_id, " in clusterset '", $clusterset->clusterset_id, "' with ", $cluster_root->get_child_count, " leaves\n" if $self->debug;
     

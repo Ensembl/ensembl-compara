@@ -354,7 +354,7 @@ sub store_tree_into_clusterset {
     $clusterset->root->add_child($clusterset_leaf);
     $clusterset_leaf->add_child($newtree->root);
     $newtree->clusterset_id($clusterset->clusterset_id);
-    $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store($clusterset_leaf);
+    $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
 
 }
 
