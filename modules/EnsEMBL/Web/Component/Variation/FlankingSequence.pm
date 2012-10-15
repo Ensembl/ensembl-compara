@@ -22,14 +22,19 @@ sub content {
   my %mappings          = %{$object->variation_feature_mapping}; 
   my $v                 = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$vf};
   my $variation_feature = $variation->get_VariationFeature_by_dbID($vf);
+  my $variation_string  = $variation_feature->ambig_code || '[' . $self->get_allele_string($variation_feature, $v->{'strand'}) . ']';
   my $align_quality     = $variation_feature->flank_match;
   my $chr_end           = $variation_feature->slice->end;
   my $slice_start       = $v->{'start'} - $flank[0] > 1        ? $v->{'start'} - $flank[0] : 1;
   my $slice_end         = $v->{'end'}   + $flank[1] > $chr_end ? $chr_end                  : $v->{'end'} + $flank[1];
-  my $slice             = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region(undef, $v->{'Chr'}, $slice_start, $slice_end, $v->{'strand'});
-  my @sequence          = [ map {{ letter => $_ }} split '', $slice->seq ];
-  my @markup            = ({});
-  my $html;
+  my $slice_adaptor     = $hub->get_adaptor('get_SliceAdaptor');
+  my (@sequence, $html);
+  
+  my %slices = (
+    var  => $slice_adaptor->fetch_by_region(undef, $v->{'Chr'}, $v->{'start'}, $v->{'end'}, $v->{'strand'}),
+    up   => $flank[0] ? $slice_adaptor->fetch_by_region(undef, $v->{'Chr'}, $slice_start, $v->{'start'} - 1, $v->{'strand'}) : undef,
+    down => $flank[1] ? $slice_adaptor->fetch_by_region(undef, $v->{'Chr'}, $v->{'end'} + 1, $slice_end,     $v->{'strand'}) : undef
+  );
   
   my $config = {
     display_width  => $hub->param('display_width') || 60,
@@ -39,8 +44,27 @@ sub content {
     focus_variant  => $vf,
     failed_variant => 1,
     ambiguity      => 1,
-    length         => $slice->length,
+    length         => $flank[0] + $flank[1] + length $variation_string,
   };
+  
+  if ($config->{'snp_display'}) {
+    foreach (grep $slices{$_}, qw(up var down)) {
+      my $seq;
+      
+      if ($_ eq 'var') {
+        $seq = [ map {{ letter => $_, class => 'var ' }} split '', $variation_string ];
+      } else {
+        my $slice  = $slices{$_};
+        my $markup = {};
+           $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
+         
+        $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup);
+        $self->markup_variation($seq, $markup, $config);
+      }
+      
+      push @sequence, @$seq;
+    }
+  }  
   
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
@@ -53,17 +77,9 @@ sub content {
     ", 'auto');
   }
   
-  # The variation_feature has coords relative to the whole chromosome.
-  # If snp_display is off, we only want to display this feature, so hack its start and end to be relative
-  # to the slice, so that it can be used in the parent module (all variations there are relative to the slice)
-  $variation_feature->$_($variation_feature->$_ - $slice->start + 1) for qw(start end);
-  
-  $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup[0], undef, $config->{'snp_display'} ? undef : $variation_feature);
-  $self->markup_variation(\@sequence, \@markup, $config); 
-  
-  $html .= $self->tool_buttons($slice->seq, $config->{'species'});
+  $html .= $self->tool_buttons(join '', map $slices{$_} ? $slices{$_}->seq : (), qw(up var down), $config->{'species'});
   $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
-  $html .= $self->build_sequence(\@sequence, $config);
+  $html .= $self->build_sequence([ \@sequence ], $config);
   
   return $self->_info('Flanking sequence', qq{ 
     The sequence below is from the <b>reference genome</b> flanking the variant location.
@@ -72,6 +88,24 @@ sub content {
     To change the display of the flanking sequence (e.g. hide the other variants, change the length of the flanking sequence), 
     use the "<b>Configure this page</b>" link on the left.
   }, 'auto') . $html;
+}
+
+sub markup_variation {
+  my ($self, $seq, $markup, $config) = @_;
+  my $hub = $self->hub;
+  my $variation;
+  
+  foreach (sort { $a <=> $b } keys %{$markup->{'variations'}}) {
+    next unless $seq->[$_];
+    
+    $variation = $markup->{'variations'}{$_};
+    
+    $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
+    $seq->[$_]{'class'} .= "$variation->{'type'} ";
+    $seq->[$_]{'href'}   = $hub->url($variation->{'href'});
+    
+    $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
+  }
 }
 
 1;
