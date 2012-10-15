@@ -47,24 +47,24 @@ sub content {
     length         => $flank[0] + $flank[1] + length $variation_string,
   };
   
-  if ($config->{'snp_display'}) {
-    foreach (grep $slices{$_}, qw(up var down)) {
-      my $seq;
+  foreach (grep $slices{$_}, qw(up var down)) {
+    my $seq;
+    
+    if ($_ eq 'var') {
+      $seq = [ map {{ letter => $_, class => 'var ' }} split '', $variation_string ];
+    } else {
+      my $slice  = $slices{$_};
+      my $markup = {};
+         $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
       
-      if ($_ eq 'var') {
-        $seq = [ map {{ letter => $_, class => 'var ' }} split '', $variation_string ];
-      } else {
-        my $slice  = $slices{$_};
-        my $markup = {};
-           $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
-         
+      if ($config->{'snp_display'}) {
         $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup);
         $self->markup_variation($seq, $markup, $config);
       }
-      
-      push @sequence, @$seq;
     }
-  }  
+    
+    push @sequence, @$seq;
+  }
   
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
