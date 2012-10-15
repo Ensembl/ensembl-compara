@@ -8,6 +8,7 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
+use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -20,11 +21,11 @@ sub fetch_by_dbIDs {    # DEPRECATED
 }
 
 
-sub fetch_by_sequence_id {
+sub fetch_all_by_sequence_id {
     my ($self, $sequence_id) = @_;
 
-    my ($member) = @{ $self->generic_fetch( "m.sequence_id = $sequence_id", undef, "LIMIT 1" )};
-    return $member;
+    $self->bind_param_generic_fetch($sequence_id, SQL_INTEGER);
+    return $self->generic_fetch('m.sequence_id = ?');
 }
 
 
@@ -55,13 +56,15 @@ sub fetch_by_source_stable_id {
   }
 
   #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "";
-  $constraint = "m.source_name = '$source_name' AND " if ($source_name);
-  $constraint .= "m.stable_id = '$stable_id'";
+  my $constraint = '';
+  if ($source_name) {
+    $constraint = 'm.source_name = ? AND ';
+    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
+  }
+  $constraint .= 'm.stable_id = ?';
+  $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
 
-  #return first element of generic_fetch list
-  my ($obj) = @{$self->generic_fetch($constraint)};
-  return $obj;
+  return $self->generic_fetch_one($constraint);
 }
 
 sub fetch_all_by_source_stable_ids {
@@ -244,9 +247,9 @@ sub fetch_all_by_source_taxon {
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
-  my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id";
-
-  return $self->generic_fetch($constraint);
+    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
+    $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
+    return $self->generic_fetch('m.source_name = ? AND m.taxon_id = ?');
 }
 
 =head2 fetch_all_by_source_genome_db_id
@@ -268,9 +271,9 @@ sub fetch_all_by_source_genome_db_id {
   throw("source_name and genome_db_id args are required") 
     unless($source_name && $genome_db_id);
 
-  my $constraint = "m.source_name = '$source_name' and m.genome_db_id = $genome_db_id";
-
-  return $self->generic_fetch($constraint);
+    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
+    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+    return $self->generic_fetch('m.source_name = ? AND m.genome_db_id = ?');
 }
 
 
@@ -398,13 +401,8 @@ sub fetch_all_peptides_for_gene_member_id {
 
   throw() unless (defined $gene_member_id);
 
-  my $constraint = "m.gene_member_id = '$gene_member_id'";
-
-  my $peplist = undef;
-  eval {
-    $peplist = $self->generic_fetch($constraint);
-  };
-  return $peplist;
+    $self->bind_param_generic_fetch($gene_member_id, SQL_INTEGER);
+    return $self->generic_fetch('m.gene_member_id = ?');
 }
 
 
@@ -425,14 +423,11 @@ sub fetch_canonical_member_for_gene_member_id {
 
     throw() unless (defined $gene_member_id);
 
-    my $constraint = "m.gene_member_id = '$gene_member_id'";
+    my $constraint = 'm.gene_member_id = ?';
     my $join = [[['subset_member', 'sm'], 'sm.member_id = m.member_id']];
 
-    my $obj = undef;
-    eval {
-        ($obj) = @{$self->generic_fetch($constraint, $join)};
-    };
-    return $obj;
+    $self->bind_param_generic_fetch($gene_member_id, SQL_INTEGER);
+    return $self->generic_fetch_one($constraint, $join);
 }
 
 
