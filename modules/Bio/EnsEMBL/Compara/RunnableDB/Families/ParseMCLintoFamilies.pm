@@ -60,7 +60,7 @@ sub write_output {
 
         foreach my $tab_idx (@cluster_members) {
 
-            if( my $member = $ma->fetch_by_sequence_id($tab_idx) ) {
+            if( my $member = $ma->fetch_all_by_sequence_id($tab_idx)->[0] ) {
                 # A funny way to add members to a family.
                 # You cannot do it without introducing a fake AlignedMember, it seems?
                 #
