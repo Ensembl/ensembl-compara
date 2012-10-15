@@ -63,7 +63,8 @@ foreach (@non_species_modules) {
   print "\nRunning Module $_ Test \n"; 
   my $report = $_."_report.txt";
   my $cmd = qq{perl run_tests.pl --module "$_" $timeout $url $browser --host $host --port $port > "test_reports/$report" 2>&1 };
-  #print "  $cmd\n";
+  $cmd =~ s/\n//g;
+#print "  $cmd\n";
   system $cmd;
 }
 
