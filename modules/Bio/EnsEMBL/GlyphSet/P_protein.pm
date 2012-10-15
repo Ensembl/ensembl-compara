@@ -56,9 +56,10 @@ sub _init {
         'width'    => $aa_e - $aa_s + 1,
         'height'   => $h,
         'colour'   => $colour,
-        'title'    => sprintf 'Exon: %s; First aa: %d %s; Last aa: %d %s; Length: %s; Description: %s',
+        'title'    => sprintf 'Exon: %s; First aa: %d %s; Last aa: %d %s; Start phase: %s; End phase: %s; Length: %s; Description: %s',
 	                $exon_id,
                   $aa_s+1,_obp($p_s,0),$aa_l+1,_obp($p_l,2),
+                  $p_s,$p_l,
                   $length,
                   join(" + ",@narrate),
       }));
