@@ -44,6 +44,9 @@ Using inkspace, the resulting PDF might get rotate 90 degrees. Go to the propert
 
 Commit the SVG, PDF and PNG in this directory.
 
+To get the PDF accessible from the webpage, you must also commit the PDF file into
+public-plugins/ensembl/htdocs/info/about/ (Check that the file is there and email the webteam otherwise).
+
 The reference for Dendroscope 3 is:
 Daniel Huson and Celine Scornavacca, Dendroscope 3: An interactive tool for rooted phylogenetic trees and networks, Systematic Biology, 2012.
 
