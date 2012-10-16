@@ -52,7 +52,7 @@ sub content {
     <div class="column-padding no-right-margin">';
 
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
-    $html .= '<div class="round-box tinted-box unbordered">'.$self->_whatsnew_text.'</div>';  
+    $html .= '<div class="round-box info-box unbordered">'.$self->_whatsnew_text.'</div>';  
   }
 
   $html .= '
@@ -112,7 +112,7 @@ sub _whatsnew_text {
 
     foreach my $record (@changes) {
       my $record_url = $news_url.'#change_'.$record->{'id'};
-      $html .= sprintf('<li><a href="%s">%s</a></li>', $record_url, $record->{'title'});
+      $html .= sprintf('<li><a href="%s" class="nodeco">%s</a></li>', $record_url, $record->{'title'});
     }
     $html .= '</ul>';
   }
@@ -161,19 +161,19 @@ sub _assembly_text {
   my $assembly = $species_defs->ASSEMBLY_NAME;
   $html .= "<h2>Genome assembly: $assembly</h2>";
 
-  $html .= qq(<p><a href="/$species/Info/Annotation/#assembly"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More information and statistics</a></p>);
+  $html .= qq(<p><a href="/$species/Info/Annotation/#assembly" class="nodeco"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More information and statistics</a></p>);
   
   ## Link to FTP site
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/dna/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
        $html   .= qq(
-<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download DNA sequence</a> (FASTA)</p>);
+<p><a href="$ftp_url" class="nodeco"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download DNA sequence</a> (FASTA)</p>);
   }
   ## Link to assembly mapper
   my $mappings = $species_defs->ASSEMBLY_MAPPINGS;
   if ($mappings && ref($mappings) eq 'ARRAY') {
     my $am_url = $hub->url({'type'=>'UserData','action'=>'SelectFeatures'});
-    $html .= qq(<p><a href="$am_url" class="modal_link"><img src="${img_url}24/tool.png" class="homepage-link" />Convert your data to $assembly coordinates</a></p>);
+    $html .= qq(<p><a href="$am_url" class="modal_link nodeco"><img src="${img_url}24/tool.png" class="homepage-link" />Convert your data to $assembly coordinates</a></p>);
   }
 
   ## PREVIOUS ASSEMBLIES
@@ -195,12 +195,12 @@ sub _assembly_text {
   ## Combine archives and pre
   my $other_assemblies;
   if (@old_archives) {
-    $other_assemblies .= join '', map qq(<li><a href="$_->{'url'}">$_->{'assembly'}</a> $_->{'release'}</li>), @old_archives;
+    $other_assemblies .= join '', map qq(<li><a href="$_->{'url'}" class="nodeco">$_->{'assembly'}</a> $_->{'release'}</li>), @old_archives;
   }
 
   my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
   if ($pre_species->{$species}) {
-    $other_assemblies .= sprintf('<li><a href="http://pre.ensembl.org/%s/">%s</a> (Ensembl pre)</li>', $species, $pre_species->{$species}[1]);
+    $other_assemblies .= sprintf('<li><a href="http://pre.ensembl.org/%s/" class="nodeco">%s</a> (Ensembl pre)</li>', $species, $pre_species->{$species}[1]);
   }
 
   if ($other_assemblies) {
@@ -247,22 +247,22 @@ sub _genebuild_text {
   $html .= '<h2>Gene annotation</h2>
 <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>';
 
-  $html .= qq(<p><a href="/$species/Info/Annotation/#genebuild"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about this genebuild</a></p>);
+  $html .= qq(<p><a href="/$species/Info/Annotation/#genebuild" class="nodeco"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about this genebuild</a></p>);
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/fasta/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
     $html   .= qq(
-<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>);
+<p><a href="$ftp_url" class="nodeco"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>);
   }
   my $im_url = $hub->url({'type'=>'UserData','action'=>'UploadStableIDs'});
-  $html .= qq(<p><a href="$im_url" class="modal_link"><img src="${img_url}24/tool.png" class="homepage-link" />Update your old Ensembl IDs</a></p>);
+  $html .= qq(<p><a href="$im_url" class="modal_link nodeco"><img src="${img_url}24/tool.png" class="homepage-link" />Update your old Ensembl IDs</a></p>);
 
   if ($has_vega) {
     $html .= qq(
-  <a href="http://vega.sanger.ac.uk/$species/">
+  <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">
   <img src="/img/vega_small.gif" alt="Vega logo" style="float:left;margin-right:8px;width:83px;height:30px;vertical-align:center" title="Vega - Vertebrate Genome Annotation database" /></a>
 <p>
-  Additional manual annotation can be found in <a href="http://vega.sanger.ac.uk/$species/">Vega</a>
+  Additional manual annotation can be found in <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">Vega</a>
 </p>);
   }
 
@@ -292,12 +292,12 @@ sub _compara_text {
 
   $html .= '<h2>Comparative genomics</h2>
 <p><strong>What can I find?</strong>  Homologues, gene trees, and whole genome alignments across multiple species.</p>';
-  $html .= qq(<p><a href="/info/docs/compara/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about comparative analysis</a></p>); 
+  $html .= qq(<p><a href="/info/docs/compara/" class="nodeco"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about comparative analysis</a></p>); 
 
   if ($species_defs->ENSEMBL_FTP_URL) {
     my $ftp_url = sprintf '%s/release-%s/emf/ensembl-compara/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version;
     $html   .= qq(
-<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download alignments</a> (EMF)</p>);
+<p><a href="$ftp_url" class="nodeco"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download alignments</a> (EMF)</p>);
   }
   return $html;
 }
@@ -352,12 +352,12 @@ sub _variation_text {
     $html .= '.</p>';
 
     my $site = $species_defs->ENSEMBL_SITETYPE;
-    $html .= qq(<p><a href="/info/docs/variation/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about variation in $site</a></p>);
+    $html .= qq(<p><a href="/info/docs/variation/" class="nodeco"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about variation in $site</a></p>);
 
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/variation/gvf/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
       $html   .= qq(
-<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download all variants</a> (GVF)</p>);
+<p><a href="$ftp_url" class="nodeco"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download all variants</a> (GVF)</p>);
     }
   }
   else {
@@ -366,7 +366,7 @@ sub _variation_text {
   }
 
    my $vep_url = $hub->url({'type'=>'UserData','action'=>'UploadVariations'});
-    $html .= qq(<p><a href="$vep_url" class="modal_link"><img src="${img_url}24/tool.png" class="homepage-link" />Variant Effect Predictor<img src="${img_url}vep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>);
+    $html .= qq(<p><a href="$vep_url" class="modal_link nodeco"><img src="${img_url}24/tool.png" class="homepage-link" />Variant Effect Predictor<img src="${img_url}vep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>);
 
   return $html;
 }
@@ -400,18 +400,18 @@ sub _funcgen_text {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>';
 
-    $html .= qq(<p><a href="/info/docs/funcgen/"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about the $site regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html">microarray annotation</a></p>);
+    $html .= qq(<p><a href="/info/docs/funcgen/" class="nodeco"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about the $site regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html" class="nodeco">microarray annotation</a></p>);
 
     if ($species_defs->ENSEMBL_FTP_URL) {
       my $ftp_url = sprintf '%s/release-%s/regulation/%s/', $species_defs->ENSEMBL_FTP_URL, $ensembl_version, lc $species;
       $html   .= qq(
-<p><a href="$ftp_url"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download all regulatory features</a> (GFF)</p>);
+<p><a href="$ftp_url" class="nodeco"><img src="${img_url}24/download.png" alt="" class="homepage-link" />Download all regulatory features</a> (GFF)</p>);
     } 
   }
   else {
     $html .= '<h2>Regulation</h2>
 <p><strong>What can I find?</strong> Microarray annotations.</p>';
-    $html .= qq(<p><a href="/info/docs/microarray_probe_set_mapping.html"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about the $site microarray annotation strategy</a></p>);
+    $html .= qq(<p><a href="/info/docs/microarray_probe_set_mapping.html" class="nodeco"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More about the $site microarray annotation strategy</a></p>);
   }
 
   return $html;
