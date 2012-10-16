@@ -86,7 +86,11 @@ body.ie67 .plain-box      { zoom: 100%; }
 .unbordered   { border:none; padding:8px 12px 0 12px; }
 .unbordered p { margin-bottom:8px; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
+.tinted-box a       { color:[[TINT_LINK]]; }
+.tinted-box a:hover { color: [[PAGE_HOVER]];   }
 .info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
+.info-box a       { color:[[CONTRAST_LINK]]; }
+.info-box a:hover { color: [[PAGE_HOVER]];   }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[[ALERT_BORDER]]; }
 .embedded-box { margin:16px 0; padding:8px; }
 .round-box    { -moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px; }
