@@ -133,6 +133,10 @@ sub write_output {
             if (exists $cds_seq->{$sequence->id}) {
                 $pep_member->sequence_cds( $cds_seq->{$sequence->id}->seq );
                 $self->param('sequence_adaptor')->store_sequence_cds($pep_member);
+            } elsif ($self->param('need_cds_seq')) {
+                die $sequence->id, " does not have cds sequence\n";
+            } else {
+                warn $sequence->id, " does not have cds sequence\n";
             }
       };
 
