@@ -4,15 +4,25 @@ package EnsEMBL::Web::Document::HTML::WhatsNew;
 
 ### This module outputs a selection of news headlines from either 
 ### a static HTML file or a database (ensembl_website or ensembl_production) 
+### If a blog URL is configured, it will also try to pull in the RSS feed
 
 use strict;
+
+use Encode qw(encode_utf8 decode_utf8);
 
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Document::HTML);
+
+our $MEMD = EnsEMBL::Web::Cache->new(
+  enable_compress    => 1,
+  compress_threshold => 10_000,
+);
+
 
 sub render {
   my $self         = shift;
@@ -98,9 +108,62 @@ sub render {
 
   if ($species_defs->ENSEMBL_BLOG_URL) {
     $html .= qq(<p><a href="http://www.ensembl.info/blog/category/releases/">More release news on our blog &rarr;</a></p>);
+    $html .= $self->_include_blog($hub);
   }
 
   return $html;
 }
+
+
+sub _include_blog {
+  my ($self, $hub) = @_;
+
+  my $rss_url = $hub->species_defs->ENSEMBL_BLOG_RSS;
+
+  my $html = '<h3>Latest blog posts</h3>';
+
+  my $blog_url  = $hub->species_defs->ENSEMBL_BLOG_URL;
+  my $items = [];
+
+  if ($MEMD && $MEMD->get('::BLOG')) {
+    $items = $MEMD->get('::BLOG');
+  }
+
+  unless ($items && @$items) {
+    $items = $self->get_rss_feed($hub, $rss_url, 3);
+
+    ## encode items before caching, in case Wordpress has inserted any weird characters
+    if ($items && @$items) {
+      foreach (@$items) {
+        while (my($k, $v) = each (%$_)) {
+          $_->{$k} = encode_utf8($v);
+        }
+      }
+      $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG)) if $MEMD;
+    }
+  }
+
+   if (scalar(@$items)) {
+    $html .= "<ul>";
+    foreach my $item (@$items) {
+      my $title = $item->{'title'};
+      my $link  = $item->{'link'};
+      my $date = $item->{'date'} ? $item->{'date'}.': ' : '';
+
+      $html .= qq(<li>$date<a href="$link">$title</a></li>);
+    }
+    $html .= "</ul>";
+  }
+  else {
+    $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
+  }
+
+  $html .= qq(<p><a href="$blog_url">Go to Ensembl blog &rarr;</a></p>);
+
+  return $html;
+
+}
+
+
 
 1;
