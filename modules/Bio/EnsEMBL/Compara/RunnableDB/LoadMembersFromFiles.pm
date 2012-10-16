@@ -133,7 +133,11 @@ sub write_output {
             if (exists $cds_seq->{$sequence->id}) {
                 $pep_member->sequence_cds( $cds_seq->{$sequence->id}->seq );
                 $self->param('sequence_adaptor')->store_other_sequence($pep_member, $cds_seq->{$sequence->id}->seq, 'cds');
-            }
+            } elsif ($self->param('need_cds_seq')) {
+                die $sequence->id, " does not have cds sequence\n";
+            } else {
+                warn $sequence->id, " does not have cds sequence\n";
+            } 
       };
 
 	print $self->param('geneSubset')->count(), " genes and ", $self->param('pepSubset')->count(), " peptides in subsets\n" if ($self->debug);

@@ -608,6 +608,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'load_fresh_members_fromfile',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles',
+            -parameters => {
+                -need_cds_seq   => 1,
+            },
             -hive_capacity => -1,
             -rc_name => '2Gb_job',
         },
