@@ -65,7 +65,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120611_'.$self->o('release').'_4',
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120611_head',
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -103,8 +103,8 @@ sub default_options {
 	#Default pairaligner config
 	#
     'skip_pairaligner_stats' => 0, #skip this module if set to 1
-    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
-#    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_67_testing',
+#    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
+    'output_dir' => '/lustre/scratch109/ensembl/st3/compara_generation/st3_vega_ga_20120611_head',
     };
 }
 
@@ -153,7 +153,8 @@ sub pipeline_analyses {
   for (my $i = @$analyses; $i >= 0; --$i) {
     my $analysis = $analyses->[$i];
     my $name = $analysis->{'-logic_name'};
-    if ($name && ! grep {$name eq $_} @e_analyses) {
+    next unless $name;
+    if (! grep {$name eq $_} @e_analyses) {
       push @new_analyses, $name;
     }
     if ($analyses_to_ignore{$name}) {
@@ -163,23 +164,23 @@ sub pipeline_analyses {
     #modify get_species_list
     if ($name eq 'get_species_list') {
       foreach (qw(master_db reg_conf core_dbs)) {
-        print "removed parameter for $_\n";
+        print "Vega fix - removed parameter for $_\n";
         delete $analyses->[$i]{'-parameters'}{$_};
       }
-      print "modifying flow into parameter for $name\n";
+      print "Vega fix - modifying flow into parameter for $name\n";
       $analyses->[$i]{'-flow_into'} = { 1 => [ 'parse_pair_aligner_conf' ] };
     }
 
     #modify parse_pair_aligner_conf
     if ($name eq 'parse_pair_aligner_conf') {
       foreach (qw(default_chain_output default_net_output default_chain_input default_net_input registry_dbs master_db do_compare_to_previous_db)) {
-        print "removed parameter for $_\n";
+        print "Vega fix - removed parameter for $_\n";
         delete $analyses->[$i]{'-parameters'}{$_};
       }
       my @unwanted_flows = qw(create_alignment_nets_jobs healthcheck create_alignment_chains_jobs no_chunk_and_group_dna pairaligner_stats;);
       foreach my $flow (keys %{$analyses->[$i]{'-flow_into'}}) {
         if (grep {$analyses->[$i]{'-flow_into'}{$flow}[0] eq $_} @unwanted_flows) {
-          print "removed flow control rule for ".$analyses->[$i]{'-flow_into'}{$flow}[0] . "\n";
+          print "Vega fix - removed flow control rule for ".$analyses->[$i]{'-flow_into'}{$flow}[0] . "\n";
           delete $analyses->[$i]{'-flow_into'}{$flow};
         }
       }
