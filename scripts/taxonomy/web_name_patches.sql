@@ -1,8 +1,5 @@
 -- This file might need to be edited before importing NCBI taxonomy into ncbi_taxonomy@ens-livemirror:
 
-UPDATE ncbi_taxa_name SET name = 'Canis familiaris'         WHERE taxon_id = 9615   AND name_class = 'scientific name'  AND name = 'Canis lupus familiaris';
-UPDATE ncbi_taxa_name SET name = 'Canis lupus familiaris'   WHERE taxon_id = 9615   AND name_class = 'synonym'          AND name = 'Canis familiaris';
-
 UPDATE ncbi_taxa_name SET name = 'Xenopus tropicalis'       WHERE taxon_id = 8364   AND name_class = 'scientific name'  AND name = 'Xenopus (Silurana) tropicalis';
 UPDATE ncbi_taxa_name SET name = 'Xenopus (Silurana) tropicalis' WHERE taxon_id = 8364 AND name_class = 'synonym'       AND name = 'Xenopus tropicalis';
 
