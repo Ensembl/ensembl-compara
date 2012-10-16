@@ -521,10 +521,6 @@ foreach my $spp (@valid_spp) {
 
     next unless $coordsys || grep $other_stats{$_}, @other_stats_keys;
 
-    print STATS qq(
-      <h3>Other</h3>
-      <table class="ss tint species-stats">
-    );
     $rowcount = 0;
 
     for (@other_stats_keys) {
