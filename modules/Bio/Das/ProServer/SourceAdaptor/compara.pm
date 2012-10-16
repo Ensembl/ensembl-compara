@@ -232,7 +232,7 @@ sub build_features
 
     ## Fetch the alginments on the query segment
     my $features;
-    if ($method_link_species_set->method_link_class =~ /SyntenyRegion/) {
+    if ($method_link_species_set->method->class =~ /SyntenyRegion/) {
       $features = $self->get_features_from_SyntenyRegions($synteny_region_adaptor,
           $method_link_species_set, $dnafrag1, $start1, $end1);
     } else {
@@ -297,7 +297,7 @@ sub get_features_from_SyntenyRegions {
         'score' => '-',
         'link'  => [@links],
         'linktxt' => [@link_txts],
-        'typecategory' => $method_link_species_set->method_link_class,
+        'typecategory' => $method_link_species_set->method->class,
         'type'  => $method_link_species_set->name,
       };
   }
@@ -438,7 +438,7 @@ sub get_features_from_GenomicAlingBlocks {
         'grouplink' => [@group_links],
         'grouplinktxt' => [@group_link_txts],
 	'groupnote'=> $group_note,
-        'typecategory' => $method_link_species_set->method_link_class,
+        'typecategory' => $method_link_species_set->method->class,
         'type'  => $method_link_species_set->name,
       };
   }
