@@ -27,7 +27,7 @@ sub content {
   # ontology website.
   
   my $hub         = $self->hub;
-  my $go_database = $hub->get_databases('go')->{'go'};
+  my $adaptor     = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
   my %clusters    = $hub->species_defs->multiX('ONTOLOGIES');
   my $terms_found = 0;
   my $label       = 'Ontology';
@@ -41,6 +41,9 @@ sub content {
     { key => 'goslim_goa_title', title => 'GOSlim Terms',      sort => 'text', width => '30%', align => 'centre' },
   ];
   
+
+
+  
   foreach my $oid (sort { $a <=> $b } keys %clusters) {
     my $go_hash = $object->get_go_list($clusters{$oid}{'db'}, $clusters{$oid}{'root'});
     
@@ -50,21 +53,7 @@ sub content {
       
       # add goslim_generic
       foreach my $key (keys %$go_hash) {
-        my $query = qq{
-          SELECT t.accession, t.name, c.distance
-          FROM closure c join term t on c.parent_term_id = t.term_id
-          where child_term_id = (SELECT term_id FROM term where accession = '$key')
-          and parent_term_id in (SELECT term_id FROM term t where subsets like '%goslim_generic%')
-          order by distance
-        };
-        
-        my $result = $go_database->dbc->db_handle->selectall_arrayref($query);
-        
-        foreach (@$result) {
-          my ($accession, $name, $distance) = @$_;
-          $go_hash->{$key}{'goslim'}{$accession}{'name'}     = $name;
-          $go_hash->{$key}{'goslim'}{$accession}{'distance'} = $distance;
-        }
+        $go_hash->{$key}{'goslim'}{$_->accession}{'name'} = $_->name for @{$adaptor->fetch_all_by_descendant_term($adaptor->fetch_by_accession($key), '%goslim_generic%')};;
       }
       
       $self->process_data($table, $go_hash, $clusters{$oid}{'db'});
