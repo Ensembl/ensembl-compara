@@ -190,7 +190,9 @@ sub required_types_for_species {
   
   # BAM
   $required_lookup{'bam'} = { map { $_ => 1 } qw(
-    pan_troglodytes sus_scrofa oreochromis_niloticus canis_familiaris pelodiscus_sinensis
+    canis_familiaris danio_rerio monodelphis_domestica mustela_putorius_furo
+    oreochromis_niloticus ornithorhynchus_anatinus pan_troglodytes pelodiscus_sinensis
+    pongo_abelii sarcophilus_harrisii sus_scrofa xiphophorus_maculatus
   )};
   
   return \%required_lookup;
