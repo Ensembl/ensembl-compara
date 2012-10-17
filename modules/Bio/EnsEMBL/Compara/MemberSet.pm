@@ -320,6 +320,18 @@ sub member_class {
     return 'Bio::EnsEMBL::Compara::Member';
 }
 
+=head2 _attr_to_copy_list
+
+  Description: Returns the list of all the attributes to be copied by deep_copy()
+  Returntype : Array of String
+  Caller     : deep_copy()
+  Status     : Stable
+
+=cut
+
+sub _attr_to_copy_list {
+    return qw(_dbID _adaptor _version _stable_id _description _method_link_species_set_id);
+}
 
 =head2 deep_copy
 
@@ -335,7 +347,7 @@ sub deep_copy {
     my $copy = {};
     bless $copy, ref($self);
 
-    foreach my $attr (qw(_dbID _adaptor _version _stable_id _description _method_link_species_set_id)) {
+    foreach my $attr ($self->_attr_to_copy_list) {
         $copy->{$attr} = $self->{$attr};
     }
 

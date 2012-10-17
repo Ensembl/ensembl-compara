@@ -97,22 +97,19 @@ sub new {
 }
 
 
-=head2 deep_copy
+=head2 _attr_to_copy_list
 
-  Description: Returns a copy of $self (as an AlignedMemberSet). All the
-               members are themselves copied, but the tree topology is lost.
-  Returntype : Bio::EnsEMBL::Compara::GeneTree
+  Description: Returns the list of all the attributes to be copied by deep_copy()
+  Returntype : Array of String
   Caller     : General
 
 =cut
 
-sub deep_copy {
+sub _attr_to_copy_list {
     my $self = shift;
-    my $copy = $self->SUPER::deep_copy();
-    foreach my $attr (qw(tree_type member_type clusterset_id)) {
-        $copy->$attr($self->$attr);
-    }
-    return $copy;
+    my @sup_attr = $self->SUPER::_attr_to_copy_list();
+    push @sup_attr, qw(_tree_type _member_type _clusterset_id);
+    return @sup_attr;
 }
 
 

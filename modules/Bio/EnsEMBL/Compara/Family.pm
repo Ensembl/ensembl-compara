@@ -50,21 +50,20 @@ sub description_score {
   return $self->{'_description_score'};
 }
 
+=head2 _attr_to_copy_list
 
-=head2 deep_copy
-
-  Description: Returns a copy of $self. All the members are themselves copied
-  Returntype : Bio::EnsEMBL::Compara::Family
-  Caller     : general
-  Status     : Stable
+  Description: Returns the list of all the attributes to be copied by deep_copy()
+  Returntype : Array of String
+  Caller     : General
 
 =cut
 
-sub deep_copy {
+sub _attr_to_copy_list {
     my $self = shift;
-    my $copy = $self->SUPER::deep_copy();
-    $copy->description_score($self->description_score);
-    return $copy;
+    my @sup_attr = $self->SUPER::_attr_to_copy_list();
+    push @sup_attr, qw(_description_score);
+    return @sup_attr;
 }
+
 
 1;
