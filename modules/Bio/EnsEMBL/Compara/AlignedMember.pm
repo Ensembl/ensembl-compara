@@ -329,6 +329,28 @@ sub alignment_string {
   return $self->{$key};
 }
 
+sub alignment_string_generic {
+  my $self = shift;
+  my $seq_type = shift;
+
+  my $key = 'alignment_string';
+  if ($seq_type) {
+    $key .= "_$seq_type";
+  }
+
+  unless (defined $self->{$key}) {
+    my $sequence;
+    if ($seq_type) {
+      $sequence = $self->get_other_sequence($seq_type);
+    } else {
+      $sequence = $self->sequence;
+    }
+    $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
+  }
+
+  return $self->{$key};
+}
+
 
 =head2 alignment_string_bounded
 

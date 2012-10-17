@@ -39,6 +39,7 @@ sequence, which is represented as an AlignedMember object.
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMemberSet
+  +- Bio::EnsEMBL::Compara::MemberSet
 
 =head1 METHODS
 
@@ -59,6 +60,98 @@ use Bio::EnsEMBL::Compara::AlignedMember;
 
 use base ('Bio::EnsEMBL::Compara::MemberSet');
 
+##############################
+# Constructors / Destructors #
+##############################
+
+=head2 new
+
+  Example    :
+  Description:
+  Returntype : Bio::EnsEMBL::Compara::GeneAlign
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub new {
+    my($class,@args) = @_;
+
+    my $self = $class->SUPER::new(@args);
+
+    if (scalar @args) {
+        my ($aln_method, $aln_length, $seq_type) = rearrange([qw(ALN_METHOD ALN_LENGTH SEQ_TYPE)], @args);
+
+        $aln_method && $self->aln_method($aln_method);
+        $aln_length && $self->aln_length($aln_length);
+        $seq_type && $self->seq_type($seq_type);
+    }
+
+    return $self;
+}
+
+
+#####################
+# Object attributes #
+#####################
+
+=head2 aln_length
+
+  Description : Getter/Setter for the aln_length field. This field contains
+                the length of the alignment
+  Returntype  : Integer
+  Example     : my $len = $tree->aln_length();
+  Caller      : General
+
+=cut
+
+sub aln_length {
+    my $self = shift;
+    $self->{'_aln_length'} = shift if(@_);
+    return $self->{'_aln_length'};
+}
+
+
+=head2 aln_method
+
+  Description : Getter/Setter for the aln_method field. This field should
+                represent the method used for the alignment
+  Returntype  : String
+  Example     : my $method = $tree->aln_method();
+  Caller      : General
+
+=cut
+
+sub aln_method {
+    my $self = shift;
+    $self->{'_aln_method'} = shift if(@_);
+    return $self->{'_aln_method'};
+}
+
+=head2 seq_type
+
+  Description : Getter/Setter for the seq_type field. This field contains
+                the type of sequence used for the members. If undefined,
+                the usual sequence is used. Otherwise, there must be a
+                matching sequence in the other_member_sequence table.
+  Returntype  : String
+  Example     : my $type = $tree->seq_type();
+  Caller      : General
+
+=cut
+
+sub seq_type {
+    my $self = shift;
+    $self->{'_seq_type'} = shift if(@_);
+    return $self->{'_seq_type'};
+}
+
+
+
+#######################
+# MemberSet interface #
+#######################
+
 
 =head2 member_class
 
@@ -72,6 +165,23 @@ use base ('Bio::EnsEMBL::Compara::MemberSet');
 sub member_class {
     return 'Bio::EnsEMBL::Compara::AlignedMember';
 }
+
+
+=head2 _attr_to_copy_list
+
+  Description: Returns the list of all the attributes to be copied by deep_copy()
+  Returntype : Array of String
+  Caller     : General
+
+=cut
+
+sub _attr_to_copy_list {
+    my $self = shift;
+    my @sup_attr = $self->SUPER::_attr_to_copy_list();
+    push @sup_attr, qw(_seq_type _aln_length _aln_method);
+    return @sup_attr;
+}
+
 
 ######################
 # Alignment sections #
@@ -260,6 +370,9 @@ sub get_SimpleAlign {
             $seqstr = $member->cdna_alignment_string($changeSelenos);
             $seqstr =~ s/\s+//g;
             $alphabet = 'dna';
+        } elsif ($self->seq_type) {
+            $seqstr = $member->alignment_string_generic($self->seq_type);
+            $alphabet = 'protein';
         } else {
             $seqstr = $member->alignment_string($exon_cased);
             $alphabet = 'protein';

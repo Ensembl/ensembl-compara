@@ -754,6 +754,20 @@ sub get_exon_bounded_sequence {
     return $seq_string;
 }
 
+sub get_other_sequence {
+  my $self = shift;
+  my $seq_type = shift;
+
+  my $key = "_sequence_other_$seq_type";
+
+  if(!defined($self->{$key})) {
+    $self->{$key} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, $seq_type);
+  }
+
+  return $self->{$key};
+}
+
+
 =head2 seq_length
 
   Example    : my $seq_length = $member->seq_length;
