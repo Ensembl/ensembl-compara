@@ -278,6 +278,10 @@ sub set {
 }
 
 
+#####################
+# Alignment strings #
+#####################
+
 =head2 alignment_string
 
   Arg [1]     : (optional) bool $exon_cased
@@ -293,7 +297,7 @@ sub set {
                 Therefore the alignment_string always returns the whole aligned
                 sequence.
   Returntype  : string
-  Exceptions  : throws if the cigar_line is not defined for this object.
+  Exceptions  : see _compose_sequence_with_cigar
   Caller      : general
   Status      : Stable
 
@@ -302,10 +306,6 @@ sub set {
 sub alignment_string {
   my $self = shift;
   my $exon_cased = shift;
-
-  unless (defined $self->cigar_line && $self->cigar_line ne "") {
-    throw("To get an alignment_string, the cigar_line needs to be define\n");
-  }
 
   # Use different keys for exon-cased and non exon-cased sequences
   my $key = 'alignment_string';
@@ -323,34 +323,7 @@ sub alignment_string {
     } else {
       $sequence = $self->sequence;
     }
-    if (defined $self->cigar_start || defined $self->cigar_end) {
-      unless (defined $self->cigar_start && defined $self->cigar_end) {
-        throw("both cigar_start and cigar_end should be defined");
-      }
-      my $offset = $self->cigar_start - 1;
-      my $length = $self->cigar_end - $self->cigar_start + 1;
-      $sequence = substr($sequence, $offset, $length);
-    }
-
-    my $cigar_line = $self->cigar_line;
-    $cigar_line =~ s/([MD])/$1 /g;
-
-    my @cigar_segments = split " ",$cigar_line;
-    my $alignment_string = "";
-    my $seq_start = 0;
-    foreach my $segment (@cigar_segments) {
-      if ($segment =~ /^(\d*)D$/) {
-        my $length = $1;
-        $length = 1 if ($length eq "");
-        $alignment_string .= "-" x $length;
-      } elsif ($segment =~ /^(\d*)M$/) {
-        my $length = $1;
-        $length = 1 if ($length eq "");
-        $alignment_string .= substr($sequence,$seq_start,$length);
-        $seq_start += $length;
-      }
-    }
-    $self->{$key} = $alignment_string;
+    $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
   }
 
   return $self->{$key};
@@ -364,8 +337,7 @@ sub alignment_string {
   Description : Returns the aligned sequence for this object with padding characters
                 representing the introns.
   Returntype  : string
-  Exceptions  : throws if the cigar_line is not defined for this object or if the
-                cigar_start or cigar_end are defined.
+  Exceptions  : see _compose_sequence_with_cigar
   Caller      : general
   Status      : Stable
 
@@ -374,41 +346,10 @@ sub alignment_string {
 sub alignment_string_bounded {
   my $self = shift;
 
-  unless (defined $self->cigar_line && $self->cigar_line ne "") {
-    throw("To get an alignment_string, the cigar_line needs to be define\n");
-  }
   unless (defined $self->{'alignment_string_bounded'}) {
     my $sequence_exon_bounded = $self->sequence_exon_bounded;
-    if (defined $self->cigar_start || defined $self->cigar_end) {
-      throw("method doesnt implement defined cigar_start and cigar_end");
-    }
     $sequence_exon_bounded =~ s/b|o|j/\ /g;
-    my $cigar_line = $self->cigar_line;
-    $cigar_line =~ s/([MD])/$1 /g;
-
-    my @cigar_segments = split " ",$cigar_line;
-    my $alignment_string_bounded = "";
-    my $seq_start = 0;
-    my $exon_count = 1;
-    foreach my $segment (@cigar_segments) {
-      if ($segment =~ /^(\d*)D$/) {
-        my $length = $1;
-        $length = 1 if ($length eq "");
-        $alignment_string_bounded .= "-" x $length;
-      } elsif ($segment =~ /^(\d*)M$/) {
-        my $length = $1;
-        $length = 1 if ($length eq "");
-        my $substring = substr($sequence_exon_bounded,$seq_start,$length);
-        if ($substring =~ /\ /) {
-          my $num_boundaries = $substring =~ s/(\ )/$1/g;
-          $length += $num_boundaries;
-          $substring = substr($sequence_exon_bounded,$seq_start,$length);
-        }
-        $alignment_string_bounded .= $substring;
-        $seq_start += $length;
-      }
-    }
-    $self->{'alignment_string_bounded'} = $alignment_string_bounded;
+    $self->{'alignment_string_bounded'} = $self->_compose_sequence_with_cigar($sequence_exon_bounded);
   }
 
   return $self->{'alignment_string_bounded'};
@@ -425,7 +366,7 @@ sub alignment_string_bounded {
                If the cdna cannot be retrieved undef is returned and a
                warning is thrown.
   Returntype : string
-  Exceptions : none
+  Exceptions : see _compose_sequence_with_cigar
   Caller     : general
 
 =cut
@@ -445,41 +386,74 @@ sub cdna_alignment_string {
       $cdna = $self->get_Transcript->translateable_seq;
     }
 
-    if (defined $self->cigar_start || defined $self->cigar_end) {
-      unless (defined $self->cigar_start && defined $self->cigar_end) {
-        throw("both cigar_start and cigar_end should be defined");
-      }
-      my $offset = $self->cigar_start * 3 - 3;
-      my $length = ($self->cigar_end - $self->cigar_start + 1) * 3;
-      $cdna = substr($cdna, $offset, $length);
-    }
-
-    my $start = 0;
-    my $cdna_align_string = '';
-
-    # foreach my $pep (split(//, $self->alignment_string)) { # Speed up below
-    my $alignment_string = $self->alignment_string;
-    foreach my $pep (unpack("A1" x length($alignment_string), $alignment_string)) {
-      if($pep eq '-') {
-        $cdna_align_string .= '--- ';
-      } elsif ((($pep eq 'U') and $changeSelenos) or ($pep eq '*')) {
-	  $cdna_align_string .= 'NNN ';
-	  $start += 3;  
-      } else {
-        my $codon = substr($cdna, $start, 3);
-        unless (length($codon) == 3) {
-          # sometimes the last codon contains only 1 or 2 nucleotides.
-          # making sure that it has 3 by adding as many Ns as necessary
-          $codon .= 'N' x (3 - length($codon));
-        }
-        $cdna_align_string .= $codon . ' ';
-        $start += 3;
-      }
-    }
-    $self->{'cdna_alignment_string'} = $cdna_align_string;
+    $self->{'cdna_alignment_string'} = $self->_compose_sequence_with_cigar($cdna, 3);
   }
   
   return $self->{'cdna_alignment_string'};
+}
+
+
+=head2 _compose_sequence_with_cigar
+
+  Arg [1]    : String $sequence
+  Arg [2]    : Integer $expansion_factor (default: 1)
+  Example    : my $alignment_string = $aligned_member->_compose_sequence_with_cigar($aligned_member->sequence_cds, 3)
+  Description: Converts the given sequence into an alignment string
+               by composing it with the cigar_line. $expansion_factor
+               can be set to accomodate CDS sequences
+  Returntype : string
+  Exceptions : throws if the cigar_line is not defined for this object or if the
+                cigar_start or cigar_end are defined.
+  Caller     : internal
+
+=cut
+
+sub _compose_sequence_with_cigar {
+    my $self = shift;
+    my $sequence = shift;
+    my $expansion_factor = shift || 1;
+
+    unless (defined $self->cigar_line && $self->cigar_line ne "") {
+        throw("To get an alignment_string, the cigar_line needs to be define\n");
+    }
+
+    # cigar_start and cigar_end
+    if (defined $self->cigar_start || defined $self->cigar_end) {
+        unless (defined $self->cigar_start && defined $self->cigar_end) {
+            throw("both cigar_start and cigar_end should be defined");
+        }
+        my $offset = ($self->cigar_start - 1) * $expansion_factor;
+        my $length = ($self->cigar_end - $self->cigar_start + 1) * $expansion_factor;
+        $sequence = substr($sequence, $offset, $length);
+    }
+
+    my $cigar_line = $self->cigar_line;
+    $cigar_line =~ s/([MD])/$1 /g;
+    my @cigar_segments = split " ", $cigar_line;
+    my $alignment_string = "";
+    my $seq_start = 0;
+    foreach my $segment (@cigar_segments) {
+        if ($segment =~ /^(\d*)D$/) {
+            my $length = $1 || 1;
+            $alignment_string .= "-" x ($length * $expansion_factor);
+
+        } elsif ($segment =~ /^(\d*)M$/) {
+            my $length = $1 || 1;
+            $length *= $expansion_factor;
+            my $substring = substr($sequence,$seq_start,$length);
+            if ($substring =~ /\ /) {
+                my $num_boundaries = $substring =~ s/(\ )/$1/g;
+                $length += $num_boundaries;
+                $substring = substr($sequence,$seq_start,$length);
+            }
+            $alignment_string .= $substring;
+            $seq_start += $length;
+        }
+    }
+    if (length($alignment_string) % $expansion_factor) {
+        $alignment_string .= ('N' x ($expansion_factor - (length($alignment_string) % $expansion_factor)));
+    }
+    return $alignment_string;
 }
 
 
