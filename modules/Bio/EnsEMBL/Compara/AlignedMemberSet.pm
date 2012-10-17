@@ -168,7 +168,7 @@ sub read_clustalw {
 }
 
 sub load_cigars_from_fasta {
-    my ($self, $file) = @_;
+    my ($self, $file, $import_seq) = @_;
 
     my $alignio = Bio::AlignIO->new(-file => "$file", -format => "fasta");
 
@@ -192,6 +192,12 @@ sub load_cigars_from_fasta {
         }
 
         $member_hash{$id}->cigar_line($cigar_line);
+
+        if ($import_seq) {
+            my $nucl_seq = $seq->seq();
+            $nucl_seq =~ s/-//g;
+            $member_hash{$id}->sequence($nucl_seq);
+        }
     }
 }
 
