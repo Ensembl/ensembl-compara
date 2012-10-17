@@ -149,9 +149,9 @@ sub cdna_alignment_string {
     foreach my $pep (split(//,$self->alignment_string($member))) {
       
       if($pep eq '-') {
-        $cdna_align_string .= '--- ';
+        $cdna_align_string .= '---';
       } elsif ($pep eq 'U' && $changeSelenos or $pep eq '*') {
-	$cdna_align_string .= 'NNN ';
+	$cdna_align_string .= 'NNN';
 	$start += 3;  
       } else {
         my $codon = substr($cdna, $start, 3);
@@ -160,7 +160,7 @@ sub cdna_alignment_string {
           # making sure that it has 3 by adding as many Ns as necessary
           $codon .= 'N' x (3 - length($codon));
         }
-        $cdna_align_string .= $codon . ' ';
+        $cdna_align_string .= $codon;
         $start += 3;
       }
     }

@@ -455,7 +455,6 @@ sub _genetreemember_body {
     else {
       $mol_seq = ($self->cdna()) ? $protein->sequence_cds() : $protein->sequence(); 
     }
-    $mol_seq =~ s/\s+//g if $self->cdna();
 
     $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
   }
