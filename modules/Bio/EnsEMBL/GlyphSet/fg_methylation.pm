@@ -16,7 +16,7 @@ sub features {
   if($slice->length > 200000) {
     if(not $self->{'config'}->{'_sent_ch3_error_track'}) {
       $self->{'config'}->{'_sent_ch3_error_track'} = 1;
-      return $self->errorTrack("Methylation data is not currently only viewable on images over 200kb in size");
+      return $self->errorTrack("Methylation data is only viewable on images  200kb in size");
     } else {
       return undef;
     }
