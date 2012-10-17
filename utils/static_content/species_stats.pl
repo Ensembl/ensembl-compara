@@ -519,7 +519,11 @@ foreach my $spp (@valid_spp) {
       );
     }
 
-    next unless $coordsys || grep $other_stats{$_}, @other_stats_keys;
+    if($coordsys){
+      print STATS $b_coordsys;
+    }
+
+    next unless grep $other_stats{$_}, @other_stats_keys;
 
     $rowcount = 0;
 
@@ -537,10 +541,6 @@ foreach my $spp (@valid_spp) {
     }
 
     print STATS '</table>';
-
-    if($coordsys){
-      print STATS $b_coordsys;
-    }
 
     close(STATS);
   }
