@@ -24,12 +24,12 @@ Bio::EnsEMBL::Compara::GeneTree
 
 Class to represent a gene tree object. Contains a link to
 the root of the tree, as long as general tree properties.
-It implements the AlignedMemberSet interface (via the leaves).
+It implements the GeneAlign interface (via the leaves).
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneTree
-  +- Bio::EnsEMBL::Compara::AlignedMemberSet
+  +- Bio::EnsEMBL::Compara::GeneAlign
   `- Bio::EnsEMBL::Compara::Taggable
 
 =head1 AUTHORSHIP
@@ -61,7 +61,7 @@ use Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Compara::AlignedMemberSet', 'Bio::EnsEMBL::Compara::Taggable');
+use base ('Bio::EnsEMBL::Compara::GeneAlign', 'Bio::EnsEMBL::Compara::Taggable');
 
 
 ##############################
@@ -94,22 +94,6 @@ sub new {
     }
 
     return $self;
-}
-
-
-=head2 _attr_to_copy_list
-
-  Description: Returns the list of all the attributes to be copied by deep_copy()
-  Returntype : Array of String
-  Caller     : General
-
-=cut
-
-sub _attr_to_copy_list {
-    my $self = shift;
-    my @sup_attr = $self->SUPER::_attr_to_copy_list();
-    push @sup_attr, qw(_tree_type _member_type _clusterset_id);
-    return @sup_attr;
 }
 
 
@@ -344,9 +328,9 @@ sub expand_subtrees {
 }
 
 
-##############################
-# AlignedMemberSet interface #
-##############################
+#######################
+# MemberSet interface #
+#######################
 
 =head2 member_class
 
@@ -358,6 +342,22 @@ sub expand_subtrees {
 
 sub member_class {
     return 'Bio::EnsEMBL::Compara::GeneTreeMember';
+}
+
+
+=head2 _attr_to_copy_list
+
+  Description: Returns the list of all the attributes to be copied by deep_copy()
+  Returntype : Array of String
+  Caller     : General
+
+=cut
+
+sub _attr_to_copy_list {
+    my $self = shift;
+    my @sup_attr = $self->SUPER::_attr_to_copy_list();
+    push @sup_attr, qw(_tree_type _member_type _clusterset_id);
+    return @sup_attr;
 }
 
 
