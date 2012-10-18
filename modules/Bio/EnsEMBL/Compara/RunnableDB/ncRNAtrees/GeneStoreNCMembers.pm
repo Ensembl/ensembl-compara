@@ -213,8 +213,8 @@ sub store_ncrna_gene {
             $gene_member_not_stored = 0;
         }
 
+        $ncrna_member->gene_member_id($gene_member->dbID);
         $member_adaptor->store($ncrna_member);
-        $member_adaptor->store_gene_peptide_link($gene_member->dbID, $ncrna_member->dbID);
         print(" : stored\n") if($self->debug);
 
         if(length($transcript_spliced_seq) > $max_ncrna_length) {

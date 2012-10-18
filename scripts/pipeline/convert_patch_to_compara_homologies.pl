@@ -135,7 +135,6 @@ sub fetch_or_store_gene {
         $trans_member->gene_member_id($gene_member->dbID);
         print "NEW: $trans_member "; $trans_member->print_member();
         $member_adaptor->store($trans_member) unless $no_store;
-        $member_adaptor->store_gene_peptide_link($gene_member->dbID, $trans_member->dbID) unless $no_store;
         $subset_peps->add_member($trans_member);
         $gene_stable_id_2_compara_transcript{$gene->stable_id} = $trans_member;
 

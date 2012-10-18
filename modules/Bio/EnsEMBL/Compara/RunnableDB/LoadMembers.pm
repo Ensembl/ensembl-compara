@@ -324,7 +324,6 @@ sub store_gene_and_all_transcripts {
                                                                   -genome_db=>$self->param('genome_db'));
       print(" => member " . $gene_member->stable_id) if($self->param('verbose'));
 
-      my $stable_id = $gene_member->stable_id;
       $member_adaptor->store($gene_member);
       print(" : stored") if($self->param('verbose'));
 
@@ -333,7 +332,7 @@ sub store_gene_and_all_transcripts {
       $gene_member_not_stored = 0;
     }
 
-    my $stable_id = $pep_member->stable_id;
+    $pep_member->gene_member_id($gene_member->dbID);
     $member_adaptor->store($pep_member);
     if ($self->param('store_related_pep_sequences')) {
         $sequence_adaptor->store_other_sequence($pep_member, $pep_member->sequence_cds, 'cds');
@@ -342,7 +341,6 @@ sub store_gene_and_all_transcripts {
         $pep_member->sequence_exon_bounded('');
     }
 
-    $member_adaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
     print(" : stored\n") if($self->param('verbose'));
 
     if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->param('force_unique_canonical'))) {
@@ -444,7 +442,6 @@ sub store_all_coding_exons {
     push @exon_members_stored, $exon_member;
 
     eval {
-	    my $stable_id = $exon_member->stable_id;
 	    #print "New member\n";
 	    $member_adaptor->store($exon_member);
 	    print(" : stored\n") if($self->param('verbose'));

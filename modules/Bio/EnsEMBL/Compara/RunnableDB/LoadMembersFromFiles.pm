@@ -113,6 +113,7 @@ sub write_output {
 		$pep_member->taxon_id($taxon_id);
 		$pep_member->description($sequence->desc);
 		$pep_member->genome_db_id($genome_db_id);
+            $pep_member->gene_member_id($gene_member->dbID);
             if (exists $cds_coordinates->{$sequence->id}) {
                 my $coord = $cds_coordinates->{$sequence->id};
                 $pep_member->chr_name($coord->[0]);
@@ -127,8 +128,6 @@ sub write_output {
 		$pep_member->sequence($seq);
 		$member_adaptor->store($pep_member);
 		$self->param('pepSubset')->add_member($pep_member);
-
-		$member_adaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
 
             if (exists $cds_seq->{$sequence->id}) {
                 $pep_member->sequence_cds( $cds_seq->{$sequence->id}->seq );
