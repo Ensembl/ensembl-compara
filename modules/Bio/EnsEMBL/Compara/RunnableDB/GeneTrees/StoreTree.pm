@@ -10,6 +10,11 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub _name_for_prot {
+    my $self = shift;
+    my $prot = shift;
+    return ($prot->member_id)."_".($self->param('use_genomedb_id') ? $prot->genome_db_id : $prot->taxon_id);
+}
 
 sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
@@ -53,7 +58,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->find_leaf_by_node_id($node1->[0]);
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
-      my $name1 = ($protein1->member_id)."_".($self->param('use_genomedb_id') ? $protein1->genome_db_id : $protein1->taxon_id);
+      my $name1 = $self->_name_for_prot($protein1);
       my $cdna = $protein1->cdna_alignment_string;
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
@@ -70,7 +75,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       foreach my $node2 (@$partial_genes) {
         my $protein2 = $gene_tree->find_leaf_by_node_id($node2->[0]);
         #print STDERR "node2 ", $node2, " ", $protein2, "\n";
-        my $name2 = ($protein2->member_id)."_".($self->param('use_genomedb_id') ? $protein2->genome_db_id : $protein2->taxon_id);
+        my $name2 = $self->_name_for_prot($protein2);
         $split_genes{$name2} = $name1;
         #print STDERR Dumper(%split_genes);
         print STDERR "Joining in ", $protein1->stable_id, " / $name1 and ", $protein2->stable_id, " / $name2 in input cdna alignment\n" if ($self->debug);
@@ -369,7 +374,7 @@ sub fetch_or_create_other_tree {
         # Reformat things
         foreach my $member (@{$newtree->get_all_Members}) {
             $member->cigar_line(undef);
-            $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
+            $member->stable_id($self->_name_for_prot($member));
             $member->{'_children_loaded'} = 1;
         }
         $self->store_tree_into_clusterset($newtree, $clusterset);
