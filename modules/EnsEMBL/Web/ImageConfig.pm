@@ -527,12 +527,13 @@ sub load_user_tracks {
           source_name => $entry->{'name'},
           source_type => 'session',
           assembly    => $entry->{'assembly'},
+          style       => $entry->{'style'},
         };
         
         $self->_compare_assemblies($entry, $session);
       }
     } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
-      my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'},$entry->{'format'});
+      my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
       $strand = $entry->{'strand'} if $entry->{'strand'};
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
@@ -576,6 +577,7 @@ sub load_user_tracks {
           source_name => $name,
           source_type => 'user',
           assembly    => $assembly,
+          style       => $entry->style,
         };
         
         $self->_compare_assemblies($entry, $session);
@@ -621,7 +623,9 @@ sub load_user_tracks {
       
       next unless $analysis;
       
-      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version, $analysis->program_version);
+      $analysis->web_data->{'style'} ||= $upload_sources{$logic_name}{'style'};
+      
+      my ($strand, $renderers) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
       my $caption     = encode_entities($analysis->display_label);
