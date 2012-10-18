@@ -14,13 +14,6 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 
-sub fetch_by_dbIDs {    # DEPRECATED
-    my $self = shift;
-    deprecate("fetch_by_dbIDs() is deprecated and will be removed in release 72. Use fetch_all_by_dbID_list() instead");
-    return $self->fetch_all_by_dbID_list([@_]);
-}
-
-
 sub fetch_all_by_sequence_id {
     my ($self, $sequence_id) = @_;
 
@@ -148,45 +141,6 @@ sub fetch_all_by_source_Iterator {
     return $self->generic_fetch_Iterator($cache_size, "member.source_name = '$source_name'");
 }
 
-sub generic_fetch_Iterator {
-    my ($self, $cache_size, $constraint) = @_;
-
-    my ($name, $syn) = @{($self->_tables)[0]};
-    # Fetch all the dbIDs
-    my $sql = "SELECT ${name}.${name}_id FROM ${name}";
-    if ($constraint) {
-        $sql .= " WHERE $constraint";
-    }
-
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    my $member_id;
-    $sth->bind_columns(\$member_id);
-
-    my $more_items = 1;
-    $cache_size ||= 1000; ## Default: 1000 members per chunk
-    my @cache;
-
-    my $closure = sub {
-        if (@cache == 0 && $more_items) {
-            my @dbIDs;
-            my $items_counter = 0;
-            while ($sth->fetch) {
-                push @dbIDs, $member_id;
-                if (++$items_counter == $cache_size) {
-                    $more_items = 1;
-                    last;
-                }
-                $more_items = 0;
-            }
-            $sth->finish() unless ($more_items);
-            @cache = @{ $self->fetch_by_dbIDs(@dbIDs) } if @dbIDs;
-        }
-        return shift @cache;
-    };
-
-    return Bio::EnsEMBL::Utils::Iterator->new($closure);
-}
 
 =head2 fetch_all_by_source
 
