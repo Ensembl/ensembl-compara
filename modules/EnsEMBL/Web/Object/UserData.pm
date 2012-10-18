@@ -331,14 +331,28 @@ sub update_configs {
   my $config_adaptor = $hub->config_adaptor;
   my $updated;
   
-  foreach my $config (values %{$config_adaptor->all_configs}) {
+  foreach my $config (grep $_->{'type'} eq 'image_config', values %{$config_adaptor->all_configs}) {
+    my @track_order = $config->{'data'}{'track_order'} ? ($config->{'data'}{'track_order'}) : map { $config->{'data'}{$_}{'track_order'} || () } keys %{$config->{'data'}};
     my $update;
     
-    foreach (@$old_tracks) {
-      my $old_track = delete $config->{'data'}{$_};
+    foreach my $key (@$old_tracks) {
+      my $old_track = delete $config->{'data'}{$key};
       
       if ($old_track) {
         $config->{'data'}{$_}{'display'} = $old_track->{'display'} for @$new_tracks;
+        
+        foreach my $hash (@track_order) {
+          foreach my $species (keys %$hash) {
+            foreach my $strand ('', '.f', '.r') {
+              my $order = delete $hash->{$species}{"$key$strand"};
+              
+              if ($order) {
+                $hash->{$species}{"$_$strand"} = $order for @$new_tracks;
+              }
+            }
+          }
+        }
+        
         $update  = 1;
         $updated = 1;
       }
