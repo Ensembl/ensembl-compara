@@ -17,7 +17,6 @@ sub feature_label { my ($self, $f) = @_; return $f->id; }
 
 sub draw_features {
   my ($self, $wiggle) = @_; 
- 
   my %data = $self->features;
   
   return 0 unless keys %data;
@@ -25,13 +24,11 @@ sub draw_features {
   if ($wiggle) {
     foreach my $key ($self->sort_features_by_priority(%data)) {
       my ($features, $config)     = @{$data{$key}};
+      my $graph_type              = ($config->{'useScore'} && $config->{'useScore'} == 4) || ($config->{'graphType'} && $config->{'graphType'} eq 'points') ? 'points' : 'bar';
       my ($min_score, $max_score) = split ':', $config->{'viewLimits'};
       
       $min_score = $config->{'min_score'} unless $min_score;
       $max_score = $config->{'max_score'} unless $max_score;
-      
-      my $graph_type = 'bar';
-         $graph_type = 'points' if ($config->{'useScore'} && $config->{'useScore'} == 4) || ($config->{'graphType'} && $config->{'graphType'} eq 'points');
       
       $self->draw_wiggle_plot($features, { 
         min_score    => $min_score,
@@ -146,7 +143,6 @@ sub features {
 
 sub feature_title {
   my ($self, $f, $db_name) = @_;
-  
   my @strand_name = qw(- Forward Reverse);
   my $title       = sprintf(
     '%s: %s; Start: %d; End: %d; Strand: %s',
@@ -175,7 +171,6 @@ sub feature_title {
 
 sub href {
   ### Links to /Location/Genome
-  
   my ($self, $f) = @_;
   my $href = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'url'};
      $href =~ s/\$\$/$f->id/e;
