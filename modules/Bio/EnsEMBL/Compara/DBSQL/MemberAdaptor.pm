@@ -171,17 +171,6 @@ sub fetch_all_by_source {
 }
 
 
-=head2 fetch_by_source_taxon
-
-  DEPRECATED: use fetch_all_by_source_taxon instead
-
-=cut
-
-sub fetch_by_source_taxon {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_source_taxon(@args);
-}
-
 =head2 fetch_all_by_source_taxon
 
   Arg [1]    : string $source_name
