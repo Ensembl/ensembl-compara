@@ -61,6 +61,7 @@ package Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor;
 use strict;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
@@ -85,8 +86,9 @@ sub fetch_all_by_Member {
   }
 
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-  my $constraint = "fm.member_id = ". $member->dbID;
+  my $constraint = 'fm.member_id = ?';
 
+  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
   return $self->generic_fetch($constraint, $join);
 }
 
@@ -101,8 +103,10 @@ sub fetch_by_Member_source_stable_id {
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'],
               [['member', 'm'], 'fm.member_id = m.member_id']];
 
-  my $constraint = "m.stable_id = '$member_stable_id' AND m.source_name = '$source_name'";
+  my $constraint = 'm.stable_id = ? AND m.source_name = ?';
 
+  $self->bind_param_generic_fetch($member_stable_id, SQL_VARCHAR);
+  $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
   return $self->generic_fetch($constraint, $join);
 }
 
