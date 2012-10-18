@@ -79,8 +79,10 @@ sub new {
     my $self = $class->SUPER::new(@args);
 
     if (scalar @args) {
-        my ($gene_align_id) = rearrange([qw(GENE_ALIGN_ID)], @args);
+        my ($gene_align_id, $aln_method, $aln_length) = rearrange([qw(GENE_ALIGN_ID ALN_METHOD ALN_LENGTH)], @args);
 
+        $aln_method && $self->aln_method($aln_method);
+        $aln_length && $self->aln_length($aln_length);
         $gene_align_id && $self->gene_align_id($gene_align_id);
     }
 
@@ -108,6 +110,39 @@ sub gene_align_id {
     return $self->{'_gene_align_id'};
 }
 
+=head2 aln_length
+
+  Description : Getter/Setter for the aln_length field. This field contains
+                the length of the alignment
+  Returntype  : Integer
+  Example     : my $len = $tree->aln_length();
+  Caller      : General
+
+=cut
+
+sub aln_length {
+    my $self = shift;
+    $self->{'_aln_length'} = shift if(@_);
+    return $self->{'_aln_length'};
+}
+
+
+=head2 aln_method
+
+  Description : Getter/Setter for the aln_method field. This field should
+                represent the method used for the alignment
+  Returntype  : String
+  Example     : my $method = $tree->aln_method();
+  Caller      : General
+
+=cut
+
+sub aln_method {
+    my $self = shift;
+    $self->{'_aln_method'} = shift if(@_);
+    return $self->{'_aln_method'};
+}
+
 
 #######################
 # MemberSet interface #
@@ -124,7 +159,7 @@ sub gene_align_id {
 sub _attr_to_copy_list {
     my $self = shift;
     my @sup_attr = $self->SUPER::_attr_to_copy_list();
-    push @sup_attr, qw(_gene_align_id);
+    push @sup_attr, qw(_gene_align_id _aln_length _aln_method);
     return @sup_attr;
 }
 

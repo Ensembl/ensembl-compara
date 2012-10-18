@@ -80,10 +80,8 @@ sub new {
     my $self = $class->SUPER::new(@args);
 
     if (scalar @args) {
-        my ($aln_method, $aln_length, $seq_type) = rearrange([qw(ALN_METHOD ALN_LENGTH SEQ_TYPE)], @args);
+        my ($seq_type) = rearrange([qw(SEQ_TYPE)], @args);
 
-        $aln_method && $self->aln_method($aln_method);
-        $aln_length && $self->aln_length($aln_length);
         $seq_type && $self->seq_type($seq_type);
     }
 
@@ -95,38 +93,6 @@ sub new {
 # Object attributes #
 #####################
 
-=head2 aln_length
-
-  Description : Getter/Setter for the aln_length field. This field contains
-                the length of the alignment
-  Returntype  : Integer
-  Example     : my $len = $tree->aln_length();
-  Caller      : General
-
-=cut
-
-sub aln_length {
-    my $self = shift;
-    $self->{'_aln_length'} = shift if(@_);
-    return $self->{'_aln_length'};
-}
-
-
-=head2 aln_method
-
-  Description : Getter/Setter for the aln_method field. This field should
-                represent the method used for the alignment
-  Returntype  : String
-  Example     : my $method = $tree->aln_method();
-  Caller      : General
-
-=cut
-
-sub aln_method {
-    my $self = shift;
-    $self->{'_aln_method'} = shift if(@_);
-    return $self->{'_aln_method'};
-}
 
 =head2 seq_type
 
@@ -178,7 +144,7 @@ sub member_class {
 sub _attr_to_copy_list {
     my $self = shift;
     my @sup_attr = $self->SUPER::_attr_to_copy_list();
-    push @sup_attr, qw(_seq_type _aln_length _aln_method);
+    push @sup_attr, qw(_seq_type);
     return @sup_attr;
 }
 
