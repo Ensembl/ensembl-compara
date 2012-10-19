@@ -155,10 +155,10 @@ sub href {
 }
 
 sub features {
-  my ($self,$options) = @_;
+  my ($self, $options) = @_;
 
   my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore style);
-  $options = { %config_in, %$options };
+  $options = { %config_in, %{$options || {}} };
 
   my $bba = $options->{'adaptor'} || $self->bigbed_adaptor;
 
