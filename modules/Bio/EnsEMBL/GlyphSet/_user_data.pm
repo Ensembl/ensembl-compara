@@ -49,7 +49,7 @@ sub features {
   
   my $sub_type   = $self->my_config('sub_type');
   my $logic_name = $self->my_config('logic_name');
-  my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'container'}{'web_species'});
+  my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->species);
   my $dba        = $dbs->get_DBAdaptor('userdata');
   
   $self->{'_default_colour'} = $self->SUPER::my_colour($sub_type);
