@@ -577,20 +577,20 @@ sub get_viewconfig {
   
   return undef unless $session;
   
-  my $config = $session->view_configs->{$cache_code};
+  my $view_config = $session->view_configs->{$cache_code};
   
-  if (!$config) {
+  if (!$view_config) {
     my $module_name = $self->get_module_names('ViewConfig', $type, $component);
     return unless $module_name;
     
-    $config = $module_name->new($type, $component, $self);
+    $view_config = $module_name->new($type, $component, $self);
     
-    $session->apply_to_view_config($config, $type, $cache_code, $config->code); # $config->code and $cache_code can be different
+    $session->apply_to_view_config($view_config, $cache_code); # $view_config->code and $cache_code can be different
   }
   
-  $self->viewconfig = $config if $cache;
+  $self->viewconfig = $view_config if $cache;
   
-  return $config;
+  return $view_config;
 }
 
 sub get_imageconfig {
@@ -599,26 +599,26 @@ sub get_imageconfig {
   ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
   ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
   
-  my $self    = shift;
-  my $type    = shift;
-  my $code    = shift || $type;
-  my $species = shift;
-  my $session = $self->session;
+  my $self       = shift;
+  my $type       = shift;
+  my $cache_code = shift || $type;
+  my $species    = shift;
+  my $session    = $self->session;
   
   return undef unless $session;
-  return $session->image_configs->{$code} if $session->image_configs->{$code};
+  return $session->image_configs->{$cache_code} if $session->image_configs->{$cache_code};
   
   my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
-  my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species, $code) : undef;
+  my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species, $cache_code) : undef;
   
   if ($image_config) {
-    $session->apply_to_image_config($image_config, $type, $code);
+    $session->apply_to_image_config($image_config, $cache_code);
     $image_config->attach_das if $image_config->has_das;
-    return $image_config;
   } else {
     $self->dynamic_use_failure($module_name);
-    return undef;
   }
+  
+  return $image_config;
 }
 
 sub fetch_userdata_by_id {
