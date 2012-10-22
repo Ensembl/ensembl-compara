@@ -121,27 +121,27 @@ sub store {
 }
 
 sub apply_to_view_config {
-  my ($self, $view_config, $type, $cache_code, $config_code) = @_;
-  $self->apply_to_config('view_config', $view_config, $type, $cache_code, $config_code);
+  my ($self, $view_config, $cache_code) = @_;
+  $self->apply_to_config($view_config, 'view_config', $view_config->code, $cache_code);
 }
 
 sub apply_to_image_config {
-  my ($self, $image_config, $type, $cache_code) = @_;
-  $self->apply_to_config('image_config', $image_config, $type, $cache_code, $type); # $cache_code is optional - used when an image has multiple configs. Defaults to $type.
+  my ($self, $image_config, $cache_code) = @_;
+  $self->apply_to_config($image_config, 'image_config', $image_config->{'type'}, $cache_code);
 }
 
 sub apply_to_config {
   ### Adds session data to a view or image config
 
-  my ($self, $config_type, $config, $type, $cache_code, $config_code) = @_;
+  my ($self, $config, $type, $code, $cache_code) = @_;
   my $session_id = $self->session_id;
   
   if ($session_id && $config->storable) {
-    my $config_data = $self->hub->config_adaptor->get_config($config_type, $config_code);
+    my $config_data = $self->hub->config_adaptor->get_config($type, $code);
     $config->set_user_settings($config_data) if $config_data;
   }
   
-  $self->{"${config_type}s"}->{$cache_code} = $config;
+  $self->{"${type}s"}->{$cache_code || $code} = $config;
 }
 
 sub get_cached_data {
