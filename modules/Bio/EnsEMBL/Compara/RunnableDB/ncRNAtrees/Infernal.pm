@@ -36,13 +36,13 @@ cigar_lines for each sequence.
 
 =cut
 
-
 =head1 CONTACT
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please emaili comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
 
-=cut
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>
 
 
 =head1 APPENDIX
