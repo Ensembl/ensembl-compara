@@ -74,8 +74,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     // Move user data to below the multi entries (active tracks, favourites, search)
     if (this.elLk.configDivs.first().not('.move_to_top').length) {
-      this.elLk.links.filter('.move_to_top').insertAfter(this.elLk.links.has('[rel=multi]').last());
-      this.elLk.configDivs.filter('.move_to_top').insertBefore(this.elLk.configDivs.first());
+      this.elLk.links.filter('.move_to_top').insertAfter(this.elLk.links.has('[rel=multi]').last()).removeClass('move_to_top');
+      this.elLk.configDivs.filter('.move_to_top').insertBefore(this.elLk.configDivs.first()).removeClass('move_to_top');
     }
     
     for (type in this.params.tracks) {
