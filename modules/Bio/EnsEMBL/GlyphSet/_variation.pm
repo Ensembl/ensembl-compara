@@ -81,14 +81,13 @@ sub fetch_features {
       
       if ($id =~ /set/) {
         my $track_set            = $self->my_config('set_name');
-        my $variation_db_adaptor = $slice->adaptor->db->get_db_adaptor('variation');
+        my $variation_db_adaptor = $config->hub->database('variation', $self->species);
         my $set_object           = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
     
         # Enable the display of failed variations in order to display the failed variation track
-        my $failed_variations_track_name = 'Failed';
-        my $orig_failed_flag             = $variation_db_adaptor->include_failed_variations;
+        my $orig_failed_flag = $variation_db_adaptor->include_failed_variations;
         
-        $variation_db_adaptor->include_failed_variations(1) if $track_set =~ m/^$failed_variations_track_name/i;
+        $variation_db_adaptor->include_failed_variations(1) if $track_set =~ /failed/i;
         
         @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object) || []};
         
