@@ -87,17 +87,23 @@ sub failed {
     
   # ignore vf and region as we want them to be overwritten
   my $core_params = join '', map $params->{$_} && $_ ne 'vf' && $_ ne 'r' ? qq(<input name="$_" value="$params->{$_}" type="hidden" />) : (), keys %$params;
-  my $options     = join '', map qq(<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>), @locations;
 
-  my $label = $vf ? 'Selected location' : 'Select a location';
+  ## Don't show dropdown if we only have one location
+  ## (Array has to be greater than 2 since we have a 'none selected' "location" as well)
+  if (scalar(@locations) > 2) {
 
-  $html .= sprintf('<form action="%s" method="get"><b>%s</b>: %s<select name="vf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>',
+    my $options     = join '', map qq(<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>), @locations;
+
+    my $label = $vf ? 'Selected location' : 'Select a location';
+
+    $html .= sprintf('<form action="%s" method="get"><b>%s</b>: %s<select name="vf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>',
                   $hub->url({ vf => undef, v => $id, source => $self->object->source }),
                   $label,
                   $core_params,
                   $options,
                 );
-
+  }
+  
   return $self->_warning('This variation has been flagged as failed', $html, '50%');
 }
 
@@ -419,6 +425,7 @@ sub validation_status {
       } elsif ($_ ne 'failed') {
         $st = $_ eq 'freq' ? 'frequency' : $_;
       }
+      
       push @status_list, $st;
     }
   }
@@ -438,7 +445,7 @@ sub validation_status {
   }
   
   return unless $status_count;
-
+  
   my $html = qq{This variation is validated by };
   
   if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
