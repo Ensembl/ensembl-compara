@@ -230,6 +230,23 @@ sub slice_number        { return shift->parameter('slice_number',    @_);       
 sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes; } # return a list of track nodes
 sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
 
+sub default_track_order {
+  my ($self,@tracks) = @_;
+
+  my (@out,%seen);
+  foreach my $t (@tracks) {
+    my $ta = $t->get('track_after');
+    $ta->set('track_before',$t) if $ta;
+  }
+  foreach my $t (grep { not $_->get('track_after') } @tracks) {
+    for(my $t2=$t; $t2 and not $seen{$t2} ; $t2=$t2->get('track_before')) {
+      push @out,$t2;
+      $seen{$t2} = 1; # %seen is paranoia against infinite loops
+    }
+  }
+  return @out;
+}
+
 sub glyphset_configs {
   my $self = shift;
   
@@ -238,8 +255,8 @@ sub glyphset_configs {
     my $track_order = $self->track_order;
     my $i           = 1;
     my @default_order;
-    
-    foreach my $track (@tracks) {
+   
+    foreach my $track ($self->default_track_order(@tracks)) {
       my $strand = $track->get('strand');
       
       if ($strand =~ /^[rf]$/) {
@@ -2359,7 +2376,8 @@ sub add_regulation_builds {
   
   # Add MultiCell first
   unshift @cell_lines, 'AAAMultiCell';   
-  
+ 
+  my $prev_track; 
   foreach my $cell_line (sort  @cell_lines) {
     $cell_line =~ s/AAA|\:\w*//g;
     
@@ -2376,7 +2394,7 @@ sub add_regulation_builds {
       $label = ": $cell_line";
     }
     
-    $reg_feats->append($self->create_track($track_key, "$fg_data{$key_2}{'name'}$label", {
+    $reg_feats->append($prev_track = $self->create_track($track_key, "$fg_data{$key_2}{'name'}$label", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -2390,7 +2408,7 @@ sub add_regulation_builds {
     }));
     
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
-      $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
+      $reg_segs->append($prev_track = $self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
         db          => $key,
         glyphset    => "fg_segmentation_features",
         sources     => 'undef',
@@ -2435,11 +2453,12 @@ sub add_regulation_builds {
       }
       
       # Add Core evidence tracks
-      $core_menu->append($self->create_track("reg_feats_core_$cell_line", "Open chromatin & TFBS$label", {
+      $core_menu->append($prev_track = $self->create_track("reg_feats_core_$cell_line", "Open chromatin & TFBS$label", {
         %options,
         set         => 'core',
         subset      => 'regulatory_features_core',
         description => $options{'description'}{'core'},
+        track_after => $prev_track,
       }));
     } 
 
@@ -2447,11 +2466,12 @@ sub add_regulation_builds {
       $other_menu ||= ($core_menu || $menu)->after($self->create_submenu('regulatory_features_other', 'Histones & polymerases'));
       
       # Add 'Other' evidence tracks
-      $other_menu->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", {
+      $other_menu->append($prev_track = $self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", {
         %options,
         set         => 'other',
         subset      => 'regulatory_features_other',
         description => $options{'description'}{'other'},
+        track_after => $prev_track,
       }));
     }
   }
