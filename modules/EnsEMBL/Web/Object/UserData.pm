@@ -329,32 +329,32 @@ sub update_configs {
   my $hub            = $self->hub;
   my $session        = $hub->session;
   my $config_adaptor = $hub->config_adaptor;
+  my %valid_species  = map { $_ => 1 } $self->species_defs->valid_species;
   my $updated;
   
   foreach my $config (grep $_->{'type'} eq 'image_config', values %{$config_adaptor->all_configs}) {
-    my @track_order = $config->{'data'}{'track_order'} ? ($config->{'data'}{'track_order'}) : map { $config->{'data'}{$_}{'track_order'} || () } keys %{$config->{'data'}};
     my $update;
     
-    foreach my $key (@$old_tracks) {
-      my $old_track = delete $config->{'data'}{$key};
-      
-      if ($old_track) {
-        $config->{'data'}{$_}{'display'} = $old_track->{'display'} for @$new_tracks;
+    foreach my $data (scalar(grep $valid_species{$_}, keys %{$config->{'data'}}) ? values %{$config->{'data'}} : $config->{'data'}) {
+      foreach my $key (@$old_tracks) {
+        my $old_track = delete $data->{$key};
         
-        foreach my $hash (@track_order) {
-          foreach my $species (keys %$hash) {
+        if ($old_track) {
+          $data->{$_}{'display'} = $old_track->{'display'} for @$new_tracks;
+          
+          foreach my $species (keys %{$data->{'track_order'} || {}}) {
             foreach my $strand ('', '.f', '.r') {
-              my $order = delete $hash->{$species}{"$key$strand"};
+              my $order = delete $data->{'track_order'}{$species}{"$key$strand"};
               
               if ($order) {
-                $hash->{$species}{"$_$strand"} = $order for @$new_tracks;
+                $data->{'track_order'}{$species}{"$_$strand"} = $order for @$new_tracks;
               }
             }
           }
+          
+          $update  = 1;
+          $updated = 1;
         }
-        
-        $update  = 1;
-        $updated = 1;
       }
     }
     
