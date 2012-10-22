@@ -38,7 +38,7 @@ cigar_lines for each sequence.
 
 =head1 CONTACT
 
-  Please emaili comments or questions to the public Ensembl
+  Please email comments or questions to the public Ensembl
   developers list at <dev@ensembl.org>.
 
   Questions may also be sent to the Ensembl help desk at
