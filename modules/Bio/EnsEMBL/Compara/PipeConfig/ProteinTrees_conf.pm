@@ -1039,7 +1039,7 @@ sub pipeline_analyses {
             -rc_name => '2Gb_job',
             -priority => 20,
             -flow_into => {
-                1 => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds' ],
+                1 => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds', 'ktreedist' ],
                 2 => [ 'ortho_tree_annot' ],
             }
         },
@@ -1054,6 +1054,17 @@ sub pipeline_analyses {
             -hive_capacity      => $self->o('ortho_tree_capacity'),
             -rc_name => '500Mb_job',
             -priority => 10,
+        },
+
+        {   -logic_name    => 'ktree_dist',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist',
+            -hive_capacity => -1,
+            -parameters    => {
+                               'treebest_exe'  => $self->o('treebest_exe'),
+                               'ktreedist_exe' => $self->o('ktreedist_exe'),
+                               'mlss_id'       => $self->o('mlss_id'),
+                              },
+            -rc_name       => '2Gb_job',
         },
 
         {   -logic_name => 'ortho_tree_annot',
