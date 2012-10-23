@@ -121,8 +121,8 @@ sub records_table {
       push @{$rows{$code}}, {
         name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
         desc   => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
-        config => { value => scalar @config ? sprintf($list, join '', map qq{<li>$_->[0]: <span class="cfg">$_->[1]</span></li>}, @config) : '', class => 'wrap' },
-        sets   => { value => scalar @sets   ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets)                     : '', class => 'wrap' },
+        config => { value => scalar @config ? sprintf($list, join '', map qq{<li>$_->[0]: <span class="cfg">$_->[1]</span></li>}, sort { $a->[0] cmp $b->[0] } @config) : '', class => 'wrap' },
+        sets   => { value => scalar @sets   ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets)                                                  : '', class => 'wrap' },
         active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
         edit   => sprintf('<a class="edit_record icon_link" href="#" rel="%s"><div class="sprite edit_icon" title="Edit sets">&nbsp;</div></a>', $record_id),
         delete => sprintf('<a class="edit icon_link" href="%s" rel="%s"><div class="sprite delete_icon" title="Delete">&nbsp;</div></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id),
@@ -146,6 +146,9 @@ sub records_table {
 
 sub image_config_description {
   my ($self, $image_config, $key, $data, $label) = @_;
+  
+  return () if $key eq 'track_order';
+  
   my $node = $image_config->get_node($key);
   
   return () unless $node;
