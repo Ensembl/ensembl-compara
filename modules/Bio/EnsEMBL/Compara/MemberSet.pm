@@ -518,7 +518,7 @@ sub get_all_Member_Attribute {  # DEPRECATED
 
 
 sub print_sequences_to_fasta {
-    my ($self, $pep_file) = @_;
+    my ($self, $pep_file, $subset_header) = @_;
     my $pep_counter = 0;
     open PEP, ">$pep_file";
     foreach my $member (@{$self->get_all_Members}) {
@@ -526,7 +526,15 @@ sub print_sequences_to_fasta {
         my $member_stable_id = $member->stable_id;
         my $seq = $member->sequence;
 
-        print PEP ">$member_stable_id\n";
+        if ($subset_header) {
+            my $source_name = $member->source_name;
+            my $genome_db_id = $member->genome_db_id || 0;
+            my $member_id = $member->member_id;
+            my $description = $member->description;
+            print PEP ">$source_name:$member_stable_id IDs:$genome_db_id:$member_id $description\n";
+        } else {
+            print PEP ">$member_stable_id\n";
+        }
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
         unless (defined($seq)) {
