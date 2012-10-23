@@ -177,6 +177,7 @@ my $species = [];
 my $mlsss = [];
 my $exact_species_name_match = 0;
 my $only_show_intentions = 0;
+my $MT_only = 0;
 
 GetOptions(
     "help" => \$help,
@@ -189,6 +190,7 @@ GetOptions(
     "mlss|method_link_species_sets=s@" => $mlsss,
     'exact_species_name_match' => \$exact_species_name_match,
     'n|intentions' => \$only_show_intentions,
+    'MT_only=i' => \$MT_only,
   );
 
 
@@ -286,7 +288,8 @@ store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
     "all previous valid species_sets");
 
 ## Copy all the DnaFrags for the default assemblies
-copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs);
+
+copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $MT_only);
 
 
 if ($old_dba and !$skip_data) {
@@ -614,6 +617,7 @@ sub get_all_species_sets_with_tags {
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
   Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
   Arg[3]      : listref Bio::EnsEMBL::Compara::GenomeDB $genome_dbs
+  Arg[4]      : boolean $MT_only
   Description : copy from $from_dba to $to_dba all the DnaFrags which
                 correspond to GenomeDBs from the $genome_dbs list only.
   Returns     :
@@ -622,7 +626,7 @@ sub get_all_species_sets_with_tags {
 =cut
 
 sub copy_all_dnafrags {
-  my ($from_dba, $to_dba, $genome_dbs) = @_;
+  my ($from_dba, $to_dba, $genome_dbs, $MT_only) = @_;
 
   throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
       unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
@@ -636,8 +640,16 @@ sub copy_all_dnafrags {
   my $port = $new_dba->dbc->port;
   my $dbname = $new_dba->dbc->dbname;
 
-  my $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
-      " WHERE genome_db_id = ?");
+  my $dnafrag_fetch_sth;
+
+  if( $MT_only ){
+    $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
+     " WHERE genome_db_id = ? AND name = \"MT\""); 
+  } else {
+     $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
+     " WHERE genome_db_id = ?");
+  }
+
   foreach my $this_genome_db (@$genome_dbs) {
     $dnafrag_fetch_sth->execute($this_genome_db->dbID);
     my $all_rows = $dnafrag_fetch_sth->fetchall_arrayref;
