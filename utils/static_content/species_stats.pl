@@ -409,9 +409,10 @@ foreach my $spp (@valid_spp) {
       my $sa = $db_adaptor->get_adaptor('slice');
       my $csa = $db_adaptor->get_adaptor('coordsystem');
       my $row_count=0;
-      foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all}){
+      foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all_by_attrib('default_version') || []}){
         my @regions = @{$sa->fetch_all($cs->name)};
         my $count_regions = scalar @regions;
+	print join ' : ', $cs->name, $cs->version , $count_regions, "\n" if ($DEBUG) ;
         my $regions_html;
         if(!$row_count && $count_regions < 1000){
           $regions_html = regions_table($spp,$cs->name,\@regions);
