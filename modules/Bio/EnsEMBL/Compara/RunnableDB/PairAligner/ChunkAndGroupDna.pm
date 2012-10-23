@@ -193,7 +193,9 @@ sub create_chunks
   my $dnafragDBA = $self->compara_dba->get_DnaFragAdaptor;
 
   my $chromosomes = [];
-  if(defined $self->param('region')) {
+  if($self->param('MT_only')){
+	push(@$chromosomes, $SliceAdaptor->fetch_by_region(undef, 'MT')); # Used when aligning only MT chromosomes
+  } elsif(defined $self->param('region')) {
     #Support list of regions
     my @regions = split(/,/, $self->param('region'));  
 
