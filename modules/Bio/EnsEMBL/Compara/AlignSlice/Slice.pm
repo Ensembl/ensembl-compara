@@ -1962,11 +1962,11 @@ sub get_all_Attributes {
 =head2 get_all_VariationFeatures
 
     Args       : none
-    Description :returns all variation features on this slice. This function will only work 
-                correctly if the variation database has been attached to the core database.
-                This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
-                method go through all of them, retrieves the data and maps them on this
-                Bio::EnsEMBL::Compara::AlignSlice::Slice object.
+    Description: returns all variation features on this slice. This function will only work 
+                 correctly if the variation database has been attached to the core database.
+                 This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
+                 method go through all of them, retrieves the data and maps them on this
+                 Bio::EnsEMBL::Compara::AlignSlice::Slice object.
     ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
     Exceptions : none
     Caller     : contigview, snpview
@@ -1977,6 +1977,29 @@ sub get_all_VariationFeatures {
   my $self = shift;
 
   return $self->_method_returning_simple_features("get_all_VariationFeatures", @_)
+}
+
+
+=head2 get_all_VariationFeatures_by_VariationSet
+
+    Arg [1]    : Bio::EnsEMBL:Variation::VariationSet $set
+    Description: returns all variation features on this slice associated with a given set.
+                 This function will only work correctly if the variation database has been
+                 attached to the core database. This method go through all of them,
+                 retrieves the data and maps them on this
+                 Bio::EnsEMBL::Compara::AlignSlice::Slice object by changing start, end,
+                 strand and slice attributes.
+    ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
+    Exceptions : none
+    Caller     : contigview, snpview
+    Status     : Stable
+
+=cut
+
+sub get_all_VariationFeatures_by_VariationSet {
+  my $self = shift;
+
+  return $self->_method_returning_simple_features("get_all_VariationFeatures_by_VariationSet", @_)
 }
 
 
