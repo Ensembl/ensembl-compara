@@ -445,6 +445,7 @@ sub get_all_Members {
   
     unless (defined $self->{'_member_array'}) {
 
+        return [] unless $self->adaptor;
         $self->clear;
         my $am_adaptor = $self->adaptor->db->get_MemberAdaptor();
         my $members = $am_adaptor->fetch_all_by_MemberSet($self);
