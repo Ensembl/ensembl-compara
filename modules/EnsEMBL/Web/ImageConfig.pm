@@ -1125,7 +1125,7 @@ sub update_from_url {
           my @path = split(/\./, $p);
           my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
           
-          while (my ($name, $info) = each (%$all_formats)) {
+          while (my ($name, $info) = each %$all_formats) {
             if ($ext =~ /^$name$/i) {
               $format = $name;
               last;
@@ -1133,7 +1133,7 @@ sub update_from_url {
           }
           if (!$format) {
             # Didn't match format name - now try checking format extensions
-            while (my ($name, $info) = each (%$all_formats)) {
+            while (my ($name, $info) = each %$all_formats) {
               if ($ext eq $info->{'ext'}) {
                 $format = $name;
                 last;
@@ -1142,15 +1142,16 @@ sub update_from_url {
           }
         }
 
-        my $style = $all_formats->{lc($format)}{'display'} eq 'graph' ? 'wiggle' : $format;
-        my $code  = md5_hex("$species:$p");
+        my $style = $all_formats->{lc $format}{'display'} eq 'graph' ? 'wiggle' : $format;
+        my $code  = join '_', md5_hex("$species:$p"), $session->session_id;
         my $n;
+        
         if ($menu_name) {
           $n = $menu_name;
         } else {
           $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
         }
-
+        
         # We have to create a URL upload entry in the session
         $session->set_data(
           type    => 'url',
@@ -1170,7 +1171,9 @@ sub update_from_url {
         );
         
         # We then have to create a node in the user_config
-        if (uc($format) ne 'DATAHUB') {
+        if (uc $format eq 'DATAHUB') {
+          $self->_add_datahub($n, $p);
+        } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
             url   => $p,
@@ -1178,10 +1181,7 @@ sub update_from_url {
           );
 
           $self->update_track_renderer("url_$code", $renderer);
-        } else {
-          # print STDERR "Handling DATAHUB url request\n";
-          $self->_add_datahub($n, $p);
-        }        
+        }       
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
         
