@@ -53,7 +53,6 @@ sub fetch_input {
       $self->param('genome_content', $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'))->db_adaptor);
 
 	$self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(-name => ("gdb:".($self->param('genome_db_id'))." ".($self->param('name')).' translations')));
-	$self->param('geneSubset', Bio::EnsEMBL::Compara::Subset->new(-name => ("gdb:".($self->param('genome_db_id'))." ".($self->param('name')).' genes')));
 
 	$self->param('subset_adaptor', $compara_dba->get_SubsetAdaptor());
 
@@ -73,7 +72,6 @@ sub write_output {
       my $taxon_id = $self->param('genome_content')->get_taxonomy_id;
 
 	$self->param('subset_adaptor')->store($self->param('pepSubset'));
-	$self->param('subset_adaptor')->store($self->param('geneSubset'));
 
 	my $count = 0;
       foreach my $gene_name (keys %$prot_seq) {
@@ -104,7 +102,6 @@ sub write_output {
 
             #print Dumper($gene_member);
 		$member_adaptor->store($gene_member);
-		$self->param('geneSubset')->add_member($gene_member);
 
 		my $pep_member = Bio::EnsEMBL::Compara::Member->new();
 		$pep_member->stable_id($gene_name);
@@ -139,7 +136,7 @@ sub write_output {
             } 
       };
 
-	print $self->param('geneSubset')->count(), " genes and ", $self->param('pepSubset')->count(), " peptides in subsets\n" if ($self->debug);
+	print "$count genes and peptides loaded\n" if ($self->debug);
 }
 
 1;

@@ -106,12 +106,8 @@ sub fetch_input {
         $self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(
           -name=>"gdb:$genome_db_id $genome_db_name $ref_nonref canonical translations") );
 
-        $self->param('geneSubset', Bio::EnsEMBL::Compara::Subset->new(
-          -name=>"gdb:$genome_db_id $genome_db_name $ref_nonref genes") );
-
             # This does an INSERT IGNORE or a SELECT if already exists:
         $compara_dba->get_SubsetAdaptor->store($self->param('pepSubset'));
-        $compara_dba->get_SubsetAdaptor->store($self->param('geneSubset'));
     }
 }
 
@@ -327,7 +323,6 @@ sub store_gene_and_all_transcripts {
       $member_adaptor->store($gene_member);
       print(" : stored") if($self->param('verbose'));
 
-      $self->param('geneSubset')->add_member($gene_member);
       print("\n") if($self->param('verbose'));
       $gene_member_not_stored = 0;
     }

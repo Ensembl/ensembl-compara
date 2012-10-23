@@ -70,13 +70,11 @@ $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
 # Subsets
 my $subset_peps  = Bio::EnsEMBL::Compara::Subset->new(-name => sprintf('gdb:%d %s projected canonical translations', $human_genome_db->dbID, $human_genome_db->name) );
-my $subset_genes = Bio::EnsEMBL::Compara::Subset->new(-name => sprintf('gdb:%d %s projected canonical genes',        $human_genome_db->dbID, $human_genome_db->name) );
 $compara_dba->get_SubsetAdaptor->store($subset_peps) unless $no_store;
-$compara_dba->get_SubsetAdaptor->store($subset_genes) unless $no_store;
 
 print 'FOUND genome_db ', $human_genome_db->dbID, "\n";
 print 'FOUND/STORED mlss ', $mlss->dbID, "\n";
-print 'FOUND/STORED subsets ', $subset_peps->dbID, ' ', $subset_genes->dbID, "\n";
+print 'FOUND/STORED subsets ', $subset_peps->dbID, "\n";
 
 #get adaptors
 my $core_ga = Bio::EnsEMBL::Registry->get_adaptor($species_name, 'core', 'Gene');
@@ -122,7 +120,6 @@ sub fetch_or_store_gene {
         $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(-gene=>$gene, -genome_db=>$human_genome_db);
         print "NEW: $gene_member "; $gene_member->print_member();
         $member_adaptor->store($gene_member) unless $no_store;
-        $subset_genes->add_member($gene_member);
         ${$counter} ++;
 
         my $transcript = $gene->canonical_transcript;
