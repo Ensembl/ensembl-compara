@@ -125,11 +125,11 @@ sub default_options {
 	'dump_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
         #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
-        'include_MT' => 1,
+        'include_MT' => 0,
 	
 	#include only MT, in some cases we only want to align MT chromosomes (set to 1 for MT only and 0 for normal mode). 
 	#Also the name of the MT chromosome in the db must be the string "MT".    
-	'MT_only' => 1, # if MT_only is set to 1, then include_MT must also be set to 1
+	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
 
 	#min length to dump dna as nib file
 	'dump_min_size' => 11500000, 
