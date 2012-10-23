@@ -23,7 +23,7 @@ Ensembl.extend({
     this.minWidthEl      = $('#min_width_container');
     this.images          = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
     
-    if (this.dynamicWidth) {
+    if (this.dynamicWidth && !window.name.match(/^popup_/)) {
       var width = this.imageWidth();
       
       if (this.width !== width) {
