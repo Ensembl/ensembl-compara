@@ -125,7 +125,11 @@ sub default_options {
 	'dump_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
         #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
-        'include_MT' => 0,
+        'include_MT' => 1,
+	
+	#include only MT, in some cases we only want to align MT chromosomes (set to 1 for MT only and 0 for normal mode). 
+	#Also the name of the MT chromosome in the db must be the string "MT".    
+	'MT_only' => 1, # if MT_only is set to 1, then include_MT must also be set to 1
 
 	#min length to dump dna as nib file
 	'dump_min_size' => 11500000, 
@@ -313,9 +317,9 @@ sub pipeline_analyses {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'mlss_id'        => $self->o('mlss_id'),
 				  'reg_conf'        => $self->o('reg_conf'),
-#				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
+#				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --MT_only " . $self->o('MT_only') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
 				  #If no master set, then use notation below
-				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
+				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --MT_only " . $self->o('MT_only') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
@@ -364,6 +368,7 @@ sub pipeline_analyses {
  	    {  -logic_name => 'chunk_and_group_dna',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
  	       -parameters => {
+			       'MT_only' => $self->o('MT_only'),
 			       'flow_to_store_sequence' => 1,
 			      },
  	       -flow_into => {
