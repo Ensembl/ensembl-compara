@@ -153,31 +153,6 @@ sub _attr_to_copy_list {
 # Alignment sections #
 ######################
 
-
-sub print_sequences_to_fasta {
-    my ($self, $pep_file) = @_;
-    my $pep_counter = 0;
-    open PEP, ">$pep_file";
-    foreach my $member (@{$self->get_all_Members}) {
-        next if $member->source_name eq 'ENSEMBLGENE';
-        my $member_stable_id = $member->stable_id;
-        my $seq = $member->sequence;
-
-        print PEP ">$member_stable_id\n";
-        $seq =~ s/(.{72})/$1\n/g;
-        chomp $seq;
-        unless (defined($seq)) {
-            my $family_id = $self->dbID;
-            die "member $member_stable_id in family $family_id doesn't have a sequence";
-        }
-        print PEP $seq,"\n";
-        $pep_counter++;
-    }
-    close PEP;
-    return $pep_counter;
-}
-
-
 =head2 read_clustalw
 
   Arg [1]    : string $file 
