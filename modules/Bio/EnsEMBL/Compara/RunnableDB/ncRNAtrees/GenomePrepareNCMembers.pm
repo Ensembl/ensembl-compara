@@ -83,13 +83,10 @@ sub fetch_input {
 # FIXME: change the fan dataflow branch to 2, allowing branch 1 to output something too
     my $genome_db_name = $genome_db->name;
     my $ncrna_subset = Bio::EnsEMBL::Compara::Subset->new( -name=>"genome_db_id:${genome_db_id} ${genome_db_name} longest ncRNAs" );
-    my $gene_subset  = Bio::EnsEMBL::Compara::Subset->new( -name=>"genome_db_id:${genome_db_id} ${genome_db_name} ncRNA genes" );
 
     my $ncrna_subset_id = $subset_adaptor->store($ncrna_subset) or die "Could not store ncRNA subset";
-    my $gene_subset_id  = $subset_adaptor->store($gene_subset)  or die "Could not store gene subset";
 
     $self->param('ncrna_subset_id', $ncrna_subset_id);
-    $self->param('gene_subset_id',  $gene_subset_id);
 }
 
 
@@ -139,13 +136,11 @@ sub write_output {
 
     my $genome_db_id    = $self->param('genome_db_id');
     my $ncrna_subset_id = $self->param('ncrna_subset_id');
-    my $gene_subset_id  = $self->param('gene_subset_id');
 
     foreach my $stable_id (@{ $self->param('stable_ids') }) {
         $self->dataflow_output_id( {
             'genome_db_id'    => $genome_db_id,
             'ncrna_subset_id' => $ncrna_subset_id,
-            'gene_subset_id'  => $gene_subset_id,
             'stable_id'       => $stable_id,
         }, 2);
     }

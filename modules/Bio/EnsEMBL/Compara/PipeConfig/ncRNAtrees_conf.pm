@@ -372,7 +372,7 @@ sub pipeline_analyses {
             },
         },
 
-# ---------------------------------------------[load ncRNA and gene members and subsets]---------------------------------------------
+# ---------------------------------------------[load ncRNA and gene members and subset]---------------------------------------------
 
         {   -logic_name    => 'load_members_factory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomePrepareNCMembers',
@@ -388,7 +388,6 @@ sub pipeline_analyses {
             -hive_capacity => 30,
             -flow_into => {
                 3 => [ 'mysql:////subset_member' ],   # every ncrna member is added to the corresponding subset
-                4 => [ 'mysql:////subset_member' ],   # every gene  member is added to the corresponding subset
             },
             -rc_name => 'default',
         },

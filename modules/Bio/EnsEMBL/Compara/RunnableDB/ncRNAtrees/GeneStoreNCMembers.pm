@@ -82,7 +82,6 @@ sub fetch_input {
     $self->param('core_db', $core_db);
 
     $self->param('to_ncrna_subset', []);
-    $self->param('to_gene_subset',  []);
 }
 
 
@@ -133,15 +132,6 @@ sub write_output {
         }
     }
 
-    if(my $gene_subset_id = $self->param('gene_subset_id')) {
-
-        foreach my $member_id (@{$self->param('to_gene_subset')}) {
-            $self->dataflow_output_id({
-                'subset_id' => $gene_subset_id,
-                'member_id' => $member_id,
-            }, 4);
-        }
-    }
 }
 
 
@@ -208,7 +198,6 @@ sub store_ncrna_gene {
                 print(" : stored") if($self->debug);
             };
 
-            push @{$self->param('to_gene_subset')}, $gene_member->dbID;
             print("\n") if($self->debug);
             $gene_member_not_stored = 0;
         }
