@@ -2,10 +2,9 @@
 
 package EnsEMBL::Web::Controller::Ajax;
 
-### Provides JSON results for autocomplete dropdown in location navigation bar
-
 use strict;
 
+use Apache2::RequestUtil;
 use HTML::Entities qw(decode_entities);
 use JSON           qw(from_json);
 
