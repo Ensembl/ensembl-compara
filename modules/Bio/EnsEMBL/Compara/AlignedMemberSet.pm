@@ -228,7 +228,7 @@ sub load_cigars_from_fasta {
     #place all members in a hash on their member name
     my %member_hash;
     foreach my $member (@{$self->get_all_Members}) {
-        $member_hash{$member->stable_id} = $member;
+        $member_hash{$member->member_id} = $member;
     }
 
     #assign cigar_line to each of the member attribute
