@@ -233,7 +233,6 @@ sub pipeline_analyses {
                 'sql'   => [
                     'ALTER TABLE member            AUTO_INCREMENT=100000001',
                     'ALTER TABLE sequence          AUTO_INCREMENT=100000001',
-                    'ALTER TABLE subset            AUTO_INCREMENT=100000001',
                     'ALTER TABLE homology          AUTO_INCREMENT=100000001',
                     'ALTER TABLE gene_tree_node    AUTO_INCREMENT=100000001',
                     'ALTER TABLE species_tree_node AUTO_INCREMENT=100000001',
@@ -372,7 +371,7 @@ sub pipeline_analyses {
             },
         },
 
-# ---------------------------------------------[load ncRNA and gene members and subset]---------------------------------------------
+# ---------------------------------------------[load ncRNA and gene members]---------------------------------------------
 
         {   -logic_name    => 'load_members_factory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomePrepareNCMembers',
@@ -386,9 +385,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'load_members',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers',
             -hive_capacity => 30,
-            -flow_into => {
-                3 => [ 'mysql:////subset_member' ],   # every ncrna member is added to the corresponding subset
-            },
             -rc_name => 'default',
         },
 
