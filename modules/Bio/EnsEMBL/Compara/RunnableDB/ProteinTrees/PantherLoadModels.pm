@@ -46,6 +46,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels;
 use strict;
 use IO::File; # ??
 use File::Basename;
+use Data::Dumper;
+use vars qw/@INC/;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
 
@@ -57,6 +59,16 @@ sub param_defaults {
             'expanded_basename' => 'PANTHER7.2',
             'expander' => 'tar -xzf ',
            }
+}
+
+sub fetch_input {
+    my ($self) = @_;
+    my $pantherScore_path = $self->param('pantherScore_path');
+    die "$pantherScore_path has to be defined" unless (defined $pantherScore_path);
+
+    push @INC, "$pantherScore_path/lib";
+    require FastaFile;
+    import FastaFile;
 }
 
 =head2 run
@@ -73,6 +85,7 @@ sub param_defaults {
 sub run {
     my $self = shift @_;
 
+    ### If you don't want to download the models, define the parameter cm_file_or_directory to point to the panther path
     if ($self->param('cm_file_or_directory')) {
         $self->param('profiles_already_there', 1);
         return;
@@ -97,7 +110,7 @@ sub write_output {
 
     return if $self->param('profiles_already_there');
     $self->get_profiles();
-    $self->clean_directory();
+#    $self->clean_directory();
 }
 
 ##########################################
@@ -111,20 +124,33 @@ sub get_profiles {
     my ($self) = @_;
 
     my $cm_directory = $self->param('cm_file_or_directory');
+    print STDERR "CM_DIRECTORY = " . $cm_directory . "\n";
+    my $consensus_fasta = $cm_directory . "/globals/con.Fasta";
+    open my $consensus_fh, "<", $consensus_fasta or die "$!: $consensus_fasta";
+    my $index = FastaFile::indexFasta($consensus_fh);
     $cm_directory .= "/books";
-
     while (my $famPath = <$cm_directory/*>) {
         my $fam = basename($famPath);
-        print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm" if ($self->debug());
-        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam);
-        while (my $subfamPath = <$famPath/*>) {
-            my $subfamBasename = basename($subfamPath);
-            next if ($subfamBasename eq 'hmmer.hmm');
-            my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
-            print STDERR "Storing $subfam HMM\n";
-            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam);
+        my $cons_seq = FastaFile::getSeq($consensus_fh, $index, $fam);
+        if (! defined $cons_seq) {
+            print STDERR "No consensus sequence found for fam $fam" unless(defined $cons_seq);
+            next; ## If we don't have consensus seq we don't store the hmm_profile
         }
+        my (undef, $seq) = split /\n/, $cons_seq, 2;
+        print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
+        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, $seq);
+
+## No subfamilies
+#        while (my $subfamPath = <$famPath/*>) {
+#            my $subfamBasename = basename($subfamPath);
+#            next if ($subfamBasename eq 'hmmer.hmm');
+#            my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
+#            print STDERR "Storing $subfam HMM\n";
+#            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam);
+#        }
     }
 }
+
+
 
 1;
