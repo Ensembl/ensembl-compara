@@ -89,12 +89,15 @@ sub content {
           )
       );
     } elsif ($object->hub->param('clusterset_id') ne 'default') {
-      $html .= $self->_info('Phylogenetic model selection',
-        sprintf(
-          'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses.',
+
+      my $text = sprintf(
+          'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses, especially homologies.',
           $object->hub->param('clusterset_id')
-          )
       );
+      my $rank = $tree->tree->get_tagvalue('k_score_rank');
+      my $score = $tree->tree->get_tagvalue('k_score');
+      $text .= sprintf('<br/>This tree is the <b>n&deg;%d</b> closest to the final tree, with a K-distance of <b>%f</b>, as computed by <a href="http://molevol.cmima.csic.es/castresana/Ktreedist.html">Ktreedist</a>.', $rank, $score) if $rank;
+      $html .= $self->_info('Phylogenetic model selection', $text);
     }
   }
 
