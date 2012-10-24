@@ -183,7 +183,6 @@ sub pipeline_analyses {
                 'sql'   => [
                     'ALTER TABLE sequence       AUTO_INCREMENT=200000001',
                     'ALTER TABLE member         AUTO_INCREMENT=200000001',
-                    'ALTER TABLE subset         AUTO_INCREMENT=200000001',
                     'ALTER TABLE family         ENGINE=InnoDB',
                     'ALTER TABLE family_member  ENGINE=InnoDB',
                 ],
@@ -260,9 +259,6 @@ sub pipeline_analyses {
             },
             -hive_capacity => 20,
             -batch_size    => 100,
-            -flow_into => {
-                3 => [ ':////subset_member' ],
-            },
             -rc_name => '2GigMem',
         },
 

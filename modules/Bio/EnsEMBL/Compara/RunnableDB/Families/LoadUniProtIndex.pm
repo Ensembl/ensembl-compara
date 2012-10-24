@@ -31,8 +31,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtIndex;
 
 use strict;
 
-use Bio::EnsEMBL::Compara::Subset;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
@@ -51,30 +49,16 @@ sub fetch_input {
     my $uniprot_version = $self->param('uniprot_version');
     my $uniprot_source  = $self->param('uniprot_source') or die "'uniprot_source' has to be either 'SWISSPROT' or 'SPTREMBL'";
 
-    my $subset_name = $uniprot_source;
-
     $self->compara_dba()->dbc->disconnect_when_inactive(1);
 
     if(my $taxon_id = $self->param('taxon_id')) {
-        $subset_name .= " ncbi_taxid:$taxon_id";
         $self->param('uniprot_ids', $self->mfetch_uniprot_ids($uniprot_version, $uniprot_source, $taxon_id) );
     } else {
         my $tax_div = $self->param('tax_div');
-        $subset_name .= " metazoa";
-        $subset_name .= ", tax_div:$tax_div" if($tax_div);
         $self->param('uniprot_ids', $self->mfetch_uniprot_ids($uniprot_version, $uniprot_source, '' , $tax_div && [ $tax_div ]) );
     }
 
     $self->compara_dba()->dbc->disconnect_when_inactive(0);
-
-    my $subset_adaptor = $self->compara_dba()->get_SubsetAdaptor();
-    my $subset;
-    unless($subset = $subset_adaptor->fetch_by_set_description($subset_name)) {
-        $subset = Bio::EnsEMBL::Compara::Subset->new(-name=>$subset_name);
-        $subset_adaptor->store($subset);
-    }
-    $self->param('subset_id', $subset->dbID);
-
 }
 
 
@@ -82,13 +66,12 @@ sub write_output {
     my $self = shift @_;
 
     my $buffer_size     = $self->param('buffer_size');
-    my $subset_id       = $self->param('subset_id');
     my $uniprot_source  = $self->param('uniprot_source');
     my $uniprot_ids     = $self->param('uniprot_ids');
 
     while (@$uniprot_ids) {
         my @id_buffer = splice(@$uniprot_ids, 0, $buffer_size);
-        $self->dataflow_output_id( { 'uniprot_source' => $uniprot_source, 'subset_id' => $subset_id, 'ids' => [@id_buffer] }, 2);
+        $self->dataflow_output_id( { 'uniprot_source' => $uniprot_source, 'ids' => [@id_buffer] }, 2);
     }
 }
 

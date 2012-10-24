@@ -38,8 +38,6 @@ sub fetch_input {
         $internal_taxon_ids{$genome_db->taxon_id} = 1;
     }
     $self->param('internal_taxon_ids', \%internal_taxon_ids);
-    
-    my $subset_id = $self->param('subset_id') or die "'subset_id' is an obligatory parameter and has to be defined";
 }
 
 sub run {
@@ -60,17 +58,6 @@ sub run {
         }
     }
     $self->param('member_ids', $self->fetch_and_store_a_chunk($source_name, join(' ',@not_yet_stored_ids), scalar @not_yet_stored_ids) );
-}
-
-sub write_output {  
-    my $self = shift;
-
-    my $subset_id   = $self->param('subset_id');
-    my $member_ids  = $self->param('member_ids');
-
-    my @output_ids = map { { 'subset_id' => $subset_id, 'member_id' => $_ } } @$member_ids;
-
-    $self->dataflow_output_id( \@output_ids, 3);
 }
 
 
