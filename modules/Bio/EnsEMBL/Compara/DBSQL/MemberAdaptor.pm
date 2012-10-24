@@ -220,6 +220,21 @@ sub fetch_all_by_source_genome_db_id {
 }
 
 
+sub fetch_all_canonical_by_source_genome_db_id {
+  my ($self,$source_name,$genome_db_id) = @_;
+
+  throw("source_name and genome_db_id args are required") 
+    unless($source_name && $genome_db_id);
+
+    my $join = [[['member mg', 'sm'], 'mg.canonical_member_id = m.member_id']];
+
+    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
+    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+    return $self->generic_fetch('m.source_name = ? AND mg.genome_db_id = ?');
+}
+
+
+
 sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
 
@@ -571,6 +586,14 @@ sub update_sequence {
     $sth3->finish;
   }
   return 1;
+}
+
+sub _set_member_as_canonical {
+    my ($self, $peptide_member) = @_;
+
+    my $sth = $self->prepare('UPDATE member SET canonical_member_id = ? WHERE member_id = ?');
+    $sth->execute($peptide_member->member_id, $peptide_member->gene_member_id);
+    $sth->finish;
 }
 
 
