@@ -500,7 +500,7 @@ sub store {
                               gene_member_id,
                               taxon_id, genome_db_id, description,
                               chr_name, chr_start, chr_end, chr_strand,display_label)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 
   my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
