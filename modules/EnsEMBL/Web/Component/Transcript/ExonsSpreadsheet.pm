@@ -112,9 +112,7 @@ sub initialize {
 
 sub content {
   my $self = shift;
-
   my ($data, $config) = $self->initialize;
-  
   my $table = $self->new_table([
       { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
       { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
@@ -143,21 +141,18 @@ sub content_rtf {
 }
 
 sub get_exon_sequence_data {
-  my $self = shift;
-  my ($config, $exon) = @_;
-  
+  my ($self, $config, $exon) = @_;
   my $coding_start = $config->{'coding_start'};
   my $coding_end   = $config->{'coding_end'};
   my $strand       = $config->{'strand'};
   my $seq          = uc $exon->seq->seq;
-
   my $seq_length   = length $seq;
   my $exon_start   = $exon->start;
   my $exon_end     = $exon->end;
   my $utr_start    = $coding_start && $coding_start > $exon_start; # exon starts with UTR
   my $utr_end      = $coding_end   && $coding_end   < $exon_end;   # exon ends with UTR
   my $class        = $coding_start && $coding_end ? 'e0' : 'eu';   # if the transcript is entirely UTR, use utr class for the whole sequence
-  my @sequence     = map {{ letter => $_, class => $class }} split //, $seq;
+  my @sequence     = map {{ letter => $_, class => $class }} split '', $seq;
 
   if ($utr_start || $utr_end) {
     my ($coding_length, $utr_length);
@@ -182,19 +177,17 @@ sub get_exon_sequence_data {
   }
 
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
-  $self->add_line_numbers($config, $seq_length) if $config->{'number'} ne 'off';
+  $self->add_line_numbers($config, $seq_length)                    if $config->{'number'} ne 'off';
 
   return \@sequence;
 }
 
 sub get_intron_sequence_data {
-  my $self = shift;
-  my ($config, $exon, $next_exon, $intron_start, $intron_end, $intron_length) = @_;
-  
+  my ($self, $config, $exon, $next_exon, $intron_start, $intron_end, $intron_length) = @_;
   my $display_width = $config->{'display_width'};
   my $strand        = $config->{'strand'};
   my $sscon         = $config->{'sscon'};
-  my @dots          = map {{ letter => $_, class => 'e1' }} split //, '.' x ($display_width - 2*($sscon % ($display_width/2)));
+  my @dots          = map {{ letter => $_, class => 'e1' }} split '', '.' x ($display_width - 2*($sscon % ($display_width/2)));
   my @sequence;
   
   eval {
@@ -202,8 +195,8 @@ sub get_intron_sequence_data {
       my $start = { slice => $exon->slice->sub_Slice($intron_start, $intron_start + $sscon - 1, $strand) };
       my $end   = { slice => $next_exon->slice->sub_Slice($intron_end - ($sscon - 1), $intron_end, $strand) };
       
-      $start->{'sequence'} = [ map {{ letter => $_, class => 'e1' }} split //, lc $start->{'slice'}->seq ];
-      $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split //, lc $end->{'slice'}->seq   ];
+      $start->{'sequence'} = [ map {{ letter => $_, class => 'e1' }} split '', lc $start->{'slice'}->seq ];
+      $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split '', lc $end->{'slice'}->seq   ];
       
       if ($config->{'snp_display'} eq 'yes') {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
@@ -215,7 +208,7 @@ sub get_intron_sequence_data {
     } else {
       my $slice = $exon->slice->sub_Slice($intron_start, $intron_end, $strand);
       
-      @sequence = map {{ letter => $_, class => 'e1' }} split //, lc $slice->seq;
+      @sequence = map {{ letter => $_, class => 'e1' }} split '', lc $slice->seq;
       
       $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'yes';
       $self->add_line_numbers($config, $intron_length)   if $config->{'number'} ne 'off';
@@ -227,37 +220,36 @@ sub get_intron_sequence_data {
 
 sub get_flanking_sequence_data {
   my ($self, $config, $first_exon, $last_exon) = @_;
-  
   my $display_width = $config->{'display_width'};
   my $strand        = $config->{'strand'};
   my $flanking      = $config->{'flanking'};
-  my @dots          = $display_width == $flanking ? () : map {{ letter => $_, class => 'ef' }} split //, '.' x ($display_width - ($flanking % $display_width));
+  my @dots          = $display_width == $flanking ? () : map {{ letter => $_, class => 'ef' }} split '', '.' x ($display_width - ($flanking % $display_width));
   my ($upstream, $downstream);
 
   if ($strand == 1) {
     $upstream = { 
       slice => $first_exon->slice->sub_Slice($first_exon->start - $flanking, $first_exon->start - 1, $strand),
-      seq   => $first_exon->slice->subseq($first_exon->start - $flanking, $first_exon->start - 1, $strand)
+      seq   => $first_exon->slice->subseq($first_exon->start    - $flanking, $first_exon->start - 1, $strand)
     };
     
     $downstream = {
       slice => $last_exon->slice->sub_Slice($last_exon->end + 1, $last_exon->end + $flanking, $strand),
-      seq   => $last_exon->slice->subseq($last_exon->end + 1, $last_exon->end + $flanking, $strand)
+      seq   => $last_exon->slice->subseq($last_exon->end    + 1, $last_exon->end + $flanking, $strand)
     };
   } else {
     $upstream = {
       slice => $first_exon->slice->sub_Slice($first_exon->end + 1, $first_exon->end + $flanking, $strand),
-      seq   => $first_exon->slice->subseq($first_exon->end + 1, $first_exon->end + $flanking, $strand)
+      seq   => $first_exon->slice->subseq($first_exon->end    + 1, $first_exon->end + $flanking, $strand)
     };
     
     $downstream = {
       slice => $last_exon->slice->sub_Slice($last_exon->start - $flanking, $last_exon->start - 1, $strand),
-      seq   => $last_exon->slice->subseq($last_exon->start - $flanking, $last_exon->start - 1, $strand)
+      seq   => $last_exon->slice->subseq($last_exon->start    - $flanking, $last_exon->start - 1, $strand)
     };
   }
   
-  $upstream->{'sequence'}   = [ map {{ letter => $_, class => 'ef' }} split //, lc $upstream->{'seq'}   ];
-  $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split //, lc $downstream->{'seq'} ];
+  $upstream->{'sequence'}   = [ map {{ letter => $_, class => 'ef' }} split '', lc $upstream->{'seq'}   ];
+  $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split '', lc $downstream->{'seq'} ];
   
   if ($config->{'snp_display'} eq 'yes') {
     $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
@@ -271,7 +263,6 @@ sub get_flanking_sequence_data {
 
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
-  
   my $transcript         = $self->object->Obj;
   my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;  
   my $length             = scalar @$sequence - 1;
@@ -279,12 +270,12 @@ sub add_variations {
   
   # fetch transcript variations here, it's quicker
   my $tva = $self->object->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-  my @transcript_variations = grep {$_->transcript->stable_id eq $transcript->stable_id} @{$tva->fetch_all_by_VariationFeatures($variation_features)};
+  my @transcript_variations = grep { $_->transcript->stable_id eq $transcript->stable_id } @{$tva->fetch_all_by_VariationFeatures($variation_features)};
   my %tvs_by_vf;
   push @{$tvs_by_vf{$_->variation_feature->dbID}}, $_ for @transcript_variations;
   
   foreach my $vf (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$variation_features) {
-    my $transcript_variation = $tvs_by_vf{$vf->dbID}->[0];
+    my $transcript_variation = $tvs_by_vf{$vf->dbID}[0];
     
     next unless $transcript_variation;
     
@@ -292,16 +283,19 @@ sub add_variations {
     
     next if $config->{'consequence_filter'} && !$consequence;
     
-    my $name        = $vf->variation_name;
-    my $start       = $vf->start - 1;
-    my $end         = $vf->end   - 1;
+    my $name  = $vf->variation_name;
+    my $start = $vf->start - 1;
+    my $end   = $vf->end   - 1;
+    
+    # Variation is an insert if start > end
+    ($start, $end) = ($end, $start) if $start > $end;
     
     $start = 0 if $start < 0;
     $end   = $length if $end > $length;
     
     $consequence ||= lc $transcript_variation->display_consequence;
     
-    $config->{'key'}->{'variations'}->{$consequence} = 1;
+    $config->{'key'}{'variations'}{$consequence} = 1;
     
     for ($start..$end) {
       $class{$_}  = $consequence;
@@ -311,18 +305,17 @@ sub add_variations {
         factorytype => 'Location'
       };
       
-      push @{$href{$_}->{'v'}},  $name;
-      push @{$href{$_}->{'vf'}}, $vf->dbID;
+      push @{$href{$_}{'v'}},  $name;
+      push @{$href{$_}{'vf'}}, $vf->dbID;
     }
   }
   
-  $sequence->[$_]->{'class'} .= " $class{$_}"       for keys %class;
-  $sequence->[$_]->{'href'}   = $self->hub->url($href{$_}) for keys %href;
+  $sequence->[$_]{'class'} .= " $class{$_}"              for keys %class;
+  $sequence->[$_]{'href'}   = $self->hub->url($href{$_}) for keys %href;
 }
 
 sub add_line_numbers {
   my ($self, $config, $seq_length, $truncated, $offset) = @_;
-  
   my $i      = $config->{'export'} ? $config->{'lines'}++ : 0;
   my $start  = $config->{'last_number'};
   my $strand = $config->{'number'} eq 'sequence' ? 1 : $config->{'strand'};
@@ -350,9 +343,7 @@ sub add_line_numbers {
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  
   $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
-  
   return $self->SUPER::build_sequence([ $sequence ], $config);
 }
 
