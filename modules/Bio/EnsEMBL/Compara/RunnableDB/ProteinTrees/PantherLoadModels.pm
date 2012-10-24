@@ -140,14 +140,14 @@ sub get_profiles {
         print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
         $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, $seq);
 
-## No subfamilies
-#        while (my $subfamPath = <$famPath/*>) {
-#            my $subfamBasename = basename($subfamPath);
-#            next if ($subfamBasename eq 'hmmer.hmm');
-#            my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
-#            print STDERR "Storing $subfam HMM\n";
-#            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam);
-#        }
+## Subfamilies
+        while (my $subfamPath = <$famPath/*>) {
+            my $subfamBasename = basename($subfamPath);
+            next if ($subfamBasename eq 'hmmer.hmm');
+            my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
+            print STDERR "Storing $subfam HMM\n";
+            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam);
+        }
     }
 }
 
