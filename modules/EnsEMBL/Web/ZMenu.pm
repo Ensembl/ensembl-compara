@@ -143,15 +143,16 @@ sub render {
     my $link;
     
     if ($entry->{'link'}) {
-      if ($entry->{'extra'}->{'abs_url'}) {
+      if ($entry->{'extra'}{'abs_url'}) {
         $link = $entry->{'link'};
       } else {
         $link = sprintf(
-          '<a href="%s"%s %s>%s</a>',
+          '<a href="%s"%s %s>%s%s</a>',
           encode_entities($entry->{'link'}),
           $entry->{'extra'}{'external'} ? ' rel="external"' : '',
           $entry->{'class'} ? qq{ class="$entry->{'class'}"} : '',
-          encode_entities($entry->{'label'} . $entry->{'label_html'})
+          encode_entities($entry->{'label'} . $entry->{'label_html'}),
+          $entry->{'extra'}{'update_params'},
         );
       }
     } else {
