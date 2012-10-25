@@ -91,7 +91,10 @@ sub content {
 
   $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data' });
   $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'File', 'name' => 'file', 'label' => 'Or upload file' });
+
+  ## Only one of these will be shown, depending on JS action
   $form->add_field({ 'field_class' => 'hidden _stt_remote', 'type' => 'URL',  'name' => 'url',  'label' => 'Provide file URL', 'size' => 30 });
+  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'URL',  'name' => 'url',  'label' => 'Or provide file URL', 'size' => 30 });
 
   return $form->render;
 }
