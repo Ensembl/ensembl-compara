@@ -66,13 +66,14 @@ sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__e
 sub cigar_string {
   my $self = shift;
   return $self->{'_cigar'} if $self->{'_cigar'};
-  if($self->{'__raw__'}[9]) {
+  if($self->{'__raw__'}[9]>0) {
     my $strand = $self->strand();
     my $cigar;
     my @block_starts  = split /,/,$self->{'__raw__'}[11];
     my @block_lengths = split /,/,$self->{'__raw__'}[10];
     my $end = 0;
     foreach(0..( $self->{'__raw__'}[9]-1) ) {
+      last unless @block_starts and @block_lengths;
       my $start =shift @block_starts;
       my $length = shift @block_lengths;
       if($_) {
