@@ -95,7 +95,6 @@ sub dumpMercatorFiles {
   my $dfa = $self->compara_dba->get_DnaFragAdaptor;
   my $gdba = $self->compara_dba->get_GenomeDBAdaptor;
   my $ma = $self->compara_dba->get_MemberAdaptor;
-  my $ssa = $self->compara_dba->get_SubsetAdaptor;
 
   my $max_gap = $self->param('maximum_gap');
 
@@ -133,10 +132,9 @@ sub dumpMercatorFiles {
   close F;
 
   ## Create the anchor file for Mercator
-  my $ss = $ssa->fetch_by_set_description("gdb:".$gdb->dbID ." ". $gdb->name . ' ref coding exons');
   $file = $self->param('input_dir') . "/$gdb_id.anchors";
   open F, ">$file";
-  foreach my $member (@{$ma->fetch_all_by_subset_id($ss->dbID)}) {
+  foreach my $member (@{$ma->fetch_all_canonical_by_source_genome_db_id('', $gdb_id)}) {
       my $strand = "+";
       $strand = "-" if ($member->chr_strand == -1);
       my $chr_name = $member->chr_name;

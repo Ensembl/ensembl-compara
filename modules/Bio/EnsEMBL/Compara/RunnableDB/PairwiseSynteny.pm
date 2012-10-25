@@ -194,10 +194,8 @@ sub fetch_coordinates {
   foreach my $genome_db_id (@{ $self->param('gdbs') }) {
     my $sql = "SELECT ".
               "concat(m2.member_id,' ',m1.chr_name,' ',m1.chr_start,' ',m1.chr_end,' ',if(m1.chr_strand=1,'-','+')) ".
-              "FROM member m1, member m2, subset_member sm ".
-              "WHERE m2.gene_member_id=m1.member_id and ".
-              "m2.member_id=sm.member_id and ".
-              "m1.source_name='ENSEMBLGENE' and ".
+              "FROM member m1, member m2 ".
+              "WHERE m2.member_id=m1.canonical_member_id and ".
               "m1.genome_db_id=$genome_db_id";
 
     print("$sql\n");

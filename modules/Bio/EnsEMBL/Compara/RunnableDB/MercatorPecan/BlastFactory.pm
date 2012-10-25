@@ -30,9 +30,6 @@ Supported keys:
    'genome_db_id' => <number>
        Genome_db id. Obligatory
 
-   'subset_id' => <number>
-       Subset id. If this is not defined, will retrieve from database
-
    'step' => <number>
        How many sequences to write into the blast query file. Default 1000
 
@@ -48,25 +45,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $subset_id = $self->param('subset_id') || $self->param('ss');
-    my $subset;
-    if (defined $subset_id) {
-	$subset      = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) or die "cannot fetch Subset with id '$subset_id'";
-    } else {
 	my $genome_db_id = $self->param('genome_db_id') || $self->param('genome_db_id', $self->param('gdb'))        # for compatibility
 	  or die "'genome_db_id' is an obligatory parameter";
-	my $gdb_Adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-	my $genome_db = $gdb_Adaptor->fetch_by_dbID($genome_db_id);
-
-	my $species = $genome_db->name;
-	my $set_description = "gdb:" . $self->param('genome_db_id') . " $species coding exons";
-	my $subsetAdaptor = $self->compara_dba->get_SubsetAdaptor;
-	$subset = $subsetAdaptor->fetch_by_set_description($set_description);
-	$self->param('subset_id', $subset->dbID);
-    }
-
-    die ("Unable to find subset for " . $self->param('genome_db_id')) if (!defined $subset);
-    $self->param('subset', $subset);
 
     if (!defined $self->param('step')) {
 	$self->param('step', 1000);
@@ -78,10 +58,10 @@ sub write_output {
     my $self = shift @_;
 
 
-    #Fetch members for subset_id
-    my $sql = "SELECT member_id FROM member JOIN subset_member USING (member_id) WHERE  subset_id=?";
+    #Fetch members for genome_db_id
+    my $sql = 'SELECT member_id FROM member WHERE genome_db_id = ?';
     my $sth = $self->compara_dba->dbc->prepare( $sql );
-    $sth->execute($self->param('subset_id'));
+    $sth->execute($self->param('genome_db_id'));
     
     my $member_id_list;
     while( my ($member_id) = $sth->fetchrow() ) {
@@ -103,7 +83,7 @@ sub write_output {
 	my $member_id = $sorted_list->[$i];
 
 	if ($batch_size == $step) {
-	    my $output_id = "{genome_db_id => " . $self->param('genome_db_id') . ", start_member_id => " . $start_member_id . ", offset=>". $offset . ", batch_size=>" . $batch_size . ", subset_id=>" . $self->param('subset_id') .  "}";
+	    my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $start_member_id, 'offset' => $offset, 'batch_size' => $batch_size};
 	    
 	    $self->dataflow_output_id($output_id, 2);
 
@@ -114,7 +94,7 @@ sub write_output {
 	$batch_size++;
     }
 
-    my $output_id = "{genome_db_id => " . $self->param('genome_db_id') . ", start_member_id => " . $start_member_id . ", offset=>". $offset . ", batch_size=>" . $batch_size . ", subset_id=>" . $self->param('subset_id') .  "}";
+    my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $start_member_id, 'offset' => $offset, 'batch_size' => $batch_size};
 
     
    $self->dataflow_output_id($output_id, 2);

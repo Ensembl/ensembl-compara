@@ -466,41 +466,11 @@ sub pipeline_analyses {
             -hive_capacity => 4,
             -can_be_empty  => 1,
             -flow_into => {
-		 1 => [ 'subset_table_reuse' ],   # n_reused_species
-            },
-	    -rc_name => '100Mb',
-        },
-        {   -logic_name => 'subset_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-		'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'subset',
-		'mode'          => 'insertignore',
-                'where'         => 'description like "gdb:#genome_db_id# %"',
-            },
-            -hive_capacity => 4,
-            -can_be_empty  => 1,
-	    -flow_into => {
-                1 => [ 'subset_member_table_reuse' ],    # n_reused_species
+		 1 => [ 'reuse_dump_subset_fasta' ],   # n_reused_species
             },
 	    -rc_name => '100Mb',
         },
 
-        {   -logic_name => 'subset_member_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'db_conn'    => $self->o('reuse_db'),
-                'inputquery' => 'SELECT sm.* FROM subset_member sm JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
-			    'fan_branch_code' => 2,
-			   },
-            -hive_capacity => 4,
-            -can_be_empty  => 1,
-            -flow_into => {
-		 1 => [ 'reuse_dump_subset_fasta'],
-		 2 => 'mysql:////subset_member',
-            },
-	    -rc_name => '1Gb',
-        },
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
@@ -531,7 +501,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {'coding_exons' => 1,
 			    'min_length' => 20 },
-            -wait_for => [ 'check_reuse_db', 'paf_create_empty_table', 'accumulate_reuse_ss', 'member_table_reuse', 'subset_table_reuse', 'subset_member_table_reuse', 'sequence_table_reuse' ],
+            -wait_for => [ 'check_reuse_db', 'paf_create_empty_table', 'accumulate_reuse_ss', 'member_table_reuse', 'sequence_table_reuse' ],
             -hive_capacity => -1,
             -can_be_empty  => 1,
             -flow_into => {
@@ -549,7 +519,7 @@ sub pipeline_analyses {
             },
              -batch_size    =>  20,  # they can be really, really short
 	    -can_be_empty  => 1,
-            -wait_for  => [ 'member_table_reuse', 'subset_table_reuse', 'subset_member_table_reuse', 'sequence_table_reuse' ],   # act as a funnel
+            -wait_for  => [ 'member_table_reuse', 'sequence_table_reuse' ],   # act as a funnel
             -flow_into => {
                 1 => [ 'make_blastdb' ],
                 2 => [ 'blast_factory' ],

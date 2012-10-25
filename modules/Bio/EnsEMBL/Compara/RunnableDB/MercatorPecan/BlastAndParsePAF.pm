@@ -39,8 +39,6 @@ eg "-num_alignments 20 -seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.
         Species genome db id.
     'offset' => <number>
         Offset into ordered array of member_ids. Obligatory
-    'subset_id' => <number>
-        Subset id of members to select
     'start_member_id' => <number>
         Member id of member at 'offset' in order array of member ids. Obligatory
     'batch_size' => <number>
@@ -72,13 +70,13 @@ sub load_members_from_db{
 
     my $idprefixed              = $self->param('idprefixed')  || 0;
     my $debug                   = $self->debug() || $self->param('debug') || 0;
-    my $subset_id               = $self->param('subset_id');
+    my $genome_db_id            = $self->param('genome_db_id');
 
     #Get list of members and sequences
-    my $sql = "SELECT member_id, sequence_id, stable_id, sequence FROM member JOIN sequence USING (sequence_id) JOIN subset_member USING (member_id) WHERE  subset_id=?";
+    my $sql = "SELECT member_id, sequence_id, stable_id, sequence FROM member JOIN sequence USING (sequence_id) WHERE genome_db_id=?";
     
     my $sth = $self->compara_dba->dbc->prepare( $sql );
-    $sth->execute($subset_id);
+    $sth->execute($genome_db_id);
 
     my $member_list;
     while( my ($member_id, $seq_id, $stable_id, $seq) = $sth->fetchrow() ) {

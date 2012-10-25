@@ -113,9 +113,6 @@ sub configure_runnable {
 
   my $name = $dnafrag->name . "_" . $db_chunks->[0]->seq_start . "_" . $db_chunks->[0]->seq_end;
 
-  #my $ref_species = $dnafrag->genome_db->name;
-  #my $subset = $self->compara_dba->get_SubsetAdaptor->fetch_by_set_description($ref_species . " raw");
-
   my $dbChunkFile = "" . $self->param('target_fa_dir') . "/" . $name . ".fa";
 
   my $program = $self->param('pair_aligner_exe');

@@ -181,7 +181,6 @@ sub fetch_by_set_description {
 sub _tables {
   my $self = shift;
 
-  #return (['subset', 's'], ['dna_collection', 'dc']);
   return (['dna_collection', 'dc']);
 }
 
@@ -197,7 +196,6 @@ sub _columns {
 sub _default_where_clause {
   my $self = shift;
   return '';
-  #return 's.subset_id = dc.dna_collection_id';
 }
 
 sub _final_clause {
