@@ -12,7 +12,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       glossary:  $('.glossary_mouseover', this.el),
       dataTable: $('table.data_table', this.el),
       helpTips:  $('._ht', this.el),
-      wrapping:  $('table.cellwrap_inside,table.heightwrap_inside',this.el)
+      wrapping:  $('table.cellwrap_inside, table.heightwrap_inside', this.el)
     };
     
     if (this.el.hasClass('ajax')) {
@@ -87,8 +87,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.trigger('hideZMenu', this.id); // Hide ZMenus based on this panel
     
-    if (newContent) {
+    if (newContent === true) {
       window.location.hash = el[0].id; // Jump to the newly added div
+    } else if (newContent) {
+      Ensembl.updateURL(newContent); // A link was clicked that needs to add parameters to the url
     }
     
     this.xhr = $.ajax({
@@ -100,7 +102,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class="[^<]*panel_type[^<]*"[^<]*>/) || [])[0]).val() || 'Content', html, el, params);
           Ensembl.EventManager.trigger('ajaxLoaded');
           
-          if (newContent) {
+          if (newContent === true) {
             // Jump to the newly added content. Set the hash to a dummy value first so the browser is forced to jump again
             window.location.hash = '_';
             window.location.hash = el[0].id;
