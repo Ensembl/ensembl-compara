@@ -18,18 +18,13 @@ sub caption {
 }
 
 sub content {
-  my $self = shift;
-  my $hub = $self->hub;
-  my $sd  = $hub->species_defs;
-  my $html;
-
-  my $sitename = $sd->ENSEMBL_SITETYPE;
+  my $self            = shift;
+  my $hub             = $self->hub;
+  my $sd              = $hub->species_defs;
+  my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
-
-  ## Should default to 5.0MB :)
-  my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB';
-
-  my $form = $self->modal_form('select', $hub->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
+  my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
+  my $form            = $self->modal_form('select', $hub->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
 
   if (!$hub->param('filter_module')) { ## No errors
     $form->add_notes({'id' => 'upload_notes', 'heading' => 'IMPORTANT NOTE', 'text' => qq{
@@ -39,25 +34,26 @@ sub content {
     }});
   }
 
-  $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
+  $form->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
 
-  ## Species is set automatically for the page you are on
-  my @species;
-  foreach my $sp ($sd->valid_species) {
-    push @species, {'value' => $sp, 'name' => $sd->species_label($sp, 1)};
-  }
-  @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
-  $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'species',
-      'label'   => "Species",
-      'values'  => \@species,
-      'value'   => $current_species,
-      'select'  => 'select',
-  );
+  # Create a data structure for species, with display labels and their current assemblies
+  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_NAME')}, $sd->valid_species);
+
+  # Create HTML for showing/hiding assembly names to work with JS
+  my $assembly_names = join '', map { sprintf '<span class="_stt_%s%s">%s</span>', $_->{'value'}, $_->{'value'} eq $current_species ? '' : ' hidden', delete $_->{'assembly'} } @species;
+
+  $form->add_field({
+      'type'        => 'dropdown',
+      'name'        => 'species',
+      'label'       => 'Species',
+      'values'      => \@species,
+      'value'       => $current_species,
+      'class'       => '_stt'
+  });
 
   ## Are mappings available?
   ## FIXME - reinstate auto-mapping option when we have a solution!
+  ## TODO - once fixed, the assembly name toggling (wrt species selected) will need redoing - hr5
   my $mappings; # = $sd->ASSEMBLY_MAPPINGS;
   my $current_assembly = $sd->get_config($current_species, 'ASSEMBLY_NAME');
   if ($mappings && ref($mappings) eq 'ARRAY') {
@@ -68,41 +64,36 @@ sub content {
       push @values, {'name' => $assembly, 'value' => $assembly};
     }
     $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'assembly',
-      'label'   => "Assembly",
-      'values'  => \@values,
-      'value'   => $current_assembly,
-      'select'  => 'select',
+      'type'        => 'DropDown',
+      'name'        => 'assembly',
+      'label'       => "Assembly",
+      'values'      => \@values,
+      'value'       => $current_assembly,
+      'select'      => 'select',
     );
     $form->add_element(
-      'type'  => 'Information',
-      'value' => 'Please note: if your data is not on the current assembly, the coordinates will be converted',
+      'type'        => 'Information',
+      'value'       => 'Please note: if your data is not on the current assembly, the coordinates will be converted',
     );
   }
   else {
-    $form->add_element(
-      'type'    => 'NoEdit',
-      'label'   => 'Assembly',
-      'name'    => 'assembly_name',
-      'value'   => $current_assembly,
-    );
-    $form->add_element(
-      'type'    => 'Hidden',
-      'name'    => 'assembly',
-      'value'   => $current_assembly,
-    );
+    $form->add_field({
+      'type'        => 'noedit',
+      'label'       => 'Assembly',
+      'name'        => 'assembly_name',
+      'value'       => $assembly_names,
+      'no_input'    => 1,
+      'is_html'     => 1
+    });
   }
 
-  $self->add_file_format_dropdown($form, 'upload');
+  $self->add_file_format_dropdown($form);
 
-  $form->add_element( type => 'Text', name => 'text', label => 'Paste data' );
-  $form->add_element( type => 'File', name => 'file', label => 'Upload file' );
-  $form->add_element( type => 'URL',  name => 'url',  label => 'or provide file URL', size => 30 );
+  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data' });
+  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'File', 'name' => 'file', 'label' => 'Or upload file' });
+  $form->add_field({ 'field_class' => 'hidden _stt_remote', 'type' => 'URL',  'name' => 'url',  'label' => 'Provide file URL', 'size' => 30 });
 
-  $html .= $form->render;
-  
-  return $html;
+  return $form->render;
 }
 
 1;
