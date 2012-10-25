@@ -47,8 +47,14 @@ Ensembl.LayoutManager.extend({
     }).on('click', 'a.update_panel', function () {
       var panelId = this.rel;
       
-      if (Ensembl.PanelManager.panels[panelId] && Ensembl.PanelManager.panels[panelId].params.updateURL.split('?')[0] === this.href.split('?')[0]) {
-        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, this.href, null, { updateURL: this.href });
+      if (Ensembl.PanelManager.panels[panelId] && this.href.split('?')[0].match(Ensembl.PanelManager.panels[panelId].params.updateURL.split('?')[0])) {
+        var params = {};
+        
+        if (!$('.update_url', this).each(function () { params[this.name] = this.value; }).length) {
+          params = undefined;
+        }
+        
+        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, this.href, null, { updateURL: this.href }, params);
       } else {
         $.ajax({
           url: this.href,
