@@ -177,20 +177,15 @@ sub build_hash_models {
   $self->param('rfamclassify', {});
   $self->param('orphan_transcript_model_id', {});
 
-  # We only take the longest transcript by doing a join with subset_member.
+  # We only take the canonical transcripts.
   # Right now, this only affects a few transcripts in Drosophila, but it's safer this way.
   my $sql = 
-    "SELECT gene.member_id, gene.description, transcript.member_id, transcript.description ".
-    "FROM subset_member sm, ".
-    "member gene, ".
-    "member transcript ".
-    "WHERE ".
-    "sm.member_id=transcript.member_id ".
-    "AND gene.source_name='ENSEMBLGENE' ".
-    "AND transcript.source_name='ENSEMBLTRANS' ".
-    "AND transcript.gene_member_id=gene.member_id ".
-    "AND transcript.description not like '%Acc:NULL%' ".
-    "AND transcript.description not like '%Acc:'";
+    q/SELECT gene.member_id, gene.description, transcript.member_id, transcript.description
+    FROM member gene JOIN member transcript ON (gene.canonical_member_id = transcript.member_id)
+    WHERE
+    gene.source_name='ENSEMBLGENE' AND transcript.source_name='ENSEMBLTRANS'
+    AND transcript.description not like '%Acc:NULL%'
+    AND transcript.description not like '%Acc:'/;
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
