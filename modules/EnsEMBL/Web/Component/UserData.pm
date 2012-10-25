@@ -35,6 +35,7 @@ sub add_file_format_dropdown {
       'name'    => 'format',
       'label'   => 'Data format',
       'values'  => $values,
+      'notes'   => '<a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>',
       scalar @remote_formats && scalar @upload_formats ? ( 'class' => '_stt' ) : ()
     });
   }
