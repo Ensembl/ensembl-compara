@@ -19,30 +19,25 @@ sub get_assemblies {
 sub add_file_format_dropdown {
   my ($self, $form, $limit) = @_;
 
-  my @formats;
-  if ($limit) {
-    @formats = $limit eq 'remote' ? @{$self->hub->species_defs->REMOTE_FILE_FORMATS} 
-                                                : @{$self->hub->species_defs->UPLOAD_FILE_FORMATS}; 
-  }
-  else {
-    @formats = (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
-  }
-  my $format_info = $self->hub->species_defs->DATA_FORMAT_INFO;
- 
-  if (scalar @formats > 0) {
-    my $values = [{'name' => '-- Choose --', 'value' => ''}];
-    foreach my $f (sort {$a cmp $b} @formats) {
-      push @$values, {'value' => uc($f), 'name' => $format_info->{$f}{'label'}};
-    }
-    $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'format',
-      'label'   => "Data format",
-      'values'  => $values,
-      'select'  => 'select',
-    );
-  }
+  my $sd              = $self->hub->species_defs;
+  my @remote_formats  = $limit && $limit eq 'upload' ? () : @{$sd->REMOTE_FILE_FORMATS};
+  my @upload_formats  = $limit && $limit eq 'remote' ? () : @{$sd->UPLOAD_FILE_FORMATS};
+  my $format_info     = $sd->DATA_FORMAT_INFO;
+  my %format_type     = (map({$_ => 'remote'} @remote_formats), map({$_ => 'upload'} @upload_formats));
 
+  if (scalar @remote_formats || scalar @upload_formats) {
+    my $values = [
+      {'caption' => '-- Choose --', 'value' => ''},
+      map {'value' => uc($_), 'caption' => $format_info->{$_}{'label'}, 'class' => "_stt__$format_type{$_}"}, sort (@remote_formats, @upload_formats)
+    ];
+    $form->add_field({
+      'type'    => 'dropdown',
+      'name'    => 'format',
+      'label'   => 'Data format',
+      'values'  => $values,
+      scalar @remote_formats && scalar @upload_formats ? ( 'class' => '_stt' ) : ()
+    });
+  }
 }
 
 sub output_das_text {
