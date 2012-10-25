@@ -827,10 +827,9 @@ sub fetch_all_orphans_by_GenomeDB {
   throw("genome_db arg is required\n")
     unless ($gdb);
 
-  my $gdb_id = $gdb->dbID;
-  my $sql = "SELECT m.member_id from member m JOIN member mp ON m.member_id = mp.gene_member_id JOIN subset_member sm ON sm.member_id = mp.member_id LEFT JOIN homology_member hm ON mp.member_id=hm.member_id WHERE m.source_name='ENSEMBLGENE' AND m.genome_db_id=$gdb_id AND hm.member_id IS NULL";
+  my $sql = 'SELECT mg.member_id FROM member mg LEFT JOIN homology_member hm ON (mg.canonical_member_id = hm.member_id) WHERE hm.member_id IS NULL AND mg.genome_db_id = ?';
   my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
+  $sth->execute($gdb->dbID);
   my $ma = $self->db->get_MemberAdaptor;
   my @members;
   while ( my $member_id  = $sth->fetchrow ) {

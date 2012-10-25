@@ -127,10 +127,10 @@ sub fetch_gdb_orphan_genes {
 
     my %orphan_stable_id_hash = ();
 
-    my $sql = "SELECT m3.stable_id FROM member m2, member m3, subset_member sm WHERE m3.member_id=m2.gene_member_id AND m2.source_name='ENSEMBLPEP' AND sm.member_id=m2.member_id AND sm.member_id IN (SELECT m1.member_id FROM member m1 LEFT JOIN gene_tree_node gtn ON m1.member_id=gtn.member_id WHERE gtn.member_id IS NULL AND m1.genome_db_id=$genome_db_id)";
+    my $sql = 'SELECT mg.stable_id FROM member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.member_id) WHERE gtn.member_id IS NULL AND mg.genome_db_id = ?';
 
     my $sth = $given_compara_dba->dbc->prepare($sql);
-    $sth->execute();
+    $sth->execute($genome_db_id);
 
     while(my ($member) = $sth->fetchrow()) {
         $orphan_stable_id_hash{$member} = 1;

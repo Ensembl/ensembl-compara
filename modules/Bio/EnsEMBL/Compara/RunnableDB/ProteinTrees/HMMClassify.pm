@@ -130,31 +130,11 @@ sub dump_sequences_to_workdir {
 
     my $fastafile = $self->worker_temp_directory . "${genome_db_id}.fasta"; ## Include pipeline name to avoid clashing??
     print STDERR "fastafile: $fastafile\n" if ($self->debug);
-    open my $fastafh, ">", $fastafile or $self->throw("I can't open sequence file $fastafile for writing\n");
 
-    my $count = 0;
-    my $memberAdaptor = $self->compara_dba->get_MemberAdaptor;
-    my $undefMembers = 0;
-
-    my $subset = $self->compara_dba->get_SubsetAdaptor->fetch_by_description_pattern("gdb:$genome_db_id % translations");
-
-    for my $member_id (@{$subset->member_id_list}) {
-        my $member = $memberAdaptor->fetch_by_dbID($member_id);
-        if (!defined $member) {
-            print STDERR "Member $member_id is not found in the db\n";
-            $undefMembers++;
-        }
-        $count++;
-        my $seq = $member->sequence;
-        $seq =~ s/(.{72})/$1\n/g;
-        chomp $seq;
-        print $fastafh ">" . $member->member_id . "\n$seq\n";
-    }
-
-    close ($fastafh);
+    my $members = $self->compara_dba->get_MemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_fasta($fastafile);
     $self->param('fastafile', $fastafile);
 
-    return;
 }
 
 sub run_HMM_search {

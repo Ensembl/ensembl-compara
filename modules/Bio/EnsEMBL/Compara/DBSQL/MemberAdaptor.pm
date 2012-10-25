@@ -381,8 +381,8 @@ sub fetch_canonical_member_for_gene_member_id {
 
     throw() unless (defined $gene_member_id);
 
-    my $constraint = 'm.gene_member_id = ?';
-    my $join = [[['subset_member', 'sm'], 'sm.member_id = m.member_id']];
+    my $constraint = 'mg.member_id = ?';
+    my $join = [[['member', 'mg'], 'm.member_id = mg.canonical_member_id']];
 
     $self->bind_param_generic_fetch($gene_member_id, SQL_INTEGER);
     return $self->generic_fetch_one($constraint, $join);

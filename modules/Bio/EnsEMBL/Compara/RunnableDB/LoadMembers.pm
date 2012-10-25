@@ -47,7 +47,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Subset;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -90,25 +89,6 @@ sub fetch_input {
     unless($self->param('include_reference') or $self->param('include_nonreference')) {
         die "Either 'include_reference' or 'include_nonreference' or both have to be true";
     }
-
-    my $ref_nonref = join('+', ($self->param('include_reference') ? ('ref') : ()), ($self->param('include_nonreference') ? ('nonref') : ()));
-
-    if ($self->param('coding_exons')) {
-
-        $self->param('exonSubset', Bio::EnsEMBL::Compara::Subset->new(
-          -name=>"gdb:$genome_db_id $genome_db_name $ref_nonref coding exons") );
-
-            # This does an INSERT IGNORE or a SELECT if already exists:
-        $compara_dba->get_SubsetAdaptor->store($self->param('exonSubset'));
-
-    } else {
-
-        $self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(
-          -name=>"gdb:$genome_db_id $genome_db_name $ref_nonref canonical translations") );
-
-            # This does an INSERT IGNORE or a SELECT if already exists:
-        $compara_dba->get_SubsetAdaptor->store($self->param('pepSubset'));
-    }
 }
 
 
@@ -148,9 +128,6 @@ sub write_output {
     $self->dataflow_output_id( {
         'genome_db_id'      => $self->param('genome_db_id'),
         'reuse_this'        => 0,
-        'subset_id'         => $self->param('coding_exons')
-                                ? $self->param('exonSubset')->dbID  # MercatorPecan pipeline
-                                : $self->param('pepSubset')->dbID,  # ProteinTrees pipeline
         'per_genome_suffix' => $self->param('per_genome_suffix'),
     } , 1);
 }
@@ -228,12 +205,6 @@ sub loadMembersFromCoreSlices {
   print("       ".$self->param('geneCount')." genes\n");
   print("       ".$self->param('realGeneCount')." real genes\n");
   print("       ".$self->param('transcriptCount')." transcripts\n");
-
-  if($self->param('coding_exons')) {
-      print("       ".$self->param('exonSubset')->count()." in exonSubset\n");
-  } else {
-      print("       ".$self->param('pepSubset')->count()." in pepSubset\n");
-  }
 }
 
 
@@ -346,7 +317,7 @@ sub store_gene_and_all_transcripts {
 
   if(@canonicalPeptideMember) {
     my ($transcript, $member) = @canonicalPeptideMember;
-    $self->param('pepSubset')->add_member($member);
+    $member_adaptor->_set_member_as_canonical($member);
     # print("     LONGEST " . $transcript->stable_id . "\n");
   }
   return 1;
@@ -441,7 +412,6 @@ sub store_all_coding_exons {
 	    $member_adaptor->store($exon_member);
 	    print(" : stored\n") if($self->param('verbose'));
     };
-    $self->param('exonSubset')->add_member($exon_member);
   }
 }
 

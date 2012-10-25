@@ -52,10 +52,6 @@ sub fetch_input {
 
       $self->param('genome_content', $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'))->db_adaptor);
 
-	$self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(-name => ("gdb:".($self->param('genome_db_id'))." ".($self->param('name')).' translations')));
-
-	$self->param('subset_adaptor', $compara_dba->get_SubsetAdaptor());
-
 }
 
 sub write_output {
@@ -70,8 +66,6 @@ sub write_output {
       my $gene_coordinates = $self->param('genome_content')->get_gene_coordinates;
       my $cds_coordinates = $self->param('genome_content')->get_cds_coordinates;
       my $taxon_id = $self->param('genome_content')->get_taxonomy_id;
-
-	$self->param('subset_adaptor')->store($self->param('pepSubset'));
 
 	my $count = 0;
       foreach my $gene_name (keys %$prot_seq) {
@@ -124,7 +118,7 @@ sub write_output {
 		$seq =~ s/O/X/g;
 		$pep_member->sequence($seq);
 		$member_adaptor->store($pep_member);
-		$self->param('pepSubset')->add_member($pep_member);
+            $member_adaptor->_set_member_as_canonical($pep_member);
 
             if (exists $cds_seq->{$sequence->id}) {
                 $pep_member->sequence_cds( $cds_seq->{$sequence->id}->seq );

@@ -12,7 +12,6 @@ use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBSQL::SliceAdaptor;
 
-use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
@@ -68,13 +67,8 @@ my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
 );
 $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
-# Subsets
-my $subset_peps  = Bio::EnsEMBL::Compara::Subset->new(-name => sprintf('gdb:%d %s projected canonical translations', $human_genome_db->dbID, $human_genome_db->name) );
-$compara_dba->get_SubsetAdaptor->store($subset_peps) unless $no_store;
-
 print 'FOUND genome_db ', $human_genome_db->dbID, "\n";
 print 'FOUND/STORED mlss ', $mlss->dbID, "\n";
-print 'FOUND/STORED subsets ', $subset_peps->dbID, "\n";
 
 #get adaptors
 my $core_ga = Bio::EnsEMBL::Registry->get_adaptor($species_name, 'core', 'Gene');
@@ -132,7 +126,7 @@ sub fetch_or_store_gene {
         $trans_member->gene_member_id($gene_member->dbID);
         print "NEW: $trans_member "; $trans_member->print_member();
         $member_adaptor->store($trans_member) unless $no_store;
-        $subset_peps->add_member($trans_member);
+        $member_adaptor->_set_member_as_canonical($trans_member);
         $gene_stable_id_2_compara_transcript{$gene->stable_id} = $trans_member;
 
     }

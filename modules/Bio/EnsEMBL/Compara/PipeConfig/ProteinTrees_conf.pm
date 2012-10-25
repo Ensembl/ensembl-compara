@@ -524,34 +524,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
-                1 => [ 'subset_table_reuse', 'other_sequence_reuse' ],
-            },
-        },
-
-        {   -logic_name => 'subset_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'subset',
-                'mode'          => 'insertignore',
-                'where'         => 'description LIKE "gdb:#genome_db_id# %" AND subset_id<='.$self->o('protein_members_range'),
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
-                1 => [ 'subset_member_table_reuse' ],
-            },
-        },
-
-        {   -logic_name => 'subset_member_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                            'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE member_id<='.$self->o('protein_members_range').' AND description LIKE "gdb:#genome_db_id# %" AND subset_id<='.$self->o('protein_members_range'),
-                            'fan_branch_code' => 2,
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
-                2 => [ 'mysql:////subset_member' ],
+                1 => [ 'other_sequence_reuse' ],
             },
         },
 
@@ -778,10 +751,9 @@ sub pipeline_analyses {
 
 
         {   -logic_name => 'blast_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_SubsetAdaptor', ['fetch_by_description_pattern', 'gdb:#genome_db_id# % translations'], 'member_id_list'],
-                'column_names'          => [ 'member_id' ],
+                'inputquery'            => 'SELECT canonical_member_id AS member_id FROM member WHERE genome_db_id = #genome_db_id# AND canonical_member_id IS NOT NULL',
                 'fan_branch_code'       => 2,
             },
             -hive_capacity => $self->o('blast_factory_capacity'),
