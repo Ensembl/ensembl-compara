@@ -215,7 +215,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
                 expand.replaceWith(body);
                 expand = null;
               } else {
-                this.elLk.tbody.html(function (j, html) { return caption && caption === (subheader || json.caption) ? body : html + body; });
+                this.elLk.tbody.html(function (j, html) { return caption && caption === (subheader || json.caption) ? body : html + body; }).find('a.update_panel').attr('rel', this.imageId);
                 this.elLk.caption.html(json.caption);
                 
                 this.show();
