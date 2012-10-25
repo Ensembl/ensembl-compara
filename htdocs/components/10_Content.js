@@ -7,12 +7,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.xhr = false;
     
     var fnEls = {
-      ajaxLoad:  $('.ajax', this.el),
-      hideHints: $('.hint', this.el),
-      glossary:  $('.glossary_mouseover', this.el),
-      dataTable: $('table.data_table', this.el),
-      helpTips:  $('._ht', this.el),
-      wrapping:  $('table.cellwrap_inside, table.heightwrap_inside', this.el)
+      ajaxLoad:       $('.ajax', this.el),
+      hideHints:      $('.hint', this.el),
+      glossary:       $('.glossary_mouseover', this.el),
+      dataTable:      $('table.data_table', this.el),
+      helpTips:       $('._ht', this.el),
+      wrapping:       $('table.cellwrap_inside, table.heightwrap_inside', this.el),
+      selectToToggle: $('select._stt', this.el)
     };
     
     if (this.el.hasClass('ajax')) {
@@ -261,5 +262,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   
   wrapping: function () {
     this.elLk.wrapping.togglewrap();
+  },
+  
+  selectToToggle: function() {
+    this.elLk.selectToToggle.selectToToggle({}, this.el);
   }
 });
