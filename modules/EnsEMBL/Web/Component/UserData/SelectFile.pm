@@ -26,14 +26,6 @@ sub content {
   my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
   my $form            = $self->modal_form('select', $hub->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
 
-  if (!$hub->param('filter_module')) { ## No errors
-    $form->add_notes({'id' => 'upload_notes', 'heading' => 'IMPORTANT NOTE', 'text' => qq{
-      <p>We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. 
-      If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL" class="modal_link">attach it to $sitename</a> without uploading.</p>
-      <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
-    }});
-  }
-
   $form->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
 
   # Create a data structure for species, with display labels and their current assemblies
@@ -96,7 +88,7 @@ sub content {
   $form->add_field({ 'field_class' => 'hidden _stt_remote', 'type' => 'URL',  'name' => 'url',  'label' => 'Provide file URL', 'size' => 30 });
   $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'URL',  'name' => 'url',  'label' => 'Or provide file URL', 'size' => 30 });
 
-  return $form->render;
+  return '<h2>Add a custom track</h2>'.$form->render;
 }
 
 1;
