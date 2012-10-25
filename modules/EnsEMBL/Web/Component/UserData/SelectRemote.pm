@@ -32,7 +32,7 @@ sub content {
   my $format_list = join(', ', (sort {lc($a) cmp lc($b)} keys %format_name));
 
   my $note = sprintf qq(
-    <p>Accessing data via a URL can be slow unless you use an indexed format such as BAM.However it has the advantage that you always see the same data as the file on your own machine.</p>
+    <p>Accessing data via a URL can be slow unless you use an indexed format such as BAM. However it has the advantage that you always see the same data as the file on your own machine.</p>
     <p>We currently accept attachment of the following formats: $format_list.%s</p>), grep(/vcf/i, keys %format_name) ? ' <b>Note</b>: VCF files must be indexed prior to attachment.' : ''
   ;
 
