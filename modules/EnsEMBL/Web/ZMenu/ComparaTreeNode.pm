@@ -12,15 +12,16 @@ use EnsEMBL::Web::TmpFile::Text;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self     = shift;
-  my $cdb      = shift || 'compara';
-  my $hub      = $self->hub;
-  my $object   = $self->object;
-  my $tree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_GeneTree($cdb);
-  die 'No tree for gene' unless $tree;
-  my $node_id  = $hub->param('node')                   || die 'No node value in params';
-  my $node     = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
+  my $self   = shift;
+  my $cdb    = shift || 'compara';
+  my $hub    = $self->hub;
+  my $object = $self->object;
+  my $tree   = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_GeneTree($cdb);
   
+  die 'No tree for gene' unless $tree;
+  
+  my $node_id         = $hub->param('node')                   || die 'No node value in params';
+  my $node            = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
   my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $hub->param('collapse');
   my $leaf_count      = scalar @{$node->get_all_leaves};
   my $is_leaf         = $node->is_leaf;
@@ -33,15 +34,15 @@ sub content {
      $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf;
   my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
   my $taxon_alias     = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$taxon_id};
- 
-  my $caption   = "Taxon: ";
+  my $caption         = 'Taxon: ';
+  
   if (defined $taxon_alias) {
     $caption .= $taxon_alias;
-    $caption .= (sprintf " ~%d MYA", $taxon_mya) if defined $taxon_mya;
+    $caption .= sprintf ' ~%d MYA', $taxon_mya if defined $taxon_mya;
     $caption .= " ($taxon_name)" if defined $taxon_name;
   } elsif (defined $taxon_name) {
     $caption .= $taxon_name;
-    $caption .= (sprintf " ~%d MYA", $taxon_mya) if defined $taxon_mya;
+    $caption .= sprintf ' ~%d MYA', $taxon_mya if defined $taxon_mya;
   } else {
     $caption .= 'unknown';
   }
@@ -54,41 +55,43 @@ sub content {
     label => $parent_distance,
     order => 3
   }) unless $is_root;
-
+  
   # Bootstrap
   $self->add_entry({
-    type => 'Bootstrap',
-    label => (exists $tagvalues->{'bootstrap'} ? $tagvalues->{'bootstrap'} : "NA"),
+    type  => 'Bootstrap',
+    label => exists $tagvalues->{'bootstrap'} ? $tagvalues->{'bootstrap'} : 'NA',
     order => 4
-  }) unless $is_root or $is_leaf;
+  }) unless $is_root || $is_leaf;
 
   if (defined $tagvalues->{'lost_taxon_id'}) {
     my $lost_taxa = $tagvalues->{'lost_taxon_id'};
-    $lost_taxa = [$lost_taxa] if ref($lost_taxa) ne 'ARRAY';
+       $lost_taxa = [ $lost_taxa ] if ref $lost_taxa ne 'ARRAY';
+       
     $self->add_entry({
       type  => 'Lost taxa',
-      label => join(', ', map {$hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_"}  @$lost_taxa ),
+      label => join(', ', map { $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_" }  @$lost_taxa ),
       order => 5.6
     });
   }
-
+  
   # Internal node_id
   $self->add_entry({
-    type => 'node_id',
+    type  => 'node_id',
     label => $node->node_id,
     order => 13
-  });
+  }); 
   
-  my $action = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 'Image' : 'Compara_Tree';
-  $action .= '/pan_compara' if ($cdb =~ /pan/);
+  my $action = 'Web/ComparaTree' . ($cdb =~ /pan/ ? '/pan_compara' : '');
 
   # Expand all nodes
   if (grep $_ != $node_id, keys %collapsed_ids) {
     $self->add_entry({
       type  => 'Image',
       label => 'expand all sub-trees',
+      class => 'update_panel',
       order => 8,
-      link  => $hub->url({
+      extra => { update_params => '<input type="hidden" class="update_url" name="collapse" value="none" />' },
+      link  => $hub->url('Component', {
         type     => $hub->type,
         action   => $action,
         collapse => 'none' 
@@ -100,14 +103,18 @@ sub content {
   my @adjacent_subtree_ids = map $_->node_id, @{$node->get_all_adjacent_subtrees};
   
   if (grep !$collapsed_ids{$_}, @adjacent_subtree_ids) {
+    my $collapse = join ',', keys %collapsed_ids, @adjacent_subtree_ids;
+    
     $self->add_entry({
       type  => 'Image',
       label => 'collapse other nodes',
+      class => 'update_panel',
       order => 10,
-      link  => $hub->url({
+      extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
+      link  => $hub->url('Component', {
         type     => $hub->type,
         action   => $action,
-        collapse => join(',', keys %collapsed_ids, @adjacent_subtree_ids)
+        collapse => $collapse
       })
     });
   }
@@ -115,8 +122,7 @@ sub content {
   if ($is_leaf) {
     # expand all paralogs
     my $gdb_id = $node->genome_db_id;
-    my %collapse_nodes;
-    my %expand_nodes;
+    my (%collapse_nodes, %expand_nodes);
     
     foreach my $leaf (@{$tree->get_all_leaves}) {
       if ($leaf->genome_db_id == $gdb_id) {
@@ -128,14 +134,18 @@ sub content {
     my @collapse_node_ids = grep !$expand_nodes{$_}, keys %collapse_nodes;
     
     if (@collapse_node_ids) {
+      my $collapse = join ',', @collapse_node_ids;
+      
       $self->add_entry({
         type  => 'Image',
         label => 'show all paralogs',
+        class => 'update_panel',
         order => 11,
-        link  => $hub->url({
+        extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
+        link  => $hub->url('Component', {
           type     => $hub->type,
           action   => $action,
-          collapse => join(',', @collapse_node_ids)
+          collapse => $collapse
         })
       }); 
     }
@@ -145,10 +155,10 @@ sub content {
     
     if (defined $node_type) {
       my $label;
-      $label = "Dubious duplication" if $node_type eq 'dubious';
-      $label = sprintf('Duplication (%d%s confid.)', 100*($tagvalues->{'duplication_confidence_score'} || 0), '%') if $node_type eq 'duplication';
-      $label = 'Speciation' if $node_type eq 'speciation';
-      $label = 'Gene split' if $node_type eq 'gene_split';
+         $label = 'Dubious duplication' if $node_type eq 'dubious';
+         $label = sprintf 'Duplication (%d%s confid.)', 100 * ($tagvalues->{'duplication_confidence_score'} || 0), '%' if $node_type eq 'duplication';
+         $label = 'Speciation' if $node_type eq 'speciation';
+         $label = 'Gene split' if $node_type eq 'gene_split';
       
       $self->add_entry({
         type  => 'Type',
@@ -208,27 +218,35 @@ sub content {
     });
     
     if ($collapsed_ids{$node_id}) {
+      my $collapse = join(',', grep $_ != $node_id, keys %collapsed_ids) || 'none';
+      
       # Expand this node
       $self->add_entry({
         type  => 'Image',
         label => 'expand this sub-tree',
+        class => 'update_panel',
         order => 7,
-        link  => $hub->url({
+        extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
+        link  => $hub->url('Component', {
           type     => $hub->type,
           action   => $action,
-          collapse => (grep $_ != $node_id, keys %collapsed_ids) ? join(',', grep $_ != $node_id, keys %collapsed_ids) : 'none'
+          collapse => $collapse
         })
       });
     } else {
+      my $collapse = join ',', $node_id, keys %collapsed_ids;
+      
       # Collapse this node
       $self->add_entry({
         type  => 'Image',
         label => 'collapse this node',
+        class => 'update_panel',
         order => 9,
-        link  => $hub->url({
+        extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
+        link  => $hub->url('Component', {
           type     => $hub->type,
           action   => $action,
-          collapse => join(',', $node_id, keys %collapsed_ids) 
+          collapse => $collapse
         })
       });
     }
