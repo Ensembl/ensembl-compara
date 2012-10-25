@@ -14,8 +14,9 @@ Ensembl.extend({
     }
     
     this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
+    this.hashParamRegex  = '([#?;&]__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch   = new RegExp(/[#?;&]r=([^;&]+)/);
-    this.locationReplace = new RegExp(/([#?;&]r=)[^;&]+((;&)?)/);
+    this.locationReplace = new RegExp(this.hashParamRegex.replace('__PARAM__', 'r'));
     this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
     this.dynamicWidth    = !!this.cookie.get('DYNAMIC_WIDTH');
     this.hideHints       = {};
@@ -47,17 +48,19 @@ Ensembl.extend({
     // If there's a hash in the URL with a new location in it, and the browser supports history API,
     // update window.location.search to contain the new location.
     // Also change all ajax_load values, so panels are loaded matching the new location.
-    var removeHash = this.locationURL === 'hash' ? '' : window.location.hash.match(this.locationMatch);
+    var removeHash = this.locationURL === 'hash' ? '' : window.location.hash.match('=');
+    var hashChange = removeHash ? window.location.hash.match(this.locationMatch) : false;
+    
+    $('input.ajax_load').val(function (i, val) { return Ensembl.urlFromHash(val); });
     
     if (removeHash) {
-      window.history.replaceState({}, '', window.location.search.replace(this.locationReplace, '$1' + removeHash[1] + '$2'));
-      $('input.ajax_load').val(function (i, val) { return val.replace(Ensembl.locationReplace, '$1' + removeHash[1] + '$2'); });
+      window.history.replaceState({}, '', Ensembl.urlFromHash(window.location.search));
     }
     
     this.PanelManager.initialize();
     
-    if (removeHash) {
-      this.EventManager.trigger('hashChange', removeHash[1]); // update links and HTML for the new location
+    if (hashChange) {
+      this.EventManager.trigger('hashChange', hashChange[1]); // update links and HTML for the new location
     }
   },
   
@@ -194,12 +197,37 @@ Ensembl.extend({
   updateLocation: function (r) {
     this.historyReady = true;
     
-    if (this.locationURL === 'hash') {
-      window.location.hash = 'r=' + r;
-    } else {
-      window.history.pushState({}, '', window.location.search.replace(this.locationReplace, '$1' + r + '$2'));
+    this.updateURL({ r: r });
+    
+    if (this.locationURL === 'search') {
       this.setCoreParams();
       this.EventManager.trigger('hashChange', r);
+    }
+  },
+  
+  updateURL: function (params, url) {
+    if (url) {
+      url += url.match(/\?/) ? '' : '?';
+    } else {
+      url = window.location[this.locationURL];
+    }
+    
+    for (var i in params) {
+      if (url.match(i + '=')) {
+        url = url.replace(new RegExp(this.hashParamRegex.replace('__PARAM__', i)), '$1' + params[i] + '$2');
+      } else {
+        url += (url ? ';' : '') + i + '=' + params[i];
+      }
+    }
+    
+    if (arguments[1]) {
+      return url;
+    }
+    
+    if (this.locationURL === 'hash') {
+      window.location.hash = url;
+    } else {
+      window.history.pushState({}, '', url);
     }
   },
   
@@ -208,7 +236,21 @@ Ensembl.extend({
     var match    = location.match(this.locationMatch);
     var r        = match ? match[1] : this.initialR || '';
     
-    return paramOnly ? r : url.match(this.locationMatch) ? url.replace(this.locationReplace, '$1' + r + '$2') : r ? url + (url.match(/\?/) ? ';r=' : '?r=') + r : url;
+    if (paramOnly) {
+      return r;
+    }
+    
+    var hash = r && this.locationURL === 'search' ? { r: r } : {};
+    
+    $.each(window.location.hash.replace('#', '').split(/[;&]/), function () {
+      var param = this.split('=');
+      
+      if (param.length === 2) {
+        hash[param[0]] = param[1]; 
+      }
+    });
+    
+    return this.updateURL(hash, url);
   },
   
   thousandify: function (str) {
