@@ -7,12 +7,15 @@
 (function ($) {
   $.selectToToggle = function (el, toggleMap, wrapper) {
     
-    el.on('change.selectToToggle', function() {
+    var toggle = function() {
       for (var val in toggleMap) {
         wrapper.find(toggleMap[val]).hide();
       }
       wrapper.find(toggleMap[this.value]).show();
-    });
+    };
+    
+    el.on('change.selectToToggle', toggle);
+    toggle.apply(el[0]);
   };
 
   $.fn.selectToToggle = function (
