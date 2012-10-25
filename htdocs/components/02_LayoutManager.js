@@ -44,17 +44,25 @@ Ensembl.LayoutManager.extend({
       return false;
     }).on('click', 'a[rel="external"]', function () { 
       this.target = '_blank';
-    });
-    
-    $('.modal_link').show();
-    
-    this.validateForms(document);
-    
-    // Close modal window if the escape key is pressed
-    $(document).on({
+    }).on('click', 'a.update_panel', function () {
+      var panelId = this.rel;
+      
+      if (Ensembl.PanelManager.panels[panelId] && Ensembl.PanelManager.panels[panelId].params.updateURL.split('?')[0] === this.href.split('?')[0]) {
+        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, this.href, null, { updateURL: this.href });
+      } else {
+        $.ajax({
+          url: this.href,
+          success: function () {
+            Ensembl.EventManager.triggerSpecific('updatePanel', panelId);
+          }
+        });
+      }
+      
+      return false;
+    }).on({
       keyup: function (event) {
         if (event.keyCode === 27) {
-          Ensembl.EventManager.trigger('modalClose', true);
+          Ensembl.EventManager.trigger('modalClose', true); // Close modal window if the escape key is pressed
         }
       },
       mouseup: function (e) {
@@ -64,6 +72,10 @@ Ensembl.LayoutManager.extend({
         }
       }
     });
+    
+    $('.modal_link').show();
+    
+    this.validateForms(document);
     
     function popState() {
       if (
