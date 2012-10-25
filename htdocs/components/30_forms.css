@@ -98,10 +98,10 @@ div.ff-notes {
 .ftext, .ftextarea {
   border: [[PANEL_BORDER]] solid 1px;
   width: 210px;
-  margin-bottom: 3px;
+  margin: 0 0 3px;
 }
 .ffile {
-  margin-bottom: 3px;
+  margin: 0 0 3px;
 }
 .ftextarea {
   height: 100px;
