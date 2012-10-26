@@ -206,7 +206,7 @@ sub get_sequence_data {
   if (!$config->{'utr'}) {
     foreach (@sequence) {
       splice @$_, $cd_end;
-      splice @$_, 0, $cd_start ,- 1;
+      splice @$_, 0, $cd_start - 1;
     }
     
     $length = scalar @{$sequence[0]};
