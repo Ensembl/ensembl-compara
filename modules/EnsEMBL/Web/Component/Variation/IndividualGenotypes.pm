@@ -78,13 +78,7 @@ sub content {
   if ($selected_pop || scalar keys %rows == 1) {
     $selected_pop ||= (keys %rows)[0]; # there is only one entry in %rows
     
-    my $columns = [
-      { key => 'Individual',  title => 'Individual<br /><small>(Male/Female/Unknown)</small>', sort => 'html', width => '20%' },
-      { key => 'Genotype',    title => 'Genotype<br /><small>(forward strand)</small>',        sort => 'html', width => '15%' },
-      { key => 'Description', title => 'Description',                                          sort => 'html'                 },
-      { key => 'Father',      title => 'Father',                                               sort => 'none'                 },
-      { key => 'Mother',      title => 'Mother',                                               sort => 'none'                 }
-    ];
+    my $columns = $self->get_table_headings;
     
     push @$columns, { key => 'Children', title => 'Children<br /><small>(Male/Female)</small>', sort => 'none' } if $flag_children;
     
@@ -192,5 +186,17 @@ sub pop_url {
   
   return $pop_url;
 }
+
+sub get_table_headings {
+  return [
+    { key => 'Individual',  title => 'Individual<br /><small>(Male/Female/Unknown)</small>', sort => 'html', width => '20%' },
+    { key => 'Genotype',    title => 'Genotype<br /><small>(forward strand)</small>',        sort => 'html', width => '15%' },
+    { key => 'Description', title => 'Description',                                          sort => 'html'                 },
+    { key => 'Father',      title => 'Father',                                               sort => 'none'                 },
+    { key => 'Mother',      title => 'Mother',                                               sort => 'none'                 }
+  ];
+}
+    
+
 
 1;
