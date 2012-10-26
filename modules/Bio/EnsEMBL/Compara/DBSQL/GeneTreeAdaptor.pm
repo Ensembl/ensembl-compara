@@ -340,27 +340,15 @@ sub fetch_subtrees {
 sub fetch_all_linked_trees {
     my ($self, $tree) = @_;
 
-    my $ini_tree_id = (ref($tree) ? $tree->root_id : $tree);
-
-    my %results = ($ini_tree_id => $tree);
-    my @todo = ($ini_tree_id);
-
-    my $join = [[['gene_tree_root_tag', 'gtrt'], 'gtr.root_id = gtrt.value']];
-
-    while (scalar(@todo)) {
-        
-        my $constraint = '(gtrt.tag LIKE "%\_tree\_root\_id") AND (gtrt.root_id IN ('.join(',',@todo).'))';
-        @todo = ();
-        my $array1 = $self->generic_fetch($constraint, $join);
-        foreach my $other_tree (@$array1) {
-            next if exists $results{$other_tree->root_id};
-            push @todo, $other_tree->root_id;
-            $results{$other_tree->root_id} = $other_tree;
-        }
+    # Currently, all linked trees are accessible in 1 hop
+    if ($tree->ref_root_id) {
+        # Trees that share the same reference
+        $self->bind_param_generic_fetch($tree->ref_root_id, SQL_INTEGER);
+    } else {
+        # The given tree is the reference
+        $self->bind_param_generic_fetch($tree->root_id, SQL_INTEGER);
     }
-    delete $results{$ini_tree_id};
-    my @results = values %results;
-    return \@results;
+    return $self->generic_fetch('ref_root_id = ?');
 }
 
 
@@ -380,11 +368,11 @@ sub store {
     my $sth;
     # Make sure that the variables are in the same order
     if ($has_root_id) {
-        $sth = $self->prepare('UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?'),
+        $sth = $self->prepare('UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ?, ref_root_id = ? WHERE root_id = ?'),
     } else {
-        $sth = $self->prepare('INSERT INTO gene_tree_root (tree_type, member_type, clusterset_id, method_link_species_set_id, stable_id, version, root_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $sth = $self->prepare('INSERT INTO gene_tree_root (tree_type, member_type, clusterset_id, method_link_species_set_id, stable_id, version, ref_root_id, root_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     }
-    $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $root_id);
+    $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $tree->ref_root_id, $root_id);
     
     $tree->adaptor($self);
 
@@ -443,6 +431,7 @@ sub _columns {
         gtr.method_link_species_set_id
         gtr.stable_id
         gtr.version
+        gtr.ref_root_id
     );
 }
 
@@ -461,6 +450,7 @@ sub _objs_from_sth {
         _method_link_species_set_id => $rowhash->{method_link_species_set_id},
         _stable_id                  => $rowhash->{stable_id},
         _version                    => $rowhash->{version},
+        _ref_root_id                => $rowhash->{ref_root_id},
         _parent_id                  => $rowhash->{parent_id},
     });
     push @tree_list, $tree;

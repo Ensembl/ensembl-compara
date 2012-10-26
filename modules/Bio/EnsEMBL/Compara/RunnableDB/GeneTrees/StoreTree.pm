@@ -377,9 +377,8 @@ sub fetch_or_create_other_tree {
             $member->stable_id($self->_name_for_prot($member));
             $member->{'_children_loaded'} = 1;
         }
+        $newtree->ref_root_id($tree->root_id);
         $self->store_tree_into_clusterset($newtree, $clusterset);
-        $newtree->store_tag('merged_tree_root_id', $tree->root_id);
-        $tree->store_tag('other_tree_root_id', $newtree->root_id, 1);
         ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
     }
 

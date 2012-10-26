@@ -85,12 +85,13 @@ sub new {
     my $self = $class->SUPER::new(@args);
 
     if (scalar @args) {
-        my ($root_id, $member_type, $tree_type, $clusterset_id) = rearrange([qw(ROOT_ID MEMBER_TYPE TREE_TYPE CLUSTERSET_ID)], @args);
+        my ($root_id, $member_type, $tree_type, $clusterset_id, $ref_root_id) = rearrange([qw(ROOT_ID MEMBER_TYPE TREE_TYPE CLUSTERSET_ID REF_ROOT_ID)], @args);
 
         $self->{'_root_id'} = $root_id if defined $root_id;
         $member_type && $self->member_type($member_type);
         $tree_type && $self->tree_type($tree_type);
         $clusterset_id && $self->clusterset_id($clusterset_id);
+        $ref_root_id && $self->ref_root_id($ref_root_id);
     }
 
     return $self;
@@ -166,6 +167,24 @@ sub clusterset_id {
     my $self = shift;
     $self->{'_clusterset_id'} = shift if(@_);
     return $self->{'_clusterset_id'};
+}
+
+
+=head2 ref_root_id
+
+  Description : Getter/Setter for the ref_root_id field. This field must
+                link to a valid root_id. It refers to the main tree (the
+                tree in the "default" clusterset).
+  Returntype  : Integer
+  Example     : my $ref_root_id = $tree->ref_root_id();
+  Caller      : General
+
+=cut
+
+sub ref_root_id {
+    my $self = shift;
+    $self->{'_ref_root_id'} = shift if(@_);
+    return $self->{'_ref_root_id'};
 }
 
 

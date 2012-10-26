@@ -51,3 +51,12 @@ ALTER TABLE member
 UPDATE subset_member sm JOIN member mp USING (member_id) JOIN member mg ON mg.member_id = mp.gene_member_id SET mg.canonical_member_id = mp.member_id;
 
 
+-- reference tree
+ALTER TABLE gene_tree_root
+	ADD COLUMN ref_root_id INT(10) UNSIGNED AFTER method_link_species_set_id,
+	ADD KEY ref_root_id (ref_root_id);
+UPDATE gene_tree_root JOIN gene_tree_root_tag USING (root_id)
+	SET ref_root_id = value
+	WHERE clusterset_id != "default" AND tag LIKE "%\_tree\_root\_id";
+
+

@@ -683,14 +683,17 @@ CREATE TABLE gene_tree_root (
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
     clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
+    ref_root_id                     INT(10) UNSIGNED,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
     version                         INT UNSIGNED,           # version of the stable_id (changes only when members move to/from existing trees)
 
     FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
     FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+    FOREIGN KEY (ref_root_id) REFERENCES gene_tree_root(root_id),
 
     PRIMARY KEY (root_id ),
     UNIQUE KEY ( stable_id ),
+    KEY ref_root_id (ref_root_id),
     KEY (tree_type)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;

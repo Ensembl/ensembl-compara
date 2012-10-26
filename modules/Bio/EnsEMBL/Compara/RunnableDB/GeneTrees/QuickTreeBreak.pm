@@ -256,8 +256,7 @@ sub store_supertree {
   }
   my $super_align_clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
   $self->store_tree_into_clusterset($self->param('super_align_tree'), $super_align_clusterset);
-  $self->param('super_align_tree')->store_tag('other_tree_root_id', $self->param('tree_id'));
-  $self->param('original_cluster')->store_tag('other_tree_root_id', $self->param('super_align_tree')->root_id, 1);
+  $self->param('super_align_tree')->ref_root_id($self->param('tree_id'));
 }
 
 
