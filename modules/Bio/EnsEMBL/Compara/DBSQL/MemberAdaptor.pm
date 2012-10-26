@@ -226,11 +226,11 @@ sub fetch_all_canonical_by_source_genome_db_id {
   throw("source_name and genome_db_id args are required") 
     unless($source_name && $genome_db_id);
 
-    my $join = [[['member mg', 'sm'], 'mg.canonical_member_id = m.member_id']];
+    my $join = [[['member', 'mg'], 'mg.canonical_member_id = m.member_id']];
 
     $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
     $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
-    return $self->generic_fetch('m.source_name = ? AND mg.genome_db_id = ?');
+    return $self->generic_fetch('m.source_name = ? AND mg.genome_db_id = ?', $join);
 }
 
 
