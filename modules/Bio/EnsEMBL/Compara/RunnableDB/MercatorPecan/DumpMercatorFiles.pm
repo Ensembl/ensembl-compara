@@ -134,7 +134,7 @@ sub dumpMercatorFiles {
   ## Create the anchor file for Mercator
   $file = $self->param('input_dir') . "/$gdb_id.anchors";
   open F, ">$file";
-  foreach my $member (@{$ma->fetch_all_canonical_by_source_genome_db_id('', $gdb_id)}) {
+  foreach my $member (@{$ma->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $gdb_id)}) {
       my $strand = "+";
       $strand = "-" if ($member->chr_strand == -1);
       my $chr_name = $member->chr_name;
