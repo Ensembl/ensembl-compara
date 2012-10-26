@@ -365,7 +365,7 @@ sub store_all_coding_exons {
         $exon_member->chr_strand($exon->seq_region_strand);
         $exon_member->version($exon->version);
         $exon_member->stable_id($exon->stable_id);
-        $exon_member->source_name("ENSEMBLEXON");
+        $exon_member->source_name("ENSEMBLPEP");
 
 	#Not sure what this should be but need to set it to something or else the members do not get added
 	#to the member table in the store method of MemberAdaptor
