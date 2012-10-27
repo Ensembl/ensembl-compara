@@ -297,8 +297,7 @@ sub parse_blast_table_into_paf {
         unless ($line =~ /^#/) {
             my ($qname, $hname, $evalue, $score, $nident,$pident, $qstart, $qend, $hstart,$hend, $length, $positive, $ppos ) = split(/\s+/, $line);
 
-	    my $source_name = "ENSEMBLEXON";
-
+	    my $source_name = "ENSEMBLPEP";
 	    $hname =~ s/[$source_name]*://; #Need to remove "$source_name:" from name. Need to check if this is a general problem or just for
 	                     #my old test database
             my $qmember_id = $self->name2member($qname);
