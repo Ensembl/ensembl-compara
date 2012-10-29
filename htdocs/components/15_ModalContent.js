@@ -100,7 +100,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       form.attr('action', formAction);
     }
     
-    if (form.hasClass('upload')) {
+    if (form.attr('action').match('upload=1')) {
       return true;
     }
     
