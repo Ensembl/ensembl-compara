@@ -2668,7 +2668,8 @@ sub add_structural_variations {
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
   
-  my $structural_variation = $self->create_submenu('structural_variation', 'Structural variants');
+  my $sv_menu = $self->create_submenu('structural_variation', 'Structural variants');
+  my $structural_variants  = $self->create_submenu('structural_variants', 'Structural variants');
   
   my %options = (
     db         => $key,
@@ -2680,7 +2681,7 @@ sub add_structural_variations {
     display    => 'off',
   );
   
-  $structural_variation->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
+  $structural_variants->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
     %options,
     caption     => 'Structural variants',
     sources     => undef,
@@ -2689,7 +2690,7 @@ sub add_structural_variations {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
-    $structural_variation->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
+    $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
       caption     => $key_2,
       source      => $key_2,
@@ -2706,7 +2707,7 @@ sub add_structural_variations {
        $temp_name =~ s/^sv_set_//;
     my $node_name = "$menu_item->{'long_name'} (structural variants)";
       
-    $structural_variation->append($self->create_track($menu_item->{'key'}, $node_name, {
+    $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
       %options,
       caption     => $node_name,
       sources     => undef,
@@ -2716,7 +2717,8 @@ sub add_structural_variations {
     }));
   }
   
-  $menu->append($structural_variation);
+  $sv_menu->append($structural_variants);
+  $menu->append($sv_menu);
 }
   
 sub add_copy_number_variant_probes {
@@ -2725,10 +2727,10 @@ sub add_copy_number_variant_probes {
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
   
-  $menu = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
+  my $sv_menu = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
   
-	my $cnv_probe_menu = $self->create_submenu('cnv_probe','Copy number variant probes');
-	
+  my $cnv_probe_menu = $self->create_submenu('cnv_probe','Copy number variant probes');
+  
   my %options = (
     db         => $key,
     glyphset   => 'cnv_probes',
@@ -2756,8 +2758,8 @@ sub add_copy_number_variant_probes {
       description => $hashref->{'source'}{'descriptions'}{$key_2}
     }));  
   }
-	
-	$menu->append($cnv_probe_menu);
+  
+  $sv_menu->append($cnv_probe_menu);
 }
 
 
@@ -2812,6 +2814,8 @@ sub add_somatic_mutations {
       description => "All somatic variants from $key_2"
     }));
     
+    my $tissue_menu = $self->create_submenu('somatic_mutation_by_tissue', 'Somatic variants by tissue');
+    
     ## Add tracks for each tumour site
     my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}};
     
@@ -2824,13 +2828,14 @@ sub add_somatic_mutations {
       $site                      =~ s/\W/_/g;
       $formatted_site            =~ s/\_/ /g;
       
-      $somatic->append($self->create_track("somatic_mutation_${key_2}_$site", "$key_2 somatic mutations in $formatted_site", {
+      $tissue_menu->append($self->create_track("somatic_mutation_${key_2}_$site", "$key_2 somatic mutations in $formatted_site", {
         %options,
         caption     => "$key_2 $formatted_site tumours",
         filter      => $phenotype_id,
         description => $description
       }));    
     }
+    $somatic->append($tissue_menu);
   }
   
   $menu->append($somatic);
