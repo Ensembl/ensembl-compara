@@ -126,14 +126,19 @@ sub fieldset {
 
 sub add_fieldset {
   ## Adds a fieldset to the form
-  ## @param String with Legend text or HashRef with following keys
+  ## @param String with Legend text or HashRef with following keys (plus any other node attributes to be set on the fieldset object)
   ##  - legend            Legend string
   ##  - stripes           Shows the fieldset child nodes in alternative bg colour
-  ##  - no_required_notes Flag if on will not print a note about the required fields 
+  ##  - no_required_notes Flag if on will not print a note about the required fields
   ## @return Form::Fieldset object
-  my $self = shift;
-  my $fieldset = $self->dom->create_element('form-fieldset');
-  $fieldset->configure(ref($_[0]) eq 'HASH' ? $_[0] : {'legend' => $_[0]}) if @_;
+  my $self      = shift;
+  my $fieldset  = $self->dom->create_element('form-fieldset');
+  if (@_) {
+    my $attribs = ref $_[0] eq 'HASH' ? $_[0] : {'legend' => $_[0]};
+    my $options = { map {$_ => delete $attribs->{$_}} qw(legend stripes no_required_notes) };
+    $fieldset->configure($options)      if keys %$options;
+    $fieldset->set_attributes($attribs) if keys %$attribs;
+  }
 
   my $foot_notes = $self->foot_notes;
   return scalar @$foot_notes ? $self->insert_before($fieldset, $foot_notes->[0]) : $self->append_child($fieldset);
