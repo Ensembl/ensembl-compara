@@ -1,5 +1,5 @@
 /**
- * selectToToggle - Show/hide an HTML block(s) according to value selected in a <select> element
+ * selectToToggle - Show/hide an HTML block(s) according to value selected in a <select>, or <input type="radio"> element
  * Reserved JS class prefix: _stt
  * Reserved CSS class prefix: none
  * Note: Be careful if there are more than one selectToToggle elements on a page with one or more options having same values (use className on the option tags in those cases)
@@ -15,7 +15,9 @@
     };
     
     el.on('change.selectToToggle', toggle);
-    toggle.apply(el[0]);
+    if (el[0].nodeName == 'SELECT' || el[0].checked) {
+      toggle.apply(el[0]);
+    }
   };
 
   $.fn.selectToToggle = function (
@@ -24,16 +26,17 @@
   ) {
     
     return this.each(function () {
-      var select  = $(this);
-      var tMap    = $.extend({}, toggleMap);
+      var input = $(this);
+      var tMap  = $.extend({}, toggleMap);
+      wrapper   = wrapper || $(document.body);
       if ($.isEmptyObject(tMap)) {
-        select.find('option').each(function() {
+        (this.tagName == 'SELECT' ? input.find('option') : wrapper.find('input[name=' + this.name + ']')).each(function() {
           if (this.value) {
             tMap[this.value] = '._stt_' + ((this.className.match(/(?:\s+|^)_stt__([^\s]+)/) || []).pop() || this.value);
           }
         });
       }
-      $.selectToToggle(select, tMap, wrapper || $(document.body));
+      $.selectToToggle(input, tMap, wrapper);
     });
   };
 })(jQuery);
