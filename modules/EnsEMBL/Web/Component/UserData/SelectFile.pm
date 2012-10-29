@@ -25,7 +25,7 @@ sub content {
   my $current_species = $hub->data_species;
   my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
   my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
-  my $form            = $self->modal_form('select', $urls{'upload'}, {'label'=>'Upload'});
+  my $form            = $self->modal_form('select', $urls{'remote'}, {'label'=>'Upload'});
 
   $form->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
 
@@ -86,8 +86,8 @@ sub content {
   my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote'});
 
   my $actions = [
-    {'caption' => 'Upload data',    'value' => $urls{'upload'}, 'class' => '_stt__upload1 _stt', 'checked' => 1},
-    {'caption' => 'Attach via URL', 'value' => $urls{'remote'}, 'class' => '_stt__remote1 _stt'},
+    {'caption' => 'Attach via URL', 'value' => $urls{'remote'}, 'class' => '_stt__remote1 _stt', 'checked' => 1},
+    {'caption' => 'Upload data',    'value' => $urls{'upload'}, 'class' => '_stt__upload1 _stt'},
   ];
 
   $upload_fieldset->add_field({ 'type' => 'Radiolist', 'name' => 'action', 'label' => 'Type', 'values' => $actions });
