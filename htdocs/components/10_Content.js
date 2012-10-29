@@ -13,7 +13,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       dataTable:      $('table.data_table', this.el),
       helpTips:       $('._ht', this.el),
       wrapping:       $('table.cellwrap_inside, table.heightwrap_inside', this.el),
-      selectToToggle: $('select._stt', this.el)
+      selectToToggle: $('._stt', this.el)
     };
     
     if (this.el.hasClass('ajax')) {
