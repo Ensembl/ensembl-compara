@@ -95,7 +95,6 @@ sub content {
   $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data' });
   $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'File', 'name' => 'file', 'label' => 'Or choose file' });
   $upload_fieldset->add_field({
-    'field_class' => 'hidden _stt_upload1 _stt_remote1',
     'type'        => 'URL',
     'name'        => 'url',
     'label'       => '<span class="_stt_remote1">P</span><span class="_stt_upload1">Or p</span>rovide file URL',
