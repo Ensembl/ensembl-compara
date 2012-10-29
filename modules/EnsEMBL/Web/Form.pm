@@ -243,11 +243,12 @@ sub format      { shift->{'_format'};               }
 ## BACKWARD COMPATIBILITY PATCH ##
 ##                              ##
 ##################################
-my $do_warn = 0;
+use Carp qw(carp);
+my $do_warn = 1;
 sub _new {
   my ($class, $name, $action, $method, $style) = @_;
 
-  warn "Constructor for form is modified. Use Component->new_form if in components or pass arguments as hash." if $do_warn;
+  carp('Constructor for form is modified. Use $self->new_form if this module is inherited from EnsEMBL::Web::Component, or pass arguments as hash. See EnsEMBL::Web::Form for more details -') if $do_warn;
   
   return $class->new({
     'id'        => $name,
