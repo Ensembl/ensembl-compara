@@ -18,7 +18,7 @@ sub populate_tree {
   my $self = shift;
 
   ## Upload "wizard"
-  $self->create_node( 'SelectFile', "Upload Data",
+  $self->create_node( 'SelectFile', "Add a Custom Track",
     [qw(select_file EnsEMBL::Web::Component::UserData::SelectFile)], 
     { 'availability' => 1 }
   );
@@ -35,6 +35,18 @@ sub populate_tree {
       upload_feedback EnsEMBL::Web::Component::UserData::UploadFeedback
       upload_parsed   EnsEMBL::Web::Component::UserData::UploadParsed
     )], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
+  ## URL attachment
+  $self->create_node( 'AttachRemote', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachRemote', 
+    'availability' => 1, 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'RemoteFeedback', '',
+   [qw(
+      remote_feedback  EnsEMBL::Web::Component::UserData::RemoteFeedback
+      remote_parsed    EnsEMBL::Web::Component::UserData::UploadParsed
+    )],
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
 
@@ -108,22 +120,6 @@ sub populate_tree {
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
 
-  ## URL attachment
-  $self->create_node( 'SelectRemote', "Attach Remote File",
-   [qw(select_url EnsEMBL::Web::Component::UserData::SelectRemote)], 
-    { 'availability' => 1 }
-  );
-  $self->create_node( 'AttachRemote', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachRemote', 
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'RemoteFeedback', '',
-   [qw(
-      remote_feedback  EnsEMBL::Web::Component::UserData::RemoteFeedback
-      remote_parsed    EnsEMBL::Web::Component::UserData::UploadParsed
-    )],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
 
   ## Saving remote data
   $self->create_node( 'ShowRemote', '',
