@@ -24,7 +24,8 @@ sub content {
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
   my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
-  my $form            = $self->modal_form('select', $hub->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
+  my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
+  my $form            = $self->modal_form('select', $urls{'upload'}, {'label'=>'Upload'});
 
   $form->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
 
@@ -81,19 +82,29 @@ sub content {
 
   $self->add_file_format_dropdown($form);
 
+  my $upload_fieldset = $form->add_fieldset({'class' => '_stt_upload'});
+  my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote'});
+
   my $actions = [
-    {'caption' => 'Upload data', value => 'UploadFile', 'checked' => 1},
-    {'caption' => 'Attach via URL', value => 'AttachRemote'},
+    {'caption' => 'Upload data',    'value' => $urls{'upload'}, 'class' => '_stt__upload1 _stt', 'checked' => 1},
+    {'caption' => 'Attach via URL', 'value' => $urls{'remote'}, 'class' => '_stt__remote1 _stt'},
   ];
 
-  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'Radiolist', 'name' => 'action', 'label' => 'Type', 'values' => $actions });
+  $upload_fieldset->add_field({ 'type' => 'Radiolist', 'name' => 'action', 'label' => 'Type', 'values' => $actions });
 
-  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data' });
-  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'File', 'name' => 'file', 'label' => 'Or choose file' });
+  $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data' });
+  $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'File', 'name' => 'file', 'label' => 'Or choose file' });
+  $upload_fieldset->add_field({
+    'field_class' => 'hidden _stt_upload1 _stt_remote1',
+    'type'        => 'URL',
+    'name'        => 'url',
+    'label'       => '<span class="_stt_remote1">P</span><span class="_stt_upload1">Or p</span>rovide file URL',
+    'size'        => 30
+  });
 
-  ## Only one of these will be shown, depending on JS action
-  $form->add_field({ 'field_class' => 'hidden _stt_remote', 'type' => 'URL',  'name' => 'url',  'label' => 'Provide file URL', 'size' => 30 });
-  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'URL',  'name' => 'url',  'label' => 'Or provide file URL', 'size' => 30 });
+  $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url', 'label' => 'Provide file URL', 'size' => 30 });
+
+  $form->add_fieldset; #an extra fieldset for the submit button that gets automatically added
 
   return '<h2>Add a custom track</h2>'.$form->render;
 }
