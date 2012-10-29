@@ -81,8 +81,15 @@ sub content {
 
   $self->add_file_format_dropdown($form);
 
+  my $actions = [
+    {'caption' => 'Upload data', value => 'UploadFile', 'checked' => 1},
+    {'caption' => 'Attach via URL', value => 'AttachRemote'},
+  ];
+
+  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'Radiolist', 'name' => 'action', 'label' => 'Type', 'values' => $actions });
+
   $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data' });
-  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'File', 'name' => 'file', 'label' => 'Or upload file' });
+  $form->add_field({ 'field_class' => 'hidden _stt_upload', 'type' => 'File', 'name' => 'file', 'label' => 'Or choose file' });
 
   ## Only one of these will be shown, depending on JS action
   $form->add_field({ 'field_class' => 'hidden _stt_remote', 'type' => 'URL',  'name' => 'url',  'label' => 'Provide file URL', 'size' => 30 });
