@@ -24,7 +24,7 @@ sub content {
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
   my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
-  my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
+  my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile', 'upload' => 1}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
   my $form            = $self->modal_form('select', $urls{'remote'}, {'label'=>'Upload'});
 
   $form->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
