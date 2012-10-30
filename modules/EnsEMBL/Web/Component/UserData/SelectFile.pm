@@ -103,7 +103,7 @@ sub content {
     'size'        => 30
   });
 
-  $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url', 'label' => 'Provide file URL', 'size' => 30 });
+  $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30 });
 
   $form->add_fieldset; #an extra fieldset for the submit button that gets automatically added
 

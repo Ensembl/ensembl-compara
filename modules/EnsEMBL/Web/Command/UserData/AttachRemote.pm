@@ -18,7 +18,7 @@ sub process {
   my $species_defs  = $hub->species_defs;
   my $session       = $hub->session;
   my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
-  my $url           = $hub->param('url');
+  my $url           = $hub->param('url') || $hub->param('url_2');
   my $filename      = [split '/', $url]->[-1];
   my $name          = $hub->param('name') || $filename;
   my $chosen_format = $hub->param('format');
@@ -31,12 +31,11 @@ sub process {
   my %params;
 
   ## We have to do some intelligent checking here, in case the user
-  ## doesn't select a format, or tries to attach a large format file
-  ## with a small format selected in the form
+  ## tries to attach a large format file with a small format selected in the form
   my $format_name = !$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts)) ? uc $extension : $chosen_format;
 
   if (!$format_name) {
-    $redirect .= 'SelectRemote';
+    $redirect .= 'SelectFile';
     
     $session->add_data(
       type     => 'message',
@@ -62,7 +61,7 @@ sub process {
     my ($error,$options) = $format->check_data();
         
     if ($error) {
-      $redirect .= 'SelectRemote';
+      $redirect .= 'SelectFile';
       
       $session->add_data(
         type     => 'message',
@@ -75,6 +74,8 @@ sub process {
       my $extra_config_page = $format->extra_config_page;
       $redirect .= $extra_config_page || "RemoteFeedback";
             
+      warn ">>> FORMAT NAME ".$format->name;
+
       my $data = $session->add_data(
         type      => 'url',
         code      => join('_', md5_hex($name . $url), $session->session_id),
@@ -98,7 +99,7 @@ sub process {
       );
     }
   } else {
-    $redirect .= 'SelectRemote';
+    $redirect .= 'SelectFile';
       $session->add_data(
         type     => 'message',
         code     => 'AttachURL',
