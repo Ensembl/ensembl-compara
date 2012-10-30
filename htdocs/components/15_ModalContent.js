@@ -95,12 +95,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   
   formSubmit: function (form, data) {
     
-    var formAction = form.find('input[name=action]:checked').attr('value');
-    if (formAction) {
-      form.attr('action', formAction);
-    }
-    
-    if (form.attr('action').match('upload=1')) {
+    if (form.hasClass('upload')) {
       return true;
     }
     
