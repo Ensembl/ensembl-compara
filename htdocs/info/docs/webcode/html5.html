@@ -23,23 +23,13 @@ e.g. &lt;input type="text" ... /&gt; but not &lt;input type="Text" ... /&gt;
 </li>
 
 <li>
-<p><b>All elements which can have end tags <em>must</em> have end tags</b></p>
+<p><b>All elements which can have end tags should have end tags</b></p>
 <p>e.g. &lt;p&gt;Paragraph&lt;/p&gt;&lt;p&gt;More&lt;/p&gt; not &lt;p&gt;Paragraph &lt;p&gt;More</p>
 </li>
 
 <li>
 <p><b>All paired tags must be nested correctly</b></p>
 <p>e.g. &lt;p&gt;This is some &lt;b&gt;bold text with &lt;i&gt;italics&lt;/i&gt; inside&lt;/b&gt;.&lt;/p&gt;</p>
-
-<p>In addition, there are some tags that cannot contain certain other tags (most of these are common sense):</p>
-<ul>
-<li>The &lt;a&gt; tag cannot contain another &lt;a&gt; tag.</li>
-<li>The &lt;pre&gt; tag cannot contain &lt;img&gt;, &lt;object&gt;,  &lt;big&gt;, &lt;small&gt;, &lt;sub&gt; or &lt;sup&gt; tags.</li> 
-<li>The &lt;button&gt; tag cannot contain  &lt;input&gt;, &lt;select&gt;, &lt;textarea&gt;, &lt;label&gt;, &lt;button&gt;, &lt;form&gt;, &lt;fieldset&gt;, &lt;iframe&gt; or &lt;isindex&gt; tags.</li> 
-<li>The &lt;label&gt; tag cannot contain other &lt;label&gt; tags.</li>
-<li>The &lt;form&gt; tag cannot contain other &lt;form&gt; tags.</li> 
-</ul>
-</li>
 
 <li>
 <p><b>Attribute values must always be enclosed in quotes</b></p>
@@ -61,10 +51,10 @@ Also, ids must match the pattern [A-Za-z][A-Za-z0-9:_.-]*</p>
 <li>
 <p><b>All ampersands should be encoded as &amp;amp;</b></p>
 <p>This includes alt text, titles and external URLs. E.g. 
-&lt;a href="http://www.misk.edu/genomics.php?project=cthulu&amp;amp;id=hpl"&gt;Interesting Page&lt;/a&gt;</p> 
+&lt;a href="http://www.unseen.ac.uk/index.php?project=hex&amp;amp;id=pstibbons"&gt;Interesting Page&lt;/a&gt;</p> 
 
 <p>For internal links, the Ensembl server has been configured to accept a semicolon in URLs instead:
-e.g. &lt;a&nbsp;href="/Homo_sapiens/ldview?snp=rs1154266;pop=936"&gt;</p>
+e.g. &lt;a&nbsp;href="/Homo_sapiens/Location/View?db=core;r=1:1-100000"&gt;</p>
 </li>
 </ol>
 
