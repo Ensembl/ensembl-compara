@@ -21,7 +21,7 @@ use constant {
 
   CSS_CLASS_DEFAULT       => 'std',
   CSS_CLASS_VALIDATION    => 'check',
-  FILE_UPLOAD_PARAM       => 'upload=1',
+  CSS_CLASS_FILE_UPLOAD   => 'upload',
   TARGET_FILE_UPLOAD      => 'uploadframe',
 
   HEADING_TAG             => 'h2',
@@ -84,11 +84,10 @@ sub render {
     if ($_->get_attribute('type') eq 'file') {
       $self->set_attributes({
         'target'  => $self->TARGET_FILE_UPLOAD,
+        'class'   => $self->CSS_CLASS_FILE_UPLOAD,
         'enctype' => 'multipart/form-data'
       });
       $self->add_hidden({'name' => 'uploadto', 'value' => 'iframe'});
-      my $action = $self->get_attribute('action');
-      $self->set_attribute('action', sprintf '%s%s%s', $action, $action =~ /\?/ ? ';' : '?', $self->FILE_UPLOAD_PARAM);
       last;
     }
   }
