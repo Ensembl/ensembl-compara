@@ -23,7 +23,7 @@ sub content {
   my $sd              = $hub->species_defs;
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
-  my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
+  my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
   my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
   my $form            = $self->modal_form('select', $urls{'upload'}, {'label'=>'Upload'});
 
@@ -88,7 +88,7 @@ sub content {
   my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote'});
 
   my $actions = [
-    {'caption' => 'Upload data',    'value' => 'upload', 'class' => '_stt__upload1 _stt _action _action_upload', 'checked' => 1},
+    {'caption' => "Upload data (max $max_upload_size)",    'value' => 'upload', 'class' => '_stt__upload1 _stt _action _action_upload', 'checked' => 1},
     {'caption' => 'Attach via URL', 'value' => 'remote', 'class' => '_stt__remote1 _stt _action _action_remote'},
   ];
 
