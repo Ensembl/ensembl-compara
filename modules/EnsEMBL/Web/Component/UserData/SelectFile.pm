@@ -24,8 +24,10 @@ sub content {
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
   my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
-  my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile', 'upload' => 1}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
-  my $form            = $self->modal_form('select', $urls{'remote'}, {'label'=>'Upload'});
+  my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
+  my $form            = $self->modal_form('select', $urls{'upload'}, {'label'=>'Upload'});
+
+  $form->add_hidden({'name' => $_, 'value' => $urls{$_}}) for keys %urls;
 
   $form->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
 
@@ -86,8 +88,8 @@ sub content {
   my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote'});
 
   my $actions = [
-    {'caption' => 'Attach via URL', 'value' => $urls{'remote'}, 'class' => '_stt__remote1 _stt', 'checked' => 1},
-    {'caption' => 'Upload data',    'value' => $urls{'upload'}, 'class' => '_stt__upload1 _stt'},
+    {'caption' => 'Upload data',    'value' => 'upload', 'class' => '_stt__upload1 _stt _action _action_upload', 'checked' => 1},
+    {'caption' => 'Attach via URL', 'value' => 'remote', 'class' => '_stt__remote1 _stt _action _action_remote'},
   ];
 
   $upload_fieldset->add_field({ 'type' => 'Radiolist', 'name' => 'action', 'label' => 'Type', 'values' => $actions });
@@ -105,7 +107,7 @@ sub content {
 
   $form->add_fieldset; #an extra fieldset for the submit button that gets automatically added
 
-  return '<h2>Add a custom track</h2>'.$form->render;
+  return sprintf '<input type="hidden" class="panel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
 
 1;
