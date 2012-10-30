@@ -63,6 +63,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     this.el.togglewrap();
     Ensembl.EventManager.trigger('validateForms', this.el);
     
+    this.el.find('._ht').helptip();
+    
     this.el.find('._stt').selectToToggle({}, this.el);
     
     this.addSubPanel();
