@@ -68,18 +68,6 @@ sub init {
     ['variation_feature_structural'],
     { display => 'normal', depth => 100 }
   );
-  $self->modify_configs(
-    ['variation_feature_structural_large'],
-    { display => 'normal', depth => 100 }
-  );
-  $self->modify_configs(
-    ['variation_feature_structural_medium'],
-    { display => 'normal', depth => 100 }
-  );
-  $self->modify_configs(
-    ['variation_feature_structural_small'],
-    { display => 'normal', depth => 100 }
-  );
   
   # Somatic structural variations
   $self->modify_configs(
