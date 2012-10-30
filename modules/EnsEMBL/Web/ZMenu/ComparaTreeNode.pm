@@ -22,7 +22,7 @@ sub content {
   
   my $node_id         = $hub->param('node')                   || die 'No node value in params';
   my $node            = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
-  my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $hub->param('collapse');
+  my %collapsed_ids   = map { $_ => 1 } grep /\d/, split ',', $hub->param('collapse');
   my $leaf_count      = scalar @{$node->get_all_leaves};
   my $is_leaf         = $node->is_leaf;
   my $is_root         = ($node->root eq $node);
