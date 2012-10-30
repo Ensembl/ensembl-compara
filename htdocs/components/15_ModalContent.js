@@ -89,7 +89,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       },
       error: function (e) {
         if (e.status !== 0) {
-          this.elLk.content.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
+          this.displayErrorMessage();
         }
       }
     });
@@ -124,7 +124,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       },
       error: function (e) {
         if (e.status !== 0) {
-          this.elLk.content.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
+          this.displayErrorMessage();
         }
       }
     });
@@ -172,5 +172,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     $('form div.select_all input', this.elLk.content).prop('checked', function () {
       return $(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').length - 1 <= 0; // -1 for the select_all checkbox itself
     });
+  },
+  
+  displayErrorMessage: function (message) {
+    message = message || 'Sorry, the page request failed to load.';
+    this.elLk.content.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>' + message + '</p></div></div>');
   }
 });

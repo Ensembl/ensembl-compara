@@ -114,7 +114,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       },
       error: function (e) {
         if (e.status !== 0) { // e.status === 0 when navigating to a new page while request is still loading
-          el.html('<p class="ajax_error">Sorry, the page request "' + url + '" failed to load.</p>');
+          el.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>Sorry, the page request "' + url + '" failed to load.</p></div></div>');
         }
       },
       complete: function () {
