@@ -51,9 +51,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.multi = this.elLk.areas.hasClass('multi');
     this.align = this.elLk.areas.hasClass('align');
     
-    this.makeImageMap(); 
-    this.makeHoverLabels(); 
-
+    this.makeImageMap();
+    this.makeHoverLabels();
+    
+    if (this.elLk.areas.filter('.nav').length) {
+      this.elLk.img.helptip('');
+    };
+    
     if (this.elLk.boundaries.length) {
       Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);
       
@@ -185,6 +189,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   
   makeHoverLabels: function () {
     var panel = this;
+    var tip   = false;
     
     this.elLk.hoverLabels.detach().appendTo('body'); // IE 6/7 can't do z-index, so move hover labels to body
     
@@ -197,8 +202,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var area  = panel.getArea(panel.getMapCoords(e));
         var hover = false;
         
-        if (area && area.a) {
-          if ($(area.a).hasClass('label')) {
+        if (area && area.a && $(area.a).hasClass('nav')) { // Add helptips on navigation controls in multi species view
+          if (tip != area.a.alt) {
+            tip = area.a.alt;
+            panel.elLk.img.helptip(tip);
+          }
+        } else {
+          
+          if (tip) {
+            tip = false;
+            panel.elLk.img.helptip('');
+          }
+          
+          if (area && area.a && $(area.a).hasClass('label')) {
             var label = panel.elLk.hoverLabels.filter('.' + area.a.className.replace(/label /, ''));
             
             if (!label.hasClass('active')) {
@@ -219,8 +235,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             }
             
             hover = true;
-          } else if ($(area.a).hasClass('nav')) { // Used to title tags on navigation controls in multi species view
-            panel.elLk.img.attr('title', area.a.alt);
           }
         }
         
