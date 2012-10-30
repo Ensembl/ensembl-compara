@@ -17,7 +17,7 @@ sub get_assemblies {
 }
 
 sub add_file_format_dropdown {
-  my ($self, $form, $limit) = @_;
+  my ($self, $form, $limit, $js_enabled) = @_;
 
   my $sd              = $self->hub->species_defs;
   my @remote_formats  = $limit && $limit eq 'upload' ? () : @{$sd->REMOTE_FILE_FORMATS};
@@ -28,7 +28,7 @@ sub add_file_format_dropdown {
   if (scalar @remote_formats || scalar @upload_formats) {
     my $values = [
       {'caption' => '-- Choose --', 'value' => ''},
-      map {'value' => uc($_), 'caption' => $format_info->{$_}{'label'}, 'class' => "_stt__$format_type{$_}"}, sort (@remote_formats, @upload_formats)
+      map { 'value' => uc($_), 'caption' => $format_info->{$_}{'label'}, $js_enabled ? ('class' => "_stt__$format_type{$_} _action_$format_type{$_}") : () }, sort (@remote_formats, @upload_formats)
     ];
     $form->add_field({
       'type'    => 'dropdown',
@@ -36,7 +36,7 @@ sub add_file_format_dropdown {
       'label'   => 'Data format',
       'values'  => $values,
       'notes'   => '<a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>',
-      scalar @remote_formats && scalar @upload_formats ? ( 'class' => '_stt' ) : ()
+      $js_enabled ? ( 'class' => '_stt _action' ) : ()
     });
   }
 }
