@@ -30,7 +30,7 @@
       var tMap  = $.extend({}, toggleMap);
       wrapper   = wrapper || $(document.body);
       if ($.isEmptyObject(tMap)) {
-        (this.tagName == 'SELECT' ? input.find('option') : wrapper.find('input[name=' + this.name + ']')).each(function() {
+        (this.nodeName == 'SELECT' ? input.find('option') : wrapper.find('input[name=' + this.name + ']')).each(function() {
           if (this.value) {
             tMap[this.value] = '._stt_' + ((this.className.match(/(?:\s+|^)_stt__([^\s]+)/) || []).pop() || this.value);
           }
