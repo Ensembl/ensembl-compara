@@ -82,7 +82,7 @@ sub content {
     });
   }
 
-  $self->add_file_format_dropdown($form);
+  $self->add_file_format_dropdown($form, '', 1);
 
   my $upload_fieldset = $form->add_fieldset({'class' => '_stt_upload'});
   my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote'});
