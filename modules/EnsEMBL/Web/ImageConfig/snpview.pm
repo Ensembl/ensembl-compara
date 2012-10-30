@@ -38,7 +38,7 @@ sub init {
     [ 'v_line',   '', 'v_line',   { display => 'normal', strand => 'b', name => 'Vertical mark', description => 'Shows the middle of the feature' }],
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar',     description => 'Shows the scalebar' }],
     [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'b', name => 'Ruler',         description => 'Shows the length of the region being displayed' }],
-   );
+  );
 
   $self->load_tracks;
 
@@ -70,10 +70,11 @@ sub init {
   );
   
   $self->modify_configs(
-    ['somatic'],
+    ['somatic_mutation_all'],
     { display => 'normal', style => 'box', depth => 100000 }
   );
   
+  # Transcript
   $self->modify_configs(
     ['transcript_core_ensembl'],
     { display => 'transcript_label' }

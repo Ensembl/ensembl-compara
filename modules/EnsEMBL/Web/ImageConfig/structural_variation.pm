@@ -39,6 +39,7 @@ sub init {
   );
 
   $self->load_tracks;
+
  
   $self->modify_configs(
    [ 'gene_legend' ],
@@ -46,24 +47,37 @@ sub init {
   );
 
   # variations
-  $self->modify_configs(
-   [ 'variation_legend', 'gene_legend', 'somatic', ],
-   { display => 'off' }
-  );
   
   $self->modify_configs(
     [ 'variation' ],
-    { display => 'off', style => 'box', depth => 100000 }
-  ); 
-  
-  $self->modify_configs(
-    ['somatic_mutation_COSMIC'],
     { style => 'box', depth => 100000 }
   );
 
+  $self->modify_configs(
+    [ 'variation_feature_variation', 'functional' ],
+    { display => 'normal' }
+  );  
+  
+  $self->modify_configs(
+    ['somatic_mutation_all'],
+    { display => 'normal', style => 'box', depth => 100000 }
+  );
+  
   # structural variations
   $self->modify_configs(
     ['variation_feature_structural'],
+    { display => 'normal', depth => 100 }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural_large'],
+    { display => 'normal', depth => 100 }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural_medium'],
+    { display => 'normal', depth => 100 }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural_small'],
     { display => 'normal', depth => 100 }
   );
   
