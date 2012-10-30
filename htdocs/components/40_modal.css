@@ -62,6 +62,9 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content p.modal_a a       { background-color: [[MH_BG]]; color: #FFF; border: outset [[MH_BG]] 2px; text-decoration: none; padding: 2px 8px; }
 .modal_content div.filter-error  { margin: 12px 12px 0; }
 
+.modal_content .ajax_error                { margin: 12px; }
+.modal_content .modal_wrapper .ajax_error { margin-left: 232px; }
+
 .modal_content .config_wrapper                 { overflow: hidden; }
 .modal_content .config_wrapper .panel .content { padding: 12px 12px 0; }
 
