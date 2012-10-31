@@ -57,5 +57,7 @@ ALTER TABLE gene_tree_root
 UPDATE gene_tree_root JOIN gene_tree_root_tag USING (root_id)
 	SET ref_root_id = value
 	WHERE clusterset_id != "default" AND tag LIKE "%\_tree\_root\_id";
-
+DELETE gene_tree_root_tag
+	FROM gene_tree_root JOIN gene_tree_root_tag USING (root_id)
+	WHERE clusterset_id != "default" AND tag LIKE "%\_tree\_root\_id";
 
