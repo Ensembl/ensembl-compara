@@ -268,9 +268,10 @@ sub get_SimpleAlign {
     my $exon_cased = 0;
     my $alignment = 'protein';
     my $changeSelenos = 0;
+    my $keep_gaps = 0;
     if (scalar @args) {
-        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $alignment, $changeSelenos) =
-            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED ALIGNMENT CHANGE_SELENO)], @args);
+        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $alignment, $changeSelenos, $keep_gaps) =
+            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED ALIGNMENT CHANGE_SELENO KEEP_GAPS)], @args);
     }
 
     my $sa = Bio::SimpleAlign->new();
@@ -354,7 +355,7 @@ sub get_SimpleAlign {
             $sa->add_seq($seq);
         }
     }
-    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps');
+    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and not $keep_gaps;
     return $sa;
 }
 

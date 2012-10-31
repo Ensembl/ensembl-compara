@@ -245,6 +245,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     my $sa = $tree->get_SimpleAlign
         (
          -id_type => 'MEMBER',
+         -keep_gaps => 1,
          %sa_params,
         );
     $sa->set_displayname_flat(1);
