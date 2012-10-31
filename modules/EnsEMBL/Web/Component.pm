@@ -891,13 +891,11 @@ sub transcript_table {
     my %biotype_rows;
 
     my $trans_attribs = {};
-    if ( ($hub->species_defs->ENSEMBL_SITETYPE eq 'Vega') || ($object->get_db eq 'vega') ) {
-      foreach my $trans (@$transcripts) {
-        foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF)) {
-          (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
-          if ($attrib && $attrib->value) {
-            $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value;
-          }
+    foreach my $trans (@$transcripts) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF)) {
+        (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
+        if ($attrib && $attrib->value) {
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value;
         }
       }
     }
