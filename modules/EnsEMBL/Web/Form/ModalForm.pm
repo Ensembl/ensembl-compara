@@ -13,26 +13,28 @@ use constant {
 sub new {
   ## @overrides
   ## @params HashRef with keys
-  ##  - action         Action attribute
-  ##  - class          Class attribute
-  ##  - method         Method attribute
-  ##  - wizard         Flag on if form is a part of wizard
-  ##  - label          Label for the submit button if wizard - default "Next >"
-  ##  - back_button    Flag if 0, back button is not displayed
-  ##  - no_button      No buttons displayed automatically if flag is on
-  ##  - buttons_on_top If flag on, dupicate buttons are added at the top of the form
-  ##  - buttons_align  where to align the buttons - centre, left, right, default
+  ##  - action          Action attribute
+  ##  - class           Class attribute
+  ##  - method          Method attribute
+  ##  - wizard          Flag on if form is a part of wizard
+  ##  - label           Label for the submit button if wizard - default "Next >"
+  ##  - no_back_button  Flag if on, back button is not displayed
+  ##  - no_button       No buttons displayed automatically if flag is on
+  ##  - buttons_on_top  If flag on, dupicate buttons are added at the top of the form
+  ##  - buttons_align   where to align the buttons - centre, left, right, default
+  ##  - skip_validation Flag if on, will not apply JS validation while submitting the form
   my ($class, $params) = @_;
   my $self = $class->SUPER::new({
-    'id' => $params->{'name'},
-    'action' => $params->{'action'} || '#',
-    'method' => $params->{'method'},
+    'id'              => $params->{'name'},
+    'action'          => $params->{'action'} || '#',
+    'method'          => $params->{'method'},
+    'skip_validation' => $params->{'skip_validation'},
   });
-  
+
   $self->set_attribute('class', $params->{'class'}) if $params->{'class'};
 
   $self->{$self->_PARAMS_KEY} = {};
-  for (qw(wizard label back_button no_button backtrack current next buttons_on_top buttons_align)) {
+  for (qw(wizard label no_back_button no_button backtrack current next buttons_on_top buttons_align)) {
     $self->{$self->_PARAMS_KEY}{$_} = $params->{$_} if exists $params->{$_};
   }
   return $self;
@@ -51,7 +53,7 @@ sub render {
   if ($params->{'wizard'}) {
     $self->set_attribute('class', $self->WIZARD_CLASS_NAME);
     
-    push @buttons, {'type' => 'button', 'name' => 'wizard_back', 'value' => '< Back', 'class' => 'back submit'} unless defined $params->{'back_button'} && $params->{'back_button'} == 0;
+    push @buttons, {'type' => 'button', 'name' => 'wizard_back', 'value' => '< Back', 'class' => 'back submit'} unless $params->{'no_back_button'};
     
     # Include current and former nodes in _backtrack
     if ($params->{'backtrack'}) {
