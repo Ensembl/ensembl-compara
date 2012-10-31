@@ -166,6 +166,10 @@ sub store_node_tags
     my $self = shift;
     my $node = shift;
 
+    if ($self->debug) {
+        print 'storing tags for:'; $node->print_node;
+    }
+
     my $node_type = '';
     if (not $node->is_leaf) {
         if ($node->has_tag('gene_split')) {
@@ -178,9 +182,7 @@ sub store_node_tags
             $node_type = 'speciation';
         }
         $node->store_tag('node_type', $node_type);
-        if ($self->debug) {
-            print "store node_type: $node_type"; $node->print_node;
-        }
+        print "node_type: $node_type\n" if ($self->debug);
     }
 
     if ($node->has_tag("E")) {
@@ -189,9 +191,7 @@ sub store_node_tags
         my @lost_taxa = split('-', $n_lost);
         my $topup = 0;   # is used to delete all the pre-existing lost_taxon_id
         foreach my $taxon (@lost_taxa) {
-            if ($self->debug) {
-                printf("store lost_taxon_id : $taxon "); $node->print_node;
-            }
+            print "lost_taxon_id : $taxon\n" if ($self->debug);
             $node->store_tag('lost_taxon_id', $taxon, $topup);
             $topup = 1;
         }
@@ -206,9 +206,7 @@ sub store_node_tags
         next if ($tag eq 'T') and (not $self->param('store_tree_support'));
 
         $node->store_tag($db_tag, $value);
-        if ($self->debug) {
-            printf("store $tag as $db_tag: $value"); $node->print_node;
-        }
+        print "$tag as $db_tag: $value\n" if ($self->debug);
     }
 
     foreach my $child (@{$node->children}) {
