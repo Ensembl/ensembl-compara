@@ -341,15 +341,13 @@ sub modal_form {
   ## Params Name (Id attribute) for form
   ## Params Action attribute
   ## Params HashRef with keys as accepted by Web::Form::ModalForm constructor
-
   my ($self, $name, $action, $options) = @_;
-  
-  my $hub     = $self->hub;
-  my $params  = {};
-  
+
+  my $hub               = $self->hub;
+  my $params            = {};
   $params->{'action'}   = $params->{'next'} = $action;
   $params->{'current'}  = $hub->action;
-  $params->{$_}         = $options->{$_} for qw(class method wizard label back_button no_button buttons_on_top buttons_align);
+  $params->{$_}         = $options->{$_} for qw(class method wizard label no_back_button no_button buttons_on_top buttons_align skip_validation);
 
   if ($options->{'wizard'}) {
     my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
@@ -448,8 +446,8 @@ sub new_form {
   my ($self, $params) = @_;
   $params->{'dom'}    = $self->dom;
   $params->{'action'} = ref $params->{'action'} ? $self->hub->url($params->{'action'}) : $params->{'action'} if $params->{'action'};
-  $params->{'format'} = $self->format;  
-  return new EnsEMBL::Web::Form($params);
+  $params->{'format'} = $self->format;
+  return EnsEMBL::Web::Form->new($params);
 }
 
 sub _export_image {
