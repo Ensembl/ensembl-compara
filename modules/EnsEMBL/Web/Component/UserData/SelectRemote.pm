@@ -22,7 +22,7 @@ sub content {
   my $object = $self->object;
   
   my $current_species = $object->species_path($object->data_species);
-  my $form = $self->modal_form('select_url', "$current_species/UserData/AttachRemote", {'wizard' => 1, 'back_button' => 0});
+  my $form = $self->modal_form('select_url', "$current_species/UserData/AttachRemote", {'wizard' => 1, 'no_back_button' => 1});
   my $user = $object->user;
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
 

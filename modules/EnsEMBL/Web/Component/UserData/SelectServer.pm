@@ -28,7 +28,7 @@ sub content {
   my $action_url  = "$current_species/UserData/CheckServer";
 
   my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE; 
-  my $form = $self->modal_form('select_server', $action_url, {'wizard' => 1, 'back_button' => 0});
+  my $form = $self->modal_form('select_server', $action_url, {'wizard' => 1, 'no_back_button' => 1});
   $form->add_notes({
     'heading'=>'Tip',
     'text'=>qq(<p>$sitename supports the $das_link, a network of data sources
