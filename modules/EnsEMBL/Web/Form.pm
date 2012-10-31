@@ -20,7 +20,7 @@ use EnsEMBL::Web::Form::Element;
 use constant {
 
   CSS_CLASS_DEFAULT       => 'std',
-  CSS_CLASS_VALIDATION    => 'check',
+  CSS_CLASS_VALIDATION    => 'check _check',
   CSS_CLASS_FILE_UPLOAD   => 'upload',
   TARGET_FILE_UPLOAD      => 'uploadframe',
 
