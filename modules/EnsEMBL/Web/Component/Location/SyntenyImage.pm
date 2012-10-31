@@ -74,7 +74,7 @@ sub content {
       value => $self->hub->param('otherspecies') || $self->default_otherspecies,
   );
   
-  return if $self->_export_image($image);
+  return if $self->_export_image($image,'no_text');
   my $html = sprintf('
   <div class="synteny_image">
     %s
