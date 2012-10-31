@@ -95,7 +95,7 @@ sub species_form {
   my $url              = $hub->url({ otherspecies => undef }, 1);
   my $image_config     = $hub->get_imageconfig('Vsynteny');
   my $vwidth           = $image_config->image_height;
-  my $form             = $self->new_form({ id => 'change_sp', action => $url->[0], method => 'get', class => 'autocenter check', style => $vwidth ? "width:${vwidth}px" : undef });
+  my $form             = $self->new_form({ id => 'change_sp', action => $url->[0], method => 'get', class => 'autocenter', style => $vwidth ? "width:${vwidth}px" : undef });
   my %synteny_hash     = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
   my %synteny          = %{$synteny_hash{$hub->species} || {}};
   my @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} } map {{ name => $_, common => $species_defs->get_config($_, 'SPECIES_COMMON_NAME') }} keys %synteny;

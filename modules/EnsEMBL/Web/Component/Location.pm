@@ -46,7 +46,7 @@ sub chromosome_form {
   my $image_config  = $hub->get_imageconfig($ic);
   my $vwidth        = $image_config->image_height;
   my @chrs          = map { 'caption' => $_, 'value' => $_.':1-1000' }, @{$self->object->species_defs->ENSEMBL_CHROMOSOMES};
-  my $form          = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'autocenter check', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
+  my $form          = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'autocenter', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
 
   $form->add_field({
     'label'       => 'Change Chromosome',
