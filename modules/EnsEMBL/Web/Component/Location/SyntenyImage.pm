@@ -56,7 +56,8 @@ sub content {
     sa_secondary  => $hub->get_adaptor('get_SliceAdaptor', 'core', $other),
     synteny       => $raw_data,
     other_species => $other,
-    line          => $loc
+    line          => $loc,
+    format        => $hub->param('export')
   }, $image_config);
 
   $image->centred    = 1;  
@@ -72,7 +73,8 @@ sub content {
       name  => 'otherspecies',
       value => $self->hub->param('otherspecies') || $self->default_otherspecies,
   );
-
+  
+  return if $self->_export_image($image);
   my $html = sprintf('
   <div class="synteny_image">
     %s

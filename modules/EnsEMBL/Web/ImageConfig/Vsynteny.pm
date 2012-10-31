@@ -10,6 +10,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
+    toolbars        => {'top' => 1, 'bottom' => 1},
     label           => 'above',
     band_labels     => 'off',
     image_height    => 500,
