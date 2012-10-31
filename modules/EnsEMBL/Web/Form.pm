@@ -38,29 +38,29 @@ sub new {
   ## @overrides
   ## Creates a new DOM::Node::Element::Form and adds the required attributes before returning it
   ## @param HashRef with following keys
-  ##  - id        id attribute of the form
-  ##  - action    action attribute
-  ##  - method    method attribute (post as default)
-  ##  - class     Space seperatred class names for class attribute
-  ##  - validate  Flag set 0 if no validation is required on JS end
-  ##  - dom       DOM object (optional)
+  ##  - id                id attribute of the form
+  ##  - action            action attribute
+  ##  - method            method attribute (post as default)
+  ##  - class             Space seperatred class names for class attribute
+  ##  - skip_validation   Flag if on, no validation is done on JS end
+  ##  - dom               DOM object (optional)
   my $class = shift;
   my $params = shift;
-  
+
   ##compatibility patch
   if (ref($params) ne 'HASH') {
     return $class->_new($params, @_);
   }
   ##compatibility patch ends
   
-  my $self = $class->SUPER::new($params->{'dom'} || undef);
+  my $self = $class->SUPER::new($params->{'dom'});
   
   $self->{_format} =  exists $params->{'format'} ? $params->{'format'} : 'HTML';  
   $self->set_attribute('id',      $params->{'id'}) if exists $params->{'id'};
   $self->set_attribute('action',  $params->{'action'}) if exists $params->{'action'};
   $self->set_attribute('method',  $params->{'method'} || 'post');
   $self->set_attribute('class',   exists $params->{'class'} ? $params->{'class'} : $self->CSS_CLASS_DEFAULT);
-  $self->set_attribute('class',   $self->CSS_CLASS_VALIDATION) unless exists $params->{'validate'} && $params->{'validate'} eq '0'; #on by default
+  $self->set_attribute('class',   $self->CSS_CLASS_VALIDATION) unless $params->{'skip_validation'};
 
   $self->dom->map_element_class ({                            #map all form components to classes for DOM
     'form-fieldset'    => 'EnsEMBL::Web::Form::Fieldset',
@@ -253,8 +253,7 @@ sub _new {
     'id'        => $name,
     'action'    => $action,
     'method'    => $method,
-    'class'     => $style,
-    'validate'  => 1,
+    'class'     => $style
   });
 }
 
