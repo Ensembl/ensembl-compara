@@ -302,8 +302,8 @@ sub attach_alignment {
 
     # Gets the alignment
     my %cigars;
-    my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
-    foreach my $leaf (@{$gtn_adaptor->fetch_all_AlignedMember_by_root_id($good_others[0]->root_id)}) {
+
+    foreach my $leaf (@{$self->adaptor->fetch_by_root_id($good_others[0]->root_id)->get_all_Members()}) {
         $cigars{$leaf->member_id} = $leaf->cigar_line;
     }
 

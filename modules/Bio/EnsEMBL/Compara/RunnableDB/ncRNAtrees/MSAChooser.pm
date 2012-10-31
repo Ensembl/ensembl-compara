@@ -94,7 +94,7 @@ sub fetch_input {
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($nc_tree_id);
     die "Unfetchable tree root_id=$nc_tree_id\n" unless $tree;
 
-    my $gene_count = scalar(@{$self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($nc_tree_id)});
+    my $gene_count = scalar(@{$tree->get_all_Members});
     die "Unfetchable leaves root_id=$nc_tree_id\n" unless $gene_count;
 
     if ($gene_count > $self->param('treebreak_gene_count')) {
