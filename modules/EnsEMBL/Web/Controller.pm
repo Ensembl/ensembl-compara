@@ -14,9 +14,10 @@ use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::Data::Record::History;
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Tree;
 
 use base qw(EnsEMBL::Web::Root);
+
+my @HANDLES_TO_DISCONNECT;
 
 sub new {
   my $class = shift;
@@ -152,7 +153,6 @@ sub configuration {
   
   if (!$self->{'configuration'}) {
     my $conf = {
-      tree         => new EnsEMBL::Web::Tree,
       default      => undef,
       action       => undef,
       configurable => 0,
@@ -195,7 +195,7 @@ sub configure {
     my $referer     = $hub->referer;
     my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
     
-    $hub->components = $module_name->new_for_components($hub, { tree => new EnsEMBL::Web::Tree }, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}) if $self->dynamic_use($module_name);
+    $hub->components = $module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}) if $self->dynamic_use($module_name);
   }
 }
 
@@ -381,6 +381,44 @@ sub add_error {
  push @{$self->errors}, new EnsEMBL::Web::Document::Panel(caption => $caption, content => sprintf($template, @content, $error));
 }
 
+sub save_config {
+  my ($self, $view_config, $image_config, %params) = @_;
+  my $hub       = $self->hub;
+  my $adaptor   = $hub->config_adaptor;
+  my $configs   = $adaptor->all_configs;
+  my $overwrite = $hub->param('overwrite');
+     $overwrite = undef unless exists $configs->{$overwrite}; # check that the overwrite id belongs to this user
+  my (@links, %existing, $existing_config);
+  
+  if ($overwrite) {
+    foreach my $id ($overwrite, $configs->{$overwrite}{'link_id'} || ()) {
+      $existing{$configs->{$id}{'type'}} = { record_id => $id };
+      $params{$_} ||= $configs->{$id}{$_} for qw(record_type record_type_id name description);
+      push @{$params{'set_ids'}}, $adaptor->record_to_sets($id);
+    }
+  }
+  
+  foreach (qw(view_config image_config)) {
+    ($params{'code'}, $params{'link'}) = $_ eq 'view_config' ? ($view_config, [ 'image_config', $image_config ]) : ($image_config, [ 'view_config', $view_config ]);
+    
+    my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_} || {}}, type => $_, data => $adaptor->get_config($_, $params{'code'}));
+    
+    push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_ids => $params{'set_ids'} };
+    
+    if ($deleted) {
+      push @{$existing_config->{'deleted'}}, $deleted;
+    } elsif ($saved) {
+      $existing_config->{'saved'} ||= { value => $saved, class => $saved, html => $configs->{$saved}{'name'} }; # only provide one saved entry for a linked pair
+    }
+  }
+  
+  $adaptor->link_configs(@links);
+  
+  delete $existing_config->{'saved'} if $overwrite && $configs->{$existing_config->{'saved'}{'value'}}{'link_id'};
+  
+  return $existing_config;
+}
+
 sub _use {
   ### Wrapper for EnsEMBL::Web::Root::dynamic_use.
   ### Returns either a newly created module or the error detailing why the new function failed.
@@ -400,18 +438,15 @@ sub _use {
   return ($module, $error);
 }
 
-my @handles_to_disconnect;
 sub disconnect_on_request_finish {
-  my ($class,$handle) = @_;
+  my ($class, $handle) = @_;
   return unless $SiteDefs::TIDY_USERDB_CONNECTIONS;
-  push @handles_to_disconnect,$handle;
+  push @HANDLES_TO_DISCONNECT, $handle;
 }
 
 sub DESTROY {
   Bio::EnsEMBL::Registry->disconnect_all;
-  for(@handles_to_disconnect) {
-    $_->disconnect || warn $_->errstr;
-  }
- }
+  $_->disconnect || warn $_->errstr for @HANDLES_TO_DISCONNECT;
+}
 
 1;
