@@ -164,6 +164,10 @@
     // set tip
     if (tip) {
       methods.setTip.call(el, popup, tip);
+      
+      if (options.show) {
+        popup.show();
+      }
     } else {
       methods.hide.call(el, popup);
     }
