@@ -371,6 +371,7 @@ $OBJECT_TO_SCRIPT = {
   ZMenu               => 'ZMenu',
   psychic             => 'Psychic',
   Ajax                => 'Ajax',
+  Share               => 'Share',
   Export              => 'Export',
 
   Gene                => 'Page',
