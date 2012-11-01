@@ -55,7 +55,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeHoverLabels();
     
     if (this.elLk.areas.filter('.nav').length) {
-      this.elLk.img.helptip('');
+      this.elLk.img.helptip('', { delay: false });
     };
     
     $('.image_toolbar a', this.el).helptip({ 'static': true });
@@ -218,7 +218,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (area && area.a && $(area.a).hasClass('nav')) { // Add helptips on navigation controls in multi species view
           if (tip != area.a.alt) {
             tip = area.a.alt;
-            panel.elLk.img.helptip(tip);
+            panel.elLk.img.helptip(tip, { show: true });
           }
         } else {
           
