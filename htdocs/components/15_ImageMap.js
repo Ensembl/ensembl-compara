@@ -75,17 +75,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     panel.elLk.exportMenu.appendTo('body').css('left', this.el.offset().left);
     
     $('a.iexport', this.el).on('click', function () {
-      panel.elLk.exportMenu.css({ top: $(this).parent().hasClass('bottom') ? $(this).parent().offset().top - panel.elLk.exportMenu.outerHeight() : panel.elLk.img.offset().top }).toggle();
+      panel.positionToolbarPopup(panel.elLk.exportMenu, this).toggle();
       return false;
     });
     
-    $('a.image_resize', this.el).on('click', function () {      
-      panel.params.updateURL = panel.params.updateURL.replace(/;image_width=\d+$/, '') + ';image_width=' + ($('.imagemap',panel.el).width() + (100 *($(this).hasClass('big') ? 1 : -1)));
+    $('a.image_resize', this.el).on('click', function () {
+      panel.params.updateURL = panel.params.updateURL.replace(/;image_width=\d+$/, '') + ';image_width=' + (panel.elLk.img.width() + (100 * ($(this).hasClass('big') ? 1 : -1)));
       panel.getContent();
-      return false;      
+      return false;
     });
+    
+    var species = {};
+    species[this.id] = this.getSpecies();
+    
+    $.extend(this, Ensembl.Share);
+    
+    this.shareInit({ species: species, type: 'image', positionPopup: this.positionToolbarPopup });
   },
-  
   
   hashChange: function (r) {
     var reload = this.hashChangeReload;
@@ -104,13 +110,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     if (reload) {
-      this.elLk.exportMenu.remove();
       this.base();
     }
     
     if (this.align) {
       Ensembl.EventManager.trigger('highlightAllImages');
     }
+  },
+  
+  getContent: function () {
+    this.elLk.exportMenu.add(this.elLk.hoverLabels).remove();
+    this.removeShare();
+    this.base.apply(this, arguments);
   },
   
   makeImageMap: function () {
@@ -439,6 +450,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     tracks = track = null;
     
+    this.removeShare();
+    Ensembl.EventManager.trigger('removeShare');
+    
     return order;
   },
   
@@ -748,6 +762,26 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     return Math.abs(t/Math.PI/2) > 0.01;
+  },
+  
+  positionToolbarPopup: function (el, link) {
+    var toolbar = $(link.parentNode);
+    el.css({ top: toolbar.hasClass('bottom') ? toolbar.offset().top - el.outerHeight() : this.elLk.img.offset().top });
+    link = toolbar = null;
+    return el;
+  },
+  
+  getSpecies: function () {
+    var species = $.map(this.draggables, function (el) { return el.a.href.split('|')[3]; });
+    
+    if (species.length) {
+      var unique = {};
+      unique[Ensembl.species] = 1;
+      $.each(species, function () { unique[this] = 1; });
+      species = $.map(unique, function (i, s) { return s });
+    }
+    
+    return species.length > 1 ? species : undefined;
   },
   
   dropFileUpload: function () {
