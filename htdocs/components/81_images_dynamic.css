@@ -87,13 +87,14 @@ div.image_toolbar.top    { border-bottom: 1px solid #999999; }
 div.image_toolbar.bottom { border-top: 1px solid #999999; }
 div.image_toolbar a      { float: left; width: 16px; height: 16px; display: block; margin: 0 4px 2px 4px; }
 
-div.image_toolbar a.config { background-image: url(/i/16/rev/setting.png);   }
-div.image_toolbar a.data   { background-image: url(/i/16/rev/page-user.png); }
-div.image_toolbar a.export { background-image: url(/i/16/rev/picture.png);   }
-div.image_toolbar a.big    { background-image: url(/i/16/rev/image_big.png);   }
+div.image_toolbar a.config { background-image: url(/i/16/rev/setting.png);      }
+div.image_toolbar a.data   { background-image: url(/i/16/rev/page-user.png);    }
+div.image_toolbar a.export { background-image: url(/i/16/rev/picture.png);      }
+div.image_toolbar a.big    { background-image: url(/i/16/rev/image_big.png);    }
 div.image_toolbar a.small  { background-image: url(/i/16/rev/image_small.png);  }
+div.image_toolbar a.share  { background-image: url(/i/16/rev/share.png);        }
 
-/* Below is the image export CSS code */
+/* Image exporting */
 
 div.iexport_menu             { z-index: 1000; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; width: 120px;  }
 div.iexport_menu div         { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 16px; background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; text-align: left; padding: 0 4px; }
