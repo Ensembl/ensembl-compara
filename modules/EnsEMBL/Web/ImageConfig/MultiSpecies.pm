@@ -8,9 +8,9 @@ use base qw(EnsEMBL::Web::ImageConfig);
 
 ## Container for multiple species image configs. Data is stored in the database as follows:
 ## {
-##   Homo_sapiens  => {'contig'   => {'display' => 'off'}}
-##   Gallus_gallus => {'scalebar' => {'display' => 'off'}}
-##   Multi         => {...}
+##   Homo_sapiens  => { contig   => { display => 'off' }}
+##   Gallus_gallus => { scalebar => { display => 'off' }}
+##   Multi         => { ... }
 ## }
 ##
 ## When calling get_imageconfig with species as 3rd parameter, it behaves like a normal image config for that species.
@@ -46,7 +46,6 @@ sub species_list {
   return $self->{'species_list'};
 }
 
-
 sub get_user_settings {
   my $self     = shift;
   my $settings = $self->tree->user_data;
@@ -55,8 +54,10 @@ sub get_user_settings {
     my $species = $self->species;
     $self->{'user_settings'}{$species} = { %{$self->{'user_settings'}{$species} || {}}, %$settings };
     delete $self->{'user_settings'}{$species} unless scalar keys %{$self->{'user_settings'}{$species}};
+    delete $self->{'user_settings'}{$species}{'track_order'} if $self->{'user_settings'}{$species}{'track_order'} && !scalar keys %{$self->{'user_settings'}{$species}{'track_order'}};
     return $self->{'user_settings'};
   } else {
+    delete $settings->{'track_order'} if $settings->{'track_order'} && !scalar keys %{$settings->{'track_order'}};
     return $settings;
   }
 }
@@ -110,15 +111,10 @@ sub reset {
   
   if ($self->{'all_species'}) {
     my $species = $self->species;
+    my $reset   = $self->hub->input->param('reset');
+    my ($tracks, $order) = $reset eq 'all' ? (1, 1) : $reset eq 'track_order' ? (0, 1) : (1, 0);
     
-    if ($self->hub->input->param('reset') eq 'track_order') {
-      my $node = $self->get_node('track_order');
-      
-      if ($self->{'user_settings'}{$species}{'track_order'}) {
-        $self->altered = 1;
-        delete $self->{'user_settings'}{$species}{'track_order'};
-      }
-    } else {
+    if ($tracks) {
       my $user_data = $self->{'user_settings'}{$species};
       
       foreach (keys %$user_data) {
@@ -127,8 +123,28 @@ sub reset {
         delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
       }
     }
+    
+    if ($order) {
+      my $node = $self->get_node('track_order');
+      
+      if ($self->{'user_settings'}{$species}{'track_order'}) {
+        $self->altered = 1;
+        delete $self->{'user_settings'}{$species}{'track_order'};
+      }
+    } 
   } else {
-    $self->SUPER::reset;
+    $self->SUPER::reset(@_);
+  }
+}
+
+sub share {
+  my ($self, %shared_custom_tracks) = @_;
+  
+  if ($self->{'all_species'}) {
+    my $hub = $self->hub;
+    return { map { $_ => $hub->get_imageconfig($self->{'type'}, $_ . 'share', $_)->share(%shared_custom_tracks) } keys %{$self->get_user_settings} };
+  } else {
+    return $self->SUPER::share(%shared_custom_tracks);
   }
 }
 
