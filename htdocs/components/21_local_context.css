@@ -51,6 +51,5 @@ div.share_page ul li    { list-style-image: none; }
 div.share_page ul label { width: 90%; display: inline-block; overflow: hidden; text-overflow: ellipsis; }
 div.share_page ul input { position: absolute; right: 0; }
 div.share_page .go      { margin-right: 8px; }
-div.share_page .margin  { margin-bottom: 16px; }
 div.share_page .url     { width: 286px; border: 1px solid [[PANEL_BORDER]]; padding: 6px; }
 div.share_page .spinner { height: 66px; border: 0; margin: 16px 0; display: none; }

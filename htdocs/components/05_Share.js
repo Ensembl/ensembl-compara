@@ -57,7 +57,7 @@ Ensembl.Share = {
         
         if (json.url) {
           if (!$('.url', panel.elLk.share).val(json.url).add('.copy', panel.elLk.share).show().length) {
-            panel.elLk.share.find('.fbutton').addClass('margin');
+            panel.elLk.share.find('.fbutton').addClass('bottom-margin');
             panel.elLk.shareSpinner.before('<p class="copy">Copy this link:</p><input class="url" type="text" value="' + json.url + '" />');
           }
         } else if (json.share) {
