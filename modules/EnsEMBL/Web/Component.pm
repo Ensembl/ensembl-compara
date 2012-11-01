@@ -310,11 +310,11 @@ sub ajax_url {
   my $self     = shift;
   my $function = shift;
   my $params   = shift || {};
-  my (undef, $plugin, undef, undef, $module) = split '::', ref $self;
+  my (undef, $plugin, undef, $type, $module) = split '::', ref $self;
   
   $module .= "/$function" if $function && $self->can("content_$function");
   
-  return $self->hub->url('Component', { action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
+  return $self->hub->url('Component', { type => $type, action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
 }
 
 sub EC_URL {
