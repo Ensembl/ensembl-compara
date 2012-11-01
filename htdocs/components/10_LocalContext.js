@@ -7,6 +7,17 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     
     this.base();
     
+    this.shareEnabled = false;
+    
+    $.extend(this, Ensembl.Share);
+    
+    this.shareInit();
+    
+    Ensembl.EventManager.register('removeShare',  this, this.removeShare);
+    Ensembl.EventManager.register('hashChange',   this, this.removeShare);
+    Ensembl.EventManager.register('reloadPage',   this, this.removeShare);
+    Ensembl.EventManager.register('ajaxComplete', this, this.shareReady);
+    
     this.elLk.links = $('ul.local_context li', this.el);
     
     $('img.toggle', this.elLk.links).on('click', function () {
@@ -33,5 +44,21 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
       
       return false;
     });
+  },
+  
+  shareReady: function () {
+    var panel = this;
+    
+    this.shareOptions.species = {};
+    
+    $.each(Ensembl.PanelManager.getPanels('ImageMap'), function () {
+      panel.shareOptions.species[this.id] = this.getSpecies();
+    });
+    
+    this.shareEnabled = true;
+    
+    if (this.shareWaiting) {
+      this.share(this.elLk.shareLink.href, this.elLk.shareLink);
+    }
   }
 });

@@ -30,17 +30,27 @@ body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 .tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a:visited  { color: [[BUTTON_TEXT]]; }
      
-.tool_buttons .config    { background-image: url(/i/16/rev/setting.png);   }
-.tool_buttons .data      { background-image: url(/i/16/rev/page-user.png); }
-.tool_buttons .export    { background-image: url(/i/16/rev/download.png);  }
-.tool_buttons .csv       { background-image: url(/i/16/rev/page-csv.png);  }
-.tool_buttons .bookmark  { background-image: url(/i/16/rev/bookmark.png);  }
-.tool_buttons .find      { background-image: url(/i/16/rev/search.png);    }
-.tool_buttons .add       { background-image: url(/i/16/rev/add.png);       }
-.tool_buttons .save      { background-image: url(/i/16/rev/save.png);      }
-.tool_buttons .load      { background-image: url(/i/16/rev/paste.png);     }
-.tool_buttons .list      { background-image: url(/i/16/rev/list.png);      }
-
+.tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
+.tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }
+.tool_buttons .export       { background-image: url(/i/16/rev/download.png);      }
+.tool_buttons .csv          { background-image: url(/i/16/rev/page-csv.png);      }
+.tool_buttons .bookmark     { background-image: url(/i/16/rev/bookmark.png);      }
+.tool_buttons .find         { background-image: url(/i/16/rev/search.png);        }
+.tool_buttons .add          { background-image: url(/i/16/rev/add.png);           }
+.tool_buttons .save         { background-image: url(/i/16/rev/save.png);          }
+.tool_buttons .load         { background-image: url(/i/16/rev/paste.png);         }
+.tool_buttons .list         { background-image: url(/i/16/rev/list.png);          }
+.tool_buttons .share        { background-image: url(/i/16/rev/share.png);         }
 .tool_buttons .config-load  { background-image: url(/i/16/rev/setting-load.png);  }
 .tool_buttons .config-reset { background-image: url(/i/16/rev/setting-reset.png); }
-.tool_buttons .order-reset  { background-image: url(/i/16/rev/order-reset.png);   } 
+.tool_buttons .order-reset  { background-image: url(/i/16/rev/order-reset.png);   }
+
+div.share_page          { background: #FFF; color: #000; z-index: 1000; border: 1px solid #000; position: absolute; display: none; width: 300px; padding: 16px; }
+div.share_page ul       { position: relative; list-style: none; clear: both; margin-bottom: 16px; }
+div.share_page ul li    { list-style-image: none; }
+div.share_page ul label { width: 90%; display: inline-block; overflow: hidden; text-overflow: ellipsis; }
+div.share_page ul input { position: absolute; right: 0; }
+div.share_page .go      { margin-right: 8px; }
+div.share_page .margin  { margin-bottom: 16px; }
+div.share_page .url     { width: 286px; border: 1px solid [[PANEL_BORDER]]; padding: 6px; }
+div.share_page .spinner { height: 66px; border: 0; margin: 16px 0; display: none; }
