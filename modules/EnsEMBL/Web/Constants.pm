@@ -13,6 +13,7 @@ sub ICON_MAPPINGS {
     'download'  => { 'file' => 'download.png',  'alt' => 'download', 'title' => "Download data from this $component" },
     'image'     => { 'file' => 'picture.png',   'alt' => 'image',    'title' => "Export this image"                  },
     'userdata'  => { 'file' => 'page-user.png', 'alt' => 'data',     'title' => "Manage your custom tracks"          },
+    'share'     => { 'file' => 'share.png',     'alt' => 'share',    'title' => "Share this $component"              },
   };
 }
 
