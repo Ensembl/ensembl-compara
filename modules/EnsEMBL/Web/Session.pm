@@ -520,18 +520,16 @@ sub configure_das_views {
   my ($self, $das, $image, $track_options) = @_;
   my $hub     = $self->hub;
   my $referer = $hub->referer;
-  my $type    = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
-  my $action  = $referer->{'ENSEMBL_ACTION'} || $hub->action;
   
   $track_options->{'display'} ||= 'normal';
   
   foreach (@{$hub->components}) {
-    my $view_config  = $hub->get_viewconfig($_, $type);
+    my $view_config  = $hub->get_viewconfig(@$_);
     my $image_config = $view_config->image_config;
     my $logic_name   = $das->logic_name;
     
     # If source is suitable for this VIEW (i.e. not image) - Gene/Protein DAS
-    if ($das->is_on("$type/$_")) {
+    if ($das->is_on(join '/', reverse @$_)) {
       # Need to set default to 'no' before we can set it to 'yes'
       $view_config->set_defaults({ $logic_name => 'no' }) unless $view_config->get($logic_name);
       $view_config->set($logic_name, 'yes');
@@ -564,10 +562,9 @@ sub configure_das_views {
 sub configure_user_data {
   my ($self, @track_data) = @_;
   my $hub     = $self->hub;
-  my $type    = $hub->referer->{'ENSEMBL_TYPE'} || $hub->type;
   my $species = $hub->species;
   
-  foreach my $view_config (map { $hub->get_viewconfig($_, $type) || () } @{$hub->components}) {
+  foreach my $view_config (map { $hub->get_viewconfig(@$_) || () } @{$hub->components}) {
     my $ic_code = $view_config->image_config;
     
     next unless $ic_code;
@@ -587,10 +584,8 @@ sub configure_user_data {
           my %valid     = @$renderers;
           if ($vertical) {
             $_->set_user('ftype', $track->{'ftype'});
-            $_->set_user('display', $track->{'style'} 
-                            || EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}));
-          }
-          else {
+            $_->set_user('display', $track->{'style'} || EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}));
+          } else {
             $_->set_user('display', $valid{'normal'} ? 'normal' : $renderers->[2]);
           }
         }

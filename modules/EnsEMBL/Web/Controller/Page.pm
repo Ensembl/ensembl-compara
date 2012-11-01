@@ -70,7 +70,7 @@ sub update_configuration_from_url {
     $new_url = 1;
   }
   
-  $new_url += $hub->get_viewconfig($components[$_])->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
+  $new_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
   
   if ($new_url) {
     $input->param('time', time); # Add time to cache-bust the browser
