@@ -74,9 +74,11 @@ sub render_toolbar {
   if ($hub->get_viewconfig($component)) {
     my $config_url = $hub->url('Config', { action => $component, function => undef });
     my $data_url   = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
+    my $share_url  = $hub->url('Share', { action => $component, function => undef, __clear => 1, create => 1, share_type => 'image', time => time });
     
     $toolbar .= sprintf '<a href="%s" class="config modal_link force" title="%s" rel="modal_config_%s"></a>', $config_url, $icon_mapping->{'config'}{'title'}, lc $component;
     $toolbar .= qq{<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>} if $self->{'image_configs'}[0]->get_node('user_data');
+    $toolbar .= qq{<a href="$share_url" class="share" title="$icon_mapping->{'share'}{'title'}"></a>};
   }
   
   ## Image export popup menu
@@ -115,6 +117,7 @@ sub render_toolbar {
         };
       }
     }
+    
     $export = qq{
       <div class="iexport_menu">
         <div class="header">Export as:</div>
@@ -126,7 +129,7 @@ sub render_toolbar {
   }
 
   if ($toolbar) {
-    $top    = $self->toolbars->{'top'}    ? sprintf '<div class="image_toolbar top print_hide">%s</div>%s',    $toolbar, $export             : '';
+    $top    = $self->toolbars->{'top'}                       ? sprintf '<div class="image_toolbar top print_hide">%s</div>%s',    $toolbar, $export             : '';
     $bottom = ($self->toolbars->{'bottom'} || $height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $export : '';
   }
 
