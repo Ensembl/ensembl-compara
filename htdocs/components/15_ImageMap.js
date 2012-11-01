@@ -58,6 +58,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.elLk.img.helptip('');
     };
     
+    $('.image_toolbar a', this.el).helptip({ 'static': true });
+    
     if (this.elLk.boundaries.length) {
       Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);
       
