@@ -75,7 +75,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak;
 use strict;
 use IO::File;
 use File::Basename;
-use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::AlignIO;
 use Bio::SimpleAlign;
@@ -85,7 +84,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 =head2 fetch_input
@@ -178,7 +177,6 @@ sub post_cleanup {
 sub run_quicktreebreak {
   my $self = shift;
 
-  my $starttime = time()*1000;
   my $gene_tree = $self->param('gene_tree');
 
   $self->param('original_leafcount', scalar(@{$gene_tree->get_all_leaves}) );
@@ -188,28 +186,15 @@ sub run_quicktreebreak {
   }
   my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $gene_tree->root, 1 );
 
-  my $cmd = $self->param('quicktree_exe');
-  $cmd .= " -out t -in a";
-  $cmd .= " ". $input_aln;
+  my $cmd = sprintf('%s -out t -in a %s', $self->param('quicktree_exe'), $input_aln);
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  open(RUN, "$cmd |") or die "Could not open pipe [$cmd |] for reading : $!";
-  my @output = <RUN>;
-  close(RUN) or die "Could not close pipe [$cmd |] : $!";
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-  my $quicktree_newick_string = '';
-  foreach my $line (@output) {
-    $line =~ s/\n//;
-    $quicktree_newick_string .= $line;
-  }
+  my $cmd_out = $self->run_command($cmd);
+  my $quicktree_newick_string = $cmd_out->out;
 
   #parse the tree into the datastucture
   $self->generate_subtrees( $quicktree_newick_string );
 
-  my $runtime = time()*1000-$starttime;
-  $gene_tree->store_tag('QuickTreeBreak_runtime_msec', $runtime);
+  $gene_tree->store_tag('QuickTreeBreak_runtime_msec', $cmd_out->runtime_msec);
 }
 
 
@@ -224,7 +209,6 @@ sub store_supertree {
   my $self = shift;
 
   my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
-  my $starttime = time();
 
   $gene_tree_adaptor->store($self->param('original_cluster'));
   $self->param('original_cluster')->root->store_tag('tree_support', 'quicktree');
