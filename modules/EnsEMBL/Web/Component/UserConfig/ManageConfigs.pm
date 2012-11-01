@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::UserConfig::ManageConfigs;
 
 use strict;
 
-use EnsEMBL::Web::Tree;
-
 use base qw(EnsEMBL::Web::Component);
 
 sub content {
@@ -37,7 +35,7 @@ sub records_table {
   my $hub         = $self->hub;
   my $referer     = $hub->referer;
   my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
-  my @components  = $self->dynamic_use($module_name) ? @{$module_name->new_for_components($hub, { tree => new EnsEMBL::Web::Tree }, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'})} : ();
+  my @components  = $self->dynamic_use($module_name) ? @{$module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'})} : ();
   my $html;
 
   if (scalar @components) {
@@ -61,15 +59,14 @@ sub records_table {
     push @columns, { key => 'delete', title => '', width => '20px', align => 'center', sort => 'none' };
     
     foreach (@components) {
-      my $type        = $referer->{'ENSEMBL_TYPE'};
-      my $view_config = $hub->get_viewconfig($_, $type);
+      my $view_config = $hub->get_viewconfig(@$_);
       my $component   = $view_config->component;
       my $title       = $view_config->title;
       my $code        = $view_config->code;
-         $code        =~ s/^.+?::/${type}::/ unless $code =~ /^${type}::/;
+         $code        =~ s/^.+?::/$_->[1]::/ unless $code =~ /^$_->[1]::/;
          $configs{$_} = { component => $component, title => $title } for grep $_, $code, $view_config->image_config;
     }
-
+    
     my $filtered_configs = $adaptor->filtered_configs({ code => [ sort keys %configs ] });
     my @config_records   = values %$filtered_configs;
     my %linked_configs   = map { !$_->{'active'} && $_->{'link_id'} ? ($_->{'record_id'} => $_) : () } @config_records;
