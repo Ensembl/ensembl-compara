@@ -39,13 +39,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
     
-    this.elLk.drag        = $('.drag_select',  this.el);
-    this.elLk.map         = $('map',           this.el);
-    this.elLk.areas       = $('area',          this.elLk.map);
-    this.elLk.exportMenu  = $('.iexport_menu', this.el);
-    this.elLk.img         = $('img.imagemap',  this.el);
-    this.elLk.hoverLabels = $('.hover_label',  this.el);
-    this.elLk.boundaries  = $('.boundaries',   this.el);
+    this.elLk.drag        = $('.drag_select',     this.el);
+    this.elLk.map         = $('map',              this.el);
+    this.elLk.areas       = $('area',             this.elLk.map);
+    this.elLk.exportMenu  = $('.iexport_menu',    this.el);
+    this.elLk.img         = $('img.imagemap',     this.el);
+    this.elLk.hoverLabels = $('.hover_label',     this.el);
+    this.elLk.boundaries  = $('.boundaries',      this.el);
+    this.elLk.helpTips    = $('.image_toolbar a', this.el).helptip({ 'static': true });
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
@@ -55,10 +56,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeHoverLabels();
     
     if (this.elLk.areas.filter('.nav').length) {
-      this.elLk.img.helptip('', { delay: false });
+      this.elLk.helpTips.push(this.elLk.img.helptip('', { delay: false })[0]);
     };
-    
-    $('.image_toolbar a', this.el).helptip({ 'static': true });
     
     if (this.elLk.boundaries.length) {
       Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);

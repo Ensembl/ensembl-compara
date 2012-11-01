@@ -73,6 +73,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   getContent: function (url, el, params, newContent) {
     var node;
     
+    this.elLk.helpTips.helptip(false); // Destroy helptips based on this panel
+    
     params = params || this.params;
     url    = url    || Ensembl.replaceTimestamp(params.updateURL);
     el     = el     || this.el.empty();
