@@ -60,4 +60,7 @@ UPDATE gene_tree_root JOIN gene_tree_root_tag USING (root_id)
 DELETE gene_tree_root_tag
 	FROM gene_tree_root JOIN gene_tree_root_tag USING (root_id)
 	WHERE clusterset_id != "default" AND tag LIKE "%\_tree\_root\_id";
+DELETE gtrt
+	FROM gene_tree_root_tag gtrt JOIN gene_tree_root gtr ON gtr.ref_root_id = gtrt.root_id
+	WHERE tag LIKE "%\_tree\_root\_id" AND gtr.root_id = value;
 
