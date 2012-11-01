@@ -41,39 +41,7 @@ sub update_configuration {
     my %params = map { $_ => decode_utf8($hub->param($_)) } qw(record_type name description);
     $params{'record_type_id'} = $params{'record_type'} eq 'session' ? $session->create_session_id : $hub->user ? $hub->user->id : undef;
     
-    if ($params{'record_type_id'}) {
-      my $adaptor   = $hub->config_adaptor;
-      my $configs   = $adaptor->all_configs;
-      my $overwrite = $hub->param('overwrite');
-         $overwrite = undef unless exists $configs->{$overwrite}; # check that the overwrite id belongs to this user
-      my (%existing, @links);
-      
-      if ($overwrite) {
-        foreach my $id ($overwrite, $configs->{$overwrite}{'link_id'} || ()) {
-          $existing{$configs->{$id}{'type'}} = { record_id => $id };
-          $params{$_} ||= $configs->{$id}{$_} for qw(record_type record_type_id name description);
-          push @{$params{'set_ids'}}, $adaptor->record_to_sets($id);
-        }
-      }
-      
-      foreach (qw(view_config image_config)) {
-        ($params{'code'}, $params{'link'}) = $_ eq 'view_config' ? ($code, [ 'image_config', $image_config ]) : ($image_config, [ 'view_config', $code ]);
-        
-        my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_}}, type => $_, data => $adaptor->get_config($_, $params{'code'}));
-        
-        push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_ids => $params{'set_ids'} };
-        
-        if ($deleted) {
-          push @{$existing_config->{'deleted'}}, $deleted;
-        } elsif ($saved) {
-          $existing_config->{'saved'} ||= { value => $saved, class => $saved, html => $configs->{$saved}{'name'} }; # only provide one saved entry for a linked pair
-        }
-      }
-      
-      $adaptor->link_configs(@links);
-      
-      delete $existing_config->{'saved'} if $overwrite && $configs->{$existing_config->{'saved'}{'value'}}{'link_id'};
-    }
+    $existing_config = $self->save_config($code, $image_config, %params) if $params{'record_type_id'};
   }
   
   if ($hub->param('submit')) {
