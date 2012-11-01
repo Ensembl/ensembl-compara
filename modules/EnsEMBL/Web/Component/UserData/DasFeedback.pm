@@ -52,7 +52,7 @@ sub content {
       
       if (!$url) {
         foreach (@{$hub->components}) {
-          if ($source->is_on("$referer->{'ENSEMBL_TYPE'}/$_")) {
+          if ($source->is_on(join '/', reverse @$_)) {
             $url = $hub->url({%params, function => $logic_name });
             last;
           }
