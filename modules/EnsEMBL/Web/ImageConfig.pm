@@ -218,7 +218,6 @@ sub multi_species       { return 0;                                             
 sub bgcolor             { return $_[0]->get_parameter('bgcolor') || 'background1';             }
 sub bgcolour            { return $_[0]->bgcolor;                                               }
 sub get_node            { return shift->tree->get_node(@_);                                    }
-sub get_user_settings   { return $_[0]->tree->user_data;                                       }
 sub get_parameters      { return $_[0]->{'_parameters'};                                       }
 sub get_parameter       { return $_[0]->{'_parameters'}{$_[1]};                                }
 sub set_width           { $_[0]->set_parameter('width', $_[1]);  } # TODO: find out why we have width and image_width. delete?
@@ -229,6 +228,13 @@ sub toolbars            { return shift->parameter('toolbars',        @_);       
 sub slice_number        { return shift->parameter('slice_number',    @_);                      } # TODO: delete?
 sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes; } # return a list of track nodes
 sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
+
+sub get_user_settings {
+  my $self     = shift;
+  my $settings = $self->tree->user_data;
+  delete $settings->{'track_order'} if $settings->{'track_order'} && !scalar keys %{$settings->{'track_order'}};
+  return $settings;
+}
 
 sub default_track_order {
   my ($self,@tracks) = @_;
@@ -1268,9 +1274,25 @@ sub update_track_order {
 }
 
 sub reset {
-  my $self = shift;
+  my $self  = shift;
+  my $reset = $self->hub->input->param('reset');
+  my ($tracks, $order) = $reset eq 'all' ? (1, 1) : $reset eq 'track_order' ? (0, 1) : (1, 0);
   
-  if ($self->hub->input->param('reset') eq 'track_order') {
+  if ($tracks) {
+    my $tree = $self->tree;
+    
+    foreach my $node ($tree, $tree->nodes) {
+      my $user_data = $node->{'user_data'};
+      
+      foreach (keys %$user_data) {
+        $self->altered = 1 if $user_data->{$_}{'display'};
+        delete $user_data->{$_}{'display'};
+        delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
+      }
+    }
+  }
+  
+  if ($order) {
     my $node    = $self->get_node('track_order');
     my $species = $self->species;
     
@@ -1278,18 +1300,6 @@ sub reset {
       $self->altered = 1;
       delete $node->{'user_data'}{'track_order'}{$species};
       delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
-    }
-  } else {
-    my $tree = $self->tree;
-    
-    foreach my $node ($tree, $tree->nodes) {
-      my $user_data = $node->{'user_data'};
-      
-      foreach (keys %$user_data) {
-        $self->altered = 1 if $user_data->{$_}->{'display'};
-        delete $user_data->{$_}->{'display'};
-        delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
-      }
     }
   }
 }
@@ -2878,6 +2888,65 @@ sub add_somatic_structural_variations {
   }
   
   $menu->append($somatic);
+}
+
+sub share {
+  # Remove anything from user settings that is:
+  #  Custom data that the user isn't sharing
+  #  A track from a datahub that the user isn't sharing
+  #  Not for the species in the image
+  # Reduced track order of explicitly ordered tracks if they are after custom tracks which aren't shared
+  
+  my ($self, %shared_custom_tracks) = @_;
+  my $user_settings     = EnsEMBL::Web::Root->deepcopy($self->get_user_settings);
+  my $species           = $self->species;
+  my $user_data         = $self->get_node('user_data');
+  my @unshared_datahubs = grep $_->get('datahub') && !$shared_custom_tracks{$_->id}, @{$self->tree->child_nodes};
+  my @user_tracks       = map { $_ ? $_->nodes : () } $user_data;
+  my %user_track_ids    = map { $_->id => 1 } @user_tracks;
+  my %datahub_tracks    = map { $_->id => [ map $_->id, $_->nodes ] } @unshared_datahubs;
+  my %to_delete;
+  
+  foreach (keys %$user_settings) {
+    next if $_ eq 'track_order';
+    next if $shared_custom_tracks{$_};
+    
+    my $node = $self->get_node($_);
+    
+    $to_delete{$_} = 1 unless $node && $node->parent_node; # delete anything that isn't for this species
+    $to_delete{$_} = 1 if $user_track_ids{$_};             # delete anything that isn't shared
+  }
+  
+  foreach (@unshared_datahubs) {
+    $to_delete{$_} = 1 for grep $user_settings->{$_}, @{$datahub_tracks{$_->id} || []};  # delete anything for tracks in datahubs that aren't shared
+  }
+  
+  # Reduce track orders if custom tracks aren't shared
+  if (scalar keys %to_delete) {
+    my %track_ids_to_delete  = map { $_ => 1 } keys %to_delete, map { @{$datahub_tracks{$_->id} || []} } @unshared_datahubs;
+    my @removed_track_orders = map { $track_ids_to_delete{$_->id} && $_->{'data'}{'node_type'} eq 'track' ? $_->{'data'}{'order'} : () } @{$self->glyphset_configs};
+    
+    foreach my $order (values %{$user_settings->{'track_order'}{$species}}) {
+      my $i = 0;
+      
+      for (@removed_track_orders) {
+        last if $_ > $order;
+        $i++;
+      }
+      
+      $i-- if $i && $removed_track_orders[$i] > $order;
+      $order -= $i;
+    }
+  }
+  
+  foreach (keys %to_delete) {
+    delete $user_settings->{$_};
+    delete $user_settings->{'track_order'}{$species}{$_} for $_, "$_.f", "$_.r";
+  }
+  
+  delete $user_settings->{'track_order'}{$_} for grep $_ ne $species, keys %{$user_settings->{'track_order'}};
+  
+  return $user_settings;
 }
 
 1;
