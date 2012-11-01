@@ -111,6 +111,11 @@ sub fetch_input {
 
     $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 
+    foreach my $exe_name (qw(sreformat_exe quicktree_exe)) {
+        my $exe = $self->param($exe_name) or die "'$exe_name' is an obligatory parameter";
+        die "Cannot execute '$exe_name'" unless (-x $exe_name);
+    }
+
     ## 'tags_to_copy' can also be set
 }
 
@@ -183,12 +188,7 @@ sub run_quicktreebreak {
   }
   my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $gene_tree->root, 1 );
 
-  my $quicktree_exe = $self->param('quicktree_exe')
-        or die "'quicktree_exe' is an obligatory parameter";
-
-  die "Cannot execute '$quicktree_exe'" unless(-x $quicktree_exe);
-
-  my $cmd = $quicktree_exe;
+  my $cmd = $self->param('quicktree_exe');
   $cmd .= " -out t -in a";
   $cmd .= " ". $input_aln;
 
