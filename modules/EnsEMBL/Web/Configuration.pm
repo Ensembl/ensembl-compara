@@ -4,6 +4,8 @@ package EnsEMBL::Web::Configuration;
 
 use strict;
 
+use EnsEMBL::Web::Tree;
+
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
@@ -32,11 +34,11 @@ sub new {
 
 # Get configurable components from a specific action/function combination
 sub new_for_components {
-  my ($class, $hub, $data, $action, $function) = @_;
+  my ($class, $hub, $action, $function) = @_;
 
   my $self = {
-    hub     => $hub,
-    _data   => $data,
+    hub   => $hub,
+    _data => {},
   };
   
   bless $self, $class;
@@ -61,6 +63,7 @@ sub init {
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
+    $self->{'_data'}{'tree'} = new EnsEMBL::Web::Tree;
     $self->populate_tree; # If no user + session tree found, build one
     $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $cache && $cache_key; # Cache default tree
   }
@@ -209,20 +212,21 @@ sub get_configurable_components {
   my ($self, $node, $action, $function) = @_;
   my $hub       = $self->hub;
   my $component = $hub->script eq 'Config' ? $hub->action : undef;
-  my $type      = [ split '::', ref $self ]->[-1];
   my @components;
   
   if ($component && !$action) {
+    my $type        = [ split '::', ref $self ]->[-1];
     my $module_name = $self->get_module_names('ViewConfig', $type, $component);
-    @components = ($component) if $module_name;
+       @components  = ([ $component, $type ]) if $module_name;
   } else {
     $node ||= $self->get_node($self->get_valid_action($action || $hub->action, $function || $hub->function));
     
     if ($node) {
       foreach (reverse grep /::Component::/, @{$node->data->{'components'}}) {
-        my ($component) = split '/', [split '::']->[-1];
-        my $module_name = $self->get_module_names('ViewConfig', $type, $component);
-        push @components, $component if $module_name;
+        my @package     = split '::';
+        my ($component) = split '/', $package[-1];
+        my $module_name = $self->get_module_names('ViewConfig', $package[-2], $component);
+        push @components, [ $component, $package[-2] ] if $module_name;
       }
     }
   }
