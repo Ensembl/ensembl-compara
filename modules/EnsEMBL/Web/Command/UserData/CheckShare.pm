@@ -16,7 +16,7 @@ sub process {
   my $session    = $hub->session;
   my $group_id   = $hub->param('webgroup_id');
   my $group      = $user && $group_id ? $user->get_group($group_id) : undef;
-  my @share_ids  = $hub->param('share_id');
+  my @share_ids  = $_[0] ? @_ : $hub->param('share_id');
   my $url_params = { __clear => 1 };
   my $param;
   
@@ -67,6 +67,8 @@ sub process {
       $url_params->{'action'} = 'ShareRecord';
     }
   }
+  
+  return @{$url_params->{'share_id'} || $url_params->{'id'}} if $_[0];
   
   $self->ajax_redirect($hub->url($url_params));
 }
