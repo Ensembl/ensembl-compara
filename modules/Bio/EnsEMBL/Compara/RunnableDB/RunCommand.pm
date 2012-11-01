@@ -61,6 +61,7 @@ use IO::File;
 use Symbol qw/gensym/;
 use IPC::Open3;
 use Data::Dumper;
+use Time::HiRes qw(time gettimeofday tv_interval);
 
 
 sub new {
