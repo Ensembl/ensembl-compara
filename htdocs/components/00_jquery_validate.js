@@ -16,15 +16,27 @@
 
 $.extend($.fn, {
   validate: function (options) {
-    if (this.length && this[0].nodeName === 'FORM') {
-      var validator = $(this).data('validator');
-      
-      if (!validator) {
-        validator = new $.validator(options, this);
-        $(this).data('validator', validator); 
+    if (this.length) {
+      if (this[0].nodeName === 'FORM') {
+        var validator = $(this).data('validator');
+        
+        if (!validator) {
+          validator = new $.validator(options, this);
+          $(this).data('validator', validator); 
+        }
+        
+        validator.validateInputs(null, 'initial');
+        
+      } else {
+        this.each(function () {
+          if (this.nodeName.match(/SELECT|INPUT|TEXTAREA/)) {
+            var inp = $(this);
+            if (inp.parents('form').data('validator')) {
+              inp.data('required', options === false ? false : true);
+            }
+          }
+        });
       }
-      
-      validator.validateInputs(null, 'initial');
     }
     
     return this;
@@ -37,11 +49,11 @@ $.validator = function (options, form) {
   this.settings      = $.extend({}, $.validator.defaults, options);
   this.rules         = this.settings.rules;
   this.tests         = this.settings.tests; // Precompiled regular expressions
-  this.inputs        = $('input[type="text"], input[type="password"], textarea, select', form);
+  this.inputs        = $('input[type="text"], input[type="password"], input[type="file"], textarea, select', form);
   this.submitButtons = $('input[type="submit"]', form);
   this.result        = true;
   
-  $(form).on('submit', function (e) {
+  $(form).on('submit.validate', function (e) {
     validator.result = true;
     validator.validateInputs(null, 'showError');
     
@@ -82,9 +94,9 @@ $.validator = function (options, form) {
     
     el = null;
   }).on({
-    keyup:  function (e) { if (e.keyCode !== 9) { validator.validateInputs($(this), 'delay'); } }, // Ignored if the tab key is pressed, since this will cause blur to fire
-    change: function ()  { validator.validateInputs($(this), 'delay'); },
-    blur:   function ()  { validator.validateInputs($(this), 'showError'); }
+    'keyup.validate':  function (e) { if (e.keyCode !== 9) { validator.validateInputs($(this), 'delay'); } }, // Ignored if the tab key is pressed, since this will cause blur to fire
+    'change.validate': function ()  { validator.validateInputs($(this), 'delay'); },
+    'blur.validate':   function ()  { validator.validateInputs($(this), 'showError'); }
   });
   
   form = null;
@@ -115,7 +127,7 @@ $.extend($.validator, {
       posint:      'Please enter an integer (minimum 1)',
       'float':     'Please enter a number',
       nonnegfloat: 'Please enter a number (minimum 0)',
-      pofloat:     'Please enter a number (minimum 1)',
+      posfloat:    'Please enter a number (minimum 1)',
       password:    'The password you have entered is invalid',
       email:       'Please enter a valid email address',
       url:         'Please enter a valid URL'
