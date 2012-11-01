@@ -456,10 +456,14 @@ sub _compose_sequence_with_cigar {
     my $seq_start = 0;
     foreach my $segment (@cigar_segments) {
         if ($segment =~ /^(\d*)D$/) {
+            
+            # Gap
             my $length = $1 || 1;
             $alignment_string .= "-" x ($length * $expansion_factor);
 
         } elsif ($segment =~ /^(\d*)M$/) {
+
+            # Match
             my $length = $1 || 1;
             $length *= $expansion_factor;
             my $substring = substr($sequence,$seq_start,$length);
@@ -468,13 +472,14 @@ sub _compose_sequence_with_cigar {
                 $length += $num_boundaries;
                 $substring = substr($sequence,$seq_start,$length);
             }
+            if (length($substring) % $expansion_factor) {
+                $substring .= ('N' x ($expansion_factor - (length($substring) % $expansion_factor)));
+            }
             $alignment_string .= $substring;
             $seq_start += $length;
         }
     }
-    if (length($alignment_string) % $expansion_factor) {
-        $alignment_string .= ('N' x ($expansion_factor - (length($alignment_string) % $expansion_factor)));
-    }
+    die "It does happen ...\n" if (length($alignment_string) % $expansion_factor);
     return $alignment_string;
 }
 
