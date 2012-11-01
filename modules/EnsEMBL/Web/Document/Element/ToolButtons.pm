@@ -30,7 +30,8 @@ sub label_classes {
     'Configure this page' => 'config',
     'Manage your data'    => 'data',
     'Export data'         => 'export',
-    'Bookmark this page'  => 'bookmark'
+    'Bookmark this page'  => 'bookmark',
+    'Share this page'     => 'share',
   };
 }
 
@@ -60,14 +61,13 @@ sub content {
 }
 
 sub init {
-  my $self        = shift;  
-  my $controller  = shift;
-  my $hub         = $controller->hub;
-  my $object      = $controller->object;
-  my @components  = @{$hub->components};
+  my $self       = shift;  
+  my $controller = shift;
+  my $hub        = $controller->hub;
+  my $object     = $controller->object;
+  my @components = @{$hub->components};
   my $view_config;
-  
-  $view_config = $hub->get_viewconfig(shift @components) while !$view_config && scalar @components; 
+     $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
   
   if ($view_config) {
     my $component = $view_config->component;
@@ -77,6 +77,7 @@ sub init {
       class   => 'modal_link',
       rel     => "modal_config_$component",
       url     => $hub->url('Config', {
+        type      => $view_config->type,
         action    => $component,
         function  => undef,
       })
@@ -139,7 +140,16 @@ sub init {
       url     => undef,
       title   => 'You must be logged in to bookmark pages'
     });
-  } 
+  }
+  
+  $self->add_entry({
+    caption => 'Share this page',
+    url     => $hub->url('Share', {
+      __clear => 1,
+      create  => 1,
+      time    => time
+    })
+  });
 }
 
 sub export_url {
