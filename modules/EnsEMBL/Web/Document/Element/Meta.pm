@@ -25,6 +25,7 @@ sub content {
   
   $content .= sprintf qq{  <meta name="%s" content="%s" />\n},       encode_entities($_), encode_entities($self->{'tags'}{$_})  for keys %{$self->{'tags'}};
   $content .= sprintf qq{  <meta http-equiv="%s" content="%s" />\n}, encode_entities($_), encode_entities($self->{'equiv'}{$_}) for keys %{$self->{'equiv'}};
+  $content .= '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes" />';
   
   return $content;
 }
