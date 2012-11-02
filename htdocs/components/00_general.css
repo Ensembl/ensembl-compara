@@ -13,6 +13,8 @@ pre, code, kbd { font-family: Courier New, Courier, monospace; }
 
 div > span, div > a, /* sic - we only want 'raw' elements directly inside divs to be resized */
 p, li, dd, dt, th, td, pre, code, kbd, label { font-size: 0.8em; }
+ul > li > ul > li,
+ol > li > ol > li   { font-size:1em; }
 
 body.ie6 th, body.ie6 td { font-size: 13px; }
 
