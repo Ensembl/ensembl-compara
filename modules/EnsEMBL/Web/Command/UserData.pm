@@ -42,7 +42,7 @@ sub upload {
   } elsif ($method ne 'text') {
     ## Try to guess the format from the extension
     my @parts       = split('\.', $filename);
-    my $ext         = $parts[-1] =~ /gz/i ? $parts[-2] : $parts[-1];
+    my $ext         = $parts[-1] =~ /gz|zip/i ? $parts[-2] : $parts[-1];
     my $format_info = $hub->species_defs->DATA_FORMAT_INFO;
     my $extensions;
     
@@ -56,7 +56,11 @@ sub upload {
   ## Set up parameters for file-writing
   if ($method eq 'url') {
     my $url      = $hub->param('url');
-       $url      = "http://$url" unless $url =~ /^http/;
+
+    ## Needs full URL to work, including protocol
+    unless ($url =~ /^http/ || $url =~ /^ftp:/) {
+      $url = ($url =~ /^ftp/) ? "ftp://$url" : "http://$url";
+    }
     my $response = get_url_content($url);
     
     $error           = $response->{'error'};
