@@ -15,15 +15,6 @@ sub alt         :lvalue { $_[0]{'alt'};         }
 sub href        :lvalue { $_[0]{'href'}         }
 sub print_image :lvalue { $_[0]{'print_image'}; }
 
-sub logo_img {
-### a
-  my $self = shift;
-  return sprintf(
-    '<img src="%s%s" alt="%s" title="%s" class="print_hide" style="width:%spx;height:%spx" />',
-    $self->img_url, $self->image, $self->alt, $self->alt, $self->width, $self->height
-  );
-}
-
 sub logo_print {
 ### a
   my $self = shift;
@@ -37,7 +28,19 @@ sub content {
   my $self = shift;
   my $url  = $self->href || $self->home_url;
   
-  return sprintf '<a href="%s">%s</a>%s', $url, $self->logo_img, $self->logo_print;
+  my $html = sprintf '<a href="%s"><div class="logo-header print_hide" title="%s">&nbsp;</div></a>', 
+              $url, $self->alt; 
+
+  my $species = $self->hub->{'_species'};
+  $species = '' if ($species eq 'Multi');
+
+  $html .= sprintf '<span class="mobile-only species-header">%s</span>',
+              $species ? $self->species_defs->SPECIES_COMMON_NAME 
+                       : $self->species_defs->ENSEMBL_SITETYPE; 
+
+  $html .= $self->logo_print;
+
+  return $html;
 }
 
 sub init {
