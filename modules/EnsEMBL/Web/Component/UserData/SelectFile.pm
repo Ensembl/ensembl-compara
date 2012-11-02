@@ -25,11 +25,12 @@ sub content {
   my $current_species = $hub->data_species;
   my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
   my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
-  my $form            = $self->modal_form('select', $urls{'upload'}, {'label'=>'Upload'});
+  my $form            = $self->modal_form('select', $urls{'upload'}, {'skip_validation' => 1, 'class' => 'check', 'no_button' => 1}); # default JS validation is skipped as this form goes through a customised validation
+  my $fieldset        = $form->add_fieldset({'no_required_notes' => 1});
 
-  $form->add_hidden({'name' => $_, 'value' => $urls{$_}}) for keys %urls;
+  $fieldset->add_hidden({'name' => $_, 'value' => $urls{$_}}) for keys %urls;
 
-  $form->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
+  $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
 
   # Create a data structure for species, with display labels and their current assemblies
   my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_NAME')}, $sd->valid_species);
@@ -37,7 +38,7 @@ sub content {
   # Create HTML for showing/hiding assembly names to work with JS
   my $assembly_names = join '', map { sprintf '<span class="_stt_%s%s">%s</span>', $_->{'value'}, $_->{'value'} eq $current_species ? '' : ' hidden', delete $_->{'assembly'} } @species;
 
-  $form->add_field({
+  $fieldset->add_field({
       'type'        => 'dropdown',
       'name'        => 'species',
       'label'       => 'Species',
@@ -72,7 +73,7 @@ sub content {
     );
   }
   else {
-    $form->add_field({
+    $fieldset->add_field({
       'type'        => 'noedit',
       'label'       => 'Assembly',
       'name'        => 'assembly_name',
@@ -84,28 +85,32 @@ sub content {
 
   $self->add_file_format_dropdown($form, '', 1);
 
-  my $upload_fieldset = $form->add_fieldset({'class' => '_stt_upload'});
-  my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote'});
+  my $upload_fieldset = $form->add_fieldset({'class' => '_stt_upload', 'no_required_notes' => 1});
+  my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote', 'no_required_notes' => 1});
 
   my $actions = [
-    {'caption' => "Upload data (max $max_upload_size)",    'value' => 'upload', 'class' => '_stt__upload1 _stt _action _action_upload', 'checked' => 1},
-    {'caption' => 'Attach via URL', 'value' => 'remote', 'class' => '_stt__remote1 _stt _action _action_remote'},
+    {'caption' => "Upload data (max $max_upload_size)", 'value' => 'upload', 'class' => '_stt__upload1 _stt _action _action_upload', 'checked' => 1},
+    {'caption' => 'Attach via URL',                     'value' => 'remote', 'class' => '_stt__remote1 _stt _action _action_remote'},
   ];
 
   $upload_fieldset->add_field({ 'type' => 'Radiolist', 'name' => 'action', 'label' => 'Type', 'values' => $actions });
 
-  $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data' });
-  $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'File', 'name' => 'file', 'label' => 'Or choose file' });
+  $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'Text', 'name' => 'text', 'required' => 1, 'label' => 'Paste data' });
+  $upload_fieldset->add_field({ 'field_class' => 'hidden _stt_upload1', 'type' => 'File', 'name' => 'file', 'required' => 1, 'label' => 'Or choose file' });
   $upload_fieldset->add_field({
     'type'        => 'URL',
     'name'        => 'url',
+    'required'    => 1,
     'label'       => '<span class="_stt_remote1">P</span><span class="_stt_upload1">Or p</span>rovide file URL',
     'size'        => 30
   });
+  $upload_fieldset->add_button({ 'name' => 'submit', 'value' => 'Upload' })->inputs->[0]->after($self->dom->create_element('label', {
+    'inner_HTML'  => 'Please provide one of the above three fields',
+    'class'       => '_userdata_upload_error hidden invalid'
+  }));
 
-  $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30 });
-
-  $form->add_fieldset; #an extra fieldset for the submit button that gets automatically added
+  $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30, 'required' => 1 });
+  $remote_fieldset->add_button({ 'name' => 'submit', 'value' => 'Attach' });
 
   return sprintf '<input type="hidden" class="panel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
