@@ -3,6 +3,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Feature;
+use Bio::EnsEMBL::SimpleFeature;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 my $reg = "Bio::EnsEMBL::Registry";
 $reg->no_version_check(1);
@@ -15,6 +17,7 @@ my $compara_url;
 my $species = "Homo sapiens";
 my $regions;
 my $feature = "";
+my $default_promoter_length = 10000;
 my $extra;
 my $print_strand = 0;
 my $from;
@@ -35,6 +38,8 @@ FEATURES
 * coding-exons
 * constitutive-exons (coding-exons that are in all transcripts)
 * cassette-exons (coding-exons that are not present in all transcripts)
+* utr
+* promoter-regions (see extra for specifying the length; $default_promoter_length by default)
 * pseudogene
 * repeats (see extra for specifying the repeat type)
 * regulatory_features
@@ -154,6 +159,12 @@ if ($feature =~ /^top/) {
 } elsif ($feature =~ /^utr/) {
   $track_name = "utr.e$version";
   $description = "$species_name utr in Ensembl $version";
+} elsif ($feature =~ /^promo/) {
+  $track_name = "promoters.e$version";
+  if (!defined $extra) {
+    $extra = $default_promoter_length;
+  }
+  $description = "$species_name promoters (l=${extra}bp) in Ensembl $version";
 } elsif ($feature =~ /^intron/) {
   $track_name = "intron.e$version";
   $description = "$species_name intron in Ensembl $version";
@@ -294,6 +305,41 @@ foreach my $slice (sort {
          }
        }
      }
+  } elsif ($feature =~ /^promo/) {
+    my $genes = $slice->get_all_Genes_by_type('protein_coding');
+    foreach my $this_gene (@$genes) {
+      my $transcripts = $this_gene->get_all_Transcripts;
+      foreach my $this_transcript (@$transcripts) {
+        next if ($this_transcript->biotype ne "protein_coding");
+        next if (!$this_transcript->coding_region_start);
+        my $start;
+        my $end;
+
+        if ($this_transcript->strand == 1) {
+          $start = $this_transcript->coding_region_start - $extra;
+          $start = 1 if ($start < 1);
+
+          $end = $this_transcript->coding_region_start - 1;
+          $end = 1 if ($end < 1);
+
+        } else {
+          $start = $this_transcript->coding_region_start + 1;
+          $start = $slice->length if ($start > $slice->length);
+
+          $end = $this_transcript->coding_region_start + $extra;
+          $end = $slice->length if ($end > $slice->length);
+        }
+          
+        my $promoter = new Bio::EnsEMBL::SimpleFeature(
+              -start => $start,
+              -end => $end,
+              -slice => $slice,
+              -strand => $this_transcript->strand,
+              -display_label => $this_transcript->display_id."\t".$this_gene->display_id);
+
+        push @$all_features, $promoter;
+      }
+    }
   } elsif ($feature =~ /^intron/) {
     my $genes = $slice->get_all_Genes;
     foreach my $this_gene (@$genes) {
