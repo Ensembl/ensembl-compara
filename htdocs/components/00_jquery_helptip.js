@@ -9,9 +9,9 @@
   $.helptip = function (el, tip, options) {
     el      = $(el);
     options = $.extend({
-      eventIn: 'mouseenter',
+      eventIn:  'mouseenter',
       eventOut: 'mouseleave',
-      delay: 100
+      delay:    100
     }, options);
     
     var container = options.container || $(document.body);
@@ -101,7 +101,7 @@
           pos.x -= (el.data('helptip').offset || {}).width || popup.width();
         }
         
-        if (!el.data('helptip').hidden) {
+        if (!el.data('helptip').disabled) {
           popup.css({ left: pos.x, top: pos.y }).show();
         }
         
@@ -118,14 +118,14 @@
       mouseMove: function (e) {
         var el = $(this);
         
-        if (!el.data('helptip').hidden) {
+        if (!el.data('helptip').disabled) {
           var offset = el.data('helptip').offset;
           el.data('helptip').popup.css({ left: offset.x + e.pageX, top: offset.y + e.pageY });
         }
       },
       
-      hide: function (popup) {
-        this.data('helptip').hidden = true;
+      disable: function (popup) {
+        this.data('helptip').disabled = true;
         popup.hide();
       },
       
@@ -154,11 +154,11 @@
     }
     
     // if not already, instantiate helptip
-    if (!popup) {
+    if (popup) {
+      el.data('helptip').disabled = false;
+    } else {
       methods.init.call(el);
       popup = el.data('helptip').popup;
-    } else {
-      el.data('helptip').hidden = false;
     }
     
     // set tip
@@ -169,7 +169,7 @@
         popup.show();
       }
     } else {
-      methods.hide.call(el, popup);
+      methods.disable.call(el, popup);
     }
     
     // set options
