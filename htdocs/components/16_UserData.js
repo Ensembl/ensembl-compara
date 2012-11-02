@@ -42,8 +42,10 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({ // inheriting Modal
             'keyup.UserData': function (e) {
               if (e.keyCode !== 9) { // ignore TAB
                 $(this).validate(!!this.value);
+                if (e.keyCode !== 13) { // ignore TAB & ENTER
+                  panel.elLk.errorMessage.hide();
+                }
               }
-              panel.elLk.errorMessage.hide();
             },
             'change.UserData': function () {
               panel.elLk.errorMessage.hide();
