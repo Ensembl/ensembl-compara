@@ -10,7 +10,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({ // inheriting Modal
     // form
     this.elLk.form = this.el.find('form').validate().on('submit.UserData', function() {
       var visibleInps = panel.elLk.requiredInputs.filter(':visible');
-      if (visibleInps.length > 1 && !$.grep(visibleInps, function (inp) { return !!inp.value; })[0]) {// if neither of the multiple inputs have any value
+      if (visibleInps.length > 1 && visibleInps.filter(function () { return !!this.value; }).length === 0) {// if neither of the multiple inputs have any value
         panel.elLk.errorMessage.show();
         return false;
       }
