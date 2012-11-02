@@ -29,8 +29,7 @@ sub content {
 
   my $html = '
 <div class="column-wrapper">  
-  <div class="column-two">
-    <div class="column-padding no-left-margin">
+  <div class="box-left">
       <div class="species-badge">';
 
   $html .= qq(<img src="${img_url}species/64/$species.png" alt="" title="$sound" />);
@@ -47,44 +46,27 @@ sub content {
 
   $html .= '
     </div>
-  </div>
-  <div class="column-two">
-    <div class="column-padding no-right-margin">';
+    <div class="box-right">';
 
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
     $html .= '<div class="round-box info-box unbordered">'.$self->_whatsnew_text.'</div>';  
   }
 
   $html .= '
-    </div>
-  </div>
-</div>
-<div class="column-wrapper">  
-  <div class="column-two">
-    <div class="column-padding no-left-margin">';
-
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_assembly_text.'</div>';
-
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div>';
-
-  if ($hub->database('funcgen')) {
-    $html .= '<div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div>';
-  }
-
-  $html .= '
-    </div>
-  </div>
-  <div class="column-two">
-    <div class="column-padding no-right-margin">';
-
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div>';
- 
-  $html .= '<div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div>';
-
-  $html .= '
-    </div>
   </div>
 </div>';
+
+  $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_assembly_text.'</div></div>';
+
+  $html .= '<div class="box-right"><div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div></div>';
+ 
+  $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div></div>';
+
+  $html .= '<div class="box-right"><div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div></div>';
+
+  if ($hub->database('funcgen')) {
+    $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div></div>';
+  }
 
   return $html;  
 }
@@ -194,21 +176,36 @@ sub _assembly_text {
   }
 
   ## Combine archives and pre
-  my $other_assemblies;
+  my @other_assemblies;
   if (@old_archives) {
-    $other_assemblies .= join '', map qq(<li><a href="$_->{'url'}" class="nodeco">$_->{'assembly'}</a> $_->{'release'}</li>), @old_archives;
+    push @other_assemblies, @old_archives;
   }
 
   my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
   if ($pre_species->{$species}) {
-    $other_assemblies .= sprintf('<li><a href="http://pre.ensembl.org/%s/" class="nodeco">%s</a> (Ensembl pre)</li>', $species, $pre_species->{$species}[1]);
+    push @other_assemblies, {'url' => "http://pre.ensembl.org/$species/", 'assembly' => $pre_species->{$species}[1], 'release' => ' (Ensembl pre)'};
   }
 
-  if ($other_assemblies) {
+  if (scalar @other_assemblies > 0) {
     $html .= qq(
       <h3 style="color:#808080;padding-top:8px">Other assemblies</h3>
-      <ul>$other_assemblies</ul>
-      );
+    );
+    if (scalar @other_assemblies > 1) {
+      $html .= sprintf '<form action="/%s/redirect" method="get"><select name="url">', $species;
+      foreach (@other_assemblies) {
+        $html .= sprintf '<option value="%s">%s %s</option>',
+                      $_->{'url'},
+                      $_->{'assembly'},
+                      $_->{'release'};
+      }
+      $html .= '</select> <input type="submit" name="submit" class="fbutton" value="Go" /></form>';
+    }
+    else { 
+      $html .= sprintf '<ul><li><a href="%s" class="nodeco">%s</a> %s</li></ul>', 
+                      $other_assemblies[0]->{'url'},
+                      $other_assemblies[0]->{'assembly'},
+                      $other_assemblies[0]->{'release'};
+    }
   }
 
   return $html;
@@ -261,7 +258,7 @@ sub _genebuild_text {
   if ($has_vega) {
     $html .= qq(
   <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">
-  <img src="/img/vega_small.gif" alt="Vega logo" style="float:left;margin-right:8px;width:83px;height:30px;vertical-align:center" title="Vega - Vertebrate Genome Annotation database" /></a>
+  <img src="/img/vega_small.gif" alt="Vega logo" style="float:left;margin-right:8px;margin-bottom:1em;width:83px;height:30px;vertical-align:center" title="Vega - Vertebrate Genome Annotation database" /></a>
 <p>
   Additional manual annotation can be found in <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">Vega</a>
 </p>);
