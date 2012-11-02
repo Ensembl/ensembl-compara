@@ -4,9 +4,15 @@
   General font sizes and styles...
 ----------------------------------------------------------------------*/
 
-body { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif; color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; font-size: 80%; padding: 0; margin: 0; border: 0; }
+body      { font-family: Luxi Sans, Helvetica Neue, Helvetica, Arial, Geneva, sans-serif; 
+            font-size:100%; color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]];
+            padding: 0; margin: 0; border: 0; }
+body.ie6  { font-size:85%; }
+
 pre, code, kbd { font-family: Courier New, Courier, monospace; }
-div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size: 1em; }
+
+div > span, div > a, /* sic - we only want 'raw' elements directly inside divs to be resized */
+p, li, dd, dt, th, td, pre, code, kbd, label { font-size: 0.8em; }
 
 body.ie6 th, body.ie6 td { font-size: 13px; }
 
@@ -15,16 +21,16 @@ body.ie6 th, body.ie6 td { font-size: 13px; }
 ----------------------------------------------------------------------*/
 
 img     { border: 0; }
-form    { border: none; margin: 0 0 16px 0; }
-p       { margin: 0 0 16px; line-height: 16px; padding: 0; }
-ul, ol  { margin: 0 0 16px; line-height: 16px; padding-left: 32px; }
-pre     { margin: 0 0 16px; }
+form    { border: none; margin: 0 0 1em 0; }
+p       { margin: 0 0 0.9em; line-height: 1.2em; padding: 0; }
+ul, ol  { margin: 0 0 1em; line-height: 1.2em; padding-left: 2em; }
+pre     { margin: 0 0 1em; }
 
 /*----------------------------------------------------------------------
-  Minimum page width
+  Minimum page width - control page layout in desktop browsers
 ----------------------------------------------------------------------*/
 
-#min_width_container { position: relative; width: 100%; min-width: 775px; }
+#min_width_container { position: relative; width: 100%; min-width:775px; }
 #min_width_holder    { display: block; }
 
 body.ie6 #min_width_container { border-right: 775px solid [[PAGE_BG]]; }
@@ -44,15 +50,15 @@ body.ie6 .spinner { background-color: [[PAGE_BG]]; border-color: [[PAGE_BG]]; he
 /*----------------------------------------------------------------------
   Manual margin settings - to override any existing margins
 ----------------------------------------------------------------------*/
-.top-margin       { margin-top:     16px  !important; }
-.bottom-margin    { margin-bottom:  16px  !important; }
-.left-margin      { margin-left:    16px  !important; }
-.right-margin     { margin-right:   16px  !important; }
+.top-margin       { margin-top:     1em   !important; }
+.bottom-margin    { margin-bottom:  1em   !important; }
+.left-margin      { margin-left:    1em   !important; }
+.right-margin     { margin-right:   1em   !important; }
 .no-top-margin    { margin-top:     0     !important; }
 .no-bottom-margin { margin-bottom:  0     !important; }
 .no-left-margin   { margin-left:    0     !important; }
 .no-right-margin  { margin-right:   0     !important; }
-.half-margin      { margin-bottom:  8px   !important; }
+.half-margin      { margin-bottom:  0.5em !important; }
 
 /*----------------------------------------------------------------------
   jQuery resizable handles
@@ -67,15 +73,15 @@ body.ie6 .spinner { background-color: [[PAGE_BG]]; border-color: [[PAGE_BG]]; he
   Headings
 ----------------------------------------------------------------------*/
 
-h1, h2, h3, h4  { color: [[PAGE_HEADER]]; margin: 0 0 16px; }
-h1              { font-size: 1.5em; }
-h2              { font-size: 1.2em; }
-h3              { font-size: 1.1em; }
-h4              { font-size: 1em;   }
-body.mac h1,
-body.mac h2     { padding-top: 4px; }
+h1, h2, h3, h4  { color: [[PAGE_HEADER]]; margin: 0 0 1em; }
+h1              { font-size: 1.2em; }
+h2              { font-size: 1.0em; }
+h3              { font-size: 0.9em; }
+h4              { font-size: 0.8em;   }
 
 .invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
+.mobile-only    { display:none; }
+
 
 /*----------------------------------------------------------------------
  Links 
@@ -110,7 +116,7 @@ ul li ul li, ul.level2 li    { list-style-image: url(/i/bullet_2.gif); }
 ul li ol li                  { list-style-image: none; }
 ul li ul, ul li ol, ol li ul { margin-top: 0.5em; }
 dt { font-weight: bold; }
-dd { margin-bottom: 16px; }
+dd { margin-bottom: 1em; }
 
 /*----------------------------------------------------------------------
   Errors and info boxes
@@ -119,12 +125,12 @@ dd { margin-bottom: 16px; }
 div.error,
 div.warning,
 div.info,
-div.hint            { margin: 0 0 16px; }
+div.hint            { margin: 0 0 1em; }
 
 div.error h3,
 div.warning h3,
 div.info h3,
-div.hint h3         { margin: 0; padding: 4px 8px 2px 24px; background: [[ERROR_BG]] url(/i/16/rev/alert.png) no-repeat 4px center; border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; line-height: 16px; }
+div.hint h3         { margin: 0; padding: 4px 8px 2px 24px; background: [[ERROR_BG]] url(/i/16/rev/alert.png) no-repeat 4px center; border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; line-height: 1em; }
 div.error h4,
 div.error h3,
 div.warning h3      { color: [[PAGE_BG]] !important; }
@@ -143,15 +149,17 @@ div.hint div        { border-color: [[INFO_BG]]; }
 div.syntax-error    { color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; }
 
 .error-pad,
-.message-pad        { padding: 16px 16px 0; }
+.message-pad        { padding: 1em 1em 0; }
 
-div.filter-error    { margin: 16px 16px 0; }
+div.filter-error    { margin: 1em 1em 0; }
 
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
 
-div.notes    { padding: 16px 16px 8px; margin-bottom: 16px; background-color: [[CONTRAST_BG]]; border: 1px [[CONTRAST_BORDER]] solid; }
-div.notes h4 { background: url(/i/16/info.png) top left no-repeat; height: 16px; line-height: 16px; padding-left: 24px; }
+.ajax_error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; border: solid 1px [[ALERT_TEXT]]; font-weight: bold; margin: 0 0 1em; padding: 1em; }
+
+div.notes    { padding: 1em 1em 8px; margin-bottom: 1em; background-color: [[CONTRAST_BG]]; border: 1px [[CONTRAST_BORDER]] solid; }
+div.notes h4 { background: url(/i/16/info.png) top left no-repeat; height: 1em; line-height: 1em; padding-left: 24px; }
 div.notes p  { margin-bottom: 8px; }
 
 /***********************************************************************

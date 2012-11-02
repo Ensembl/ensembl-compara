@@ -48,18 +48,37 @@ pre.wrap            { white-space: pre-wrap; }
   Columns and boxes 
 ----------------------------------------------------------------------*/
 
-div.column-wrapper          { overflow: hidden;             } /* wraps the columns */
+div.column-wrapper          { overflow: hidden; position:relative; } /* wraps the columns (position is IE8/9 fix) */
 div.column-two              { float: left; width:50%;       } /* actual column for 2 col layout */
 div.column-three            { float: left; width:33.3333%;  } /* actual column for 3 col layout */
 div.column-four             { float: left; width:25%;       } /* actual column for 4 col layout */
-div.column-padding          { margin-left: 8px; margin-right: 8px; } /* inner div for columns to provide padding */
+
+div.column-left             { margin-left: 0;       margin-right: 0.5em; }
+div.column-middle           { margin-left: 0.25em;  margin-right: 0.25em; }
+div.column-right            { margin-left: 0.5em;   margin-right: 0; }
+
+div.box-left                { width:49.5%; float:left; margin-left: 0; margin-right: 0.5%; }
+div.box-right               { width:49.5%; float:right; margin-left: 0.5%; margin-right: 0; }
 
 /* IE 6 & 7 hacks for above */
 body.ie67 div.column-wrapper,
 body.ie67 div.column-two,
 body.ie67 div.column-three,
 body.ie67 div.column-four,
+body.ie67 div.column-left,
+body.ie67 div.column-middle,
+body.ie67 div.column-right,
+body.ie67 div.box-left,
+body.ie67 div.box-right,,
 body.ie67 div.column-padding  { zoom: 100% }
+
+
+body.ie6 div.column-two,
+body.ie6 div.box-left,      
+body.ie6 div.box-right     { width:47% }
+body.ie7 div.column-two,
+body.ie7 div.box-left,      
+body.ie7 div.box-right     { width:49% }
 
 /* Old 2-column styles */
 
