@@ -55,6 +55,7 @@ sub content {
         </div>
       </form>
     </div>
+    <a href="/Multi/Search/New"><img src="/i/32/rev/search.png" title="Search this site" class="mobile-search mobile-only" /></a>
   );
 }
 
