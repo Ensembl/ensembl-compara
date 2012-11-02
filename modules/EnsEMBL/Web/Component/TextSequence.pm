@@ -11,6 +11,8 @@ use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Component);
 
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
+
 sub new {
   my $class = shift;
   my $self  = $class->SUPER::new(@_);
@@ -512,7 +514,9 @@ sub markup_variation {
     foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {
       $variation = $data->{'variations'}{$_};
       
-      $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
+      (my $ambiguity = ambiguity_code($variation->{'alleles'}) || undef) =~ s/-//g;
+ 
+      $seq->[$_]{'letter'} = $ambiguity if $ambiguity && $config->{'ambiguity'};
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
@@ -759,7 +763,9 @@ sub build_sequence {
     
     foreach my $seq (@$lines) {
       my $style;
-      
+     
+      warn "$seq->{'title'} $seq->{'letter'}\n";
+ 
       $previous{$_}     = $current{$_} for keys %current;
       $current{'title'} = $seq->{'title'}  ? qq{title="$seq->{'title'}"} : '';
       $current{'href'}  = $seq->{'href'}   ? qq{href="$seq->{'href'}"}   : '';;
