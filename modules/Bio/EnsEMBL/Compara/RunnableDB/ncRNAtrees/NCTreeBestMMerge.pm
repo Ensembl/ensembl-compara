@@ -62,6 +62,14 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 
+sub param_defaults {
+    return {
+            'store_tree_support'    => 1,
+    };
+}
+
+
+
 =head2 fetch_input
 
     Title   :   fetch_input
@@ -112,7 +120,8 @@ sub run {
   my $self = shift;
 
     $self->reroot_inputtrees;
-    my $input_trees = [values  %{$self->param('inputtrees_rooted')}];
+    $self->param('ref_support', [keys %{$self->param('inputtrees_rooted')}]);
+    my $input_trees = [map {$self->param('inputtrees_rooted')->{$_}} @{$self->param('ref_support')}];
     my $merged_tree = $self->run_treebest_mmerge($input_trees);
 
     my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree')->root);
@@ -137,7 +146,7 @@ sub run {
 sub write_output {
   my ($self) = @_;
 
-  $self->store_genetree($self->param('nc_tree')) if (defined($self->param('inputtrees_unrooted')));
+  $self->store_genetree($self->param('nc_tree'), $self->param('ref_support')) if (defined($self->param('inputtrees_unrooted')));
 
   if ($self->param('store_intermediate_trees')) {
        foreach my $clusterset_id (keys %{$self->param('inputtrees_rooted')}) {

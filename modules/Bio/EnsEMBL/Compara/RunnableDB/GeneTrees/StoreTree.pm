@@ -143,6 +143,7 @@ sub store_genetree
 {
     my $self = shift;
     my $tree = shift;
+    my $ref_support = shift;
 
     printf("PHYML::store_genetree\n") if($self->debug);
 
@@ -156,7 +157,7 @@ sub store_genetree
     }
 
     if ($tree->root->get_child_count == 2) {
-        $self->store_node_tags($tree->root);
+        $self->store_node_tags($tree->root, $ref_support);
         $self->store_tree_tags($tree);
     }
 }
@@ -165,6 +166,7 @@ sub store_node_tags
 {
     my $self = shift;
     my $node = shift;
+    my $ref_support = shift;
 
     if ($self->debug) {
         print 'storing tags for:'; $node->print_node;
@@ -197,20 +199,33 @@ sub store_node_tags
         }
     }
 
-    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'T' => 'tree_support');
+    if ($node->has_tag('T') and $self->param('store_tree_support')) {
+        my $binary_support = $node->get_tagvalue('T');
+        my $i = 0;
+        my $topup = 0;   # is used to delete all the pre-existing tree_support
+        while ($binary_support) {
+            if ($binary_support & 1) {
+                print 'tree_support : ', $ref_support->[$i], "\n" if ($self->debug);
+                $node->store_tag('tree_support', $ref_support->[$i], $topup);
+                $topup = 1;
+            }
+            $binary_support >>= 1;
+            $i++;
+        }
+    }
+
+    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score');
     foreach my $tag (keys %mapped_tags) {
         next unless $node->has_tag($tag);
         my $value = $node->get_tagvalue($tag);
         my $db_tag = $mapped_tags{$tag};
-        # tree_support is only valid in protein trees (so far)
-        next if ($tag eq 'T') and (not $self->param('store_tree_support'));
 
         $node->store_tag($db_tag, $value);
         print "$tag as $db_tag: $value\n" if ($self->debug);
     }
 
     foreach my $child (@{$node->children}) {
-        $self->store_node_tags($child);
+        $self->store_node_tags($child, $ref_support);
     }
 }
 

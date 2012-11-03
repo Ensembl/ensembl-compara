@@ -95,7 +95,8 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    $self->store_genetree($self->param('protein_tree'));
+    my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
+    $self->store_genetree($self->param('protein_tree'), \@ref_support);
 
     if ($self->param('store_intermediate_trees')) {
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
