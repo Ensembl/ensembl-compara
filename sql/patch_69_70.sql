@@ -64,3 +64,39 @@ DELETE gtrt
 	FROM gene_tree_root_tag gtrt JOIN gene_tree_root gtr ON gtr.ref_root_id = gtrt.root_id
 	WHERE tag LIKE "%\_tree\_root\_id" AND gtr.root_id = value;
 
+
+-- tree support
+INSERT INTO gene_tree_node_tag
+	SELECT node_id, 'tree_support', 'phyml_nt'
+	FROM gene_tree_node_attr
+	WHERE FIND_IN_SET('phyml_nt', tree_support);
+
+INSERT INTO gene_tree_node_tag
+	SELECT node_id, 'tree_support', 'phyml_aa'
+	FROM gene_tree_node_attr
+	WHERE FIND_IN_SET('phyml_aa', tree_support);
+
+INSERT INTO gene_tree_node_tag
+	SELECT node_id, 'tree_support', 'nj_ds'
+	FROM gene_tree_node_attr
+	WHERE FIND_IN_SET('nj_ds', tree_support);
+
+INSERT INTO gene_tree_node_tag
+	SELECT node_id, 'tree_support', 'nj_dn'
+	FROM gene_tree_node_attr
+	WHERE FIND_IN_SET('nj_dn', tree_support);
+
+INSERT INTO gene_tree_node_tag
+	SELECT node_id, 'tree_support', 'nj_mm'
+	FROM gene_tree_node_attr
+	WHERE FIND_IN_SET('nj_mm', tree_support);
+
+INSERT INTO gene_tree_node_tag
+	SELECT node_id, 'tree_support', 'quicktree'
+	FROM gene_tree_node_attr
+	WHERE FIND_IN_SET('quicktree', tree_support);
+
+ALTER TABLE gene_tree_node_attr DROP COLUMN tree_support;
+
+
+

@@ -795,7 +795,6 @@ CREATE TABLE gene_tree_root_tag (
 #    taxon_name                      -- Only present after reconciliation, the name of the species refered to by taxon_id
 #    bootstrap                       -- A bootstrap value
 #    duplication_confidence_score    -- Only for duplications: the ratio between the number of species in the intersection by the number of the species in the union
-#    tree_support                    -- Set of the 5 different trees that we compute that are supporting the node
 
 # The following foreign key is honoured in Ensembl Compara
 #  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
@@ -809,7 +808,6 @@ CREATE TABLE gene_tree_node_attr (
   taxon_name                      VARCHAR(255),
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),
-  tree_support                    SET('phyml_nt', 'nj_ds', 'phyml_aa', 'nj_dn', 'nj_mm', 'quicktree'),
 
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
