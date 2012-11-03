@@ -168,9 +168,11 @@ sub content {
     }
     
     if (defined $tagvalues->{'tree_support'}) {
+      my $tree_support = $tagvalues->{'tree_support'};
+         $tree_support = [ $tree_support ] if ref $tree_support ne 'ARRAY';
       $self->add_entry({
         type  => 'Support',
-        label => $tagvalues->{'tree_support'},
+        label => join(',', @$tree_support),
         order => 5.5
       });
     }
