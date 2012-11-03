@@ -80,6 +80,40 @@ sub content {
     ['Number of gene split events', $self->get_num_nodes_with_tag($tree, 'node_type', 'gene_split')   ]
   )->render;
 
+  my $parent      = $tree->tree->{'_supertree'};
+  if (defined $parent) {
+
+    if ($hub->param('super_tree') eq 'on') {
+      my $super_image_config = $hub->get_imageconfig('supergenetreeview');
+      $super_image_config->set_parameters({
+        container_width => 400,
+        image_width     => 400,
+        slice_number    => '1|1',
+        cdb             => $cdb
+      });
+      my $image = $self->new_image($parent->root, $super_image_config, []);
+      $image->image_type       = 'genetree';
+      $image->image_name       = ($hub->param('image_width')) . "-SUPER-$tree_stable_id";
+      $image->imagemap         = 'yes';
+      $image->set_button('drag', 'title' => 'Drag to select region');
+      $html .= sprintf(
+        '<h3>Super-tree (%d trees and %d genes in total)</h3>',
+        scalar @{$parent->root->get_all_leaves},
+        $parent->{'_total_num_leaves'},
+      );
+      $html .= $image->render ;
+    } else {
+      $html .= $self->_info(
+        sprintf(
+          'This tree is part of a super-tree of %d trees (%d genes in total)',
+          scalar @{$parent->root->get_all_leaves},
+          $parent->{'_total_num_leaves'},
+        ),
+        'The super-tree is currently not displayed. Use the "configure page" link in the left panel to change the options'
+      );
+    }
+  }
+
   if ($hub->type eq 'Gene') {
     if ($tree->tree->clusterset_id ne $object->hub->param('clusterset_id')) {
       $html .= $self->_info('Phylogenetic model selection',

@@ -788,6 +788,24 @@ sub get_GeneTree {
     $self->{$cache_key} = $tree->root;
     $self->{"_member_$compara_db"} = $member;
 
+    my $parent      = $adaptor->fetch_parent_tree($tree);
+    if ($parent->tree_type ne 'clusterset') {
+      my %subtrees;
+      my $total_leaves = 0;
+      foreach my $subtree (@{$adaptor->fetch_subtrees($parent)}) {
+        $subtrees{$subtree->{_parent_id}} = ($tree->root_id eq $subtree->root_id ? $tree : $subtree);
+      }
+      $parent->preload;
+      foreach my $leaf (@{$parent->root->get_all_leaves}) {
+        my $subtree = $subtrees{$leaf->node_id};
+        $leaf->{'_subtree'} = $subtree;
+        $leaf->{'_subtree_size'} = $subtree->get_tagvalue('gene_count');
+        $total_leaves += $leaf->{'_subtree_size'};
+      }
+      $parent->{'_total_num_leaves'} = $total_leaves;
+      $tree->{'_supertree'} = $parent;
+    }
+
     $tree->attach_alignment('default') if ($tree->clusterset_id ne 'default');
   }
   return $self->{$cache_key};

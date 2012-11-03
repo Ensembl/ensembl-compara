@@ -25,6 +25,7 @@ sub init {
     tree_format    => 'newick_mode',
     newick_mode    => 'full_web',
     nhx_mode       => 'full',
+    super_tree     => 'off',
     scale          => 150,
   };
   
@@ -144,6 +145,13 @@ sub form {
       'name'  => 'exons',
       'value' => 'on',
       'raw'   => 1,
+    });
+
+    $self->add_form_element({
+      'type'  => 'CheckBox',
+      'label' => 'Display super-tree',
+      'name'  => 'super_tree',
+      'value' => 'on',
     });
 
     if (@groups) {

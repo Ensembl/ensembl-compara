@@ -21,17 +21,39 @@ sub content {
   die 'No tree for gene' unless $tree;
   
   my $node_id         = $hub->param('node')                   || die 'No node value in params';
-  my $node            = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
+  my $node            = $tree->find_node_by_node_id($node_id);
+  
+  unless ($node) {
+    $tree = $tree->tree->{'_supertree'};
+    $node = $tree->find_node_by_node_id($node_id);
+    die "No node_id $node_id in ProteinTree" unless $node;
+  }
+  
   my %collapsed_ids   = map { $_ => 1 } grep /\d/, split ',', $hub->param('collapse');
   my $leaf_count      = scalar @{$node->get_all_leaves};
   my $is_leaf         = $node->is_leaf;
   my $is_root         = ($node->root eq $node);
+  my $is_supertree    = ($node->tree->tree_type eq 'supertree');
   my $parent_distance = $node->distance_to_parent || 0;
+
+  if ($is_leaf and $is_supertree) {
+    my $child = $node->adaptor->fetch_node_by_node_id($node->{_subtree}->root_id);
+    $node->add_tag('taxon_name', $child->get_tagvalue('taxon_name'));
+    $node->add_tag('taxon_id', $child->get_tagvalue('taxon_id'));
+    my $members = $node->adaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
+    $node->{_sub_leaves_count} = scalar(@$members);
+    my $link_gene = $members->[0];
+    foreach my $g (@$members) {
+      $link_gene = $g if (lc $g->genome_db->name) eq (lc $hub->species);
+    }
+    $node->{_sub_reference_gene} = $link_gene->gene_member;
+  }
+
   my $tagvalues       = $node->get_tagvalue_hash;
   my $taxon_id        = $tagvalues->{'taxon_id'};
-     $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf;
+     $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf && not $is_supertree;
   my $taxon_name      = $tagvalues->{'taxon_name'};
-     $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf;
+     $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf && not $is_supertree;
   my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
   my $taxon_alias     = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$taxon_id};
   my $caption         = 'Taxon: ';
@@ -61,7 +83,7 @@ sub content {
     type  => 'Bootstrap',
     label => exists $tagvalues->{'bootstrap'} ? $tagvalues->{'bootstrap'} : 'NA',
     order => 4
-  }) unless $is_root || $is_leaf;
+  }) unless $is_root || $is_leaf || $is_supertree;
 
   if (defined $tagvalues->{'lost_taxon_id'}) {
     my $lost_taxa = $tagvalues->{'lost_taxon_id'};
@@ -82,6 +104,8 @@ sub content {
   }); 
   
   my $action = 'Web/ComparaTree' . ($cdb =~ /pan/ ? '/pan_compara' : '');
+
+  if (not $is_supertree) {
 
   # Expand all nodes
   if (grep $_ != $node_id, keys %collapsed_ids) {
@@ -119,7 +143,33 @@ sub content {
     });
   }
   
-  if ($is_leaf) {
+  }
+
+  if ($is_leaf and $is_supertree) {
+
+      # Gene count
+      $self->add_entry({
+        type  => 'Gene Count',
+        label => $node->{_sub_leaves_count},
+        order => 2,
+      });
+    
+      my $link_gene = $node->{_sub_reference_gene};
+
+      $self->add_entry({
+        type  => 'Gene',
+        label => 'Switch to that tree',
+        order => 11,
+        link  => $hub->url({
+          species  => $link_gene->genome_db->name,
+          type     => 'Gene',
+          action   => 'Compara_Tree',
+          __clear  => 1,
+          g        => $link_gene->stable_id,
+        })
+      }); 
+
+  } elsif ($is_leaf) {
     # expand all paralogs
     my $gdb_id = $node->genome_db_id;
     my (%collapse_nodes, %expand_nodes);
@@ -177,7 +227,7 @@ sub content {
       });
     }
 
-    if ($is_root) {
+    if ($is_root and not $is_supertree) {
       # GeneTree StableID
       $self->add_entry({
         type  => 'GeneTree StableID',
@@ -214,10 +264,12 @@ sub content {
     
     # Gene count
     $self->add_entry({
-      type  => 'Gene Count',
+      type  => $is_supertree ? 'Tree Count' : 'Gene Count',
       label => $leaf_count,
       order => 2
     });
+    
+    return if $is_supertree;
     
     if ($collapsed_ids{$node_id}) {
       my $collapse = join(',', grep $_ != $node_id, keys %collapsed_ids) || 'none';
