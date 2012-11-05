@@ -52,10 +52,10 @@ body.static #main { margin-left: 0; }
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background:url(/i/[[SITE_LOGO]]) no-repeat 0 4px; display:inline-block; 
                                             width:[[SITE_LOGO_WIDTH]]px; height:[[SITE_LOGO_HEIGHT]]px; }
-#masthead .account_holder                 { position: absolute; top: 6px; right: 12px; }
+#masthead .account_holder                 { position: absolute; top: 5px; right: 10px; }
 #masthead .tools_holder                   { position: relative; top: 10px; }
 #masthead .tools_holder .arrow            { font-size: 8px; position: relative; top: -1px; padding-left: 1px; }
-#masthead .search_holder                  { position: absolute; top: 28px; right: 6px; margin-left: 6px; }
+#masthead .search_holder                  { position: absolute; top: 24px; right: 6px; margin-left: 6px; }
 #masthead .tabs_holder                    { position: absolute; bottom: 0; clear: both; }
 #masthead div.more                        { display: none; float: left; margin: -16px 7px 0; position: relative; z-index: 250; }
 #masthead div.more a                      { outline: 0; padding: 2px 4px; }
@@ -64,6 +64,7 @@ body.static #main { margin-left: 0; }
 #masthead ul.more_tools li                { color: [[CONTRAST_TEXT]]; border: 1px solid [[MH_BORDER]]; border-top: 0; background-color: [[PANEL_BG]]; float: none; text-align: left; margin: 0; padding: 2px; }
 #masthead ul.more_tools li a              { color: [[CONTRAST_TEXT]]; }
 
+body.mac #masthead                        { font-size: 13px; }
 body.mac #masthead ul.tabs li             { height: 21px; }
 body.mac #masthead div.more a             { padding: 4px; }
 body.mac #masthead .tools_holder          { top: 13px; }

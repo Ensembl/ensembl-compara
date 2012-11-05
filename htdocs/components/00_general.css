@@ -11,7 +11,7 @@ body.ie6  { font-size:85%; }
 
 pre, code, kbd { font-family: Courier New, Courier, monospace; }
 
-div. span, p, li, dd, dt, th, td, pre, code, kbd, label { font-size: 1em; }
+div, span, p, li, dd, dt, th, td, pre, code, kbd { font-size: 1em; }
 
 body.ie6 th, body.ie6 td { font-size: 13px; }
 
@@ -21,8 +21,8 @@ body.ie6 th, body.ie6 td { font-size: 13px; }
 
 img     { border: 0; }
 form    { border: none; margin: 0 0 1em 0; }
-p       { margin: 0 0 0.9em; line-height: 1.2em; padding: 0; }
-ul, ol  { margin: 0 0 1em; line-height: 1.2em; padding-left: 2em; }
+p       { margin: 0 0 1em; line-height: 1em; padding: 0; }
+ul, ol  { margin: 0 0 1em; line-height: 1em; padding-left: 2em; }
 pre     { margin: 0 0 1em; }
 
 /*----------------------------------------------------------------------
