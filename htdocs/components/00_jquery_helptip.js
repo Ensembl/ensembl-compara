@@ -23,7 +23,7 @@
     
     var methods = {
       init: function () {
-        this.data('helptip').popup = $('<div class="helptip"><div class="ht-inner"></div></div>').appendTo(container);
+        this.data('helptip').popup = $('<div class="helptip"><div class="helptip-inner"></div></div>').appendTo(container);
       },
       
       setTip: function (popup, html) {
