@@ -70,15 +70,16 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   },
   
   open: function (el) {
-    var caption = /modal_title_([^\s]+)/.exec(el.className + ' ');
-    var rel     = this.el.is(':visible') || $(el).hasClass('force') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
+    var $el     = $(el);
+    var caption = ((el.className.match(/\bmodal_title_(\w+)\b/) || []).pop() || '').replace('_', ' ') || this.elLk.caption.html() || el.title || $el.text();
+    var rel     = this.el.is(':visible') || $el.hasClass('force') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
     var tab     = rel ? this.elLk.tabs.children('a.' + rel) : [];
     
     if (tab.length) {
       rel = tab.data('panels').filter('.active').attr('id');
     }
     
-    this.elLk.caption.html(caption ? caption[1].replace('_', ' ') : this.elLk.caption.html() || el.title || el.innerHTML).show();
+    this.elLk.caption.html(caption).show();
     this.elLk.menu.hide();
     this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
     this.show();
