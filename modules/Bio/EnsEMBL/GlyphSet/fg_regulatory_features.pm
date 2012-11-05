@@ -20,58 +20,64 @@ sub features {
 
   unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
     $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
-    if(!$fg_db) {
+    
+    if (!$fg_db) {
       warn("Cannot connect to $db_type db");
       return [];
     }
   }
   
   my $reg_features = $self->fetch_features($fg_db, $slice, $Config);
- 
+  
   return $reg_features;
 }
 
 sub fetch_features {
   my ($self, $db, $slice, $Config ) = @_;
   my $cell_line = $self->my_config('cell_line');  
-
-
-  my $fsa = $db->get_FeatureSetAdaptor(); 
+  my $fsa       = $db->get_FeatureSetAdaptor; 
+  
   if (!$fsa) {
     warn ("Cannot get get adaptors: $fsa");
     return [];
   }
 
-  my @reg_feature_sets = @{$fsa->fetch_all_displayable_by_type('regulatory')}; 
+  my @reg_feature_sets = @{$fsa->fetch_all_displayable_by_type('regulatory')};
+  
   foreach my $set (@reg_feature_sets) {   
     next unless $set->cell_type->name =~/$cell_line/;
-    my @rf_ref = @{$set->get_Features_by_Slice($slice)};
-    if(@rf_ref && !$self->{'config'}->{'fg_regulatory_features_legend_features'} ) {
-     #warn "...................".ref($self)."........................";
-      $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_reglatory_features'} = { 'priority' => 1020, 'legend' => [] };
-    }
-    $self->{'config'}->{'reg_feats'} = \@rf_ref;
-  }
     
-  my $reg_feats = $self->{'config'}->{'reg_feats'} || [];   
-
-  my $counter = 0;
-  my $config = $self->{'config'};
-  my $hub = $config->hub;
-  my $rf_url = $hub->param('rf');
+    my @rf_ref = @{$set->get_Features_by_Slice($slice)};
+    
+    if (scalar @rf_ref && !$self->{'config'}{'fg_regulatory_features_legend_features'} ) {
+      $self->{'config'}{'fg_regulatory_features_legend_features'}{'fg_reglatory_features'} = { priority => 1020, legend => [] };
+    }
+    
+    $self->{'config'}{'reg_feats'} = \@rf_ref;
+  }
   
-  if($rf_url) {  
+  my $reg_feats = $self->{'config'}{'reg_feats'} || [];   
+  my $counter   = 0;
+  my $config    = $self->{'config'};
+  my $hub       = $config->hub;
+  my $rf_url    = $hub->param('rf');
+  
+  if ($rf_url) {
     foreach my $row (@$reg_feats) {
-      last if($row->stable_id eq $rf_url);
+      last if $row->stable_id eq $rf_url;
       $counter++;
-    }  
-    unshift(@$reg_feats, @$reg_feats[$counter]); # adding the matching regulatory features to the top of the array so that it is drawn first
-    my @array = splice(@$reg_feats, $counter+1, 1);    #and removing it where it was in the array (counter+1 since we add one more element above)
+    }
+    
+    if (exists $reg_feats->[$counter]) { 
+      unshift @$reg_feats, $reg_feats->[$counter];  # adding the matching regulatory features to the top of the array so that it is drawn first
+      splice @$reg_feats, $counter + 1, 1;          # and removing it where it was in the array (counter+1 since we add one more element above)
+    }
   }
 
-  if (@$reg_feats && $self->{'config'}->{'fg_regulatory_features_legend_features'} ){
-    $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'} = {'priority' =>1020, 'legend' => [] };	
-  }  
+  if (scalar @$reg_feats && $self->{'config'}{'fg_regulatory_features_legend_features'} ){
+    $self->{'config'}{'fg_regulatory_features_legend_features'}{'fg_regulatory_features'} = { priority => 1020, legend => [] };	
+  }
+  
   return $reg_feats;
 }
 
