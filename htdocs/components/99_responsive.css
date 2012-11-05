@@ -50,7 +50,7 @@ towards interesting content. */
   .logo-header              { background-image:url(/i/[[MOBILE_LOGO]])!important;  
                               width:[[MOBILE_LOGO_WIDTH]]px!important;
                                height:[[MOBILE_LOGO_HEIGHT]]px!important; }
-  .species-header           { font-size:150%; font-weight:bold; font-style:italic;
+  .species-header           { font-size:2em; font-weight:bold; font-style:italic;
                               color:[[SITE_LOGO_COLOUR]]; 
                               vertical-align:top; margin:16px 0 0 0; }
   .species-badge            { display: none; }
