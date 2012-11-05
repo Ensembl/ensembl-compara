@@ -4,17 +4,14 @@
   General font sizes and styles...
 ----------------------------------------------------------------------*/
 
-body      { font-family: Luxi Sans, Helvetica Neue, Helvetica, Arial, Geneva, sans-serif; 
-            font-size:100%; color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]];
+body      { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif; 
+            font-size:80%; color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]];
             padding: 0; margin: 0; border: 0; }
 body.ie6  { font-size:85%; }
 
 pre, code, kbd { font-family: Courier New, Courier, monospace; }
 
-div > span, div > a, /* sic - we only want 'raw' elements directly inside divs to be resized */
-p, li, dd, dt, th, td, pre, code, kbd, label { font-size: 0.8em; }
-ul > li > ul > li,
-ol > li > ol > li   { font-size:1em; }
+div. span, p, li, dd, dt, th, td, pre, code, kbd, label { font-size: 1em; }
 
 body.ie6 th, body.ie6 td { font-size: 13px; }
 
@@ -76,10 +73,10 @@ body.ie6 .spinner { background-color: [[PAGE_BG]]; border-color: [[PAGE_BG]]; he
 ----------------------------------------------------------------------*/
 
 h1, h2, h3, h4  { color: [[PAGE_HEADER]]; margin: 0 0 1em; }
-h1              { font-size: 1.2em; }
-h2              { font-size: 1.0em; }
-h3              { font-size: 0.9em; }
-h4              { font-size: 0.8em;   }
+h1              { font-size: 1.5em; }
+h2              { font-size: 1.2em; }
+h3              { font-size: 1.1em; }
+h4              { font-size: 1em;   }
 
 .invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
 .mobile-only    { display:none; }

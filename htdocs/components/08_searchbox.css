@@ -3,8 +3,8 @@ div.search                    { margin: 1px 1px 0 0; height: 22px; }
 div.search img                { cursor: pointer; height: 16px; width: 16px; }
 div.search div                { background-color: [[PANEL_BG]] !important; float: left; height: 16px; padding: 3px; font-weight: bold; }
 div.search div input          { width: 256px; height: 16px; position: relative; top: -1px;
-                                font-family: inherit; font-size: 14px; 
-                                line-height:14px; vertical-align:top;
+                                font-family: inherit; font-size: 13px; 
+                                line-height:13px; vertical-align:top;
                                 margin:0; padding:0;
                                 color: [[CONTRAST_TEXT]]; outline: 0; border:0; }
 div.search div input.inactive { font-style: italic; color: [[PAGE_TEXT]]; }
