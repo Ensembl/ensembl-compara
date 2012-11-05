@@ -7,6 +7,14 @@ towards interesting content. */
 
 /* BASIC RESPONSIVE DESIGN, for all small viewports including netbooks */
 
+
+@media all and (max-width:1023px) {
+
+  div.column-three { width:50%; }
+  div.column-four  { width:33.3333%; }
+
+}
+
 @media all and (max-width: 767px) {
 
 
