@@ -49,7 +49,7 @@ body.static #main { margin-left: 0; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 #masthead div.dropdown.species            { width: 505px; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
-#masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
+#masthead .logo_holder                    { position: relative; top: 2px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background:url(/i/[[SITE_LOGO]]) no-repeat 0 4px; display:inline-block; 
                                             width:[[SITE_LOGO_WIDTH]]px; height:[[SITE_LOGO_HEIGHT]]px; }
 #masthead .account_holder                 { position: absolute; top: 5px; right: 10px; }
