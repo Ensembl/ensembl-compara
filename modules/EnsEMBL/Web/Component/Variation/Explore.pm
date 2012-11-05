@@ -66,16 +66,9 @@ sub content {
     {'title' => 'Sequence',               'img' => 'flanking_sequence',      'url' => $seq_url},
   );
 
-  my $html;
-  my $break = int(scalar(@buttons)/2);
-  my $i = 0;
+  my $html = '<div class="icon-holder">';
 
   foreach my $button (@buttons) {
-    if (($i % $break) == 0) {
-      $html .= qq(
-        <div>
-      );
-    }
     my $title = $button->{'title'};
     my $img   = 'var_'.$button->{'img'};
     my $url   = $button->{'url'};
@@ -86,19 +79,15 @@ sub content {
       $title .= ' (NOT AVAILABLE)';
       $html  .= qq(<img src="/i/96/${img}_off.png" class="portal" alt="$title" title="$title" />);
     }
-    $i++;
-    if ($i > 0 && ($i % $break) == 0) {
-      $html .= qq(
-        </div>
-      );
-    }
   }
+
+  $html .= '</div>';
 
   ## Variation documentation links
   $html .= qq(
     <div class="column-wrapper">
-      <div class="column-two">
-        <div class="column-padding no-left-margin">
+      <div class="column-two column-first">
+        <div class="column-left">
           <h2>Using the website</h2>
           <ul>
             <li>Video: <a href="/Help/Movie?id=208">Browsing SNPs and CNVs in Ensembl</a></li>
@@ -110,8 +99,8 @@ sub content {
             <p><a href="/$species/UserData/UploadVariations?db=core"><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own variants with the <a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></p>
         </div>
       </div>
-      <div class="column-two">
-        <div class="column-padding no-right-margin">
+      <div class="column-two column-next">
+        <div class="column-right">
           <h2>Programmatic access</h2>
           <ul>
             <li>Tutorial: <a href="http://www.ensembl.org/info/docs/api/variation/variation_tutorial.html">Accessing variation data with the Variation API</a></li>
