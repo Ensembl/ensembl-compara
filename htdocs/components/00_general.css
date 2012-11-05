@@ -21,8 +21,8 @@ body.ie6 th, body.ie6 td { font-size: 13px; }
 
 img     { border: 0; }
 form    { border: none; margin: 0 0 1em 0; }
-p       { margin: 0 0 1em; line-height: 1em; padding: 0; }
-ul, ol  { margin: 0 0 1em; line-height: 1em; padding-left: 2em; }
+p       { margin: 0 0 1em; line-height: 1.25em; padding: 0; }
+ul, ol  { margin: 0 0 1em; line-height: 1.25em; padding-left: 2em; }
 pre     { margin: 0 0 1em; }
 
 /*----------------------------------------------------------------------
@@ -77,6 +77,8 @@ h1              { font-size: 1.5em; }
 h2              { font-size: 1.2em; }
 h3              { font-size: 1.1em; }
 h4              { font-size: 1em;   }
+body.mac h1,
+body.mac h2     { padding-top: 4px; }
 
 .invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
 .mobile-only    { display:none; }
