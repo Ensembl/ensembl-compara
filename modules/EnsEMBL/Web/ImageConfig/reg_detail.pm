@@ -48,14 +48,22 @@ sub init {
     [ 'transcript_core_ensembl' ],
     { display => 'collapsed_nolabel' }
   );
+  
   $self->modify_configs(
     [ 'alignment_compara_431_constrained' ], 
     { display => 'compact' }
  ); 
- $self->modify_configs(
-    [ 'functional' ],
+ 
+  $self->modify_configs(
+    [ 'regulatory_features', 'functional_other_regulatory_regions' ],
     { display => 'normal' }
   );
+  
+  $self->modify_configs(
+    [ 'regulatory_features_core', 'regulatory_features_other' ],
+    { display => 'off', menu => 'no' }
+  );
+  
   $self->modify_configs(
     [ 'gene_legend' ],
     { display => 'off' }
@@ -67,18 +75,6 @@ sub init {
     [ map "regulatory_regions_funcgen_$_", @feature_sets ],
     { depth => 25, height => 6 }
   );
-  
-  my @cell_lines = map s/\:\d*//, sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  
-  foreach my $cell_line (@cell_lines) { 
-    $cell_line =~ s/\:\d*//;
-    
-    # Turn off core and supporting evidence track
-    $self->modify_configs(
-      [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
-      { display => 'off' }
-    );
-  }
 }
 
 1;

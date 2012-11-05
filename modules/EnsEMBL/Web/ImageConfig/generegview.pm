@@ -31,13 +31,13 @@ sub init {
   );
 
   $self->modify_configs(
-    [ 'functional' ],
+    [ 'regulatory_features', 'functional_other_regulatory_regions' ],
     { display => 'normal' }
   );
   
   $self->modify_configs(
-    [ 'gene_legend' ],
-    { display => 'off' }
+    [ 'regulatory_features_core', 'regulatory_features_other' ],
+    { display => 'off', menu => 'no' }
   );
   
   # hack to stop zmenus having the URL ZMenu/Transcript/Regulation, since this causes a ZMenu::Regulation to be created instead of a ZMenu::Transcript
@@ -54,19 +54,6 @@ sub init {
   );
   
   $self->load_configured_das('functional');
-  
-  # Turn off cell line wiggle tracks
-  my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  
-  foreach my $cell_line (@cell_lines) {
-    $cell_line =~ s/\:\d*//;
-    
-    # Turn off core and supporting evidence track
-    $self->modify_configs(
-      [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
-      { display => 'off' }
-    );
-  }
 }
 
 1;
