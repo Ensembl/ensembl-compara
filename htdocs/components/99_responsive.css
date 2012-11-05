@@ -33,8 +33,6 @@ towards interesting content. */
 
   div.box-left  { width:100%; float:none; margin-left: 0; margin-right: 0; }
   div.box-right { width:100%; float:none; margin-left: 0; margin-right: 0; }
-
-
 }
 
 /* SMALL MOBILE DEVICES - remove extraneous navigation */
@@ -77,3 +75,16 @@ towards interesting content. */
 
 }
 
+/* Very small mobile devices - reduce elements further */
+
+@media all and (max-width:599px) {
+
+  div.icon-holder { width: 390px; }
+
+}
+
+@media all and (max-width:479px) {
+
+  div.icon-holder { width: 260px; }
+
+}
