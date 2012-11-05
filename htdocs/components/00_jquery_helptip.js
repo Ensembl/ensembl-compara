@@ -74,13 +74,13 @@
         var $window = $(window);
         var popup   = el.data('helptip').popup;
         var options = el.data('helptip').options;
-        var pos, originalPos;
+        var pos;
         
         if (options['static']) {
           var offset = options.container ? el.position() : el.offset();
-          originalPos = pos = { x: offset.left + el.outerWidth() / 2, y: offset.top + el.outerHeight() / 2 };
+          pos = { x: offset.left + el.outerWidth() / 2, y: offset.top + el.outerHeight() / 2 };
         } else {
-          originalPos = pos = el.data('helptip').coords || { x: e.pageX, y: e.pageY };
+          pos = el.data('helptip').coords || { x: e.pageX, y: e.pageY };
           
           el.data('helptip').coords = false;
           
@@ -88,6 +88,8 @@
             el.on('mousemove.helptip', methods.mouseMove).data('helptip').mousemove = true;
           }
         }
+        
+        var originalPos = $.extend(true, pos);
         
         popup.removeClass('helptip-left helptip-top');
         
@@ -122,6 +124,8 @@
           var offset = el.data('helptip').offset;
           el.data('helptip').popup.css({ left: offset.x + e.pageX, top: offset.y + e.pageY });
         }
+        
+        el = null;
       },
       
       disable: function (popup) {
