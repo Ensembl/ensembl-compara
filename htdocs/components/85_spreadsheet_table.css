@@ -65,7 +65,7 @@ body.ie6 .dataTables_filter input { height: 20px; }
 
 .col_toggle              { float: left; width: 34%; text-align: center; color: [[PAGE_TEXT]]; }
 .col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; 
-                            font-size:0.8em; border: 2px outset [[TINT_BG]]; 
+                           border: 2px outset [[TINT_BG]]; 
                             width: 125px; padding: 1px 5px; margin: auto; }
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; text-align: center; }
