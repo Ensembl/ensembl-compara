@@ -288,7 +288,7 @@ sub _info_panel {
     $width || $self->image_width . 'px', 
     $class, 
     $width ? ' fixed_width' : '',
-    $caption, 
+    $caption || '&nbsp;', 
     $self->wrap_in_p_tag($desc)
   ) : '';
 }
