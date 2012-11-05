@@ -101,7 +101,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (Ensembl.images.total === 1) {
       this.highlightAllImages();
-    } else if (!this.multi) {
+    } else if (!this.multi && this.highlightRegions[0]) {
       var range = this.highlightRegions[0][0].region.range;
       r = r.split(/\W/);
       
