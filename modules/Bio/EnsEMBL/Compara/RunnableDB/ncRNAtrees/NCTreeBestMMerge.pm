@@ -150,7 +150,7 @@ sub write_output {
 
   if ($self->param('store_intermediate_trees')) {
        foreach my $clusterset_id (keys %{$self->param('inputtrees_rooted')}) {
-          my $newtree = $self->store_alternative_tree($self->param('inputtrees_rooted')->{$clusterset_id}, $clusterset_id, $self->param('nc_tree');
+          my $newtree = $self->store_alternative_tree($self->param('inputtrees_rooted')->{$clusterset_id}, $clusterset_id, $self->param('nc_tree'));
           $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
       }
    }
