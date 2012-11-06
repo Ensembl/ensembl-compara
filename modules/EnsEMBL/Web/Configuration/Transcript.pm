@@ -154,7 +154,7 @@ sub populate_tree {
     [qw(
       display    EnsEMBL::Web::Component::Gene::HistoryReport
       associated EnsEMBL::Web::Component::Gene::HistoryLinked
-      map        EnsEMBL::Web::Component::Gene::HistoryMap
+      map        EnsEMBL::Web::Component::Transcript::HistoryMap
     )],
     { 'availability' => 'history', 'concise' => 'ID History' }
   ));
@@ -163,7 +163,7 @@ sub populate_tree {
     [qw(
       display    EnsEMBL::Web::Component::Gene::HistoryReport/protein
       associated EnsEMBL::Web::Component::Gene::HistoryLinked/protein
-      map        EnsEMBL::Web::Component::Gene::HistoryMap/protein
+      map        EnsEMBL::Web::Component::Transcript::HistoryMap/protein
     )],
     { 'availability' => 'history_protein', 'concise' => 'ID History' }
   ));
