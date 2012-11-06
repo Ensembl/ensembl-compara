@@ -22,12 +22,13 @@ sub content {
   my %mappings          = %{$object->variation_feature_mapping}; 
   my $v                 = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$vf};
   my $variation_feature = $variation->get_VariationFeature_by_dbID($vf);
-  my $variation_string  = $variation_feature->ambig_code || '[' . $self->get_allele_string($variation_feature, $v->{'strand'}) . ']';
+  my $variation_string  = $variation_feature->ambig_code || '[' . $variation_feature->allele_string . ']';
   my $align_quality     = $variation_feature->flank_match;
   my $chr_end           = $variation_feature->slice->end;
   my $slice_start       = $v->{'start'} - $flank[0] > 1        ? $v->{'start'} - $flank[0] : 1;
   my $slice_end         = $v->{'end'}   + $flank[1] > $chr_end ? $chr_end                  : $v->{'end'} + $flank[1];
   my $slice_adaptor     = $hub->get_adaptor('get_SliceAdaptor');
+  my @order             = $v->{'strand'} == 1 ? qw(up var down) : qw(down var up);
   my (@sequence, $html);
   
   my %slices = (
@@ -47,7 +48,7 @@ sub content {
     length         => $flank[0] + $flank[1] + length $variation_string,
   };
   
-  foreach (grep $slices{$_}, qw(up var down)) {
+  foreach (grep $slices{$_}, @order) {
     my $seq;
     
     if ($_ eq 'var') {
@@ -77,7 +78,7 @@ sub content {
     ", 'auto');
   }
   
-  $html .= $self->tool_buttons(join '', map $slices{$_} ? $slices{$_}->seq : (), qw(up var down), $config->{'species'});
+  $html .= $self->tool_buttons(join '', map $slices{$_} ? $slices{$_}->seq : (), @order, $config->{'species'});
   $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
   $html .= $self->build_sequence([ \@sequence ], $config);
   
