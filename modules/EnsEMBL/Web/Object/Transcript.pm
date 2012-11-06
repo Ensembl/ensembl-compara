@@ -1638,7 +1638,7 @@ sub get_transcript_variations {
 }
 
 sub variation_data {
-  my ($self, $slice, $include_utr) = @_;
+  my ($self, $slice, $include_utr, $strand) = @_;
   
   return [] unless $self->species_defs->databases->{'DATABASE_VARIATION'};
   
@@ -1691,9 +1691,9 @@ sub variation_data {
       vdbid         => $vdbid,
       snp_source    => $vf->source,
       snp_id        => $vf->variation_name,
-      ambigcode     => $vf->ambig_code,
+      ambigcode     => $vf->ambig_code($strand),
       codons        => $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '',
-      allele        => $vf->allele_string,
+      allele        => $vf->allele_string(undef, $strand),
       pep_snp       => join(', ', split '/', $tva->pep_allele_string),
       type          => $tv->display_consequence,
       class         => $vf->var_class,
