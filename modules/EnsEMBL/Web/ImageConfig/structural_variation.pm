@@ -46,13 +46,8 @@ sub init {
   );
 
   $self->modify_configs(
-    [ 'variation_feature_variation', 'regulatory_features', 'functional_other_regulatory_regions' ],
+    [ 'variation_feature_variation', 'somatic_mutation_all', 'regulatory_features', 'functional_other_regulatory_regions' ],
     { display => 'normal' }
-  );
-  
-  $self->modify_configs(
-    [ 'somatic_mutation_all' ],
-    { display => 'normal', style => 'box', depth => 100000 }
   );
   
   # structural variations
