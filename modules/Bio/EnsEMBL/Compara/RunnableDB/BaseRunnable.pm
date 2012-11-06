@@ -148,7 +148,7 @@ sub _slurp {
   my $slurped;
   {
     local $/ = undef;
-    open(my $fh, '<', $file_name);
+    open(my $fh, '<', $file_name) or $self->throw("Couldnt open file [$file_name]");
     $slurped = <$fh>;
     close($fh);
   }
