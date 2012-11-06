@@ -41,7 +41,7 @@ sub new {
   
   my $object_types = { map { $_->[0] => $_->[1] } @$object_params };
   
-  my $hub = new EnsEMBL::Web::Hub({
+  my $hub = EnsEMBL::Web::Hub->new({
     apache_handle  => $r,
     input          => $input,
     object_types   => $object_types,
