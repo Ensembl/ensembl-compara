@@ -104,7 +104,9 @@ sub write_output {
             my $clusterset_id = $1;
             next if $clusterset_id eq 'mmerge';
             next if $clusterset_id eq 'phyml';
-            $self->store_intermediate_tree($filename, $clusterset_id);
+            print STDERR "Found file $filename for clusterset $clusterset_id\n";
+            my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('protein_tree'));
+            $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
         }
     }
 
@@ -180,22 +182,6 @@ sub run_njtree_phyml {
     }
 
     $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', time()*1000-$starttime);
-}
-
-
-sub store_intermediate_tree {
-    my ($self, $filename, $clusterset_id) = @_;
-    print STDERR "Found file $filename for clusterset $clusterset_id\n";
-    my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
-    if (not defined $clusterset) {
-        $self->warning("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
-        return;
-    }
-    my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
-    $self->parse_newick_into_tree($self->_slurp($filename), $newtree);
-    $self->store_genetree($newtree);
-    $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
-    $newtree->release_tree;
 }
 
 
