@@ -3,7 +3,6 @@ package EnsEMBL::Web::DOM::Node;
 use strict;
 
 use HTML::Entities qw(encode_entities decode_entities);
-use utf8;
 use Clone qw(clone);
 use Data::Dumper;
 
@@ -629,7 +628,6 @@ sub dom {
 sub encode_htmlentities {
   #use this to avoid using HTML::entities in every child
   my ($self, $value) = @_;
-  utf8::decode($value);
   return encode_entities($value);
 }
 
