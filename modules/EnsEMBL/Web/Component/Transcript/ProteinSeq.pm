@@ -8,6 +8,7 @@ sub get_sequence_data {
   my ($self, $translation, $config) = @_;
   my $object   = $self->object;
   my $pep_seq  = $translation->Obj->seq;
+  my $strand   = $object->Obj->strand;
   my @sequence = [ map {{ letter => $_ }} split //, uc $pep_seq ];
   my $markup;
   
@@ -33,7 +34,7 @@ sub get_sequence_data {
   }
   
   if ($config->{'snp_display'}) {
-    foreach my $snp (reverse @{$object->variation_data($translation->get_Slice)}) {
+    foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
       

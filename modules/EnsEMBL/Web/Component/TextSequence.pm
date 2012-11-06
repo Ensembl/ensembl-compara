@@ -11,8 +11,6 @@ use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Component);
 
-use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
-
 sub new {
   my $class = shift;
   my $self  = $class->SUPER::new(@_);
@@ -194,7 +192,7 @@ sub set_variations {
     my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
     my $start          = $_->start;
     my $end            = $_->end;
-    my $allele_string  = $self->get_allele_string($_, $strand);
+    my $allele_string  = $_->allele_string(undef, $strand);
     my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
        $snp_type       = lc [ grep $config->{'consequence_types'}{$_}, @{$_->consequence_type} ]->[0] if $config->{'consequence_types'};
        $snp_type       = 'failed' if $failed;
@@ -272,7 +270,7 @@ sub set_variations {
     });
     
     my $link_text  = qq{ <a href="$url">$snp_start: $variation_name $allele_string</a>;};
-    (my $ambiguity = $config->{'ambiguity'} ? $_->ambig_code : '') =~ s/-//g;
+    (my $ambiguity = $config->{'ambiguity'} ? $_->ambig_code($strand) : '') =~ s/-//g;
     
     for ($s..$e) {
       # Don't mark up variations when the secondary strain is the same as the sequence.
@@ -323,7 +321,6 @@ sub get_allele_string {
   
   return $allele_string;
 }
-
 
 sub set_exons {
   my ($self, $config, $slice_data, $markup) = @_;
@@ -514,9 +511,7 @@ sub markup_variation {
     foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {
       $variation = $data->{'variations'}{$_};
       
-      (my $ambiguity = ambiguity_code($variation->{'alleles'}) || undef) =~ s/-//g;
- 
-      $seq->[$_]{'letter'} = $ambiguity if $ambiguity && $config->{'ambiguity'};
+      $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
@@ -763,9 +758,7 @@ sub build_sequence {
     
     foreach my $seq (@$lines) {
       my $style;
-     
-      warn "$seq->{'title'} $seq->{'letter'}\n";
- 
+      
       $previous{$_}     = $current{$_} for keys %current;
       $current{'title'} = $seq->{'title'}  ? qq{title="$seq->{'title'}"} : '';
       $current{'href'}  = $seq->{'href'}   ? qq{href="$seq->{'href'}"}   : '';;

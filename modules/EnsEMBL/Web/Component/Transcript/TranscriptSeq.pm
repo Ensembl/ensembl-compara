@@ -122,7 +122,7 @@ sub get_sequence_data {
   }
   
   if ($config->{'snp_display'}) {
-    foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'})}) {
+    foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'}, $trans_strand)}) {
       my $dbID              = $snp->{'vdbid'};
       my $tv                = $snp->{'tv'};
       my $var               = $snp->{'vf'}->transfer($slice);
@@ -136,10 +136,6 @@ sub get_sequence_data {
       my $pep_allele_string = $tv->pep_allele_string;
       my $consequence_type  = join ' ', @{$tv->consequence_type};
       my $aa_change         = $consequence_type =~ /\b(NON_SYNONYMOUS_CODING|FRAMESHIFT_CODING|STOP_LOST|STOP_GAINED)\b/;
-      
-      if ($var && $var->strand == -1 && $trans_strand == -1) {
-        tr/acgthvmrdbkyACGTDBKYHVMR/tgcadbkyhvmrTGCAHVMRDBKY/ for $ambigcode, $alleles;
-			}
       
       # Variation is an insert if start > end
       ($start, $end) = ($end, $start) if $start > $end;
