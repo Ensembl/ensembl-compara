@@ -59,7 +59,7 @@ use strict;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {
