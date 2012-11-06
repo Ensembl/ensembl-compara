@@ -12,7 +12,6 @@ sub direct_connection {
     require EnsEMBL::Web::Controller;
     use strict 'refs';
     my $dbh = $handles{$caller};
-    return $dbh if (defined $dbh) and $dbh->ping;
     my $dsn = join(':','dbi','mysql',$name,$host,$port);
     $dbh = DBI->connect_cached($dsn,$user,$pass,
       {
