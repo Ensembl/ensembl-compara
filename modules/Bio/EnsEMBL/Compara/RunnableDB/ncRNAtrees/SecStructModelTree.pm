@@ -198,14 +198,8 @@ sub _store_newick_into_protein_tree_tag_string {
   my $tag = shift;
   my $newick_file = shift;
 
-  my $newick = '';
   print STDERR "load from file $newick_file\n" if($self->debug);
-  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
-  while(<FH>) {
-    chomp $_;
-    $newick .= $_;
-  }
-  close(FH);
+  my $newick = $self->_slurp($newick_file);
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
 
   $self->param('nc_tree')->store_tag($tag, $newick);
