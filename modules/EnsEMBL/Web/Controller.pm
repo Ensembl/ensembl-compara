@@ -49,7 +49,7 @@ sub new {
     user_cookie    => $args->{'user_cookie'},
   });
   
-  my $builder = new EnsEMBL::Web::Builder({
+  my $builder = EnsEMBL::Web::Builder->new({
     hub           => $hub,
     object_params => $object_params
   });
@@ -378,7 +378,7 @@ sub add_error {
  
  my ($self, $caption, $template, @content) = @_;
  my $error = $self->_format_error(pop @content);
- push @{$self->errors}, new EnsEMBL::Web::Document::Panel(caption => $caption, content => sprintf($template, @content, $error));
+ push @{$self->errors}, EnsEMBL::Web::Document::Panel->new(caption => $caption, content => sprintf($template, @content, $error));
 }
 
 sub save_config {
