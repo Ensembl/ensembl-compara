@@ -112,7 +112,7 @@ sub fetch_input {
 
     foreach my $exe_name (qw(sreformat_exe quicktree_exe)) {
         my $exe = $self->param($exe_name) or die "'$exe_name' is an obligatory parameter";
-        die "Cannot execute '$exe_name'" unless (-x $exe_name);
+        die "Cannot execute '$exe'" unless (-x $exe);
     }
 
     ## 'tags_to_copy' can also be set
