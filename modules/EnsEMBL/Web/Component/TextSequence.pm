@@ -303,25 +303,6 @@ sub set_variations {
   $adaptor->db->include_failed_variations($include_failed) if $adaptor && defined $include_failed;
 }
 
-sub get_allele_string {
-  my ($self, $variation_feature, $strand) = @_;
-  my $allele_string = $variation_feature->allele_string;
-  
-  # If slice is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
-  if ($strand < 0) {
-    my @al = split '/', $allele_string;
-    
-    $allele_string  = '';
-    $allele_string .= reverse($_) . '/' for @al;
-    $allele_string  =~ s/\/$//;
-  }
-
-  # If the variation is on reverse strand, flip the bases
-  $allele_string =~ tr/ACGTacgt/TGCAtgca/ if $variation_feature->strand < 0;
-  
-  return $allele_string;
-}
-
 sub set_exons {
   my ($self, $config, $slice_data, $markup) = @_;
   my $slice    = $slice_data->{'slice'};
