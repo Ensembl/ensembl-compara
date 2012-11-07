@@ -241,9 +241,10 @@ sub reroot_inputtrees {
 sub store_ktreedist_score {
     my ($self) = @_;
     my $root_id = $self->param('gene_tree')->root_id;
+    my $tree = $self->param('gene_tree'),
 
     my %other_trees;
-    for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($root_id)}) {
+    for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
         print STDERR "OTHER TREE FOUND: ", $other_tree->root_id, "WITH CLUSTERSET_ID", $other_tree->clusterset_id, "\n" if ($self->debug());
         $other_trees{$other_tree->clusterset_id} = $other_tree;
     }
