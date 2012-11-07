@@ -367,8 +367,9 @@ sub get_SimpleAlign {
         }
 
         # Sequence length
-        my $aln_end = $member->seq_length;
-        $aln_end = $aln_end*3 if $alphabet eq 'dna';
+        my $true_seq = $seqstr;
+        $true_seq =~ s/-//g;
+        my $aln_end = length($true_seq);
 
         $seqstr =~ s/\*/X/g if ($stop2x);
         my $seq = Bio::LocatableSeq->new(
