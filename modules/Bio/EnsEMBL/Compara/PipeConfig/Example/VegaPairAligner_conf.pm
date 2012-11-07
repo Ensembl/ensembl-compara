@@ -50,6 +50,7 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf');
 
 sub default_options {
   my ($self) = @_;
+  my $version = 'vega_ga_20120822_69'; #edit this each time
   return {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
@@ -60,12 +61,13 @@ sub default_options {
     'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
     'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-    'pipeline_db' => {                                  # connection parameters
+    # connection parameters
+    'pipeline_db' => {
       -host   => 'vegabuild',
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'),
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120822_'.$self->o('release'),
+      -dbname => $self->o('ENV', 'USER').'_'.$version,
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -103,8 +105,7 @@ sub default_options {
 	#Default pairaligner config
 	#
     'skip_pairaligner_stats' => 0, #skip this module if set to 1
-    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/compara_generation/vega_ga_20120822_'.$self->o('release'),
-#    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_67_testing',
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/compara_generation/'.$version,
     };
 }
 
