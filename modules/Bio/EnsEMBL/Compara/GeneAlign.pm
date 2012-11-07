@@ -79,11 +79,10 @@ sub new {
     my $self = $class->SUPER::new(@args);
 
     if (scalar @args) {
-        my ($gene_align_id, $aln_method, $aln_length) = rearrange([qw(GENE_ALIGN_ID ALN_METHOD ALN_LENGTH)], @args);
+        my ($aln_method, $aln_length) = rearrange([qw(ALN_METHOD ALN_LENGTH)], @args);
 
         $aln_method && $self->aln_method($aln_method);
         $aln_length && $self->aln_length($aln_length);
-        $gene_align_id && $self->gene_align_id($gene_align_id);
     }
 
     return $self;
@@ -93,23 +92,6 @@ sub new {
 #####################
 # Object attributes #
 #####################
-
-=head2 gene_align_id
-
-  Description : Getter/Setter for the gene_align_id field. This field would map
-                to the gene_align / gene_align_member tables
-  Returntype  : String
-  Example     : my $aln_id = $tree->gene_align_id();
-  Caller      : General
-
-=cut
-
-sub gene_align_id {
-    my $self = shift;
-    $self->{'_gene_align_id'} = shift if(@_);
-    return $self->{'_gene_align_id'};
-}
-
 =head2 aln_length
 
   Description : Getter/Setter for the aln_length field. This field contains
@@ -159,7 +141,7 @@ sub aln_method {
 sub _attr_to_copy_list {
     my $self = shift;
     my @sup_attr = $self->SUPER::_attr_to_copy_list();
-    push @sup_attr, qw(_gene_align_id _aln_length _aln_method);
+    push @sup_attr, qw(_aln_length _aln_method);
     return @sup_attr;
 }
 

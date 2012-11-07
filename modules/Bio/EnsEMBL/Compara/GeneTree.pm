@@ -85,13 +85,15 @@ sub new {
     my $self = $class->SUPER::new(@args);
 
     if (scalar @args) {
-        my ($root_id, $member_type, $tree_type, $clusterset_id, $ref_root_id) = rearrange([qw(ROOT_ID MEMBER_TYPE TREE_TYPE CLUSTERSET_ID REF_ROOT_ID)], @args);
+        my ($root_id, $member_type, $tree_type, $clusterset_id, $ref_root_id, $gene_align_id) =
+            rearrange([qw(ROOT_ID MEMBER_TYPE TREE_TYPE CLUSTERSET_ID REF_ROOT_ID GENE_ALIGN_ID)], @args);
 
         $self->{'_root_id'} = $root_id if defined $root_id;
         $member_type && $self->member_type($member_type);
         $tree_type && $self->tree_type($tree_type);
         $clusterset_id && $self->clusterset_id($clusterset_id);
         $ref_root_id && $self->ref_root_id($ref_root_id);
+        $gene_align_id && $self->gene_align_id($gene_align_id);
     }
 
     return $self;
@@ -201,6 +203,23 @@ sub root_id {
     my $self = shift;
     return $self->{'_root_id'};
 }
+
+=head2 gene_align_id
+
+  Description : Getter/Setter for the gene_align_id field. This field would map
+                to the gene_align / gene_align_member tables
+  Returntype  : String
+  Example     : my $aln_id = $tree->gene_align_id();
+  Caller      : General
+
+=cut
+
+sub gene_align_id {
+    my $self = shift;
+    $self->{'_gene_align_id'} = shift if(@_);
+    return $self->{'_gene_align_id'};
+}
+
 
 
 ################
@@ -375,7 +394,7 @@ sub member_class {
 sub _attr_to_copy_list {
     my $self = shift;
     my @sup_attr = $self->SUPER::_attr_to_copy_list();
-    push @sup_attr, qw(_tree_type _member_type _clusterset_id);
+    push @sup_attr, qw(_tree_type _member_type _clusterset_id _gene_align_id);
     return @sup_attr;
 }
 
