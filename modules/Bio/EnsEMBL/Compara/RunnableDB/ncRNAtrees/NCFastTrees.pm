@@ -151,8 +151,8 @@ sub _run_fasttree {
     die "Cannot execute '$fasttree_exe'" unless(-x $fasttree_exe);
 
     my $fasttree_output = $self->worker_temp_directory . "FastTree.$fasttree_tag";
-    my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_IT_nj';
-#    my $tag = 'ft_IT_nj';
+    my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_it_nj';
+#    my $tag = 'ft_it_nj';
     my $cmd = $fasttree_exe;
     $cmd .= " -nt -quiet -nopr";
     $cmd .= " $aln_file";
@@ -215,8 +215,8 @@ sub _run_raxml_light {
 
     die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);
 
-    my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_IT_ml';
-#    my $tag = 'ft_IT_ml';
+    my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_it_ml';
+#    my $tag = 'ft_it_ml';
     my $cmd = $raxmlLight_exe;
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";

@@ -55,7 +55,7 @@ sub run_ncgenomic_tree {
 
     $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
     return if ($newick =~ /^_null_;/);
-    my $tag = "pg_IT_" . $method;
+    my $tag = "pg_it_" . $method;
     $cluster->store_tag($tag, $newick);
 }
 

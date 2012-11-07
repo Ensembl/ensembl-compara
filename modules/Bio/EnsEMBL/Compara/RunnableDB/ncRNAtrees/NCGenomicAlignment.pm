@@ -44,8 +44,8 @@ sub run {
         $self->dataflow_output_id (
                                    {
                                     'gene_tree_id' => $self->param('gene_tree_id'),
-                                    'fastTreeTag' => "ftga_IT_nj",
-                                    'raxmlLightTag' => "ftga_IT_ml",
+                                    'fastTreeTag' => "ftga_it_nj",
+                                    'raxmlLightTag' => "ftga_it_ml",
                                     'alignment_id' => $self->param('alignment_id'),
                                    },3
                                   );

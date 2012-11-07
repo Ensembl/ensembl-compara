@@ -183,7 +183,7 @@ sub _run_bootstrap_raxml {
   die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
   my $bootstrap_num = 10;
-  my $tag = 'ml_IT_' . $bootstrap_num;
+  my $tag = 'ml_it_' . $bootstrap_num;
 
   # Checks if the bootstrap tree is already in the DB (is this a rerun?)
   if ($self->param('nc_tree')->has_tag($tag)) {

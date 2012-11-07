@@ -99,7 +99,7 @@ sub run {
 
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
-    my $tag = 'ss_IT_' . $model;
+    my $tag = 'ss_it_' . $model;
     if ($self->param('nc_tree')->has_tag($tag)) {
         my $eval_tree;
         # Checks the tree string can be parsed successfully
