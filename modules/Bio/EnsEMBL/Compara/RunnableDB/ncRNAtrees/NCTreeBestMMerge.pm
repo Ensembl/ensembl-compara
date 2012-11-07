@@ -86,16 +86,6 @@ sub fetch_input {
 
   my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id'));
 
-  # We now have genomic_trees for them
-#   if (scalar @{$nc_tree->get_all_leaves()} < 4) {
-#       # We don't have enough data to create the trees
-#       my $msg = sprintf "Tree cluster %d has <4 genes\n", $self->param('gene_tree_id');
-#       print STDERR $msg if ($self->debug());
-#       $self->input_job->incomplete(0);
-#       die $msg;
-#   }
-
-      # Fetch sequences:
   $self->param('nc_tree', $nc_tree);
 
   $self->param('inputtrees_unrooted', {});
@@ -148,12 +138,6 @@ sub write_output {
 
   $self->store_genetree($self->param('nc_tree'), $self->param('ref_support')) if (defined($self->param('inputtrees_unrooted')));
 
-  if ($self->param('store_intermediate_trees')) {
-       foreach my $clusterset_id (keys %{$self->param('inputtrees_rooted')}) {
-          my $newtree = $self->store_alternative_tree($self->param('inputtrees_rooted')->{$clusterset_id}, $clusterset_id, $self->param('nc_tree'));
-          $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
-      }
-   }
 }
 
 sub post_cleanup {
@@ -193,18 +177,10 @@ sub load_input_trees {
   my $self = shift;
   my $tree = $self->param('nc_tree');
 
-  foreach my $tag ($tree->get_all_tags) {
-    next unless $tag =~ m/_it_/;
-    my $inputtree_string = $tree->get_value_for_tag($tag);
-
-    # Checks that the tree can be parsed
-    eval {
-      my $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string);
-      my @leaves = @{$eval_inputtree->get_all_leaves};
-    };
-    unless ($@) {
-        $self->param('inputtrees_unrooted')->{$tag} = $inputtree_string;
-    }
+  for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+    print STDERR $tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
+    my $tag = $other_tree->clusterset_id;
+    $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
   }
 }
 

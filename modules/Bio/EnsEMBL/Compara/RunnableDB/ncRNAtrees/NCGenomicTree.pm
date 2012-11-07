@@ -6,7 +6,7 @@ use Data::Dumper;
 use Time::HiRes qw/time/;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub fetch_input {
     my ($self) = @_;
@@ -53,10 +53,9 @@ sub run_ncgenomic_tree {
         die "unknown method: $method\n";
     }
 
-    $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
     return if ($newick =~ /^_null_;/);
     my $tag = "pg_it_" . $method;
-    $cluster->store_tag($tag, $newick);
+    $self->store_alternative_tree($newick, $tag, $cluster);
 }
 
 sub _load_and_dump_alignment {

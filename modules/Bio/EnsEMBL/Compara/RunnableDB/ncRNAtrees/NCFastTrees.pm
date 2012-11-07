@@ -56,7 +56,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees;
 
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 =head2 fetch_input
 
@@ -317,9 +317,8 @@ sub _store_newick_into_nc_tree_tag_string {
 
   print("load from file $newick_file\n") if($self->debug);
   my $newick = $self->_slurp($newick_file);
-  $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
 
-  $self->param('nc_tree')->store_tag($tag, $newick);
+  $self->store_alternative_tree($newick, $tag, $self->param('nc_tree'));
   if (defined($self->param('model'))) {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
     $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));

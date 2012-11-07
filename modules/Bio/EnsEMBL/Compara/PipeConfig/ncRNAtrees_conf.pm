@@ -649,7 +649,6 @@ sub pipeline_analyses {
                             'treebest_exe' => $self->o('treebest_exe'),
                             'mlss_id' => $self->o('mlss_id'),
                             'member_type' => 'ncrna', # For creating additional 
-                            'store_intermediate_trees' => 1,
                            },
             -flow_into => {
                            2 => [ 'orthotree', 'ktreedist' ],
