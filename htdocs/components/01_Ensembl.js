@@ -205,12 +205,8 @@ Ensembl.extend({
     }
   },
   
-  updateURL: function (params, url) {
-    if (url) {
-      url += url.match(/\?/) ? '' : '?';
-    } else {
-      url = window.location[this.locationURL];
-    }
+  updateURL: function (params, inputURL) {
+    var url = inputURL ? (inputURL + (inputURL.match(/\?/) ? '' : '?')) : window.location[this.locationURL];
     
     for (var i in params) {
       if (url.match(i + '=')) {
@@ -220,7 +216,7 @@ Ensembl.extend({
       }
     }
     
-    if (arguments[1]) {
+    if (inputURL) {
       return url;
     }
     
