@@ -702,12 +702,13 @@ sub _add_datahub {
   if ($hub_info->{'error'}) {
     warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
   } else {
-    my $source_list = $hub_info->{$self->hub->species_defs->UCSC_GOLDEN_PATH};
+    my $golden_path = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH');
+    my $source_list = $hub_info->{$golden_path} || [];
     
     return unless scalar @$source_list;
     
     ## Get tracks from hub
-    my $datahub_config = $parser->parse($base_url . $self->hub->species_defs->UCSC_GOLDEN_PATH, $source_list);
+    my $datahub_config = $parser->parse($base_url . $golden_path, $source_list);
     
     ## Create Ensembl-style tracks from the datahub configuration
     ## TODO - implement track grouping!
@@ -2283,11 +2284,8 @@ sub add_regulation_features {
   
   return unless $menu;
   
-  my $reg_regions = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
-  
-  my $ch3 = $self->create_submenu('functional_dna_methylation', 'DNA Methylation');
-  $reg_regions->before($ch3);
-  
+  my $reg_regions       = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
+  my $methylation_menu  = $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
@@ -2335,14 +2333,13 @@ sub add_regulation_features {
   }
   
   # Add internal methylation tracks
-  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}->{'tables'};
-
-  my $m = $db_tables->{'methylation'};
-  foreach my $k (sort { $m->{$a}->{'description'} cmp 
-                        $m->{$b}->{'description'}     } keys %$m) {
-    $ch3->append($self->create_track("methylation_$k",$m->{$k}->{'name'}, {
+  my $db_tables   = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my $methylation = $db_tables->{'methylation'};
+  
+  foreach my $k (sort { $methylation->{$a}{'description'} cmp $methylation->{$b}{'description'} } keys %$methylation) {
+    $methylation_menu->append($self->create_track("methylation_$k", $methylation->{$k}{'name'}, {
       data_id      => $k,
-      description  => $m->{$k}->{'description'},
+      description  => $methylation->{$k}{'description'},
       strand       => 'r',
       nobump       => 1,
       addhiddenbgd => 1,
@@ -2352,7 +2349,8 @@ sub add_regulation_features {
       colourset    => 'seq',
     }));
   }
-  $self->add_track('information', 'meth_legend',   'Methylation Legend', 'meth_legend', { strand => 'r' });        
+  
+  $self->add_track('information', 'meth_legend', 'Methylation Legend', 'meth_legend', { strand => 'r' });        
 }
 
 sub add_regulation_builds {
@@ -2374,7 +2372,7 @@ sub add_regulation_builds {
   
   my $reg_feats = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
   my $reg_segs  = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
-  my ($core_menu, $other_menu);
+  my ($core_menu, $other_menu, $prev_track);
   
   my @cell_lines = sort keys %{$db_tables->{'cell_type'}{'ids'}};
   my (@renderers, $multi_flag);
@@ -2386,9 +2384,8 @@ sub add_regulation_builds {
   }
   
   # Add MultiCell first
-  unshift @cell_lines, 'AAAMultiCell';   
- 
-  my $prev_track; 
+  unshift @cell_lines, 'AAAMultiCell';
+  
   foreach my $cell_line (sort  @cell_lines) {
     $cell_line =~ s/AAA|\:\w*//g;
     
@@ -2488,8 +2485,8 @@ sub add_regulation_builds {
   }
   
   if ($db_tables->{'cell_type'}{'ids'}) {
-    $self->add_track('information', 'fg_regulatory_features_legend',   'Reg. Features Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'});        
-    $self->add_track('information', 'fg_segmentation_features_legend', 'Reg. Segments Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features'});
+    $self->add_track('information', 'fg_regulatory_features_legend',   'Reg. Features Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });        
+    $self->add_track('information', 'fg_segmentation_features_legend', 'Reg. Segments Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features' });
     $self->add_track('information', 'fg_multi_wiggle_legend',          'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
   }
 }
