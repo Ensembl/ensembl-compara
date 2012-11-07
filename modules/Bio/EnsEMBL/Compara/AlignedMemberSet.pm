@@ -24,24 +24,17 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 
 =head1 NAME
 
-AlignedMemberSet - A superclass for pairwise or multiple relationships, base of
-Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and
-Bio::EnsEMBL::Compara::Domain.
+Bio::EnsEMBL::Compara::AlignedMemberSet
 
 =head1 DESCRIPTION
 
-A superclass for pairwise and multiple relationships
-
-Currently the AlignedMember objects are used in the GeneTree structure
-to represent the leaves of the trees. Each leaf contains an aligned
-sequence, which is represented as an AlignedMember object.
+A superclass for pairwise or multiple sequence alignments of genes,
+base of Family, Homology and GeneTree.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMemberSet
   +- Bio::EnsEMBL::Compara::MemberSet
-
-=head1 METHODS
 
 =cut
 
@@ -68,7 +61,7 @@ use base ('Bio::EnsEMBL::Compara::MemberSet');
 
   Example    :
   Description:
-  Returntype : Bio::EnsEMBL::Compara::GeneAlign
+  Returntype : Bio::EnsEMBL::Compara::AlignedMemberSet
   Exceptions :
   Caller     :
 
@@ -80,9 +73,12 @@ sub new {
     my $self = $class->SUPER::new(@args);
 
     if (scalar @args) {
-        my ($seq_type) = rearrange([qw(SEQ_TYPE)], @args);
+        my ($seq_type, $aln_method, $aln_length) =
+            rearrange([qw(SEQ_TYPE ALN_METHOD ALN_LENGTH)], @args);
 
         $seq_type && $self->seq_type($seq_type);
+        $aln_method && $self->aln_method($aln_method);
+        $aln_length && $self->aln_length($aln_length);
     }
 
     return $self;
@@ -110,6 +106,40 @@ sub seq_type {
     my $self = shift;
     $self->{'_seq_type'} = shift if(@_);
     return $self->{'_seq_type'};
+}
+
+
+=head2 aln_length
+
+  Description : Getter/Setter for the aln_length field. This field contains
+                the length of the alignment
+  Returntype  : Integer
+  Example     : my $len = $tree->aln_length();
+  Caller      : General
+
+=cut
+
+sub aln_length {
+    my $self = shift;
+    $self->{'_aln_length'} = shift if(@_);
+    return $self->{'_aln_length'};
+}
+
+
+=head2 aln_method
+
+  Description : Getter/Setter for the aln_method field. This field should
+                represent the method used for the alignment
+  Returntype  : String
+  Example     : my $method = $tree->aln_method();
+  Caller      : General
+
+=cut
+
+sub aln_method {
+    my $self = shift;
+    $self->{'_aln_method'} = shift if(@_);
+    return $self->{'_aln_method'};
 }
 
 
@@ -144,7 +174,7 @@ sub member_class {
 sub _attr_to_copy_list {
     my $self = shift;
     my @sup_attr = $self->SUPER::_attr_to_copy_list();
-    push @sup_attr, qw(_seq_type);
+    push @sup_attr, qw(_seq_type _aln_length _aln_method);
     return @sup_attr;
 }
 

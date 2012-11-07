@@ -24,12 +24,12 @@ Bio::EnsEMBL::Compara::GeneTree
 
 Class to represent a gene tree object. Contains a link to
 the root of the tree, as long as general tree properties.
-It implements the GeneAlign interface (via the leaves).
+It implements the AlignedMemberSet interface (via the leaves).
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneTree
-  +- Bio::EnsEMBL::Compara::GeneAlign
+  +- Bio::EnsEMBL::Compara::AlignedMemberSet
   `- Bio::EnsEMBL::Compara::Taggable
 
 =head1 AUTHORSHIP
@@ -61,7 +61,7 @@ use Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Compara::GeneAlign', 'Bio::EnsEMBL::Compara::Taggable');
+use base ('Bio::EnsEMBL::Compara::AlignedMemberSet', 'Bio::EnsEMBL::Compara::Taggable');
 
 
 ##############################
