@@ -53,7 +53,7 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
-    'release'               => '68',
+    'release'               => '69',
     #'dbname'               => '', #Define on the command line via the conf_file
 
     # dependent parameters:
@@ -64,8 +64,8 @@ sub default_options {
       -host   => 'vegabuild',
       -port   => 5304,
       -user   => 'ottadmin',
-      -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120611_'.$self->o('release').'_4',
+      -pass   => $self->o('password'),
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20120822_'.$self->o('release'),
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -103,7 +103,7 @@ sub default_options {
 	#Default pairaligner config
 	#
     'skip_pairaligner_stats' => 0, #skip this module if set to 1
-    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/compara_generation/vega_ga_20120822_'.$self->o('release'),
 #    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_67_testing',
     };
 }
