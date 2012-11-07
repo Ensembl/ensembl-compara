@@ -12,6 +12,7 @@ sub direct_connection {
     require EnsEMBL::Web::Controller;
     use strict 'refs';
     my $dbh = $handles{$caller};
+    return $dbh if $dbh and $dbh->ping;
     my $dsn = join(':','dbi','mysql',$name,$host,$port);
     $dbh = DBI->connect_cached($dsn,$user,$pass,
       {
@@ -19,6 +20,7 @@ sub direct_connection {
         RaiseError => 1,
         PrintError => 1,
         AutoCommit => 1,
+        mysql_connect_timeout => 30,
       }
     ) || die "Can not connect to $dsn";
     EnsEMBL::Web::Controller->disconnect_on_request_finish($dbh);
