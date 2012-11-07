@@ -53,10 +53,10 @@ sub default_options {
     # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#    'mlss_id'               => '25',   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-#    'release'               => '68',
+#    'mlss_id'               => '25',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
+    'release'               => '69',
     'rel_suffix'            => 'vega',
-    'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/vega_genetree_20120611_68_3',
+    'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/vega_genetree_20120822_69',
     'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
@@ -69,7 +69,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'),
-      -dbname => $self->o('ENV', 'USER').'_vega_genetree_20120611_'.$self->o('release').'_3',
+      -dbname => $self->o('ENV', 'USER').'_vega_genetree_20120822'.$self->o('release'),
     },
 
     # the master database for synchronization of various ids
@@ -96,18 +96,16 @@ sub default_options {
     'other_paralogs_capacity'   => 50,
     'homology_dNdS_capacity'    => 100,
 
-    #if the 65 hive fails at wublast p and you can't work out what's wrong with the path then uncomment this
-    'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
+    #if the hive fails at wublast p and you can't work out what's wrong with the path then uncomment this
+#    'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
 
   };
 }
 
 #
-# We don't really want to have to maintain our own analysis pipeline, we just want to alter the existing one
-# to cope with our issues with exploding mcoffees. So we get the parent analysis and then tinker with it
-# rather than specifying it from scratch. This should make it clearer what we're changing and also make it
-# more robust to changes in unrelated parts of the analysis.
+# We don't really want to have to maintain our own analysis pipeline, if needed we just want to alter the existing one
 #
+
 sub pipeline_analyses {
   my ($self) = @_;
 
@@ -121,8 +119,45 @@ sub pipeline_analyses {
     }
   }
 
+  my $new_analyses = $self->_new_analyses();
+  push(@{$analyses}, @{$new_analyses});
   return $analyses;
 
+}
+
+#add any new analyses
+sub _new_analyses {
+  my ($self) = @_;
+
+  #update_display_member labels (borrowed from EG)
+  return [
+    {
+      -logic_name => 'member_display_labels_factory',
+      -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+      -parameters => {
+        inputquery      => 'select genome_db_id from species_set ss join method_link_species_set mlss using (species_set_id) where mlss.method_link_species_set_id = '.$self->o('mlss_id'),
+        column_names    => [qw/genome_db_id/],
+        input_id        => { genome_db_ids => ['#genome_db_id#'] },
+        fan_branch_code => 1,
+      },
+      -input_ids => [
+        {}
+      ],
+      -wait_for => ['backbone_fire_dnds'],
+      -flow_into => {
+        1 => [ 'update_member_display_labels' ]
+      }
+    },
+    {
+      -logic_name => 'update_member_display_labels',
+      -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+      -parameters => {
+        die_if_no_core_adaptor => 1
+      },
+      -hive_capacity => 10,
+      -batch_size => 1
+    },
+  ];
 }
 
 1;
