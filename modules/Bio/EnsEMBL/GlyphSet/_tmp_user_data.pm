@@ -13,7 +13,7 @@ sub features {
   my $format = $self->my_config('format');
   my @data = ();
   if( $data_source eq 'tmp' ) {
-    my $file = new EnsEMBL::Web::File::Text($self->species_defs);
+    my $file = EnsEMBL::Web::File::Text->new($self->species_defs);
     my @data = split /[\r\n]+/, $file->retrieve( $self->my_config('filename') );
     foreach( @data ) {
       

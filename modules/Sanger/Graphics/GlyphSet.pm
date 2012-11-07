@@ -257,7 +257,7 @@ sub transform {
 
 sub _dump {
   my($self) = CORE::shift;
-  $self->push( new Sanger::Graphics::Glyph::Diagnostic({
+  $self->push( Sanger::Graphics::Glyph::Diagnostic->new({
   'x'    =>0 ,
   'y'    =>0 ,
   'track'  => ref($self),
@@ -274,7 +274,7 @@ sub errorTrack {
   my $w    = $self->{'config'}->texthelper()->width('Tiny');
   my $h    = $self->{'config'}->texthelper()->height('Tiny');
   my $h2   = $self->{'config'}->texthelper()->height('Small');
-  $self->push( new Sanger::Graphics::Glyph::Text({
+  $self->push( Sanger::Graphics::Glyph::Text->new({
       'x'     => $x || int( ($length - $w * CORE::length($message))/2 ),
     'y'     => $y || int( ($h2-$h)/2 ),
       'height'  => $h2,

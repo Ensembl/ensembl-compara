@@ -98,7 +98,7 @@ sub tile {
       $tile->transparent($bg);
       $tile->line(@$_, $fg ) foreach( @{$pattern_def->{'lines'}||[]});
       foreach my $poly_def ( @{$pattern_def->{'polys'}||[]} ) {
-        my $poly = new GD::Polygon;
+        my $poly = GD::Polygon->new;
         foreach( @$poly_def ) {
           $poly->addPt( map { $_ } @$_ );
         } 
@@ -296,7 +296,7 @@ sub render_Poly {
   my $canvas         = $self->{'canvas'};
   my $bordercolour   = $self->colour($glyph->{'bordercolour'});
   my $colour         = $self->colour($glyph->{'colour'});
-  my $poly           = new GD::Polygon;
+  my $poly           = GD::Polygon->new;
 
   return unless(defined $glyph->pixelpoints());
 

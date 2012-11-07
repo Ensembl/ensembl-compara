@@ -27,7 +27,7 @@ sub features {
        $string =~ tr/AGCTagct/TCGAtcga/;
     }
     
-    my $bioseq = new Bio::Seq(-seq => $string, -moltype => 'dna');
+    my $bioseq = Bio::Seq->new(-seq => $string, -moltype => 'dna');
     
     $string = $bioseq->translate(undef, undef, undef, $codon_table)->seq;
     $string = reverse $string if $strand == -1;

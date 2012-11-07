@@ -49,7 +49,7 @@ sub features {
   my $container    = $self->{'container'};
   my $species_defs = $self->species_defs;
   my $sub_type     = $self->my_config('sub_type');
-  my $parser       = new EnsEMBL::Web::Text::FeatureParser($species_defs);
+  my $parser       = EnsEMBL::Web::Text::FeatureParser->new($species_defs);
   my $features     = [];
   my %results;
   
@@ -68,7 +68,7 @@ sub features {
       warn "!!! $response->{'error'}";
     }
   } else {
-    my $file = new EnsEMBL::Web::TmpFile::Text(filename => $self->my_config('file'));
+    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $self->my_config('file'));
     
     return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists && $self->strand < 0;
 

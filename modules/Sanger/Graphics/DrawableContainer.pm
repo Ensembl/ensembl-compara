@@ -215,7 +215,7 @@ sub new {
 
       if(defined $bgcolour_flag) {
         ## colour the area behind this strip
-        my $background = new Sanger::Graphics::Glyph::Rect({
+        my $background = Sanger::Graphics::Glyph::Rect->new({
           'x'         => 0,
           'y'         => $gminy,
           'z'         => -100,

@@ -40,7 +40,7 @@ sub features {
     
     ## Glyphset simple requires real Bio::EnsEMBL::Feature objects so 
     ## create one and set the start/end etc..
-    my $f = new Bio::EnsEMBL::Feature(
+    my $f = Bio::EnsEMBL::Feature->new(
       -start   => $main_dfr->dnafrag_start - $offset,
       -end     => $main_dfr->dnafrag_end   - $offset,
       -strand  => $main_dfr->dnafrag_strand,

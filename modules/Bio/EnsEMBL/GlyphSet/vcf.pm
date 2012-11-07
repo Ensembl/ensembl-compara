@@ -25,7 +25,7 @@ sub vcf_adaptor {
        $url    =~ s/###CHR###/$region/g;
   }
   
-  return $self->{'_cache'}{'_vcf_adaptor'} ||= new Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor($url);
+  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor->new($url);
 }
 
 sub render_compact { return $_[0]->render_normal; }

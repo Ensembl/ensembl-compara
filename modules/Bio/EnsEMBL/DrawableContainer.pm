@@ -201,7 +201,7 @@ sub new {
 
       if ($bgcolour_flag && $glyphset->_colour_background) {
         ## colour the area behind this strip
-        my $background = new Sanger::Graphics::Glyph::Rect({
+        my $background = Sanger::Graphics::Glyph::Rect->new({
           x             => -$label_width - $padding - $margin * 3/2,
           y             => $gminy - $padding,
           z             => -100,

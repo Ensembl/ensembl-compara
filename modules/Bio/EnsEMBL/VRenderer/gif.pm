@@ -6,7 +6,7 @@ use base qw(Bio::EnsEMBL::VRenderer);
 
 sub init_canvas {
   my ($self, $config, $im_height, $im_width) = @_;
-  my $canvas = new GD::Image($im_width, $im_height);
+  my $canvas = GD::Image->new($im_width, $im_height);
   $canvas->colorAllocate($config->colourmap()->rgb_by_name( $config->bgcolor ));
   $self->canvas($canvas);
 }
@@ -153,7 +153,7 @@ sub render_Poly {
   my $bordercolour = $self->colour($glyph->bordercolour());
   my $colour       = $self->colour($glyph->colour());
   
-  my $poly = new GD::Polygon;
+  my $poly = GD::Polygon->new;
   
   return unless(defined $glyph->pixelpoints());
   

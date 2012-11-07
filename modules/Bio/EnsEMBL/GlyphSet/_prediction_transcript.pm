@@ -10,7 +10,7 @@ sub _das_type { return 'prediction_transcript'; }
 
 sub _make_gene {
   my ($self, $transcript) = @_;
-  my $gene = new Bio::EnsEMBL::Gene;
+  my $gene = Bio::EnsEMBL::Gene->new;
   
   $gene->add_Transcript($transcript);
   $gene->stable_id($transcript->stable_id); # fake a stable id so that the data structures returned by features are correct.

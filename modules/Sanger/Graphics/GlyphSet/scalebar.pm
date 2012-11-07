@@ -85,7 +85,7 @@ sub _init {
       my $box_end   = $end   > $global_end   ? $global_end      : $end;
 
       ## Draw the glyph for this box!
-      my $t = new Sanger::Graphics::Glyph::Rect({
+      my $t = Sanger::Graphics::Glyph::Rect->new({
          'x'         => $box_start - $global_start, 
          'y'         => 0,
          'width'     => $box_end - $box_start + 1,
@@ -106,7 +106,7 @@ sub _init {
         $self->join_tag( $t, "ruler_end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE);
       }
       unless( $box_start % $major_unit ) { ## Draw the major unit tick 
-        $self->push(new Sanger::Graphics::Glyph::Rect({
+        $self->push(Sanger::Graphics::Glyph::Rect->new({
             'x'         => $box_start - $global_start,
             'y'         => 0,
             'width'     => 0,
@@ -116,7 +116,7 @@ sub _init {
         }));
         my $LABEL = $minor_unit < 250 ? $self->commify($box_start): $self->bp_to_nearest_unit( $box_start, 2 );
         if( $last_text_X + length($LABEL) * $fontwidth * 1.5 < $box_start ) {
-          $self->push(new Sanger::Graphics::Glyph::Text({
+          $self->push(Sanger::Graphics::Glyph::Text->new({
             'x'         => $box_start - $global_start,
             'y'         => 8,
             'height'    => $fontheight,
@@ -131,7 +131,7 @@ sub _init {
       $start += $minor_unit;
     }
     unless( ($global_end+1) % $major_unit ) { ## Draw the major unit tick 
-      $self->push(new Sanger::Graphics::Glyph::Rect({
+      $self->push(Sanger::Graphics::Glyph::Rect->new({
         'x'         => $global_end - $global_start + 1,
         'y'         => 0,
         'width'     => 0,

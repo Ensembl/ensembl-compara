@@ -3,7 +3,7 @@
 package Sanger::Graphics::Glyph::Triangle;
 
 ### Usage:
-###   new Sanger::Graphics::Glyph::Triangle({
+###   Sanger::Graphics::Glyph::Triangle->new({
 ###     width     => 5,       # Length of baseline
 ###     height    => 10,      # Distance from point to baseline
 ###     direction => 'up',    # Can be up, down, left, right - refers to the direction of the triangle
@@ -39,7 +39,7 @@ sub new {
     ($args->{'height'}, $args->{'width'}) = ($args->{'width'}, $args->{'height'}) if $direction =~ /^(left|right)$/;
     
     # Make an invisible rectangle to go on top of the triangle to make clicking for z-menus easier
-    $rectangle = new Sanger::Graphics::Glyph::Rect({ %$args, %$rect, bordercolour => undef, colour => undef });
+    $rectangle = Sanger::Graphics::Glyph::Rect->new({ %$args, %$rect, bordercolour => undef, colour => undef });
   }
   
   $args->{'points'} = [ $x, $y, @$points ];

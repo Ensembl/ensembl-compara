@@ -88,19 +88,19 @@ sub href               { return undef;                                          
 sub tag                { return ();                                                                                }
 
 ### Helper functions to wrap round Glyphs
-sub Bezier     { my $self = shift; return new Sanger::Graphics::Glyph::Bezier(@_);     }
-sub Circle     { my $self = shift; return new Sanger::Graphics::Glyph::Circle(@_);     }
-sub Composite  { my $self = shift; return new Sanger::Graphics::Glyph::Composite(@_);  }
-sub Diagnostic { my $self = shift; return new Sanger::Graphics::Glyph::Diagnostic(@_); }
-sub Ellipse    { my $self = shift; return new Sanger::Graphics::Glyph::Ellipse(@_);    }
-sub Intron     { my $self = shift; return new Sanger::Graphics::Glyph::Intron(@_);     }
-sub Line       { my $self = shift; return new Sanger::Graphics::Glyph::Line(@_);       }
-sub Poly       { my $self = shift; return new Sanger::Graphics::Glyph::Poly(@_);       }
-sub Rect       { my $self = shift; return new Sanger::Graphics::Glyph::Rect(@_);       }
-sub Space      { my $self = shift; return new Sanger::Graphics::Glyph::Space(@_);      }
-sub Sprite     { my $self = shift; return new Sanger::Graphics::Glyph::Sprite(@_);     }
-sub Text       { my $self = shift; return new Sanger::Graphics::Glyph::Text(@_);       }
-sub Triangle   { my $self = shift; return new Sanger::Graphics::Glyph::Triangle(@_);   }
+sub Bezier     { my $self = shift; return Sanger::Graphics::Glyph::Bezier->new(@_);     }
+sub Circle     { my $self = shift; return Sanger::Graphics::Glyph::Circle->new(@_);     }
+sub Composite  { my $self = shift; return Sanger::Graphics::Glyph::Composite->new(@_);  }
+sub Diagnostic { my $self = shift; return Sanger::Graphics::Glyph::Diagnostic->new(@_); }
+sub Ellipse    { my $self = shift; return Sanger::Graphics::Glyph::Ellipse->new(@_);    }
+sub Intron     { my $self = shift; return Sanger::Graphics::Glyph::Intron->new(@_);     }
+sub Line       { my $self = shift; return Sanger::Graphics::Glyph::Line->new(@_);       }
+sub Poly       { my $self = shift; return Sanger::Graphics::Glyph::Poly->new(@_);       }
+sub Rect       { my $self = shift; return Sanger::Graphics::Glyph::Rect->new(@_);       }
+sub Space      { my $self = shift; return Sanger::Graphics::Glyph::Space->new(@_);      }
+sub Sprite     { my $self = shift; return Sanger::Graphics::Glyph::Sprite->new(@_);     }
+sub Text       { my $self = shift; return Sanger::Graphics::Glyph::Text->new(@_);       }
+sub Triangle   { my $self = shift; return Sanger::Graphics::Glyph::Triangle->new(@_);   }
 
 sub render {
   my $self   = shift;

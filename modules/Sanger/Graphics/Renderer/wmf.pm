@@ -11,7 +11,7 @@ use base qw(Sanger::Graphics::Renderer::gif);
 
 sub init_canvas {
     my ($this, $config, $im_width, $im_height) = @_;
-    my $canvas = new WMF($im_width, $im_height);
+    my $canvas = WMF->new($im_width, $im_height);
     $canvas->colorAllocate($config->colourmap()->rgb_by_name($config->bgcolor()));
     $this->canvas($canvas);
 }
@@ -58,7 +58,7 @@ sub render_Poly {
     my $bordercolour = $self->colour($glyph->bordercolour());
     my $colour       = $self->colour($glyph->colour());
 
-    my $poly = new WMF::Polygon;
+    my $poly = WMF::Polygon->new;
 
     return unless(defined $glyph->pixelpoints());
 
