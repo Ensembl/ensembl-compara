@@ -117,9 +117,8 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-         0 => { -desc => 'default',          'LSF' => '' },
-         1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'himem',            'LSF' => '-q yesterday -R"select[mem>3000] rusage[mem=3000]" -M3000000' },
+         'default' => {'LSF' => '-q yesterday' },
+         'highmem' => {'LSF' => '-q yesterday -R"select[mem>3000] rusage[mem=3000]" -M3000000' },
     };
 }
 
@@ -146,7 +145,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'untar' ],
             },
-            -rc_id => 1,
         },
 
         {   -logic_name    => 'untar',
@@ -158,7 +156,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'load_nodes', 'load_names' ],
             },
-            -rc_id => 1,
         },
 
         {   -logic_name => 'load_nodes',
@@ -174,7 +171,7 @@ sub pipeline_analyses {
                 1 => [ 'zero_parent_id' ],
                 2 => [ ':////ncbi_taxa_node' ],
             },
-            -rc_id => 2,
+            -rc_name => 'highmem',
         },
 
         {   -logic_name    => 'zero_parent_id',
@@ -186,7 +183,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'build_left_right_indices' ],
             },
-            -rc_id => 1,
         },
 
         {   -logic_name    => 'build_left_right_indices',
@@ -196,7 +192,7 @@ sub pipeline_analyses {
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -wait_for => ['load_names'],
-            -rc_id => 2,
+            -rc_name => 'highmem',
         },
 
 
@@ -214,7 +210,7 @@ sub pipeline_analyses {
                 1 => [ 'load_merged_names' ],
                 2 => [ ':////ncbi_taxa_name' ],
             },
-            -rc_id => 2,
+            -rc_name => 'highmem',
         },
 
         {   -logic_name => 'load_merged_names',
@@ -230,7 +226,6 @@ sub pipeline_analyses {
                 1 => [ 'web_name_patches' ],
                 2 => [ ':////ncbi_taxa_name' ],
             },
-            -rc_id => 1,
         },
 
         {   -logic_name    => 'web_name_patches',
@@ -242,7 +237,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'add_import_date' ],
             },
-            -rc_id => 1,
         },
 
         {   -logic_name => 'add_import_date',
@@ -258,7 +252,6 @@ sub pipeline_analyses {
                 1 => [ 'cleanup' ],
                 2 => [ ':////ncbi_taxa_name' ],
             },
-            -rc_id => 1,
         },
 
         {   -logic_name    => 'cleanup',
@@ -268,7 +261,6 @@ sub pipeline_analyses {
                 'cmd'       => 'rm -rf #work_dir#',
             },
             -hive_capacity  => 10,  # to allow parallel branches
-            -rc_id => 1,
         },
 
     ];
