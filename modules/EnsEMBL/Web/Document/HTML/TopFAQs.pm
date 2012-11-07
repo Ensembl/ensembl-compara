@@ -17,7 +17,7 @@ sub render {
     <h3>Top 5 Frequently Asked Questions</h3>
   ';
 
-  my $hub = new EnsEMBL::Web::Hub;
+  my $hub = EnsEMBL::Web::Hub->new;
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
 
   my $args = {'limit' => 5};

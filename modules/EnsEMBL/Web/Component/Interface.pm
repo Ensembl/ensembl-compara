@@ -27,7 +27,7 @@ sub data_form {
   $url          = '' if $url !~ /_/;
   $url         .= '/' . $self->script_name . "/$next";
   
-  my $form = new EnsEMBL::Web::Form($name, $url, 'post');
+  my $form = EnsEMBL::Web::Form->new($name, $url, 'post');
   $form->set_attribute('class', 'narrow-labels');
 
   ## form widgets
@@ -53,7 +53,7 @@ sub record_select {
   my $interface = $object->interface;
   my $script    = $self->script_name($object);
   my $select    = $interface->dropdown ? 'select' : '';
-  my $form      = new EnsEMBL::Web::Form('interface_select', "/$script/$action", 'post');
+  my $form      = EnsEMBL::Web::Form->new('interface_select', "/$script/$action", 'post');
   
   $form->set_attribute('class', 'narrow-labels');
   

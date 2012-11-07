@@ -715,7 +715,7 @@ sub _create_from_slice {
       my $region = $slice->seq_region_name;
       
       if ($slice->seq_region_name ne $real_chr) {
-        my $feat = new Bio::EnsEMBL::Feature(
+        my $feat = Bio::EnsEMBL::Feature->new(
           -start  => 1, 
           -end    => $slice->length, 
           -strand => 1, 

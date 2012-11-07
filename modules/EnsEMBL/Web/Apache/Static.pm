@@ -17,8 +17,8 @@ use SiteDefs qw(:ALL);
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Cache;
 
-our $MEMD = new EnsEMBL::Web::Cache;
-our $MIME = new MIME::Types;
+our $MEMD = EnsEMBL::Web::Cache->new;
+our $MIME = MIME::Types->new;
 
 our @HTDOCS_TRANS_DIRS;
 

@@ -43,8 +43,8 @@ sub new {
 
   my $type         = $args->{'type'}         || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL: Gene, UserData, etc
   my $species      = $args->{'species'}      || $ENV{'ENSEMBL_SPECIES'};
-  my $input        = $args->{'input'}        || new CGI;
-  my $species_defs = $args->{'species_defs'} || new EnsEMBL::Web::SpeciesDefs;
+  my $input        = $args->{'input'}        || CGI->new;
+  my $species_defs = $args->{'species_defs'} || EnsEMBL::Web::SpeciesDefs->new;
   my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
   my $cookies      = $args->{'apache_handle'} ? EnsEMBL::Web::Cookie->fetch($args->{'apache_handle'}) : {};
 
@@ -59,15 +59,15 @@ sub new {
     _action        => $args->{'action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
     _function      => $args->{'function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
     _script        => $args->{'script'}        || $ENV{'ENSEMBL_SCRIPT'},   # Page, Component, Config etc
-    _cache         => $args->{'cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
-    _ext_url       => $args->{'ext_url'}       || new EnsEMBL::Web::ExtURL($species, $species_defs),
+    _cache         => $args->{'cache'}         || EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000),
+    _ext_url       => $args->{'ext_url'}       || EnsEMBL::Web::ExtURL->new($species, $species_defs),
     _problem       => $args->{'problem'}       || {},
     _user_details  => $args->{'user_details'}  || 1,
     _object_types  => $args->{'object_types'}  || {},
     _apache_handle => $args->{'apache_handle'} || undef,
     _user          => $args->{'user'}          || undef,
     _timer         => $args->{'timer'}         || undef,
-    _databases     => new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs),
+    _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
     _cookies       => $cookies,
     _core_objects  => {},
     _core_params   => {},
@@ -77,12 +77,12 @@ sub new {
   bless $self, $class;
   
   $self->initialize_user($args->{'user_cookie'}) if $args->{'user_cookie'};
-  $self->session = new EnsEMBL::Web::Session($self, $args->{'session_cookie'});
+  $self->session = EnsEMBL::Web::Session->new($self, $args->{'session_cookie'});
   $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer if $ENSEMBL_WEB_REGISTRY;
   
   $self->set_core_params;
   
-  $self->{'_config_adaptor'} = new EnsEMBL::Web::DBSQL::ConfigAdaptor($self);
+  $self->{'_config_adaptor'} = EnsEMBL::Web::DBSQL::ConfigAdaptor->new($self);
   
   return $self;
 }
@@ -114,7 +114,7 @@ sub config_adaptor { return $_[0]{'_config_adaptor'}; }
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return $_[0]{'referer'}    ||= $_[0]->parse_referer;                                  }
-sub colourmap         { return $_[0]{'colourmap'}  ||= new Bio::EnsEMBL::ColourMap($_[0]->species_defs);      }
+sub colourmap         { return $_[0]{'colourmap'}  ||= Bio::EnsEMBL::ColourMap->new($_[0]->species_defs);      }
 
 sub is_ajax_request   { exists $_[0]{'is_ajax'} or $_[0]{'is_ajax'} = $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; return $_[0]{'is_ajax'}; }
 
@@ -167,7 +167,7 @@ sub new_cookie {
 
 sub problem {
   my $self = shift;
-  push @{$self->{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
+  push @{$self->{'_problem'}{$_[0]}}, EnsEMBL::Web::Problem->new(@_) if @_;
   return $self->{'_problem'};
 }
 
@@ -501,7 +501,7 @@ sub get_ExtURL_link {
 # use PFETCH etc to get description and sequence of an external record
 sub get_ext_seq {
   my ($self, $id, $ext_db, $strand_mismatch) = @_;
-  my $indexer = new EnsEMBL::Web::ExtIndex($self->species_defs);
+  my $indexer = EnsEMBL::Web::ExtIndex->new($self->species_defs);
   
   return [" Could not get an indexer: $@", -1] unless $indexer;
   
@@ -671,7 +671,7 @@ sub get_data_from_session {
     my $response = EnsEMBL::Web::Tools::Misc::get_url_content($tempdata->{'url'});
        $content  = $response->{'content'};
   } else {
-    my $file    = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
+    my $file    = EnsEMBL::Web::TmpFile::Text->new(filename => $tempdata->{'filename'});
        $content = $file->retrieve;
     
     return {} unless $content;
@@ -689,7 +689,7 @@ sub initialize_user {
   if ($id) {
     # try to log in with user id from cookie
     eval { 
-      $self->user = new EnsEMBL::Web::Data::User($id);
+      $self->user = EnsEMBL::Web::Data::User->new($id);
     };
       
     if ($@) {

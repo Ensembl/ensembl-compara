@@ -201,7 +201,7 @@ sub karyotype {
   return $@ if $@;
 
   # create the container object and add it to the image
-  $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer({
+  $self->drawable_container = Bio::EnsEMBL::VDrawableContainer->new({
     sa  => $sa, 
     ka  => $ka, 
     da  => $da, 
@@ -497,7 +497,7 @@ sub render {
   }
 
   my $html    = $self->introduction;
-  my $image   = new EnsEMBL::Web::TmpFile::Image;
+  my $image   = EnsEMBL::Web::TmpFile::Image->new;
   my $content = $self->drawable_container->render('png');
   my $caption_style  = 'image-caption';
 

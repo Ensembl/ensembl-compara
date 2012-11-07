@@ -1320,7 +1320,7 @@ sub _summarise_datahubs {
   
   return unless $datahub;
   
-  my $parser = new Bio::EnsEMBL::ExternalData::DataHub::SourceParser({
+  my $parser = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({
     timeout => 10,
     proxy   => $self->tree->{'ENSEMBL_WWW_PROXY'},
   });

@@ -22,7 +22,7 @@ sub process {
   }
 
   ## This bit is basically replicating the old featureview URL-based functionality!
-  my $builder = new EnsEMBL::Web::Builder({hub => $hub});
+  my $builder = EnsEMBL::Web::Builder->new({hub => $hub});
   my $features = [];
   $hub->param('id', @output_ids);
   my $object = $builder->create_objects('Feature', 'lazy');

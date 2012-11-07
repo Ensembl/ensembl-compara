@@ -21,7 +21,7 @@ sub process {
     $spam = 1;
   }  else {
     # Check the user's input for spam _before_ we start adding all our crap!
-#    my $filter = new EnsEMBL::Web::Filter::Spam;
+#    my $filter = EnsEMBL::Web::Filter::Spam->new;
 #    $spam = $filter->check($hub->param('message'), 1);
   }
 
@@ -68,7 +68,7 @@ sub process {
     $message .= $problem_text;
     $message .= "\n\nComments:\n\n" . $hub->param('message') . "\n\n";
     
-    my $mailer = new EnsEMBL::Web::Mailer({
+    my $mailer = EnsEMBL::Web::Mailer->new({
       mail_server => 'localhost',
       from        => $hub->param('email'),
       to          => $species_defs->ENSEMBL_HELPDESK_EMAIL,

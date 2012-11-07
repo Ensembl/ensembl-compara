@@ -39,7 +39,7 @@ sub content {
     $name = 'converted_'.$name;
 
     ## Fetch content
-    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
+    my $tmpfile = EnsEMBL::Web::TmpFile::Text->new(
                     filename => $file, prefix => 'user_upload', extension => 'gff'
     );
     next unless $tmpfile->exists;

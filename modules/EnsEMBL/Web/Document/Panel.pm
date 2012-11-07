@@ -262,7 +262,7 @@ sub content_Text {
   
   my $temp_renderer = $self->renderer;
   
-  $self->renderer = new EnsEMBL::Web::Document::Renderer::String;
+  $self->renderer = EnsEMBL::Web::Document::Renderer::String->new;
   $self->content;
   
   my $value = $self->renderer->content;

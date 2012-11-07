@@ -18,7 +18,7 @@ sub process {
   my $user = $hub->user;
   
   my ($species_list) = $user->specieslists;
-  $species_list    ||= new EnsEMBL::Web::Data::Record::SpeciesList::User;
+  $species_list    ||= EnsEMBL::Web::Data::Record::SpeciesList::User->new;
     
   $species_list->favourites($hub->param('favourites'));
   $species_list->user_id($user->id);

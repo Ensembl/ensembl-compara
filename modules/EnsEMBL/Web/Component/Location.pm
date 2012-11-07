@@ -167,11 +167,11 @@ sub get_chr_legend {
   my $image_config   = $hub->get_imageconfig('text_seq_legend');
   $image_config->{'legend'}={'Chromosome Type'=>$legend};
   $image_config->image_width(650);
-  my $image = $self->new_image(new EnsEMBL::Web::Fake({}), $image_config);
+  my $image = $self->new_image(EnsEMBL::Web::Fake->new({}), $image_config);
   $image->set_button('drag',undef);
   return $image->render;
   
-  #return $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render;
+  #return $self->new_image(EnsEMBL::Web::Fake->new({}), $image_config)->render;
 }
 
 sub chr_colour_key {

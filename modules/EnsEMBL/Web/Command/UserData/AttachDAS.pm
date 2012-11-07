@@ -20,7 +20,7 @@ sub process {
   my $params  = {};
   
   if ($server) {
-    my $filter  = new EnsEMBL::Web::Filter::DAS({ object => $object });
+    my $filter  = EnsEMBL::Web::Filter::DAS->new({ object => $object });
     my $sources = $filter->catch($server, $hub->param('logic_name'));
     
     if ($filter->error_code) {

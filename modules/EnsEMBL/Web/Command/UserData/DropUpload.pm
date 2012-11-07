@@ -25,7 +25,7 @@ sub process {
   if ($upload->{'code'}) {
     my $session = $hub->session;
     my $data    = $session->get_data(code => $upload->{'code'});
-    my $parser  = new EnsEMBL::Web::Text::FeatureParser($species_defs, $hub->referer->{'params'}{'r'}[0], $data->{'species'});
+    my $parser  = EnsEMBL::Web::Text::FeatureParser->new($species_defs, $hub->referer->{'params'}{'r'}[0], $data->{'species'});
     my $format  = $data->{'format'};
     my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
 
@@ -35,7 +35,7 @@ sub process {
 
     return if $size > 10; # Uncompressed file is too big.
     
-    my $content = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
+    my $content = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
     
     return unless $content;
     

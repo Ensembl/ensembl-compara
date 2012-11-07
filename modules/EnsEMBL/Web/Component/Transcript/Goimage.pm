@@ -44,7 +44,7 @@ sub content {
   $node_fill_text                 =~ s/_/ /g;
   $goslim_goa_fill_text           =~ s/_/ /g;
   
-  my $ontovis = new EnsEMBL::Web::Tools::OntologyVisualisation(
+  my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new(
     $ontology_term_adaptor,
     $go_dir,
     $go_url,

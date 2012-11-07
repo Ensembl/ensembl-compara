@@ -15,10 +15,10 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self    = shift;
-  my $hub     = new EnsEMBL::Web::Hub;
-  my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
+  my $hub     = EnsEMBL::Web::Hub->new;
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   
-  my $table = new EnsEMBL::Web::Document::Table([
+  my $table = EnsEMBL::Web::Document::Table->new([
     { key => 'title', title => 'Title',                  width => '60%', align => 'left' },
     { key => 'mins',  title => 'Running time (minutes)', width => '20%', align => 'left' },
   ]);

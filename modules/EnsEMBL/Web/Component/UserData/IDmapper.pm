@@ -160,7 +160,7 @@ sub archive_link {
   if ($release == $current) {
      $url = $hub->url({ type => $type, action => $action, $p => $name });
   } else {
-    my $adaptor      = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
+    my $adaptor      = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
     my $release_info = $adaptor->fetch_release($release);
     
     return unless $release_info;

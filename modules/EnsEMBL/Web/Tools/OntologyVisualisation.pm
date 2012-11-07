@@ -21,7 +21,7 @@ Terms an be clustered by a number of accessions.
 The module generates images + image map htmlscript to restart an Ensembl server.
 
 example:
-  my $ontovis = new EnsEMBL::Web::Tools::OntologyVisualisation(
+  my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new(
     $ontology_term_adaptor,
     $go_dir,
     $go_url,
@@ -83,7 +83,7 @@ Post questions to the EnsEMBL development list dev@ensembl.org
                     the colour for all relationshp arrows & labels
                     a function f(x::relation_name)->colour
  
- Example     : my $ontovis = new EnsEMBL::Web::Tools::OntologyVisualisation(
+ Example     : my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new(
                  $ontology_term_adaptor,
                  $go_dir,
                  $go_url,
@@ -496,7 +496,7 @@ sub render{
   foreach(keys %{$self->{_clusters}}){
     my $cluster=$self->{_clusters}->{$_};
     
-    my $image = new EnsEMBL::Web::TmpFile::Image( $self->{'species_defs'} );
+    my $image = EnsEMBL::Web::TmpFile::Image->new( $self->{'species_defs'} );
 
     $image->content($cluster->as_png);
     $image->save;    

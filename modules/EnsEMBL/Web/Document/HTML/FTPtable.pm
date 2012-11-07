@@ -14,7 +14,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self            = shift;
-  my $hub             = new EnsEMBL::Web::Hub;
+  my $hub             = EnsEMBL::Web::Hub->new;
   my $species_defs    = $hub->species_defs;
   my $rel             = 'release-' . $species_defs->ENSEMBL_VERSION; # Always set to use the release number rather than current to get around the delay in FTP site links updating
   my $required_lookup = $self->required_types_for_species;
@@ -111,11 +111,11 @@ sub render {
     };
   }
 
-  my $main_table           = new EnsEMBL::Web::Document::Table($columns, $rows, { data_table => 1, exportable => 0 });
+  my $main_table           = EnsEMBL::Web::Document::Table->new($columns, $rows, { data_table => 1, exportable => 0 });
   $main_table->code        = 'FTPtable::'.scalar(@$rows);
   $main_table->{'options'}{'data_table_config'} = {iDisplayLength => 10};
  
-  my $multi_table          = new EnsEMBL::Web::Document::Table([
+  my $multi_table          = EnsEMBL::Web::Document::Table->new([
     { key => 'database',  title => 'Database' },
     { key => 'mysql',     title => '', align => 'center' },
     { key => 'emf',       title => '', align => 'center' },

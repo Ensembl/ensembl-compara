@@ -10,7 +10,7 @@ sub process {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $group = new EnsEMBL::Web::Data::Group($hub->param('id'));
+  my $group = EnsEMBL::Web::Data::Group->new($hub->param('id'));
   $group->assign_status_to_user($hub->user, 'inactive');
 
   $self->ajax_redirect('/Account/MemberGroups', { reload => 1 });

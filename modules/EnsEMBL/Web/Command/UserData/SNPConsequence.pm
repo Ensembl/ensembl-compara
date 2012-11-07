@@ -36,7 +36,7 @@ sub process {
     my $table = $object->consequence_table($results);
 
     # Output new data to temp file
-    my $temp_file = new EnsEMBL::Web::TmpFile::Text(
+    my $temp_file = EnsEMBL::Web::TmpFile::Text->new(
       extension    => 'txt',
       prefix       => 'user_upload',
       content_type => 'text/plain; charset=utf-8',

@@ -7,14 +7,14 @@ use EnsEMBL::Web::Document::Panel;
 
 sub handler {
   my $r          = shift;
-  my $controller = new EnsEMBL::Web::Controller($r, { page_type => 'Static', renderer_type => 'Apache' });
+  my $controller = EnsEMBL::Web::Controller->new($r, { page_type => 'Static', renderer_type => 'Apache' });
   my $page       = $controller->page;
   my $admin      = $controller->species_defs->ENSEMBL_HELPDESK_EMAIL;
   
   $page->initialize;
   $page->title->set('500: Internal Server Error');
   
-  $page->content->add_panel(new EnsEMBL::Web::Document::Panel(
+  $page->content->add_panel(EnsEMBL::Web::Document::Panel->new(
     raw => qq{
       <div class="error left-margin right-margin">
         <h3>Internal Server Error</h3>

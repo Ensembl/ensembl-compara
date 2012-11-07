@@ -75,7 +75,7 @@ sub createObjects {
       $sth->execute($identifier);
       my ($t, $n, $d) = $sth->fetchrow;
       
-      $transcript = new EnsEMBL::Web::Fake({ view => 'Domains/Genes', type => 'Interpro Domain', id => $t, name => $n, description => $d, adaptor => $db_adaptor->get_GeneAdaptor }) if $t;
+      $transcript = EnsEMBL::Web::Fake->new({ view => 'Domains/Genes', type => 'Interpro Domain', id => $t, name => $n, description => $d, adaptor => $db_adaptor->get_GeneAdaptor }) if $t;
       $new_factory_type = undef;
     }
     

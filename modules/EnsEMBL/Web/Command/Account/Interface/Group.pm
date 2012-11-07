@@ -10,7 +10,7 @@ sub process {
   my $self      = shift;
   my $object    = $self->object;
   my $interface = $self->interface; ## Create interface object, which controls the forms
-  my $data      = new EnsEMBL::Web::Data::Group($object->param('id'));
+  my $data      = EnsEMBL::Web::Data::Group->new($object->param('id'));
   
   $interface->data($data);
   $interface->discover;

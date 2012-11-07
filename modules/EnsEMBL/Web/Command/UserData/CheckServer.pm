@@ -21,7 +21,7 @@ sub process {
     $object->param('das_name_filter','');
   }
 
-  my $filter  = new EnsEMBL::Web::Filter::DAS({ object => $object });
+  my $filter  = EnsEMBL::Web::Filter::DAS->new({ object => $object });
   my $sources = $filter->catch($server);
 
   if ($sources) {

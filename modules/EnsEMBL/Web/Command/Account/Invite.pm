@@ -81,7 +81,7 @@ sub _send_invitation {
     code       => random_string,
   });
   
-  my $mailer = new EnsEMBL::Web::Mailer::User;
+  my $mailer = EnsEMBL::Web::Mailer::User->new;
   $mailer->send_invitation_email($self->object, $group, $invite);
 }
 

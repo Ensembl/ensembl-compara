@@ -72,7 +72,7 @@ sub availability {
   return $self->{'_availability'};
 }
 
-our $MEMD = new EnsEMBL::Web::Cache;
+our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub counts {
   my $self = shift;

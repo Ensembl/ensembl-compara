@@ -23,7 +23,7 @@ sub process {
   }
   $oneliner .= " $script --species=".$data->{'species'};
 
-  my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'});
+  my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'});
   my $filename = $file->filename;
   my $fullpath = $file->tmp_dir.'/'.$file->prefix.'/'.$filename;
   $oneliner .= " --input=$fullpath";

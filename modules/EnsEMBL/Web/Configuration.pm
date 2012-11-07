@@ -63,7 +63,7 @@ sub init {
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
-    $self->{'_data'}{'tree'} = new EnsEMBL::Web::Tree;
+    $self->{'_data'}{'tree'} = EnsEMBL::Web::Tree->new;
     $self->populate_tree; # If no user + session tree found, build one
     $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $cache && $cache_key; # Cache default tree
   }

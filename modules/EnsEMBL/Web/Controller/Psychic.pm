@@ -21,9 +21,9 @@ sub new {
   my $class = shift;
   my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $args  = shift || {};
-  my $input = new CGI;
+  my $input = CGI->new;
   
-  my $hub = new EnsEMBL::Web::Hub({
+  my $hub = EnsEMBL::Web::Hub->new({
     apache_handle  => $r,
     input          => $input,
     session_cookie => $args->{'session_cookie'}

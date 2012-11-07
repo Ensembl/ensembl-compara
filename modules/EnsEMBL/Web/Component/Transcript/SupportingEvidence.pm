@@ -162,7 +162,7 @@ sub _content {
   my $t = scalar @$exons;
   
   while ($e < $t) {
-    my $i = new Bio::EnsEMBL::Intron($exons->[$s], $exons->[$e]);
+    my $i = Bio::EnsEMBL::Intron->new($exons->[$s], $exons->[$e]);
     push @introns, [ $i, $exons->[$s]->stable_id, $exons->[$e]->stable_id ];
     $s++;
     $e++;

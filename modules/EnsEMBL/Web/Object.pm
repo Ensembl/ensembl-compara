@@ -212,7 +212,7 @@ sub long_caption {
 sub get_earliest_archive { 
   my $self = shift;
   
-  my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($self->hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
   my $releases = $adaptor->fetch_releases();
   foreach my $r (@$releases){ 
     return $r->{'id'} if $r->{'online'} eq 'Y';

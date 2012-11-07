@@ -151,7 +151,7 @@ sub get_dna_align_features {
 sub get_parsed_features {
   my ($self, $track, $parser, $bins, $colours) = @_;
   my $url     = $track->get('url');
-  my $content = $url ? EnsEMBL::Web::Tools::Misc::get_url_content($url)->{'content'} : new EnsEMBL::Web::TmpFile::Text(filename => $track->get('file'))->retrieve;
+  my $content = $url ? EnsEMBL::Web::Tools::Misc::get_url_content($url)->{'content'} : EnsEMBL::Web::TmpFile::Text->new(filename => $track->get('file'))->retrieve;
   
   return undef unless $content;
   

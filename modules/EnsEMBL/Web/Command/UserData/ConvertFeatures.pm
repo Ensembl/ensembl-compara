@@ -33,7 +33,7 @@ sub process {
     my $data     = $hub->fetch_userdata_by_id($file);
     my $parser   = $data->{'parser'};
     my $skip     = join '|', map "^$_\$", qw(_type source feature_type score frame);
-    my $exporter = new EnsEMBL::Web::Object::Export($hub);
+    my $exporter = EnsEMBL::Web::Object::Export->new($hub);
     my (@fs, $current_slice, $nearest);
     
     $exporter->{'config'} = {
@@ -47,7 +47,7 @@ sub process {
           my $features = $parser->fetch_features_by_tracktype($type);
           ## Convert each feature into a proper API object
           foreach (@$features) {
-            my $ddaf = new Bio::EnsEMBL::DnaDnaAlignFeature($_->cigar_string);
+            my $ddaf = Bio::EnsEMBL::DnaDnaAlignFeature->new($_->cigar_string);
             
             $ddaf->species($species);
             $ddaf->start($_->rawstart);
@@ -119,7 +119,7 @@ sub process {
     my $output = $exporter->string;
 
     ## Output new data to temp file
-    my $temp_file = new EnsEMBL::Web::TmpFile::Text(
+    my $temp_file = EnsEMBL::Web::TmpFile::Text->new(
       extension    => 'gff',
       prefix       => 'user_upload',
       content_type => 'text/plain; charset=utf-8',

@@ -22,8 +22,8 @@ sub make_files {
   my $self = shift;
   my $location = $self->object->get_location_object;
   
-  my $gen_file   = new EnsEMBL::Web::TmpFile::Text(extension => 'ped', prefix => '');
-  my $locus_file = new EnsEMBL::Web::TmpFile::Text(
+  my $gen_file   = EnsEMBL::Web::TmpFile::Text->new(extension => 'ped', prefix => '');
+  my $locus_file = EnsEMBL::Web::TmpFile::Text->new(
     filename  => $gen_file->filename,
     extension => 'txt',
     prefix    => ''
@@ -74,7 +74,7 @@ sub make_files {
   $gen_file->save;
   $locus_file->save;
   
-  my $tar_file = new EnsEMBL::Web::TmpFile::Tar(
+  my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
     filename        => $gen_file->filename,
     prefix          => '',
     use_short_names => 1

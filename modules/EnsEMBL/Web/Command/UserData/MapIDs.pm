@@ -27,7 +27,7 @@ sub process {
     $output .= $self->add_unmapped($unmapped);
 
     ## Output new data to temp file
-    my $temp_file = new EnsEMBL::Web::TmpFile::Text(
+    my $temp_file = EnsEMBL::Web::TmpFile::Text->new(
         extension    => 'txt',
         prefix       => 'export',
         content_type => 'text/plain; charset=utf-8',
@@ -49,7 +49,7 @@ sub process {
 sub process_data {
   my ($self, $ids) = @_; 
   my %stable_ids = %$ids;
-  my $table      = new EnsEMBL::Web::Document::Table([], [], { margin => '1em 0px' });
+  my $table      = EnsEMBL::Web::Document::Table->new([], [], { margin => '1em 0px' });
   
   $table->add_columns(
     { key => 'request', align =>'left', title => 'Requested ID'  },

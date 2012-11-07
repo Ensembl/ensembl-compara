@@ -39,11 +39,11 @@ sub get_url_content {
   my $url   = shift;
   my $proxy = shift || $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
 
-  my $ua = new LWP::UserAgent;
+  my $ua = LWP::UserAgent->new;
      $ua->timeout( 10 );
      $ua->proxy( 'http', $proxy ) if $proxy;
 
-  my $request  = new HTTP::Request( 'GET', $url );
+  my $request  = HTTP::Request->new( 'GET', $url );
      $request->header('Cache-control' => 'no-cache');
      $request->header('Pragma'        => 'no-cache');
 
@@ -74,11 +74,11 @@ sub get_url_filesize {
     return {'filesize' => 1000};
   }
 
-  my $ua = new LWP::UserAgent;
+  my $ua = LWP::UserAgent->new;
      $ua->timeout(10);
      $ua->proxy('http', $proxy) if $proxy;
 
-  my $request = new HTTP::Request( 'GET', $url );
+  my $request = HTTP::Request->new( 'GET', $url );
      $request->header('Cache-control' => 'no-cache');
      $request->header('Pragma'        => 'no-cache');
 

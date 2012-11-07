@@ -16,9 +16,9 @@ sub process {
   
   ## TODO: make new constructor accept 'record_type' parameter 
   if ($hub->param('record_type') && $hub->param('record_type') eq 'group') {
-    $data = new EnsEMBL::Web::Data::Record::Bookmark::Group($hub->param('id'));
+    $data = EnsEMBL::Web::Data::Record::Bookmark::Group->new($hub->param('id'));
   } else {
-    $data = new EnsEMBL::Web::Data::Record::Bookmark::User($hub->param('id'));
+    $data = EnsEMBL::Web::Data::Record::Bookmark::User->new($hub->param('id'));
   }
   
   $interface->data($data);

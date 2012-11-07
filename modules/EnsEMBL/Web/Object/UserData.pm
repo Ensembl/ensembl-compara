@@ -83,7 +83,7 @@ sub save_to_db {
   my $user     = $hub->user;
   my $tmpdata  = $session->get_data(%args);
   my $assembly = $tmpdata->{'assembly'};
-  my $file     = new EnsEMBL::Web::TmpFile::Text(filename => $tmpdata->{'filename'}); ## TODO: proper error exceptions !!!!!
+  my $file     = EnsEMBL::Web::TmpFile::Text->new(filename => $tmpdata->{'filename'}); ## TODO: proper error exceptions !!!!!
   
   return unless $file->exists;
   
@@ -182,7 +182,7 @@ sub store_data {
     return undef;
   }
   
-  new EnsEMBL::Web::TmpFile::Text(filename => $tmp_data->{'filename'})->delete if $tmp_data->{'filename'}; ## Delete cached file
+  EnsEMBL::Web::TmpFile::Text->new(filename => $tmp_data->{'filename'})->delete if $tmp_data->{'filename'}; ## Delete cached file
   
   ## logic names
   my $analyses    = $report->{'analyses'};
@@ -470,7 +470,7 @@ sub _store_user_track {
 sub _create_datasource {
   my ($self, $config, $adaptor) = @_;
 
-  my $datasource = new Bio::EnsEMBL::Analysis(
+  my $datasource = Bio::EnsEMBL::Analysis->new(
     -logic_name     => $config->{track_name},
     -description    => $config->{description},
     -web_data       => $config->{web_data}||{},
@@ -560,7 +560,7 @@ sub _save_protein_features {
     if (my $object_id = $shash->{$seqname}) {
       eval {
           my($s,$e) = $f->rawstart<$f->rawend?($f->rawstart,$f->rawend):($f->rawend,$f->rawstart);
-    my $feat = new Bio::EnsEMBL::ProteinFeature(
+    my $feat = Bio::EnsEMBL::ProteinFeature->new(
               -translation_id => $object_id,
               -start      => $s,
               -end        => $e,
@@ -621,7 +621,7 @@ sub _save_genomic_features {
     if (my $slice = $shash->{$seqname}) {
       eval {
         my($s,$e) = $f->rawstart < $f->rawend ? ($f->rawstart,$f->rawend) : ($f->rawend,$f->rawstart);
-        my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
+        my $feat = Bio::EnsEMBL::DnaDnaAlignFeature->new(
                   -slice        => $slice,
                   -start        => $s,
                   -end          => $e,
@@ -998,7 +998,7 @@ sub consequence_table {
     }
   }
   
-  return new EnsEMBL::Web::Document::Table($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { data_table => '1' });
+  return EnsEMBL::Web::Document::Table->new($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { data_table => '1' });
 }
 
 #---------------------------------- DAS functionality ----------------------------------
@@ -1053,7 +1053,7 @@ sub get_das_sources {
   $clearCache = $self->param('das_clear_cache');
 
   ## First check for cached sources
-  my $MEMD = new EnsEMBL::Web::Cache;
+  my $MEMD = EnsEMBL::Web::Cache->new;
 
   my $cache_key;
   if ($MEMD) {

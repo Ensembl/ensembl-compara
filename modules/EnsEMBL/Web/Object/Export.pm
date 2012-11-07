@@ -488,7 +488,7 @@ sub flat {
     $dumper_params->{'_data_source'} = join ', ' , @list;
   }
 
-  my $seq_dumper = new EnsEMBL::Web::SeqDumper(undef, $dumper_params);
+  my $seq_dumper = EnsEMBL::Web::SeqDumper->new(undef, $dumper_params);
 
   foreach (qw( genscan similarity gene repeat variation contig marker )) {
     $seq_dumper->disable_feature_type($_) unless $params->{$_};
@@ -520,7 +520,7 @@ sub alignment {
   my $export;
 
   my $align_io = Bio::AlignIO->newFh(
-    -fh     => new IO::String($export),
+    -fh     => IO::String->new($export),
     -format => $hub->param('format')
   );
 
@@ -912,7 +912,7 @@ sub misc_sets {
   
   foreach (@misc_sets, '_gene') {
     $header = $header_map->{$_} || $header_map->{'default'};
-    $table  = new EnsEMBL::Web::Document::Table if $self->html_format;
+    $table  = EnsEMBL::Web::Document::Table->new if $self->html_format;
     
     $self->html(sprintf "<h2>$header->{'title'}</h2>", $sets->{$_}->{'name'});
     

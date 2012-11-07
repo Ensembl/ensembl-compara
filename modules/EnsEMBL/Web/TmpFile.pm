@@ -315,7 +315,7 @@ EnsEMBL::Web::TmpFile - parent module to work with ensembl tmp files
 
   use EnsEMBL::Web::TmpFile;
 
-  my $new_file = new EnsEMBL::Web::TmpFile(
+  my $new_file = EnsEMBL::Web::TmpFile->new(
     prefix => 'x_files'
   );
   
@@ -323,7 +323,7 @@ EnsEMBL::Web::TmpFile - parent module to work with ensembl tmp files
   
   $new_file->save;
 
-  my $old_file = new EnsEMBL::Web::TmpFile(
+  my $old_file = EnsEMBL::Web::TmpFile->new(
     prefix   => 'x_files',
     filename => 'myfile.txt',
   );

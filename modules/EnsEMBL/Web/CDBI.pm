@@ -408,7 +408,7 @@ sub tie_a {
 
 ## Set caching object
 ## Any cache object that has a get, set, and remove method is supported
-if (my $cache = new EnsEMBL::Web::Cache) {
+if (my $cache = EnsEMBL::Web::Cache->new) {
   __PACKAGE__->add_trigger(select =>        sub { $_[0]->propagate_cache_tags     } );
   __PACKAGE__->add_trigger(after_create  => sub { $_[0]->invalidate_cache($cache) } );
   __PACKAGE__->add_trigger(after_update  => sub { $_[0]->invalidate_cache($cache) } );

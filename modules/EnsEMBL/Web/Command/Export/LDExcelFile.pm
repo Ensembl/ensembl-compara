@@ -30,8 +30,8 @@ sub make_file {
   
   warn 'ERROR: No population defined', return unless %pop_params;
   
-  my $file     = new EnsEMBL::Web::TmpFile::Text(extension => 'xls', prefix => ''); 
-  my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($file); 
+  my $file     = EnsEMBL::Web::TmpFile::Text->new(extension => 'xls', prefix => ''); 
+  my $renderer = EnsEMBL::Web::Document::Renderer::Excel->new($file); 
   my $table    = $renderer->new_table_renderer;
   
   my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));

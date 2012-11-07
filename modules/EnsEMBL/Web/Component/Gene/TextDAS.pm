@@ -15,7 +15,7 @@ sub _init {
   my $self = shift;
   $self->cacheable(1);
   $self->ajaxable(1);
-  $self->{'validator'}          = new XHTML::Validator('extended');
+  $self->{'validator'}          = XHTML::Validator->new('extended');
   $self->{'validate_error'}     = 'Data provided by this DAS source contains HTML markup, but it contains errors or has dangerous content. As a security precaution it has not been processed.';
   $self->{'timeout_multiplier'} = 3;
 }
@@ -56,7 +56,7 @@ sub content {
   my $html = $table->render;
   my $query_object = $self->_das_query_object; 
  
-  my $engine = new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
+  my $engine = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
     -sources => [ $source ],
     -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
     -noproxy => $species_defs->ENSEMBL_NO_PROXY,

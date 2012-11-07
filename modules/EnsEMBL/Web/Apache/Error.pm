@@ -17,7 +17,7 @@ sub handler {
   
   warn "$error_number ERROR: $error_subject $error_url\n";
   
-  my $controller = new EnsEMBL::Web::Controller($r, { page_type => 'Static', renderer_type => 'Apache' });
+  my $controller = EnsEMBL::Web::Controller->new($r, { page_type => 'Static', renderer_type => 'Apache' });
   my $page       = $controller->page;
 
   $r->uri($error_url);
@@ -25,7 +25,7 @@ sub handler {
   $page->initialize;
   $page->title->set("$error_number error: $error_subject");
   
-  $page->content->add_panel(new EnsEMBL::Web::Document::Panel(
+  $page->content->add_panel(EnsEMBL::Web::Document::Panel->new(
     raw => qq{<div class="error left-margin right-margin">
       <h3>$error_number error: $error_subject</h3>
       <div class="error-pad">

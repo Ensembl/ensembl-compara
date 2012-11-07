@@ -1057,7 +1057,7 @@ sub get_key {
   
   $image_config->image_width(650);
   
-  my $key_img = $image_config->{'legend'} ? $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render : '';
+  my $key_img = $image_config->{'legend'} ? $self->new_image(EnsEMBL::Web::Fake->new({}), $image_config)->render : '';
   
   my $key_list;
      $key_list .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"                if $config->{'population_filter'};
@@ -1149,7 +1149,7 @@ sub export_sequence {
   }
   
   my $string;
-  my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'rtf', prefix => '');
+  my $file = EnsEMBL::Web::TmpFile::Text->new(extension => 'rtf', prefix => '');
   my $rtf  = RTF::Writer->new_to_string(\$string);
   
   $rtf->prolog(

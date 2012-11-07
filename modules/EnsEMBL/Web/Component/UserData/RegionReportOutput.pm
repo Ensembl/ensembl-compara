@@ -33,7 +33,7 @@ sub content {
 
     my $extension = $record->{'extension'};
     my $filename = $record->{'filename'};
-    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
+    my $tmpfile = EnsEMBL::Web::TmpFile::Text->new(
       filename  => $filename, 
       prefix    => 'download', 
       extension => $extension,

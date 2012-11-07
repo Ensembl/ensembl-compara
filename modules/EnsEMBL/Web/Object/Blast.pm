@@ -343,7 +343,7 @@ sub new_hsp_image {
      });
   my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $config);
 
-  my $image = new EnsEMBL::Web::Document::Image( $self->species_defs );
+  my $image = EnsEMBL::Web::Document::Image->new( $self->species_defs );
   $image->drawable_container = $hsp_dc;
   return $image;
 }

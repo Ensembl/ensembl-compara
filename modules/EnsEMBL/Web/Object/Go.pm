@@ -5,7 +5,7 @@ package EnsEMBL::Web::Object::Go;
 ### PLUGGABLE: Yes, using Proxy::Object 
 
 ### STATUS: At Risk
-### Needs rewriting to use new API
+### Needs rewriting to use API->new
 
 ### DESCRIPTION                                                                                   
 use strict;

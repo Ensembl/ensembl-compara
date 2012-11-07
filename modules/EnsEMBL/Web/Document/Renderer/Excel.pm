@@ -18,7 +18,7 @@ sub new {
   
   my $class    = shift;
   my $fh       = shift;
-  my $workbook = new Spreadsheet::WriteExcel($fh);
+  my $workbook = Spreadsheet::WriteExcel->new($fh);
   
   my $self = $class->SUPER::new(
     sheet    => -1,
@@ -67,7 +67,7 @@ sub new_sheet {
 
 sub new_table_renderer {
   my $self = shift;
-  return new EnsEMBL::Web::Document::Renderer::Excel::Table($self);
+  return EnsEMBL::Web::Document::Renderer::Excel::Table->new($self);
 }
 
 sub new_cell_renderer {
@@ -78,7 +78,7 @@ sub new_cell_renderer {
   $args->{'colour'}   = $self->colour;
   $args->{'workbook'} = $self->workbook;
   
-  return new EnsEMBL::Web::Document::Renderer::Excel::CellFormat($args);
+  return EnsEMBL::Web::Document::Renderer::Excel::CellFormat->new($args);
 }
 
 sub printf { shift->print(@_, 'printf'); }

@@ -408,7 +408,7 @@ sub render_JSON {
 
 sub render_TextGz {
   my $self     = shift;
-  my $renderer = new EnsEMBL::Web::Document::Renderer::GzFile($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
+  my $renderer = EnsEMBL::Web::Document::Renderer::GzFile->new($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
   
   $renderer->print(shift->{'content'});
   $renderer->close;

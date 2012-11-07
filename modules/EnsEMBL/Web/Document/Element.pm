@@ -42,7 +42,7 @@ sub new_panel {
     }
     
     push @{$controller->errors},
-      new EnsEMBL::Web::Document::Panel(
+      EnsEMBL::Web::Document::Panel->new(
         hub        => $self->hub,
         builder    => $controller->builder,
         object     => $controller->object,
@@ -69,7 +69,7 @@ sub new_panel {
   return $panel unless $@;
   
   push @{$controller->errors},
-    new EnsEMBL::Web::Document::Panel(
+    EnsEMBL::Web::Document::Panel->new(
       hub     => $self->hub,
       builder => $controller->builder,
       object  => $controller->object,

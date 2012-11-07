@@ -26,7 +26,7 @@ sub dna          { $_[0]->new_panel('DASDNA',      'EnsEMBL::Web::Component::DAS
 sub new_panel {
   my $self      = shift;
   my $page      = $self->page;
-  my $das_panel = new EnsEMBL::Web::Document::Panel(
+  my $das_panel = EnsEMBL::Web::Document::Panel->new(
     hub     => $self->hub,
     builder => $self->builder,
     object  => $self->object,

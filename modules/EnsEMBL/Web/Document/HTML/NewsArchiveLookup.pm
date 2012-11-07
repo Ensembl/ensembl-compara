@@ -12,10 +12,10 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self            = shift;
-  my $hub             = new EnsEMBL::Web::Hub;
+  my $hub             = EnsEMBL::Web::Hub->new;
   my $id              = $hub->param('id');
   my $ensembl_version = $hub->species_defs->ENSEMBL_VERSION;
-  my @releases        = $self->get_releases(new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub), $hub->species_defs->ENSEMBL_VERSION);
+  my @releases        = $self->get_releases(EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub), $hub->species_defs->ENSEMBL_VERSION);
   my $html;
   
   if (@releases) {

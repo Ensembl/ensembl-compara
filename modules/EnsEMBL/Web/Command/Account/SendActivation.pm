@@ -11,7 +11,7 @@ sub process {
   my $self = shift;
   my $object = $self->object;
 
-  my $mailer = new EnsEMBL::Web::Mailer::User{
+  my $mailer = EnsEMBL::Web::Mailer::User->new{
     to => $object->param('email')
   };
   

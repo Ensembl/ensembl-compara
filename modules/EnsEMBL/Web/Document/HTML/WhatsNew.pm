@@ -26,14 +26,14 @@ our $MEMD = EnsEMBL::Web::Cache->new(
 
 sub render {
   my $self         = shift;
-  my $hub          = new EnsEMBL::Web::Hub;
+  my $hub          = EnsEMBL::Web::Hub->new;
   my $species_defs = $hub->species_defs;
   my $html;
 
   my $release_id = $hub->param('id') || $hub->param('release_id') || $hub->species_defs->ENSEMBL_VERSION;
   return unless $release_id;
 
-  my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   my $release      = $adaptor->fetch_release($release_id);
   my $release_date = $release->{'date'};
   my $html = qq{<h2 class="box-header">What's New in Release $release_id ($release_date)</h2>};

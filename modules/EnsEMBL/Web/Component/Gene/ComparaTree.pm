@@ -434,8 +434,8 @@ sub content_align {
   $mode       = 'fasta' unless $formats{$mode};
 
   my $formatted; # Variable to hold the formatted alignment string
-  my $fh  = new IO::Scalar(\$formatted);
-  my $aio = new Bio::AlignIO( -format => $mode, -fh => $fh );
+  my $fh  = IO::Scalar->new(\$formatted);
+  my $aio = Bio::AlignIO->new( -format => $mode, -fh => $fh );
   
   $aio->write_aln($tree->get_SimpleAlign);
 

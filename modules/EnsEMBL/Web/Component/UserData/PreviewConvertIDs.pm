@@ -39,7 +39,7 @@ sub content {
 
     ## Fetch content
     my $prefix = $object->param('data_format') eq 'snp' ? 'user_upload' : 'export';
-    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
+    my $tmpfile = EnsEMBL::Web::TmpFile::Text->new(
                     filename => $file, prefix => $prefix, extension => 'txt'
     );
     next unless $tmpfile->exists;

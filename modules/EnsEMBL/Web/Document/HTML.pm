@@ -48,7 +48,7 @@ sub new_panel {
     }
     
     push @{$controller->errors},
-      new EnsEMBL::Web::Document::Panel(
+      EnsEMBL::Web::Document::Panel->new(
         hub        => $controller->hub,
         builder    => $controller->builder,
         object     => $controller->object,
@@ -75,7 +75,7 @@ sub new_panel {
   return $panel unless $@;
   
   push @{$controller->errors},
-    new EnsEMBL::Web::Document::Panel(
+    EnsEMBL::Web::Document::Panel->new(
       hub     => $controller->hub,
       builder => $controller->builder,
       object  => $controller->object,
@@ -96,7 +96,7 @@ sub get_rss_feed {
   ## Does this feed work best with XML::Atom or XML:RSS? 
   my $rss_type = $rss_url =~ /atom/ ? 'atom' : 'rss';
 
-  my $ua = new LWP::UserAgent;
+  my $ua = LWP::UserAgent->new;
   my $proxy = $hub->species_defs->ENSEMBL_WWW_PROXY;
   $ua->proxy( 'http', $proxy ) if $proxy;
   #$ua->timeout(5);

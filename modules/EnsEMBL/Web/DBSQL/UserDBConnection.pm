@@ -6,7 +6,7 @@ use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::DBSQL::DirectDBConnection);
 
-our $cache = new EnsEMBL::Web::Cache;
+our $cache = EnsEMBL::Web::Cache->new;
 
 my $dbh;
 

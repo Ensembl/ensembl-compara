@@ -38,7 +38,7 @@ sub new {
     hub              => $hub,
     _font_face       => $style->{'GRAPHIC_FONT'} || 'Arial',
     _font_size       => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
-    _texthelper      => new Sanger::Graphics::TextHelper,
+    _texthelper      => Sanger::Graphics::TextHelper->new,
     code             => $code,
     type             => $type,
     species          => $species,
@@ -47,7 +47,7 @@ sub new {
     no_load          => undef,
     altered          => 0,
     _core            => undef,    
-    _tree            => new EnsEMBL::Web::Tree,
+    _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
       storable     => 1,      
@@ -637,7 +637,7 @@ sub load_user_tracks {
   
   # We now need to get a userdata adaptor to get the analysis info
   if (keys %upload_sources) {
-    my $dbs        = new EnsEMBL::Web::DBSQL::DBConnection($self->{'species'});
+    my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'species'});
     my $dba        = $dbs->get_DBAdaptor('userdata');
     my $an_adaptor = $dba->get_adaptor('Analysis');
     my @tracks;
@@ -683,7 +683,7 @@ sub load_user_tracks {
 sub _add_datahub {
   my ($self, $menu_name, $url) = @_;
   
-  my $parser = new Bio::EnsEMBL::ExternalData::DataHub::SourceParser({
+  my $parser = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({
     timeout => 10,
     proxy   => $self->hub->species_defs->ENSEMBL_WWW_PROXY,
   });
@@ -1523,7 +1523,7 @@ sub attach_das {
 
   # Cache the DAS Coordinator object (with key das_coord)
   $self->cache('das_coord',  
-    new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
+    Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
       -sources => \@das_sources,
       -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
       -noproxy => $species_defs->ENSEMBL_NO_PROXY,

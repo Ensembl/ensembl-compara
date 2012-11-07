@@ -39,7 +39,7 @@ sub content_ajax {
   
   return unless $data;
   
-  my $parser  = new EnsEMBL::Web::Text::FeatureParser($hub->species_defs, $hub->param('r'), $data->{'species'});
+  my $parser  = EnsEMBL::Web::Text::FeatureParser->new($hub->species_defs, $hub->param('r'), $data->{'species'});
   my $format  = $data->{'format'};
   my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
   my $html;
@@ -57,7 +57,7 @@ sub content_ajax {
       if ($type eq 'url') {
         $content = get_url_content($data->{'url'})->{'content'};
       }  elsif ($type eq 'upload') {
-        $content = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
+        $content = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
       }
 
       if ($content) {      

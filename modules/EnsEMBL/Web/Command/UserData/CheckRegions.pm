@@ -22,7 +22,7 @@ sub process {
   if ($method) {
     my $response = $self->upload($method, 'coords');
     $data = $session->get_data(code => $response->{'code'});
-    my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'});
+    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'});
     if ($file) {
       $content = $file->retrieve;
       $param->{'code'} = $data->{'code'};

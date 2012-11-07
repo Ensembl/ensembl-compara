@@ -17,7 +17,7 @@ sub new {
   
   bless $self, $class;
   
-  my $hub     = new EnsEMBL::Web::Hub;
+  my $hub     = EnsEMBL::Web::Hub->new;
   my $cache   = $hub->cache;
   my $species = $hub->species;
   my $query   = $hub->param('q');
@@ -29,7 +29,7 @@ sub new {
   }
   
   if (!$results) {
-    my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
+    my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
     my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
     
     $sth->execute;

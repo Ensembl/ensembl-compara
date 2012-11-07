@@ -18,7 +18,7 @@ sub content { return $_[0]{'string'}; }
 
 sub fh {
   my $self = shift;
-  $self->{'fh'} = new IO::String($self->{'string'}) unless $self->{'fh'};
+  $self->{'fh'} = IO::String->new($self->{'string'}) unless $self->{'fh'};
   return $self->{'fh'};
 }
 

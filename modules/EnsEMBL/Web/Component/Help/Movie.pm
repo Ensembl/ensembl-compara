@@ -19,7 +19,7 @@ sub _init {
 sub content {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   my @ids     = $hub->param('id') || $hub->param('feedback');
   my $html;
   my @movies;

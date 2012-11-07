@@ -27,8 +27,8 @@ use EnsEMBL::Web::Apache::DasHandler;
 use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 
-our $species_defs = new EnsEMBL::Web::SpeciesDefs;
-our $MEMD         = new EnsEMBL::Web::Cache;
+our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
+our $MEMD         = EnsEMBL::Web::Cache->new;
 
 our $BLAST_LAST_RUN;
 our $LOAD_COMMAND;
@@ -61,7 +61,7 @@ sub childInitHandler {
   srand(time ^ $temp_seed);
   
   # Create the Registry
-  $ENSEMBL_WEB_REGISTRY = new EnsEMBL::Web::Registry;
+  $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new;
   $ENSEMBL_WEB_REGISTRY->timer->set_process_child_count(0);
   $ENSEMBL_WEB_REGISTRY->timer->set_process_start_time(time);
   
@@ -150,7 +150,7 @@ sub redirect_to_nearest_mirror {
                 require Geo::IP;
                 warn "** GeoIP city dat file not found at [ $geocity_dat_file ] falling back to country based lookup... Set GEOCITY_DAT location in DEFAULTS.ini **";
                 eval ' 
-                     $geo = new Geo::IP(GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE);
+                     $geo = Geo::IP->new(GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE);
                     $geo_details = [ $geo->country_code_by_addr($ip), undef ] if $geo;
                 ';
                 warn $@ if $@;

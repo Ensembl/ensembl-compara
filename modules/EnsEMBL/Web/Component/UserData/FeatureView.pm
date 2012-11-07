@@ -24,7 +24,7 @@ sub content {
   my $current_species = $hub->data_species;
   my $html;
 
-  my $form = new EnsEMBL::Web::Form('select', $hub->species_path($current_species).'/UserData/FviewRedirect', 'post', 'std check');
+  my $form = EnsEMBL::Web::Form->new('select', $hub->species_path($current_species).'/UserData/FviewRedirect', 'post', 'std check');
 
   $form->add_notes({'id' => 'notes', 'heading' => 'Hint', 'text' => qq{
 <p>Using this form, you can select Ensembl features to display on a karyotype (formerly known as FeatureView).</p>

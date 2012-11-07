@@ -19,7 +19,7 @@ sub new {
   my $args  = shift || {};
   my $self  = {};
   
-  my $hub = new EnsEMBL::Web::Hub({
+  my $hub = EnsEMBL::Web::Hub->new({
     apache_handle  => $r,
     session_cookie => $args->{'session_cookie'},
     user_cookie    => $args->{'user_cookie'},
@@ -47,7 +47,7 @@ sub autocomplete {
   }
   
   if (!$results) {
-    my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
+    my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
     my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
     
     $sth->execute;

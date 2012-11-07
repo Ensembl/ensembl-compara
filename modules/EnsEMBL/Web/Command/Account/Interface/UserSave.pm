@@ -17,7 +17,7 @@ sub process {
 
   my $interface = $self->interface;
   my $user = $object->user;
-  $user = new EnsEMBL::Web::Data::User unless $user;
+  $user = EnsEMBL::Web::Data::User->new unless $user;
   $interface->data($user);
   $interface->cgi_populate($object);
 

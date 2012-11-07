@@ -72,7 +72,7 @@ sub create_node {
     return $self->get_node($id);
   }
   
-  return new EnsEMBL::Web::Tree($self->dom, {
+  return EnsEMBL::Web::Tree->new($self->dom, {
     id        => $id,
     data      => $data,
     user_data => $self->user_data,

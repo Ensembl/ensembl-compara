@@ -38,7 +38,7 @@ sub ajax_redirect {
 
 sub interface {
   my $self = shift;
-  $self->{'interface'} ||= new EnsEMBL::Web::Interface;
+  $self->{'interface'} ||= EnsEMBL::Web::Interface->new;
   return $self->{'interface'};
 }
 

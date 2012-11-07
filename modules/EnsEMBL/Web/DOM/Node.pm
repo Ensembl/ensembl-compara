@@ -25,7 +25,7 @@ sub new {
     '_attributes'           => {},
     '_child_nodes'          => [],
     '_text'                 => '',
-    '_dom'                  => $dom || new EnsEMBL::Web::DOM, #creates new DOM object if not provided as arg
+    '_dom'                  => $dom || EnsEMBL::Web::DOM->new, #creates DOM->new object if not provided as arg
     '_parent_node'          => 0,
     '_next_sibling'         => 0,
     '_previous_sibling'     => 0,

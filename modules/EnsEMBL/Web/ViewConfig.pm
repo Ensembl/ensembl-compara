@@ -37,7 +37,7 @@ sub new {
     title            => undef,
     form             => undef,
     form_id          => sprintf('%s_%s_configuration', lc $type, lc $component),
-    tree             => new EnsEMBL::Web::Tree,
+    tree             => EnsEMBL::Web::Tree->new,
   };
   
   bless $self, $class;
@@ -271,7 +271,7 @@ sub update_from_url {
 
 sub get_form {
   my $self = shift;
-  return $self->{'form'} ||= new EnsEMBL::Web::Form({ id => $self->{'form_id'}, action => $self->hub->url('Config', undef, 1)->[0], class => 'configuration std' });
+  return $self->{'form'} ||= EnsEMBL::Web::Form->new({ id => $self->{'form_id'}, action => $self->hub->url('Config', undef, 1)->[0], class => 'configuration std' });
 }
 
 sub add_fieldset {

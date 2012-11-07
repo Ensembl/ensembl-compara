@@ -18,7 +18,7 @@ sub _init {
 sub content {
   my $self  = shift;
   my $hub   = $self->hub;
-  my $form  = new EnsEMBL::Web::Form('retrieve_ticket', '/Blast/Submit', 'get');
+  my $form  = EnsEMBL::Web::Form->new('retrieve_ticket', '/Blast/Submit', 'get');
   my $table = $self->new_table;
 
   $form->add_element(

@@ -11,7 +11,7 @@ use SiteDefs qw(:APACHE);
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::OldLinks qw(get_redirect);
 
-our $MEMD = new EnsEMBL::Web::Cache;
+our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub handler_species {
   my ($r, $cookies, $species, $raw_path_segments, $querystring, $file, $flag) = @_;

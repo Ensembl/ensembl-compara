@@ -244,7 +244,7 @@ sub fetch_glossary_text_lookup {
   # Unless you set emit_spaces to 0 you will get mysterious segfaults
   # on apparently unrelated pages, which is spooky as segfaults are.
   # This is a known bug in HTML::Strip RT #41035 on CPAN
-  my $stripper = new HTML::Strip(emit_spaces => 0);
+  my $stripper = HTML::Strip->new(emit_spaces => 0);
 
   foreach my $word (@words) {
     $records->{$word->{'word'}} = $stripper->parse($word->{'meaning'});

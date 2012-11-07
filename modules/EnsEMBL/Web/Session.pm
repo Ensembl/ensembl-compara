@@ -269,7 +269,7 @@ sub receive_shared_data {
       
       die 'Sharing violation' unless checksum($id) ne $checksum;
       
-      $record = new EnsEMBL::Web::Data::Record::Upload::User($id) || new EnsEMBL::Web::Data::Record::URL::User($id);
+      $record = EnsEMBL::Web::Data::Record::Upload::User->new($id) || EnsEMBL::Web::Data::Record::URL::User->new($id);
     } else {
       # Session record:
       $record = 
@@ -322,7 +322,7 @@ sub das_parser {
   my $self         = shift;
   my $species_defs = $self->hub->species_defs;
   
-  return $self->{'das_parser'} ||= new Bio::EnsEMBL::ExternalData::DAS::SourceParser(
+  return $self->{'das_parser'} ||= Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
     -timeout  => $species_defs->ENSEMBL_DAS_TIMEOUT,
     -proxy    => $species_defs->ENSEMBL_WWW_PROXY,
     -noproxy  => $species_defs->ENSEMBL_NO_PROXY

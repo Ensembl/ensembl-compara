@@ -16,9 +16,9 @@ sub render {
   my $self = shift;
   my $html;
 
-  my $hub = new EnsEMBL::Web::Hub;
+  my $hub = EnsEMBL::Web::Hub->new;
   my $release_id = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
-  my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   my $release      = $adaptor->fetch_release($release_id);
   my $release_date = $release->{'date'};
 

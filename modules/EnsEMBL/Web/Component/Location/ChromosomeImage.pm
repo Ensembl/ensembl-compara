@@ -102,7 +102,7 @@ sub stats_table {
     'Raw percentage of map covered by sequence clones',
   );
   
-  my $table = new EnsEMBL::Web::Document::Table([{ key => 'header'}, { key => 'value'}], [], { header => 'no', exportable => 0, 'class' => 'tint' });
+  my $table = EnsEMBL::Web::Document::Table->new([{ key => 'header'}, { key => 'value'}], [], { header => 'no', exportable => 0, 'class' => 'tint' });
 
   my ($stats, %chr_stats);
   my $chr = $object->Obj->{'slice'};

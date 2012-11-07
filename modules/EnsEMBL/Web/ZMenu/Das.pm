@@ -28,7 +28,7 @@ sub content {
   my $slice        = $self->object->slice;
   my %strand_map   = ( 1 => '+', -1 => '-' );
   
-  my $coordinator = new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
+  my $coordinator = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
     -sources => [ $das{$logic_name} ],
     -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
     -noproxy => $species_defs->ENSEMBL_NO_PROXY,
@@ -39,7 +39,7 @@ sub content {
   
   return unless $features && $features->{$logic_name};
   
-  my $validator = new XHTML::Validator('extended');
+  my $validator = XHTML::Validator->new('extended');
   my $id        = $feature_id || $group_id || 'default';
   
   $strand = $strand_map{$strand};

@@ -19,8 +19,8 @@ sub new {
   return $self;
 }
 
-sub species_defs { return $_[0]{'species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
-sub timer        { return $_[0]{'timer'}        ||= new EnsEMBL::Web::Timer;       }
+sub species_defs { return $_[0]{'species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new; }
+sub timer        { return $_[0]{'timer'}        ||= EnsEMBL::Web::Timer->new;       }
 sub timer_push   { shift->timer->push(@_); }
 
 1;

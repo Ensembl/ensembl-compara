@@ -73,7 +73,7 @@ sub handler_das {
   $r->headers_out->add('Access-Control-Allow-Origin',   '*');
   $r->headers_out->add('Access-Control-Expose-Headers', 'X-DAS-Version X-DAS-Status X-DAS-Capabilities');
  
-  new EnsEMBL::Web::Controller::DAS($r, $cookies);
+  EnsEMBL::Web::Controller::DAS->new($r, $cookies);
   
   return OK;
 }

@@ -6,7 +6,7 @@ use EnsEMBL::Web::Cache;
 
 use base qw(EnsEML::Web::DBSQL::DirectDBConnection);
 
-our $cache = new EnsEMBL::Web::Cache;
+our $cache = EnsEMBL::Web::Cache->new;
 
 sub import {
   my ($class, $species_defs) = @_;

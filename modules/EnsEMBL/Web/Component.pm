@@ -61,7 +61,7 @@ sub builder     { return $_[0]->{'builder'};     }
 sub hub         { return $_[0]->{'hub'};         }
 sub renderer    { return $_[0]->{'renderer'};    }
 sub view_config { return $_[0]->{'view_config'}; }
-sub dom         { return $_[0]->{'dom'} ||= new EnsEMBL::Web::DOM; }
+sub dom         { return $_[0]->{'dom'} ||= EnsEMBL::Web::DOM->new; }
 
 sub content_pan_compara {
   my $self = shift;
@@ -148,7 +148,7 @@ sub get_content {
 
 sub cache {
   my ($panel, $obj, $type, $name) = @_;
-  my $cache = new EnsEMBL::Web::TmpFile::Text(
+  my $cache = EnsEMBL::Web::TmpFile::Text->new(
     prefix   => $type,
     filename => $name,
   );
@@ -358,7 +358,7 @@ sub modal_form {
     $params->{'backtrack'} = \@tracks if scalar @tracks; 
   }
 
-  return new EnsEMBL::Web::Form::ModalForm($params);
+  return EnsEMBL::Web::Form::ModalForm->new($params);
 }
 
 sub new_image {
@@ -392,8 +392,8 @@ sub new_image {
   
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
  
-  my $image = new EnsEMBL::Web::Document::Image($hub, $self->id, \@image_configs);   
-  $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_) if $self->html_format;
+  my $image = EnsEMBL::Web::Document::Image->new($hub, $self->id, \@image_configs);   
+  $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
 }
@@ -402,15 +402,15 @@ sub new_vimage {
   my $self  = shift;
   my @image_config = $_[1];
   
-  my $image = new EnsEMBL::Web::Document::Image($self->hub, $self->id, \@image_config);
-  $image->drawable_container = new Bio::EnsEMBL::VDrawableContainer(@_) if $self->html_format;
+  my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, \@image_config);
+  $image->drawable_container = Bio::EnsEMBL::VDrawableContainer->new(@_) if $self->html_format;
   
   return $image;
 }
 
 sub new_karyotype_image {
   my ($self, $image_config) = @_;  
-  my $image = new EnsEMBL::Web::Document::Image($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
+  my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
   $image->{'object'} = $self->object;
   
   return $image;
@@ -419,7 +419,7 @@ sub new_karyotype_image {
 sub new_table {
   my $self     = shift;
   my $hub      = $self->hub;
-  my $table    = new EnsEMBL::Web::Document::Table(@_);
+  my $table    = EnsEMBL::Web::Document::Table->new(@_);
   my $filename = $hub->filename($self->object);
   my $options  = $_[2];
   

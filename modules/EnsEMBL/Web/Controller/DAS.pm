@@ -19,7 +19,7 @@ sub page          { return $_[0]->SUPER::page('DAS'); }
 sub configure {
   my $self          = shift;
   my $request       = $self->request;
-  my $configuration = new EnsEMBL::Web::Configuration::DAS($self->page, $self->hub, $self->builder);
+  my $configuration = EnsEMBL::Web::Configuration::DAS->new($self->page, $self->hub, $self->builder);
   
   if ($configuration->can($request)) {
     $configuration->$request();

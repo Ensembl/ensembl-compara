@@ -5,7 +5,7 @@ use IO::File;
 sub new {
   my $class = shift;
   my $filename = shift;
-  my $fh = new IO::File;
+  my $fh = IO::File->new;
   my $self;
   if( $fh->open( ">$filename") ) {
     $self = { 'file' => $fh };

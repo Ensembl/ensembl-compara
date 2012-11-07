@@ -43,7 +43,7 @@ sub content {
   my $join_alignments = grep $_ ne 'off', values %$methods;
   my $join_genes      = $hub->param('opt_join_genes_bottom') eq 'on';
 
-  my $compara_db      = $join_genes ? new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database : undef;
+  my $compara_db      = $join_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
   my $i               = 1;
   my $primary_image_config;
   my @images;

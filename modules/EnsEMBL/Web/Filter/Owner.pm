@@ -38,7 +38,7 @@ sub catch {
           $self->error_code = 'bogus_id';
           return;
         } else {
-          my $data_group = new EnsEMBL::Web::Data::Group($group);
+          my $data_group = EnsEMBL::Web::Data::Group->new($group);
           
           if ($data_group && $user->is_member_of($data_group)) {            
             if (!$data_group->records($id)) {

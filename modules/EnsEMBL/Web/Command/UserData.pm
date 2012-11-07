@@ -80,7 +80,7 @@ sub upload {
     $params->{'filter_module'} = 'Data';
     $params->{'filter_code'}   = 'no_response';
   } else {
-    my $file = new EnsEMBL::Web::TmpFile::Text(prefix => 'user_upload', %args);
+    my $file = EnsEMBL::Web::TmpFile::Text->new(prefix => 'user_upload', %args);
   
     if ($file->content) {
       if ($file->save) {

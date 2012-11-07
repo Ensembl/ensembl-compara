@@ -70,10 +70,10 @@ sub new {
 	foreach my $par_name ( keys(%$args) ) {
 		$self->{$par_name} = $args->{$par_name};
 	}
-	$self->{ua} = new LWP::UserAgent;
+	$self->{ua} = LWP::UserAgent->new;
 	$self->{ua}->agent( $self->{params}{agent} );
 	if ( defined $self->{proxy} ) {
-		my $url    = new URI::URL $self->{service_base};
+		my $url    = URI::URL->new $self->{service_base};
 		my $scheme = $url->scheme;
 		$self->{ua}->proxy( $scheme, $self->{proxy} );
 	}
@@ -207,7 +207,7 @@ sub do_request {
 #	warn "REQ: $path";
 	# Ask the User Agent object to request a URL.
 	# Results go into the response object (HTTP::Response).
-	my $request = new HTTP::Request( $method, $path );
+	my $request = HTTP::Request->new( $method, $path );
 	my $response = $self->{ua}->request($request);
 
 	# Parse/convert the response object for "easier reading"

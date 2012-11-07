@@ -40,7 +40,7 @@ sub handler {
       
       return OK;
     } elsif ($r->filename =~ /\/Doxygen\/(?!index.html)/ || $r->filename =~ /\/edoc\/index.html/) {
-      return new EnsEMBL::Web::Controller::Doxygen($r, $cookies)->status;
+      return EnsEMBL::Web::Controller::Doxygen->new($r, $cookies)->status;
     }
   }
 
@@ -61,7 +61,7 @@ sub handler {
   return DECLINED                if $r->method_number == M_OPTIONS;
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
   return DECLINED                if -d $r->filename;
-  return new EnsEMBL::Web::Controller::SSI($r, $cookies)->status;
+  return EnsEMBL::Web::Controller::SSI->new($r, $cookies)->status;
 }
 
 1;

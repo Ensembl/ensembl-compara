@@ -21,7 +21,7 @@ sub handler {
   $r->err_headers_out->{ 'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::Rss' };
   $r->custom_response(SERVER_ERROR, '/Crash');
 
-  my $hub = new EnsEMBL::Web::Hub;
+  my $hub = EnsEMBL::Web::Hub->new;
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   my $species = $hub->species;
 

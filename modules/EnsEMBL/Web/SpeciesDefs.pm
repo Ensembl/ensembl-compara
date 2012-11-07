@@ -285,7 +285,7 @@ sub parse {
   
   $CONF = {};
   
-  my $reg_conf = new EnsEMBL::Web::Tools::Registry($CONF);
+  my $reg_conf = EnsEMBL::Web::Tools::Registry->new($CONF);
 
   $self->{'_start_time'} = time;
   $self->{'_last_time'}  = $self->{'_start_time'};
@@ -580,7 +580,7 @@ sub _parse {
   my $tree          = {};
   my $db_tree       = {};
   my $das_tree      = {};
-  my $config_packer = new EnsEMBL::Web::ConfigPacker($tree, $db_tree, $das_tree);
+  my $config_packer = EnsEMBL::Web::ConfigPacker->new($tree, $db_tree, $das_tree);
   
   $self->_info_line('Parser', 'Child objects attached');
 

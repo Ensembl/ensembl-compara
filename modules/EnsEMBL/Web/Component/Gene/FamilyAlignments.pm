@@ -45,7 +45,7 @@ sub _embed_jalview {
   return unless $count;
   
   my $BASE = $object->species_defs->ENSEMBL_BASE_URL;
-  my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'fa', prefix => 'family_alignment');
+  my $file = EnsEMBL::Web::TmpFile::Text->new(extension => 'fa', prefix => 'family_alignment');
   my $URL  = $file->URL;
 
   foreach my $member (@$refs) {

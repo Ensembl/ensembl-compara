@@ -133,7 +133,7 @@ sub get_all_das {
   my %by_name = ();
   my %by_url  = ();
   for my $data ( $self->dases ) {
-    # Create new DAS source from value in database...
+    # Create DAS->new source from value in database...
     my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
     $das->matches_species( $species ) || next;
     $das->category( 'user' );
@@ -175,7 +175,7 @@ sub get_favourite_tracks {
 sub set_favourite_tracks {
   my ($self, $data) = @_;
   my ($favourites)  = $self->favourite_tracks;
-      $favourites ||= new EnsEMBL::Web::Data::Record::FavouriteTracks::User({ user_id => $self->id });
+      $favourites ||= EnsEMBL::Web::Data::Record::FavouriteTracks::User->new({ user_id => $self->id });
   
   if ($data) {
     local $Data::Dumper::Indent = 0;

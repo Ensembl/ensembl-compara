@@ -28,7 +28,7 @@ sub process {
     if ($new_id) {
       $url .= '/List';
       ## Add current user as creator and administrator
-      my $group = new EnsEMBL::Web::Data::Group($new_id);
+      my $group = EnsEMBL::Web::Data::Group->new($new_id);
       my $user = $object->user;
       $group->created_by($user->id);
       $group->save;

@@ -23,7 +23,7 @@ sub new {
   my $class = shift;
   my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $args  = shift || {};
-  my $input = new CGI;
+  my $input = CGI->new;
   
   my $object_params = [
     [ 'Phenotype',           'ph'  ],
