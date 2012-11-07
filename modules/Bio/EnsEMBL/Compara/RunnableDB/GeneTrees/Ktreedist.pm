@@ -211,33 +211,6 @@ sub load_input_trees {
     return 1;
 }
 
-sub load_input_trees_bk {
-
-  my $self = shift;
-  my $tree = $self->param('gene_tree');
-
-  $self->param('inputtrees_unrooted', {});
-  foreach my $tag ($tree->get_all_tags) {
-    next unless $tag =~ m/_it_/;
-    my $inputtree_string = $tree->get_value_for_tag($tag);
-
-    my $eval_inputtree;
-    eval {
-      $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string);
-      my @leaves = @{$eval_inputtree->get_all_leaves};
-    };
-    unless ($@) {
-#         # manual vivification needed:
-#       unless($self->param('inputtrees_unrooted')) {
-#           $self->param('inputtrees_unrooted', {});
-#       }
-
-        $self->param('inputtrees_unrooted')->{$tag} = $inputtree_string if ($self->check_distances_to_parent($eval_inputtree));
-    }
-  }
-
-  return 1;
-}
 
 ## We filter out all the trees with all the distance to parent equals to 0
 ## ktreedist will fail on them
@@ -312,42 +285,5 @@ sub store_ktreedist_score {
 
 }
 
-sub store_ktreedist_score_bk {
-  my $self = shift;
-  my $root_id = $self->param('gene_tree')->root_id;
-
-  my $sth = $self->compara_dba->dbc->prepare
-    ("INSERT IGNORE INTO ktreedist_score 
-                           (node_id,
-                            tag,
-                            k_score,
-                            scale_factor,
-                            symm_difference,
-                            n_partitions,
-                            k_score_rank) VALUES (?,?,?,?,?,?,?)");
-  my $count = 1;
-  my $ktreedist_score_root_id = $self->param('ktreedist_score')->{$root_id};
-  foreach my $k_score_as_rank (sort {$a <=> $b} keys %$ktreedist_score_root_id) {
-    foreach my $tag (keys %{$ktreedist_score_root_id->{$k_score_as_rank}{_tag}}) {
-      my $k_score         = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{k_score};
-      my $scale_factor    = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{scale_factor};
-      my $symm_difference = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{symm_difference};
-      my $n_partitions    = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{n_partitions};
-      my $k_score_rank    = $count;
-      $DB::single=1;1;
-      $sth->execute($root_id,
-                    $tag,
-                    $k_score,
-                    $scale_factor,
-                    $symm_difference,
-                    $n_partitions,
-                    $k_score_rank);
-      $count++;
-    }
-  }
-  $sth->finish;
-
-
-}
 
 1;
