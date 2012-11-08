@@ -152,7 +152,7 @@ sub write_output {
     my $tree_adaptor = $self->param('tree_adaptor');
 
     if (scalar(@{$self->param('nodes_todelete')})) {
-        $tree_adaptor->store($tree);
+        $tree_adaptor->store_nodes_rec($tree);
         foreach my $node (@{$self->param('nodes_todelete')}) {
             $tree_adaptor->delete_node($node);
             print "deleting node ", $node->node_id, "\n";
