@@ -55,7 +55,7 @@ sub chromosome_form {
       'type'        => 'dropdown',
       'name'        => 'r',
       'values'      => \@chrs,
-      'value'       => $object->seq_region_name
+      'value'       => $object->seq_region_name . ':1-1000',
     }, {
       'type'        => 'submit',
       'value'       => 'Go'
