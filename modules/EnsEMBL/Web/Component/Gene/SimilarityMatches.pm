@@ -54,7 +54,6 @@ sub matches_to_html {
       my $ext_db_entry     = $similarity_links{'link'} ? qq{<a href="$similarity_links{'link'}">$similarity_links{'link_text'}</a>}  : $similarity_links{'link_text'};
       $row->{$_->db_display_name} .= ' ' if defined $row->{$_->db_display_name};
       $row->{$_->db_display_name} .= $ext_db_entry;
-
       $count_ext_refs++;
 
       if (!defined $existing_display_names{$_->db_display_name}) {
@@ -70,7 +69,7 @@ sub matches_to_html {
         $existing_display_names{$_->db_display_name} = 1;
       }
     }
-    push @rows, $row;
+    push @rows, $row if (1 < keys %$row);
   }
   @columns = sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'title'} cmp $b->{'title'} || $a->{'link_text'} cmp $b->{'link_text'} } @columns;
   #@columns = sort { default_on($a) <=> default_on($b) || $a->{'title'} cmp $b->{'title'}} @columns;
