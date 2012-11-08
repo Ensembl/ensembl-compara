@@ -12,7 +12,7 @@ Ensembl.Share = {
       }
     }, options);
     
-    this.elLk.shareLink = $('a.share', this.el).on('click', function (e) {e.preventDefault();
+    this.elLk.shareLink = $('a.share', this.el).on('click', function () {
       if (!panel.elLk.share) {
         panel.elLk.share        = $('<div class="share_page info_popup"><span class="close"></span></div>').appendTo('body').css('left', panel.el.offset().left).data('loading', true);
         panel.elLk.shareSpinner = $('<div class="spinner"></div>').appendTo(panel.elLk.share);
