@@ -17,6 +17,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     this.base();
     this.initPopups();
     
+    if (!$('body').hasClass('ie')) {
+      $('pre > [title]', this.el).helptip({ deferred: true });
+    }
+    
     this.elLk.popup = $([
       '<div class="info_popup floating_popup">',
       ' <span class="close"></span>',
