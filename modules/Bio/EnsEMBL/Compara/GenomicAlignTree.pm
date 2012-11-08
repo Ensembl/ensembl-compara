@@ -1101,9 +1101,21 @@ sub method_link_species_set_id {
   return $method_link_species_set_id;
 }
 
+sub release_tree {
+  my ($self) = @_;
+
+  # Remove additional (Perl) references to the reference genomic_align_node and genomic_align:
+  delete($self->{"reference_genomic_align_node"}) if ($self->{"reference_genomic_align_node"});
+  delete($self->{"reference_genomic_align"}) if ($self->{"reference_genomic_align"});
+
+  # Call SUPER method, which will now work as expected
+  $self->SUPER::release_tree();
+}
+
 #sub DESTROY {
 #    my ($self) = @_;
+#
 #    $self->release_tree unless ($self->{_parent_link});
-#    }
+#}
 
 1;
