@@ -280,7 +280,7 @@ sub set_variations {
       $markup->{'variations'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
       $markup->{'variations'}{$_}{'type'}      = $snp_type;
       $markup->{'variations'}{$_}{'ambiguity'} = $ambiguity;
-      $markup->{'variations'}{$_}{'alleles'}  .= ($markup->{'variations'}{$_}{'alleles'} ? '; ' : '') . $allele_string;
+      $markup->{'variations'}{$_}{'alleles'}  .= ($markup->{'variations'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
       
       unshift @{$markup->{'variations'}{$_}{'link_text'}}, $link_text if $_ == $s;
 
@@ -356,7 +356,7 @@ sub set_exons {
     
     for ($start..$end) {          
       push @{$markup->{'exons'}{$_}{'type'}}, $type;          
-      $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? '; ' : '') . $id unless $markup->{'exons'}{$_}{'id'} =~ /$id/;
+      $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $id unless $markup->{'exons'}{$_}{'id'} =~ /$id/;
     }
   }
 }
@@ -394,7 +394,7 @@ sub set_codons {
         $start = 1 unless $start > 0;
         $end   = $slice_length unless $end < $slice_length;
         
-        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? '; ' : '') . "$c->{'label'}($id)" for $start-1..$end-1;
+        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? "\n" : '') . "$c->{'label'}($id)" for $start-1..$end-1;
       }
     }
   } else { # Normal Slice
@@ -404,13 +404,13 @@ sub set_codons {
       # START codons
       if ($start >= 1) {
         my $label = ($strand == 1 ? 'START' : 'STOP') . "($id)";
-        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? '; ' : '') . $label for $start-1..$start+1;
+        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? "\n" : '') . $label for $start-1..$start+1;
       }
       
       # STOP codons
       if ($stop <= $slice_length) {
         my $label = ($strand == 1 ? 'STOP' : 'START') . "($id)";
-        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? '; ' : '') . $label for $stop-3..$stop-1;
+        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? "\n" : '') . $label for $stop-3..$stop-1;
       }
     }
   }
@@ -427,7 +427,11 @@ sub markup_exons {
     exon2   => 'e2',
     other   => 'eo',
     gene    => 'eg',
-    compara => 'e2'
+    compara => 'e2',
+    
+    xxx=>'xxx',
+    yyy=>'yyy',
+    eu=>'eu',
   };
   
   foreach my $data (@$markup) {
@@ -435,7 +439,7 @@ sub markup_exons {
     
     foreach (sort { $a <=> $b } keys %{$data->{'exons'}}) {
       $exon = $data->{'exons'}{$_};
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $exon->{'id'} if $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $exon->{'id'} if $config->{'title_display'};
       
       foreach $type (@{$exon->{'type'}}) {
         $seq->[$_]{'class'} .= "$class->{$type} " unless $seq->[$_]{'class'} =~ /\b$class->{$type}\b/;
@@ -461,7 +465,7 @@ sub markup_codons {
       $class = $data->{'codons'}{$_}{'class'} || 'co';
       
       $seq->[$_]{'class'} .= "$class ";
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $data->{'codons'}{$_}{'label'} if $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $data->{'codons'}{$_}{'label'} if $config->{'title_display'};
       
       if ($class eq 'cu') {
         $config->{'key'}{'utr'} = 1;
@@ -493,7 +497,7 @@ sub markup_variation {
       $variation = $data->{'variations'}{$_};
       
       $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
@@ -542,7 +546,7 @@ sub markup_comparisons {
     foreach (sort {$a <=> $b} keys %{$data->{'comparisons'}}) {
       $comparison = $data->{'comparisons'}{$_};
       
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? '; ' : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
       $seq->[$_]{'class'} .= 'res ' if $comparison->{'resequencing'};
     }
     
@@ -938,6 +942,9 @@ sub class_to_style {
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'label'}" } ],
       bold => [ $i++, { 'font-weight' => 'bold' } ],
+      
+      xxx  => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXON1'}->{'default'}", 'display' => 'inline-block', 'height' => '5px', 'vertical-align' => 'middle' } ],
+      yyy  => [ $i++, { 'background-color' => "#9400d3",                              'display' => 'inline-block', 'height' => '5px', 'vertical-align' => 'middle' } ],
     );
     
     foreach (keys %$var_styles) {
