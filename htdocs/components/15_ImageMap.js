@@ -83,18 +83,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     $('a.iexport', this.elLk.toolbars).data('popup', this.elLk.exportMenu);
     
     this.elLk.popupLinks.on('click', function () {
-      var popup   = $(this).data('popup');
-      var visible = panel.elLk.popupLinks.map(function () { return ($(this).data('popup') || $()).filter(':visible')[0]; }).not(popup);
+      var popup = $(this).data('popup');
       
-      if (visible.length && (!popup || popup.is(':hidden'))) {
-        visible.hide();
-      }
+      panel.elLk.popupLinks.map(function () { return ($(this).data('popup') || $()).filter(':visible')[0]; }).not(popup).hide();
       
-      if (popup && !popup.hasClass('share')) {
+      if (popup && !popup.hasClass('share_page')) {
         panel.positionToolbarPopup(popup, this).toggle();
       }
       
-      popup = visible = null;
+      popup = null;
       
       return false;
     });
