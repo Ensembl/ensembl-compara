@@ -1250,11 +1250,8 @@ sub ld_pops_for_snp {
   return [] unless $self->counts->{'individuals'};    # must have genotypes
   return [] unless $self->vari_class =~ /snp/i;  # must be a SNP or mixed
 
-  my @pops;
-  foreach ( @vari_mappings ) {    
-    push @pops, map {$_->dbID} @{$_->get_all_LD_Populations};
-  }
-  return \@pops;
+  my $pa = $self->Obj->adaptor->db->get_PopulationAdaptor;
+  return [map {$_->dbID} @{$pa->fetch_all_LD_Populations}];
 }
 
 
