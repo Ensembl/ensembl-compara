@@ -24,7 +24,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('imageResize',        this, function () { if (this.xhr) { this.xhr.abort(); } this.getContent(); });
     Ensembl.EventManager.register('windowResize',       this, resetOffset);
     Ensembl.EventManager.register('ajaxLoaded',         this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
-    Ensembl.EventManager.register('changeWidth',        this, function () { Ensembl.EventManager.trigger('queuePageReload', this.id); });
+    Ensembl.EventManager.register('changeWidth',        this, function () { Ensembl.updateURL({ image_width: '' }, this.params.updateURL); Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
   },
   
@@ -81,7 +81,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
     
     $('a.image_resize', this.el).on('click', function () {
-      panel.params.updateURL = panel.params.updateURL.replace(/;image_width=\d+$/, '') + ';image_width=' + (panel.elLk.img.width() + (100 * ($(this).hasClass('big') ? 1 : -1)));
+      panel.params.updateURL = Ensembl.updateURL({ image_width: panel.elLk.img.width() + (100 * ($(this).hasClass('big') ? 1 : -1)) }, panel.params.updateURL);
       panel.getContent();
       return false;
     });
