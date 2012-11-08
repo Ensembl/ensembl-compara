@@ -175,15 +175,16 @@ sub fetch_input {
 
 sub run {
   my $self = shift;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Ortheus(
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
       -tree_string => $self->param('tree_string'),
-      -species_tree => $self->get_species_tree->newick_simple_format,
+      -species_tree => $self->get_species_tree->newick_format('simple'),
       -species_order => $self->param('species_order'),
-      -analysis => $self->analysis,
+      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
       -options => $self->param('options'),
       );
@@ -205,7 +206,28 @@ sub run {
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
-  $runnable->run_analysis;
+  #$runnable->run_analysis;
+  #Capture error message from ortheus and write it to the job_message table
+  eval {
+      $runnable->run_analysis;
+  } or do {
+      #make hash to remove duplicate messages
+      my %err_msgs;
+      my @lines = split /\n/, $@;
+      foreach my $line (@lines) {
+	  next if ($line =~ /Arguments received/);
+	  next if ($line =~ /^total_time/);
+	  next if ($line =~ /^alignment/);
+	  $err_msgs{$line} = 1;
+      }
+      
+      #Write to job_message table but without returing an error
+      foreach my $err_msg (keys %err_msgs) {
+	  $self->warning("Ortheus failed with error: $err_msg\n");
+      }
+      return;
+  };
+
 
   $self->parse_results();
 }
@@ -1147,7 +1169,7 @@ sub _load_2XGenomes {
       my $pairwise_mlss = $p_mlss_adaptor->fetch_by_dbID($param->{'method_link_species_set_id'});
 
       #find non_reference species name in pairwise alignment
-      my $species_set = $pairwise_mlss->species_set;
+      my $species_set = $pairwise_mlss->species_set_obj->genome_dbs;
       foreach my $genome_db (@$species_set) {
 	  if ($genome_db->name ne $self->param('reference_species')) {
 	      $target_species = $genome_db->name;
@@ -1364,7 +1386,7 @@ sub get_tree_string {
 
   return if (!$tree);
 
-  my $tree_string = $tree->newick_simple_format;
+  my $tree_string = $tree->newick_format("simple");
   # Remove quotes around node labels
   $tree_string =~ s/"(seq\d+)"/$1/g;
   # Remove branch length if 0
