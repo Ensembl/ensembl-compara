@@ -27,7 +27,6 @@ sub init {
     snp_display    => 'yes',
     line_numbering => 'sequence',
     codons_display => 'off',
-    title_display  => 'off',
     strand         => 1,
     %strains
   });

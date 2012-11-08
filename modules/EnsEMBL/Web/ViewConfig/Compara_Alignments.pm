@@ -35,7 +35,6 @@ sub init {
     conservation_display  => 'off',
     region_change_display => 'off',
     codons_display        => 'off',
-    title_display         => 'off',
     %defaults
   });
   

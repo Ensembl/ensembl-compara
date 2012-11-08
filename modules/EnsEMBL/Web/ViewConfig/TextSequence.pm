@@ -17,6 +17,7 @@ sub init {
     population_filter  => 'off',
     min_frequency      => 0.1,
     consequence_filter => 'off',
+    title_display      => 'off',
   });
 }
 
