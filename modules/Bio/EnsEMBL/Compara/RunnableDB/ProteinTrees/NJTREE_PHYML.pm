@@ -157,7 +157,7 @@ sub run_njtree_phyml {
     
     } else {
 
-        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $protein_tree->root );
+        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($protein_tree);
         
         warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$protein_tree->root->get_all_leaves}), scalar(keys %{$self->param('split_genes')}));
 

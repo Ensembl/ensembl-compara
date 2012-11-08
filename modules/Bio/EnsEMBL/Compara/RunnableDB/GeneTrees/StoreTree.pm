@@ -21,9 +21,9 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   my $gene_tree = shift;
   my $convert_to_stockholm = shift;
   
-  my $leafcount = scalar(@{$gene_tree->get_all_leaves});
+  my $leafcount = scalar(@{$gene_tree->get_all_Members});
 
-  my $file_root = $self->worker_temp_directory. $gene_tree->node_id;
+  my $file_root = $self->worker_temp_directory. $gene_tree->root_id;
   $file_root =~ s/\/\//\//g;  # converts any // in path to /
 
   my $aln_file = $file_root . '.aln';
@@ -56,7 +56,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
       my $node1 = shift @$partial_genes;
-      my $protein1 = $gene_tree->find_leaf_by_node_id($node1->[0]);
+      my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
       my $name1 = $self->_name_for_prot($protein1);
       my $cdna = $protein1->cdna_alignment_string;
@@ -73,7 +73,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         # and form:
         # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
       foreach my $node2 (@$partial_genes) {
-        my $protein2 = $gene_tree->find_leaf_by_node_id($node2->[0]);
+        my $protein2 = $gene_tree->root->find_leaf_by_node_id($node2->[0]);
         #print STDERR "node2 ", $node2, " ", $protein2, "\n";
         my $name2 = $self->_name_for_prot($protein2);
         $split_genes{$name2} = $name1;

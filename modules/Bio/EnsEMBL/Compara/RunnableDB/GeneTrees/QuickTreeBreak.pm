@@ -184,7 +184,7 @@ sub run_quicktreebreak {
     printf(STDERR "tree cluster %d has <3 members (proteins or ncRNAs) - can not build a tree\n", $gene_tree->root_id);
     return;
   }
-  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $gene_tree->root, 1 );
+  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, 1);
 
   my $cmd = sprintf('%s -out t -in a %s', $self->param('quicktree_exe'), $input_aln);
 

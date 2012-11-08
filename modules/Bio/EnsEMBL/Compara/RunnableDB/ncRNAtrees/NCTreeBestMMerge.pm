@@ -114,7 +114,7 @@ sub run {
     my $input_trees = [map {$self->param('inputtrees_rooted')->{$_}} @{$self->param('ref_support')}];
     my $merged_tree = $self->run_treebest_mmerge($input_trees);
 
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree')->root);
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree'));
     my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
     $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree) if ($leafcount >= 3);
     
