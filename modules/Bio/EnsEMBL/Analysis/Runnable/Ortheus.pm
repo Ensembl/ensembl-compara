@@ -225,13 +225,13 @@ sub options {
 sub run_analysis {
   my ($self, $program) = @_;
 
-  $self->run_ortheus;
+  return $self->run_ortheus;
 
   #move this to compara module instead because it is easier to keep track
   #of the 2x composite fragments. And also it removes the need to create
   #compara objects in analysis module.
   #$self->parse_results;
-  return 1;
+  #return 1;
 }
 
 sub run_ortheus {
@@ -279,7 +279,7 @@ sub run_ortheus {
   } else {
     $command .= " -s $SEMPHY";
   }
-  $command .= " -f output.$$.mfa -g output.$$.tree";
+  $command .= " -f output.$$.mfa -g output.$$.tree ";
 
   #append any additional options to command
   if ($self->options) {
@@ -287,9 +287,19 @@ sub run_ortheus {
   }
   print "Running ortheus: " . $command . "\n";
 
-  if (my $return_code = system($command)) {
-    throw("The following command failed (return_code=$return_code):\n\t$command\n");
+  #Capture output messages when running ortheus instead of throwing
+  open(ORTHEUS, "$command 2>&1 |") || die "Failed: $!\n";
+  my $output = "";
+  while (<ORTHEUS>){
+      $output .= $_;
   }
+  close ORTHEUS;
+
+  return $output;
+
+  #unless (system($command) == 0) {
+   # throw("ortheus execution failed\n");
+  #}
 }
 
 =head2 parse_results
