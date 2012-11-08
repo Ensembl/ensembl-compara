@@ -11,6 +11,9 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 sub init {
   my $self = shift;
   
+  $self->SUPER::init;
+  $self->title = 'Sequence';
+  
   $self->set_defaults({
     flank5_display => 600,
     flank3_display => 600,
@@ -18,10 +21,8 @@ sub init {
     exon_ori       => 'all',
     snp_display    => 'off',
     line_numbering => 'off',
+    title_display  => 'yes',
   });
-
-  $self->title = 'Sequence';
-  $self->SUPER::init;
 }
 
 sub form {
@@ -41,6 +42,7 @@ sub form {
   $self->add_form_element($general_markup_options{'exon_ori'});
   $self->variation_options({ populations => [ 'fetch_all_LD_Populations' ] }) if $dbs->{'DATABASE_VARIATION'};
   $self->add_form_element($general_markup_options{'line_numbering'});
+  $self->add_form_element($other_markup_options{'title_display'});
 }
 
 1;

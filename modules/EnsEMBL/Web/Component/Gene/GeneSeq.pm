@@ -18,13 +18,12 @@ sub initialize {
     site_type       => ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
     gene_name       => $object->Obj->can('external_name') ? $object->Obj->external_name : $object->stable_id,
     species         => $hub->species,
-    title_display   => 'yes',
     sub_slice_start => $start,
     sub_slice_end   => $end,
     ambiguity       => 1,
   };
 
-  for (qw(exon_display exon_ori snp_display line_numbering)) {
+  for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
