@@ -29,7 +29,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   init: function () {
-    var panel = this;
+    var panel   = this;
+    var species = {};
     
     this.base();
     
@@ -39,14 +40,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
     
-    this.elLk.drag        = $('.drag_select',     this.el);
-    this.elLk.map         = $('map',              this.el);
-    this.elLk.areas       = $('area',             this.elLk.map);
-    this.elLk.exportMenu  = $('.iexport_menu',    this.el);
-    this.elLk.img         = $('img.imagemap',     this.el);
-    this.elLk.hoverLabels = $('.hover_label',     this.el);
-    this.elLk.boundaries  = $('.boundaries',      this.el);
-    this.elLk.helpTips    = $('.image_toolbar a', this.el).helptip({ 'static': true });
+    this.elLk.drag        = $('.drag_select',   this.el);
+    this.elLk.map         = $('map',            this.el);
+    this.elLk.areas       = $('area',           this.elLk.map);
+    this.elLk.exportMenu  = $('.iexport_menu',  this.el).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.img         = $('img.imagemap',   this.el);
+    this.elLk.hoverLabels = $('.hover_label',   this.el);
+    this.elLk.boundaries  = $('.boundaries',    this.el);
+    this.elLk.toolbars    = $('.image_toolbar', this.el)
+    this.elLk.helpTips    = $('a',              this.elLk.toolbars).helptip({ 'static': true });
+    this.elLk.popupLinks  = $('a.popup',        this.elLk.toolbars);
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
@@ -55,15 +58,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeImageMap();
     this.makeHoverLabels();
     
-    if (this.elLk.areas.filter('.nav').length) {
-      this.elLk.helpTips.push(this.elLk.img.helptip('', { delay: false })[0]);
-    };
+    species[this.id] = this.getSpecies();
+    $.extend(this, Ensembl.Share);
+    this.shareInit({ species: species, type: 'image', positionPopup: this.positionToolbarPopup });
     
     if (this.elLk.boundaries.length) {
       Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);
       
       if (this.elLk.img[0].complete) {
-        panel.makeSortable();
+        this.makeSortable();
       } else {
         this.elLk.img.on('load', function () { panel.makeSortable(); });
       }
@@ -73,25 +76,34 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.dropFileUpload();
     }
     
-    panel.elLk.exportMenu.appendTo('body').css('left', this.el.offset().left);
+    if (this.elLk.areas.filter('.nav').length) {
+      this.elLk.helpTips.push(this.elLk.img.helptip('', { delay: false })[0]);
+    }
     
-    $('a.iexport', this.el).on('click', function () {
-      panel.positionToolbarPopup(panel.elLk.exportMenu, this).toggle();
+    $('a.iexport', this.elLk.toolbars).data('popup', this.elLk.exportMenu);
+    
+    this.elLk.popupLinks.on('click', function () {
+      var popup   = $(this).data('popup');
+      var visible = panel.elLk.popupLinks.map(function () { return ($(this).data('popup') || $()).filter(':visible')[0]; }).not(popup);
+      
+      if (visible.length && (!popup || popup.is(':hidden'))) {
+        visible.hide();
+      }
+      
+      if (popup && !popup.hasClass('share')) {
+        panel.positionToolbarPopup(popup, this).toggle();
+      }
+      
+      popup = visible = null;
+      
       return false;
     });
     
-    $('a.image_resize', this.el).on('click', function () {
+    $('a.image_resize', this.elLk.toolbars).on('click', function () {
       panel.params.updateURL = Ensembl.updateURL({ image_width: panel.elLk.img.width() + (100 * ($(this).hasClass('big') ? 1 : -1)) }, panel.params.updateURL);
       panel.getContent();
       return false;
     });
-    
-    var species = {};
-    species[this.id] = this.getSpecies();
-    
-    $.extend(this, Ensembl.Share);
-    
-    this.shareInit({ species: species, type: 'image', positionPopup: this.positionToolbarPopup });
   },
   
   hashChange: function (r) {
@@ -220,7 +232,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             panel.elLk.img.helptip(tip, { show: true });
           }
         } else {
-          
           if (tip) {
             tip = false;
             panel.elLk.img.helptip('');
