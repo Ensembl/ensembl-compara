@@ -78,7 +78,7 @@ sub render_toolbar {
     
     $toolbar .= sprintf '<a href="%s" class="config modal_link force" title="%s" rel="modal_config_%s"></a>', $config_url, $icon_mapping->{'config'}{'title'}, lc $component;
     $toolbar .= qq{<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>} if $self->{'image_configs'}[0]->get_node('user_data');
-    $toolbar .= qq{<a href="$share_url" class="share" title="$icon_mapping->{'share'}{'title'}"></a>};
+    $toolbar .= qq{<a href="$share_url" class="share popup" title="$icon_mapping->{'share'}{'title'}"></a>};
   }
   
   ## Image export popup menu
@@ -125,7 +125,7 @@ sub render_toolbar {
       </div>
     };
    
-    $toolbar .= sprintf '<a href="%spdf" class="export %s" title="%s"></a>', $url, $self->{'export'}, $icon_mapping->{'image'}{'title'};
+    $toolbar .= sprintf '<a href="%spdf" class="export popup %s" title="%s"></a>', $url, $self->{'export'}, $icon_mapping->{'image'}{'title'};
   }
 
   if ($toolbar) {
