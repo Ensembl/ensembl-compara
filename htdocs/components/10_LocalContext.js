@@ -58,7 +58,7 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     this.shareEnabled = true;
     
     if (this.shareWaiting) {
-      this.share(this.elLk.shareLink.href, this.elLk.shareLink);
+      this.share(this.elLk.shareLink[0].href, this.elLk.shareLink[0]);
     }
   }
 });
