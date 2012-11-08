@@ -24,12 +24,14 @@ Ensembl.Share = {
         }).on('click', '.url', function () {
           $(this).select();
         });
+        
+        panel.elLk.shareLink.data('popup', panel.elLk.share);
       } else if (!panel.elLk.share.data('loading')) {
         panel.shareOptions.positionPopup.call(panel, panel.elLk.share, this).toggle();
       }
       
       return false;
-    })[0];
+    });
   },
   
   share: function (url, link) {
