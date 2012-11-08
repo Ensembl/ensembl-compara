@@ -24,7 +24,10 @@ sub get_sequence_data {
     $self->set_alignments($config, $sl, $mk, $seq) if $config->{'align'};
     $self->set_variations($config, $sl, $mk, \@variation_seq);
     
-    $mk->{'variations'}{$_}{'align'} = 1 for @{$config->{'focus_position'} || []};
+    foreach (@{$config->{'focus_position'} || []}) {
+      $mk->{'variations'}{$_}{'align'} = 1;
+      delete $mk->{'variations'}{$_}{'href'} unless $config->{'ref_slice_seq'}; # delete link on the focus variation on the primary species, since we're already looking at it
+    }
     
     if (!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
       push @temp_slices, {};

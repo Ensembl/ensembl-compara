@@ -501,7 +501,7 @@ sub markup_variation {
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
-      $seq->[$_]{'href'}   = $hub->url($variation->{'href'});
+      $seq->[$_]{'href'}   = $hub->url($variation->{'href'}) if $variation->{'href'};
       $seq->[$_]{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
       
       $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
