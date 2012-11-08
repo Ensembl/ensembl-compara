@@ -80,7 +80,7 @@ sub param_defaults {
 sub write_output {
     my $self = shift @_;
 
-    $self->SUPER::write_output;
+    #$self->SUPER::write_output;
     if ($self->param('dataflow_subclusters')) {
         foreach my $child (@{$self->param('children')}) {
             $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2);
