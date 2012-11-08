@@ -230,10 +230,13 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   if (defined($start) and defined($end) and $restrict) {
     my $restricted_genomic_align_trees = [];
     foreach my $this_genomic_align_tree (@$genomic_align_trees) {
-      $this_genomic_align_tree = $this_genomic_align_tree->restrict_between_reference_positions(
+      my $this_restricted_genomic_align_tree = $this_genomic_align_tree->restrict_between_reference_positions(
           $start, $end, undef, "skip_empty_genomic_aligns");
-      if (@{$this_genomic_align_tree->get_all_leaves()} > 1) {
-        push(@$restricted_genomic_align_trees, $this_genomic_align_tree);
+      if (@{$this_restricted_genomic_align_tree->get_all_leaves()} > 1) {
+        push(@$restricted_genomic_align_trees, $this_restricted_genomic_align_tree);
+      }
+      if ($this_restricted_genomic_align_tree ne $this_genomic_align_tree) {
+          $this_genomic_align_tree->release_tree;
       }
     }
     $genomic_align_trees = $restricted_genomic_align_trees;
@@ -1253,6 +1256,5 @@ sub _create_GenomicAlign_object_from_rowhash {
 
   return $genomic_align;
 }
-
 
 1;
