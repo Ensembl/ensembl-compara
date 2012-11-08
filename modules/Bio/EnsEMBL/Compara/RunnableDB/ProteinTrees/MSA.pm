@@ -170,8 +170,11 @@ sub write_output {
     my $self = shift @_;
 
     if ($self->param('single_peptide_tree')) {
-        $self->compara_dba->get_AlignedMemberAdaptor->store_all_by_GeneTree($self->param('protein_tree'));
-        return;
+        $self->param('protein_tree')->aln_method('identical_seq');
+    } else {
+        my $method = ref($self);
+        $method =~ /::([^:]*)$/;
+        $self->param('protein_tree')->aln_method($1);
     }
     my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
 
@@ -188,7 +191,7 @@ sub write_output {
         }
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store_all_by_GeneTree($self->param('protein_tree'));
+    $self->compara_dba->get_AlignedMemberAdaptor->store($self->param('protein_tree'));
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
 
@@ -252,10 +255,9 @@ sub update_single_peptide_tree {
   my $tree   = shift;
 
   foreach my $member (@{$tree->get_all_Members}) {
-    next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-    next unless($member->sequence);
     $member->cigar_line(length($member->sequence)."M");
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
+    $tree->aln_length(length($member->sequence));
   }
 }
 
@@ -329,6 +331,9 @@ sub dumpProteinTreeToWorkdir {
 sub parse_and_store_alignment_into_proteintree {
   my $self = shift;
 
+
+  return 1 if ($self->param('single_peptide_tree'));
+
   my $msa_output =  $self->param('msa_output');
   my $format = 'fasta';
   my $tree = $self->param('protein_tree');
@@ -375,6 +380,7 @@ sub parse_and_store_alignment_into_proteintree {
     $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
     #print "The cigar_line of $id is: ", $align_hash{$id}, "\n";
   }
+  $self->$tree->aln_length($alignment_length);
 
   #
   # Align cigar_lines to members and store
@@ -436,17 +442,11 @@ sub _store_aln_tags {
     my $aln_pi = $sa->average_percentage_identity;
     $tree->store_tag("aln_percent_identity",$aln_pi);
 
-    # Alignment length.
-    my $aln_length = $sa->length;
-    $tree->store_tag("aln_length",$aln_length);
-
     # Alignment runtime.
-    my $aln_runtime = int(time()*1000-$self->param('msa_starttime'));
-    $tree->store_tag("aln_runtime",$aln_runtime);
-
-    # Alignment method.
-    my $aln_method = ref($self); #$self->param('method');
-    $tree->store_tag("aln_method",$aln_method);
+    if ($self->param('msa_starttime')) {
+        my $aln_runtime = int(time()*1000-$self->param('msa_starttime'));
+        $tree->store_tag("aln_runtime",$aln_runtime);
+    }
 
     # Alignment residue count.
     my $aln_num_residues = $sa->no_residues;

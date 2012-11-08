@@ -23,7 +23,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   
   my $leafcount = scalar(@{$gene_tree->get_all_Members});
 
-  my $file_root = $self->worker_temp_directory. $gene_tree->root_id;
+  my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
   $file_root =~ s/\/\//\//g;  # converts any // in path to /
 
   my $aln_file = $file_root . '.aln';

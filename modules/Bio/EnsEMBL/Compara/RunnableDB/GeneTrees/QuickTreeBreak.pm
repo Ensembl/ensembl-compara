@@ -238,9 +238,6 @@ sub store_supertree {
       #$self->dataflow_output_id({'gene_tree_id' => $node_id}, 2);
       print STDERR "Created new cluster $node_id\n";
   }
-  my $super_align_clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
-  $self->store_tree_into_clusterset($self->param('super_align_tree'), $super_align_clusterset);
-  $self->param('super_align_tree')->ref_root_id($self->param('tree_id'));
 }
 
 

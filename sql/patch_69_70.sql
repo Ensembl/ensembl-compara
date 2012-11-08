@@ -99,4 +99,40 @@ INSERT INTO gene_tree_node_tag
 ALTER TABLE gene_tree_node_attr DROP COLUMN tree_support;
 
 
+-- gene_align
+
+CREATE TABLE gene_align (
+       gene_align_id         int(10) unsigned NOT NULL AUTO_INCREMENT,
+	 seq_type              varchar(40),
+	 aln_method            varchar(40) NOT NULL DEFAULT '',
+	 aln_length            int(10) NOT NULL DEFAULT 0,
+
+  PRIMARY KEY (gene_align_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+CREATE TABLE gene_align_member (
+       gene_align_id         int(10) unsigned NOT NULL,
+       member_id             int(10) unsigned NOT NULL,
+       cigar_line            mediumtext,
+
+  FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+
+  PRIMARY KEY (gene_align_id,member_id),
+  KEY member_id (member_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+ALTER TABLE gene_tree_root ADD COLUMN gene_align_id INT(10) UNSIGNED  DEFAULT NULL AFTER method_link_species_set_id;
+
+INSERT INTO gene_align SELECT root_id, NULL, IF(member_type = "ncrna", "infernal", IF(clusterset_id = "default", "mcoffee", "mafft")), 0 FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN gene_tree_member USING (node_id) WHERE cigar_line IS NOT NULL GROUP BY root_id;
+
+INSERT INTO gene_align_member SELECT root_id, member_id, cigar_line FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN gene_tree_member USING (node_id) WHERE cigar_line IS NOT NULL;
+UPDATE gene_align JOIN gene_tree_root ON gene_tree_root.root_id = gene_align.gene_align_id SET gene_tree_root.gene_align_id = gene_tree_root.root_id;
+
+-- DROP TABLE gene_tree_member
+
+
 

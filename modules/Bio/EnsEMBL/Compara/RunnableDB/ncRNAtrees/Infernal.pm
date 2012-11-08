@@ -462,6 +462,9 @@ sub parse_and_store_alignment_into_tree {
     }
     $align_hash{$id} = $cigar_line;
   }
+ 
+  $tree->aln_method('infernal');
+  $tree->aln_length($alignment_length);
 
   #
   # align cigar_line to member and store
@@ -483,7 +486,7 @@ sub parse_and_store_alignment_into_tree {
 #    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
     #$self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
   }
-  $self->compara_dba->get_AlignedMemberAdaptor->store_all_by_GeneTree($tree);
+  $self->compara_dba->get_AlignedMemberAdaptor->store($tree);
   return undef;
 }
 
@@ -502,17 +505,11 @@ sub _store_aln_tags {
     my $aln_pi = $sa->average_percentage_identity;
     $tree->store_tag("aln_percent_identity",$aln_pi);
 
-    # Alignment length.
-    my $aln_length = $sa->length;
-    $tree->store_tag("aln_length",$aln_length);
-
     # Alignment runtime.
-    my $aln_runtime = int(time()*1000-$self->param('infernal_starttime'));
-    $tree->store_tag("aln_runtime",$aln_runtime);
-
-    # Alignment method.
-    my $aln_method = $self->param('method');
-    $tree->store_tag("aln_method",$aln_method);
+    if ($self->param('infernal_starttime')) {
+        my $aln_runtime = int(time()*1000-$self->param('infernal_starttime'));
+        $tree->store_tag("aln_runtime",$aln_runtime);
+    }
 
     # Alignment residue count.
     my $aln_num_residues = $sa->no_residues;

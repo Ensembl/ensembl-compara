@@ -253,7 +253,7 @@ sub pipeline_analyses {
 #              -logic_name => 'backbone_fire_hmmAlign',
 #              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
 #              -parameters => {
-#                              'updated_tables' => 'gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_node_tag gene_tree_node_attr gene_tree_member',
+#                              'updated_tables' => 'gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_node_tag gene_tree_node_attr',
 #                              'filename'       => 'snapshot_before_hmmalign.sql',
 #                              'output_file'    => $self->o('dump_dir') . '/#filename#',
 #                             }
@@ -318,7 +318,8 @@ sub pipeline_analyses {
                     'INSERT INTO protein_tree_hmmprofile SELECT root_id, "dna", value FROM gene_tree_root_tag WHERE tag = "hmm_dna";',
                     'DELETE FROM gene_tree_root_tag WHERE tag IN ("hmm_aa", "hmm_dna");',
                     # We move mcoffee scores
-                    'INSERT INTO protein_tree_member_score SELECT node_id, value FROM gene_tree_node_tag WHERE tag = "aln_score";',
+                    'INSERT INTO gene_align (aln_method) VALUES ("mcoffee_scores")',
+                    'INSERT INTO gene_align_member SELECT #_insert_id_3#, member_id, value FROM gene_tree_node_tag JOIN gene_tree_node USING (node_id) WHERE tag = "aln_score";',
                     'DELETE FROM gene_tree_node_tag WHERE tag = "aln_score";',
                 ],
             },
@@ -524,11 +525,11 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
-                1 => [ 'other_sequence_reuse' ],
+                1 => [ 'other_sequence_table_reuse' ],
             },
         },
 
-        {   -logic_name => 'other_sequence_reuse',
+        {   -logic_name => 'other_sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),

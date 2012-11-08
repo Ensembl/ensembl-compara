@@ -246,33 +246,6 @@ CREATE TABLE cmsearch_hit (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
--- These tables are for passing alignments between runnables
---
-DROP TABLE IF EXISTS alignment;
-CREATE TABLE alignment (
-       alignment_id    varchar(100) NOT NULL,
-       compara_table   ENUM('compara','ncrna') NOT NULL,
-       compara_key     int(10) unsigned NOT NULL,
-
-PRIMARY KEY (alignment_id)
-) ENGINE=InnoDB;
-
-
-DROP TABLE IF EXISTS aligned_sequence;
-CREATE TABLE aligned_sequence (
-       alignment_id           varchar(100) NOT NULL,
-       aligned_seq_id         int(10) unsigned NOT NULL AUTO_INCREMENT,
-       aligned_length         int(10) NOT NULL,
-       sequence_id            int(10) unsigned,
-       member_id              int(10) unsigned,
-       aligned_sequence       mediumtext,
-
-PRIMARY KEY (aligned_seq_id),
-FOREIGN KEY (alignment_id) REFERENCES alignment(alignment_id)
--- FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
--- FOREIGN KEY (member_id) REFERENCES member(member_id)
-) ENGINE=InnoDB;
-
 
 -- These tables are for passing CAFE species trees and CAFE tables between runnables for
 -- CAFE Analysis

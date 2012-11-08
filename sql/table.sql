@@ -625,6 +625,32 @@ CREATE TABLE domain_member (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
+CREATE TABLE gene_align (
+       gene_align_id         int(10) unsigned NOT NULL AUTO_INCREMENT,
+	 seq_type              varchar(40),
+	 aln_method            varchar(40) NOT NULL DEFAULT '',
+	 aln_length            int(10) NOT NULL DEFAULT 0,
+
+  PRIMARY KEY (gene_align_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+CREATE TABLE gene_align_member (
+       gene_align_id         int(10) unsigned NOT NULL,
+       member_id             int(10) unsigned NOT NULL,
+       cigar_line            mediumtext,
+
+  FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+
+  PRIMARY KEY (gene_align_id,member_id),
+  KEY member_id (member_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+
 #
 # Table structure for table 'gene_tree_node'
 #
@@ -683,12 +709,14 @@ CREATE TABLE gene_tree_root (
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
     clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
+    gene_align_id                   INT(10) UNSIGNED,
     ref_root_id                     INT(10) UNSIGNED,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
     version                         INT UNSIGNED,           # version of the stable_id (changes only when members move to/from existing trees)
 
     FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
     FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+    FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
     FOREIGN KEY (ref_root_id) REFERENCES gene_tree_root(root_id),
 
     PRIMARY KEY (root_id ),
@@ -701,15 +729,15 @@ CREATE TABLE gene_tree_root (
 
 
 #
-# Table structure for table 'gene_tree_member'
+# Table structure for table 'protein_tree_member_score'
 #
 # overview:
-#   to allow certain nodes (leaves) to have aligned members attached to them
+#   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
 # semantics:
 #    node_id                  -- the id of node associated with this name
 #    cigar_line               -- compressed alignment information
 
-CREATE TABLE gene_tree_member (
+CREATE TABLE protein_tree_member_score (
   node_id                     int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
 
@@ -719,18 +747,6 @@ CREATE TABLE gene_tree_member (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-
-#
-# Table structure for table 'protein_tree_member_score'
-#
-# overview:
-#   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
-# semantics:
-#    node_id                  -- the id of node associated with this name
-#    member_id                -- link to member.member_id in many-1 relation (single member per node)
-#    cigar_line               -- string with the alignment score values 
-
-CREATE TABLE protein_tree_member_score LIKE gene_tree_member;
 
 
 #

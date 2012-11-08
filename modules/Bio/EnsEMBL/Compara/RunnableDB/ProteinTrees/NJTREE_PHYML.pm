@@ -52,6 +52,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML;
 
 use strict;
 
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
 use File::Glob;
@@ -188,21 +190,25 @@ sub run_njtree_phyml {
 sub store_filtered_align {
     my ($self, $filename) = @_;
     print STDERR "Found filtered alignment: $filename\n";
-    my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
-    my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$filename'";
 
     #place all members in a hash on their member name
     my %member_hash;
+    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type   => 'filtered', -aln_method => 'clustal');
     foreach my $member (@{$self->param('protein_tree')->get_all_Members}) {
-        $member_hash{$member->member_id} = $member;
+        my $copy = $member->copy();
+        $copy->stable_id($self->_name_for_prot($member));
+        $aln->add_Member($copy);
     }
 
-    # Storing the alignment as tags
-    $self->param('protein_tree')->store_tag('filtered_alignment_length', $aln->length()/3);
-    foreach my $seq ($aln->each_seq) {
-        $seq->display_id =~ /(\d+)\_\d+/;
-        $member_hash{$1}->store_tag('filtered_alignment', $seq->seq());
+    $aln->load_cigars_from_fasta($filename, 1);
+
+    my $sequence_adaptor = $self->$self->compara_dba->get_SequenceAdaptor;
+    foreach my $member (@{$aln->get_all_Members}) {
+        $sequence_adaptor->store_other_sequence($member, $member->sequence, 'filtered');
     }
+
+    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+    $self->param('protein_tree')->store_tag('filtered_alignment', $aln->gene_align_id);
 }
 
 

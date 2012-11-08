@@ -651,7 +651,7 @@ sub pipeline_analyses {
                             'member_type' => 'ncrna', # For creating additional 
                            },
             -flow_into => {
-                           2 => [ 'orthotree', 'ktreedist' ],
+                           1 => [ 'orthotree', 'ktreedist' ],
                            -1 => [ 'treebest_mmerge_himem' ],
                            -2 => [ 'treebest_mmerge_himem' ],
             },
@@ -667,7 +667,7 @@ sub pipeline_analyses {
                          'mlss_id' => $self->o('mlss_id'),
                         },
          -flow_into => {
-                        2 => [ 'orthotree', 'ktreedist' ],
+                        1 => [ 'orthotree', 'ktreedist' ],
                        },
          -rc_name => 'himem',
         },

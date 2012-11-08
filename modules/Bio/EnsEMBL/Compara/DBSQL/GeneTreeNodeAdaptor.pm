@@ -410,19 +410,23 @@ sub _columns {
           't.right_index',
           't.distance_to_parent',
 
-          'tm.cigar_line',
+          'gam.cigar_line',
 
           Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->_columns()
           );
 }
 
 sub _tables {
-  return (['gene_tree_node', 't'], ['gene_tree_member', 'tm'], ['member', 'm']);
+  return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['member', 'm']);
+}
+
+sub _default_where_clause {
+    return 't.root_id = tr.root_id';
 }
 
 sub _left_join {
     return (
-        ['gene_tree_member', 't.node_id = tm.node_id'],
+        ['gene_align_member', 'gam.member_id = t.member_id AND gam.gene_align_id = tr.gene_align_id'],
         ['member', 't.member_id = m.member_id'],
     );
 }

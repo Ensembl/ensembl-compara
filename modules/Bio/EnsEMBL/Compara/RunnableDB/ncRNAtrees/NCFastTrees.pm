@@ -334,40 +334,31 @@ sub _load_and_dump_alignment {
     my $aln_file = $file_root . ".aln";
     open my $outaln, ">", "$aln_file" or $self->throw("Error opening $aln_file for writing");
 
-#    my $sql_load_alignment = "SELECT member_id, aligned_sequence FROM aligned_sequence WHERE alignment_id = $alignment_id";
-    my $sql_load_alignment = "SELECT member_id, aligned_sequence FROM aligned_sequence WHERE alignment_id = ?";
-    my $sth_load_alignment = $self->compara_dba->dbc->prepare($sql_load_alignment);
-    print STDERR "SELECT member_id, aligned_sequence FROM aligned_sequence WHERE alignment_id = $alignment_id\n" if ($self->debug);
-    $sth_load_alignment->execute($alignment_id);
-    my $all_aln_seq_hashref = $sth_load_alignment->fetchall_arrayref({});
+    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'seq_with_flanking', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $bioaln = $aln->get_SimpleAlign;
+    my @all_aln_seq;
+    foreach my $seq ($bioaln->each_seq) {
+        push @all_aln_seq, $seq;
+    }
 
-    my $seqLen = length($all_aln_seq_hashref->[0]->{aligned_sequence});
+    my $seqLen = length($all_aln_seq[0]->seq);
     if ($seqLen >= 5000) {
         # It is better to feed FastTree with aln in fasta format
         my $aln_fasta = $file_root . ".fa";
         open my $aln_fasta_fh, ">", $aln_fasta or $self->throw("Error opening $aln_fasta for writing");
-        for my $row_hashref (@$all_aln_seq_hashref) {
-            my $mem_id = $row_hashref->{member_id};
-            my $member = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($mem_id);
-            my $taxid = $member->taxon_id();
-            my $aln_seq = $row_hashref->{aligned_sequence};
-            print $aln_fasta_fh ">" . $mem_id . "_" . $taxid . "\n";
-            print $aln_fasta_fh $aln_seq . "\n";
+        for my $seq (@all_aln_seq) {
+            print $aln_fasta_fh ">" . $seq->display_id . "\n";
+            print $aln_fasta_fh $seq->seq . "\n";
         }
         close ($aln_fasta_fh);
         $self->param('aln_fasta', $aln_fasta);
     }
 
-    print $outaln scalar(@$all_aln_seq_hashref), " ", $seqLen, "\n";
-    for my $row_hashref (@$all_aln_seq_hashref) {
-        my $mem_id = $row_hashref->{member_id};
-        my $member = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($mem_id);
-        my $taxid = $member->taxon_id();
-        my $aln_seq = $row_hashref->{aligned_sequence};
-        print STDERR "$mem_id\t" if ($self->debug);
-        print STDERR substr($aln_seq, 0, 60), "...\n" if ($self->debug);
+    print $outaln scalar(@all_aln_seq), " ", $seqLen, "\n";
+    for my $seq (@all_aln_seq) {
+        my $aln_seq = $seq->seq;
         $aln_seq =~ s/^N/A/;  # To avoid RAxML failure
-        print $outaln $mem_id, "_", $taxid, " ", $aln_seq, "\n";
+        print $outaln $seq->display_id, " ", $aln_seq, "\n";
     }
     close($outaln);
 

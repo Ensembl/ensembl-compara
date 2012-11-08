@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Time::HiRes qw /time/;
+
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
@@ -15,6 +17,7 @@ sub fetch_input {
     my ($self) = @_;
     my $nc_tree_id = $self->param('gene_tree_id');
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
+    $self->param('gene_tree', $nc_tree);
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
@@ -329,41 +332,20 @@ sub store_fasta_alignment {
     my $uniq_alignment_id = "$param" . "_" . $self->input_job->dbID ;
     my $aln_file = $self->param($param);
 
-    # Insert a new alignment in the DB
-    my $sql_new_alignment = "INSERT IGNORE INTO alignment (alignment_id, compara_table, compara_key) VALUES (?, 'ncrna', ?)";
-    print STDERR "$sql_new_alignment\n" if ($self->debug);
-    my $sth_new_alignment = $self->compara_dba->dbc->prepare($sql_new_alignment);
-    $sth_new_alignment->execute($uniq_alignment_id, $nc_tree_id);
-    $sth_new_alignment->finish();
+    my $aln = $self->param('gene_tree')->deep_copy();
+    bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
+    $aln->seq_type('seq_with_flanking');
+    $aln->aln_method('prank');
+    $aln->load_cigars_from_fasta($aln_file, 1);
 
-    # read the alignment back from file
-    print "Reading alignment fasta file $aln_file\n" if ($self->debug());
-    open my $aln_fh, "<", $aln_file or die "I can't open $aln_file for reading\n";
-    my $aln_header;
-    my $aln_seq;
-    my $sql_new_alnseq = "INSERT INTO aligned_sequence (alignment_id, aligned_length, member_id, aligned_sequence) VALUES (?,?,?,?)";
-    my $sth_new_alnseq = $self->compara_dba->dbc->prepare($sql_new_alnseq);
-    while (<$aln_fh>) {
-        chomp;
-        if (/^>/) {
-            if (! defined ($aln_header)) {
-                ($aln_header) = $_ =~ />(.+)/;
-                next;
-            }
-            my $l = length($aln_seq);
-            print STDERR "INSERT INTO aligned_sequence (alignment_id, aligned_length, member_id, aligned_sequence) VALUES ($uniq_alignment_id, $l, $aln_header, $aln_seq)\n";
-            $sth_new_alnseq->execute($uniq_alignment_id, $l, $aln_header, $aln_seq);
-            ($aln_header) = $_ =~ />(.+)/;
-            $aln_seq = "";
-        } else {
-            $aln_seq .= $_;
-        }
+    my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
+    foreach my $member (@{$aln->get_all_Members}) {
+        $sequence_adaptor->store_other_sequence($member, $member->sequence, 'seq_with_flanking');
     }
-    my $l = length($aln_seq);
-    $sth_new_alnseq->execute($uniq_alignment_id, $l, $aln_header, $aln_seq);
-    $sth_new_alnseq->finish();
 
-    $self->param('alignment_id', $uniq_alignment_id);
+    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+
+    $self->param('alignment_id', $aln->dbID);
     return;
 }
 
