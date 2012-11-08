@@ -12,7 +12,6 @@ sub init {
   $self->set_defaults({
     flank_size      => 400,
     snp_display     => 'yes',
-    line_numbering  => 'sequence',
     select_sequence => 'both',
   });
 
