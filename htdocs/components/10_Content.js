@@ -73,6 +73,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   getContent: function (url, el, params, newContent) {
     var node;
     
+    $('.js_panel', el || this.el).each(function () {
+      Ensembl.EventManager.trigger('destroyPanel', this.id); // destroy all sub panels
+    });
+    
     this.elLk.helpTips.helptip(false); // Destroy helptips based on this panel
     
     params = params || this.params;
