@@ -20,6 +20,9 @@
 body.ie67 .nav                         { margin-top: 3px; }
 body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 
+div#mobile_context        { display: none; }
+ul.mobile_context li img  { display: none; }
+
 .tool_buttons p,
 .other_tool              { display: none; margin: 0; }
 .tool_buttons a,

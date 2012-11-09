@@ -17,6 +17,10 @@ towards interesting content. */
 
 @media all and (max-width: 767px) {
 
+  body {
+    -webkit-text-size-adjust: 100%; // Prevents Mobile Safari from bumping up font sizes in landscape
+  }
+
 
   #min_width_container { min-width:320px; }
 
@@ -35,13 +39,9 @@ towards interesting content. */
   div.box-right { width:100%; float:none; margin-left: 0; margin-right: 0; }
 }
 
-/* SMALL MOBILE DEVICES - remove extraneous navigation */
+/* SMALLER MOBILE DEVICES - remove extraneous navigation */
 
 @media all and (max-width:600px) {
-
-  body {
-    -webkit-text-size-adjust: 100%; // Prevents Mobile Safari from bumping up font sizes in landscape
-  }
 
   .mobile-only              { display:inline-block; }
 
@@ -62,6 +62,9 @@ towards interesting content. */
   .species-badge            { display: none; }
 
   .nav                      { display: none; }
+
+  div#mobile_context        { display: block; }
+
   #main, #widemain          { margin-left: 0; }
   #footer                   { margin-left: 1em; }
 
