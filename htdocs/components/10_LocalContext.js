@@ -60,5 +60,7 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     if (this.shareWaiting) {
       this.share(this.elLk.shareLink[0].href, this.elLk.shareLink[0]);
     }
+    
+     Ensembl.EventManager.unregister('ajaxLoaded', this);
   }
 });
