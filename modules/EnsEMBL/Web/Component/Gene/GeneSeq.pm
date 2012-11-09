@@ -51,9 +51,7 @@ sub content {
   my $html      = $self->tool_buttons(uc $slice->seq(1), $species);
   
   if ($length >= $self->{'subslice_length'}) {
-    my $base_url = $self->ajax_url('sub_slice', { length => $length, name => $slice->name });
-    
-    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
+    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
   } else {
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
   }
