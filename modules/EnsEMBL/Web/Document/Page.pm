@@ -27,20 +27,7 @@ sub new {
   
    my $document_types = {
     none => { none => '' },
-    HTML => {
-      '2.0'         => '"-//IETF//DTD HTML 2.0 Level 2//EN"',
-      '3.0'         => '"-//IETF//DTD HTML 3.0//EN"',
-      '3.2'         => '"-//W3C//DTD HTML 3.2 Final//EN"',
-      '4.01 Strict' => '"-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"',
-      '4.01 Trans'  => '"-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"',
-      '4.01 Frame'  => '"-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd"'
-    },
-    XHTML => {
-      '1.0 Strict' => '"-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"',
-      '1.0 Trans'  => '"-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"',
-      '1.0 Frame'  => '"-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"',
-      '1.1'        => '"-//W3C//DTD XHTML 1.1//EN"'
-    },
+    HTML => { '5' => '' },
     XML => {
       'DASGFF'             => '"http://www.biodas.org/dtd/dasgff.dtd"',
       'DASDSN'             => '"http://www.biodas.org/dtd/dasdsn.dtd"',
@@ -96,17 +83,20 @@ sub set_doc_type {
 
 sub doc_type {
   my $self = shift;
-  
+
   return '' if $self->{'doc_type'} eq 'none';
-  
-  my $doctype = $self->{'doc_type'} eq 'XML' ? "$self->{'doc_type_version'} SYSTEM" : 'html PUBLIC';
-  
-  return "<!DOCTYPE $doctype $self->{'document_types'}->{$self->{'doc_type'}}->{$self->{'doc_type_version'}}>\n";
+
+  if ($self->{'doc_type'} eq 'XML') {
+    return sprintf "<!DOCTYPE %s SYSTEM %s>\n", $self->{'doc_type_version'}, $self->{'document_types'}->{$self->{'doc_type'}}->{$self->{'doc_type_version'}};
+  }
+  else {
+    return "<!DOCTYPE html>\n";
+  }
 }
 
 sub html_tag {
   my $self = shift;
-  return sprintf qq{<html %slang="%s">\n}, $self->{'doc_type'} eq 'XHTML' ? 'xmlns="http://www.w3.org/1999/xhtml" xml:' : '', $self->{'language'};
+  return sprintf qq{<html lang="%s">\n}, $self->{'language'};
 }
 
 # AJAX-friendly redirect, for use in control panel
@@ -446,7 +436,7 @@ sub html_template {
   
   my ($self, $elements) = @_;
   
-  $self->set_doc_type('XHTML',  '1.0 Trans');
+  $self->set_doc_type('HTML',  '5');
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')                               if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
   $self->add_body_attr('class', "ie ie$1" . ($1 < 8 ? ' ie67' : '')) if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 <  9;
@@ -480,8 +470,6 @@ sub html_template {
     $footer_id = 'footer';
   }
   
-  $html_tag = qq(<?xml version="1.0" encoding="utf-8"?>\n$html_tag) if $self->{'doc_type'} eq 'XHTML';
-  
   return qq($html_tag
 <head>
   $head
@@ -505,9 +493,12 @@ sub html_template {
           $elements->{'breadcrumbs'}
           $elements->{'message'}
           $elements->{'content'}
+          $elements->{'mobile_nav'}
         </div>
-        <div id="$footer_id" class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
-          <p class="invisible">.</p>
+        <div id="$footer_id">
+          <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
+            <p class="invisible">.</p>
+          </div>
         </div>
       </div>
     </div>
