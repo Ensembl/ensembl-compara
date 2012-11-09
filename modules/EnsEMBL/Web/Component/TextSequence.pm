@@ -891,17 +891,17 @@ sub build_sequence {
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly
 sub chunked_content {
-  my ($self, $total_length, $chunk_length, $base_url) = @_;
+  my ($self, $total_length, $chunk_length, $url_params) = @_;
   my $hub = $self->hub;
   my $i   = 1;
   my $j   = $chunk_length;
   my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
-  my ($url, $html);
+  my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => undef });
+  my $html;
   
   # The display is split into a managable number of sub slices, which will be processed in parallel by requests
   while ($j <= $total_length) {
-    $url   = qq{$base_url;subslice_start=$i;subslice_end=$j};
-    $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url" /></div>};
+    $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$j" /></div>};
 
     last if $j == $total_length;
 
