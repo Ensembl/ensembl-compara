@@ -23,7 +23,6 @@ Ensembl.PanelManager.extend({
     Ensembl.EventManager.register('ajaxLoaded', this, function () {
       if (!$('.ajax_load').length) {
         Ensembl.EventManager.trigger('ajaxComplete');
-        Ensembl.EventManager.unregister('ajaxLoaded', this);
       }
     });
     
