@@ -63,7 +63,7 @@ towards interesting content. */
 
   .nav                      { display: none; }
 
-  div#mobile_context        { display: block; }
+  div#mobile_context        { display: block; margin-left:1em; }
 
   #main, #widemain          { margin-left: 0; }
   #footer                   { margin-left: 1em; }
