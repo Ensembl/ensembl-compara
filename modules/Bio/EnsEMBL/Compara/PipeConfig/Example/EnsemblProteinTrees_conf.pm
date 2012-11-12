@@ -227,7 +227,6 @@ sub resource_classes {
          'msa'          => {'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]"' },
          'msa_himem'    => {'LSF' => '-C0 -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
-         '500Mb_long_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]" -q long' },
          'urgent_hcluster'   => {'LSF' => '-C0 -M32000000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
     };
 }

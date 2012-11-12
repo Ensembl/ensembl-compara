@@ -71,8 +71,12 @@ sub fetch_input {
     my $codeml_parameters = $self->param('codeml_parameters')
         or die "Either 'codeml_parameters' or 'codeml_parameters_file' has to be correctly defined";  # let it break immediately if no codeml_parameters
 
+    my $min_homology_id = $self->param('min_homology_id');
+    my $max_homology_id = $self->param('max_homology_id');
+
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
-    my $homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_id);
+    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d', $mlss_id, $min_homology_id, $max_homology_id);
+    my $homologies = $homology_adaptor->generic_fetch($constraint);
 
     $self->param('homologies', $homologies);
 }
@@ -84,8 +88,6 @@ sub run {
     my $homologies        = $self->param('homologies');
     my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
 
-    my $stats = new Statistics::Descriptive::Full;
-
     foreach my $homology (@$homologies) {
 
         # Compute ds
@@ -94,9 +96,6 @@ sub run {
             $self->warning($@) if $@;
         }
 
-        # Store it
-        $stats->add_data($homology->ds) if $homology->ds;
-
         # To save memory
         $homology->clear;
         for my $attr (qw(_members_by_source_genome_db _subtype _tree_node_id _members_by_genome_db _adaptor _method_link_species_set_id _description _this_one_first _ancestor_node_id _member_array _members_by_source _members_by_source_taxon)) {
@@ -104,21 +103,6 @@ sub run {
         }
     }
 
-    my $median = $stats->median;
-    print STDERR "median: $median; 2\*median: ",2*$median;
-
-    if($median >1.0) {
-        print STDERR "  threshold exceeds 2.0 - to distant -> set to 2\n";
-        $median = 1.0;
-    }
-    if($median <1.0) {
-        print STDERR "  threshold below 1.0 -> set to 1\n";
-        $median = 0.5;
-    }
-    my $threshold = 2 * $median;
-    foreach my $homology (@$homologies) {
-        $homology->threshold_on_ds($threshold);
-    }
 }
 
 
