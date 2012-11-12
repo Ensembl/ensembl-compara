@@ -6,6 +6,8 @@ ALTER TABLE ncbi_taxa_node
 	MODIFY COLUMN right_index int(10) DEFAULT 0 NOT NULL;
 
 ALTER TABLE genomic_align_tree
+	DROP KEY left_index,
+	ADD KEY left_index (root_id, left_index),
 	DROP KEY right_index;
 
 ALTER TABLE species_tree_node
@@ -132,7 +134,11 @@ INSERT INTO gene_align SELECT root_id, NULL, IF(member_type = "ncrna", "infernal
 INSERT INTO gene_align_member SELECT root_id, member_id, cigar_line FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN gene_tree_member USING (node_id) WHERE cigar_line IS NOT NULL;
 UPDATE gene_align JOIN gene_tree_root ON gene_tree_root.root_id = gene_align.gene_align_id SET gene_tree_root.gene_align_id = gene_tree_root.root_id;
 
--- DROP TABLE gene_tree_member
+UPDATE gene_tree_root gref JOIN gene_tree_root gsub ON gref.root_id=gsub.ref_root_id SET gsub.gene_align_id=gref.gene_align_id;
+DELETE gene_tree_member FROM gene_tree_member JOIN gene_tree_node USING (node_id) JOIN gene_tree_root USING (root_id) WHERE gene_align_id IS NOT NULL;
+
+-- gene_tree_member should now be empty
+DROP TABLE gene_tree_member;
 
 
 
