@@ -29,6 +29,7 @@ sub label_classes {
   return {
     'Configure this page' => 'config',
     'Manage your data'    => 'data',
+    'Add custom track'    => 'data',
     'Export data'         => 'export',
     'Bookmark this page'  => 'bookmark',
     'Share this page'     => 'share',
@@ -90,18 +91,34 @@ sub init {
       title   => 'There are no options for this page'
     });
   }
-  
-  $self->add_entry({
-    caption => 'Manage your data',
-    class   => 'modal_link',
-    rel     => 'modal_user_data',
-    url     => $hub->url({
-      time    => time,
-      type    => 'UserData',
-      action  => 'ManageData',
-      __clear => 1 
-    })
-  });
+
+  if ($hub->session->get_data(type => 'upload') || $hub->session->get_data(type => 'url')
+      || ($hub->user && ($hub->user->get_records('uploads') || $hub->user->get_records('urls')))) {
+    $self->add_entry({
+      caption => 'Manage your data',
+      class   => 'modal_link',
+      rel     => 'modal_user_data',
+      url     => $hub->url({
+        time    => time,
+        type    => 'UserData',
+        action  => 'ManageData',
+        __clear => 1 
+      })
+    });
+  }
+  else {
+    $self->add_entry({
+      caption => 'Add custom track',
+      class   => 'modal_link',
+      rel     => 'modal_user_data',
+      url     => $hub->url({
+        time    => time,
+        type    => 'UserData',
+        action  => 'SelectFile',
+        __clear => 1 
+      })
+    });
+  }
   
   if ($object && $object->can_export) {       
     $self->add_entry({
