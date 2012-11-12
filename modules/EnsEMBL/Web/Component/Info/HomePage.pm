@@ -141,8 +141,11 @@ sub _assembly_text {
 </div>
 ';
 
+  my $gca = $accession;
+  $gca =~ s/_/ /g;
+  $gca = " <small>($gca)</small>" if $gca;
   my $assembly = $species_defs->ASSEMBLY_NAME;
-  $html .= "<h2>Genome assembly: $assembly</h2>";
+  $html .= "<h2>Genome assembly: $assembly$gca</h2>";
 
   $html .= qq(<p><a href="/$species/Info/Annotation/#assembly" class="nodeco"><img src="${img_url}24/info.png" alt="" class="homepage-link" />More information and statistics</a></p>);
   
