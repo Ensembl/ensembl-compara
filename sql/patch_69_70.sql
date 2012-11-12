@@ -30,9 +30,9 @@ CREATE TABLE other_member_sequence (
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 INSERT INTO other_member_sequence SELECT member_id, 'exon_bounded', length, sequence_exon_bounded FROM sequence_exon_bounded;
--- DROP TABLE sequence_exon_bounded;
+DROP TABLE sequence_exon_bounded;
 INSERT INTO other_member_sequence SELECT member_id, 'cds', length, sequence_cds FROM sequence_cds;
--- DROP TABLE sequence_cds;
+DROP TABLE sequence_cds;
 
 
 -- gene_tree_member
@@ -41,7 +41,7 @@ ALTER TABLE gene_tree_node
 	ADD COLUMN member_id int(10) unsigned,
 	ADD INDEX member_id (member_id);
 UPDATE gene_tree_node JOIN gene_tree_member USING (node_id) SET gene_tree_node.member_id = gene_tree_member.member_id;
--- ALTER TABLE gene_tree_member DROP COLUMN member_id;
+ALTER TABLE gene_tree_member DROP COLUMN member_id;
 
 
 -- subset
