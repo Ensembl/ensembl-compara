@@ -58,8 +58,7 @@ sub new {
     $feature_sets = $feature_set_adaptor->fetch_all_displayable_by_type('annotated', keys %$constraints ? {'constraints' => $constraints} : ());
   }
 
-  my $binding_matrix_adaptor      = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
-  my $regulatory_evidence_labels  = $feature_type_adaptor->get_regulatory_evidence_labels;
+  my $binding_matrix_adaptor = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
 
   # Get info for all feature sets and pack it in an array of hashes
   foreach my $feature_set (@$feature_sets) {
