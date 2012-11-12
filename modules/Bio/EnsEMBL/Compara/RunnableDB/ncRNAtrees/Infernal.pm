@@ -22,7 +22,6 @@ my $infernal = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal->new
   );
 $infernal->fetch_input(); #reads from DB
 $infernal->run();
-$infernal->output();
 $infernal->write_output(); #writes to DB
 
 =cut

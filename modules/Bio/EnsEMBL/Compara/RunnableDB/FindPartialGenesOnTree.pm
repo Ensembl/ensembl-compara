@@ -23,7 +23,6 @@ my $find_partial_genes = Bio::EnsEMBL::Compara::RunnableDB::FindPartialGenesOnTr
   );
 $find_partial_genes->fetch_input(); #reads from DB
 $find_partial_genes->run();
-$find_partial_genes->output();
 $find_partial_genes->write_output(); #writes to DB
 
 =cut

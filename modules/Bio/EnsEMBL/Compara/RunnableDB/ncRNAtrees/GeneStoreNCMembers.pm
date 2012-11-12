@@ -20,7 +20,6 @@ my $g_load_members = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCM
                                                     -analysis   => $analysis );
 $g_load_members->fetch_input(); #reads from DB
 $g_load_members->run();
-$g_load_members->output();
 $g_load_members->write_output(); #writes to DB
 
 =cut

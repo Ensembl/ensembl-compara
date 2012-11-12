@@ -34,7 +34,6 @@ my $rfamclassify = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify->
 
 $rfamclassify->fetch_input(); #reads from DB
 $rfamclassify->run();
-$rfamclassify->output();
 $rfamclassify->write_output(); #writes to DB
 
 

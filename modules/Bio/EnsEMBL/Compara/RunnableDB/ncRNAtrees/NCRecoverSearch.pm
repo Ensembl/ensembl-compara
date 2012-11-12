@@ -22,7 +22,6 @@ my $ncrecoversearch = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSe
   );
 $ncrecoversearch->fetch_input(); #reads from DB
 $ncrecoversearch->run();
-$ncrecoversearch->output();
 $ncrecoversearch->write_output(); #writes to DB
 
 =cut

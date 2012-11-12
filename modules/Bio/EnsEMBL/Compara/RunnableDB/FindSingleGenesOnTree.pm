@@ -22,7 +22,6 @@ my $find_single_gene = Bio::EnsEMBL::Compara::RunnableDB::FindSingleGenesOnTree-
   );
 $find_single_gene->fetch_input(); #reads from DB
 $find_single_gene->run();
-$find_single_gene->output();
 $find_single_gene->write_output(); #writes to DB
 
 =cut

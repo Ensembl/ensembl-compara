@@ -22,7 +22,6 @@ my $rfamloadmodels = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMLoadMode
   );
 $rfamloadmodels->fetch_input(); #reads from DB
 $rfamloadmodels->run();
-$rfamloadmodels->output();
 $rfamloadmodels->write_output(); #writes to DB
 
 =cut

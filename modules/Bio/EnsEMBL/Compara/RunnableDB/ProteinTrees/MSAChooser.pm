@@ -39,7 +39,6 @@ my $mcoffee = Bio::EnsEMBL::Compara::RunnableDB::Mcoffee->new (
                                                     -analysis   => $analysis );
 $mcoffee->fetch_input(); #reads from DB
 $mcoffee->run();
-$mcoffee->output();
 $mcoffee->write_output(); #writes to DB
 
 =head1 AUTHORSHIP

@@ -31,7 +31,6 @@ my $repmask = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJ
                                                     -analysis   => $analysis );
 $repmask->fetch_input(); #reads from DB
 $repmask->run();
-$repmask->output();
 $repmask->write_output(); #writes to DB
 
 =cut

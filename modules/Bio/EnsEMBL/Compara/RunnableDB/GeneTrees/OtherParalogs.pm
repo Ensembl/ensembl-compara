@@ -36,7 +36,6 @@ my $otherparalogs = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs-
   );
 $otherparalogs->fetch_input(); #reads from DB
 $otherparalogs->run();
-$otherparalogs->output();
 $otherparalogs->write_output(); #writes to DB
 
 =head1 AUTHORSHIP

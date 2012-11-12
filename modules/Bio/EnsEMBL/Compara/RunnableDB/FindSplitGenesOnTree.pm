@@ -22,7 +22,6 @@ my $find_split_genes = Bio::EnsEMBL::Compara::RunnableDB::FindSplitGenesOnTree->
   );
 $find_split_genes->fetch_input(); #reads from DB
 $find_split_genes->run();
-$find_split_genes->output();
 $find_split_genes->write_output(); #writes to DB
 
 =cut

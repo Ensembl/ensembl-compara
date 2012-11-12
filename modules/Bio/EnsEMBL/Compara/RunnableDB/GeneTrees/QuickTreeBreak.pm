@@ -48,7 +48,6 @@ my $quicktreebreak = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBrea
   );
 $quicktreebreak->fetch_input(); #reads from DB
 $quicktreebreak->run();
-$quicktreebreak->output();
 $quicktreebreak->write_output(); #writes to DB
 
 =head1 AUTHORSHIP

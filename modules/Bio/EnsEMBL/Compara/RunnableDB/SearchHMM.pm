@@ -22,7 +22,6 @@ my $search_hmm = Bio::EnsEMBL::Compara::RunnableDB::SearchHMM->new
   );
 $search_hmm->fetch_input(); #reads from DB
 $search_hmm->run();
-$search_hmm->output();
 $search_hmm->write_output(); #writes to DB
 
 =cut

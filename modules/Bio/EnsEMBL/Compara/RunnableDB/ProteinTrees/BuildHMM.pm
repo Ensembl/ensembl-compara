@@ -40,7 +40,6 @@ my $buildhmm = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM->new
   );
 $buildhmm->fetch_input(); #reads from DB
 $buildhmm->run();
-$buildhmm->output();
 $buildhmm->write_output(); #writes to DB
 
 =head1 AUTHORSHIP

@@ -30,7 +30,6 @@ my $runnableDB = Bio::EnsEMBL::Compara::RunnableDB::CreateAlignmentChainsJobs->n
                                                     -analysis   => $analysis );
 $runnableDB->fetch_input(); #reads from DB
 $runnableDB->run();
-$runnableDB->output();
 $runnableDB->write_output(); #writes to DB
 
 =cut

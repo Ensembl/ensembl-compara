@@ -22,7 +22,6 @@ my $nc_recover_epo = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO
   );
 $nc_recover_epo->fetch_input(); #reads from DB
 $nc_recover_epo->run();
-$nc_recover_epo->output();
 $nc_recover_epo->write_output(); #writes to DB
 
 =cut

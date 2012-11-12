@@ -20,7 +20,6 @@ my $repmask = Bio::EnsEMBL::Analysis::RunnableDB::Blat->new (
                                                     -analysis   => $analysis );
 $repmask->fetch_input(); #reads from DB
 $repmask->run();
-$repmask->output();
 $repmask->write_output(); #writes to DB
 
 =cut

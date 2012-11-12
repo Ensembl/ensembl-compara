@@ -22,7 +22,6 @@ my $pairwisesynteny = Bio::EnsEMBL::Compara::RunnableDB::PairwiseSynteny->new
   );
 $pairwisesynteny->fetch_input(); #reads from DB
 $pairwisesynteny->run();
-$pairwisesynteny->output();
 $pairwisesynteny->write_output(); #writes to DB
 
 =cut

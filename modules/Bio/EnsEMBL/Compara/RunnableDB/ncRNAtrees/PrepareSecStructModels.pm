@@ -33,7 +33,6 @@ my $ncsecstructtree = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecM
   );
 $ncsecstructtree->fetch_input(); #reads from DB
 $ncsecstructtree->run();
-$ncsecstructtree->output();
 $ncsecstructtree->write_output(); #writes to DB
 
 =head1 DESCRIPTION

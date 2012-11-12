@@ -33,7 +33,6 @@ my $ncfasttree = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees->new
   );
 $ncfasttree->fetch_input(); #reads from DB
 $ncfasttree->run();
-$ncfasttree->output();
 $ncfasttree->write_output(); #writes to DB
 
 =head1 DESCRIPTION

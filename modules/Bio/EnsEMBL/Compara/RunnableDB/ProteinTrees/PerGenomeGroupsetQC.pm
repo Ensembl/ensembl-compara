@@ -37,7 +37,6 @@ my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGr
   );
 $sillytemplate->fetch_input(); #reads from DB
 $sillytemplate->run();
-$sillytemplate->output();
 $sillytemplate->write_output(); #writes to DB
 
 =head1 AUTHORSHIP

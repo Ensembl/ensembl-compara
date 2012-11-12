@@ -22,7 +22,6 @@ my $ktreedist = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist->new
   );
 $ktreedist->fetch_input(); #reads from DB
 $ktreedist->run();
-$ktreedist->output();
 $ktreedist->write_output(); #writes to DB
 
 =cut

@@ -22,7 +22,6 @@ my $treebest_mmerge = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestM
   );
 $treebest_mmerge->fetch_input(); #reads from DB
 $treebest_mmerge->run();
-$treebest_mmerge->output();
 $treebest_mmerge->write_output(); #writes to DB
 
 =cut

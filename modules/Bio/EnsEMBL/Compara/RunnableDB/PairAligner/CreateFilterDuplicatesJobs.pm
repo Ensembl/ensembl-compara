@@ -31,7 +31,6 @@ my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDupli
                                                     -analysis   => $analysis );
 $runnable->fetch_input(); #reads from DB
 $runnable->run();
-$runnable->output();
 $runnable->write_output(); #writes to DB
 
 =cut

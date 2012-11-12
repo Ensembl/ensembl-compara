@@ -42,7 +42,6 @@ my $otree = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree->new (
                                                     -analysis   => $analysis );
 $otree->fetch_input(); #reads from DB
 $otree->run();
-$otree->output();
 $otree->write_output(); #writes to DB
 
 =head1 AUTHORSHIP

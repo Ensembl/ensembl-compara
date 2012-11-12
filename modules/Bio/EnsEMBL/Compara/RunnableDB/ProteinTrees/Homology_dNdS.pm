@@ -20,7 +20,6 @@ my $repmask = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS->ne
                                                     -analysis   => $analysis );
 $repmask->fetch_input(); #reads from DB
 $repmask->run();
-$repmask->output();
 $repmask->write_output(); #writes to DB
 
 =cut

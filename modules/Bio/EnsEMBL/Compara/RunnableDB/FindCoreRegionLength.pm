@@ -22,7 +22,6 @@ my $core_region_length = Bio::EnsEMBL::Compara::RunnableDB::FindCoreRegionLength
   );
 $core_region_length->fetch_input(); #reads from DB
 $core_region_length->run();
-$core_region_length->output();
 $core_region_length->write_output(); #writes to DB
 
 =cut

@@ -21,7 +21,6 @@ my $blast = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse->ne
   -analysis   => $analysis );
 $blast->fetch_input(); #reads from DB
 $blast->run();
-$blast->output();
 $blast->write_output(); #writes to DB
 
 =cut
