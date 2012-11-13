@@ -474,13 +474,12 @@ sub quantify_mapping {
   print STDERR "# Average contribution mapped clusters = $average_mapped_contribution\n";
 
   my $groupset_tree = $self->param('groupset_tree');
-  my $groupset_tag  = $self->param('groupset_tag').'QC';
 
-  $groupset_tree->store_tag('sid_map_novel_cls' . '_' . $groupset_tag, $num_novel_clusters);
-  $groupset_tree->store_tag('sid_map_mapped_cls' . '_' . $groupset_tag, $num_mapped_clusters);
-  $groupset_tree->store_tag('sid_map_summary_contrib' . '_' . $groupset_tag, $sum_contrib);
-  $groupset_tree->store_tag('sid_map_average_contrib' . '_' . $groupset_tag, $average_mapped_contribution);
-  $groupset_tree->store_tag('sid_prop_novel_cls' . '_' . $groupset_tag, $proportion_novel_clusters);
+  $groupset_tree->store_tag('sid_map_novel_cls', $num_novel_clusters);
+  $groupset_tree->store_tag('sid_map_mapped_cls', $num_mapped_clusters);
+  $groupset_tree->store_tag('sid_map_summary_contrib', $sum_contrib);
+  $groupset_tree->store_tag('sid_map_average_contrib', $average_mapped_contribution);
+  $groupset_tree->store_tag('sid_prop_novel_cls', $proportion_novel_clusters);
 
   my $unmap_tolerance = $self->param('unmap_tolerance');
   print STDERR "# Unmap tolerance parameter set to $unmap_tolerance\n";

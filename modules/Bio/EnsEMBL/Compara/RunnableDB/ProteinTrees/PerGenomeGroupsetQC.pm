@@ -68,7 +68,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run {
     my $self = shift @_;
     my $genome_db_id            = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
-    my $groupset_tag            = $self->param('groupset_tag') or die "'groupset_tag' is an obligatory parameter";
 
     my $this_orphans            = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id);
     my $total_orphans_num       = scalar keys (%$this_orphans);
@@ -102,19 +101,18 @@ sub write_output {
     my $self = shift @_;
 
     my $genome_db_id            = $self->param('genome_db_id');
-    my $groupset_tag            = $self->param('groupset_tag');
 
     my $sql = "INSERT IGNORE INTO protein_tree_qc (genome_db_id) VALUES (?)";
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($genome_db_id);
 
-    my $sql = "UPDATE protein_tree_qc SET total_orphans_num_$groupset_tag=?, prop_orphans_$groupset_tag=? WHERE genome_db_id=?";
+    my $sql = "UPDATE protein_tree_qc SET total_orphans_num=?, prop_orphans=? WHERE genome_db_id=?";
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($self->param('total_orphans_num'), $self->param('prop_orphan'), $genome_db_id);
 
     return unless $self->param('reuse_this');
 
-    my $sql = "UPDATE protein_tree_qc SET common_orphans_num_$groupset_tag=?, new_orphans_num_$groupset_tag=? WHERE genome_db_id=?";
+    my $sql = "UPDATE protein_tree_qc SET common_orphans_num=?, new_orphans_num=? WHERE genome_db_id=?";
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($self->param('common_orphans_num'), $self->param('new_orphans_num'), $genome_db_id);
 

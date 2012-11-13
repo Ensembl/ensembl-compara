@@ -704,12 +704,7 @@ sub pipeline_analyses {
                             },
              -hive_capacity => -1,
              -rc_name => '8Gb_job',
-             -flow_into => {
-                            1 => {
-                                  'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
-                                  'mysql:////meta' => { 'meta_key' => 'clusterset_id', 'meta_value' => '#clusterset_id#' },
-                                 },
-                           },
+             -flow_into => [ 'run_qc_tests' ],
             },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
@@ -848,11 +843,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -rc_name => '2Gb_job',
-            -flow_into => {
-                1 => {
-                    'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
-                },
-            },
+            -flow_into => [ 'run_qc_tests' ],
         },
 
 # ---------------------------------------------[Pluggable QC step]----------------------------------------------------------
@@ -865,7 +856,7 @@ sub pipeline_analyses {
                 'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID' },
 
-                'input_id'              => {'genome_db_id' => '#genome_db_id#', 'groupset_tag', '#groupset_tag#'},
+                'input_id'              => {'genome_db_id' => '#genome_db_id#'},
 
                 'fan_branch_code'       => 2,
             },
@@ -905,7 +896,6 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '2->A'      => [ 'msa_chooser' ],
-                'A->1'      => { 'run_qc_tests' => { 'groupset_tag' => 'GeneTreeset' } },
             },
         },
 
