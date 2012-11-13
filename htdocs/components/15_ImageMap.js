@@ -24,7 +24,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('imageResize',        this, function () { if (this.xhr) { this.xhr.abort(); } this.getContent(); });
     Ensembl.EventManager.register('windowResize',       this, resetOffset);
     Ensembl.EventManager.register('ajaxLoaded',         this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
-    Ensembl.EventManager.register('changeWidth',        this, function () { Ensembl.updateURL({ image_width: '' }, this.params.updateURL); Ensembl.EventManager.trigger('queuePageReload', this.id); });
+    Ensembl.EventManager.register('changeWidth',        this, function () { this.params.updateURL = this.params.updateURL.replace(/;image_width=\d+$/, ''); Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
   },
   
@@ -44,10 +44,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.map         = $('map',            this.el);
     this.elLk.areas       = $('area',           this.elLk.map);
     this.elLk.exportMenu  = $('.iexport_menu',  this.el).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.resizeMenu  = $('.image_resize_menu',this.el).appendTo('body').css('left', this.el.offset().left);
     this.elLk.img         = $('img.imagemap',   this.el);
     this.elLk.hoverLabels = $('.hover_label',   this.el);
     this.elLk.boundaries  = $('.boundaries',    this.el);
-    this.elLk.toolbars    = $('.image_toolbar', this.el)
+    this.elLk.toolbars    = $('.image_toolbar', this.el)    
     this.elLk.helpTips    = $('a',              this.elLk.toolbars).helptip({ 'static': true });
     this.elLk.popupLinks  = $('a.popup',        this.elLk.toolbars);
     
@@ -81,6 +82,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     $('a.iexport', this.elLk.toolbars).data('popup', this.elLk.exportMenu);
+    $('a.resize', this.elLk.toolbars).data('popup', this.elLk.resizeMenu);
     
     this.elLk.popupLinks.on('click', function () {
       var popup = $(this).data('popup');
@@ -96,10 +98,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return false;
     });
     
-    $('a.image_resize', this.elLk.toolbars).on('click', function () {
-      panel.params.updateURL = Ensembl.updateURL({ image_width: panel.elLk.img.width() + (100 * ($(this).hasClass('big') ? 1 : -1)) }, panel.params.updateURL);
+    $('a.image_resize', this.elLk.resizeMenu).on('click', function () {      
+      panel.params.updateURL = Ensembl.updateURL({ image_width: $('div',this).html().replace(/ px/,'') }, panel.params.updateURL);      
       panel.getContent();
-      return false;
+      return false;      
     });
   },
   
@@ -130,6 +132,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   
   getContent: function () {
     this.elLk.exportMenu.add(this.elLk.hoverLabels).remove();
+    this.elLk.resizeMenu.add(this.elLk.hoverLabels).remove();
     this.removeShare();
     this.base.apply(this, arguments);
   },
