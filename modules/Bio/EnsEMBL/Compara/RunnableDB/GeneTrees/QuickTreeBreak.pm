@@ -150,7 +150,8 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_supertree;
+    $self->compara_dba->get_GeneTreeAdaptor->store($self->param('original_cluster'));
+    $self->rec_update_tags($self->param('original_cluster')->root);
 }
 
 
@@ -203,40 +204,34 @@ sub run_quicktreebreak {
 #
 ########################################################
 
+sub rec_update_tags {
+    my $self = shift;
+    my $node = shift;
 
-sub store_supertree {
-  my $self = shift;
+    if ($node->tree->tree_type eq 'tree') {
+        my $cluster = $node->tree;
+        my $node_id = $cluster->root_id;
 
-  my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
+        my $leafcount = scalar(@{$cluster->root->get_all_leaves});
+        $cluster->store_tag('gene_count', $leafcount);
+        print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
-  $gene_tree_adaptor->store($self->param('original_cluster'));
-  $self->param('original_cluster')->root->store_tag('tree_support', 'quicktree');
-  $self->param('original_cluster')->root->store_tag('node_type', 'speciation');
+        #We replicate needed tags into the children
+        if (defined $self->param('tags_to_copy')) {
+            my @tags = @{$self->param('tags_to_copy')};
+            for my $tag (@tags) {
+                print STDERR "Stored tag $tag in $node_id\n" if ($self->debug);
+                my $value = $self->param('original_cluster')->get_tagvalue($tag);
+                $self->throw("$tag tag not found in " . $self->param('original_cluster')->root->node_id) unless (defined $value);
+                $cluster->store_tag($tag, $value);
+            }
+        }
 
-  foreach my $cluster (@{$self->param('subclusters')}) {
-      my $node_id = $cluster->root_id;
+    } else {
+        $node->store_tag('tree_support', 'quicktree');
+        $node->store_tag('node_type', 'speciation');
+    }
 
-    #calc residue count total
-      my $leafcount = scalar(@{$cluster->root->get_all_leaves});
-      $cluster->store_tag('gene_count', $leafcount);
-      print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
-
-      #We replicate needed tags into the children
-      if (defined $self->param('tags_to_copy')) {
-          my @tags = @{$self->param('tags_to_copy')};
-          for my $tag (@tags) {
-              print STDERR "Stored tag $tag in $node_id\n" if ($self->debug);
-              my $value = $self->param('original_cluster')->get_tagvalue($tag);
-              $self->throw("$tag tag not found in " . $self->param('original_cluster')->root->node_id) unless (defined $value);
-              $cluster->store_tag($tag, $value);
-          }
-      }
-
-      # Dataflow clusters
-      # This will create a new MSA alignment job for each of the newly generated clusters
-      #$self->dataflow_output_id({'gene_tree_id' => $node_id}, 2);
-      print STDERR "Created new cluster $node_id\n";
-  }
 }
 
 
