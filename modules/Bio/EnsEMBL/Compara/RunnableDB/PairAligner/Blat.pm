@@ -145,6 +145,7 @@ sub configure_runnable {
     print("  program : $program\n");
   }
 
+  $self->param('runnable', []);
   my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blat->
     new(
 	-query      => $qyChunkFile,
@@ -153,8 +154,7 @@ sub configure_runnable {
 	-program    => $program,
 	-analysis   => $fake_analysis,
        );
-  
-  $self->runnable($runnable);
+  push @{$self->param('runnable')}, $runnable;
 
   return 1;
 }

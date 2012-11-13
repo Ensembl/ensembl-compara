@@ -110,6 +110,9 @@ sub configure_runnable {
   }
   
   $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
+
+  $self->param('runnable', []);
+
   foreach my $dbChunkFile (@db_chunk_files) {
     my $runnable = Bio::EnsEMBL::Analysis::Runnable::Lastz->
         new(
@@ -126,7 +129,7 @@ sub configure_runnable {
       $runnable->results_to_file(1);  # switch on whether to use pipe or /tmp file
     }
 
-    $self->runnable($runnable);
+    push @{$self->param('runnable')}, $runnable;
   }
 
   #
