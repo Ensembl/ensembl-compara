@@ -325,7 +325,7 @@ sub get_SimpleAlign {
             # codeml icodes
             # 0:universal code (default)
             my $class;
-            eval {$class = member->taxon->classification;};
+            eval {$class = $member->taxon->classification;};
             unless ($@) {
                 if ($class =~ /vertebrata/i) {
                     # 1:mamalian mt
@@ -560,8 +560,6 @@ sub get_4D_SimpleAlign {
     if(!$sa->can('add_seq')) {
         $bio07 = 1;
     }
-
-    my $ma = $self->adaptor->db->get_MemberAdaptor;
 
     my %member_seqstr;
     foreach my $member (@{$self->get_all_Members}) {
