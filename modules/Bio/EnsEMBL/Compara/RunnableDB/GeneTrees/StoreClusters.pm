@@ -58,11 +58,10 @@ use Bio::EnsEMBL::Compara::GeneTreeMember;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-=head2 store_and_dataflow_clusterset
+=head2 store_clusterset
 
   Description: Shortcut for all the individual steps. This function stores the
-               clusters and the clusterset, then flow the clusters into the
-               branch 2.
+               clusters and the clusterset
   Arg [1]    : clusterset_id of the new clusterset
   Arg [2]    : hashref of hashref with at least a 'members' key
   Parameters : member_type, immediate_dataflow, sort_clusters
@@ -72,11 +71,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =cut
 
-sub store_and_dataflow_clusterset {
+sub store_clusterset {
     my $self = shift;
     my $clusterset_id = shift;
     my $allclusters = shift;
-    
+
     my $clusterset = $self->create_clusterset($clusterset_id);
     print STDERR "STORING AND DATAFLOWING THE CLUSTERSET\n" if ($self->debug());
     for my $cluster_name (keys %$allclusters) {
@@ -98,7 +97,8 @@ sub store_and_dataflow_clusterset {
         push @allcluster_ids, $cluster->root_id unless $self->param('immediate_dataflow');
     }
     $self->finish_store_clusterset($clusterset);
-    $self->dataflow_clusters($clusterset, \@allcluster_ids);
+    return ($clusterset, [@allcluster_ids]);
+#    $self->dataflow_clusters($clusterset, \@allcluster_ids);
 }
 
 
