@@ -30,7 +30,7 @@
         ref_species (if not homo_sapiens)
         
     #5. Run init_pipeline.pl script: eg for human self alignments
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password <your_password) -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map ctgPos.txt --config_url '' --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password <your_password) -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map ctgPos.txt --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
@@ -38,7 +38,7 @@
 =head1 DESCRIPTION  
 
 This pipeline populates a compara database using the Chain (--chain_file) and Net files (--net_file) produced by UCSC. It uses the chromInfo file (--ref_chromInfo_file, --non_ref_chromInfo_file) to convert between UCSC and Ensembl chromosome names. It may additionally need a mapping file (--ref_ucsc_map, --non_ref_ucsc_map), such as ctgPos.txt to convert the supercontig names for human.
-It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_hsap_lastz_65 will become kb3_hsap_hsap_lastz_65. To write to the pairwise configuration database, you must provide the correct config_url. The URL of the downloads is defined using --ucsc_url.
+It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_hsap_lastz_65 will become kb3_hsap_hsap_lastz_65. The URL of the downloads is defined using --ucsc_url.
 
 
 =head1 CONTACT
@@ -60,7 +60,7 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-	'release'               => '66',
+	'release'               => '69',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	'dbname'               => 'ucsc_import_'.$self->o('release').$self->o('release_suffix'), #It is recommended this is set on the command line to allow more meaningful database naming
 
@@ -100,7 +100,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 64,
+	    -db_version => 69,
         },
 
 	#'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
@@ -111,6 +111,7 @@ sub default_options {
 	'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
 	'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
 	'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
+        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 
 	#Set for single pairwise mode
 	'mlss_id' => '',
@@ -128,6 +129,8 @@ sub default_options {
 
 	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
 	'do_transactions' => 1,
+
+         'skip_pairaligner_stats' => 0, #skip this module if set to 1
 
 	'chain_method_link_type' => 'LASTZ_CHAIN',
 	'net_method_link_type' => 'LASTZ_NET',
@@ -148,7 +151,7 @@ sub default_options {
 	#Default pairaligner config
 	#
 	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'config_url' => '', #Location of pairwise config database. Must define on command line
+	#'config_url' => '', #Location of pairwise config database. Must define on command line
 	#'ucsc_url' => '', #Location of ucsc url. Must define on command line
 	'output_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
@@ -179,10 +182,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
     return {
-        0 => { -desc => 'default, 8h',      'LSF' => '' },         
-	 1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'himem1',            'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
-         3 => { -desc => 'himem2',            'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
+         '100Mb' => { 'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
+         '1Gb'   => { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
+         '1.8Gb' => { 'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },
+         '3.6Gb' => { 'LSF' => '-C0 -M3600000 -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 
@@ -203,6 +206,7 @@ sub pipeline_analyses {
 			       2 => [ 'innodbise_table'  ],
 			       1 => [ 'populate_new_database' ],
 			      },
+                -rc_name => '100Mb',
 	    },
 
 	    {   -logic_name    => 'innodbise_table',
@@ -212,6 +216,7 @@ sub pipeline_analyses {
 				  },
 		-hive_capacity => 1,
 		-can_be_empty  => 1,
+                -rc_name => '100Mb',
 	    },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -228,6 +233,7 @@ sub pipeline_analyses {
 			      1 => [ 'load_genomedb_factory' ],
 			     },
 	       -wait_for => [ 'innodbise_table' ],
+               -rc_name => '1Gb',
 	    },
 	    {   -logic_name => 'load_genomedb_factory',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
@@ -248,14 +254,17 @@ sub pipeline_analyses {
 			       2 => [ 'load_genomedb' ],
 			       1 => [ 'load_genomedb_funnel' ],    # backbone
 			      },
+                -rc_name => '100Mb',
 	    },
 
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 				'registry_dbs'  => $self->o('curr_core_sources_locs'),
+                                'db_version'    => $self->o('release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
+                -rc_name => '100Mb',
 	    },
 	    {   -logic_name => 'load_genomedb_funnel',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -279,10 +288,12 @@ sub pipeline_analyses {
 			       2 => [ 'ucsc_to_ensembl_mapping' ],
 			       1 => [ 'chain_factory' ],
 		},
+                -rc_name => '100Mb',
 	    },
 
 	    {  -logic_name => 'ucsc_to_ensembl_mapping',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscToEnsemblMapping',
+               -rc_name => '100Mb',
 	    },
 
 	    {   -logic_name => 'chain_factory',
@@ -296,6 +307,7 @@ sub pipeline_analyses {
 			       2 => [ 'import_chains' ],
 			       1 => [ 'net_factory'],
 			      },
+                -rc_name => '100Mb',
 	    },
 	    
  	    {  -logic_name => 'import_chains',
@@ -307,6 +319,7 @@ sub pipeline_analyses {
 			       'output_method_link_type' => $self->o('chain_method_link_type'),
 			      },
  	       -hive_capacity => 20,
+               -rc_name => '1.8Gb',
  	    },
 	    
 	    {  -logic_name => 'net_factory',
@@ -321,6 +334,7 @@ sub pipeline_analyses {
 			       2 => [ 'import_nets'  ],
 			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
 			      },
+               -rc_name => '100Mb',
 	    },
 	    {  -logic_name => 'set_internal_ids',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
@@ -328,6 +342,7 @@ sub pipeline_analyses {
 			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
 			       'method_link_species_set_id' => $self->o('mlss_id'),
 			      },
+               -rc_name => '100Mb',
  	    },
  	    {  -logic_name => 'import_nets',
  	       -hive_capacity => 20,
@@ -344,7 +359,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'import_nets_himem' ],
 			     },
-	       
+	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => 'import_nets_himem',
  	       -hive_capacity => 20,
@@ -357,7 +372,7 @@ sub pipeline_analyses {
 			       'input_method_link_type' => $self->o('chain_method_link_type'),
 			       'output_method_link_type' => $self->o('net_method_link_type'),
 			      },
-	       -rc_id => 2,
+               -rc_name => '3.6Gb',
 	       -can_be_empty => 1,
  	    },
   	    {  -logic_name => 'update_max_alignment_length_after_net',
@@ -374,6 +389,7 @@ sub pipeline_analyses {
 						      ],
 				    },
 			      },
+               -rc_name => '100Mb',
   	    },
  	    { -logic_name => 'healthcheck',
  	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
@@ -384,25 +400,28 @@ sub pipeline_analyses {
  			      'max_percent_diff' => $self->o('max_percent_diff'),
  			     },
 	      -flow_into => {
-			     1 => { 'pairaligner_config' => [{'mlss_id' => $self->o('mlss_id'),'ref_species' => $self->o('ref_species')}
+			     1 => { 'pairaligner_stats' => [{'mlss_id' => $self->o('mlss_id'),'ref_species' => $self->o('ref_species')}
 							     ],
 				  },
 			    },
+              -rc_name => '100Mb',
  	    },
- 	    { -logic_name => 'pairaligner_config',
- 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerConfig',
- 	      -parameters => {
- 			      'dump_features' => $self->o('dump_features_exe'),
- 			      'update_config_database' => $self->o('update_config_database_exe'),
- 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
- 			      'bed_dir' => $self->o('bed_dir'),
- 			      'ensembl_release' => $self->o('release'),
- 			      'config_url' => $self->o('config_url'),
- 			      'reg_conf' => $self->o('reg_conf'),
- 			      'output_dir' => $self->o('output_dir'),
-			      'ucsc_url' => $self->o('ucsc_url'),
- 			     },
- 	    },
+            { -logic_name => 'pairaligner_stats',
+	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
+	      -parameters => {
+			      'skip' => $self->o('skip_pairaligner_stats'),
+			      'dump_features' => $self->o('dump_features_exe'),
+			      'compare_beds' => $self->o('compare_beds_exe'),
+			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
+			      'bed_dir' => $self->o('bed_dir'),
+			      'ensembl_release' => $self->o('release'),
+			      'reg_conf' => $self->o('reg_conf'),
+			      'output_dir' => $self->o('output_dir'),
+                              'ucsc_url' => $self->o('ucsc_url'),
+			     },
+	      -rc_name => '1Gb',
+	    },
+
 	   ];
 }
 
