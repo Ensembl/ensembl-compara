@@ -117,6 +117,7 @@ sub default_options {
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
+        'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
 
     # HMM specific parameters
         'hmm_clustering'            => 0, ## by default run blastp clustering
