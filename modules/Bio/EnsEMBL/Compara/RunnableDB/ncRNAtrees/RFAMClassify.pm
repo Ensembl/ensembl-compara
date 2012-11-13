@@ -79,7 +79,6 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
-
 sub param_defaults {
     return {
             'sort_clusters'         => 1,
@@ -87,8 +86,6 @@ sub param_defaults {
             'member_type'           => 'ncrna',
     };
 }
-
-
 
 sub fetch_input {
     my $self = shift @_;
@@ -115,8 +112,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
-    $self->create_additional_clustersets();
+    $self->store_clusterset('default', $self->param('allclusters'));
 }
 
 
