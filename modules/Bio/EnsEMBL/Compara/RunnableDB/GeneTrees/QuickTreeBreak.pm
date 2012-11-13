@@ -100,12 +100,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEM
 sub fetch_input {
     my $self = shift @_;
 
-    my $tree_id = $self->param('gene_tree_id');
-    die "'gene_tree_id' must be defined" unless ($tree_id);
-    $self->param('tree_id', $tree_id);
-    my $tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $tree_id )
-        or die "Could not fetch gene_tree with gene_tree_id='$tree_id'";
-    $self->param('gene_tree', $tree);
+    my $gene_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' must be defined";
+    my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    $self->param('gene_tree', $gene_tree);
 
     $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 
@@ -132,7 +129,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    $self->run_quicktreebreak;
+    $self->do_quicktreebreak;
 }
 
 
@@ -174,7 +171,7 @@ sub post_cleanup {
 ##########################################
 
 
-sub run_quicktreebreak {
+sub do_quicktreebreak {
   my $self = shift;
 
   my $gene_tree = $self->param('gene_tree');
@@ -196,6 +193,16 @@ sub run_quicktreebreak {
 
   $gene_tree->store_tag('QuickTreeBreak_runtime_msec', $cmd_out->runtime_msec);
 }
+
+sub run_quicktreebreak {
+    my $self = shift;
+    my $input_aln = shift;
+
+    my $cmd = sprintf('%s -out t -in a %s', $self->param('quicktree_exe'), $input_aln);
+    my $cmd_out = $self->run_command($cmd);
+    return $cmd_out->out;
+}
+
 
 
 ########################################################
@@ -230,6 +237,9 @@ sub rec_update_tags {
     } else {
         $node->store_tag('tree_support', 'quicktree');
         $node->store_tag('node_type', 'speciation');
+        foreach my $child (@{$node->children}) {
+            $self->rec_update_tags($child);
+        }
     }
 
 }
