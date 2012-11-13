@@ -195,7 +195,6 @@ sub new_from_transcript {
   my $seq_string;
 
   my ($transcript, $genome_db, $translate, $description) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
-  #my ($transcript, $genome_db, $translate) = @args;
 
   unless(defined($transcript) and $transcript->isa('Bio::EnsEMBL::Transcript')) {
     throw(
@@ -569,7 +568,7 @@ sub sequence {
   Args       : none
   Example    : my $sequence_exon_cased = $member->sequence_exon_cased;
 
-  Description: Get/set the sequence string of this peptide member with
+  Description: Get/set the sequence string of this member with
                alternating upper and lower case corresponding to the translateable exons.
   Returntype : string
   Exceptions : none
@@ -813,7 +812,7 @@ sub sequence_id {
 
   Arg [1]    : int $gene_member_id
   Example    : my $gene_member_id = $member->gene_member_id;
-  Description: Gene_member_id of this protein member
+  Description: Gene_member_id of this member
   Returntype : int
   Exceptions : none
   Caller     : general
@@ -830,8 +829,8 @@ sub gene_member_id {
 =head2 bioseq
 
   Args       : none
-  Example    : my $primaryseq = $member->primaryseq;
-  Description: returns sequence this member as a Bio::Seq object
+  Example    : my $bioperl_seq = $member->bioseq;
+  Description: returns sequence of this member as a Bio::Seq object
   Returntype : Bio::Seq object
   Exceptions : none
   Caller     : general
@@ -852,9 +851,9 @@ sub bioseq {
     $seqname = $self->source_name . ":" . $self->stable_id;
   }
   my $seq = Bio::Seq->new(-seq        => $self->sequence(),
-                          -primary_id => "member_id_".$self->dbID,
-                          -display_id => "member_id_".$self->dbID,
-                          -desc       => $seqname ."|". $self->description(),
+                          -primary_id => $self->dbID,
+                          -display_id => $seqname,
+                          -desc       => $self->description(),
                          );
   return $seq;
 }
@@ -863,7 +862,7 @@ sub bioseq {
 
   Arg[1]     : Bio::EnsEMBL::Compara::Member $geneMember (optional)
   Example    : my $gene_member = $member->gene_member;
-  Description: returns gene member object for this protein member
+  Description: returns gene member object for this sequence member
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions : if arg[0] is not a Bio::EnsEMBL::Compara::Member object
   Caller     : MemberAdaptor(set), general
@@ -984,7 +983,7 @@ sub get_Transcript {
                by connecting to ensembl genome core database
                REQUIRES properly setup Registry conf file or
                manually setting genome_db->db_adaptor for each genome.
-  Returntype : Bio::EnsEMBL::Gene or undef
+  Returntype : Bio::EnsEMBL::Translation or undef
   Exceptions : none
   Caller     : general
 
