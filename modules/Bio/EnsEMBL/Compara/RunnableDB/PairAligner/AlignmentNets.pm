@@ -184,9 +184,9 @@ sub fetch_input {
                     -workdir              => $self->worker_temp_directory,
 		    -min_chain_score      => $self->param('min_chain_score'));
   
-  my $run = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
-  $self->runnable($run);
-
+  my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
+  #Store runnable in param
+  $self->param('runnable', $runnable);
 }
 
 sub delete_alignments {
@@ -244,11 +244,12 @@ sub delete_alignments {
 
 sub run {
   my ($self) = @_;
-  foreach my $runnable(@{$self->runnable}){
-    $runnable->run;
-    $self->cleanse_output($runnable->output);
-    $self->output($runnable->output);
-  }
+
+  my $runnable = $self->param('runnable');
+  $runnable->run;
+  $self->cleanse_output($runnable->output);
+  $self->param('chains', $runnable->output);
+
 }
 
 sub write_output {
