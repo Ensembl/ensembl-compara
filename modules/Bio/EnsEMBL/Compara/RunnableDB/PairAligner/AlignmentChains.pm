@@ -211,7 +211,8 @@ sub fetch_input {
   }
 
   my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
-  $self->runnable($runnable);
+  #Store runnable in param
+  $self->param('runnable', $runnable);
 
 }
 
