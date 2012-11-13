@@ -63,12 +63,12 @@ sub fetch_input {
 
 sub run{
   my ($self) = @_;
-  foreach my $runnable(@{$self->runnable}){
-    $runnable->run;
-    my $converted_output = $self->convert_output($runnable->output);
-    $self->output($converted_output);
-    rmdir($runnable->workdir) if (defined $runnable->workdir);
-  }
+
+  my $runnable = $self->param('runnable');
+  $runnable->run;
+  my $converted_chains = $self->convert_output($runnable->output);
+  $self->param('chains', $converted_chains);
+  rmdir($runnable->workdir) if (defined $runnable->workdir);
 }
 
 
@@ -107,35 +107,34 @@ sub write_output {
 }
 
 sub _write_output {
-  my ($self) = @_;
-
-  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
-  #LOCK TABLES which does an implicit commit and prevent any rollback
-  $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
-
-  foreach my $chain (@{$self->output}) {
-      my $group_id;
-
-      #store first block
-      my $first_block = shift @$chain;
-      $self->compara_dba->get_GenomicAlignBlockAdaptor->store($first_block);
+    my ($self) = @_;
     
-      #Set the group_id if one doesn't already exist ie for chains, to be the
-      #dbID of the first genomic_align_block. For nets,the group_id has already
-      #been set and is the same as it's chain.
-      unless (defined($first_block->group_id)) {
-	  $group_id = $first_block->dbID;
-	  $self->compara_dba->get_GenomicAlignBlockAdaptor->store_group_id($first_block, $group_id);
-      }
-
-      #store the rest of the genomic_align_blocks
-      foreach my $block (@$chain) {
-	  if (defined $group_id) {
-	      $block->group_id($group_id);
-	  }
-	  $self->compara_dba->get_GenomicAlignBlockAdaptor->store($block);
-     }
-  }
+    #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
+    #LOCK TABLES which does an implicit commit and prevent any rollback
+    $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
+    foreach my $chain (@{ $self->param('chains') }) {
+        my $group_id;
+        
+        #store first block
+        my $first_block = shift @$chain;
+        $self->compara_dba->get_GenomicAlignBlockAdaptor->store($first_block);
+        
+        #Set the group_id if one doesn't already exist ie for chains, to be the
+        #dbID of the first genomic_align_block. For nets,the group_id has already
+        #been set and is the same as it's chain.
+        unless (defined($first_block->group_id)) {
+            $group_id = $first_block->dbID;
+            $self->compara_dba->get_GenomicAlignBlockAdaptor->store_group_id($first_block, $group_id);
+        }
+        
+        #store the rest of the genomic_align_blocks
+        foreach my $block (@$chain) {
+            if (defined $group_id) {
+                $block->group_id($group_id);
+            }
+            $self->compara_dba->get_GenomicAlignBlockAdaptor->store($block);
+        }
+    }
 }
 
 ###########################################
