@@ -97,6 +97,8 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
 
+    $self->load_split_genes;
+
     if (defined $self->param('lambda') and defined $self->param('perFamTable')) {
         $self->get_per_family_cafe_table_from_db();
         return;
@@ -163,6 +165,56 @@ sub get_cafe_tree_from_string {
     return;
 }
 
+sub load_split_genes {
+    my ($self) = @_;
+    my $member_id_to_gene_split_id;
+    my $gene_split_id_to_member_ids;
+    my $sql = "SELECT member_id, gene_split_id FROM split_genes";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute();
+    while (my ($member_id, $gene_split_id) = $sth->fetchrow_array()) {
+        $member_id_to_gene_split_id->{$member_id} = $gene_split_id;
+        push @{$gene_split_id_to_member_ids->{$gene_split_id}}, $member_id;
+    }
+    $self->param('member_id_to_gene_split_id', $member_id_to_gene_split_id);
+    $self->param('gene_split_id_to_member_ids', $gene_split_id_to_member_ids);
+
+    return;
+}
+
+sub filter_split_genes {
+    my ($self, $all_members) = @_;
+    my $member_id_to_gene_split_id = $self->param('member_id_to_gene_split_id');
+    my $gene_split_id_to_member_ids = $self->param('gene_split_id_to_member_ids');
+
+    my %members_to_delete = ();
+
+    my @filtered_members;
+    for my $member (@$all_members) {
+        my $member_id = $member->dbID;
+        if ($members_to_delete{$member_id}) {
+            delete $members_to_delete{$member_id};
+            print STDERR "$member_id has been removed because of split_genes filtering" if ($self->debug());
+            next;
+        }
+        if (exists $member_id_to_gene_split_id->{$member_id}) {
+            my $gene_split_id = $member_id_to_gene_split_id->{$member_id};
+            my @member_ids_to_delete = grep {$_ ne $member_id} @{$gene_split_id_to_member_ids->{$gene_split_id}};
+            for my $new_member_to_delete (@member_ids_to_delete) {
+                $members_to_delete{$new_member_to_delete} = 1;
+            }
+        }
+        push @filtered_members, $member;
+    }
+    if (scalar keys %members_to_delete) {
+        my $msg = "Still have some members to delete!: \n";
+        $msg .= Dumper \%members_to_delete;
+        die $msg;
+    }
+
+    return [@filtered_members];
+}
+
 sub get_full_cafe_table_from_db {
     my ($self) = @_;
     my $cafe_tree = $self->param('cafe_tree');
@@ -188,7 +240,9 @@ sub get_full_cafe_table_from_db {
         $tree->preload();
         my $root_id = $tree->root_id;
         my $name = $self->get_name($tree);
-        my $tree_members = $tree->get_all_leaves();
+        my $full_tree_members = $tree->get_all_leaves();
+        my $tree_members = $self->filter_split_genes($full_tree_members);
+
         my %species;
         for my $member (@$tree_members) {
             my $sp;
@@ -208,10 +262,8 @@ sub get_full_cafe_table_from_db {
             $table .= "\n";
         }
         $tree->release_tree();
-#        last if ($ok_fams == 10);
     }
 
-#    $self->param('all_fams', [1]);
     print STDERR "$ok_fams families in final table\n" if ($self->debug());
     print STDERR "$table\n";
     return $table;
@@ -234,7 +286,8 @@ sub get_per_family_cafe_table_from_db {
         print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
         my $name = $self->get_name($tree);
         print STDERR "MODEL_NAME: $name\n" if ($self->debug());
-        my $tree_members = $tree->get_all_leaves();
+        my $full_tree_members = $tree->get_all_leaves();
+        my $tree_members = $self->filter_split_genes($full_tree_members);
         print STDERR "NUMBER_OF_LEAVES: ", scalar @$tree_members, "\n" if ($self->debug());
         my %species;
         for my $member (@$tree_members) {
@@ -325,7 +378,6 @@ sub get_name {
     my ($self, $tree) = @_;
     my $name;
     if ($self->param('type') eq 'nc') {
-#        $name = $tree->get_tagvalue('clustering_id');
         $name = $tree->root_id();
     } else {
         $name = $tree->root_id();
@@ -407,7 +459,6 @@ sub get_normalized_table {
             push @{$data->{$species[$i-2]}}, $flds[$i];
         }
     }
-    print STDERR Dumper $data;
     my $means_a;
     for my $sp (@species) {
         my $mean = mean(@{$data->{$sp}});
