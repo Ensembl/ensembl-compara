@@ -298,39 +298,28 @@ sub update_genome_db {
     <STDIN>;
   }
 
-	my ($assembly) = @{$meta_container->list_value_by_key('assembly.default')};
-	if (!defined($assembly)) {
-    warning "Cannot find assembly.default in meta table for $primary_species_binomial_name";
-    $assembly = $primary_species_assembly;
-	}
-
 	my $genebuild = $meta_container->get_genebuild();
 	if (! $genebuild) {
 			warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
 			$genebuild = '';
 	}
 
-  print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
+  print "New assembly and genebuild: ", join(" -- ", $primary_species_assembly, $genebuild),"\n\n";
 
 	#Have to define these since they were removed from the above meta queries
 	#and the rest of the code expects them to be defined
   my $sql;
   my $sth;
 
-  $genome_db = eval {
-  	$genome_db_adaptor->fetch_by_name_assembly($primary_species_binomial_name,
-  		$assembly)
-  };
-
   ## New genebuild!
   if ($genome_db) {
   	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =?, WHERE genome_db_id =?');
-  	$sth->execute($assembly, $genebuild, $genome_db->dbID());
+  	$sth->execute($primary_species_assembly, $genebuild, $genome_db->dbID());
   	$sth->finish();
 
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
             $primary_species_binomial_name,
-            $assembly
+            $primary_species_assembly
         );
 
   }
@@ -344,7 +333,7 @@ sub update_genome_db {
       throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
           "   You can use the --taxon_id option";
     }
-    print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
+    print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $primary_species_assembly\n\n";
 
     $sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
     my $nrows = $sth->execute($primary_species_binomial_name);
@@ -352,7 +341,7 @@ sub update_genome_db {
     print "$nrows of the species '$primary_species_binomial_name' were un-defaulted\n";
 
     #New ID search if $offset is true
-    my @args = ($taxon_id, $primary_species_binomial_name, $assembly, $genebuild);
+    my @args = ($taxon_id, $primary_species_binomial_name, $primary_species_assembly, $genebuild);
     if($offset) {
     	$sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
     	$sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
@@ -374,7 +363,7 @@ sub update_genome_db {
     $genome_db_adaptor->cache_all(1);                           # reload the adaptor cache to update with the new species
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
          $primary_species_binomial_name,
-         $assembly
+         $primary_species_assembly
     );
   }
   return $genome_db;
