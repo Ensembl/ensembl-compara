@@ -60,6 +60,7 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -84,15 +85,20 @@ sub fetch_input {
   $non_ref_gdb = $gdba->fetch_by_name_assembly($self->param('non_ref_species'));
 
   #get method_link_species_set of Chains, defined by output_method_link_type
-  my $out_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $out_mlss->method_link_type($self->param('output_method_link_type'));
-  
-  #Create and store Chain method_link_species_set
-  if ($ref_gdb->dbID == $non_ref_gdb->dbID) {
-    $out_mlss->species_set_obj->genome_dbs([$ref_gdb]);
-  } else {
-    $out_mlss->species_set_obj->genome_dbs([$ref_gdb, $non_ref_gdb]);
-  }
+  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('output_method_link_type'),
+                                                   -class => "GenomicAlignBlock.pairwise_alignment");
+
+  my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+        -genome_dbs => ($ref_gdb->dbID == $non_ref_gdb->dbID)
+                            ? [$ref_gdb]
+                            : [$ref_gdb, $non_ref_gdb]
+  );
+        
+  my $out_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -method             => $method,
+        -species_set_obj    => $species_set_obj,
+  );
+
   $mlssa->store($out_mlss);
 
   throw("No MethodLinkSpeciesSet for method_link_type". $self->param('output_method_link_type') . " and species " . $ref_gdb->name . " and " . $non_ref_gdb->name)
@@ -121,13 +127,14 @@ sub fetch_input {
   @$features = [];
   @$target_slices = [];
 
-  my %parameters = (-analysis      => $self->analysis,
+  my %parameters = (-analysis      => $fake_analysis,
 		   -features       => $features,
 		   -query_slice    => $query_slice,
 		   -target_slices  => $target_slices);
 
   my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
-  $self->runnable($runnable);
+  $self->param('runnable', $runnable);
+
   ##################################
   # read the chain file
   ##################################
@@ -144,11 +151,10 @@ sub run {
     my $self = shift;
 
     #print "RUNNING \n";
-    foreach my $runnable(@{$self->runnable}){
-	my $converted_output = $self->convert_output($runnable->output, 0);
-	$self->output($converted_output);
-	rmdir($runnable->workdir) if (defined $runnable->workdir);
-    }
+    my $runnable = $self->param('runnable');
+    my $converted_chains = $self->convert_output($runnable->output, 0);
+    $self->param('chains', $converted_chains);
+    rmdir($runnable->workdir) if (defined $runnable->workdir);
 }
 
 sub write_output {
@@ -231,9 +237,6 @@ sub parse_Chain_file {
           my ($current_q_end, $current_t_end) = 
               ($current_q_start + $ungapped - 1, $current_t_start + $ungapped - 1);
 
-	  if ($current_q_start == 10738407) {
-	      $DB::single = 1;
-	  }
           push @{$blocks[-1]}, { q_start => $current_q_start,
                                  q_end   => $current_q_end,
                                  t_start => $current_t_start,
@@ -291,20 +294,11 @@ sub parse_Chain_file {
           $fp->score($chain->{score});
         
 	  $fp->group_id($data[11]); #store chain_id
-	  if ($fp->start == 10738407) {
-	      $DB::single = 1;
-	      print "fp " . $fp->start . " " . $fp->end . " $cnt1 $cnt2\n";
-	      $stop = 1;
-	  }
 	 # print "feature_pair " . $data[11] . "\n";
           push @ug_feats, $fp;
 	  $cnt1++;
         }
         my $dalf = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@ug_feats);
-	if ($stop == 1) {
-	    $stop = 0;
-	    $DB::single =1;
-	}
         $dalf->level_id(1);
 	$cnt2++;
         push @{$chain->{blocks}}, $dalf;
