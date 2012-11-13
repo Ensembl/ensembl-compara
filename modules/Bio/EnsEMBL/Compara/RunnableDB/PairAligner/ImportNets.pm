@@ -61,6 +61,7 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
+  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -198,7 +199,7 @@ sub fetch_input {
       return;
   }
 
-  my %parameters = (-analysis             => $self->analysis, 
+  my %parameters = (-analysis             => $fake_analysis, 
                     -query_lengths        => \%query_lengths,
                     -target_lengths       => \%target_lengths,
                     -chains               => $features_array,
@@ -208,7 +209,9 @@ sub fetch_input {
 		    -min_chain_score      => $self->param('min_chain_score'));
   
   my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
-  $self->runnable($runnable);
+
+  #Store runnable in param
+  $self->param('runnable', $runnable);
 
   ##################################
   # read the net file
@@ -218,7 +221,7 @@ sub fetch_input {
   my $res_chains = $runnable->parse_Net_file($fh);
   close($fh);
   
-  $runnable->output($res_chains);    
+  $runnable->output($res_chains);
  
 }
 
@@ -226,11 +229,15 @@ sub fetch_input {
 sub run {
     my $self = shift;
     #print "RUNNING \n";
-    foreach my $runnable(@{$self->runnable}){
-	$self->cleanse_output($runnable->output);
-	$self->output($runnable->output);
-    }
 
+    if ($self->param('runnable')) {
+        my $runnable = $self->param('runnable');
+        $self->cleanse_output($runnable->output);
+        $self->param('chains', $runnable->output);
+    } else {
+        #Set to empty if no features found
+        $self->param('chains', []);
+    }
 }
 
 sub write_output {
