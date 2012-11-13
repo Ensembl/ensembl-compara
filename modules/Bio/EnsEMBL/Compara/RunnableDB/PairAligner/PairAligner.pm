@@ -173,7 +173,7 @@ sub fetch_input {
   # execute subclass configure_runnable method
   #
   $self->configure_runnable();
-  
+
   return 1;
 }
 
@@ -185,10 +185,12 @@ sub run
   $self->compara_dba->dbc->disconnect_when_inactive(1);  
 
   my $starttime = time();
-  foreach my $runnable (@{$self->runnable}) {
-    throw("Runnable module not set") unless($runnable);
-    $runnable->run();
+
+  foreach my $runnable (@{$self->param('runnable')}) {
+      throw("Runnable module not set") unless($runnable);
+      $runnable->run();
   }
+
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -251,16 +253,17 @@ sub _write_output {
   #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
   #LOCK TABLES which does an implicit commit and prevent any rollback
   $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
+  foreach my $runnable (@{$self->param('runnable')}) {
+      foreach my $fp ( @{ $runnable->output() } ) {
+          if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
+              $fp->analysis($fake_analysis);
 
-  foreach my $fp ($self->output) {
-    if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
-      $fp->analysis($fake_analysis);
-
-      $self->store_featurePair_as_genomicAlignBlock($fp);
-    }
+              $self->store_featurePair_as_genomicAlignBlock($fp);
+          }
+      }
+      if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$runnable->output}));}
   }
 
-  if($self->debug){printf("%d FeaturePairs found\n", scalar($self->output));}
   #print STDERR (time()-$starttime), " secs to write_output\n";
 }
 
