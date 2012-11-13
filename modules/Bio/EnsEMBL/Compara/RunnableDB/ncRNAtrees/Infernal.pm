@@ -142,6 +142,17 @@ sub write_output {
 
     $self->parse_and_store_alignment_into_tree;
     $self->_store_aln_tags;
+
+    my $gene_tree_id = $self->param('gene_tree_id');
+
+    $self->dataflow_output_id ( {
+                                 'gene_tree_id' => $gene_tree_id,
+                                },3
+                              );
+    $self->dataflow_output_id ( {
+                                 'gene_tree_id' => $gene_tree_id,
+                                },1
+                              );
 }
 
 
