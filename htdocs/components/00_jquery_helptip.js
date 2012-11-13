@@ -9,10 +9,12 @@
   $.helptip = function (tip, options) {
     var el  = $(this);
     options = $.extend({
-      container: 'body',
-      eventIn:   'mouseenter',
-      eventOut:  'mouseleave',
-      delay:     100
+      container:       'body',
+      scrollContainer: $(window),
+      eventIn:         'mouseenter',
+      eventOut:        'mouseleave',
+      delay:           100,
+      callbacks:       {}
     }, options);
     
     var data = { coords: false };
@@ -23,11 +25,21 @@
     
     var methods = {
       init: function () {
+        var elData = el.data('helptip');
+        
+        if (elData) {
+          data = $.extend(elData, data);
+        }
+        
+        el.data('helptip', data);
+        
         if (data.popup) {
           data.disabled = false; // if helptip already created
         } else {
           data.popup = $('<div class="helptip"><div class="helptip-inner"></div></div>').appendTo(options.container);
         }
+        
+        methods.setOption(); // set options
         
         tip = tip.replace(/\n/g, '<br />');
         
@@ -45,15 +57,13 @@
           methods.disable(el);
         }
         
-        methods.setOption(); // set options
-        
         if (!data.initiated) {
           methods.setEventHandlers(); // set event handlers
         }
-      },
-      
-      setTip: function (html) {
-        data.popup.children().html(html);
+        
+        if (typeof options.callbacks.init === 'function') {
+          options.callbacks.init.call(this, el, data, options);
+        }
       },
       
       setOption: function () {
@@ -71,15 +81,19 @@
         data.popup.toggleClass('helptip-static', options['static']);
       },
       
+      setTip: function (html) {
+        data.popup.children().html(html).end().width(function (i, w) { return w; });
+      },
+      
       setEventHandlers: function (args) {
-        var handlers = {};
-        var func;
-        
         args = $.extend({
           namespace: 'helptip',
           mouseIn:   methods.mouseIn,
           mouseOut:  methods.mouseOut
         }, args);
+        
+        var handlers = {};
+        var func;
         
         if (options.delay) {
           handlers = { over: args.mouseIn, out: args.mouseOut, interval: options.delay, namespace: args.namespace };
@@ -93,10 +107,15 @@
         } else {
           handlers[options.eventIn  + '.' + args.namespace] = args.mouseIn;
           handlers[options.eventOut + '.' + args.namespace] = args.mouseOut;
+          
           func = 'on';
         }
         
         el[func](handlers);
+        
+        if (data.popup) {
+          data.popup.on(options.eventOut + '.' + args.namespace, args.mouseOut);
+        }
         
         if (args.namespace === 'helptip') {
           data.initiated = true;
@@ -104,7 +123,6 @@
       },
       
       mouseIn: function (e) {
-        var $window = $(window);
         var pos;
         
         if (options['static']) {
@@ -112,7 +130,6 @@
           pos = { x: offset.left + el.outerWidth() / 2, y: offset.top + el.outerHeight() / 2 };
         } else {
           pos = data.coords || { x: e.pageX, y: e.pageY };
-          
           data.coords = false;
           
           if (!data.mousemove) {
@@ -123,16 +140,20 @@
         
         var originalPos = $.extend(true, pos);
         
-        data.popup.removeClass('helptip-left helptip-top');
-        
-        if ($window.height() < ((pos.y - $window.scrollTop()) * 2)) {
-          data.popup.addClass('helptip-top');
-          pos.y -= data.popup.height();
-        }
-        
-        if ($window.width() < ((pos.x - $window.scrollLeft()) * 2)) {
-          data.popup.addClass('helptip-left');
-          pos.x -= (data.offset || {}).width || data.popup.width();
+        if (options.fixed) {
+          pos.x += options.scrollContainer.scrollLeft();
+        } else {
+          data.popup.removeClass('helptip-left helptip-top');
+          
+          if (options.scrollContainer.height() < ((pos.y - options.scrollContainer.scrollTop()) * 2)) {
+            data.popup.addClass('helptip-top');
+            pos.y -= data.popup.height();
+          }
+          
+          if (options.scrollContainer.width() < ((pos.x - options.scrollContainer.scrollLeft()) * 2)) {
+            data.popup.addClass('helptip-left');
+            pos.x -= (data.offset || {}).width || data.popup.width();
+          }
         }
         
         if (!data.disabled) {
@@ -140,14 +161,14 @@
         }
         
         data.offset = { x: pos.x - originalPos.x, y: pos.y - originalPos.y, width: data.popup.width() };
-        
-        $window = null;
       },
       
-      mouseOut: function () {
-        data.popup.hide();
-        el.off('mousemove.helptip');
-        data.mousemove = false;
+      mouseOut: function (e) {
+        if (!(e.currentTarget === el[0] ? data.popup : el).find('*').andSelf().is(e.relatedTarget)) {
+          data.popup.hide();
+          el.off('mousemove.helptip');
+          data.mousemove = false;
+        }
       },
       
       mouseMove: function (e) {
@@ -182,7 +203,7 @@
       
       return methods.setEventHandlers({
         namespace: 'helptip-deferred',
-        mouseMove: function (e) { data.coords = { x: e.pageX, y: e.pageY }; },
+        mouseMove: options['static'] ? $.noop : function (e) { data.coords = { x: e.pageX, y: e.pageY }; },
         mouseOut:  function ()  { el.off('.helptip-deferred'); },
         mouseIn:   function (e) {
           if (!data.coords) {
@@ -194,14 +215,6 @@
         }
       });
     }
-    
-    var elData = el.data('helptip');
-    
-    if (elData) {
-      data = $.extend(elData, data);
-    }
-    
-    el.data('helptip', data);
     
     // destroy any existing helptip instance if first argument is set false, else initialise
     methods[tip === false ? 'destroy' : 'init']();
