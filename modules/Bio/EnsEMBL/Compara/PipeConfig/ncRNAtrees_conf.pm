@@ -33,12 +33,13 @@ sub default_options {
             # parameters that are likely to change from execution to another:
             # 'mlss_id'             => 40086,
             'release'               => '69',
-            'rel_suffix'            => 'c',    # an empty string by default, a letter or string otherwise
+            'rel_suffix'            => 'd',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
             'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
             'dump_dir'              => $self->o('work_dir') . '/dumps',
+            'ss_picts_dir'          => $self->o('work_dir') . '/ss_picts/',
             'pipeline_name'         => 'NC_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
             # dump parameters:
@@ -60,6 +61,7 @@ sub default_options {
             'fast_trees_capacity'             => 200,
             'raxml_capacity'                  => 200,
             'recover_capacity'                => 150,
+            'ss_picts_capacity'               => 200,
 
             # executable locations:
             'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
@@ -76,11 +78,13 @@ sub default_options {
             'treebest_exe'          => '/software/ensembl/compara/treebest.doubletracking',
             'sreformat_exe'         => '/usr/local/ensembl/bin/sreformat',
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
+#            'b2ct_exe'              => '/software/ensembl/compara/ViennaRNA-2.0.7/Utils/b2ct',
+#            'sir_graph_exe'         => '/software/ensembl/compara/mfold_util-4.6/src/sir_graph',
+            'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
 
             # tree break
-            'treebreak_gene_count'     => 700,
-            'treebreak_tags_to_copy'   => ['clustering_id'],
-
+            'treebreak_gene_count'     => 500,
+            'treebreak_tags_to_copy'   => ['clustering_id', 'model_name'],
 
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
@@ -132,10 +136,11 @@ sub default_options {
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
-        @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
+            @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        'mkdir -p '.$self->o('work_dir'),
-        'mkdir -p '.$self->o('dump_dir'),
+            'mkdir -p '.$self->o('work_dir'),
+            'mkdir -p '.$self->o('dump_dir'),
+            'mkdir -p '.$self->o('ss_picts_dir'),
     ];
 }
 
@@ -238,7 +243,7 @@ sub pipeline_analyses {
                     'ALTER TABLE species_tree_node AUTO_INCREMENT=100000001',
                 ],
             },
-            -wait_for => [ 'copy_table' ],    # have to wait until the tables have been copied
+#            -wait_for => [ 'copy_table' ],    # have to wait until the tables have been copied
             -flow_into => {
                 1 => [ 'innodbise_table_factory' ],
             },
@@ -399,17 +404,42 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
 
-        {   -logic_name    => 'rfam_classify',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
-            -parameters    => {
-                'mlss_id'                   => $self->o('mlss_id'),
-                'additional_clustersets'    => [qw(super-align pg_it_nj ml_it_10 pg_it_phyml ss_it_s16 ss_it_s6a ss_it_s16a ss_it_s6b ss_it_s16b ss_it_s6c ss_it_s6d ss_it_s6e ss_it_s7a ss_it_s7b ss_it_s7c ss_it_s7d ss_it_s7e ss_it_s7f)],
+            {   -logic_name    => 'rfam_classify',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
+                -parameters    => {
+                                   'mlss_id' => $self->o('mlss_id'),
+                                  },
+                -flow_into     => {
+                                   '1->A' => ['create_additional_clustersets'],
+                                   'A->1' => ['clusters_factory'],
+                                  },
+                -rc_name       => 'default',
             },
-            -flow_into => {
-                           2 => [ 'recover_epo' ],
+
+
+            {   -logic_name    => 'create_additional_clustersets',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
+                -parameters    => {
+                                   'member_type'            => 'ncrna',
+                                   'mlss_id'                => $self->o('mlss_id'),
+                                   'additional_clustersets' => [qw(super-align pg_it_nj ml_it_10 pg_it_phyml ss_it_s16 ss_it_s6a ss_it_s16a ss_it_s6b ss_it_s16b ss_it_s6c ss_it_s6d ss_it_s6e ss_it_s7a ss_it_s7b ss_it_s7c ss_it_s7d ss_it_s7e ss_it_s7f ft_it_ml ft_it_nj)],
+                                  },
+                -rc_name       => 'default',
             },
-            -rc_name => 'default',
-        },
+
+            {   -logic_name    => 'clusters_factory',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -parameters => {
+                                'inputquery'      => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
+                                'fan_branch_code' => 2,
+                               },
+
+                -rc_name       => 'default',
+                -flow_into     => {
+                                   2 => [ 'recover_epo' ],
+                                  },
+            },
+
 
         {   -logic_name    => 'recover_epo',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
@@ -470,7 +500,7 @@ sub pipeline_analyses {
                                 'sreformat_exe'     => $self->o('sreformat_exe'),
                                 'store_super_align' => 1,
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
-                                'member_type'       => 'ncrna',   ## In principle this is only needed for create additional clustersets (super-align), but these are now created by RFAM_classify, so in principle this option can be deleted
+#                                'member_type'       => 'ncrna',   ## In principle this is only needed for create additional clustersets (super-align), but these are now created by a dedicated analysis
                                },
                 -hive_capacity  => $self->o('quick_tree_break_capacity'),
                 -rc_name        => '4Gb_job',
@@ -503,14 +533,27 @@ sub pipeline_analyses {
             {   -logic_name    => 'infernal',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
                 -hive_capacity => $self->o('infernal_capacity'),
-                -parameters => {
-                                'cmbuild_exe' => $self->o('cmbuild_exe'),
-                                'cmalign_exe' => $self->o('cmalign_exe'),
-                               },
-                -flow_into => {
-                               1 => ['pre_sec_struct_tree' ],
-                              },
-                -rc_name => 'default',
+                -parameters    => {
+                                   'cmbuild_exe' => $self->o('cmbuild_exe'),
+                                   'cmalign_exe' => $self->o('cmalign_exe'),
+                                  },
+                -flow_into     => {
+                                   1 => ['pre_sec_struct_tree' ],
+                                   3 => ['create_ss_picts'],
+                                  },
+                -rc_name       => 'default',
+            },
+
+            {   -logic_name    => 'create_ss_picts',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict2',
+                -hive_capacity => $self->o('ss_picts_capacity'),
+                -parameters    => {
+                                   'ss_picts_dir'  => $self->o('ss_picts_dir'),
+#                                   'b2ct_exe'      => $self->o('b2ct_exe'),
+#                                   'sir_graph_exe' => $self->o('sir_graph_exe'),
+                                   'r2r_exe'       => $self->o('r2r_exe'),
+                                  },
+                -rc_name       => 'default',
             },
 
             {
