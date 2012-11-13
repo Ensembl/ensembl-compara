@@ -90,8 +90,7 @@ div.image_toolbar a      { float: left; width: 16px; height: 16px; display: bloc
 div.image_toolbar a.config { background-image: url(/i/16/rev/setting.png);      }
 div.image_toolbar a.data   { background-image: url(/i/16/rev/page-user.png);    }
 div.image_toolbar a.export { background-image: url(/i/16/rev/picture.png);      }
-div.image_toolbar a.big    { background-image: url(/i/16/rev/image_big.png);    }
-div.image_toolbar a.small  { background-image: url(/i/16/rev/image_small.png);  }
+div.image_toolbar a.resize    { background-image: url(/i/16/rev/image_resize.png);}
 div.image_toolbar a.share  { background-image: url(/i/16/rev/share.png);        }
 
 /* Image exporting */
@@ -105,6 +104,17 @@ div.iexport_menu div a.view  { right: 26px; margin: 0; float: none; }
 div.iexport_menu div a img   { float: none; margin: 0; }
 
 body.ie67 div.iexport_menu a { margin-top: -16px; }
+
+/* Image resize */
+div.image_resize_menu                 { z-index: 1000; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; width: 120px;  }
+div.image_resize_menu div             { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 20px; background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; text-align: left; padding: 0 4px; }
+div.image_resize_menu div.header      { background-color: [[TABLE_HEADER]]; color: #FFFFFF; font-weight: bold; }
+div.image_resize_menu div div         { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 135px; }
+div.image_resize_menu div a           { text-decoration: none; font-weight: bold; }
+div.image_resize_menu div div.current { text-decoration: none; font-weight: bold; color: grey }
+
+body.ie67 div.image_big_menu a { margin-top: -16px; }
+
 
 /* Styles for sprite mouseovers */
 a.icon_link                   { text-decoration: none; }
