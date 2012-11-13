@@ -1088,8 +1088,8 @@ sub get_canonical_transcript_Member {
 
   Args       : none
   Example    : $pepMembers = $gene_member->get_all_peptide_Members
-  Description: return listref of all peptide members of this gene_member
-  Returntype : array ref of Bio::EnsEMBL::Compara::Member 
+  Description: return listref of all peptide members of this gene member
+  Returntype : array ref of Bio::EnsEMBL::Compara::Member
   Exceptions : throw if not an ENSEMBLGENE
   Caller     : general
 
@@ -1098,7 +1098,7 @@ sub get_canonical_transcript_Member {
 sub get_all_peptide_Members {
     my $self = shift;
 
-    throw("adaptor undefined, can access database") unless($self->adaptor);
+    throw("adaptor undefined, cannot access database") unless($self->adaptor);
     throw("not an ENSEMBLGENE member") if($self->source_name ne 'ENSEMBLGENE'); 
 
     my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_all_peptides_for_gene_member_id')
