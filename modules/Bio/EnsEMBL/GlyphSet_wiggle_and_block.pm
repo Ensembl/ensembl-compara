@@ -379,6 +379,10 @@ sub draw_wiggle_points {
   foreach my $f (@$features) {
     my $href        = ref $f ne 'HASH' && $f->can('id') ? $hrefs->{$f->id} : '';
     my $this_colour = $colour;
+    if($parameters->{'use_feature_colours'}) {
+      $this_colour = $f->external_data()->{'item_colour'}[0];
+    }
+
     my ($start, $end, $score, $min_score, $drawn_score, $y, $height);
     
     # Data is from a Funcgen result set collection, windowsize > 0

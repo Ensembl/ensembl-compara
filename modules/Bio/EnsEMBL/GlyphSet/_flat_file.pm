@@ -37,6 +37,7 @@ sub draw_features {
         axis_colour  => 'black',
         description  => $config->{'description'},
         graph_type   => $graph_type,
+        use_feature_colours => (lc($config->{'itemRgb'}||'') eq 'on'),
       });
     }
   }
