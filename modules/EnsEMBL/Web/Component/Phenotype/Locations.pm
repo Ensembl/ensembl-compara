@@ -20,18 +20,17 @@ sub _init {
 
 sub content {
   my $self = shift;
-  ## Accept both parameters for now, to avoid breaking links from elsewhere in code
-  my $id   = $self->hub->param('ph') || $self->hub->param('id');
+  my @id   = $self->hub->param('ph');
   my $features = {};
 
   ## Get features to draw
-  if ($id) {
+  if (@id) {
     my $object = $self->object;
     if ($object && $object->can('convert_to_drawing_parameters')) {
       $features = $object->convert_to_drawing_parameters;
     }
   }
-  my $html = $self->_render_features($id, $features);
+  my $html = $self->_render_features(\@id, $features);
   return $html;
 }
 

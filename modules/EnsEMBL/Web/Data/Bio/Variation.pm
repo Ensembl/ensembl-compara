@@ -21,7 +21,7 @@ sub convert_to_drawing_parameters {
   my $self         = shift;
   my $data         = $self->data_objects;
   my $hub          = $self->hub;
-  my $phenotype_id = $hub->param('ph') || $hub->param('id');
+  my @phen_ids     = $hub->param('ph');
   my $species      = $hub->species;
   my $vardb        = $hub->database('variation');
   my $vaa          = $vardb->get_adaptor('VariationAnnotation');
@@ -39,7 +39,7 @@ sub convert_to_drawing_parameters {
     $phenotypes_sources{$variation_id}{$source_name} = 1;
     
     
-    if ($va->{'_phenotype_id'} eq $phenotype_id) {      
+    if (grep @phen_ids, $va->{'_phenotype_id'}) {      
       # only get the p value log 10 for the pointer matching phenotype id and variation id
       #warn ">>> PVAL ".$va->{'p_value'};
       $p_value_logs{$variation_id} = -(log($va->{'p_value'}) / log(10)) unless $va->{'p_value'} == 0;      
