@@ -89,11 +89,16 @@ sub stats_table {
   
   my $columns = [
     { key => 'count',   title => 'Number of variants', sort => 'numeric_hidden', width => '10%', align => 'right'  },   
-    { key => 'view',    title => '',                   sort => 'none',           width => '5%',  align => 'center' },
-    { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '48%'                    },
-    { key => 'source',  title => 'Source(s)',          sort => 'string',         width => '26%'                    },
-    { key => 'lview',   title => 'Link',               sort => 'none',           width => '11%'                    },
+    { key => 'view',    title => 'Show/hide details', sort => 'none',           width => '10%',  align => 'center' },
+    { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '38%' },
   ];
+  if ($hub->species_defs->ENSEMBL_CHROMOSOMES) {
+    push @$columns, { key => 'loc',   title => 'Locations',   sort => 'none', width => '13%'};
+  }
+  if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
+    push @$columns, { key => 'mart',   title => 'Biomart',    sort => 'none',  width => '13%'};
+  }
+  push @$columns,  { key => 'source',  title => 'Source(s)',  sort => 'string', width => '11%'};
   
   foreach my $va (@{$va_adaptor->fetch_all_by_associated_gene($gene_name)}) {
     my $var_name   = $va->variation->name;  
@@ -125,21 +130,20 @@ sub stats_table {
     my $phe_count    = scalar @{$phenotype->{'count'}};
     my $warning      = $phe_count > $max_lines ? $warning_text : '';
     my $sources_list = join ', ', map $self->source_link($_), @{$phenotype->{'source'}};
-    my $lview        = '-';
+    my $loc          = '-';
+    my $mart         = '-';
     
     # BioMart link
-    my $bm_flag = 0;
-    if (grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
+    if ($hub->species_defs->ENSEMBL_MART_ENABLED && grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
       if ($va_adaptor->fetch_annotation_number_by_phenotype_id($phenotype->{'id'}) > 250) {
         my $mart_phe_url = $mart_somatic_url;
         $mart_phe_url =~ s/###PHE###/$_/;
-        $lview = qq{<a href="$mart_phe_url">[View list in BioMart]</a>};
-        $bm_flag = 1;
+        $mart = qq{<a href="$mart_phe_url">View list in BioMart</a>};
       }
     }
     # Karyotype link
-    if ($bm_flag == 0) {
-      $lview = sprintf '<a href="%s">[View on Karyotype]</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
+    if ($hub->species_defs->ENSEMBL_CHROMOSOMES) {
+      $loc = sprintf '<a href="%s">View on Karyotype</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
     }
        
     push @rows, {
@@ -147,7 +151,8 @@ sub stats_table {
       count  => $phe_count,
       view   => $self->ajax_add($self->ajax_url(undef, { sub_table => $_ }), $table_id),
       source => $sources_list,
-      lview  => $lview
+      loc    => $loc,
+      mart    => $mart,
     };
   }
   
@@ -343,7 +348,7 @@ sub source_link {
   else {
     $url =~ s/###ID###//;
   }
-  return $url ? qq{<a rel="external" href="$url">[$source]</a>} : $source;
+  return $url ? qq{<a rel="external" href="$url">$source</a>} : $source;
 }
 
 
