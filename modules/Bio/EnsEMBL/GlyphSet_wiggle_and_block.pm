@@ -379,8 +379,13 @@ sub draw_wiggle_points {
   foreach my $f (@$features) {
     my $href        = ref $f ne 'HASH' && $f->can('id') ? $hrefs->{$f->id} : '';
     my $this_colour = $colour;
-    if($parameters->{'use_feature_colours'}) {
-      $this_colour = $f->external_data()->{'item_colour'}[0];
+    if($parameters->{'use_feature_colours'} and
+       $f->can("external_data")) {
+      my $data = $f->external_data();
+      if($data and $data->{'item_colour'} and
+         ref($data->{'item_colour'}) eq 'ARRAY') {
+        $this_colour = $f->external_data()->{'item_colour'}[0];
+      }
     }
 
     my ($start, $end, $score, $min_score, $drawn_score, $y, $height);
