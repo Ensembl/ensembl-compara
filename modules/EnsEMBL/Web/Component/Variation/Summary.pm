@@ -166,6 +166,7 @@ sub co_located {
   my ($self, $feature_slice) = @_;
   my $hub        = $self->hub;
   my $adaptor    = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+  $adaptor->db->include_failed_variations(1);
   my @variations = (@{$adaptor->fetch_all_by_Slice($feature_slice)}, @{$adaptor->fetch_all_somatic_by_Slice($feature_slice)});
 
   if (@variations) {
