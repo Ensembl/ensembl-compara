@@ -58,14 +58,14 @@ sub content {
 
   $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_assembly_text.'</div></div>';
 
-  $html .= '<div class="box-right"><div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div></div>';
+  $html .= '<div class="box-right alt-box-middle"><div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div></div>';
  
-  $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div></div>';
+  $html .= '<div class="box-left alt-box-right"><div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div></div>';
 
-  $html .= '<div class="box-right"><div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div></div>';
+  $html .= '<div class="box-right alt-box-left"><div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div></div>';
 
   if ($hub->database('funcgen')) {
-    $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div></div>';
+    $html .= '<div class="box-left alt-box-middle"><div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div></div>';
   }
 
   return $html;  
@@ -97,6 +97,7 @@ sub _whatsnew_text {
       $html .= sprintf('<li><a href="%s" class="nodeco">%s</a></li>', $record_url, $record->{'title'});
     }
     $html .= '</ul>';
+    $html .= sprintf '<div style="text-align:right;margin-top:-2em;padding-bottom:8px"><a href="%s" class="nodeco">More news<a/>...</div>', $news_url;
   }
 
   return $html;
@@ -161,6 +162,10 @@ sub _assembly_text {
     my $am_url = $hub->url({'type'=>'UserData','action'=>'SelectFeatures'});
     $html .= qq(<p><a href="$am_url" class="modal_link nodeco"><img src="${img_url}24/tool.png" class="homepage-link" />Convert your data to $assembly coordinates</a></p>);
   }
+  ## Link to custom track form
+  my $site = $species_defs->ENSEMBL_SITETYPE;
+  my $cp_url = $hub->url({'type'=>'UserData','action'=>'SelectFile'});
+  $html .= qq(<p><a href="$cp_url" class="modal_link nodeco"><img src="${img_url}24/page-user.png" class="homepage-link" />Display your data in $site</a></p>);
 
   ## PREVIOUS ASSEMBLIES
   my @old_archives;
