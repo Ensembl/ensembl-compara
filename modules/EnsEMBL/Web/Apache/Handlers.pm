@@ -270,6 +270,7 @@ sub handler {
   ## Check for stable id URL (/id/ENSG000000nnnnnn)
   if ($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) {
     my $stable_id = $raw_path[1];
+    $stable_id =~ s/\.[0-9]+$//; ## Remove versioning
     my ($object_type, $db_type, $uri);
     ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
     
