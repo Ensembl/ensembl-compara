@@ -112,7 +112,7 @@ sub stats_table {
     $total_counts->{$var_name} = 1;
   }  
   
-  my $warning_text = qq{<span style="color:red">(WARNING: table may not load for this number of variants!)</span>};
+  my $warning_text = qq{<span style="color:red">(WARNING: details table may not load for this number of variants!)</span>};
   my ($url, @rows);
   
   
@@ -122,6 +122,19 @@ sub stats_table {
                          '&FILTERS=hsapiens_snp_som.default.filters.phenotype_description.&quot;###PHE###&quot;'.
                          '&VISIBLEPANEL=resultspanel';
   my $max_lines = 1000;
+  
+  # add the row for ALL variations if there are any
+  if (my $total = scalar keys %$total_counts) {
+    my $warning = $total > $max_lines ? $warning_text : '';
+  
+    push @rows, {
+      phen   => "ALL variations with a phenotype annotation $warning",
+      count  => qq{<span class="hidden">-</span>$total}, # create a hidden span to add so that ALL is always last in the table
+      view   => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL' }), 'ALL'),
+      source => '-',
+      lview  => '-'
+    };
+  }
   
   foreach (sort keys %phenotypes) {
     my $phenotype    = $phenotypes{$_};
@@ -156,20 +169,7 @@ sub stats_table {
     };
   }
   
-  # add the row for ALL variations if there are any
-  if (my $total = scalar keys %$total_counts) {
-    my $warning = $total > $max_lines ? $warning_text : '';
-  
-    push @rows, {
-      phen   => "ALL variations with a phenotype annotation $warning",
-      count  => qq{<span class="hidden">-</span>$total}, # create a hidden span to add so that ALL is always last in the table
-      view   => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL' }), 'ALL'),
-      source => '-',
-      lview  => '-'
-    };
-  }
-  
-  return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', sorting => [ 'type asc' ], exportable => 0 });
+  return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', data_table_config => {iDisplayLength => 10}, sorting => [ 'type asc' ], exportable => 0 });
 }
 
 
