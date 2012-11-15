@@ -85,7 +85,7 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '69',
+        'release'               => '70',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
@@ -195,11 +195,11 @@ sub default_options {
         #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'ens-livemirror',
+           -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'ensembl_compara_68',
+           -dbname => 'sf5_ensembl_compara_69',
         },
         #'reuse_db' => {   # current release if we are testing after production
         #    -host   => 'compara1',
