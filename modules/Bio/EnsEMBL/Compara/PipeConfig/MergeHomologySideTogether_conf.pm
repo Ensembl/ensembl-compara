@@ -59,62 +59,23 @@ sub default_options {
             -dbname => $self->o('ENV', 'USER').'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
         },
 
-            'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-
-#         'master_db' => {
-#             -host   => 'compara1',
-#             -port   => 3306,
-#             -user   => 'ensro',
-#             -pass   => '',
-#             -dbname => 'sf5_ensembl_compara_master',
-#         },
-
+        'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
         'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
 
-            'prevrel_db' => 'mysql://ensro@compara3/mm14_ensembl_compara_68',
-#         'prevrel_db' => {
-#             -host   => 'compara4',
-#             -port   => 3306,
-#             -user   => 'ensro',
-#             -pass   => '',
-#             -dbname => 'kb3_ensembl_compara_65',
-#         },
-
+        'prevrel_db' => 'mysql://ensro@compara3/mm14_ensembl_compara_68',
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
-            'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_69',
-#         'genetrees_db' => {
-#             -host   => 'compara2',
-#             -port   => 3306,
-#             -user   => 'ensadmin',
-#             -pass   => $self->o('password'),
-#             -dbname => 'mm14_compara_homology_66',
-#         },
-
+        'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_69',
         'genetrees_copy_tables'  => [ 'protein_tree_member_score', 'protein_tree_hmmprofile' ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member', 'method_link_species_set_tag', 'species_tree_root', 'species_tree_node', 'species_tree_node_tag', 'CAFE_gene_family', 'CAFE_species_gene' ],
+        'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag' ],
 
-            'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',
-#         'families_db' => {
-#             -host   => 'compara1',
-#             -port   => 3306,
-#             -user   => 'ensadmin',
-#             -pass   => $self->o('password'),
-#             -dbname => 'lg4_compara_families_66',
-#         },
+        'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
-            'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_69a',
-#         'nctrees_db' => {
-#             -host   => 'compara4',
-#             -port   => 3306,
-#             -user   => 'ensadmin',
-#             -pass   => $self->o('password'),
-#             -dbname => 'mp12_compara_nctrees_66c',
-#         },
+        'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_69a',
         'nctrees_copy_tables'  => [ 'hmm_profile' ],
-        'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member', 'method_link_species_set_tag', 'species_tree_root', 'species_tree_node', 'species_tree_node_tag', 'CAFE_gene_family', 'CAFE_species_gene' ],
+        'nctrees_merge_tables' => [ 'member', 'sequence', 'method_link_species_set_tag' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
         'compara_innodb_schema' => 0,                               # to override the default Compara setting
@@ -169,10 +130,18 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputlist'  => $self->o('genetrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputlist'  => $self->o('genetrees_merge_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_tree\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_align\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'homology%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'CAFE\_%'" },
 
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_merge_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'gene\_tree\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'gene\_align\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'homology%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'CAFE\_%'" },
             ],
             -flow_into => {
                 2 => [ 'copy_table'  ],
