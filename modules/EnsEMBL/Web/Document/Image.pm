@@ -84,7 +84,7 @@ sub render_toolbar {
   ## Image export popup menu
   if ($self->{'export'}) {
     my @formats = (
-      { f => 'pdf',     label => 'PDF' },
+      { f => 'pdf',     label => 'PDF'},
       { f => 'svg',     label => 'SVG' },
       { f => 'eps',     label => 'PostScript' },
       { f => 'png-5',   label => 'PNG (x5)' },
@@ -107,7 +107,20 @@ sub render_toolbar {
         next if $self->{'export'} =~ /no_text/;
 
         $export .= qq{<div><div>$_->{'label'}</div><a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>};
-      } else {
+        
+      } elsif ($_->{'f'} eq 'pdf') {
+        # option not to include pdf export
+        next if $self->{'export'} =~ /no_pdf/;
+                
+        $export .= qq{
+          <div>
+            <div>$_->{'label'}</div>
+            <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
+            <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
+          </div>
+        };                
+        
+      }else {
         $export .= qq{
           <div>
             <div>$_->{'label'}</div>
