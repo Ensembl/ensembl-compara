@@ -310,15 +310,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'backbone_pipeline_finished',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => [
-                    # We move HMM profiles
-                    'INSERT INTO protein_tree_hmmprofile SELECT root_id, "aa", value FROM gene_tree_root_tag WHERE tag = "hmm_aa";',
-                    'INSERT INTO protein_tree_hmmprofile SELECT root_id, "dna", value FROM gene_tree_root_tag WHERE tag = "hmm_dna";',
-                    'DELETE FROM gene_tree_root_tag WHERE tag IN ("hmm_aa", "hmm_dna");',
-                ],
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------

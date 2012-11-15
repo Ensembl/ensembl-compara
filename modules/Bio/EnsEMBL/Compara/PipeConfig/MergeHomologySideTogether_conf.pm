@@ -66,7 +66,7 @@ sub default_options {
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
         'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_69',
-        'genetrees_copy_tables'  => [ 'protein_tree_hmmprofile' ],
+        'genetrees_copy_tables'  => [  ],
         'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag' ],
 
         'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',

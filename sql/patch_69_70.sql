@@ -1,4 +1,8 @@
 
+-- MySQL should 'die' on warnings, ensuring data is not truncated
+SET session sql_mode='TRADITIONAL';
+
+
 -- left/right_index
 
 ALTER TABLE ncbi_taxa_node
@@ -140,5 +144,11 @@ DELETE gene_tree_member FROM gene_tree_member JOIN gene_tree_node USING (node_id
 -- gene_tree_member should now be empty
 DROP TABLE gene_tree_member;
 
+
+
+-- protein-tree HMM profiles
+
+INSERT INTO hmm_profile (model_id, type, hc_profile) SELECT CONCAT(type, "_", node_id), "hmmer", hmmprofile FROM protein_tree_hmmprofile;
+DROP TABLE protein_tree_hmmprofile;
 
 
