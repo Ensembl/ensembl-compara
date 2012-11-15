@@ -54,6 +54,7 @@ $ time mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress 
 # rel.67: 30 sec
 # rel.68: 30 sec
 # rel.69: 35 sec
+# rel.70  32 sec
 
 5.2 Update the extant taxon names
 
@@ -419,6 +420,9 @@ $ bsub -q yesterday -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
     Note 6: to avoid constantly recomputing the indices, there is a "-re_enable 0" flag on copy_data.pl.
             The last run of the script (for each type of data) should not have the flag, to re-enable the indices. Otherwise.
             the "keys disabled" properly will be transmitted to the staging / web servers, which may slow down the websites.
+
+    Note 7: for human and mouse patches patches which have "changed" or no longer exist ("deleted") from the previous 
+	    release alignments will have to removed from those alignments. 
 
 # rel.58
 #           30m to copy over Human-vs-Marmoset
