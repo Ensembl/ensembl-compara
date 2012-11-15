@@ -11,10 +11,11 @@ sub init_canvas {
   $im_height = int($im_height* $self->{sf})+0;
   $im_width  = int($im_width* $self->{sf})+0;
 
-  my $pdf = PDF::API2->new;
+  my $pdf = PDF::API2->new;  
   my $page = $pdf->page();
-  $page->mediabox( $im_width , $im_height );
-  $page->rotate(90);
+  
+  $page->mediabox( $im_width , $im_height );   
+  $page->rotate(90);  
 
   $self->canvas(
     { 'im_height' => $im_height, 'page' => $page, 'pdf' => $pdf, 'g' => $page->gfx, 't'=>$page->text, 'font' => $pdf->corefont('Helvetica-Bold',1), 'rotate' => 1 }
@@ -86,7 +87,7 @@ sub render_Text {
 #  return;
 
   my $gcolour = $glyph->colour() || "black";
-  my $text  = $glyph->text();
+  my $text  = $glyph->text();  
 
 	my($x,$y) = $self->XY($glyph->pixelx+2,$glyph->pixely);
 	my($a,$b) = $self->XY($glyph->pixelx+$glyph->pixelwidth,$glyph->pixely+$glyph->pixelheight);
@@ -94,10 +95,11 @@ sub render_Text {
 	my $h = $y - $b;
 
   my $S = ($glyph->{'ptsize'}||8)* $self->{sf};
-  my $T = $self->{'canvas'}{'t'};
+  my $T = $self->{'canvas'}{'t'};     
      $T->font( $self->{'canvas'}{'font'}, $S );
      $T->fillcolor( $gcolour ); 
-  if( $glyph->{'valign'} eq 'top' ) {
+     
+  if( $glyph->{'valign'} eq 'top' ) {    
     $y -= $S;
   } elsif( $glyph->{'valign'} ne 'bottom' ) {
 	  $y = ( $y + $b - $S ) /2;
@@ -106,14 +108,18 @@ sub render_Text {
 	}
   
   if( $glyph->{'halign'} eq 'right' ) {
-    $T->translate( $a, $y );
-    $T->text_right( $text );
+    $T->translate( $a, $y );    
+    $T->text_right( $text );    
   } elsif( $glyph->{'halign'} eq 'center' ) {
-    $T->translate( ($x+$a)/2, $y );
-    $T->text_center( $text );
+    $T->translate( ($x+$a)/2, $y );    
+    $T->text_center( $text );    
   } else {    
-    $T->translate( $x, $y );
+    $T->transform(
+      -translate=>[$x+10,$y],
+      -rotate=> 90
+    );
     $T->text( $text );
+        
   }
 }
 
