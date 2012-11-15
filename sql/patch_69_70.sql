@@ -152,3 +152,10 @@ INSERT INTO hmm_profile (model_id, type, hc_profile) SELECT CONCAT(type, "_", no
 DROP TABLE protein_tree_hmmprofile;
 
 
+
+-- protein_tree_member_score
+
+INSERT INTO gene_align (aln_method) VALUES ("mcoffee_scores");
+INSERT INTO gene_align_member SELECT LAST_INSERT_ID() , member_id, cigar_line FROM protein_tree_member_score;
+DROP TABLE protein_tree_member_score;
+
