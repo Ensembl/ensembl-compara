@@ -51,6 +51,8 @@ use strict;
 
 use IO::File;
 
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA');
 
 
@@ -110,12 +112,16 @@ sub parse_and_store_alignment_into_proteintree {
     #
     # Align cigar_lines to members and store
     #
-    foreach my $member (@{$self->param('protein_tree')->get_all_leaves}) {
+    my $aln_score = Bio::Ensembl::Compara::AlignedMemberSet->deep_copy($self->param('protein_tree'));
+    $aln_score->aln_method('mcoffee_score');
+    foreach my $member (@{$aln_score->get_all_Members}) {
         my $score_string = $score_hash{$member->sequence_id} || '';
         $score_string =~ s/[^\d-]/9/g;   # Convert non-digits and non-dashes into 9s. This is necessary because t_coffee leaves some leftover letters
         printf("Updating the score of %s : %s\n",$member->stable_id,$score_string) if ($self->debug);
-        $member->store_tag('aln_score', $score_string);
+        $member->cigar_line($score_string);
     }
+    $self->compara_dba->get_AlignedMemberAdaptor->store($aln_score);
+    $self->param('protein_tree')->store_tag('mcoffee_scores', $aln_score->gene_align_id);
     return 1;
 }
 

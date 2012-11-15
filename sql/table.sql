@@ -729,27 +729,6 @@ CREATE TABLE gene_tree_root (
 
 
 #
-# Table structure for table 'protein_tree_member_score'
-#
-# overview:
-#   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
-# semantics:
-#    node_id                  -- the id of node associated with this name
-#    cigar_line               -- compressed alignment information
-
-CREATE TABLE protein_tree_member_score (
-  node_id                     int(10) unsigned NOT NULL,
-  cigar_line                  mediumtext,
-
-  FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
-
-  PRIMARY KEY (node_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-
-#
 # Table structure for table 'gene_tree_node_tag'
 #
 # overview:
