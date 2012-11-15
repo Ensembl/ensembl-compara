@@ -235,6 +235,7 @@ sub pipeline_analyses {
             },
         },
 
+       $self->o('hmm_clustering') ? (
             {
              -logic_name => 'backbone_fire_hmmClassify',
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
@@ -247,6 +248,7 @@ sub pipeline_analyses {
                             'A->1' => [ 'backbone_fire_tree_building' ],
                            },
             },
+        ) : (), # do not show the hmm analysis if the option is off
 
 ### For hmmalign instead of mcoffee
 #             {
@@ -630,6 +632,7 @@ sub pipeline_analyses {
         },
 
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
+       $self->o('hmm_clustering') ? (
             {
             -logic_name => 'load_models',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels',
@@ -694,6 +697,8 @@ sub pipeline_analyses {
              -rc_name => '8Gb_job',
              -flow_into => [ 'run_qc_tests' ],
             },
+
+        ) : (), # do not show the hmm analysis if the option is off
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
@@ -883,7 +888,7 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                '2->A'      => [ 'msa_chooser' ],
+                '2' => [ 'msa_chooser' ],
             },
         },
 
@@ -1006,7 +1011,7 @@ sub pipeline_analyses {
             -priority => 10,
         },
 
-        {   -logic_name    => 'ktree_dist',
+        {   -logic_name    => 'ktreedist',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist',
             -hive_capacity => -1,
             -parameters    => {
