@@ -147,7 +147,6 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Getopt::Long;
-use ExtUtils::MakeMaker qw(prompt);
 
 my $help;
 
@@ -387,6 +386,19 @@ exit(0);
 ###############################################################################
 ## SUBROUTINES
 ###############################################################################
+
+sub prompt {
+    my $message = shift;
+    my $default = shift;
+    my $answer;
+
+    print $message;
+    print ' (default is ', $default, ')' if $default;
+    print '   ';
+    chomp ($answer = <>);
+    return $answer if $answer;
+    return $default;
+}
 
 sub ask_for_method_link_type {
   my ($compara_dba) = @_;
