@@ -42,7 +42,6 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::ConstrainedElement;
-use ExtUtils::MakeMaker qw(prompt);
 use Getopt::Long;
 use DBI;
 use Data::Dumper; 
