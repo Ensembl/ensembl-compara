@@ -498,9 +498,7 @@ sub pipeline_analyses {
                                 'mlss_id'           => $self->o('mlss_id'),
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
                                 'sreformat_exe'     => $self->o('sreformat_exe'),
-                                'store_super_align' => 1,
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
-#                                'member_type'       => 'ncrna',   ## In principle this is only needed for create additional clustersets (super-align), but these are now created by a dedicated analysis
                                },
                 -hive_capacity  => $self->o('quick_tree_break_capacity'),
                 -rc_name        => '4Gb_job',
@@ -691,7 +689,6 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
                             'mlss_id' => $self->o('mlss_id'),
-                            'member_type' => 'ncrna', # For creating additional 
                            },
             -flow_into => {
                            1 => [ 'orthotree', 'ktreedist' ],
