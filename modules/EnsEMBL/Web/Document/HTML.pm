@@ -22,8 +22,9 @@ sub new {
   return $self;
 }
 
-sub renderer :lvalue { $_[0]->{'_renderer'}; }
-sub species_defs     { return $_[0]->{'species_defs'}; }
+sub renderer      :lvalue { $_[0]->{'_renderer'}; }
+sub hub           :lvalue { $_[0]->{'_hub'}; }
+sub species_defs  { return $_[0]->{'species_defs'}; }
 
 sub printf { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
