@@ -92,6 +92,8 @@ netting process, the best sub-chain is chosen in each region on the reference sp
 
   $html .= '<h2>Results</h2>';
 
+  $html .= '<p>Number of alignment blocks: '.$alignment_results->{num_blocks}.'</p>';
+
   $html .= '<table>
 <tr>
 <th></th>
@@ -101,12 +103,14 @@ netting process, the best sub-chain is chosen in each region on the reference sp
 ';
 
   my $i = 0;
+  my $n = 1;
   foreach my $sp ($ref_sp, $nonref_sp) {
-    $html .= "<tr><th>$sp</th>";
+    $html .= qq(<tr><th style="vertical-align:middle">$sp</th>);
     my $results = $i ? $non_ref_results : $ref_results; 
 
     foreach my $coverage ('alignment', 'alignment_exon') {
-      $html .= '<td style="padding:1em">';
+      $html .= '<td style="padding:12px">';
+      $html .= sprintf '<div id="graphHolder%s" style="width:200px;height:200px"></div>', $i;
       $html .= $self->thousandify($results->{$coverage.'_coverage'}).' out of '
                 .$self->thousandify($results->{'length'});
       $html .= '</td>';
@@ -114,6 +118,7 @@ netting process, the best sub-chain is chosen in each region on the reference sp
 
     $html .= '</tr>';
     $i++;
+    $n++;
   }
 
   $html .= '</table>';
