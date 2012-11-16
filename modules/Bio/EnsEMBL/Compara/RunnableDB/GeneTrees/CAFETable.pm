@@ -172,9 +172,14 @@ sub load_split_genes {
     my $sql = "SELECT member_id, gene_split_id FROM split_genes";
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
+    my $n_split_genes = 0;
     while (my ($member_id, $gene_split_id) = $sth->fetchrow_array()) {
+        $n_split_genes++;
         $member_id_to_gene_split_id->{$member_id} = $gene_split_id;
         push @{$gene_split_id_to_member_ids->{$gene_split_id}}, $member_id;
+    }
+    if ($n_split_genes == 0) {
+        $self->param('no_split_genes', 1);
     }
     $self->param('member_id_to_gene_split_id', $member_id_to_gene_split_id);
     $self->param('gene_split_id_to_member_ids', $gene_split_id_to_member_ids);
@@ -241,7 +246,7 @@ sub get_full_cafe_table_from_db {
         my $root_id = $tree->root_id;
         my $name = $self->get_name($tree);
         my $full_tree_members = $tree->get_all_leaves();
-        my $tree_members = $self->filter_split_genes($full_tree_members);
+        my $tree_members = $self->param('no_split_genes') ? $full_tree_members : $self->filter_split_genes($full_tree_members);
 
         my %species;
         for my $member (@$tree_members) {
@@ -265,7 +270,7 @@ sub get_full_cafe_table_from_db {
     }
 
     print STDERR "$ok_fams families in final table\n" if ($self->debug());
-    print STDERR "$table\n";
+    print STDERR "$table\n" if ($self->debug());
     return $table;
 }
 
@@ -287,7 +292,7 @@ sub get_per_family_cafe_table_from_db {
         my $name = $self->get_name($tree);
         print STDERR "MODEL_NAME: $name\n" if ($self->debug());
         my $full_tree_members = $tree->get_all_leaves();
-        my $tree_members = $self->filter_split_genes($full_tree_members);
+        my $tree_members = $self->param('no_split_genes') ? $full_tree_members : $self->filter_split_genes($full_tree_members);
         print STDERR "NUMBER_OF_LEAVES: ", scalar @$tree_members, "\n" if ($self->debug());
         my %species;
         for my $member (@$tree_members) {
@@ -408,9 +413,9 @@ LABEL:    while (1) {
         my $new_table = $self->get_normalized_table($table, $norm_factor);
         my $table_file = $self->get_table_file($new_table);
         my $script     = $self->get_script($table_file);
-        print STDERR "NORM_FACTOR: $norm_factor\n";
-        print STDERR "Table file is:  $table_file\n";
-        print STDERR "Script file is: $script\n";
+        print STDERR "NORM_FACTOR: $norm_factor\n" if ($self->debug());
+        print STDERR "Table file is:  $table_file\n" if ($self->debug());
+        print STDERR "Script file is: $script\n" if ($self->debug());
         chmod 0755, $script;
         $self->compara_dba->dbc->disconnect_when_inactive(0);
         open my $cafe_proc, "-|", $script or die $!;  ## clean after! (cafe leaves output files)
@@ -426,13 +431,13 @@ LABEL:    while (1) {
             if ($score eq '-inf') {
                 $inf++;
                 $inf_in_row++;
-                print STDERR "-inf score! => INF: $inf, INF_IN_ROW: $inf_in_row\n";
+                print STDERR "-inf score! => INF: $inf, INF_IN_ROW: $inf_in_row\n" if ($self->debug());
             } else {
                 $inf_in_row = 0;
             }
             if ($inf >= 10 || $inf_in_row >= 4) {
                 $norm_factor+=$norm_factor_step;
-                print STDERR "FAILED LAMBDA CALCULATION -- RETRYING WITH $norm_factor\n";
+                print STDERR "FAILED LAMBDA CALCULATION -- RETRYING WITH $norm_factor\n" if ($self->debug());
                 next LABEL;
             }
         }
@@ -485,7 +490,7 @@ sub get_normalized_table {
             $nfams++;
         }
     }
-    print STDERR "$nfams families written in tbl file\n";
+    print STDERR "$nfams families written in tbl file\n" if ($self->debug());
     return $newTable;
 }
 
