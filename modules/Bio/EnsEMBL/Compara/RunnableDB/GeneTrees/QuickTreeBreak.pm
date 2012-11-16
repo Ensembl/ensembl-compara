@@ -129,7 +129,45 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    $self->do_quicktreebreak;
+    my $supertree = $self->param('gene_tree');;
+    $supertree->tree_type('supertree');
+
+    my $tree = new Bio::EnsEMBL::Compara::GeneTree(
+            -tree_type => 'tree',
+            -member_type => $supertree->member_type,
+            -method_link_species_set_id => $supertree->method_link_species_set_id,
+            -clusterset_id => $supertree->clusterset_id,
+            );
+
+    foreach my $member (@{$supertree->get_all_Members}) {
+        $tree->add_Member($member);
+    }
+
+    $supertree->clear();
+    $supertree->root->add_child($tree->root);
+
+    print "ini_root: ", $supertree->root, "\n";
+    print "tree_root: ", $tree->root, "\n";
+
+    $self->do_quicktree_loop($supertree->root);
+    print_supertree($supertree->root, "");
+}
+
+sub print_supertree {
+    my $node = shift;
+    my $indent = shift;
+    print $indent; $node->print_node;
+    if ($node->tree->tree_type eq 'tree') {
+        print $indent, "TREE: ", scalar(@{$node->get_all_leaves}), "\n";
+        if (scalar(@{$node->get_all_leaves}) == 1) {
+        }
+    } else {
+        print $indent, "SUPERTREE\n";
+        $indent .= "\t";
+        foreach my $child (@{$node->children}) {
+            print_supertree($child, $indent);
+        }
+    }
 }
 
 
@@ -147,8 +185,8 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->compara_dba->get_GeneTreeAdaptor->store($self->param('original_cluster'));
-    $self->rec_update_tags($self->param('original_cluster')->root);
+    $self->compara_dba->get_GeneTreeAdaptor->store($self->param('gene_tree'));
+    $self->rec_update_tags($self->param('gene_tree')->root);
 }
 
 
@@ -158,7 +196,6 @@ sub post_cleanup {
     printf("QuickTreeBreak::post_cleanup releasing trees\n") if($self->debug);
 
     $self->param('gene_tree')->release_tree;
-    $self->param('max_subtree')->release_tree;
 
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
@@ -171,27 +208,60 @@ sub post_cleanup {
 ##########################################
 
 
-sub do_quicktreebreak {
-  my $self = shift;
+sub do_quicktree_loop {
+    my $self = shift;
+    my $supertree_root = shift;
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]);
+    my $quicktree_newick_string = $self->run_quicktreebreak($input_aln);
+    my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
+    my @todo = ();
+    push @todo, [$newtree, $supertree_root];
+    while (scalar(@todo)) {
+        my $args = shift @todo;
+        my $res = $self->generate_subtrees(@$args);
+        foreach my $node_cluster (@$res) {
+            if (defined $self->param('treebreak_gene_count') and (scalar(@{$node_cluster->[1]->get_all_leaves}) >= $self->param('treebreak_gene_count'))) {
+                push @todo, $node_cluster;
+            } else {
+                $node_cluster->[0]->release_tree;
+            }
+        }
+    }
+    $self->rec_update_indexing($supertree_root);
+}
 
-  my $gene_tree = $self->param('gene_tree');
 
-  $self->param('original_leafcount', scalar(@{$gene_tree->get_all_leaves}) );
-  if($self->param('original_leafcount')<3) {
-    printf(STDERR "tree cluster %d has <3 members (proteins or ncRNAs) - can not build a tree\n", $gene_tree->root_id);
-    return;
-  }
-  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, 1);
 
-  my $cmd = sprintf('%s -out t -in a %s', $self->param('quicktree_exe'), $input_aln);
+sub dumpTreeMultipleAlignmentToWorkdir {
+    my $self = shift;
+    my $member_set = shift;
 
-  my $cmd_out = $self->run_command($cmd);
-  my $quicktree_newick_string = $cmd_out->out;
+    my $aln_file = $self->worker_temp_directory.'supertree.aln';
 
-  #parse the tree into the datastucture
-  $self->generate_subtrees( $quicktree_newick_string );
+    # Getting the multiple alignment
+    my $sa = $member_set->get_SimpleAlign(-id_type => 'MEMBER', -stop2x => 1);
 
-  $gene_tree->store_tag('QuickTreeBreak_runtime_msec', $cmd_out->runtime_msec);
+    $sa->set_displayname_flat(1);
+    # Now outputing the alignment
+    open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
+    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
+    print $alignIO $sa;
+    close OUTSEQ;
+
+    print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
+    my $stk_file = $self->worker_temp_directory.'supertree.stk';
+
+    my $sreformat_exe = $self->param('sreformat_exe');
+    my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
+
+    if(system($cmd)) {
+        die "Error running command [$cmd] : $!";
+    }
+    unless(-e $stk_file and -s $stk_file) {
+        die "'$cmd' did not produce any data in '$stk_file'";
+    }
+
+    return $stk_file;
 }
 
 sub run_quicktreebreak {
@@ -211,6 +281,24 @@ sub run_quicktreebreak {
 #
 ########################################################
 
+sub rec_update_indexing {
+    my $self = shift;
+    my $node = shift;
+    my $index = shift;
+
+    if ($node->tree->tree_type eq 'supertree') {
+        $node->left_index($index);
+        $index++;
+        foreach my $child (@{$node->children}) {
+            $index = $self->rec_update_indexing($child, $index);
+        }
+        $node->right_index($index);
+        $index++;
+    }
+    return $index;
+}
+
+
 sub rec_update_tags {
     my $self = shift;
     my $node = shift;
@@ -228,8 +316,8 @@ sub rec_update_tags {
             my @tags = @{$self->param('tags_to_copy')};
             for my $tag (@tags) {
                 print STDERR "Stored tag $tag in $node_id\n" if ($self->debug);
-                my $value = $self->param('original_cluster')->get_tagvalue($tag);
-                $self->throw("$tag tag not found in " . $self->param('original_cluster')->root->node_id) unless (defined $value);
+                my $value = $self->param('gene_tree')->get_tagvalue($tag);
+                $self->throw("$tag tag not found in " . $self->param('gene_tree')->root_id) unless (defined $value);
                 $cluster->store_tag($tag, $value);
             }
         }
@@ -247,120 +335,82 @@ sub rec_update_tags {
 
 sub generate_subtrees {
     my $self                    = shift @_;
-    my $quicktree_newick_string = shift @_;
+    my $newtree                 = shift @_;
+    my $attach_node             = shift @_;
 
-    my $mlss_id = $self->param('mlss_id');
-    my $gene_tree = $self->param('gene_tree');
+    my $supertree = $attach_node->tree;
+    my $members = $attach_node->get_all_leaves;
+
+    # Break the tree by immediate children recursively
+    my @children;
+    my $keep_breaking = 1;
+    my $max_subtree = $newtree;
+    my $half_count = int(scalar(@{$members})/2);
+    while ($keep_breaking) {
+        @children = @{$max_subtree->children};
+        my $max_num_leaves = 0;
+        foreach my $child (@children) {
+            my $num_leaves = scalar(@{$child->get_all_leaves});
+            if ($num_leaves > $max_num_leaves) {
+                $max_num_leaves = $num_leaves;
+                $max_subtree = $child;
+            }
+        }
+        # Broke down to half, happy with it
+        print STDERR "QuickTreeBreak iterate -- $max_num_leaves (goal: $half_count)\n"; # if ($self->debug);
+        if ($max_num_leaves <= $half_count) {
+            $keep_breaking = 0;
+        }
+    }
+
+    my $supertree_leaf1 = new Bio::EnsEMBL::Compara::GeneTreeNode;
+    my $cluster1 = new Bio::EnsEMBL::Compara::GeneTree(
+            -tree_type => 'tree',
+            -member_type => $supertree->member_type,
+            -method_link_species_set_id => $supertree->method_link_species_set_id,
+            -clusterset_id => $supertree->clusterset_id,
+            );
+
+    my $supertree_leaf2 = new Bio::EnsEMBL::Compara::GeneTreeNode;
+    my $cluster2 = new Bio::EnsEMBL::Compara::GeneTree(
+            -tree_type => 'tree',
+            -member_type => $supertree->member_type,
+            -method_link_species_set_id => $supertree->method_link_species_set_id,
+            -clusterset_id => $supertree->clusterset_id,
+            );
+
+    my %in_cluster1;
+    foreach my $leaf (@{$max_subtree->get_all_leaves}) {
+        $in_cluster1{$leaf->name} = 1;
+    }
+
+    foreach my $leaf (@{$members}) {
+        if (defined $in_cluster1{$leaf->member_id}) {
+            $cluster1->add_Member($leaf);
+        } else {
+            $cluster2->add_Member($leaf);
+        }
+    }
+
+    print "supertree_leaf1: $supertree_leaf1\n";
+    print "cluster1_root: ", $cluster1->root, "\n";
+    print "supertree_leaf2: $supertree_leaf2\n";
+    print "cluster2_root: ", $cluster2->root, "\n";
+
+    $attach_node->release_children;
+    print "attach node: "; $attach_node->print_node;
     
-    # The tree to hold the super-alignment
-    $self->param('super_align_tree', $gene_tree->deep_copy());
+    $supertree_leaf1->add_child($cluster1->root);
+    $supertree_leaf1->tree($supertree);
+    $attach_node->add_child($supertree_leaf1, $max_subtree->distance_to_parent/2);
+    
+    $supertree_leaf2->add_child($cluster2->root);
+    $supertree_leaf2->tree($supertree);
+    $attach_node->add_child($supertree_leaf2, $max_subtree->distance_to_parent/2);
 
-  #cleanup old tree structure- 
-  #  flatten and reduce to only GeneTreeMember leaves
-  $gene_tree->root->flatten_tree;
-  $gene_tree->root->print_tree(20) if($self->debug);
+    $max_subtree->disavow_parent;
 
-  #parse newick into a new tree object structure
-  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
-  $newtree->print_tree(20) if($self->debug > 1);
-  # get rid of the taxon_id needed by njtree -- name tag
-  foreach my $leaf (@{$newtree->get_all_leaves}) {
-    my $quicktreebreak_name = $leaf->get_tagvalue('name');
-    $quicktreebreak_name =~ /(\d+)\_\d+/;
-    my $member_name = $1;
-    $leaf->add_tag('name', $member_name);
-    bless $leaf, "Bio::EnsEMBL::Compara::GeneTreeMember";
-    $leaf->member_id($member_name);
-  }
-
-  # Break the tree by immediate children recursively
-  my @children;
-  my $keep_breaking = 1;
-  $self->param('max_subtree', $newtree);
-  while ($keep_breaking) {
-    @children = @{$self->param('max_subtree')->children};
-    my $max_num_leaves = 0;
-    foreach my $child (@children) {
-      my $num_leaves = scalar(@{$child->get_all_leaves});
-      if ($num_leaves > $max_num_leaves) {
-        $max_num_leaves = $num_leaves;
-        $self->param('max_subtree', $child);
-      }
-    }
-    # Broke down to half, happy with it
-    my $proportion = ($max_num_leaves*100/$self->param('original_leafcount') );
-    print STDERR "QuickTreeBreak iterate -- $max_num_leaves ($proportion)\n" if ($self->debug);
-    if ($proportion <= 50) {
-      $keep_breaking = 0;
-    }
-  }
-
-  my $final_original_num = scalar @{$self->param('gene_tree')->root->get_all_leaves};
-  # Creating the supertree structure
-  my $supertree_root = $self->param('gene_tree')->root;
-  my $supertree = $self->param('gene_tree');;
-  $supertree->tree_type('supertree');
-  my $supertree_leaf1 = new Bio::EnsEMBL::Compara::GeneTreeNode;
-  my $supertree_leaf2 = new Bio::EnsEMBL::Compara::GeneTreeNode;
-  $supertree_leaf1->tree($supertree);
-  $supertree_leaf2->tree($supertree);
-
-  my $cluster1 = new Bio::EnsEMBL::Compara::GeneTree(
-    -tree_type => 'tree',
-    -member_type => $supertree->member_type,
-    -method_link_species_set_id => $supertree->method_link_species_set_id,
-    -clusterset_id => $supertree->clusterset_id,
-  );
-  
-  my $cluster2 = new Bio::EnsEMBL::Compara::GeneTree(
-    -tree_type => 'tree',
-    -member_type => $supertree->member_type,
-    -method_link_species_set_id => $supertree->method_link_species_set_id,
-    -clusterset_id => $supertree->clusterset_id,
-  );
-  
-  my $subtree_leaves;
-  foreach my $leaf (@{$self->param('max_subtree')->get_all_leaves}) {
-    $subtree_leaves->{$leaf->member_id} = 1;
-  }
-  foreach my $leaf (@{$supertree_root->get_all_leaves}) {
-    if (defined $subtree_leaves->{$leaf->member_id}) {
-      $cluster1->add_Member($leaf);
-    } else {
-      $cluster2->add_Member($leaf);
-    }
-  }
-  $supertree_root->add_child($supertree_leaf1, $self->param('max_subtree')->distance_to_parent/2);
-  $supertree_root->add_child($supertree_leaf2, $self->param('max_subtree')->distance_to_parent/2);
-  $supertree_root->build_leftright_indexing(1);
-  
-  if ($self->debug) {
-    print "SUPERTREE " ;
-    $supertree_root->print_tree(20);
-    print "CLUSTER1 ";
-    $cluster1->root->print_tree(20);
-    print "CLUSTER2 ";
-    $cluster2->root->print_tree(20);
-  }
-  $supertree_leaf1->add_child($cluster1->root);
-  $supertree_leaf2->add_child($cluster2->root);
-
-  if ($self->debug) {
-    print "FINAL STRUCTURE ";
-    $supertree->root->print_tree(20);
-  }
-
-  $self->param('subclusters', [$cluster1, $cluster2]);
-
-  # Some checks
-  my       $final_max_num = scalar @{$cluster1->root->get_all_leaves};
-  my $final_remaining_num = scalar @{$cluster2->root->get_all_leaves};
-
-  if(($final_max_num + $final_remaining_num) != $final_original_num) {
-    die "Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]";
-  }
-
-  $self->param('original_cluster', $supertree);
+    return [[$max_subtree, $supertree_leaf1], [$newtree, $supertree_leaf2]];
 }
 
 1;

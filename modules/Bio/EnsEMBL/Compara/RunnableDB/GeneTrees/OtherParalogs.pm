@@ -63,6 +63,7 @@ use strict;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
@@ -75,16 +76,21 @@ sub param_defaults {
     };
 }
 
+sub fetch_input {
+    my $self = shift;
+    $self->SUPER::fetch_input;
 
-sub write_output {
-    my $self = shift @_;
+    my $alignment_id = $self->param('gene_tree')->tree->gene_align_id;
+    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'seq_with_flanking', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
 
-    #$self->SUPER::write_output;
-    if ($self->param('dataflow_subclusters')) {
-        foreach my $child (@{$self->param('children')}) {
-            $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2);
-        }
+    my %super_align;
+    foreach my $member (@{$aln->get_all_Members}) {
+        bless $member, 'Bio::EnsEMBL::Compara::GeneTreeMember';
+        $super_align{$member->member_id} = $member;
     }
+    $self->param('super_align', \%super_align);
+    $self->param('homology_consistency', {});
+    $self->param('homology_links', []);
 }
 
 
@@ -98,41 +104,56 @@ sub run_analysis {
 
     my $starttime = time()*1000;
     my $gene_tree = $self->param('gene_tree');
-    my $tree_node_id = $gene_tree->node_id;
-    $gene_tree->print_node if ($self->debug);
-
-    my ($child1, $child2) = @{$gene_tree->children};
 
     print "Calculating ancestor species hash\n" if ($self->debug);
     $self->get_ancestor_species_hash($gene_tree);
-    $self->param('children', [$child1->children->[0], $child2->children->[0]]);
 
     my $tmp_time = time();
     print "build paralogs graph\n" if ($self->debug);
-    my @genepairlinks;
-    my $graphcount = 0;
+    my $ngenepairlinks = $self->rec_add_paralogs($gene_tree);
+    print "$ngenepairlinks pairings\n" if ($self->debug);
+
+    printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
+    #display summary stats of analysis 
+    my $runtime = time()*1000-$starttime;  
+    $gene_tree->tree->store_tag('OtherParalogs_runtime_msec', $runtime) unless ($self->param('_readonly'));
+    $self->param('orthotree_homology_counts', {'other_paralog' => $ngenepairlinks});
+
+}
+
+sub rec_add_paralogs {
+    my $self = shift;
+    my $ancestor = shift;
+
+    $ancestor->print_node if ($self->debug);
+    return unless $ancestor->get_child_count;
+    my ($child1, $child2) = @{$ancestor->children};
+    $child1->print_node if ($self->debug);
+    $child2->print_node if ($self->debug);
 
     # All the homologies will share this information
-    my $ancestor = $gene_tree;
     my $taxon_name = $self->get_ancestor_taxon_level($ancestor)->name;
+    print "taxon_name: $taxon_name\n" if ($self->debug);
 
     # The node_type of the root
     unless ($self->param('_readonly')) {
-        my $original_node_type = $gene_tree->get_tagvalue('node_type');
-        if ($gene_tree->get_tagvalue('is_dup', 0)) {
-            $gene_tree->store_tag('node_type', 'duplication');
-            $self->duplication_confidence_score($gene_tree);
+        my $original_node_type = $ancestor->get_tagvalue('node_type');
+        print "original_node_type: $original_node_type\n" if ($self->debug);
+        if ($ancestor->get_tagvalue('is_dup', 0)) {
+            $ancestor->store_tag('node_type', 'duplication');
+            $self->duplication_confidence_score($ancestor);
         } elsif (($child1->get_tagvalue('taxon_name') eq $taxon_name) or ($child2->get_tagvalue('taxon_name') eq $taxon_name)) {
-            $gene_tree->store_tag('node_type', 'dubious');
-            $gene_tree->store_tag('duplication_confidence_score', 0);
+            $ancestor->store_tag('node_type', 'dubious');
+            $ancestor->store_tag('duplication_confidence_score', 0);
         } else {
-            $gene_tree->store_tag('node_type', 'speciation');
+            $ancestor->store_tag('node_type', 'speciation');
         }
-        print "setting node_type of the root to ", $gene_tree->get_tagvalue('node_type'), "\n" if ($self->debug);
+        print "setting node_type to ", $ancestor->get_tagvalue('node_type'), "\n" if ($self->debug);
     }
 
     # Each species
-    foreach my $genome_db_id (keys %{$child1->get_tagvalue('gene_hash')}) {
+    my $ngenepairlinks = 0;
+    foreach my $genome_db_id (keys %{$ancestor->get_tagvalue('gene_hash')}) {
         # Each gene from the sub-tree 1
         foreach my $gene1 (@{$child1->get_tagvalue('gene_hash')->{$genome_db_id}}) {
             # Each gene from the sub-tree 2
@@ -140,24 +161,17 @@ sub run_analysis {
                 my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2, 0);
                 $genepairlink->add_tag("ancestor", $ancestor);
                 $genepairlink->add_tag("taxon_name", $taxon_name);
-                $genepairlink->add_tag("tree_node_id", $tree_node_id);
+                $genepairlink->add_tag("tree_node_id", $ancestor->tree->root_id);
                 $genepairlink->add_tag("orthotree_type", 'other_paralog');
-                push @genepairlinks, $genepairlink;
-                print "build links $graphcount\n" if ($graphcount++ % 10 == 0 and $self->debug);
+                $ngenepairlinks++;
+                $self->store_gene_link_as_homology($genepairlink) if $self->param('store_homologies');
+                $genepairlink->dealloc;
             }
         }
     }
-    printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
-    
-    $self->param('orthotree_homology_counts', {'other_paralog' => $graphcount});
-
-    print scalar(@genepairlinks), " pairings\n" if ($self->debug);
-    $self->param('homology_links', \@genepairlinks);
-
-    #display summary stats of analysis 
-    my $runtime = time()*1000-$starttime;  
-    $gene_tree->tree->store_tag('OtherParalogs_runtime_msec', $runtime) unless ($self->param('_readonly'));
-
+    $ngenepairlinks += $self->rec_add_paralogs($child1);
+    $ngenepairlinks += $self->rec_add_paralogs($child2);
+    return $ngenepairlinks;
 }
 
 
@@ -180,17 +194,23 @@ sub get_ancestor_species_hash
     print $node->node_id, " is a ", $node->tree->tree_type, "\n" if ($self->debug);
     my $gene_hash = {};
 
-    if ($node->tree->tree_type eq 'tree') {
+    if ($node->is_leaf) {
+  
+        # Super-tree leaf
+        $node->adaptor->fetch_all_children_for_node($node);
+        print "super-tree leaf=", $node->node_id, " children=", $node->get_child_count, "\n";
+        my $child = $node->children->[0];
+        my $leaves = $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
+        $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2) if ($self->param('dataflow_subclusters'));
+        $child->disavow_parent;
 
-        # "Normal" tree: get_all_leaves
-        foreach my $leaf (@{$node->get_all_leaves}) {
-            print "leaf " if ($self->debug);
+        foreach my $leaf (@$leaves) {
             $leaf->print_member if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
-            push @{$gene_hash->{$leaf->genome_db_id}}, $leaf;
+            push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->member_id};
         }
    
-    } elsif ($node->get_child_count) {
+    } else {
 
         # Super-tree root
         print "super-tree root=", $node->node_id, " children=", $node->get_child_count, "\n";
@@ -207,17 +227,8 @@ sub get_ancestor_species_hash
 
         $node->add_tag("is_dup", $is_dup);
  
-    } else {
-
-        # Super-tree leaf
-        $node->adaptor->fetch_all_children_for_node($node);
-        print "super-tree leaf=", $node->node_id, " children=", $node->get_child_count, "\n";
-        my $child = $node->children->[0];
-
-        $species_hash = $self->get_ancestor_species_hash($child);
-        $gene_hash = $child->get_tagvalue('gene_hash');
-
     }
+
     print $node->node_id, " contains ", scalar(keys %$species_hash), " species\n" if ($self->debug);
     $node->add_tag("species_hash", $species_hash);
     $node->add_tag("gene_hash", $gene_hash);

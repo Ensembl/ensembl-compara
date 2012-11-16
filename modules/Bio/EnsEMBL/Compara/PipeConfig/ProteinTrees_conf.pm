@@ -1070,6 +1070,7 @@ sub pipeline_analyses {
                 'mlss_id'           => $self->o('mlss_id'),
                 'quicktree_exe'     => $self->o('quicktree_exe'),
                 'sreformat_exe'     => $self->o('sreformat_exe'),
+                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_name   => '500Mb_job',
@@ -1088,15 +1089,9 @@ sub pipeline_analyses {
             -rc_name        => '250Mb_job',
             -priority       => 40,
             -flow_into => {
-                '2->A' => [ 'msa_chooser' ],
-                'A->1' => [ 'merge_supertrees' ],
+                '2->A' => [ 'mafft' ],
+                'A->2' => [ 'split_genes' ],
             },
-        },
-
-        {   -logic_name     => 'merge_supertrees',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SuperTreeMerge',
-            -hive_capacity  => $self->o('merge_supertrees_capacity'),
-            -priority       => 40,
         },
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
