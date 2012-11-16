@@ -5,7 +5,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily;
 
 use POSIX;
 use strict;
-use Algorithm::Diff qw(LCS);
+use Bio::EnsEMBL::Compara::Production::AlgorithmDiff qw(LCS);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

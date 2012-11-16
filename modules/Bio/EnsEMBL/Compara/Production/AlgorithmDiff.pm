@@ -4,7 +4,7 @@
 # $Id$
 #
 
-package Algorithm::Diff;
+package Bio::EnsEMBL::Compara::Production::AlgorithmDiff;
 use strict;
 use vars qw($VERSION @EXPORT_OK @ISA @EXPORT);
 use integer;		# see below in _replaceNextLargerWith() for mod to make
