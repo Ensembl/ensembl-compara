@@ -98,8 +98,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return false;
     });
     
-    $('a.image_resize', this.elLk.resizeMenu).on('click', function () {      
-      panel.params.updateURL = Ensembl.updateURL({ image_width: $('div',this).html().replace(/ px/,'') }, panel.params.updateURL);      
+    $('a.image_resize', this.elLk.resizeMenu).on('click', function () {
+      var image_width = ($('div',this).html() === "Best Fit") ? Ensembl.imageWidth() : $('div',this).html().replace(/ px/,'');      
+      panel.params.updateURL = Ensembl.updateURL({ image_width: image_width }, panel.params.updateURL);
       panel.getContent();
       return false;      
     });
