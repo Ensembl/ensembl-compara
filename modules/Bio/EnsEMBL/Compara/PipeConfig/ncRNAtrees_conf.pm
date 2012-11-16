@@ -31,9 +31,9 @@ sub default_options {
         %{$self->SUPER::default_options},
 
             # parameters that are likely to change from execution to another:
-            # 'mlss_id'             => 40086,
-            'release'               => '69',
-            'rel_suffix'            => 'd',    # an empty string by default, a letter or string otherwise
+            # 'mlss_id'             => 40088,
+            'release'               => '70',
+            'rel_suffix'            => '',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
@@ -537,7 +537,7 @@ sub pipeline_analyses {
             },
 
             {   -logic_name    => 'create_ss_picts',
-                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict2',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict',
                 -hive_capacity => $self->o('ss_picts_capacity'),
                 -parameters    => {
                                    'ss_picts_dir'  => $self->o('ss_picts_dir'),
