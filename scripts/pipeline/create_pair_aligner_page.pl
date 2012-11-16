@@ -380,27 +380,28 @@ sub fetch_input {
     if ($mlss->method->type eq "TRANSLATED_BLAT_NET") { 
 	unless (defined $pairwise_params) {
 	    $tblat_parameters = {};
-	}
-	my @params = split " ", $pairwise_params;
-	foreach my $param (@params) {
-	    my ($p, $v) = split "=", $param;
-	    $p =~ s/-//;
-	    $tblat_parameters->{$p} = $v; 
-	}
+	} else {
+            my @params = split " ", $pairwise_params;
+            foreach my $param (@params) {
+                my ($p, $v) = split "=", $param;
+                $p =~ s/-//;
+                $tblat_parameters->{$p} = $v; 
+            }
+        }
     } else {
 	unless (defined $pairwise_params) {
 	    $blastz_parameters = {};
-	}
-
-	my @params = split " ", $pairwise_params;
-	foreach my $param (@params) {
-	    my ($p, $v) = split "=", $param;
-	    if ($blastz_options->{$p}) {
-		$blastz_parameters->{$p} = $v; 
-	    } else {
-		$blastz_parameters->{other} .= $param;
-	    }
-	}
+	} else {
+            my @params = split " ", $pairwise_params;
+            foreach my $param (@params) {
+                my ($p, $v) = split "=", $param;
+                if ($blastz_options->{$p}) {
+                    $blastz_parameters->{$p} = $v; 
+                } else {
+                    $blastz_parameters->{other} .= $param;
+                }
+            }
+        }
     }
     my $ref_common_name;
     if ($urls) {
@@ -411,8 +412,15 @@ sub fetch_input {
 #	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->get_common_name;
     }
 
-    my $ref_dna_collection_config = eval $mlss->get_value_for_tag("ref_dna_collection");
-    my $non_ref_dna_collection_config = eval $mlss->get_value_for_tag("non_ref_dna_collection");
+    my $ref_dna_collection_config;
+    my $non_ref_dna_collection_config;
+    if ($mlss->get_value_for_tag("ref_dna_collection")) {
+        $ref_dna_collection_config = eval $mlss->get_value_for_tag("ref_dna_collection");
+    }
+    if ($mlss->get_value_for_tag("non_ref_dna_collection")) {
+        $non_ref_dna_collection_config = eval $mlss->get_value_for_tag("non_ref_dna_collection");
+    }
+
     $ref_dna_collection_config->{name} = $ref_species;
     $ref_dna_collection_config->{common_name} = $ref_common_name;
 
