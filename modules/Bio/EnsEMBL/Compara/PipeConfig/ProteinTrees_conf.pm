@@ -879,7 +879,7 @@ sub pipeline_analyses {
             -failed_job_tolerance => 0,
         },
 
-# ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
+# ---------------------------------------------[main tree fan]-------------------------------------------------------------
 
         {   -logic_name => 'cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -910,6 +910,9 @@ sub pipeline_analyses {
                 'B->5' => [ 'quick_tree_break' ],
             },
         },
+
+
+# ---------------------------------------------[Pluggable MSA steps]----------------------------------------------------------
 
         {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
@@ -970,6 +973,7 @@ sub pipeline_analyses {
             -rc_name => 'msa_himem',
         },
 
+# ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
         {   -logic_name     => 'split_genes',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
@@ -1057,6 +1061,8 @@ sub pipeline_analyses {
             -batch_size           => 10,
             -rc_name => '500Mb_job',
         },
+
+# ---------------------------------------------[Quick tree break steps]-----------------------------------------------------------------------
 
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
