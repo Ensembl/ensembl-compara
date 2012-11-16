@@ -266,7 +266,7 @@ sub helptip {
 }
 
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
-sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub caption     { return undef; }
 sub _init       { return; }
 
@@ -392,7 +392,7 @@ sub new_image {
   
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
  
-  my $image = EnsEMBL::Web::Document::Image->new($hub, $self->id, \@image_configs);   
+  my $image = EnsEMBL::Web::Document::Image->new($hub, $self->id, \@image_configs);
   $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
