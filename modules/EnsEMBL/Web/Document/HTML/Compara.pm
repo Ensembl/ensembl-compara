@@ -5,14 +5,25 @@ package EnsEMBL::Web::Document::HTML::Compara;
 
 use strict;
 
-use EnsEMBL::Web::Hub;
-
 use base qw(EnsEMBL::Web::Document::HTML);
+
+sub sci_name {
+  my ($self, $name) = @_;
+  $name = ucfirst($name);
+  $name =~ s/_/ /;
+  return $name;
+}
+
+sub common_name {
+  my ($self, $name) = @_;
+  $name = ucfirst($name);
+  return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME');
+}
 
 ## Output a list of aligned species
 sub format_list {
   my ($self, $method, $list) = @_;
-  my $hub = EnsEMBL::Web::Hub->new;
+  my $hub = $self->hub; 
   my $html;
 
   if ($list && scalar(@{$list||[]})) {
