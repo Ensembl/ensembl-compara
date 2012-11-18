@@ -380,7 +380,7 @@ sub parse_and_store_alignment_into_proteintree {
     $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
     #print "The cigar_line of $id is: ", $align_hash{$id}, "\n";
   }
-  $self->$tree->aln_length($alignment_length);
+  $tree->aln_length($alignment_length);
 
   #
   # Align cigar_lines to members and store
