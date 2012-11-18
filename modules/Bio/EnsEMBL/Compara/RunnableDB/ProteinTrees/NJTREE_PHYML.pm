@@ -202,7 +202,7 @@ sub store_filtered_align {
 
     $aln->load_cigars_from_fasta($filename, 1);
 
-    my $sequence_adaptor = $self->$self->compara_dba->get_SequenceAdaptor;
+    my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
     foreach my $member (@{$aln->get_all_Members}) {
         $sequence_adaptor->store_other_sequence($member, $member->sequence, 'filtered');
     }
