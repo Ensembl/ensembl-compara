@@ -265,6 +265,7 @@ sub load_cigars_from_fasta {
     #assign cigar_line to each of the member attribute
     foreach my $seq ($aln->each_seq) {
         my $id = $seq->display_id;
+        $id =~ s/_.*$//;
         throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
 
         my $cigar_line = '';
