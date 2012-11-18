@@ -208,7 +208,7 @@ sub store_filtered_align {
     }
 
     $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
-    $self->param('protein_tree')->store_tag('filtered_alignment', $aln->gene_align_id);
+    $self->param('protein_tree')->store_tag('filtered_alignment', $aln->dbID);
 }
 
 
