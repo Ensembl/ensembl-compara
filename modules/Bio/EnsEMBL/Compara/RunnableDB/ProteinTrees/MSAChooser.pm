@@ -97,6 +97,8 @@ sub fetch_input {
 
     my $gene_count = scalar(@{$tree->get_all_Members});
     die "Unfetchable leaves root_id=$protein_tree_id\n" unless $gene_count;
+    $tree->root->release_tree;
+    $tree->clear;
     
     if ($gene_count > $self->param('treebreak_gene_count')) {
         # Create an alignment job and the waiting quicktree break job
