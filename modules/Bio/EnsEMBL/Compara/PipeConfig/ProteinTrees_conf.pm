@@ -626,7 +626,6 @@ sub pipeline_analyses {
                             'ALTER TABLE peptide_align_feature_#name#_#genome_db_id# DISABLE KEYS',
                 ],
             },
-            -priority       => -10,
             -batch_size     =>  100,  # they can be really, really short
             -hive_capacity  => -1,
         },
@@ -902,7 +901,6 @@ sub pipeline_analyses {
             -batch_size => 1000,
             -hive_capacity => 500,
             -rc_name => '500Mb_job',
-            -priority => 30,
             -flow_into => {
                 '2->A' => [ 'mcoffee' ],
                 '3->A' => [ 'mafft' ],
@@ -924,7 +922,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
-            -priority => 30,
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -940,7 +937,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
-            -priority => 30,
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
@@ -956,7 +952,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
-            -priority => 30,
             -flow_into => {
                -2 => [ 'mafft_himem' ],
             },
@@ -970,7 +965,6 @@ sub pipeline_analyses {
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -priority => 35,
             -rc_name => 'msa_himem',
         },
 
@@ -980,7 +974,6 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '250Mb_job',
             -batch_size     => 20,
-            -priority       => 20,
             -flow_into      => [ 'njtree_phyml' ],
         },
 
@@ -997,7 +990,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -rc_name => '2Gb_job',
-            -priority => 20,
             -flow_into => {
                 1 => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds', 'ktreedist' ],
                 2 => [ 'ortho_tree_annot' ],
@@ -1013,7 +1005,6 @@ sub pipeline_analyses {
             },
             -hive_capacity      => $self->o('ortho_tree_capacity'),
             -rc_name => '500Mb_job',
-            -priority => 10,
         },
 
         {   -logic_name    => 'ktreedist',
@@ -1037,7 +1028,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('ortho_tree_annot_capacity'),
             -rc_name => '500Mb_job',
-            -priority => 10,
         },
 
         {   -logic_name => 'build_HMM_aa',
@@ -1075,7 +1065,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_name   => '500Mb_job',
-            -priority  => 50,
             -flow_into => [ 'other_paralogs' ],
         },
 
@@ -1088,7 +1077,6 @@ sub pipeline_analyses {
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '250Mb_job',
-            -priority       => 40,
             -flow_into => {
                 '2->A' => [ 'mafft' ],
                 'A->2' => [ 'split_genes' ],
