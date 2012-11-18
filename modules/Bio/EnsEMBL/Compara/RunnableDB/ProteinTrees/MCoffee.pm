@@ -112,7 +112,7 @@ sub parse_and_store_alignment_into_proteintree {
     #
     # Align cigar_lines to members and store
     #
-    my $aln_score = Bio::Ensembl::Compara::AlignedMemberSet->deep_copy($self->param('protein_tree'));
+    my $aln_score = $self->param('protein_tree')->deep_copy;
     $aln_score->aln_method('mcoffee_score');
     foreach my $member (@{$aln_score->get_all_Members}) {
         my $score_string = $score_hash{$member->sequence_id} || '';
@@ -122,6 +122,8 @@ sub parse_and_store_alignment_into_proteintree {
     }
     $self->compara_dba->get_AlignedMemberAdaptor->store($aln_score);
     $self->param('protein_tree')->store_tag('mcoffee_scores', $aln_score->gene_align_id);
+    $aln_score->root->release_tree;
+    $aln_score->clear;
     return 1;
 }
 
