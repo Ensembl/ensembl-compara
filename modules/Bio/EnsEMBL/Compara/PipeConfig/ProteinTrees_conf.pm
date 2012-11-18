@@ -899,7 +899,8 @@ sub pipeline_analyses {
                 'mafft_gene_count'      => $self->o('mafft_gene_count'),
                 'mafft_runtime'         => $self->o('mafft_runtime'),
             },
-            -batch_size => 10,
+            -batch_size => 1000,
+            -hive_capacity => 500,
             -rc_name => '500Mb_job',
             -priority => 30,
             -flow_into => {
