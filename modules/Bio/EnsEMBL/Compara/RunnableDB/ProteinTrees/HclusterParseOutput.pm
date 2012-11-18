@@ -81,7 +81,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
+    $self->store_clusterset('default', $self->param('allclusters'));
 
     if (defined $self->param('additional_clustersets')) {
         foreach my $clusterset_id (@{$self->param('additional_clustersets')}) {
