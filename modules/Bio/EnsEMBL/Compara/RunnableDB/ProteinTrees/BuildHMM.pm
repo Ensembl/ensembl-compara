@@ -254,8 +254,8 @@ sub store_hmmprofile {
   my $hmm_text = join('', <FH>);
   close(FH);
 
-  my $sth = $self->compara_dba->dbc->prepare('INSERT INTO hmm_profile VALUES (model_id,type,hc_profile) VALUES (?,?,?)');
-  $sth->execute($protein_tree->root_id, $self->param('hmm_type'), $hmm_text);
+  my $sth = $self->compara_dba->dbc->prepare('INSERT INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
+  $sth->execute(sprintf('%d_%s', $protein_tree->root_id, $self->param('hmm_type')), 'hmmer', $hmm_text);
 }
 
 1;
