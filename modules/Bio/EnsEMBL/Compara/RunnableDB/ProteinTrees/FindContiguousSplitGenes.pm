@@ -111,6 +111,7 @@ sub post_cleanup {
         $protein_tree->release_tree;
         $self->param('protein_tree', undef);
     }
+    $self->param('connected_split_genes')->holding_node->cascade_unlink;
 
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
