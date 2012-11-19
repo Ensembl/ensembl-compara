@@ -334,7 +334,7 @@ sub _load_and_dump_alignment {
     open my $outaln, ">", "$aln_file" or $self->throw("Error opening $aln_file for writing");
 
     my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'seq_with_flanking', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-    my $bioaln = $aln->get_SimpleAlign;
+    my $bioaln = $aln->get_SimpleAlign(-ID_TYPE => 'MEMBER');
     my @all_aln_seq;
     foreach my $seq ($bioaln->each_seq) {
         push @all_aln_seq, $seq;
