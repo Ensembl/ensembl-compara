@@ -980,17 +980,28 @@ sub dumpPhenotype {
   print LOG "  Dumping $VariationDB Phenotype info to $file ... ", format_datetime($start_time), "\n";
   header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
+  #phenotype synonyms - modify this to use db when it comes along
+  my %synonyms = ();
+  my $in;
+#  open $in, '<', 'phenotype_synonyms.txt';
+#  while (<$in>) {
+#    my ($id,$name,$desc,$syn) = split '\t', $_;
+#    chomp $syn;
+#    push @{$synonyms{$id}},$syn;
+#  }
+
   #phenotype info
   my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $VariationDB.phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
-    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $counter ), $nogzip, $fh);
+    my $syns = $synonyms{$phenotype_info->{$phen}{'phenotype_id'}} || [];
+    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, $counter ), $nogzip, $fh);
   }
 
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub PhenLine {
-  my ($species, $name, $id, $counter ) = @_;
+  my ($species, $name, $id, $synonyms, $counter ) = @_;
   my $url = sprintf(qq(%s/Phenotype/Locations?ph=%s),
                     $species,
                     $id);
@@ -1001,6 +1012,10 @@ sub PhenLine {
 <doc>
   <field name="id">$id</field>
   <field name="description">$name</field>);
+    foreach my $syn (@$synonyms) {
+      $xml .= qq(
+  <field name="synonym">$syn</field>);
+  }
     $xml .= &common_fields($species,'Phenotype','variation');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -1011,6 +1026,10 @@ sub PhenLine {
 <entry id="$id">
   <description>$name</description>
   <additional_fields>);
+    foreach my $syn (@$synonyms) {
+      $xml .= qq(
+    <field name="synonym">$syn</field>);
+  }
     $xml .= &common_fields($species,'Phenotype');
     $xml .= qq(
   </additional_fields>
