@@ -259,6 +259,8 @@ sub load_cigars_from_fasta {
     #place all members in a hash on their member name
     my %member_hash;
     foreach my $member (@{$self->get_all_Members}) {
+        $member->cigar_line(undef);
+        $member->sequence(undef) if $import_seq;
         $member_hash{$member->member_id} = $member;
     }
 
