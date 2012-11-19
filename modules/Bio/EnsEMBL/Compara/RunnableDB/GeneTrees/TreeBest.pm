@@ -100,6 +100,7 @@ sub run_treebest_best {
         if (($logfile =~ /NNI/) || ($logfile =~ /Optimize_Br_Len_Serie/) || ($logfile =~ /Optimisation failed/) || ($logfile =~ /Brent failed/))  {
             # Increase the tolerance max_diff_lk in the computation
             $max_diff_lk = 1e-5 unless $max_diff_lk;
+            $max_diff_lk *= 10;
         } else {
             $self->throw(sprintf("error running treebest [%s]: %d\n%s", $run_cmd->cmd, $run_cmd->exit_code, $logfile));
         }
