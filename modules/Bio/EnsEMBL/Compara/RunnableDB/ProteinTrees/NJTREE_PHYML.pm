@@ -192,19 +192,28 @@ sub store_filtered_align {
     print STDERR "Found filtered alignment: $filename\n";
 
     #place all members in a hash on their member name
-    my %member_hash;
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type   => 'filtered', -aln_method => 'clustal');
-    foreach my $member (@{$self->param('protein_tree')->get_all_Members}) {
-        my $copy = $member->copy();
-        $copy->stable_id($self->_name_for_prot($member));
-        $aln->add_Member($copy);
+    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'filtered', -aln_method => 'clustal');
+
+    if ($self->param('protein_tree')->has_tag('filtered_alignment')) {
+        my $gene_align_id = $self->param('protein_tree')->get_tagvalue('filtered_alignment');
+        $aln->dbID($gene_align_id);
+        $aln->adaptor($self->compara_dba->get_AlignedMemberAdaptor);
+    } else {
+        foreach my $member (@{$self->param('protein_tree')->get_all_Members}) {
+            $aln->add_Member($member->copy());
+        }
+    }
+
+    # Same name as in the alignment
+    foreach my $member (@{$aln->get_all_Members}) {
+        $member->stable_id($self->_name_for_prot($member));
     }
 
     $aln->load_cigars_from_fasta($filename, 1);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
     foreach my $member (@{$aln->get_all_Members}) {
-        $sequence_adaptor->store_other_sequence($member, $member->sequence, 'filtered');
+        $sequence_adaptor->store_other_sequence($member, $member->sequence, 'filtered') if $member->sequence;
     }
 
     $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
