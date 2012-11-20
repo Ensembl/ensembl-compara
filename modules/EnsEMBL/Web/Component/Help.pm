@@ -42,5 +42,29 @@ sub parse_help_html {
   return $html;
 }
 
+sub help_feedback {
+  my ($self, $style, $id, %args) = @_;
+  return ''; ## FIXME - this needs to be reenabled when we have time
+  
+  my $html = qq{
+    <div style="text-align:right;margin-right:2em;">
+      <form id="help_feedback_$id" class="std check _check" action="/Help/Feedback" method="get">
+        <strong>Was this helpful?</strong>
+        <input type="radio" class="autosubmit" name="help_feedback" value="yes" /><label>Yes</label>
+        <input type="radio" class="autosubmit" name="help_feedback" value="no" /><label>No</label>
+        <input type="hidden" name="record_id" value="$id" />
+  };
+  
+  while (my ($k, $v) = each (%args)) {
+    $html .= qq{
+        <input type="hidden" name="$k" value="$v" />};
+  }
+  
+  $html .= '
+      </form>
+    </div>';
+  
+  return $html;
+}
 
 1;
