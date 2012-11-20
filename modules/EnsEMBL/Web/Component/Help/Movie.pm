@@ -36,17 +36,15 @@ sub content {
     $html .= $self->embed_movie($movie);
 
     ## Feedback
-    my $style = 'text-align:right;margin-right:2em';
-    
     if ($hub->param('feedback')) {
-      $html .= qq{<p style="$style">Thank you for your feedback.</p>};
+      $html .= qq{<p>Thank you for your feedback.</p>};
     } else {
       ## Feedback form
-      $html .= $self->help_feedback($style, $movie->{'id'}, return_url => '/Help/Movie', type => 'Movie');
+      $html .= $self->help_feedback($movie->{'id'}, return_url => '/Help/Movie', type => 'Movie');
 
       ## Link to movie-specific feedback form
       $html .= qq(
-        <div class="info-box" style="padding:10px;">
+        <div class="info-box">
           If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$movie->{'title'}" class="popup">provide feedback</a> that will help us improve our service. Thank you.
         </div>
       );

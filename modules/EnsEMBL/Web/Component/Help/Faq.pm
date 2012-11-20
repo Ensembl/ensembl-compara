@@ -52,7 +52,6 @@ sub content {
 
   if (scalar(@faqs) > 0) {
   
-    my $style = 'text-align:right;margin-right:2em';
     my $category = '';
 
     if (scalar(@faqs) == 1) {
@@ -76,10 +75,10 @@ sub content {
 
         $html .= sprintf(qq(<li><a href="/Help/Faq?id=%s" id="faq%s" class="popup">%s</a></li>\n), $faq->{'id'}, $faq->{'id'}, $faq->{'question'});
         if ($hub->param('feedback') && $hub->param('feedback') == $faq->{'id'}) {
-          $html .= qq(<div style="$style">Thank you for your feedback</div>);
+          $html .= qq(<div>Thank you for your feedback</div>);
         } 
         else {
-          $html .= $self->help_feedback($style, $faq->{'id'}, return_url => '/Help/Faq', type => 'Faq');
+          $html .= $self->help_feedback($faq->{'id'}, return_url => '/Help/Faq', type => 'Faq');
         }
         $category = $faq->{'category'};
       }
