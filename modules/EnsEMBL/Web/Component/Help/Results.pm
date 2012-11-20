@@ -44,15 +44,13 @@ sub content {
 
       if ($help->{'type'} eq 'faq') {
         $title  = '<h4><strong>'.$help->{'question'}.'</strong></h4>';
-        $text   = $help->{'answer'};
-        unless ($text =~ /$</) {
-          $text = '<p class="space-below">'.$text.'</p>';
-        }
+        $text   = $self->wrap_in_p_tag($help->{'answer'});
+
         ## Add feedback form
-        $text .= $self->help_feedback('text-align:right;margin-right:2em', $help->{'id'}, return_url => '/Help/Results', type => $help->{'type'});
+        $text  .= $self->help_feedback($help->{'id'}, return_url => '/Help/Results', type => $help->{'type'});
       }
       elsif ($help->{'type'} eq 'glossary') {
-        $title  = '<p class="space-below"><strong>'.$help->{'word'}.'</strong>: ';
+        $title  = '<p><strong>'.$help->{'word'}.'</strong>: ';
         $text   = $help->{'meaning'}.'</p>';
       }
       elsif ($help->{'type'} eq 'view') {
@@ -63,15 +61,14 @@ sub content {
         $text .= ' <a href="/Help/View?id='.$help->{'id'}.'">More...</a>';
       }
       elsif ($help->{'type'} eq 'movie') {
-        $title  = '<p class="space-below"><strong><a href="/Help/Movie?id='.$help->{'id'}.'" class="popup">'.$help->{'title'}.'</a></strong></p>';
+        $title  = '<p><strong><a href="/Help/Movie?id='.$help->{'id'}.'" class="popup">'.$help->{'title'}.'</a></strong></p>';
       }
       if ($hub->param('hilite') eq 'yes') {
-        $title  = $self->kw_hilite($title);
-        $text   = $self->kw_hilite($text);
+        $title  = $self->_keyword_hilite($title);
+        $text   = $self->_keyword_hilite($text);
       }
 
       $html .= qq($title\n$text); 
-
 
       $prev_type = $help->{'type'};
     }
@@ -85,6 +82,17 @@ sub content {
   }
 
   return $html;
+}
+
+sub _keyword_hilite {
+  ## @private
+  ## Highlights the search keyword(s) in the text, omitting HTML tag contents
+  my ($self, $content)  = @_;
+  my $keyword           = $self->hub->param('string');
+
+  $content =~ s/($keyword)(?![^<]*?>)/<span class="hilite">$1<\/span>/img if $keyword;
+
+  return $content;
 }
 
 1;
