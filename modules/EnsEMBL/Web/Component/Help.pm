@@ -29,8 +29,8 @@ sub parse_help_html {
       $line = $self->embed_movie(@{$adaptor->fetch_help_by_ids([$1]) || []});
     }
 
-    while ($line =~ /\[\[image=([^\s]+)\s+([^\]]+)\s*\]\]/ig) {
-      substr $line, $-[0], $+[0] - $-[0], qq(<img src="$img_url$1" $2 \/>); # replace square bracket tag with actual image
+    while ($line =~ /\[\[image=([^\s]+)\s*([^\]]+)?\s*\]\]/ig) {
+      substr $line, $-[0], $+[0] - $-[0], qq(<img src="$img_url$1" alt="" $2 \/>); # replace square bracket tag with actual image
     }
 
     $html .= $line;
