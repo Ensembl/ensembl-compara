@@ -265,11 +265,38 @@ sub helptip {
   return sprintf '<img src="%s/i/16/%s.png" alt="(?)" class="_ht helptip-icon" title="%s" />', $self->static_server, $icon || 'info', $tip;
 }
 
+sub error_panel {
+  ## Returns html for a standard error box (with red header)
+  ## @params Heading, error description, width of the box (defaults to image width)
+  return shift->_info_panel('error', @_);
+}
+
+sub warning_panel {
+  ## Returns html for a standard warning box
+  ## @params Heading, warning description, width of the box (defaults to image width)
+  return shift->_info_panel('warning', @_);
+}
+
+sub info_panel {
+  ## Returns html for a standard info box (with grey header)
+  ## @params Heading, description text, width of the box (defaults to image width)
+  return shift->_info_panel('info', @_);
+}
+
+sub hint_panel {
+  ## Returns html for a standard info box, but hideable with JS
+  ## @params Heading, description text, width of the box (defaults to image width)
+  my ($self, $id, $caption, $desc, $width) = @_;
+  return if grep $_ eq $id, split /:/, $self->hub->get_cookie_value('ENSEMBL_HINTS');
+  return $self->_info_panel('hint hint_flag', $caption, $desc, $width, $id);
+}
+
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub caption     { return undef; }
 sub _init       { return; }
 
+## TODO - remove these four method once above four methods are used instead of these
 sub _error   { return shift->_info_panel('error',   @_);  } # Fatal error message. Couldn't perform action
 sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but not fatal
 sub _info    { return shift->_info_panel('info',    @_ ); } # Extra information 
