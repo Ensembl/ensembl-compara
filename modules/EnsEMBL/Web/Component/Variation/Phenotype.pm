@@ -57,6 +57,7 @@ sub content {
   return $table->render;
 };
 
+
 sub table_data { 
   my ($self, $external_data) = @_;
   
@@ -167,28 +168,44 @@ sub gene_links {
   my @links;
   
   my $gene_adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core');
+  my $tr_adaptor   = $hub->get_adaptor('get_TranscriptAdaptor', 'core');
   my $arch_adaptor = $hub->get_adaptor('get_ArchiveStableIdAdaptor', 'core');
   
   foreach my $g (@genes) {
     
     $g =~ s/\s//g;
+    my $gname = $g; 
+    my $trname;
     
-    # try to fetch gene
+    if ($g =~ /^(\S+)_(\S+)/) {
+      $gname = $1;
+      $trname = $2;
+    }
+    
+    
+    # try to fetch gene & transcript
     my $linkable = 0;
+    my $tr_linkable = 0;
     
     # external name
-    $linkable = 1 if scalar @{$gene_adaptor->fetch_all_by_external_name($g)};
+    $linkable = 1 if scalar @{$gene_adaptor->fetch_all_by_external_name($gname)};
     # stable_id
     unless($linkable) {
-      $linkable = 1 if $gene_adaptor->fetch_by_stable_id($g);
+      $linkable = 1 if $gene_adaptor->fetch_by_stable_id($gname);
     }
     # archive stable_id
     unless($linkable) {
-      $linkable = 1 if $arch_adaptor->fetch_by_stable_id($g);
+      $linkable = 1 if $arch_adaptor->fetch_by_stable_id($gname);
+    }
+    
+    if ($trname) {
+      $tr_linkable = 1 if $tr_adaptor->fetch_by_stable_id($trname);
     }
     
     if ($linkable) {
-      my $url = $hub->url({ type => 'Gene', action => 'Summary', g => $g });
+      my %params = ( type => 'Gene', action => 'Summary', g => $gname );
+      $params{t} = $trname if ($tr_linkable);
+      my $url = $hub->url(\%params);
       push @links, qq{<a href="$url">$g</a>};
     } else { 
       push @links, $g;
