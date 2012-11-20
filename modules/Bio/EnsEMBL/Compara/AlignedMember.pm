@@ -472,14 +472,13 @@ sub _compose_sequence_with_cigar {
                 $length += $num_boundaries;
                 $substring = substr($sequence,$seq_start,$length);
             }
-            if (length($substring) % $expansion_factor) {
-                $substring .= ('N' x ($expansion_factor - (length($substring) % $expansion_factor)));
+            if (length($substring) < $length) {
+                $substring .= ('N' x ($length - length($substring)));
             }
             $alignment_string .= $substring;
             $seq_start += $length;
         }
     }
-    die "It does happen ...\n" if (length($alignment_string) % $expansion_factor);
     return $alignment_string;
 }
 
