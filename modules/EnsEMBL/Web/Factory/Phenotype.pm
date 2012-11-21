@@ -57,6 +57,7 @@ sub createObjects {
             foreach my $gene_id (grep $_, split /,/, $va->{'associated_gene'}) {
               $gene_id =~ s/\s//g;
               next if $gene_id =~ /intergenic/i;
+              next unless $gene_id;
               my $gene_objects = $self->_create_Gene('core', $gene_id);
               unless ($associated_gene{$gene_id}) {
                 $associated_gene{$gene_id} = $gene_objects;
