@@ -81,6 +81,11 @@ sub fetch_input {
 
   $self->load_input_trees;
 
+  unless (scalar(keys %{$self->param('inputtrees_unrooted')})) {
+    $self->input_job->incomplete(0);
+    die "No trees with non-0 distances. Nothing to compute";
+  }
+
   my $ktreedist_exe = $self->param('ktreedist_exe')
       or die "'ktreedist_exe' is an obligatory parameter";
 
