@@ -80,7 +80,7 @@ sub form {
 
   $self->add_fieldset("Resequenced $strains");
 
-  foreach (@{$variations->{'DEFAULT_STRAINS'} || []}, @{$variations->{'DISPLAY_STRAINS'} || []}) {
+  foreach (sort (@{$variations->{'DEFAULT_STRAINS'} || []}, @{$variations->{'DISPLAY_STRAINS'} || []})) {
     next if $_ eq $ref;
     
     $self->add_form_element({
