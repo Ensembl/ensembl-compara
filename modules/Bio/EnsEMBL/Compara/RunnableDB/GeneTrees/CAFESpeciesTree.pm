@@ -51,7 +51,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'tree_fmt' => '%{n}%{":"d}',
-            'pvalue_lim' => 0.05,
+            'pvalue_lim' => 0.01,
            };
 }
 
