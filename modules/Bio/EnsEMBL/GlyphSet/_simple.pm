@@ -7,7 +7,8 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 sub features  { 
   my $self     = shift;
   my $call     = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
-  my @features = map @{$self->{'container'}->$call($_)||[]}, @{$self->my_config('logic_names')||[]};
+  my $db_type       = $self->my_config('db');
+  my @features = map @{$self->{'container'}->$call($_, undef, $db_type)||[]}, @{$self->my_config('logic_names')||[]};
   
   return \@features;
 }
