@@ -43,7 +43,7 @@ sub content {
 
   if (scalar @groups) {
     my @ids = ({ value => 0, name => 'Anyone, via URL' });
-    push @ids, { value => $_->id, name => $_->name } for @groups;
+    push @ids, { value => $_->group_id, name => $_->name } for @groups;
     
     $form->add_element(type => 'RadioGroup', name => 'webgroup_id', values => \@ids);
     $form->add_element(type => 'Hidden',     name => 'source',      value  => $hub->param('source'));
