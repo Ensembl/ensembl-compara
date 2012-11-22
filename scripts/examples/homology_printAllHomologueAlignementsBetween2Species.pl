@@ -33,13 +33,12 @@ my $mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
     fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
 
 my $species_names = '';
-foreach my $gdb (@{$mlss->species_set}) {
+foreach my $gdb (@{$mlss->species_set_obj->genome_dbs}) {
   $species_names .= $gdb->dbID.".".$gdb->name."  ";
 }
-printf("mlss(%d) %s : %s\n", $mlss->dbID, $mlss->method_link_type, $species_names);
+printf("mlss(%d) %s : %s\n", $mlss->dbID, $mlss->method->type, $species_names);
 
-my $homology_list = $comparaDBA->get_HomologyAdaptor->
-    fetch_all_by_MethodLinkSpeciesSet($mlss);
+my $homology_list = $comparaDBA->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 printf("fetched %d homologies\n", scalar(@{$homology_list}));
 
 foreach my $homology (@{$homology_list}) {

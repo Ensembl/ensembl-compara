@@ -22,18 +22,16 @@ $reg->load_registry_from_db(
 my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Homo sapiens", "core", "Gene");
 my $member_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Compara", "compara", "Member");
 my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Compara", "compara", "Homology");
-my $proteintree_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Compara", "compara", "ProteinTree");
 
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('BRCA2');
 
 my $gene = shift @$genes; # We assume we have only one gene
 
-my $member = $member_adaptor->
-  fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+my $member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
 my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus",['ENSEMBL_ORTHOLOGUES'])};
 my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Rattus_norvegicus",['ENSEMBL_ORTHOLOGUES'])};
 
-my $aligned_member = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_Member->member_id);
+my $aligned_member = $member->get_canonical_Member;
 
 sub print_transcript ($$)
 {
@@ -125,7 +123,7 @@ sub print_transcript ($$)
 foreach my $homology (@mouse_homologies, @rat_homologies) {
   print "\n";
   $homology->print_homology;
-  my $cdna_simple_align = $homology->get_SimpleAlign('cdna');
+  my $cdna_simple_align = $homology->get_SimpleAlign(-cdna => 1);
   my ($gene1,$gene2) = @{$homology->gene_list};
   my $temp;
   unless ($gene1->stable_id =~ /ENSG0/) {
@@ -134,10 +132,9 @@ foreach my $homology (@mouse_homologies, @rat_homologies) {
     $gene2 = $temp;
   }
   my $member2 = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene2->stable_id);
-  my $aligned_member2 = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($member2->get_canonical_Member->member_id);
 
-  print_transcript($aligned_member->get_Transcript, $cdna_simple_align);
-  print_transcript($aligned_member2->get_Transcript, $cdna_simple_align);
+  print_transcript($member->get_canonical_Member->get_Transcript, $cdna_simple_align);
+  print_transcript($member2->get_canonical_Member->get_Transcript, $cdna_simple_align);
 
 }
 
