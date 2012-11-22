@@ -2563,7 +2563,7 @@ sub add_sequence_variations_meta {
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
       (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
-      (my $other_sources = $menu_item->{'long_name'}) =~ /all other sources/;
+      my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
