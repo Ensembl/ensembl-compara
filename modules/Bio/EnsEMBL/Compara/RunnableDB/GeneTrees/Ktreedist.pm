@@ -73,6 +73,7 @@ sub fetch_input {
 
     # Fetch sequences:
   $self->param('gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')) );
+  $self->param('gene_tree')->preload();
 
   if ($self->check_members) {
       $self->input_job->incomplete(0);
@@ -208,7 +209,8 @@ sub load_input_trees {
     my $tree = $self->param('gene_tree');
     $self->param('inputtrees_unrooted', {});
     for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
-        print STDERR $tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
+        $other_tree->preload();
+        print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         my $tag = $other_tree->clusterset_id;
         $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
     }
