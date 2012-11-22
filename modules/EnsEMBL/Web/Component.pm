@@ -262,7 +262,7 @@ sub helptip {
   ## @param Tip text (TODO - make it HTML compatiable)
   ## @param Optional - icon name to override the default info icon
   my ($self, $tip, $icon) = @_;
-  return sprintf '<img src="%s/i/16/%s.png" alt="(?)" class="_ht helptip-icon" title="%s" />', $self->static_server, $icon || 'info', $tip;
+  return sprintf '<img src="%s/i/16/%s.png" alt="(?)" class="_ht _ht_static helptip-icon" title="%s" />', $self->static_server, $icon || 'info', $tip;
 }
 
 sub error_panel {
