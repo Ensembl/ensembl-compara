@@ -36,7 +36,7 @@ my $bioperl_dnastats = 0;
 eval {require Bio::Align::DNAStatistics;};
 unless ($@) { $bioperl_dnastats = 1; }
 
-$input = 'ENSG00000139618:ENSG00000073910' unless (length($input) > 1);
+$input = 'ENSG00000139618:ENSG00000073910' unless (defined $input and length($input) > 1);
 my $result = undef;
 
 print "spa,labela,spb,labelb,dn,ds\n";
@@ -58,24 +58,25 @@ foreach my $gene_id (split(':',$input)) {
     my ($a,$b) = @{$this_homology->gene_list};
     my $spa = $a->taxon->short_name;
     my $spb = $b->taxon->short_name;
-    my $labela = $a->stable_id . "(" . $a->display_label . ")";
-    my $labelb = $b->stable_id . "(" . $b->display_label . ")";
+    my $labela = $a->stable_id;
+    $labela .= "(" . $a->display_label . ")" if $a->display_label;
+    my $labelb = $b->stable_id;
+    $labelb .= "(" . $b->display_label . ")" if $b->display_label;
     my $dn; my $ds;
     my $lnl = $this_homology->lnl;
-    if (0 != $lnl) {
+    if ($lnl) {
         $dn = $this_homology->dn;
         $ds = $this_homology->ds;
-        $dn = 'na' if (!defined($dn));
-        $ds = 'na' if (!defined($ds));
     } else {
         # This bit calculates dnds values using the counting method in bioperl-run
-        my $aln = $this_homology->get_SimpleAlign("cdna", 1);
+        my $aln = $this_homology->get_SimpleAlign( -cdna => 1);
         if ($bioperl_dnastats) {
             my $stats;
             eval { $stats = new Bio::Align::DNAStatistics;};
             if($stats->can('calc_KaKs_pair')) {
                 my ($seq1id,$seq2id) = map { $_->display_id } $aln->each_seq;
                 my $results;
+                print ">";
                 eval { $results = $stats->calc_KaKs_pair($aln, $seq1id, $seq2id);};
                 unless ($@) {
                   my $counting_method_dn = $results->[0]{D_n};
@@ -87,6 +88,8 @@ foreach my $gene_id (split(':',$input)) {
         }
         ##
     }
+    $dn = 'na' if (!defined($dn));
+    $ds = 'na' if (!defined($ds));
     print "$spa,$labela,$spb,$labelb,$dn,$ds\n";
   }
 }
