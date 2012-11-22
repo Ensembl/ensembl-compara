@@ -263,7 +263,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
 
   helpTips: function () {
-    this.elLk.helpTips.helptip();
+    this.elLk.helpTips.not('._ht_static').helptip().end().filter('._ht_static').helptip({'static': true});
   },
   
   wrapping: function () {
