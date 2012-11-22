@@ -94,8 +94,6 @@ sub fetch_input {
     }
     $self->param('hmm_type', $hmm_type);
 
-    $self->param('done', 1) if $protein_tree->has_tag("hmm_$hmm_type");
-
     my $members = $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_GeneTree($protein_tree);
     if ($self->param('notaxon')) {
         my $newmembers = [];
@@ -220,7 +218,7 @@ sub store_hmmprofile {
   print("load from file $hmm_file\n") if($self->debug);
   my $hmm_text = $self->_slurp($hmm_file);
 
-  my $sth = $self->compara_dba->dbc->prepare('INSERT INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
+  my $sth = $self->compara_dba->dbc->prepare('REPLACE INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
   $sth->execute(sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type')), 'hmmer', $hmm_text);
 }
 
