@@ -157,8 +157,6 @@ div.filter-error    { margin: 1em 1em 0; }
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
 
-.ajax_error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; border: solid 1px [[ALERT_TEXT]]; font-weight: bold; margin: 0 0 1em; padding: 1em; }
-
 div.notes    { padding: 1em 1em 8px; margin-bottom: 1em; background-color: [[CONTRAST_BG]]; border: 1px [[CONTRAST_BORDER]] solid; }
 div.notes h4 { background: url(/i/16/info.png) top left no-repeat; height: 1em; line-height: 1em; padding-left: 24px; }
 div.notes p  { margin-bottom: 8px; }
