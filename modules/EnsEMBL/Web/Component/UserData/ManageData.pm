@@ -294,7 +294,7 @@ sub group_shared_data {
     
     next unless scalar @rows;
     
-    $html .= sprintf '<h4>Data shared from the %s group</h4>', $group->name;
+    $html .= sprintf '<h4>Data shared from the <i>%s</i> group</h4>', $group->name;
     $html .= $self->new_table(\@columns, \@rows, { class => 'fixed editable' })->render;
   }
   
