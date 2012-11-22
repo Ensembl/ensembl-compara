@@ -65,17 +65,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM;
 
 use strict;
 
-use IO::File;
-use File::Basename;
-use Time::HiRes qw(time gettimeofday tv_interval);
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
-use Bio::AlignIO;
-use Bio::SimpleAlign;
-
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
-
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
@@ -90,7 +82,6 @@ sub fetch_input {
     my $protein_tree_id     = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
-    $protein_tree->preload;
     $self->param('protein_tree', $protein_tree);
 
     my $hmm_type = $self->param('cdna') ? 'dna' : 'aa';
@@ -105,35 +96,32 @@ sub fetch_input {
 
     $self->param('done', 1) if $protein_tree->has_tag("hmm_$hmm_type");
 
-  my @to_delete;
-
-  if ($self->param('notaxon')) {
-    foreach my $leaf (@{$protein_tree->get_all_leaves}) {
-      next unless ($leaf->taxon_id eq $self->param('notaxon'));
-      push @to_delete, $leaf;
+    my $members = $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_GeneTree($protein_tree);
+    if ($self->param('notaxon')) {
+        my $newmembers = [];
+        foreach my $member (@$members) {
+            push @$newmembers, $member unless ($member->taxon_id eq $self->param('notaxon'));
+        }
+        $members = $newmembers;
     }
-    $protein_tree->root->remove_nodes(\@to_delete);
-  }
 
-  if ($self->param('taxon_ids')) {
-    my $taxon_ids_to_keep;
-    foreach my $taxon_id (@{$self->param('taxon_ids')}) {
-      $taxon_ids_to_keep->{$taxon_id} = 1;
+    if ($self->param('taxon_ids')) {
+        my $taxon_ids_to_keep;
+        foreach my $taxon_id (@{$self->param('taxon_ids')}) {
+            $taxon_ids_to_keep->{$taxon_id} = 1;
+        }
+        my $newmembers = [];
+        foreach my $member (@$members) {
+            push @$newmembers, $member  if (defined($taxon_ids_to_keep->{$member->taxon_id}));
+        }
+        $members = $newmembers;
     }
-    foreach my $leaf (@{$protein_tree->get_all_leaves}) {
-      next if (defined($taxon_ids_to_keep->{$leaf->taxon_id}));
-      push @to_delete, $leaf;
-    }
-    $protein_tree->root->remove_nodes(\@to_delete);
-  }
 
-  if (!defined($protein_tree)) {
-    $self->param('done', 1);
-  }
+    $self->param('done', 1) if scalar(@$members) < 2;
+    $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
-  if (2 > (scalar @{$protein_tree->get_all_leaves})) {
-    $self->param('done', 1);
-  }
+    my $buildhmm_exe = $self->param('buildhmm_exe') or die "'buildhmm_exe' is an obligatory parameter";
+    die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
 }
 
 
@@ -198,42 +186,23 @@ sub post_cleanup {
 
 
 sub run_buildhmm {
-  my $self = shift;
+    my $self = shift;
 
-  my $starttime = time()*1000;
+    my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_align'), 1);
+    my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
 
-  my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_tree'), 1);
+    ## as in treefam
+    # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
+    my $cmd = join(' ',
+            $self->param('buildhmm_exe'),
+            ($self->param('cdna') ? '--dna' : '--amino'),
+            $hmm_file,
+            $stk_file
+    );
+    my $cmd_out = $self->run_command($cmd);
+    die 'Could not run $buildhmm_exe: ', $cmd_out->out if $cmd_out->exit_code;
 
-  my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
-
-  my $buildhmm_exe = $self->param('buildhmm_exe')
-        or die "'buildhmm_exe' is an obligatory parameter";
-
-  die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
-
-  ## as in treefam
-  # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
-
-  my $cmd = $buildhmm_exe;
-  $cmd .= ($self->param('cdna') ? ' --dna ' : ' --amino ');
-
-  $cmd .= $hmm_file;
-  $cmd .= " ". $stk_file;
-  $cmd .= " 2>&1 > /dev/null" unless($self->debug);
-
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  my $worker_temp_directory = $self->worker_temp_directory;
-  $cmd = "cd $worker_temp_directory ; $cmd";
-  if(system($cmd)) {
-    my $system_error = $!;
-    die "Could not run [$cmd] : $system_error";
-  }
-
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-  my $runtime = time()*1000-$starttime;
-
-  $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $runtime);
+    $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $cmd_out->runtime_msec);
 }
 
 
@@ -246,16 +215,13 @@ sub run_buildhmm {
 sub store_hmmprofile {
   my $self = shift;
   my $hmm_file =  $self->param('hmm_file');
-  my $protein_tree = $self->param('protein_tree');
   
   #parse hmmer file
   print("load from file $hmm_file\n") if($self->debug);
-  open(FH, $hmm_file) or die "Could not open '$hmm_file' for reading : $!";
-  my $hmm_text = join('', <FH>);
-  close(FH);
+  my $hmm_text = $self->_slurp($hmm_file);
 
   my $sth = $self->compara_dba->dbc->prepare('INSERT INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
-  $sth->execute(sprintf('%d_%s', $protein_tree->root_id, $self->param('hmm_type')), 'hmmer', $hmm_text);
+  $sth->execute(sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type')), 'hmmer', $hmm_text);
 }
 
 1;
