@@ -18,7 +18,7 @@ sub embed_movie {
     $alt      = 'Youku &#20248;&#37239;&#32593; channel';
   }  
   else {    
-    $source   = sprintf('http://www.youtube-nocookie.com/embed/', $movie->{'youtube_id'});
+    $source   = sprintf('http://www.youtube-nocookie.com/embed/%s', $movie->{'youtube_id'});
     $channel  = '"http://www.youtube.com/user/EnsemblHelpdesk';
     $logo     = $self->hub->species_defs->ENSEMBL_STATIC_SERVER.'/img/youtube.png';
     $alt      = 'YouTube channel';
