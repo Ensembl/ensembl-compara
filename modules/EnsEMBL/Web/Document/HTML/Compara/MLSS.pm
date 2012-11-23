@@ -2,6 +2,8 @@ package EnsEMBL::Web::Document::HTML::Compara::MLSS;
 
 use strict;
 
+use Math::Round;
+
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Document::Table;
 
@@ -44,8 +46,7 @@ our $references = {
 
 sub render { 
   my $self = shift;
-  my $hub = EnsEMBL::Web::Hub->new;
-  $self->hub = $hub;
+  my $hub     = $self->hub;
   my $mlss_id = $hub->param('mlss');
   my $method  = $hub->param('method');
   my $type    = $pretty_method{$method};
@@ -76,25 +77,98 @@ netting process, the best sub-chain is chosen in each region on the reference sp
 
   $html .= '<h2>Configuration parameters</h2>';
 
-  my $columns = [
-    {'key' => 'param', 'title' => 'Parameter'},
-    {'key' => 'value', 'title' => 'Value'},
-  ];
+  if (keys %$blastz_parameters) {
 
-  my $rows;
-  foreach my $k (@blastz_order) {
-    my $v = $blastz_options->{$k};
-    push @$rows, {'param' => $v, 'value' => $blastz_parameters->{$k}};
+    my $columns = [
+      {'key' => 'param', 'title' => 'Parameter'},
+      {'key' => 'value', 'title' => 'Value'},
+    ];
+
+    my $rows;
+    foreach my $k (@blastz_order) {
+      my $v = $blastz_options->{$k};
+      if ($k eq 'Q' && !$blastz_parameters->{$k}) {
+        $blastz_parameters->{$k} = 'Default';
+      }
+      push @$rows, {'param' => $v, 'value' => $blastz_parameters->{$k}};
+    }
+
+    my $table = EnsEMBL::Web::Document::Table->new($columns, $rows);
+    $html .= $table->render;
+  }
+  else {
+    $html .= '<p>No configuration parameters are available.</p>';
   }
 
-  my $table = EnsEMBL::Web::Document::Table->new($columns, $rows);
-  $html .= $table->render;
+  if ($ref_dna_collection_config->{'chunk_size'}) {
+    $html .= '<h2>Chunking parameters</h2>';
 
+    $html .= qq(<table style="width:80%">
+<tr>
+<th style="width:20%;padding:0 1em"></th>
+<th style="width:40%;padding:0 1em">$ref_common</th>
+<th style="width:40%;padding:0 1em">$nonref_common</th>
+</tr>
+);
+
+    my @params = qw(chunk_size overlap group_set_size masking_options);
+
+    foreach my $param (@params) {
+      my $header = ucfirst($param);
+      $header =~ s/_/ /g;
+      my ($value_1, $value_2);
+      if ($param eq 'masking_options') {
+        $value_1 = $ref_dna_collection_config->{$param} || '';
+        $value_2 = $non_ref_dna_collection_config->{$param} || '';
+      }
+      else {
+        $value_1 = $self->thousandify($ref_dna_collection_config->{$param}) || 0;
+        $value_2 = $self->thousandify($non_ref_dna_collection_config->{$param}) || 0;
+      }
+      $html .= qq(<tr>
+<th style="padding:1em">$header</th>
+<td style="padding:1em">$value_1</td>
+<td style="padding:1em">$value_2</td>
+</tr>
+      );
+    } 
+
+    $html .= '</table>';
+  }
+
+  ## Format into table
   $html .= '<h2>Results</h2>';
 
   $html .= '<p>Number of alignment blocks: '.$alignment_results->{num_blocks}.'</p>';
 
-  $html .= '<table>
+  $html .= '<div id="SimplePiecharts" class="js_panel __h __h_comp_SimplePiecharts">';
+
+  $html .= '
+<div id="SimplePiecharts" class="js_panel __h __h_comp_SimplePiecharts">
+  <div>
+    <input class="panel_type" type="hidden" value="SimplePiechart" />';
+
+  ## Create HTML blocks for piechart code
+  my $i = 0;
+  foreach my $sp ($ref_sp, $nonref_sp) {
+    my $results = $i ? $non_ref_results : $ref_results; 
+
+    foreach my $type ('alignment', 'alignment_exon') {
+
+      my $coverage = $results->{$type.'_coverage'};
+      my $total    = $type eq 'alignment' ? $results->{'length'} : $results->{'coding_exon_length'};; 
+      my $percent  = round($coverage/$total * 100);
+      my $inverse  = 100 - $percent;
+
+      $html .= qq(<input class="piechart" type="hidden" value="[[$percent,$inverse]]" />);
+      
+      $i++;
+    }
+  }
+
+  $html .= '</div>';
+
+  $html .= '<table style="width:100%">
 <tr>
 <th></th>
 <th style="text-align:center">Genome coverage (bp)</th>
@@ -103,25 +177,29 @@ netting process, the best sub-chain is chosen in each region on the reference sp
 ';
 
   my $i = 0;
-  my $n = 1;
   foreach my $sp ($ref_sp, $nonref_sp) {
     $html .= qq(<tr><th style="vertical-align:middle">$sp</th>);
     my $results = $i ? $non_ref_results : $ref_results; 
 
-    foreach my $coverage ('alignment', 'alignment_exon') {
-      $html .= '<td style="padding:12px">';
-      $html .= sprintf '<div id="graphHolder%s" style="width:200px;height:200px"></div>', $i;
-      $html .= $self->thousandify($results->{$coverage.'_coverage'}).' out of '
-                .$self->thousandify($results->{'length'});
+    foreach my $type ('alignment', 'alignment_exon') {
+      $html .= '<td style="text-align:center;padding:12px">';
+    
+      my $coverage = $results->{$type.'_coverage'};
+      my $total    = $type eq 'alignment' ? $results->{'length'} : $results->{'coding_exon_length'}; 
+      my $percent  = round($coverage/$total * 100);
+      my $inverse  = 100 - $percent;
+
+      $html .= sprintf '<div id="graphHolder%s" style="width:160px;height:160px;margin:0 auto"></div>', $i;
+      $html .= '<p><b>'.$percent.'%</b></p>';
+      $html .= '<p>'.$self->thousandify($coverage).' out of '.$self->thousandify($total).'</p>';
       $html .= '</td>';
+      $i++;
     }
 
     $html .= '</tr>';
-    $i++;
-    $n++;
   }
 
-  $html .= '</table>';
+  $html .= '</table></div>';
 
   return $html;
 }
@@ -193,6 +271,17 @@ sub fetch_input {
       my @params = split " ", $pairwise_params;
       foreach my $param (@params) {
         my ($p, $v) = split "=", $param;
+        if ($v =~ /^\/nfs/) {
+          ## slurp in the matrix file
+          my @path  = split('/', $v);
+          $v        = '<pre>';
+          my $file  = $path[-1];
+          my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT.'/public-plugins/ensembl/htdocs/info/docs/compara/'.$file;
+          while (<IN>) {
+            $v .= $_;
+          }
+          $v .= '</pre>';
+        }
         if ($blastz_options->{$p}) {
           $blastz_parameters->{$p} = $v;
         } 
