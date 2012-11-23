@@ -12,23 +12,32 @@ use base qw(EnsEMBL::Web::Document::HTML::Compara);
 ## CONFIGURATION
 
 our $blastz_options = {
-        'O' => "Gap open penalty (O)",
-        'E' => "Gap extend penalty (E)",
-        'K' => "HSP threshold (K)",
-        'L' => "Threshold for gapped extension (L)",
-        'H' => "Threshold for alignments between gapped alignment blocks (H)",
-        'M' => "Masking count (M)",
-        'T' => "Seed and Transition value (T)",
-        'Q' => "Scoring matrix (Q)"
+    'O' => "Gap open penalty",
+    'E' => "Gap extend penalty",
+    'K' => "HSP threshold",
+    'L' => "Threshold for gapped extension",
+    'H' => "Threshold for alignments between gapped alignment blocks",
+    'M' => "Masking count",
+    'T' => "Seed and Transition value",
+    'Q' => "Scoring matrix",
 };
 our @blastz_order = (qw(O E K L H M T Q)); 
 
 our $blastz_parameters = {
-          'O' => 400,
-          'E' => 30,
-          'K' => 3000,
-          'T' => 1
+    'O' => 400,
+    'E' => 30,
+    'K' => 3000,
+    'T' => 1,
 };
+
+our $tblat_options = {
+    'minScore'  => 'Minimum score',
+    't'         => 'Database type',
+    'q'         => 'Query type',
+    'mask'      => 'Mask out repeats',
+    'qMask'     => 'Mask out repeats on query',     
+};
+our @tblat_order = (qw(minScore t q mask qMask));
 
 our %pretty_method = (
     'BLASTZ_NET' => 'BlastZ',
@@ -63,6 +72,7 @@ sub render {
   my $nonref_common = $non_ref_dna_collection_config->{common_name};
   my $nonref_assembly  = $non_ref_results->{assembly};
 
+  ## HEADER AND INTRO
   $html .= sprintf('<h1>%s vs %s %s alignments</h1>', 
                         $ref_common, $nonref_common, $pretty_method{$method},
             );
@@ -75,9 +85,10 @@ were aligned using the $type alignment algorithm};
 the raw $type alignment blocks are chained according to their location in both genomes. During the final 
 netting process, the best sub-chain is chosen in each region on the reference species.</p>};
 
+  ## CONFIG TABLE
   $html .= '<h2>Configuration parameters</h2>';
 
-  if (keys %$blastz_parameters) {
+  if (keys %$blastz_parameters || keys %$tblat_parameters) {
 
     my $columns = [
       {'key' => 'param', 'title' => 'Parameter'},
@@ -85,12 +96,25 @@ netting process, the best sub-chain is chosen in each region on the reference sp
     ];
 
     my $rows;
-    foreach my $k (@blastz_order) {
-      my $v = $blastz_options->{$k};
-      if ($k eq 'Q' && !$blastz_parameters->{$k}) {
-        $blastz_parameters->{$k} = 'Default';
+    my ($options, @order, $params);
+    if ($type eq 'Translated Blat') {
+      $options = $tblat_options;
+      @order   = @tblat_order;
+      $params  = $tblat_parameters;
+    }
+    else {
+      $options = $blastz_options;
+      @order   = @blastz_order;
+      $params  = $blastz_parameters;
+    }
+
+    foreach my $k (@order) {
+      my $v = $options->{$k};
+      if ($k eq 'Q' && !$params->{$k}) {
+        $params->{$k} = 'Default';
       }
-      push @$rows, {'param' => $v, 'value' => $blastz_parameters->{$k}};
+      my $header = sprintf('%s (%s)', $v, $k);
+      push @$rows, {'param' => $header, 'value' => $params->{$k}};
     }
 
     my $table = EnsEMBL::Web::Document::Table->new($columns, $rows);
@@ -100,6 +124,7 @@ netting process, the best sub-chain is chosen in each region on the reference sp
     $html .= '<p>No configuration parameters are available.</p>';
   }
 
+  ## CHUNKING TABLE
   if ($ref_dna_collection_config->{'chunk_size'}) {
     $html .= '<h2>Chunking parameters</h2>';
 
@@ -136,7 +161,7 @@ netting process, the best sub-chain is chosen in each region on the reference sp
     $html .= '</table>';
   }
 
-  ## Format into table
+  ## PIE CHARTS
   $html .= '<h2>Results</h2>';
 
   $html .= '<p>Number of alignment blocks: '.$alignment_results->{num_blocks}.'</p>';
