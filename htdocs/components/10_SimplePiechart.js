@@ -56,7 +56,7 @@ Ensembl.Panel.SimplePiechart = Ensembl.Panel.Content.extend({
       raphael    = Raphael('graphHolder' + index[i]);
       raphael.g.txtattr.font = "12px 'Luxi Sans','Helvetica', sans-serif";
  
-      raphael.g.piechart(80, 80, 75, pieData, { colors: pieColors, stroke: "#999", legend: piePercent, legendpos: "east", legendcolor: "#555" }); 
+      raphael.g.piechart(80, 80, 75, pieData, { colors: pieColors, stroke: "#999" }); 
       
       this.graphEls[index[i]].data('done', true);
     }
