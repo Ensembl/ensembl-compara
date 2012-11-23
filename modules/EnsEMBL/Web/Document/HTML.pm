@@ -5,6 +5,7 @@ package EnsEMBL::Web::Document::HTML;
 use strict;
 
 use EnsEMBL::Web::Document::Panel;
+use EnsEMBL::Web::Hub;
 use LWP::UserAgent;
 
 use base qw(EnsEMBL::Web::Root);
@@ -12,7 +13,10 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
   my $class = shift;
   
+  my $hub = EnsEMBL::Web::Hub->new;
+
   my $self = { 
+    _hub      => $hub,
     _renderer => undef,
     @_
   };
@@ -23,7 +27,7 @@ sub new {
 }
 
 sub renderer      :lvalue { $_[0]->{'_renderer'}; }
-sub hub           :lvalue { $_[0]->{'_hub'}; }
+sub hub           { return $_[0]->{'_hub'}; }
 sub species_defs  { return $_[0]->{'species_defs'}; }
 
 sub printf { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
