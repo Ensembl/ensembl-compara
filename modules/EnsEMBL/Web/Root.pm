@@ -24,6 +24,8 @@ use JSON                  qw(to_json);
 use Text::Wrap;
 use Time::HiRes           qw(gettimeofday);
 use URI::Escape           qw(uri_escape uri_unescape);
+use Apache2::RequestUtil;
+use Geo::IP;
 
 my %FAILED_MODULES;
 
@@ -84,6 +86,28 @@ sub make_link_tag {
   else {
     return $args{'text'};
   }
+}
+
+sub requesting_country {
+  my $self = shift;
+  my $sd = $self->hub->species_defs;
+
+  my $geocity_dat_file = $sd->ENSEMBL_SERVERROOT;
+  $geocity_dat_file .= $sd->GEOCITY_DAT || '/geocity/GeoLiteCity.dat';
+  return unless ( -e $geocity_dat_file );
+
+  my $r    = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
+  my ($record, $geo);
+
+  eval {
+          $geo = Geo::IP->open( $geocity_dat_file, 'GEOIP_MEMORY_CACHE' );
+          $record = $geo->record_by_addr($ip) if $geo;
+  };
+  warn $@ if $@;
+  return unless $record;
+
+  return $record->country_code;
 }
 
 # Format an error message by wrapping text to 120 columns
