@@ -189,6 +189,7 @@ sub get_tree_and_table_from_db {
     my $sth = $self->compara_dba->dbc->prepare("SELECT tree, tabledata FROM CAFE_data WHERE fam_id = ?");
     $sth->execute($fam_id);
     my ($tree, $table) = $sth->fetchrow_array();
+    $sth->finish();
     return ($tree, $table);
 }
 
@@ -301,6 +302,7 @@ sub parse_cafe_output {
         my $sth2 = $self->compara_dba->dbc->prepare("SELECT root_id FROM species_tree_root WHERE method_link_species_set_id = ?");
         $sth2->execute($self->param('mlss_id'));
         my ($root_id) = $sth2->fetchrow_array();
+        $sth2->finish;
         print STDERR "ROOT_ID is $root_id\n" if ($self->debug());
 
         my $lca_name = $tree->root->name;
