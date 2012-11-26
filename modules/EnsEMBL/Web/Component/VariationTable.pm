@@ -41,7 +41,7 @@ sub content {
     $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
 
   }
-  $msg .= qq(<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/docs/variation/predicted_data.html#consequence_type_table">More information about consequences</a>.</p>);
+  $msg .= qq{<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/docs/variation/predicted_data.html#consequence_type_table">More information about consequences</a>.</p>};
 
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
@@ -71,9 +71,9 @@ sub make_table {
     { key => 'Alleles',  width => '16u', sort => 'string',                          align => 'center'                                           },
     { key => 'class',    width => '11u', sort => 'string',   title => 'Class',      align => 'center'                                           },
     { key => 'Source',   width => '8u',  sort => 'string'                                                                                       },
-    { key => 'status',   width => '6u', sort => 'string',   title => 'Validation', align => 'center', help => $glossary->{'Validation status'}  },
+    { key => 'status',   width => '6u',  sort => 'string',   title => 'Validation', align => 'center', help => $glossary->{'Validation status'} },
     { key => 'snptype',  width => '12u', sort => 'string',   title => 'Type',                                                                   },
-    { key => 'aachange', width => '6u',  sort => 'string',   title => 'AA', align => 'center', help => 'Amino Acid'                             },
+    { key => 'aachange', width => '6u',  sort => 'string',   title => 'AA',         align => 'center', help => 'Amino Acid'                     },
     { key => 'aacoord',  width => '6u',  sort => 'position', title => 'AA coord',   align => 'center', help => "Amino Acid Co-ordinate"         },
   ];
 
@@ -109,9 +109,9 @@ sub render_content {
       $consequence_label = $consequence_label . ' variant';
     }
     $consequence_label .='s';
-    $html = $self->toggleable_table("$consequence_label", $consequence_type, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html = $self->toggleable_table("$consequence_label", $consequence_type, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
   } else {
-    $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variations in $stable_id by consequence type</h2>} . $table->render;
+    $html = qq(<a id="$self->{'id'}_top"></a><h2>Summary of variations in $stable_id by consequence type</h2>) . $table->render;
   }
   
   return $html;
