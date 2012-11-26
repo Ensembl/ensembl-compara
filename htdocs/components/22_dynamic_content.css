@@ -76,6 +76,8 @@ form.data_table_export { display: none; }
 /***********************************
            helptip stuff
 ***********************************/
+.ht                                     { border-bottom: [[PAGE_TEXT]] dotted 1px; }
+.ht-rev                                 { border-bottom: [[PAGE_BG]] dotted 1px; }
 img.helptip-icon                        { vertical-align: middle; }
 div.helptip                             { position: absolute; z-index: 999999999999; max-width: 250px; display: none; border-left: 8px solid [[PAGE_TEXT]]; border-top: 8px solid transparent; margin: 20px 0 0 10px; border-radius: 0 0 0 4px; }
 div.helptip div.helptip-inner           { background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px 8px 8px 0; line-height: 16px; border-radius: 0 4px 4px 0; }
