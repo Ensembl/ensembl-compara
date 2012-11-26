@@ -4,7 +4,7 @@
 
 table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; border-spacing: 0; }
 table.ss   th, 
-table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; }
+table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; line-height: 16px; }
 table.ss   th,
 table.ss   td           { padding: 4px; }
 table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
