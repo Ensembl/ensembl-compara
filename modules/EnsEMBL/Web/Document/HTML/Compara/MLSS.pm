@@ -60,7 +60,6 @@ sub render {
   my $method  = $hub->param('method');
   my $type    = $pretty_method{$method};
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
-  my $release = $hub->species_defs->VERSION;
   my $html;
 
   my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config) = $self->fetch_input($mlss_id);
@@ -71,6 +70,7 @@ sub render {
   my $nonref_sp     = $non_ref_dna_collection_config->{name};
   my $nonref_common = $non_ref_dna_collection_config->{common_name};
   my $nonref_assembly  = $non_ref_results->{assembly};
+  my $release       = $pair_aligner_config->{ensembl_release};
 
   ## HEADER AND INTRO
   $html .= sprintf('<h1>%s vs %s %s alignments</h1>', 
