@@ -20,14 +20,19 @@ sub populate_tree {
     { 'availability' => 'structural_variation', 'concise' => 'Overlapped Genes/Transcripts' }
   );
 	
-	$self->create_node('Evidence', 'Supporting evidence',
+	$self->create_node('Evidence', 'Supporting evidence ([[counts::supporting_structural_variation]])',
     [qw( summary  EnsEMBL::Web::Component::StructuralVariation::SupportingEvidence)],
-    { 'availability' => 'supporting_structural_variation', 'concise' => 'Supporting evidence' }
+    { 'availability' => 'has_supporting_structural_variation', 'concise' => 'Supporting evidence' }
   );
 	
   $self->create_node('Context', 'Genomic context',
     [qw( summary  EnsEMBL::Web::Component::StructuralVariation::Context)],
     { 'availability' => 'structural_variation', 'concise' => 'Context' }
+  );
+	
+	$self->create_node('Phenotype', 'Phenotype Data',
+    [qw( genes EnsEMBL::Web::Component::StructuralVariation::LocalGenes )],
+    { 'availability' => 'has_transcripts', 'concise' => 'Phenotype Data' }
   );
 }
 1;
