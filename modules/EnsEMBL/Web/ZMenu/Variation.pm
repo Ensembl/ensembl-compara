@@ -152,12 +152,6 @@ sub content {
       label    => $status || '-',
       position => ($lrg_bp ? 4 : 3)
     });
-    
-    $self->add_entry({
-      type     => 'Mapweight',
-      label    => $feature->map_weight,
-      position => 6
-    });
   } elsif ($var_box) {
     if ($var_box ne '-') {
       $self->add_entry({
