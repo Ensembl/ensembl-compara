@@ -30,20 +30,78 @@ sub availability {
   my $self = shift;
 
   if (!$self->{'_availability'}) {
+    my $counts = $self->counts;
     my $availability = $self->_availability;
     my $obj = $self->Obj;
 
     if ($obj->isa('Bio::EnsEMBL::Variation::StructuralVariation')) {
-      $availability->{'structural_variation'} = 1;
-    }
     
-    if (scalar @{$obj->get_all_SupportingStructuralVariants} != 0) {
-      $availability->{'supporting_structural_variation'} = 1;
-    }
+      my $counts = $self->counts;
+      
+      $availability->{'structural_variation'} = 1;
+    
+      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts supporting_structural_variation);
 
-    $self->{'_availability'} = $availability;
+      $self->{'_availability'} = $availability;
+    }
   }
   return $self->{'_availability'};
+}
+
+
+sub counts {
+  my $self = shift;
+  my $obj  = $self->Obj;
+  my $hub  = $self->hub;
+
+  return {} unless $obj->isa('Bio::EnsEMBL::Variation::StructuralVariation');
+
+  my $svf  = $hub->param('svf');
+  my $key = sprintf '::Counts::StructuralVariation::%s::%s::%s::', $self->species, $hub->param('vdb'), $hub->param('sv');
+  $key   .= $svf . '::' if $svf;
+
+  my $counts = $self->{'_counts'};
+  $counts ||= $MEMD->get($key) if $MEMD;
+
+  unless ($counts) {
+    $counts = {};
+    $counts->{'transcripts'} = $self->count_transcripts;
+    $counts->{'supporting_structural_variation'} = $self->count_supporting_structural_variation;
+    
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $self->{'_counts'} = $counts;
+  }
+
+  return $counts;
+}
+
+sub count_supporting_structural_variation {
+  my $self = shift;
+  my @ssvs = @{$self->supporting_sv};
+  my $counts = scalar @ssvs || 0; 
+  return $counts;  
+}
+
+sub count_transcripts {
+  my $self = shift;
+  my $counts = 0;
+    
+  my $slice_adaptor = $self->hub->get_adaptor('get_SliceAdaptor');  
+  
+  foreach my $sv_feature_obj (@{ $self->get_structural_variation_features }) {
+      
+    my $type   = $sv_feature_obj->coord_system_name;
+    my $region = $sv_feature_obj->seq_region_name;
+    my $start  = $sv_feature_obj->seq_region_start;
+    my $end    = $sv_feature_obj->seq_region_end;
+    my $strand = $sv_feature_obj->seq_region_strand;
+      
+    my $slice = $slice_adaptor->fetch_by_region($type, $region, $start, $end, $strand);
+   
+    $counts = scalar @{$slice->get_all_Transcripts};
+    last if ($counts != 0);
+  }
+  return $counts;
 }
 
 
