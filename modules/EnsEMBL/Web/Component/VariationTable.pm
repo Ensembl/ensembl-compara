@@ -61,7 +61,7 @@ sub content {
 sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
   my $hub      = $self->hub;
-  my $glossary = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_text_lookup;
+  my $glossary = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
 
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
@@ -71,7 +71,7 @@ sub make_table {
     { key => 'Alleles',  width => '16u', sort => 'string',                          align => 'center'                                           },
     { key => 'class',    width => '11u', sort => 'string',   label => 'Class',      align => 'center'                                           },
     { key => 'Source',   width => '8u',  sort => 'string'                                                                                       },
-    { key => 'status',   width => '6u',  sort => 'string',   label => 'Validation', align => 'center', help => $glossary->{'Validation status'} },
+    { key => 'status',   width => '6u',  sort => 'string',   label => 'Validation', align => 'center', help => $self->strip_HTML($glossary->{'Validation status'}) },
     { key => 'snptype',  width => '12u', sort => 'string',   label => 'Type',                                                                   },
     { key => 'aachange', width => '6u',  sort => 'string',   label => 'AA',         align => 'center', help => 'Amino Acid'                     },
     { key => 'aacoord',  width => '6u',  sort => 'position', label => 'AA coord',   align => 'center', help => "Amino Acid Co-ordinate"         },
@@ -83,11 +83,11 @@ sub make_table {
   # add GMAF, SIFT and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => 'SIFT',     align => 'center', help => $glossary->{'SIFT'}     },
-      { key => 'polyphen', sort => 'position_html', width => '6u', label => 'PolyPhen', align => 'center', help => $glossary->{'PolyPhen'} },
+      { key => 'sift',     sort => 'position_html', width => '6u', label => 'SIFT',     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'})     },
+      { key => 'polyphen', sort => 'position_html', width => '6u', label => 'PolyPhen', align => 'center', help => $self->strip_HTML($glossary->{'PolyPhen'}) },
     );
 
-    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => 'Global MAF', align => 'center', help => $glossary->{'Global MAF'} };
+    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => 'Global MAF', align => 'center', help => $self->strip_HTML($glossary->{'Global MAF'}) };
   }
  
   if ($self->hub->type ne 'Transcript'){
