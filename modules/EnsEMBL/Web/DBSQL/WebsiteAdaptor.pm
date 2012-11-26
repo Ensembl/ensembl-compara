@@ -9,7 +9,6 @@ use warnings;
 no warnings 'uninitialized';
 
 use DBI;
-use HTML::Strip;
 
 sub new {
   my ($class, $hub) = @_;
@@ -236,20 +235,11 @@ sub fetch_glossary {
   return \@sorted;
 }
 
-sub fetch_glossary_text_lookup {
+sub fetch_glossary_lookup {
   my $self = shift;
   my $records = {};
 
-  my @words = @{$self->fetch_glossary||[]};
-  # Unless you set emit_spaces to 0 you will get mysterious segfaults
-  # on apparently unrelated pages, which is spooky as segfaults are.
-  # This is a known bug in HTML::Strip RT #41035 on CPAN
-  my $stripper = HTML::Strip->new(emit_spaces => 0);
-
-  foreach my $word (@words) {
-    $records->{$word->{'word'}} = $stripper->parse($word->{'meaning'});
-  }
-  return $records;
+  return { map { $_->{'word'} => $_->{'meaning'} } @{ $self->fetch_glossary || [] } };
 }
 
 ##---------------- NEWS ------------------------
