@@ -323,7 +323,10 @@ sub process {
     
     $col->{'style'}  = join ';', map { join ':', $_, $style{$_} } keys %style;
     $col->{'class'} .= ($col->{'class'} ? ' ' : '') . "sort_$col->{'sort'}" if $col->{'sort'};
-    $col->{'title'}  = $col->{'help'} if $col->{'help'};
+    if ($col->{'help'}) {
+      delete $col->{'title'};
+      $label = qq(<span class="ht _ht" title="$col->{'help'}">$label</span>);
+    }
     
     push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq( $_="$col->{$_}") : () } qw(id class title style colspan rowspan)), $label;
   }
