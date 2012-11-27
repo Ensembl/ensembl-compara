@@ -65,7 +65,7 @@ while(<INF>){
 }
 
 my $daf_a = Bio::EnsEMBL::Registry->get_adaptor(
-	"$species_name", "otherfeatures", "DnaAlignFeature");
+	"$species_name", "core", "DnaAlignFeature");
 
 my $patch_align_features = $daf_a->fetch_all_by_logic_name("alt_seq_mapping");
 
