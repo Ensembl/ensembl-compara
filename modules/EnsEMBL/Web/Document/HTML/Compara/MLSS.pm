@@ -80,16 +80,25 @@ sub render {
   my $release         = $pair_aligner_config->{'ensembl_release'};
 
   ## HEADER AND INTRO
-  $html .= sprintf(qq{
-    <h1>$ref_common vs $nonref_common $pretty_method{$method} alignments</h1>
-    <p>
-      $ref_common (<i>$ref_sp</i>, $ref_assembly) and $nonref_common (<i>$nonref_sp</i>, $nonref_assembly) were aligned using the $type alignment algorithm%s
-      in $site release $release. $ref_common was used as the reference species. After running $type, 
-      the raw $type alignment blocks are chained according to their location in both genomes. During the final 
-      netting process, the best sub-chain is chosen in each region on the reference species.
-    </p>
-    <h2>Configuration parameters</h2>
-  }, $pair_aligner_config->{'download_url'} ? '' : " ($references->{$type})");
+  $html .= sprintf('<h1>%s vs %s %s alignments</h1>',
+                        $ref_common, $nonref_common, $pretty_method{$method},
+            );
+
+  if ($pair_aligner_config->{'download_url'}) {
+    my $ucsc = $pair_aligner_config->{'download_url'};
+    $html .= qq{<p>$ref_common (<i>$ref_sp</i>, $ref_assembly) and $nonref_common (<i>$nonref_sp</i>, $nonref_assembly)
+alignments were downloaded from <a href="$ucsc">UCSC</a> in $site release $release.</p>};
+  }
+  else {
+    $html .= sprintf '<p>%s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were aligned using the %s alignment algorithm
+in %s release %s. %s was used as the reference species. After running %s, the raw %s alignment blocks
+are chained according to their location in both genomes. During the final netting process, the best
+sub-chain is chosen in each region on the reference species.</p>',
+              $ref_common, $ref_sp, $ref_assembly, $nonref_common, $nonref_sp, $nonref_assembly,
+              $type, $references->{$type}, $site, $release, $ref_common, $type, $type;
+  }
+
+  $html .= '<h2>Configuration parameters</h2>';
 
   ## CONFIG TABLE
   if (keys %$blastz_parameters || keys %$tblat_parameters) {
