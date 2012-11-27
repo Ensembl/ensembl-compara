@@ -299,7 +299,7 @@ sub get_per_family_cafe_table_from_db {
             my $sp;
             eval {$sp = $member->genome_db->name};
             next if ($@);
-            $sp =~ s/_/\./;
+            $sp =~ s/_/\./g;
             $species{$sp}++;
         }
         print STDERR scalar (keys %species) , " species for this tree\n";
