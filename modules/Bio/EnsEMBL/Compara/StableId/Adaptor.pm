@@ -228,12 +228,21 @@ sub load_compara_ncs {
                     WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree'
                     ORDER BY root_id, left_index
             };
-        } else {
+        } elsif ($schema_version < 70) {
             $sql = qq{
                 SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN gene_tree_member gtm USING (node_id)
+                    LEFT JOIN member m USING (member_id)
+                    WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
+                    ORDER BY root_id, left_index
+            };
+        } else {
+            $sql = qq{
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM gene_tree_node gtn
+                    JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN member m USING (member_id)
                     WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY root_id, left_index
