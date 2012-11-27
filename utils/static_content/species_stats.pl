@@ -263,7 +263,7 @@ foreach my $spp (@valid_spp) {
         and at.attrib_type_id = sa.attrib_type_id
         and s.seq_region_id = sa.seq_region_id
         and cs.coord_system_id = s.coord_system_id
-        and code = 'coding_alt_cnt'
+        and code = 'coding_acnt'
         ");
       print STDERR "Alternate coding:$gene_stats{'alt_coding'}\n" if $DEBUG;
 
