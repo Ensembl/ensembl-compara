@@ -189,7 +189,7 @@ foreach my $spp (@valid_spp) {
 
     ## logicnames for valid genes
     my $genetypes = "'ensembl', 'ensembl_havana_gene', 'havana', 'ensembl_projection',
-      'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_proteins',
+      'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'processed_pseudogene', 'human_ensembl_proteins',
       'ncRNA_pseudogene', 'havana_ig_gene','ensembl_ig_gene', 'ensembl_lincrna', 'ensembl_havana_lincrna',
       'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN', 'MT_genbank_import'";
 
@@ -200,27 +200,36 @@ foreach my $spp (@valid_spp) {
 
     my (%gene_stats, %other_stats);
 
-    my @gene_stats_keys   = qw(coding noncoding pseudogene exon transcript);
+    my @gene_stats_keys   = qw(coding noncoding pseudogene transcript);
+    my @alt_gene_stats_keys = qw(alt_coding alt_noncoding alt_pseudogene alt_transcript);
 
     my @other_stats_keys  = qw(genpept genfpept fgenpept snps strucvar);
 
     my %glossary          = $SD->multiX('ENSEMBL_GLOSSARY');
  
     my %glossary_lookup   = (
-      'known'               => 'Known gene',
-      'novel'               => 'Novel gene',
-      'known_by_projection' => 'Projected gene (or known by_projection)',
+      'coding'              => 'Protein coding',
+      'alt_coding'          => 'Protein coding',
+      'noncoding'           => 'Non coding',
+      'alt_noncoding'       => 'Non coding',
       'pseudogene'          => 'Pseudogene',
-      'exon'                => 'Exon',
+      'alt_pseudogene'      => 'Pseudogene',
       'transcript'          => 'Transcript',
+      'alt_transcript'      => 'Transcript',
     );
 
     my %gene_title        = (
       'coding'              => 'Coding genes',
       'noncoding'           => 'Non coding genes',
       'pseudogene'          => 'Pseudogenes',
-      'exon'                => 'Gene exons',
       'transcript'          => 'Gene transcripts'
+    );
+
+    my %alt_gene_title        = (
+      'alt_coding'          => 'Coding genes',
+      'alt_noncoding'       => 'Non coding genes',
+      'alt_pseudogene'      => 'Pseudogenes',
+      'alt_transcript'      => 'Gene transcripts'
     );
 
     my %other_title       = (
@@ -246,6 +255,19 @@ foreach my $spp (@valid_spp) {
         ");
       print STDERR "Coding:$gene_stats{'coding'}\n" if $DEBUG;
 
+      ($gene_stats{'alt_coding'}) = &query( $db,
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
+        where species_id=$spp_id
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'coding_alt_cnt'
+        ");
+      print STDERR "Alternate coding:$gene_stats{'alt_coding'}\n" if $DEBUG;
+
+
 
 ###
 
@@ -261,6 +283,18 @@ foreach my $spp (@valid_spp) {
         ");
       print STDERR "Non coding:$gene_stats{'noncoding'}\n" if $DEBUG;
 
+      ($gene_stats{'alt_noncoding'}) = &query( $db,
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
+        where species_id=$spp_id
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'noncoding_acnt'
+        ");
+      print STDERR "Alternate non coding:$gene_stats{'alt_noncoding'}\n" if $DEBUG;
+
 ###
 
       ( $gene_stats{'pseudogene'} ) = &query( $db,
@@ -274,6 +308,18 @@ foreach my $spp (@valid_spp) {
         and code = 'pseudogene_cnt'
         ");    
       print STDERR "Pseudogenes:$gene_stats{'pseudogene'}\n" if $DEBUG;
+
+      ( $gene_stats{'alt_pseudogene'} ) = &query( $db,
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
+        where species_id=$spp_id
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'pseudogene_acnt'
+        ");
+      print STDERR "Alternate pseudogenes:$gene_stats{'alt_pseudogene'}\n" if $DEBUG;
 
     } #unless pre
 
@@ -335,31 +381,17 @@ foreach my $spp (@valid_spp) {
         );
       }
       print STDERR "Transcripts:$gene_stats{'transcript'}\n" if $DEBUG;
-      if ($allgenetypes) {
-        ( $gene_stats{'exon'} )= &query( $db,
-          "select count(distinct et.exon_id)
-          from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
-          where et.transcript_id = t.transcript_id
-          and t.seq_region_id = sr.seq_region_id
+        ( $gene_stats{'alt_transcript'} )= &query( $db,
+          "select count(distinct t.transcript_id)
+          from transcript t, seq_region_attrib sa, attrib_type at, seq_region sr, coord_system cs
+          where t.seq_region_id = sa.seq_region_id
+          and sa.attrib_type_id = at.attrib_type_id
           and sr.coord_system_id = cs.coord_system_id
           and cs.species_id=$spp_id
-          and t.gene_id = g.gene_id
-          and g.analysis_id = a.analysis_id"
+          and sr.seq_region_id = sa.seq_region_id
+          and at.code = 'non_ref'"
         );
-      } else {
-        ( $gene_stats{'exon'} )= &query( $db,
-          "select count(distinct et.exon_id)
-          from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
-          where et.transcript_id = t.transcript_id
-          and t.seq_region_id = sr.seq_region_id
-          and sr.coord_system_id = cs.coord_system_id
-          and cs.species_id=$spp_id
-          and t.gene_id = g.gene_id
-          and g.analysis_id = a.analysis_id
-          and a.logic_name in ($genetypes)"
-        );
-      }
-      print STDERR "Exons:$gene_stats{'exon'}\n" if $DEBUG;
+      print STDERR "Transcripts:$gene_stats{'alt_transcript'}\n" if $DEBUG;
 
       $other_stats{'snps'}      = 0;
       $other_stats{'strucvar'}  = 0;
@@ -412,7 +444,7 @@ foreach my $spp (@valid_spp) {
       foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all_by_attrib('default_version') || []}){
         my @regions = @{$sa->fetch_all($cs->name)};
         my $count_regions = scalar @regions;
-	print join ' : ', $cs->name, $cs->version , $count_regions, "\n" if ($DEBUG) ;
+      	print join ' : ', $cs->name, $cs->version , $count_regions, "\n" if ($DEBUG) ;
         my $regions_html;
         if(!$row_count && $count_regions < 1000){
           $regions_html = regions_table($spp,$cs->name,\@regions);
@@ -495,7 +527,7 @@ foreach my $spp (@valid_spp) {
 ######################
  
       print STATS qq(
-        <h3>Gene counts</h3>
+        <h3>Gene counts (Primary assembly)</h3>
         <table class="ss tint species-stats">
       );
       $rowcount = 0;
@@ -518,6 +550,34 @@ foreach my $spp (@valid_spp) {
       print STATS qq(
         </table>
       );
+
+      if ($gene_stats{'alt_coding'}) {
+      print STATS qq(
+        <h3>Gene counts (Alternate sequences)</h3>
+        <table class="ss tint species-stats">
+      );
+      $rowcount = 0;
+      }
+
+      for (@alt_gene_stats_keys) {
+        if ($gene_stats{$_}) {
+          $gene_stats{$_} = thousandify($gene_stats{$_});
+          $rowcount++;
+          $row = stripe_row($rowcount);
+          my $term = $glossary_lookup{$_};
+          my $header = $term ? qq(<span class="glossary_mouseover">$alt_gene_title{$_}<span class="floating_popup">$glossary{$term}</span></span>) : $alt_gene_title{$_};
+          print STATS qq($row
+            <td class="data">$header:</td>
+            <td class="value">$gene_stats{$_}</td>
+            </tr>
+          );
+        }
+      }
+
+      print STATS qq(
+        </table>
+      );
+
     }
 
     if($coordsys){
