@@ -179,7 +179,7 @@ sub draw_stepped_table {
 
   my ($species_order, $info) = $self->get_species_info($species_list, 1);
 
-  my $html .= qq{<table class="spreadsheet" style="width:auto">\n\n};
+  my $html .= qq{<table class="spreadsheet" style="width:100%;padding-bottom:2em">\n\n};
 
   my ($i, $j, @to_do);
   foreach my $species (@$species_order) { 
