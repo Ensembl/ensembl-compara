@@ -50,8 +50,7 @@ body.static #main { margin-left: 0; }
 #masthead div.dropdown.species            { width: 505px; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
-#masthead .logo_holder .logo-header       { background:url(/i/[[SITE_LOGO]]) no-repeat 0 0; display:inline-block; 
-                                            width:[[SITE_LOGO_WIDTH]]px; height:[[SITE_LOGO_HEIGHT]]px; }
+#masthead .logo_holder .logo-header       { background: url(/i/[[SITE_LOGO]]) no-repeat 0 0; display: inline-block; width: [[SITE_LOGO_WIDTH]]px; height: [[SITE_LOGO_HEIGHT]]px; }
 #masthead .account_holder                 { position: absolute; top: 5px; right: 10px; }
 #masthead .tools_holder                   { position: relative; top: 10px; }
 #masthead .tools_holder .arrow            { font-size: 8px; position: relative; top: -1px; padding-left: 1px; }
