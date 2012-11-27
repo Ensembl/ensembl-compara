@@ -17,14 +17,18 @@ sub caption {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
+  my $species      = $hub->species;
+  my $path         = $hub->species_path;
+  my $sound        = $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'};
   my ($heading, $subhead);
 
+  $heading .= qq(<a href="$path"><img src="/i/species/48/$species.png" class="species-img float-left" alt="" title="$sound" /></a>);
   my $common_name = $species_defs->SPECIES_COMMON_NAME;
   if ($common_name =~ /\./) {
-    $heading = $species_defs->SPECIES_BIO_NAME;
+    $heading .= $species_defs->SPECIES_BIO_NAME;
   }
   else {
-    $heading = $common_name;
+    $heading .= $common_name;
     $subhead = '('.$species_defs->SPECIES_BIO_NAME.')';
   }
   return [$heading, $subhead];
@@ -48,17 +52,16 @@ sub populate_tree {
     [qw(homepage EnsEMBL::Web::Component::Info::HomePage)],
     { availability => 1, title => 'Description' }
   );
- 
-  my $index = $self->create_node('Annotation', '',
+
+  $self->create_node('Annotation', '',
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)],
     { availability => 1 }
   );
- 
+
   $index->append($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
     { availability  => 1, no_menu_entry => 1, }
   ));
-  
   
   foreach (keys %error_messages) {
     $index->append($self->create_subnode("Error/$_", "Error $_",

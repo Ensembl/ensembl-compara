@@ -87,24 +87,34 @@ sub content {
 
   if (keys %genes) {
     $html .= '<ul>';
-    while (my($stable_id, $data) = each (%genes)) {
+    
+    while (my ($stable_id, $data) = each %genes) {
       my $gene      = $data->{'gene'};
       my $dxr       = $gene->can('display_xref') ? $gene->display_xref : undef;
       my $gene_name = $dxr->display_id;
-      my $text      = $gene_name ? "$gene_name ($stable_id)" : $stable_id;  
-      my $type      = $data->{'LRG'} ? 'LRG' : 'Gene';
-      my $gene_url  = $hub->url({
-                        type   => $type,
-                        action => "Phenotype",
-                        db     => 'core',
-                        r      => undef,
-                        g      => $stable_id,
-                        v      => $name,
-                        source => $source
-                      });
-      $html .= sprintf('<li><a href="%s">%s</a> (%s)</li>', $gene_url, $text, $data->{'position'});
+      my $text      = $gene_name ? "$gene_name ($stable_id)" : $stable_id;
+      my $params    = {
+        db     => 'core',
+        r      => undef,
+        v      => $name,
+        source => $source,
+      };
+
+      if ($data->{'LRG'}) {
+        $params->{'type'}   = 'LRG';
+        $params->{'action'} = 'Variation_LRG/Table';
+        $params->{'lrg'}    = $stable_id;
+      } else {
+        $params->{'type'}   = 'Gene';
+        $params->{'action'} = 'Phenotype';
+        $params->{'g'}      = $stable_id;
+      }
+      
+      $html .= sprintf'<li><a href="%s">%s</a> (%s)</li>', $hub->url($params), $text, $data->{'position'};
     }
+
     $html .= '</ul>';
+
     return $html;
   } else { 
     return $self->_info('', "<p>This $label_msg\variation has not been mapped to any Ensembl genes.</p>");
