@@ -154,10 +154,6 @@ sub init {
       my $mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name($method, $species_set);
       if ($mlss) {
         $self->modify_configs(
-          [ 'alignment_compara_'.$mlss->dbID.'_scores' ],
-          { display => 'tiling' }
-        );
-        $self->modify_configs(
           [ 'alignment_compara_'.$mlss->dbID.'_constrained' ],
           { display => 'compact' }
         );

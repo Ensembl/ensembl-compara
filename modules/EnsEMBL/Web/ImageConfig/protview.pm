@@ -16,11 +16,14 @@ sub init {
     feature
     variation
 		somatic
+    external_data
+    user_data
     other
     information
   ));
   
   $self->load_tracks;
+  $self->load_configured_das;
   
   $self->modify_configs(
     [ 'variation', 'somatic' ],
@@ -36,10 +39,12 @@ sub init {
     [ 'variation_legend' ],
     { glyphset => 'P_variation_legend' }
   );
-  
+
+  my $translation = $self->hub->core_objects->{'transcript'}->Obj->translation;
+  my $id = $translation ? $translation->stable_id : $self->hub->species_defs->ENSEMBL_SITETYPE.' Protein'; 
   $self->add_tracks('other',
     [ 'scalebar',       'Scale bar', 'P_scalebar', { display => 'normal', strand => 'r' }],
-    [ 'exon_structure', 'Ensembl Protein',   'P_protein',  { display => 'normal', strand => 'f', colourset => 'protein_feature', menu => 'no' }],
+    [ 'exon_structure', $id, 'P_protein',  { display => 'normal', strand => 'f', colourset => 'protein_feature', menu => 'no' }],
   );
 }
 
