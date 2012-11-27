@@ -127,13 +127,17 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     var offset       = this.el.offset();
     var windowWidth  = this.window.width();
     var windowHeight = this.window.height();
-
-    this.el.resizable('option', {
-      maxWidth:  this.maxWidth,
-      maxHeight: this.maxHeight,
-      minWidth:  this.minWidth,
-      minHeight: this.minHeight
-    }).css({ 
+    
+    if (!this.isIE6) {
+      this.el.resizable('option', {
+        maxWidth:  this.maxWidth,
+        maxHeight: this.maxHeight,
+        minWidth:  this.minWidth,
+        minHeight: this.minHeight
+      });
+    }
+    
+    this.el.css({ 
       height: height,
       width:  width,
       top:    !this.customized.top  || offset.top  + height > windowHeight || this.customized.top  + height > windowHeight ? (windowHeight - height) / 2 : this.customized.top,
