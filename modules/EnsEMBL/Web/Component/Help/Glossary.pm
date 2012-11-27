@@ -17,41 +17,18 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub = $self->hub || EnsEMBL::Web::Hub->new;
-
+  my $self    = shift;
+  my $hub     = $self->hub || EnsEMBL::Web::Hub->new;
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $table   = $self->new_twocol({'striped' => 1});
+  my $words   = ($hub->param('id') ? $adaptor->fetch_help_by_ids([ $hub->param('id') ]) : $adaptor->fetch_glossary) || [];
 
+  $table->add_row(
+    $_->{'word'} . ( $_->{'expanded'} ? " ($_->{'expanded'})" : '' ),
+    $_->{'meaning'}
+  ) for @$words;
 
-  my $html = qq(<h2>Glossary</h2>);
-
-  my @words;
-  if ($hub->param('id')) {
-    my @ids = $hub->param('id');
-    @words = @{$adaptor->fetch_help_by_ids(\@ids)};
-  }
-  else {
-    @words = @{$adaptor->fetch_glossary};
-  }
-
-  if (scalar(@words)) {
-  
-    $html .= qq(<dl class="normal striped twocol">\n); 
-
-    my @bg = qw(bg1 bg2);
-
-    foreach my $word (@words) {
-      $html .= qq(<dt id="word$word->{'id'}" class="$bg[1]">$word->{'word'});
-      if ($word->{'expanded'}) {
-        $html .= " ($word->{'expanded'})";
-      }
-      $html .= qq(</dt>\n<dd class="$bg[1]">$word->{'meaning'}</dd>\n);
-      @bg = reverse @bg;
-    }
-    $html .= "</dl>\n";
-  }
-
-  return $html;
+  return sprintf '<h2>Glossary</h2>%s', $table->render;
 }
 
 1;
