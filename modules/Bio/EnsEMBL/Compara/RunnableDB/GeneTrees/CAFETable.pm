@@ -457,7 +457,7 @@ sub get_normalized_table {
     my $fams;
 
     for my $row (@table) {
-        chomp;
+        chomp $row;
         my @flds = split/\t/, $row;
         push @$fams, [@flds];
         for my $i (2..$#flds) {
