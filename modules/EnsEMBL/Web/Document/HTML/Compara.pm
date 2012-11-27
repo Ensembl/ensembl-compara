@@ -110,7 +110,7 @@ sub mlss_data {
         ## Build data matrix
         foreach my $nonref_db (@{$mlss->species_set_obj->genome_dbs}) {
           $species->{ucfirst($nonref_db->name)}++;
-          if ($nonref_db->dbID != $ref_genome_db->dbID) {
+          if ($mlss->source eq "ucsc" || ($nonref_db->dbID != $ref_genome_db->dbID)) {
             $data->{ucfirst($ref_genome_db->name)}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID];
           }
         }
