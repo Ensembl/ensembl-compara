@@ -5,6 +5,8 @@ use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
+deprecate('SubsetAdaptor and Subset are deprecated and will be removed in e71. Please have a look at Member and MemberAdaptor, at the canonical member methods.');
+
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 

@@ -34,6 +34,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
+deprecate('SubsetAdaptor and Subset are deprecated and will be removed in e71. Please have a look at Member and MemberAdaptor, at the canonical member methods.');
 
 sub new {
   my ($class, @args) = @_;
