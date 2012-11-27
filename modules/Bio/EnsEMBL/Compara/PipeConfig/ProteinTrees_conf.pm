@@ -709,6 +709,7 @@ sub pipeline_analyses {
 
                 'fan_branch_code'       => 2,
             },
+            -rc_name       => '250Mb_job',
             -flow_into  => {
                 '2->A'  => [ 'dump_subset_create_blastdb' ],
                 'A->1'  => [ 'blast_species_factory' ],
@@ -1015,7 +1016,7 @@ sub pipeline_analyses {
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
                                'mlss_id'       => $self->o('mlss_id'),
                               },
-            -rc_name       => '2Gb_job',
+            -rc_name       => '1Gb_job',
         },
 
         {   -logic_name => 'ortho_tree_annot',
@@ -1064,7 +1065,7 @@ sub pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '500Mb_job',
+            -rc_name   => '1Gb_job',
             -flow_into => [ 'other_paralogs' ],
         },
 

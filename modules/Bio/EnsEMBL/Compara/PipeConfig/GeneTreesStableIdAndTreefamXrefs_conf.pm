@@ -46,7 +46,7 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master',
         },
 
-        'idmap_gigs'  => 8,
+        'idmap_gigs'  => 8,  # only 1 for ensembl-compara
     };
 }
 
