@@ -35,7 +35,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Subset;
 
 use Data::Dumper;
 
