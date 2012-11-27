@@ -83,8 +83,10 @@ body.ie7 div.box-right     { width:49% }
 
 /* Old 2-column styles */
 
-div.twocol { margin: 0 0 8px; } /* other 4px come from any <p> or <ul> inside it, and 4px from rhs padding to make it 16px */
-div.twocol div.row { overflow: hidden; }
+div.twocol                  { margin: 0 0 8px; } /* other 4px come from any <p> or <ul> inside it, and 4px from rhs padding to make it 16px */
+div.twocol div.row          { overflow: hidden; }
+div.twocol div.bg1,
+div.twocol div.bg2          { padding: 8px 8px 0; }
 div.twocol div.row div.lhs  { float: left; width: 224px; font-weight: bold; }
 div.twocol div.row div.rhs  { margin-left: 240px; padding-bottom: 4px; }
 div.twocol p,
