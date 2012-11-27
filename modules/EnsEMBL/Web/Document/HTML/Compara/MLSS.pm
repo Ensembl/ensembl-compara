@@ -90,7 +90,7 @@ sub render {
 alignments were downloaded from <a href="$ucsc">UCSC</a> in $site release $release.</p>};
   }
   else {
-    $html .= sprintf '<p>%s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were aligned using the %s alignment algorithm
+    $html .= sprintf '<p>%s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were aligned using the %s alignment algorithm (%s)
 in %s release %s. %s was used as the reference species. After running %s, the raw %s alignment blocks
 are chained according to their location in both genomes. During the final netting process, the best
 sub-chain is chosen in each region on the reference species.</p>',
