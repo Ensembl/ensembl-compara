@@ -59,7 +59,8 @@ sub default_options {
 
             # Data needed for CAFE
             'species_tree_meta_key' => 'full_species_tree_string',
-            'cafe_species'          =>  ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
+### ncRNA uses only 6 species for CAFE analysis:
+#            'cafe_species'          =>  ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
             'cafe_lambdas'          => '',  # For now, we don't supply lambdas
             'cafe_struct_tree_str'  => '',  # Not set by default
             'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
