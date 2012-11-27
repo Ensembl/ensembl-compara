@@ -26,7 +26,13 @@ sub content {
   
   my $graph_id = 0;
   my $height   = 50;
-  my (@graphs, @inputs, $pop_tree, %sub_pops, @alleles);
+  my (@graphs, $pop_tree, %sub_pops, @alleles);
+  
+  my @inputs = (
+    q{<input class="graph_config" type="hidden" name="legendpos" value="'east'" />},
+    q{<input class="graph_config" type="hidden" name="legendmark" value="'arrow'" />},
+    '<input class="graph_dimensions" type="hidden" value="[25,25,20]" />',
+  );
   
   # Get alleles list
   foreach my $pop_name (sort keys %$pop_freq) {
@@ -71,12 +77,12 @@ sub content {
         
         $values .= ',' if $values ne '';
         $freq    = 0.5 if $freq < 0.5; # Fixed bug if freq between 0 and 0.5
-        $values .= "['$al',$freq]";
+        $values .= "[$freq,'$al']";
         last;
       }
     }
     
-    push @inputs, qq{<input type="hidden" class="population" value="[$values]" />};
+    push @inputs, qq{<input type="hidden" class="graph_data" value="[$values]" />};
     
     if ($short_name =~ /ALL/) {
       push @graphs, sprintf('
