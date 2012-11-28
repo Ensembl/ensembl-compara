@@ -253,7 +253,7 @@ sub get_full_cafe_table_from_db {
             my $sp;
             eval {$sp = $member->genome_db->name};
             next if ($@);
-            $sp =~ s/_/\./;
+            $sp =~ s/_/\./g;
             $species{$sp}++;
         }
 
