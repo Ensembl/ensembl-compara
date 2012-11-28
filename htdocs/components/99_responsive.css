@@ -90,4 +90,6 @@ towards interesting content. */
 
   div.icon-holder { width: 260px; }
 
+  div.did-you-know { float: none; margin-left: 0; width: auto; }
+  div.species-list div.species-box { float: none; width: auto; }
 }
