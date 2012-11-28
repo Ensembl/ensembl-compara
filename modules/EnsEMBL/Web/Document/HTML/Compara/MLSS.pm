@@ -257,9 +257,19 @@ sub fetch_input {
     my $pairwise_params               = $mlss->get_value_for_tag('param');
     my $ref_genome_db                 = $genome_db_adaptor->fetch_by_name_assembly($ref_species);
     my $non_ref_genome_db             = $genome_db_adaptor->fetch_by_name_assembly($non_ref_species);
-       $ref_dna_collection_config     = eval $mlss->get_value_for_tag('ref_dna_collection');
-       $non_ref_dna_collection_config = eval $mlss->get_value_for_tag('non_ref_dna_collection');
-       
+      
+    ## hack for double-quotes
+    my $string_ref_dna_collection_config  = $mlss->get_value_for_tag("ref_dna_collection");
+    if ($string_ref_dna_collection_config) {
+       $string_ref_dna_collection_config =~ s/\"/\'/g;
+       $ref_dna_collection_config = eval $string_ref_dna_collection_config;
+    }
+    my $string_non_ref_dna_collection_config  = $mlss->get_value_for_tag("ref_dna_collection");
+    if ($string_non_ref_dna_collection_config) {
+       $string_non_ref_dna_collection_config =~ s/\"/\'/g;
+       $non_ref_dna_collection_config = eval $string_non_ref_dna_collection_config;
+    }
+ 
     $results->{'num_blocks'} = $num_blocks;
     
     $ref_results->{'name'}                    = $ref_genome_db->name;
