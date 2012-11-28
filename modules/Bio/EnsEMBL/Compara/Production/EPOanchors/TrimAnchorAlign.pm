@@ -59,7 +59,7 @@ sub fetch_input {
 
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  $self->get_params($self->parameters);
+  $self->get_params($self->analysis->parameters);
   $self->get_params($self->input_id);
 
   if (!$self->anchor_id) {
