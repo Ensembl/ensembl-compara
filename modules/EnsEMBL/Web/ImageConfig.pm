@@ -646,9 +646,9 @@ sub load_user_tracks {
       my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
       
       next unless $analysis;
-      
+   
       $analysis->web_data->{'style'} ||= $upload_sources{$logic_name}{'style'};
-      
+     
       my ($strand, $renderers) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
@@ -757,7 +757,15 @@ sub _add_datahub_tracks {
       'datahub'       => 1,
       %$options
     };
-
+    # Alternative rendering order for genome segmentation and similar
+    if ($track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish') {
+      $source->{'renderers'} = [
+          'off',    'Off',
+          'compact', 'Continuous',
+          'normal', 'Separate',
+          'labels', 'Separate with labels',
+      ];
+    }
     $source->{'colour'} = $track->{'color'} if (exists($track->{'color'}));
 
     my $type = ref($track->{'type'}) eq 'HASH' ? uc($track->{'type'}{'format'}) : uc($track->{'type'});
@@ -863,14 +871,14 @@ sub _add_bam_track {
 
 sub _add_bigbed_track {
   my ($self, %args) = @_;
-  
-  my $renderers = [
+ 
+  my $renderers = $args{'source'}{'renderers'} || [
     'off',    'Off', 
     'normal', 'Normal', 
     'labels', 'Labels',
     'compact', 'Compact',
   ];
-  
+
   my $options = {
     external => 'external',
     sub_type => 'url',
@@ -898,6 +906,12 @@ sub _add_bigbed_track {
 sub _add_bigwig_track {
   my ($self, %args) = @_;
   
+  my $renderers = $args{'source'}{'renderers'} || [
+      'off',    'Off',
+      'tiling', 'Wiggle plot',
+      'compact', 'Compact',
+  ];
+ 
   my $options = {
     external => 'external',
     sub_type => 'bigwig',
@@ -908,12 +922,8 @@ sub _add_bigwig_track {
   
   $self->_add_file_format_track(
     format    => 'BigWig', 
-    renderers =>  [
-      'off',    'Off',
-      'tiling', 'Wiggle plot',
-      'compact', 'Compact',
-    ], 
-    options => $options,
+    renderers =>  $renderers,
+    options   => $options,
     %args
   );
 }
@@ -2163,7 +2173,7 @@ sub add_alignments {
   my $alignments = {};
   my $self_label = $species_defs->species_label($species, 'no_formatting');
   my $static     = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '/info/data/comparative_analysis.html' : '/info/docs/compara/analyses.html';
-  
+ 
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
     next unless $row->{'species'}{$species};
     
