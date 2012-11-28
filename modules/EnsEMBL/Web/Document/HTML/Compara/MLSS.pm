@@ -264,7 +264,7 @@ sub fetch_input {
        $string_ref_dna_collection_config =~ s/\"/\'/g;
        $ref_dna_collection_config = eval $string_ref_dna_collection_config;
     }
-    my $string_non_ref_dna_collection_config  = $mlss->get_value_for_tag("ref_dna_collection");
+    my $string_non_ref_dna_collection_config  = $mlss->get_value_for_tag("non_ref_dna_collection");
     if ($string_non_ref_dna_collection_config) {
        $string_non_ref_dna_collection_config =~ s/\"/\'/g;
        $non_ref_dna_collection_config = eval $string_non_ref_dna_collection_config;
