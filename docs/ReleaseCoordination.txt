@@ -213,25 +213,25 @@ eg
 $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_species_sets.pl \
     --conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --dbname compara_master > update_species_sets.out 2> update_species_sets.err
 
-# Add/Update any dna tags if necessary (they may be already present). There should be a tag for each of the multiple alignments.
+# Add/Update any dna tags if necessary (they may be already present - see NOTE below). There should be a tag for each of the multiple alignments.
 # Note that fish will already have had a species_set_tag added by the above script.
 
 # 6way epo
-> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34115,"name","primates"); ## Be careful with the IDs! They are ss_ids
+#> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34115,"name","primates"); ## Be careful with the IDs! They are ss_ids
 
 # 12way epo
-> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34114,"name","mammals");  ## Be careful with the IDs!
+#> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34114,"name","mammals");  ## Be careful with the IDs!
 
 # 19way mercator/pecan
-> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34117,"name","amniotes");  ## Be careful with the IDs!
+#> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34117,"name","amniotes");  ## Be careful with the IDs!
 
 # 35way low coverage
-> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34338,"name","mammals");  ## Be careful with the IDs!
+#> INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34338,"name","mammals");  ## Be careful with the IDs!
 
 # Check FISHES and BIRDS if there is any new alignments
 
 #
-# TODO: create_mlss should perform this insert if --species_set_name option has been provided on the command line
+# NOTE: create_mlss already performs this insert if --species_set_name option has been filled in on the command line
 # (Check this! make sure this is the case)
  
 
@@ -281,6 +281,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_datab
 # rel.67:   2.1h (launched from compara3)
 # rel.68:   1h40m (run on compara3)
 # rel.69:   2.5h
+# rel.70   ~3.5h (compara1 was slow)
 
 If new method_link_species_sets are added in the master after this, you use this
 script again to copy the new relevant data. In such case, you will have to:
@@ -414,15 +415,16 @@ $ bsub -q yesterday -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
     Note_4: for multiple alignments that SHOULD HAVE BEEN automatically copied from the prev.release,
     check that you have the ancestral dnafrags copied. Again this should now happen automatically.
 
-    Note 5: the "patch-to-ref" alignment as the mlss_id 556, which is skipped (via meta) because the data needs to be recomputed
-    every release. This means that the entry in the mlss table is not present and must be manually added.
+    Note 5: the "patch-to-ref" alignment as the mlss_id (eg. 556), which is skipped (via meta) because the data needs to be recomputed
+    every release. This means that the entry in the mlss table is not present and must be manually added. This applies to both human 
+    and mouse (as of e70). 
 
     Note 6: to avoid constantly recomputing the indices, there is a "-re_enable 0" flag on copy_data.pl.
             The last run of the script (for each type of data) should not have the flag, to re-enable the indices. Otherwise.
             the "keys disabled" properly will be transmitted to the staging / web servers, which may slow down the websites.
 
-    Note 7: for human and mouse patches patches which have "changed" or no longer exist ("deleted") from the previous 
-	    release alignments will have to removed from those alignments. 
+    Note 7: for human and mouse patches which have "changed" or no longer exist ("deleted") from the previous 
+	    release the affected alignments will have to be removed from the release db. 
 
 # rel.58
 #           30m to copy over Human-vs-Marmoset
@@ -553,15 +555,16 @@ $ bsub -q yesterday -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
 ## Make sure that all the pairwise alignment are in the database
 before loading these (TRANSLATED_BLAT_NET and BlastZ-Net).
 
-         # Find all the relevant mlss_ids:
-$ export AFFECTED_MLSSS=`mysql --defaults-group-suffix=_compara1 kb3_hsap_lastz_hap_68 -N -e "select group_concat(distinct(method_link_species_set_id) SEPARATOR ' ') from genomic_align join dnafrag using (dnafrag_id) where genome_db_id=90 and method_link_species_set_id<1000"`
+         # Find all the relevant mlss_ids (NOTE you will need to do this 3 times in all. Once each for both human and mouse, and again for mouse patches against human - from e70):
+$ export AFFECTED_MLSSS=`mysql --defaults-group-suffix=_compara2 kb3_mmus_lastz_hap_70 -N -e "select group_concat(distinct(method_link_species_set_id) SEPARATOR ' ') from genomic_align join dnafrag using (dnafrag_id) where genome_db_id=134 and method_link_species_set_id<1000"`
 
         # Use the --merge option of copy_data:
-$ time for i in $AFFECTED_MLSSS; do echo $i; $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/copy_data.pl --from_url mysql://ensro@compara1/kb3_hsap_lastz_hap_68 --to_url mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_ensembl_compara_68 --mlss $i --merge; done
+$ time for i in $AFFECTED_MLSSS; do echo $i; $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/copy_data.pl --from_url mysql://ensro@compara2/kb3_mmus_lastz_hap_70 --to_url mysql://ensadmin:${ENSADMIN_PSW}@compara3/sf5_ensembl_compara_70 --mlss $i --merge; done
 
 # rel.64: 1h (13 affected mlsss)
 # rel.66: 12m49s (14 affected mlss_ids)
 # rel.67: 10m  (14 affected mlss_ids)
+# rel.70: 14min for human (14 mlssids) and 5min for mouse (5 mlssids)
 
 10.2 Syntenies
 
@@ -608,7 +611,7 @@ $ init_pipeline.pl AncestralMerge_conf.pm -password $ENSADMIN_PSW
     If everything is ok, drop hive-specific tables:
     You may need to remove a foreign key in analysis_description before that.
 
-> ALTER TABLE analysis_description DROP FOREIGN KEY analysis_description_ibfk_1;
+> ALTER TABLE analysis_description DROP KEY analysis_idx;
 > CALL drop_hive_tables;
 > TRUNCATE analysis; TRUNCATE analysis_description;
 
