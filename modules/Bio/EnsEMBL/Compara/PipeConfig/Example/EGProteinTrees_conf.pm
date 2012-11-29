@@ -45,8 +45,9 @@ use base qw(Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf);
 sub _pipeline_db_options {
   my ($self) = @_;
   return {
-    #eg_release=9
-    #release=61
+    eg_release=>17,
+    release=>70,
+    division_name=>'protists',
 
     prefix => 'ensembl_compara',
     suffix => 'hom_'.$self->o('eg_release').'_'.$self->o('release'), #output hom_9_61
@@ -74,12 +75,12 @@ sub default_options {
     #Dirs
 #    ensembl_cvs_root_dir  =>  '',
     exe_dir               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
-    base_dir              =>  '/nfs/panda/ensemblgenomes/production/compara/'.$self->o('ENV', 'USER').'/hive',
+    base_dir              =>  '/nfs/nobackup/ensemblgenomes/uma/workspace/compara/'.$self->o('ENV', 'USER').'/hive',
     work_dir              =>  $self->o('base_dir').'/'.$self->o('mlss_id').'/PT',
     blast_tmp_dir         =>  $self->o('work_dir').'/blastTmp',
 
     #Executables
-    wublastp_exe    =>  'wublastp',
+    wublastp_exe    =>  $self->o('exe_dir').'/wublast/wublastp',
     hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
     mcoffee_exe     =>  $self->o('exe_dir').'/t_coffee',
     mafft_exe       =>  $self->o('exe_dir').'/mafft-distro/bin/mafft',
@@ -104,8 +105,8 @@ sub default_options {
 
     #Trees
     use_exon_boundaries     =>  0,
-    use_genomedb_id         =>  1,
-    tree_dir                =>  $self->o('ensembl_cvs_root_dir').'/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
+    use_genomedb_id         =>  0,
+   # tree_dir                =>  $self->o('ensembl_cvs_root_dir').'/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
 #    species_tree_input_file =>  $self->o('tree_dir').'/'.$self->o('division_name').'.peptide.nh',
 
     # hive_capacity values for some analyses:
@@ -126,7 +127,7 @@ sub default_options {
         'HMMer_classify_capacity'   => 100,
 
     #DNDS
-    codeml_parameters_file  => $self->o('ensembl_cvs_root_dir').'/EGCompara/config/prod/configs/Release'.$self->o('eg_release').'/codeml.ctl.hash',
+    codeml_parameters_file  => $self->o('ensembl_cvs_root_dir').'ensembl-compara/scripts/homology/codeml.ctl.hash',
     taxlevels               => ['cellular organisms'],
     filter_high_coverage    => 0,
 
@@ -139,24 +140,24 @@ sub default_options {
       -dbname => $self->o('db_name'),
     },
 
-#    master_db => {
-#      -host   => '',
-#      -port   => 1,
-#      -user   => '',
-#      -pass   => '',
-#      -dbname => 'ensembl_compara_master',
-#    },
+    master_db => {
+      -host   => 'mysql-eg-pan-1.ebi.ac.uk',
+      -port   => 4276,
+      -user   => 'ensrw',
+      -pass   => 'xxxxx',
+      -dbname => 'ensembl_compara_master',
+    },
 
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
 
-#    clusterprod_1 => {
-#      -host   => '',
-#      -port   => 1,
-#      -user   => '',
-#      -db_version => $self->o('release')
-#    },
-#
+   staging_2 => {
+      -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+      -port   => 4275,
+      -user   => 'ensro',
+      -db_version => $self->o('release')
+    },
+
 #    staging_1 => {
 #      -host   => '',
 #      -port   => 1,
@@ -164,35 +165,40 @@ sub default_options {
 #      -db_version => $self->o('release')
 #    },
 #
-#    staging_2 => {
-#      -host   => '',
-#      -port   => ,
-#      -user   => 'ensro',
-#      -db_version => $self->o('release')
-#    },
+   	clusterprod_1 => {
+      -host   => 'mysql-cluster-eg-prod-1.ebi.ac.uk',
+      -port   => 4238,
+      -user   => 'ensro',
+      -db_version => $self->o('release')
+    },
 
     prev_release              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
     reuse_core_sources_locs   => [],
     reuse_db                  => q{}, #Set to this to ignore reuse otherwise ....
 
-    do_not_reuse_list => [], # set this to empty or to the genome db names we should ignore
+    do_not_reuse_list => ['giardia_lamblia'], # set this to empty or to the genome db names we should ignore
 
-#    reuse_core_sources_locs   => [ $self->o('staging_2') ],
-#    curr_core_sources_locs    => [ $self->o('clusterprod_1') ],
-#    reuse_db                  => {
-#       -host   => '',
-#       -port   => 1,
-#       -user   => 'ensro',
-#       -pass   => '',
-#       -dbname => '',
-#    },
+    #reuse_core_sources_locs   => [ $self->o('staging_2') ],
+    curr_core_sources_locs    => [ $self->o('clusterprod_1') ],
+    reuse_db                  => {
+       -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+       -port   => 4275,
+       -user   => 'ensrw',
+       -pass   => 'writ3rs2',
+       -dbname => 'ensembl_compara_protists_16_69',
+    },
 
     #Set these up to perform stable ID mapping
 
-#    stable_id_prev_rel_db => {
-#      #HOST PARAMS
-#    },
+    stable_id_prev_rel_db => {
+	    -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+       -port   => 4275,
+       -user   => 'ensrw',
+       -pass   => 'writ3rs2',
+       -dbname => 'ensembl_compara_protists_16_69',
+
+    },
 
     #To skip set prev_rel_db to empty; other params do need to be set though
     stable_id_prev_release_db => q{},
@@ -224,15 +230,16 @@ sub pipeline_create_commands {
 sub resource_classes {
   my ($self) = @_;
   return {
-         'default'      => {'LSF' => '-q production' },
-         '250Mb_job'    => {'LSF' => '-q production -M250   -R"select[mem>250]   rusage[mem=250]"' },
-         '500Mb_job'    => {'LSF' => '-q production -M500   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-q production -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '2Gb_job'      => {'LSF' => '-q production -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '8Gb_job'      => {'LSF' => '-q production -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         'urgent_hcluster'     => {'LSF' => '-q production -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         'msa'      => {'LSF' => '-q production -W 24:00' },
-         'msa_himem'    => {'LSF' => '-q production -M 32768 -R "rusage[mem=32768]" -W 24:00' },
+         'default'      => {'LSF' => '-q production-rh6' },
+         '250Mb_job'    => {'LSF' => '-q production-rh6 -M250   -R"select[mem>250]   rusage[mem=250]"' },
+         '500Mb_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '500Mb_long_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+         'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         'msa'      => {'LSF' => '-q production-rh6 -W 24:00' },
+         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R "rusage[mem=32768]" -W 24:00' },
   };
 }
 
