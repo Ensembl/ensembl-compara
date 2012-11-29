@@ -187,17 +187,6 @@ foreach my $spp (@valid_spp) {
 
 ##----------------------- NASTY RAW SQL STUFF! ------------------------------
 
-    ## logicnames for valid genes
-    my $genetypes = "'ensembl', 'ensembl_havana_gene', 'havana', 'ensembl_projection',
-      'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'processed_pseudogene', 'human_ensembl_proteins',
-      'ncRNA_pseudogene', 'havana_ig_gene','ensembl_ig_gene', 'ensembl_lincrna', 'ensembl_havana_lincrna',
-      'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN', 'MT_genbank_import'";
-
-    my $authority = $SD->get_config($spp, 'AUTHORITY');
-    if( $authority ){
-      $genetypes .= sprintf(", '%s'",$authority);
-    }
-
     my (%gene_stats, %other_stats);
 
     my @gene_stats_keys   = qw(coding noncoding pseudogene transcript);
@@ -358,29 +347,20 @@ foreach my $spp (@valid_spp) {
     print STDERR "Fgenesh:$other_stats{'fgenpept'}\n" if $DEBUG;
 
     unless ($pre) {
-      if ($allgenetypes) {
         ( $gene_stats{'transcript'} )= &query( $db,
           "select count(distinct t.transcript_id)
-          from transcript t, gene g, analysis a, seq_region sr, coord_system cs
-          where t.seq_region_id = sr.seq_region_id
-          and sr.coord_system_id = cs.coord_system_id
-          and cs.species_id=$spp_id
-          and t.gene_id = g.gene_id
-          and g.analysis_id = a.analysis_id"
+          from transcript t
+          where t.seq_region_id not in (
+          select sa.seq_region_id
+          from seq_region_attrib sa, attrib_type at, seq_region s, coord_system cs
+          where sa.seq_region_id = s.seq_region_id
+          and sa.attrib_type_id = at.attrib_type_id
+          and at.code = 'non_ref'
+          and s.coord_system_id = cs.coord_system_id
+          and cs.species_id=$spp_id)"
         );
-      } else {
-        ( $gene_stats{'transcript'} )= &query( $db,
-				  "select count(distinct t.transcript_id)
-          from transcript t, gene g, analysis a, seq_region sr, coord_system cs
-          where t.seq_region_id = sr.seq_region_id
-          and sr.coord_system_id = cs.coord_system_id
-          and cs.species_id=$spp_id
-          and t.gene_id = g.gene_id
-          and g.analysis_id = a.analysis_id
-          and a.logic_name in ($genetypes)"
-        );
-      }
       print STDERR "Transcripts:$gene_stats{'transcript'}\n" if $DEBUG;
+
         ( $gene_stats{'alt_transcript'} )= &query( $db,
           "select count(distinct t.transcript_id)
           from transcript t, seq_region_attrib sa, attrib_type at, seq_region sr, coord_system cs
@@ -389,6 +369,7 @@ foreach my $spp (@valid_spp) {
           and sr.coord_system_id = cs.coord_system_id
           and cs.species_id=$spp_id
           and sr.seq_region_id = sa.seq_region_id
+          and t.biotype not in ('LRG_gene')
           and at.code = 'non_ref'"
         );
       print STDERR "Transcripts:$gene_stats{'alt_transcript'}\n" if $DEBUG;
