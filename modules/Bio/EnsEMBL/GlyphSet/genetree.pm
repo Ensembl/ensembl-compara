@@ -176,7 +176,6 @@ sub _init {
     if ($highlight_ancestor and $highlight_ancestor == $f->{'_id'}) {
       $bold = 1;
     }
-    $label_colour = 'red' if exists $f->{_subtree_ref};
     $label_colour = "red" if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') && $f->{label} =~ /$current_gene/ );
     $node_colour = "navyblue" if (!$node_colour); # Default colour
     $label_colour = "black" if (!$label_colour); # Default colour
@@ -359,8 +358,6 @@ sub _init {
           __clear  => 1,
           g        => $f->{'_gene'}
         });
-      } elsif (exists $f->{_subtree}) {
-        $txt->{'href'} = $node_href;
       }
       
       push(@labels, $txt);
@@ -738,11 +735,6 @@ sub features {
   } elsif ($f->{'_collapsed'}) { # Collapsed node
     $f->{'_name'}       = $tree->name;
     $f->{'_cigar_line'} = $tree->consensus_cigar_line if UNIVERSAL::can($tree, 'consensus_cigar_line');
-  } elsif ($tree->is_leaf) {
-    my $name = $tree->{_subtree}->stable_id;
-    $name = $tree->{_subtree}->get_tagvalue('model_id') unless $name;
-    $f->{label} =  $f->{'_display_id'} = sprintf('%s (%d genes)', $name, $tree->{_subtree_size});
-    $f->{_subtree_ref} = 1 if exists $tree->{_subtree}->{_supertree};
   } else { # Internal node
     $f->{'_name'} = $tree->name;
   }
