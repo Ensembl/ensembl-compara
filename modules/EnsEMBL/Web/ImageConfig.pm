@@ -578,8 +578,8 @@ sub load_user_tracks {
   
   if ($user) {
     my @groups = $user->get_groups;
-    
-    foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('urls'), map $user->get_group_records('urls', $_), @groups) {
+
+    foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('urls'), map $user->get_group_records($_, 'urls'), @groups) {
       $url_sources{'url_' . $entry->code} = {
         source_name => $entry->name || $entry->url,
         source_type => 'user', 
@@ -593,7 +593,7 @@ sub load_user_tracks {
       };
     }
     
-    foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records('uploads', $_), @groups) {
+    foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records($_, 'uploads'), @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
       
       foreach my $analysis (split /, /, $entry->analyses) {
