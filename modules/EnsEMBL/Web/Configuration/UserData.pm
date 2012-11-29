@@ -150,6 +150,12 @@ sub populate_tree {
     [], { 'command' => 'EnsEMBL::Web::Command::ShareRecord',
      'no_menu_entry' => 1 }
   );
+
+  $self->create_node( 'Unshare', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UnshareRecord',
+     'no_menu_entry' => 1 }
+  );
+
   $self->create_node( 'IDConversion', "Stable ID Conversion", 
     [ qw(idmapper  EnsEMBL::Web::Component::UserData::IDmapper) ],
     { 'no_menu_entry' => 1 }
