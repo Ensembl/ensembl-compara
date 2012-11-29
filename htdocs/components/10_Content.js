@@ -206,7 +206,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           this.elLk[rel] = $('.' + rel, this.el);
         }
         
-        if (!$('.toggleable', this.elLk[rel]).toggle().length) {
+        if (!$('.toggleable:first', this.elLk[rel]).toggle().length) {
           el.siblings('.toggleable').toggle();
         }
       }
