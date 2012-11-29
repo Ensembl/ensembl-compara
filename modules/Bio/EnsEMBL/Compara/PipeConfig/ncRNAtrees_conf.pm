@@ -241,6 +241,8 @@ sub pipeline_analyses {
                     'ALTER TABLE homology          AUTO_INCREMENT=100000001',
                     'ALTER TABLE gene_tree_node    AUTO_INCREMENT=100000001',
                     'ALTER TABLE species_tree_node AUTO_INCREMENT=100000001',
+                    'ALTER TABLE CAFE_gene_family  AUTO_INCREMENT=100000001',
+                    'ALTER TABLE CAFE_species_gene AUTO_INCREMENT=100000001',
                 ],
             },
 #            -wait_for => [ 'copy_table' ],    # have to wait until the tables have been copied
