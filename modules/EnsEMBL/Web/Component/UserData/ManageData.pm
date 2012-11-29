@@ -288,7 +288,7 @@ sub group_shared_data {
     foreach (grep $_, $user->get_group_records($group, 'uploads'), $user->get_group_records($group, 'urls')) {
       push @rows, {
         %{$self->table_row($_)},
-        share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->id, __clear => 1 }))
+        share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->group_id, __clear => 1 }))
       };
     }
     
