@@ -28,10 +28,9 @@ sub process {
     }
     
     %url_params = (
-      type     => 'Account',
-      action   => 'Groups',
-      function => 'View',
-      id       => $group->id,
+      type     => 'UserData',
+      action   => 'ManageData',
+      function => ''
     );
   } else {
     %url_params = (
