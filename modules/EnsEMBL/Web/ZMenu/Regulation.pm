@@ -4,6 +4,8 @@ package EnsEMBL::Web::ZMenu::Regulation;
 
 use strict;
 
+use List::Util qw(first);
+
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
@@ -114,7 +116,7 @@ sub content {
       my ($name, $score, $binding_matrix_name) = @{$motif_features{$motif}};
       my $bm_link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
       my $style;
-      if (scalar @feat == 1 && $feat[0] eq $motif ){
+      if (first { $_ eq $motif } @feat){
         $style = 'style="background-color: #BBCCFF"';
       }
       $pwm_table .= sprintf( '<tr><td %s>%s</td><td %s>%s</td><td %s>%s</td></tr>',
