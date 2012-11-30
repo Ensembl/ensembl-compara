@@ -1,7 +1,7 @@
 // $Revision$
 // Hides options in 'conversion' that don't match the current value in 'species'
 
-Ensembl.Panel.AssemblyMappings = Ensembl.Panel.extend({
+Ensembl.Panel.AssemblyMappings = Ensembl.Panel.ModalContent.extend({
   init: function () {
     var panel = this;
     this.base();
@@ -13,7 +13,6 @@ Ensembl.Panel.AssemblyMappings = Ensembl.Panel.extend({
   },
   
   showBySpecies: function () {
-    this.elLk.conversion.children().hide().filter(':selected').removeAttr('selected').end()
-      .filter('.' + this.elLk.species.val()).show().first().attr('selected', 'selected');
+    this.elLk.conversion.children().hide().filter(':selected').removeAttr('selected').end().filter('.' + this.elLk.species.val()).show().first().attr('selected', 'selected');
   }
 });
