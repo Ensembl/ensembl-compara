@@ -172,10 +172,10 @@ sub new {
         my $colour_2 = $glyphset->my_config('colour_2') || ($feature_type_2 ? $glyphset->my_colour($feature_type_2, 'label') : undef);
 
         my $chr = $glyphset->{'chr'};
-        my $href = $self->{'config'}->hub->url({'type' => 'Location',
-                                                'action' => 'Chromosome', 
-                                                '__clear' => 1,
-                                                'r' => $chr});         
+        my $href = $self->{'config'}->hub->url("ZMenu",{
+          action => 'VChrom',
+          chr => $chr,
+        });
         if ($label_1) {
           my $chr_colour_key = $config->get_parameter('chr_colour_key');
           $colour_1 = $chr_colour_key->{$chr}->{'label'} if $chr_colour_key && $chr_colour_key->{$chr};
@@ -189,7 +189,6 @@ sub new {
             absolutey => 1,
             colour    => $colour_1,
             href      => $href,
-            title     => "$chr: Chromosome Summary",
           }));
         }
         
@@ -204,7 +203,6 @@ sub new {
             absolutey => 1,
             colour    => $colour_2,
             href      => $href,
-            title     => "$chr: Chromosome Summary",
           }));
         }
       }
