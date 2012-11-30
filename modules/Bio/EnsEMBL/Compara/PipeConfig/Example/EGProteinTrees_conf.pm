@@ -143,8 +143,8 @@ sub default_options {
     master_db => {
       -host   => 'mysql-eg-pan-1.ebi.ac.uk',
       -port   => 4276,
-      -user   => 'ensrw',
-      -pass   => 'xxxxx',
+      -user   => 'ensro',
+      -pass   => '',
       -dbname => 'ensembl_compara_master',
     },
 
@@ -184,8 +184,8 @@ sub default_options {
     reuse_db                  => {
        -host   => 'mysql-eg-staging-2.ebi.ac.uk',
        -port   => 4275,
-       -user   => 'ensrw',
-       -pass   => 'writ3rs2',
+       -user   => 'ensro',
+       -pass   => '',
        -dbname => 'ensembl_compara_protists_16_69',
     },
 
@@ -194,8 +194,8 @@ sub default_options {
     stable_id_prev_rel_db => {
 	    -host   => 'mysql-eg-staging-2.ebi.ac.uk',
        -port   => 4275,
-       -user   => 'ensrw',
-       -pass   => 'writ3rs2',
+       -user   => 'ensro',
+       -pass   => '',
        -dbname => 'ensembl_compara_protists_16_69',
 
     },
