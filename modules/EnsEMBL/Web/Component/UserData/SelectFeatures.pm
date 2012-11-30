@@ -48,36 +48,33 @@ sub content {
     
     ## Munge data needed for form elements
     foreach (@mapping_species) {
-      push @species_values, { value => $_, name => $species_defs->species_label($_, 1) };
+      push @species_values, { value => $_, caption => $species_defs->species_label($_, 1) };
      
       my @mappings = ref($assembly_mappings{$_}) eq 'ARRAY' ? @{$assembly_mappings{$_}} : ($assembly_mappings{$_});
  
       foreach my $string (sort { $b cmp $a } @mappings) {
         my ($to, $from) = split '#', $string;
         ## Which mapping set? Have to fetch all, for easy JS auto-changing with species
-        push @forward,  { name => "$from -> $to", value => "${from}:$to", class => $_ };
-        push @backward, { name => "$to -> $from", value => "${to}:$from", class => $_ };
+        push @forward,  { caption => "$from -> $to", value => "${from}:$to", class => "_stt_$_" };
+        push @backward, { caption => "$to -> $from", value => "${to}:$from", class => "_stt_$_" };
       }
     }
 
-    $form->add_element(
-      type   => 'DropDown',
+    $form->add_field({
+      type   => 'dropdown',
       name   => 'species',
       label  => 'Species',
       values => \@species_values,
       value  => $species,
-      select => 'select',
-      class  => 'dropdown_remotecontrol',
-    );
+      class  => '_stt'
+    });
     
-    $form->add_element(
-      type   => 'DropDown',
+    $form->add_field({
+      type   => 'dropdown',
       name   => 'conversion',
       label  => 'Assembly/coordinates to convert',
-      values => [ @forward, @backward ],
-      select => 'select',
-      class  => 'conversion',
-    );
+      values => [ @forward, @backward ]
+    });
 
     ## Check for uploaded data for this species
     my @data = grep { $_->{'species'} eq $species } map { $user ? $user->get_records($_) : (), $session->get_data(type => substr $_, 0, -1) } qw(uploads urls);
@@ -106,7 +103,6 @@ sub content {
     $form->add_element(type => 'File',   name => 'file', label => 'Upload file');
     $form->add_element(type => 'URL',    name => 'url',  label => 'or provide file URL', size => 30);
     
-    $html .= '<input type="hidden" class="panel_type" value="AssemblyMappings" />';
     $html .= $form->render;
   } else {
     $html .= $self->_info('No mappings', '<p>Sorry, no species currently have assembly mappings.</p>');
