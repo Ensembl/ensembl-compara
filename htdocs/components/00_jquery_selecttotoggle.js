@@ -9,11 +9,19 @@
     
     var toggle = function() {
       for (var val in toggleMap) {
-        wrapper.find(toggleMap[val]).hide();
+        if (val != this.value) {
+          wrapper.find(toggleMap[val]).hide().removeAttr('selected checked');
+        }
       }
-      wrapper.find(toggleMap[this.value]).show();
+
+      wrapper.find(toggleMap[this.value]).show().filter('select option').parent().each(function() { //show the requried html block
+        var dropdown = $(this);
+        if (!dropdown.find('option:selected:visible').length) { //in case any selected option got hidden in this, select one of the visible ones
+          dropdown.find('option:visible').first().attr('selected', true);
+        }
+      });
     };
-    
+
     el.on('change.selectToToggle', toggle);
     if (el[0].nodeName == 'SELECT' || el[0].checked) {
       toggle.apply(el[0]);
