@@ -90,6 +90,7 @@ sub default_options {
     quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
     buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
     codeml_exe      =>  $self->o('exe_dir').'/codeml',
+    ktreedist_exe   =>  $self->o('exe_dir').'/ktreedist',
 
     # HMM specific parameters
    'hmm_clustering'            => 0, ## by default run blastp clustering
