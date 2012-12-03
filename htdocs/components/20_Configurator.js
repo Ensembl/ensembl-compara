@@ -120,126 +120,20 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.makeSortable();
     }
     
-    this.elLk.configDivs.on('click', 'ul.config_menu > li.track', function (e) {
+    this.elLk.configDivs.not('.view_config')
+    .on('click', '.menu_option',   $.proxy(this.showConfigMenu, this)) // Popup menus - displaying
+    .on('click', '.popup_menu li', $.proxy(this.setTrackConfig, this)) // Popup menus - setting values
+    .on('click', 'ul.config_menu > li.track', function (e) {
       if (e.target === this) {
         $(this).children('img.menu_option').trigger('click');
       }
       
       return e.target.nodeName === 'A';
-    });
-    
-    // Popup menus - displaying
-    this.elLk.configDivs.on('click', '.menu_option', function () {
-      var el       = $(this);
-      var menu     = el.siblings('.popup_menu');
-      var current  = menu.find('span.current');
-      var selected = el.siblings('input.track_name').val();
-      
-      if (menu.children().length === 2 && !el.parent().hasClass('select_all')) {
-        menu.children(':not(.' + selected + ')').trigger('click');
-      } else {
-        panel.elLk.menus.filter(':visible').not(menu.toggle()).hide();        
-        panel.elLk.menus = panel.elLk.menus.add(menu).filter(function () { return this.style.display !== 'none'; });
-      }
-      
-      if (current.parent().attr('class') !== selected) {
-        menu.find('span.current').removeClass('current').siblings('img.tick').detach().insertBefore(menu.find('.' + selected + ' span').addClass('current'));
-      }
-      
-      menu = current = el = null;
-      
-      return false;
-    });
-    
-    // Popup menus - setting values
-    this.elLk.configDivs.on('click', '.popup_menu li:not(.header)', function () {
-      var li     = $(this);
-      var val    = this.className;
-      var menu   = li.parents('.popup_menu');
-      var subset = val.match(/\s*subset_(\w+)\s*/) || false;
-      
-      if (subset) {
-        menu.hide();
-        panel.elLk.links.children('a.' + subset[1]).trigger('click');
-        return false;
-      }
-      
-      var img     = li.children('img');
-      var track   = menu.parent();
-      var change  = 0;
-      var updated = {};
-      
-      if (track.hasClass('select_all')) {
-        track = track.next().find('li.track:not(.hidden)');
-        
-        if (val === 'all_on') {
-          // First li is off, so use the second (index 1) as default on setting.
-          track.find('li:not(.header):eq(1)').each(function () {
-            var text = $(this).text();
-            
-            $(this).parent().siblings('img.menu_option:not(.select_all)').attr({ 
-              src:   '/i/render/' + this.className + '.gif', 
-              alt:   text,
-              title: text
-            }).siblings('input.track_name').data('newVal', this.className).parent()[this.className === 'off' ? 'removeClass' : 'addClass']('on');
-          });
-        }
-      }
-      
-      track.children('input.track_name').each(function () {
-        var input = $(this);
-        
-        if (input.val() === 'off' ^ val === 'off') {
-          change += (val === 'off' ? -1 : 1);
-        }
-        
-        input.val(input.data('newVal') || val).removeData('newVal');
-        
-        updated[this.name] = [ this.value, li.text() ];
-        
-        input = null;
-      });
-      
-      if (val !== 'all_on') {
-        track.children('img.menu_option').attr({ 
-          src:   '/i/render/' + val + '.gif', 
-          alt:   li.text(),
-          title: li.text()
-        }).end()[val === 'off' ? 'removeClass' : 'addClass']('on');
-      }
-      
-      panel.elLk.links.children(track.data('links')).siblings('.count').children('.on').html(function (i, html) {
-        return parseInt(html, 10) + change;
-      });
-      
-      menu.hide();
-      
-      $.each(updated, function (trackName, attrs) {
-        panel.imageConfig[trackName].el.add(panel.imageConfig[trackName].linked).not(li).children('img.menu_option').attr({ 
-          src:   '/i/render/' + attrs[0] + '.gif', 
-          alt:   attrs[1],
-          title: attrs[1]
-        }).siblings('input.track_name').val(attrs[0]).parent()[attrs[0] === 'off' ? 'removeClass' : 'addClass']('on');
-      });
-      
-      menu = track = img = li = null;
-      
-      return false;
-    });
-    
-    this.elLk.configDivs.on('click', '.popup_menu .header .close', function () {
-      $(this).parents('.popup_menu').hide();
-      return false;
-    });
-    
-    // Header on search results and active tracks sections will act like the links on the left
-    this.elLk.configDivs.on('click', '.config_header', function () {
+    }).on('click', '.config_header', function () { // Header on search results and active tracks sections will act like the links on the left
       var link = $(this).parent().attr('class').replace(/\s*config\s*/, '');
       $('a.' + link, panel.elLk.links).trigger('click');
       return false;
-    });
-    
-    this.elLk.configDivs.on('click', '.favourite', function () {
+    }).on('click', '.favourite', function () {
       Ensembl.EventManager.trigger(
         'changeFavourite', 
         $(this).parent().siblings('input.track_name')[0].name,
@@ -249,13 +143,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       );
       
       return false;
-    });
-    
-    this.elLk.configDivs.on('click', '.menu_help', function () {
+    }).on('click', '.menu_help', function () {
       panel.toggleDescription(this);
       return false;
     });
-    
     
     this.elLk.viewConfigs.on('change', ':input', function () {
       var value, attr;
@@ -380,6 +271,119 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.getContent();
+  },
+  
+  showConfigMenu: function (e, val) {
+    var el       = $(e.currentTarget);
+    var menu     = el.siblings('.popup_menu');
+    var current  = menu.find('span.current');
+    var selected = el.siblings('input.track_name').val();
+    
+    if (menu.children().length === 2 && !el.parent().hasClass('select_all')) {
+      menu.children(':not(.' + selected + ')').trigger('click');
+    } else {
+      this.elLk.menus.filter(':visible').not(menu.toggle()).hide();        
+      this.elLk.menus = this.elLk.menus.add(menu).filter(function () { return this.style.display !== 'none'; });
+    }
+    
+    if (current.parent().attr('class') !== selected) {
+      current.removeClass('current').siblings('img.tick').detach().insertBefore(menu.find('.' + selected + ' span').addClass('current'));
+    }
+    
+    menu = current = el = null;
+    
+    return false;
+  },
+  
+  setTrackConfig: function (e, options) {
+    if ($(e.target).filter('.close').parents('.popup_menu').hide().length) {
+      return false;
+    }
+    
+    var li = $(e.currentTarget);
+    
+    if (li.hasClass('header')) {
+      li = null;
+      return false;
+    }
+    
+    var panel  = this;
+    var val    = e.currentTarget.className;
+    var menu   = li.parent();
+    var subset = val.match(/\s*subset_(\w+)\s*/) || false;
+    
+    if (subset) {
+      menu.hide();
+      this.elLk.links.children('a.' + subset[1]).trigger('click');
+      return false;
+    }
+    
+    var img     = li.children('img');
+    var track   = menu.parent();
+    var change  = 0;
+    var updated = {};
+        options = options || {};
+    
+    if (track.hasClass('select_all')) {
+      track = track.next().find('li.track:not(.hidden)');
+      
+      if (val === 'all_on') {
+        // First li is off, so use the second (index 1) as default on setting.
+        track.find('li:not(.header):eq(1)').each(function () {
+          var text = $(this).text();
+          
+          $(this).parent().siblings('img.menu_option:not(.select_all)').attr({ 
+            src:   '/i/render/' + this.className + '.gif', 
+            alt:   text,
+            title: text
+          }).siblings('input.track_name').data('newVal', this.className).parent()[this.className === 'off' ? 'removeClass' : 'addClass']('on');
+        });
+      }
+    }
+    
+    track.children('input.track_name').each(function () {
+      var input = $(this);
+      
+      if (this.value === 'off' ^ val === 'off') {
+        change += (val === 'off' ? -1 : 1);
+      }
+      
+      input.val(input.data('newVal') || val).removeData('newVal');
+      
+      updated[this.name] = [ this.value, li.text() ];
+      
+      input = null;
+    });
+    
+    if (val !== 'all_on') {
+      track.children('img.menu_option').attr({ 
+        src:   '/i/render/' + val + '.gif', 
+        alt:   li.text(),
+        title: li.text()
+      }).end()[val === 'off' ? 'removeClass' : 'addClass']('on');
+    }
+    
+    if (options.updateCount !== false) {
+      this.elLk.links.children(track.data('links')).siblings('.count').children('.on').html(function (i, html) {
+        return parseInt(html, 10) + change;
+      });
+    }
+    
+    menu.hide();
+    
+    $.each(updated, function (trackName, attrs) {
+      if (panel.imageConfig[trackName] && panel.imageConfig[trackName].el) {
+        panel.imageConfig[trackName].el.add(panel.imageConfig[trackName].linked).not(li).children('img.menu_option').attr({ 
+          src:   '/i/render/' + attrs[0] + '.gif', 
+          alt:   attrs[1],
+          title: attrs[1]
+        }).siblings('input.track_name').val(attrs[0]).parent()[attrs[0] === 'off' ? 'removeClass' : 'addClass']('on');
+      }
+    });
+    
+    menu = track = img = li = null;
+    
+    return false;
   },
   
   addTracks: function (type) {
@@ -639,12 +643,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         data: { time: new Date().getTime() }, // Cache buster for IE
         dataType: 'json',
         success: function (json) {
-          configDiv.html(json.content);
+          var width = configDiv.width(); // Calculate width of div before adding content - much faster to do it now
+          
+          configDiv.detach().html(json.content).insertAfter(panel.elLk.form); // fix for Chrome (23) being slow when inserting a large content into an already large form.
           
           var panelDiv = $('.js_panel', configDiv);
           
           if (panelDiv.length) {
-            Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, { links: [ panel.elLk.links.filter('.active').parent().siblings('a').attr('class'), active ] });
+            Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, $.extend(json.params, {
+              links:       panel.elLk.links.filter('.active').parents('li.parent').andSelf(),
+              imageConfig: panel.imageConfig,
+              width:       width
+            }));
+            
             panel.subPanels.push(panelDiv[0].id);
             
             $('input.track_name', panelDiv).each(function () {
@@ -653,14 +664,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
               var newVal = track.children('input.track_name').val();
               
               if (val !== newVal) {
-                $(this).siblings('.popup_menu').children('.' + newVal).trigger('click');
-                
-                // triggering the click above will cause counts to be changed twice, so compensate for that
-                if (val === 'off' || newVal === 'off') {
-                  panel.elLk.links.children(track.data('links')).siblings('.count').children('.on').html(function (i, html) {
-                    return parseInt(html, 10) + (newVal === 'off' ? 1 : -1);
-                  });
-                }
+                $(this).siblings('.popup_menu').children('.' + newVal).trigger('click', { updateCount: false });
               }
               
               panel.imageConfig[this.name].linked = (panel.imageConfig[this.name].linked || $()).add(this.parentNode);
@@ -755,9 +759,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           }).removeClass('active');
         }
         
-        if (url && !configDiv.children().length) {
-          this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
-          addSection(configDiv);
+        if (url) {
+          if (!configDiv.children().length) {
+            this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
+            addSection(configDiv);
+          }
+          
+          configDiv.data('active', true);
+          this.elLk.configDivs.not(configDiv).data('active', false);
         } else {
           configDiv.find('ul.config_menu > li').each(show);
         }
