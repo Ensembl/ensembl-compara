@@ -280,7 +280,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var el     = $(e.currentTarget);
     var parent = el.parent();
     
-    Ensembl.Panel.Configurator.prototype.showConfigMenu.call(this, e, parent.parents('.subtracks').data('renderer').val());
+    Ensembl.Panel.Configurator.prototype.showConfigMenu.call(this, e);
     
     el.siblings('.popup_menu').position({
       of:        parent,

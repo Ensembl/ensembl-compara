@@ -273,7 +273,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.getContent();
   },
   
-  showConfigMenu: function (e, val) {
+  showConfigMenu: function (e) {
     var el       = $(e.currentTarget);
     var menu     = el.siblings('.popup_menu');
     var current  = menu.find('span.current');
