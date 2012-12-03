@@ -14,7 +14,7 @@ sub glyphset_configs {
   my $self = shift;
   
   if (!$self->{'ordered_tracks'}) {
-    $self->get_node('user_data')->after($_) for grep $_->get('datahub'), $self->tree->nodes;
+    $self->get_node('user_data')->after($_) for grep $_->get('datahub_menu'), $self->tree->nodes;
     $self->SUPER::glyphset_configs;
   }
   
