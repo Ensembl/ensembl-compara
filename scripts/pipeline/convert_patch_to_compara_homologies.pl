@@ -180,7 +180,7 @@ TRANSCRIPT:
         my $orig_transcript_id = '';
         my @supp_feat_pairs = @{$proj_transcript->get_all_supporting_features()};
         foreach my $feat_pair (@supp_feat_pairs){
-            if($feat_pair->hseqname =~ m/^ENSMUST/){
+            if($feat_pair->db_display_name =~ m/^Ensembl .* Transcript$/){
                 $orig_transcript_id = $feat_pair->hseqname;
                 #print $proj_transcript->stable_id().' '.$feat_pair->hseqname."\n";
 
