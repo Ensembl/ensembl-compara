@@ -451,7 +451,7 @@ sub build_imageconfig_form {
     next if $section eq 'track_order';
     
     my $caption = $node->get('caption');
-    my $class   = $node->get('datahub') || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
+    my $class   = $node->get('datahub_menu') || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
     my $div     = $form->append_child('div', { class => "config $section $class" });
     
     $div->append_child('h2', { class => 'config_header', inner_HTML => $caption });
@@ -480,17 +480,17 @@ sub build_imageconfig_form {
           next unless scalar @child_nodes > 1;
           
           my @child_ids = map $_->id, grep { $_->get('node_type') eq 'track' && $_->get('menu') ne 'hidden' } $_->nodes;
-          my $count     = scalar @child_ids;
+          my $total     = scalar @child_ids;
           my $on        = 0;
-             $on       += $self->{'enabled_tracks'}->{$_} for @child_ids;
+             $on       += $self->{'enabled_tracks'}{$_} for @child_ids;
           
           # Add submenu entries to the navigation tree
           $parent_menu->append($tree->get_node($id) || $tree->create_node($id, {
             caption      => $_->get('caption'),
             class        => $parent_menu->id . "-$id",
             url          => '#',
-            count        => $count ? qq{(<span class="on">$on</span>/$count)} : '',
-            availability => $count > 0,
+            count        => $total ? qq{(<span class="on">$on</span>/$total)} : '',
+            availability => $total > 0,
           }));
         }
       } else {
@@ -501,11 +501,11 @@ sub build_imageconfig_form {
       }
     }
     
-    my $on    = $self->{'enabled_tracks'}->{$section} || 0;
-    my $count = $self->{'total_tracks'}->{$section}   || 0;
+    my $on    = $self->{'enabled_tracks'}{$section} || 0;
+    my $total = $self->{'total_tracks'}{$section}   || 0;
     
-    $parent_menu->set('count', qq{(<span class="on">$on</span>/$count)}) if $count;
-    $parent_menu->set('availability', $count > 0);
+    $parent_menu->set('count', qq{(<span class="on">$on</span>/$total)}) if $total;
+    $parent_menu->set('availability', $total > 0);
   }
   
   # When creating HTML for the form, we want only the tracks which are turned on, and their parent nodes - remove all other track nodes before rendering.
@@ -528,7 +528,7 @@ sub build_imageconfig_menus {
   
   my $menu_type = $node->get('menu');
   
-  return if $menu_type eq 'no';
+  return if $menu_type eq 'no' || $menu_type eq 'datahub_subtrack';
   
   my $id       = $node->id;
   my $external = $node->get('external');
@@ -564,8 +564,9 @@ sub build_imageconfig_menus {
     my $desc        = $node->get('description');
     my $controls    = $node->get('controls');
     my $subset      = $node->get('subset');
+    my $features    = $node->get('features');
     my $name        = encode_entities($node->get('name'));
-    my $icon        = $external ? sprintf '<img src="%strack-%s.gif" style="width:48px;height:16px" alt="%s" />', $img_url, lc $external, $external : ''; # Exernal data icons, etc
+    my $icon        = $external ? sprintf '<img src="%strack-%s.gif" class="external" alt="%s" />', $img_url, lc $external, $external : ''; # Exernal data icons, etc
     my @classes     = ($id, 'track');
     my $menu_header = scalar @states > 4 ? qq{<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>} : '';
     my ($selected, $menu, $help);
@@ -600,7 +601,7 @@ sub build_imageconfig_menus {
       push @classes, 'on';
     }
     
-    $self->{'total_tracks'}->{$menu_class}++;
+    $self->{'total_tracks'}{$menu_class}++;
     
     if ($desc) {
       $desc = qq{<div class="desc">$desc</div>};
