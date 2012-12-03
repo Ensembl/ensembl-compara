@@ -5,7 +5,6 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     this.base(id);
     
     this.window    = $(window);
-    this.isIE6     = $('body').hasClass('ie6');
     this.firstOpen = true;
     
     this.setMinMax();
@@ -20,7 +19,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     
     this.base();
     
-    if (!panel.isIE6) {
+    if (!Ensembl.browser.ie6) {
       this.el.draggable({
         containment: 'document',
         handle: 'div.modal_title',
@@ -67,7 +66,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   getCookie: function () {
     var cookie = Ensembl.cookie.get('modal').split('|');
     
-    return cookie.length === 4 && !this.isIE6 ? {
+    return cookie.length === 4 && !Ensembl.browser.ie6 ? {
       width:  Math.min(parseInt(cookie[0], 10), this.maxWidth),
       height: Math.min(parseInt(cookie[1], 10), this.maxHeight),
       left:   parseInt(cookie[2], 10),
@@ -85,7 +84,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       this.firstOpen = false;
     }
     
-    if (this.isIE6) {
+    if (Ensembl.browser.ie6) {
       css = { marginTop: this.window.scrollTop(), marginLeft: this.window.scrollLeft() };
       this.el.css(css);
       this.elLk.background.css(css);
@@ -106,7 +105,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     
     this.elLk.background.hide();
     
-    if (this.isIE6) {
+    if (Ensembl.browser.ie6) {
       $('body').css('overflow', 'auto');
       $('select').show();
     }
@@ -128,7 +127,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     var windowWidth  = this.window.width();
     var windowHeight = this.window.height();
     
-    if (!this.isIE6) {
+    if (!Ensembl.browser.ie6) {
       this.el.resizable('option', {
         maxWidth:  this.maxWidth,
         maxHeight: this.maxHeight,

@@ -37,7 +37,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     this.dragCell    = [];
     this.imageConfig = {};
     this.viewConfig  = {};
-    this.browser     = { ie: body.hasClass('ie'), ie67: body.hasClass('ie67') };
     
     this.elLk.links         = this.params.links.find('> .count > .on');
     this.elLk.wrapper       = this.el.children('.config_matrix_wrapper');
@@ -79,7 +78,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     this.setScrollerSize();
     
     // Fix z-index for popups in IE6 and 7
-    if (this.browser.ie67) {
+    if (Ensembl.browser.ie67) {
       this.elLk.headers.css('zIndex',   function (i) { return 200 - i; });
       this.elLk.renderers.css('zIndex', function (i) { return 100 - i; });
     }
@@ -137,7 +136,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       }
     });
     
-    if (!this.browser.ie) { // IE 8 and below are too slow
+    if (!Ensembl.browser.ie) { // IE 8 and below are too slow
       this.elLk.table.on('mousedown', function (e) {
         // only for left clicks, create a highlight overlay to show which cells are being dragged over
         if ((!e.which || e.which === 1) && /^(TD|P|SPAN)$/.test(e.target.nodeName)) {
@@ -395,7 +394,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   tutorial: function () {
     var panel = this;
     
-    if (this.browser.ie67) {
+    if (Ensembl.browser.ie67) {
       return;
     }
     
@@ -423,12 +422,12 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     }
     
     // IE is to slow to calculate widths, so use estimates
-    var wide = this.browser.ie ? parseInt(this.elLk.tableWrapper.data('maxWidth'), 10) > this.params.width : this.elLk.table.width() > this.el.width(); 
+    var wide = Ensembl.browser.ie ? parseInt(this.elLk.tableWrapper.data('maxWidth'), 10) > this.params.width : this.elLk.table.width() > this.el.width(); 
     
     this.elLk.wrapper[wide ? 'addClass' : 'removeClass']('wide');
     this.elLk.tableWrapper.width(wide ? this.elLk.tableWrapper.data('maxWidth') : 'auto');
     
-    if (!this.browser.ie) {
+    if (!Ensembl.browser.ie) {
       this.elLk.scroller.eq(0).children().width(wide ? this.elLk.wrapper[0].scrollWidth : 'auto');
     }
   },

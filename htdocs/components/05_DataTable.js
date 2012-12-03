@@ -4,8 +4,6 @@ Ensembl.DataTable = {
   dataTableInit: function () {
     var panel = this;
     
-    this.hideFilter = $('body').hasClass('ie67');
-    
     this.elLk.dataTable.each(function (i) {
       // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
       if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable === this) {
@@ -238,7 +236,7 @@ Ensembl.DataTable = {
     function exportHover() {
       $(this).children().toggle();
       
-      if (panel.hideFilter) {
+      if (Ensembl.browser.ie67) {
         $(this).siblings('.dataTables_filter').toggle();
       }
     }

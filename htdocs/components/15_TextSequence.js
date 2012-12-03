@@ -17,7 +17,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     this.base();
     this.initPopups();
     
-    if (!$('body').hasClass('ie')) {
+    if (!Ensembl.browser.ie) {
       $('pre > [title]', this.el).helptip({ deferred: true });
     }
     
