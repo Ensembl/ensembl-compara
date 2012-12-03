@@ -210,7 +210,7 @@ sub init_label {
   
   if ($hover) {
     my $fav       = $config->get_favourite_tracks->{$track};
-    my @renderers = @{$node->get('renderers') || []};
+    my @renderers = grep !/default/i, @{$node->get('renderers') || []};
     my $subset    = $node->get('subset');
     my @r;
     
