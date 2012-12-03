@@ -10,14 +10,21 @@
     var toggle = function() {
       for (var val in toggleMap) {
         if (val != this.value) {
-          wrapper.find(toggleMap[val]).hide().removeAttr('selected checked');
+          wrapper.find(toggleMap[val]).hide().removeAttr('selected checked').filter('option').each(function() { // if hiding an option element, also disable it to make it work in webkit
+            var option = $(this);
+            if (typeof option.data('_stt_disabled') === 'undefined') {
+              option.data('_stt_disabled', !!this.disabled); // remember original disabled attribute
+            }
+          }).attr('disabled', true);
         }
       }
 
-      wrapper.find(toggleMap[this.value]).show().filter('select option').parent().each(function() { //show the requried html block
+      wrapper.find(toggleMap[this.value]).show().filter('option').attr('disabled', function() {
+        return $(this).data('_stt_disabled');
+      }).filter('select option').parent().each(function() { //show the requried html block
         var dropdown = $(this);
-        if (!dropdown.find('option:selected:visible').length) { //in case any selected option got hidden in this, select one of the visible ones
-          dropdown.find('option:visible').first().attr('selected', true);
+        if (!dropdown.find('option:selected:enabled').length) { //in case any selected option got hidden in this, select one of the visible ones
+          dropdown.find('option:enabled').first().attr('selected', true);
         }
       });
     };
