@@ -8,11 +8,13 @@ Ensembl.extend({
   initialize: function () {
     var hints       = this.cookie.get('ENSEMBL_HINTS');
     var imagePanels = $('.image_panel');
+    var bodyClass   = $('body')[0].className.split(' ');
     
     if (!window.name) {
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
+    this.browser         = {};
     this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.hashParamRegex  = '([#?;&]__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch   = new RegExp(/[#?;&]r=([^;&]+)/);
@@ -23,6 +25,12 @@ Ensembl.extend({
     this.initialPanels   = $('.initial_panel');
     this.minWidthEl      = $('#min_width_container');
     this.images          = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
+    
+    for (var i in bodyClass) {
+      if (bodyClass[i]) {
+        this.browser[bodyClass[i]] = true;
+      }
+    }
     
     if (this.dynamicWidth && !window.name.match(/^popup_/)) {
       var width = this.imageWidth();
