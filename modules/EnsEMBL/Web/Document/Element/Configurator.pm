@@ -30,7 +30,7 @@ sub get_json {
   return {
     wrapper   => qq{<div class="modal_wrapper config_wrapper"></div>},
     content   => $self->content,
-    params    => { tracks => $self->{'tracks'}, order => $self->{'track_order'} },
+    params    => { tracks => $self->{'tracks'}, order => $self->{'track_order'}, %{$self->{'json_params'} || {}} },
     panelType => $self->{'panel_type'}
   };
 }
@@ -64,10 +64,6 @@ sub init_config {
   
   $view_config->build_form($controller->object, $image_config);
   
-  my $form = $view_config->get_form;
-  
-  $form->add_element(type => 'Hidden', name => 'component', value => $action, class => 'component');
-  
   if ($image_config) {
     if ($image_config->multi_species) {
       foreach (@{$image_config->species_list}) {
@@ -97,10 +93,13 @@ sub init_config {
     }
   }
   
+  my $form = $view_config->get_form;
+  
   if ($hub->param('partial')) {
     $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
     $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
   } else {
+    $form->add_element(type => 'Hidden', name => 'component', value => $action, class => 'component');
     $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config));
   }
   
@@ -109,7 +108,7 @@ sub init_config {
   $self->tree    = $view_config->tree;
   $self->caption = 'Configure view';
   
-  $self->{$_} = $view_config->{$_} || {} for qw(tracks track_order);
+  $self->{$_} = $view_config->{$_} || {} for qw(tracks track_order json_params);
   
   $self->add_image_config_notes($controller) if $image_config;
 }
