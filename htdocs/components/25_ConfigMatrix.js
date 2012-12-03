@@ -1,20 +1,20 @@
 // $Revision$
 
-/** TODO:     
-  update link count correctly when column track in main panel is turned on/off
-  
-  only column nodes appear in track order - need all sortable nodes somehow
-  filter subtracks
-  change tutorial to be HTML (use helptip style?) so that wording can be correct for any column/row types
-  filter classes (<select>) for datahubs?
+/** FIXME:
   hover labels for tracks don't link correctly to subtracks in popups
+  only column nodes appear in track order - need all sortable nodes somehow
+  change tutorial to be HTML (use helptip style?) so that wording can be correct for any column/row types
+  
+  TODO: 
+  update link count correctly when column track in main panel is turned on/off
+  filter subtracks
+  filter classes (<select>) for datahubs?
   
   (look at hiding rows outside the viewport to increase interaction speed in ie)
   (look at appending popup to cell, rather than wrapper)
   (remove column and row hovers from initial DOM (build template, attach/detach))
   
   find other TODO and FIXME in this file and deal with them
-  clean up commented-out lines of code
 **/
 
 Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
@@ -208,7 +208,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     
     // FIXME: too slow - find a way to do this without triggering loads of individual events
     this.elLk.renderers.filter('.select_all').children('.popup_menu').children('li:not(.header)').on('click', function () {
-      $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li' + (this.className === 'all_on' ? ':not(.header):eq(1)' : '.' + this.className)).trigger('click');
+      $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li' + (this.className === 'all_on' ? '.off +' : '.' + this.className)).trigger('click');
       return false;
     });
     

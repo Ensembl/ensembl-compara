@@ -328,8 +328,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       track = track.next().find('li.track:not(.hidden)');
       
       if (val === 'all_on') {
-        // First li is off, so use the second (index 1) as default on setting.
-        track.find('li:not(.header):eq(1)').each(function () {
+        // Use the first renderer after "off" as default on setting.
+        track.find('li.off +').each(function () {
           var text = $(this).text();
           
           $(this).parent().siblings('img.menu_option:not(.select_all)').attr({ 
