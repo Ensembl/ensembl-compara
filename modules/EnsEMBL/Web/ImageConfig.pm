@@ -220,7 +220,7 @@ sub bgcolour            { return $_[0]->bgcolor;                                
 sub get_node            { return shift->tree->get_node(@_);                                    }
 sub get_parameters      { return $_[0]->{'_parameters'};                                       }
 sub get_parameter       { return $_[0]->{'_parameters'}{$_[1]};                                }
-sub set_width           { $_[0]->set_parameter('width', $_[1]);  } # TODO: find out why we have width and image_width. delete?
+sub set_width           { $_[0]->set_parameter('width', $_[1]);                                } # TODO: find out why we have width and image_width. delete?
 sub image_height        { return shift->parameter('image_height',    @_);                      }
 sub image_width         { return shift->parameter('image_width',     @_);                      }
 sub container_width     { return shift->parameter('container_width', @_);                      }
@@ -237,20 +237,22 @@ sub get_user_settings {
 }
 
 sub default_track_order {
-  my ($self,@tracks) = @_;
-
-  my (@out,%seen,%before,%after);
-  foreach my $t (@tracks) {
-    next unless my $ta = $t->get('track_after');
-    $before{$ta->id} = $t;
-    $after{$t->id} = $ta;
+  my ($self, @tracks) = @_;
+  my (@out, %seen, %before, %after);
+  
+  foreach (@tracks) {
+    next unless my $ta = $_->get('track_after');
+    $before{$ta->id} = $_;
+    $after{$_->id}   = $ta;
   }
-  foreach my $t (grep { not $after{$_->id} } @tracks) {
-    for(my $t2=$t; $t2 and not $seen{$t2} ; $t2=$before{$t2->id}) {
-      push @out,$t2;
+  
+  foreach my $t (grep !$after{$_->id}, @tracks) {
+    for (my $t2 = $t; $t2 && !$seen{$t2}; $t2 = $before{$t2->id}) {
+      push @out, $t2;
       $seen{$t2} = 1; # %seen is paranoia against infinite loops
     }
   }
+  
   return @out;
 }
 
@@ -716,15 +718,128 @@ sub _add_datahub {
       if ($dataset->{'error'}) {
         warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
       } else {
+        my $func = scalar keys %{$dataset->{'config'}{'dimensions'} || {}} ? '_add_datahub_tracks_matrix' : '_add_datahub_tracks';
+        
         if ($dataset->{'config'}{'subsets'}) {
-          foreach (@{$dataset->{'tracks'}}) {
-            $self->_add_datahub_tracks($_, $menu_name, $dataset->{'config'}{'description_url'});
-          }
+          $self->$func($_, $menu_name, $dataset->{'config'}) for @{$dataset->{'tracks'}};
         } else {
-          $self->_add_datahub_tracks($dataset, $menu_name);
+          $self->$func($dataset, $menu_name);
         }
       }
     }
+  }
+}
+
+sub _add_datahub_tracks_matrix {
+  my ($self, $dataset, $name, $config) = @_;
+  $config ||= $dataset->{'config'};
+  
+  my ($x, $y)   = map $config->{'dimensions'}{"dimension$_"} || $config->{'dimensions'}{"dim$_"}, qw(X Y);
+  my ($x_label) = map { /subGroup\d/ && $config->{$_}{'name'} eq $x ? $config->{$_} : () } keys %$config;
+  my ($y_label) = map { /subGroup\d/ && $config->{$_}{'name'} eq $y ? $config->{$_} : () } keys %$config;
+  my %options   = (
+    menu_key     => $name,
+    menu_name    => $name,
+    submenu_key  => $dataset->{'config'}{'track'},
+    submenu_name => $dataset->{'config'}{'shortLabel'},
+    view         => $dataset->{'config'}{'view'},
+    desc_url     => $config->{'description_url'},
+    axes         => { x => $x, y => $y },
+  );
+  
+  my $link = qq{ <a href="$options{'desc_url'}" rel="external">Go to track description on datahub</a>};
+  my $info = "$config->{'longLabel'}.$link.";
+  my (%matrix_columns, %tracks);
+  
+  foreach my $track (@{$dataset->{'tracks'}}) {
+    my $label_x    = $x_label->{$track->{'subGroups'}{$x}};
+    my $label_y    = $y_label->{$track->{'subGroups'}{$y}};
+    my $key        = join '_', $name, $dataset->{'config'}{'track'}, $label_x;
+    my $column_key = $self->tree->clean_id($key);
+    my $type       = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+    
+    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
+    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
+    # means the short label can be very non specific, because the header gives context of what type of
+    # track it is. For Ensembl we need to have all the information in the track name / caption
+    my $source_name = $track->{'longLabel'};
+    
+    s/_/ /g for $label_x, $label_y, $source_name;
+    
+    my $source = {
+      name        => "$dataset->{'config'}{'track'}_$track->{'track'}",
+      source_name => $source_name,
+      description => $track->{'longLabel'} . $link,
+      source_url  => $track->{'bigDataUrl'},
+      color       => exists $track->{'color'} ? $track->{'color'} : undef,
+      no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
+      datahub     => 'track',
+      option_key  => join('_', 'opt_matrix', $self->tree->clean_id($options{'menu_key'}), $options{'submenu_key'}, "$label_x:$label_y"),
+      column_key  => $column_key,
+      %options
+    };
+    
+    if (exists $track->{'viewLimits'}) {
+      $source->{'viewLimits'} = $track->{'viewLimits'};
+    } elsif (exists $track->{'autoscale'} && $track->{'autoscale'} eq 'off') {
+      $source->{'viewLimits'} = '0:127';
+    }
+    
+    if (exists $track->{'maxHeightPixels'}) {
+      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
+    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
+      $source->{'maxHeightPixels'} = '64:32:16';
+    }
+    
+    $matrix_columns{$type}{$key} ||= {
+      name        => $key,
+      source_name => $label_x,
+      label_x     => $label_x,
+      description => "<p>$info</p><p>Contains the following sub tracks:</p>",
+      info        => $info,
+      datahub     => 1,
+      %options
+    };
+    
+    push @{$matrix_columns{$type}{$key}{'subtracks'}}, [ lc $track->{'longLabel'}, "<li>$track->{'longLabel'}</li>" ];
+    push @{$matrix_columns{$type}{$key}{'features'}{$label_y}}, $source;
+    $tracks{$type}{$source->{'name'}} = $source;
+  }
+  
+  foreach my $format (keys %matrix_columns) {
+    foreach (values %{$matrix_columns{$format}}) {
+      $_->{'description'} .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp lc $b->[0] } @{$_->{'subtracks'}};
+      delete $_->{'subtracks'};
+    }
+    
+    $self->load_file_format(lc $format, $matrix_columns{$format});
+  }
+  
+  $self->load_file_format(lc $_, $tracks{$_}) for keys %tracks;
+}
+
+sub _add_datahub_extras_options {
+  my ($self, %args) = @_;
+  
+  if (exists $args{'menu'}{'maxHeightPixels'} || exists $args{'source'}{'maxHeightPixels'}) {
+    $args{'options'}{'maxHeightPixels'} = $args{'menu'}{'maxHeightPixels'} || $args{'source'}{'maxHeightPixels'};
+
+    (my $default_height = $args{'options'}{'maxHeightPixels'}) =~ s/^.*:([0-9]*):.*$/$1/;
+    
+    $args{'options'}{'height'} = $default_height if $default_height > 0;
+  }
+  
+  $args{'options'}{'viewLimits'} = $args{'menu'}{'viewLimits'} || $args{'source'}{'viewLimits'} if exists $args{'menu'}{'viewLimits'} || exists $args{'source'}{'viewLimits'};
+  $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
+  $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
+  $args{'options'}{'header'}     = $args{'source'}{'submenu_name'};
+  $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}");
+  $args{'options'}{$_}           = $args{'source'}{$_} for qw(label_x features menu_key description info axes datahub option_key column_key);
+  
+  if ($args{'source'}{'datahub'} eq 'track') {
+    $args{'options'}{'menu'}    = 'datahub_subtrack';
+    $args{'options'}{'display'} = 'default';
+    splice @{$args{'renderers'}}, 2, 0, 'default', 'Default';
   }
 }
 
@@ -821,7 +936,7 @@ sub load_file_format {
       my $menu_name    = $source->{'menu_name'};
       my $submenu_key  = $source->{'submenu_key'};
       my $submenu_name = $source->{'submenu_name'};
-      my $options      = { external => 1, datahub => !!$source->{'datahub'} };
+      my $options      = { external => 1, datahub_menu => !!$source->{'datahub'} };
       my $main_menu    = $self->get_node($menu_key) || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name, $options));
          $menu         = $self->get_node($submenu_key);
       
@@ -891,9 +1006,7 @@ sub _add_bigbed_track {
   } else {
     push @$renderers, ('tiling', 'Wiggle plot');
   } 
-
-  $options = $self->_add_datahub_extras_to_options($options, %args);
-
+  
   $self->_add_file_format_track(
     format      => 'BigBed',
     description => 'Bigbed file',
@@ -918,41 +1031,12 @@ sub _add_bigwig_track {
     colour   => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
   };
   
-  $options = $self->_add_datahub_extras_to_options($options, %args);
-  
   $self->_add_file_format_track(
     format    => 'BigWig', 
     renderers =>  $renderers,
     options   => $options,
     %args
   );
-}
-
-sub _add_datahub_extras_to_options {
-  my ($self, $options, %args) = @_;
-  
-  return $options unless $args{'source'}{'datahub'};
-  
-  if (exists $args{'menu'}{'maxHeightPixels'} || exists $args{'source'}{'maxHeightPixels'}) {
-    $options->{'maxHeightPixels'} = $args{'menu'}{'maxHeightPixels'} || $args{'source'}{'maxHeightPixels'};
-
-    (my $default_height = $options->{'maxHeightPixels'}) =~ s/^.*:([0-9]*):.*$/$1/;
-    
-    $options->{'height'} = $default_height if $default_height > 0;
-  }
-  
-  $options->{'viewLimits'}  = $args{'menu'}{'viewLimits'} || $args{'source'}{'viewLimits'} if exists $args{'menu'}{'viewLimits'} || exists $args{'source'}{'viewLimits'};
-  $options->{'no_titles'}   = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
-  $options->{'label_x'}     = $args{'source'}{'label_x'};
-  $options->{'features'}    = $args{'source'}{'features'};
-  $options->{'menu_key'}    = $args{'source'}{'menu_key'};
-  $options->{'set'}         = $args{'source'}{'submenu_key'};
-  $options->{'header'}      = $args{'source'}{'submenu_name'};
-  $options->{'description'} = $args{'source'}{'description'};
-  $options->{'axes'}        = $args{'source'}{'axes'};
-  $options->{'subset'}      = "$options->{'menu_key'}_$options->{'set'}";
-  
-  return $options; 
 }
 
 sub _add_vcf_track {
@@ -1005,6 +1089,8 @@ sub _add_file_format_track {
   
   return unless $menu;
   
+  $self->_add_datahub_extras_options(%args) if $args{'source'}{'datahub'};
+  
   my $type    = lc $args{'format'};
   my $article = $args{'format'} =~ /^[aeiou]/ ? 'an' : 'a';
   my $desc;
@@ -1022,7 +1108,7 @@ sub _add_file_format_track {
       encode_entities($args{'source'}{'source_url'})
     );
   }
-
+  
   my $track = $self->create_track($args{'key'}, $args{'source'}{'source_name'}, {
     display     => 'off',
     strand      => 'f',
@@ -1035,7 +1121,7 @@ sub _add_file_format_track {
     description => $desc,
     %{$args{'options'}}
   });
- 
+  
   $menu->append($track) if $track;
 }
 
@@ -1237,10 +1323,10 @@ sub update_track_renderer {
   my $renderers = $node->data->{'renderers'};
   my %valid     = @$renderers;
   my $flag      = 0;
-
+  
   ## Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
   $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
-
+  
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
   $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
   
