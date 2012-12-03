@@ -839,7 +839,7 @@ sub _add_datahub_extras_options {
   if ($args{'source'}{'datahub'} eq 'track') {
     $args{'options'}{'menu'}    = 'datahub_subtrack';
     $args{'options'}{'display'} = 'default';
-    splice @{$args{'renderers'}}, 2, 0, 'default', 'Default';
+    unshift @{$args{'renderers'}}, 'default', 'Default';
   }
 }
 

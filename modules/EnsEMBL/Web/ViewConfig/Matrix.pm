@@ -242,7 +242,7 @@ sub form_matrix {
           # TODO: renderers. Currently assuming that subtrack renderers match parent renderers.
           my @r = @{$self->deepcopy($_->{'renderers'})};
           
-          splice @r, 2, 0, 'default', 'Default';
+          unshift @r, 'default', 'Default';
           
           my %renderers = @r;
           my $total     = scalar @{$conf->{'features'}{$x}{$id}};
