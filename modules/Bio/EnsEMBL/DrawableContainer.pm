@@ -82,12 +82,24 @@ sub new {
       ## This is much simplified as we just get a row of configurations
       foreach my $row_config (@{$config->glyphset_configs}) {
         my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
+        
+        if ($display eq 'default') {
+          my $column_key = $row_config->get('column_key');
+          
+          if ($column_key) {
+            my $column  = $config->get_node($column_key);
+               $display = $column->get('display') || ($column->get('on') eq 'on' ? 'normal' : 'off') if $column;
+          }
+        }
+           
         next if $display eq 'off';
         
         my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
+        
         next if ($self->{'strandedness'} || $glyphset_ids{$row_config->id} > 1) && $strand eq 'f';
         
         my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
+        
         next unless $self->dynamic_use($classname);
         
         my $glyphset;
