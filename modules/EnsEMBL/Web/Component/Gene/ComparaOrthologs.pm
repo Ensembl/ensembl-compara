@@ -226,10 +226,11 @@ sub content {
   my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ], id => 'orthologues' });
   
   if ($alignview && keys %orthologue_list) {
-    $html .= sprintf(
-      '<p><a href="%s">View sequence alignments of these homologues</a>.</p>', 
+    # PREpend
+    $html = sprintf(
+      '<p><a href="%s">View sequence alignments of all homologues</a>.</p>', 
       $hub->url({ action => 'Compara_Ortholog', function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''), })
-    );
+    ).$html;
   }
   
   $html .= $table->render;
