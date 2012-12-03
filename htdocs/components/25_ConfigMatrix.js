@@ -1,15 +1,35 @@
 // $Revision$
 
+/** TODO:     
+  update link count correctly when column track in main panel is turned on/off
+  
+  only column nodes appear in track order - need all sortable nodes somehow
+  filter subtracks
+  change tutorial to be HTML (use helptip style?) so that wording can be correct for any column/row types
+  filter classes (<select>) for datahubs?
+  hover labels for tracks don't link correctly to subtracks in popups
+  
+  (look at hiding rows outside the viewport to increase interaction speed in ie)
+  (look at appending popup to cell, rather than wrapper)
+  (remove column and row hovers from initial DOM (build template, attach/detach))
+  
+  find other TODO and FIXME in this file and deal with them
+  clean up commented-out lines of code
+**/
+
 Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
     Ensembl.EventManager.register('mouseUp',             this, this.dragStop);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
+    Ensembl.EventManager.register('modalPanelResize',    this, this.setScrollerSize);
   },
   
   init: function () {
     var panel = this;
+    var body  = $('body');
+    var j;
     
     this.base();
     
@@ -17,37 +37,66 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     this.dragCell    = [];
     this.imageConfig = {};
     this.viewConfig  = {};
+    this.browser     = { ie: body.hasClass('ie'), ie67: body.hasClass('ie67') };
     
-    this.elLk.table = $('table.config_matrix', this.el);
+    this.elLk.links         = this.params.links.find('> .count > .on');
+    this.elLk.wrapper       = this.el.children('.config_matrix_wrapper');
+    this.elLk.scroller      = this.el.children('.config_matrix_scroller').add(this.elLk.wrapper).on('scroll', function () { panel.elLk.scroller.not(this).scrollLeft(this.scrollLeft); });
+    this.elLk.filterWrapper = this.el.children('.filter_wrapper');
+    this.elLk.tableWrapper  = this.elLk.wrapper.children('.table_wrapper');
+    this.elLk.noResults     = this.elLk.wrapper.children('.no_results');
+    this.elLk.table         = this.elLk.tableWrapper.children('table.config_matrix');
+    this.elLk.headers       = this.elLk.table.children('thead').children('tr:first').children('th');
+    this.elLk.renderers     = this.elLk.table.children('thead').children('tr.renderers').children('th');
+    this.elLk.rows          = this.elLk.table.children('tbody').children('tr');
+    this.elLk.trackNames    = this.elLk.renderers.children('.track_name').each(function () { panel.imageConfig[this.name] = { renderer: this.value, el: panel.params.imageConfig[this.name].el }; });
+    this.elLk.menus         = this.elLk.renderers.children('.popup_menu');
+    this.elLk.columnHeaders = this.elLk.headers.add(this.elLk.renderers).not('.first');
+    this.elLk.cols          = [].slice.call($.map(this.elLk.table[0].rows[0].cells, function (c, i) { if (i) { return [[]]; } }));
+    this.elLk.subtracks     = $();
+    this.elLk.hiddenCells   = $();
     
-    var colClasses = $.map(this.elLk.table[0].rows[0].cells, function (el) { return el.className; });
-    var linkData   = $.map(this.params.links, function (link) { return 'a.' + link; }).join(', ');
+    this.elLk.tableWrapper.data('maxWidth', this.elLk.tableWrapper[0].style.width).width('auto');
     
-    this.elLk.noResults  = $('.no_results',           this.el);
-    this.elLk.headers    = $('thead tr:first th',     this.elLk.table);
-    this.elLk.renderers  = $('thead tr.renderers th', this.elLk.table);
-    this.elLk.rows       = $('tbody tr',              this.elLk.table);
-    this.elLk.trackNames = $('.track_name',           this.elLk.renderers).each(function () { panel.imageConfig[this.name] = { renderer: this.value }; });
-    this.elLk.menus      = $('.popup_menu',           this.elLk.renderers);
-    this.elLk.options    = $('.option',               this.elLk.rows).each(function () {
+    for (var i = 0; i < this.elLk.table[0].rows.length; i++) {
+      j = this.elLk.cols.length;
+      
+      while (j--) {
+        this.elLk.cols[j].push(this.elLk.table[0].rows[i].cells[j + 1]);
+      }
+    }
+    
+    this.elLk.options = this.elLk.rows.children('.opt').each(function () {
+      var el = $(this);
+      
       this.configCode  = 'opt_matrix_' + panel.id + '_' + this.title; // configCode is used to set the correct values for the ViewConfig
-      this.searchTerms = $.trim(this.parentNode.className + ' ' + colClasses[$(this).index()] + ' ' + this.title).toLowerCase(); // Do this here so we don't have to look up the header row for every cell
-      panel.viewConfig[this.configCode] = $(this).hasClass('on') ? 'on' : 'off';
-    }).on('click', function () {
-      panel.resetSelectAll($(this).toggleClass('on'));
+      this.searchTerms = $.trim(this.parentNode.className + ' ' + panel.elLk.headers.eq(el.index()).children('p').html() + ' ' + this.title).toLowerCase();
+      panel.viewConfig[this.configCode] = el.hasClass('on') ? 'on' : 'off';
     });
     
-    this.elLk.scroller = $('.config_matrix_scroller, .config_matrix_wrapper', this.el).on('scroll', function () {
-      panel.elLk.scroller.not(this).scrollLeft(this.scrollLeft);
-    });
+    this.setEventHandlers();
+    this.tutorial();
+    this.setScrollerSize();
     
-    $('.help', this.el).on('click', function () {
+    // Fix z-index for popups in IE6 and 7
+    if (this.browser.ie67) {
+      this.elLk.headers.css('zIndex',   function (i) { return 200 - i; });
+      this.elLk.renderers.css('zIndex', function (i) { return 100 - i; });
+    }
+  },
+  
+  setEventHandlers: function () {
+    var panel = this;
+    
+    this.el.children('.header_wrapper').children('.help').on('click', function () {
       $(this).toggleClass('open').attr('title', function (i, title) {
         return title === 'Hide information' ? 'Click for more information' : 'Hide information';
       }).siblings('.desc').width($(this).parent().width() - 25).toggle();
+      
+      return false;
     });
     
-    $('select.filter', this.el).on('change', function () {
+    this.elLk.filterWrapper.children('select.filter').on('change', function () {
       panel.elLk.rows.removeClass('hidden');
       
       if (this.value) {
@@ -57,7 +106,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       panel.afterFilter();
     });
     
-    $('input.filter', this.el).on({
+    this.elLk.filterWrapper.children('input.filter').on({
       keyup: function () {
         var value = this.value;
         
@@ -88,10 +137,10 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       }
     });
     
-    if (!$('body').hasClass('ie')) { // IE 8 and below are too slow
+    if (!this.browser.ie) { // IE 8 and below are too slow
       this.elLk.table.on('mousedown', function (e) {
         // only for left clicks, create a highlight overlay to show which cells are being dragged over
-        if ((!e.which || e.which === 1) && (e.target.nodeName === 'TD' || e.target.nodeName === 'P')) {
+        if ((!e.which || e.which === 1) && /^(TD|P|SPAN)$/.test(e.target.nodeName)) {
           panel.dragStart(e);
         }
         
@@ -99,12 +148,12 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       });
     }
     
-    $('.menu_option', this.elLk.renderers).on('click', function () { 
-      panel.elLk.menus.not(this).hide(); 
-    });
+    this.elLk.table.children('thead').children('tr.renderers')
+    .on('click', '.menu_option',   $.proxy(Ensembl.Panel.Configurator.prototype.showConfigMenu, this))
+    .on('click', '.popup_menu li', $.proxy(this.setColumnConfig, this));
     
     // Display a select all popup for columns
-    this.elLk.headers.not('.disabled').hover(function () {
+    this.elLk.headers.hover(function () {
       if (panel.mousemove) {
         return;
       }
@@ -112,7 +161,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       panel.selectAllCol($(this).children('div').show());
     }, function () {
       $(this).children('div').hide();
-    }).find('.select_all_column input').on('click', function () {
+    }).children('.select_all_column').find('input').on('click', function (e) {
       var cls   = this.className;
       var cells = panel.elLk.rows.children('.' + this.name);
       
@@ -126,15 +175,17 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       panel.resetSelectAll(cells);
       
       cells = null;
+      
+      e.stopPropagation();
     });
     
     // Display a select all popup for rows
-    $('th', this.elLk.rows).hover(function () {
+    this.elLk.rows.children('th').hover(function () {
       if (panel.mousemove) {
         return;
       }
     
-      var popup = $(this).children().show();
+      var popup = $(this).children('.select_all_row').show();
       
       if (!popup.data('selectAll')) {
         popup.children('input').prop('checked', panel.allOnRow(this));
@@ -143,71 +194,247 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       
       popup = null;
     }, function () {
-      $(this).children().hide();
-    }).children('.select_all_row').on('click', function () {
+      $(this).children('.select_all_row').hide();
+    }).children('.select_all_row').on('click', function (e) {
       var input   = $('input', this);
       var checked = panel.allOnRow(this.parentNode);
       
-      panel.resetSelectAll($(this).parent().siblings('.option')[checked ? 'removeClass' : 'addClass']('on'));
+      panel.resetSelectAll($(this).parent().siblings('.opt')[checked ? 'removeClass' : 'addClass']('on'));
       
       input.prop('checked', !checked);
       input = null;
+      
+      e.stopPropagation();
     });
     
-    this.elLk.renderers.filter('.select_all').find('.popup_menu li').on('click', function () {
+    // FIXME: too slow - find a way to do this without triggering loads of individual events
+    this.elLk.renderers.filter('.select_all').children('.popup_menu').children('li:not(.header)').on('click', function () {
       $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li' + (this.className === 'all_on' ? ':not(.header):eq(1)' : '.' + this.className)).trigger('click');
       return false;
     });
     
-    this.elLk.renderers.not('.select_all').data('links', linkData);
+    this.elLk.table.children('tbody').on('click', '.opt', function () {
+      var el         = $(this).toggleClass('on');
+      var cellTracks = panel.params.cellTracks ? panel.params.cellTracks[this.title] : false;
+      var popup;
+      
+      if (cellTracks && el.hasClass('on')) {
+        panel.removePopups();
+        
+        popup = el.data('subtracks');
+        
+        if (!popup) {
+          popup = $(panel.params.cellTracks[this.title]);
+          
+          $('.menu_option',   popup).on('click', $.proxy(panel.showConfigMenu, panel));
+          $('.popup_menu li', popup).on('click', $.proxy(panel.setTrackConfig, panel));
+          
+          $('> ul.config_menu > li.track', popup).on('click', function (e) {
+            if (e.target === this) {
+              $(this).children('img.menu_option').trigger('click');
+            }
+            
+            return false;
+          });
+          
+          popup.children('.close').on('click', function () {
+            panel.removePopups($(this).parent());
+            return false;
+          });
+          
+          el.data('subtracks', popup);
+          popup.data({ cell: el, renderer: panel.elLk.renderers.eq(el.index()).children('.track_name') });
+          
+          panel.elLk.subtracks.push(popup[0]);
+          panel.elLk.trackNames.push.apply(panel.elLk.trackNames, popup.find('.track_name').each(function () { panel.imageConfig[this.name] = { renderer: this.value }; }).toArray());
+        }
+        
+        var colRenderer = popup.data('renderer').siblings('img.menu_option')[0];
+        
+        $('> ul.config_menu > li.track > input.track_name[value=default]', popup).siblings('img.menu_option').attr({
+          src:   colRenderer.src, 
+          alt:   colRenderer.alt,
+          title: colRenderer.title
+        }).parent()[$(colRenderer.parentNode).hasClass('on') ? 'addClass' : 'removeClass']('on');
+        
+        $('ul.popup_menu > li.default > img:not(.tick)', popup).attr('src', colRenderer.src);
+        
+        popup.appendTo(panel.elLk.wrapper).position({ of: this, within: panel.elLk.wrapper, my: 'left top', collision: 'flipfit' });
+        
+        colRenderer = null;
+      } 
+      
+      if (cellTracks) {
+        panel.updateLinkCount();
+      } else {
+        panel.resetSelectAll(el);
+      }
+      
+      el = popup = null;
+      
+      return false;
+    });
+  },
+  
+  showConfigMenu: function (e) {
+    var el     = $(e.currentTarget);
+    var parent = el.parent();
     
-    // Fix z-index for popups in IE6 and 7
-    if ($('body').hasClass('ie67')) {
-      this.elLk.headers.css('zIndex',   function (i) { return 200 - i; });
-      this.elLk.renderers.css('zIndex', function (i) { return 100 - i; });
+    Ensembl.Panel.Configurator.prototype.showConfigMenu.call(this, e, parent.parents('.subtracks').data('renderer').val());
+    
+    el.siblings('.popup_menu').position({
+      of:        parent,
+      within:    this.elLk.wrapper,
+      my:        parent.hasClass('select_all') ? 'left bottom+2' : 'left+8 top',
+      at:        parent.hasClass('select_all') ? 'left top'      : 'left center',
+      collision: 'flipfit'
+    });
+    
+    el = parent = null;
+    
+    return false;
+  },
+  
+  setColumnConfig: function (e, options) {
+    var panel = this;
+    var th    = $(e.target).parents('th');
+    var on    = th.hasClass('on');
+    var off   = e.currentTarget.className === 'off' ? -1 : 1;
+    
+    Ensembl.Panel.Configurator.prototype.setTrackConfig.call(this, e, $.extend(options, { updateCount: false }));
+    
+    if ($(e.target).hasClass('close') || $(e.currentTarget).hasClass('header')) {
+      return false;
     }
     
-    this.tutorial();
+    if (panel.params.defaultRenderers && th.hasClass('on') !== on) {
+      this.elLk.options.filter('.' + this.elLk.headers[th.index()].className).find('.on').html(function (i, html) {
+        return parseInt(html, 10) + panel.params.defaultRenderers[$(this).parents('td.opt')[0].title] * off;
+      });
+    }
+    
+    this.elLk.subtracks.filter(function () { return this.parentNode; }).find('> ul.config_menu > li.track > input.track_name[value=default]').siblings('img.menu_option').attr({
+      src:   e.target.src, 
+      alt:   e.target.alt,
+      title: e.target.title
+    }).parent()[th.hasClass('on') ? 'addClass' : 'removeClass']('on');
+    
+    $('ul.popup_menu > li.default > img:not(.tick)', this.elLk.subtracks).attr('src', e.target.src);
+    
+    this.updateLinkCount();
+    
+    th = null;
+    
+    return false;
+  },
+  
+  setTrackConfig: function (e, options) {
+    var li        = $(e.currentTarget);
+    var popup     = li.parents('.subtracks');
+    var cell      = popup.data('cell');
+    var isDefault = e.currentTarget.className === 'default';
+    
+    if (isDefault) {
+      e.currentTarget.className = this.elLk.renderers.eq(cell.index()).children('input.track_name').val();
+    }
+    
+    Ensembl.Panel.Configurator.prototype.setTrackConfig.call(this, e, $.extend(options, { updateCount: false }));
+    
+    if (isDefault) {
+      e.currentTarget.className = 'default';
+      
+      if (!li.parent().siblings('input.track_name').val('default').length) {
+        popup.find('li.track').children('input.track_name').val('default'); // change all tracks in the popup for select all = default
+      }
+    }
+    
+    this.params.defaultRenderers[cell[0].title] = $('> ul.config_menu > li > input.track_name[value=default]', popup).length;
+    
+    if (!($(e.target).hasClass('close') || li.hasClass('header'))) {
+      cell.find('span.on').html(popup.find('li.track.on').length);
+    }
+    
+    this.updateLinkCount();
+    
+    li = popup = cell = null;
+    
+    return false;
+  },
+  
+  // FIXME: often called multiple times for one operation
+  // FIXME: set counts correctly when changing renderer in main panel
+  updateLinkCount: function () {
+    var on   = 0;
+    var link = this.elLk.links.last();
+    var old  = parseInt(link.html(), 10);
+    
+    if (this.params.cellTracks) {
+      this.elLk.options.filter('.on').find('.on').each(function () { on += parseInt(this.innerHTML, 10); });
+    } else {
+      on = this.elLk.renderers.filter('.on').length;
+    }
+    
+    link.html(on);
+    this.elLk.links.first().html(function (i, html) { return parseInt(html, 10) + (on - old); });
+    
+    link = null;
+  },
+  
+  removePopups: function () {
+    (arguments[0] || this.elLk.subtracks.filter(function () { return this.parentNode; })).detach().each(function () {
+      var popup = $(this);
+      
+      if (!popup.find('li.track.on').length) {
+        popup.data('cell').removeClass('on');
+      }
+      
+      popup = null;
+    });
   },
   
   tutorial: function () {
     var panel = this;
     
+    if (this.browser.ie67) {
+      return;
+    }
+    
     this.showTutorial = Ensembl.cookie.get('config_matrix_tutorial') !== 'off';
     
-    var col = panel.elLk.headers.length > 4 ? panel.elLk.headers.length < 12 ? -1 : 11 : panel.elLk.headers.length - 1;
-    var height;
+    this.elLk.tutorial = $('.tutorial', this.el);
     
-    this.elLk.tutorial = $('div.tutorial', this.el)[this.showTutorial ? 'show' : 'hide']().each(function () {
-      var css, pos, tmp;
-      
-      switch (this.className.replace(/tutorial /, '')) {
-        case 'track'    : css = { top: panel.elLk.renderers.eq(1).position().top - 73, marginLeft: panel.elLk.headers.eq(0).outerWidth(true) - 90 }; break;
-        case 'all_track': pos = panel.elLk.renderers.first().position(); css = { top: pos.top + 25, left: pos.left + 50 }; break;
-        case 'col'      : css = { top: panel.elLk.rows.eq(Math.min(panel.elLk.rows.length, 5)).find('th').position().top + 15 }; height = css.top + $(this).height(); break;
-        case 'row'      : tmp = panel.elLk.headers.eq(col); pos = tmp.position(); css = { top: pos.top - 50, left: pos.left + tmp.width() }; break;
-        case 'drag'     : tmp = panel.elLk.rows.eq(Math.min(panel.elLk.rows.length - 1, 4)); css = { top: tmp.position().top, left: tmp.children().eq(col).position().left + 10 }; break;
-        default:          return;
-      }
-      
-      $(this).css(css);
-      
-      tmp = null;
-    });
+    if (this.showTutorial) {
+      this.elLk.tutorial.css('display', 'block');
+    }
     
-    this.elLk.scroller.eq(1).height(function (i, h) { return Math.max(h, height); }).filter(function () { return panel.elLk.table.width() > panel.el.width(); }).addClass('wide');
-    this.elLk.scroller.eq(0).children().width(this.elLk.scroller[1].scrollWidth);
-    
-    $('.toggle_tutorial', this.el).on('click', function () {
+    this.elLk.tutorialToggle = this.el.children('.toggle_tutorial').on('click', function () {
       panel.showTutorial = !panel.showTutorial;
-      panel.elLk.tutorial.toggle();
+      panel.elLk.tutorial.css('display', panel.showTutorial ? 'block' : 'none');
       $(this)[panel.showTutorial ? 'addClass' : 'removeClass']('on');
       Ensembl.cookie.set('config_matrix_tutorial', panel.showTutorial ? 'on' : 'off');
+      
+      return false;
     })[panel.showTutorial ? 'addClass' : 'removeClass']('on');
   },
   
+  setScrollerSize: function () {
+    if (!this.el.parent().data('active')) {
+      return;
+    }
+    
+    // IE is to slow to calculate widths, so use estimates
+    var wide = this.browser.ie ? parseInt(this.elLk.tableWrapper.data('maxWidth')) > this.params.width : this.elLk.table.width() > this.el.width(); 
+    
+    this.elLk.wrapper[wide ? 'addClass' : 'removeClass']('wide');
+    this.elLk.tableWrapper.width(wide ? this.elLk.tableWrapper.data('maxWidth') : 'auto');
+    
+    if (!this.browser.ie) {
+      this.elLk.scroller.eq(0).children().width(wide ? this.elLk.wrapper[0].scrollWidth : 'auto');
+    }
+  },
+  
   allOnRow: function (el) {
-    var tds  = $(el).siblings(':not(.disabled)');
+    var tds  = $(el).siblings('.opt');
     var rtn  = tds.length === tds.filter('.on').length;
     tds = el = null;
     return rtn;
@@ -269,7 +496,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     cells.each(function () {
       reset.row[$(this).parent().index()] = 1;
       reset.col[$(this).index()] = 1;
-    });  
+    });
     
     for (i in reset.row) {
       $('th .select_all_row', this.elLk.rows[i]).data('selectAll', false);
@@ -278,12 +505,22 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     for (i in reset.col) {
       className = $('.select_all_column', this.elLk.headers[i]).data('selectAll', false).parent().attr('class');
       renderer  = this.elLk.renderers.filter('.' + className).find('.track_name');
-      off       = renderer.val() === 'off';
       on        = !!this.elLk.rows.children('.' + className + '.on').length;
+      off       = renderer.val() === 'off';
       
       if (off === on) {
         renderer.siblings('.popup_menu').children(':not(.header):eq(' + (on ? 1 : 0) + ')').trigger('click');
+        
+        this.elLk.subtracks.map(function () {
+          if ($(this).hasClass(className) && $(this).children('track_name').val() === 'default') {
+            return $(this).find('.popup_menu').children(':not(.header):eq(' + (on ? 1 : 0) + ')')[0];
+          }
+        }).trigger('click', true);
       }
+    }
+    
+    if (cells.find('.on').length) {
+      this.updateLinkCount();
     }
     
     cells = null;
@@ -326,16 +563,18 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     
   dragStart: function (e) {
     var panel  = this;
-    var target = $(e.target);
+    var target = e.target.nodeName === 'P' ? $(e.target.parentNode) : e.target.nodeName === 'SPAN' ? $(e.target.parentNode.parentNode) : $(e.target);    
     
-    // Cache the mousemove event for easy unbinding
-    this.mousemove = function (e2) {
-      panel.drag(e2);
-      return false;
-    };
+    if (target[0].nodeName !== 'TD') {
+      target = null;
+      return;
+    }
     
+    this.mousemove = { x: e.pageX, y: e.pageY };
     this.startCell = [ target.index(), target.parent().index() + 2 ]; // cell and row coordinates
-    this.elLk.table.on('mousemove', this.mousemove);
+    
+    this.elLk.table.on('mousemove', $.proxy(this.drag, this));
+    this.removePopups();
     
     target = null;
   },
@@ -345,13 +584,35 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    this.resetSelectAll($('.highlight', this.elLk.table).removeClass('highlight').not('.disabled').toggleClass('on'));
-    this.elLk.table.off('mousemove', this.mousemove);
+    this.elLk.table.off('mousemove');
+    
+    var highlighted = $('.highlight', this.elLk.table).removeClass('highlight');
+    
+    // If only one cell is highlighted, it'll be picked up by the click
+    if (highlighted.length > 1) {
+      var options = highlighted.filter('.opt');
+      
+      if (options.length === 1) {
+        options.trigger('click');
+      } else {
+        this.resetSelectAll(options.toggleClass('on'));
+      }
+      
+      options = null;
+    }
+    
     this.mousemove = false;
+    this.dragCell  = [];
+    
+    highlighted = null;
   },
   
   drag: function (e) {
-    var target = e.target.nodeName === 'P' ? $(e.target.parentNode) : $(e.target);    
+    if (Math.abs(e.pageX - this.mousemove.x) < 3 && Math.abs(e.pageY - this.mousemove.y) < 3) {
+      return; // set a drag threshold
+    }
+    
+    var target = e.target.nodeName === 'P' ? $(e.target.parentNode) : e.target.nodeName === 'SPAN' ? $(e.target.parentNode.parentNode) : $(e.target);    
     
     if (target[0].nodeName !== 'TD') {
       target = null;
@@ -378,7 +639,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     }
     
     $('.highlight', this.elLk.table).not(cells).removeClass('highlight');
-    $(cells).not('.highlight').addClass('highlight');
+    $(cells).not('.highlight').addClass('highlight').not(':has(p)').append('<p></p>');
     
     this.dragCell = cell;
     
@@ -389,36 +650,73 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var cells      = [];
     var rows       = [];
     var rowMatches = {};
-    var i;
+    var colMatches = {};
+    var values, match, options, els, i, j;
     
     if (value) {
-      value = $.trim(value.toLowerCase()).split(' '); // remove extra whitespace
+      options = this.elLk.options.filter(function () { return this.style.display !== 'none'; });
+      value   = value.toLowerCase();
+      match   = value.match(/(?:"[^"]+"|'[^']+')/g);
+      values  = match ? $.map(match, function (match) { return match.replace(/^["']/, '').replace(/["']$/, ''); }) : [ value ];
       
-      this.elLk.options.each(function () {
-        for (i in value) {
-          if (this.searchTerms.indexOf(value[i]) !== -1) {
-            cells.push(this);
-            rowMatches[$(this.parentNode).index()] = true;
-            break;
-          }
+      for (i in values) {
+        value = $.trim(values[i]); // remove extra whitespace
+        
+        if (value === '') {
+          continue;
         }
-      });
+        
+        value = value.split(' ');
+        
+        options.each(function () {
+          match = true;
+          
+          for (i in value) {
+            if (this.searchTerms.indexOf(value[i]) === -1) {
+              match = false;
+              break;
+            }
+          }
+          
+          if (match) {
+            cells.push(this);
+            rowMatches[$(this.parentNode).index()] = colMatches[$(this).index() - 1] = true;
+          }
+        });
+      }
       
       if (cells.length) {
+        els = { show: $(), hide: $() };
+        
         for (i in rowMatches) {
           rows.push(this.elLk.rows[i]);
         }
-      
-        this.elLk.rows.not(rows).hide();
+        
+        this.elLk.rows.not(rows).css('display', 'none');
         this.elLk.options.filter('.filter').removeClass('filter');
-        $(rows).show();
         $(cells).addClass('filter');
+        
+        $(rows).show().each(function () {
+          for (i = 1; i < this.cells.length; i++) {
+            els[colMatches[i - 1] ? 'show': 'hide'].push(this.cells[i]);
+          }
+        });
+        
+        this.elLk.columnHeaders.each(function () {
+          els[colMatches[$(this).index() - 1] ? 'show': 'hide'].push(this);
+        });
+        
+        els.show.css('display', '');
+        els.hide.css('display', 'none');
+        
+        this.elLk.hiddenCells = this.elLk.hiddenCells.add(els.hide.not(this.elLk.hiddenCells));
       } else {
-        this.elLk.rows.hide();
+        this.elLk.rows.css('display', 'none');
       }
     } else {
-      this.elLk.rows.show();
       this.elLk.options.filter('.filter').removeClass('filter');
+      this.elLk.rows.filter(function () { return this.style.display === 'none'; }).add(this.elLk.hiddenCells).css('display', '');
+      this.elLk.hiddenCells = $();
     }
     
     this.afterFilter();
@@ -431,7 +729,12 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       this.elLk.menus.hide();
     }
     
+    if (this.showTutorial) {
+      this.elLk.tutorialToggle.trigger('click');
+    }
+    
     this.elLk.table[shown < 4 ? 'addClass' : 'removeClass']('short');
     this.elLk.noResults[shown ? 'hide' : 'show']();
+    this.setScrollerSize();
   }
 });
