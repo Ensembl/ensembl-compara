@@ -52,8 +52,9 @@ sub set_columns {
   my ($self, $image_config) = @_;
      $image_config   = ref $image_config ? $image_config : $self->hub->get_imageconfig($image_config);
   my $funcgen_tables = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my $tree           = $image_config->tree;
   
-  foreach (grep $_->data->{'set'}, map $_ ? $_->nodes : (), $image_config->get_node('regulatory_features_core'), $image_config->get_node('regulatory_features_other')) {
+  foreach (grep $_->data->{'set'}, map $_ ? $_->nodes : (), $tree->get_node('regulatory_features_core'), $tree->get_node('regulatory_features_other')) {
     my $set       = $_->data->{'set'};
     my $cell_line = $_->data->{'cell_line'};
     my $renderers = $_->get('renderers');
@@ -68,7 +69,7 @@ sub set_columns {
       axes         => { x => 'cell', y => 'evidence type' },
     };
     
-    push @{$conf->{'columns'}}, { display => $_->get('display'), renderers => $renderers, x => $cell_line };
+    push @{$conf->{'columns'}}, { display => $_->get('display'), renderers => $renderers, x => $cell_line, name => $tree->clean_id(join '_', $conf->{'track_prefix'}, $set, $cell_line) };
     
     $conf->{'features'}{$cell_line} = $self->deepcopy($funcgen_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line});
     $conf->{'renderers'}{$_}++ for keys %renderers;
