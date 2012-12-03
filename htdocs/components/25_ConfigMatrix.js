@@ -423,7 +423,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     }
     
     // IE is to slow to calculate widths, so use estimates
-    var wide = this.browser.ie ? parseInt(this.elLk.tableWrapper.data('maxWidth')) > this.params.width : this.elLk.table.width() > this.el.width(); 
+    var wide = this.browser.ie ? parseInt(this.elLk.tableWrapper.data('maxWidth'), 10) > this.params.width : this.elLk.table.width() > this.el.width(); 
     
     this.elLk.wrapper[wide ? 'addClass' : 'removeClass']('wide');
     this.elLk.tableWrapper.width(wide ? this.elLk.tableWrapper.data('maxWidth') : 'auto');
@@ -515,7 +515,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
           if ($(this).hasClass(className) && $(this).children('track_name').val() === 'default') {
             return $(this).find('.popup_menu').children(':not(.header):eq(' + (on ? 1 : 0) + ')')[0];
           }
-        }).trigger('click', true);
+        }).trigger('click', true); // FIXME: find a way to do this without triggering loads of events
       }
     }
     
@@ -562,7 +562,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   },
     
   dragStart: function (e) {
-    var panel  = this;
     var target = e.target.nodeName === 'P' ? $(e.target.parentNode) : e.target.nodeName === 'SPAN' ? $(e.target.parentNode.parentNode) : $(e.target);    
     
     if (target[0].nodeName !== 'TD') {
@@ -651,7 +650,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var rows       = [];
     var rowMatches = {};
     var colMatches = {};
-    var values, match, options, els, i, j;
+    var values, match, options, els, i;
     
     if (value) {
       options = this.elLk.options.filter(function () { return this.style.display !== 'none'; });
