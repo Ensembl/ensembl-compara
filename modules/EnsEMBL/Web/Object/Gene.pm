@@ -242,8 +242,11 @@ sub insdc_accession {
 
   # Try to project to supercontig (aka scaffold)
   my $csv = $self->Obj->slice->coord_system->version; 
-  
-  foreach my $level (('supercontig','chromosome','toplevel')) {
+ 
+  my $csa = Bio::EnsEMBL::Registry->get_adaptor($self->species,'core',
+                                                'CoordSystem');
+  foreach my $level (qw(supercontig scaffold chromosome toplevel)) {
+    next unless $csa->fetch_by_name($level);
     my $gsa = $self->Obj->project($level,$csv);
     if(@$gsa == 1) {
       my $slice = $gsa->[0]->to_Slice;
