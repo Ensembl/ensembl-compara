@@ -98,15 +98,29 @@ div.config div.config_matrix div.subtracks img.menu_option                { marg
 
 div.config div.config_matrix .toggle_tutorial           { position: absolute; top: 8px; right: 5px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
 div.config div.config_matrix .toggle_tutorial.on        { background-position: 0 bottom; }
-div.config div.config_matrix .tutorial                  { position: absolute; display: none; background: url(/img/funcgen_matrix_tutorial.png) no-repeat; z-index: 10000; }
-div.config div.config_matrix .tutorial.fil              { width: 210px; height: 77px; background-position: 0 -154px; top: -8px; left: 270px; }
-div.config div.config_matrix .tutorial.track            { width: 134px; height: 86px; background-position: -230px bottom; margin: -92px 0 0 -90px; }
-div.config div.config_matrix .tutorial.all_track        { width: 119px; height: 87px; background-position: -23px -66px; margin: -5px 0 0 30px; }
-div.config div.config_matrix .tutorial.col              { width: 160px; height: 79px; background-position: -208px 0; }
-div.config div.config_matrix .tutorial.row              { width: 218px; height: 67px; background-position: -148px -79px; margin: -65px 0 0 25px; z-index: 10001; }
-div.config div.config_matrix .tutorial.drag             { width: 208px; height: 64px; background-position: 0 0; margin: -25px 0 0 10px; }
+div.config div.config_matrix .tutorial                  { position: absolute; padding: 8px; background: #444; color: #FFF; text-align: center; z-index: 10000; white-space: normal; line-height: 16px; border-radius: 10px; }
+div.config div.config_matrix .tutorial:before, 
+div.config div.config_matrix .tutorial:after            { border-color: transparent #444; border-style: solid; content: ""; display: block; position: absolute; width: 0; }
+div.config div.config_matrix .tutorial.track            { width: 130px; margin: -53px 0 0 -102px; }
+div.config div.config_matrix .tutorial.track:before     { border-width: 0 20px 20px 0; bottom: -20px; right: 30px; }
+div.config div.config_matrix .tutorial.track:after      { border-width: 0 0 20px 10px; bottom: -20px; right: 20px; }
+div.config div.config_matrix .tutorial.all_track        { width: 100px; margin: 13px 0 0 30px; }
+div.config div.config_matrix .tutorial.all_track:before { border-width: 20px 0 0 30px; left: 20px; top: -20px; }
+div.config div.config_matrix .tutorial.all_track:after  { border-width: 20px 0 0 5px;  left: 20px; top: -20px; border-color: transparent #FFF; }
+div.config div.config_matrix .tutorial.col              { width: 140px; margin: 30px 0 0; }
+div.config div.config_matrix .tutorial.col:before       { border-width: 15px 5px 0 0;  left: 20px; top: -15px; }
+div.config div.config_matrix .tutorial.col:after        { border-width: 15px 0 0 30px; left: 25px; top: -15px; }
+div.config div.config_matrix .tutorial.drag             { width: 160px; margin: -25px 0 0 45px; }
+div.config div.config_matrix .tutorial.drag:before      { border-width: 10px 35px 0 0; bottom: 20px; left: -35px; }
+div.config div.config_matrix .tutorial.drag:after       { border-width: 0 35px 10px 0; bottom: 10px; left: -35px; }
+div.config div.config_matrix .tutorial.row              { width: 150px; margin: -65px 0 0 65px; z-index: 10001; }
+div.config div.config_matrix .tutorial.row:before       { border-width: 28px 43px 0 0; bottom: 0; left: -43px; }
+div.config div.config_matrix .tutorial.row:after        { border-width: 10px 43px 0 0; bottom: 0; left: -43px; border-color: transparent #FFF; }
+div.config div.config_matrix .tutorial.fil              { width: 180px; top: 3px; left: 310px; padding: 4px; border-radius: 0; }
+div.config div.config_matrix .tutorial.fil:before       { border-width: 40px 40px 0 0; bottom: 50%; left: -40px; }
+div.config div.config_matrix .tutorial.fil:after        { border-width: 0 40px 40px 0; top:    50%; left: -40px; }
 
-body.ie67 div.config div.config_matrix .tutorial,
-body.ie67 div.config div.config_matrix .toggle_tutorial,
-body.ie   div.config div.config_matrix .tutorial.drag   { display: none!important; }
-body.ie   div.config div.config_matrix .tutorial.row    { margin-top: -50px; }
+body.ie67  div.config div.config_matrix .tutorial,
+body.ie67  div.config div.config_matrix .toggle_tutorial,
+body.ie8   div.config div.config_matrix .tutorial.drag  { display: none!important; }
+body.ie8   div.config div.config_matrix .tutorial.row   { margin: -50px 0 0 65px; }
