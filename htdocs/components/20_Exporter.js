@@ -5,26 +5,10 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
     var panel = this;
     
     this.base();
-    this.filterInit();
     
     this.config = {};
     
     $.each($('form.configuration', this.el).serializeArray(), function () { panel.config[this.name] = this.value; });
-  },
-  
-  filter: function (val) {
-    this.elLk.fieldsets.hide().filter('.' + val).show();
-  },
-  
-  filterInit: function () {
-    var panel = this;
-    
-    this.elLk.outputTypes = $('fieldset.general_options', this.elLk.content).find('select.output_type').on('change', function () {
-      panel.filter(this.value);
-    });
-  
-    this.elLk.fieldsets = $('fieldset[class]:not(.general_options)', this.el);
-    this.filter($('fieldset.general_options', this.el).find('select.output_type').val());
   },
   
   formSubmit: function (form) {
@@ -37,16 +21,16 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
     $('input[type=hidden], input.as-param', form).each(function () { data[this.name] = this.value; });
     var skip     = {};
     $('input.as-param', form).each(function() { skip[this.name] = 1; });
-
+    
     if (form.hasClass('configuration')) {
       $.each(form.serializeArray(), function () {
         if (!skip[this.name] && panel.config[this.name] !== this.value) {
           diff[this.name] = this.value;
         }
-
+        
         delete checked[this.name];
       });
-
+      
       // Add unchecked checkboxes to the diff
       for (i in checked) {
         diff[i] = 'no';
@@ -57,13 +41,6 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
       $.extend(true, this.config, diff);
     }
     
-    this.elLk.outputTypes.off();
-    
     return this.base(form, data);
-  },
-  
-  updateContent: function (json) {
-    this.base(json);
-    this.filterInit();
   }
 });
