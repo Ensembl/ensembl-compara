@@ -1094,7 +1094,7 @@ sub dumpStructuralVariations {
     my $study  = $row->[4];
     my $action = ($length >> $max_length) ? 'Overview' : 'View';
     my $params = ($length >> $max_length) ? { 'cytoview' => 'variation_feature_structural=normal' }
-      : { 'contigviewbottom' => 'variation_feature_structural=normal' };
+       : { 'contigviewbottom' => 'variation_feature_structural=normal' };
     my $desc;
     if ($study) {
       $desc = qq(A structural variation from $row->[2], identified by $row->[3] (study $study).);
@@ -2548,10 +2548,12 @@ sub GeneTransLine {
   <field name="name">$disp_xref</field>
   <field name="description">$description</field>);
     $xml .= &common_fields($species,$type,$db);
-    my (%seen_labels,%seen_syns);
+    my (%seen_labels,%seen_syns,%seen_sources);
     foreach my $xref (@$xrefs) {
       my $dbname   = $xref->{'db_name'};
       my $dbkey    = $xref->{'label'};
+      my $dbacc    = $xref->{'db_acc'};
+
       #xref synonyms
       foreach my $syn (@{$xref->{'synonyms'}}) {
         next if $seen_syns{$syn};
@@ -2563,12 +2565,20 @@ sub GeneTransLine {
       next if $seen_labels{$dbkey};
       $seen_labels{$dbkey} = 1;
       $dbkey = &clean($dbkey,'dbkey');
+      $dbacc = &clean($dbacc,'dbacc');
       if (! $dbname) {
         print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
       }
       else {
-        $xml .= qq(
+        if (! $seen_sources{$dbname}) {
+          $seen_sources{$dbname} = 1;
+          $xml .= qq(
   <field name="_xr_$dbname">$dbkey</field>);
+          if ($dbkey ne $dbacc) {
+            $xml .= qq(
+  <field name="_xr_${dbname}_dbacc">$dbacc</field>);
+          }
+        }
       }
     }
     foreach my $xref_description (keys %{$xref_descriptions}) {
@@ -2635,8 +2645,10 @@ sub GeneTransLine {
     <field name="id_version">$sid.$sid_ver</field>);
     my (%seen_sources,%seen_syns,%seen_labels);
     foreach my $xref (@$xrefs) {
-      my $dbname   = $xref->{'db_name'};
-      my $dbkey    = $xref->{'label'};
+      my $dbname = $xref->{'db_name'};
+      my $dbkey  = $xref->{'label'};
+      my $dbacc  = $xref->{'db_acc'};
+
       foreach my $syn (@{$xref->{'synonyms'}}) {
         next if $seen_syns{$syn};
         $seen_syns{$syn} = 1;
@@ -2646,18 +2658,23 @@ sub GeneTransLine {
       }
       next if $seen_labels{$dbkey};
       $seen_labels{$dbkey} = 1;
-      $dbkey = &clean($dbkey,'dbkey');
       if (! $dbname) {
         print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
       }
       else {
-        unless ($seen_sources{$dbname}) {
+        if (! $seen_sources{$dbname}) {
+          $seen_sources{$dbname} = 1;
           $xml .= qq(
     <field name="xref_source">$dbname</field>);
         }
-        $seen_sources{$dbname} = 1;
+        $dbkey = &clean($dbkey,'dbkey');
+        $dbacc = &clean($dbacc,'dbacc');
         $xml .= qq(
     <field name="xref">$dbkey</field>);
+        if ($dbacc ne $dbkey) {
+          $xml .= qq(
+    <field name="xref_dbacc">$dbacc</field>);
+        }
         if ($dbkey =~ /^(\w+)\.\d+$/) {
           my $k = $1;
           next if $seen_labels{$k};
