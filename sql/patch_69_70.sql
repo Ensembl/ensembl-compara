@@ -3,6 +3,19 @@
 SET session sql_mode='TRADITIONAL';
 
 
+-- Table structure for table `CAFE_data`
+
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+CREATE TABLE `CAFE_data` (
+  `fam_id` varchar(20) NOT NULL,
+  `tree` mediumtext NOT NULL,
+  `tabledata` mediumtext NOT NULL,
+  PRIMARY KEY (`fam_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
+
+
 -- left/right_index
 
 ALTER TABLE ncbi_taxa_node
@@ -158,4 +171,9 @@ DROP TABLE protein_tree_hmmprofile;
 INSERT INTO gene_align (aln_method) VALUES ("mcoffee_scores");
 INSERT INTO gene_align_member SELECT LAST_INSERT_ID() , member_id, cigar_line FROM protein_tree_member_score;
 DROP TABLE protein_tree_member_score;
+
+
+-- New version
+REPLACE INTO meta (species_id, meta_key, meta_value)
+VALUES (NULL, 'schema_version', '70');
 
