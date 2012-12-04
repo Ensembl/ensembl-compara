@@ -836,7 +836,7 @@ sub get_SpeciesTree {
     my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();    
 
     my $member   = $self->get_compara_Member($compara_db)           || return;        
-    my $geneTree = $geneTree_Adaptor->fetch_all_by_Member($member)->[0] || return;
+    my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);
     $cafeTree    = $cafeTree->lca_reroot() if($collapsability eq 'part'); 
       
