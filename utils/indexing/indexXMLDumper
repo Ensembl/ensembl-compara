@@ -1082,8 +1082,9 @@ sub dumpStructuralVariations {
            $VariationDB.seq_region as r,
            $VariationDB.structural_variation_feature as vf
      WHERE s.source_id = v.source_id
-       AND vf.structural_variation_id=v.structural_variation_id
+       AND v.structural_variation_id = vf.structural_variation_id
        AND vf.seq_region_id = r.seq_region_id
+       AND v.is_evidence = 0
   GROUP BY v.structural_variation_id));
 
   foreach my $row ( @$T ) {
