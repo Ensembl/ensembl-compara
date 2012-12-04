@@ -115,7 +115,7 @@ sub form {
     });
   }
 
-  $self->add_fieldset(undef, 'general_options');
+  $self->add_fieldset;
   
   my @output_values;
   
@@ -131,7 +131,7 @@ sub form {
       select   => 'select',
       required => 'yes',
       name     => 'output',
-      classes  => [ 'output_type' ],
+      classes  => [ '_stt' ],
       label    => 'Output',
       values   => \@output_values
     });
@@ -177,7 +177,7 @@ sub form {
     next unless $config->{$c}->{'params'};
     
     foreach my $f (@{$config->{$c}->{'formats'}}) {
-      $self->add_fieldset("Options for $f->[1]", $f->[0]);
+      $self->add_fieldset("Options for $f->[1]", "_stt_$f->[0]");
       
       if ($f->[0] eq 'fasta') {
         my $genomic = [
