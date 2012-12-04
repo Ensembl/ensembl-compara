@@ -805,8 +805,6 @@ sub get_GeneTree {
       $parent->{'_total_num_leaves'} = $total_leaves;
       $tree->{'_supertree'} = $parent;
     }
-
-    $tree->attach_alignment('default') if ($tree->clusterset_id ne 'default');
   }
   return $self->{$cache_key};
 }
