@@ -46,9 +46,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30039,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#       'mlss_id'         => 30040,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara4',    # where the pipeline database will be created
-        'release'         => '69',          # current ensembl release number
+        'release'         => '70',          # current ensembl release number
         'rel_suffix'      => '',            # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
@@ -62,7 +62,7 @@ sub default_options {
         'mafft_root_dir'  => '/software/ensembl/compara/mafft-6.864',
             
             # data directories:
-        'work_dir'        => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
+        'work_dir'        => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => 'metazoa_'.$self->o('rel_with_suffix').'.pep',
         'tcx_name'        => 'families_'.$self->o('rel_with_suffix').'.tcx',
@@ -86,10 +86,10 @@ sub default_options {
         'cons_capacity'   =>  400,
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara1/mm14_compara_homology_69',
+        'homology_db'  => 'mysql://ensro@compara1/mm14_compara_homology_70',
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_ensembl_compara_68',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_ensembl_compara_69',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
