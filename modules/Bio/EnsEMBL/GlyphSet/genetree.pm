@@ -738,7 +738,7 @@ sub features {
   } elsif ($f->{'_collapsed'}) { # Collapsed node
     $f->{'_name'}       = $tree->name;
     $f->{'_cigar_line'} = $tree->consensus_cigar_line if UNIVERSAL::can($tree, 'consensus_cigar_line');
-  } elsif ($tree->is_leaf) {
+  } elsif ($tree->is_leaf && $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     my $name = $tree->{_subtree}->stable_id;
     $name = $tree->{_subtree}->get_tagvalue('model_id') unless $name;
     $f->{label} =  $f->{'_display_id'} = sprintf('%s (%d genes)', $name, $tree->{_subtree_size});
