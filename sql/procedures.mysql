@@ -17,7 +17,7 @@ READS SQL DATA
 SELECT CONCAT(
 	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(parent.left_index-pip.left_index=1, '|', ' '),'     ')) ORDER BY parent.left_index SEPARATOR ''),
 	IF(node.node_id=node.root_id,
-		CONCAT(IFNULL(CONCAT(root.stable_id, ' '), ''), root.tree_type, '/', root.member_type, ': '),
+		CONCAT(IFNULL(CONCAT(root.stable_id, ' '), ''), root.tree_type, '/', root.member_type, '/', root.clusterset_id, ': '),
 		CONCAT(IF(MIN(node.left_index-parent.left_index)=1, '+', '\\'), '----')
 	),
 	'(', node.node_id, ')',	' ',
