@@ -474,7 +474,6 @@ sub draw_cigar_feature {
       width     => $e - $s + 1,
       height    => $h,
       colour    => $match_colour,
-      absolutey => 1
     }));
     
     return;
@@ -548,7 +547,6 @@ sub draw_cigar_feature {
         width     => $e - $s + 1,
         height    => $h,
         colour    => $match_colour,
-        absolutey => 1
       });
       
       if ($params->{'link'}) {
@@ -589,7 +587,6 @@ sub draw_cigar_feature {
           width     => $s - $last_e + 1,
           height    => $h,
           colour    => $params->{'feature_colour'},
-          absolutey => 1
         }));
         
       }
