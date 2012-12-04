@@ -907,6 +907,9 @@ sub transcript_table {
 
   $table->add_row('Location', $location_html);
 
+  my $insdc_accession = $self->object->insdc_accession;
+  $table->add_row('INSDC Accession',$insdc_accession) if $insdc_accession;
+
   my $gene = $object->gene;
   
   if ($gene) {

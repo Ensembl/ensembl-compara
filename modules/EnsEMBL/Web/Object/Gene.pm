@@ -221,6 +221,41 @@ sub count_homologues {
   return $counts;
 }
 
+sub _embl_synonym {
+  my ($self,$slice) = @_;
+
+  my $dbc = $self->database($self->get_db)->dbc;
+  my $sql = qq(
+    SELECT external_db_id FROM external_db WHERE db_name = ?
+  );
+  my $sth = $dbc->prepare($sql);
+  $sth->execute("EMBL");
+  my ($dbid) = $sth->fetchrow_array;
+  foreach my $s (@{$slice->get_all_synonyms()}) {
+    return $s->name if $s->external_db_id == $dbid;
+  }
+  return undef;
+}
+
+sub insdc_accession {
+  my $self = shift;
+
+  # Try to project to supercontig (aka scaffold)
+  my $csv = $self->Obj->slice->coord_system->version; 
+  
+  foreach my $level (qw(supercontig chromosome)) {
+    my $gsa = $self->Obj->project($level,$csv);
+    if(@$gsa == 1) {
+      my $slice = $gsa->[0]->to_Slice;
+      next unless $slice;
+      my $name = $self->_embl_synonym($slice);
+      next unless $name;
+      return join(':',$slice->coord_system->name,$csv,$name,
+                  $slice->start,$slice->end,$slice->strand);
+    }
+  }
+}
+
 sub count_xrefs {
   my $self = shift;
   my $type = $self->get_db;
