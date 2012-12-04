@@ -58,13 +58,20 @@ sub content {
   } elsif ($class && $class =~ /^patch/) {
     my $db_adaptor  = $hub->database('core');
     my $slice       = $db_adaptor->get_SliceAdaptor->fetch_by_region('chromosome', $chr);
-    my $projections = $db_adaptor->get_CoordSystemAdaptor->fetch_by_name('supercontig') ? $slice->project('supercontig') : [];
-    my $synonym;
-       $synonym .= $_->name . ', ' for map @{$_->to_Slice->get_all_synonyms}, @$projections;
-    
-    if ($synonym =~ /^\w/) {
-      $synonym =~ s/,\s$//;
-      $self->add_entry({ label => "Synonyms: $synonym" });
+    $slice = $slice->sub_Slice($start,$stop);
+
+    my @synonyms;
+    my $csa = $db_adaptor->get_CoordSystemAdaptor;
+    foreach my $name (qw(supercontig scaffold)) { # where patches are
+      next unless $csa->fetch_by_name($name,$slice->coord_system->version);
+      my $projections=$slice->project($name,$slice->coord_system->version);
+      next unless $projections;
+      push @synonyms,
+        (map { @{$_->to_Slice->get_all_synonyms} } @$projections);
+    }
+    my %synonyms = (map { $_->name => 1 } @synonyms);
+    if(@synonyms) {
+      $self->add_entry({ label => "Synonyms: ".join(", ",keys %synonyms) }); 
     }
   }
   
