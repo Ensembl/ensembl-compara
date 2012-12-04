@@ -165,6 +165,7 @@ sub form_matrix {
   my $img_url       = $self->img_url;
   my $conf          = $self->{'matrix_config'}{$menu}{$set};
   my @columns       = @{$conf->{'columns'}};
+  my @axis_labels   = map { s/([a-z])([A-Z])([a-z])/$1_$2$3/g; s/_/ /g; s/( [Tt]ype|s$)//g; lc; } $conf->{'axes'}{'x'}, $conf->{'axes'}{'y'};
   my $width         = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
   my %filters       = ( '' => 'All classes' );
   my $tick          = qq{<img class="tick" src="${img_url}tick.png" alt="Selected" title="Selected" />};
@@ -310,10 +311,21 @@ sub form_matrix {
   
   $tutorial_row++ for grep { $_ < $tutorial_row } sort { $a <=> $b } keys %gaps;
   
-  $rows[$tutorial_row][1]{'html'}                 .= '<b class="tutorial col"></b>';
-  $rows[$tutorial_row - 1][$tutorial_col]{'html'} .= '<b class="tutorial drag"></b>';
-  
   $track_style_header ||= 'Track';
+  
+  my %tutorials = (
+    row       => sprintf('Hover on %s names to select or deselect %s types', @axis_labels),
+    col       => sprintf('Hover on %s names to select or deselect %s types', reverse @axis_labels),
+    track     => sprintf('Click the boxes to choose %s style', lc $track_style_header),
+    fil       => sprintf('%s %s or %s type search terms', scalar keys %filters > 1 ? sprintf 'Choose a%s %s class and/or enter', $axis_labels[1] =~ /^[aeiou]/ ? 'n' : '', $axis_labels[1] : 'Enter', @axis_labels),
+    drag      => 'Click and drag with your mouse to turn on/off more than one box',
+    all_track => 'Click to change all track styles at once',
+  );
+  
+  $tutorials{$_} = qq{<b class="tutorial $_">$tutorials{$_}</b>} for keys %tutorials;
+  
+  $rows[$tutorial_row][1]{'html'}                  = "$tutorials{'col'}$rows[$tutorial_row][1]{'html'}";
+  $rows[$tutorial_row - 1][$tutorial_col]{'html'} .= $tutorials{'drag'};
   
   foreach (@rows) {
     my $row_class = shift @$_;
@@ -344,15 +356,19 @@ sub form_matrix {
        $menu     .= sprintf $renderer_template[1], $k, $v, $v, $k, $k eq $display ? ($tick, ' class="current"') : ('', ''), $v while ($k, $v) = splice @{$_->{'renderers'}}, 0, 2;
        $menu     .= $renderer_template[2];
     
-    $headers_html[0] .= sprintf qq{<th class="$x_class"><p>$x</p>$select_all_col%s</th>}, $x, $x_class, $x_class, $x_class, $i == $tutorial_col - 2 ? '<b class="tutorial row"></b>' : '';
+    $headers_html[0] .= sprintf(
+      qq{<th class="$x_class"><p>$x</p>$select_all_col%s</th>},
+      $x, $x_class, $x_class, $x_class, $i == $tutorial_col - 2 ? $tutorials{'row'} : ''
+    );
+    
     $headers_html[2] .= sprintf(qq{
       <th class="$x_class $name%s">
+        %s
         $menu
         <input type="hidden" class="track_name" name="$name" value="$display" />
         <img class="menu_option" title="$renderers{$display}" alt="$renderers{$display}" src="${img_url}render/$display.gif" />
-        %s
       </th>
-    }, $display eq 'off' ? '' : ' on', $i++ ? '' : '<b class="tutorial track"></b>');
+    }, $display eq 'off' ? '' : ' on', $i++ ? '' : $tutorials{'track'});
   }
   
   my $html = sprintf(qq{
@@ -366,8 +382,8 @@ sub form_matrix {
     <div class="filter_wrapper">
       <h2>Filter by</h2>
       %s
-      <input type="text" class="filter" value="Enter %s or %s" />
-      <div class="tutorial fil"></div>
+      <input type="text" class="filter" value="Enter %s or %s type" />
+      $tutorials{'fil'}
     </div>
     <div class="matrix_key">
       <h2>Key</h2>
@@ -383,8 +399,18 @@ sub form_matrix {
       <div class="table_wrapper" style="width:${width}px; margin-top: 50px">
         <table class="config_matrix" cellspacing="0" cellpadding="0">
           <thead>
-            <tr><th class="first"></th>%s</tr>
-            <tr class="renderers"><th class="first select_all"><div class="menu_option"><h2>$track_style_header style:</h2><em>Enable/disable all</em></div>%s<b class="tutorial all_track"></b></th>%s</tr>
+            <tr>
+              <th class="first"></th>
+              %s
+            </tr>
+            <tr class="renderers">
+              <th class="first select_all">
+                <div class="menu_option"><h2>$track_style_header style:</h2><em>Enable/disable all</em></div>
+                %s
+                $tutorials{'all_track'}
+              </th>
+              %s
+            </tr>
           </thead>
           <tbody>
             $rows_html
@@ -396,7 +422,7 @@ sub form_matrix {
     },
     encode_entities($conf->{'header'}),
     scalar keys %filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq{<option value="$_">$filters{$_}</option>}, sort keys %filters) : '',
-    map({ s/([a-z])([A-Z])([a-z])/$1_$2$3/g; s/_/ /g; lc; } $conf->{'axes'}{'x'}, $conf->{'axes'}{'y'}),
+    @axis_labels,
     @headers_html
   );
   
