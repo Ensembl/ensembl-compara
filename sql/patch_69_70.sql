@@ -54,11 +54,15 @@ INSERT INTO other_member_sequence SELECT member_id, 'cds', length, sequence_cds 
 DROP TABLE sequence_cds;
 
 
--- gene_tree_member
+-- gene_tree_node
 
 ALTER TABLE gene_tree_node
 	ADD COLUMN member_id int(10) unsigned,
 	ADD INDEX member_id (member_id);
+ALTER TABLE gene_tree_node 
+	DROP KEY `root_id_2`, 
+	ADD INDEX root_id_left_index (root_id,left_index);
+
 UPDATE gene_tree_node JOIN gene_tree_member USING (node_id) SET gene_tree_node.member_id = gene_tree_member.member_id;
 ALTER TABLE gene_tree_member DROP COLUMN member_id;
 
@@ -144,7 +148,8 @@ CREATE TABLE gene_align_member (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-ALTER TABLE gene_tree_root ADD COLUMN gene_align_id INT(10) UNSIGNED  DEFAULT NULL AFTER method_link_species_set_id;
+ALTER TABLE gene_tree_root ADD COLUMN gene_align_id INT(10) UNSIGNED  DEFAULT NULL AFTER method_link_species_set_id,
+	ADD KEY `gene_align_id` (`gene_align_id`);
 
 INSERT INTO gene_align SELECT root_id, NULL, IF(member_type = "ncrna", "infernal", IF(clusterset_id = "default", "mcoffee", "mafft")), 0 FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN gene_tree_member USING (node_id) WHERE cigar_line IS NOT NULL GROUP BY root_id;
 
