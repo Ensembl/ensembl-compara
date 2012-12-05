@@ -103,15 +103,14 @@ sub content_ensembl {
   my $species_defs  = $hub->species_defs;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
   my $current_taxon = $hub->database('core')->get_MetaContainer->get_taxonomy_id;
-  my @taxa          = @{$family->get_all_taxa_by_member_source_name('ENSEMBLPEP')}; ## Ensembl proteins
+  my @genomedbs     = @{$family->get_all_GenomeDBs_by_member_source_name('ENSEMBLPEP')}; ## Ensembl proteins
   my $count         = 0;
   my %data;
   my $html;
-  
-  foreach my $taxon (@taxa) {
-    my $id        = $taxon->ncbi_taxid;
-    my @peptides  = map $_->stable_id, @{$family->get_Member_by_source_taxon('ENSEMBLPEP', $id) || []};
-    $data{$taxon} = \@peptides;
+
+  foreach my $genomedb (@genomedbs) { 
+    my @peptides  = map $_->stable_id, @{$family->get_Member_by_source_GenomeDB('ENSEMBLPEP', $genomedb) || []};
+    $data{$genomedb->dbID} = \@peptides; 
     $count       += scalar(@peptides);
   }
 
@@ -128,25 +127,23 @@ sub content_ensembl {
       { key => 'peptides', title => 'Proteins', width => '80%', align => 'left' },
     );
     
-    foreach my $species (sort { $a->binomial cmp $b->binomial } @taxa) {
-      my $display_species = $species->binomial || $species->name;
-      (my $species_key    = $display_species) =~ s/\s+/_/g;
-      $species_key = $species_defs->get_config($species_key, 'SPECIES_PRODUCTION_NAME');  
-      
+    foreach my $genomedb (sort { $a->name cmp $b->name } @genomedbs) {
+      my $species_key = $genomedb->name; 
+
       if ($hub->param('species_' . lc $species_key) ne 'yes') {
-        push @member_skipped_species, $display_species;
-        $member_skipped_count += @{$data{$species}};
+        push @member_skipped_species, $species_defs->species_label($species_key);
+        $member_skipped_count += @{$data{$genomedb->dbID}};
         next;
       }
 
-      next unless $data{$species};
+      next unless $data{$genomedb->dbID};
       
       my $row = {
         species  => $species_defs->species_label($species_key),
         peptides => '<dl class="long_id_list">'
       };
       
-      foreach (sort @{$data{$species}}) {
+      foreach (sort @{$data{$genomedb->dbID}}) {
         $row->{'peptides'} .= sprintf qq(<dt><a href="/%s/Transcript/ProteinSummary?peptide=%s">%s</a> [<a href="/%s/Location/View?peptide=%s">location</a>]</dt>), $species_key, $_, $_, $species_key, $_;
       }
       
