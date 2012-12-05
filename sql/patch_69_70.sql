@@ -60,8 +60,9 @@ ALTER TABLE gene_tree_node
 	ADD COLUMN member_id int(10) unsigned,
 	ADD INDEX member_id (member_id);
 ALTER TABLE gene_tree_node 
-	DROP KEY `root_id_2`, 
-	ADD INDEX root_id_left_index (root_id,left_index);
+	DROP KEY `root_id_2`,DROP KEY `root_id`, 
+	ADD INDEX root_id_left_index (root_id,left_index),
+	ADD INDEX root_id (root_id);
 
 UPDATE gene_tree_node JOIN gene_tree_member USING (node_id) SET gene_tree_node.member_id = gene_tree_member.member_id;
 ALTER TABLE gene_tree_member DROP COLUMN member_id;
