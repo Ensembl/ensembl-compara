@@ -221,15 +221,15 @@ sub count_homologues {
   return $counts;
 }
 
-sub _embl_synonym {
-  my ($self,$slice) = @_;
+sub _insdc_synonym {
+  my ($self,$slice,$name) = @_;
 
   my $dbc = $self->database($self->get_db)->dbc;
   my $sql = qq(
     SELECT external_db_id FROM external_db WHERE db_name = ?
   );
   my $sth = $dbc->prepare($sql);
-  $sth->execute("EMBL");
+  $sth->execute($name);
   my ($dbid) = $sth->fetchrow_array;
   foreach my $s (@{$slice->get_all_synonyms()}) {
     return $s->name if $s->external_db_id == $dbid;
@@ -246,12 +246,17 @@ sub insdc_accession {
   my $csa = Bio::EnsEMBL::Registry->get_adaptor($self->species,'core',
                                                 'CoordSystem');
   foreach my $level (qw(supercontig scaffold chromosome toplevel)) {
-    next unless $csa->fetch_by_name($level);
+    next unless $csa->fetch_by_name($level,$csv);
     my $gsa = $self->Obj->project($level,$csv);
     if(@$gsa == 1) {
       my $slice = $gsa->[0]->to_Slice;
       next unless $slice;
-      my $name = $self->_embl_synonym($slice);
+      my $name;
+      # Should be INSDC only by e71. At this point remove these. -- ds23
+      foreach my $edbname (('INSDC','EMBL','Broad Institute')) {
+        $name = $self->_insdc_synonym($slice,$edbname);
+        last if $name;
+      }
       next unless $name;
       return join(':',$slice->coord_system->name,$csv,$name,
                   $slice->start,$slice->end,$slice->strand);
