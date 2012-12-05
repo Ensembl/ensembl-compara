@@ -131,7 +131,8 @@ sub content_ensembl {
     foreach my $species (sort { $a->binomial cmp $b->binomial } @taxa) {
       my $display_species = $species->binomial || $species->name;
       (my $species_key    = $display_species) =~ s/\s+/_/g;
-       
+      $species_key = $species_defs->get_config($species_key, 'SPECIES_PRODUCTION_NAME');  
+      
       if ($hub->param('species_' . lc $species_key) ne 'yes') {
         push @member_skipped_species, $display_species;
         $member_skipped_count += @{$data{$species}};
