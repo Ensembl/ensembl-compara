@@ -239,6 +239,7 @@ sub pipeline_analyses {
                     'ALTER TABLE member            AUTO_INCREMENT=100000001',
                     'ALTER TABLE sequence          AUTO_INCREMENT=100000001',
                     'ALTER TABLE homology          AUTO_INCREMENT=100000001',
+                    'ALTER TABLE gene_align        AUTO_INCREMENT=100000001',
                     'ALTER TABLE gene_tree_node    AUTO_INCREMENT=100000001',
                     'ALTER TABLE species_tree_node AUTO_INCREMENT=100000001',
                     'ALTER TABLE CAFE_gene_family  AUTO_INCREMENT=100000001',
