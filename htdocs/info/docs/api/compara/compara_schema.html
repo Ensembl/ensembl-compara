@@ -96,11 +96,13 @@ secondary structure and genomic alignments.
       <li><a href="#gene_tree_node">gene_tree_node</a></li>
       <li><a href="#gene_tree_node_tag">gene_tree_node_tag</a></li>
       <li><a href="#gene_tree_node_attr">gene_tree_node_attr</a></li>
-      <li><a href="#gene_tree_member">gene_tree_member</a></li>
+      <li><a href="#gene_align">gene_align</a></li>
+      <li><a href="#gene_align_member">gene_align_member</a></li>
       <li><a href="#protein_tree_member_score">protein_tree_member_score</a></li>
       <li><a href="#sitewise_aln">sitewise_aln</a></li>
       <li><a href="#CAFE_gene_family">CAFE_gene_family</a></li>
       <li><a href="#CAFE_species_gene">CAFE_species_gene</a></li>
+      <li><a href="#CAFE_data">CAFE_data</a></li>
       <li><a href="#species_tree_node">species_tree_node</a></li>
       <li><a href="#species_tree_node_tag">species_tree_node_tag</a></li>
       <li><a href="#species_tree_root">species_tree_root</a></li>
@@ -3333,66 +3335,6 @@ Contains the data structure of each tree.</p>
 
 <p>will return the root nodes of the independant protein trees stored in the database</p>
 
-
-<!--
-#####################################################################
-TABLE GENE_TREE_MEMBER
-#####################################################################
--->
-<h4 id="gene_tree_member">gene_tree_member</h4>
-
-
-<p>
-Contains the data about the leaf (joining the table with a member_id
-from the member table, all ENSEMBLPEP members (ENSEMBLTRANS for ncRNAs)<br />
-present in each tree. The method_link_species_set should link to an
-entry that has a method_link.type="PROTEIN_TREES" (for protein trees)
-or "NC TREES" (for ncRNA trees)
-</p>
-
-<table class="spreadsheet">
-  <caption>gene_tree_member</caption>
-  <thead><tr>
-    <th>Field</th>
-    <th>Type</th>
-    <th>Null</th>
-    <th>Key</th>
-    <th>Default</th>
-    <th>Extra</th>
-    <th>Description</th>
-  </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>node_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td>PRI</td>
-      <td></td>
-      <td></td>
-      <td>the id of node associated with this name</td>
-    </tr>
-    <tr>
-      <td>member_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td>MUL</td>
-      <td></td>
-      <td></td>
-      <td>external reference to member.member_id. &nbsp;Should always link to a protein (usually member.source_name='ENSEMBLPEP')</td>
-    </tr>
-    <tr>
-      <td>cigar_line</td>
-      <td>mediumtext</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>compressed alignment information</td>
-    </tr>
-  </tbody>
-</table>
-
 <!--
 #####################################################################
 TABLE PROTEIN_TREE_MEMBER_SCORE
@@ -4096,5 +4038,31 @@ New tables for 69
   PRIMARY KEY (`root_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 </pre>
-
+<p>
+<h4 id="CAFE_data">CAFE_data</h4>
+<pre>
+  `fam_id` varchar(20) NOT NULL,
+  `tree` mediumtext NOT NULL,
+  `tabledata` mediumtext NOT NULL,
+  PRIMARY KEY (`fam_id`)
+</pre>
+<p>
+<h4 id="gene_align">gene_align</h4>
+<pre>
+  gene_align_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  seq_type varchar(40),
+  aln_method varchar(40) NOT NULL DEFAULT '', 
+  aln_length int(10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (gene_align_id)
+</pre>
+<p>
+<h4 id="gene_align_member">gene_align_member</h4>
+  gene_align_id int(10) unsigned NOT NULL,
+  member_id int(10) unsigned NOT NULL, 
+  cigar_line mediumtext,
+  FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),  PRIMARY KEY (gene_align_id,member_id),
+  KEY member_id (member_id)
+</pre>
+<p>
 </html>
