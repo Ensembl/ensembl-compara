@@ -44,7 +44,7 @@ sub records_table {
     my $img_url  = $self->img_url;
     my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div>%s<a rel="%s" href="%s" class="save"></a></div>};
     my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div></div>};
-    my $active   = qq{<a class="edit icon_link" href="%s" rel="%s"><div class="sprite use_icon" title="Use this configuration">&nbsp;</div></a><div class="config_used">Configuration applied</div>};
+    my $active   = qq{<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht _ht_static use_icon" title="Use this configuration">&nbsp;</div></a><div class="config_used">Configuration applied</div>};
     my (%configs, %rows);
     
     my @columns = (
@@ -121,8 +121,8 @@ sub records_table {
         config => { value => scalar @config ? sprintf($list, join '', map qq{<li>$_->[0]: <span class="cfg">$_->[1]</span></li>}, sort { $a->[0] cmp $b->[0] } @config) : '', class => 'wrap' },
         sets   => { value => scalar @sets   ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets)                                                  : '', class => 'wrap' },
         active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
-        edit   => sprintf('<a class="edit_record icon_link" href="#" rel="%s"><div class="sprite edit_icon" title="Edit sets">&nbsp;</div></a>', $record_id),
-        delete => sprintf('<a class="edit icon_link" href="%s" rel="%s"><div class="sprite delete_icon" title="Delete">&nbsp;</div></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id),
+        edit   => sprintf('<a class="edit_record icon_link" href="#" rel="%s"><div class="sprite _ht _ht_static edit_icon" title="Edit sets">&nbsp;</div></a>', $record_id),
+        delete => sprintf('<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht _ht_static delete_icon" title="Delete">&nbsp;</div></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id),
       };
     }
 

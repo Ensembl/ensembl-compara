@@ -115,7 +115,7 @@ sub content {
 sub _icon_inner {
   my ($self,$params) = @_;
 
-  return qq(<span class="sprite $params->{'class'}" title="$params->{'title'}">&nbsp;</span>);
+  return qq(<span class="sprite _ht _ht_static $params->{'class'}" title="$params->{'title'}">&nbsp;</span>);
 }
 
 sub _icon {
