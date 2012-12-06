@@ -587,7 +587,14 @@ sub freqs {
   my (%data, $allele_missing);
   foreach my $allele_obj ( sort { $a->subsnp cmp $b->subsnp }@{ $allele_list } ) {  
     my $pop_obj = $allele_obj->population;  
-    next unless $pop_obj;
+    
+    # no population, add to special data structure
+    if(!defined($pop_obj) || (defined($pop_obj) && ($pop_obj->size == 1 || !defined($allele_obj->frequency)))) {
+      next unless $allele_obj->subsnp_handle();
+      push @{$data{no_pop}{$allele_obj->subsnp_handle}{$allele_obj->subsnp}}, $allele_obj->allele;
+      next;
+    }
+    
     my $pop_id  = $self->pop_id($pop_obj);
     my $ssid = $allele_obj->subsnp;
     
@@ -611,6 +618,14 @@ sub freqs {
   # Add genotype data;
   foreach my $pop_gt_obj ( sort { $a->subsnp cmp $b->subsnp} @{ $self->pop_genotype_obj } ) {
     my $pop_obj = $pop_gt_obj->population; 
+    
+    # no population, add to special data structure
+    if(!defined($pop_obj) || (defined($pop_obj) && ($pop_obj->size == 1 || !defined($pop_gt_obj->frequency)))) {
+      next unless $pop_gt_obj->subsnp_handle();
+      push @{$data{no_pop}{$pop_gt_obj->subsnp_handle}{$pop_gt_obj->subsnp}}, @{$pop_gt_obj->genotype};
+      next;
+    }
+    
     my $pop_id  = $self->pop_id($pop_obj); 
     my $ssid = $pop_gt_obj->subsnp();  
     # No allele data for this population ...
