@@ -91,8 +91,12 @@ sub new {
                $display = $column->get('display') || ($column->get('on') eq 'on' ? 'normal' : 'off') if $column;
           }
         }
-           
+        
         next if $display eq 'off';
+        
+        my $option_key = $row_config->get('option_key');
+        
+        next if $option_key && $config->hub->param($option_key) eq 'off';
         
         my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
         

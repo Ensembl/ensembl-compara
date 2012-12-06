@@ -54,7 +54,11 @@ sub new {
         $config->set_parameter('band_labels', 'off') if $display =~ /highlight/; ## Turn off band labels if we have pointer tracks 
         
         next if $display eq 'off' || $display =~ /highlight/;
-       
+        
+        my $option_key = $row_config->get('option_key');
+        
+        next if $option_key && $config->hub->param($option_key) eq 'off';
+        
         my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
         
         next unless $self->dynamic_use($classname);
