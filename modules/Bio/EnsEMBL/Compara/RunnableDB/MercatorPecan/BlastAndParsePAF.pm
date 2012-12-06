@@ -110,29 +110,6 @@ sub load_members_from_db{
     return $fasta_list;
 }
 
-sub load_name2index_mapping_from_db {
-    my ($self) = @_;
-
-    my $sql = qq {
-        SELECT sequence_id, stable_id
-          FROM member
-         WHERE sequence_id
-      GROUP BY sequence_id
-    };
-
-    my $sth = $self->compara_dba->dbc->prepare( $sql );
-    $sth->execute();
-
-    my %name2index = ();
-    while( my ($seq_id, $stable_id) = $sth->fetchrow() ) {
-        $name2index{$stable_id} = $seq_id;
-    }
-    $sth->finish();
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-    return \%name2index;
-}
-
 #
 # Load stable_id name to member_id mappings from the database
 #
@@ -155,40 +132,6 @@ sub load_name2member_mapping_from_db {
     $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     return \%name2index;
-}
-
-sub load_name2index_mapping_from_file {
-    my ($self, $filename) = @_;
-
-    my %name2index = ();
-    open(MAPPING, "<$filename") || die "Could not open name2index mapping file '$filename'";
-    while(my $line = <MAPPING>) {
-        chomp $line;
-        my ($idx, $stable_id) = split(/\s+/,$line);
-        $name2index{$stable_id} = $idx;
-    }
-    close MAPPING;
-
-    return \%name2index;
-}
-
-sub name2index { # can load the name2index mapping from db/file if necessary
-    my ($self, $name) = @_;
-
-    if($name=~/^seq_id_(\d+)_/) {
-        return $1;
-    } else {
-        my $name2index;
-        unless($name2index = $self->param('name2index')) {
-            my $tabfile                 = $self->param('tabfile');
-
-            $name2index = $self->param('name2index', $tabfile
-                ? $self->load_name2index_mapping_from_file($tabfile)
-                : $self->load_name2index_mapping_from_db()
-            );
-        }
-        return $name2index->{$name} || "UNKNOWN($name)";
-    }
 }
 
 #
