@@ -4,7 +4,7 @@ div.config div.config_matrix_wrapper.short                        { padding-bott
 div.config div.config_matrix_scroller                             { height: 16px; width: 100%; overflow-x: auto; overflow-y: hidden; }
 div.config div.config_matrix_scroller div                         { height: 16px; }
 
-div.config div.config_matrix h1                                   { display: block; border:0; }
+div.config div.config_matrix h1                                   { display: block; border: 0; }
 div.config div.config_matrix h2                                   { margin: 0 8px 0 0; border: 0; float: left; font-size: 15px; }
 div.config div.config_matrix div.header_wrapper                   { margin: 3px 0 10px 0; clear: both; }
 div.config div.config_matrix div.filter_wrapper                   { position: relative; padding: 7px 0; border: 1px solid transparent; border-width: 1px 0; clear: both; }
@@ -98,7 +98,7 @@ div.config div.config_matrix div.subtracks img.menu_option                { marg
 
 div.config div.config_matrix .toggle_tutorial           { position: absolute; top: 8px; right: 5px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
 div.config div.config_matrix .toggle_tutorial.on        { background-position: 0 bottom; }
-div.config div.config_matrix .tutorial                  { position: absolute; padding: 8px; background: #444; color: #FFF; text-align: center; z-index: 10000; white-space: normal; line-height: 16px; border-radius: 10px; }
+div.config div.config_matrix .tutorial                  { position: absolute; display: none; padding: 8px; background: #444; color: #FFF; text-align: center; z-index: 10000; white-space: normal; line-height: 16px; border-radius: 10px; }
 div.config div.config_matrix .tutorial:before, 
 div.config div.config_matrix .tutorial:after            { border-color: transparent #444; border-style: solid; content: ""; display: block; position: absolute; width: 0; }
 div.config div.config_matrix .tutorial.track            { width: 130px; margin: -53px 0 0 -102px; }
