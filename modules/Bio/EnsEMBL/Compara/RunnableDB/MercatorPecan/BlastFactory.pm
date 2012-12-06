@@ -45,8 +45,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-	my $genome_db_id = $self->param('genome_db_id') || $self->param('genome_db_id', $self->param('gdb'))        # for compatibility
-	  or die "'genome_db_id' is an obligatory parameter";
+	my $genome_db_id = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
 
     if (!defined $self->param('step')) {
 	$self->param('step', 1000);

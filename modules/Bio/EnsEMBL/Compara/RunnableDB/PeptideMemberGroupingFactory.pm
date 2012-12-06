@@ -53,7 +53,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $genome_db_id = $self->param('genome_db_id') || $self->param('genome_db_id', $self->param('gdb'));
+    my $genome_db_id = $self->param('genome_db_id');
     my $species_set = ($genome_db_id ? [ $genome_db_id ] : $self->param('species_set'))
         or die "Either 'species_set' list or 'genome_db_id' parameter has to be defined";
 
