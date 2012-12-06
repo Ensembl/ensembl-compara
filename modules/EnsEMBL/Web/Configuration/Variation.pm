@@ -46,7 +46,7 @@ sub populate_tree {
     { 'availability' => 'variation' }
   ));  
 		
-  $self->create_node('Population', 'Population genetics ([[counts::populations]])',
+  $self->create_node('Population', 'Population genetics',
     [qw( 
       graphs  EnsEMBL::Web::Component::Variation::PopulationGraphs
       table 	EnsEMBL::Web::Component::Variation::PopulationGenotypes 
