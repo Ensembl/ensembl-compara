@@ -42,6 +42,15 @@ sub new {
       foreach my $row_config (@configs) {
         my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
         
+        if ($display eq 'default') {
+          my $column_key = $row_config->get('column_key');
+          
+          if ($column_key) {
+            my $column  = $config->get_node($column_key);
+               $display = $column->get('display') || ($column->get('on') eq 'on' ? 'normal' : 'off') if $column;
+          }
+        }
+        
         $config->set_parameter('band_labels', 'off') if $display =~ /highlight/; ## Turn off band labels if we have pointer tracks 
         
         next if $display eq 'off' || $display =~ /highlight/;
