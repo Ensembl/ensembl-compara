@@ -52,6 +52,7 @@ sub new {
     _parameters      => { # Default parameters
       storable     => 1,      
       has_das      => 1,
+      datahubs     => 0,
       image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
       image_resize => 0,      
       margin       => 5,
@@ -511,10 +512,11 @@ sub load_user_tracks {
   
   return unless $menu;
   
-  my $hub     = $self->hub;
-  my $session = $hub->session;
-  my $user    = $hub->user;
-  my $das     = $hub->get_all_das;
+  my $hub      = $self->hub;
+  my $session  = $hub->session;
+  my $user     = $hub->user;
+  my $das      = $hub->get_all_das;
+  my $datahubs = $self->get_parameter('datahubs') == 1;
   my (%url_sources, %upload_sources);
   
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
@@ -530,7 +532,7 @@ sub load_user_tracks {
   # Now we deal with the url sources... again flat file
   foreach my $entry ($session->get_data(type => 'url')) {
     next unless $entry->{'species'} eq $self->{'species'};
-
+    
     $url_sources{"url_$entry->{'code'}"} = {
       source_type => 'session',
       source_name => $entry->{'name'} || $entry->{'url'},
@@ -622,7 +624,7 @@ sub load_user_tracks {
         external => 'user'
       );
     } elsif (lc $url_sources{$code}{'format'} eq 'datahub') {
-      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'});
+      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'}) if $datahubs;
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
@@ -713,7 +715,6 @@ sub _add_datahub {
     my $datahub_config = $parser->parse($base_url . $golden_path, $source_list);
     
     ## Create Ensembl-style tracks from the datahub configuration
-    ## TODO - implement track grouping!
     foreach my $dataset (@$datahub_config) {
       if ($dataset->{'error'}) {
         warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
@@ -818,6 +819,72 @@ sub _add_datahub_tracks_matrix {
   $self->load_file_format(lc $_, $tracks{$_}) for keys %tracks;
 }
 
+sub _add_datahub_tracks {
+  my ($self, $dataset, $name, $desc_url) = @_;
+  my %sources_by_type;
+
+  my $options = {
+    menu_key     => $name,
+    menu_name    => $name,
+    submenu_key  => $dataset->{'config'}{'track'},
+    submenu_name => $dataset->{'config'}{'shortLabel'},
+    desc_url     => $desc_url || $dataset->{'config'}{'description_url'},
+    view         => $dataset->{'config'}{'view'},
+  };
+
+  foreach my $track (@{$dataset->{'tracks'}}) {
+    my $link = qq{ <a href="$options->{'desc_url'}" rel="external">Go to track description on datahub</a>};
+    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
+    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
+    # means the short label can be very non specific, because the header gives context of what type of
+    # track it is. For Ensembl we need to have all the information in the track name / caption
+    (my $source_name = $track->{'longLabel'}) =~ s/_/ /g;
+    my $source = {
+      name        => $track->{'track'},
+      source_name => $source_name,
+    # caption     => $track->{'shortLabel'},
+      description => $track->{'longLabel'} . $link,
+      source_url  => $track->{'bigDataUrl'},
+      datahub     => 1,
+      %$options
+    };
+    
+    # Alternative rendering order for genome segmentation and similar
+    if ($track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish') {
+      $source->{'renderers'} = [
+        'off',     'Off',
+        'compact', 'Continuous',
+        'normal',  'Separate',
+        'labels',  'Separate with labels',
+      ];
+    }
+    
+    $source->{'colour'} = $track->{'color'} if exists $track->{'color'};
+
+    my $type = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+
+    # Graph range - Track Hub default is 0-127
+    if (exists($track->{'viewLimits'})) {
+      $source->{'viewLimits'} = $track->{'viewLimits'};
+    } elsif (!exists $track->{'autoscale'} || $track->{'autoscale'} eq 'off') {
+      $source->{'viewLimits'} = '0:127';
+    }
+
+    if (exists $track->{'maxHeightPixels'}) {
+      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
+    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
+      $source->{'maxHeightPixels'} = '64:32:16';
+    }
+    
+    # To improve browser speed don't display a zmenu for bigwigs 
+    $source->{'no_titles'} = 1 if $type eq 'BIGWIG';
+    
+    $sources_by_type{$type}{$track->{'track'}} = $source;
+  }
+
+  $self->load_file_format(lc, \%{$sources_by_type{$_}}) for keys %sources_by_type;
+}
+
 sub _add_datahub_extras_options {
   my ($self, %args) = @_;
   
@@ -840,74 +907,6 @@ sub _add_datahub_extras_options {
     $args{'options'}{'menu'}    = 'datahub_subtrack';
     $args{'options'}{'display'} = 'default';
     unshift @{$args{'renderers'}}, 'default', 'Default';
-  }
-}
-
-sub _add_datahub_tracks {
-  my ($self, $dataset, $name, $desc_url) = @_;
-  my %sources_by_type;
-
-  my $options = {
-    menu_key     => $name,
-    menu_name    => $name,
-    submenu_key  => $dataset->{'config'}{'track'},
-    submenu_name => $dataset->{'config'}{'shortLabel'},
-    desc_url     => $desc_url || $dataset->{'config'}{'description_url'},
-    view         => $dataset->{'config'}{'view'},
-  };
-
-  foreach my $track (@{$dataset->{'tracks'}}) {
-    my $link = ' <a href="'.$options->{'desc_url'}.'" rel="external">Go to track description on datahub</a>';
-    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-    # means the short label can be very non specific, because the header gives context of what type of
-    # track it is. For Ensembl we need to have all the information in the track name / caption
-    (my $source_name = $track->{'longLabel'}) =~ s/_/ /g;
-    my $source = {
-      'name'          => $track->{'track'},
-      'source_name'   => $source_name,
-     # 'caption'       => $track->{'shortLabel'},
-      'description'   => $track->{'longLabel'}.$link,
-      'source_url'    => $track->{'bigDataUrl'},
-      'datahub'       => 1,
-      %$options
-    };
-    # Alternative rendering order for genome segmentation and similar
-    if ($track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish') {
-      $source->{'renderers'} = [
-          'off',    'Off',
-          'compact', 'Continuous',
-          'normal', 'Separate',
-          'labels', 'Separate with labels',
-      ];
-    }
-    $source->{'colour'} = $track->{'color'} if (exists($track->{'color'}));
-
-    my $type = ref($track->{'type'}) eq 'HASH' ? uc($track->{'type'}{'format'}) : uc($track->{'type'});
-
-    # Graph range - Track Hub default is 0-127
-    if (exists($track->{'viewLimits'})) {
-      $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif (!exists($track->{'autoscale'}) || $track->{'autoscale'} eq 'off') {
-      $source->{'viewLimits'} = '0:127';
-    }
-
-    if (exists($track->{'maxHeightPixels'})) {
-      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
-      $source->{'maxHeightPixels'} = '64:32:16';
-    }
-
-    if ($type eq 'BIGWIG') {
-      # To improve browser speed don't display a zmenu for bigwigs 
-      $source->{'no_titles'} = 1;
-    }
-
-    $sources_by_type{$type}{$track->{'track'}} = $source;
-  }
-
-  foreach my $format (keys(%sources_by_type)) {
-    $self->load_file_format(lc($format), \%{$sources_by_type{$format}});
   }
 }
 
