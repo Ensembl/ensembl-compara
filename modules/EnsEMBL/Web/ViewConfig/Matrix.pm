@@ -142,7 +142,6 @@ sub build_imageconfig_form {
       
       my $menu_data = {
         url          => $hub->url('Config', { function => 'Matrix', partial => 1, set => $set, menu => $menu }),
-        class        => $conf->{'subset'},
         class        => "${menu}_$set",
         availability => 1,
       };
