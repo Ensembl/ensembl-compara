@@ -34,18 +34,16 @@ sub content {
       HapMap => 2,
       Other  => 3,
       Failed => 4,
-      Pilot  => 5,
+      No     => 5,
     );
     
     foreach (sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @$table_array) {
       my ($title, $table) = @$_;
       
       # hide "other" and "failed" table
-      if ($title =~ /other|failed/i) {
-        my $id = $title =~ /other/i ? 'other' : 'failed';
-        $html .= $self->toggleable_table($title, $id, $table, 1);
-      } elsif ($title =~ /pilot/i) {
-        $html .= $self->toggleable_table($title, 'pilot', $table);
+      if ($title =~ /other|failed|population/i) {
+        my $id = $title =~ /other/i ? 'other' : ($title =~ /failed/i ? 'failed' : 'nopop');
+        $html .= $self->toggleable_table($title, $id, $table, 0);
       } else {     
         $html .= "<h2>$title</h2>" . $table->render;
       }
@@ -65,9 +63,13 @@ sub format_frequencies {
   
   # split off 1000 genomes, HapMap and failed if present
   if (!$tg_flag) {
-    my ($tg_data, $pi_data, $hm_data, $fv_data);
+    my ($tg_data, $hm_data, $fv_data, $no_pop_data);
     
     foreach my $pop_id (keys %$freq_data) {
+      if($pop_id eq 'no_pop') {
+        $no_pop_data = delete $freq_data->{$pop_id};
+      }
+      
       foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
         my $name = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'};
         
@@ -76,8 +78,6 @@ sub format_frequencies {
           $fv_data->{$pop_id}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
         } elsif ($name =~ /^1000genomes\:phase.*/i) {
           $tg_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
-        } elsif ($name =~ /^1000genomes\:.*/i) {
-          $pi_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
         } elsif ($name =~ /^cshl\-hapmap/i) {
           $hm_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
         }
@@ -86,9 +86,11 @@ sub format_frequencies {
     
     # recurse this method with just the tg_data and a flag to indicate it
     push @table_array,  @{$self->format_frequencies($tg_data, '1000 Genomes')} if $tg_data;
-    push @table_array,  @{$self->format_frequencies($pi_data, 'Pilot 1000 Genomes')} if $pi_data;
     push @table_array,  @{$self->format_frequencies($hm_data, 'HapMap')}       if $hm_data;
     push @table_array,  @{$self->format_frequencies($fv_data, 'Failed data')}  if $fv_data;
+    
+    # special method for data with no pop/freq data
+    push @table_array,  ['No population or frequency data', $self->no_pop_data($no_pop_data)]  if $no_pop_data;
   }
     
   foreach my $pop_id (keys %$freq_data) {
@@ -223,6 +225,62 @@ sub pop_url {
   }
   
   return $pop_url;
+}
+
+sub no_pop_data {
+  my ($self, $data) = @_;
+  
+  my $hub = $self->hub;
+  
+  # get reference alleles
+  my $vfs = $self->object->Obj->get_all_VariationFeatures;
+  
+  my (@alleles, %alleles);
+  
+  if(scalar @$vfs) {
+    my $vf = $vfs->[0];
+    @alleles = split /\//, $vf->allele_string;
+    %alleles = map {$_ => 1} @alleles;
+  }
+  
+  my @rows;
+  
+  foreach my $sub(keys %$data) {
+    foreach my $ss(keys %{$data->{$sub}}) {
+      my %unique = map {$_ => 1} @{$data->{$sub}{$ss}};
+      
+      my @ss_alleles = sort {
+        (($b eq $alleles[0]) <=> ($a eq $alleles[0])) ||
+        (defined($alleles{$b}) <=> defined($alleles{$a}))
+      } keys %unique;
+      
+      my $flag = 0;
+      foreach(@ss_alleles) {
+        $flag = 1 if !defined($alleles{$_});
+      }
+      
+      push @rows, {
+        ssid      => $hub->get_ExtURL_link($ss, 'DBSNPSS', $ss),
+        submitter => $hub->get_ExtURL_link($sub, 'DBSNPSSID', $sub),
+        alleles   =>
+          join("/",
+            map {defined($alleles{$_}) ? $_ : '<span style="color:red">'.$_.'</span>'}
+            @ss_alleles
+          ).
+          ($flag ? ' *' : ''),
+      };
+    }
+  }
+  
+  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
+  $table->add_columns(
+    { key => 'ssid',      title => 'ssID'              },
+    { key => 'submitter', title => 'Submitter'         },
+    { key => 'alleles',   title => 'Submitted alleles' }
+  );
+  $table->add_rows(@rows);
+  
+  return $table;
 }
 
 
