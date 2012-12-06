@@ -42,14 +42,18 @@ package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::BlastFactory;
 use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'step'  => 1000,
+    }
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
-	my $genome_db_id = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
-
-    if (!defined $self->param('step')) {
-	$self->param('step', 1000);
-    }
+    $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
+    $self->param('step') or die "'step' is an obligatory parameter";
 }
 
 
@@ -58,7 +62,7 @@ sub write_output {
 
 
     #Fetch members for genome_db_id
-    my $sql = 'SELECT member_id FROM member WHERE genome_db_id = ?';
+    my $sql = 'SELECT member_id FROM member WHERE genome_db_id = ? ORDER BY member_id';
     my $sth = $self->compara_dba->dbc->prepare( $sql );
     $sth->execute($self->param('genome_db_id'));
     
@@ -69,35 +73,14 @@ sub write_output {
 
     my $step = $self->param('step');
 
-    #Sort on member_id
-    my $sorted_list;
-    @$sorted_list = sort {$a <=> $b} @$member_id_list;
-    
-    my $start_member_id = $sorted_list->[0];
-    my $offset = 0;
-    my $batch_size;
-
-    #Create jobs for BlastAndParsePAF
-    for (my $i = 0; $i < @$sorted_list; $i++) {
-	my $member_id = $sorted_list->[$i];
-
-	if ($batch_size == $step) {
-	    my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $start_member_id, 'offset' => $offset, 'batch_size' => $batch_size};
+    while (@$member_id_list) {
+        my @job_array = splice(@$member_id_list, 0, $step);
+        my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $job_array[0], 'end_member_id' => $job_array[-1] };
 	    
-	    $self->dataflow_output_id($output_id, 2);
-
-	    $offset += $batch_size;
-	    $batch_size = 0;
-	    $start_member_id= $member_id;
-	}
-	$batch_size++;
+        $self->dataflow_output_id($output_id, 2);
     }
 
-    my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $start_member_id, 'offset' => $offset, 'batch_size' => $batch_size};
-
-    
-   $self->dataflow_output_id($output_id, 2);
-
-
 }
-return 1;
+
+1;
+
