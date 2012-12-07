@@ -605,7 +605,7 @@ sub get_author_name {
 
 sub retrieve_remarks {
   my $self = shift;
-  my @remarks = ! grep {$_ eq 'EnsEMBL merge exception'} map { $_->value } @{ $self->Obj->get_all_Attributes('remark') };
+  my @remarks = grep {$_ ne 'EnsEMBL merge exception'} map { $_->value } @{ $self->Obj->get_all_Attributes('remark') };
   return \@remarks;
 }
 
