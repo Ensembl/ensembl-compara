@@ -3,7 +3,6 @@
 /** FIXME:
   hover labels for tracks don't link correctly to subtracks in popups
   only column nodes appear in track order - need all sortable nodes somehow
-  change tutorial to be HTML (use helptip style?) so that wording can be correct for any column/row types
   
   TODO: 
   update link count correctly when column track in main panel is turned on/off
@@ -28,7 +27,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   
   init: function () {
     var panel = this;
-    var body  = $('body');
     var j;
     
     this.base();
