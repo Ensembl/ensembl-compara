@@ -61,9 +61,14 @@ sub content {
       base_url        => $base_url,
       join_types      => $gene_join_types
     });
-    
+
+    # allows the 'set as primary' sprite to be shown on an single species view
+    if ($image_config->get_parameter('can_set_as_primary')) {
+      $image_config->set_parameters({
+           compara => 'secondary'
+         });
+    }
     $image_config->get_node('scalebar')->set('caption', $_->{'short_name'});
-    
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
