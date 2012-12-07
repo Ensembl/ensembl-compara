@@ -105,7 +105,7 @@ Under <kbd>bash</kbd>, <kbd>ksh</kbd>, or any <kbd>sh</kbd>-derived shell:
 </p>
 
 <pre>
-PERL5LIB=${PERL5LIB}:${HOME}/src/bioperl-live
+PERL5LIB=${PERL5LIB}:${HOME}/src/bioperl-1.2.3
 PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl/modules
 PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl-compara/modules
 PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl-variation/modules
@@ -120,7 +120,7 @@ Under <kbd>csh</kbd> or <kbd>tcsh</kbd>:
 </p>
 
 <pre>
-setenv PERL5LIB ${PERL5LIB}:${HOME}/src/bioperl-live
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/bioperl-1.2.3
 setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl/modules
 setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl-compara/modules
 setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl-variation/modules
@@ -134,7 +134,7 @@ Under Windows (assuming you installed the APIs in C:\src\):
 </p>
 
 <pre>
-set PERL5LIB=C:\src\bioperl-live;C:\src\ensembl\modules;C:\src\ensembl-compara\modules;C:\src\ensembl-variation\modules;C:\src\ensembl-functgenomics\modules
+set PERL5LIB=C:\src\bioperl-1.2.3;C:\src\ensembl\modules;C:\src\ensembl-compara\modules;C:\src\ensembl-variation\modules;C:\src\ensembl-functgenomics\modules
 </pre>
 </li>
 
@@ -154,6 +154,20 @@ a command-line tool which is bundled with ActivePerl.</li>
 <li>If the existing mysql-driver ("libmysql.dll") doesn't work, replace it - e.g. with the one distributed with "php-5-2-3-win32-installer.msi"</li>
 </ul>
 
+<h2 id='mac'>Additional Tips for Mac users</h2>
+<ul>
+<li>Please install the latest <a href='http://dev.mysql.com/downloads/'>client libraries or server</a></li>
+<li>XCode and gcc must be installed. Follow this <a href='http://stackoverflow.com/questions/9353444/how-to-use-install-gcc-on-mac-os-x-10-8-xcode-4-4'>guide</a> about how to install this on OSX 10.8</li>
+<li>You will need to install <tt>DBD::mysql</tt> using CPAN</li>
+<li>Users have reported issues with a missing library called <tt>libmysqlclient.18.dylib</tt>. If you followed the normal server installtion this is available under <tt>/usr/local/mysql/lib/</tt>. You must either:
+<ul>
+  <li>Add the MySQL library location to your <tt>DYLD_LIBRARY_PATH</tt> environment variable</li>
+  <li>Use <tt>install_name_tool</tt> to force OSX to find your library</li>
+  <li>Symbolically link the library into <tt>/usr/lib</tt></li>
+  <li>Search <a href='https://www.google.co.uk/search?q=libmysqlclient.18.dylib'>Google</a> for more information</li>
+</ul>
+</li>
+</ul>
 
 <h2>Additional Modules</h2>
 
