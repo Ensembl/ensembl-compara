@@ -148,7 +148,7 @@ sub content {
       	next unless $rem;  #ignore remarks with a value of 0
         $text .= "<p>$rem</p>";
       }
-      $table->add_row('Remarks', $text);
+      $table->add_row('Remarks', $text) if $text;
     }
   } else {
     my $type = $object->gene_type;

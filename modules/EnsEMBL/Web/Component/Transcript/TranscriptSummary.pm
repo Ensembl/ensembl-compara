@@ -62,7 +62,7 @@ sub content {
         $text .= "<p>$rem</p>";
       }
 
-      $table->add_row('Remarks', $text);
+      $table->add_row('Remarks', $text) if $text;
     }
   } else { ## type for core genes
     my $type = $object->transcript_type;
