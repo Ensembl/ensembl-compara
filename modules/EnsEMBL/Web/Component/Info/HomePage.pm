@@ -97,7 +97,7 @@ sub _whatsnew_text {
       $html .= sprintf('<li><a href="%s" class="nodeco">%s</a></li>', $record_url, $record->{'title'});
     }
     $html .= '</ul>';
-    $html .= sprintf '<div style="text-align:right;margin-top:-2em;padding-bottom:8px"><a href="%s" class="nodeco">More news<a/>...</div>', $news_url;
+    $html .= sprintf '<div style="text-align:right;margin-top:-2em;padding-bottom:8px"><a href="%s" class="nodeco">More news</a>...</div>', $news_url;
   }
 
   return $html;
