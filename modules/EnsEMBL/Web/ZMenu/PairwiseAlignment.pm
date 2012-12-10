@@ -6,6 +6,20 @@ use strict;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
+sub method_type {
+  my ($self,$id) = @_;
+
+  my $hub = $self->hub;
+  my $mlssa = $hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor',
+                                'compara');
+  return undef unless $mlssa;
+  my $mlss = $mlssa->fetch_by_dbID($id);
+  return undef unless $mlss;
+  my $method = $mlss->method;
+  return undef unless $method;
+  return $method->type;
+}
+
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
@@ -29,7 +43,10 @@ sub content {
   }
   ## Display the location of the net and all the links
   if ($n1 and (!$r1 or $r1 ne $n1)) {
-    $self->add_subheader("This net: $n1 $orient");
+    my $type = $self->method_type($align);
+    my $name = "alignment";
+    $name = "net" if $type =~ /_net$/i;
+    $self->add_subheader("This $name: $n1 $orient");
 
     # Link from the net to the other species
     $url = $hub->url({
