@@ -305,18 +305,18 @@ sub fetch_input {
     } else {
       foreach my $param (split ' ', $pairwise_params) {
         my ($p, $v) = split '=', $param;
+        warn ">>> Parameter $p";
         
-        if ($v =~ /^\/nfs/) {
+        if ($p eq 'Q' && $v =~ /^\/nfs/) {
           ## slurp in the matrix file
           my @path  = split '/', $v;
-             $v     = '<pre>';
           my $file  = $path[-1];
           my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/docs/compara/$file";
           
+          $v  = '<pre>';
           while (<IN>) {
             $v .= $_;
           }
-          
           $v .= '</pre>';
         }
         
@@ -325,6 +325,17 @@ sub fetch_input {
         } else {
           $blastz_parameters->{'other'} .= $param;
         }
+      }
+      ## Set default matrix
+      unless ($blastz_parameters->{'Q'}) {
+        my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/docs/compara/default.matrix";
+        my $v  = '<pre>Default:
+';
+        while (<IN>) {
+          $v .= $_;
+        }
+        $v .= '</pre>';
+        $blastz_parameters->{'Q'} = $v;
       }
     }
   }
