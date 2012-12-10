@@ -57,7 +57,7 @@ sub new {
         
         my $option_key = $row_config->get('option_key');
         
-        next if $option_key && $config->hub->param($option_key) eq 'off';
+        next if $option_key && $config->hub->param($option_key) ne 'on';
         
         my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
         

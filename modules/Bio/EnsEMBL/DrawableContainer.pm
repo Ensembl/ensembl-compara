@@ -8,8 +8,6 @@ package Bio::EnsEMBL::DrawableContainer;
 
 use strict;
 
-use Time::HiRes qw(time);
-
 use Sanger::Graphics::Glyph::Rect;
 
 use base qw(Sanger::Graphics::Root);
@@ -35,7 +33,7 @@ sub new {
      $inter_space     = 2 * $margin unless defined $inter_space;
   
   $self->{'__extra_block_spacing__'} -= $inter_space;
-
+  
   ## Loop through each pair of "container / config"s
   foreach my $CC (@{$self->{'contents'}}) {
     my ($container, $config) = @$CC;
@@ -96,7 +94,7 @@ sub new {
         
         my $option_key = $row_config->get('option_key');
         
-        next if $option_key && $config->hub->param($option_key) eq 'off';
+        next if $option_key && $config->hub->param($option_key) ne 'on';
         
         my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
         
