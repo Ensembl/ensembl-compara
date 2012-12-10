@@ -907,6 +907,8 @@ sub _add_datahub_extras_options {
     $args{'options'}{'menu'}    = 'datahub_subtrack';
     $args{'options'}{'display'} = 'default';
     unshift @{$args{'renderers'}}, 'default', 'Default';
+  } else {
+    $args{'options'}{'option_key'} = $args{'key'};
   }
 }
 
