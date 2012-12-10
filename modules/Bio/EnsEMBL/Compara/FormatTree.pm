@@ -23,7 +23,6 @@ package Bio::EnsEMBL::Compara::FormatTree;
 use strict;
 use warnings;
 
-use Parse::RecDescent;
 use Data::Dumper;
 use Carp;
 #$::RD_HINT = 1;
@@ -348,6 +347,10 @@ sub new {
             'fmt' => $fmt,
             'callbacks' => {%callbacks},
     }, $class);
+    eval { require Parse::RecDescent };
+    if ($@) {
+        die "You need Parse::RecDescent installed to output a tree in newick format. Please install it from CPAN, or from your usual Perl distribution.\n";
+    }
     eval {
         my $parser = Parse::RecDescent->new($grammar);
         my $tokens = $parser->Format($fmt);
