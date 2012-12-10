@@ -206,7 +206,10 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     
     // FIXME: too slow - find a way to do this without triggering loads of individual events
     this.elLk.renderers.filter('.select_all').children('.popup_menu').children('li:not(.header)').on('click', function () {
-      $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li' + (this.className === 'all_on' ? '.off +' : '.' + this.className)).trigger('click');
+      $(this).parents('.popup_menu').hide().parent().siblings().filter(function () {
+        return this.style.display !== 'none';
+      }).find('.popup_menu li' + (this.className === 'all_on' ? '.off +' : '.' + this.className)).trigger('click');
+      
       return false;
     });
     
