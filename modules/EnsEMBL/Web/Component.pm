@@ -320,6 +320,33 @@ sub _info_panel {
   ) : '';
 }
 
+sub skipped_and_missing {
+  my ($self, $skipped, $missing, $pairwise) = @_;
+  my $species_defs = $self->hub->species_defs;
+  my $info;
+
+  if (scalar @{$skipped||[]}) {
+    $info .= sprintf(
+      '<p>The following %d species in the alignment are not shown in the image. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+      scalar @$skipped,
+      join "</li>\n<li>", sort map $species_defs->species_label($_), @$skipped
+    );
+  }
+
+  if (scalar @{$missing||[]}) {
+    if ($pairwise) {
+      $info .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing->[0]);
+    } else {
+      $info .= sprintf(
+        '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
+        scalar @$missing,
+        join "</li>\n<li>", sort map $species_defs->species_label($_), @$missing
+      );
+    }
+  }
+  return $info;
+}
+
 sub config_msg {
   my $self = shift;
   my $url  = $self->hub->url({

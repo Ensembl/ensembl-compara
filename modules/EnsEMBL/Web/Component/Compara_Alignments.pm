@@ -247,14 +247,8 @@ sub check_for_errors {
     }
 
     if (scalar @skipped) {
-      $warnings = $self->_info(
-        'Species hidden by configuration',
-        sprintf(
-          '<p>The following %d species in the alignment are not shown. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
-          scalar @skipped,
-          join "</li>\n<li>", sort map { $species_defs->species_label($_) } @skipped
-        )
-      );
+      my $info = $self->skipped_and_missing(\@skipped);
+      $warnings = $self->_info('Species hidden by configuration', $info);
     }
   }
 

@@ -30,7 +30,7 @@ sub content {
   
   my $align_details = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align};
 
-  return $self->_error('Unknown alignment', '<p>The alignment you have select does not exist in the current database.</p>') unless $align_details;
+  return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
   
   my $primary_species = $hub->species;
   
@@ -47,7 +47,7 @@ sub content {
   my ($slices)        = $self->get_slices($slice, $align_params, $primary_species);
   my %aligned_species = map { $_->{'name'} => 1 } @$slices;
   my $i               = 1;
-  my (@skipped, @missing, @images, $html, $info);
+  my (@skipped, @missing, @images, $html);
   
   foreach (keys %{$align_details->{'species'}}) {
     next if $_ eq $primary_species;
@@ -95,27 +95,10 @@ sub content {
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
   $html .= $image->render;
-  
-  if (scalar @skipped) {  
-    $info .= sprintf(
-      '<p>The following %d species in the alignment are not shown in the image. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>', 
-      scalar @skipped, 
-      join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
-    );
-  }
-  
-  if (scalar @missing) {
-    if ($align_details->{'class'} =~ /pairwise/) {
-      $info .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
-    } else {
-      $info .= sprintf(
-        '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>', 
-        scalar @missing, 
-        join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
-      );
-    }
-  }
-  
+ 
+  my $is_pairwise = $align_details->{'class'} =~ /pairwise/ ? 1 : 0;
+  my $info = $self->skipped_and_missing(\@skipped, \@missing, $is_pairwise);
+ 
   $html .= $self->_info('Notes', $info) if $info;
   
   return $html;
