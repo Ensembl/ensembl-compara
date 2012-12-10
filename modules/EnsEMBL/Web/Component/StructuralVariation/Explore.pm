@@ -24,7 +24,7 @@ sub content {
   if ($avail->{'has_transcripts'}) {
     $gt_url    = $hub->url({'action' => 'Mappings'});
   }
-  if ($avail->{'has_ega'}) {
+  if ($avail->{'has_transcripts'}) {
     $pheno_url = $hub->url({'action' => 'Phenotype'});
   }
   if ($avail->{'has_supporting_structural_variation'}) {
