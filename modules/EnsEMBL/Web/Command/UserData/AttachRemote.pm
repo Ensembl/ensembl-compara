@@ -74,8 +74,6 @@ sub process {
       my $extra_config_page = $format->extra_config_page;
       $redirect .= $extra_config_page || "RemoteFeedback";
             
-      warn ">>> FORMAT NAME ".$format->name;
-
       my $data = $session->add_data(
         type      => 'url',
         code      => join('_', md5_hex($name . $url), $session->session_id),
