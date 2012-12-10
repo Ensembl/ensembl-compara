@@ -240,28 +240,34 @@ sub _insdc_synonym {
 sub insdc_accession {
   my $self = shift;
 
-  # Try to project to supercontig (aka scaffold)
   my $csv = $self->Obj->slice->coord_system->version; 
- 
   my $csa = Bio::EnsEMBL::Registry->get_adaptor($self->species,'core',
                                                 'CoordSystem');
-  foreach my $level (qw(supercontig scaffold chromosome toplevel)) {
-    next unless $csa->fetch_by_name($level,$csv);
-    my $gsa = $self->Obj->project($level,$csv);
-    if(@$gsa == 1) {
-      my $slice = $gsa->[0]->to_Slice;
-      next unless $slice;
-      my $name;
-      # Should be INSDC only by e71. At this point remove these. -- ds23
-      foreach my $edbname (('INSDC','EMBL','Broad Institute')) {
-        $name = $self->_insdc_synonym($slice,$edbname);
-        last if $name;
+  my $slice;
+  if($self->Obj->slice->is_reference) {
+    $slice = $self->Obj->slice->sub_Slice($self->Obj->start,
+                                          $self->Obj->end);
+  } else {
+    # Try to project to supercontig (aka scaffold)
+    foreach my $level (qw(supercontig scaffold)) {
+      next unless $csa->fetch_by_name($level,$csv);
+      my $gsa = $self->Obj->project($level,$csv);
+      if(@$gsa==1) {
+        $slice = $gsa->[0]->to_Slice;
+        last;
       }
-      next unless $name;
-      return join(':',$slice->coord_system->name,$csv,$name,
-                  $slice->start,$slice->end,$slice->strand);
     }
   }
+  return undef unless $slice;
+  my $name;
+  # Should be INSDC only by e71. At this point remove these. -- ds23
+  foreach my $edbname (qw(INSDC EMBL)) {
+    $name = $self->_insdc_synonym($slice,$edbname);
+    last if $name;
+  }
+  return undef unless $name;
+  return join(':',$slice->coord_system->name,$csv,$name,
+                  $slice->start,$slice->end,$slice->strand);
 }
 
 sub count_xrefs {
