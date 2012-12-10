@@ -49,21 +49,22 @@ sub content {
   
   my ($p_title, $p_img);
   if($avail->{'not_somatic'}) {
-    ($p_title, $p_img) = ('Population genetics', 'population_genetics');
+    ($p_title, $p_img) = ('Allele and genotype frequencies by population', 'population_genetics');
   }
   else {
     ($p_title, $p_img) = ('Sample information', 'sample_information');
   }
 
   my @buttons = (
-    {'title' => 'Genomic context',        'img' => 'genomic_context',        'url' => $context_url},
-    {'title' => 'Gene/Transcript',        'img' => 'gene_transcript',        'url' => $gt_url},
+    {'title' => 'Graphical neighbourhood region', 'img' => 'genomic_context',        'url' => $context_url},
+    {'title' => 'Consequences (e.g. missense)',   'img' => 'gene_transcript',        'url' => $gt_url},
     {'title' => $p_title,                 'img' => $p_img,                   'url' => $pop_url},
     {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',   'url' => $geno_url},
-    {'title' => 'Linkage disequilibrium', 'img' => 'linkage_disequilibrium', 'url' => $ld_url},
-    {'title' => 'Phenotype data',         'img' => 'phenotype_data',         'url' => $pheno_url},
-    {'title' => 'Phylogenetic context',   'img' => 'phylogenetic_context',   'url' => $phylo_url},
-    {'title' => 'Sequence',               'img' => 'flanking_sequence',      'url' => $seq_url},
+    {'title' => 'LD plots and tables',    'img' => 'linkage_disequilibrium', 'url' => $ld_url},
+    {'title' => 'Diseases and traits',    'img' => 'phenotype_data',         'url' => $pheno_url},
+    {'title' => 'Sequence conservation via cross-species alignments',   
+                                          'img' => 'phylogenetic_context',   'url' => $phylo_url},
+    {'title' => 'Upstream and downstream sequence', 'img' => 'flanking_sequence',      'url' => $seq_url},
   );
 
   my $html = '<div class="icon-holder">';
