@@ -8,16 +8,23 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
-  $self->{'_data'}->{'default'} = 'Summary';
+  $self->{'_data'}->{'default'} = 'Explore';
 }
 
 
 sub populate_tree {
   my $self = shift;
+  
+  $self->create_node('Explore', 'Explore this SV',
+    [qw(
+      explore EnsEMBL::Web::Component::StructuralVariation::Explore
+    )],
+    { 'availability' => 'structural_variation' }
+  );
 
-	$self->create_node('Summary', 'Genes/Transcripts',
+	$self->create_node('Mappings', 'Genes and regulation',
     [qw( summary EnsEMBL::Web::Component::StructuralVariation::Mappings )],
-    { 'availability' => 'structural_variation', 'concise' => 'Overlapped Genes/Transcripts' }
+    { 'availability' => 'has_transcripts', 'concise' => 'Genes and regulation' }
   );
 	
 	$self->create_node('Evidence', 'Supporting evidence ([[counts::supporting_structural_variation]])',
