@@ -507,8 +507,10 @@ foreach my $spp (@valid_spp) {
 ######################
 ######################
  
+      my $primary = $gene_stats{'alt_coding'} ? ' (Primary assembly)' : '';
+
       print STATS qq(
-        <h3>Gene counts (Primary assembly)</h3>
+        <h3>Gene counts$primary</h3>
         <table class="ss tint species-stats">
       );
       $rowcount = 0;
