@@ -20,7 +20,7 @@ sub caption {
 sub content {
   my $self = shift;
   
-  my $form = EnsEMBL::Web::Form->new('url_feedback', '', 'post');
+  my $form = $self->new_form({'id' => 'url_feedback', 'method' => 'post'});
 
   $form->add_element(
       type  => 'Information',
