@@ -45,7 +45,7 @@ if (defined $output_tree_file) {
     my $pruned_tree  = $compara_dba->get_SpeciesTreeAdaptor()->prune_tree( $blength_tree, $species_set_id );
 
     open FH, ">$output_tree_file" or die "$!";
-    print FH $pruned_tree->newick_simple_format() . "\n";
+    print FH $pruned_tree->newick_format('simple') . "\n";
     close FH;
 }
 

@@ -739,7 +739,7 @@ sub _build_tree_string {
   #if duplications found, $tree will not be defined
   return if (!$tree);
 
-  my $tree_string = $tree->newick_simple_format;
+  my $tree_string = $tree->newick_format('simple');
   # Remove quotes around node labels
   $tree_string =~ s/"(seq\d+)"/$1/g;
   # Remove branch length if 0
@@ -840,7 +840,7 @@ sub _run_ortheus {
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
       #-tree_string => $self->tree_string,
-      -species_tree => $self->get_species_tree->newick_simple_format,
+      -species_tree => $self->get_species_tree->newick_format('simple'),
       -species_order => $self->param('species_order'),
       -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),

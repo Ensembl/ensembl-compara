@@ -1500,7 +1500,7 @@ sub _build_tree_string {
 
   return if (!$tree);
 
-  my $tree_string = $tree->newick_simple_format;
+  my $tree_string = $tree->newick_format('simple');
 
 
   # Remove quotes around node labels

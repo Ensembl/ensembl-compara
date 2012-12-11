@@ -46,7 +46,7 @@ foreach my $this_gene (@$these_genes) {
   return 0 unless (defined $tree);
 
   ## Print tree in newick format
-  print $tree->newick_simple_format,"\n\n";
+  print $tree->newick_format('simple'),"\n\n";
   print $tree->newick_format("display_label_composite"), "\n\n";
   print $tree->nhx_format("display_label_composite"), "\n\n";
 

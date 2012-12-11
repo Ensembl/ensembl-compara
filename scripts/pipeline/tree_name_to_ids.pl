@@ -7,7 +7,7 @@ my $newick_tree = qx"cat $file";
 print "INPUT TREE:\n$newick_tree\n";
 my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_tree);
 
-print "TREE AFTER PARSING:\n", $tree->newick_simple_format(), "\n";
+print "TREE AFTER PARSING:\n", $tree->newick_format('simple'), "\n";
 
 my $genome_dbs = $compara_dba->get_GenomeDBAdaptor->fetch_all();
 
@@ -30,4 +30,4 @@ foreach my $this_leaf (@{$tree->get_all_leaves}) {
     }
 }
 
-print "TREE WITH INTERNAL IDS\n", $tree->newick_simple_format(), "\n";
+print "TREE WITH INTERNAL IDS\n", $tree->newick_format('simple'), "\n";

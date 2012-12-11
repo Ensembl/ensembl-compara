@@ -195,7 +195,7 @@ sub dumpNewickTree {
   if ($nhx) {
     print $fh $tree->nhx_format;
   } else {
-    print $fh $tree->newick_simple_format;
+    print $fh $tree->newick_format('simple');
   }
   print $fh "\n//\n\n";
 }

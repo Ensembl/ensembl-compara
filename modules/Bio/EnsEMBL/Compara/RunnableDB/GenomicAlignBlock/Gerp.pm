@@ -822,7 +822,7 @@ sub _build_tree_string {
     
     $tree = $self->_update_tree($tree, $genomic_aligns);
     
-    my $tree_string = $tree->newick_simple_format;
+    my $tree_string = $tree->newick_format('simple');
 
     # Remove quotes around node labels
     $tree_string =~ s/"(_\d+_)"/$1/g;
