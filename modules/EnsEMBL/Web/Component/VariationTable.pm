@@ -181,7 +181,6 @@ sub tree {
   
   $self->add_colours_to_tree($tree, $var_styles, $colourmap);
   
- # my $html = '<div class="nav" style="width:100%; position: relative; left:;"><ul class="local_context" style="line-height: 20px; border: 0px;">';
   my $html = '<ul class="tree">';
   
   $html .= $self->tree_html($tree, 1);
@@ -515,7 +514,7 @@ sub tree_html {
   
   # don't go further in these cases only
   #undef @children if $term_obj->name =~ /feature.+ation/i;
-  
+  my $side_padding = @children ? '7px' : '5px';
   my $html = sprintf(
     '<li%s>%s<span title="%s">%s%s',
     
@@ -529,7 +528,8 @@ sub tree_html {
     (split /\"/, $term_obj->definition)[1],
     
     # colour block
-    (defined($term_obj->{colour}) ? sprintf('<div style="background-color: %s; color: %s; width: 10px; display: inline; margin: 0 3px 0 0; padding: 0 5px 0 5px;"> </div>', $term_obj->{colour}) : ''),
+    
+    (defined($term_obj->{colour}) ? sprintf('<div style="background-color: %s; color: %s; width: 10px; display: inline; margin: 0 3px 0 0; padding: 0 %s;"> </div>', $term_obj->{colour}, $term_obj->{colour}, $side_padding) : ''),
     
     # name and link
     $con,
