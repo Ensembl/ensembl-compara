@@ -181,11 +181,12 @@ sub tree {
   
   $self->add_colours_to_tree($tree, $var_styles, $colourmap);
   
-  my $html = '<div class="nav" style="width:100%; position: relative; left:;"><ul class="local_context" style="line-height: 20px; border: 0px;">';
+ # my $html = '<div class="nav" style="width:100%; position: relative; left:;"><ul class="local_context" style="line-height: 20px; border: 0px;">';
+  my $html = '<ul class="tree">';
   
   $html .= $self->tree_html($tree, 1);
   
-  $html .= '</ul></div>';
+  $html .= '</ul>';
   
   return $html;
 }
