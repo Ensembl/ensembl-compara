@@ -11,7 +11,6 @@ sub init {
   my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'} || {};
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults   = {
-    consequence_format => 'so',
     context            => 'FULL', 
     hgvs               => 'off',
   }; # Don't change context if you want the page to come back!!
@@ -89,17 +88,6 @@ sub form {
   
   # Add type selection
   $self->add_fieldset('Consequence options');
-  
-  $self->add_form_element({
-    type   => 'DropDown',
-    select =>, 'select',
-    label  => 'Type of consequences to display',
-    name   => 'consequence_format',
-    values => [
-      { value => 'so',       name => 'Sequence Ontology terms' },
-      { value => 'ensembl',  name => 'Old Ensembl terms'       },
-    ]
-  });
   
   $self->add_form_element({
     type  => 'CheckBox',
