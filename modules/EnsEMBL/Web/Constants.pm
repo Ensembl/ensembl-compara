@@ -335,6 +335,8 @@ sub VARIATION_OPTIONS {
       'opt_nc_transcript_variant'             =>  [ 'on', 'Non-coding transcript',       23 ],
       'opt_upstream_gene_variant'             =>  [ 'on', 'Upstream',                    24 ],
       'opt_downstream_gene_variant'           =>  [ 'on', 'Downstream',                  25 ],
+	  'opt_feature_truncation'                =>  [ 'on', 'Feature truncation',          36 ],
+	  'opt_feature_elongation'                =>  [ 'on', 'Feature elongation',          37 ],
       'opt_sara'                              =>  [ 'on', 'SARA (same as ref.assembly)', 40 ],
     },
   );
