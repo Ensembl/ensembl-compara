@@ -30,7 +30,7 @@ sub content {
   my $align_param = $hub->param('align');
   my ($align) = split '--', $align_param;
   
-  my ($error, $warnings) = $self->check_for_errors($align, $species, $cdb);
+  my ($error, $warnings) = $self->check_for_align_errors($align, $species, $cdb);
 
   return $error if $error;
   
@@ -68,7 +68,7 @@ sub content {
   } else {
     $html .= $self->content_sub_slice($slice, $slices, $warnings, undef, $cdb); # Direct call if the sequence length is short enough
   }
-  
+ 
   return $html;
 }
 
@@ -211,48 +211,6 @@ sub get_alignments {
   $align_slice = $align_slice->sub_AlignSlice($start, $end) if $start && $end;
   
   return $align_slice->$func(@selected_species);
-}
-
-sub check_for_errors {
-  my $self = shift;
-  my ($align, $species, $cdb) = @_;
-
-  return (undef, $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>')) unless $align;
-  
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
-  my $db_key        = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
-  my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
-  
-  return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
-
-  if (!exists $align_details->{'species'}->{$species}) {
-    return $self->_error('Unknown alignment', sprintf(
-      '<p>%s is not part of the %s alignment in the database.</p>',
-      $species_defs->species_label($species),
-      encode_entities($align_details->{'name'})
-    ));
-  }
-  
-  my @skipped;
-  my $warnings;
-  
-  if ($align_details->{'class'} !~ /pairwise/) { # This is a multiway alignment
-    foreach (keys %{$align_details->{'species'}}) {
-      my $key = sprintf 'species_%d_%s', $align, lc $_;
-
-      next if $species eq $_;
-      
-      push @skipped, $_ if ($hub->param($key)||'off') eq 'off';
-    }
-
-    if (scalar @skipped) {
-      my $info = $self->skipped_and_missing(\@skipped);
-      $warnings = $self->_info('Species hidden by configuration', $info);
-    }
-  }
-
-  return (undef, $warnings);
 }
 
 # Displays slices for all species above the sequence

@@ -47,17 +47,7 @@ sub content {
   my ($slices)        = $self->get_slices($slice, $align_params, $primary_species);
   my %aligned_species = map { $_->{'name'} => 1 } @$slices;
   my $i               = 1;
-  my (@skipped, @missing, @images, $html);
-  
-  foreach (keys %{$align_details->{'species'}}) {
-    next if $_ eq $primary_species;
-    
-    if ($align_details->{'class'} !~ /pairwise/ && ($hub->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
-      push @skipped, $_;
-    } elsif (!$aligned_species{$_} && $_ ne 'ancestral_sequences') {
-      push @missing, $_;
-    }
-  }
+  my (@images, $html);
   
   foreach (@$slices) {
     my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $_->{'name'}; # Cheating: set species to Multi to stop errors due to invalid species.
@@ -95,11 +85,10 @@ sub content {
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
   $html .= $image->render;
- 
-  my $is_pairwise = $align_details->{'class'} =~ /pairwise/ ? 1 : 0;
-  my $info = $self->skipped_and_missing(\@skipped, \@missing, $is_pairwise);
- 
-  $html .= $self->_info('Notes', $info) if $info;
+
+  my $cdb                 = $hub->param('cdb') || 'compara';
+  my ($errors, $warnings) = $self->check_for_align_errors($align, $primary_species, $cdb);
+  $html .=  $warnings;
   
   return $html;
 }
