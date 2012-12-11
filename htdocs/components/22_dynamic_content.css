@@ -88,3 +88,25 @@ div.helptip-top.helptip-left            { border-radius: 0 4px 0 0; }
 div.helptip-left div.helptip-inner      { padding-left: 8px; padding-right: 0; border-radius: 4px 0 0 4px; }
 body.ie6 div.helptip                    { border: none; }
 body.ie6 div.helptip div.helptip-inner  { padding: 8px; }
+
+/*****************
+Generic tree
+*****************/
+
+ul.tree              { padding: 0; list-style: none; white-space: nowrap; }
+ul.tree li           { width: 100%; list-style-image: none; margin: 0 0 0 -7px; overflow: hidden;
+                      background-image: url(/i/line.gif); background-repeat: repeat-y; }
+ul.tree li ul        { list-style: none; border: 0; padding: 0 0 0 28px; margin: 0; }
+ul.tree li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 0; }
+ul.tree li.parent > a.toggle,  
+ul.tree li.last > a.toggle    { margin-left:-6px; }
+ul.tree li.last      { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
+ul.tree li.last ul   { background: 0; }
+ul.tree li.active    { font-weight: bold; background-color: [[TINT_BG]]; }
+ul.tree li.active ul { background-color: [[PANEL_BG]]; }
+ul.tree li.active li { font-weight: normal; }
+ul.tree li.closed ul { display: none; }
+ul.tree li .disabled { color: [[PAGE_TEXT]]; }
+ul.tree a            { color: [[MENU_LINK]]; text-decoration: none; }
+ul.tree a.open       { font-weight:bold; color:#c00; }
+
