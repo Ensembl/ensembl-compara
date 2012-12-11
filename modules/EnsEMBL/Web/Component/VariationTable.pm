@@ -511,7 +511,7 @@ sub tree_html {
   my %include_cons = map {$_->SO_term => 1} values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
   my @children = grep {$_->{count}} @{$term_obj->children};
-  
+ 
   # don't go further in these cases only
   #undef @children if $term_obj->name =~ /feature.+ation/i;
   my $side_padding = @children ? '7px' : '5px';
@@ -562,7 +562,10 @@ sub tree_html {
   
   $html .= '<span class="small"> | '.$self->hub->get_ExtURL_link($term_obj->accession, 'SEQUENCE_ONTOLOGY', $term_obj->accession).'</span>' unless $con eq 'All variants';
   
-  $html .= '</span>';
+  my $warning_text = $term_obj->{count} > 10000 ? qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>} : '';
+
+  $html .= "</span> $warning_text";
+ 
   
   # iterate  
   if(@children) {
