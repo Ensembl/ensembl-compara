@@ -67,15 +67,15 @@ sub default_options {
 
         'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_69',
         'genetrees_copy_tables'  => [  ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence' ],
+        'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile' ],
 
         'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_69a',
-        'nctrees_copy_tables'  => [ 'hmm_profile' ],
-        'nctrees_merge_tables' => [ 'member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence' ],
+        'nctrees_copy_tables'  => [ ],
+        'nctrees_merge_tables' => [ 'member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
         'compara_innodb_schema' => 0,                               # to override the default Compara setting
