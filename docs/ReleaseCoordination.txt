@@ -1055,8 +1055,10 @@ You can run the pipelines yourself or delegate the task to a fellow Compara memb
 
 22a. Go to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig and open the PipeConfig file DumpTrees_conf.pm
 
-    Check that you are happy about all parameters:
-        rel             being the current release number (sometimes this is the only thing to change),
+    Check that you are happy about all parameters. In usual cases, only these 2 parameters need to be changed:
+        rel             being the current release number
+	rel_coord       username of the release coordinator (defaults to you !)
+    You can still check that the parameters are correct
         rel_db          pointing at the release database,
         target_dir      suitable for creating and storing the dumps in
     If not happy, edit the changes, save the config file and exit the editor.
@@ -1074,6 +1076,7 @@ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -tree_type 
 # rel65: 2h5m
 # rel66: more than 1 week (lustre was very slow, and dump_all_homologies takes ages)
 # rel67 and rel68: much faster (< 2 days)
+# rel70: < 3 hours
 
 22b. Create another pipeline from the same config file:
 
@@ -1087,12 +1090,16 @@ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -tree_type 
 # rel65: 7m
 # rel66: 1h in total
 # rel67 and rel68: a few hours
+# rel70: < 2 hours
 
 22c. Commit the DumpTrees_conf.pm file into the CVS if you'd like to keep the changes.
 
-22d. Report to Javier the location of the tree content dump for Uniprot, in 'target_dir'/Compara.{release}.protein.tree_content.txt.gz
+22d. Copy the tree content dump for Uniprot
 
-22e. Report the locations of the dumps to the main Release Coordinator and/or the web people.
+The file 'target_dir'/ensembl.GeneTree_content.{release}.txt.gz needs to be copied to the EBI ftp server.
+You can scp the file to login.ebi.ac.uk:/nfs/ftp/pub/databases/ensembl/ensembl_compara/ and from there, create its MD5 checksum
+
+22e. Report the locations of the dumps to the main Release Coordinator and/or the production people.
      'target_dir'/emf should go to /emf/ensembl-compara/homologies/ on the ftp
      'target_dir'/xml should go to /xml/ensembl-compara/homologies/ on the ftp
 
