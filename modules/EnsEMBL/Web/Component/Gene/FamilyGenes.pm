@@ -28,6 +28,16 @@ sub content {
   if ($family_id) {
     my $families = $object->get_all_families($cdb);
     my $genes    = $families->{$family_id}{'info'}{'genes'} || [];
+    my $proteins = $families->{$family_id}{'info'}{'proteins'} || {};
+
+    ## Dedupe results
+    my %seen;
+    foreach (@$genes) {
+      next if $seen{$_->stable_id};
+      $seen{$_->stable_id} = $_;
+    }
+    my @unique_genes = values %seen;
+
     $html       .= "<h4>Ensembl genes containing proteins in family $family_id</h4>\n";
 
     ## Karyotype (optional)
@@ -44,7 +54,7 @@ sub content {
       $image->imagemap   = 'yes';
       $image->set_button('drag', 'title' => 'Click or drag to jump to a region');
       
-      foreach my $g (@$genes) {
+      foreach my $g (@unique_genes) {
         my $stable_id = $g->stable_id;
         my $chr       = $g->slice->seq_region_name;
         my $start     = $g->start;
@@ -73,35 +83,47 @@ sub content {
       $html .= $image->render if $image;
     }
 
-    if (@$genes) {
+    if (@unique_genes) {
       ## Table of gene info
       my $table = $self->new_table;
       
       $table->add_columns(
-        { key => 'id',   title => 'Gene ID and Location',  width => '30%'},
-        { key => 'name', title => 'Gene Name',             width => '20%'},
-        { key => 'desc', title => 'Description(if known)', width => '50%'}
+        { key => 'id',   title => 'Gene ID and Location',   width => '20%'},
+        { key => 'name', title => 'Gene Name',              width => '20%'},
+        { key => 'desc', title => 'Description (if known)', width => '40%'},
+        { key => 'prot', title => 'Protein ID',             width => '20%'},
       );
-      
-      foreach my $gene (sort { $object->seq_region_sort($a->seq_region_name, $b->seq_region_name) || $a->seq_region_start <=> $b->seq_region_start } @$genes) {
+     
+      my %shown;
+ 
+      foreach my $gene (sort { $object->seq_region_sort($a->seq_region_name, $b->seq_region_name) || $a->seq_region_start <=> $b->seq_region_start } @unique_genes) {
+
         my $row = {};
+
         $row->{'id'} = sprintf(
-          '<a href="%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small nodeco">%s: %s</a>',
-          $spath, $gene->stable_id, $gene->stable_id,
-          $spath, $gene->slice->seq_region_name, $gene->start, $gene->end,
-          $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name), 
-          $self->round_bp($gene->start)
+              '<a href="%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small nodeco">%s: %s</a>',
+              $spath, $gene->stable_id, $gene->stable_id,
+              $spath, $gene->slice->seq_region_name, $gene->start, $gene->end,
+              $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name), 
+              $self->round_bp($gene->start)
         );
         
         my $xref = $gene->display_xref;
         
         if ($xref) {
           $row->{'name'} = $hub->get_ExtURL_link($xref->display_id, $xref->dbname, $xref->primary_id);
-        } else {
+        } 
+        else {
           $row->{'name'} = '-novel-';
         }
         
         $row->{'desc'} = $object->gene_description($gene);
+        
+        foreach my $protein (@{$proteins->{$gene->stable_id}||[]}) {
+          #$row->{'prot'} .= sprintf('<p>%s</p>', $protein->stable_id);
+          $row->{'prot'} .= sprintf('<p><a href="%s/Transcript/ProteinSummary?p=%s" title="More about this protein">%s</a></p>', $spath, $protein->stable_id, $protein->stable_id);
+        }
+
         $table->add_row($row);
       }
       
