@@ -16,13 +16,22 @@ sub content {
   my $self      = shift;
   my $hub       = $self->hub;
   my $freq_data = $self->object->freqs;
-  my $pop_freq  = $self->format_frequencies($freq_data);
   
-  return unless defined $pop_freq;
+	my $graph_type = ($hub->param('graph_type')) ? $hub->param('graph_type') : 'allele';
+	
+	my $pop_freq;
+	my $graph_width = '118';
+	if ($graph_type eq 'allele') {
+    $pop_freq = $self->format_allele_frequencies($freq_data);
+	} else {
+	  $pop_freq = $self->format_genotype_frequencies($freq_data);
+	  $graph_width = '125';
+	}
+	
+	return '' unless (defined($pop_freq));
   
-  my @pop_phase1 = grep /phase_1/, keys %$pop_freq;
-  
-  return unless scalar @pop_phase1;
+  my @pop_phase1 = grep{ /phase_1/} keys(%$pop_freq);
+  return '' unless (scalar @pop_phase1);
   
   my $graph_id = 0;
   my $height   = 50;
@@ -52,7 +61,7 @@ sub content {
   
   if ($nb_alleles > 2) {
     while ($nb_alleles != 2) {
-      $height += 5;
+      $height += 6;
       $nb_alleles--;
     }
   }
@@ -89,27 +98,27 @@ sub content {
         <div class="pie_chart_holder">
           <div class="pie_chart%s" title="%s">
             <h4>%s</h4>
-            <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+            <div id="graphHolder%s" style="width:%spx;height:%spx"></div>
           </div>
         </div>
-      ', $short_name eq 'ALL' ? ' all_population' : '', $pop_desc, $short_name, $graph_id, $height);
+      ', $short_name eq 'ALL' ? ' all_population' : '', $pop_desc, $short_name, $graph_id, $graph_width, $height);
     } elsif ($pop_tree->{$short_name}) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
           <div class="pie_chart" title="%s">
             <h4>%s</h4>
-            <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+            <div id="graphHolder%s" style="width:%spx;height:%spx"></div>
           </div>
           <a class="toggle set_cookie %s" href="#" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
         </div>
-      ', $pop_desc, $short_name, $graph_id, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
+      ', $pop_desc, $short_name, $graph_id, $graph_width, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
     } else {
       foreach (grep $pop_tree->{$_}{$short_name}, keys %$pop_tree) {
         push @{$sub_pops{$_}}, qq{
           <div class="pie_chart_holder">
             <div class="pie_chart" title="$pop_desc">
               <h4>$short_name</h4>
-              <div id="graphHolder$graph_id" style="width:118px;height:${height}px"></div>
+              <div id="graphHolder$graph_id" style="width:${graph_width}px;height:${height}px"></div>
             </div>
           </div>
         };
@@ -119,12 +128,24 @@ sub content {
     $graph_id++;
   }
   
-  my $html = sprintf(
-    '<h2>1000 Genomes allele frequencies</h2><div><input type="hidden" class="panel_type" value="PopulationGraph" />%s</div><div class="population_genetics_pie">%s</div>',
-    join('', @inputs),
+	my $switch_to_type = $graph_type eq 'allele' ? 'genotype' : 'allele';
+	
+	my $switch_link = $hub->url({
+                      type   => 'Variation',
+                      action => 'Population',
+                      v      => $hub->param('v'),
+										  vf     => $hub->param('vf'),
+										  graph_type => $switch_to_type
+                    });
+	my $html_link = qq{<img src="/img/var_al-gen_switch.png" style="vertical-align:middle;padding-right:5px"/><a href="$switch_link">Switch to display the $switch_to_type frequency pie charts</a>};
+	
+  my $html = sprintf( q{<h2>1000 Genomes %s frequencies</h2><div><input type="hidden" class="panel_type" value="PopulationGraph" />%s</div>%s<br /><br />
+	                     <div class="population_genetics_pie">%s</div>},
+    $graph_type,
+		$html_link,
+		join('', @inputs),
     join('', @graphs)
   );
-  
   foreach my $sp (sort keys %sub_pops) {
     my $sub_html = join '', @{$sub_pops{$sp}};
     my $show     = $hub->get_cookie_value("toggle_population_freq_$sp") eq 'open';
@@ -142,24 +163,24 @@ sub content {
   return $html;
 }
 
-sub format_frequencies {
+sub format_allele_frequencies {
   my ($self, $freq_data) = @_;
   my $hub = $self->hub;
   my $pop_freq;
   
-   foreach my $pop_id (keys %$freq_data) {
-    foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
-      my $pop_name = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'};
-      
+  foreach my $pop_id (keys %$freq_data) {
+	  my $pop_name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+		next if $freq_data->{$pop_id}{'pop_info'}{'Name'} !~ /^1000genomes\:.*/i;
+		
+		$pop_freq->{$pop_name}{'desc'}    = $freq_data->{$pop_id}{'pop_info'}{'Description'};
+    $pop_freq->{$pop_name}{'sub_pop'} = $freq_data->{$pop_id}{'pop_info'}{'Sub-Population'} if scalar keys %{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}};
+		
+    foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
       next if $freq_data->{$pop_id}{$ssid}{'failed_desc'};
-      next if $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} !~ /^1000genomes\:.*/i;
       
-      my @allele_freq = @{$freq_data->{$pop_id}{$ssid}{'AlleleFrequency'}};
+      my @allele_freq = @{$freq_data->{$pop_id}{'ssid'}{$ssid}{'AlleleFrequency'}};
       
-      $pop_freq->{$pop_name}{'desc'}    = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Description'};
-      $pop_freq->{$pop_name}{'sub_pop'} = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Sub-Population'} if scalar keys %{$freq_data->{$pop_id}{$ssid}{'pop_info'}{'Sub-Population'}};
-      
-      foreach my $gt (@{$freq_data->{$pop_id}{$ssid}{'Alleles'}}) {
+      foreach my $gt (@{$freq_data->{$pop_id}{'ssid'}{$ssid}{'Alleles'}}) {
         next unless $gt =~ /(\w|\-)+/;
         
         my $freq = $self->format_number(shift @allele_freq);
@@ -169,6 +190,40 @@ sub format_frequencies {
     }
   }
   
+  return $pop_freq;
+}
+
+sub format_genotype_frequencies {
+  my ($self, $freq_data) = @_;
+  my $hub = $self->hub;
+  my $pop_freq;
+  
+  foreach my $pop_id (keys %$freq_data) {
+	  my $pop_name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+    next if($freq_data->{$pop_id}{'pop_info'}{'Name'} !~ /^1000genomes\:.*/i);
+	 
+	  $pop_freq->{$pop_name}{desc} = $freq_data->{$pop_id}{'pop_info'}{'Description'};
+      
+    if (scalar(keys %{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}})) {
+      $pop_freq->{$pop_name}{sub_pop} = $freq_data->{$pop_id}{'pop_info'}{'Sub-Population'};
+    }
+
+    foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
+      next if($freq_data->{$pop_id}{'ssid'}{$ssid}{failed_desc});
+			next if(!$freq_data->{$pop_id}{'ssid'}{$ssid}{Genotypes});
+      # Freqs genotypes ---------------------------------------------
+      my @geno_freq = @{$freq_data->{$pop_id}{'ssid'}{$ssid}{'GenotypeFrequency'}};
+      
+      foreach my $gt (@{$freq_data->{$pop_id}{'ssid'}{$ssid}{'Genotypes'}}) {
+        next unless $gt =~ /(\w|\-)+/;
+        
+        my $freq = $self->format_number(shift @geno_freq);
+        if ($freq ne 'unknown') {
+          $pop_freq->{$pop_name}{freq}{$ssid}{$gt} = $freq;
+        }
+      }
+    }
+  }
   return $pop_freq;
 }
 

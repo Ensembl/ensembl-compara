@@ -66,20 +66,25 @@ sub format_frequencies {
     my ($tg_data, $hm_data, $fv_data, $no_pop_data);
     
     foreach my $pop_id (keys %$freq_data) {
-      if($pop_id eq 'no_pop') {
+      if ($pop_id eq 'no_pop') {
         $no_pop_data = delete $freq_data->{$pop_id};
+        next;
       }
       
-      foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
-        my $name = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'};
+      my $name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+    
+      foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
         
-        if ($freq_data->{$pop_id}{$ssid}{'failed_desc'}) {
-          $fv_data->{$pop_id}{$ssid}                = delete $freq_data->{$pop_id}{$ssid};
-          $fv_data->{$pop_id}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
+        if ($freq_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'}) {
+          $fv_data->{$pop_id}{'ssid'}{$ssid}                = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+          $fv_data->{$pop_id}{'pop_info'}                 = $freq_data->{$pop_id}{'pop_info'};
+          $fv_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
         } elsif ($name =~ /^1000genomes\:phase.*/i) {
-          $tg_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
+          $tg_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+          $tg_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
         } elsif ($name =~ /^cshl\-hapmap/i) {
-          $hm_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
+          $hm_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+          $hm_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
         }
       }
     }
@@ -94,13 +99,15 @@ sub format_frequencies {
   }
     
   foreach my $pop_id (keys %$freq_data) {
-    foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
-      my $data = $freq_data->{$pop_id}{$ssid};
+    my $pop_info = $freq_data->{$pop_id}{'pop_info'};
+    
+    foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
+      my $data = $freq_data->{$pop_id}{'ssid'}{$ssid};
       my %pop_row;
       
       # SSID + Submitter
-      if (defined $data->{'ssid'}) {
-        $pop_row{'ssid'}      = $hub->get_ExtURL_link($data->{'ssid'}, 'DBSNPSS', $data->{'ssid'}) unless $ssid eq 'ss0';
+      if ($ssid) {
+        $pop_row{'ssid'}      = $hub->get_ExtURL_link($ssid, 'DBSNPSS', $ssid) unless $ssid eq 'ss0';
         $pop_row{'submitter'} = $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'});
       }  
       
@@ -130,15 +137,15 @@ sub format_frequencies {
       }
       
       $pop_row{'Genotype count'}   = join ' / ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
-      $pop_row{'pop'}              = $self->pop_url($data->{'pop_info'}{'Name'}, $data->{'pop_info'}{'PopLink'});
-      $pop_row{'Description'}      = $data->{'pop_info'}{'Description'} if $is_somatic;
+      $pop_row{'pop'}              = $self->pop_url($pop_info->{'Name'}, $pop_info->{'PopLink'});
+      $pop_row{'Description'}      = $pop_info->{'Description'} if $is_somatic;
       $pop_row{'failed'}           = $data->{'failed_desc'}             if $tg_flag =~ /failed/i;
-      $pop_row{'Super-Population'} = $self->sort_extra_pops($data->{'pop_info'}{'Super-Population'});
-      $pop_row{'Sub-Population'}   = $self->sort_extra_pops($data->{'pop_info'}{'Sub-Population'});
-      $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id);
+      $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
+      $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
+      $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id) if ($pop_info->{Size});;
       
       # force ALL population to be displayed on top
-      if($data->{'pop_info'}{'Name'} =~ /ALL/) {
+      if($pop_info->{'Name'} =~ /ALL/) {
         $pop_row{'pop'} = qq{<span class="hidden">0</span>}.$pop_row{'pop'};
       }
 
