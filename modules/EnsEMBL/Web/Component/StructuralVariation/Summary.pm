@@ -94,7 +94,6 @@ sub get_source {
     $source_link = $hub->get_ExtURL_link($source, 'ILLUMINA', $source);
   }
   
-  $description = $self->add_pubmed_link($description);
   $source      = "<p>$source_link - $description</p>";
 
   return ['Source', $source];
@@ -119,6 +118,7 @@ sub add_pubmed_link {
   my $self        = shift;
   my $description = shift;
   my $hub         = $self->hub;
+  my $er_url      = $self->object->external_reference;
   
   if ($description =~ /PMID/) { 
     my @temp = split /\s/, $description;
@@ -130,7 +130,10 @@ sub add_pubmed_link {
            $description =~ s/$_/$pubmed_url/;
       }
     }
-  }
+  } 
+  elsif ($er_url && $er_url =~ /^http|ftp/){
+    $description .= " | <a href=\"$er_url\" rel=\"external\">Go to website</a>";
+  } 
   
   return $description;
 }
@@ -153,19 +156,47 @@ sub location {
     my $region   = $mappings->{$svf}{'Chr'}; 
     my $start    = $mappings->{$svf}{'start'};
     my $end      = $mappings->{$svf}{'end'};
-       $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings->{$svf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
+    my $strand   = $mappings->{$svf}{'strand'};
     
-    $location_link = sprintf(
-      ' | <a href="%s" class="constant">View in location tab</a>',
-      $hub->url({
-        type              => 'Location',
-        action            => 'View',
-        r                 => $region . ':' . ($start - 500) . '-' . ($end + 500),
-        sv                => $name,
-        svf               => $svf,
-        contigviewbottom  => 'variation_feature_structural=normal'
-      })
-    );
+    # Breakpoint feature
+    if (defined($mappings->{$svf}{'breakpoint_order'}) && $start!=$end) {
+      
+      foreach my $coord ($start,$end) {
+        my $loc_text = "<b>$region:$coord</b>";
+      
+        my $loc_link = sprintf(
+          '<a href="%s" class="constant">%s</a>',
+            $hub->url({
+              type              => 'Location',
+              action            => 'View',
+              r                 => $region . ':' . ($coord - 500) . '-' . ($coord + 500),
+              sv                => $name,
+              svf               => $svf,
+              contigviewbottom  => 'somatic_sv_feature=normal'
+          }), $loc_text
+        );
+        $loc_link .= ' ('.($strand > 0 ? 'forward' : 'reverse').' strand)';
+        
+        $location  .= (defined($location)) ? " to $loc_link" : "from $loc_link";
+        
+      }
+    }
+    # Normal feature
+    else {
+      $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings->{$svf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
+    
+      $location_link = sprintf(
+        ' | <a href="%s" class="constant">View in location tab</a>',
+        $hub->url({
+          type              => 'Location',
+          action            => 'View',
+          r                 => $region . ':' . ($start - 500) . '-' . ($end + 500),
+          sv                => $name,
+          svf               => $svf,
+          contigviewbottom  => 'variation_feature_structural=normal'
+        })
+      );
+    }
   }
   
   if ($count > 1) {
@@ -182,7 +213,7 @@ sub location {
       my $end      = $mappings->{$_}{'end'};
       my $str      = $mappings->{$_}{'strand'};
       my $bp_order = $mappings->{$_}{'breakpoint_order'};
-      
+            
       push @locations, {
         value    => $_,
         name     => sprintf('%s (%s strand)', ($start == $end ? "$region:$start" : "$region:$start-$end"), ($str > 0 ? 'forward' : 'reverse')),
@@ -224,7 +255,7 @@ sub location {
     
     return (
       ['Location', $location_info],
-      ['Selected location', sprintf(q(<div class="twocol-cell"><form action="%s" method="get">%s<select name="svf" class="fselect">%s</select><input value="Go" class="fbutton" type="submit">%s</form>%s</div>),
+      ['Selected location', sprintf(q(<div class="twocol-cell"><form action="%s" method="get">%s<select name="svf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit">%s</form>%s</div>),
         $hub->url({ svf => undef, sv => $name, source => $object->source }),
         $core_params,
         $options,
@@ -266,7 +297,7 @@ sub size {
   
   return $svf || scalar(keys %$mappings) == 1 ? ['Genomic size', sprintf('%s bp%s',
     $self->thousandify($mappings->{$svf}{'end'} - $mappings->{$svf}{'start'} + 1),
-    defined($mappings->{$svf}{'breakpoint_order'}) ? ' (breakpoint)' : ''
+    (defined($mappings->{$svf}{'breakpoint_order'}) && $mappings->{$svf}{'start'}!=$mappings->{$svf}{'end'}) ? ' (between breakpoints)' : ''
   )] : ();
 }
 
