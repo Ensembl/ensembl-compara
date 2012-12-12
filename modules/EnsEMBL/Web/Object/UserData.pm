@@ -834,21 +834,39 @@ sub consequence_table {
   my $hub     = $self->hub;
   my $species = $hub->param('species') || $hub->species;
   my $code    = $hub->param('code');
+
+  my %popups = (
+    'var'       => 'What you input (chromosome, nucleotide position, alleles)',
+    'location'  => 'Chromosome and nucleotide position in standard coordinate format (chr:nucleotide position or chr:start-end)',
+    'allele'    => 'The variant allele used to calculate the consequence',
+    'gene'      => 'Ensembl stable ID of the affected gene (e.g. ENSG00000187634)',
+    'trans'     => 'Ensembl stable ID of the affected feature (e.g. ENST00000474461)',
+    'ftype'     => 'Type of feature (i.e. Transcript, RegulatoryFeature or MotifFeature)',
+    'con'       => 'Consequence type of this variant',
+    'cdna_pos'  => 'Nucleotide (base pair) position in the cDNA sequence',
+    'cds_pos'   => 'Nucleotide (base pair) position in the coding sequence',
+    'prot_pos'  => 'Amino acid position in the protein sequence',
+    'aa'        => 'All possible amino acids at the position.  This is only given if the variant affects the protein-coding sequence',
+    'codons'    => 'All alternative codons at the position.  The position of the variant is highlighted as bold (HTML version) or upper case (text version)',
+    'snp'       => 'Known identifiers of variants at that position',
+    'extra'     => 'More information',
+  );
+
   my $columns = [
-    { key => 'var',      title =>'Uploaded Variation',   align => 'center', sort => 'string'        },
-    { key => 'location', title =>'Location',             align => 'center', sort => 'position_html' },
-    { key => 'allele',   title =>'Allele',               align => 'center', sort => 'string'        },
-    { key => 'gene',     title =>'Gene',                 align => 'center', sort => 'html'          },
-    { key => 'trans',    title =>'Feature',              align => 'center', sort => 'html'          },
-    { key => 'ftype',    title =>'Feature type',         align => 'center', sort => 'html'          },
-    { key => 'con',      title =>'Consequence',          align => 'center', sort => 'string'        },
-    { key => 'cdna_pos', title =>'Position in cDNA',     align => 'center', sort => 'position'      },
-    { key => 'cds_pos',  title =>'Position in CDS',      align => 'center', sort => 'position'      },
-    { key => 'prot_pos', title =>'Position in protein',  align => 'center', sort => 'position'      },
-    { key => 'aa',       title =>'Amino acid change',    align => 'center', sort => 'none'          },
-    { key => 'codons',   title =>'Codon change',         align => 'center', sort => 'none'          },
-    { key => 'snp',      title =>'Co-located Variation', align => 'center', sort => 'html'          },
-    { key => 'extra',    title =>'Extra',                align => 'left',   sort => 'html'          },
+    { key => 'var',      label =>'Uploaded Variation',   title => $popups{'var'}, align => 'center', sort => 'string'        },
+    { key => 'location', label =>'Location',             title => $popups{'location'}, align => 'center', sort => 'position_html' },
+    { key => 'allele',   label =>'Allele',               title => $popups{'allele'}, align => 'center', sort => 'string'        },
+    { key => 'gene',     label =>'Gene',                 title => $popups{'gene'}, align => 'center', sort => 'html'          },
+    { key => 'trans',    label =>'Feature',              title => $popups{'trans'}, align => 'center', sort => 'html'          },
+    { key => 'ftype',    label =>'Feature type',         title => $popups{'ftype'}, align => 'center', sort => 'html'          },
+    { key => 'con',      label =>'Consequence',          title => $popups{'con'}, align => 'center', sort => 'string'        },
+    { key => 'cdna_pos', label =>'Position in cDNA',     title => $popups{'cdna_pos'}, align => 'center', sort => 'position'      },
+    { key => 'cds_pos',  label =>'Position in CDS',      title => $popups{'cds_pos'}, align => 'center', sort => 'position'      },
+    { key => 'prot_pos', label =>'Position in protein',  title => $popups{'prot_pos'}, align => 'center', sort => 'position'      },
+    { key => 'aa',       label =>'Amino acid change',    title => $popups{'aa'}, align => 'center', sort => 'none'          },
+    { key => 'codons',   label =>'Codon change',         title => $popups{'codons'}, align => 'center', sort => 'none'          },
+    { key => 'snp',      label =>'Co-located Variation', title => $popups{'snp'}, align => 'center', sort => 'html'          },
+    { key => 'extra',    label =>'Extra',                title => $popups{'extra'}, align => 'left',   sort => 'html'          },
   ];
 
   my @rows;
@@ -878,8 +896,8 @@ sub consequence_table {
       my $snp_string        = $snp_id;
       
       # guess core type from feature ID
-      my $core_type = 'core';
-      $core_type = 'otherfeatures' unless $feature_id =~ /^ENS/ and $feature_id !~ /^ENSEST/;
+
+      my $core_type = 'otherfeatures' unless $feature_id =~ /^ENS/ and $feature_id !~ /^ENSEST/;
       
       my $location_url = $hub->url({
         species          => $species,
