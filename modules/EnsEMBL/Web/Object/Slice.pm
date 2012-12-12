@@ -323,7 +323,7 @@ sub get_cell_line_data {
   
   # First work out which tracks have been turned on in image_config
   my %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  my @sets       = qw(core other);  
+  my @sets       = qw(core non_core);  
   my $data;
 
   foreach my $cell_line (keys %cell_lines) { 
@@ -363,7 +363,7 @@ sub get_configured_tracks {
       my ($feature_name, $feature_id) = split /:/, $evidence_feature; 
       
       if (exists $feature_type_ids{$cell_line}{$feature_id}) {
-        my $set = $cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id} ? 'core' : 'other';
+        my $set = $cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id} ? 'core' : 'non_core';
         
         next unless exists $data->{$cell_line}{$set};
         
@@ -402,7 +402,7 @@ sub get_data {
     foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
       my $feature_type_name     = $reg_attr_fset->feature_type->name;
       my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name;
-      my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'other';
+      my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
       my $name                  = $cell_line eq 'MultiCell' ? "opt_matrix_regulatory_features_core_$cell_line:$feature_type_name" : "opt_matrix_regulatory_features_${focus_flag}_$unique_feature_set_id";
       
       $count++;

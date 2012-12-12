@@ -302,7 +302,7 @@ sub get_evidence_data {
       my $cell_type             = $reg_attr_fset->cell_type->name;
       my $feature_type          = $reg_attr_fset->feature_type->name;
       my $block_features        = $reg_attr_fset->get_Features_by_Slice($slice);
-      my $set                   = $multicell || $reg_attr_fset->is_focus_set ? 'core' : 'other';
+      my $set                   = $multicell || $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
       my $key                   = $multicell || $cell_type;
       my $unique_feature_set_id = join ':', $key, $feature_type, $multicell ? $cell_type : ();
       my $name                  = "opt_matrix_regulatory_features_${set}_$key:$feature_type";

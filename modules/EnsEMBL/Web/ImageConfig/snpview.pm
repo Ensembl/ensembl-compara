@@ -48,7 +48,7 @@ sub init {
   );
  
   $self->modify_configs(
-    [ 'gene_legend', 'regulatory_features_core', 'regulatory_features_other', 'functional_dna_methylation' ],
+    [ 'gene_legend', 'regulatory_features_core', 'regulatory_features_non_core', 'functional_dna_methylation' ],
     { display => 'off', menu => 'no' }
   );
 

@@ -60,7 +60,7 @@ sub init {
   );
   
   $self->modify_configs(
-    [ 'regulatory_features_core', 'regulatory_features_other' ],
+    [ 'regulatory_features_core', 'regulatory_features_non_core' ],
     { display => 'off', menu => 'no' }
   );
   
