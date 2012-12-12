@@ -22,7 +22,7 @@ sub populate_tree {
     { 'availability' => 'structural_variation' }
   );
   
-	
+  
   my $context_menu = $self->create_node('Context', 'Genomic context',
     [qw( summary  EnsEMBL::Web::Component::StructuralVariation::Context)],
     { 'availability' => 'structural_variation', 'concise' => 'Context' }
@@ -32,15 +32,19 @@ sub populate_tree {
     [qw( summary EnsEMBL::Web::Component::StructuralVariation::Mappings )],
     { 'availability' => 'has_transcripts', 'concise' => 'Genes and regulation' }
   ));
-	
+  
   $self->create_node('Evidence', 'Supporting evidence ([[counts::supporting_structural_variation]])',
     [qw( summary  EnsEMBL::Web::Component::StructuralVariation::SupportingEvidence)],
     { 'availability' => 'has_supporting_structural_variation', 'concise' => 'Supporting evidence' }
   );
-	
-	$self->create_node('Phenotype', 'Phenotype Data',
-    [qw( genes EnsEMBL::Web::Component::StructuralVariation::LocalGenes )],
-    { 'availability' => 'has_transcripts', 'concise' => 'Phenotype Data' }
+  
+  $self->create_node('Phenotype', 'Phenotype Data',
+    [qw( 
+        phenotype EnsEMBL::Web::Component::StructuralVariation::Phenotype  
+        genes     EnsEMBL::Web::Component::StructuralVariation::LocalGenes 
+    )],
+    { 'availability' => 'has_phenotype', 'concise' => 'Phenotype Data' }
   );
+  
 }
 1;
