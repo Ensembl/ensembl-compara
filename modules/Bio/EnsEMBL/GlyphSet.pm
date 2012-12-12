@@ -55,6 +55,7 @@ sub new {
     config     => $data->{'config'},
     my_config  => $data->{'my_config'},
     display    => $data->{'display'} || 'off',
+    legend     => $data->{'legend'}  || {},
     extras     => $data->{'extra'}   || {}
   };
   
