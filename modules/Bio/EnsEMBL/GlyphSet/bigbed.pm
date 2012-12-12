@@ -181,8 +181,7 @@ sub features {
     $config->{'useScore'} = 2;    
   } elsif($style eq 'colour') {
     $config->{'useScore'} = 2;
- 
-    my $default_rgb_string = "0,0,0";
+    my $default_rgb_string = $self->my_config('colour') || '0,0,0';
     if($options->{'fallbackcolour'}) {
       my $colour = $options->{'fallbackcolour'};
       $colour = $self->{'_default_colour'} if($colour eq 'default');
