@@ -772,7 +772,7 @@ sub _add_datahub_tracks_matrix {
       source_name => $source_name,
       description => $track->{'longLabel'} . $link,
       source_url  => $track->{'bigDataUrl'},
-      color       => exists $track->{'color'} ? $track->{'color'} : undef,
+      colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
       datahub     => 'track',
       option_key  => join('_', 'opt_matrix', $self->tree->clean_id($options{'menu_key'}), $options{'submenu_key'}, "$label_x:$label_y"),
@@ -901,7 +901,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'header'}     = $args{'source'}{'submenu_name'};
   $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}");
-  $args{'options'}{$_}           = $args{'source'}{$_} for qw(label_x features menu_key description info axes datahub option_key column_key);
+  $args{'options'}{$_}           = $args{'source'}{$_} for qw(label_x features menu_key description info colour axes datahub option_key column_key);
   
   if ($args{'source'}{'datahub'} eq 'track') {
     $args{'options'}{'menu'}    = 'datahub_subtrack';
