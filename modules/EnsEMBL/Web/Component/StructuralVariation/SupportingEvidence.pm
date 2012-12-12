@@ -31,7 +31,7 @@ sub supporting_evidence_table {
   
   my $columns = [
      { key => 'ssv',    sort => 'string',        title => 'Supporting evidence'   },
-     { key => 'pos',    sort => 'position_html', title => 'Chr:bp'                }, 
+     { key => 'pos',    sort => 'position_html', title => 'Chr:bp (strand)'       }, 
   ];
   my $sorting = 'pos';
 
@@ -57,23 +57,50 @@ sub supporting_evidence_table {
       
       # Location(s)
       foreach my $svf (@{$ssv_obj->get_all_StructuralVariationFeatures}) {
-        my $sv_name;
-        my $chr_bp  = $svf->seq_region_name.':';
-           $chr_bp .= $svf->seq_region_start ==  $svf->seq_region_end ? $svf->seq_region_start : $svf->seq_region_start.'-'.$svf->seq_region_end;
-        my $loc_url;
-        
-        my $loc_hash = {
-            type   => 'Location',
-            action => 'View',
-            r      => $chr_bp,
-          };
-        $loc_hash->{sv} = $name if ($ssv_obj->is_evidence == 0);
-          
-        my $loc_url = $hub->url($loc_hash);
-        $loc .= "<br />" if ($loc);
-        $loc .= qq{<a href="$loc_url">$chr_bp</a>};
+        my ($sv_name,$chr_bp);
+        my $start  = $svf->seq_region_start;
+        my $end    = $svf->seq_region_end;
+        my $strand = $svf->seq_region_strand;
+           $strand = ' <small>('.($strand > 0 ? 'forward' : 'reverse').' strand)</small>';
         
         $bp_order = $svf->breakpoint_order;
+        my $chr = $svf->seq_region_name.':';
+        
+        if ($bp_order) {
+          my @c_list = ($start!=$end) ? ($start,$end) : ($start);
+            
+          foreach my $coord (@c_list) {
+            $chr_bp = $chr.$coord;
+            my $loc_hash = {
+                type   => 'Location',
+                action => 'View',
+                r      => $chr_bp,
+            };
+
+            $loc_hash->{sv} .= $name if ($ssv_obj->is_evidence == 0);
+          
+            my $loc_url = $hub->url($loc_hash);
+            $loc .= ($loc) ? "<br />to " : "from ";
+            $loc .= qq{<a href="$loc_url">$chr_bp</a>$strand};
+          }
+        }
+        else {
+          $chr_bp  = $chr;
+          $chr_bp .= $start == $end ? $start : $start.'-'.$end;
+          my $loc_url;
+        
+          my $loc_hash = {
+              type   => 'Location',
+              action => 'View',
+              r      => $chr_bp,
+          };
+          $loc_hash->{sv} = $name if ($ssv_obj->is_evidence == 0);
+          
+          my $loc_url = $hub->url($loc_hash);
+          $loc .= "<br />" if ($loc);
+          $loc .= qq{<a href="$loc_url">$chr_bp</a>$strand};
+        }
+        
         $has_bp = 1 if ($bp_order && $bp_order > 1);
       }
       $loc = '-' if (!$loc);
@@ -101,20 +128,20 @@ sub supporting_evidence_table {
         my $aphen   = $annot->phenotype_description;
         
         if ($aclin) {
-          $clin .= '<br />' if ($clin);
-          $clin = $aclin;
+          $clin .= ';<br />' if ($clin);
+          $clin .= $aclin;
         }
         if ($asample) {
-          $sample .= '<br />' if ($sample);
-          $sample = $asample;
+          $sample .= ';<br />' if ($sample);
+          $sample .= $asample;
         }
         if ($astrain) {
-          $strain .= '<br />' if ($strain);
-          $strain = $astrain;
+          $strain .= ';<br />' if ($strain);
+          $strain .= $astrain;
         }
         if ($aphen) {
-          $phen .= '<br />' if ($phen);
-          $phen = $aphen;
+          $phen .= ';<br />' if ($phen);
+          $phen .= $aphen;
           $has_phen = 1;
         }    
       }
@@ -141,11 +168,11 @@ sub supporting_evidence_table {
     push @$columns, (
      { key => 'class',  sort => 'string',        title => 'Allele type'           },
      { key => 'clin',   sort => 'string',        title => 'Clinical significance' },
-     { key => 'sample', sort => 'string',        title => 'Sample name'           },
+     { key => 'sample', sort => 'string',        title => 'Sample name(s)'        },
     );
     
     if (defined($has_phen)) {  
-     push(@$columns,{ key => 'phen', sort => 'string', title => 'Phenotype' });
+     push(@$columns,{ key => 'phen', sort => 'string', title => 'Phenotype(s)' });
     };
     
     if ($self->hub->species ne 'Homo_sapiens') {  
