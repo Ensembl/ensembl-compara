@@ -32,13 +32,13 @@ sub content {
   ); 
 
   my @rows;
-
-  foreach my $cell_line (sort keys %{$evidence_data}) {
-    my $core_features  = $evidence_data->{$cell_line}{'core'}{'block_features'};
-    my $other_features = $evidence_data->{$cell_line}{'other'}{'block_features'};
+  
+  foreach my $cell_line (sort keys %$evidence_data) {
+    my $core_features     = $evidence_data->{$cell_line}{'core'}{'block_features'};
+    my $non_core_features = $evidence_data->{$cell_line}{'non_core'}{'block_features'};
     
     # Process core features first
-    foreach my $features ($core_features, $other_features) {
+    foreach my $features ($core_features, $non_core_features) {
       foreach my $f_set (sort { $features->{$a}[0]->start <=> $features->{$b}[0]->start } keys %$features) { 
         my $feature_name = [split /:/, $f_set]->[1];
         
