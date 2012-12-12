@@ -33,10 +33,11 @@ sub content {
   
 
   my @buttons = (
-    {'title' => 'Genomic context',        'img' => 'genomic_context',        'url' => $context_url},
-    {'title' => 'Genes and Regulation',   'img' => 'gene_transcript',        'url' => $gt_url},
-    {'title' => 'Supporting evidence',    'img' => 'supporting_evidence',    'url' => $supp_url},
-    {'title' => 'Phenotype data',         'img' => 'phenotype_data',         'url' => $pheno_url},
+    {'title' => 'Graphical neighbourhood region', 'img' => 'genomic_context',        'url' => $context_url},
+    {'title' => 'Consequences (e.g. missense)',   'img' => 'gene_transcript',        'url' => $gt_url},
+    {'title' => 'Sample level variant data used to define the structural variant', 
+                                                  'img' => 'supporting_evidence',    'url' => $supp_url},
+    {'title' => 'Diseases and traits',            'img' => 'phenotype_data',         'url' => $pheno_url},
   );
 
   my $html = '<div class="icon-holder">';
