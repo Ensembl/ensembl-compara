@@ -50,9 +50,9 @@ sub content {
   my ($p_title, $p_img);
   if($avail->{'not_somatic'}) {
     ($p_title, $p_img) = ('Allele and genotype frequencies by population', 'population_genetics');
-  }
+  
   else {
-    ($p_title, $p_img) = ('Sample information', 'sample_information');
+    ($p_title, $p_img) = ('Samples with this variant', 'sample_information');
   }
 
   my @buttons = (
