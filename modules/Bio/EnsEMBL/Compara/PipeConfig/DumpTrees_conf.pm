@@ -44,9 +44,10 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 69,                                              # current release number
+        'rel'               => 70,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
+        'rel_coord'         => $self->o('ENV', 'USER'),                         # by default, the release coordinator is doing the dumps
         # Commented out to make sure people define it on the command line
         'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
 
@@ -54,7 +55,7 @@ sub default_options {
 
         'rel_db'      => {
             -host         => 'compara3',
-            -dbname       => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('rel')),
+            -dbname       => sprintf('%s_ensembl_compara_%s', $self->o('rel_coord'), $self->o('rel')),
             -port         => 3306,
             -user         => 'ensro',
             -pass         => '',
@@ -132,7 +133,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
-                'name_root'     => $self->o('name_root'),
+                'file_name'     => sprintf('ensembl.GeneTree_content.%d.txt.bz2', $self->o('rel')),
                 'target_dir'    => $self->o('target_dir'),
                 'query'         => sprintf q|
                     SELECT 
@@ -152,11 +153,11 @@ sub pipeline_analyses {
                 |, $self->o('member_type'), 'default'
             },
             -input_ids => [
-                {'cmd' => 'mysql #db_conn# -N -q -e "#query#" > #target_dir#/#name_root#.tree_content.txt',},
+                {'cmd' => 'mysql #db_conn# -N -q -e "#query#" > #target_dir#/#file_name#',},
             ],
             -hive_capacity => -1,
             -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#name_root#.tree_content.txt' } },
+                1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
             },
           }
         : () ),
