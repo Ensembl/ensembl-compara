@@ -8,7 +8,6 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::ViewConfig);
 
-# TODO: Support z dimension - popup with extra options on each square
 # TODO: Support other datahub dimensions as filters?
 
 sub matrix_image_config :lvalue { $_[0]->{'matrix_image_config'}; }
@@ -266,7 +265,7 @@ sub form_matrix {
                 $renderer_template[2]
                 <input type="hidden" class="track_name" name="$feature->{'name'}" value="$display" />
                 <img class="menu_option" title="$renderers{$renderer}" alt="$renderers{$renderer}" src="${img_url}render/$renderer.gif" />
-                <span class="menu_option">$feature->{'long_name'}</span>
+                <span class="menu_option">$feature->{'feature_name'}</span>
               </li>
             };
             
