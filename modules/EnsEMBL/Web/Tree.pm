@@ -65,16 +65,21 @@ sub create_node {
   ### Node is always created as a "root" node - needs to be appended to another node to make it part of another tree.
   
   my ($self, $id, $data) = @_;
-  $id     = $id ? $self->clean_id($id) : $self->generate_unique_id;
-  $data ||= {};
+  $id = $id ? $self->clean_id($id) : $self->generate_unique_id;
   
   if (exists $self->tree_ids->{$id}) {
-    return $self->get_node($id);
+    my $node = $self->get_node($id);
+    
+    if ($data) {
+      $node->data->{$_} = $data->{$_} for keys %$data;
+    }
+    
+    return $node;
   }
   
   return EnsEMBL::Web::Tree->new($self->dom, {
     id        => $id,
-    data      => $data,
+    data      => $data || {},
     user_data => $self->user_data,
     tree_ids  => $self->tree_ids,
   });
