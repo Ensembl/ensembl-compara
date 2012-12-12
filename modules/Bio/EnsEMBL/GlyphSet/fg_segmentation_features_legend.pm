@@ -7,17 +7,19 @@ use base qw(Bio::EnsEMBL::GlyphSet::legend);
 sub _init {
   my $self = shift;
 
-  my $config = $self->{'config'};
-  return unless $config->{'fg_segmentation_features_legend_features'};
+  return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
   
   my %features = %{$self->my_config('colours')};
+  
   return unless %features;
 
   $self->init_legend(2);
 
   my $empty = 1;
+  
   foreach (sort keys %features) {
     my $legend = $self->my_colour($_, 'text'); 
+    
     next if $legend =~ /unknown/i; 
     
     $self->add_to_legend({
