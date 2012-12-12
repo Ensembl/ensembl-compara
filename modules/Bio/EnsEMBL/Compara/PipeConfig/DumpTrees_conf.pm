@@ -133,7 +133,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
-                'file_name'     => sprintf('ensembl.GeneTree_content.%d.txt.bz2', $self->o('rel')),
+                'file_name'     => sprintf('ensembl.GeneTree_content.%d.txt', $self->o('rel')),
                 'target_dir'    => $self->o('target_dir'),
                 'query'         => sprintf q|
                     SELECT 
