@@ -67,7 +67,7 @@ sub image_config_data {
   
   foreach my $sp (scalar @species ? @species : $hub->species) {
     my $ic = $multi_species ? $hub->get_imageconfig($type, $sp, $sp) : $image_config;
-    push @user_data, $ic->get_node('user_data'), grep $_->get('datahub'), @{$ic->tree->child_nodes};
+    push @user_data, $ic->get_node('user_data'), grep $_->get('datahub_menu'), @{$ic->tree->child_nodes};
   }
   
   return ($image_config, map { $_ ? $_->nodes : () } @user_data);
