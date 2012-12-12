@@ -559,26 +559,6 @@ sub display_no_data_error{
   $self->_offset($height + 4); 
 }
 
-sub draw_separating_line {
-  my $self = shift;
-  
-  # Set up a separating line
-  $self->push($self->Rect({
-    x             => -125,
-    y             => $self->_offset + 5,
-    width         => $self->{'config'}->image_width,
-    height        => 2,
-    colour        => 'grey40',
-    absolutey     => 1,
-    absolutex     => 1,
-    absolutewidth => 1,
-  }));
-  
-  $self->_offset(8);
-  
-  return 1;
-}
-
 sub draw_space_glyph {
   ### Draws a an empty glyph as a spacer
   ### Arg1 : (optional) integer for space height,
