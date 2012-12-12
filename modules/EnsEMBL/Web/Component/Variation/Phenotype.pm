@@ -42,7 +42,7 @@ sub content {
   $table->add_columns(
     { key => 'study',   title => $study,               align => 'left', sort => 'html' },
     { key => 'genes',   title => 'Reported gene(s)',   align => 'left', sort => 'none' },
-    { key => 'variant', title => 'Associated variant', align => 'left', sort => 'none' },
+    { key => 'variant', title => 'Associated variant(s)', align => 'left', sort => 'none' },
   );
   
   if (!$is_somatic) {
