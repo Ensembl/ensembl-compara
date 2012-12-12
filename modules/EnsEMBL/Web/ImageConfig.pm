@@ -32,7 +32,6 @@ sub new {
   my $code    = shift;
   my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
   my $style   = $hub->species_defs->ENSEMBL_STYLE || {};
-  my $cache   = $hub->cache;
   
   my $self = {
     hub              => $hub,
@@ -42,11 +41,7 @@ sub new {
     code             => $code,
     type             => $type,
     species          => $species,
-    _useradded       => {}, # contains list of added features
-    _r               => undef,
-    no_load          => undef,
     altered          => 0,
-    _core            => undef,    
     _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
@@ -85,7 +80,15 @@ sub new {
     ],
   };
   
-  bless $self, $class;
+  return bless $self, $class;
+}
+
+sub initialize {
+  my $self    = shift;
+  my $class   = ref $self;
+  my $species = $self->species;
+  my $code    = $self->code;
+  my $cache   = $self->hub->cache;
   
   # Check memcached for defaults
   if (my $defaults = $cache ? $cache->get("::${class}::${species}::$code") : undef) {
@@ -108,8 +111,8 @@ sub new {
   
   my $sortable = $self->get_parameter('sortable_tracks');
   
-  $self->set_parameter('sortable_tracks', 1)  if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
-  $self->{'extra_menus'}->{'track_order'} = 1 if $sortable;
+  $self->set_parameter('sortable_tracks', 1) if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
+  $self->{'extra_menus'}{'track_order'} = 1  if $sortable;
   
   $self->{'no_image_frame'} = 1;
   
@@ -124,8 +127,6 @@ sub new {
     $decorations->set('caption', 'Information and decorations');
     $decorations->append_children($information->nodes);
   }
-  
-  return $self;
 }
 
 sub menus {
@@ -265,7 +266,7 @@ sub glyphset_configs {
     my $track_order = $self->track_order;
     my $i           = 1;
     my @default_order;
-   
+    
     foreach my $track ($self->default_track_order(@tracks)) {
       my $strand = $track->get('strand');
       
@@ -443,7 +444,7 @@ sub create_track {
   $details->{'colours'}   ||= $self->species_defs->colour($options->{'colourset'}) if exists $options->{'colourset'};
   $details->{'glyphset'}  ||= $code;
   $details->{'caption'}   ||= $caption;
-
+  
   return $self->tree->create_node($code, $details);
 }
 
@@ -2447,7 +2448,7 @@ sub add_regulation_features {
     }));
   }
   
-  $self->add_track('information', 'meth_legend', 'Methylation Legend', 'meth_legend', { strand => 'r' });        
+  $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });        
 }
 
 sub add_regulation_builds {
@@ -2467,12 +2468,11 @@ sub add_regulation_builds {
   
   $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
   
-  my $reg_feats = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
-  my $reg_segs  = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
-  my ($core_menu, $other_menu, $prev_track);
-  
-  my @cell_lines = sort keys %{$db_tables->{'cell_type'}{'ids'}};
-  my (@renderers, $multi_flag);
+  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
+  my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
+  my $evidence_info = $self->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info;
+  my @cell_lines    = sort keys %{$db_tables->{'cell_type'}{'ids'}};
+  my (@renderers, $multi_flag, $core_menu, $non_core_menu, $prev_track);
 
   if ($fg_data{$key_2}{'renderers'}) {
     push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
@@ -2483,7 +2483,7 @@ sub add_regulation_builds {
   # Add MultiCell first
   unshift @cell_lines, 'AAAMultiCell';
   
-  foreach my $cell_line (sort  @cell_lines) {
+  foreach my $cell_line (sort @cell_lines) {
     $cell_line =~ s/AAA|\:\w*//g;
     
     next if $cell_line eq 'MultiCell' && $multi_flag;
@@ -2526,6 +2526,7 @@ sub add_regulation_builds {
         renderers   => \@renderers,
         cell_line   => $cell_line,
         caption     => "Reg. Segs $cell_line",
+        track_after => $prev_track,
       }));
     }
     
@@ -2553,29 +2554,31 @@ sub add_regulation_builds {
     
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
       if (!$core_menu) {
-        $core_menu = $self->create_submenu('regulatory_features_core', 'Open chromatin & TFBS');
-        $core_menu = $other_menu ? $other_menu->before($core_menu) : $menu->after($core_menu);
+        $core_menu = $self->create_submenu('regulatory_features_core', $evidence_info->{'core'}{'name'});
+        $core_menu = $non_core_menu ? $non_core_menu->before($core_menu) : $menu->after($core_menu);
       }
       
-      # Add Core evidence tracks
-      $prev_track = $core_menu->append($self->create_track("reg_feats_core_$cell_line", "Open chromatin & TFBS$label", {
+      # Add core evidence tracks
+      $prev_track = $core_menu->append($self->create_track("reg_feats_core_$cell_line", "$evidence_info->{'core'}{'name'}$label", {
         %options,
         set         => 'core',
         subset      => 'regulatory_features_core',
         description => $options{'description'}{'core'},
+        label       => "$evidence_info->{'core'}{'label'} $label",
         track_after => $prev_track,
       }));
     } 
 
     if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
-      $other_menu ||= ($core_menu || $menu)->after($self->create_submenu('regulatory_features_other', 'Histones & polymerases'));
+      $non_core_menu ||= ($core_menu || $menu)->after($self->create_submenu('regulatory_features_non_core', $evidence_info->{'non_core'}{'name'}));
       
-      # Add 'Other' evidence tracks
-      $prev_track = $other_menu->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", {
+      # Add non core evidence tracks
+      $prev_track = $non_core_menu->append($self->create_track("reg_feats_non_core_$cell_line", "$evidence_info->{'non_core'}{'name'}$label", {
         %options,
-        set         => 'other',
-        subset      => 'regulatory_features_other',
+        set         => 'non_core',
+        subset      => 'regulatory_features_non_core',
         description => $options{'description'}{'other'},
+        label       => "$evidence_info->{'non_core'}{'label'} $label",
         track_after => $prev_track,
       }));
     }
