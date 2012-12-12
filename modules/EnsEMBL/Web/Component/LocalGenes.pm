@@ -36,7 +36,7 @@ sub content {
 
   my $source      = $object->source;
   my $name        = $object->name;
-  my $html        = "<h2>Genes in this region</h2>
+  my $html        = "<br />\n<h2>Genes in this region</h2>
 <p>The following genes in the region of this $label_msg\variant also have associated phenotype data:</p>";
  
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
@@ -84,15 +84,22 @@ sub content {
       }
     }
   }
-
+  
   if (keys %genes) {
-    $html .= '<ul>';
+    
+    my $table = $self->new_table([], [], { data_table => 1 });
+    my @data_row;
+
+    $table->add_columns(
+      { key => 'gene', title => 'Gene',      align => 'left', sort => 'html' },
+      { key => 'hgnc', title => 'HGNC name', align => 'left', sort => 'html' },  
+      { key => 'pos',  title => 'Position',  align => 'left', sort => 'html' },
+    );
     
     while (my ($stable_id, $data) = each %genes) {
       my $gene      = $data->{'gene'};
       my $dxr       = $gene->can('display_xref') ? $gene->display_xref : undef;
-      my $gene_name = $dxr->display_id;
-      my $text      = $gene_name ? "$gene_name ($stable_id)" : $stable_id;
+      my $gene_name = ($dxr->display_id) ? $dxr->display_id : '-';
       my $params    = {
         db     => 'core',
         r      => undef,
@@ -110,12 +117,17 @@ sub content {
         $params->{'g'}      = $stable_id;
       }
       
-      $html .= sprintf'<li><a href="%s">%s</a> (%s)</li>', $hub->url($params), $text, $data->{'position'};
+      my $row = {
+        gene  => sprintf ('<a href="%s">%s</a> ', $hub->url($params), $stable_id),
+        hgnc  => $gene_name,
+        pos   => $data->{'position'}
+      };
+      push @data_row, $row;
     }
 
-    $html .= '</ul>';
-
-    return $html;
+    $table->add_rows(@data_row);
+    
+    return $html.$table->render;
   } else { 
     return $self->_info('', "<p>This $label_msg\variation has not been mapped to any Ensembl genes.</p>");
   }
