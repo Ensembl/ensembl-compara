@@ -853,20 +853,20 @@ sub consequence_table {
   );
 
   my $columns = [
-    { key => 'var',      label =>'Uploaded Variation',   title => $popups{'var'}, align => 'center', sort => 'string'        },
-    { key => 'location', label =>'Location',             title => $popups{'location'}, align => 'center', sort => 'position_html' },
-    { key => 'allele',   label =>'Allele',               title => $popups{'allele'}, align => 'center', sort => 'string'        },
-    { key => 'gene',     label =>'Gene',                 title => $popups{'gene'}, align => 'center', sort => 'html'          },
-    { key => 'trans',    label =>'Feature',              title => $popups{'trans'}, align => 'center', sort => 'html'          },
-    { key => 'ftype',    label =>'Feature type',         title => $popups{'ftype'}, align => 'center', sort => 'html'          },
-    { key => 'con',      label =>'Consequence',          title => $popups{'con'}, align => 'center', sort => 'string'        },
-    { key => 'cdna_pos', label =>'Position in cDNA',     title => $popups{'cdna_pos'}, align => 'center', sort => 'position'      },
-    { key => 'cds_pos',  label =>'Position in CDS',      title => $popups{'cds_pos'}, align => 'center', sort => 'position'      },
-    { key => 'prot_pos', label =>'Position in protein',  title => $popups{'prot_pos'}, align => 'center', sort => 'position'      },
-    { key => 'aa',       label =>'Amino acid change',    title => $popups{'aa'}, align => 'center', sort => 'none'          },
-    { key => 'codons',   label =>'Codon change',         title => $popups{'codons'}, align => 'center', sort => 'none'          },
-    { key => 'snp',      label =>'Co-located Variation', title => $popups{'snp'}, align => 'center', sort => 'html'          },
-    { key => 'extra',    label =>'Extra',                title => $popups{'extra'}, align => 'left',   sort => 'html'          },
+    { key => 'var',      title =>'Uploaded Variation',   help => $popups{'var'}, align => 'center', sort => 'string'        },
+    { key => 'location', title =>'Location',             help => $popups{'location'}, align => 'center', sort => 'position_html' },
+    { key => 'allele',   title =>'Allele',               help => $popups{'allele'}, align => 'center', sort => 'string'        },
+    { key => 'gene',     title =>'Gene',                 help => $popups{'gene'}, align => 'center', sort => 'html'          },
+    { key => 'trans',    title =>'Feature',              help => $popups{'trans'}, align => 'center', sort => 'html'          },
+    { key => 'ftype',    title =>'Feature type',         help => $popups{'ftype'}, align => 'center', sort => 'html'          },
+    { key => 'con',      title =>'Consequence',          help => $popups{'con'}, align => 'center', sort => 'string'        },
+    { key => 'cdna_pos', title =>'Position in cDNA',     help => $popups{'cdna_pos'}, align => 'center', sort => 'position'      },
+    { key => 'cds_pos',  title =>'Position in CDS',      help => $popups{'cds_pos'}, align => 'center', sort => 'position'      },
+    { key => 'prot_pos', title =>'Position in protein',  help => $popups{'prot_pos'}, align => 'center', sort => 'position'      },
+    { key => 'aa',       title =>'Amino acid change',    help => $popups{'aa'}, align => 'center', sort => 'none'          },
+    { key => 'codons',   title =>'Codon change',         help => $popups{'codons'}, align => 'center', sort => 'none'          },
+    { key => 'snp',      title =>'Co-located Variation', help => $popups{'snp'}, align => 'center', sort => 'html'          },
+    { key => 'extra',    title =>'Extra',                help => $popups{'extra'}, align => 'left',   sort => 'html'          },
   ];
 
   my @rows;
