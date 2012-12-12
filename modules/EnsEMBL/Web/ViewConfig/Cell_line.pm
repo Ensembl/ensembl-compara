@@ -52,9 +52,10 @@ sub set_columns {
   my ($self, $image_config) = @_;
      $image_config   = ref $image_config ? $image_config : $self->hub->get_imageconfig($image_config);
   my $funcgen_tables = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my $evidence_info  = $self->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info;
   my $tree           = $image_config->tree;
   
-  foreach (grep $_->data->{'set'}, map $_ ? $_->nodes : (), $tree->get_node('regulatory_features_core'), $tree->get_node('regulatory_features_other')) {
+  foreach (grep $_->data->{'set'}, map $_ ? $_->nodes : (), $tree->get_node('regulatory_features_core'), $tree->get_node('regulatory_features_non_core')) {
     my $set       = $_->data->{'set'};
     my $cell_line = $_->data->{'cell_line'};
     my $renderers = $_->get('renderers');
@@ -63,8 +64,8 @@ sub set_columns {
       menu         => "regulatory_features_$set",
       track_prefix => 'reg_feats',
       section      => 'Regulation',
-      caption      => $set eq 'core' ? 'Open chromatin & TFBS' : 'Histones & polymerases',
-      header       => $set eq 'core' ? 'Open chromatin & Transcription Factor Binding Sites' : 'Histones & Polymerases',
+      caption      => $evidence_info->{$set}{'name'},
+      header       => $evidence_info->{$set}{'long_name'},
       description  => $funcgen_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
       axes         => { x => 'cell', y => 'evidence type' },
     };
@@ -85,9 +86,7 @@ sub matrix_data {
   
   my $adaptor = $self->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen');
   
-  return map {
-    sort { $a->{'id'} cmp $b->{'id'} } map { id => $_->name, class => $_->class }, @{$adaptor->fetch_all_by_class($_)}
-  } $set eq 'core' ? ('Open Chromatin', 'Transcription Factor') : qw(Polymerase Histone);
+  return map { sort { $a->{'id'} cmp $b->{'id'} } map { id => $_->name, class => $_->class }, @{$adaptor->fetch_all_by_class($_)} } @{$adaptor->get_regulatory_evidence_info($set)->{'classes'}};
 }
 
 1;
