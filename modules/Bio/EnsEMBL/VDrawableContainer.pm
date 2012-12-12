@@ -5,8 +5,9 @@ use strict;
 use Bio::EnsEMBL::GlyphSet::Videogram;
 
 sub new {
-  my $class = shift;
-  my $self  = $class->_init(@_);
+  my $class  = shift;
+  my $self   = $class->_init(@_);
+  my $legend = {};
 
   ########## loop over all the glyphsets the user wants:
   foreach (@{$self->{'contents'}}) {
@@ -74,6 +75,7 @@ sub new {
 	          strand     => 0,
 	          highlights => $self->{'highlights'},
             display    => $display,
+            legend     => $legend,
           });
         };
         

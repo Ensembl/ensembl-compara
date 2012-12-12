@@ -29,6 +29,7 @@ sub new {
   my $panel_width     = $image_width - $panel_start - $margin;
   my $yoffset         = $margin;
   my $iteration       = 0;
+  my $legend          = {};
   my $inter_space     = $primary_config->get_parameter('intercontainer');
      $inter_space     = 2 * $margin unless defined $inter_space;
   
@@ -115,7 +116,8 @@ sub new {
             strand      => $strand eq 'f' ? 1 : -1,
             extra       => {},
             highlights  => $self->{'highlights'},
-            display     => $display
+            display     => $display,
+            legend      => $legend,
           });
         };
         
