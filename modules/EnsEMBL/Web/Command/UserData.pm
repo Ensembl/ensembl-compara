@@ -27,11 +27,8 @@ sub upload {
     $name = 'Data' unless $name;
   } else {
     my @orig_path = split('/', $hub->param($method));
-    
-    $filename = $orig_path[-1];
-    $name   ||= $filename;
-    
-    $args{'filename'} = $name;
+    $args{'filename'} = $orig_path[-1];
+    $name ||= $args{'filename'};
   }
   
   $params->{'name'} = $name;
@@ -55,7 +52,9 @@ sub upload {
 
   ## Set up parameters for file-writing
   if ($method eq 'url') {
-    my $url      = $hub->param('url');
+    my $url = $hub->param('url');
+    $url    =~ s/^\s+//;
+    $url    =~ s/\s+$//;
 
     ## Needs full URL to work, including protocol
     unless ($url =~ /^http/ || $url =~ /^ftp:/) {
@@ -127,7 +126,8 @@ sub file_uploaded {
   my ($self, $url_params) = @_;
   
   my $url = encode_entities($self->hub->url($url_params));
-  
+  warn ">>> URL $url"; 
+ 
   $self->r->content_type('text/html; charset=utf-8');
   
   print qq{

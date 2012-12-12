@@ -19,6 +19,8 @@ sub process {
   my $session       = $hub->session;
   my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
   my $url           = $hub->param('url') || $hub->param('url_2');
+  $url              =~ s/^\s+//;
+  $url              =~ s/\s+$//;
   my $filename      = [split '/', $url]->[-1];
   my $name          = $hub->param('name') || $filename;
   my $chosen_format = $hub->param('format');
