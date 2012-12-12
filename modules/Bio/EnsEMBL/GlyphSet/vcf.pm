@@ -200,7 +200,7 @@ sub features {
       
       push @features, $snp;
       
-      $config->{'variation_legend'}{$snp->display_consequence} ||= $self->get_colour($snp);
+      $self->{'legend'}{'variation_legend'}{$snp->display_consequence} ||= $self->get_colour($snp);
     }
 
     $self->{'_cache'}{'features'} = \@features;

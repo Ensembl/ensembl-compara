@@ -112,7 +112,7 @@ sub fetch_features {
 
   my $snps = $self->cache($id) || [];
 
-  $config->{'variation_legend'}{$_->display_consequence} ||= $self->get_colours($_)->{'feature'} for @$snps;
+  $self->{'legend'}{'variation_legend'}{$_->display_consequence} ||= $self->get_colours($_)->{'feature'} for @$snps;
   
   return $snps;
 }
@@ -279,9 +279,9 @@ sub export_feature {
   
   my $variation_name = $feature->variation_name;
   
-  return if $self->{'export_cache'}->{"variation:$variation_name"};
+  return if $self->{'export_cache'}{"variation:$variation_name"};
   
-  $self->{'export_cache'}->{"variation:$variation_name"} = 1;
+  $self->{'export_cache'}{"variation:$variation_name"} = 1;
   
   return $self->_render_text($feature, 'Variation', { 
     headers => [ 'variation_name', 'alleles', 'class', 'type' ],

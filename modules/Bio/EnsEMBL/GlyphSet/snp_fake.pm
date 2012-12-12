@@ -87,7 +87,7 @@ sub _init {
     $self->join_tag($tglyph, "X:$tag_root=$tag2", 0.5, 0, $colour, '', -3);
     $self->push($tglyph);
     
-    $config->{'variation_legend'}{$snp->display_consequence} ||= $colour;
+    $self->{'legend'}{'variation_legend'}{$snp->display_consequence} ||= $colour;
   }
 }
 

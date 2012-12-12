@@ -124,8 +124,8 @@ sub render_collapsed {
             
             $self->join_tag($composite2, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
             
-            $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-            $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
+            $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+            $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
           }
           
           push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @{$self->filter_by_target($alt_alleles, $previous_target)};
@@ -137,8 +137,8 @@ sub render_collapsed {
             
             $self->join_tag($composite2, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
             
-            $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-            $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
+            $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+            $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
           }
           
           push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @{$self->filter_by_target($alt_alleles, $next_target)};
@@ -147,8 +147,8 @@ sub render_collapsed {
         $self->join_tag($composite2, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags; # join alt_alleles
         
         if (@gene_tags) {
-          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
         }
       }
     }
@@ -197,13 +197,13 @@ sub render_collapsed {
 
   if ($transcript_drawn) {
     my $type = $self->my_config('name');
-    my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
+    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'} || []};
     
     $used_colours{$_} = $legend_old{$_} for keys %legend_old;
     
     my @legend = %used_colours;
     
-    $config->{'legend_features'}{$type} = {
+    $self->{'legend'}{'gene_legend'}{$type} = {
       priority => $self->_pos,
       legend   => \@legend
     };
@@ -287,8 +287,8 @@ sub render_transcripts {
         push @gene_tags, map { join '=', $_->stable_id, $tsid } @{$self->filter_by_target(\@transcripts, $previous_target)};
         
         for (@$homologues) {
-          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
+          $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
       }
       
@@ -303,8 +303,8 @@ sub render_transcripts {
         push @gene_tags, map { join '=', $tsid, $_->stable_id } @{$self->filter_by_target(\@transcripts, $next_target)};
         
         for (@$homologues) {
-          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
+          $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
       }
     }
@@ -348,8 +348,8 @@ sub render_transcripts {
         $self->join_tag($composite2, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags;
         
         if (@gene_tags) {
-          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
         }
       }
       
@@ -482,10 +482,10 @@ sub render_transcripts {
   
   if ($transcript_drawn) {
     my $type = $self->type;
-    my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
+    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
     $used_colours{$_} = $legend_old{$_} for keys %legend_old;
     my @legend = %used_colours;
-    $config->{'legend_features'}->{$type} = {
+    $self->{'legend'}{'gene_legend'}->{$type} = {
       priority => $self->_pos,
       legend   => \@legend
     };
@@ -762,13 +762,13 @@ sub render_alignslice_transcript {
 
   if ($transcript_drawn) {
     my $type = $self->my_config('name');
-    my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
+    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
     
     $used_colours{$_} = $legend_old{$_} for keys %legend_old;
     
     my @legend = %used_colours;
     
-    $config->{'legend_features'}{$type} = {
+    $self->{'legend'}{'gene_legend'}{$type} = {
       priority => $self->_pos,
       legend   => \@legend
     };
@@ -923,10 +923,10 @@ sub render_alignslice_collapsed {
   
   if ($transcript_drawn) {
     my $type = $self->my_config('name');
-    my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
+    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
     $used_colours{$_} = $legend_old{$_} for keys %legend_old;
     my @legend = %used_colours;
-    $config->{'legend_features'}{$type} = {
+    $self->{'legend'}{'gene_legend'}{$type} = {
       priority => $self->_pos,
       legend   => \@legend
     };
@@ -1041,8 +1041,8 @@ sub render_genes {
           
           $self->join_tag($rect, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
           
-          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
+          $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
         
         push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @{$self->filter_by_target($alt_alleles, $previous_target)};
@@ -1054,8 +1054,8 @@ sub render_genes {
           
           $self->join_tag($rect, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
           
-          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
+          $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+          $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
         
         push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @{$self->filter_by_target($alt_alleles, $next_target)};
@@ -1064,8 +1064,8 @@ sub render_genes {
       $self->join_tag($rect, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags; # join alt_alleles
       
       if (@gene_tags) {
-        $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-        $config->{'legend_features'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
+        $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+        $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
       }
     }
     
@@ -1158,7 +1158,7 @@ sub render_genes {
     my %used_colours = map { $_->{'type'} => $_->{'col'} } @genes_to_label;
     my @legend = %used_colours;
     
-    $config->{'legend_features'}->{$self->type} = {
+    $self->{'legend'}{'gene_legend'}{$self->type} = {
       priority => $self->_pos,
       legend   => \@legend
     }
