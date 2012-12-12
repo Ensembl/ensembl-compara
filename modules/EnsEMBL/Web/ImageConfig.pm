@@ -754,23 +754,19 @@ sub _add_datahub_tracks_matrix {
   my (%matrix_columns, %tracks);
   
   foreach my $track (@{$dataset->{'tracks'}}) {
-    my $label_x    = $x_label->{$track->{'subGroups'}{$x}};
-    my $label_y    = $y_label->{$track->{'subGroups'}{$y}};
-    my $key        = join '_', $name, $dataset->{'config'}{'track'}, $label_x;
-    my $column_key = $self->tree->clean_id($key);
-    my $type       = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-    
-    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-    # means the short label can be very non specific, because the header gives context of what type of
-    # track it is. For Ensembl we need to have all the information in the track name / caption
-    my $source_name = $track->{'longLabel'};
+    my $label_x     = $x_label->{$track->{'subGroups'}{$x}};
+    my $label_y     = $y_label->{$track->{'subGroups'}{$y}};
+    my $key         = join '_', $name, $dataset->{'config'}{'track'}, $label_x;
+    my $column_key  = $self->tree->clean_id($key);
+    my $type        = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+    my $source_name = $track->{'shortLabel'};
     
     s/_/ /g for $label_x, $label_y, $source_name;
     
     my $source = {
       name        => "$dataset->{'config'}{'track'}_$track->{'track'}",
       source_name => $source_name,
+      long_name   => $track->{'longLabel'},
       description => $track->{'longLabel'} . $link,
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
@@ -902,7 +898,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'header'}     = $args{'source'}{'submenu_name'};
   $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}");
-  $args{'options'}{$_}           = $args{'source'}{$_} for qw(label_x features menu_key description info colour axes datahub option_key column_key);
+  $args{'options'}{$_}           = $args{'source'}{$_} for qw(label_x long_name features menu_key description info colour axes datahub option_key column_key);
   
   if ($args{'source'}{'datahub'} eq 'track') {
     $args{'options'}{'menu'}    = 'datahub_subtrack';
