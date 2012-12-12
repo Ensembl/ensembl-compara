@@ -536,13 +536,26 @@ sub get_all_families {
     my $members = $family->get_all_Members;
     my $info = {'description' => $family->description};
     my $genes = [];
+    my $prots = {};
     foreach my $member (@$members) {
       $member->genome_db($genome_db);
       my $gene = $member->get_Gene;
-      push @$genes, $gene if $gene;
+      if ($gene) {
+        push @$genes, $gene;
+        my $protein = $member->get_Translation;
+        if ($protein) {
+          if ($prots->{$gene->stable_id}) {
+            push @{$prots->{$gene->stable_id}}, $protein;
+          }
+          else {
+            $prots->{$gene->stable_id} = [$protein];
+          }
+        }
+      }
     }
-    $info->{'genes'} = $genes;
-    $info->{'count'} = @$genes;
+    $info->{'genes'}    = $genes;
+    $info->{'proteins'} = $prots;
+    $info->{'count'}    = @$genes;
     $families->{$self->param('family')} = {'info' => $info};
   }
   else {
