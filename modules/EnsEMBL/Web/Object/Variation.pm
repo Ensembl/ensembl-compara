@@ -599,19 +599,18 @@ sub freqs {
     my $ssid = $allele_obj->subsnp;
     
     # failed status
-    $data{$pop_id}{$ssid}{failed_desc} = $allele_obj->failed_description if $allele_obj->is_failed;
+    $data{$pop_id}{ssid}{$ssid}{failed_desc} = $allele_obj->failed_description if $allele_obj->is_failed;
    
-    push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);
-    push (@{ $data{$pop_id}{$ssid}{AlleleCount} }, $allele_obj->count);
-    push (@{ $data{$pop_id}{$ssid}{Alleles} },   $allele_obj->allele);    
-    next if $data{$pop_id}{$ssid}{pop_info};
-    $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
-    $data{$pop_id}{$ssid}{ssid} = $allele_obj->subsnp();
+    push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);
+    push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleCount} }, $allele_obj->count);
+    push (@{ $data{$pop_id}{ssid}{$ssid}{Alleles} },   $allele_obj->allele);    
+    next if $data{$pop_id}{pop_info};
+    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
     
     ## If frequency data is available, show frequency data submitter, else show observation submitter
-    $data{$pop_id}{$ssid}{submitter}  = $allele_obj->frequency_subsnp_handle($pop_obj);
-    unless (defined $data{$pop_id}{$ssid}{submitter} ){
-  $data{$pop_id}{$ssid}{submitter}  = $allele_obj->subsnp_handle() ;
+    $data{$pop_id}{ssid}{$ssid}{submitter}  = $allele_obj->frequency_subsnp_handle($pop_obj);
+    unless (defined $data{$pop_id}{ssid}{$ssid}{submitter} ){
+    $data{$pop_id}{ssid}{$ssid}{submitter}  = $allele_obj->subsnp_handle() ;
     }
   }
   
@@ -629,21 +628,20 @@ sub freqs {
     my $pop_id  = $self->pop_id($pop_obj); 
     my $ssid = $pop_gt_obj->subsnp();  
     # No allele data for this population ...
-    unless (exists $data{$pop_id}{$ssid}{AlleleFrequency}){
+    unless (exists $data{$pop_id}{ssid}{$ssid}{AlleleFrequency}){
       $allele_missing = 1;
-      push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, "");
-      push (@{ $data{$pop_id}{$ssid}{AlleleCount} }, "");
-      push (@{ $data{$pop_id}{$ssid}{Alleles} }, "");
-      $data{$pop_id}{$ssid}{ssid} = $pop_gt_obj->subsnp();
-      $data{$pop_id}{$ssid}{submitter} = $pop_gt_obj->subsnp_handle();
+      push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleFrequency} }, "");
+      push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleCount} }, "");
+      push (@{ $data{$pop_id}{ssid}{$ssid}{Alleles} }, "");
+      $data{$pop_id}{ssid}{$ssid}{submitter} = $pop_gt_obj->subsnp_handle();
     }
 
-    $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
-    push (@{ $data{$pop_id}{$ssid}{GenotypeFrequency} }, $pop_gt_obj->frequency);
-    push (@{ $data{$pop_id}{$ssid}{GenotypeCount} }, $pop_gt_obj->count);
-    push (@{ $data{$pop_id}{$ssid}{Genotypes} }, $self->pop_genotypes($pop_gt_obj)); 
+    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
+    push (@{ $data{$pop_id}{ssid}{$ssid}{GenotypeFrequency} }, $pop_gt_obj->frequency);
+    push (@{ $data{$pop_id}{ssid}{$ssid}{GenotypeCount} }, $pop_gt_obj->count);
+    push (@{ $data{$pop_id}{ssid}{$ssid}{Genotypes} }, $self->pop_genotypes($pop_gt_obj)); 
 
-    $data{$pop_id}{$ssid}{count} = $pop_gt_obj->count();
+    $data{$pop_id}{ssid}{$ssid}{count} = $pop_gt_obj->count();
   }
 
   if ($allele_missing == 1){
@@ -660,14 +658,14 @@ sub calculate_allele_freqs_from_genotype {
   
   # check if have allele data, if not calculate it
   foreach my $pop_id(keys %data){
-    foreach my $ssid (keys %{$data{$pop_id}}){
-      if (scalar @{$data{$pop_id}{$ssid}{'Alleles'}} <= 1){
+    foreach my $ssid (keys %{$data{$pop_id}{ssid}}){
+      if (scalar @{$data{$pop_id}{ssid}{$ssid}{'Alleles'}} <= 1){
         my (%genotype_freqs, $i);
         
-        next unless $data{$pop_id}{$ssid}{'GenotypeFrequency'};
+        next unless $data{$pop_id}{ssid}{$ssid}{'GenotypeFrequency'};
         
-        foreach my $genotype (@{$data{$pop_id}{$ssid}{'Genotypes'}}){
-          $genotype_freqs{$genotype} = $data{$pop_id}{$ssid}{'GenotypeFrequency'}[$i++];
+        foreach my $genotype (@{$data{$pop_id}{ssid}{$ssid}{'Genotypes'}}){
+          $genotype_freqs{$genotype} = $data{$pop_id}{ssid}{$ssid}{'GenotypeFrequency'}[$i++];
         }
         
         my $genotype_1_same = $genotype_freqs{"$a1|$a1"} || 0;
@@ -675,13 +673,13 @@ sub calculate_allele_freqs_from_genotype {
         my $freq_a1         = ($genotype_1_diff + (2 * $genotype_1_same)) /2;
         my $freq_a2         = 1 - $freq_a1;
         
-        @{$data{$pop_id}{$ssid}{'Alleles'}} = ();
-        @{$data{$pop_id}{$ssid}{'AlleleFrequency'}} = ();
+        @{$data{$pop_id}{ssid}{$ssid}{'Alleles'}} = ();
+        @{$data{$pop_id}{ssid}{$ssid}{'AlleleFrequency'}} = ();
         
-        push @{$data{$pop_id}{$ssid}{'Alleles'}}, $a1; 
-        push @{$data{$pop_id}{$ssid}{'Alleles'}}, $a2;  
-        push @{$data{$pop_id}{$ssid}{'AlleleFrequency'}}, $freq_a1; 
-        push @{$data{$pop_id}{$ssid}{'AlleleFrequency'}}, $freq_a2; 
+        push @{$data{$pop_id}{ssid}{$ssid}{'Alleles'}}, $a1; 
+        push @{$data{$pop_id}{ssid}{$ssid}{'Alleles'}}, $a2;  
+        push @{$data{$pop_id}{ssid}{$ssid}{'AlleleFrequency'}}, $freq_a1; 
+        push @{$data{$pop_id}{ssid}{$ssid}{'AlleleFrequency'}}, $freq_a2; 
       }
     }
   }
