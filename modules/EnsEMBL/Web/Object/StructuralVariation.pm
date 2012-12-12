@@ -41,7 +41,9 @@ sub availability {
       $availability->{'structural_variation'} = 1;
     
       $availability->{"has_$_"} = $counts->{$_} for qw(transcripts supporting_structural_variation);
-
+      
+			$availability->{'has_phenotype'} = 1 if ($self->has_phenotype || $availability->{'has_transcripts'});
+ 
       $self->{'_availability'} = $availability;
     }
   }
@@ -102,6 +104,18 @@ sub count_transcripts {
     last if ($counts != 0);
   }
   return $counts;
+}
+
+sub has_phenotype {
+  my $self = shift;
+  my @ssvs = @{$self->supporting_sv};
+	foreach my $ssv (@ssvs) {
+	  my $svas = $ssv->get_all_StructuralVariationAnnotations();
+    foreach my $sva (@$svas) {
+		  return 1 if ($sva->phenotype_description);
+		}
+	}
+	return undef;
 }
 
 
