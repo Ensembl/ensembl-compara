@@ -473,6 +473,10 @@ sub remove_low_cov_predictions {
       my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
       $gene_tree_adaptor->delete_tree($nc_tree);
 
+      ## TODO: Dying here prevents storing the tag for a disappeared tree.
+      ## The problem is that it also prevents adding new members by add_matching_predictions below.
+      ## For now, this is not a problem, since add_matching_predictions is not finished, but we may need to
+      ## make sure that it is running properly once it is finished.
       $self->input_job->incomplete(0);
       die ("$root_id tree has become too short ($leafcount leaf/ves)\n");
   }
