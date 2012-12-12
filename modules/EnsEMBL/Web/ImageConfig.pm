@@ -144,7 +144,7 @@ sub menus {
     transcript          => [ 'Genes',                  'gene_transcript' ],
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
     lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
-    rnaseq              => [ 'RNA-Seq models',         'gene_transcript' ],
+    rnaseq              => [ 'RNASeq models',         'gene_transcript' ],
     
     # Supporting evidence
     splice_sites        => 'Splice sites',
