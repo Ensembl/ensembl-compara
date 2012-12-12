@@ -91,7 +91,7 @@ sub content {
         { key => 'id',   title => 'Gene ID and Location',   width => '20%'},
         { key => 'name', title => 'Gene Name',              width => '20%'},
         { key => 'desc', title => 'Description (if known)', width => '40%'},
-        { key => 'prot', title => 'Protein ID',             width => '20%'},
+        { key => 'prot', title => 'Protein ID(s)',          width => '20%'},
       );
      
       my %shown;
