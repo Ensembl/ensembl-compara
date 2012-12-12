@@ -69,13 +69,13 @@ sub make_table {
   my $columns = [
     { key => 'ID',       width => '12u', sort => 'html'                                                                                         },
     { key => 'chr' ,     width => '10u', sort => 'position', label => 'Chr: bp'                                                                 },
-    { key => 'Alleles',  width => '16u', sort => 'string',                          align => 'center'                                           },
+    { key => 'Alleles',  width => '16u', sort => 'string',   label => "Alle\fles",  align => 'center'                                           },
     { key => 'class',    width => '11u', sort => 'string',   label => 'Class',      align => 'center'                                           },
-    { key => 'Source',   width => '8u',  sort => 'string'                                                                                       },
-    { key => 'status',   width => '6u',  sort => 'string',   label => 'Validation', align => 'center', help => $self->strip_HTML($glossary->{'Validation status'}) },
+    { key => "Source",   width => '8u',  sort => 'string', label => "Sour\fce",                                                                                       },
+    { key => 'status',   width => '6u',  sort => 'string',   label => "Val\fi\fda\ftion", align => 'center', help => $self->strip_HTML($glossary->{'Validation status'}) },
     { key => 'snptype',  width => '12u', sort => 'string',   label => 'Type',                                                                   },
     { key => 'aachange', width => '6u',  sort => 'string',   label => 'AA',         align => 'center', help => 'Amino Acid'                     },
-    { key => 'aacoord',  width => '6u',  sort => 'position', label => 'AA coord',   align => 'center', help => "Amino Acid Co-ordinate"         },
+    { key => 'aacoord',  width => '6u',  sort => 'position', label => "AA co\ford",   align => 'center', help => "Amino Acid Co-ordinate"         },
   ];
   
   # submitter data for LRGs
@@ -87,10 +87,11 @@ sub make_table {
   # add GMAF, SIFT and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => 'SIFT',     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'})     },
-      { key => 'polyphen', sort => 'position_html', width => '6u', label => 'PolyPhen', align => 'center', help => $self->strip_HTML($glossary->{'PolyPhen'}) },
+      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\vFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'})     },
+      { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $self->strip_HTML($glossary->{'PolyPhen'}) },
     );
-    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => 'Global MAF', align => 'center', help => $self->strip_HTML($glossary->{'Global MAF'}) };
+
+    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $self->strip_HTML($glossary->{'Global MAF'}) };
   }
  
   if ($self->hub->type ne 'Transcript'){

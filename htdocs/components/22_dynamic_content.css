@@ -50,6 +50,7 @@ body.ie .open .toggle_summary { position: static; visibility: visible; display: 
 
 .cell_detail { word-wrap: break-word; overflow-wrap: break-word; }
 .data_table { word-wrap: break-word; overflow-wrap: break-word; }
+html .hyphenated { word-wrap: normal; text-align: left; }
 
 body.ie .dataTables_wrapper { zoom: 1; }
 body.ie .open .cell_detail { display: block; }

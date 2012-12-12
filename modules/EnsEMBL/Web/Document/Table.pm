@@ -26,6 +26,7 @@ sub new {
   
   bless $self, $class;
   $self->preprocess_widths();
+  $self->preprocess_hyphens();
   return $self;
 }
 
@@ -35,7 +36,7 @@ sub format     :lvalue { $_[0]{'format'};     }
 sub export_url :lvalue { $_[0]{'export_url'}; }
 sub filename   :lvalue { $_[0]{'filename'};   }
 
-sub has_rows { return !!@{$_[0]{'rows'}}; }
+sub has_rows { return ! !@{$_[0]{'rows'}}; }
 
 sub preprocess_widths {
   my ($self) = @_;
@@ -69,6 +70,27 @@ sub preprocess_widths {
           $unitcols[$col]->{'percent'}++;
   }       
   $_->{'column'}->{'width'} = $_->{'percent'}."%" for (@unitcols);
+}
+
+# \f -- optional hyphenation point
+# \v -- optional break point (no hyphen)
+sub hyphenate {
+  my ($self,$data,$key) = @_;
+
+  return unless exists $data->{$key};
+  my $any = ($data->{$key} =~ s/\f/&shy;/g or 
+             $data->{$key} =~ s/\v/&#8203;/g   );
+  return $any;
+}
+
+sub preprocess_hyphens {
+  my ($self) = @_;
+
+  foreach my $c (@{$self->{'columns'}}) {
+    my $h = 0;
+    $h ||= $self->hyphenate($c,'label') if $c->{'label'};
+    $c->{'class'} .= ' hyphenated' if $h;
+  }
 }
 
 sub export_options {
