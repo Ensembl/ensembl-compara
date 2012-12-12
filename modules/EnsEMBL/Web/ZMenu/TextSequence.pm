@@ -105,24 +105,29 @@ sub variation_content {
   
   push @entries, { entry => sprintf $link, $hub->url({ action => 'Phenotype', %url_params }), 'Phenotype Data' } if scalar @{$object->get_external_data};
   
+
   foreach my $pop (
-    sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} }
-    sort { $a->{'submitter'} cmp $b->{'submitter'} }
-    grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i }
-    map  { values %$_ }
-    values %{$object->freqs($feature)}
-  ) {
+      sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} }
+      grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i }
+      values %{$object->freqs($feature)}
+    ) {
     my $name = [ split /:/, $pop->{'pop_info'}{'Name'} ]->[-1]; # shorten the population name
        $name =~ /phase_1_(.+)/;
        $name = $1;
 
-    my @afreqs = @{$pop->{'AlleleFrequency'}};
-    foreach my $allele (@{$pop->{Alleles}}) {
+    foreach my $ssid (
+        sort { $a->{'submitter'} cmp $b->{'submitter'} }
+        values %{$pop->{ssid}}
+      ) {
+
+      my @afreqs = @{$ssid->{'AlleleFrequency'}};
+      foreach my $allele (@{$ssid->{Alleles}}) {
     
-      push (@{$population_allele{$name}}, $allele) if (!grep {$_ eq $allele} @{$population_allele{$name}});
+        push (@{$population_allele{$name}}, $allele) if (!grep {$_ eq $allele} @{$population_allele{$name}});
       
-      my $freq = sprintf '%.3f',shift(@afreqs);
-      $population_data{$name}{$pop->{submitter}}{$allele} = $freq;
+        my $freq = sprintf '%.3f',shift(@afreqs);
+        $population_data{$name}{$ssid->{submitter}}{$allele} = $freq;
+      }
     }
   }
     
