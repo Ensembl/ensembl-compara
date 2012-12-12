@@ -5,17 +5,17 @@ use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
-  my ($self) = @_;
-  my $Config      = $self->{'config'};  
-  my $height  = $self->my_config('height') || 20;
+  my $self = shift;  
   
-  $self->push( $self->Rect({
-    'x'         => 1,
-    'y'         => 0,
-    'width'     => 1,
-    'height'    => $height,
-    'absolutey' => 1,
-    'absolutex' => 1,
+  $self->push($self->Rect({
+    x             => $self->image_width - $self->get_parameter('image_width') + $self->get_parameter('margin'),
+    y             => 0,
+    absolutey     => 1,
+    absolutex     => 1,
+    absolutewidth => 1,
+    width         => $self->my_config('width')  || 1,
+    height        => $self->my_config('height') || 20,
+    colour        => $self->my_config('colour'),
   }));
 }
 
