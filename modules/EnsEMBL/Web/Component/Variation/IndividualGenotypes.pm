@@ -31,6 +31,7 @@ sub content {
   my @colour_order  = qw(blue red green);
   my %colours       = map { $_ => shift @colour_order || 'black' } split /\//, $allele_string;
   
+  
   foreach my $ind_id (sort { $ind_data{$a}{'Name'} cmp $ind_data{$b}{'Name'} } keys %ind_data) {
     my $data     = $ind_data{$ind_id};
     my $genotype = $data->{'Genotypes'};
@@ -42,13 +43,20 @@ sub content {
     my $description = $data->{'Description'} || '-';
     my %populations;
     
+    my $other_ind = 0;
+    
     foreach my $pop(@{$data->{'Population'}}) {
       my $pop_id = $pop->{'ID'};
-      next unless $pop_id;
+      next unless ($pop_id);
       
-      $populations{$pop_id} = 1;
-      $all_pops{$pop_id}    = $self->pop_url($pop->{'Name'}, $pop->{'Link'});
-      $pop_names{$pop_id}   = $pop->{'Name'};
+      if ($pop->{'Size'} == 1) {
+        $other_ind = 1;
+      }
+      else {
+        $populations{$pop_id} = 1;
+        $all_pops{$pop_id}    = $self->pop_url($pop->{'Name'}, $pop->{'Link'});
+        $pop_names{$pop_id}   = $pop->{'Name'};
+      }
     }
     
     $genotype =~ s/A/<span style="color:green">A<\/span>/g;
@@ -72,16 +80,22 @@ sub content {
       $flag_children = 1;
     }
     
-    push @{$rows{$_}}, $row foreach keys %populations;
+    if ($other_ind == 1 && scalar(keys %populations) == 0) {  
+      push @{$rows{'other_ind'}}, $row;
+    }
+    else {
+      push @{$rows{$_}}, $row foreach keys %populations;
+    }
   }
+  
+  my $columns = $self->get_table_headings;
+  
+  push @$columns, { key => 'Children', title => 'Children<br /><small>(Male/Female)</small>', sort => 'none' } if $flag_children;
+    
   
   if ($selected_pop || scalar keys %rows == 1) {
     $selected_pop ||= (keys %rows)[0]; # there is only one entry in %rows
-    
-    my $columns = $self->get_table_headings;
-    
-    push @$columns, { key => 'Children', title => 'Children<br /><small>(Male/Female)</small>', sort => 'none' } if $flag_children;
-    
+      
     return $self->toggleable_table(
       "Genotypes for $pop_names{$selected_pop}", $selected_pop, 
       $self->new_table($columns, $rows{$selected_pop}, { data_table => 1, sorting => [ 'Individual asc' ] }),
@@ -90,15 +104,16 @@ sub content {
     );
   }
   
-  return $self->summary_tables(\%all_pops, \%rows);
+  return $self->summary_tables(\%all_pops, \%rows, $columns);
 }
 
 sub summary_tables {
-  my ($self, $all_pops, $rows) = @_;
+  my ($self, $all_pops, $rows, $ind_columns) = @_;
   my $hub          = $self->hub;
   my $od_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
   my $hm_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
   my $tg_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
+  my $ind_table    = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Individual asc' ] });
   my %descriptions = map { $_->dbID => $_->description } @{$hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_by_dbID_list([ keys %$all_pops ])};
   my ($other_row_count, $html);
   
@@ -113,8 +128,8 @@ sub summary_tables {
   
   foreach my $pop (sort keys %$all_pops) {
     my $row_count   = scalar @{$rows->{$pop}};
-    my $pop_name    = $all_pops->{$pop};
-    my $description = $descriptions{$pop};
+    my $pop_name    = $all_pops->{$pop} || 'Other individuals';
+    my $description = $descriptions{$pop} || '';
     my $full_desc   = $self->strip_HTML($description);
     
     if (length $description > 75 && $self->html_format) {
@@ -125,6 +140,7 @@ sub summary_tables {
     }
     
     my $table;
+    
     
     if ($pop_name =~ /cshl-hapmap/i) {        
       $table = $hm_table;
@@ -157,12 +173,24 @@ sub summary_tables {
   
   if ($od_table->has_rows && ($hm_table->has_rows || $tg_table->has_rows)) {
     if ($self->html_format) {
-      $html .= $self->toggleable_table("Other data ($other_row_count)", 'other', $od_table, 1);
+      $html .= $self->toggleable_table("Other populations ($other_row_count)", 'other', $od_table, 1);
     } else {
-      $html .= '<h2>Other data</h2>' . $od_table->render;
+      $html .= '<h2>Other populations</h2>' . $od_table->render;
     }
   } else {     
     $html .= '<h2>Summary of genotypes by population</h2>' . $od_table->render;
+  }
+  
+  # Other individuals table
+  if ($rows->{'other_ind'}) {
+    my $ind_count = scalar @{$rows->{'other_ind'}};
+    
+    $html .= $self->toggleable_table(
+      "Other individuals ($ind_count)",'other_ind', 
+      $self->new_table($ind_columns, $rows->{'other_ind'}, { data_table => 1, sorting => [ 'Individual asc' ] }), 
+      0,
+      qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span><br />}
+    );
   }
   
   return $html;
