@@ -62,7 +62,9 @@ This document gives a describes the tables that make up the Ensembl funcgen sche
 <br />
 A simplified entity relationship diagram of the schema is available <a href="./trimmed_funcgen_schema.png">here</a>. Core, core like and some ancilliary tables have been omitted from the schema diagram.<br>
 <br />
+
 </p>
+<br />
 
 <h3 id="top">List of the tables:</h3>
       <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
@@ -212,8 +214,8 @@ A simplified entity relationship diagram of the schema is available <a href="./t
     <tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#feature_type">feature_type</a> table ID</td><td>key: feature_type_idx</td></tr>
     <tr class="bg2"><td><b>feature_set_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#feature_set">feature_set</a> table ID</td><td>unique key: fset_seq_region_idx</td></tr>
     <tr class="bg1"><td><b>stable_id</b></td><td>mediumint(8)</td><td>NULL</td><td>Integer stable ID without ENSR prefix</td><td>key: stable_id_idx</td></tr>
-    <tr class="bg2"><td><b>bound_seq_region_start</b></td><td>int(10)</td><td></td><td>Bound start position of this feature</td><td></td></tr>
-    <tr class="bg1"><td><b>bound_seq_region_end</b></td><td>int(10)</td><td></td><td>Bound end position of this feature</td><td></td></tr>
+    <tr class="bg2"><td><b>bound_start_length</b></td><td>mediumint(3)</td><td></td><td>Distance between start of the feature and start of the bound region</td><td></td></tr>
+    <tr class="bg1"><td><b>bound_end_length</b></td><td>mediumint(3)</td><td></td><td>Distance between end of the bound region and end of this feature</td><td></td></tr>
     <tr class="bg2"><td><b>binary_string</b></td><td>varchar(500)</td><td>NULL</td><td>Binary representation for the underlying feature sets/types</td><td></td></tr>
     <tr class="bg1"><td><b>projected</b></td><td>boolean</td><td>FALSE</td><td>Boolean, defines whether reg feat structure has been projected to this cell type</td><td></td></tr>
 </table>
