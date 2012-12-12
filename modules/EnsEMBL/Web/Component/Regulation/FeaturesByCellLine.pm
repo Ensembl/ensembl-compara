@@ -59,16 +59,10 @@ sub content {
     slice_number    => '3|1',
     opt_highlight   => $highlight
   });
-    
-  $image_config_bottom->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'} = { priority => 1020, legend => [] };
-  $image_config_bottom->{'fg_segmentation_features_legend_features'}->{'fg_segmentation_features'} = { priority => 1020, legend => [] };
   
-  push @containers_and_configs, $slice, $image_config_bottom; 
-
-  my $image = $self->new_image(
-    \@containers_and_configs,
-    [ $object->stable_id ],
-  );
+  push @containers_and_configs, $slice, $image_config_bottom;
+  
+  my $image = $self->new_image(\@containers_and_configs, [ $object->stable_id ]);
 
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'top';
