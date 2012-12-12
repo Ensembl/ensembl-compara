@@ -444,7 +444,7 @@ sub validation_status {
   
   return unless $status_count;
   
-  my $html = qq{This variation is validated by };
+  my $html;
   
   if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
     my $show = $self->hub->get_cookie_value('toggle_status') eq 'open';
