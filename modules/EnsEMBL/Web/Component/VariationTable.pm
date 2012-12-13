@@ -18,6 +18,7 @@ sub content {
   my $consequence_type = $hub->param('sub_table');
   my $table_id = $hub->param('table_id');
   my $icontext = $hub->param('context') || 100;
+  my $sum_type = $hub->param('summary_type') || 'tree';
   my $gene_object = $self->configure($icontext, $consequence_type);
   my ($count, $msg, $html);
 
@@ -53,7 +54,7 @@ sub content {
     $html = $self->render_content($table, $consequence_type, $table_id);
   } else {
     $html  = $self->_hint('snp_table', 'Configuring the page', $msg);
-    $html .= $self->render_content($self->tree(\@transcripts, $gene_object)); # no sub-table selected, just show stats
+    $html .= $self->render_content($sum_type eq 'tree' ? $self->tree(\@transcripts, $gene_object) : $self->stats_table(\@transcripts, $gene_object)->render); # no sub-table selected, just show stats
   }
   
   return $html;
@@ -113,10 +114,147 @@ sub render_content {
     #$consequence_label .='s';
     $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   } else {
-    $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variation consequences in $stable_id</h2>} . $table;
+    my $hub = $self->hub;
+    my $current = $hub->param('summary_type') || 'tree';
+    my $switched = $current eq 'tree' ? 'table' : 'tree';
+    my $url = $hub->url({summary_type => $switched});
+    
+    $html = qq{
+      <a id="$self->{'id'}_top"></a>
+      <span style="float:right;">
+        <a href="$url">Switch to $switched view <img src="/i/16/reload.png" height="12px"/></a>
+        
+      </span>
+      <h2>Summary of variation consequences in $stable_id</h2>
+    } . $table;
   }
   
   return $html;
+}
+
+
+sub stats_table {
+  my ($self, $transcripts, $gene_object) = @_;
+  
+  my $hub         = $self->hub;
+  
+  my $columns = [
+    { key => 'count', title => 'Number of variants', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
+    { key => 'view',  title => '',                   sort => 'none',           width => '5%',  align => 'center' },   
+    { key => 'key',   title => '',                   sort => 'none',           width => '2%',  align => 'center' },
+    { key => 'type',  title => 'Type',               sort => 'numeric_hidden', width => '20%'                    },   
+    { key => 'desc',  title => 'Description',        sort => 'none',           width => '53%'                    },
+  ];
+  
+  my (%counts, %total_counts, %ranks, %descriptions, %labels, %colours);
+  my $total_counts;
+  
+  # colour stuff
+  my $species_defs = $hub->species_defs;
+  my $var_styles   = $species_defs->colour('variation');
+  my $colourmap    = $hub->colourmap;
+  
+  my @all_cons = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  
+  foreach my $con(@all_cons) {
+    next if $con->SO_accession =~ /x/i;
+    
+    my $term = $con->SO_term;
+    
+    $labels{$term}       = $con->label;
+    $descriptions{$term} = $con->description.' <span class="small">('.$hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession).')</span' unless $descriptions{$term};
+    
+    $colours{$term} = $colourmap->hex_by_name($var_styles->{lc($con->SO_term)}->{default});
+    print STDERR $con->SO_term."\t".$colours{$term}."\n";
+    $ranks{$term} = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
+  }
+
+  if (!exists($gene_object->__data->{'conscounts'})) {
+# Generate the data the hard way - from all the vfs and tvs
+    my %counts_hash;
+    my %total_counts_hash;
+
+    foreach my $tr (@$transcripts) { 
+      my $tr_stable_id = $tr->stable_id;
+      my $tvs          = $tr->__data->{'transformed'}{'snps'} || {};
+      my $gene_snps    = $tr->__data->{'transformed'}{'gene_snps'};
+      my $tr_start     = $tr->__data->{'transformed'}{'start'};
+      my $tr_end       = $tr->__data->{'transformed'}{'end'};
+      my $extent       = $tr->__data->{'transformed'}{'extent'};
+      
+      foreach (@$gene_snps) {
+        my ($snp, $chr, $start, $end) = @$_;
+        my $vf_id = $snp->dbID;
+        my $tv    = $tvs->{$vf_id};
+        
+        if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
+          foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+            foreach my $con (@{$tva->get_all_OverlapConsequences}) {
+              my $key  = join '_', $tr_stable_id, $vf_id, $tva->variation_feature_seq;
+              my $term = $con->SO_term;
+              
+              $counts_hash{$term}{$key} = 1 if $con;
+              $total_counts_hash{$key}++;
+            }
+          }
+        }
+      }
+    }
+    
+    foreach my $con (keys %descriptions) {
+      $counts{$con} = scalar keys %{$counts_hash{$con}};
+    }
+    $total_counts = scalar keys %total_counts_hash;
+
+  } else {
+# Use the results of the TV count queries
+    %counts = %{$gene_object->__data->{'conscounts'}};
+
+    $total_counts = $counts{'ALL'};
+  }
+  
+  my $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>};
+  my @rows;
+  
+  foreach my $con (keys %descriptions) {
+    my $colour_block = sprintf('<div style="background-color: %s; width: 10px;">&nbsp;</div>', $colours{$con});
+    
+    if ($counts{$con}) {
+      my $count = $counts{$con};
+      my $warning = $count > 10000 ? $warning_text : '';
+      
+      push @rows, {
+        type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
+        desc  => $descriptions{$con}.' '.$warning,
+        count => $count,
+        view  => $self->ajax_add($self->ajax_url(undef, { sub_table => $con, update_panel => 1 }), $con),
+        key   => $colour_block,
+      };
+    } else {
+      push @rows, {
+        type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
+        desc  => $descriptions{$con},
+        count => 0,
+        view  => '-',
+        key   => $colour_block,
+      };
+    }
+  }
+  
+  # add the row for ALL variations if there are any
+  if (my $total = $total_counts) {
+    my $hidden_span = qq{<span class="hidden">-</span>}; # create a hidden span to add so that ALL is always last in the table
+    my $warning     = $total > 10000 ? $warning_text : '';
+    
+    push @rows, {
+      type  => $hidden_span . 'ALL',
+      view  => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 }), 'ALL'),
+      desc  => "All variations $warning",
+      count => $hidden_span . $total,
+    };
+  }
+
+  return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', sorting => [ 'type asc' ], exportable => 0 });
 }
 
 sub tree {
