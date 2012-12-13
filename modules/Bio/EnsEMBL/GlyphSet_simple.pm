@@ -129,8 +129,10 @@ sub _init {
     my $composite = $self->Composite;
     my $rowheight = int($height * 1.5);
     my @tag_glyphs;
-    
-    if ($colours->{'part'} eq 'line') {
+   
+    my $part = $colours->{'part'};
+ 
+    if ($part eq 'line') {
       $composite->push($self->Space({
         x         => $start - 1,
         y         => 0,
@@ -146,7 +148,7 @@ sub _init {
         colour    => $colours->{'feature'},
         absolutey => 1,
       }));
-    } elsif ($colours->{'part'} eq 'invisible') {
+    } elsif ($part eq 'invisible') {
       $composite->push($self->Space({
         x          => $start - 1,
         y          => 0,
@@ -154,7 +156,7 @@ sub _init {
         height     => $height,
         absolutey  => 1
       }));
-    } elsif ($colours->{'part'} eq 'align') {
+    } elsif ($part eq 'align') {
       $composite->push($self->Rect({
         x         => $start - 1,
         y         => 0,
@@ -165,7 +167,7 @@ sub _init {
         absolutey => 1,
         absolutez => 1,
       }));
-    } else {
+    } elsif($part ne 'none') {
       my $colour_key = "$colours->{'part'}colour";
       
       $composite->push($self->Rect({

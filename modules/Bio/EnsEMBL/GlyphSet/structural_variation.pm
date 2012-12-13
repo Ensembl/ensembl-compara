@@ -7,7 +7,12 @@ use List::Util qw(min max);
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub somatic    { return $_[0]->{'my_config'}->id =~ /somatic/; }
-sub colour_key { return $_[1]->class_SO_term; }
+sub colour_key { 
+  if($_[1]->is_somatic and $_[1]->breakpoint_order) {
+    return "somatic_structural_variant";
+  }
+  return $_[1]->class_SO_term;
+}
 
 sub features {
   my $self     = shift; 
