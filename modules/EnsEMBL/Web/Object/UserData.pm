@@ -1194,6 +1194,17 @@ sub configure_vep {
     $vep_config{$param} = $value unless $value eq 'no' || $value eq '';
   }
   
+  # frequency filtering
+  if($vep_config{filter_common}) {
+    $vep_config{check_frequency} = 1;
+    
+    # set defaults
+    $vep_config{freq_freq}   ||= 0.01;
+    $vep_config{freq_filter} ||= 'exclude';
+    $vep_config{freq_pop}    ||= '1KG_ALL';
+    $vep_config{freq_gt_lt}  ||= 'gt';
+  }
+  
   # get adaptors
   my $species = $self->param('species') || $self->species;
   
@@ -1231,6 +1242,7 @@ sub configure_vep {
   $vep_config{chunk_size}     = 50000;
   $vep_config{quiet}          = 1;
   $vep_config{failed}         = 0;
+  $vep_config{gmaf}           = 1;
   $vep_config{check_alleles}  = 1 if $vep_config{check_existing} eq 'allele';
   $vep_config{check_existing} = 1 if defined($vep_config{check_frequency}) && exists $species_dbs{'DATABASE_VARIATION'};
   

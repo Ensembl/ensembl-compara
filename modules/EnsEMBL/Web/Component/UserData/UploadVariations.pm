@@ -150,7 +150,15 @@ sub content {
     ],
     value  => 'yes',
     select => 'select',
-  );  
+  );
+  
+  $form->add_element(
+    type   => 'CheckBox',
+    label  => 'Get 1000 Genomes global allele frequency for existing variants',
+    name   => 'gmaf',
+    value  => 'yes',
+    selected => 1,
+  );
   
   $form->add_element(
     type  => 'CheckBox',
@@ -232,7 +240,7 @@ sub content {
     label => "Filter variants by frequency",
     value => 'yes',
     selected => 0,
-    notes => '<strong>NB:</strong> Enabling frequency filtering may be very slow for large datasets',
+    notes => '<strong>NB:</strong> Enabling frequency filtering may be slow for large datasets. The default options will filter out common variants found by the 1000 Genomes project.',
   );
   
   $form->add_element(
@@ -264,7 +272,7 @@ sub content {
   $form->add_element(
     type  => 'String',
     name  => 'freq_freq',
-    value => '0.1',
+    value => '0.01',
     max   => 1,
   );
   
@@ -274,27 +282,43 @@ sub content {
     #label  => '',
     name   => 'freq_pop',
     values => [
-      { value => 'any',     name => 'in any 1KG LC or HapMap population' },
-      { value => '-',       name => '-----'                              },
-      { value => '1kg',     name => 'in any 1KG low coverage population' },
-      { value => '1kg_ceu', name => 'in 1KG CEU low coverage'            },
-      { value => '1kg_chb', name => 'in 1KG CHB+JPT low coverage'        },
-      { value => '1kg_yri', name => 'in 1KG YRI low coverage'            },
-      { value => '-',       name => '-----'                              },
-      { value => 'hap',     name => 'in any HapMap population'           },
-      { value => 'hap_asw', name => 'in HapMap ASW'                      },
-      { value => 'hap_ceu', name => 'in HapMap CEU'                      },
-      { value => 'hap_chb', name => 'in HapMap CHB'                      },
-      { value => 'hap_chd', name => 'in HapMap CHD'                      },
-      { value => 'hap_gih', name => 'in HapMap GIH'                      },
-      { value => 'hap_jpt', name => 'in HapMap JPT'                      },
-      { value => 'hap_lwk', name => 'in HapMap LWK'                      },
-      { value => 'hap_mex', name => 'in HapMap MEX'                      },
-      { value => 'hap_mkk', name => 'in HapMap MKK'                      },
-      { value => 'hap_tsi', name => 'in HapMap TSI'                      },
-      { value => 'hap_yri', name => 'in HapMap YRI'                      },
+      { value => '1kg_all', name => 'in 1000 genomes (1KG) combined population' },
+      { value => '1kg_afr', name => 'in 1KG African combined population'        },
+      { value => '1kg_amr', name => 'in 1KG American combined population'       },
+      { value => '1kg_asn', name => 'in 1KG Asian combined population'          },
+      { value => '1kg_eur', name => 'in 1KG European combined population'       },
+      { value => '-',       name => '-----'                                     },
+      { value => '1kg_asw', name => 'in 1KG ASW population'                     },
+      { value => '1kg_ceu', name => 'in 1KG CEU population'                     },
+      { value => '1kg_chb', name => 'in 1KG CHB population'                     },
+      { value => '1kg_chs', name => 'in 1KG CHS population'                     },
+      { value => '1kg_clm', name => 'in 1KG CLM population'                     },
+      { value => '1kg_fin', name => 'in 1KG FIN population'                     },
+      { value => '1kg_gbr', name => 'in 1KG GBR population'                     },
+      { value => '1kg_ibs', name => 'in 1KG IBS population'                     },
+      { value => '1kg_jpt', name => 'in 1KG JPT population'                     },
+      { value => '1kg_lwk', name => 'in 1KG LWK population'                     },
+      { value => '1kg_mxl', name => 'in 1KG MXL population'                     },
+      { value => '1kg_pur', name => 'in 1KG PUR population'                     },
+      { value => '1kg_tsi', name => 'in 1KG TSI population'                     },
+      { value => '1kg_yri', name => 'in 1KG YRI population'                     },
+      { value => '-',       name => '-----'                                     },
+      { value => 'hap_asw', name => 'in HapMap ASW'                             },
+      { value => 'hap_ceu', name => 'in HapMap CEU'                             },
+      { value => 'hap_chb', name => 'in HapMap CHB'                             },
+      { value => 'hap_chd', name => 'in HapMap CHD'                             },
+      { value => 'hap_gih', name => 'in HapMap GIH'                             },
+      { value => 'hap_jpt', name => 'in HapMap JPT'                             },
+      { value => 'hap_lwk', name => 'in HapMap LWK'                             },
+      { value => 'hap_mex', name => 'in HapMap MEX'                             },
+      { value => 'hap_mkk', name => 'in HapMap MKK'                             },
+      { value => 'hap_tsi', name => 'in HapMap TSI'                             },
+      { value => 'hap_yri', name => 'in HapMap YRI'                             },
+      { value => 'hap',     name => 'in any HapMap population'                  },
+      { value => '-',       name => '-----'                                     },
+      { value => 'any',     name => 'any 1KG phase 1 or HapMap population'      },
     ],
-    value  => '1kg',
+    value  => '1kg_all',
     select => 'select',
   ); 
   
