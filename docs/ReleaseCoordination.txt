@@ -664,6 +664,14 @@ $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/convert_patch_to_c
     -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl
     -comp_alias compara_homology_merged -species homo_sapiens
 
+# For e70 - human
+#new compara entries:
+#578 ref genes
+#1028 projected genes
+#1459 new homologies
+
+
+
 # NB: The underscore in the species name is necessary to match the genome_db name.
 # There is a "-no_store 1" flag to avoid writing to the compara database.
 
@@ -751,7 +759,7 @@ You can use "--compara_db compara_curr" if it is run on the final merged db,
 # rel.66    5m
 # rel.67    5m
 # rel.69    10m
-
+# rel.70    13min
 
 13. Run the healthchecks:
 
@@ -815,6 +823,10 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_
 
 ...and correct mismatches if any!
 
+
+13.4 Until a health check exists, it is best to check that there are no empty tables in the release db. A comparison between the current and 
+previous release database WRT table sizes and/or row-numbers would be wise, check for missing tables / new tables and large, unexpected  
+row number changes. 
 
 14. Ask the release coordinator to point the test web server to the compara DB.
 
@@ -912,6 +924,7 @@ $ time perl ~mm14/workspace/cvs/head/ensembl/misc-scripts/CopyDBoverServer.pl -p
 # rel66 1h12m to copy over ensembl_compara_66
 #       0h11m to copy over ensembl_ancestral_66
 # rel68 90m39.996s
+# r70 ens-staging2 (1h29m4s)
 
 16.4 Do the same thing in parallel on ens-staging2 :
 
@@ -1041,17 +1054,17 @@ CVS commit these files.
     $ENSEMBL_CVS_ROOT_DIR/ensembl-webcode/htdocs/info/docs/api/compara/
     (previously - public-plugins/ensembl/htdocs/info/docs/api/compara )
 
-CVS commit the changes.
 
+## Data Dumps
+# Note: It is probably best practice to ask the person who ran the pipeline to perform the associated dump (if any).
 
 21. DNA dumps.
 
-21.1 Follow the instructions in $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/README.multi_align.dumps
-If you have any doubt ask Kathryn or Stephen
+21.1 The instructions are in $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/README.multi_align.dumps
+Kathryn and Stephen normally do these.
 
 22. Gene tree dumps.
-
-You can run the pipelines yourself or delegate the task to a fellow Compara member.
+Matthieu and Miguel normally do these.
 
 22a. Go to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig and open the PipeConfig file DumpTrees_conf.pm
 
