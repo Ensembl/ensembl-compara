@@ -29,8 +29,6 @@ It requires one parameter:
  - compara_db: connection parameters to the Compara database
 
 The following parameters are optional:
- - possible_ortho: [boolean] (default 0) whether or not low confidence
-                   duplications should be treated as speciations
  - file: [string] output file to dump (otherwise: standard output)
 
 =head1 SYNOPSIS
@@ -95,7 +93,7 @@ sub run {
     print $HANDLE "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     print $HANDLE "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
 
-    my $sql = 'SELECT member.taxon_id, name, member_id, stable_id, assembly, genebuild,source_name FROM gene_tree_node JOIN member USING (member_id) JOIN genome_db USING (genome_db_id) ORDER BY taxon_id, member_id';
+    my $sql = 'SELECT member.taxon_id, name, member_id, member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN member USING (member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, member_id';
     my $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
     $sth->execute;
     my $last;
