@@ -394,8 +394,7 @@ sub alignment_string_bounded {
 =cut
 
 sub cdna_alignment_string {
-  my ($self, $changeSelenos) = @_;
-  $changeSelenos = 0 unless (defined $changeSelenos);
+  my $self = shift;
 
   unless (defined $self->{'cdna_alignment_string'}) {
 

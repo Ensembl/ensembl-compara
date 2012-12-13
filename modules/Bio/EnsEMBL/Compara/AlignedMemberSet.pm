@@ -288,6 +288,35 @@ sub load_cigars_from_fasta {
 
 
 
+=head2 get_SimpleAlign
+
+    Arg [-UNIQ_SEQ] : (opt) boolean (default: false)
+        : whether redundant sequences should be discarded
+    Arg [-CDNA] : (opt) boolean (default: false)
+        : whether the CDS sequence should be used instead of the default sequence
+    Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
+        : which identifier should be used as sequence names: the stable_id, the sequence_id, or the member_id
+    Arg [-STOP2X] (opt) boolean (default: false)
+        : whether the stop codons (character '*') should be replaced with gaps (character 'X')
+    Arg [-APPEND_TAXON_ID] (opt) boolean (default: false)
+        : whether the taxon_ids should be added to the sequence names
+    Arg [-APPEND_SP_SHORT_NAME] (opt) boolean (default: false)
+        : whether the species (in short name format) should be added to the sequence names
+    Arg [-APPEND_GENOMEDB_ID] (opt) boolean (default: false)
+        : whether the genome_db_id should be added to the sequence names
+    Arg [-EXON_CASED] (opt) boolean (default: false)
+        : whether the case of the sequence should change at each exon
+    Arg [-KEEP_GAPS] (opt) boolean (default: false)
+        : whether columns that only contain gaps should be kept in the alignment
+
+  Example    : $tree->get_SimpleAlign(-CDNA => 1);
+  Description: Returns the alignment as a BioPerl object
+  Returntype : Bio::SimpleAlign
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub get_SimpleAlign {
 
     my ($self, @args) = @_;
@@ -300,12 +329,10 @@ sub get_SimpleAlign {
     my $append_sp_short_name = 0;
     my $append_genomedb_id = 0;
     my $exon_cased = 0;
-    my $alignment = 'protein';
-    my $changeSelenos = 0;
     my $keep_gaps = 0;
     if (scalar @args) {
-        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $alignment, $changeSelenos, $keep_gaps) =
-            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED ALIGNMENT CHANGE_SELENO KEEP_GAPS)], @args);
+        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps) =
+            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS)], @args);
     }
 
     my $sa = Bio::SimpleAlign->new();
@@ -342,8 +369,8 @@ sub get_SimpleAlign {
 
         my $seqstr;
         my $alphabet;
-        if ($cdna or (lc($alignment) eq 'cdna')) {
-            $seqstr = $member->cdna_alignment_string($changeSelenos);
+        if ($cdna) {
+            $seqstr = $member->cdna_alignment_string();
             $seqstr =~ s/\s+//g;
             $alphabet = 'dna';
         } elsif ($self->seq_type) {
