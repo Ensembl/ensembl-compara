@@ -111,9 +111,9 @@ sub render_content {
     $consequence_label =~ s/_/ /g;
     $consequence_label =~ s/children/\(with children\)/;
     #$consequence_label .='s';
-    $html = $self->toggleable_table("Consequence type: $consequence_label", $table_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   } else {
-    $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variations in $stable_id by consequence type</h2>} . $table;
+    $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variation consequences in $stable_id</h2>} . $table;
   }
   
   return $html;
