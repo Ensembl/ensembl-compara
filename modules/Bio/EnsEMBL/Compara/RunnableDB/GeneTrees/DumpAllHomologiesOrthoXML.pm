@@ -29,8 +29,6 @@ It requires one parameter:
  - compara_db: connection parameters to the Compara database
 
 The following parameters are optional:
- - tree_type: [string] restriction on which trees should be dumped (see the
-              corresponding field in the gene_tree_root table)
  - possible_ortho: [boolean] (default 0) whether or not low confidence
                    duplications should be treated as speciations
  - file: [string] output file to dump (otherwise: standard output)
