@@ -224,8 +224,11 @@ sub source_link {
   my $source_uc = uc $source;
   $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
-  
+  my $label     = $source;
   if ($url =~ /ega/) {
+    $label = $ega_id;
+    my @ega_data = split('\.',$ega_id);
+    $ega_id = (scalar(@ega_data) > 1) ? $ega_data[0].'*' : $ega_data[0];
     $url       =~ s/###ID###/$ega_id/;
   } elsif ($url =~/gwastudies/) {
     $ext_id    =~ s/pubmed\///; 
@@ -245,7 +248,7 @@ sub source_link {
   }
   return $source if $url eq "";
   
-  return qq{<a rel="external" href="$url">[$source]</a>};
+  return qq{<a rel="external" href="$url">[$label]</a>};
 }
 
 
@@ -301,6 +304,11 @@ sub supporting_evidence_link {
     my $a_url = $st->url;
     if (!defined($a_url)) {
       $as_html .= $self->source_link($st->source,$st->name,$ext_id);
+    }
+    # Temporary link to fix the problem of the non stable IDs for the EGA studies coming from dbGAP
+    elsif ($a_url =~ /ega/ && $self->hub->species eq 'Homo_sapiens') {
+      my $source = $st->source.'_SEARCH';
+      $as_html .= $self->source_link($source,$st->name,$ext_id);
     }
     else {
       my $a_source = $st->source;
