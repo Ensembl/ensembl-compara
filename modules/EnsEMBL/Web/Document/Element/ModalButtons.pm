@@ -14,7 +14,7 @@ sub label_classes {
     'Load configuration'  => 'config-load',
     'Reset configuration' => 'config-reset',
     'Reset track order'   => 'order-reset',
-    'Add custom track'    => 'data',
+    'Add your data'    => 'data',
   };
 }
 

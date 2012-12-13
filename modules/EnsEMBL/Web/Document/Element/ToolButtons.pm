@@ -29,7 +29,7 @@ sub label_classes {
   return {
     'Configure this page' => 'config',
     'Manage your data'    => 'data',
-    'Add custom track'    => 'data',
+    'Add your data'       => 'data',
     'Export data'         => 'export',
     'Bookmark this page'  => 'bookmark',
     'Share this page'     => 'share',
