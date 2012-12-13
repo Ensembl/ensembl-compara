@@ -29,7 +29,7 @@ It requires one parameter:
  - compara_db: connection parameters to the Compara database
 
 The following parameters are optional:
- - possible_ortho: [boolean] (default 0) whether or not low confidence
+ - possible_orth: [boolean] (default 0) whether or not low confidence
                    duplications should be treated as speciations
  - file: [string] output file to dump (otherwise: standard output)
 
@@ -69,7 +69,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'possible_ortho' => 0,
+            'possible_orth' => 0,
            };
 }
 
@@ -87,7 +87,7 @@ sub fetch_input {
     # Creates the OrthoXML writer
     my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
             -HANDLE => $self->param('file_handle'),
-            -POSSIBLE_ORTHOLOGS => $self->param('possible_ortho'),
+            -POSSIBLE_ORTHOLOGS => $self->param('possible_orth'),
             -SOURCE => "Ensembl Compara",
             -SOURCE_VERSION => software_version(),
             );
