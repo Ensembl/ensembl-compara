@@ -14,14 +14,26 @@ sub _init {
   $self->ajaxable(0);
 }
 
+# status warnings would be eg out-of-date page, dubious evidence, etc
+# which need to be displayed prominently at the top of a page. Only used
+# in Vega plugin at the moment, but probably more widely useful.
+sub status_warnings { return undef; }
+
 sub content {
   my $self = shift;
   my $object = $self->object;
   
   return sprintf '<p>%s</p>', encode_entities($object->Obj->description) if $object->Obj->isa('Bio::EnsEMBL::Compara::Family'); # Grab the description of the object
   return sprintf '<p>%s</p>', 'This identifier is not in the current EnsEMBL database' if $object->Obj->isa('Bio::EnsEMBL::ArchiveStableId');
-  
-  my $html = $self->transcript_table;
+
+  my $html = "";
+ 
+  my @warnings = $self->status_warnings;
+  if(@warnings>1 and $warnings[0] and $warnings[1]) {
+    $html .= $self->_info_panel($warnings[2]||'warning',
+                                $warnings[0],$warnings[1]);
+  }
+  $html .= $self->transcript_table;
   my $extra = ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ' and manually curated alternative alleles' : ', paralogues, regulatory regions and splice variants';
 
   $html .= $self->_hint('gene', 'Transcript and Gene level displays', sprintf('
