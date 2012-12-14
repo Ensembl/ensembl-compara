@@ -9,7 +9,7 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 sub somatic    { return $_[0]->{'my_config'}->id =~ /somatic/; }
 sub colour_key { 
   if($_[1]->is_somatic and $_[1]->breakpoint_order) {
-    return "somatic_structural_variant";
+    return "somatic_breakpoint_variant";
   }
   return $_[1]->class_SO_term;
 }
@@ -64,9 +64,8 @@ sub tag {
    
      foreach my $coord (@coords) {
       push @tags,{
-        style  => 'breakpoint',
+        style  => $self->my_colour($self->colour_key($f), 'style'),
         colour => 'gold',
-        border => 'goldenrod',
         start  => $coord,
         end    => $coord+10
       };
@@ -168,7 +167,7 @@ sub render_tag {
       height       => $y / $pix_per_bp,
       direction    => $1,
     });
-  } elsif ($tag->{'style'} eq 'breakpoint') {
+  } elsif ($tag->{'style'} eq 'none') {
     my $h     = $self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2;
     my $x     = $tag->{'start'};
     my $y     = $h / 2;
