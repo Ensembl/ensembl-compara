@@ -29,16 +29,14 @@ It requires one parameter:
  - compara_db: connection parameters to the Compara database
 
 The following parameters are optional:
- - tree_type: [string] restriction on which trees should be dumped (see the
-              corresponding field in the gene_tree_root table)
- - possible_ortho: [boolean] (default 0) whether or not low confidence
+ - possible_orth: [boolean] (default 0) whether or not low confidence
                    duplications should be treated as speciations
  - file: [string] output file to dump (otherwise: standard output)
 
 =head1 SYNOPSIS
 
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrthoXML
-  -compara_db 'mysql://ensro:@compara4:3306/mp12_compara_nctrees_66c' -member_type ncrna -tree_type tree -file dump_ncrna
+  -compara_db 'mysql://ensro:@compara4:3306/mp12_compara_nctrees_66c' -member_type ncrna -file dump_ncrna
 
 =head1 AUTHORSHIP
 
@@ -71,7 +69,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'possible_ortho' => 0,
+            'possible_orth' => 0,
            };
 }
 
@@ -89,14 +87,14 @@ sub fetch_input {
     # Creates the OrthoXML writer
     my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
             -HANDLE => $self->param('file_handle'),
-            -POSSIBLE_ORTHOLOGS => $self->param('possible_ortho'),
+            -POSSIBLE_ORTHOLOGS => $self->param('possible_orth'),
             -SOURCE => "Ensembl Compara",
             -SOURCE_VERSION => software_version(),
             );
     $self->param('writer', $w);
 
     # List of all the trees
-    my $list_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-clusterset_id => 'default', -member_type => $self->param('member_type'), -tree_type => $self->param('tree_type'));
+    my $list_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-clusterset_id => 'default', -member_type => $self->param('member_type'), -tree_type => 'tree');
 
     $self->param('tree_list', $list_trees);
 
@@ -110,7 +108,8 @@ sub run {
     my $callback_list_members = sub {
         my ($species) = @_;
         my $constraint = 'm.genome_db_id = '.($species->dbID);
-        $constraint .= ' AND gtr.tree_type = "'.($self->param('tree_type')).'"' if defined $self->param('tree_type');
+        $constraint .= ' AND gtr.tree_type = "tree"';
+        $constraint .= ' AND gtr.clusterset_id = "default"';
         $constraint .= ' AND gtr.member_type = "'.($self->param('member_type')).'"' if defined $self->param('member_type');
         my $join = [[['gene_tree_member', 'gtm'], 'm.member_id = gtm.member_id', undef], [['gene_tree_node', 'gtn'], 'gtm.node_id = gtn.node_id', undef], [['gene_tree_root', 'gtr'], 'gtn.root_id = gtr.root_id', undef]];
         return $member_adaptor->generic_fetch($constraint, $join);

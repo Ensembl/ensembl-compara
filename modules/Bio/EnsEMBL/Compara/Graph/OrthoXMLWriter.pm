@@ -285,11 +285,14 @@ sub write_data {
   foreach my $species (@$list_species) {
     # species should be a GenomeDB instance
 
+    my $all_members = $callback_list_members->($species);
+    next unless scalar(@$all_members);
+
     $w->startTag("species", "NCBITaxId" => $species->taxon_id, "name" => $species->name);
     $w->startTag("database", "name" => $self->source_version, "version" => sprintf("%s/%s", $species->assembly, $species->genebuild));
     $w->startTag("genes");
 
-    foreach my $member (@{$callback_list_members->($species)}) {
+    foreach my $member (@$all_members) {
 	$w->emptyTag("gene", "id" => $member->member_id, "geneId" => $member->gene_member->stable_id, ($member->source_name eq "ENSEMBLPEP" ? "protId" : "transcriptId") => $member->stable_id);
     }
 
