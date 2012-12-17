@@ -58,14 +58,14 @@ sub content {
 
   $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_assembly_text.'</div></div>';
 
-  $html .= '<div class="box-right alt-box-middle"><div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div></div>';
+  $html .= '<div class="box-right"><div class="round-box tinted-box unbordered">'.$self->_genebuild_text.'</div></div>';
  
-  $html .= '<div class="box-left alt-box-right"><div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div></div>';
+  $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_compara_text.'</div></div>';
 
-  $html .= '<div class="box-right alt-box-left"><div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div></div>';
+  $html .= '<div class="box-right"><div class="round-box tinted-box unbordered">'.$self->_variation_text.'</div></div>';
 
   if ($hub->database('funcgen')) {
-    $html .= '<div class="box-left alt-box-middle"><div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div></div>';
+    $html .= '<div class="box-left"><div class="round-box tinted-box unbordered">'.$self->_funcgen_text.'</div></div>';
   }
 
   return $html;  
