@@ -18,7 +18,7 @@ This script will output a html document for a pairwise alignment showing the con
 
 =head1 SYNOPSIS
 
- perl ~/work/projects/tests/test_config/create_pair_aligner_page.pl --config_url mysql://ensadmin:ensembl\@compara1:3306/kb3_pair_aligner_config --mlss_id 455 > pair_aligner_455.html
+ perl ~/work/projects/tests/test_config/create_pair_aligner_page.pl --config_url mysql://ensadmin:${ENSADMIN_PSW}\@compara1:3306/kb3_pair_aligner_config --mlss_id 455 > pair_aligner_455.html
 
 perl create_pair_aligner_page.pl
    --config_url pair aligner configuration database

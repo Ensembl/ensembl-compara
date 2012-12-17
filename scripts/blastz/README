@@ -38,16 +38,16 @@ http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/$i; done
 
 (2)- set up a mysql database with UCSC data
 
-mysql -h compara1 -P 3306 -u ensadmin -pensembl -e "create database jh7_ucsc_Hsap_Cfam_42"
+mysql -h compara1 -P 3306 -u ensadmin -p${ENSADMIN_PSW} -e "create database jh7_ucsc_Hsap_Cfam_42"
 
  create the tables
 
-ls *.sql | while read i; do mysql -h compara1 -P 3306 -u ensadmin -pensembl jh7_ucsc_Hsap_Cfam_42 < $i;done
+ls *.sql | while read i; do mysql -h compara1 -P 3306 -u ensadmin -p${ENSADMIN_PSW} jh7_ucsc_Hsap_Cfam_42 < $i;done
 
  load the data
 
 ls *.gz | sed "s/\.gz//" | while read i; do echo "Loading $i..."; gunzip $i.gz; \
-mysqlimport -h compara1 -P 3306 -u ensadmin -pensembl -L jh7_ucsc_Hsap_Ggap_42 $i; \
+mysqlimport -h compara1 -P 3306 -u ensadmin -p${ENSADMIN_PSW} -L jh7_ucsc_Hsap_Ggap_42 $i; \
 gzip $i; echo $i loaded; done
 
  You can also get the goldenpath for the query species. The script expects
@@ -68,14 +68,14 @@ sed -r -i -e 's/\w+_gold/query_gold/' query_gold.sql
 
 sed -r -i -e 's/UNIQUE KEY/KEY/' query_gold.sql
 
-mysql -h compara1 -P 3306 -u ensadmin -pensembl jh7_ucsc_Hsap_Cfam_42 < query_gold.sql
+mysql -h compara1 -P 3306 -u ensadmin -p${ENSADMIN_PSW} jh7_ucsc_Hsap_Cfam_42 < query_gold.sql
 
-mysql -h compara1 -P 3306 -u ensadmin -pensembl \
+mysql -h compara1 -P 3306 -u ensadmin -p${ENSADMIN_PSW} \
 -e "ALTER TABLE query_gold ADD KEY region (chrom, chromStart)" \
 jh7_ucsc_Hsap_Cfam_42
 
 ls *.gz|sed "s/\.gz//"|while read i;do echo "Loading $i...";gunzip $i.gz; mv $i query_gold.txt; \
-mysqlimport -h compara1 -P 3306 -u ensadmin -pensembl -L jh7_ucsc_Hsap_Cfam_42 query_gold.txt; \
+mysqlimport -h compara1 -P 3306 -u ensadmin -p${ENSADMIN_PSW} -L jh7_ucsc_Hsap_Cfam_42 query_gold.txt; \
 mv query_gold.txt $i; gzip $i;echo $i loaded;done
 
 cd ..
@@ -83,11 +83,11 @@ cd ..
 
 (3)- create a mysql database for ensembl data
 
-mysql -u ensadmin -pensembl -h compara1 -e "CREATE DATABASE jh7_ensembl_Hsap_Cfam_42"
+mysql -u ensadmin -p${ENSADMIN_PSW} -h compara1 -e "CREATE DATABASE jh7_ensembl_Hsap_Cfam_42"
 
  create tables
 
-mysql -u ensadmin -pensembl -h compara1 jh7_ensembl_Hsap_Cfam_42 < ~/src/ensembl_main/ensembl-compara/sql/table.sql
+mysql -u ensadmin -p${ENSADMIN_PSW} -h compara1 jh7_ensembl_Hsap_Cfam_42 < ~/src/ensembl_main/ensembl-compara/sql/table.sql
 
  IMPORTANT - Set up your registry. The conf file must have data for connecting to the master, both
 uscs and e! DBs and the two core DBs
@@ -156,7 +156,7 @@ ucsc databases e.g. here
 
 new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'compara1',
                                             -user => 'ensadmin',
-                                            -pass => 'ensembl',
+                                            -pass => $ENV{'ENSADMIN_PSW'},
                                             -port => 3366,
                                             -disconnect_when_inactive => 1,
                                             -species => 'ucscHsapCfam',

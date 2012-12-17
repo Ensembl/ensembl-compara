@@ -4,7 +4,7 @@
     '-host'     => "ia64g",
     '-port'     => "3306",
     '-user'     => "ensadmin",
-    '-pass'     => "ensembl",
+    '-pass'     => $ENV{'ENSADMIN_PSW'},
     '-dbname'   => "abel_compara_blastz_Hs35Rn3p4c",
     '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
   },

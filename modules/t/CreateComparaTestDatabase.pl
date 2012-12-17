@@ -876,7 +876,7 @@ $dbh->disconnect();
 print "Test genome database $destDB created\n";
 
 #cmd to dump .sql and .txt files
-#/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ abel_core_test
+#/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ abel_core_test
 
 sub _run_query_from_method_link_type_species_set_name {
     my ($method_link_type, $species_set_name) = @_;

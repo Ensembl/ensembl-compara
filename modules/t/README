@@ -76,15 +76,15 @@ respectively
 
 cd ~/src/ensembl_main/ensembl-compara/modules/t
 
-./CreateComparaTestDatabase.pl -s ensembl_compara_23_1 -d ensembl_compara_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file homo_sapiens.seq_region_file
+./CreateComparaTestDatabase.pl -s ensembl_compara_23_1 -d ensembl_compara_test -h ia64f -u ensadmin -p ${ENSADMIN_PSW} --port 3306 --seq_region_file homo_sapiens.seq_region_file
 
-./CreateCoreTestDatabase.pl -s homo_sapiens_core_23_34e -d homo_sapiens_core_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file homo_sapiens.seq_region_file 
+./CreateCoreTestDatabase.pl -s homo_sapiens_core_23_34e -d homo_sapiens_core_test -h ia64f -u ensadmin -p ${ENSADMIN_PSW} --port 3306 --seq_region_file homo_sapiens.seq_region_file 
 
 This above script ill have created the mus_musculus.seq_region_file and rattus_norvegicus.seq_region_file files for the folowing steps.
 
-./CreateCoreTestDatabase.pl -s mus_musculus_core_23_32c -d mus_musculus_core_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file mus_musculus.seq_region_file
+./CreateCoreTestDatabase.pl -s mus_musculus_core_23_32c -d mus_musculus_core_test -h ia64f -u ensadmin -p ${ENSADMIN_PSW} --port 3306 --seq_region_file mus_musculus.seq_region_file
 
-./CreateCoreTestDatabase.pl -s rattus_norvegicus_core_23_3c -d rattus_norvegicus_core_test -h ia64f -u ensadmin -p ensembl --port 3306 --seq_region_file rattus_norvegicus.seq_region_file
+./CreateCoreTestDatabase.pl -s rattus_norvegicus_core_23_3c -d rattus_norvegicus_core_test -h ia64f -u ensadmin -p ${ENSADMIN_PSW} --port 3306 --seq_region_file rattus_norvegicus.seq_region_file
 
  Dumping the databases. For use of mysqldump with -T option, you will need to run it on 
  the same machine that runs the MySQL instance, here ia64f
@@ -93,19 +93,19 @@ mkdir -p test-genome-DBs/homo_sapiens/core test-genome-DBs/mus_musculus/core tes
 
 cd test-genome-DBs/homo_sapiens/core
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ homo_sapiens_core_test
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ homo_sapiens_core_test
 
 cd ../../mus_musculus/core
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ mus_musculus_core_test
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ mus_musculus_core_test
 
 cd ../../rattus_norvegicus/core
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ rattus_norvegicus_core_test
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ rattus_norvegicus_core_test
 
 cd test-genome-DBs/multi/compara
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -pensembl -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ ensembl_compara_test
+/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ ensembl_compara_test
 
 cd ../../
 

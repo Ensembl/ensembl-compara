@@ -16,7 +16,7 @@ my $help;
 my $host = "127.0.0.1";
 my $port = "2914";
 my $user = "ensadmin";
-my $pass = "ensembl";
+my $pass = $ENV{'ENSADMIN_PSW'};
 my $dbname = "lg4_ensembl_compara_64";
 my $url;
 my $mlss = 40076;
