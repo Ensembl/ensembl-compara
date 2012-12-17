@@ -159,7 +159,7 @@ sub location {
     my $strand   = $mappings->{$svf}{'strand'};
     
     # Breakpoint feature
-    if (defined($mappings->{$svf}{'breakpoint_order'}) && $start!=$end) {
+    if (defined($mappings->{$svf}{'breakpoint_order'}) && $object->is_somatic == 1 && $start!=$end) {
       
       foreach my $coord ($start,$end) {
         my $loc_text = "<b>$region:$coord</b>";
@@ -220,7 +220,7 @@ sub location {
         selected => $svf == $_ ? ' selected' : ''
       };
        
-      if (defined($bp_order)) {
+      if (defined($bp_order) && $object->is_somatic) {
       
         my $loc_text = '<b>'.($start == $end ? "$region:$start" : "$region:$start-$end"). '</b>';
         
