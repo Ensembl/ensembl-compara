@@ -108,7 +108,7 @@ sub init {
   }
   else {
     $self->add_entry({
-      caption => 'Add custom track',
+      caption => 'Add your data',
       class   => 'modal_link',
       rel     => 'modal_user_data',
       url     => $hub->url({
