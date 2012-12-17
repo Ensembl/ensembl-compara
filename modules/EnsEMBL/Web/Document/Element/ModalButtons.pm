@@ -73,7 +73,7 @@ sub init {
       }
       
       $self->add_entry({
-        caption => 'Add custom track',
+        caption => 'Add your data',
         class   => 'modal_link',
         url     => $hub->url({
           type    => 'UserData',
