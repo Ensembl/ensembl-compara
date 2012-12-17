@@ -54,6 +54,7 @@ sub supporting_evidence_table {
       my $name = $ssv_obj->variation_name;
       my $loc;
       my $bp_order;
+      my $is_somatic = $ssv_obj->is_somatic;
       
       # Location(s)
       foreach my $svf (@{$ssv_obj->get_all_StructuralVariationFeatures}) {
@@ -66,7 +67,8 @@ sub supporting_evidence_table {
         $bp_order = $svf->breakpoint_order;
         my $chr = $svf->seq_region_name.':';
         
-        if ($bp_order) {
+        
+        if ($bp_order && $is_somatic == 1) {
           my @c_list = ($start!=$end) ? ($start,$end) : ($start);
             
           foreach my $coord (@c_list) {
@@ -101,7 +103,7 @@ sub supporting_evidence_table {
           $loc .= qq{<a href="$loc_url">$chr_bp</a>$strand};
         }
         
-        $has_bp = 1 if ($bp_order && $bp_order > 1);
+        $has_bp = 1 if ($bp_order && $bp_order > 1 && $is_somatic == 1);
       }
       $loc = '-' if (!$loc);
   
