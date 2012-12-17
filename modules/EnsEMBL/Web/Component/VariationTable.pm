@@ -18,7 +18,7 @@ sub content {
   my $consequence_type = $hub->param('sub_table');
   my $table_id = $hub->param('table_id');
   my $icontext = $hub->param('context') || 100;
-  my $sum_type = $hub->param('summary_type') || 'tree';
+  my $sum_type = $hub->param('summary_type') || 'table';
   my $gene_object = $self->configure($icontext, $consequence_type);
   my ($count, $msg, $html);
 
@@ -115,7 +115,7 @@ sub render_content {
     $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   } else {
     my $hub = $self->hub;
-    my $current = $hub->param('summary_type') || 'tree';
+    my $current = $hub->param('summary_type') || 'table';
     my $switched = $current eq 'tree' ? 'table' : 'tree';
     my $url = $hub->url({summary_type => $switched});
     
