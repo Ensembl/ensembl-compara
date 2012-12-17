@@ -58,7 +58,7 @@ div.column-left             { margin-left: 0;       margin-right: 0.5em; }
 div.column-middle           { margin-left: 0.25em;  margin-right: 0.25em; }
 div.column-right            { margin-left: 0.5em;   margin-right: 0; }
 
-div.box-left                { width:49.5%; float:left; margin-left: 0; margin-right: 0.5%; }
+div.box-left                { width:49.5%; float:left; margin-left: 0; margin-right: 0.5%; clear:left; }
 div.box-right               { width:49.5%; float:right; margin-left: 0.5%; margin-right: 0; }
 
 /* IE 6 & 7 hacks for above */
