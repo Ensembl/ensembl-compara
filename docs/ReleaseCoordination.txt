@@ -319,27 +319,9 @@ cvs commit
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
-may have to edit the ensj-healthcheck/database.properties file. It should look
-like this:
-
-    host=compara1
-    port=3306
-    user=ensadmin
-    password=***********
-
-    # Database driver class - shouldn't need to be changed
-    driver=org.gjt.mm.mysql.Driver
-
-    # Master schema - see CompareSchema healthcheck
-    # This setting is ignored if CompareSchema is not run
-    master.schema=master_schema_38
-
-    # Secondary database connection details
-    secondary.host=ecs2
-    secondary.port=3364
-    secondary.user=ensro
-    secondary.driver=org.gjt.mm.mysql.Driver
-
+may have to edit the ensj-healthcheck/database.properties file, using
+ensembl-compara/scripts/pipeline/database.properties as a reference.
+Do not forget to replace ${ENSADMIN_PSW} with its appropriate, secret, value.
 
 Make sure everything is up to date:
 $ cd ensj-healthcheck
@@ -827,6 +809,11 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_
 13.4 Until a health check exists, it is best to check that there are no empty tables in the release db. A comparison between the current and 
 previous release database WRT table sizes and/or row-numbers would be wise, check for missing tables / new tables and large, unexpected  
 row number changes. 
+
+13.5 CVS commit database.properties
+
+Hide any password / sensitive data from the configuration file database.properties (for example, using the string "${ENSADMIN_PSW}") and
+commit it back to ensembl-compara/scripts/pipeline/
 
 14. Ask the release coordinator to point the test web server to the compara DB.
 
