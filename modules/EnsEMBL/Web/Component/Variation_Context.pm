@@ -31,10 +31,54 @@ sub content {
   
   ($v) = values %mappings if keys %mappings == 1;
   
+
   # Structural variation 
   if ($object->isa('EnsEMBL::Web::Object::StructuralVariation')) {
     $im_cfg = 'structural_variation';
-    $v    ||= $mappings{$hub->param('svf')};
+    my $svf_id = $hub->param('svf');
+    
+    # Somatic Breakpoints
+    if ( $svf_id && $mappings{$svf_id}{breakpoint_order} && $object->is_somatic == 1 && $v){
+      my @locations;
+      my $region = $mappings{$svf_id}{'Chr'}; 
+      my $start  = $mappings{$svf_id}{'start'};
+      my $end    = $mappings{$svf_id}{'end'};
+      my $str    = $mappings{$svf_id}{'strand'};
+        
+      my $bpf = ($hub->param('bpf')) ? $hub->param('bpf') : $svf_id.'from';
+        
+      push @locations, {
+          value    => $svf_id.'from',
+          name     => sprintf('%s (%s strand)', "$region:$start", ($str > 0 ? 'forward' : 'reverse')),
+          selected => $svf_id.'from' eq $bpf ? ' selected' : ''
+      };
+      push @locations, {
+          value    => $svf_id.'to',
+          name     => sprintf('%s (%s strand)', "$region:$end", ($str > 0 ? 'forward' : 'reverse')),
+          selected => $svf_id.'to' eq $bpf ? ' selected' : ''
+      };
+      
+      my $params    = $hub->core_params;
+      my $core_params = join '', map $params->{$_} && $_ ne 'svf' && $_ ne 'r' ? qq(<input name="$_" value="$params->{$_}" type="hidden" />) : (), keys %$params;
+      my $options     = join '', map qq(<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>), @locations;
+    
+      $html .= qq{<div style="margin-bottom:20px"><div style="font-weight:bold;margin-right:20px;vertical-align:middle;float:left">Selected breakpoint</div>};
+      $html .= sprintf(q(<form action="%s" method="get">%s<select name="bpf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>),
+        $hub->url({ svf => undef, sv => $vname, source => $object->source }),
+        $core_params,
+        $options
+      ); 
+      $html .= qq{</div>};
+      
+      if ($hub->param('bpf')) {
+        $v->{'end'} = $mappings{$svf_id}{start} if ($hub->param('bpf') =~ /from/) ;
+        $v->{'start'} = $mappings{$svf_id}{end} if ($hub->param('bpf') =~ /to/) ;
+      } else {
+        $v->{'end'} = $mappings{$svf_id}{start};
+      }
+    } else {
+      $v ||= $mappings{$svf_id};
+    }
   }  else { # Variation
     $v ||= $mappings{$hub->param('vf')};
   }
@@ -48,8 +92,6 @@ sub content {
   my $length     = $end - $start + 1;
   my $img_start  = $start;
   my $img_end    = $end;
-  
-  
   
   # Width max > length Slice > context
   if ($length >= $width && $length <= $width_max) {
@@ -126,7 +168,7 @@ sub content {
   
   $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['get_all_StructuralVariationFeatures','get_all_somatic_StructuralVariationFeatures'], 1);
   $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['get_all_CopyNumberVariantProbeFeatures']);
-  $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config);
+  #$html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config);
   $html .= $self->constrained_element_table($var_slice, $vname);
   
   return $html;
