@@ -133,11 +133,12 @@ sub menus {
   return $_[0]->{'menus'} ||= {
     # Sequence
     seq_assembly        => 'Sequence and assembly',
-    sequence            => [ 'Sequence',               'seq_assembly' ],
-    misc_feature        => [ 'Misc. regions & clones', 'seq_assembly' ],
-    marker              => [ 'Markers',                'seq_assembly' ],
-    simple              => [ 'Simple features',        'seq_assembly' ],
-    ditag               => [ 'Ditag features',         'seq_assembly' ],
+    sequence            => [ 'Sequence',              'seq_assembly' ],
+    misc_feature        => [ 'Clones',                'seq_assembly' ],
+    genome_attribs      => [ 'Genome attributes',     'seq_assembly' ],
+    marker              => [ 'Markers',               'seq_assembly' ],
+    simple              => [ 'Simple features',       'seq_assembly' ],
+    ditag               => [ 'Ditag features',        'seq_assembly' ],
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
@@ -1467,6 +1468,7 @@ sub load_tracks {
       'add_trans_associated',       # Add to features associated with transcripts
       'add_marker_features',        # Add to marker tree
       'add_qtl_features',           # Add to marker tree
+      'add_genome_attribs',         # Add to genome_attribs tree
       'add_misc_features',          # Add to misc_feature tree
       'add_prediction_transcripts', # Add to prediction_transcript tree
       'add_protein_align_features', # Add to protein_align_feature_tree
@@ -1938,6 +1940,32 @@ sub add_qtl_features {
     renderers   => [ 'off', 'Off', 'normal', 'On' ],
     strand      => 'r',
   }));
+}
+
+sub add_genome_attribs {
+  my ($self, $key, $hashref) = @_;
+  my $menu = $self->get_node('genome_attribs');
+  
+  return unless $menu;
+ 
+  my $default_tracks = {}; 
+  my $config_name = $self->{'type'};
+  my $data        = $hashref->{'genome_attribs'}{'sets'}; # Different loop - no analyses - just misc_sets
+  
+  foreach (sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data) {
+    next if $_ eq 'NoAnnotation' || $default_tracks->{$config_name}{$_}{'available'} eq 'no';
+    
+    $self->generic_add($menu, $key, "genome_attribs_${key}_$_", $data->{$_}, {
+      glyphset          => '_clone',
+      set               => $_,
+      colourset         => 'clone',
+      caption           => $data->{$_}{'name'},
+      description       => $data->{$_}{'desc'},
+      strand            => 'r',
+      display           => $default_tracks->{$config_name}{$_}{'default'} || $data->{$_}{'display'} || 'off',
+      outline_threshold => $default_tracks->{$config_name}{$_}{'threshold'} eq 'no' ? undef : 350000,
+    });
+  }
 }
 
 sub add_misc_features {
