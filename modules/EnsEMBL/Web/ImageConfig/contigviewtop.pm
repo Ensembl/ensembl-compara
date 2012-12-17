@@ -21,6 +21,7 @@ sub init {
     marker
     transcript
     misc_feature
+    genome_attribs
     synteny
     variation
     somatic

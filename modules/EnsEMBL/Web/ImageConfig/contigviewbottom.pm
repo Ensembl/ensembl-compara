@@ -49,6 +49,7 @@ sub init {
     rnaseq
     ditag
     simple
+    genome_attribs
     misc_feature
     variation
     somatic
