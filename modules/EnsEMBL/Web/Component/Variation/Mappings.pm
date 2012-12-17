@@ -110,13 +110,20 @@ sub content {
     { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
     { key => 'allele',   title => 'Allele',                    sort => 'string',                          },
     { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
+  );
+  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
+  my @motif_columns = (
+    { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
+    { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
+    { key => 'allele',   title => 'Allele',                    sort => 'string',                          },
+    { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
     { key => 'matrix',   title => 'Motif name',                sort => 'string',                          },
     { key => 'pos',      title => 'Motif position',            sort => 'numeric'                          },
     { key => 'high_inf', title => 'High information position', sort => 'string'                           },
     { key => 'score',    title => 'Motif score change',        sort => 'position_html', align => 'center' },
   );
-  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
-  
+  my $motif_table = $self->new_table(\@motif_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
+
   
   foreach my $varif_id (grep $_ eq $hub->param('vf'), keys %mappings) {
     foreach my $transcript_data (@{$mappings{$varif_id}{'transcript_vari'}}) {
@@ -297,10 +304,6 @@ sub content {
           ftype    => 'Regulatory feature',
           allele   => $r_allele,
           type     => $type || '-',
-          matrix   => '-',
-          pos      => '-',
-          high_inf => '-',
-          score    => '-',
         };
         
         $reg_table->add_row($row);
@@ -358,7 +361,7 @@ sub content {
           score    => defined($mfva->motif_score_delta) ? $self->render_motif_score($mfva->motif_score_delta) : '-',
         };
         
-        $reg_table->add_row($row);
+        $motif_table->add_row($row);
         $flag = 1;
       }
     }
@@ -367,7 +370,8 @@ sub content {
   if ($flag) {
     $html .=
       ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
-      ($reg_table->has_rows ? '<h2>Regulatory consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>');
+      ($reg_table->has_rows ? '<h2>Regulatory feature consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>').
+      ($motif_table->has_rows ? '<h2>Motif feature consequences</h2>'.$motif_table->render : '<h3>No overlap with Ensembl Motif features</h3>');
     
     return $html;
   } else { 
