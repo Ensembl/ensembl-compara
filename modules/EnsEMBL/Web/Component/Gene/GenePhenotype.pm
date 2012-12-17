@@ -104,8 +104,8 @@ sub stats_table {
     my $var_name   = $va->variation->name;  
     my $phe        = $va->phenotype_description;
     my $phe_source = $va->source_name;
-    
-    $phenotypes{$phe} ||= { id => $va->{'_phenotype_id'} };
+   
+    $phenotypes{$phe} ||= { id => $va->{'_phenotype_id'} , name => $va->{'_phenotype_name'}};
     push @{$phenotypes{$phe}{'count'}},  $var_name   unless grep $var_name   eq $_, @{$phenotypes{$phe}{'count'}};
     push @{$phenotypes{$phe}{'source'}}, $phe_source unless grep $phe_source eq $_, @{$phenotypes{$phe}{'source'}};
     
@@ -142,7 +142,7 @@ sub stats_table {
        $table_id     =~ s/[^\w]/_/g;
     my $phe_count    = scalar @{$phenotype->{'count'}};
     my $warning      = $phe_count > $max_lines ? $warning_text : '';
-    my $sources_list = join ', ', map $self->source_link($_), @{$phenotype->{'source'}};
+    my $sources_list = join ', ', map $self->source_link($_, undef, undef, $gene_name), @{$phenotype->{'source'}};
     my $loc          = '-';
     my $mart         = '-';
     
@@ -317,31 +317,42 @@ sub source_link {
     $source_uc  = $1 if $source_uc =~ /(HGMD)/;
   }
   my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
-  
+
   if ($ext_id && $ext_id ne 'no-ref') {
-    if ($url =~ /ega/) {
-      $url       =~ s/###ID###/$ext_id/;
-    } elsif ($url =~/gwastudies/) {
+    if ($url =~/gwastudies/) {
       $ext_id =~ s/pubmed\///; 
       $url    =~ s/###ID###/$ext_id/;
-    } elsif ($url =~/omim/) {
-      if ($vname) {
-        $vname = "search?search=".$vname;
-        $url =~ s/###ID###/$vname/; 
-      } else {
-        $ext_id    =~ s/MIM\://; 
-        $url =~ s/###ID###/$ext_id/;
-      }
-    } elsif ($url =~/hgmd/) {
-      $url =~ s/###ID###/$gname/;
-      $url =~ s/###ACC###/$vname/;
-    } elsif ($url =~/cosmic/) {
-	    my $cname = ($vname =~ /^COSM(\d+)/) ? $1 : $vname;
-			$url =~ s/###ID###/$cname/;
-		} else {
-      $url =~ s/###ID###/$vname/;
+    } 
+    elsif ($url =~ /omim/) {
+      $ext_id    =~ s/MIM\://; 
+      $url =~ s/###ID###/$ext_id/;
+    } 
+    else {
+      $url =~ s/###ID###/$ext_id/;
     }
   } 
+  elsif ($vname || $gname) {
+    if ($url =~ /omim/) {
+        my $search = "search?search=".($vname || $gname);
+        $url =~ s/###ID###/$search/; 
+    } 
+    elsif ($url =~/hgmd/) {
+      $url =~ s/###ID###/$gname/;
+      $url =~ s/###ACC###/$vname/;
+    } 
+    elsif ($url =~/cosmic/) {
+      if ($vname) {
+	      my $cname = ($vname =~ /^COSM(\d+)/) ? $1 : $vname;
+			  $url =~ s/###ID###/$cname/;
+      }
+      else {
+			  $url =~ s/###ID###/$gname/;
+      } 
+		} 
+    else {
+      $url =~ s/###ID###/$vname/;
+    }
+  }
   elsif ($url =~ /(.+)\?/) { # Only general source link
     $url = $1;
   }
