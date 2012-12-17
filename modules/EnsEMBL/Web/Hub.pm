@@ -405,15 +405,22 @@ sub parse_referer {
   my $uri          = $ENV{'HTTP_REFERER'};
      $uri          =~ s/^(https?:\/\/.*?)?\///i;
      $uri          =~ s/[;&]$//;
-     
+  
   my ($url, $query_string) = split /\?/, $uri;
+
+  my $info = {
+    absolute_url => $ENV{'HTTP_REFERER'},
+    uri          => "/$uri",
+    external     => 0,
+  };
+
   my @path = split /\//, $url;
   
   unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
-  
-  return { absolute_url => $ENV{'HTTP_REFERER'}, external => 1 } unless $species_defs->OBJECT_TO_SCRIPT->{$path[1]} && ($ENV{'HTTP_REFERER'} =~ /$servername/i || $ENV{'HTTP_REFERER'} =~ /$server/);
-  
-  my ($species, $type, $action, $function) = @path;
+
+  if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/) {
+    $info->{'external'} = 1; 
+  }
 
   my @pairs  = split /[&;]/, $query_string;
   my $params = {};
@@ -429,15 +436,25 @@ sub parse_referer {
     
     push @{$params->{$param}}, $value unless $param eq 'time'; # don't copy time
   }
+  $info->{'params'} = $params;
+
+  ## Local dynamic page
+  if ($species_defs->OBJECT_TO_SCRIPT->{$path[1]} && !$info->{'external'}) {
+    my ($species, $type, $action, $function) = @path;
+    $info->{'ENSEMBL_SPECIES'}  = $species;
+    $info->{'ENSEMBL_TYPE'}     = $type;
+    $info->{'ENSEMBL_ACTION'}   = $action;
+    $info->{'ENSEMBL_FUNCTION'} = $function;
+  }
 
   if ($species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_REFERER) {
     warn "\n";
     warn "------------------------------------------------------------------------------\n";
     warn "\n";
-    warn "  SPECIES:  $species\n";
-    warn "  TYPE:     $type\n";
-    warn "  ACTION:   $action\n";
-    warn "  FUNCTION: $function\n";
+    warn "  SPECIES:  $info->{'species'}\n";
+    warn "  TYPE:     $info->{'type'}\n";
+    warn "  ACTION:   $info->{'action'}\n";
+    warn "  FUNCTION: $info->{'function'}\n";
     warn "  QS:       $query_string\n";
     
     foreach my $param (sort keys %$params) {
@@ -450,16 +467,7 @@ sub parse_referer {
     warn "------------------------------------------------------------------------------\n";
   }
   
-  return {
-    ENSEMBL_SPECIES  => $species,
-    ENSEMBL_TYPE     => $type,
-    ENSEMBL_ACTION   => $action,
-    ENSEMBL_FUNCTION => $function,
-    params           => $params,
-    uri              => "/$uri",
-    absolute_url     => $ENV{'HTTP_REFERER'},
-    external         => 0
-  };
+  return $info;
 }
 
 sub filename {
