@@ -58,7 +58,7 @@ sub content {
     $description = $variation->source_description;
   }
   
-	if ($start == $end && defined($feature->breakpoint_order)) {
+	if (defined($feature->breakpoint_order) && $feature->is_somatic == 1) {
 	  $is_breakpoint = " (breakpoint)";
 	  $position = $self->get_locations($sv_id);
 	
@@ -175,7 +175,8 @@ sub get_locations {
   my @locations = ({ value => 'null', name => 'None selected' });
     
   my $location_info;
-    
+  my $global_location_info;
+	  
   # add locations for each mapping
   foreach (sort { $mappings->{$a}{'Chr'} cmp $mappings->{$b}{'Chr'} || $mappings->{$a}{'start'} <=> $mappings->{$b}{'start'}} keys %$mappings) {
     my $region   = $mappings->{$_}{'Chr'}; 
@@ -185,32 +186,37 @@ sub get_locations {
     my $bp_order = $mappings->{$_}{'breakpoint_order'};
        
     if (defined($bp_order)) {
-      
-      my $loc_text = '<b>'.($start == $end ? "$region:$start" : "$region:$start-$end"). '</b>';
-            
-      my $loc_link = sprintf(
+      my @coords = ($start);
+			push (@coords, $end) if ($start!=$end);
+			
+			foreach my $coord (@coords) {
+        my $loc_text = "<b>$region:$coord</b>";
+        my $loc_link = sprintf(
           '<a href="%s" class="constant">%s</a>',
             $hub->url({
               type              => 'Location',
               action            => 'View',
-              r                 => $region . ':' . ($start - 500) . '-' . ($end + 500),
+              r                 => $region . ':' . ($coord - 500) . '-' . ($coord + 500),
               sv                => $sv_id,
               svf               => $_,
               contigviewbottom  => 'somatic_sv_feature=normal'
-          }), $loc_text
-      );
-      $loc_link .= '<br />('.($str > 0 ? 'forward' : 'reverse').' strand)';
+            }), $loc_text
+        );
+        $loc_link .= '<br />('.($str > 0 ? 'forward' : 'reverse').' strand)';
         
-      if (!defined($location_info)) {
-        $location_info = "Breakpoints<br />FROM $loc_link";
-      } else {
-        $location_info .= "<br />TO $loc_link";
-      }  
-        
+        if (!defined($location_info)) {
+          $location_info = "Breakpoints<br />FROM $loc_link";
+        } elsif ($location_info =~ /<br \/>TO/) {
+				  $global_location_info .= $location_info;
+					$location_info = "<br />Breakpoints<br />FROM $loc_link";
+				} else {
+          $location_info .= "<br />TO $loc_link";
+        }  
+      } 
     }
   }
     
-  return $location_info;
+  return ($global_location_info) ? $global_location_info.$location_info : $location_info;
 }
 
 1;
