@@ -1066,7 +1066,7 @@ Matthieu and Miguel normally do these.
     Make sure you have the XML::Writer module in your PERL5LIB (there is a copy in ~mm14/src/perl/orthoxml/)
     Run init_pipeline.pl with this file:
 $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -tree_type protein -pipeline_db -host=compara2
-# rel.64: testing sqlite mode failed: too many occurences of "database locked". We should stick to mysql.
+# rel.64: testing sqlite mode failed: too many occurrences of "database locked". We should stick to mysql.
 
     Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
     This pipeline will produce protein_tree dumps in the directory pointed at by 'target_dir' parameter.
