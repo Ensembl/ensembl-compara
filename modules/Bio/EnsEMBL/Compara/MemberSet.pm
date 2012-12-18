@@ -51,7 +51,6 @@ use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::Member;
 
 
@@ -408,32 +407,6 @@ sub add_Member {
     weaken($member->{'set'});
 }
 
-sub add_Member_Attribute {  # DEPRECATED
-    my ($self, $member_attribute) = @_;
-    my ($member, $attr) = @{$member_attribute};
-
-    my $am = Bio::EnsEMBL::Compara::Member::copy($member);
-    bless $am, $self->member_class;
-    foreach my $key (keys %Bio::EnsEMBL::Compara::Attribute::ok_field) {
-        $am->$key($attr->$key) if defined $attr->key;
-    }
-    $self->add_Member($am);
-}
-
-
-sub _tranform_array_to_Member_Attributes {
-    my ($self, $array) = @_;
-    my @all_ma;
-    foreach my $member (@$array) {
-        my $attribute = new Bio::EnsEMBL::Compara::Attribute;
-        foreach my $key (keys %Bio::EnsEMBL::Compara::Attribute::ok_field) {
-            $attribute->$key($member->can($key) ? $member->$key : undef);
-        }
-        push @all_ma, [$member, $attribute];
-    }
-    return \@all_ma;
-}
-
 
 =head2 get_all_Members
 
@@ -515,12 +488,6 @@ sub get_all_GeneMembers {
 sub gene_list {  # DEPRECATED
     my $self = shift;
     return $self->get_all_GeneMembers
-}
-
-
-sub get_all_Member_Attribute {  # DEPRECATED
-    my $self = shift;
-    return $self->_tranform_array_to_Member_Attributes($self->get_all_Members);
 }
 
 
@@ -664,113 +631,6 @@ sub _get_Member {
     $self->{$scope}->{$key} = [] unless defined $self->{$scope}->{$key};
     return $self->{$scope}->{$key};
 }
-
-
-=head2 get_Member_Attribute_by_source
-
-  Arg [1]    : string $source_name
-               e.g. "ENSEMBLPEP"
-  Example    : 
-  Description: 
-  Returntype : array reference of Bio::EnsEMBL::Compara::Member and attribute
-  Exceptions : 
-  Caller     : public
-
-=cut
-
-sub get_Member_Attribute_by_source {  # DEPRECATED
-    my ($self, $source_name) = @_;
-    throw("Should give defined source_name as arguments\n") unless (defined $source_name);
-    my ($attribute_scope, $key) = ('_members_by_source', $source_name);
-    return $self->_get_Member_Attribute($attribute_scope, $key);
-}
-
-=head2 get_Member_Attribute_by_source_taxon
-
-  Arg [1]    : string $source_name
-  Arg [2]    : int $taxon_id
-  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP',9606)
-  Description: 
-  Returntype : array reference of Bio::EnsEMBL::Compara::Member
-  Exceptions : 
-  Caller     : public
-
-=cut
-
-sub get_Member_Attribute_by_source_taxon {  # DEPRECATED
-    my ($self, $source_name, $taxon_id) = @_;
-    throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
-    my ($attribute_scope, $key) = ('_members_by_source_taxon', "${source_name}_${taxon_id}");
-    return $self->_get_Member_Attribute($attribute_scope, $key);
-}
-
-=head2 get_Member_Attribute_by_GenomeDB
-
-  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Example    : $domain->get_Member_Attribute_by_GenomeDB($genome_db)
-  Description: Returns all [Member_Attribute] entries linked to this GenomeDB. 
-               This will only return EnsEMBL based entries since UniProtKB 
-               entries are not linked to a GenomeDB.
-  Returntype : array reference of Bio::EnsEMBL::Compara::Member
-  Exceptions : If input is undefined & genome db is not of expected type
-  Caller     : public
-
-=cut
-
-sub get_Member_Attribute_by_GenomeDB {  # DEPRECATED
-    my ($self, $genome_db) = @_;
-    throw("Should give defined genome_db as an argument\n") unless defined $genome_db;
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
-    my ($attribute_scope, $key) = ('_members_by_genome_db', $genome_db->dbID());
-    return $self->_get_Member_Attribute($attribute_scope, $key);
-}
-
-=head2 get_Member_Attribute_by_source_GenomeDB
-
-  Arg [1]    : string $source_name
-  Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP', $genome_db)
-  Description: Returns all [Member_Attribute] entries linked to this GenomeDB
-               and the given source_name. This will only return EnsEMBL based 
-               entries since UniProtKB entries are not linked to a GenomeDB.
-  Returntype : array reference of Bio::EnsEMBL::Compara::Member
-  Exceptions : If input is undefined & genome db is not of expected type
-  Caller     : public
-
-=cut
-
-sub get_Member_Attribute_by_source_GenomeDB {  # DEPRECATED
-    my ($self, $source_name, $genome_db) = @_;
-    throw("Should give defined source_name & genome_db as arguments\n") unless defined $source_name && $genome_db;
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
-    my ($attribute_scope, $key) = ('_members_by_source_genome_db', "${source_name}_".$genome_db->dbID());
-    return $self->_get_Member_Attribute($attribute_scope, $key);
-}
-
-=head2 _get_Member_Attribute
-
-  Arg [1]    : string $attribute_scope
-  Arg [2]    : string $key
-  Example    : $domain->_get_Member_Attribute('_members_by_source', 'ENSEMBLPEP')
-  Description: Used as the generic reference point for all 
-               get_Memeber_Attribute_by* methods. The method searches the given
-               scope & if the values cannot be found will initalize that value
-               to an empty array reference.
-  Returntype : array reference of Bio::EnsEMBL::Compara::Member
-  Exceptions : None.
-  Caller     : internal
-
-=cut
-
-sub _get_Member_Attribute {  # DEPRECATED
-    my ($self, $attribute_scope, $key) = @_;
-    $self->get_all_Member_Attribute();
-    $self->{$attribute_scope}->{$key} = [] unless defined $self->{$attribute_scope}->{$key};
-    return $self->_tranform_array_to_Member_Attributes($self->{$attribute_scope}->{$key});
-}
-
-
-
 
 
 =head2 Member_count_by_source
