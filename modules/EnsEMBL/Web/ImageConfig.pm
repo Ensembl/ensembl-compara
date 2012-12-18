@@ -139,7 +139,7 @@ sub menus {
     marker              => [ 'Markers',                 'seq_assembly' ],
     simple              => [ 'Simple features',         'seq_assembly' ],
     ditag               => [ 'Ditag features',          'seq_assembly' ],
-    dna_align_other     => [ 'GRC patch alignments',    'seq_assembly' ],
+    dna_align_other     => [ 'GRC alignments',          'seq_assembly' ],
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
