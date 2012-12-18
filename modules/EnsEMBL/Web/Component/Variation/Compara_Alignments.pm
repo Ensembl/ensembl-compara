@@ -99,7 +99,7 @@ sub content {
   my $end        = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width / 2);
   my $slice      = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
   my $align      = $hub->param('align');
-  my ($error)    = $self->check_for_errors($align, $species);
+  my ($error)    = $self->check_for_align_errors($align, $species);
   
   return $error if $error;
   

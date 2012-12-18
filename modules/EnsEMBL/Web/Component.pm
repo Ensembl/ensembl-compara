@@ -341,12 +341,16 @@ sub check_for_align_errors {
     ));
   }
   
-  my (@skipped, @missing, $title, $warnings);
+  my (@skipped, @missing, $title, $warnings, %aligned_species);
  
   my $align_params    = $hub->param('align');
   my $slice           = $self->object->slice;
-  my ($slices)        = $self->get_slices($slice, $align_params, $species);
-  my %aligned_species = map { $_->{'name'} => 1 } @$slices;
+  $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
+ 
+  if(defined $slice) { 
+    my ($slices)     = $self->get_slices($slice, $align_params, $species);
+    %aligned_species = map { $_->{'name'} => 1 } @$slices;
+  }
  
   foreach (keys %{$align_details->{'species'}}) {
     next if $_ eq $species;
@@ -355,7 +359,7 @@ sub check_for_align_errors {
         && ($hub->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
       push @skipped, $_;
     } 
-    elsif (!$aligned_species{$_} && $_ ne 'ancestral_sequences') {
+    elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
       push @missing, $_;
     }
   }
