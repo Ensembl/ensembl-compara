@@ -133,12 +133,13 @@ sub menus {
   return $_[0]->{'menus'} ||= {
     # Sequence
     seq_assembly        => 'Sequence and assembly',
-    sequence            => [ 'Sequence',              'seq_assembly' ],
-    misc_feature        => [ 'Clones',                'seq_assembly' ],
-    genome_attribs      => [ 'Genome attributes',     'seq_assembly' ],
-    marker              => [ 'Markers',               'seq_assembly' ],
-    simple              => [ 'Simple features',       'seq_assembly' ],
-    ditag               => [ 'Ditag features',        'seq_assembly' ],
+    sequence            => [ 'Sequence',                'seq_assembly' ],
+    misc_feature        => [ 'Clones & misc. regions',  'seq_assembly' ],
+    genome_attribs      => [ 'Genome attributes',       'seq_assembly' ],
+    marker              => [ 'Markers',                 'seq_assembly' ],
+    simple              => [ 'Simple features',         'seq_assembly' ],
+    ditag               => [ 'Ditag features',          'seq_assembly' ],
+    dna_align_other     => [ 'GRC patch alignments',    'seq_assembly' ],
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
@@ -157,7 +158,6 @@ sub menus {
     dna_align_est       => [ 'EST alignments',     'mrna_prot' ],
     protein_align       => [ 'Protein alignments', 'mrna_prot' ],
     protein_feature     => [ 'Protein features',   'mrna_prot' ],
-    dna_align_other     => 'Other DNA alignments',
     dna_align_rna       => 'ncRNA',
     
     # Proteins
