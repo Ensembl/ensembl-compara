@@ -11,8 +11,9 @@ use Digest::MD5 qw(md5_hex);
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
-use HTML::Entities qw(encode_entities);
-use Text::Wrap     qw(wrap);
+use HTML::Entities  qw(encode_entities);
+use Text::Wrap      qw(wrap);
+use List::MoreUtils qw(distinct);
 
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
@@ -308,8 +309,28 @@ sub _hint    {                                              # Extra information,
 
 sub _info_panel {
   my ($self, $class, $caption, $desc, $width, $id) = @_;
-  
-  return $self->html_format ? sprintf(
+ 
+  return '' unless $self->html_format;
+
+  if(ref($desc) eq 'ARRAY') {
+    return '' unless @$desc;
+    if(@$desc>1) {
+      $desc = "<ul>".join("",map "<li>$_</li>",@$desc)."</ul>";
+    } else {
+      $desc = $desc->[0];
+    }
+  }
+  if(ref($caption) eq 'ARRAY') {
+    if(@$caption > 1) {
+      my $last = pop @$caption;
+      $caption = join(", ",distinct(@$caption))." and $last";
+    } elsif(@$caption) {
+      $caption = $caption->[0];
+    } else {
+      $caption = '';
+    }
+  }
+  return sprintf(
     '<div%s style="width:%s" class="%s%s"><h3>%s</h3><div class="message-pad">%s</div></div>',
     $id ? qq{ id="$id"} : '',
     $width || $self->image_width . 'px', 
@@ -317,7 +338,7 @@ sub _info_panel {
     $width ? ' fixed_width' : '',
     $caption || '&nbsp;', 
     $self->wrap_in_p_tag($desc)
-  ) : '';
+  );
 }
 
 sub check_for_align_errors {
