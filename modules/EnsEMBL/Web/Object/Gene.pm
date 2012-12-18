@@ -672,6 +672,7 @@ sub get_alternative_locations {
 
 sub get_homology_matches {
   my ($self, $homology_source, $homology_description, $disallowed_homology, $compara_db) = @_;
+  #warn ">>> MATCHING $homology_source, $homology_description BUT NOT $disallowed_homology";
   
   $homology_source      ||= 'ENSEMBL_HOMOLOGUES';
   $homology_description ||= 'ortholog';
@@ -762,6 +763,7 @@ sub fetch_homology_species_hash {
   
   my $homology_adaptor = $database->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member); # It is faster to get all the Homologues and discard undesired entries than to do fetch_all_by_Member_method_link_type
+  #warn ">>> @$homologies_array";
 
   $self->timer_push('fetched', 6);
 
