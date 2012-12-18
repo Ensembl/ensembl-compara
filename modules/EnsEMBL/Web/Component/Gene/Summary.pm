@@ -14,10 +14,11 @@ sub _init {
   $self->ajaxable(0);
 }
 
-# status warnings would be eg out-of-date page, dubious evidence, etc
+# status warnings/hints would be eg out-of-date page, dubious evidence, etc
 # which need to be displayed prominently at the top of a page. Only used
 # in Vega plugin at the moment, but probably more widely useful.
 sub status_warnings { return undef; }
+sub status_hints    { return undef; }
 
 sub content {
   my $self = shift;
@@ -33,6 +34,11 @@ sub content {
     $html .= $self->_info_panel($warnings[2]||'warning',
                                 $warnings[0],$warnings[1]);
   }
+  my @hints = $self->status_hints;
+  if(@hints>1 and $hints[0] and $hints[1]) {
+    $html .= $self->_hint($hints[2],$hints[0],$hints[1]);
+  }
+  
   $html .= $self->transcript_table;
   my $extra = ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ' and manually curated alternative alleles' : ', paralogues, regulatory regions and splice variants';
 
