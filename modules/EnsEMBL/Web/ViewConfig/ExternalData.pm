@@ -9,6 +9,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->set_defaults({ map { $_->logic_name => 'off' } values %{$self->hub->get_all_das} });
+  $self->set_defaults({'DS_864' => 'yes'}) if $self->type eq 'Variation'; 
   $self->code = $self->type . '::ExternalData';
   $self->title = 'External Data';
 }
@@ -21,7 +22,7 @@ sub form {
   
   $self->add_fieldset('DAS sources');
   
-  foreach my $das (@all_das) {
+  foreach my $das (@all_das) { warn $das;
     $self->add_form_element({
       type  => 'DASCheckBox',
       das   => $das,
