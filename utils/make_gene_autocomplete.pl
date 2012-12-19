@@ -4,6 +4,7 @@ use strict;
 
 use File::Basename qw(dirname);
 use FindBin qw($Bin);
+use GetOpt::Long;
 
 BEGIN {
   my $serverroot = dirname($Bin);
@@ -16,6 +17,9 @@ BEGIN {
   require EnsEMBL::Web::DBSQL::WebsiteAdaptor;
   require EnsEMBL::Web::Hub;  
 }
+
+my $nodelete = 0;
+GetOptions ('nodelete' => \$nodelete);
 
 my $hub = new EnsEMBL::Web::Hub;
 my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
@@ -34,7 +38,7 @@ $dbh->do(
   )'
 );
 
-if (!@ARGV) {
+if (!@ARGV and !$nodelete) {
   my %existing_species = map { lc $_ => 1 } @$SiteDefs::ENSEMBL_DATASETS;
   my @delete = grep !$existing_species{$_}, @{$dbh->selectcol_arrayref('select distinct(species) from gene_autocomplete')};
   
