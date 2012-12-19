@@ -4,7 +4,7 @@ use strict;
 
 use File::Basename qw(dirname);
 use FindBin qw($Bin);
-use GetOpt::Long;
+use Getopt::Long;
 
 BEGIN {
   my $serverroot = dirname($Bin);
