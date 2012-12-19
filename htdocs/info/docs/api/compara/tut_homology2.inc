@@ -1,0 +1,11 @@
+<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$homology</span> <span class="comp_tut opt">=</span> <span class="comp_tut kwb">$homologies</span><span class="comp_tut opt">-&gt;[</span><span class="comp_tut num">0</span><span class="comp_tut opt">];</span> <span class="comp_tut slc"># take one of the homologies and look into it</span>
+
+<span class="comp_tut kwa">foreach</span> <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$member</span> <span class="comp_tut opt">(</span>&#64;<span class="comp_tut opt">{</span><span class="comp_tut kwb">$homology</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">get_all_Members</span><span class="comp_tut opt">}) {</span>
+
+  <span class="comp_tut slc"># each AlignedMember contains both the information on the Member and in</span>
+  <span class="comp_tut slc"># relation to the homology</span>
+
+  <span class="comp_tut kwc">print</span> <span class="comp_tut opt">(</span><span class="comp_tut kwc">join</span> <span class="comp_tut str">&quot; &quot;</span><span class="comp_tut opt">,</span> <span class="comp_tut kwc">map</span> <span class="comp_tut opt">{</span> <span class="comp_tut kwb">$member</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwb">$_</span> <span class="comp_tut opt">}</span> <span class="comp_tut kwc">qw</span><span class="comp_tut opt">(</span>stable_id taxon_id<span class="comp_tut opt">)).</span><span class="comp_tut str">&quot;</span><span class="comp_tut esc">\n</span><span class="comp_tut str">&quot;</span><span class="comp_tut opt">;</span>
+  <span class="comp_tut kwc">print</span> <span class="comp_tut opt">(</span><span class="comp_tut kwc">join</span> <span class="comp_tut str">&quot; &quot;</span><span class="comp_tut opt">,</span> <span class="comp_tut kwc">map</span> <span class="comp_tut opt">{</span> <span class="comp_tut kwb">$member</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwb">$_</span> <span class="comp_tut opt">}</span> <span class="comp_tut kwc">qw</span><span class="comp_tut opt">(</span>perc_id perc_pos perc_cov<span class="comp_tut opt">)).</span><span class="comp_tut str">&quot;</span><span class="comp_tut esc">\n</span><span class="comp_tut str">&quot;</span><span class="comp_tut opt">;</span>
+
+<span class="comp_tut opt">}</span>

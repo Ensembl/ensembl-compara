@@ -9,7 +9,7 @@
 
 
 <p>
-This document refers to the schema of EnsEMBL Compara version <strong>69</strong>.
+This document refers to the schema of EnsEMBL Compara version <strong>70</strong>.
 </p>
 
 
@@ -98,7 +98,6 @@ secondary structure and genomic alignments.
       <li><a href="#gene_tree_node_attr">gene_tree_node_attr</a></li>
       <li><a href="#gene_align">gene_align</a></li>
       <li><a href="#gene_align_member">gene_align_member</a></li>
-      <li><a href="#protein_tree_member_score">protein_tree_member_score</a></li>
       <li><a href="#sitewise_aln">sitewise_aln</a></li>
       <li><a href="#CAFE_gene_family">CAFE_gene_family</a></li>
       <li><a href="#CAFE_species_gene">CAFE_species_gene</a></li>
@@ -109,7 +108,6 @@ secondary structure and genomic alignments.
 
       <li><a href="#mapping_session">mapping_session</a></li>
       <li><a href="#stable_id_history">stable_id_history</a></li>
-      <li><a href="#protein_tree_stable_id">protein_tree_stable_id</a></li>
     </ul>
   </li>
 
@@ -2070,6 +2068,15 @@ May be 0 when the sequence is not available in the <a href="#sequence">sequence<
       <td>external reference to <a href="#member">member.memebr_id</a> to allow linkage from peptides to genes.</td>
     </tr>
     <tr>
+      <td>canonical_member_id</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>external reference to <a href="#member">member.memebr_id</a> to allow linkage from a gene to its canonical peptide.</td>
+    </tr>
+    <tr>
       <td>description</td>
       <td>text</td>
       <td>YES</td>
@@ -2596,7 +2603,7 @@ handle more than just pairwise relations.
       <td></td>
       <td></td>
       <td></td>
-      <td>external reference to protein_tree_node.node_id that represents the ancestor node between the 2 genes involved in the homology relation</td>
+      <td>external reference to gene_tree_node.node_id that represents the ancestor node between the 2 genes involved in the homology relation</td>
     </tr>
     <tr>
       <td>tree_node_id</td>
@@ -2605,7 +2612,7 @@ handle more than just pairwise relations.
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td>external reference to protein_tree_node.node_id that represents the root node of the tree that relates the 2 genes involved in the homology relation</td>
+      <td>external reference to gene_tree_node.node_id that represents the root node of the tree that relates the 2 genes involved in the homology relation</td>
     </tr>
   </tbody>
 </table>
@@ -3304,6 +3311,15 @@ Contains the data structure of each tree.</p>
       <td></td>
       <td>phylogenetic distance between this node and its parent</td>
     </tr>
+    <tr>
+      <td>member_id</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>external reference to <a href="#member">member.memebr_id</a> to allow linkage from trees to peptides.</td>
+    </tr>
   </tbody>
 </table>
 
@@ -3340,7 +3356,7 @@ Contains the data structure of each tree.</p>
 TABLE PROTEIN_TREE_MEMBER_SCORE
 #####################################################################
 -->
-<h4 id="protein_tree_member_score">protein_tree_member_score</h4>
+<h4 id="gene_align_member">gene_align_member</h4>
 
 
 <p>
@@ -3348,7 +3364,7 @@ to allow certain nodes (leaves) to have aligned protein member_scores attached t
 </p>
 
 <table class="spreadsheet">
-  <caption>protein_tree_member_score table description</caption>
+  <caption>gene_align_member table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3361,7 +3377,7 @@ to allow certain nodes (leaves) to have aligned protein member_scores attached t
   </thead>
   <tbody>
     <tr>
-      <td>node_id</td>
+      <td>gene_align_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
@@ -3370,31 +3386,13 @@ to allow certain nodes (leaves) to have aligned protein member_scores attached t
       <td>the id of node associated with this name</td>
     </tr>
     <tr>
-      <td>root_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td>MUL</td>
-      <td></td>
-      <td></td>
-      <td>the id of the tree root</td>
-    </tr>
-    <tr>
       <td>member_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
-      <td>MUL</td>
+      <td>PRI</td>
       <td></td>
       <td></td>
       <td>link to member.member_id in many-1 relation (single member per node)</td>
-    </tr>
-    <tr>
-      <td>method_link_species_set_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>external reference to method_link_species_set.method_link_species_set_id</td>
     </tr>
     <tr>
       <td>cigar_line</td>
@@ -3414,7 +3412,7 @@ to allow certain nodes (leaves) to have aligned protein member_scores attached t
 TABLE GENE_TREE_NODE_TAG
 #####################################################################
 -->
-<h4 id="gene_tree_tag">gene_tree_tag</h4>
+<h4 id="gene_tree_node_tag">gene_tree_node_tag</h4>
 
 
 <p>
@@ -3498,7 +3496,7 @@ Contains several protein tree attributes data attached to node_ids
       <td>PRI</td>
       <td></td>
       <td></td>
-      <td>external reference to protein_tree_node.node_id</td>
+      <td>external reference to gene_tree_node.node_id</td>
     </tr>
     <tr>
       <td>node_type</td>
@@ -3545,26 +3543,6 @@ Contains several protein tree attributes data attached to node_ids
       <td></td>
       <td></td>
     </tr>
-    <tr>
-      <td>tree_suport</td>
-      <td>set('phyml_nt','nj_ds','phyml_aa','nj_dn','nj_mm','quicktree')</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>All the final trees are the result of merging different
-      trees.</br>This column gives information about what trees
-      support this node after the merge:
-        <ul>
-          <li><strong>phyml_aa</strong>: phyml tree built with the amino-acid model WAG</li>
-          <li><strong>phyml_nt</strong>: phyml tree built with the nucleotide model HKY</li>
-          <li><strong>nj_dn</strong>: Neighbor-joining tree built using dn as a distance (number of non-synonymous changes)</li>
-          <li><strong>nj_ds</strong>: Neighbor-joining tree built using ds as a distance (number of synonymous changes)</li>
-          <li><strong>nj_mm</strong>: Neighbor-joining tree built using the "p-distance"</li>
-          <li><strong>quicktree</strong>: Neighbor-joining tree using QuickTree</li>
-        </ul>
-      </td>
-    </tr>
   </tbody>
 </table>
 
@@ -3575,7 +3553,7 @@ Contains several protein tree attributes data attached to node_ids
 TABLE GENE_TREE_ROOT_TAG
 #####################################################################
 -->
-<h4 id="gene_tree_root_tag">gene_tree_root_tagr</h4>
+<h4 id="gene_tree_root_tag">gene_tree_root_tag</h4>
 
 
 <p>
@@ -3920,62 +3898,6 @@ If both neither stable_id_from nor stable_id_to is empty, these members are trul
 
 <!--
 #####################################################################
-TABLE PROTEIN_TREE_STABLE_ID
-#####################################################################
--->
-<h4 id="protein_tree_stable_id">protein_tree_stable_id</h4>
-
-
-<p>
-to allow protein trees have trackable stable_ids
-</p>
-
-
-<table class="spreadsheet">
-  <caption>protein_tree_stable_id table description</caption>
-  <thead><tr>
-    <th>Field</th>
-    <th>Type</th>
-    <th>Null</th>
-    <th>Key</th>
-    <th>Default</th>
-    <th>Extra</th>
-    <th>Description</th>
-  </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>node_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td>PRI</td>
-      <td></td>
-      <td></td>
-      <td>node_id of the root of the tree</td>
-    </tr>
-    <tr>
-      <td>stable_id</td>
-      <td>varchar(40)</td>
-      <td>NO</td>
-      <td>UNI</td>
-      <td></td>
-      <td></td>
-      <td>the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10)</td>
-    </tr>
-    <tr>
-      <td>version</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>numeric version of the stable_id (changes only when members move to/from existing trees)</td>
-    </tr>
-  </tbody>
-</table>
-
-<!--
-#####################################################################
 New tables for 69
 #####################################################################</body>
 -->                                                                  
@@ -4003,7 +3925,6 @@ New tables for 69
   KEY `node_id` (`node_id`),
   KEY `cafe_gene_family_id` (`cafe_gene_family_id`)
 </pre>
-<p>
 <h4 id="species_tree_node">species_tree_node</h4>
 <pre>
   `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -4017,7 +3938,6 @@ New tables for 69
   KEY `root_id` (`root_id`,`left_index`),
   KEY `root_id_2` (`root_id`,`right_index`)
 </pre>
-<p>
 <h4 id="species_tree_node">species_tree_node_tag</h4>
 <pre>
   `node_id` int(10) unsigned NOT NULL,
@@ -4028,7 +3948,6 @@ New tables for 69
   KEY `node_id` (`node_id`),
   KEY `tag` (`tag`)
 </pre>
-<p>
 <h4 id="species_tree_node">species_tree_root</h4>
 <pre>
   `root_id` int(10) unsigned NOT NULL,
@@ -4038,7 +3957,6 @@ New tables for 69
   PRIMARY KEY (`root_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 </pre>
-<p>
 <h4 id="CAFE_data">CAFE_data</h4>
 <pre>
   `fam_id` varchar(20) NOT NULL,
@@ -4046,7 +3964,6 @@ New tables for 69
   `tabledata` mediumtext NOT NULL,
   PRIMARY KEY (`fam_id`)
 </pre>
-<p>
 <h4 id="gene_align">gene_align</h4>
 <pre>
   gene_align_id int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -4055,15 +3972,4 @@ New tables for 69
   aln_length int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (gene_align_id)
 </pre>
-<p>
-<h4 id="gene_align_member">gene_align_member</h4>
-<pre>
-  gene_align_id int(10) unsigned NOT NULL,
-  member_id int(10) unsigned NOT NULL, 
-  cigar_line mediumtext,
-  FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),  PRIMARY KEY (gene_align_id,member_id),
-  KEY member_id (member_id)
-</pre>
-<p>
 </html>

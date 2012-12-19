@@ -1,0 +1,4 @@
+<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$all_genome_dbs</span> <span class="comp_tut opt">=</span> <span class="comp_tut kwb">$genome_db_adaptor</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">fetch_all</span><span class="comp_tut opt">();</span>
+<span class="comp_tut kwa">foreach</span> <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$this_genome_db</span> <span class="comp_tut opt">(</span>&#64;<span class="comp_tut opt">{</span><span class="comp_tut kwb">$all_genome_dbs</span><span class="comp_tut opt">}) {</span>
+  <span class="comp_tut kwc">print</span> <span class="comp_tut kwb">$this_genome_db</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">name</span><span class="comp_tut opt">,</span> <span class="comp_tut str">&quot;</span><span class="comp_tut esc">\n</span><span class="comp_tut str">&quot;</span><span class="comp_tut opt">;</span>
+<span class="comp_tut opt">}</span>
