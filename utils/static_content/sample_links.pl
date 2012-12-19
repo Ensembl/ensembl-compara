@@ -675,9 +675,9 @@ sub rand_tree {
     my $count = 1;
     foreach my $gene_member (@{$ma->fetch_all_by_source_taxon
 ('ENSEMBLGENE',$gdb->taxon_id)}) {
-      my $longest_peptide_member = $ma->fetch_longest_peptide_member_for_gene_member_id($gene_member->dbID);
+      my $canonical_peptide_member = $ma->fetch_longest_peptide_member_for_gene_member_id($gene_member->dbID);
       my $node = $pta->fetch_AlignedMember_by_member_id_root_id
-($longest_peptide_member->dbID);
+($canonical_peptide_member->dbID);
       next unless (defined $node);
       my $subroot = $node->subroot;
       if (_good_tree_example($subroot, $pta)) {
