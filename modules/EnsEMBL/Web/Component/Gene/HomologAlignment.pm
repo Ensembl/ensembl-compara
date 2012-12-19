@@ -34,17 +34,36 @@ sub content {
   eval {
     $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm);
   };
+ 
+  my ($match_type, %desc_mapping);
   
-  my %desc_mapping = (
-    ortholog_one2one          => '1 to 1 orthologue',
-    apparent_ortholog_one2one => '1 to 1 orthologue (apparent)',
-    ortholog_one2many         => '1 to many orthologue',
-    between_species_paralog   => 'paralogue (between species)',
-    ortholog_many2many        => 'many to many orthologue',
-    within_species_paralog    => 'paralogue (within species)',
-  );
+  if ($hub->action eq 'Compara_Ortholog') {
+    $match_type = 'Orthologue';
+    %desc_mapping = (
+      ortholog_one2one          => '1 to 1 orthologue',
+      apparent_ortholog_one2one => '1 to 1 orthologue (apparent)',
+      ortholog_one2many         => '1 to many orthologue',
+      ortholog_many2many        => 'many to many orthologue',
+      possible_ortholog         => 'possible orthologue',
+    );
+  }
+  else {
+    $match_type = 'Paralogue';
+    %desc_mapping = (
+      within_species_paralog    => 'paralogue (within species)',
+      putative_gene_split       => 'putative gene split',
+      contiguous_gene_split     => 'contiguous gene split',
+    );
+  }
+ 
+  my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
   
   foreach my $homology (@{$homologies}) {
+
+    ## filter out non-required types
+    my $homology_desc  = $homology_types->{$homology->{'_description'}} || $homology->{'_description'};
+    next unless $desc_mapping{$homology_desc};      
+
     my $sa;
     
     eval {
@@ -101,15 +120,10 @@ sub content {
       
       next unless $flag;
       
-      my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
-      my $homology_desc  = $homology_types->{$homology->{'_description'}} || $homology->{'_description'};
-      
-      next if $homology_desc eq 'between_species_paralog'; # filter out the between species paralogs
-      
       my $homology_desc_mapped = $desc_mapping{$homology_desc} ? $desc_mapping{$homology_desc} : 
                                  $homology_desc ? $homology_desc : 'no description';
 
-      $html .= "<h2>Orthologue type: $homology_desc_mapped</h2>";
+      $html .= "<h2>$match_type type: $homology_desc_mapped</h2>";
       
       my $ss = $self->new_table([
           { title => 'Species',          width => '18%' },
