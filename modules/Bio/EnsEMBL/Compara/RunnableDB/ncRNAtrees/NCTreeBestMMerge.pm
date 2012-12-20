@@ -177,7 +177,7 @@ sub load_input_trees {
   my $tree = $self->param('nc_tree');
 
   for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
-    print STDERR $tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
+    print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
     my $tag = $other_tree->clusterset_id;
     $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
   }
