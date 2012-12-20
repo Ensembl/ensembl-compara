@@ -356,12 +356,13 @@ sub delete_node {
   my $node = shift;
 
   my $node_id = $node->node_id;
-  #print("delete node $node_id\n");
   $self->dbc->do("UPDATE gene_tree_node dn, gene_tree_node n SET ".
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
   $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
   $self->dbc->do("UPDATE gene_tree_node SET root_id = NULL WHERE node_id = $node_id");
+  $self->dbc->do("DELETE homology_member from homology_member JOIN homology using(homology_id) WHERE ancestor_node_id = $node_id");
+  $self->dbc->do("DELETE from homology WHERE ancestor_node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 
