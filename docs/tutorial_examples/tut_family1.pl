@@ -20,7 +20,7 @@ foreach my $family (@{$families}) {
 
     print $alignIO $simple_align;
 
-    $simple_align = $family->get_SimpleAlign('cdna');
+    $simple_align = $family->get_SimpleAlign(-cdna => 1);
     $alignIO = Bio::AlignIO->newFh(
         -interleaved => 0,
         -fh          => \*STDOUT,
