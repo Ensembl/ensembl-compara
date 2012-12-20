@@ -20,7 +20,7 @@
 
     <span class="comp_tut kwc">print</span> <span class="comp_tut kwb">$alignIO $simple_align</span><span class="comp_tut opt">;</span>
 
-    <span class="comp_tut kwb">$simple_align</span> <span class="comp_tut opt">=</span> <span class="comp_tut kwb">$family</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">get_SimpleAlign</span><span class="comp_tut opt">(</span><span class="comp_tut str">'cdna'</span><span class="comp_tut opt">);</span>
+    <span class="comp_tut kwb">$simple_align</span> <span class="comp_tut opt">=</span> <span class="comp_tut kwb">$family</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">get_SimpleAlign</span><span class="comp_tut opt">(-</span>cdna <span class="comp_tut opt">=&gt;</span> <span class="comp_tut num">1</span><span class="comp_tut opt">);</span>
     <span class="comp_tut kwb">$alignIO</span> <span class="comp_tut opt">=</span> Bio<span class="comp_tut opt">::</span>AlignIO<span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">newFh</span><span class="comp_tut opt">(</span>
         <span class="comp_tut opt">-</span>interleaved <span class="comp_tut opt">=&gt;</span> <span class="comp_tut num">0</span><span class="comp_tut opt">,</span>
         <span class="comp_tut opt">-</span>fh          <span class="comp_tut opt">=&gt;</span> \<span class="comp_tut opt">*</span>STDOUT<span class="comp_tut opt">,</span>
