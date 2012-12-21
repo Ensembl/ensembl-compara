@@ -50,8 +50,11 @@ Internal methods are usually preceded by a _
 =cut 
 
 
+# $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Tools/Blastz.pm,v $
+# $Version: $
 package Bio::EnsEMBL::Analysis::Tools::Blastz;
 
+use warnings ;
 use strict;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange); 
