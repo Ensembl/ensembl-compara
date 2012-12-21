@@ -2665,8 +2665,7 @@ sub add_sequence_variations {
     depth      => 0.5,
     bump_width => 0,
     colourset  => 'variation',
-    display    => 'off',
-		renderers  => [ 'off', 'Off', 'normal', 'Normal', 'histogram', 'Density', 'compact', 'Compact' ]
+    display    => 'off'
   };
   
   if ($hashref->{'menu'}) {
