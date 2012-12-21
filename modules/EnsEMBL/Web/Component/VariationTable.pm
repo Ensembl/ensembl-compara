@@ -139,7 +139,7 @@ sub stats_table {
   my $hub         = $self->hub;
   
   my $columns = [
-    { key => 'count', title => 'Number of variants', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
+    { key => 'count', title => 'Number of variant consequences', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
     { key => 'view',  title => '',                   sort => 'none',           width => '5%',  align => 'center' },   
     { key => 'key',   title => '',                   sort => 'none',           width => '2%',  align => 'center' },
     { key => 'type',  title => 'Type',               sort => 'numeric_hidden', width => '20%'                    },   
