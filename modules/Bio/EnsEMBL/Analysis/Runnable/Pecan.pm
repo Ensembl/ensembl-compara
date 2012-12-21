@@ -44,7 +44,7 @@ The output (multiple alignment) is parsed and return as a Bio::EnsEMBL::Compara:
 
 
 # $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/Pecan.pm,v $
-# $Version: $
+# $Revision: 1.13 $
 package Bio::EnsEMBL::Analysis::Runnable::Pecan;
 
 use strict;
