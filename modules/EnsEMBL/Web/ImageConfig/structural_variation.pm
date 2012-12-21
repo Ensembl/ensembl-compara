@@ -53,6 +53,14 @@ sub init {
   # structural variations
   $self->modify_configs(
     [ 'variation_feature_structural' ],
+    { display => 'off', depth => 100 }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural_larger'],
+    { display => 'normal', depth => 1 }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural_smaller'],
     { display => 'normal', depth => 100 }
   );
   

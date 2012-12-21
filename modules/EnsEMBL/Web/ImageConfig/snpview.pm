@@ -38,7 +38,7 @@ sub init {
     [ 'v_line',   '', 'v_line',   { display => 'normal', strand => 'b', name => 'Vertical mark', description => 'Shows the middle of the feature' }],
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar',     description => 'Shows the scalebar' }],
     [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'b', name => 'Ruler',         description => 'Shows the length of the region being displayed' }],
-  );
+   );
 
   $self->load_tracks;
 
@@ -57,9 +57,19 @@ sub init {
     { display => 'normal' }
   );
   
+  
+  
   # structural variations
   $self->modify_configs(
     [ 'variation_feature_structural' ],
+    { display => 'off', depth => 100 }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural_larger'],
+    { display => 'normal', depth => 1 }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural_smaller'],
     { display => 'normal', depth => 100 }
   );
   
@@ -74,7 +84,6 @@ sub init {
     { display => 'normal', style => 'box', depth => 100000 }
   );
   
-  # Transcript
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
