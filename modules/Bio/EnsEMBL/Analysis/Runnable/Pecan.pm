@@ -43,6 +43,8 @@ The output (multiple alignment) is parsed and return as a Bio::EnsEMBL::Compara:
 =cut
 
 
+# $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/Pecan.pm,v $
+# $Version: $
 package Bio::EnsEMBL::Analysis::Runnable::Pecan;
 
 use strict;
