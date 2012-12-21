@@ -39,12 +39,13 @@ if(grep { not defined $_ } @key) {
   $key[2] ||= $SiteDefs::ENSEMBL_ENCRYPT_2;
   $key[3] ||= $SiteDefs::ENSEMBL_ENCRYPT_3;
 }
+$key[0] = hex($key[0]) if $key[0] =~ /^0x/;
 
 my $rand1 = substr($cookie,16,8);
 my $time = substr($cookie,24,8);
 my $rand2 = substr($cookie,32,8);
 
-my $value = ((hex($rand1)^hex($rand2))-hex($key[0])) & 0x0fffffff;
+my $value = ((hex($rand1)^hex($rand2))-$key[0]) & 0x0fffffff;
 my $enc =  crypt($rand1,$key[1]).
            crypt($time,$key[2]).
            crypt($rand2,$key[3]);
