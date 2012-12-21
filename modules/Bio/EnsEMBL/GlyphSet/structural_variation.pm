@@ -20,31 +20,63 @@ sub features {
   my $source   = $self->my_config('source');
   my $set_name = $self->my_config('set_name');
   my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
+  my $id       = $self->{'my_config'}->id;
+  my ($min_length,$max_length) = split('-', $self->my_config('length'));
+  my $overlap  = $self->my_config('overlap');
   
   my $features;
-  
-  if ($set_name) {
-    $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name)) if $set_name;
-  } else {
-    $features = $slice->$func($source =~ /^\w/ ? $source : undef);
-  }
-  
-  my @display_features;    
-  for (my $i=0;$i<scalar(@$features);$i++) {
-    if (!$features->[$i]->{breakpoint_order}) {
-      push (@display_features,$features->[$i]);
-      next;
+  if (!$self->cache($id)) {
+    my $features;
+    my @display_features;
+    
+    if ($set_name) {
+      $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name)) if $set_name;
+    } 
+    else {
+      my @display_features;
+      
+      $features = $slice->$func($source =~ /^\w/ ? $source : undef);
+      
+      # Dispatch the SV features in the 2 "overlap" tracks
+      if (defined($overlap)) {
+    
+        for (my $i=0;$i<scalar(@$features);$i++) {
+          my $seq_start = $features->[$i]->seq_region_start;
+          my $seq_end   = $features->[$i]->seq_region_end;
+          if ($overlap == 1) {
+            push (@display_features, $features->[$i]) if ($seq_start >= $slice->start || $seq_end <= $slice->end);
+          } elsif ($overlap == 2) {
+            push (@display_features, $features->[$i]) if ($seq_start < $slice->start && $seq_end > $slice->end);
+          }
+        }
+        $features = \@display_features;
+        
+      } 
+      # Display only the correct breakpoint (somatic data)
+      elsif ($self->somatic) {
+      
+        for (my $i=0;$i<scalar(@$features);$i++) {
+          if (!$features->[$i]->{breakpoint_order}) {
+            push (@display_features,$features->[$i]);
+            next;
+          }
+          my $seq_start = $features->[$i]->seq_region_start;
+          my $seq_end   = $features->[$i]->seq_region_end;
+          if (($seq_start >= $slice->start && $seq_start <= $slice->end) || 
+              ($seq_end >= $slice->start && $seq_end <= $slice->end)) 
+          {
+            push (@display_features, $features->[$i]);
+          }
+        }
+        $features = \@display_features;
+        
+      }
     }
-    my $seq_start = $features->[$i]->seq_region_start;
-    my $seq_end   = $features->[$i]->seq_region_end;
-    if (($seq_start >= $slice->start && $seq_start <= $slice->end) || 
-          ($seq_end >= $slice->start && $seq_end <= $slice->end)) 
-    {
-      push (@display_features, $features->[$i]);
-    }
-     
+    $self->cache($id, $features);
   }
-  return \@display_features;
+  my $sv_features = $self->cache($id) || [];
+  
+  return $sv_features;
 }
 
 
@@ -219,15 +251,25 @@ sub render_tag {
   return @glyph;
 }
 
+
 sub href {
   my ($self, $f) = @_;
   
-  return $self->_url({
-    type => 'StructuralVariation',
-    sv   => $f->variation_name,
-    svf  => $f->dbID,
-    vdb  => 'variation'
-  });
+  if ($self->my_config('depth') == 1) {
+    return $self->_url({
+      species  => $self->species,
+      type     => 'StructuralVariationGroup',
+      r        => $f->seq_region_name.':'.$self->{'container'}{'start'}.'-'.$self->{'container'}{'end'},
+      length   => $self->my_config('length'),
+    });
+  } else {
+    return $self->_url({
+      type => 'StructuralVariation',
+      sv   => $f->variation_name,
+      svf  => $f->dbID,
+      vdb  => 'variation'
+    });
+  }
 }
 
 sub title {
@@ -243,6 +285,11 @@ sub title {
 
 sub highlight {
   my ($self, $f, $composite, $pix_per_bp, $h, undef, @tags) = @_;
+  
+  my $sv_id;
+  if ($self->{'config'}->core_objects->{'variation'}){
+    $sv_id = $self->{'config'}->core_objects->{'structuralvariation'}->variation_name;
+  }
   
   return unless $self->core('sv') eq $f->variation_name;
   
