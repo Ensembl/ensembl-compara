@@ -41,8 +41,11 @@ Internal methods are usually preceded with a _
 
 # Let the code begin...
 
+# $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/AlignmentNets.pm,v $
+# $Version: $
 package Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
 
+use warnings ;
 use vars qw(@ISA);
 use strict;
 
