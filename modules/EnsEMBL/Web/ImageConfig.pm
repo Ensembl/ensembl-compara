@@ -2666,6 +2666,7 @@ sub add_sequence_variations {
     bump_width => 0,
     colourset  => 'variation',
     display    => 'off',
+		renderers  => [ 'off', 'Off', 'normal', 'Normal', 'histogram', 'Density', 'compact', 'Compact' ]
   };
   
   if ($hashref->{'menu'}) {
@@ -2815,7 +2816,17 @@ sub add_structural_variations {
     colourset  => 'structural_variant',
     display    => 'off',
   );
-  
+  my %options2 = (
+    db         => $key,
+    glyphset   => 'structural_variation',
+    strand     => 'r', 
+    bump_width => 0,
+    height     => 12,
+    colourset  => 'structural_variant',
+    display    => 'off',
+  );
+	
+	# All
   $structural_variants->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
     %options,
     caption     => 'Structural variants',
@@ -2823,7 +2834,30 @@ sub add_structural_variations {
     description => 'Structural variants from all sources. For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.',
     depth       => 10
   }));
-  
+	
+	# Complete overlap (Larger structural variants)
+	$structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
+    %options2,
+    caption     => 'Larger structural variants',
+    sources     => undef,
+    description => 'Structural variants from all sources overlapping completely the image (i.e. the start and end coordinates are outside the image).
+		                For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.',
+    depth       => 1,
+		overlap     => 2
+  }));
+	
+	# Partial overlap (Smaller structural variants)
+	$structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
+    %options,
+    caption     => 'Smaller structural variants',
+    sources     => undef,
+    description => 'Structural variants from all sources overlapping partially the image (i.e. start and/or end coordinates are inside the image).
+		                For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.',
+		depth       => 10,
+		overlap     => 1
+  }));
+
+	
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
