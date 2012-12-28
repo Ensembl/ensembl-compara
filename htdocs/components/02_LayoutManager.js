@@ -46,7 +46,8 @@ Ensembl.LayoutManager.extend({
       this.target = '_blank';
     }).on('click', 'a.update_panel', function () {
       var panelId = this.rel;
-      
+      var url     = Ensembl.updateURL({ update_panel: 1 }, this.href);
+ 
       if (Ensembl.PanelManager.panels[panelId] && this.href.split('?')[0].match(Ensembl.PanelManager.panels[panelId].params.updateURL.split('?')[0])) {
         var params = {};
         
@@ -54,10 +55,10 @@ Ensembl.LayoutManager.extend({
           params = undefined;
         }
         
-        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, this.href, null, { updateURL: this.href }, params);
+        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, url, null, { updateURL: this.href }, params);
       } else {
         $.ajax({
-          url: this.href,
+          url: url,
           success: function () {
             Ensembl.EventManager.triggerSpecific('updatePanel', panelId);
           }
