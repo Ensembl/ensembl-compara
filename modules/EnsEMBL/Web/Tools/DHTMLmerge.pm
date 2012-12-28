@@ -38,7 +38,7 @@ sub merge {
     foreach (@subdirs) {
       my @content   = get_contents($type, $root, $_);
          $contents .= $content[0];
-         $jquery    = $content[1] if $content[1];
+         $jquery   .= $content[1] if $content[1];
     }
   }
   
@@ -57,10 +57,12 @@ sub merge {
   my $tmp             = "$minified.tmp";
   
   if (!-e $minified) {
-    open  O, ">$tmp" or die "can't open $tmp for writing";    
+    open O, ">$tmp" or die "can't open $tmp for writing";    
     
     if ($type eq 'js') {
-      print  O $jquery;
+      open   J, ">$tmp.jq";
+      print  J $jquery;
+      close  J;
       printf O '(function($,window,document,undefined){%s})(jQuery,this,document)', $contents; # wrap javascript for extra compression
     } else {
       print O $contents;
@@ -69,14 +71,20 @@ sub merge {
     close O;
    
     if ($type eq 'js') {
-      system $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', $tmp, '--js_output_file', $minified, '--compilation_level', 'SIMPLE_OPTIMIZATIONS', '--warning_level', 'QUIET';
+      my $jq = join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', "$tmp.jq", '--compilation_level', 'WHITESPACE_ONLY',      '--warning_level', 'QUIET';
+      my $js = join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', "$tmp",    '--compilation_level', 'SIMPLE_OPTIMIZATIONS', '--warning_level', 'QUIET';
+
+      open  O, ">$minified" or die "can't open $minified for writing";
+      print O `$_` for $jq, $js;
+      close O;
+      unlink "$tmp.jq";
     } else {
       system $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/yuicompressor-2.4.7.jar", '--type', 'css', '-o', $minified, $tmp;
     }
     
     unlink $tmp;
     
-    if (!-e $minified) {
+    if (!-s $minified) {
       open  O, ">$minified" or die "can't open $minified for writing";
       print O $type eq 'css' ? CSS::Minifier::minify(input => $contents) : JavaScript::Minifier::minify(input => "$jquery$contents");
       close O;
@@ -101,7 +109,7 @@ sub get_contents {
       if (-d "$dir/$_") {
         my @content   = get_contents($type, $root, "$subdir/$_");
            $contents .= $content[0];
-           $jquery    = $content[1] if $content[1];
+           $jquery   .= $content[1] if $content[1];
       } elsif (-f "$dir/$_" && /\.$type$/) {
         next if $components && !/^\d/;
         
@@ -110,8 +118,8 @@ sub get_contents {
         my $file_contents = <I>;
         close I;
         
-        if (/jquery\.js/) {
-          $jquery = $file_contents;
+        if (/jquery(_ui)?\.js/) {
+          $jquery .= $file_contents;
         } else {
           $contents .= $file_contents;
         }
