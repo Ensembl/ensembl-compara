@@ -29,7 +29,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({
     });
     
     this.elLk.requiredInputs = this.elLk.form.find(':input.required');
-    this.elLk.errorMessage   = this.elLk.form.find('label._userdata_upload_error');
+    this.elLk.errorMessage   = this.elLk.form.find('label._userdata_upload_error').addClass('invalid');
     this.elLk.actionInputs   = this.elLk.form.find(':input._action').each(function () {
       $(this).on('change.UserData', function () {
         // change the form action according to the dropdown/radio buttons (if <select> is changed, give priority to radio buttons if they are visible)

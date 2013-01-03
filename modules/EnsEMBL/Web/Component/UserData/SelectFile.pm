@@ -106,7 +106,7 @@ sub content {
   });
   $upload_fieldset->add_button({ 'name' => 'submit', 'value' => 'Upload' })->inputs->[0]->after($self->dom->create_element('label', {
     'inner_HTML'  => 'Please provide one of the above three fields',
-    'class'       => '_userdata_upload_error hidden invalid'
+    'class'       => '_userdata_upload_error hidden'
   }));
 
   $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30, 'required' => 1 });
