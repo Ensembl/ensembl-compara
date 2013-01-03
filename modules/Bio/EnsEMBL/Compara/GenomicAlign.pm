@@ -1082,12 +1082,15 @@ sub node_id {
   if (defined($node_id)) {
     $self->{'node_id'} = $node_id;
   } elsif (!defined($self->{'node_id'})) {
-    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+    # it may be a restricted genomic_align object with no dbID or node_id
+    if (defined($self->{'adaptor'}) and defined($self->{'_original_dbID'}) and (!defined($self->{'dbID'}))){
+     $self->{'_original_node_id'} = $self->adaptor->fetch_by_dbID($self->{'_original_dbID'})->node_id;
+    } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     }
   }
-  return $self->{'node_id'};
+  return $self->{'node_id'} || $self->{'_original_node_id'};
 }
 
 =head2 genomic_align_group
