@@ -50,6 +50,8 @@ sub init {
 
 sub set_columns {
   my ($self, $image_config) = @_;
+    return unless $self->species_defs->databases->{'DATABASE_FUNCGEN'} && keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}};
+
      $image_config   = ref $image_config ? $image_config : $self->hub->get_imageconfig($image_config);
   my $funcgen_tables = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'};
   my $evidence_info  = $self->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info;
