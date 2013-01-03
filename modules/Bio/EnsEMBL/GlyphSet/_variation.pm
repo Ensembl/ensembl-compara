@@ -203,16 +203,18 @@ sub render_tag {
       my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
       my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
       my $width = $text_width / $pix_per_bp;
-    
+      my $box_x = $start - 4/$pix_per_bp;
+      my $text_x = ($box_width<$width) ? $box_x : $start + 0.5 - ($width/2) ;
+      
       $composite->push($self->Rect({
-        x         => $start - 0.5 - 4/$pix_per_bp,
+        x         => $box_x - 0.5,
         y         => 0,
         width     => $box_width,
         height    => $height,
         colour    => $tag->{'colour'},
         absolutey => 1
       }), $self->Text({
-        x         => ($end + $start - $width) / 2,
+        x         => $text_x,
         y         => ($height - $text_height) / 2,
         width     => $width,
         textwidth => $text_width,
