@@ -126,7 +126,6 @@ sub file_uploaded {
   my ($self, $url_params) = @_;
   
   my $url = encode_entities($self->hub->url($url_params));
-  warn ">>> URL $url"; 
  
   $self->r->content_type('text/html; charset=utf-8');
   
