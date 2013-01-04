@@ -11,8 +11,6 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({
     this.base();
     
     // Hack this.elLk.content and this.elLk.link to get formSubmit to correctly reload content when the form doesn't have a class of upload
-    this.elLk.content = this.el.children('.modal_wrapper');
-    
     if (!this.elLk.content.length) {
       this.elLk.content = this.el.parents('.modal_wrapper');
     }
