@@ -293,7 +293,7 @@ sub _caption_h1 {
 
 sub _caption_h2_with_helplink {
   my $self  = shift;
-    my $id    = $self->{'help'};
+  my $id    = $self->{'help'};
   my $html  = '<h1 class="caption">';
      $html .= sprintf ' <a href="/Help/View?id=%s" class="popup constant help-header _ht" title="Click for help (opens in new window)"><span>', encode_entities($id) if $id;
      $html .= $self->{'caption'};
