@@ -11,9 +11,13 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({
     this.base();
     
     // Hack this.elLk.content and this.elLk.link to get formSubmit to correctly reload content when the form doesn't have a class of upload
-    this.elLk.content = this.el.parents('.modal_wrapper');
-    this.elLk.link    = this.elLk.content.siblings('.modal_nav').find('ul.local_context li.active');
+    this.elLk.content = this.el.children('.modal_wrapper');
     
+    if (!this.elLk.content.length) {
+      this.elLk.content = this.el.parents('.modal_wrapper');
+    }
+
+    this.elLk.link = this.elLk.content.siblings('.modal_nav').find('ul.local_context li.active');    
     this.elLk.form = this.el.find('form').validate().on('submit.UserData', function () {
       var visibleInps = panel.elLk.requiredInputs.filter(':visible');
       
