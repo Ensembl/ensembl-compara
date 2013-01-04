@@ -1239,7 +1239,7 @@ sub structural_variation_table {
     push @$rows, \%row;
   }
   
-  return $self->toggleable_table($title, $table_id, $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] }), $open);
+  return $self->toggleable_table($title, $table_id, $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), $open);
 }
 
 sub toggleable_table {
