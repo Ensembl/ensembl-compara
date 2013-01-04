@@ -155,8 +155,8 @@ sub gene_transcript_table {
       }
     }
   }
-  
-  return @$rows ? $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'gene asc' ] })->render : '<p>No Gene or Transcript consequences</p>';
+
+  return @$rows ? $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'gene asc' ], data_table_config => {iDisplayLength => 25} })->render : '<p>No Gene or Transcript consequences</p>';
 }
 
 sub regfeat_table {
@@ -263,7 +263,7 @@ sub regfeat_table {
     }
   }
   
-  return @$rows ? $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'rf asc' ] })->render : '<p>No overlap with Ensembl Regulatory features</p>';
+  return @$rows ? $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'rf asc' ], data_table_config => {iDisplayLength => 25} })->render : '<p>No overlap with Ensembl Regulatory features</p>';
 }
 
 sub _coverage_glyph {
