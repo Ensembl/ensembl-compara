@@ -57,6 +57,35 @@ sub content {
 
   $html .= '</div>';
 
+   ## Structural variation documentation links
+  $html .= qq(
+    <div class="column-wrapper">
+      <div class="column-two column-first">
+        <div class="column-left">
+          <h2>Using the website</h2>
+          <ul>
+            <li>Video: <a href="/Help/Movie?id=208">Browsing SNPs and CNVs in Ensembl</a></li>
+            <li>Video: <a href="/Help/Movie?id=316">Demo: Structural variation for a region</a></li>
+          </ul>
+          <h2>Analysing your data</h2>
+            <p><a href="/$species/UserData/UploadVariations?db=core"><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own structural variants with the <a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></p>
+        </div>
+      </div>
+      <div class="column-two column-next">
+        <div class="column-right">
+          <h2>Programmatic access</h2>
+          <ul>
+            <li>Tutorial: <a href="http://www.ensembl.org/info/docs/api/variation/variation_tutorial.html">Accessing structural variation data with the Variation API</a></li>
+          </ul>
+          <h2>Reference materials</h2>
+          <ul>
+            <li><a href="http://www.ensembl.org/info/docs/variation/index.html">Ensembl variation data: background and terminology</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
   return $html;
 }
 
