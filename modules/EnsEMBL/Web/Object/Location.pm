@@ -1219,7 +1219,7 @@ sub pop_name_from_id {
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
   my $pa  = $variation_db->get_PopulationAdaptor;
   my $pop = $pa->fetch_by_dbID($pop_id);
-  return {} unless $pop;
+  return "" unless $pop;
   return $self->pop_name( $pop );
 }
 
