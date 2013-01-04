@@ -168,7 +168,7 @@ sub content {
   
   $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['get_all_StructuralVariationFeatures','get_all_somatic_StructuralVariationFeatures'], 1);
   $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['get_all_CopyNumberVariantProbeFeatures']);
-  #$html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config);
+  $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config);
   $html .= $self->constrained_element_table($var_slice, $vname);
   
   return $html;
@@ -227,7 +227,7 @@ sub regulatory_feature_table {
     }
   }
   
-  return $self->toggleable_table('Regulatory features', 'reg', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] }), 1);
+  return $self->toggleable_table('Regulatory features', 'reg', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
 }
 
 sub constrained_element_table {
@@ -262,8 +262,8 @@ sub constrained_element_table {
       }
     }
   }
-  
-  return $self->toggleable_table('Constrained elements', 'cons', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] }), 1);
+	
+  return $self->toggleable_table('Constrained elements', 'cons', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
 }
 
 1;
