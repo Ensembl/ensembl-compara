@@ -14,6 +14,16 @@ This object uses 'pfetch' or 'mfetch' (selectable) to fetch Uniprot sequence ent
 package Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries;
 
 use strict;
+use warnings;
+use Bio::Perl;
+BEGIN {         # Because BioPerl switched from not recordin version to 1.4 to 1.5 to 1.00500x format
+                # we cannot simply rely on Perl to correctly require the version we need
+                # and have to carefully work around this childish outburst.
+    die "This module now requires Bio::Perl::VERSION to be at least 1.6.0; Your current BioPerl version is ".($Bio::Perl::VERSION || '(undef)').", please check your PERL5LIB.\n"
+        if(!defined($Bio::Perl::VERSION)    # not defined prior to 1.4.0
+        or $Bio::Perl::VERSION >= 1.1       # defined but in old format since 1.4.0
+        or $Bio::Perl::VERSION<1.006);      # we require at least 1.6.0
+}
 
 use Bio::SeqIO;
 use Bio::EnsEMBL::Compara::Member;
@@ -52,8 +62,11 @@ sub run {
     foreach my $id (@$ids) {
         my $stable_id = ($id =~ /^(\S+)\.\d+$/) ? $1 : $id;     # drop the version number if it's there
         my $member = $self->compara_dba()->get_MemberAdaptor->fetch_by_source_stable_id($source_name, $stable_id);
+        my $member_id;
 
-        unless($member and $member->sequence_id) {  # skip the ones that have been already loaded
+        if($member and $member_id = $member->sequence_id) {
+            print "Member '$stable_id' already stored (member_id=$member_id), skipping\n";
+        } else {    # skip the ones that have been already stored
             push @not_yet_stored_ids, $id;
         }
     }
@@ -87,9 +100,14 @@ sub fetch_and_store_a_chunk {
   my $seen_in_this_batch = 0;
 
   while (my $seq = $fh->next_seq){
+
+    my $member_name = $source_name.'/'.( $self->param('accession_number') ? $seq->accession_number : $seq->display_id );
     $seen_in_this_batch++;
 
-    next if ($seq->length < $self->param('min_length'));
+    if ($seq->length < $self->param('min_length')) {
+        print STDERR "Member '$member_name' not loaded because it is shorter (".$seq->length.") than current cutoff of ".$self->param('min_length')."\n";
+        next;
+    }
 
     my $ncbi_taxon_id = $seq->species && $seq->species->ncbi_taxid;
 
@@ -97,42 +115,33 @@ sub fetch_and_store_a_chunk {
     if($taxon) {
         $ncbi_taxon_id = $taxon->dbID;  # could have changed because of merged taxa
     } else { # if taxon has not been loaded into compara at all, do not store the member and warn:
-        warn "Taxon id $ncbi_taxon_id from $source_name ". $seq->accession_number ." not in the database. Member not stored.";
+        print STDERR "Member '$member_name' not loaded because taxon_id $ncbi_taxon_id is not in the database.\n";
         next;
     }
 
-    ####################################################################
-    # This bit is to avoid duplicated entries btw Ensembl and Uniprot
-    # It only affects the Ensembl species dbs, and right now I am using
-    # a home-brewed version of Bio::SeqIO::swiss to parse the PE entries
-    # in a similar manner as comments (CC) but of type 'evidence'
-    #
-    # NB: To avoid severe disappointment make sure you actually have
-    #     Abel's home-brewed version of bioperl-live in your PERL5LIB
-    #
+    ########################################################################################################
+    # This bit is to avoid duplicated entries btw Ensembl and Uniprot.
+    # Has been re-written based on new (v1.6 and later) BioPerl functionality instead of homebrew patches.
     #
     if ($self->param('internal_taxon_ids')->{$ncbi_taxon_id}) {
-      my $evidence_annotations; 
-      eval { $evidence_annotations = $seq->get_Annotations('evidence');}; # old style
-      if ($@) {
-        my $annotation = $seq->annotation;
-        $evidence_annotations = $annotation->get_Annotations('evidence');
-      }
-      if (defined $evidence_annotations) {
-            if ($evidence_annotations->text =~ /^4/) {
-              print STDERR $seq->display_id, "PE discarded ", $evidence_annotations->text, "\n";
-              next;      # We don't want duplicated entries
+        if(my ($evidence_annotations) = $seq->annotation->get_Annotations('evidence')) {
+            my $evidence_value = $evidence_annotations->value;
+
+            if ($evidence_value =~ /^4/) {
+                print STDERR "Member '$member_name' not loaded from Uniprot as it should be already loaded from EnsEMBL (evidence_value = '$evidence_value').\n";
+                next;
             }
-      }
+        }
     }
-    ####################################################################
+    #
+    ########################################################################################################
 
     if(my $member_id = $self->store_bioseq($seq, $source_name, $ncbi_taxon_id)) {
-        print STDERR "adding member $member_id\n";
+        print STDERR "Member '$member_name' stored under member_id=$member_id\n";
         push @member_ids, $member_id;
         $loaded_in_this_batch++;
     } else {
-        print STDERR "not adding member\n";
+        print STDERR "Member '$member_name' not stored.\n";
     }
   }
   close IN;
@@ -142,6 +151,7 @@ sub fetch_and_store_a_chunk {
 
   return \@member_ids;
 }
+
 
 sub store_bioseq {
     my ($self, $bioseq, $source_name, $ncbi_taxon_id) = @_;
@@ -162,6 +172,7 @@ sub store_bioseq {
 
     return $self->compara_dba()->get_MemberAdaptor->store($member);
 }
+
 
 sub parse_description {
     my $old_desc = shift @_;
