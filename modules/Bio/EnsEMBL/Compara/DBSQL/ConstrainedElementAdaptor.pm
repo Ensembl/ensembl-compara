@@ -400,4 +400,51 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 	}
 }
 
+=head2 fetch_all_by_MethodLinkSpeciesSet_Gene
+
+  Arg  1     : object (Compara) MethodLinkSpeciesSet
+  Arg  2     : object (Core) Gene
+  Example    : my @cons_eles_overlapping_exons = $constrained_element_adaptor->
+                fetch_all_by_MethodLinkSpeciesSet_Gene(
+                 $constrained_element_methodLinkSpeciseSet, $gene);
+  Description: Retrieve the constrained_elements overlapping a gene.
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::ConstrainedElement objects
+  Exceptions : -none-
+  Caller     : object::methodname
+
+=cut
+
+sub fetch_all_by_MethodLinkSpeciesSet_Gene {
+ my $self = shift;
+ my ($mlss, $gene) = @_;
+
+ my($exonic_constrained_elements);
+
+ if(defined($gene)){
+   throw("second argument should be a Bio::EnsEMBL::Gene object")
+   unless ($gene->isa("Bio::EnsEMBL::Gene"));
+ } else {
+   throw("undefined Bio::EnsEMBL::Gene argument");
+ }
+ if (defined($mlss)) {
+  throw("first argument should be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+  unless ($mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+ } else {
+  throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
+ }
+ my($species, $seq_region_name, $coord_sys, $gene_start, $gene_end, $gene_strand) = 
+  ($gene->species, $gene->seq_region_name, $gene->coord_system_name, 
+   $gene->seq_region_start, $gene->seq_region_end, $gene->seq_region_strand);
+ $species=~s/_/ /g;
+ my $slice_a = Bio::EnsEMBL::Registry->get_adaptor("$species", "core", "Slice");
+ my $slice = $slice_a->fetch_by_region("$coord_sys","$seq_region_name",$gene_start,$gene_end,$gene_strand);
+ push(@$exonic_constrained_elements, @{ $self->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice) });
+ return $exonic_constrained_elements;
+}
+
+
+
+
+
+
 1;
