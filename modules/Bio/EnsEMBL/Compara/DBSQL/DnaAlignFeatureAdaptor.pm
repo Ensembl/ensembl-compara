@@ -1,4 +1,4 @@
-# Copyright (c) 1999-2012
+# Copyright (c) 1999-2013
 #
 # Ensembl module for Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor
 #

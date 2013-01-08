@@ -34,7 +34,7 @@ Ensembl Team
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999-2012. Ensembl Team
+Copyright (c) 1999-2013. Ensembl Team
 
 You may distribute this module under the same terms as perl itself
 
