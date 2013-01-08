@@ -129,6 +129,14 @@ sub content {
   my $slice        = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $img_start, $img_end, 1);
   my $image_config = $hub->get_imageconfig($im_cfg);
   
+  if ($object->isa('EnsEMBL::Web::Object::Variation') && $object->Obj->failed_description) {
+    $image_config->modify_configs(
+      [ 'variation_set_fail_all' ],
+      { display => 'normal' }
+    );
+  }
+  
+  
   my $sv_count = scalar(@{$slice->get_all_StructuralVariationFeatures});
     
   $html .= $self->_warning(
@@ -262,7 +270,7 @@ sub constrained_element_table {
       }
     }
   }
-	
+  
   return $self->toggleable_table('Constrained elements', 'cons', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
 }
 
