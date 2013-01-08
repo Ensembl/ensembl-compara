@@ -28,6 +28,10 @@ sub content {
   my $db_entry    = $genes[0]->get_all_DBLinks('HGNC');
   my $slice       = $lrg->feature_Slice;
 
+  # Hack for e!70 #
+  return "<br /><b>No alignment available for this LRG.</p>" if ($param eq 'LRG_53');
+  # End of the hack #
+
 	my $slice_adaptor = $self->hub->database('core')->get_SliceAdaptor;
 	
   # Chr slice 
