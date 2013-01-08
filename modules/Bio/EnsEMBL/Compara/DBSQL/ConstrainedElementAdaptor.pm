@@ -297,6 +297,7 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 				'reference_dnafrag_id' => $dnafrag_id,
 			}
 		);
+		$constrained_element->{'alignment_segments'} = $self->fetch_by_dbID($dbID)->{'alignment_segments'};
 		push(@$constrained_elements, $constrained_element);
 	}
 }	
