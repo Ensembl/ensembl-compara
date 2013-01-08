@@ -284,6 +284,7 @@ sub parse_newick_into_tree {
     $leaf->gene_member_id($old_leaf->gene_member_id);
     $leaf->cigar_line($old_leaf->cigar_line);
     $leaf->node_id($old_leaf->node_id);
+    $leaf->taxon_id($old_leaf->taxon_id);
     $leaf->adaptor($old_leaf->adaptor);
     $leaf->add_tag('name', $member_id);
     $leaf->{'_children_loaded'} = 1;
