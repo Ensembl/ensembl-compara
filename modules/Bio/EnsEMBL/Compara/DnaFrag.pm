@@ -291,7 +291,7 @@ sub name {
   my ($self, $name) = @_;
    
   if (defined($name)) {
-    $self->{'name'} = ($name or undef);
+    $self->{'name'} = $name;
   }
 
   return $self->{'name'};
