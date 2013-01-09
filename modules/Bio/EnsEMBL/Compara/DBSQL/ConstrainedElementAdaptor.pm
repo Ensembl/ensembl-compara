@@ -283,14 +283,15 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value);
 	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$ce_strand, \$score, \$p_value);
 	while ($sth->fetch()) {
-		my $ce_slice_start = $ce_start - $start + 1;
-		my $ce_slice_end = $ce_end - $start + 1;
+		my $ce_slice_start = ($ce_start - $start + 1);
+		my $ce_slice_end = ($ce_end - $start + 1);
 		my $cons_ele_slice = $slice->sub_Slice($ce_slice_start, $ce_slice_end, $ce_strand);
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
 				'adaptor' => $self,
 				'dbID' => $dbID,
-				'slice' => $cons_ele_slice,
+				'element_slice' => $cons_ele_slice,
+				'slice' => $slice,
 				'start' =>  $ce_slice_start,
 				'end' => $ce_slice_end,
 			        'strand' => $ce_strand,
@@ -389,10 +390,14 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 			$general_attributes{p_value} = $p_value;
 			push(@alignment_segments, [ $dnafrag_id, $ce_start, $ce_end, $ce_strand, $species_name, $dnafrag_name ]);
 		}
+		my $dnafrag_adp = $self->db->get_DnaFragAdaptor;
+		my $element_slice = $dnafrag_adp->fetch_by_dbID($dnafrag_id)->slice->sub_Slice($ce_start, $ce_end, $ce_strand);
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
 				'adaptor' => $self,
 				'dbID' => $general_attributes{dbID},
+				'slice' => $element_slice,
+				'element_slice' => $element_slice,
 				'alignment_segments' => \@alignment_segments,
 				'method_link_species_set_id' => $general_attributes{mlssid},
 				'score' => $general_attributes{score},
