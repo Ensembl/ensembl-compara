@@ -283,13 +283,16 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value);
 	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$ce_strand, \$score, \$p_value);
 	while ($sth->fetch()) {
+		my $ce_slice_start = $ce_start - $start + 1;
+		my $ce_slice_end = $ce_end - $start + 1;
+		my $cons_ele_slice = $slice->sub_Slice($ce_slice_start, $ce_slice_end, $ce_strand);
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
 				'adaptor' => $self,
 				'dbID' => $dbID,
-				'slice' => $slice,
-				'start' =>  ($ce_start - $start + 1), 
-				'end' => ($ce_end - $start + 1),
+				'slice' => $cons_ele_slice,
+				'start' =>  $ce_slice_start,
+				'end' => $ce_slice_end,
 			        'strand' => $ce_strand,
 				'method_link_species_set_id' => $mlss_id,
 				'score' => $score,
