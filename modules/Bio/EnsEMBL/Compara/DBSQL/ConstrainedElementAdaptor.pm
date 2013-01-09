@@ -418,7 +418,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Gene {
  my $self = shift;
  my ($mlss, $gene) = @_;
 
- my($exonic_constrained_elements);
+ my($constrained_elements);
 
  if(defined($gene)){
    throw("second argument should be a Bio::EnsEMBL::Gene object")
@@ -438,13 +438,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Gene {
  $species=~s/_/ /g;
  my $slice_a = Bio::EnsEMBL::Registry->get_adaptor("$species", "core", "Slice");
  my $slice = $slice_a->fetch_by_region("$coord_sys","$seq_region_name",$gene_start,$gene_end,$gene_strand);
- push(@$exonic_constrained_elements, @{ $self->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice) });
- return $exonic_constrained_elements;
+ push(@$constrained_elements, @{ $self->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice) });
+ return $constrained_elements;
 }
-
-
-
-
-
 
 1;
