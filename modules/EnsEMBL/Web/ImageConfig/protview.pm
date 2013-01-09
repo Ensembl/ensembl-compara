@@ -15,7 +15,7 @@ sub init {
     domain
     feature
     variation
-		somatic
+    somatic
     external_data
     user_data
     other
@@ -39,8 +39,8 @@ sub init {
     [ 'variation_legend' ],
     { glyphset => 'P_variation_legend' }
   );
-
-  my $translation = $self->hub->core_objects->{'transcript'}->Obj->translation;
+  
+  my $translation = $self->hub->core_objects->{'transcript'} ? $self->hub->core_objects->{'transcript'}->Obj->translation : undef;
   my $id = $translation ? $translation->stable_id : $self->hub->species_defs->ENSEMBL_SITETYPE.' Protein'; 
   $self->add_tracks('other',
     [ 'scalebar',       'Scale bar', 'P_scalebar', { display => 'normal', strand => 'r' }],
