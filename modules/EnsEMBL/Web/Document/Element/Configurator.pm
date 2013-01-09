@@ -118,7 +118,7 @@ sub add_image_config_notes {
   my $panel   = $self->new_panel('Configurator', $controller, code => 'x', class => 'image_config_notes' );
   my $img_url = $self->img_url;
   
-  $panel->set_content(qq{
+  $panel->set_content(qq(
     <h2 class="border">Key</h2>
     <div>
       <ul class="configuration_key">
@@ -137,7 +137,7 @@ sub add_image_config_notes {
     </div>
     <p class="border space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
     <p>URL-based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
-  });
+  ));
 
   $self->add_panel($panel);
 }
