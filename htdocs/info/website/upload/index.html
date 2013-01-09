@@ -17,16 +17,26 @@
 
 <h2 id="addtrack">How to add custom tracks</h2>
 
-<p>Your custom tracks are  managed using the pop-up control panel, accessed through the 'Manage your data' button under the left-hand menu.</p>
+<p>You can add a track from any species-specific page, such as <a href="/Homo_sapiens/Location/View?r=6:133017695-133161157"><strong>Region in Detail</strong></a>.  The track will automatically display in the view in which you have added it. You can also display an uploaded track in other views like <a href="/Homo_sapiens/Location/Overview?r=6:133017695-133161157"><strong>Region Overview</strong></a> and the whole <a href="/Homo_sapiens/Location/Chromosome?r=6:133017695-133161157"><strong>Chromosome</strong></a>.  To do so, click the <strong>Configure this page</strong> button at the left, and select the track within the <strong>Your data</strong> menu.  
+</p> 
+<p> 
+To attach or upload a custom track, click the <strong>Add your data</strong> button at the left of most Ensembl views (which reads <strong>Manage your data</strong> if you already have added custom data) and upload or attach a file (see more about file types further in this document) in the resulting window.  Alternatively, if you have clicked on <strong>Configure this page</strong>, add data by navigating to the <strong>Custom data</strong> tab in the configuration window and click on <strong>Add a custom track</strong>.
+</p>
 
-<p>You can add a track from any species-specific page, but it will only be displayed on suitable Location views, such as 'Region in Detail'.</p>
+
+<p>
+To upload and display data on a <a href="/Homo_sapiens/Location/Genome?r=6:133017695-133161157"><strong>Karyotype</strong></a> view, click the <strong>Add your data</strong> or <strong>Manage your data</strong> button at the left.  At the left of the resulting menu, click <strong>Features on Karyotype</strong>.  Add IDs (such as Gene IDs like ENSG00000012048, ENSG00000139618, ENSG00000198668) or names (such as Gene names like BRCA1, BRCA2, CALM) into the box.  Click the Show features button to view them along the karyotype.
+</p>
+
+<p>
+<strong>Note</strong>: for large data sets, your display options will automatically be limited to density plots rather than individual feature points.</p>
 
 <h3>Ways to add tracks to Ensembl</h3>
 <ol>
 <li>Upload a file to our servers (max 5MB), from either your own computer or a location on the web (URL-based data).</li>
 <li>Attach a URL, from which the file will be read each time you visit a page that has the track on.
   <ul>
-  <li>either by using the URL upload panel: Manage Your Data -&gt; Attach Remote File</li>
+  <li>either by using the Add your data link (or Manage your data if you already have custom data in Ensembl)</li>
   <li>or by <a href="/info/docs/webcode/linking.html#attachurl">creating a specific URL</a> for an Ensembl page that includes the location of your data file</li>
   </ul>
   </li>
@@ -45,24 +55,6 @@
 Use either <a href="coords.html">chromosome</a> or (finished) 
 <a href="coords.html#bacclone">BAC clone coordinates</a> in custom data sets.
 </p> 
-
-<h3 id="Displaying">Displaying Data on Whole Chromosomes</h3>
-
-<p>
-You can display uploaded and/or attached user data on the karyotype, or the
-chromosome diagram.</p>
-<ol>
-<li>Click on either <strong>Whole genome</strong> or <strong>Chromosome summary</strong> 
-at the left of any Location page.</li>
-<li>Click the <strong>Configure this page</strong> button below the left-hand menu.</li>
-<li>Click on the <strong>User attached data</strong> link in the lefthand menu and select any tracks you would like to display.</li>
-<li>Click on the 'tick' button to <strong>Save and Close</strong> the window and view the data.</li>
-</ol>
-
-<p>
-<strong>Note</strong>: for large data sets, your display options will automatically be limited to density plots rather than individual feature points.</p>
-
-
 
 <h2 id="formats">Supported file formats</h2>
 
@@ -98,11 +90,11 @@ at the left of any Location page.</li>
 
 <h2 id="access">Data access and security</h2>
 
-<h3>Saving tracks</h3>
+<h3>Saving and sharing tracks</h3>
 
 <p>Uploaded data is saved temporarily to our filesystem and accessed
 via cookie, so you can only view it from the browser in which you 
-uploaded it. For longer-term access to your data, you can save the 
+uploaded it (unless you click the share icon as below). For longer-term access to your data, you can save the 
 track to our database server, but this requires an Ensembl user account.
 Once logged in, you will see a 'Save' link next to your track - click
 on this and the track will be transferred to the database and can be
@@ -111,6 +103,8 @@ accessed on any computer where you are logged into Ensembl.</p>
 <p>Remote data is not saved to the database. Only the URL or source
 name is saved to your user account, to allow you to access the file
 easily from any location, without having to reattach it.</p>
+
+<p>If you display your data on a Location view such as Region in Detail, click the sharing icon, or the <strong>Share this page</strong> button at the left, to send the same view, including your own track, to a labmate or collaborator.</p>
 
 <h3 id="DeletingTracks">Deleting tracks</h3>
 
