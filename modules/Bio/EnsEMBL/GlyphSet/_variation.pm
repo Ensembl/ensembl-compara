@@ -58,6 +58,12 @@ sub fetch_features {
   my $id        = $self->{'my_config'}->id;
   
   if (!$self->cache($id)) {
+  
+    my $variation_db_adaptor = $config->hub->database('variation', $self->species);
+    my $orig_failed_flag = $variation_db_adaptor->include_failed_variations;
+    # Disable the display of failed variations by default
+    $variation_db_adaptor->include_failed_variations(0);
+  
     # different retrieval method for somatic mutations
     if ($id =~ /somatic/) {
       my @somatic_mutations;
@@ -81,12 +87,9 @@ sub fetch_features {
       
       if ($id =~ /set/) {
         my $track_set            = $self->my_config('set_name');
-        my $variation_db_adaptor = $config->hub->database('variation', $self->species);
         my $set_object           = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
     
         # Enable the display of failed variations in order to display the failed variation track
-        my $orig_failed_flag = $variation_db_adaptor->include_failed_variations;
-        
         $variation_db_adaptor->include_failed_variations(1) if $track_set =~ /failed/i;
         
         @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object) || []};
@@ -105,6 +108,9 @@ sub fetch_features {
           grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
           @temp_variations;
       }
+
+      # Reset the flag for displaying of failed variations to its original state
+      $variation_db_adaptor->include_failed_variations($orig_failed_flag);
 
       $self->cache($id, \@vari_features);
     }
