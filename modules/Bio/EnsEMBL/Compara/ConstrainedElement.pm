@@ -48,6 +48,9 @@ GET / SET VALUES
   $constrained_element->strand($strand);
   $constrained_element->reference_dnafrag_id($dnafrag_id);
 
+OVERLAPPING FEATURE FETCHING METHODS
+  $constrained_element->get_all_exons # get all exons which overlap this constrained element 
+
 =head1 OBJECT ATTRIBUTES
 
 =over
@@ -122,6 +125,7 @@ use strict;
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
+use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::SimpleAlign;
 use Data::Dumper;
@@ -597,6 +601,55 @@ sub get_SimpleAlign {
 	}
 	return $sa;
 }
+
+
+=head2 get_all_exons
+
+  Arg  1        : (optional) list of Bio::EnsEMBL::Gene objects eg ce->get_all_exons($gene1, $gene2);
+  Example       : my $gene = $gene_a->fetch_by_stable_id('ENSG00000267174');
+		  my $CEs = $cons_ele_a->fetch_all_by_MethodLinkSpeciesSet_Gene($cons_ele_mlss, $gene);
+		  foreach my $constrained_element( @{ $CEs }) {
+		   foreach my $exon(@{ $constrained_element->get_all_exons($gene) }){
+		    print $exon->stable_id, "\n";
+		   }
+		  }
+  Description   : Will return a listref of Bio::EnsEMBL::Exon objects which overlap the constrained element 
+                  if Gene objects are provided as arguments, only exons associated with these genes will be returned
+  Returns       : listref of Bio::EnsEMBL::Exon objects or undef if there are no overlapping exons
+
+=cut
+
+sub get_all_exons {
+ my $self = shift;
+ my @genes = @_;
+ my @exons;
+ if(defined $self->{'element_slice'}){
+  if(scalar @genes){ # filter out any exons not associated with the list of gene(s) supplied
+   my %exon_stable_ids;
+   foreach my $gene(@genes){
+    throw("method needs to be supplied with one or more Bio::EnsEMBL::Gene objects") unless 
+     ($gene->isa("Bio::EnsEMBL::Gene"));
+     foreach my $gene_exon(@{ $gene->get_all_Exons }){
+      $exon_stable_ids{ $gene_exon->stable_id }++;
+     }
+   }
+   # get all exons associated with the cons_ele slice
+   foreach my $exon(@{ $self->{'element_slice'}->get_all_Exons }){ 
+    my $in_the_genes;
+    if( exists( $exon_stable_ids{ $exon->stable_id } ) ){
+     $in_the_genes++;
+    }
+    if($in_the_genes){
+     push(@exons, $exon);
+    }
+   }
+  } else { # else bring back all overlapping exons
+   return $self->{'element_slice'}->get_all_Exons || undef;
+  } 
+  return \@exons || undef;
+ }
+}
+     
 
 =head2 summary_as_hash
 
