@@ -22,7 +22,7 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $PRE $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list $pan_comp_species $ena);
+use vars qw( $SERVERROOT $PRE $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list $pan_comp_species $ena $nogenebuild);
 
 BEGIN{
   &GetOptions( 
@@ -38,7 +38,8 @@ BEGIN{
                'pre'       => \$PRE,
                'coordsys' => \$coordsys,
                'pan_c_sp' => \$pan_comp_species,
-               'ena' => \$ena
+               'ena' => \$ena,
+               'nogenebuild' => \$nogenebuild
   );
 
   pod2usage(-verbose => 2) if $info;
@@ -495,6 +496,12 @@ foreach my $spp (@valid_spp) {
         'Genebuild last updated/patched' => $b_latest,
         'Genebuild version' => $b_version
       );
+      
+      if ($nogenebuild) {
+        # no genebuild dates - but want method
+        @summary_stats = ('Genebuild method'=> $b_method);
+      }
+
       while (my($k, $v) = splice(@summary_stats, 0, 2)) {
         $rowcount++;
         $row = stripe_row($rowcount);
