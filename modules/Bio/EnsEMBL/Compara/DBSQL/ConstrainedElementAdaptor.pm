@@ -285,7 +285,9 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 	while ($sth->fetch()) {
 		my $ce_slice_start = ($ce_start - $start + 1);
 		my $ce_slice_end = ($ce_end - $start + 1);
-		my $cons_ele_slice = $slice->sub_Slice($ce_slice_start, $ce_slice_end, $ce_strand);
+		my $seq_region_name = $slice->seq_region_name;
+		my $coord_sys_name = $slice->coord_system_name;
+		my $cons_ele_slice = $slice->adaptor->fetch_by_region("$coord_sys_name", "$seq_region_name", $ce_start, $ce_end, $ce_strand);
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
 				'adaptor' => $self,
