@@ -21,8 +21,6 @@ use constant {
 
   CSS_CLASS_DEFAULT       => 'std',
   CSS_CLASS_VALIDATION    => 'check _check',
-  CSS_CLASS_FILE_UPLOAD   => 'upload',
-  TARGET_FILE_UPLOAD      => 'uploadframe',
 
   HEADING_TAG             => 'h2',
   CSS_CLASS_HEADING       => '',
@@ -76,22 +74,8 @@ sub new {
 sub render {
   ## @overrides
   ## Modifies the form before calling the inherited render method  
-  my ($self) = @_;
-  return '' if $self->format ne 'HTML';  #dont return any form stuff if the format is not HTML (webpage) (eg: csv)
-  
-  ## change form attributes for uploading a file
-  for (@{$self->get_elements_by_tag_name('input')}) {
-    if ($_->get_attribute('type') eq 'file') {
-      $self->set_attributes({
-        'target'  => $self->TARGET_FILE_UPLOAD,
-        'class'   => $self->CSS_CLASS_FILE_UPLOAD,
-        'enctype' => 'multipart/form-data'
-      });
-      $self->add_hidden({'name' => 'uploadto', 'value' => 'iframe'});
-      last;
-    }
-  }
-  return $self->SUPER::render;
+  my $self = shift;
+  return $self->format eq 'HTML' ? $self->SUPER::render(@_) : '';  #dont return any form stuff if the format is not HTML (webpage) (eg: csv)
 }
 
 sub fieldsets {
