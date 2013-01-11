@@ -68,8 +68,7 @@ sub process {
   if ($param->{'error_code'}) {
     $param->{'action'} = 'RegionReportOutput';
     $session->purge_data('code' => $param->{'code'});
-    ## Not really uploaded - name of method below is a bit misleading!
-    $self->file_uploaded($param);
+    $self->ajax_redirect($hub->url($param));
   }
   else {
     $url .= 'RunRegionTool';

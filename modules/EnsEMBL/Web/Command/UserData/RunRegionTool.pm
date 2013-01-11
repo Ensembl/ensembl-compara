@@ -105,7 +105,7 @@ sub process {
     $session->purge_data('code' => $hub->param('code'));
   }
 
-  $self->file_uploaded($param);
+  $self->ajax_redirect($hub->url($param));
 }
 
 1;

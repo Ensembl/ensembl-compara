@@ -30,7 +30,7 @@ sub process {
     $url_params->{'action'} = 'SelectFile';
   }
 
-  $self->file_uploaded($url_params);
+  return $self->ajax_redirect($self->hub->url($url_params));
 }
 
 sub set_format {
