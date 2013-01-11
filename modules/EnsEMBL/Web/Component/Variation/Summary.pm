@@ -259,7 +259,7 @@ sub synonyms {
 
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
-      sprintf('<p>This feature has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+      sprintf('<p>This variation has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? '' : 'display:none',
         join('', map "<li>$_</li>", @synonyms_list)
@@ -364,7 +364,7 @@ sub location {
   my %mappings = %{$object->variation_feature_mapping};
   my $count    = scalar keys %mappings;
   
-  return ['Location', 'This feature has not been mapped'] unless $count;
+  return ['Location', 'This variation has not been mapped'] unless $count;
   
   my $hub = $self->hub;
   my $vf  = $hub->param('vf');
@@ -394,7 +394,7 @@ sub location {
     );
   }
   else {
-    $location = "This feature maps to $count genomic locations; <b>None selected</b>";
+    $location = "This variation maps to $count genomic locations; <b>None selected</b>";
   }
   
   return [ 'Location', "$location$location_link" ];
@@ -498,7 +498,7 @@ sub hgvs {
     return [
       sprintf('<a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
       sprintf(qq(<div class="twocol-cell">
-        <p>This feature has <strong>%s</strong> HGVS names - click the plus to show</p>
+        <p>This variation has <strong>%s</strong> HGVS names - click the plus to show</p>
         <div class="HGVS_names"><div class="toggleable"%s>$html</div></div>
       </div>), $count, $show ? '' : ' style="display:none"')
     ];
