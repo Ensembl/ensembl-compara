@@ -615,6 +615,9 @@ sub get_SimpleAlign {
 		  }
   Description   : Will return a listref of Bio::EnsEMBL::Exon objects which overlap the constrained element 
                   if Gene objects are provided as arguments, only exons associated with these genes will be returned
+                  This method will only work when the constrained element objects have an associated Slice object,
+                  ie. only if they were obtained from the adaptor using methods 'fetch_all_by_MethodLinkSpeciesSet_Slice'
+                  or 'fetch_all_by_MethodLinkSpeciesSet_Dnafrag'
   Returns       : listref of Bio::EnsEMBL::Exon objects or undef if there are no overlapping exons
 
 =cut
@@ -647,6 +650,8 @@ sub get_all_exons {
    return $self->{'element_slice'}->get_all_Exons || undef;
   } 
   return \@exons || undef;
+ } else {
+  throw("Bio::EnsEMBL::Compara::ConstrainedElement object does not have an associated slice"); 
  }
 }
      
