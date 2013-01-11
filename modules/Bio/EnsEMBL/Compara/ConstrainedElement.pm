@@ -617,8 +617,8 @@ sub get_SimpleAlign {
                   if Gene objects are provided as arguments, only exons associated with these genes will be returned
   Returns       : listref of Bio::EnsEMBL::Exon objects or undef if there are no overlapping exons
   Exceptions    : This method will only work when the constrained element objects have an associated Slice object,
-                  ie. only if they were obtained from the adaptor using methods 'fetch_all_by_MethodLinkSpeciesSet_Slice'
-                  or 'fetch_all_by_MethodLinkSpeciesSet_Dnafrag', otherwise throw an exception
+                  ie. only if they were obtained from the adaptor using methods 'fetch_all_by_MethodLinkSpeciesSet_Slice',
+                  'fetch_all_by_MethodLinkSpeciesSet_Dnafrag' or fetch_all_by_MethodLinkSpeciesSet_Gene, otherwise throw
 
 =cut
 
