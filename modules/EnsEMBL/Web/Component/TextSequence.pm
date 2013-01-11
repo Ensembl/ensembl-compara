@@ -269,7 +269,7 @@ sub set_variations {
       vdb     => 'variation'
     });
     
-    my $link_text  = qq{ <a href="$url">$snp_start: $variation_name $allele_string</a>;};
+    my $link_text  = qq{ <a href="$url">$snp_start: $variation_name</a>;};
     (my $ambiguity = $config->{'ambiguity'} ? $_->ambig_code($strand) : '') =~ s/-//g;
     
     for ($s..$e) {
