@@ -42,6 +42,7 @@ sub new {
     type             => $type,
     species          => $species,
     altered          => 0,
+    tracks_added     => {},
     _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
@@ -460,9 +461,10 @@ sub add_tracks {
   
   foreach my $row (@_) {
     my ($key, $caption, $glyphset, $params) = @$row; 
-    
-    next if $self->get_node($key); # Don't add duplicates
-    
+
+    next if exists $self->{'tracks_added'}{$key};
+    $self->{'tracks_added'}{$key} = 1;
+
     $params->{'glyphset'} = $glyphset;
     $menu->append($self->create_track($key, $caption, $params));
   }
