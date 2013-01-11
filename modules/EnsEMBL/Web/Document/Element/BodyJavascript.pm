@@ -36,12 +36,7 @@ sub add_script {
 }
 
 sub content {
-  my $self = shift;
-  
-  return qq{
-    $self->{'scripts'}
-    <div id="uploadframe_div" style="display: none"><iframe name="uploadframe"></iframe></div>
-  };
+  return shift->{'scripts'};
 } 
 
 sub init {
