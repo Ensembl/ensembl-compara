@@ -104,13 +104,13 @@ sub content {
     'label'       => '<span class="_stt_remote1">P</span><span class="_stt_upload1">Or p</span>rovide file URL',
     'size'        => 30
   });
-  $upload_fieldset->add_button({ 'name' => 'submit', 'value' => 'Upload' })->inputs->[0]->after($self->dom->create_element('label', {
+  $upload_fieldset->add_button({ 'name' => 'submit_button', 'value' => 'Upload' })->inputs->[0]->after($self->dom->create_element('label', {
     'inner_HTML'  => 'Please provide one of the above three fields',
     'class'       => '_userdata_upload_error hidden'
   }));
 
   $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30, 'required' => 1 });
-  $remote_fieldset->add_button({ 'name' => 'submit', 'value' => 'Attach' });
+  $remote_fieldset->add_button({ 'name' => 'submit_button', 'value' => 'Attach' });
 
   return sprintf '<input type="hidden" class="panel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
