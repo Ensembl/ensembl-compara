@@ -178,6 +178,40 @@ sub generic_fetch {
 }
 
 
+sub mysql_server_prepare {
+    my $self = shift;
+    return (exists $self->{'_cached_statements'} ? 1 : 0) unless scalar(@_);
+    my $value = shift;
+    if ($value) {
+        $self->{'_cached_statements'} = {} unless exists $self->{'_cached_statements'};
+        return 1;
+    } else {
+        return 0 unless exists $self->{'_cached_statements'};
+        foreach my $sth (values %{$self->{'_cached_statements'}}) {
+            $sth->finish;
+        }
+        delete $self->{'_cached_statements'};
+        return 0;
+    }
+}
+
+
+sub prepare {
+    my ($self, $query, @args) = @_;
+
+    if (exists $self->{'_cached_statements'}) {
+        return $self->{'_cached_statements'}->{$query} if exists $self->{'_cached_statements'}->{$query};
+        $self->dbc->db_handle->{mysql_server_prepare} = 1;
+        my $sth = $self->SUPER::prepare($query, @args);
+        $self->dbc->db_handle->{mysql_server_prepare} = 0;
+        $self->{'_cached_statements'}->{$query} = $sth;
+        return $sth;
+    } else {
+        return $self->SUPER::prepare($query, @args);
+    }
+}
+
+
 =head2 generic_fetch_one
 
   Arguments  : Same arguments as construct_sql_query()
