@@ -619,4 +619,22 @@ sub summary_as_hash {
   return $summary_ref;
 }
 
+=head2 add_alignment_segments
+ 
+ Example       : my $CEs = $constrained_element_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
+                 foreach my $constrained_element( @{ $CE }) {
+                  $constrained_element->add_alignment_segments;
+                 }
+ Description   : Add the alignments segments to constrained element objects retrieved by coordinate-based 'fetch_all'
+                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_Dnafrag
+ Returns       : Nothing
+
+=cut
+
+sub add_alignment_segments {
+ my $self = shift;
+ $self->alignment_segments( $self->adaptor->fetch_by_dbID($self->dbID)->{'alignment_segments'} );
+} 
+
+
 1;
