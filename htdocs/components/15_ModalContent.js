@@ -96,11 +96,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   formSubmit: function (form, data) {
-    
-    if (form.hasClass('upload')) {
-      return true;
-    }
-    
+  
     data = data || form.serialize();
     
     this.elLk.content.html('<div class="panel"><div class="spinner">Loading Content</div></div>');
@@ -111,6 +107,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       data: data,
       dataType: 'json',
       context: this,
+      iframe: true,
+      form: form,
       success: function (json) {
         if (json.redirectURL && json.redirectType === 'modal') {
           return json.modalTab ? Ensembl.EventManager.trigger('modalOpen', { href: json.redirectURL, rel: json.modalTab }) : this.getContent(undefined, json.redirectURL);
