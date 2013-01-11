@@ -46,12 +46,7 @@ sub process {
   $url_params->{'conversion'}   = $hub->param('conversion') unless $id_mapper || $consequence_mapper;
   $url_params->{$_}             = $hub->param($_) for qw(id_limit variation_limit);
   
-  ## Go from a modal form (with file upload) directly to another web page
-  if ($hub->param('uploadto') eq 'iframe') {
-    $self->file_uploaded($url_params);
-  } else {
-    $self->ajax_redirect($hub->url($url_params));
-  }
+  $self->ajax_redirect($hub->url($url_params));
 }
 
 1;
