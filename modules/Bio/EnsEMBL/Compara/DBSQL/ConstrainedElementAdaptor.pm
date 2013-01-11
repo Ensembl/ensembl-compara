@@ -283,19 +283,13 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value);
 	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$ce_strand, \$score, \$p_value);
 	while ($sth->fetch()) {
-		my $ce_slice_start = ($ce_start - $start + 1);
-		my $ce_slice_end = ($ce_end - $start + 1);
-		my $seq_region_name = $slice->seq_region_name;
-		my $coord_sys_name = $slice->coord_system_name;
-		my $cons_ele_slice = $slice->adaptor->fetch_by_region("$coord_sys_name", "$seq_region_name", $ce_start, $ce_end, $ce_strand);
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
 				'adaptor' => $self,
 				'dbID' => $dbID,
-				'element_slice' => $cons_ele_slice,
 				'slice' => $slice,
-				'start' =>  $ce_slice_start,
-				'end' => $ce_slice_end,
+				'start' =>  ($ce_start - $start + 1), 
+				'end' => ($ce_end - $start + 1),
 			        'strand' => $ce_strand,
 				'method_link_species_set_id' => $mlss_id,
 				'score' => $score,
@@ -303,7 +297,6 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 				'reference_dnafrag_id' => $dnafrag_id,
 			}
 		);
-		$constrained_element->{'alignment_segments'} = $self->fetch_by_dbID($dbID)->{'alignment_segments'};
 		push(@$constrained_elements, $constrained_element);
 	}
 }	
@@ -398,60 +391,12 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 				'dbID' => $general_attributes{dbID},
 				'alignment_segments' => \@alignment_segments,
 				'method_link_species_set_id' => $general_attributes{mlssid},
-				'element_slice' => undef,
-				'slice' => => undef,
-				'reference_dnafrag_id' => undef,
-				'start' => undef,
-				'end' => undef,
-				'strand' => undef,
 				'score' => $general_attributes{score},
 				'p_value' => $general_attributes{p_value},
 			}
 		);
 		push(@$constrained_elements, $constrained_element) if @alignment_segments;
 	}
-}
-
-=head2 fetch_all_by_MethodLinkSpeciesSet_Gene
-
-  Arg  1     : object (Compara) MethodLinkSpeciesSet
-  Arg  2     : object (Core) Gene
-  Example    : my @cons_eles_overlapping_exons = $constrained_element_adaptor->
-                fetch_all_by_MethodLinkSpeciesSet_Gene(
-                 $constrained_element_methodLinkSpeciseSet, $gene);
-  Description: Retrieve the constrained_elements overlapping a gene.
-  Returntype : Arrayref of Bio::EnsEMBL::Compara::ConstrainedElement objects
-  Exceptions : -none-
-  Caller     : object::methodname
-
-=cut
-
-sub fetch_all_by_MethodLinkSpeciesSet_Gene {
- my $self = shift;
- my ($mlss, $gene) = @_;
-
- my($constrained_elements);
-
- if(defined($gene)){
-   throw("second argument should be a Bio::EnsEMBL::Gene object")
-   unless ($gene->isa("Bio::EnsEMBL::Gene"));
- } else {
-   throw("undefined Bio::EnsEMBL::Gene argument");
- }
- if (defined($mlss)) {
-  throw("first argument should be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-  unless ($mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
- } else {
-  throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
- }
- my($species, $seq_region_name, $coord_sys, $gene_start, $gene_end, $gene_strand) = 
-  ($gene->species, $gene->seq_region_name, $gene->coord_system_name, 
-   $gene->seq_region_start, $gene->seq_region_end, $gene->seq_region_strand);
- $species=~s/_/ /g;
- my $slice_a = Bio::EnsEMBL::Registry->get_adaptor("$species", "core", "Slice");
- my $slice = $slice_a->fetch_by_region("$coord_sys","$seq_region_name",$gene_start,$gene_end,$gene_strand);
- push(@$constrained_elements, @{ $self->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice) });
- return $constrained_elements;
 }
 
 1;
