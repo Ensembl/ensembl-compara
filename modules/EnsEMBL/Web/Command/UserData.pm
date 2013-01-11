@@ -122,25 +122,4 @@ sub upload {
   return $params;
 }
 
-sub file_uploaded {
-  my ($self, $url_params) = @_;
-  
-  my $url = encode_entities($self->hub->url($url_params));
- 
-  $self->r->content_type('text/html; charset=utf-8');
-  
-  print qq{
-    <html>
-    <head>
-      <script type="text/javascript">
-        if (!window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '$url', title: 'File uploaded' })) {
-          window.parent.location = '$url';
-        }
-      </script>
-    </head>
-    <body><p>UP</p></body>
-    </html>
-  };
-}
-
 1;
