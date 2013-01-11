@@ -66,7 +66,7 @@ sub render {
     push @hiddens, {'name' => '_backtrack', 'value' => $params->{'current'}}, {'name' => 'wizard_next', 'value' => $params->{'next'}};
 
   } elsif (!$params->{'no_button'}) {
-    push @buttons, {'type' => 'Submit', 'name' => 'submit', 'value' => $label};
+    push @buttons, {'type' => 'Submit', 'name' => 'submit_button', 'value' => $label};
   }
   
   $self->add_hidden(\@hiddens);
