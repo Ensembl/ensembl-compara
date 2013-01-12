@@ -93,13 +93,16 @@ sub initialize {
   
   # Check memcached for defaults
   if (my $defaults = $cache ? $cache->get("::${class}::${species}::$code") : undef) {
+    my $user_data = $self->tree->user_data;
     $self->{$_} = $defaults->{$_} for keys %$defaults;
+    $self->tree->push_user_data_through_tree($user_data);
   } else {
     # No cached defaults found, so initialize them and cache
     $self->init;
     $self->modify;
     
     if ($cache) {
+      $self->tree->hide_user_data;
       my $defaults = {
         _tree       => $self->{'_tree'},
         _parameters => $self->{'_parameters'},
@@ -107,6 +110,7 @@ sub initialize {
       };
       
       $cache->set("::${class}::${species}::$code", $defaults, undef, 'IMAGE_CONFIG', $species);
+      $self->tree->reveal_user_data;
     }
   }
   
