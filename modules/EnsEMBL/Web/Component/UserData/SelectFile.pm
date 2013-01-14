@@ -104,10 +104,11 @@ sub content {
     'label'       => '<span class="_stt_remote1">P</span><span class="_stt_upload1">Or p</span>rovide file URL',
     'size'        => 30
   });
-  $upload_fieldset->add_button({ 'name' => 'submit_button', 'value' => 'Upload' })->inputs->[0]->after($self->dom->create_element('label', {
+  $upload_fieldset->add_button({ 'field_class' => 'hidden _stt_upload1', 'name' => 'submit_button', 'value' => 'Upload' })->inputs->[0]->after($self->dom->create_element('label', {
     'inner_HTML'  => 'Please provide one of the above three fields',
     'class'       => '_userdata_upload_error hidden'
   }));
+  $upload_fieldset->add_button({ 'field_class' => 'hidden _stt_remote1', 'name' => 'submit_button', 'value' => 'Attach' });
 
   $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30, 'required' => 1 });
   $remote_fieldset->add_button({ 'name' => 'submit_button', 'value' => 'Attach' });
