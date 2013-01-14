@@ -535,7 +535,9 @@ sub configure {
   my %cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my %selected_so;
   
-  $selected_so{$_} = 1 for split /\,/, $consequence;
+  if(defined($consequence) && $consequence ne 'ALL') {
+    $selected_so{$_} = 1 for split /\,/, $consequence;
+  }
   
   my @so_terms = keys %selected_so;
 
