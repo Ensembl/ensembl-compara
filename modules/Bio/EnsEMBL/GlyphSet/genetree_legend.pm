@@ -80,11 +80,11 @@ sub render_normal {
   if($other_gene) {
     $self->add_vgroup_to_legend([
       { legend => "gene of interest",
-        colour => "darkgreen", text => "Gene ID" },
+        colour => "red", text => "Gene ID" },
       { legend => "within-sp. paralog",
         colour => "blue", text => "Gene ID" },
       { legend => "other gene",
-        colour => "red", text => "Gene ID" },
+        colour => "ff6666", text => "Gene ID" },
       { legend => "other within-sp. paralog",
         colour => "black", text => "Gene ID" },
       ],"Genes",{

@@ -153,11 +153,11 @@ sub _init {
     if ($f->{label}) {
       if( $f->{_genes}->{$other_gene} ){
         $bold = 1;
-        $label_colour = "red";
+        $label_colour = "ff6666";
       } elsif( $f->{_genome_dbs}->{$other_genome_db_id} ){
         $bold = 1;
       } elsif( $f->{_genes}->{$current_gene} ){
-        $label_colour     = 'darkgreen';
+        $label_colour     = 'red';
         $collapsed_colour = 'red';
         $node_colour = "royalblue";
         $bold = defined($other_genome_db_id);
