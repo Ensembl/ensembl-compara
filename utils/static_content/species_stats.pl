@@ -351,14 +351,15 @@ foreach my $spp (@valid_spp) {
         ( $gene_stats{'transcript'} )= &query( $db,
           "select count(distinct t.transcript_id)
           from transcript t
-          where t.seq_region_id not in (
+           join seq_region sr using (seq_region_id)
+           join coord_system cs using (coord_system_id)
+           where cs.species_id=$spp_id 
+           and t.seq_region_id not in (
           select sa.seq_region_id
-          from seq_region_attrib sa, attrib_type at, seq_region s, coord_system cs
-          where sa.seq_region_id = s.seq_region_id
-          and sa.attrib_type_id = at.attrib_type_id
-          and at.code = 'non_ref'
-          and s.coord_system_id = cs.coord_system_id
-          and cs.species_id=$spp_id)"
+             from seq_region_attrib sa
+             join attrib_type at using (attrib_type_id) 
+             where at.code = 'non_ref'
+           )"
         );
       print STDERR "Transcripts:$gene_stats{'transcript'}\n" if $DEBUG;
 
