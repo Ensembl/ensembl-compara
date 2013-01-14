@@ -265,7 +265,7 @@ sub form_matrix {
                 $renderer_template[2]
                 <input type="hidden" class="track_name" name="$feature->{'name'}" value="$display" />
                 <img class="menu_option" title="$renderers{$renderer}" alt="$renderers{$renderer}" src="${img_url}render/$renderer.gif" />
-                <span class="menu_option">$feature->{'feature_name'}</span>
+                <span class="menu_option">$feature->{'source_name'}</span>
               </li>
             };
             
