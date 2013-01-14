@@ -30,7 +30,7 @@ sub content {
 
   $fieldset->add_hidden({'name' => $_, 'value' => $urls{$_}}) for keys %urls;
 
-  $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this upload (optional)'});
+  $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
 
   # Create a data structure for species, with display labels and their current assemblies
   my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_NAME')}, $sd->valid_species);
