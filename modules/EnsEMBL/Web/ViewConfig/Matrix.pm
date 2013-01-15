@@ -403,7 +403,7 @@ sub form_matrix {
             </tr>
             <tr class="renderers">
               <th class="first select_all">
-                <div class="menu_option"><h2>$track_style_header style (<span class="link">all</span>)</h2></div>
+                <div class="menu_option"><h2>$track_style_header style:</h2><em>Enable/disable all</em></div>
                 %s
                 $tutorials{'all_track'}
               </th>
