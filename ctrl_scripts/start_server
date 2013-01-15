@@ -154,8 +154,11 @@ warn "==========================================================================
 
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
 my $cmd  = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
+
+my $defines = join(" ",map { "-D$_" } grep { /\S/ } split(/ /,$SiteDefs::APACHE_DEFINE));
+
 my $exe  =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR . '/bin/httpd');
-   $cmd .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf" . ($single ? ' -X &' : '');
+   $cmd .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf $defines" . ($single ? ' -X &' : '');
 
 require $_ for @start_before;
 

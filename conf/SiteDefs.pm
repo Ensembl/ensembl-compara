@@ -14,6 +14,7 @@ use Config;
 $Text::Wrap::columns = 75;
 
 use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
+  $APACHE_DEFINE
   $APACHE_DIR
   $APACHE_BIN
   $BIOPERL_DIR
