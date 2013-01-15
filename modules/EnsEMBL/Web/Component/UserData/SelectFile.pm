@@ -113,7 +113,7 @@ sub content {
   $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30, 'required' => 1 });
   $remote_fieldset->add_button({ 'name' => 'submit_button', 'value' => 'Attach' });
 
-  return sprintf '<input type="hidden" class="panel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
+  return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
 
 1;
