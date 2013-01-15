@@ -42,7 +42,6 @@ sub new {
     type             => $type,
     species          => $species,
     altered          => 0,
-    tracks_added     => {},
     _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
@@ -94,6 +93,7 @@ sub initialize {
   # Check memcached for defaults
   if (my $defaults = $cache ? $cache->get("::${class}::${species}::$code") : undef) {
     my $user_data = $self->tree->user_data;
+    
     $self->{$_} = $defaults->{$_} for keys %$defaults;
     $self->tree->push_user_data_through_tree($user_data);
   } else {
@@ -103,6 +103,7 @@ sub initialize {
     
     if ($cache) {
       $self->tree->hide_user_data;
+      
       my $defaults = {
         _tree       => $self->{'_tree'},
         _parameters => $self->{'_parameters'},
@@ -138,20 +139,20 @@ sub menus {
   return $_[0]->{'menus'} ||= {
     # Sequence
     seq_assembly        => 'Sequence and assembly',
-    sequence            => [ 'Sequence',                'seq_assembly' ],
-    misc_feature        => [ 'Clones & misc. regions',  'seq_assembly' ],
-    genome_attribs      => [ 'Genome attributes',       'seq_assembly' ],
-    marker              => [ 'Markers',                 'seq_assembly' ],
-    simple              => [ 'Simple features',         'seq_assembly' ],
-    ditag               => [ 'Ditag features',          'seq_assembly' ],
-    dna_align_other     => [ 'GRC alignments',          'seq_assembly' ],
+    sequence            => [ 'Sequence',          'seq_assembly' ],
+    misc_feature        => [ 'Clones',            'seq_assembly' ],
+    genome_attribs      => [ 'Genome attributes', 'seq_assembly' ],
+    marker              => [ 'Markers',           'seq_assembly' ],
+    simple              => [ 'Simple features',   'seq_assembly' ],
+    ditag               => [ 'Ditag features',    'seq_assembly' ],
+    dna_align_other     => [ 'GRC alignments',    'seq_assembly' ],
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
     transcript          => [ 'Genes',                  'gene_transcript' ],
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
     lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
-    rnaseq              => [ 'RNASeq models',         'gene_transcript' ],
+    rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
     
     # Supporting evidence
     splice_sites        => 'Splice sites',
@@ -464,11 +465,11 @@ sub add_tracks {
   return unless $menu;
   
   foreach my $row (@_) {
-    my ($key, $caption, $glyphset, $params) = @$row; 
-
-    next if exists $self->{'tracks_added'}{$key};
-    $self->{'tracks_added'}{$key} = 1;
-
+    my ($key, $caption, $glyphset, $params) = @$row;
+    my $node = $self->get_node($key);
+    
+    next if $node && $node->get('node_type') eq 'track';
+    
     $params->{'glyphset'} = $glyphset;
     $menu->append($self->create_track($key, $caption, $params));
   }
@@ -787,6 +788,16 @@ sub _add_datahub_tracks_matrix {
       column_key  => $column_key,
       %options
     };
+   
+    # Alternative rendering order for genome segmentation and similar
+    if ($track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish') {
+      $source->{'renderers'} = [
+        'off',     'Off',
+        'compact', 'Continuous',
+        'normal',  'Separate',
+        'labels',  'Separate with labels',
+      ];
+    }
     
     if (exists $track->{'viewLimits'}) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
@@ -806,7 +817,8 @@ sub _add_datahub_tracks_matrix {
       label_x     => $label_x,
       description => "<p>$info</p><p>Contains the following sub tracks:</p>",
       info        => $info,
-      datahub     => 1,
+      datahub     => 'column',
+#      renderers   => $source->{'renderers'},
       %options
     };
     
@@ -850,7 +862,7 @@ sub _add_datahub_tracks {
     my $source = {
       name        => $track->{'track'},
       source_name => $source_name,
-    # caption     => $track->{'shortLabel'},
+#      caption     => $track->{'shortLabel'},
       description => $track->{'longLabel'} . $link,
       source_url  => $track->{'bigDataUrl'},
       datahub     => 1,
@@ -870,6 +882,8 @@ sub _add_datahub_tracks {
     $source->{'colour'} = $track->{'color'} if exists $track->{'color'};
 
     my $type = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+       $type =~ s/^\s*//g;
+       $type =~ s/\s*$//g;
 
     # Graph range - Track Hub default is 0-127
     if (exists($track->{'viewLimits'})) {
@@ -910,12 +924,12 @@ sub _add_datahub_extras_options {
   $args{'options'}{'header'}     = $args{'source'}{'submenu_name'};
   $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}");
   $args{'options'}{$_}           = $args{'source'}{$_} for qw(label_x features menu_key description info colour axes datahub option_key column_key);
-  
+ 
   if ($args{'source'}{'datahub'} eq 'track') {
     $args{'options'}{'menu'}    = 'datahub_subtrack';
     $args{'options'}{'display'} = 'default';
     unshift @{$args{'renderers'}}, 'default', 'Default';
-  } else {
+  } elsif ($args{'source'}{'datahub'} eq 'column') {
     $args{'options'}{'option_key'} = $args{'key'};
   }
 }
@@ -927,6 +941,7 @@ sub load_configured_vcf    { shift->load_file_format('vcf');    }
 
 sub load_file_format {
   my ($self, $format, $sources) = @_;
+
   my $function = "_add_${format}_track";
      $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
   
@@ -973,7 +988,7 @@ sub _add_bam_track {
   my $self = shift;
   my $desc = '
     The read end bars indicate the direction of the read and the colour indicates the type of read pair:
-    Green = both mates mapped to the same chromosome, Blue = second mate was not mapped, Red = second mate mapped to a different chromosome.
+    Green = both mates are part of a proper pair; Blue = either this read is not paired, or its mate was not mapped; Red = this read is not properly paired.
   ';
   
   $self->_add_file_format_track(
@@ -1616,8 +1631,9 @@ sub load_configured_das {
 # Attach all das sources from an image config
 sub attach_das {
   my $self      = shift;
+
   my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logic_names')||[]} : () } $self->tree->nodes; # Look for all das sources which are configured and turned on
-  
+
   return unless @das_nodes; # Return if no sources to be drawn
   
   my $hub         = $self->hub;
@@ -2671,7 +2687,7 @@ sub add_sequence_variations {
     depth      => 0.5,
     bump_width => 0,
     colourset  => 'variation',
-    display    => 'off'
+    display    => 'off',
   };
   
   if ($hashref->{'menu'}) {
@@ -2809,10 +2825,10 @@ sub add_structural_variations {
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
   
-  my $sv_menu = $self->create_submenu('structural_variation', 'Structural variants');
-  my $structural_variants  = $self->create_submenu('structural_variants', 'Structural variants');
-  
-  my %options = (
+  my $sv_menu             = $self->create_submenu('structural_variation', 'Structural variants');
+  my $structural_variants = $self->create_submenu('structural_variants',  'Structural variants');
+  my $desc                = 'For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.';
+  my %options             = (
     db         => $key,
     glyphset   => 'structural_variation',
     strand     => 'r', 
@@ -2821,48 +2837,37 @@ sub add_structural_variations {
     colourset  => 'structural_variant',
     display    => 'off',
   );
-  my %options2 = (
-    db         => $key,
-    glyphset   => 'structural_variation',
-    strand     => 'r', 
-    bump_width => 0,
-    height     => 12,
-    colourset  => 'structural_variant',
-    display    => 'off',
-  );
-	
-	# All
+  
+  # All
   $structural_variants->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
     %options,
     caption     => 'Structural variants',
     sources     => undef,
-    description => 'Structural variants from all sources. For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.',
+    description => "Structural variants from all sources. $desc",
     depth       => 10
   }));
-	
-	# Complete overlap (Larger structural variants)
-	$structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
-    %options2,
+  
+  # Complete overlap (Larger structural variants)
+  $structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
+    %options,
     caption     => 'Larger structural variants',
     sources     => undef,
-    description => 'Structural variants from all sources overlapping completely the image (i.e. the start and end coordinates are outside the image).
-		                For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.',
+    description => "Structural variants from all sources overlapping completely the image (i.e. the start and end coordinates are outside the image). $desc",
     depth       => 1,
-		overlap     => 2
+    overlap     => 2,
+    height      => 12
   }));
-	
-	# Partial overlap (Smaller structural variants)
-	$structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
+  
+  # Partial overlap (Smaller structural variants)
+  $structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
     %options,
     caption     => 'Smaller structural variants',
     sources     => undef,
-    description => 'Structural variants from all sources overlapping partially the image (i.e. start and/or end coordinates are inside the image).
-		                For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.',
-		depth       => 10,
-		overlap     => 1
+    description => "Structural variants from all sources overlapping partially the image (i.e. start and/or end coordinates are inside the image). $desc",
+    depth       => 10,
+    overlap     => 1
   }));
-
-	
+  
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
@@ -2901,8 +2906,7 @@ sub add_copy_number_variant_probes {
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
   
-  my $sv_menu = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
-  
+  my $sv_menu        = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
   my $cnv_probe_menu = $self->create_submenu('cnv_probe','Copy number variant probes');
   
   my %options = (
@@ -2936,8 +2940,6 @@ sub add_copy_number_variant_probes {
   $sv_menu->append($cnv_probe_menu);
 }
 
-
-
 sub add_somatic_mutations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('somatic');
@@ -2945,7 +2947,6 @@ sub add_somatic_mutations {
   return unless $menu;
   
   my $somatic = $self->create_submenu('somatic_mutation', 'Somatic variants');
-  
   my %options = (
     db         => $key,
     glyphset   => '_variation',
@@ -2994,7 +2995,7 @@ sub add_somatic_mutations {
     my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}};
     
     foreach my $description (sort  keys %tumour_sites) {
-      next if ($description eq 'none');
+      next if $description eq 'none';
       
       my $phenotype_id           = $tumour_sites{$description};
       my ($source, $type, $site) = split /\:/, $description;
@@ -3009,6 +3010,7 @@ sub add_somatic_mutations {
         description => $description
       }));    
     }
+    
     $somatic->append($tissue_menu);
   }
   
