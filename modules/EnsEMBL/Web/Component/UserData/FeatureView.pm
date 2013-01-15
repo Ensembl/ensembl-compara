@@ -22,47 +22,45 @@ sub content {
   my $species_defs    = $hub->species_defs;
   my $sitename        = $species_defs->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
-  my $html;
 
-  my $form = EnsEMBL::Web::Form->new('select', $hub->species_path($current_species).'/UserData/FviewRedirect', 'post', 'std check');
+  my $form            = $self->new_form({'id' => 'select', 'action' => $hub->species_path($current_species).'/UserData/FviewRedirect', 'method' => 'post'});  
+  my $add_track_link  = $hub->url({qw(type UserData action SelectFile __clear 1)});
 
   $form->add_notes({'id' => 'notes', 'heading' => 'Hint', 'text' => qq{
-<p>Using this form, you can select Ensembl features to display on a karyotype (formerly known as FeatureView).</p>
-<p>If you want to use your own data file, please go to the <a href="/$current_species/UserData/SelectFile" class="modal_link">Add custom track</a> page instead.</p>
+    <p>Using this form, you can select Ensembl features to display on a karyotype (formerly known as FeatureView).</p>
+    <p>If you want to use your own data file, please go to the <a href="$add_track_link" class="modal_link" rel="modal_user_data">Add custom track</a> page instead.</p>
   }});
 
-  ## Species is set automatically for the page you are on
-  my @species;
-  foreach my $sp ($species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $species_defs->species_label($sp, 1)};
-  }
-  @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
-  $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'species',
-      'label'   => "Species",
-      'values'  => \@species,
-      'value'   => $current_species,
-      'select'  => 'select',
-  );
+  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map {'value' => $_, 'caption' => $species_defs->species_label($_, 1)}, $species_defs->valid_species;
+  $form->add_field({
+    'type'    => 'dropdown',
+    'name'    => 'species',
+    'label'   => 'Species',
+    'values'  => \@species,
+    'value'   => $current_species  # Species is set automatically for the page you are on
+  });
 
   my @types = (
-    {'value' => 'Gene',                 'name' => 'Gene'},
-    {'value' => 'DnaAlignFeature',      'name' => 'Sequence Feature'},
-    {'value' => 'ProteinAlignFeature',  'name' => 'Protein Feature'},
+    {'value'  => 'Gene',                'caption' => 'Gene'},
+    {'value'  => 'DnaAlignFeature',     'caption' => 'Sequence Feature'},
+    {'value'  => 'ProteinAlignFeature', 'caption' => 'Protein Feature'},
   );
   ## Disabled owing to API issues
-  ##  {'value' => 'OligoProbe',           'name' => 'OligoProbe'},
+  ##  {'value' => 'OligoProbe',           'caption' => 'OligoProbe'},
 
-  $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'ftype',
-      'label'   => 'Feature Type',
-      'values'  => \@types,
-      'select'  => 'select',
-  );
+  $form->add_field({
+    'type'    => 'dropdown',
+    'name'    => 'ftype',
+    'label'   => 'Feature Type',
+    'values'  => \@types
+  });
 
-  $form->add_element( type => 'Text', name => 'id', label => 'ID(s)', 'notes' => 'Hint: to display multiple features, enter them on separate lines or as a comma-delimited list' );
+  $form->add_field({
+    'type'    => 'text',
+    'name'    => 'id',
+    'label'   => 'ID(s)',
+    'notes'   => 'Hint: to display multiple features, enter them on separate lines or as a comma-delimited list'
+  });
 
   ## Need to convert standard colours to hex colours for storing in ID file
   my @colours;
@@ -72,38 +70,40 @@ sub content {
     my $colourname = ucfirst($colour);
     $colourname =~ s/Dark/Dark /;
     my $hex = $colour_scheme->{'POINTER_'.uc($colour)};
-    push @colours, {'name' => $colourname, 'value' => $hex};
+    push @colours, {'caption' => $colourname, 'value' => $hex};
   }
 
-  $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'colour',
-      'label'   => 'Colour',
-      'values'  => \@colours,
-      'select'  => 'select',
-  );
+  $form->add_field({
+    'type'    => 'dropdown',
+    'name'    => 'colour',
+    'label'   => 'Colour',
+    'values'  => \@colours,
+    'select'  => 'select',
+  });
 
   my @styles = (
-    {'value' => 'highlight_lharrow',   'name' => 'Arrow on lefthand side'},
-    {'value' => 'highlight_rharrow',   'name' => 'Arrow on righthand side'},
-    {'value' => 'highlight_bowtie',    'name' => 'Arrows on both sides'},
-    {'value' => 'highlight_wideline',  'name' => 'Line'},
-    {'value' => 'highlight_widebox',   'name' => 'Box'},
+    {'value'  => 'highlight_lharrow',   'caption' => 'Arrow on lefthand side'},
+    {'value'  => 'highlight_rharrow',   'caption' => 'Arrow on righthand side'},
+    {'value'  => 'highlight_bowtie',    'caption' => 'Arrows on both sides'},
+    {'value'  => 'highlight_wideline',  'caption' => 'Line'},
+    {'value'  => 'highlight_widebox',   'caption' => 'Box'}
   );
-  $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'style',
-      'label'   => 'Pointer style',
-      'values'  => \@styles,
-      'select'  => 'select',
-  );
+  $form->add_field({
+    'type'    => 'dropdown',
+    'name'    => 'style',
+    'label'   => 'Pointer style',
+    'values'  => \@styles
+  });
 
-  $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Show features', 'class' => 'submit');
-  $form->add_element('type' => 'ForceReload');
+  $form->add_button({
+    'name'    => 'submit_button',
+    'value'   => 'Show features',
+    'class'   => 'submit'
+  });
 
-  $html .= $form->render;
-  
-  return $html;
+  $form->force_reload_on_submit;
+
+  return $form->render;
 }
 
 1;
