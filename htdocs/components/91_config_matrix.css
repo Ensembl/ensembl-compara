@@ -59,7 +59,7 @@ div.config div.matrix_key .key .filter.on p                       { background-c
 table.config_matrix td.highlight p                                { background-color: #DAA520; opacity: 0.4; filter: Alpha(Opacity=40); }
 table.config_matrix tr.renderers                                  { height: 30px; }
 table.config_matrix tr.renderers th img.menu_option               { position: relative; left: 3px; top: 5px; }
-table.config_matrix tr.renderers th ul.popup_menu                 { width: 145px; margin-top: 19px; }
+table.config_matrix tr.renderers th ul.popup_menu                 { margin-top: 19px; }
 table.config_matrix tr.renderers th.first div                     { position: relative; top: -6px; }
 table.config_matrix tr.renderers th.first ul.popup_menu           { margin: -6px 0 0; }
 table.config_matrix tr.renderers th.first h2                      { margin: 0; padding: 0; float: none; }
@@ -72,6 +72,7 @@ body.ie   table.config_matrix thead th p                          { filter: prog
 body.ie   table.config_matrix thead th div.select_all_column      { width: 140px; margin-top: 20px; filter: Alpha(Opacity=85); }
 body.ie   table.config_matrix thead th div.select_all_column div  { margin: 0; }
 body.ie   table.config_matrix th.first div.select_all_row         { left: 0; top: -6px; margin: 0; }
+body.ie   table.config_matrix tr.renderers th ul.popup_menu       { width: 165px; }
 body.ie67 table.config_matrix tr.renderers th ul.popup_menu       { margin: 19px 0 0 -20px; }
 body.ie7  table.config_matrix thead th p                          { bottom: 3px; }
 body.ie7  table.config_matrix thead th div.select_all_column      { margin-top: 25px; }
