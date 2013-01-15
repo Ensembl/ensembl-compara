@@ -90,7 +90,7 @@ sub content {
   $html  .= $self->group_shared_data;
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html ||= '<p class="space-below">You have no custom data.</p>';
-  $html .= sprintf '<p><a href="%s" class="modal_link"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add a custom track</a></p>', $hub->url({'action'=>'SelectFile'});
+  $html .= sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add a custom track</a></p>', $hub->url({'action'=>'SelectFile'});
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
   my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups
@@ -115,7 +115,7 @@ sub content {
 sub _icon_inner {
   my ($self,$params) = @_;
 
-  return qq(<span class="sprite _ht _ht_static $params->{'class'}" title="$params->{'title'}">&nbsp;</span>);
+  return qq(<span class="sprite _ht _ht_static _ht_rm $params->{'class'}" title="$params->{'title'}">&nbsp;</span>);
 }
 
 sub _icon {
@@ -129,7 +129,7 @@ sub _icon {
   my $inner = $self->_icon_inner($params);
   return $inner if($params->{'no_link'});
   return qq(
-    <a href="$params->{'link'}" class="$params->{'link_class'} icon_link"
+    <a href="$params->{'link'}" class="$params->{'link_class'} icon_link" rel="modal_user_data"
       $params->{'link_extra'}>$inner</a>
   );
 }
