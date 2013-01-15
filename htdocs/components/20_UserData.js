@@ -58,11 +58,8 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({
   },
   
   formSubmit: function(form, data) {
-    
-    var visibleInps = this.elLk.requiredInputs.filter(':visible');
-    
-    // if neither of the multiple inputs have any value
-    if (visibleInps.length > 1 && visibleInps.filter(function () { return !!this.value; }).length === 0) {
+  
+    if (!this.elLk.requiredInputs.filter(':visible:not([value=""])').length) {
       this.elLk.errorMessage.show();
       return false;
     }
