@@ -767,6 +767,7 @@ sub _add_datahub_tracks_matrix {
     my $key        = join '_', $name, $dataset->{'config'}{'track'}, $label_x;
     my $column_key = $self->tree->clean_id($key);
     my $type       = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+    my $squish     = $track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish';
     
     # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
     # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
@@ -783,21 +784,12 @@ sub _add_datahub_tracks_matrix {
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
+      squish      => $squish,
       datahub     => 'track',
       option_key  => join('_', 'opt_matrix', $self->tree->clean_id($options{'menu_key'}), $options{'submenu_key'}, "$label_x:$label_y"),
       column_key  => $column_key,
       %options
     };
-   
-    # Alternative rendering order for genome segmentation and similar
-    if ($track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish') {
-      $source->{'renderers'} = [
-        'off',     'Off',
-        'compact', 'Continuous',
-        'normal',  'Separate',
-        'labels',  'Separate with labels',
-      ];
-    }
     
     if (exists $track->{'viewLimits'}) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
@@ -817,8 +809,8 @@ sub _add_datahub_tracks_matrix {
       label_x     => $label_x,
       description => "<p>$info</p><p>Contains the following sub tracks:</p>",
       info        => $info,
+      squish      => $squish,
       datahub     => 'column',
-#      renderers   => $source->{'renderers'},
       %options
     };
     
@@ -862,22 +854,12 @@ sub _add_datahub_tracks {
     my $source = {
       name        => $track->{'track'},
       source_name => $source_name,
-#      caption     => $track->{'shortLabel'},
       description => $track->{'longLabel'} . $link,
       source_url  => $track->{'bigDataUrl'},
+      squish      => $track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish',
       datahub     => 1,
       %$options
     };
-    
-    # Alternative rendering order for genome segmentation and similar
-    if ($track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish') {
-      $source->{'renderers'} = [
-        'off',     'Off',
-        'compact', 'Continuous',
-        'normal',  'Separate',
-        'labels',  'Separate with labels',
-      ];
-    }
     
     $source->{'colour'} = $track->{'color'} if exists $track->{'color'};
 
@@ -918,6 +900,16 @@ sub _add_datahub_extras_options {
     $args{'options'}{'height'} = $default_height if $default_height > 0;
   }
   
+  # Alternative rendering order for genome segmentation and similar
+  if ($args{'source'}{'squish'}) {
+    $args{'renderers'} = [
+      'off',     'Off',
+      'compact', 'Continuous',
+      'normal',  'Separate',
+      'labels',  'Separate with labels',
+    ];
+  }
+  
   $args{'options'}{'viewLimits'} = $args{'menu'}{'viewLimits'} || $args{'source'}{'viewLimits'} if exists $args{'menu'}{'viewLimits'} || exists $args{'source'}{'viewLimits'};
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
@@ -932,6 +924,8 @@ sub _add_datahub_extras_options {
   } elsif ($args{'source'}{'datahub'} eq 'column') {
     $args{'options'}{'option_key'} = $args{'key'};
   }
+  
+  return %args;
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
@@ -1012,17 +1006,17 @@ sub _add_bigbed_track {
   my ($self, %args) = @_;
  
   my $renderers = $args{'source'}{'renderers'} || [
-    'off',    'Off', 
-    'normal', 'Normal', 
-    'labels', 'Labels',
+    'off',     'Off', 
+    'normal',  'Normal', 
+    'labels',  'Labels',
     'compact', 'Compact',
   ];
 
   my $options = {
-    external => 'external',
-    sub_type => 'url',
+    external  => 'external',
+    sub_type  => 'url',
     colourset => 'feature',
-    style => $args{'source'}{'style'},
+    style     => $args{'source'}{'style'},
   };
   
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
@@ -1044,9 +1038,9 @@ sub _add_bigwig_track {
   my ($self, %args) = @_;
   
   my $renderers = $args{'source'}{'renderers'} || [
-      'off',    'Off',
-      'tiling', 'Wiggle plot',
-      'compact', 'Compact',
+    'off',     'Off',
+    'tiling',  'Wiggle plot',
+    'compact', 'Compact',
   ];
  
   my $options = {
@@ -1089,7 +1083,7 @@ sub _add_flat_file_track {
   
   return unless $menu;
  
-  my ($strand, $renderers) = $self->_user_track_settings($options{'style'},$options{'format'});
+  my ($strand, $renderers) = $self->_user_track_settings($options{'style'}, $options{'format'});
   
   my $track = $self->create_track($key, $name, {
     display     => 'off',
@@ -1113,18 +1107,17 @@ sub _add_file_format_track {
   
   return unless $menu;
   
-  $self->_add_datahub_extras_options(%args) if $args{'source'}{'datahub'};
+  %args = $self->_add_datahub_extras_options(%args) if $args{'source'}{'datahub'};
   
   my $type    = lc $args{'format'};
   my $article = $args{'format'} =~ /^[aeiou]/ ? 'an' : 'a';
   my $desc;
   
   if ($args{'internal'}) {
-    $desc = sprintf('Data served from a %s file: %s', $args{'format'}, $args{'description'});
+    $desc = "Data served from a $args{'format'} file: $args{'description'}";
   } else {
     $desc = sprintf(
-      'Data retrieved from %s %s file on an external webserver. %s
-      This data is attached to the %s, and comes from URL: %s',
+      'Data retrieved from %s %s file on an external webserver. %s This data is attached to the %s, and comes from URL: %s',
       $article,
       $args{'format'},
       $args{'description'},
@@ -1155,11 +1148,10 @@ sub _user_track_settings {
       
   if ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
-    @user_renderers = ( 'off', 'Off', 'tiling', 'Wiggle plot' );
+    @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   } else {
     $strand         = 'b'; 
-    @user_renderers = @{$self->{'alignment_renderers'}};
-    push @user_renderers,'difference','Differences';
+    @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
   
   return ($strand, \@user_renderers);
@@ -1220,7 +1212,8 @@ sub update_from_input {
 }
 
 sub update_from_url {
-## Tracks added "manually" in the URL (e.g. via a link)
+  ## Tracks added "manually" in the URL (e.g. via a link)
+  
   my ($self, @values) = @_;
   my $hub     = $self->hub;
   my $session = $hub->session;
