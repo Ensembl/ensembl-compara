@@ -11,6 +11,12 @@ use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Command);
 
+sub ajax_redirect {
+  ## Provide default value for redirectType and modalTab
+  my ($self, $url, $param, $anchor, $redirect_type, $modal_tab) = @_;
+  $self->SUPER::ajax_redirect($url, $param, $anchor, $redirect_type || 'modal', $modal_tab || 'modal_user_data');
+}
+
 sub upload {
 ## Separate out the upload, to make code reuse easier
   my ($self, $method, $type) = @_;
