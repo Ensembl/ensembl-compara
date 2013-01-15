@@ -1743,8 +1743,34 @@ sub dumpSequence {
     $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
   }
 
+  my %patch_hap_dets = ();
+  # get seq_region_synonyms and start / stop positions for patches (ensembl)
+  #  - requires the supercontig (which has the seq_region_synonym) and the chromosome to have the same name
+  #  - positions come from assembly_exception table
+  $sth = $conf->{'dbh'}->prepare(qq(
+       SELECT sr2.name, srs.synonym, ae.seq_region_start, ae.seq_region_end
+         FROM coord_system cs, seq_region sr2, assembly_exception ae, seq_region sr1
+            LEFT JOIN seq_region_synonym srs ON sr1.seq_region_id = srs.seq_region_id
+       WHERE sr1.name = sr2.name
+         AND sr1.coord_system_id != sr2.coord_system_id
+         AND sr1.coord_system_id = cs.coord_system_id
+         AND sr2.seq_region_id = ae.seq_region_id));
+  $sth->execute;
+  while (my ($name, $grc_name, $start, $end) = $sth->fetchrow_array() ) {
+    $patch_hap_dets{$name} = {
+      'name' => $name,
+      'syn'  => $grc_name,
+      'start'=> $start,
+      'end'   => $end,
+    };
+  }
+
+
+  ## haplotypes
+
+
   #for vega - get ensembl chromosome names if they're different from the vega names
-  my %enames = {};
+  my %enames = ();
   if ($sitetype eq 'Vega') {
     $sth = $conf->{'dbh'}->prepare(qq(
        SELECT sr.name, sra.value
@@ -1757,6 +1783,26 @@ sub dumpSequence {
     while (my ($v_name, $e_name) = $sth->fetchrow_array() ) {
       $enames{$v_name} = $e_name;
     }
+    #get seq_region_synonyms and start / stop positions for patches (vega)
+    %patch_hap_dets = ();
+    $sth = $conf->{'dbh'}->prepare(qq(
+              SELECT sr.name, concat(sra1.value,'.',sra2.value) as synonym,  ae.seq_region_start, ae.seq_region_end
+                FROM assembly_exception ae, seq_region sr, seq_region_attrib sra1, attrib_type at1, seq_region_attrib sra2, attrib_type at2
+               WHERE sr.seq_region_id    = ae.seq_region_id
+                 AND sr.seq_region_id    = sra1.seq_region_id
+                 AND sra1.attrib_type_id = at1.attrib_type_id
+                 AND at1.code            = 'embl_acc'
+                 AND sr.seq_region_id    = sra2.seq_region_id
+                 AND sra2.attrib_type_id = at2.attrib_type_id
+                 AND at2.code            = 'embl_version'));
+    while (my ($name, $grc_name, $start, $end) = $sth->fetchrow_array() ) {
+      $patch_hap_dets{$name} = {
+        'name' => $name,
+        'syn'  => $grc_name,
+        'start'=> $start,
+        'end'   => $end,
+      };
+    }
   }
 
   #get all seq_regions
@@ -1766,7 +1812,7 @@ sub dumpSequence {
          LEFT JOIN seq_region_synonym as srs on sr.seq_region_id = srs.seq_region_id
         WHERE sr.coord_system_id = cs.coord_system_id));
   $sth->execute();
-  my ($old_name,$old_type,$old_length);
+  my ($old_name,$old_type,$old_length,$old_start,$old_end);
   my $synonyms = [];
   my $other_names = [];
   while( my($name,$length,$type,$cs_id,$syn) = $sth->fetchrow_array() ) {
@@ -1792,7 +1838,7 @@ sub dumpSequence {
     }
     else {
       if ($old_name) {
-        &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
+        &p( SeqLine($dbspecies,$old_name,$old_type,$old_start,$old_end,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
       }
       $old_name = $name;
       $old_type = $type;
@@ -1803,9 +1849,20 @@ sub dumpSequence {
         push @$other_names, $ename;
       }
       push @$synonyms, $syn if $syn;
+
+      #set different seq_region start and stop, add a synonym, for Patches
+      if ($patch_hap_dets{$old_name}) {
+        $old_end = $patch_hap_dets{$old_name}{'end'};
+        $old_start = $patch_hap_dets{$old_name}{'start'};
+        push @$synonyms, $patch_hap_dets{$old_name}{'syn'} unless (grep {$syn eq $_} @$synonyms);
+      }
+      else {
+        $old_end = $length;
+        $old_start = 1;
+      }
     }
   }
-  &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
+  &p( SeqLine($dbspecies,$old_name,$old_type,$old_start,$old_end,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
   return footer( $counter->(),$nogzip,$fh);
 }
 
@@ -1837,13 +1894,12 @@ sub SeqLine {
                     $r);
   $species =~ s/_/ /;
 
-
   my $desc = ($name eq $sr) ? "$type $name has a length of $len bp." : "$type $name (length $len bp) is mapped to $sr_type $sr.";
   my $extra_desc = '';
 
   #deal with any synonyms
   if (@$synonyms) {
-    $extra_desc = " It has EMBL accessions / synonyms of " . join(',',@$synonyms) . ".";
+    $extra_desc = " It has synonyms or EMBL/GRC accessions of " . join(',',@$synonyms) . ".";
   }
 
  #deal with with Sanger Projects
