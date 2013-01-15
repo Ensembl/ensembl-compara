@@ -103,7 +103,7 @@ sub content_ajax {
               <p class="space-below">None of the features in your file could be mapped to the %s genome.</p>
               <p class="space-below">Please check that you have selected the right species.</p>
             </div>
-            <p class="space-below"><a href="%s" class="modal_link">Delete upload and start again</a></p>
+            <p class="space-below"><a href="%s" class="modal_link" rel="modal_user_data">Delete upload and start again</a></p>
             <p class="space-below">or</p>',
             $error,
             $hub->species_defs->get_config($data->{'species'}, 'SPECIES_SCIENTIFIC_NAME'),
