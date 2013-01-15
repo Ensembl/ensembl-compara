@@ -63,8 +63,13 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     this.el.togglewrap();
     Ensembl.EventManager.trigger('validateForms', this.el);
     
-    this.el.find('._ht').not('._ht_static').helptip().end().filter('._ht_static').helptip({'static': true});
-    
+    this.el.find('._ht').each(function() {
+      var ht = $(this).helptip({'static': !!this.className.match(/_ht_static/)});
+      if (ht.hasClass('_ht_rm')) {
+        ht.on('click', function() { $(this).helptip(false); });
+      }
+    });
+       
     this.el.find('._stt').selectToToggle({}, this.el);
     
     this.addSubPanel();
@@ -153,7 +158,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
     
     $('.js_panel', this.elLk.content).each(function () {
-      var panelType = $('input.panel_type', this).val();
+      var panelType = $('input.subpanel_type', this).val();
       
       if (panelType && !(panel instanceof Ensembl.Panel[panelType])) {
         params.push([ this.id, panelType ]);
