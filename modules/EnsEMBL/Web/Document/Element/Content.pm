@@ -154,7 +154,7 @@ sub get_json {
   return {
     wrapper   => '<div class="modal_wrapper"></div>',
     content   => $content,
-    panelType => $content =~ /panel_type/ ? '' : 'ModalContent'
+    panelType => $content =~ /[^a-z]+panel_type/ ? '' : 'ModalContent'
   };
 }
 
