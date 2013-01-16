@@ -168,6 +168,7 @@ sub fetch_by_GenomeDB_and_name {
   Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomeDB
   Arg [2]    : (optional) string $coord_system_name
   Arg [3]    : (optional) string $name
+  Arg [4]    : (optional) boolean $is_reference
   Example    : my $human_chr_dnafrags = $dnafrag_adaptor->
                    fetch_all_by_GenomeDB_region(
                      $human_genome_db, 'chromosome')
@@ -181,7 +182,7 @@ sub fetch_by_GenomeDB_and_name {
 =cut
 
 sub fetch_all_by_GenomeDB_region {
-  my ($self, $genome_db, $coord_system_name, $name) = @_;
+  my ($self, $genome_db, $coord_system_name, $name, $is_reference) = @_;
 
   unless($genome_db && ref $genome_db && 
 	 $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
@@ -213,6 +214,11 @@ sub fetch_all_by_GenomeDB_region {
   if(defined $name) {
     $sql .= ' AND df.name = ?';
     push @bind_values, "$name";
+  }
+
+  if(defined $is_reference) {
+    $sql .= ' AND df.is_reference = ?';
+    push @bind_values, "$is_reference";
   }
 
   my $sth = $self->prepare($sql);
