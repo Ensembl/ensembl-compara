@@ -1,0 +1,347 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::PairAlignerConfig
+
+=cut
+
+=head1 SYNOPSIS
+
+$module->fetch_input
+
+$module->run
+
+$module->write_output
+
+=cut
+
+=head1 DESCRIPTION
+
+This module populuates the temporary table 'statistics' with coding exon statistics (matches, mis-matches, insertions and uncovered)
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with a _
+
+=cut
+
+package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats;
+
+use strict;
+use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub fetch_input {
+  my ($self) = @_;
+
+  #These lines are only necessary when running as not part of the PairAligner pipeline
+  if ($self->param('registry_dbs')) {
+      my $reg = "Bio::EnsEMBL::Registry";
+      my $registry_dbs =$self->param('registry_dbs');
+      
+      for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
+          $reg->load_registry_from_db( %{ $registry_dbs->[$r_ind] } );
+      }
+  }
+
+  return 1;
+}
+
+=head2 run
+
+=cut
+
+sub run {
+  my $self = shift;
+
+  my $reg = "Bio::EnsEMBL::Registry";
+
+  my $ref_species = $self->param('species');
+  my $seq_region = $self->param('seq_region');
+  
+  my $compara_dba;
+  if ($self->param('db_conn')) {
+      #These lines are only necessary when running as not part of the PairAligner pipeline
+      my $compara_url = $self->param('db_conn');
+      $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+  } else {
+      $compara_dba = $self->compara_dba;
+  }
+
+  my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
+  my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
+  my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
+  my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+
+  my $mlss_id = $self->param('mlss_id');
+  my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+
+  my $slice_adaptor = $reg->get_adaptor($ref_species, 'core', 'Slice');
+  throw("Registry configuration file has no data for connecting to <$ref_species>") if (!$slice_adaptor);
+
+  #Necessary to get unique bits of Y
+  my $slices = $slice_adaptor->fetch_by_region_unique('toplevel', $seq_region);
+
+  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
+  my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $seq_region);
+  
+  my $coding_exons = [];
+  foreach my $slice (@$slices) {
+      $coding_exons = get_coding_exon_regions($slice, $coding_exons);
+  }
+
+  print "coding_exons " . @$coding_exons . "\n" if($self->debug);
+  
+  my $totals;
+  my $uncovered = 0;
+  foreach my $coding_exon (@$coding_exons) {
+      my ($start, $end) = @$coding_exon;
+
+      my $coding_exon_length = ($end - $start + 1);
+      print "start=$start end=$end length=$coding_exon_length\n" if($self->debug);
+
+      #Store the total coding_exon_length
+      $totals->{'coding_exon_length'} += $coding_exon_length;
+
+      #restricted genomic_align_blocks (use dnafrag so I can send over start and end instead of creating a new slice)
+      my $gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $dnafrag, $start, $end, undef, undef, 1);
+
+      if (@$gabs > 1) {
+          $gabs = $self->restrict_overlapping_genomic_align_blocks($gabs);
+      }
+
+      print "num gabs " . @$gabs . "\n" if($self->debug);
+
+      #Keep track of how much of a coding exon is covered by the reference genomic_align 
+      #(in the case where multiple gabs cover a single coding exon with gaps between the blocks)
+      my $ref_ga_covering_coding_exon = 0;
+
+      foreach my $gab (@$gabs) {
+
+          #values for this gab
+          my $num_matches = 0;
+          my $num_mis_matches = 0;
+          my $ref_insertions = 0;
+          my $non_ref_insertions = 0;
+        
+          #Total length of this restricted alignment block (include insertions)
+          my $align_length = $gab->length;
+          print "  align_length=$align_length coding_exon_length=$coding_exon_length\n" if($self->debug);
+        
+          #reference and non-reference genomic_align
+          my $ref_ga = $gab->reference_genomic_align;
+          my $non_ref_ga = $gab->get_all_non_reference_genomic_aligns->[0];
+          
+          #Length of reference genomic_align (in slice coords ie no insertions)
+          my $ref_ga_length = ($ref_ga->dnafrag_end - $ref_ga->dnafrag_start + 1);
+        
+          #Perform xor which will result in matches having a value of zero and mis-matches being non-zero
+          my $mask = $ref_ga->aligned_sequence ^ $non_ref_ga->aligned_sequence;
+        
+          #Count the number of matches ie zero (\x0) values there are
+          $num_matches = $mask =~ tr/\x0/\x0/;
+        
+          #Find number of insertions (ie gaps in the other species)
+          $non_ref_insertions = $ref_ga->aligned_sequence =~ tr/-//;
+          $ref_insertions = $non_ref_ga->aligned_sequence =~ tr/-//;
+        
+          #Mismatches must be what is left. Assume we can't have a gap aligning to a gap
+          $num_mis_matches = $ref_ga_length - $num_matches - $ref_insertions;
+
+          #check (not necessary?)
+          if ($num_mis_matches != ($align_length - $num_matches - $ref_insertions - $non_ref_insertions)) {
+              $self->warning("  PROBLEM $num_mis_matches " . ($align_length - $num_matches - $ref_insertions - $non_ref_insertions) . "\n");
+          }
+
+          #Remember this is the reference genomic_align has already been restricted to the coding_exon. If the
+          #coding exon spans more than one genomic_align, we need to keep track for each genomic_align
+          $ref_ga_covering_coding_exon += ($ref_ga->dnafrag_end - $ref_ga->dnafrag_start + 1);
+        
+          #Store total values
+          $totals->{'matches'} += $num_matches;
+          $totals->{'mis_matches'} += $num_mis_matches;
+          $totals->{'ref_insertions'} += $ref_insertions;
+          $totals->{'non_ref_insertions'} += $non_ref_insertions;
+          
+          #Print values for this coding_exon/genomic_align
+          print "  " . $ref_ga->aligned_sequence . "\n" if($self->debug);
+          print "  " . $non_ref_ga->aligned_sequence . "\n" if($self->debug);
+          
+          print "  match=$num_matches mis_match=$num_mis_matches ref_ins=$ref_insertions non_ref_ins=$non_ref_insertions ga_length=$ref_ga_length " if($self->debug);
+      }
+      
+      #The uncovered portion of the coding_exon must be the total length of the coding_exon (in slice coords) minus the portion covered by the restricted reference genomic_aligns (there may be more than one)
+      print "uncovered " . ($coding_exon_length-$ref_ga_covering_coding_exon) . "\n\n" if($self->debug);
+      $totals->{'uncovered'} += ($coding_exon_length-$ref_ga_covering_coding_exon);
+  }
+
+  #Store in param to pass to write_output
+  $self->param('totals', $totals);
+
+  return 1;
+}
+
+sub write_output {
+  my $self = shift;
+
+  print "TOTAL\n" if($self->debug);
+  my $totals = $self->param('totals');
+  my $ref_species = $self->param('species');
+  my $seq_region = $self->param('seq_region');
+  my $mlss_id = $self->param('mlss_id');
+
+  foreach my $key (keys %$totals) {
+      print "$key " . $totals->{$key} . "\n" if($self->debug);
+  }
+
+  my $sql = "INSERT INTO statistics (method_link_species_set_id, species_name, seq_region, matches, mis_matches, ref_insertions, non_ref_insertions, uncovered, coding_exon_length) VALUES (?,?,?,?,?,?,?,?,?)";
+  my $sth = $self->compara_dba->dbc->prepare($sql);
+  $sth->execute($mlss_id, $ref_species, $seq_region, $totals->{'matches'},  $totals->{'mis_matches'}, $totals->{'ref_insertions'}, $totals->{'non_ref_insertions'},$totals->{'uncovered'}, $totals->{'coding_exon_length'});
+  $sth->finish;
+
+  return 1;
+
+}
+
+sub get_coding_exon_regions {
+  my ($this_slice, $regions) = @_;
+  #my $regions = [];
+
+  return undef if (!$this_slice);
+
+  my $all_coding_exons = [];
+  my $all_genes = $this_slice->get_all_Genes_by_type("protein_coding");
+  foreach my $this_gene (@$all_genes) {
+    my $all_transcripts = $this_gene->get_all_Transcripts();
+    foreach my $this_transcript (@$all_transcripts) {
+      push(@$all_coding_exons, @{$this_transcript->get_all_translateable_Exons()});
+    }
+  }
+  my $last_start = 0;
+  my $last_end = -1;
+  foreach my $this_exon (sort {$a->seq_region_start <=> $b->seq_region_start} @$all_coding_exons) {
+      #print "exon start " . $this_exon->seq_region_start . " end " . $this_exon->seq_region_end . " last_start $last_start last_end $last_end\n";
+
+    if ($last_end < $this_exon->seq_region_start) {
+      if ($last_end > 0) {
+        push(@$regions, [$last_start, $last_end]);
+      }
+      $last_end = $this_exon->seq_region_end;
+      $last_start = $this_exon->seq_region_start;
+    } elsif ($this_exon->seq_region_end > $last_end) {
+      $last_end = $this_exon->seq_region_end;
+    }
+  }
+
+  #Add final region
+  push (@$regions, [$last_start, $last_end]);
+  return $regions;
+}
+
+
+#
+#Need to deal with overlapping blocks:
+#Sort gabs by dnafrag_start of the reference 
+#Compare current gab ($gab) with previous gab (last_gab)
+#If the there is no overlap, add last_gab to array to be returned (restricted_gabs)
+#If the end of the current ref_ga is less than the end of previous ref_ga (last_end), current gab must be within prev gab so skip
+#If the end of the current ref_ga is greater than the end of previous ref_ga (last_end) and the start is not the same, then restrict
+#block 1 from last_start to current ref_ga start. If the start positions are the same, use the longer block 2.
+#
+sub restrict_overlapping_genomic_align_blocks {
+    my ($self, $gabs) = @_;
+
+    my $restricted_gabs;
+    my $last_start = 0;
+    my $last_end = -1;
+    my $last_gab;
+
+    #Sort on ref_ga->dnafrag_start
+    foreach my $gab (sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$gabs) {
+        my $ref_ga = $gab->reference_genomic_align;
+        my $non_ref_ga = $gab->get_all_non_reference_genomic_aligns->[0];
+
+        print "  ga_start " . $gab->reference_genomic_align->dnafrag_start . " ga_end " . $gab->reference_genomic_align->dnafrag_end . "\n" if ($self->debug);
+        #print "  start " . $non_ref_ga->dnafrag_start . " end " . $non_ref_ga->dnafrag_end . " " . $non_ref_ga->dnafrag->name . "\n";
+
+        my $species1 = $ref_ga->dnafrag->genome_db->name;
+        my $species2 = $non_ref_ga->dnafrag->genome_db->name;
+        #print "  " . $species1 . "\t" . $ref_ga->aligned_sequence . "\n";
+        #print "  " . $species2 . "\t" . $non_ref_ga->aligned_sequence . "\n";
+
+        if ($last_end < 0) {
+            #first time through
+            $last_end = $ref_ga->dnafrag_end;
+            $last_start = $ref_ga->dnafrag_start;
+            $last_gab = $gab;
+
+         #causes problems with chimp chr 6 29997216-29997216 1bp exon
+#        } elsif ($ref_ga->dnafrag_start >= $last_end) {
+        } elsif ($ref_ga->dnafrag_start > $last_end) {
+            #no overlap, no restriction necessary
+            print "  OVER No overlap\n" if($self->debug);
+
+            #Store the last_gab
+            push @$restricted_gabs, $last_gab;
+
+            #Set 'last' to new gab
+            $last_end = $ref_ga->dnafrag_end;
+            $last_start = $ref_ga->dnafrag_start;
+            $last_gab = $gab;
+        } elsif ($ref_ga->dnafrag_end <= $last_end) {
+            #block 1 covers block 2, no restriction necessary
+            print "  OVER block 2 covered by block 1\n" if($self->debug);
+
+            #Don't set 'last'
+        } elsif ($ref_ga->dnafrag_end > $last_end) {
+            #block 2 extends beyond block 1
+            if ($ref_ga->dnafrag_start > $last_start) {
+                #need to restrict end of block 1
+                print "  OVER restrict block1 $last_start " . $ref_ga->dnafrag_start . "\n" if($self->debug);
+                #$last_end = $ref_ga->dnafrag_start-1;
+                #$last_gab = $last_gab->restrict_between_reference_positions($last_start, $last_end);
+
+                my $rest_gab = $last_gab->restrict_between_reference_positions($last_start, $ref_ga->dnafrag_start-1);
+                push @$restricted_gabs,$rest_gab;
+                #Set 'last' to new gab
+                $last_end = $ref_ga->dnafrag_end;
+                $last_start = $ref_ga->dnafrag_start;
+                $last_gab = $gab;
+
+            } else {
+                #block2 start is the same as block 1 start so use block 2
+                #Set 'last' to new gab
+                print "  OVER block2 is larger than block1 $last_end " . $ref_ga->dnafrag_end . "\n" if($self->debug);
+                $last_end = $ref_ga->dnafrag_end;
+                $last_start = $ref_ga->dnafrag_start;
+                $last_gab = $gab;
+            }
+        }
+    }
+
+    #Need to deal with last gab
+    push @$restricted_gabs, $last_gab;
+
+    return $restricted_gabs;
+}
+
+1;
