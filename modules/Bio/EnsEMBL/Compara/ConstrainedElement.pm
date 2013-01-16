@@ -633,8 +633,92 @@ sub summary_as_hash {
 
 sub add_alignment_segments {
  my $self = shift;
- $self->alignment_segments( $self->adaptor->fetch_by_dbID($self->dbID)->{'alignment_segments'} );
-} 
+ unless( $self->alignment_segments ){
+  $self->alignment_segments( $self->adaptor->fetch_by_dbID($self->dbID)->{'alignment_segments'} );
+ }
+}
 
+
+=head2 get_all_exons
+
+  Arg  1        : (optional) list of Bio::EnsEMBL::Gene and/or Bio::EnsEMBL::Transcript and/or Bio::EnsEMBL::Compara::GenomeDB
+                  objects eg ce->get_all_exons($human_gene1, $human_gene2, $cow_transcript1, $horse_genomeDB);
+  Examples      : my $CEs = $cons_ele_a->fetch_all_by_MethodLinkSpeciesSet_Slice($cons_ele_mlss, $species_slice);
+                  foreach my $constrained_element( @{ $CEs }) {
+                #1   foreach my $exon(@{ $constrained_element->get_all_exons() }){ # will return all exons based on the $species_slice only
+                #2   foreach my $exon(@{ $constrained_element->get_all_exons($human_gene1) }){ # same as #1 but will filter out all exons 
+                                                                                               # not associated with $human_gene1
+                #3   foreach my $exon(@{ $constrained_element->get_all_exons($horse_genomeDB) }){ # will return horse specific exons (if  
+                                                                                                  # there is horse sequence in the cons_ele) 
+                    print $exon->stable_id, "\n";
+                   }
+                  }
+  Description   : Will return a listref of Bio::EnsEMBL::Exon objects which overlap the constrained element 
+                  if Gene objects are provided as arguments, only exons associated with these genes will be returned
+  Returns       : listref of Bio::EnsEMBL::Exon objects or an empty listref if there are no overlapping exons
+  Exceptions    : If the constrained element objects have an no associated Slice object (ie. only if they were obtained 
+                  from the adaptor using the method fetch_by_dbID then at least one parameter (gene, transcript or genomeDB object) 
+                  must be provided, otherwise throw
+
+=cut
+
+sub get_all_exons {
+ my $self = shift;
+ my @params = @_;
+
+ my (%genomes, %exon_stable_ids, @exons);
+  
+ my $dnafrag_a = $self->adaptor->db->get_DnaFrag;
+ my $genome_db_a = $self->adaptor->db->get_GenomeDB;
+
+ $self->add_alignment_segments;
+
+ if(@params){
+  foreach my $param(@params){
+   if(ref $param eq "Bio::EnsEMBL::Gene" || ref $param eq "Bio::EnsEMBL::Transcript"){
+     foreach my $feature_exon(@{ $param->get_all_Exons }){
+      $exon_stable_ids{ $feature_exon->stable_id }++; # get the stable ids for the feature exons, if any
+     }
+     my $genome_db = $genome_db_a->fetch_by_Slice( $param->feature_Slice );
+     $genomes{ $genome_db->name } = undef; 
+   } elsif (ref $param eq "Bio::EnsEMBL::Compara::GenomeDB"){
+     $genomes{ $param->name } = undef;
+   } else { throw("incorrect object type in parameter list"); }
+  }
+  foreach my $alignment_seg( @{ $self->alignment_segments } ){
+   if(exists( $genomes{ $alignment_seg->[4] } )) { 
+    my $species = $alignment_seg->[4];
+    push( @{ $genomes{ $species } }, $alignment_seg);
+   }
+  }
+ } elsif($self->reference_dnafrag_id) { # must have been fetched by a slice/dnafrag_region method 
+    my $dnafrag_id = $self->reference_dnafrag_id;
+    my $dnafrag = $dnafrag_a->fetch_by_dbID($dnafrag_id);
+    my $species = $dnafrag->genome_db->name;
+    push( @{ $genomes{ "$species" } }, [ $dnafrag_id, 
+                                       $self->seq_region_start, 
+                                       $self->seq_region_end,
+                                       $self->strand,
+                                       "$species",
+                                       $dnafrag->name ] );
+ } else {
+    throw("need to supply a reference species genome_db, gene or a transcript object");
+ } 
+
+ foreach my $genome (keys %genomes){
+  foreach my $seg (@{ $genomes{ $genome } }){
+   my($dbID, $from, $to, $strand) = @{ $seg }[0..3];
+   my $align_seg_slice = $dnafrag_a->fetch_by_dbID( $dbID )->slice->sub_Slice( $from, $to, $strand );
+   foreach my $align_seg_exon( @{ $align_seg_slice->get_all_Exons } ){
+    if(keys %exon_stable_ids){
+     push(@exons, $align_seg_exon) if( exists($exon_stable_ids{ $align_seg_exon->stable_id }) );
+    } else {
+     push(@exons, $align_seg_exon);
+    }
+   }
+  }
+ }
+ return \@exons;
+}
 
 1;
