@@ -235,8 +235,8 @@ if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" ||
 	}
 	
 	if (defined $blastz_parameters->{Q} && $blastz_parameters->{Q} ne "" ) {
-	    my $matrix = create_matrix_table($blastz_parameters->{Q});
-	    $template->param(BLASTZ_Q => $matrix);
+	    #my $matrix = create_matrix_table($blastz_parameters->{Q});
+	    #$template->param(BLASTZ_Q => $matrix);
 	} else {
 	    $template->param(BLASTZ_Q => "Default");
 	}
@@ -292,14 +292,19 @@ $template->param(REF_ALIGN => format_number($ref_results->{alignment_coverage}))
 #$template->param(REF_ALIGN_PERC => sprintf "%.2f",($ref_results->{alignment_coverage} / $ref_results->{length} * 100));
 $template->param(REF_CODEXON => format_number($ref_results->{coding_exon_length}));
 #$template->param(REF_CODEXON_PERC => sprintf "%.2f",($ref_results->{coding_exon_length} / $ref_results->{length}* 100));
-$template->param(REF_ALIGN_CODEXON => format_number($ref_results->{alignment_exon_coverage}));
+$template->param(REF_MATCHES => format_number($ref_results->{matches}));
+$template->param(REF_MISMATCHES => format_number($ref_results->{mis_matches}));
+$template->param(REF_INSERTIONS => format_number($ref_results->{ref_insertions}));
+$template->param(REF_UNCOVERED => format_number($ref_results->{uncovered}));
+
+
 #$template->param(REF_ALIGN_CODEXON_PERC => sprintf "%.2f",($ref_results->{alignment_exon_coverage} / $ref_results->{coding_exon_length} * 100));
 
 my $file_ref_align_pie = $image_dir . "pie_ref_align_" . $mlss_id . ".png";
 create_pie_chart($mlss_id,$ref_results->{alignment_coverage}, $ref_results->{length}, $file_ref_align_pie);
 
 my $file_ref_cod_align_pie = $image_dir . "pie_ref_cod_align_" . $mlss_id . ".png";
-create_pie_chart($mlss_id,$ref_results->{alignment_exon_coverage}, $ref_results->{coding_exon_length}, $file_ref_cod_align_pie);
+create_coding_exon_pie_chart($mlss_id,$ref_results->{matches}, $ref_results->{mis_matches}, $ref_results->{ref_insertions}, $ref_results->{uncovered}, $ref_results->{coding_exon_length}, $file_ref_cod_align_pie);
 
 $template->param(REF_ALIGN_PIE => "$file_ref_align_pie");
 $template->param(REF_ALIGN_CODEXON_PIE => "$file_ref_cod_align_pie");
@@ -308,15 +313,18 @@ $template->param(NON_REF_GENOME_SIZE =>  format_number($non_ref_results->{length
 $template->param(NON_REF_ALIGN => format_number($non_ref_results->{alignment_coverage}));
 #$template->param(NON_REF_ALIGN_PERC => sprintf "%.2f",($non_ref_results->{alignment_coverage} / $non_ref_results->{length} * 100));
 $template->param(NON_REF_CODEXON => format_number($non_ref_results->{coding_exon_length}));
-#$template->param(NON_REF_CODEXON_PERC => sprintf "%.2f",($non_ref_results->{coding_exon_length} / $non_ref_results->{length}* 100));
-$template->param(NON_REF_ALIGN_CODEXON => format_number($non_ref_results->{alignment_exon_coverage}));
-#$template->param(NON_REF_ALIGN_CODEXON_PERC => sprintf "%.2f",($non_ref_results->{alignment_exon_coverage} / $non_ref_results->{coding_exon_length} * 100));
+
+$template->param(NON_REF_MATCHES => format_number($non_ref_results->{matches}));
+$template->param(NON_REF_MISMATCHES => format_number($non_ref_results->{mis_matches}));
+$template->param(NON_REF_INSERTIONS => format_number($non_ref_results->{ref_insertions}));
+$template->param(NON_REF_UNCOVERED => format_number($non_ref_results->{uncovered}));
+
 
 my $file_non_ref_align_pie = $image_dir . "pie_non_ref_align_" . $mlss_id . ".png";
 create_pie_chart($mlss_id,$non_ref_results->{alignment_coverage}, $non_ref_results->{length}, $file_non_ref_align_pie);
 
 my $file_non_ref_cod_align_pie = $image_dir . "pie_non_ref_cod_align_" . $mlss_id . ".png";
-create_pie_chart($mlss_id,$non_ref_results->{alignment_exon_coverage}, $non_ref_results->{coding_exon_length}, $file_non_ref_cod_align_pie);
+create_coding_exon_pie_chart($mlss_id,$non_ref_results->{matches}, $non_ref_results->{mis_matches}, $non_ref_results->{ref_insertions}, $non_ref_results->{uncovered}, $non_ref_results->{coding_exon_length}, $file_non_ref_cod_align_pie);
 
 $template->param(NON_REF_ALIGN_PIE => "$file_non_ref_align_pie");
 $template->param(NON_REF_ALIGN_CODEXON_PIE => "$file_non_ref_cod_align_pie");
@@ -355,18 +363,24 @@ sub fetch_input {
     $ref_results->{assembly} = $ref_genome_db->assembly;
 
     $ref_results->{length} = $mlss->get_value_for_tag("ref_genome_length");
-    $ref_results->{coding_exon_length} = $mlss->get_value_for_tag("ref_coding_length");;
     $ref_results->{alignment_coverage} = $mlss->get_value_for_tag("ref_genome_coverage");
-    $ref_results->{alignment_exon_coverage} = $mlss->get_value_for_tag("ref_coding_coverage");
+    $ref_results->{coding_exon_length} = $mlss->get_value_for_tag("ref_coding_exon_length");;
+    $ref_results->{matches} = $mlss->get_value_for_tag("ref_matches");
+    $ref_results->{mis_matches} = $mlss->get_value_for_tag("ref_mis_matches");
+    $ref_results->{ref_insertions} = $mlss->get_value_for_tag("ref_insertions");
+    $ref_results->{uncovered} = $mlss->get_value_for_tag("ref_uncovered");
 
     my $non_ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($non_ref_species);
     $non_ref_results->{name} = $non_ref_genome_db->name;
     $non_ref_results->{assembly} = $non_ref_genome_db->assembly;
 
     $non_ref_results->{length} = $mlss->get_value_for_tag("non_ref_genome_length");
-    $non_ref_results->{coding_exon_length} = $mlss->get_value_for_tag("non_ref_coding_length");;
     $non_ref_results->{alignment_coverage} = $mlss->get_value_for_tag("non_ref_genome_coverage");
-    $non_ref_results->{alignment_exon_coverage} = $mlss->get_value_for_tag("non_ref_coding_coverage");
+    $non_ref_results->{coding_exon_length} = $mlss->get_value_for_tag("non_ref_coding_exon_length");;
+    $non_ref_results->{matches} = $mlss->get_value_for_tag("non_ref_matches");
+    $non_ref_results->{mis_matches} = $mlss->get_value_for_tag("non_ref_mis_matches");
+    $non_ref_results->{ref_insertions} = $mlss->get_value_for_tag("non_ref_insertions");
+    $non_ref_results->{uncovered} = $mlss->get_value_for_tag("non_ref_uncovered");
 
     $pair_aligner_config->{method_link_type} = $mlss->method->type;
 
@@ -469,6 +483,34 @@ sub create_pie_chart {
     print FILE "align<- c($perc, " . (100-$perc) . ")\n";
     print FILE "labels <- c(\"$perc%\",\"\")\n";
     print FILE "colours <- c(\"red\", \"white\")\n";
+    print FILE "pie(align, labels=labels, clockwise=T, radius=0.9, col=colours)\n";
+    print FILE "dev.off()\n";
+    close $fileR;
+
+    my $R_cmd = "$R_prog CMD BATCH $fileR";
+    unless (system($R_cmd) ==0) {
+	throw("$R_cmd failed");
+    }
+    unlink $fileR;
+    return $filePNG;
+}
+
+sub create_coding_exon_pie_chart {
+    my ($mlss_id, $matches, $mis_matches, $ref_insertions, $uncovered, $coding_exon_length, $filePNG) = @_;
+
+    my $fileR = "/tmp/kb3_pie_" . $mlss_id . "_$$.R";
+
+    my $matches_perc = int(($matches/$coding_exon_length*100)+0.5);
+    my $mis_matches_perc = int(($mis_matches/$coding_exon_length*100)+0.5);
+    my $ref_insertions_perc = int(($ref_insertions/$coding_exon_length*100)+0.5);
+    my $uncovered_perc = int(($uncovered/$coding_exon_length*100)+0.5);
+
+    open FILE, ">$fileR" || die "Unable to open $fileR for writing";
+    print FILE "png(filename=\"$filePNG\", height=200, width =200, units=\"px\")\n";
+    print FILE "par(\"mai\"=c(0,0,0,0.3))\n";
+    print FILE "align<- c($matches_perc, $mis_matches_perc, $ref_insertions_perc, $uncovered_perc)\n";
+    print FILE "labels <- c(\"$matches_perc%\",\"$mis_matches_perc%\",\"$ref_insertions_perc%\",\"$uncovered_perc%\")\n";
+    print FILE "colours <- c(\"red\", \"blue\", \"green\", \"white\")\n";
     print FILE "pie(align, labels=labels, clockwise=T, radius=0.9, col=colours)\n";
     print FILE "dev.off()\n";
     close $fileR;
