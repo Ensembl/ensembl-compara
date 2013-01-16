@@ -779,16 +779,20 @@ sub write_parameters_to_mlss_tag {
     my ($self, $mlss, $pair_aligner) = @_;
 
     my $dna_collections = $self->param('dna_collections');
-
     #Write pair aligner options to mlss_tag table for use with PairAligner jobs (eg lastz)
     my $this_param = $mlss->get_value_for_tag("param");
-
     if ($this_param) {
         if ($this_param ne $pair_aligner->{'analysis_template'}->{'parameters'}{'options'}) {
             throw "Trying to store a different set of options (" . $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} . ") for the same method_link_species_set ($this_param). This is currently not supported";
         }
     } else {
-        $mlss->store_tag("param", $pair_aligner->{'analysis_template'}->{'parameters'}{'options'});
+        #Convert expanded $ensembl_cvs_root_dir to the string '$ENSEMBL_CVS_ROOT_DIR' if it is present, else store the param as it is
+        my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
+        if ($ensembl_cvs_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_cvs_root_dir(.*)/) {
+            $mlss->store_tag("param",  $1.'$ENSEMBL_CVS_ROOT_DIR'.$2);
+        } else {
+            $mlss->store_tag("param", $pair_aligner->{'analysis_template'}->{'parameters'}{'options'});
+        }
     }
 
     #Write chunk options to mlss_tag table for use with FilterDuplicates
@@ -806,7 +810,7 @@ sub write_parameters_to_mlss_tag {
             if ($key eq "masking_options_file") {
                 my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
                 if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
-                    $ref_collection->{$key} = "\$ENSEMBL_CVS_ROOT_DIR$1";
+                    $ref_collection->{$key} = '$ENSEMBL_CVS_ROOT_DIR'.$1;
                 }
             } else {
                 $ref_collection->{$key} =  $ref_dna_collection->{$key};
@@ -824,7 +828,7 @@ sub write_parameters_to_mlss_tag {
             if ($key eq "masking_options_file") {
                 my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
                 if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $non_ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
-                    $non_ref_collection->{$key} = "\$ENSEMBL_CVS_ROOT_DIR$1";
+                    $non_ref_collection->{$key} = '$ENSEMBL_CVS_ROOT_DIR'.$1;
                 }
             } else {
                 $non_ref_collection->{$key} =  $non_ref_dna_collection->{$key};
