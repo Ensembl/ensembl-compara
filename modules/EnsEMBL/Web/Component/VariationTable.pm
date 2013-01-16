@@ -163,10 +163,8 @@ sub stats_table {
     
     $labels{$term}       = $con->label;
     $descriptions{$term} = $con->description.' <span class="small">('.$hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession).')</span' unless $descriptions{$term};
-    
-    $colours{$term} = $colourmap->hex_by_name($var_styles->{lc($con->SO_term)}->{default});
-    print STDERR $con->SO_term."\t".$colours{$term}."\n";
-    $ranks{$term} = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
+    $colours{$term}      = $colourmap->hex_by_name($var_styles->{lc($con->SO_term)}->{default});
+    $ranks{$term}        = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
   }
 
   if (!exists($gene_object->__data->{'conscounts'})) {
