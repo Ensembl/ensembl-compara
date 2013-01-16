@@ -286,11 +286,6 @@ sub title {
 sub highlight {
   my ($self, $f, $composite, $pix_per_bp, $h, undef, @tags) = @_;
   
-  my $sv_id;
-  if ($self->{'config'}->core_objects->{'variation'}){
-    $sv_id = $self->{'config'}->core_objects->{'structuralvariation'}->variation_name;
-  }
-  
   return unless $self->core('sv') eq $f->variation_name;
   
   my $width = max(map $_->width, $composite, @tags);
