@@ -48,6 +48,14 @@ if ($apis[0] ne 'edocs') {
       OUTPUT_DIRECTORY => "$html/funcgen-api",
       STRIP_FROM_PATH  => "$root/ensembl-functgenomics/modules/Bio/",
     },
+    ensemblgenomes => {
+      PROJECT_NAME     => '"Ensembl Genomes"',
+      PROJECT_BRIEF    => '"EnsEMBL Genomes API reference"',
+      INPUT            => "$root/ensemblgenomes-api/modules/",
+      EXCLUDE          => "$root/ensemblgenomes-api/t $root/ensemblgenomes-api/misc-scripts",
+      STRIP_FROM_PATH  => "$root/ensemblgenomes-api/modules/",
+      TAGFILES         => '',
+    },
   );
 
   my %config_template = (
@@ -78,7 +86,9 @@ if ($apis[0] ne 'edocs') {
     close FH;
     
     # Check out the code if it doesn't exist
-    my $api_dir = 'ensembl' . ($api eq 'core' ? '' : "-$api");
+    my $api_dir = $config{API_DIR} || ('ensembl' . ($api eq 'core' ? '' : "-$api"));
+    $api_dir = 'ensemblgenomes-api' if ($api eq 'ensemblgenomes');
+    
     system("cd $root; cvs co $api_dir") unless -e "$root/$api_dir";
     
     # Run doxygen
