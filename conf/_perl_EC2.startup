@@ -31,13 +31,13 @@ use EnsEMBL::Web::SpeciesDefs;
 # If it is not used here, the only error you will see is 'Global symbol "$ENSEMBL_WEB_REGISTRY" requires explicit package name' from some plugin module
 use EnsEMBL::Web::Registry;
 
-my $conf = new EnsEMBL::Web::SpeciesDefs;
+my $conf = EnsEMBL::Web::SpeciesDefs->new;
 
 # Plugin in .pm files
 # The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
 # Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
 require LoadPlugins;
-LoadPlugins::plugin(sub { /\.pm$/ && !/(Root|SpeciesDefs|ConfigPacker|DHTMLmerge|Cache)\.pm/; });
+LoadPlugins::plugin(sub { /\.pm$/ && !/(Root|SpeciesDefs|ConfigPacker|DHTMLmerge|Cache|Constants)\.pm/; });
 
 if ($conf->ENSEMBL_MART_ENABLED > 0) {
   require 'BioMart/Initializer.pm';
@@ -152,7 +152,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   if ($conf->ENSEMBL_MEMCACHED && $conf->ENSEMBL_MEMCACHED->{'servers'} && @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []}) {
     eval { require EnsEMBL::Web::Cache; };
     
-    if (!$@ && new EnsEMBL::Web::Cache) {
+    if (!$@ && EnsEMBL::Web::Cache->new) {
       $extra .= '
  Memcached enabled:  ' . join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []};
     
@@ -213,7 +213,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   $conf->DATABASE_HOST,
 
   $conf->ENSEMBL_BASE_URL,
-  $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_AMAZON_SERVER, $conf->ENSEMBL_PORT,
+  $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_AMAZON_SERVER,     $conf->ENSEMBL_PORT,
 
   $conf->ENSEMBL_BASE_URL,
 
