@@ -64,7 +64,6 @@ sub fetch_input {
   if (!defined $self->param('bed_dir')) {
       die ("Must define a location to dump the bed files using the parameter 'bed_dir'");
   }
-
   #Find the mlss_id from the method_link_type and genome_db_ids
   my $mlss;
   my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -82,12 +81,15 @@ sub fetch_input {
 
   $self->param('ref_species', $mlss->get_value_for_tag("reference_species"));
   $self->param('non_ref_species', $mlss->get_value_for_tag("non_reference_species"));
+  $self->param('mlss_id', $mlss->dbID);
 
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
   my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('ref_species'));
   my $non_ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('non_ref_species'));
 
+  $self->param('ref_genome_db', $ref_genome_db);
+  $self->param('non_ref_genome_db', $non_ref_genome_db);
 
   my $ref_db = $ref_genome_db->db_adaptor;
   my $non_ref_db = $non_ref_genome_db->db_adaptor;
@@ -109,9 +111,6 @@ sub fetch_input {
   
   unless ($self->param('create_pair_aligner_page')) {
       $self->param('create_pair_aligner_page', $perl_path . "/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl");
-  }
-  unless (-e $self->param('create_pair_aligner_page')) {
-      die($self->param('create_pair_aligner_page') . " does not exist");
   }
 
   #Get ensembl schema version from meta table if not defined
@@ -145,15 +144,40 @@ sub write_output {
   return if ($self->param('skip'));
 
   #Dump bed files if necessary
-  my ($ref_genome_bed, $ref_coding_exons_bed) = $self->dump_bed_file($self->param('ref_species'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
-  my ($non_ref_genome_bed, $non_ref_coding_exons_bed) = $self->dump_bed_file($self->param('non_ref_species'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
+  my ($ref_genome_bed) = $self->dump_bed_file($self->param('ref_species'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
+  my ($non_ref_genome_bed) = $self->dump_bed_file($self->param('non_ref_species'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
 
   
   #Create statistics
-  $self->write_pairaligner_statistics($ref_genome_bed, $ref_coding_exons_bed, $non_ref_genome_bed, $non_ref_coding_exons_bed);
+  $self->write_pairaligner_statistics($ref_genome_bed, $non_ref_genome_bed);
 
-  #Create the pair aligner html and png files for display on the web
-  #$self->run_create_pair_aligner_page();
+  #
+  #Create jobs for 'coding_exon_stats' on branch 2
+  #
+  my $output_hash = {};
+
+  my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
+
+  my $ref_genome_db = $self->param('ref_genome_db');
+  my $non_ref_genome_db = $self->param('non_ref_genome_db');
+  my $mlss_id = $self->param('mlss_id');
+  my $ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($ref_genome_db, undef, undef, 1);
+  my $non_ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($non_ref_genome_db, undef, undef, 1);
+
+  my $output_hash;
+  foreach my $dnafrag (@$ref_dnafrags) {
+      %$output_hash = ('mlss_id' => $mlss_id,
+                       'seq_region' => $dnafrag->name,
+                      'species' => $ref_genome_db->name);
+      $self->dataflow_output_id($output_hash,2);
+  }
+
+  foreach my $dnafrag (@$non_ref_dnafrags) {
+      %$output_hash = ('mlss_id' => $mlss_id,
+                       'seq_region' => $dnafrag->name,
+                       'species' => $non_ref_genome_db->name);
+      $self->dataflow_output_id($output_hash,2);
+  }
 
   return 1;
 }
@@ -174,7 +198,6 @@ sub dump_bed_file {
     
     #Check if file already exists
     my $genome_bed_file = $self->param('bed_dir') ."/" . $name . "." . $assembly . "." . "genome.bed";
-    my $exon_bed_file = $self->param('bed_dir') . "/" . $name . "." . $assembly . "." . "coding_exons.bed";
 
     if (-e $genome_bed_file && !(-z $genome_bed_file)) {
 	print "$genome_bed_file already exists and not empty. Not overwriting.\n";
@@ -187,19 +210,8 @@ sub dump_bed_file {
 	    die("$cmd execution failed\n");
 	}
     }
-    
-    #Always overwrite the coding exon file since this will usually be updated each release for human
-    if (-e $exon_bed_file) {
-#	print "$exon_bed_file already exists. Overwriting.\n";
-	print "$exon_bed_file already exists and not empty. Not overwriting.\n";
-#    }
-    } else {
-	my $cmd = $self->param('dump_features') . " --url $dbc_url --species $name --feature coding-exons > $exon_bed_file";
-	unless (system($cmd) == 0) {
-	    die("$cmd execution failed\n");
-	}
-    }
-    return ($genome_bed_file, $exon_bed_file);
+
+    return ($genome_bed_file);
 }
 
 
@@ -207,7 +219,7 @@ sub dump_bed_file {
 #Store pair-aligner statistics in pair_aligner_statistics table
 #
 sub write_pairaligner_statistics {
-    my ($self, $ref_genome_bed, $ref_coding_exons_bed, $non_ref_genome_bed, $non_ref_coding_exons_bed) = @_;
+    my ($self, $ref_genome_bed, $non_ref_genome_bed) = @_;
     my $verbose = 0;
     my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
     
@@ -244,36 +256,16 @@ sub write_pairaligner_statistics {
 
 
     #Calculate the statistics
-    my ($ref_coverage, $ref_coding_coverage, $ref_alignment_coding) = $self->calc_stats($ref_dbc_url, $ref_genome_db, $ref_genome_bed, $ref_coding_exons_bed);
+    my ($ref_coverage) = $self->calc_stats($ref_dbc_url, $ref_genome_db, $ref_genome_bed);
 
-    my ($non_ref_coverage, $non_ref_coding_coverage, $non_ref_alignment_coding) = $self->calc_stats($non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed, $non_ref_coding_exons_bed);
+    my ($non_ref_coverage) = $self->calc_stats($non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed);
    
     #write information to method_link_species_set_tag table
-
-#    my $pairwise_lengths;
-#    %$pairwise_lengths = ('ref_genome_length'     => $ref_coverage->{total},
-#			  'non_ref_genome_length' => $non_ref_coverage->{total},
-#			  'ref_coding_length'     => $ref_coding_coverage->{both},
-#			  'non_ref_coding_length' => $non_ref_coding_coverage->{both});
-#    my $pairwise_coverage;
-#    %$pairwise_coverage = ('ref_genome_coverage'     => $ref_coverage->{both},
-#			   'non_ref_genome_coverage' => $non_ref_coverage->{both},
-#			   'ref_coding_coverage'     => $ref_alignment_coding->{both},
-#			   'non_ref_coding_coverage' => $non_ref_alignment_coding->{both});
-#
-#    $method_link_species_set->store_tag("pairwise_lengths", stringify($pairwise_lengths));
-#    $method_link_species_set->store_tag("pairwise_coverage", stringify($pairwise_coverage));
-
 
     $method_link_species_set->store_tag("ref_genome_coverage", $ref_coverage->{both});
     $method_link_species_set->store_tag("ref_genome_length", $ref_coverage->{total});
     $method_link_species_set->store_tag("non_ref_genome_coverage", $non_ref_coverage->{both});
     $method_link_species_set->store_tag("non_ref_genome_length", $non_ref_coverage->{total});
-
-    $method_link_species_set->store_tag("ref_coding_coverage", $ref_alignment_coding->{both});
-    $method_link_species_set->store_tag("ref_coding_length", $ref_coding_coverage->{both});
-    $method_link_species_set->store_tag("non_ref_coding_coverage", $non_ref_alignment_coding->{both});
-    $method_link_species_set->store_tag("non_ref_coding_length", $non_ref_coding_coverage->{both});
 
 }
 
@@ -286,7 +278,7 @@ sub write_pairaligner_statistics {
 #compare_beds.pl $coding_exons_bed $alignment_bed --stats
 #
 sub calc_stats {
-    my ($self, $dbc_url, $genome_db, $genome_bed, $coding_exons_bed) = @_;
+    my ($self, $dbc_url, $genome_db, $genome_bed) = @_;
     my $species = $genome_db->name;
     my $assembly_name = $genome_db->assembly;
 
@@ -304,27 +296,16 @@ sub calc_stats {
     #Run compare_beds.pl
     my $compare_beds = $self->param('compare_beds');
     my $coverage_data = `$compare_beds $genome_bed $alignment_bed --stats`;
-    my $coding_coverage_data = `$compare_beds $genome_bed $coding_exons_bed --stats`;
-    my $alignment_coding_data = `$compare_beds $coding_exons_bed $alignment_bed --stats`;
-
     my $coverage = parse_compare_bed_output($coverage_data);
-    my $coding_coverage = parse_compare_bed_output($coding_coverage_data);
-    my $alignment_coding = parse_compare_bed_output($alignment_coding_data);
     
     my $str = "*** $species ***\n";
     $str .= sprintf "Align Coverage: %.2f%% (%d bp out of %d)\n", ($coverage->{both} / $coverage->{total} * 100), $coverage->{both}, $coverage->{total};
-
-    $str .= sprintf "CodExon Coverage: %.2f%% (%d bp out of %d)\n", ($coding_coverage->{both} / $coverage->{total}* 100), $coding_coverage->{both}, $coverage->{total};
-    
-    $str .= sprintf "Align Overlap: %.2f%% of aligned bp correspond to coding exons (%d bp out of %d)\n", ($alignment_coding->{both} / $coverage->{both} * 100), $alignment_coding->{both}, $coverage->{both};
-
-    $str .= sprintf "CodExon Overlap: %.2f%% of coding bp are covered by alignments (%d bp out of %d)\n", ($alignment_coding->{both} / $coding_coverage->{both} * 100), $alignment_coding->{both}, $coding_coverage->{both};
 
     #Print to job_message table
     $self->warning($str);
 
     print "$str\n";
-    return ($coverage, $coding_coverage, $alignment_coding);
+    return ($coverage);
 }
 
 #
