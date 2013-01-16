@@ -237,6 +237,20 @@ sub pipeline_create_commands {
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
+            
+        #Store CodingExon coverage statistics
+        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . ' -e "CREATE TABLE IF NOT EXISTS statistics (
+        method_link_species_set_id  int(10) unsigned NOT NULL,
+        species_name                varchar(40) NOT NULL DEFAULT \'\',
+        seq_region                  varchar(40) NOT NULL DEFAULT \'\',
+        matches                     INT(10) DEFAULT 0,
+        mis_matches                 INT(10) DEFAULT 0,
+        ref_insertions              INT(10) DEFAULT 0,
+        non_ref_insertions          INT(10) DEFAULT 0,
+        uncovered                   INT(10) DEFAULT 0,
+        coding_exon_length          INT(10) DEFAULT 0
+        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;"',
+
        'mkdir -p '.$self->o('dump_dir'), #Make dump_dir directory
        'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
@@ -683,8 +697,22 @@ sub pipeline_analyses {
 			      'output_dir' => $self->o('output_dir'),
 			     },
 	      -wait_for =>  [ 'healthcheck' ],
+              -flow_into => {
+                              1 => [ 'coding_exon_stats_summary' ],
+			      2 => [ 'coding_exon_stats' ],
+			     },
 	      -rc_name => '1Gb',
 	    },
+            {   -logic_name => 'coding_exon_stats',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
+                -hive_capacity => 10,
+                -rc_name => '1Gb',
+            },
+            {   -logic_name => 'coding_exon_stats_summary',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
+                -rc_name => '1Gb',
+                -wait_for =>  [ 'coding_exon_stats' ],
+            },
 	   ];
 }
 
