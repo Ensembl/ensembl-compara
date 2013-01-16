@@ -283,6 +283,7 @@ sub create_chunks
       $dnafrag->name($chr->seq_region_name); #ie just 22
       $dnafrag->genome_db($genome_db);
       $dnafrag->coord_system_name($chr->coord_system->name());
+      $dnafrag->is_reference($chr->is_reference);
 
       #Need total length of dnafrag, not just end-start+1, otherwise the dnafrag_chunks are created
       #incorrectly because the chr->end becomes (end-start+1) but this could be less than chr->start
