@@ -31,7 +31,7 @@ sub init {
   
   $self->add_tracks('information',
     [ 'scalebar',  '', 'lrg_scalebar', { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
-    [ 'information',     '', 'ruler',        { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
+    [ 'ruler',     '', 'ruler',        { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable',    { display => 'normal', strand => 'b', menu => 'no' }],
   );
   
