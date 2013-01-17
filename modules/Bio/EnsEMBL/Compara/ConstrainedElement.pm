@@ -642,19 +642,22 @@ sub add_alignment_segments {
 =head2 get_all_exons
 
   Arg  1        : (optional) list of Bio::EnsEMBL::Gene and/or Bio::EnsEMBL::Transcript and/or Bio::EnsEMBL::Compara::GenomeDB
-                  objects eg ce->get_all_exons($human_gene1, $human_gene2, $cow_transcript1, $horse_genomeDB);
+                  objects eg ce->get_all_exons($human_gene1, $human_gene2, $cow_transcript1);
   Examples      : my $CEs = $cons_ele_a->fetch_all_by_MethodLinkSpeciesSet_Slice($cons_ele_mlss, $species_slice);
                   foreach my $constrained_element( @{ $CEs }) {
-                #1   foreach my $exon(@{ $constrained_element->get_all_exons() }){ # will return all exons based on the $species_slice only
-                #2   foreach my $exon(@{ $constrained_element->get_all_exons($human_gene1) }){ # same as #1 but will filter out all exons 
-                                                                                               # not associated with $human_gene1
+                #1   foreach my $exon(@{ $constrained_element->get_all_exons() }){                # will return all exons based on the $species_slice only
+                #2   foreach my $exon(@{ $constrained_element->get_all_exons($human_gene1) }){    # same as #1 but will filter out all exons 
+                                                                                                  # not associated with $human_gene1
                 #3   foreach my $exon(@{ $constrained_element->get_all_exons($horse_genomeDB) }){ # will return horse specific exons (if  
                                                                                                   # there is horse sequence in the cons_ele) 
                     print $exon->stable_id, "\n";
                    }
                   }
-  Description   : Will return a listref of Bio::EnsEMBL::Exon objects which overlap the constrained element 
-                  if Gene objects are provided as arguments, only exons associated with these genes will be returned
+  Description   : Will return a listref of Bio::EnsEMBL::Exon objects which overlap the constrained element (CE)
+                  if Gene and/or Transcript objects are provided as arguments, only overlapping exons associated with these features
+                  will be returned (see #2). 
+                  If no arguments are provided, exons overlapping the CE slice will be returned (the CE must have a slice in this case - see #1)
+                  If one or more genome_db objects are provided - exons overlapping the region(s) in the CE from these species will be returned (if any exist)
   Returns       : listref of Bio::EnsEMBL::Exon objects or an empty listref if there are no overlapping exons
   Exceptions    : If the constrained element objects have an no associated Slice object (ie. only if they were obtained 
                   from the adaptor using the method fetch_by_dbID then at least one parameter (gene, transcript or genomeDB object) 
