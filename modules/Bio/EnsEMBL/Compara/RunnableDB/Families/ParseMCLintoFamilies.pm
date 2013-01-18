@@ -32,7 +32,7 @@ sub write_output {
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
     my $fa            = $compara_dba->get_FamilyAdaptor();
-    my $ma            = $compara_dba->get_MemberAdaptor();
+    my $ma            = $compara_dba->get_SeqMemberAdaptor();
     my $cluster_index = 1;
 
     open (MCL, $mcl_name) || die "could not open '$mcl_name' for reading: $!";

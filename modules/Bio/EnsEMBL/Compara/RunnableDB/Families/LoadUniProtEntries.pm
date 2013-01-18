@@ -60,7 +60,7 @@ sub run {
   
     foreach my $id (@$ids) {
         my $stable_id = ($id =~ /^(\S+)\.\d+$/) ? $1 : $id;     # drop the version number if it's there
-        my $member = $self->compara_dba()->get_MemberAdaptor->fetch_by_source_stable_id($source_name, $stable_id);
+        my $member = $self->compara_dba()->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $stable_id);
         my $member_id;
 
         if($member and $member_id = $member->sequence_id) {
@@ -170,7 +170,7 @@ sub store_bioseq {
     $member->sequence($bioseq->seq);
     $member->genome_db_id($self->param('genome_db_id')) if($self->param('genome_db_id'));
 
-    return $self->compara_dba()->get_MemberAdaptor->store($member);
+    return $self->compara_dba()->get_SeqMemberAdaptor->store($member);
 }
 
 
