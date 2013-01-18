@@ -65,94 +65,6 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor);
 
 
 
-
-
-
-
-
-#
-# GLOBAL METHODS
-#
-#####################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #
 # SeqMember only methods
 #
@@ -177,7 +89,6 @@ sub fetch_all_by_sequence_id {
     $self->bind_param_generic_fetch($sequence_id, SQL_INTEGER);
     return $self->generic_fetch('m.sequence_id = ?');
 }
-
 
 
 
@@ -233,8 +144,6 @@ sub fetch_all_canonical_by_source_genome_db_id {
 
 
 
-
-
 =head2 fetch_canonical_for_gene_member_id
 
   Arg [1]    : int member_id of a gene member
@@ -262,26 +171,10 @@ sub fetch_canonical_for_gene_member_id {
 
 
 
-
-
-
-#
-# GeneMember only methods
-############################
-
-
-
-
-
-
-
-
-
 #
 # INTERNAL METHODS
 #
 ###################
-
 
 
 sub create_instance_from_rowhash {
@@ -291,9 +184,6 @@ sub create_instance_from_rowhash {
 	bless $obj, 'Bio::EnsEMBL::Compara::SeqMember';
 	return $obj;
 }
-
-
-
 
 
 
@@ -310,12 +200,6 @@ sub store {
     assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
     return $self->SUPER::store($member);
 }
-
-
-
-
-
-
 
 
 
@@ -346,12 +230,6 @@ sub update_sequence {
 
 
 
-
-
-
-
-
-
 sub _set_member_as_canonical {
     my ($self, $member) = @_;
 
@@ -361,32 +239,6 @@ sub _set_member_as_canonical {
     $sth->execute($member->member_id, $member->gene_member_id);
     $sth->finish;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
-
-
-
-
-
-
-
-
-
-
 
 
 

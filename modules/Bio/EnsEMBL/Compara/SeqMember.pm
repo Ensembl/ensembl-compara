@@ -235,84 +235,9 @@ sub new_from_transcript {
 
 
 
-
-
-### SECTION 3 ###
-#
-# Global methods
-###################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 4 ###
 #
 # Sequence methods
 #####################
-
 
 
 
@@ -679,27 +604,9 @@ sub gene_member {
 
 
 
-
-### SECTION 5 ###
-#
-# print a member
-##################
-
-
-
-
-
-
-
-
-### SECTION 6 ###
 #
 # connection to core
 #####################
-
-
-
-
 
 
 
@@ -759,43 +666,6 @@ sub get_Translation {
     return undef unless $transcript;
     return $transcript->translation();
 }
-
-
-
-### SECTION 7 ###
-#
-# canonical transcripts
-########################
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 8 ###
-#
-# sequence links
-####################
-
-
-
-
-
-
-
-
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
-
-
-
 
 
 1;

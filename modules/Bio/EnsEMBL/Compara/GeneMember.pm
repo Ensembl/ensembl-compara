@@ -124,100 +124,9 @@ sub new_from_gene {
 
 
 
-### SECTION 3 ###
-#
-# Global methods
-###################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 4 ###
-#
-# Sequence methods
-#####################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 5 ###
-#
-# print a member
-##################
-
-
-
-
-
-
-
-
-### SECTION 6 ###
 #
 # connection to core
 #####################
-
-
-
 
 
 =head2 get_Gene
@@ -257,13 +166,6 @@ sub get_Gene {
 
 
 
-
-
-
-
-
-
-### SECTION 7 ###
 #
 # canonical transcripts
 ########################
@@ -310,12 +212,9 @@ sub canonical_member_id {
 
 
 
-### SECTION 8 ###
 #
 # sequence links
 ####################
-
-
 
 
 =head2 get_all_SeqMembers
@@ -341,19 +240,6 @@ sub get_all_SeqMembers {
 
     return $able_adaptor->fetch_all_by_gene_member_id($self->dbID);
 }
-
-
-
-
-
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
-
-
-
-
 
 
 

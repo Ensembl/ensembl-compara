@@ -170,7 +170,6 @@ sub get_available_adaptors {
 
             # gene-product:
         'Sequence'              => 'Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor',
-        'Member'                => 'Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor',
         'GeneMember'            => 'Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor',
         'SeqMember'             => 'Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor',
         'GeneAlign'             => 'Bio::EnsEMBL::Compara::DBSQL::GeneAlignAdaptor',

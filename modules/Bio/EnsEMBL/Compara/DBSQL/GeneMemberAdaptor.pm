@@ -64,140 +64,6 @@ use DBI qw(:sql_types);
 use base qw(Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor);
 
 
-
-
-
-
-
-
-#
-# GLOBAL METHODS
-#
-#####################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#
-# SeqMember only methods
-#
-############################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#
-# GeneMember only methods
-############################
-
-
 =head2 fetch_all_homology_orphans_by_GenomeDB
 
  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
@@ -227,10 +93,6 @@ sub fetch_all_homology_orphans_by_GenomeDB {
 }
 
 
-
-
-
-
 #
 # INTERNAL METHODS
 #
@@ -251,9 +113,6 @@ sub create_instance_from_rowhash {
 	bless $obj, 'Bio::EnsEMBL::Compara::GeneMember';
 	return $obj;
 }
-
-
-
 
 
 
@@ -279,56 +138,6 @@ sub store {
 
     return $dbID;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
-
-
-
-
-
-
-
-
-
-
-
 
 
 1;

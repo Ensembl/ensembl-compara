@@ -73,10 +73,6 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 
-
-
-
-
 #
 # GLOBAL METHODS
 #
@@ -105,7 +101,6 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 sub fetch_by_source_stable_id {
   my ($self,$source_name, $stable_id) = @_;
 
-  $self->_warning_member_adaptor();
   unless(defined $stable_id) {
     throw("fetch_by_source_stable_id must have an stable_id");
   }
@@ -137,7 +132,6 @@ sub fetch_by_source_stable_id {
 
 sub fetch_all_by_source_stable_ids {
   my ($self,$source_name, $stable_ids) = @_;
-  $self->_warning_member_adaptor();
   return [] if (!$stable_ids or !@$stable_ids);
 
   #construct a constraint like 't1.table1_id = 1'
@@ -169,7 +163,6 @@ sub fetch_all_by_source_stable_ids {
 sub fetch_all {
   my $self = shift;
 
-  $self->_warning_member_adaptor();
   return $self->generic_fetch();
 }
 
@@ -192,7 +185,6 @@ sub fetch_all {
 
 sub fetch_all_Iterator {
     my ($self, $cache_size) = @_;
-    $self->_warning_member_adaptor();
     return $self->generic_fetch_Iterator($cache_size,"");
 }
 
@@ -217,7 +209,6 @@ sub fetch_all_Iterator {
 
 sub fetch_all_by_source_Iterator {
     my ($self, $source_name, $cache_size) = @_;
-    $self->_warning_member_adaptor();
     throw("source_name arg is required\n") unless ($source_name);
     return $self->generic_fetch_Iterator($cache_size, "member.source_name = '$source_name'");
 }
@@ -243,7 +234,6 @@ sub fetch_all_by_source_Iterator {
 sub fetch_all_by_source {
   my ($self,$source_name) = @_;
 
-  $self->_warning_member_adaptor();
   throw("source_name arg is required\n")
     unless ($source_name);
 
@@ -269,7 +259,6 @@ sub fetch_all_by_source {
 sub fetch_all_by_source_taxon {
   my ($self,$source_name,$taxon_id) = @_;
 
-    $self->_warning_member_adaptor();
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
@@ -295,7 +284,6 @@ sub fetch_all_by_source_taxon {
 sub fetch_all_by_source_genome_db_id {
   my ($self,$source_name,$genome_db_id) = @_;
 
-    $self->_warning_member_adaptor();
   throw("source_name and genome_db_id args are required") 
     unless($source_name && $genome_db_id);
 
@@ -308,7 +296,6 @@ sub fetch_all_by_source_genome_db_id {
 sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
 
-  $self->_warning_member_adaptor();
   $self->throw("all args are required") 
       unless($source_name && $taxon_id && $chr_start && $chr_end && $chr_strand && defined ($chr_name));
 
@@ -335,7 +322,6 @@ sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
 sub get_source_taxon_count {
   my ($self,$source_name,$taxon_id) = @_;
 
-  $self->_warning_member_adaptor();
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
@@ -364,7 +350,6 @@ sub get_source_taxon_count {
 
 sub fetch_all_by_MemberSet {
     my ($self, $set) = @_;
-    $self->_warning_member_adaptor();
     assert_ref($set, 'Bio::EnsEMBL::Compara::MemberSet');
     if (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::AlignedMemberSet')) {
         return $self->db->get_AlignedMemberAdaptor->fetch_all_by_AlignedMemberSet($set);
@@ -372,91 +357,6 @@ sub fetch_all_by_MemberSet {
         throw("$self is not a recognized MemberSet object\n");
     }
 }
-
-
-
-
-
-#
-# SeqMember only methods
-#
-############################
-
-
-=head2 fetch_all_by_sequence_id
-
-  Description: DEPRECATED. Use SeqMemberAdaptor::fetch_all_by_sequence_id() instead
-
-=cut
-
-sub fetch_all_by_sequence_id { # DEPRECATED
-    my $self = shift;
-    return $self->_wrap_method_seq('fetch_all_by_sequence_id', @_);
-}
-
-
-
-
-
-=head2 fetch_all_peptides_for_gene_member_id
-
-  Description: DEPRECATED. Use SeqMemberAdaptor::fetch_all_by_gene_member_id() instead
-
-=cut
-
-sub fetch_all_peptides_for_gene_member_id { # DEPRECATED
-    my $self = shift;
-
-    return $self->_rename_method_seq('fetch_all_peptides_for_gene_member_id', 'fetch_all_by_gene_member_id', @_);
-}
-
-
-
-
-=head2 fetch_all_canonical_by_source_genome_db_id
-
-  Description: DEPRECATED. Use SeqMemberAdaptor::fetch_all_canonical_by_source_genome_db_id() instead
-
-=cut
-
-sub fetch_all_canonical_by_source_genome_db_id { # DEPRECATED
-    my $self = shift;
-
-    return $self->_wrap_method_seq('fetch_all_canonical_by_source_genome_db_id', @_);
-}
-
-
-
-
-
-
-=head2 fetch_canonical_member_for_gene_member_id
-
-  Description: DEPRECATED. Use SeqMemberAdaptor::fetch_canonical_for_gene_member_id() instead
-
-=cut
-
-sub fetch_canonical_member_for_gene_member_id { # DEPRECATED
-    my $self = shift;
-
-    return $self->_rename_method_seq('fetch_canonical_member_for_gene_member_id', 'fetch_canonical_for_gene_member_id', @_);
-}
-
-
-
-
-
-
-
-#
-# GeneMember only methods
-############################
-
-
-
-
-
-
 
 
 
@@ -613,97 +513,6 @@ sub store {
   return $member->dbID;
 }
 
-
-
-
-
-
-
-
-
-sub update_sequence { # DEPRECATED
-    my $self = shift;
-    return $self->_wrap_method_seq('update_sequence', @_);
-}
-
-
-
-
-
-
-
-sub _set_member_as_canonical { # DEPRECATED
-    my $self = shift;
-    return $self->_wrap_method_seq('_set_member_as_canonical', @_);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
-
-no strict 'refs';
-
-use Bio::EnsEMBL::ApiVersion;
-
-sub _text_warning {
-    my $msg = shift;
-    return
-        "\n------------------ DEPRECATED ---------------------\n"
-        . "$msg\n"
-        . stack_trace_dump(5). "\n"
-        . "You are using the version ".software_version()." of the API. The old methods / objects are available for compatibility until version 74 (included)\n"
-        . "---------------------------------------------------\n";
-}
-
-
-sub _warning_member_adaptor {
-    my $self = shift;
-
-
-    unless ($self->isa('Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor') or
-            $self->isa('Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor')) {
-        warn _text_warning(qq{
-            The Member adaptor is deprecated in favour of the more specific GeneMember and SeqMember adaptors.
-            Please update your code (change the adaptor) here:
-        });
-    }
-}
-
-
-sub _wrap_method_seq {
-    my $self = shift;
-    my $method = shift;
-    warn _text_warning(qq{
-        $method() should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors).
-        Please update your code (change the adaptor) here:
-    });
-    my $method_wrap = "Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::$method";
-    return $method_wrap->($self, @_);
-}
-
-sub _rename_method_seq {
-    my $self = shift;
-    my $method = shift;
-    my $new_name = shift;
-    warn _text_warning(qq{
-        $method() is renamed to $new_name() and should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors).
-        Please update your code: change the adaptor, and use $new_name() instead:
-    });
-    my $method_wrap = "Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::$new_name";
-    return $method_wrap->($self, @_);
-}
 
 
 
