@@ -602,7 +602,7 @@ sub gene_member {
   if(!defined($self->{'_gene_member'}) and
      defined($self->adaptor) and $self->dbID)
   {
-    $self->{'_gene_member'} = $self->adaptor->db->get_MemberAdaptor->fetch_by_dbID($self->gene_member_id);
+    $self->{'_gene_member'} = $self->adaptor->db->get_GeneMemberAdaptor->fetch_by_dbID($self->gene_member_id);
   }
   return $self->{'_gene_member'};
 }

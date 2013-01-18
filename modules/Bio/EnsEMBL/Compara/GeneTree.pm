@@ -290,7 +290,7 @@ sub preload {
         $leaves{$pm->gene_member_id} = $pm if UNIVERSAL::isa($pm, 'Bio::EnsEMBL::Compara::GeneTreeMember');
     }
     my @m_ids = keys(%leaves);
-    my $all_gm = $self->adaptor->db->get_MemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
+    my $all_gm = $self->adaptor->db->get_GeneMemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
     foreach my $gm (@$all_gm) {
         $leaves{$gm->dbID}->gene_member($gm);
     }
