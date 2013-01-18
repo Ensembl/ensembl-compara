@@ -22,19 +22,19 @@ $reg->load_registry_from_db(
 
 
 my $human_gene_adaptor = $reg->get_adaptor ("Homo sapiens", "core", "Gene");
-my $member_adaptor = $reg->get_adaptor ("Compara", "compara", "Member");
-my $proteintree_adaptor = $reg->get_adaptor ("Compara", "compara", "ProteinTree");
+my $gene_member_adaptor = $reg->get_adaptor ("Compara", "compara", "GeneMember");
+my $gene_tree_adaptor = $reg->get_adaptor ("Compara", "compara", "GeneTree");
 
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('PAX6');
 
 foreach my $gene (@$genes) {
-  my $member = $member_adaptor-> fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
-  die "no members" unless (defined $member);
+  my $gene_member = $gene_member_adaptor-> fetch_by_source_stable_id("ENSEMBLGENE", $gene->stable_id);
+  die "no members" unless (defined $gene_member);
 
-  # Fetch the proteintree
-  my $proteintree =  $proteintree_adaptor->fetch_by_Member_root_id($member);
+  # Fetch the gene tree
+  my $tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);
   # get_all_leaves_indexed would be much faster, but it would crash find_first_shared_ancestor
-  my $all_leaves = $proteintree->get_all_leaves();
+  my $all_leaves = $tree->get_all_leaves();
 
   my $node_h;
   my $node_z;
@@ -43,13 +43,13 @@ foreach my $gene (@$genes) {
   	# finds a zebrafish gene
       $node_z = $leaf if ($leaf->taxon_id == 7955);
 	# finds the query gene
-	$node_h = $leaf if ($leaf->stable_id eq $member->get_canonical_Member->stable_id);
+	$node_h = $leaf if ($leaf->gene_member->stable_id eq $gene->stable_id);
   }
   $node_h->print_member;
   $node_z->print_member,
 
-  print "root to human: ", $node_h->distance_to_ancestor($proteintree), "\n";
-  print "root to zebra: ", $node_z->distance_to_ancestor($proteintree), "\n";
+  print "root to human: ", $node_h->distance_to_ancestor($tree->root), "\n";
+  print "root to zebra: ", $node_z->distance_to_ancestor($tree->root), "\n";
 
   my $ancestor = $node_z->find_first_shared_ancestor($node_h);
   print "lca: ";

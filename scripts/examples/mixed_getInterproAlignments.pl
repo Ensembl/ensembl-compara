@@ -20,8 +20,8 @@ $reg->load_registry_from_db(
 
 
 my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
-my $member_adaptor = $reg->get_adaptor("Multi", "compara", "Member");
-my $protein_tree_adaptor = $reg->get_adaptor("Multi", "compara", "ProteinTree");
+my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
+my $gene_tree_adaptor = $reg->get_adaptor("Multi", "compara", "GeneTree");
 
 my $interpro_domain = "IPR002305";
 
@@ -34,8 +34,8 @@ my $human_genes = $human_gene_adaptor->fetch_all_by_domain($interpro_domain);
 ## the gene trees
 foreach my $this_human_gene (@$human_genes) {
   print "GENE: ", $this_human_gene->stable_id, " - ", $this_human_gene->external_name, "\n";
-  ## Get the gene_member for this human gene
-  my $gene_member = $member_adaptor->fetch_by_source_stable_id(
+  ## Get the gene member for this human gene
+  my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id(
       "ENSEMBLGENE", $this_human_gene->stable_id);
   ## Get the canonical peptide Member, i.e. the one used for building the trees
   my $peptide_member = $gene_member->get_canonical_SeqMember;
@@ -62,8 +62,8 @@ sub get_interpro_alignment {
   my ($peptide_member, $start, $end) = @_;
 
   ## Trim the tree and leave only proteins of interest (human, mouse, rat, dog, fruitfly)
-  my $protein_tree = $protein_tree_adaptor->fetch_by_Member_root_id($peptide_member);
-  foreach my $this_leaf (@{$protein_tree->get_all_leaves}) {
+  my $tree = $gene_tree_adaptor->fetch_default_for_Member($peptide_member)->root;
+  foreach my $this_leaf (@{$tree->get_all_leaves}) {
     if ($this_leaf->genome_db->name ne "homo_sapiens" and
         $this_leaf->genome_db->name ne "mus_musculus" and
         $this_leaf->genome_db->name ne "rattus_norvegicus" and
@@ -72,14 +72,14 @@ sub get_interpro_alignment {
       ## This unlinks the leave
       $this_leaf->disavow_parent();
       ## This simplifies the tree (removes resulting nodes with 1 child only)
-      $protein_tree = $protein_tree->minimize_tree();
+      $tree = $tree->minimize_tree();
     }
   }
-  $protein_tree->print_tree(50);
+  $tree->print_tree(50);
 
   # Find out the start and end coordinates of the domain on the alignment.
   my ($aln_start, $aln_length);
-  foreach my $this_leaf (@{$protein_tree->get_all_leaves}) {
+  foreach my $this_leaf (@{$tree->get_all_leaves}) {
     # Coordinates refer to the query peptide only, skip if this leaf corresponds to another peptide
     next if ($this_leaf->stable_id ne $peptide_member->stable_id);
     my $alignment = $this_leaf->alignment_string;
@@ -105,7 +105,7 @@ sub get_interpro_alignment {
   }
 
   ## Use the start and end coordinates of the domain on the alignment to trim the alignment:
-  foreach my $this_leaf (@{$protein_tree->get_all_leaves}) {
+  foreach my $this_leaf (@{$tree->get_all_leaves}) {
     my $alignment = $this_leaf->alignment_string;
     print ">", $this_leaf->gene_member->stable_id, "\n";
     print substr($alignment, $aln_start, $aln_length), "\n";

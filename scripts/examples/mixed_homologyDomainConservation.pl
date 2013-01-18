@@ -14,25 +14,21 @@ GetOptions(
           );
 my $self = bless {};
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ensembldb.ensembl.org", 
-   -user=>"anonymous", 
-   -db_version=>'58');
-Bio::EnsEMBL::Registry->no_version_check;
+Bio::EnsEMBL::Registry->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");
 
 my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
-my $member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Member");
-my $proteintree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "ProteinTree");
+my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "GeneMember");
+my $gene_tree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "GeneTree");
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('ENPP1');
 
 foreach my $gene (@$genes) {
-  my $member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   die "no members" unless (defined $member);
-  # Fetch the proteintree
-  my $root =  $proteintree_adaptor->fetch_by_Member_root_id($member);
-  die "no tree" unless (defined $root);
-  my @leaves = @{$root->get_all_leaves};
+  # Fetch the gene tree
+  my $tree =  $gene_tree_adaptor->fetch_default_for_Member($member);
+  die "no tree" unless (defined $tree);
+  my @leaves = @{$tree->get_all_leaves};
   my $member_domain;
   my $domain_boundaries;
   my $domain_coverage;
@@ -80,21 +76,21 @@ foreach my $gene (@$genes) {
     }
   }
   unless (defined($member_domain)) {
-    $root->add_tag('pfam_representative_member',$representative_member) unless ($self->{debug});
-    $root->add_tag('pfam_num_domains',0) unless ($self->{debug});
-    $root->add_tag('pfam_non_overlapping_domains',0) unless ($self->{debug});
-    $root->add_tag('pfam_domain_coverage',0) unless ($self->{debug});
-    $root->add_tag('pfam_domain_string','na') unless ($self->{debug});
-    $root->add_tag('pfam_domain_vector_string','na') unless ($self->{debug});
+    $tree->add_tag('pfam_representative_member',$representative_member) unless ($self->{debug});
+    $tree->add_tag('pfam_num_domains',0) unless ($self->{debug});
+    $tree->add_tag('pfam_non_overlapping_domains',0) unless ($self->{debug});
+    $tree->add_tag('pfam_domain_coverage',0) unless ($self->{debug});
+    $tree->add_tag('pfam_domain_string','na') unless ($self->{debug});
+    $tree->add_tag('pfam_domain_vector_string','na') unless ($self->{debug});
     next;
   }
 
   my $aln_domains_hash;
 
-  my $aln = $root->get_SimpleAlign(-id_type => 'MEMBER');
-  my $prev_aln_length = $root->get_tagvalue("aln_length");
+  my $aln = $tree->get_SimpleAlign(-id_type => 'MEMBER');
+  my $prev_aln_length = $tree->get_tagvalue("aln_length");
   if ($prev_aln_length eq '') {
-    my $aln_length = $aln->length; $root->add_tag('aln_length',$aln_length);
+    my $aln_length = $aln->length; $tree->add_tag('aln_length',$aln_length);
   }
   my $ranges;
   foreach my $pfamid (keys %$member_domain) {
@@ -173,7 +169,7 @@ foreach my $gene (@$genes) {
   }
 
   my $pfam_num_domains = 0;
-  my $root_id = $root->node_id;
+  my $root_id = $tree->root_id;
   my $pfam_domain_string = join(":",sort keys %$ranged_coverage);
   my $pfam_domain_coverage;
   my $pfam_non_overlapping_domains = 0; my $in = 0; my $out = 1;
@@ -194,19 +190,19 @@ foreach my $gene (@$genes) {
   }
   my $range_vector = join(";",@range_vector);
   my $pfam_domain_vector_string = join(":",@domain_vector);
-$root->add_tag('pfam_representative_member',$representative_member);
+$tree->add_tag('pfam_representative_member',$representative_member);
   print 'pfam_representative_member ',$representative_member, "\n" if ($self->{debug});
-$root->add_tag('pfam_num_domains',$pfam_num_domains);
+$tree->add_tag('pfam_num_domains',$pfam_num_domains);
   print 'pfam_num_domains ',$pfam_num_domains, "\n" if ($self->{debug});
-$root->add_tag('pfam_non_overlapping_domains',$pfam_non_overlapping_domains);
+$tree->add_tag('pfam_non_overlapping_domains',$pfam_non_overlapping_domains);
   print 'pfam_non_overlapping_domains ',$pfam_non_overlapping_domains, "\n" if ($self->{debug});
-$root->add_tag('pfam_domain_coverage',$pfam_domain_coverage);
+$tree->add_tag('pfam_domain_coverage',$pfam_domain_coverage);
   print 'pfam_domain_coverage ',$pfam_domain_coverage, "\n" if ($self->{debug});
-$root->add_tag('pfam_domain_string',$pfam_domain_string);
+$tree->add_tag('pfam_domain_string',$pfam_domain_string);
   print 'pfam_domain_string ',$pfam_domain_string, "\n" if ($self->{debug});
-$root->add_tag('pfam_domain_vector_string',$pfam_domain_vector_string);
+$tree->add_tag('pfam_domain_vector_string',$pfam_domain_vector_string);
   print 'pfam_domain_vector_string ',$pfam_domain_vector_string, "\n" if ($self->{debug});
-$root->add_tag('pfam_domain_range_vector_string',$range_vector);
+$tree->add_tag('pfam_domain_range_vector_string',$range_vector);
   print 'pfam_domain_range_vector_string ',$range_vector, "\n" if ($self->{debug});
   print "\n";
 
@@ -214,7 +210,7 @@ $root->add_tag('pfam_domain_range_vector_string',$range_vector);
   my $alnout = Bio::AlignIO->new
     (-file => '>aln.fasta',
      -format => 'fasta');
-  $alnout->write_aln($root->get_SimpleAlign);
+  $alnout->write_aln($tree->get_SimpleAlign);
   $alnout->close;
   # Run scorecons
   my $cmd = "$binaryfile aln.fasta --matrixnorm karlinlike --method valdar01 --dops div_pos.out > result.txt";
@@ -240,5 +236,5 @@ $root->add_tag('pfam_domain_range_vector_string',$range_vector);
     }
   }
 
-  $root->release_tree;
+  $tree->release_tree;
 }

@@ -10,16 +10,13 @@ my $reg = "Bio::EnsEMBL::Registry";
 $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
 
 ## Get the human gene adaptor
-my $human_gene_adaptor =
-    $reg->get_adaptor("Homo sapiens", "core", "Gene");
+my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 
-## Get the compara member adaptor
-my $member_adaptor =
-    $reg->get_adaptor("Multi", "compara", "Member");
+## Get the compara genemember adaptor
+my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 
 ## Get the compara homology adaptor
-my $homology_adaptor =
-    $reg->get_adaptor("Multi", "compara", "Homology");
+my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
 
 ## Get all existing gene object with the name CNTROB
 my $these_genes = $human_gene_adaptor->fetch_all_by_external_name('CNTROB');
@@ -27,11 +24,10 @@ my $these_genes = $human_gene_adaptor->fetch_all_by_external_name('CNTROB');
 ## For each of these genes...
 foreach my $this_gene (@$these_genes) {
   ## Get the compara member
-  my $member = $member_adaptor->fetch_by_source_stable_id(
-      "ENSEMBLGENE", $this_gene->stable_id);
+  my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id( "ENSEMBLGENE", $this_gene->stable_id);
 
   ## Get all the homologues
-  my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
+  my $all_homologies = $homology_adaptor->fetch_all_by_Member($gene_member);
   ## Get all the homologues in mouse
   # my $all_homologies = $homology_adaptor->fetch_all_by_Member_paired_species($member, "mus_musculus");
 

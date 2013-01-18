@@ -28,19 +28,20 @@ my $humanGDB = $genomedb_adaptor->fetch_by_registry_name("human");
 # not efficient since gene members are stored in compara, but demonstrates
 # the connections
 
-my $member_adaptor = $reg->get_adaptor('Multi', 'compara', 'Member');
-my $m1 = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
+my $gene_member_adaptor = $reg->get_adaptor('Multi', 'compara', 'GeneMember');
+my $m1 = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
 $m1->print_member;
 
-my $members = $member_adaptor->fetch_all_by_source_taxon("ENSEMBLPEP", $humanGDB->taxon_id);
-printf("fetched %d members\n", scalar(@$members));
+my $seq_member_adaptor = $reg->get_adaptor('Multi', 'compara', 'SeqMember');
+my $pep_members = $seq_member_adaptor->fetch_all_by_source_taxon("ENSEMBLPEP", $humanGDB->taxon_id);
+printf("fetched %d members\n", scalar(@$pep_members));
 
-foreach my $m2 (@{$members}) {
+foreach my $m2 (@{$pep_members}) {
   next unless($m2->chr_name eq $m1->chr_name);
-  my $gene = $m2->get_Gene;
+  my $gene = $m2->gene_member;
   if($m1->stable_id eq $gene->stable_id) {
     printf("%s : %s %d-%d\n", $m2->stable_id, $m2->chr_name, $m2->chr_start, $m2->chr_end);
-    print("MATCHED ", $m2->get_Gene->stable_id, " ", $m2->get_Gene, "\n");
+    print("MATCHED ", $m2->gene_member->get_Gene->stable_id, " ", $m2->gene_member->get_Gene, "\n");
     print("        ", $m2->get_Transcript->stable_id, " ", $m2->get_Transcript, "\n");
     print("        ", $m2->get_Translation->stable_id, " ", $m2->get_Translation, "\n");
     last;

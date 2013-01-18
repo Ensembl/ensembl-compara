@@ -15,16 +15,13 @@ my $reg = "Bio::EnsEMBL::Registry";
 $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
 
 ## Get the human gene adaptor
-my $human_gene_adaptor =
-    $reg->get_adaptor("Homo sapiens", "core", "Gene");
+my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 
 ## Get the compara member adaptor
-my $member_adaptor =
-    $reg->get_adaptor("Multi", "compara", "Member");
+my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 
 ## Get the compara homology adaptor
-my $protein_tree_adaptor =
-    $reg->get_adaptor("Multi", "compara", "ProteinTree");
+my $gene_tree_adaptor = $reg->get_adaptor("Multi", "compara", "GeneTree");
 
 ## Get all existing gene object with the name BRCA2
 my $these_genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
@@ -33,16 +30,10 @@ my $these_genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 foreach my $this_gene (@$these_genes) {
   print "Using gene ", $this_gene->stable_id, "\n";
   ## Get the compara member
-  my $member = $member_adaptor->fetch_by_source_stable_id(
-      "ENSEMBLGENE", $this_gene->stable_id);
-
-  ## Get the canonical peptide: the gene trees are built using these
-  my $canonical_peptide = $member->get_canonical_Member;
-  print "Canonical peptide is: ", $canonical_peptide->stable_id, "\n";
+  my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $this_gene->stable_id);
 
   ## Get the tree for this peptide (cluster_set_id = 1)
-  my $tree = $protein_tree_adaptor->
-      fetch_by_Member_root_id($canonical_peptide);
+  my $tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);
   return 0 unless (defined $tree);
 
   ## Print tree in newick format

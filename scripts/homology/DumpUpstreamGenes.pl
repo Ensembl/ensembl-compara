@@ -23,16 +23,16 @@ $reg->load_registry_from_db(
         -user=>'anonymous', 
 );
 
-my $ma = $reg->get_adaptor('Multi', 'Compara', 'Member');
+my $ma = $reg->get_adaptor('Multi', 'Compara', 'GeneMember');
 
-my $members = $ma->fetch_all_by_source_taxon('ENSEMBLGENE',$taxon_id);
+my $gene_members = $ma->fetch_all_by_source_taxon('ENSEMBLGENE',$taxon_id);
 
-foreach my $member (@{$members}) {
+foreach my $gene_member (@{$gene_members}) {
   
-  my $ga = $member->genome_db->db_adaptor->get_GeneAdaptor;
-  my $gene = $ga->fetch_by_stable_id($member->stable_id);
+  my $ga = $gene_member->genome_db->db_adaptor->get_GeneAdaptor;
+  my $gene = $ga->fetch_by_stable_id($gene_member->stable_id);
   $gene->transform('toplevel');
-  my $sa = $member->genome_db->db_adaptor->get_SliceAdaptor;
+  my $sa = $gene_member->genome_db->db_adaptor->get_SliceAdaptor;
   my $slice;
   if ($gene->strand > 0) {
     $slice = $sa->fetch_by_region('toplevel',$gene->slice->seq_region_name,$gene->seq_region_start-$upstream_length,$gene->seq_region_start-1);

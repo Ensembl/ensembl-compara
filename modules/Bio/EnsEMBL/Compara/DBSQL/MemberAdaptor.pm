@@ -501,7 +501,7 @@ sub init_instance_from_rowhash {
   $member->gene_member_id($rowhash->{'gene_member_id'});
   $member->source_name($rowhash->{'source_name'});
   $member->display_label($rowhash->{'display_label'});
-  $member->canonical_member_id($rowhash->{canonical_member_id});
+  $member->canonical_member_id($rowhash->{canonical_member_id}) if $member->can('canonical_member_id');
   $member->adaptor($self);
 
   return $member;
