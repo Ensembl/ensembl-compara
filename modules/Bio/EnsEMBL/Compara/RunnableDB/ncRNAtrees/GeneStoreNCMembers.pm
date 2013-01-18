@@ -124,7 +124,8 @@ sub store_ncrna_gene {
     my $gene_member;
     my $gene_member_not_stored = 1;
 
-    my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
+    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
+    my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
 
     my $pseudo_stableID_prefix = $self->param('pseudo_stableID_prefix');
 
@@ -168,7 +169,7 @@ sub store_ncrna_gene {
             print(" => member " . $gene_member->stable_id) if($self->debug);
 
             eval {
-                $member_adaptor->store($gene_member);
+                $gene_member_adaptor->store($gene_member);
                 print(" : stored") if($self->debug);
             };
 
@@ -177,7 +178,7 @@ sub store_ncrna_gene {
         }
 
         $ncrna_member->gene_member_id($gene_member->dbID);
-        $member_adaptor->store($ncrna_member);
+        $seq_member_adaptor->store($ncrna_member);
         print(" : stored\n") if($self->debug);
 
         if(length($transcript_spliced_seq) > $max_ncrna_length) {
@@ -187,7 +188,7 @@ sub store_ncrna_gene {
     }
 
     if($longest_ncrna_member) {
-        $member_adaptor->_set_member_as_canonical($longest_ncrna_member);
+        $seq_member_adaptor->_set_member_as_canonical($longest_ncrna_member);
     }
 }
 

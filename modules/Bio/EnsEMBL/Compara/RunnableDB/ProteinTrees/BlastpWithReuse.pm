@@ -92,7 +92,7 @@ sub fetch_input {
 
     my $member_id = $self->param('member_id')
                         or die "'member_id' is an obligatory parameter";
-    my $member    = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($member_id)
+    my $member    = $self->compara_dba->get_SeqMemberAdaptor->fetch_by_dbID($member_id)
                         or die "Could not fetch member with member_id='$member_id'";
     my $query     = $member->bioseq()
                         or die "Could not fetch bioseq for member with member_id='$member_id'";

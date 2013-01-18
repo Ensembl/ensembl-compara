@@ -71,7 +71,7 @@ sub run {
 
     my $this_orphans            = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id);
     my $total_orphans_num       = scalar keys (%$this_orphans);
-    my $total_num_genes         = scalar @{ $self->compara_dba->get_MemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLGENE',$genome_db_id) };
+    my $total_num_genes         = scalar @{ $self->compara_dba->get_GeneMemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLGENE',$genome_db_id) };
 
     $self->param('total_orphans_num', $total_orphans_num);
     $self->param('prop_orphan',       $total_orphans_num/$total_num_genes);

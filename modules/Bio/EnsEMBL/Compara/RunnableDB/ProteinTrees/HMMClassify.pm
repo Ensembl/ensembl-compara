@@ -131,7 +131,7 @@ sub dump_sequences_to_workdir {
     my $fastafile = $self->worker_temp_directory . "${genome_db_id}.fasta"; ## Include pipeline name to avoid clashing??
     print STDERR "fastafile: $fastafile\n" if ($self->debug);
 
-    my $members = $self->compara_dba->get_MemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
+    my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
     Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_fasta($fastafile);
     $self->param('fastafile', $fastafile);
 
