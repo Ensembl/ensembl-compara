@@ -16,7 +16,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({
       this.elLk.links   = this.elLk.content.siblings('.modal_nav').find('ul.local_context li');
     }
     
-    this.elLk.form            = this.el.find('form').validate().off('.UserData').on('submit.UserData', function () { return panel.formSubmit($(this)); });
+    this.elLk.form            = this.el.find('form').validate().off('.UserData').on('submit.UserData', function (e) { e.preventDefault(); panel.formSubmit($(this)); });
     this.elLk.requiredInputs  = this.elLk.form.find(':input.required');
     this.elLk.errorMessage    = this.elLk.form.find('label._userdata_upload_error').addClass('invalid');
     this.elLk.actionInputs    = this.elLk.form.find(':input._action').each(function () {
