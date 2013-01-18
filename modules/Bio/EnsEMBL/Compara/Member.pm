@@ -7,6 +7,9 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Gene;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+use Bio::EnsEMBL::Compara::GeneMember;
+
 
 =head2 new (CONSTRUCTOR)
 
@@ -22,15 +25,13 @@ use Bio::EnsEMBL::Compara::GenomeDB;
          (e.g., "ENSEMBLGENE", "ENSEMBLPEP", "Uniprot/SWISSPROT", "Uniprot/SPTREMBL")
     Arg [-TAXON_ID] (opt)
          : int $taxon_id
-         (NCBI taxonomy id for the member)
+         (NCBI taxonomy id of the species)
     Arg [-GENOME_DB_ID] (opt)
         : int $genome_db_id
         (the $genome_db->dbID for a species in the database)
     Arg [-SEQUENCE_ID] (opt)
         : int $sequence_id
         (the $sequence_id for the sequence table in the database)
-    Example :
-	my $member = new Bio::EnsEMBL::Compara::Member;
        Description: Creates a new Member object
        Returntype : Bio::EnsEMBL::Compara::Member
        Exceptions : none
@@ -46,7 +47,8 @@ sub new {
   
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id) = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
+    my ($dbid, $stable_id, $description, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id)
+        = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
 
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
@@ -56,6 +58,13 @@ sub new {
     $taxon_id && $self->taxon_id($taxon_id);
     $genome_db_id && $self->genome_db_id($genome_db_id);
     $sequence_id && $self->sequence_id($sequence_id);
+  }
+  if ($self->source_name) {
+    if ($self->source_name eq 'ENSEMBLGENE') {
+        bless $self, 'Bio::EnsEMBL::Compara::GeneMember';
+    } else {
+        bless $self, 'Bio::EnsEMBL::Compara::SeqMember';
+    }
   }
 
   return $self;
@@ -77,11 +86,10 @@ sub copy {
   my $self = shift;
   
   my $mycopy = @_ ? shift : {};
-  bless $mycopy, 'Bio::EnsEMBL::Compara::Member';
+  bless $mycopy, ref($self);
   
   $mycopy->dbID($self->dbID);
   $mycopy->stable_id($self->stable_id);
-  $mycopy->version($self->version);
   $mycopy->description($self->description);
   $mycopy->source_name($self->source_name);
   #$mycopy->adaptor($self->adaptor);
@@ -91,8 +99,6 @@ sub copy {
   $mycopy->chr_strand($self->chr_strand);
   $mycopy->taxon_id($self->taxon_id);
   $mycopy->genome_db_id($self->genome_db_id);
-  $mycopy->sequence_id($self->sequence_id);
-  $mycopy->gene_member_id($self->gene_member_id);
   $mycopy->display_label($self->display_label);
   
   return $mycopy;
@@ -113,164 +119,52 @@ sub copy {
 
 sub new_fast {
   my ($class, $hashref) = @_;
+  if ($hashref->{'_source_name'}) {
+    if ($hashref->{'_source_name'} eq 'ENSEMBLGENE') {
+        bless $hashref, 'Bio::EnsEMBL::Compara::GeneMember';
+    } else {
+        bless $hashref, 'Bio::EnsEMBL::Compara::SeqMember';
+    }
+  } else {
+    bless $hashref, $class;
+  }
 
-  return bless $hashref, $class;
+  return $hashref;
 }
 
 =head2 new_from_gene
 
-  Args       : Requires both an Bio::Ensembl:Gene object and a
-             : Bio::Ensembl:Compara:GenomeDB object
-  Example    : $member = Bio::EnsEMBL::Compara::Member->new_from_gene(
-                -gene   => $gene,
-                -genome_db => $genome_db);
-  Description: contructor method which takes an Ensembl::Gene object
-               and Compara:GenomeDB object and creates a new Member object
-               translating from the Gene object
-  Returntype : Bio::Ensembl::Compara::Member
-  Exceptions :
-  Caller     :
+  Description: DEPRECATED. Use SeqMember::new_from_gene() instead
 
 =cut
 
-sub new_from_gene {
-  my ($class, @args) = @_;
-  my $self = $class->new(@args);
-
-  if (scalar @args) {
-
-    my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);
-
-    unless(defined($gene) and $gene->isa('Bio::EnsEMBL::Gene')) {
-      throw(
-      "gene arg must be a [Bio::EnsEMBL::Gene] ".
-      "not a [$gene]");
-    }
-    unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-      throw(
-      "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
-      "not a [$genome_db]");
-    }
-    unless (defined $gene->stable_id) {
-      throw("COREDB error: does not contain gene_stable_id for gene_id ". $gene->dbID."\n");
-    }
-
-    $self->stable_id($gene->stable_id);
-    $self->taxon_id($genome_db->taxon_id);
-    $self->description($gene->description);
-    $self->genome_db_id($genome_db->dbID);
-    $self->chr_name($gene->seq_region_name);
-    $self->chr_start($gene->seq_region_start);
-    $self->chr_end($gene->seq_region_end);
-    $self->chr_strand($gene->seq_region_strand);
-    $self->source_name("ENSEMBLGENE");
-    $self->version($gene->version);
-  }
-  return $self;
+sub new_from_gene { # DEPRECATED
+    my $class = shift;
+    return $class->_wrap_global_gene('new_from_gene', @_);
 }
 
 
 =head2 new_from_transcript
 
-  Arg[1]     : Bio::Ensembl:Transcript object
-  Arg[2]     : Bio::Ensembl:Compara:GenomeDB object
-  Arg[3]     : string where value='translate' causes transcript object to translate
-               to a peptide
-  Example    : $member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
-                  $transcript, $genome_db,
-                -translate);
-  Description: contructor method which takes an Ensembl::Gene object
-               and Compara:GenomeDB object and creates a new Member object
-               translating from the Gene object
-  Returntype : Bio::Ensembl::Compara::Member
-  Exceptions :
-  Caller     :
+  Description: DEPRECATED. Use SeqMember::new_from_transcript() instead
 
 =cut
 
-sub new_from_transcript {
-  my ($class, @args) = @_;
-  my $self = $class->new(@args);
-  my $peptideBioSeq;
-  my $seq_string;
-
-  my ($transcript, $genome_db, $translate, $description) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
-
-  unless(defined($transcript) and $transcript->isa('Bio::EnsEMBL::Transcript')) {
-    throw(
-    "transcript arg must be a [Bio::EnsEMBL::Transcript]".
-    "not a [$transcript]");
-  }
-  unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-    throw(
-    "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
-    "not a [$genome_db]");
-  }
-  $self->taxon_id($genome_db->taxon_id);
-  if(defined($description)) { $self->description($description); }
-  else { $self->description("NULL"); }
-  $self->genome_db_id($genome_db->dbID);
-  $self->chr_name($transcript->seq_region_name);
-  $self->chr_start($transcript->coding_region_start);
-  $self->chr_end($transcript->coding_region_end);
-  $self->chr_strand($transcript->seq_region_strand);
-  $self->version($transcript->translation->version) if ($translate eq 'yes');
-
-  if(($translate eq 'translate') or ($translate eq 'yes')) {
-    if(not defined($transcript->translation)) {
-      throw("request to translate a transcript without a defined translation",
-            $transcript->stable_id);
-    }
-    unless (defined $transcript->translation->stable_id) {
-      throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
-    }
-    
-    $self->stable_id($transcript->translation->stable_id);
-    $self->source_name("ENSEMBLPEP");
-    
-    unless ($peptideBioSeq = $transcript->translate) {
-      throw("COREDB error: unable to get a BioSeq translation from ". $transcript->stable_id);
-    }
-    eval {
-      $seq_string = $peptideBioSeq->seq;
-    };
-    throw "COREDB error: can't get seq from peptideBioSeq" if $@;
-    # OR
-    #$seq_string = $transcript->translation->seq;
-    
-    if ($seq_string =~ /^X+$/) {
-      warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
-    }
-    elsif (length($seq_string) == 0) {
-      warn("zero length sequence from translation " . $transcript->translation->stable_id."\n");
-    }
-    else {
-      #$seq_string =~ s/(.{72})/$1\n/g;
-      $self->sequence($seq_string);
-    }
-  } elsif ($translate eq 'ncrna') {
-    unless (defined $transcript->stable_id) {
-      throw("COREDB error: does not contain transcript stable id for transcript_id ".$transcript->dbID."\n");
-    }
-    $self->stable_id($transcript->stable_id);
-    $self->source_name("ENSEMBLTRANS");
-
-    unless ($seq_string = $transcript->spliced_seq) {
-      throw("COREDB error: unable to get a BioSeq spliced_seq from ". $transcript->stable_id);
-    }
-    if (length($seq_string) == 0) {
-      warn("zero length sequence from transcript " . $transcript->stable_id."\n");
-    }
-    $self->sequence($seq_string);
-  }
-  
-  #print("Member->new_from_transcript\n");
-  #print("  source_name = '" . $self->source_name . "'\n");
-  #print("  stable_id = '" . $self->stable_id . "'\n");
-  #print("  taxon_id = '" . $self->taxon_id . "'\n");
-  #print("  chr_name = '" . $self->chr_name . "'\n");
-  return $self;
+sub new_from_transcript { # DEPRECATED
+    my $class = shift;
+    return $class->_wrap_global_seq('new_from_transcript', @_);
 }
+
+
+
+### SECTION 3 ###
+#
+# Global methods
+###################
+
+
+
+
 
 
 =head2 member_id
@@ -404,9 +298,6 @@ sub adaptor {
   return $self->{'_adaptor'};
 }
 
-=head2 chr_name
-
-=cut
 
 sub chr_name {
   my $self = shift;
@@ -414,9 +305,6 @@ sub chr_name {
   return $self->{'_chr_name'};
 }
 
-=head2 chr_start
-
-=cut
 
 sub chr_start {
   my $self = shift;
@@ -424,9 +312,6 @@ sub chr_start {
   return $self->{'_chr_start'};
 }
 
-=head2 chr_end
-
-=cut
 
 sub chr_end {
   my $self = shift;
@@ -452,9 +337,6 @@ sub chr_strand {
   return $self->{'_chr_strand'};
 }
 
-=head2 taxon_id
-
-=cut
 
 sub taxon_id {
     my $self = shift;
@@ -462,9 +344,6 @@ sub taxon_id {
     return $self->{'_taxon_id'};
 }
 
-=head2 taxon
-
-=cut
 
 sub taxon {
   my $self = shift;
@@ -491,9 +370,6 @@ sub taxon {
   return $self->{'_taxon'};
 }
 
-=head2 genome_db_id
-
-=cut
 
 sub genome_db_id {
     my $self = shift;
@@ -501,9 +377,6 @@ sub genome_db_id {
     return $self->{'_genome_db_id'};
 }
 
-=head2 genome_db
-
-=cut
 
 sub genome_db {
   my $self = shift;
@@ -530,361 +403,139 @@ sub genome_db {
   return $self->{'_genome_db'};
 }
 
+
+
+
+
+
+
+
+
+
+
+### SECTION 4 ###
+#
+# Sequence methods
+#####################
+
+
+
+
 =head2 sequence
 
-  Arg [1]    : string $sequence
-  Example    : my $seq = $member->sequence;
-  Description: Get/set the sequence string of this member
-               Will lazy load by sequence_id if needed and able
-  Returntype : string
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::sequence() instead
 
 =cut
 
-sub sequence {
-  my $self = shift;
-
-  if(@_) {
-    $self->{'_seq_length'} = undef;
-    $self->{'_sequence'} = shift;
-    $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
-    return $self->{'_sequence'};
-  }
-  
-  if(!defined($self->{'_sequence'}) and
-     defined($self->sequence_id()) and     
-     defined($self->adaptor))
-  {
-    $self->{'_sequence'} = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbID($self->sequence_id);
-    $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
-  }
-
-  return $self->{'_sequence'};
+sub sequence { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('sequence', @_);
 }
 
 =head2 sequence_exon_cased
 
-  Args       : none
-  Example    : my $sequence_exon_cased = $member->sequence_exon_cased;
-
-  Description: Get/set the sequence string of this member with
-               alternating upper and lower case corresponding to the translateable exons.
-  Returntype : string
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::sequence_exon_cased() instead
 
 =cut
 
-sub sequence_exon_cased {
-  my $self = shift;
-
-  my $sequence = $self->sequence;
-  my $trans = $self->get_Transcript;
-  my @exons = @{$trans->get_all_translateable_Exons};
-  return $sequence if (1 == scalar @exons);
-
-  my %splice_site;
-  my $pep_len = 0;
-  my $overlap_len = 0;
-  while (my $exon = shift @exons) {
-    my $exon_len = $exon->length;
-    my $pep_seq = $exon->peptide($trans)->length;
-    # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
-    $pep_seq -= 1 if ($overlap_len);
-    $pep_len += $pep_seq;
-    if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
-      $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
-    } else {
-      $overlap_len = 0;
-    }
-    $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
-  }
-
-  my @exon_sequences = ();
-  foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
-    next if (defined($splice_site{$pep_len}{'overlap'}));
-    next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
-    my $length = $pep_len;
-    $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
-    my $peptide;
-    $peptide = substr($sequence,$length,length($sequence),'');
-    unshift(@exon_sequences, $peptide);
-  }
-  unshift(@exon_sequences, $sequence); # First exon (last piece of sequence left)
-
-  my $splice = 1;
-  foreach my $exon_sequence (@exon_sequences) {
-    if ($splice % 2 == 0) {
-      $exon_sequence = lc($exon_sequence);
-    }
-    $splice++;
-  }  
-  my $seqsplice = join("", @exon_sequences);
-
-  return $seqsplice;
-}
-
-sub sequence_exon_bounded {
-  my $self = shift;
-
-  if(@_) {
-    $self->{'_sequence_exon_bounded'} = shift;
-    return $self->{'_sequence_exon_bounded'};
-  }
-
-  if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded');
-  }
-
-  if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->_compose_sequence_exon_bounded;
-  }
-
-  return $self->{'_sequence_exon_bounded'};
-}
-
-
-sub _compose_sequence_exon_bounded {
-  my $self = shift;
-
-  my $sequence = $self->sequence;
-  my $trans = $self->get_Transcript;
-  my @exons = @{$trans->get_all_translateable_Exons};
-  return $sequence if (1 == scalar @exons);
-
-  my %splice_site;
-  my $pep_len = 0;
-  my $overlap_len = 0;
-  while (my $exon = shift @exons) {
-    my $exon_len = $exon->length;
-    my $pep_seq = $exon->peptide($trans)->length;
-    # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
-    $pep_seq -= 1 if ($overlap_len);
-    $pep_len += $pep_seq;
-    if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
-      $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
-    } else {
-      $overlap_len = 0;
-    }
-    $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
-  }
-
-  my $seqsplice = '';
-  foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
-    next if (defined($splice_site{$pep_len}{'overlap'}));
-    next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
-    my $length = $pep_len;
-    $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
-    my $peptide;
-    $peptide = substr($sequence,$length,length($sequence),'');
-    $seqsplice = $peptide . $seqsplice;
-    $seqsplice = 'o' . $seqsplice if (0 == $splice_site{$pep_len}{'phase'});
-    $seqsplice = 'b' . $seqsplice if (1 == $splice_site{$pep_len}{'phase'});
-    $seqsplice = 'j' . $seqsplice if (2 == $splice_site{$pep_len}{'phase'});
-  }
-  $seqsplice = $sequence . $seqsplice; # First exon AS IS
-
-  return $seqsplice;
-}
-
-sub sequence_cds {
-  my $self = shift;
-
-  if(@_) {
-    $self->{'_sequence_cds'} = shift;
-    return $self->{'_sequence_cds'};
-  }
-
-  if(!defined($self->{'_sequence_cds'})) {
-    $self->{'_sequence_cds'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'cds');
-  }
-
-  if(!defined($self->{'_sequence_cds'})) {
-    $self->{'_sequence_cds'} = $self->get_Transcript->translateable_seq;
-  }
-
-  return $self->{'_sequence_cds'};
-}
-
-# GJ 2008-11-17
-# Returns the amino acid sequence with exon boundaries denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
-sub get_exon_bounded_sequence {
+sub sequence_exon_cased { # DEPRECATED
     my $self = shift;
-    my $numbers = shift;
-    my $transcript = $self->get_Transcript;
-
-    # The get_all_translateable_exons creates a list of reformatted "translateable" exon sequences.
-    # When the exon phase is 1 or 2, there will be duplicated residues at the end and start of exons.
-    # We'll deal with this during the exon loop.
-    my @exons = @{$transcript->get_all_translateable_Exons};
-    my $seq_string = "";
-    # for my $ex (@exons) {
-    while (my $ex = shift @exons) {
-	my $seq = $ex->peptide($transcript)->seq;
-
-	# PHASE HANDLING
-	my $phase = $ex->phase;
-	my $end_phase = $ex->end_phase;
-
-	# First, cut off repeated end residues.
-	if ($end_phase == 1 && 0 < scalar @exons) {
-	    # We only own 1/3, so drop the last residue.
-	    $seq = substr($seq,0,-1);
-	}
-
-	# Now cut off repeated start residues.
-	if ($phase == 2) {
-	    # We only own 1/3, so drop the first residue.
-	    $seq = substr($seq, 1);
-	}
-
-	if ($end_phase > -1) {
-	    $seq = $seq . 'o' if ($end_phase == 0);
-	    $seq = $seq . 'b' if ($end_phase == 1);
-	    $seq = $seq . 'j' if ($end_phase == 2);
-	}
-	#print "Start_phase: $phase   End_phase: $end_phase\t$seq\n";
-	$seq_string .= $seq;
-    }
-    if (defined $numbers) {
-      $seq_string =~ s/o/0/g; $seq_string =~ s/b/1/g; $seq_string =~ s/j/2/g;
-    }
-    return $seq_string;
+    return $self->_wrap_method_seq('sequence_exon_cased', @_);
 }
 
-sub get_other_sequence {
-  my $self = shift;
-  my $seq_type = shift;
+sub sequence_exon_bounded { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('sequence_exon_bounded', @_);
+}
 
-  my $key = "_sequence_other_$seq_type";
 
-  if(!defined($self->{$key})) {
-    $self->{$key} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, $seq_type);
-  }
+sub _compose_sequence_exon_bounded { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('_compose_sequence_exon_bounded', @_);
+}
 
-  return $self->{$key};
+sub sequence_cds { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('sequence_cds', @_);
+}
+
+sub get_exon_bounded_sequence { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('get_exon_bounded_sequence', @_);
+}
+
+sub get_other_sequence { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('get_other_sequence', @_);
 }
 
 
 =head2 seq_length
 
-  Example    : my $seq_length = $member->seq_length;
-  Description: get the sequence length of this member
-  Returntype : int
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::seq_length() instead
 
 =cut
 
-sub seq_length {
-  my $self = shift;
-
-  unless(defined($self->{'_seq_length'})) {
-    #need to check case if user is calling seq_length first
-    #call $self->sequence (to lazy load if needed)
-    my $seq = $self->sequence;
-    $self->{'_seq_length'} = length($seq) if(defined($seq));
-  }
-  return $self->{'_seq_length'};
+sub seq_length { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('seq_length', @_);
 }
 
 
 =head2 sequence_id
 
-  Arg [1]    : int $sequence_id
-  Example    : my $sequence_id = $member->sequence_id;
-  Description: Extracts the sequence_id of this member
-  Returntype : int
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::sequence_id() instead
 
 =cut
 
-sub sequence_id {
-  my $self = shift;
-  $self->{'_sequence_id'} = shift if(@_);
-  if(!defined($self->{'_sequence_id'})) { $self->{'_sequence_id'}=0; }
-  return $self->{'_sequence_id'};
+sub sequence_id { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('sequence_id', @_);
 }
 
 =head2 gene_member_id
 
-  Arg [1]    : int $gene_member_id
-  Example    : my $gene_member_id = $member->gene_member_id;
-  Description: Gene_member_id of this member
-  Returntype : int
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::gene_member_id() instead
 
 =cut
 
-sub gene_member_id {
-  my $self = shift;
-  $self->{'_gene_member_id'} = shift if(@_);
-  return $self->{'_gene_member_id'};
+sub gene_member_id { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('gene_member_id', @_);
 }
 
 
 =head2 bioseq
 
-  Args       : none
-  Example    : my $bioperl_seq = $member->bioseq;
-  Description: returns sequence of this member as a Bio::Seq object
-  Returntype : Bio::Seq object
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::bioseq() instead
 
 =cut
 
-sub bioseq {
-  my $self = shift;
-
-  throw("Member stable_id undefined") unless defined($self->stable_id());
-  throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
-
-  my $seqname;
-  if (defined($self->genome_db_id) and defined($self->dbID)) {
-    $seqname = "IDs:" . $self->genome_db_id . ":" . $self->dbID . " " .
-        $self->source_name . ":" . $self->stable_id;
-  } else {
-    $seqname = $self->source_name . ":" . $self->stable_id;
-  }
-  my $seq = Bio::Seq->new(-seq        => $self->sequence(),
-                          -primary_id => $self->dbID,
-                          -display_id => $seqname,
-                          -desc       => $self->description(),
-                         );
-  return $seq;
+sub bioseq { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('bioseq', @_);
 }
 
 =head2 gene_member
 
-  Arg[1]     : Bio::EnsEMBL::Compara::Member $geneMember (optional)
-  Example    : my $gene_member = $member->gene_member;
-  Description: returns gene member object for this sequence member
-  Returntype : Bio::EnsEMBL::Compara::Member object
-  Exceptions : if arg[0] is not a Bio::EnsEMBL::Compara::Member object
-  Caller     : MemberAdaptor(set), general
+  Description: DEPRECATED. Use SeqMember::gene_member() instead
 
 =cut
 
-sub gene_member {
-  my $self = shift;
-  my $gene_member = shift;
-
-  if ($gene_member) {
-    throw("arg must be a [Bio::EnsEMBL::Compara::Member] not a [$gene_member]")
-      unless ($gene_member->isa('Bio::EnsEMBL::Compara::Member'));
-    $self->{'_gene_member'} = $gene_member;
-  }
-  if(!defined($self->{'_gene_member'}) and
-     defined($self->adaptor) and $self->dbID)
-  {
-    $self->{'_gene_member'} = $self->adaptor->db->get_MemberAdaptor->fetch_by_dbID($self->gene_member_id);
-  }
-  return $self->{'_gene_member'};
+sub gene_member { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('gene_member', @_);
 }
+
+
+
+
+### SECTION 5 ###
+#
+# print a member
+##################
+
+
 
 =head2 print_member
 
@@ -897,217 +548,213 @@ sub gene_member {
 
 =cut
 
-sub print_member
+sub print_member {
+    my $self = shift;
 
-{
-  my $self = shift;
-
-  printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
-         $self->dbID,$self->chr_name,$self->chr_start, $self->chr_end);
+    printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
+            $self->dbID,$self->chr_name,$self->chr_start, $self->chr_end);
 }
+
+
+
+
+
+### SECTION 6 ###
+#
+# connection to core
+#####################
+
+
+
 
 
 =head2 get_Gene
 
-  Args       : none
-  Example    : $gene = $member->get_Gene
-  Description: if member is an 'ENSEMBLGENE' returns Bio::EnsEMBL::Gene object
-               by connecting to ensembl genome core database
-               REQUIRES properly setup Registry conf file or
-               manually setting genome_db->db_adaptor for each genome.
-  Returntype : Bio::EnsEMBL::Gene or undef
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::get_Gene() instead
 
 =cut
 
-sub get_Gene {
-  my $self = shift;
-  
-  return $self->{'core_gene'} if($self->{'core_gene'});
-  
-  unless($self->genome_db and 
-         $self->genome_db->db_adaptor and
-         $self->genome_db->db_adaptor->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) 
-  {
-    throw("unable to connect to core ensembl database: missing registry and genome_db.locator");
-  }
-
-  my $coreDBA = $self->genome_db->db_adaptor;
-  if($self->source_name eq 'ENSEMBLGENE') {    
-    $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->stable_id);
-  }
-  if($self->source_name eq 'ENSEMBLPEP') {
-    $self->{'core_gene'} = $coreDBA->get_GeneAdaptor->fetch_by_stable_id($self->gene_member->stable_id);
-  }
-  return $self->{'core_gene'};
+sub get_Gene { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_gene('get_Gene', @_);
 }
 
 =head2 get_Transcript
 
-  Args       : none
-  Example    : $transcript = $member->get_Transcript
-  Description: if member is an 'ENSEMBLPEP' returns Bio::EnsEMBL::Transcript object
-               by connecting to ensembl genome core database
-               REQUIRES properly setup Registry conf file or
-               manually setting genome_db->db_adaptor for each genome.
-  Returntype : Bio::EnsEMBL::Transcript or undef
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::get_Transcript() instead
 
 =cut
 
-sub get_Transcript {
-  my $self = shift;
-  
-  return undef unless($self->source_name eq 'ENSEMBLPEP');
-  return $self->{'core_transcript'} if($self->{'core_transcript'});
-
-  unless($self->genome_db and 
-         $self->genome_db->db_adaptor and
-         $self->genome_db->db_adaptor->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) 
-  {
-    throw("unable to connect to core ensembl database: missing registry and genome_db.locator");
-  }
-  my $coreDBA = $self->genome_db->db_adaptor;
-  $self->{'core_transcript'} = $coreDBA->get_TranscriptAdaptor->fetch_by_translation_stable_id($self->stable_id);
-  return $self->{'core_transcript'};
+sub get_Transcript { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('get_Transcript', @_);
 }
 
 
 =head2 get_Translation
 
-  Args       : none
-  Example    : $translation = $member->get_Translation
-  Description: if member is an 'ENSEMBLPEP' returns Bio::EnsEMBL::Translation object
-               by connecting to ensembl genome core database
-               REQUIRES properly setup Registry conf file or
-               manually setting genome_db->db_adaptor for each genome.
-  Returntype : Bio::EnsEMBL::Translation or undef
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use SeqMember::get_Translation() instead
 
 =cut
 
-sub get_Translation {
-  my $self = shift;
-
-  if($self->get_Transcript) {
-    my $transcript = $self->get_Transcript;
-    return $transcript->translation();
-  }
-  return undef;
+sub get_Translation { # DEPRECATED
+    my $self = shift;
+    return $self->_wrap_method_seq('get_Translation', @_);
 }
 
-sub gene {
-  my $self = shift;
-  deprecate('Use get_Gene() instead. gene() will be removed in release 70.');
-  return $self->get_Gene;
-}
-sub transcript {
-  my $self = shift;
-  deprecate('Use get_Transcript() instead. transcript() will be removed in release 70.');
-  return $self->get_Transcript;
-}
-sub translation {
-  my $self = shift;
-  deprecate('Use get_Translation() instead. translation() will be removed in release 70.');
-  return $self->get_Translation();
-}
+
+
+### SECTION 7 ###
+#
+# canonical transcripts
+########################
+
+
 
 
 =head2 get_canonical_Member
 
-  Args       : none
-  Example    : $canonicalMember = $member->get_canonical_Member
-  Description: if member is an "ENSEMBLGENE" it will return the canonical peptide / transcript member
-               if member is an 'ENSEMBLPEP' it will get its gene member and have it
-               if member is an 'ENSEMBLTRANS' it will get its gene member and have it
-               return the canonical peptide / transcript (which could be the same as the starting member)
-  Returntype : Bio::EnsEMBL::Compara::Member or undef
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use GeneMember::get_canonical_SeqMember() instead
 
 =cut
 
-sub get_canonical_Member {
+sub get_canonical_Member { # DEPRECATED
     my $self = shift;
-
-    return unless($self->adaptor);
-
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_member_for_gene_member_id')
-        ? $self->adaptor    # a MemberAdaptor or derivative
-        : $self->adaptor->db->get_MemberAdaptor;
-
-    if($self->source_name eq 'ENSEMBLGENE') {
-
-        return $able_adaptor->fetch_canonical_member_for_gene_member_id($self->dbID);
-
-    } elsif(($self->source_name eq 'ENSEMBLPEP') or ($self->source_name eq 'ENSEMBLTRANS')) {
-
-        my $geneMember = $self->gene_member or return;
-
-        return $able_adaptor->fetch_canonical_member_for_gene_member_id($geneMember->dbID);
-
-    } else {
-
-        return undef;
-    }
+    return $self->_rename_method_gene('get_canonical_Member', 'get_canonical_SeqMember', @_);
 }
 
 
 =head2 get_canonical_peptide_Member
 
-  Description: DEPRECATED. Use get_canonical_Member() instead
+  Description: DEPRECATED. Use GeneMember::get_canonical_SeqMember() instead
 
 =cut
 
-sub get_canonical_peptide_Member {
+sub get_canonical_peptide_Member { # DEPRECATED
     my $self = shift;
-
-    deprecate('Use get_canonical_Member() instead. get_canonical_peptide_Member() will be removed in release 70.');
-    return $self->get_canonical_Member(@_);
+    return $self->_rename_method_gene('get_canonical_peptide_Member', 'get_canonical_SeqMember', @_);
 }
 
 
 =head2 get_canonical_transcript_Member
 
-  Description: DEPRECATED. Use get_canonical_Member() instead
+  Description: DEPRECATED. Use GeneMember::get_canonical_SeqMember() instead
 
 =cut
 
-sub get_canonical_transcript_Member {
+sub get_canonical_transcript_Member { # DEPRECATED
     my $self = shift;
-
-    deprecate('Use get_canonical_Member() instead. get_canonical_transcript_Member() will be removed in release 70.');
-    return $self->get_canonical_Member(@_);
+    return $self->_rename_method_gene('get_canonical_transcript_Member', 'get_canonical_SeqMember', @_);
 }
+
+
+### SECTION 8 ###
+#
+# sequence links
+####################
+
+
 
 
 =head2 get_all_peptide_Members
 
-  Args       : none
-  Example    : $pepMembers = $gene_member->get_all_peptide_Members
-  Description: return listref of all peptide members of this gene member
-  Returntype : array ref of Bio::EnsEMBL::Compara::Member
-  Exceptions : throw if not an ENSEMBLGENE
-  Caller     : general
+  Description: DEPRECATED. Use GeneMember::get_all_SeqMembers() instead
 
 =cut
 
-sub get_all_peptide_Members {
+
+
+
+sub get_all_peptide_Members { # DEPRECATED
     my $self = shift;
-
-    throw("adaptor undefined, cannot access database") unless($self->adaptor);
-    throw("not an ENSEMBLGENE member") if($self->source_name ne 'ENSEMBLGENE'); 
-
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_all_peptides_for_gene_member_id')
-        ? $self->adaptor    # a MemberAdaptor or derivative
-        : $self->adaptor->db->get_MemberAdaptor;
-
-
-    return $able_adaptor->fetch_all_peptides_for_gene_member_id($self->dbID);
+    return $self->_rename_method_gene('get_all_peptide_Members', 'get_all_SeqMembers', @_);
 }
- 
+
+
+
+
+
+### SECTION 9 ###
+#
+# WRAPPERS
+###########
+
+no strict 'refs';
+
+sub _wrap_global_gene {
+    my $self = shift;
+    my $method = shift;
+    warning(qq{
+        $method() should not be called from a Member / SeqMember namespaces, but from the GeneMember one. Please review your code and call $method() from the namespace Bio::EnsEMBL::Compara::GeneMember.
+    });
+    my $method_wrap = "Bio::EnsEMBL::Compara::GeneMember::$method";
+    return $method_wrap->(@_);
+}
+
+
+sub _wrap_global_seq {
+    my $self = shift;
+    my $method = shift;
+    warning(qq{
+        $method() should not be called from the Member / GeneMember namespaces, but from the SeqMember one. Please review your code and call $method() from the namespace Bio::EnsEMBL::Compara::SeqMember.
+    });
+    my $method_wrap = "Bio::EnsEMBL::Compara::SeqMember::$method";
+    return $method_wrap->(@_);
+}
+
+sub _wrap_method_seq {
+    my $self = shift;
+    my $method = shift;
+    if ($self->source_name eq 'ENSEMBLGENE') {
+        throw(qq{
+        $method() is not defined for genes. You may want to first call get_canonical_SeqMember() or get_all_SeqMembers() in order to have a SeqMember that will accept $method().
+        });
+    } else {
+        warning(qq{
+        $method() should be called on a SeqMember object. Please review your code and bless $self as a SeqMember (then, $method() will work).
+        })
+    }
+    my $method_wrap = "Bio::EnsEMBL::Compara::SeqMember::$method";
+    return $method_wrap->($self, @_);
+}
+
+sub _wrap_method_gene {
+    my $self = shift;
+    my $method = shift;
+    if ($self->source_name eq 'ENSEMBLGENE') {
+        warning(qq{
+        $method() should be called on a GeneMember object. Please review your code and bless $self as a GeneMember (then, $method() will work).
+        })
+    } else {
+        warning(qq{
+        $method() should not be called on a protein / ncRNA, but on a gene. Perhaps You want to call $self->gene_member()->$method().
+        });
+    }
+    my $method_wrap = "Bio::EnsEMBL::Compara::GeneMember::$method";
+    return $method_wrap->($self->source_name eq 'ENSEMBLGENE' ? $self : $self->gene_member, @_);
+}
+
+sub _rename_method_gene {
+    my $self = shift;
+    my $method = shift;
+    my $new_name = shift;
+    if ($self->isa('Bio::EnsEMBL::Compara::GeneMember')) {
+        warning(qq{
+        $method() is renamed to $new_name(). Please review your code and call $new_name() instead.
+        });
+    } elsif ($self->source_name eq 'ENSEMBLGENE') {
+        warning(qq{
+        $method() is renamed to $new_name() and should be called on a GeneMember object. Please review your code: bless $self as a GeneMember, and use $new_name() instead.
+        });
+    } else {
+        warning(qq{
+        $method() is renamed to $new_name() and cannot be called on a protein / ncRNA. Perhaps you want to call $self->gene_member()->$new_name().
+        });
+    }
+    my $method_wrap = "Bio::EnsEMBL::Compara::GeneMember::$new_name";
+    return $method_wrap->($self->source_name eq 'ENSEMBLGENE' ? $self : $self->gene_member, @_);
+}
+
+
 
 1;
