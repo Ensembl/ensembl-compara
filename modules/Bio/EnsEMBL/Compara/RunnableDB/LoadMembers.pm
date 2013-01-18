@@ -211,7 +211,8 @@ sub store_gene_and_all_transcripts {
   my $self = shift;
   my $gene = shift;
 
-  my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
+  my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
+  my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
   my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor();
   
   my @canonicalPeptideMember;
@@ -290,7 +291,7 @@ sub store_gene_and_all_transcripts {
                                                                   -genome_db=>$self->param('genome_db'));
       print(" => member " . $gene_member->stable_id) if($self->param('verbose'));
 
-      $member_adaptor->store($gene_member);
+      $gene_member_adaptor->store($gene_member);
       print(" : stored") if($self->param('verbose'));
 
       print("\n") if($self->param('verbose'));
@@ -298,7 +299,7 @@ sub store_gene_and_all_transcripts {
     }
 
     $pep_member->gene_member_id($gene_member->dbID);
-    $member_adaptor->store($pep_member);
+    $seq_member_adaptor->store($pep_member);
     if ($self->param('store_related_pep_sequences')) {
         $sequence_adaptor->store_other_sequence($pep_member, $pep_member->sequence_cds, 'cds');
         $pep_member->sequence_cds('');
@@ -316,7 +317,7 @@ sub store_gene_and_all_transcripts {
 
   if(@canonicalPeptideMember) {
     my ($transcript, $member) = @canonicalPeptideMember;
-    $member_adaptor->_set_member_as_canonical($member);
+    $seq_member_adaptor->_set_member_as_canonical($member);
     # print("     LONGEST " . $transcript->stable_id . "\n");
   }
   return 1;
@@ -330,7 +331,7 @@ sub store_all_coding_exons {
 
   my $min_exon_length = $self->param('min_length') or die "'min_length' is an obligatory parameter";
 
-  my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
+  my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
   my $genome_db = $self->param('genome_db');
   my @exon_members = ();
 
@@ -409,7 +410,7 @@ sub store_all_coding_exons {
 
     eval {
 	    #print "New member\n";
-	    $member_adaptor->store($exon_member);
+	    $seq_member_adaptor->store($exon_member);
 	    print(" : stored\n") if($self->param('verbose'));
     };
   }

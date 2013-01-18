@@ -57,11 +57,11 @@ sub fetch_input {
     my $species_set = ($genome_db_id ? [ $genome_db_id ] : $self->param('species_set'))
         or die "Either 'species_set' list or 'genome_db_id' parameter has to be defined";
 
-    my $member_adaptor   = $self->compara_dba->get_MemberAdaptor;
+    my $seq_member_adaptor   = $self->compara_dba->get_SeqMemberAdaptor;
 
     my @member_ids = ();
     foreach my $gdb_id (@$species_set) {
-        foreach my $member (@{$member_adaptor->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $gdb_id)}) {
+        foreach my $member (@{$seq_member_adaptor->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $gdb_id)}) {
             push @member_ids, $member->member_id;
         }
     }

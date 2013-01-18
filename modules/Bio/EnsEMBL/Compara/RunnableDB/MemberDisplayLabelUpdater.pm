@@ -216,7 +216,8 @@ where genome_db_id =? and display_label is null and source_name =?};
 
 sub _get_members_by_source {
 	my ($self, $genome_db, $source_name) = @_;
-	my $member_a = $self->compara_dba()->get_MemberAdaptor();
+	my $member_a = $self->compara_dba()->get_SeqMemberAdaptor();
+      $member_a = $self->compara_dba()->get_GeneMemberAdaptor() if $source_name eq 'ENSEMBLGENE';
 	my $gdb_id = $genome_db->dbID();
 	my $constraint = qq(m.source_name = '${source_name}' and m.genome_db_id = ${gdb_id});
 	my $members = $member_a->generic_fetch($constraint);
