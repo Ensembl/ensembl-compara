@@ -624,13 +624,28 @@ sub _set_member_as_canonical { # DEPRECATED
 
 no strict 'refs';
 
+use Bio::EnsEMBL::ApiVersion;
+
+sub _display_warning {
+    my $msg = shift;
+    print STDERR
+        "\n------------------ DEPRECATED ---------------------\n"
+        . "$msg\n"
+        . stack_trace_dump(5). "\n"
+        . "You are using the version ".software_version()." of the API. The old methods / objects are available for compatibility until version 74 (included)\n"
+        . "---------------------------------------------------\n";
+}
+
+
 sub _warning_member_adaptor {
     my $self = shift;
+
+
     unless ($self->isa('Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor') or
             $self->isa('Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor')) {
-        warning(qq{
-            The Member adaptor is deprecated in favour of the more specific GeneMember and SeqMember adaptors, and will be removed in release 75.
-            Please update your code (change the adaptor).
+        _display_warning(qq{
+            The Member adaptor is deprecated in favour of the more specific GeneMember and SeqMember adaptors.
+            Please update your code (change the adaptor) here:
         });
     }
 }
@@ -639,9 +654,9 @@ sub _warning_member_adaptor {
 sub _wrap_method_seq {
     my $self = shift;
     my $method = shift;
-    warning(qq{
-        $method() should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors). $method() will still be available for compatibility until release 75.
-        Please update your code (change the adaptor).
+    _display_warning(qq{
+        $method() should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors).
+        Please update your code (change the adaptor) here:
     });
     my $method_wrap = "Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::$method";
     return $method_wrap->($self, @_);
@@ -651,9 +666,9 @@ sub _rename_method_seq {
     my $self = shift;
     my $method = shift;
     my $new_name = shift;
-    warning(qq{
-        $method() is renamed to $new_name() and should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors). $method() will still be available for compatibility until release 75.
-        Please update your code: change the adaptor, and use $new_name() instead.
+    _display_warning(qq{
+        $method() is renamed to $new_name() and should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors).
+        Please update your code: change the adaptor, and use $new_name() instead:
     });
     my $method_wrap = "Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::$new_name";
     return $method_wrap->($self, @_);
