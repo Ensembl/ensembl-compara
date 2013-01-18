@@ -21,7 +21,7 @@ $reg->load_registry_from_db(
 
 
 # get compara DBAdaptor
-my $comparaDBA = $reg->get_DBAdaptor('compara', 'compara');
+my $comparaDBA = $reg->get_DBAdaptor('Multi', 'compara');
 
 # get GenomeDB for human and mouse
 my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");

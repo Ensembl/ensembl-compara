@@ -20,8 +20,8 @@ $reg->load_registry_from_db(
 
 
 my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Homo sapiens", "core", "Gene");
-my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Compara", "compara", "GeneMember");
-my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Compara", "compara", "Homology");
+my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Multi", "compara", "GeneMember");
+my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Multi", "compara", "Homology");
 
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('BRCA2');
 

@@ -17,8 +17,8 @@ my $self = bless {};
 Bio::EnsEMBL::Registry->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");
 
 my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
-my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "GeneMember");
-my $gene_tree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "GeneTree");
+my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GeneMember");
+my $gene_tree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GeneTree");
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('ENPP1');
 

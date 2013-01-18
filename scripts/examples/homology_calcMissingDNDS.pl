@@ -28,8 +28,8 @@ $reg->load_registry_from_db(
 );
 $reg->no_version_check(1) unless ($debug);
 
-my $gene_member_adaptor = $reg->get_adaptor("Compara", "compara", "GeneMember");
-my $homology_adaptor = $reg->get_adaptor("Compara", "compara", "Homology");
+my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
+my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
 
 my $bioperl_dnastats = 0;
 eval {require Bio::Align::DNAStatistics;};

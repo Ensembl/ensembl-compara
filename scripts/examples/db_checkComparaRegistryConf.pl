@@ -17,7 +17,7 @@ die("must specify registry conf file on commandline\n") unless($reg_conf);
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 
-my $comparaDBA  = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
+my $comparaDBA  = Bio::EnsEMBL::Registry->get_DBAdaptor('Multi', 'compara');
 
 my $genomes = $comparaDBA->get_GenomeDBAdaptor->fetch_all;
 foreach my $genomeDB (@{$genomes}) {

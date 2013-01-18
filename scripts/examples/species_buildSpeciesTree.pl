@@ -19,7 +19,7 @@ $reg->load_registry_from_db(
 );
 
 
-my $taxonDBA = $reg->get_adaptor("Compara", "compara", "NCBITaxon");
+my $taxonDBA = $reg->get_adaptor("Multi", "compara", "NCBITaxon");
 
 my @list_of_species = ("Homo sapiens","Mus musculus","Drosophila melanogaster","Caenorhabditis elegans");
 my $root;

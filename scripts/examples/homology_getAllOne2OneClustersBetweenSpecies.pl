@@ -19,9 +19,9 @@ $reg->load_registry_from_db(
 );
 
 
-my $homology_adaptor = $reg->get_adaptor("Compara", "compara", "Homology");
-my $mlss_adaptor = $reg->get_adaptor("Compara", "compara", "MethodLinkSpeciesSet");
-my $genomedb_adaptor = $reg->get_adaptor("Compara", "compara", "GenomeDB");
+my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
+my $mlss_adaptor = $reg->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
+my $genomedb_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");
 
 my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta");
 #my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta","mus_musculus","rattus_norvegicus","canis_familiaris","bos_taurus","sus_scrofa","monodelphis_domestica","ornithorhynchus_anatinus","gallus_gallus","danio_rerio");

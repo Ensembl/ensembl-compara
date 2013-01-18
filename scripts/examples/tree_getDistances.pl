@@ -22,8 +22,8 @@ $reg->load_registry_from_db(
 
 
 my $human_gene_adaptor = $reg->get_adaptor ("Homo sapiens", "core", "Gene");
-my $gene_member_adaptor = $reg->get_adaptor ("Compara", "compara", "GeneMember");
-my $gene_tree_adaptor = $reg->get_adaptor ("Compara", "compara", "GeneTree");
+my $gene_member_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneMember");
+my $gene_tree_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneTree");
 
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('PAX6');
 

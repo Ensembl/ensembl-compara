@@ -20,7 +20,7 @@ $reg->load_registry_from_db(
 
 
 # get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('Multi', 'compara');
 my $pafDBA = $comparaDBA-> get_PeptideAlignFeatureAdaptor;
 $pafDBA->final_clause("ORDER BY score desc");
 

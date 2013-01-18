@@ -24,7 +24,7 @@ $gene_name="ENSDARG00000052960" unless(defined($gene_name));
 
 
 # get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('Multi', 'compara');
 my $MA = $comparaDBA->get_MemberAdaptor;
 my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", $gene_name);
 my ($homologies, $genes) = $comparaDBA->get_HomologyAdaptor->fetch_orthocluster_with_Member($gene_member);

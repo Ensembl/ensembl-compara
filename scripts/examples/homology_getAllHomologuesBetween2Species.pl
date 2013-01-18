@@ -20,7 +20,7 @@ $reg->load_registry_from_db(
 
 my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('Multi', 'compara');
 my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
 my $mlss_adaptor = $comparaDBA->get_MethodLinkSpeciesSetAdaptor;
 my $genomedb_adaptor = $comparaDBA->get_GenomeDBAdaptor;
