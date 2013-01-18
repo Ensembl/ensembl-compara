@@ -1,3 +1,55 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor
+
+=head1 DESCRIPTION
+
+Adaptor to retrieve SeqMember objects.
+Most of the methods are shared with the GeneMemberAdaptor.
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor
+  +- Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 
 use strict; 
@@ -107,6 +159,13 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor);
 
 =head2 fetch_all_by_sequence_id
 
+  Arg [1]    : int sequence_id
+  Example    : @pepMembers = @{$SeqMemberAdaptor->fetch_all_by_sequence_id($seq_id)};
+  Description: given a sequence_id, fetches all sequence members for this sequence
+  Returntype : array ref of Bio::EnsEMBL::Compara::SeqMember objects
+  Exceptions :
+  Caller     : general
+
 
 =cut
 
@@ -125,10 +184,9 @@ sub fetch_all_by_sequence_id {
 
   Arg [1]    : int member_id of a gene member
   Example    : @pepMembers = @{$SeqMemberAdaptor->fetch_all_by_gene_member_id($gene_member_id)};
-  Description: given a member_id of a gene member,
-               fetches all sequence members for this gene
+  Description: given a member_id of a gene member, fetches all sequence members for this gene
   Returntype : array ref of Bio::EnsEMBL::Compara::SeqMember objects
-  Exceptions :
+  Exceptions : $gene_member_id not defined
   Caller     : general
 
 =cut
@@ -147,6 +205,13 @@ sub fetch_all_by_gene_member_id {
 
 =head2 fetch_all_canonical_by_source_genome_db_id
 
+  Arg [1]    : string source_name
+  Arg [1]    : int genome_db_id of a a species
+  Example    : @canMembers = @{$SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', 90)};
+  Description: fetches all the canonical members of given source_name and species
+  Returntype : array ref of Bio::EnsEMBL::Compara::SeqMember objects
+  Exceptions : arguments not defined
+  Caller     : general
 
 =cut
 
@@ -174,7 +239,7 @@ sub fetch_all_canonical_by_source_genome_db_id {
   Example    : $members = $memberAdaptor->fetch_canonical_for_gene_member_id($gene_member_id);
   Description: given a member_id of a gene member,
                fetches the canonical peptide / transcript member for this gene
-  Returntype : Bio::EnsEMBL::Compara::Member object
+  Returntype : Bio::EnsEMBL::Compara::SeqMember object
   Exceptions :
   Caller     : general
 

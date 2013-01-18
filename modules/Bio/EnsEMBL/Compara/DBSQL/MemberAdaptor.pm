@@ -1,3 +1,58 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
+
+=head1 DESCRIPTION
+
+Base adaptor for Member objects. This adaptor is deprecated: SeqMemberAdaptor
+and GeneMemberAdaptor are supposed to be used to fetch Members.
+
+The methods are still available for compatibility until release 74 (included),
+but the Member object should not be explicitely used.
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
+  +- Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
 use strict; 
@@ -48,7 +103,7 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 sub fetch_by_source_stable_id {
   my ($self,$source_name, $stable_id) = @_;
 
-    $self->_warning_member_adaptor();
+  $self->_warning_member_adaptor();
   unless(defined $stable_id) {
     throw("fetch_by_source_stable_id must have an stable_id");
   }
@@ -65,9 +120,22 @@ sub fetch_by_source_stable_id {
   return $self->generic_fetch_one($constraint);
 }
 
+
+=head2 fetch_all_by_source_stable_ids
+
+  Arg [1]    : (optional) string $source_name
+  Arg [2]    : arrayref of string $stable_id
+  Example    : my $members = $ma->fetch_by_source_stable_id(
+                   "Uniprot/SWISSPROT", ["O93279", "O62806"]);
+  Description: Fetches the members corresponding to all the $stable_id.
+  Returntype : arrayref Bio::EnsEMBL::Compara::Member object
+  Caller     : 
+
+=cut
+
 sub fetch_all_by_source_stable_ids {
   my ($self,$source_name, $stable_ids) = @_;
-    $self->_warning_member_adaptor();
+  $self->_warning_member_adaptor();
   return [] if (!$stable_ids or !@$stable_ids);
 
   #construct a constraint like 't1.table1_id = 1'
@@ -79,6 +147,7 @@ sub fetch_all_by_source_stable_ids {
   my $obj = $self->generic_fetch($constraint);
   return $obj;
 }
+
 
 =head2 fetch_all
 
@@ -98,7 +167,7 @@ sub fetch_all_by_source_stable_ids {
 sub fetch_all {
   my $self = shift;
 
-    $self->_warning_member_adaptor();
+  $self->_warning_member_adaptor();
   return $self->generic_fetch();
 }
 
@@ -124,6 +193,7 @@ sub fetch_all_Iterator {
     $self->_warning_member_adaptor();
     return $self->generic_fetch_Iterator($cache_size,"");
 }
+
 
 =head2 fetch_all_Iterator
 
@@ -171,7 +241,7 @@ sub fetch_all_by_source_Iterator {
 sub fetch_all_by_source {
   my ($self,$source_name) = @_;
 
-    $self->_warning_member_adaptor();
+  $self->_warning_member_adaptor();
   throw("source_name arg is required\n")
     unless ($source_name);
 
@@ -206,6 +276,7 @@ sub fetch_all_by_source_taxon {
     return $self->generic_fetch('m.source_name = ? AND m.taxon_id = ?');
 }
 
+
 =head2 fetch_all_by_source_genome_db_id
 
   Arg [1]    : string $source_name
@@ -235,7 +306,7 @@ sub fetch_all_by_source_genome_db_id {
 sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
 
-    $self->_warning_member_adaptor();
+  $self->_warning_member_adaptor();
   $self->throw("all args are required") 
       unless($source_name && $taxon_id && $chr_start && $chr_end && $chr_strand && defined ($chr_name));
 
@@ -253,17 +324,16 @@ sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   Arg [1]    : string $source_name
   Arg [2]    : int $taxon_id
   Example    : my $sp_gene_count = $memberDBA->get_source_taxon_count('ENSEMBLGENE',$taxon_id);
-  Description: 
-  Returntype : int $sp_gene_count is the number of members for this source_name and taxon_id
-  Exceptions : 
-  Caller     : 
+  Description: Returns the number of members for this source_name and taxon_id
+  Returntype : int
+  Exceptions : undefined arguments
 
 =cut
 
 sub get_source_taxon_count {
   my ($self,$source_name,$taxon_id) = @_;
 
-    $self->_warning_member_adaptor();
+  $self->_warning_member_adaptor();
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
@@ -276,6 +346,13 @@ sub get_source_taxon_count {
   return $count;
 }
 
+
+=head2 fetch_all_by_Domain
+
+  Arg [1]    : Bio::EnsEMBL::Compara::Domain $domain
+  Status     : Experimental
+
+=cut
 
 sub fetch_all_by_Domain {
     my ($self, $domain) = @_;
@@ -298,7 +375,7 @@ sub fetch_all_by_Domain {
   Example    : $family_members = $m_adaptor->fetch_all_by_MemberSet($family);
   Description: Fetches from the database all the members attached to this set
   Returntype : arrayref of Bio::EnsEMBL::Compara::Member
-  Exceptions : none
+  Exceptions : argument not a MemberSet
   Caller     : general
 
 =cut
@@ -325,7 +402,7 @@ sub fetch_all_by_MemberSet {
   Description: given a subset_id, does a join to the subset_member table
                to return a list of Member objects in this subset
   Returntype : list by reference of Compara::Member objects
-  Exceptions :
+  Exceptions : $subset_id not defined
   Caller     : general
 
 =cut
@@ -333,7 +410,7 @@ sub fetch_all_by_MemberSet {
 sub fetch_all_by_subset_id {
   my ($self, $subset_id) = @_;
 
-    $self->_warning_member_adaptor();
+  $self->_warning_member_adaptor();
   throw() unless (defined $subset_id);
 
   my $constraint = "sm.subset_id = '$subset_id'";
