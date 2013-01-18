@@ -1,8 +1,62 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::GeneMember
+
+=head1 DESCRIPTION
+
+Class to represent a member that is a gene.
+Genes do not have any sequences attached (see SeqMember for that purpose).
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::GeneMember
+  +- Bio::EnsEMBL::Compara::Member
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::GeneMember;
 
 use strict;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::Member');
 
@@ -10,8 +64,8 @@ use base ('Bio::EnsEMBL::Compara::Member');
 
 =head2 new_from_gene
 
-  Args       : Requires both an Bio::Ensembl:Gene object and a
-             : Bio::Ensembl:Compara:GenomeDB object
+  Arg [-GENE] : Bio::Ensembl:Gene
+  Arg [-GENOME_DB] : Bio::Ensembl:Compara:GenomeDB 
   Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
                 -gene   => $gene,
                 -genome_db => $genome_db);
@@ -19,8 +73,8 @@ use base ('Bio::EnsEMBL::Compara::Member');
                and Compara:GenomeDB object and creates a new GeneMember object
                translating from the Gene object
   Returntype : Bio::Ensembl::Compara::GeneMember
-  Exceptions :
-  Caller     :
+  Exceptions : undefined arguments, missing $gene->stable_id
+  Caller     : general
 
 =cut
 
@@ -32,16 +86,8 @@ sub new_from_gene {
 
     my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);
 
-    unless(defined($gene) and $gene->isa('Bio::EnsEMBL::Gene')) {
-      throw(
-      "gene arg must be a [Bio::EnsEMBL::Gene] ".
-      "not a [$gene]");
-    }
-    unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-      throw(
-      "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
-      "not a [$genome_db]");
-    }
+    assert_ref($gene, 'Bio::EnsEMBL::Gene');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
     unless (defined $gene->stable_id) {
       throw("COREDB error: does not contain gene_stable_id for gene_id ". $gene->dbID."\n");
     }

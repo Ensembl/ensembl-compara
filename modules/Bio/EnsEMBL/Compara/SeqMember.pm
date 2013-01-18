@@ -1,25 +1,78 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::SeqMember
+
+=head1 DESCRIPTION
+
+Class to represent a member that has a sequence attached.
+It is currently used for proteins and RNAs.
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::SeqMember
+  +- Bio::EnsEMBL::Compara::Member
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::SeqMember;
 
 use strict;
+
 use Bio::Seq;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(:all);
+
 
 use base ('Bio::EnsEMBL::Compara::Member');
 
 
 =head2 new (CONSTRUCTOR)
 
-    Arg [-SEQUENCE_ID] (opt)
-        : int $sequence_id
-        (the $sequence_id for the sequence table in the database)
+    Arg [-SEQUENCE_ID] (opt) : int
+        the $sequence_id for the sequence table in the database
     Example :
-	my $peptide = new Bio::EnsEMBL::Compara::SeqMember;
-       Description: Creates a new SeqMember object
-       Returntype : Bio::EnsEMBL::Compara::SeqMember
-       Exceptions : none
-       Caller     : general
-       Status     : Stable
+	my $peptide = new Bio::EnsEMBL::Compara::SeqMember(-sequence_id => $seq_id);
+    Description: Creates a new SeqMember object
+    Returntype : Bio::EnsEMBL::Compara::SeqMember
+    Exceptions : none
 
 =cut
 
@@ -40,12 +93,11 @@ sub new {
 
 =head2 copy
 
-  Arg [1]    : object $parent_object (optional)
-  Example    :
+  Arg [1]    : object $source_object (optional)
+  Example    : my $member_copy = $member->copy();
   Description: copies the object, optionally by topping up a given structure (to support multiple inheritance)
-  Returntype :
-  Exceptions :
-  Caller     :
+  Returntype : Bio::EnsEMBL::Compara::SeqMember
+  Exceptions : none
 
 =cut
 
@@ -65,43 +117,32 @@ sub copy {
 
 =head2 new_from_transcript
 
-  Arg[1]     : Bio::Ensembl:Transcript object
-  Arg[2]     : Bio::Ensembl:Compara:GenomeDB object
-  Arg[3]     : string where value='translate' causes transcript object to translate
-               to a peptide
+  Arg [-TRANSCRIPT] : Bio::EnsEMBL::Transcript
+  Arg [-GENOME_DB] : Bio::EnsEMBL::Compara::GenomeDB
+  Arg [-TRANSLATE] : string
+      'translate' or 'yes' for peptides, 'ncrna' for RNAs
+  Arg [-DESCRIPTION] : string
   Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
-                  $transcript, $genome_db,
-                -translate);
+                  $transcript, $genome_db, 'translate');
   Description: contructor method which takes an Ensembl::Gene object
                and Compara:GenomeDB object and creates a new SeqMember object
                translating from the Gene object
   Returntype : Bio::Ensembl::Compara::SeqMember
   Exceptions :
-  Caller     :
 
 =cut
 
 sub new_from_transcript {
   my ($class, @args) = @_;
   my $self = $class->new(@args);
-  my $peptideBioSeq;
   my $seq_string;
 
-  my ($transcript, $genome_db, $translate, $description) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DESCRIPTION)], @args);
+  my ($transcript, $genome_db, $translate) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE)], @args);
 
-  unless(defined($transcript) and $transcript->isa('Bio::EnsEMBL::Transcript')) {
-    throw(
-    "transcript arg must be a [Bio::EnsEMBL::Transcript]".
-    "not a [$transcript]");
-  }
-  unless(defined($genome_db) and $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-    throw(
-    "genome_db arg must be a [Bio::EnsEMBL::Compara::GenomeDB] ".
-    "not a [$genome_db]");
-  }
+  assert_ref($transcript, 'Bio::EnsEMBL::Transcript');
+  assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+
   $self->taxon_id($genome_db->taxon_id);
-  if(defined($description)) { $self->description($description); }
-  else { $self->description("NULL"); }
   $self->genome_db_id($genome_db->dbID);
   $self->chr_name($transcript->seq_region_name);
   $self->chr_start($transcript->coding_region_start);
@@ -120,6 +161,7 @@ sub new_from_transcript {
     $self->stable_id($transcript->translation->stable_id);
     $self->source_name("ENSEMBLPEP");
     
+    my $peptideBioSeq;
     unless ($peptideBioSeq = $transcript->translate) {
       throw("COREDB error: unable to get a BioSeq translation from ". $transcript->stable_id);
     }
@@ -249,7 +291,7 @@ sub new_from_transcript {
 
 =head2 sequence
 
-  Arg [1]    : string $sequence
+  Arg [1]    : (opt) string $sequence
   Example    : my $seq = $member->sequence;
   Description: Get/set the sequence string of this member
                Will lazy load by sequence_id if needed and able
@@ -280,13 +322,13 @@ sub sequence {
   return $self->{'_sequence'};
 }
 
+
 =head2 sequence_exon_cased
 
   Args       : none
   Example    : my $sequence_exon_cased = $member->sequence_exon_cased;
-
-  Description: Get/set the sequence string of this member with
-               alternating upper and lower case corresponding to the translateable exons.
+  Description: Get the sequence string of this member with alternating upper
+                and lower case corresponding to the translateable exons.
   Returntype : string
   Exceptions : none
   Caller     : general
@@ -296,6 +338,13 @@ sub sequence {
 sub sequence_exon_cased {
   my $self = shift;
 
+  $self->{_sequence_exon_cased} = $self->_compose_sequence_exon_cased unless exists $self->{_sequence_exon_cased};
+
+  return $self->{_sequence_exon_cased};
+}
+
+sub _compose_sequence_exon_cased {
+  my $self = shift;
   my $sequence = $self->sequence;
   my $trans = $self->get_Transcript;
   my @exons = @{$trans->get_all_translateable_Exons};
@@ -341,6 +390,19 @@ sub sequence_exon_cased {
 
   return $seqsplice;
 }
+
+
+=head2 sequence_exon_bounded
+
+  Args       : (opt) string
+  Example    : my $sequence_exon_bounded = $member->sequence_exon_bounded;
+  Description: Get/Set the sequence string of this member with exon boundaries
+                denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub sequence_exon_bounded {
   my $self = shift;
@@ -405,6 +467,18 @@ sub _compose_sequence_exon_bounded {
   return $seqsplice;
 }
 
+
+=head2 sequence_cds
+
+  Args       : (opt) string
+  Example    : my $sequence_cds = $member->sequence_cds;
+  Description: Get/Set the nucleotide sequence of this member
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub sequence_cds {
   my $self = shift;
 
@@ -428,51 +502,19 @@ sub sequence_cds {
   return $self->{'_sequence_cds'};
 }
 
-# GJ 2008-11-17
-# Returns the amino acid sequence with exon boundaries denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
-sub get_exon_bounded_sequence {
-    my $self = shift;
-    my $numbers = shift;
-    my $transcript = $self->get_Transcript;
 
-    # The get_all_translateable_exons creates a list of reformatted "translateable" exon sequences.
-    # When the exon phase is 1 or 2, there will be duplicated residues at the end and start of exons.
-    # We'll deal with this during the exon loop.
-    my @exons = @{$transcript->get_all_translateable_Exons};
-    my $seq_string = "";
-    # for my $ex (@exons) {
-    while (my $ex = shift @exons) {
-	my $seq = $ex->peptide($transcript)->seq;
+=head2 get_other_sequence
 
-	# PHASE HANDLING
-	my $phase = $ex->phase;
-	my $end_phase = $ex->end_phase;
+  Args       : string $seq_type
+  Example    : my $filtered_seq = $member->get_other_sequence('filtered');
+  Description: Get the alternative sequence of type $seq_type for this member.
+                Currently, proteins have 'cds', 'exon_bounded' and 'filtered'
+                sequences, while RNAs have 'seq_with_flanking' sequences.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
 
-	# First, cut off repeated end residues.
-	if ($end_phase == 1 && 0 < scalar @exons) {
-	    # We only own 1/3, so drop the last residue.
-	    $seq = substr($seq,0,-1);
-	}
-
-	# Now cut off repeated start residues.
-	if ($phase == 2) {
-	    # We only own 1/3, so drop the first residue.
-	    $seq = substr($seq, 1);
-	}
-
-	if ($end_phase > -1) {
-	    $seq = $seq . 'o' if ($end_phase == 0);
-	    $seq = $seq . 'b' if ($end_phase == 1);
-	    $seq = $seq . 'j' if ($end_phase == 2);
-	}
-	#print "Start_phase: $phase   End_phase: $end_phase\t$seq\n";
-	$seq_string .= $seq;
-    }
-    if (defined $numbers) {
-      $seq_string =~ s/o/0/g; $seq_string =~ s/b/1/g; $seq_string =~ s/j/2/g;
-    }
-    return $seq_string;
-}
+=cut
 
 sub get_other_sequence {
   my $self = shift;
@@ -513,7 +555,7 @@ sub seq_length {
 
 =head2 sequence_id
 
-  Arg [1]    : int $sequence_id
+  Arg [1]    : (opt) int $sequence_id
   Example    : my $sequence_id = $member->sequence_id;
   Description: Extracts the sequence_id of this member
   Returntype : int
@@ -529,9 +571,10 @@ sub sequence_id {
     return $self->{'_sequence_id'};
 }
 
+
 =head2 gene_member_id
 
-  Arg [1]    : int $gene_member_id
+  Arg [1]    : (opt) int $gene_member_id
   Example    : my $gene_member_id = $member->gene_member_id;
   Description: Gene_member_id of this member
   Returntype : int
@@ -579,6 +622,7 @@ sub bioseq {
   return $seq;
 }
 
+
 =head2 gene_member
 
   Arg[1]     : Bio::EnsEMBL::Compara::GeneMember $geneMember (optional)
@@ -595,8 +639,7 @@ sub gene_member {
   my $gene_member = shift;
 
   if ($gene_member) {
-    throw("arg must be a [Bio::EnsEMBL::Compara::GeneMember] not a [$gene_member]")
-      unless ($gene_member->isa('Bio::EnsEMBL::Compara::GeneMember'));
+    assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
     $self->{'_gene_member'} = $gene_member;
   }
   if(!defined($self->{'_gene_member'}) and

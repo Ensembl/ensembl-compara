@@ -1,3 +1,58 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::Member
+
+=head1 DESCRIPTION
+
+Abstract class to represent a biological (gene-related) object used
+as part of other Compara structures (gene trees, gene families, homologies).
+The (inherited) objects actually used are SeqMember and GeneMember, and Member
+should not be directly used.
+
+The methods are still available for compatibility until release 74 (included),
+but the Member object should not be explicitely used.
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::Member
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
+
+=cut
+
 package Bio::EnsEMBL::Compara::Member;
 
 use strict;
@@ -74,11 +129,10 @@ sub new {
 =head2 copy
 
   Arg [1]    : object $parent_object (optional)
-  Example    :
+  Example    : my $member_copy = $member->copy();
   Description: copies the object, optionally by topping up a given structure (to support multiple inheritance)
-  Returntype :
-  Exceptions :
-  Caller     :
+  Returntype : Bio::EnsEMBL::Compara::Member
+  Exceptions : none
 
 =cut
 
@@ -113,7 +167,6 @@ sub copy {
                the objects internals to be used.
   Returntype :
   Exceptions : none
-  Caller     :
 
 =cut
 
@@ -131,6 +184,7 @@ sub new_fast {
 
   return $hashref;
 }
+
 
 =head2 new_from_gene
 
@@ -169,12 +223,8 @@ sub new_from_transcript { # DEPRECATED
 
 =head2 member_id
 
-  Arg [1]    : int $member_id (optional)
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Arg [1]    : (opt) integer
+  Description: alias for dbID()
 
 =cut
 
@@ -186,12 +236,8 @@ sub member_id {
 
 =head2 dbID
 
-  Arg [1]    : int $dbID (optional)
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Arg [1]    : (opt) integer
+  Description: Getter/Setter for the internal database ID
 
 =cut
 
@@ -201,14 +247,11 @@ sub dbID {
   return $self->{'_dbID'};
 }
 
+
 =head2 stable_id
 
-  Arg [1]    : string $stable_id (optional)
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Arg [1]    : (opt) string
+  Description: Getter/Setter for the stable ID
 
 =cut
 
@@ -218,14 +261,11 @@ sub stable_id {
   return $self->{'_stable_id'};
 }
 
+
 =head2 display_label
 
-  Arg [1]    : string $display_label (optional)
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Arg [1]    : (opt) string
+  Description: Getter/Setter for the display label
 
 =cut
 
@@ -235,14 +275,11 @@ sub display_label {
   return $self->{'_display_label'};
 }
 
+
 =head2 version
 
-  Arg [1]    :
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Arg [1]    : (opt) int
+  Description: Getter/Setter for the version of the stable ID
 
 =cut
 
@@ -253,14 +290,11 @@ sub version {
   return $self->{'_version'};
 }
 
+
 =head2 description
 
-  Arg [1]    : string $description (optional)
-  Example    :
-  Description:
-  Returntype : string
-  Exceptions :
-  Caller     :
+  Arg [1]    : (opt) string
+  Returntype : Getter/Setter for the description
 
 =cut
 
@@ -270,7 +304,14 @@ sub description {
   return $self->{'_description'};
 }
 
+
 =head2 source_name
+
+  Arg [1]    : (opt) string
+  Description: Getter/Setter for the source of the member
+               Genes should have ENSEMBLGENE
+               ncRNAs should have ENSEMBLTRANS
+               Peptides / Proteins should have ENSEMBLPEP or Uniprot/SPTREMBL or Uniprot/SWISSPROT
 
 =cut
 
@@ -282,13 +323,8 @@ sub source_name {
 
 =head2 adaptor
 
-  Arg [1]    : string $adaptor (optional)
-               corresponding to a perl module
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Arg [1]    : (opt) instance of an adaptor in Bio::EnsEMBL::Compara::DBSQL
+  Description: Getter/Setter for the database adaptor
 
 =cut
 
@@ -299,12 +335,26 @@ sub adaptor {
 }
 
 
+=head2 chr_name
+
+  Arg [1]    : (opt) string
+  Description: Getter/Setter for the chromosome (or scaffold, contig, etc) name
+
+=cut
+
 sub chr_name {
   my $self = shift;
   $self->{'_chr_name'} = shift if (@_);
   return $self->{'_chr_name'};
 }
 
+
+=head2 chr_start
+
+  Arg [1]    : (opt) integer
+  Description: Getter/Setter for the chromosome start coordinate
+
+=cut
 
 sub chr_start {
   my $self = shift;
@@ -313,20 +363,26 @@ sub chr_start {
 }
 
 
+=head2 chr_end
+
+  Arg [1]    : (opt) integer
+  Description: Getter/Setter for the chromosome end coordinate
+
+=cut
+
 sub chr_end {
   my $self = shift;
   $self->{'_chr_end'} = shift if (@_);
   return $self->{'_chr_end'};
 }
 
+
 =head2 chr_strand
 
-  Arg [1]    : integer
-  Description: Returns the strand of the member.  Defined strands are 1 or -1.
+  Arg [1]    : (opt) integer
+  Description: Getter/Setter for the strand of the member.  Defined strands are 1 or -1.
                0 is undefined strand.
   Returntype : 1,0,-1
-  Exceptions : none
-  Caller     : general
 
 =cut
 
@@ -338,6 +394,13 @@ sub chr_strand {
 }
 
 
+=head2 taxon_id
+
+  Arg [1]    : (opt) integer
+  Description: Getter/Setter for the taxon ID (cf the NCBI database) of the species containing that member
+
+=cut
+
 sub taxon_id {
     my $self = shift;
     $self->{'_taxon_id'} = shift if (@_);
@@ -345,16 +408,19 @@ sub taxon_id {
 }
 
 
+=head2 taxon
+
+  Arg [1]    : (opt) Bio::EnsEMBL::Compara::NCBITaxon
+  Description: Getter/Setter for the NCBITaxon object refering to the species containing that member
+
+=cut
+
 sub taxon {
   my $self = shift;
 
   if (@_) {
     my $taxon = shift;
-    unless ($taxon->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
-      throw(
-		   "taxon arg must be a [Bio::EnsEMBL::Compara::NCBITaxon".
-		   "not a [$taxon]");
-    }
+    assert_ref($taxon, 'Bio::EnsEMBL::Compara::NCBITaxon');
     $self->{'_taxon'} = $taxon;
     $self->taxon_id($taxon->ncbi_taxid);
   } else {
@@ -371,6 +437,13 @@ sub taxon {
 }
 
 
+=head2 genome_db_id
+
+  Arg [1]    : (opt) integer
+  Description: Getter/Setter for the genomeDB ID of the species containing that member
+
+=cut
+
 sub genome_db_id {
     my $self = shift;
     $self->{'_genome_db_id'} = shift if (@_);
@@ -378,16 +451,19 @@ sub genome_db_id {
 }
 
 
+=head2 genome_db
+
+  Arg [1]    : (opt) Bio::EnsEMBL::Compara::GenomeDB
+  Description: Getter/Setter for the genomeDB refering to the species containing that member
+
+=cut
+
 sub genome_db {
   my $self = shift;
 
   if (@_) {
     my $genome_db = shift;
-    unless ($genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-      throw(
-		   "arg must be a [Bio::EnsEMBL::Compara::GenomeDB".
-		   "not a [$genome_db]");
-    }
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
     $self->{'_genome_db'} = $genome_db;
     $self->genome_db_id($genome_db->dbID);
   } else {
@@ -432,6 +508,7 @@ sub sequence { # DEPRECATED
     return $self->_wrap_method_seq('sequence', @_);
 }
 
+
 =head2 sequence_exon_cased
 
   Description: DEPRECATED. Use SeqMember::sequence_exon_cased() instead
@@ -442,6 +519,13 @@ sub sequence_exon_cased { # DEPRECATED
     my $self = shift;
     return $self->_wrap_method_seq('sequence_exon_cased', @_);
 }
+
+
+=head2 sequence_exon_bounded
+
+  Description: DEPRECATED. Use SeqMember::sequence_exon_bounded() instead
+
+=cut
 
 sub sequence_exon_bounded { # DEPRECATED
     my $self = shift;
@@ -454,15 +538,36 @@ sub _compose_sequence_exon_bounded { # DEPRECATED
     return $self->_wrap_method_seq('_compose_sequence_exon_bounded', @_);
 }
 
+
+=head2
+
+  Description: DEPRECATED. Use SeqMember::sequence_cds() instead
+
+=cut
+
 sub sequence_cds { # DEPRECATED
     my $self = shift;
     return $self->_wrap_method_seq('sequence_cds', @_);
 }
 
+
+=head2
+
+  Description: DEPRECATED. Use SeqMember::sequence_exon_bounded() instead
+
+=cut
+
 sub get_exon_bounded_sequence { # DEPRECATED
     my $self = shift;
-    return $self->_wrap_method_seq('get_exon_bounded_sequence', @_);
+    return $self->_rename_method_seq('get_exon_bounded_sequence', 'sequence_exon_bounded', @_);
 }
+
+
+=head2
+
+  Description: DEPRECATED. Use SeqMember::get_other_sequence() instead
+
+=cut
 
 sub get_other_sequence { # DEPRECATED
     my $self = shift;
@@ -493,6 +598,7 @@ sub sequence_id { # DEPRECATED
     return $self->_wrap_method_seq('sequence_id', @_);
 }
 
+
 =head2 gene_member_id
 
   Description: DEPRECATED. Use SeqMember::gene_member_id() instead
@@ -515,6 +621,7 @@ sub bioseq { # DEPRECATED
     my $self = shift;
     return $self->_wrap_method_seq('bioseq', @_);
 }
+
 
 =head2 gene_member
 
@@ -579,6 +686,7 @@ sub get_Gene { # DEPRECATED
     return $self->_wrap_method_gene('get_Gene', @_);
 }
 
+
 =head2 get_Transcript
 
   Description: DEPRECATED. Use SeqMember::get_Transcript() instead
@@ -612,15 +720,15 @@ sub get_Translation { # DEPRECATED
 
 
 
-=head2 get_canonical_SeqMember
+=head2 get_canonical_Member
 
   Description: DEPRECATED. Use GeneMember::get_canonical_SeqMember() instead
 
 =cut
 
-sub get_canonical_SeqMember { # DEPRECATED
+sub get_canonical_Member { # DEPRECATED
     my $self = shift;
-    return $self->_rename_method_gene('get_canonical_SeqMember', 'get_canonical_SeqMember', @_);
+    return $self->_rename_method_gene('get_canonical_Member', 'get_canonical_SeqMember', @_);
 }
 
 
@@ -767,6 +875,28 @@ sub _rename_method_gene {
     }
     my $method_wrap = "Bio::EnsEMBL::Compara::GeneMember::$new_name";
     return $method_wrap->($self->source_name eq 'ENSEMBLGENE' ? $self : $self->gene_member, @_);
+}
+
+sub _rename_method_seq {
+    my $self = shift;
+    my $method = shift;
+    my $new_name = shift;
+    if ($self->isa('Bio::EnsEMBL::Compara::SeqMember')) {
+        _display_warning(qq{
+        $method() is renamed to $new_name(). Please review your code and call $new_name() instead.
+        });
+    } elsif ($self->source_name ne 'ENSEMBLGENE') {
+        _display_warning(qq{
+        $method() is renamed to $new_name() and should be called on a SeqMember object. Please review your code: bless $self as a SeqMember, and use $new_name() instead.
+        });
+    } else {
+        _display_warning(qq{
+        $method() is renamed to $new_name() and cannot be called on a gene. Perhaps you want to call $self->get_canonical_SeqMember()->$new_name().
+        });
+        die;
+    }
+    my $method_wrap = "Bio::EnsEMBL::Compara::SeqMember::$new_name";
+    return $method_wrap->($self, @_);
 }
 
 
