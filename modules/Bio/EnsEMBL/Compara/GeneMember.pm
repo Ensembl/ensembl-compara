@@ -223,11 +223,11 @@ sub get_canonical_SeqMember {
 
     return unless($self->adaptor);
 
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_member_for_gene_member_id')
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_for_gene_member_id')
         ? $self->adaptor    # a MemberAdaptor or derivative
-        : $self->adaptor->db->get_MemberAdaptor;
+        : $self->adaptor->db->get_SeqMemberAdaptor;
 
-        return $able_adaptor->fetch_canonical_member_for_gene_member_id($self->dbID);
+        return $able_adaptor->fetch_canonical_for_gene_member_id($self->dbID);
 }
 
 
