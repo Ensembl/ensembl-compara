@@ -28,14 +28,14 @@ AlignedMember - DESCRIPTION of Object
 
 =head1 DESCRIPTION
 
-A subclass of Member which extends it to allow it to be aligned with other AlignedMember objects.
+A subclass of SeqMember which extends it to allow it to be aligned with other AlignedMember objects.
 General enough to allow for global, local, pair-wise and multiple alignments.
 At the moment used primarily in NestedSet Tree data-structure, but there are plans to extend its usage.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMember
-  +- Bio::EnsEMBL::Compara::Member
+  +- Bio::EnsEMBL::Compara::SeqMember
 
 =head1 METHODS
 
@@ -45,9 +45,8 @@ package Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Compara::Member;
 
-use base ('Bio::EnsEMBL::Compara::Member');
+use base ('Bio::EnsEMBL::Compara::SeqMember');
 
 
 ##################################
