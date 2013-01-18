@@ -24,9 +24,7 @@
 package Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-#use Bio::EnsEMBL::Compara::SyntenyPair;
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
-use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
 use vars '@ISA';
@@ -59,7 +57,7 @@ sub fetch_all_by_qmember_id{
 
   throw("member_id undefined") unless($member_id);
 
-  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($member_id);
+  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($member_id);
 
   my $gdb = $member->genome_db;
   my $species_name = lc($gdb->name);
@@ -167,7 +165,7 @@ sub fetch_all_by_qmember_id_hmember_id{
   throw("must specify query member dbID") unless($qmember_id);
   throw("must specify hit member dbID") unless($hmember_id);
 
-  my $qmember = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+  my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $qmember->genome_db;
   my $species_name = lc($gdb->name);
@@ -221,7 +219,7 @@ sub fetch_all_by_qmember_id_hgenome_db_id{
   throw("must specify query member dbID") unless($qmember_id);
   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
 
-  my $qmember = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+  my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $qmember->genome_db;
   my $species_name = lc($gdb->name);
@@ -455,7 +453,7 @@ sub fetch_selfhit_by_qmember_id {
 
   throw("qmember_id undefined") unless($qmember_id);
 
-  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $member->genome_db;
   my $species_name = lc($gdb->name);
@@ -603,7 +601,7 @@ sub _create_PAF_from_BaseAlignFeature {
 
   my $paf = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
-  my $memberDBA = $self->db->get_MemberAdaptor();
+  my $memberDBA = $self->db->get_SeqMemberAdaptor();
 
   if ($feature->seqname =~ /IDs\:(\d+)\:(\d+)/) {
     my $query_member = $memberDBA->fetch_by_dbID($2);
@@ -802,7 +800,7 @@ sub _objs_from_sth {
     $paf->cigar_line($column{'cigar_line'});
     $paf->rhit_dbID($column{'pafid2'});
 
-    my $memberDBA = $self->db->get_MemberAdaptor;
+    my $memberDBA = $self->db->get_SeqMemberAdaptor;
     if($column{'qmember_id'} and $memberDBA) {
       $paf->query_member($memberDBA->fetch_by_dbID($column{'qmember_id'}));
     }
@@ -990,7 +988,7 @@ sub fetch_BRH_by_member_genomedb
   #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id and $hit_genome_db_id);
 
-  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $member->genome_db;
   my $species_name1 = lc($gdb->name);
@@ -1070,7 +1068,7 @@ sub fetch_all_RH_by_member_genomedb
   #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id and $hit_genome_db_id);
 
-  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $member->genome_db;
   my $species_name1 = lc($gdb->name);
@@ -1147,7 +1145,7 @@ sub fetch_all_RH_by_member
   #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
   return unless($qmember_id);
 
-  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $member->genome_db;
   my $species_name = lc($gdb->name);
@@ -1272,7 +1270,7 @@ sub _recursive_find_brh_pafs_for_member_genome_db
   my $tested_member_ids  = shift;  #ref to hash
   my $found_paf_ids      = shift;  #ref to hash
 
-  my $member = $self->db->get_MemberAdaptor->fetch_by_dbID($qmember_id);
+  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $member->genome_db;
   my $species_name1 = lc($gdb->name);
