@@ -94,7 +94,7 @@ sub dumpMercatorFiles {
 
   my $dfa = $self->compara_dba->get_DnaFragAdaptor;
   my $gdba = $self->compara_dba->get_GenomeDBAdaptor;
-  my $ma = $self->compara_dba->get_MemberAdaptor;
+  my $ma = $self->compara_dba->get_SeqMemberAdaptor;
 
   my $max_gap = $self->param('maximum_gap');
 
