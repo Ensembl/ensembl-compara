@@ -46,7 +46,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Member;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

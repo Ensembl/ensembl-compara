@@ -34,7 +34,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Member;
 
 use Data::Dumper;
 

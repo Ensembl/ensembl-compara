@@ -2,7 +2,6 @@ package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
 use strict; 
 use warnings;
-use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);

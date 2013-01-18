@@ -277,10 +277,6 @@ sub fetch_by_Member_id_Member_id {
 
   return undef unless (defined $homology || 0 == scalar @$homology);
 
-  #my $pmember_id1 = $self->db_get_MemberAdaptor->fetch_canonical_member_for_gene_member_id($member_id1)->dbID;
-  #my $pmember_id2 = $self->db_get_MemberAdaptor->fetch_canonical_member_for_gene_member_id($member_id2)->dbID;
-
-  #return $self->fetch_by_PMember_id_PMember_id($pmember_id1, $pmember_id2, $allow_duplicates);
   return shift @{$homology};
 }
 

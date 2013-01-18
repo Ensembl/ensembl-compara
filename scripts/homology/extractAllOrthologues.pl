@@ -15,11 +15,8 @@ my $species_list = {"rat"=>1, "cow"=>1};
 
 
 # Auto-configure the registry
-Bio::EnsEMBL::Registry->load_registry_from_db(
-	-host=>'ensembldb.ensembl.org', -user=>'anonymous', 
-	-port=>'5306', -db_version=>'68');
+Bio::EnsEMBL::Registry->load_registry_from_db(-host=>'ensembldb.ensembl.org', -user=>'anonymous') ;
 
-my $member_adaptor = Bio::EnsEMBL::Registry->get_adaptor( "Multi", "compara", "Member");
 my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "Compara", "Homology");
 my $mlss_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
 my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");

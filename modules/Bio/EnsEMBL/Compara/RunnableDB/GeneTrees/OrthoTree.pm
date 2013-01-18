@@ -73,7 +73,6 @@ use List::Util qw(max);
 use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;

@@ -3,8 +3,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::NestedSet;
-use Bio::EnsEMBL::Compara::Member;
 use Getopt::Long;
 
 my $reg = "Bio::EnsEMBL::Registry";

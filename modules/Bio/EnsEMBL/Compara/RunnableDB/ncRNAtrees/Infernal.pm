@@ -60,7 +60,6 @@ use Data::Dumper;
 
 use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
-use Bio::EnsEMBL::Compara::Member;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
