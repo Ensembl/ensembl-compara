@@ -735,7 +735,7 @@ sub get_all_overlapping_exons {
                     print $rm->display_label, "\n";
                    }
                   }
-  Description   : will return a listref of Bio::EnsEMBL::Exon objects which overlap the constrained element (CE)
+  Description   : will return a listref of Bio::EnsEMBL::Funcgen::MotifFeature objects which overlap the constrained element (CE)
   Returns       : listref of Bio::EnsEMBL::Funcgen::MotifFeature objects or an empty listref if there are no overlapping motifs
   Exceptions    : throw if the constrained element objects have no associated Slice object AND no genome_db object was provided as a parameter
 
