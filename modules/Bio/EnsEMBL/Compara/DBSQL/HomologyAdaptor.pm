@@ -28,7 +28,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
-  #$member = $member->get_canonical_Member;
+  #$member = $member->get_canonical_SeqMember;
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = "hm.member_id = " .$member->dbID;
 
@@ -128,7 +128,7 @@ sub fetch_all_by_Member_method_link_type {
         "::".$member->stable_id.") with no GenomeDB");
     return [];
   }
-  #$member = $member->get_canonical_Member;
+  #$member = $member->get_canonical_SeqMember;
 
   throw("method_link_type arg is required\n")
     unless ($method_link_type);
@@ -170,7 +170,7 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
     throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
   }
-  #$member = $member->get_canonical_Member;
+  #$member = $member->get_canonical_SeqMember;
 
   throw("method_link_species_set arg is required\n")
     unless ($method_link_species_set);
@@ -229,8 +229,8 @@ sub fetch_by_Member_Member_method_link_type {
     return [];
   }
 
-  #$member1 = $member1->get_canonical_Member;
-  #$member2 = $member2->get_canonical_Member;
+  #$member1 = $member1->get_canonical_SeqMember;
+  #$member2 = $member2->get_canonical_SeqMember;
 
   #  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];

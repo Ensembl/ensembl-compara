@@ -612,15 +612,15 @@ sub get_Translation { # DEPRECATED
 
 
 
-=head2 get_canonical_Member
+=head2 get_canonical_SeqMember
 
   Description: DEPRECATED. Use GeneMember::get_canonical_SeqMember() instead
 
 =cut
 
-sub get_canonical_Member { # DEPRECATED
+sub get_canonical_SeqMember { # DEPRECATED
     my $self = shift;
-    return $self->_rename_method_gene('get_canonical_Member', 'get_canonical_SeqMember', @_);
+    return $self->_rename_method_gene('get_canonical_SeqMember', 'get_canonical_SeqMember', @_);
 }
 
 

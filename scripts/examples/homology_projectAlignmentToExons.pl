@@ -31,7 +31,7 @@ my $member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene->sta
 my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus",['ENSEMBL_ORTHOLOGUES'])};
 my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Rattus_norvegicus",['ENSEMBL_ORTHOLOGUES'])};
 
-my $aligned_member = $member->get_canonical_Member;
+my $aligned_member = $member->get_canonical_SeqMember;
 
 sub print_transcript ($$)
 {
@@ -133,8 +133,8 @@ foreach my $homology (@mouse_homologies, @rat_homologies) {
   }
   my $member2 = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene2->stable_id);
 
-  print_transcript($member->get_canonical_Member->get_Transcript, $cdna_simple_align);
-  print_transcript($member2->get_canonical_Member->get_Transcript, $cdna_simple_align);
+  print_transcript($member->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);
+  print_transcript($member2->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);
 
 }
 

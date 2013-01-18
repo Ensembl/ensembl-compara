@@ -493,7 +493,7 @@ sub add_matching_predictions {
     my $gene_member = $self->param('member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$gene_stable_id_to_add);
     # Incorporate this member into the cluster
     my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
-    $node->member_id($gene_member->get_canonical_Member->member_id);
+    $node->member_id($gene_member->get_canonical_SeqMember->member_id);
     $self->param('nc_tree')->root->add_child($node);
 
     #the building method uses member_id's to reference unique nodes

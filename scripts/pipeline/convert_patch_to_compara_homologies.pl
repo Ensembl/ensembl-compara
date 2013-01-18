@@ -109,7 +109,7 @@ sub fetch_or_store_gene {
     my $gene_member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
     if (defined $gene_member) {
         print "REUSE: $gene_member "; $gene_member->print_member();
-        $gene_stable_id_2_compara_transcript{$gene->stable_id} = $gene_member->get_canonical_Member;
+        $gene_stable_id_2_compara_transcript{$gene->stable_id} = $gene_member->get_canonical_SeqMember;
     } else {
         $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(-gene=>$gene, -genome_db=>$human_genome_db);
         print "NEW: $gene_member "; $gene_member->print_member();

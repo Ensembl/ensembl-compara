@@ -227,10 +227,10 @@ my $stable_id_cb = sub {  ## only if we are in a leaf?
   return $self->{tree}->gene_member->stable_id;
 };
 
-# C(get_canonical_Member,stable_id)
+# C(get_canonical_SeqMember,stable_id)
 my $prot_id_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->get_canonical_Member->stable_id;
+  return $self->{tree}->get_canonical_SeqMember->stable_id;
 };
 
 # C(member_id)
@@ -441,7 +441,7 @@ sub _internal_format_newick {
 # %{l} --> display_label ($self->gene_member->display_label)
 # %{h} --> genome short name ($self->genome_db->short_name)
 # %{s} --> stable_id ($self->gene_member->stable_id)
-# %{p} --> peptide Member ($self->get_canonical_Member->stable_id)
+# %{p} --> peptide Member ($self->get_canonical_SeqMember->stable_id)
 # %{t} --> taxon_id ($self->taxon_id)
 # %{m} --> member_id ($self->member_id)
 # %{g} --> genome_db name ($self->genome_db->name)

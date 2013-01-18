@@ -63,7 +63,7 @@ sub load_orthos {
   my $self = shift;
  
   my $homologyDBA = $self->{'comparaDBA'}->get_HomologyAdaptor();
-  my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor();
+  my $geneMemberDBA = $self->{'comparaDBA'}->get_GeneMemberAdaptor();
 
   my $build_homology_idx=1;
 
@@ -74,8 +74,8 @@ sub load_orthos {
     $fileCount++;
     my ($stable_id1, $stable_id2) = split;
     #print("$stable_id1 <=> $stable_id2\n");
-    my $gene1 = $memberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id1);
-    my $gene2 = $memberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id2);
+    my $gene1 = $geneMemberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id1);
+    my $gene2 = $geneMemberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id2);
     if(!defined($gene1)) {
       warn("WARNING couldn't find member for stable_id = $stable_id1\n");
       next;
@@ -85,8 +85,8 @@ sub load_orthos {
       next;
     }
 
-    my $pep_member1 = $memberDBA->fetch_canonical_member_for_gene_member_id($gene1->dbID);
-    my $pep_member2 = $memberDBA->fetch_canonical_member_for_gene_member_id($gene2->dbID);
+    my $pep_member1 = $gene1->get_canonical_SeqMember();
+    my $pep_member2 = $gene2->get_canonical_SeqMember();
     if(!defined($pep_member1)) {
       warn("WARNING: no peptides for gene $stable_id1\n");
       next;

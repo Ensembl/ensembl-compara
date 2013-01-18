@@ -147,8 +147,8 @@ sub build_peptide_dbentries_from_Member {
     $db_names = [];
   }
   
-  #my $peptide_member = ($member->source_name() eq 'ENSEMBLGENE') ? $member->get_canonical_Member() : $member;
-  my $canonical_member = $member->get_canonical_Member;
+  #my $peptide_member = ($member->source_name() eq 'ENSEMBLGENE') ? $member->get_canonical_SeqMember() : $member;
+  my $canonical_member = $member->get_canonical_SeqMember;
 
   my $dbc = $canonical_member->genome_db()->db_adaptor()->dbc();
   my $t = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dbc);
@@ -197,8 +197,8 @@ SQL
   }->{$member->source_name()};
   my $stable_id = {
     ENSEMBLGENE => $member->stable_id,
-    ENSEMBLTRANS => $member->get_canonical_Member->stable_id,
-    ENSEMBLPEP  => $member->get_canonical_Member->stable_id,
+    ENSEMBLTRANS => $member->get_canonical_SeqMember->stable_id,
+    ENSEMBLPEP  => $member->get_canonical_SeqMember->stable_id,
   }->{$member->source_name()};
 
   my $params = [$type, $stable_id];

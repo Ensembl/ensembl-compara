@@ -71,9 +71,8 @@ if ($compara_url) {
 #
 ###########################
 
-my $member_adaptor = $compara_dba->get_MemberAdaptor;
-my $gene_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene_stable_id);
-my $peptide_member = $gene_member->get_canonical_Member;
+my $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene_stable_id);
+my $peptide_member = $gene_member->get_canonical_SeqMember;
 print "QUERY PEP: ";
 $peptide_member->print_member();
 

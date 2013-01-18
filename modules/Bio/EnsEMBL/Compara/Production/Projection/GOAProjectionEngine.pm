@@ -177,7 +177,7 @@ sub _decode_member {
         return $member;
       }
       else {
-        return $member->get_canonical_Member();
+        return $member->get_canonical_SeqMember();
       }
     },
     ENSEMBLGENE => sub {

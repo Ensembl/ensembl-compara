@@ -333,8 +333,8 @@ sub build_projection {
   my ($self, $query_member, $target_member, $dbentry, $homology) = @_;
   return Bio::EnsEMBL::Compara::Production::Projection::Projection->new(
     -ENTRY => $dbentry,
-    -FROM => $query_member->get_canonical_Member(),
-    -TO => $target_member->get_canonical_Member(),
+    -FROM => $query_member->get_canonical_SeqMember(),
+    -TO => $target_member->get_canonical_SeqMember(),
     -FROM_IDENTITY => $query_member->perc_id(),
     -TO_IDENTITY => $target_member->perc_id(),
     -TYPE => $homology->description()
