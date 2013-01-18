@@ -47,7 +47,8 @@ GET / SET VALUES
   $constrained_element->seq_region_end($self->slice->start + $self->{'end'} - 1);
   $constrained_element->strand($strand);
   $constrained_element->reference_dnafrag_id($dnafrag_id);
-
+ 
+  $constrained_element->get_all_overlapping_exons();
 =head1 OBJECT ATTRIBUTES
 
 =over
@@ -639,7 +640,7 @@ sub add_alignment_segments {
 }
 
 
-=head2 get_all_exons
+=head2 get_all_overlapping_exons
 
   Arg  1        : (optional) list of Bio::EnsEMBL::Gene and/or Bio::EnsEMBL::Transcript and/or Bio::EnsEMBL::Compara::GenomeDB
                   objects eg ce->get_all_exons($human_gene1, $human_gene2, $cow_transcript1);
@@ -659,13 +660,13 @@ sub add_alignment_segments {
                   If no arguments are provided, exons overlapping the CE slice will be returned (the CE must have a slice in this case - see #1)
                   If one or more genome_db objects are provided - exons overlapping the region(s) in the CE from these species will be returned (if any exist)
   Returns       : listref of Bio::EnsEMBL::Exon objects or an empty listref if there are no overlapping exons
-  Exceptions    : If the constrained element objects have an no associated Slice object (ie. only if they were obtained 
+  Exceptions    : if the constrained element objects have no associated Slice object (ie. only if they were obtained 
                   from the adaptor using the method fetch_by_dbID then at least one parameter (gene, transcript or genomeDB object) 
                   must be provided, otherwise throw
 
 =cut
 
-sub get_all_exons {
+sub get_all_overlapping_exons {
  my $self = shift;
  my @params = @_;
 
@@ -702,15 +703,14 @@ sub get_all_exons {
                                        $self->seq_region_start, 
                                        $self->seq_region_end,
                                        $self->strand,
-                                       "$species",
-                                       $dnafrag->name ] );
+                                       ] );
  } else {
     throw("need to supply a reference species genome_db, gene or a transcript object");
  } 
 
  foreach my $genome (keys %genomes){
   foreach my $seg (@{ $genomes{ $genome } }){
-   my($dbID, $from, $to, $strand) = @{ $seg }[0..3];
+   my($dbID, $from, $to, $strand) = @$seg;
    my $align_seg_slice = $dnafrag_a->fetch_by_dbID( $dbID )->slice->sub_Slice( $from, $to, $strand );
    foreach my $align_seg_exon( @{ $align_seg_slice->get_all_Exons } ){
     if(keys %exon_stable_ids){
@@ -723,5 +723,59 @@ sub get_all_exons {
  }
  return \@exons;
 }
+
+
+=head2 get_all_overlapping_regulatory_motifs
+
+  Arg  1        : (optional) Bio::EnsEMBL::Compara::GenomeDB object (if CEs were not retrieved using a slice-based method
+  Examples      : my $CEs = $cons_ele_a->fetch_all_by_MethodLinkSpeciesSet_Slice($cons_ele_mlss, $species_slice);
+                  foreach my $ce( @{ $CEs }) {
+                   print $ce->dbID, "\n";
+                   foreach my $rm(@{ $constrained_element->get_all_overlapping_regulatory_motifs }){
+                    print $rm->display_label, "\n";
+                   }
+                  }
+  Description   : will return a listref of Bio::EnsEMBL::Exon objects which overlap the constrained element (CE)
+  Returns       : listref of Bio::EnsEMBL::Funcgen::MotifFeature objects or an empty listref if there are no overlapping motifs
+  Exceptions    : throw if the constrained element objects have no associated Slice object AND no genome_db object was provided as a parameter
+
+=cut
+
+sub get_all_overlapping_regulatory_motifs {
+ my $self = shift;
+ my ($genome_db) = @_;
+
+ my ($species, @ce_coords, @reg_motif);
+ 
+ if($genome_db){
+  $species = $genome_db->name;
+  foreach my $alignment_seg( @{ $self->alignment_segments } ){
+   if($alignment_seg->[4] eq "$species"){
+    push(@ce_coords, $alignment_seg);
+   }
+  }
+ } elsif(my $dnafrag_id = $self->reference_dnafrag_id){
+  $species = $self->adaptor->db->get_DnaFrag->fetch_by_dbID( $dnafrag_id )->genome_db->name;
+  push(@ce_coords, [ $dnafrag_id, $self->seq_region_start, $self->seq_region_end, $self->strand ]);
+ } else {
+  throw("need to supply a reference species genome_db or the constrained element must be derived from a slice");
+ }
+ foreach my $dba( @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() } ){
+  if($dba->isa("Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor") and $species eq $dba->species){
+   my $regfeat_a = $dba->get_RegulatoryFeature;
+   my $dnafrag_a = $self->adaptor->db->get_DnaFrag;
+   foreach my $ce_region(@ce_coords){
+    my($dnafrag_id, $from, $to, $strand) = @$ce_region;
+    my $slice = $dnafrag_a->fetch_by_dbID( $dnafrag_id )->slice->sub_Slice( $from, $to, $strand );
+    foreach my $reg_feature( @{ $regfeat_a->fetch_all_by_Slice($slice) } ){
+     foreach my $motif( @{ $reg_feature->regulatory_attributes('motif') } ){
+      push(@reg_motif, $motif);
+     }
+    }
+   }
+  }
+ }
+ return \@reg_motif;
+} 
 
 1;
