@@ -264,7 +264,9 @@ sub fetch_default_for_Member {
     my ($self, $member) = @_;
 
     # Discard the UNIPROT members
-    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    # Returns if $member is not defined or 0
+    return undef unless $member;
 
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['member', 'm'], 'gtn.member_id = m.member_id']];
     my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?)) AND (gtr.clusterset_id = "default")';
