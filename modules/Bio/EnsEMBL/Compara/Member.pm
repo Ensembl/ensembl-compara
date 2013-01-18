@@ -50,6 +50,13 @@ sub new {
     my ($dbid, $stable_id, $description, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id)
         = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
 
+    if ($source_name) {
+      if ($source_name eq 'ENSEMBLGENE') {
+          bless $self, 'Bio::EnsEMBL::Compara::GeneMember';
+      } else {
+          bless $self, 'Bio::EnsEMBL::Compara::SeqMember';
+      }
+    }
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
     $description && $self->description($description);
@@ -58,13 +65,6 @@ sub new {
     $taxon_id && $self->taxon_id($taxon_id);
     $genome_db_id && $self->genome_db_id($genome_db_id);
     $sequence_id && $self->sequence_id($sequence_id);
-  }
-  if ($self->source_name) {
-    if ($self->source_name eq 'ENSEMBLGENE') {
-        bless $self, 'Bio::EnsEMBL::Compara::GeneMember';
-    } else {
-        bless $self, 'Bio::EnsEMBL::Compara::SeqMember';
-    }
   }
 
   return $self;
