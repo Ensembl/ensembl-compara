@@ -426,8 +426,12 @@ sub get_all_Members {
 
         return [] unless $self->adaptor;
         $self->clear;
-        my $am_adaptor = $self->adaptor->db->get_MemberAdaptor();
-        my $members = $am_adaptor->fetch_all_by_MemberSet($self);
+        my $members;
+        if ($self->isa('Bio::EnsEMBL::Compara::AlignedMemberSet')) {
+            $members = $self->adaptor->db->get_AlignedMemberAdaptor->fetch_all_by_AlignedMemberSet($self);
+        } else {
+            my $members = $self->adaptor->db->get_MemberAdaptor->fetch_all_by_MemberSet($self);
+        }
         foreach my $member (@{$members}) {
             $self->add_Member($member);
         }
