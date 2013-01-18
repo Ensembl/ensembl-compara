@@ -56,7 +56,8 @@ unless ($reg_conf && $comp_alias) {
 Bio::EnsEMBL::Registry->load_all($reg_conf, 1);
 
 my $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($comp_alias, 'compara');
-my $member_adaptor = $compara_dba->get_MemberAdaptor();
+my $gene_member_adaptor = $compara_dba->get_GeneMemberAdaptor();
+my $seq_member_adaptor = $compara_dba->get_SeqMemberAdaptor();
 my $homology_adaptor = $compara_dba->get_HomologyAdaptor();
 my $human_genome_db = $compara_dba->get_GenomeDBAdaptor()->fetch_by_name_assembly($species_name);
 
@@ -106,14 +107,14 @@ my %gene_stable_id_2_compara_transcript;
 sub fetch_or_store_gene {
     my $gene = shift;
     my $counter = shift;
-    my $gene_member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
+    my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
     if (defined $gene_member) {
         print "REUSE: $gene_member "; $gene_member->print_member();
         $gene_stable_id_2_compara_transcript{$gene->stable_id} = $gene_member->get_canonical_SeqMember;
     } else {
         $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(-gene=>$gene, -genome_db=>$human_genome_db);
         print "NEW: $gene_member "; $gene_member->print_member();
-        $member_adaptor->store($gene_member) unless $no_store;
+        $gene_member_adaptor->store($gene_member) unless $no_store;
         ${$counter} ++;
 
         my $transcript = $gene->canonical_transcript;
@@ -125,8 +126,8 @@ sub fetch_or_store_gene {
                 );
         $trans_member->gene_member_id($gene_member->dbID);
         print "NEW: $trans_member "; $trans_member->print_member();
-        $member_adaptor->store($trans_member) unless $no_store;
-        $member_adaptor->_set_member_as_canonical($trans_member);
+        $seq_member_adaptor->store($trans_member) unless $no_store;
+        $seq_member_adaptor->_set_member_as_canonical($trans_member);
         $gene_stable_id_2_compara_transcript{$gene->stable_id} = $trans_member;
 
     }

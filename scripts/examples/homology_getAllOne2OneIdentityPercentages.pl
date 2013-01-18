@@ -23,13 +23,13 @@ $reg->load_registry_from_db(
 my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('Multi', 'compara');
-my $member_adaptor = $comparaDBA->get_MemberAdaptor;
+my $gene_member_adaptor = $comparaDBA->get_GeneMemberAdaptor;
 my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('CTDP1');
 
 foreach my $gene (@$genes) {
-  my $member = $member_adaptor->
+  my $member = $gene_member_adaptor->
   fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
 

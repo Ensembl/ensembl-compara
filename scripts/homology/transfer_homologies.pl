@@ -35,11 +35,10 @@ my $destination_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url => $dest
 my $source_mlssa = $source_dba->get_MethodLinkSpeciesSetAdaptor;
 my $source_mla   = $source_dba->get_MethodAdaptor;
 my $source_ha    = $source_dba->get_HomologyAdaptor;
-my $source_ma    = $source_dba->get_MemberAdaptor;
 
 my $destination_mlssa = $destination_dba->get_MethodLinkSpeciesSetAdaptor;
 my $destination_ha    = $destination_dba->get_HomologyAdaptor;
-my $destination_ma    = $destination_dba->get_MemberAdaptor;
+my $destination_ma    = $destination_dba->get_SeqMemberAdaptor;
 
 my $mlss_aref;
 

@@ -186,11 +186,11 @@ sub compare_homology_sets
 
   if($best) {
     printf("\nBest homology for gene\n");
-    my $memberDBA = $self->{$url1}->get_MemberAdaptor;
+    my $genememberDBA = $self->{$url1}->get_GeneMemberAdaptor;
     my $gdba = $self->{$url1}->get_GenomeDBAdaptor;
     my $geneset1 = new Bio::EnsEMBL::Compara::Production::GeneSet;
     my $genome_db1 = $gdba->fetch_by_dbID($gdb1);
-    $geneset1->add(@{$memberDBA->fetch_all_by_source_taxon('ENSEMBLGENE',$genome_db1->taxon_id)});
+    $geneset1->add(@{$genememberDBA->fetch_all_by_source_taxon('ENSEMBLGENE',$genome_db1->taxon_id)});
     printf("   %d genes for genome_db_id=%d\n", $geneset1->size, $gdb1);
     $cross_hash = crossref_genes_to_best_homology($geneset1, $homology_set1, $homology_set2);
     print_conversion_stats($homology_set1, $homology_set2, $cross_hash);
@@ -198,7 +198,7 @@ sub compare_homology_sets
     printf("\nBest homology for gene\n");
     my $geneset2 = new Bio::EnsEMBL::Compara::Production::GeneSet;
     my $genome_db2 = $gdba->fetch_by_dbID($gdb2);
-    $geneset2->add(@{$memberDBA->fetch_all_by_source_taxon('ENSEMBLGENE',$genome_db2->taxon_id)});
+    $geneset2->add(@{$genememberDBA->fetch_all_by_source_taxon('ENSEMBLGENE',$genome_db2->taxon_id)});
     printf("   %d genes for genome_db_id=%d\n", $geneset2->size, $gdb2);
     $cross_hash = crossref_genes_to_best_homology($geneset2, $homology_set1, $homology_set2);
     print_conversion_stats($homology_set1, $homology_set2, $cross_hash);

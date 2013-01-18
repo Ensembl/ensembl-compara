@@ -53,7 +53,8 @@ unless (scalar @ARGV) {
 
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url => $compara_url);
 my $ha = $compara_dba->get_HomologyAdaptor;
-my $ma = $compara_dba->get_MemberAdaptor;
+my $ma = $compara_dba->get_GeneMemberAdaptor;
+my $pa = $compara_dba->get_SeqMemberAdaptor;
 my $gdba = $compara_dba->get_GenomeDBAdaptor;
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
@@ -80,7 +81,7 @@ while (<>) {
     print STDERR "$gene_stable_id1 not in db\n";
     next;
   }
-  my $peptide_member1 = $ma->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id1);
+  my $peptide_member1 = $pa->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id1);
   unless (defined  $peptide_member1) {
     print STDERR "$translation_stable_id1 not in db\n";
     next;
@@ -92,7 +93,7 @@ while (<>) {
     print STDERR "$gene_stable_id2 not in db\n";
     next;
   }
-  my $peptide_member2 = $ma->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id2);
+  my $peptide_member2 = $pa->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id2);
   unless (defined  $peptide_member2) {
     print STDERR "$translation_stable_id2 not in db\n";
     next;
