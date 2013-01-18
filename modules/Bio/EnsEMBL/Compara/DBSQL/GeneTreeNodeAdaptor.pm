@@ -59,7 +59,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
-use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 
 use DBI qw(:sql_types);
 
@@ -413,7 +413,7 @@ sub _columns {
 
           'gam.cigar_line',
 
-          Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->_columns()
+          Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor->_columns()
           );
 }
 
@@ -465,7 +465,7 @@ sub init_instance_from_rowhash {
     $self->SUPER::init_instance_from_rowhash($node, $rowhash);
     if ($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
         # here is a gene leaf
-        Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
+        Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor->init_instance_from_rowhash($node, $rowhash);
 
         $node->cigar_line($rowhash->{'cigar_line'});
     } else {

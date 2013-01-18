@@ -345,6 +345,7 @@ sub get_SimpleAlign {
     foreach my $member (@{$self->get_all_Members}) {
 
         next if $member->source_name eq 'ENSEMBLGENE';
+        next if $member->source_name =~ m/^Uniprot/i and $cdna;
 
         # Print unique sequences only ?
         next if($unique_seqs and $seq_id_hash->{$member->sequence_id});
