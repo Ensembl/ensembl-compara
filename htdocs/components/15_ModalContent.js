@@ -104,8 +104,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   
     data = data || form.serialize();
     
-    this.elLk.content.html('<div class="panel"><div class="spinner">Loading Content</div></div>');
-    
     $.ajax({
       url: form.attr('action'),
       type: form.attr('method'),
@@ -131,6 +129,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         }
       }
     });
+    
+    this.elLk.content.html('<div class="panel"><div class="spinner">Loading Content</div></div>');
     
     return false;
   },
