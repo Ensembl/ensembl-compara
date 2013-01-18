@@ -160,12 +160,13 @@ sub store_bioseq {
         printf("store_bioseq %s %s : %d : %s", $source_name, $bioseq->display_id, $ncbi_taxon_id, $species_name);
     }
    
-    my $member = new Bio::EnsEMBL::Compara::Member;
-    $member->stable_id( $self->param('accession_number') ? $bioseq->accession_number : $bioseq->display_id );
+    my $member = new Bio::EnsEMBL::Compara::SeqMember(
+        -stable_id      => $self->param('accession_number') ? $bioseq->accession_number : $bioseq->display_id,
+        -taxon_id       => $ncbi_taxon_id,
+        -description    => parse_description($bioseq->desc),
+        -source_name    => $source_name,
+    );
     $member->display_label($bioseq->display_id);
-    $member->taxon_id($ncbi_taxon_id);
-    $member->description( parse_description($bioseq->desc) );
-    $member->source_name($source_name);
     $member->sequence($bioseq->seq);
     $member->genome_db_id($self->param('genome_db_id')) if($self->param('genome_db_id'));
 

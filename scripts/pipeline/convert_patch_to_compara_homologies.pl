@@ -111,13 +111,13 @@ sub fetch_or_store_gene {
         print "REUSE: $gene_member "; $gene_member->print_member();
         $gene_stable_id_2_compara_transcript{$gene->stable_id} = $gene_member->get_canonical_Member;
     } else {
-        $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(-gene=>$gene, -genome_db=>$human_genome_db);
+        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(-gene=>$gene, -genome_db=>$human_genome_db);
         print "NEW: $gene_member "; $gene_member->print_member();
         $member_adaptor->store($gene_member) unless $no_store;
         ${$counter} ++;
 
         my $transcript = $gene->canonical_transcript;
-        my $trans_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
+        my $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
                 -transcript     => $transcript,
                 -genome_db      => $human_genome_db,
                 -description    => Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::fasta_description(undef, $gene, $transcript),

@@ -267,7 +267,7 @@ sub store_gene_and_all_transcripts {
 
     my $description = $self->fasta_description($gene, $transcript);
 
-    my $pep_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
+    my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
          -transcript=>$transcript,
          -genome_db=>$self->param('genome_db'),
          -translate=>'yes',
@@ -285,7 +285,7 @@ sub store_gene_and_all_transcripts {
     # the gene.
     if($self->param('store_genes') && $gene_member_not_stored) {
       print("     gene       " . $gene->stable_id ) if($self->param('verbose'));
-      $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
+      $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
                                                                   -gene=>$gene,
                                                                   -genome_db=>$self->param('genome_db'));
       print(" => member " . $gene_member->stable_id) if($self->param('verbose'));
@@ -350,21 +350,22 @@ sub store_all_coding_exons {
         }
         my $description = $self->fasta_description($exon, $transcript);
         
-        my $exon_member = new Bio::EnsEMBL::Compara::Member;
+        my $exon_member = new Bio::EnsEMBL::Compara::SeqMember(
+            -source_name    => 'ENSEMBLPEP',
+            -genome_db_id   => $genome_db->dbID,
+            -stable_id      => $exon->stable_id
+        );
         $exon_member->taxon_id($genome_db->taxon_id);
         if(defined $description ) {
           $exon_member->description($description);
         } else {
           $exon_member->description("NULL");
         }
-        $exon_member->genome_db_id($genome_db->dbID);
         $exon_member->chr_name($exon->seq_region_name);
         $exon_member->chr_start($exon->seq_region_start);
         $exon_member->chr_end($exon->seq_region_end);
         $exon_member->chr_strand($exon->seq_region_strand);
         $exon_member->version($exon->version);
-        $exon_member->stable_id($exon->stable_id);
-        $exon_member->source_name("ENSEMBLPEP");
 
 	#Not sure what this should be but need to set it to something or else the members do not get added
 	#to the member table in the store method of MemberAdaptor

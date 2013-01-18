@@ -75,7 +75,7 @@ sub write_output {
 		print "sequence $count: description ", $sequence->desc, "\n" if ($self->debug > 1);
 		print "sequence $count: length ", $sequence->length, "\n" if ($self->debug > 1);
 
-		my $gene_member = Bio::EnsEMBL::Compara::Member->new(
+		my $gene_member = Bio::EnsEMBL::Compara::GeneMember->new(
                 -stable_id      => $gene_name,
                 -source_name    => 'ENSEMBLGENE',
                 -taxon_id       => $taxon_id,
@@ -97,7 +97,7 @@ sub write_output {
             #print Dumper($gene_member);
 		$member_adaptor->store($gene_member);
 
-		my $pep_member = Bio::EnsEMBL::Compara::Member->new(
+		my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new(
                 -stable_id      => $gene_name,
                 -source_name    => 'ENSEMBLPEP',
                 -taxon_id       => $taxon_id,
