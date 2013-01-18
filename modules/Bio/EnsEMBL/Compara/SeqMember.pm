@@ -418,6 +418,10 @@ sub sequence_cds {
   }
 
   if(!defined($self->{'_sequence_cds'})) {
+    if ($self->source_name =~ m/^Uniprot/) {
+      warn "Uniprot entries don't have CDS sequences\n";
+      return "";
+    }
     $self->{'_sequence_cds'} = $self->get_Transcript->translateable_seq;
   }
 
