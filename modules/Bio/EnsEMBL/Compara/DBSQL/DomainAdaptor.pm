@@ -24,7 +24,7 @@ DomainAdaptor
   my $da = $famdb->get_DomainAdaptor;
   my $dom = $da->fetch_by_stable_id('PR00262');
 
-  my $ma = $db->get_MemberAdaptor;
+  my $ma = $db->get_SeqMemberAdaptor;
   my $member = $ma->fetch_by_source_stable_id('SWISSPROT', 'YSV4_CAEEL')};
   my @dom = @{$da->fetch_all_by_Member($member)};
 

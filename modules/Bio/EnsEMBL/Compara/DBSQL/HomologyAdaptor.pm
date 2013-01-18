@@ -749,7 +749,7 @@ sub store {
   my $sth = $self->prepare($sql);
   foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored
-    $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
+    $self->db->get_SeqMemberAdaptor->store($member) unless (defined $member->dbID);
     $sth->execute($member->set->dbID, $member->gene_member_id, $member->dbID, $member->cigar_line, $member->perc_id, $member->perc_pos, $member->perc_cov);
   }
 
@@ -826,13 +826,9 @@ sub fetch_all_orphans_by_GenomeDB {
   my $sql = 'SELECT mg.member_id FROM member mg LEFT JOIN homology_member hm ON (mg.canonical_member_id = hm.member_id) WHERE hm.member_id IS NULL AND mg.genome_db_id = ?';
   my $sth = $self->dbc->prepare($sql);
   $sth->execute($gdb->dbID);
-  my $ma = $self->db->get_MemberAdaptor;
-  my @members;
-  while ( my $member_id  = $sth->fetchrow ) {
-    my $member = $ma->fetch_by_dbID($member_id);
-    push @members, $member;
-  }
-  return \@members;
+  my $ids = $sth->fetchall_arrayref;
+  $sth->finish;
+  return $self->db->get_GeneMemberAdaptor->fetch_all_by_dbID_list([map {$_->[0]} $ids]);
 }
 
 

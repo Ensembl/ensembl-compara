@@ -27,7 +27,7 @@ FamilyAdaptor - DESCRIPTION of Object
   my $fa = $db->get_FamilyAdaptor;
   my $fam = $fa->fetch_by_stable_id('ENSF000013034');
 
-  my $ma = $db->get_MemberAdaptor;
+  my $ma = $db->get_SeqMemberAdaptor;
   my $member = $ma->fetch_by_source_stable_id('Uniprot/SWISSPROT', 'YSV4_CAEEL')};
   my @fam = @{$fa->fetch_all_by_Member($member)};
 
@@ -270,7 +270,13 @@ sub store {
   $sth = $self->prepare($sql);
   foreach my $member (@{$fam->get_all_Members}) {   
     # Stores the member if not yet stored
-    $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
+    unless (defined $member->dbID) {
+        if ($member->source_name eq 'ENSEMBLGENE') {
+            $self->db->get_GeneMemberAdaptor->store($member);
+        } else {
+            $self->db->get_SeqMemberAdaptor->store($member);
+        }
+    }
     $sth->execute($member->set->dbID, $member->dbID, $member->cigar_line);
   }
 
