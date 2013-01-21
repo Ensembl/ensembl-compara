@@ -22,9 +22,9 @@ sub initialize {
   
   my $config = {
     display_width => $hub->param('display_width') || 60,
-    sscon         => $hub->param('sscon')         || 25,   # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking')      || 50,   # no of bp up/down stream of transcript
-    full_seq      => $hub->param('fullseq') eq 'yes',      # flag to display full sequence (introns and exons)
+    sscon         => $hub->param('sscon'),            # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking'),         # no of bp up/down stream of transcript
+    full_seq      => $hub->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
     snp_display   => $hub->param('snp_display'),
     number        => $hub->param('line_numbering'),
     coding_start  => $transcript->coding_region_start,
@@ -153,7 +153,7 @@ sub get_exon_sequence_data {
   my $utr_end      = $coding_end   && $coding_end   < $exon_end;   # exon ends with UTR
   my $class        = $coding_start && $coding_end ? 'e0' : 'eu';   # if the transcript is entirely UTR, use utr class for the whole sequence
   my @sequence     = map {{ letter => $_, class => $class }} split '', $seq;
-
+  
   if ($utr_start || $utr_end) {
     my ($coding_length, $utr_length);
     
@@ -175,9 +175,11 @@ sub get_exon_sequence_data {
       $sequence[$_]->{'class'} = 'eu' for 0..($utr_length < $seq_length ? $utr_length : $seq_length) - 1;
     }
   }
-
+  
+  $config->{'last_number'} = $strand == 1 ? $exon_start - 1 : $exon_end + 1; # Ensures that line numbering is correct if there are no introns
+  
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
-  $self->add_line_numbers($config, $seq_length)                    if $config->{'number'} ne 'off';
+  $self->add_line_numbers($config, $seq_length)                    if $config->{'number'}      ne 'off';
 
   return \@sequence;
 }
