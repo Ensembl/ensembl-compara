@@ -475,13 +475,12 @@ CREATE TABLE other_member_sequence (
   member_id                   int(10) unsigned NOT NULL, # unique internal id
   seq_type                    VARCHAR(40) NOT NULL,
   length                      int(10) NOT NULL,
-  sequence                    longtext NOT NULL,
+  sequence                    mediumtext NOT NULL,
 
   FOREIGN KEY (member_id) REFERENCES member(member_id),
 
-  PRIMARY KEY (member_id, seq_type),
-  KEY (seq_type, member_id),
-  KEY sequence (sequence(18))
+  PRIMARY KEY (member_id, seq_type)
+
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
