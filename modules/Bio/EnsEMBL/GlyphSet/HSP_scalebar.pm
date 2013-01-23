@@ -166,21 +166,6 @@ sub bp_to_nearest_unit_by_divs {
     return $self->bp_to_nearest_unit ($bp,$dp);
 }
 
-sub bp_to_nearest_unit {
-    my ($self,$bp,$dp) = @_;
-    $dp = 1 unless defined $dp;
-    
-    my @units = qw( bp kb Mb Gb Tb );
-    my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
-    my $unit = $units[$power_ranger];
-
-    my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
-      
-    $value = sprintf( "%.${dp}f", $bp / ( 10 ** ( $power_ranger * 3 ) ) ) if ($unit ne 'bp');      
-
-    return "$value $unit";
-}
-
 sub zoom_URL {
   return "";
 }

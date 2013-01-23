@@ -363,6 +363,24 @@ sub get_gd {
   return $cache{$font_key} = $gd; # Update font cache
 }
 
+sub bp_to_nearest_unit {
+  my ($self, $bp, $dp) = @_;
+
+  $dp = 1 unless defined $dp;
+
+  my @units = qw( bp kb Mb Gb Tb );
+  my $power = int((length(abs $bp) - 1) / 3);
+
+  my $unit = $units[$power];
+
+  my $value = int($bp / (10 ** ($power * 3)));
+
+  $value = sprintf "%.${dp}f", $bp / (10 ** ($power * 3)) if $unit ne 'bp';
+
+  return "$value $unit";
+}
+
+
 sub commify {
   ### Puts commas into numbers over 1000
   my ($self, $val) = @_;

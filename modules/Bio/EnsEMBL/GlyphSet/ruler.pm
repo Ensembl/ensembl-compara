@@ -109,22 +109,3 @@ sub _init {
 }
 
 1;
-
-sub bp_to_nearest_unit {
-  my $bp = shift;
-  my @units = qw( bp kb Mb Gb Tb );
-    
-  my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
-  my $unit = $units[$power_ranger];
-  my $unit_str;
-
-  my $value = int( $bp / ( 10 ** ( $power_ranger * 3 ) ) );
-      
-  if ( $unit eq "bp" ) {
-    $unit_str = "$value bp";
-  } else {
-    $unit_str = sprintf( "%.2f%s", $bp / ( 10 ** ( $power_ranger * 3 ) ), " $unit" );
-  }
-
-  return $unit_str;
-}
