@@ -170,7 +170,7 @@ sub bp_to_nearest_unit {
     my ($self,$bp,$dp) = @_;
     $dp = 1 unless defined $dp;
     
-    my @units = qw( bp Kb Mb Gb Tb );
+    my @units = qw( bp kb Mb Gb Tb );
     my $power_ranger = int( ( length( abs($bp) ) - 1 ) / 3 );
     my $unit = $units[$power_ranger];
 

@@ -132,7 +132,7 @@ sub bp_to_nearest_unit {
   
   $dp = 1 unless defined $dp;
    
-  my @units = qw( bp Kb Mb Gb Tb );
+  my @units = qw( bp kb Mb Gb Tb );
   my $power = int((length(abs $bp) - 1) / 3);
   
   my $unit = $units[$power];
