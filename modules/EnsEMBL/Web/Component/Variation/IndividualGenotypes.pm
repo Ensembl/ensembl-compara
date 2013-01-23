@@ -90,7 +90,7 @@ sub content {
   
   my $columns = $self->get_table_headings;
   
-  push @$columns, { key => 'Children', title => 'Children<br /><small>(Male/Female)</small>', sort => 'none' } if $flag_children;
+  push @$columns, { key => 'Children', title => 'Children<br /><small>(Male/Female)</small>', sort => 'none', help => 'Children names and genders' } if $flag_children;
     
   
   if ($selected_pop || scalar keys %rows == 1) {
@@ -217,11 +217,11 @@ sub pop_url {
 
 sub get_table_headings {
   return [
-    { key => 'Individual',  title => 'Individual<br /><small>(Male/Female/Unknown)</small>', sort => 'html', width => '20%' },
-    { key => 'Genotype',    title => 'Genotype<br /><small>(forward strand)</small>',        sort => 'html', width => '15%' },
-    { key => 'Description', title => 'Description',                                          sort => 'html'                 },
-    { key => 'Father',      title => 'Father',                                               sort => 'none'                 },
-    { key => 'Mother',      title => 'Mother',                                               sort => 'none'                 }
+    { key => 'Individual',  title => 'Individual<br /><small>(Male/Female/Unknown)</small>', sort => 'html', width => '20%', help => 'Individual name and gender'     },
+    { key => 'Genotype',    title => 'Genotype<br /><small>(forward strand)</small>',        sort => 'html', width => '15%', help => 'Genotype on the forward strand' },
+    { key => 'Description', title => 'Description',                                          sort => 'html'                                                           },
+    { key => 'Father',      title => 'Father',                                               sort => 'none'                                                           },
+    { key => 'Mother',      title => 'Mother',                                               sort => 'none'                                                           }
   ];
 }
     

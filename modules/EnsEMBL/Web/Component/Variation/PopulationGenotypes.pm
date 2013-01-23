@@ -30,20 +30,22 @@ sub content {
     $html .= $table_array->[0]->[1]->render; # only one table to render (non-human or if no 1KG data)
   } else {
     my %table_order = (
-      1000   => 1,
-      HapMap => 2,
-      Other  => 3,
-      Failed => 4,
-      No     => 5,
+      1000     => 1,
+      HapMap   => 2,
+      Other    => 3,
+      Failed   => 4,
+      Observed => 5,
     );
     
+    my $species = $self->hub->species;
     foreach (sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @$table_array) {
       my ($title, $table) = @$_;
       
       # hide "other" and "failed" table
       if ($title =~ /other|failed|population/i) {
         my $id = $title =~ /other/i ? 'other' : ($title =~ /failed/i ? 'failed' : 'nopop');
-        $html .= $self->toggleable_table($title, $id, $table, 0);
+        my $expanded = ($id eq 'other' && $species ne 'Homo_sapiens') ? 1 : 0;
+        $html .= $self->toggleable_table($title, $id, $table, $expanded);
       } else {     
         $html .= "<h2>$title</h2>" . $table->render;
       }
@@ -95,7 +97,7 @@ sub format_frequencies {
     push @table_array,  @{$self->format_frequencies($fv_data, 'Failed data')}  if $fv_data;
     
     # special method for data with no pop/freq data
-    push @table_array,  ['No population or frequency data', $self->no_pop_data($no_pop_data)]  if $no_pop_data;
+    push @table_array,  ['Observed variant(s) without frequency or population', $self->no_pop_data($no_pop_data)]  if $no_pop_data;
   }
     
   foreach my $pop_id (keys %$freq_data) {
