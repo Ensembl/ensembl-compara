@@ -73,17 +73,26 @@ sub content {
       name  => 'otherspecies',
       value => $self->hub->param('otherspecies') || $self->default_otherspecies,
   );
-  
+ 
+
+  my @coords = split(/[:-]/, $hub->param('r'));
+  my $caption = sprintf('Synteny between %s chromosome %s and %s', 
+                    $hub->species_defs->SPECIES_COMMON_NAME,
+                    $coords[0],
+                    $hub->species_defs->get_config($hub->otherspecies, 'SPECIES_COMMON_NAME'),
+                );
+ 
   return if $self->_export_image($image,'no_text no_pdf');
   my $html = sprintf('
   <div class="synteny_image">
+    <h2>%s</h2>
     %s
   </div>
   <div class="synteny_forms">
     %s
     %s
   </div>
-', $image->render, $self->species_form->render, $chr_form->render);
+', $caption, $image->render, $self->species_form->render, $chr_form->render);
 
   return $html;
 }
