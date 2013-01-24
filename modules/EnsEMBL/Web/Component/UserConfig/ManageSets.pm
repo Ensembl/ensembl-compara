@@ -49,7 +49,7 @@ sub sets_table {
   my $icon_url = $img_url . '16/';
   my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div>%s<a href="%s" class="save"></a></div>};
   my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div></div>};
-  my $active   = qq{<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht _ht_static use_icon" title="Use this configuration set">&nbsp;</div></a><div class="config_used">Configuration set applied</div>};
+  my $active   = qq{<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht use_icon" title="Use this configuration set">&nbsp;</div></a><div class="config_used">Configuration set applied</div>};
   my @rows;
   
   my @columns = (
@@ -80,8 +80,8 @@ sub sets_table {
       desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
       configs => { value => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set', class => 'wrap' },
       active  => sprintf($active, $hub->url({ function => 'activate_set', %params }), join ' ', @rel),
-      edit    => sprintf('<a class="edit_record icon_link" href="#" rel="%s"><div class="sprite _ht _ht_static edit_icon" title="Edit configurations">&nbsp;</div></a>', $record_id),
-      delete  => sprintf('<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht _ht_static delete_icon" title="Delete">&nbsp;</div></a>', $hub->url({ function => 'delete_set', %params }), $record_id),
+      edit    => sprintf('<a class="edit_record icon_link" href="#" rel="%s"><div class="sprite _ht edit_icon" title="Edit configurations">&nbsp;</div></a>', $record_id),
+      delete  => sprintf('<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht delete_icon" title="Delete">&nbsp;</div></a>', $hub->url({ function => 'delete_set', %params }), $record_id),
     };
   }
 
