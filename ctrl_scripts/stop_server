@@ -40,7 +40,7 @@ no warnings 'uninitialized';
 use FindBin qw($Bin);
 use File::Basename qw(dirname);
 use POSIX qw(strftime);
-use Sys::Hostname::Long;
+use Sys::Hostname;
 use Getopt::Long;
 
 my $serverroot;
@@ -104,7 +104,7 @@ Options:
   exit;
 }
 
-my $hostname = hostname_long;
+my $hostname = hostname;
 
 for (@stop_before) {
   eval { require $_; };
