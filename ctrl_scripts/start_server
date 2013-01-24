@@ -39,7 +39,7 @@ no warnings 'uninitialized';
 use FindBin qw($Bin);
 use File::Basename qw(dirname);
 use POSIX qw(strftime);
-use Sys::Hostname;
+use Net::Domain;
 use Getopt::Long;
 
 my ($help, $rmconfig, $single, $flush);
@@ -118,7 +118,7 @@ if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
   close LOG; 
 }
 
-my $hostname = hostname;
+my $hostname = Net::Domain::hostfqdn;
 
 # start the server
 if ($rmconfig) {
