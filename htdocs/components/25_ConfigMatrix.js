@@ -5,7 +5,6 @@
   only column nodes appear in track order - need all sortable nodes somehow
   
   TODO: 
-  make child of Configurator?
   update link count correctly when column track in main panel is turned on/off
   filter subtracks
   filter classes (<select>) for datahubs?
@@ -15,22 +14,11 @@
   (remove column and row hovers from initial DOM (build template, attach/detach))
 **/
 
-Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
+Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
   constructor: function (id, params) {
-    var i      = params.trackIds.length;
-    var tracks = {};
-    
-    while (i--) {
-      tracks[params.trackIds[i]] = params.tracks[i]; // convert tracks from an array into a hash
-    }
-    
-    this.tracks = tracks;
-    
-    delete params.tracks;
-    delete params.trackIds;
-  
     this.base(id, params);
     
+    Ensembl.EventManager.remove(id); // Get rid of all the Configurator events which we don't care about
     Ensembl.EventManager.register('mouseUp',             this, this.dragStop);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('modalPanelResize',    this, this.setScrollerSize);
@@ -40,7 +28,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var panel = this;
     var j;
     
-    this.base();
+    Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
     
     this.startCell   = [];
     this.dragCell    = [];
@@ -101,7 +89,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     
     // Fix z-index for popups in IE6 and 7
     if (Ensembl.browser.ie67) {
-      this.elLk.headers.css('zIndex',   function (i) { return 200 - i; });
+      this.elLk.headers.css('zIndex',     function (i) { return 200 - i; });
       this.elLk.configMenus.css('zIndex', function (i) { return 100 - i; });
     }
   },
@@ -170,7 +158,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     }
     
     this.elLk.table.children('thead').children('tr.config_menu')
-    .on('click', 'th',             $.proxy(Ensembl.Panel.Configurator.prototype.showConfigMenu, this))
+    .on('click', 'th',             $.proxy(this.showConfigMenu,  this))
     .on('click', '.popup_menu li', $.proxy(this.setColumnConfig, this));
     
     // Display a select all popup for columns
@@ -284,19 +272,22 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   },
   
   showConfigMenu: function (e) {
-    var el = $(e.currentTarget);
+    var el    = $(e.currentTarget);
+    var popup = el.data('popup');
     
-    Ensembl.Panel.Configurator.prototype.showConfigMenu.call(this, e);
+    this.base(e);
     
-    el.data('popup').position({
-      of:        el,
-      within:    this.elLk.wrapper,
-      my:        el.hasClass('select_all') ? 'left bottom+2' : 'left+8 top',
-      at:        el.hasClass('select_all') ? 'left top'      : 'left center',
-      collision: 'flipfit'
-    });
+    if (popup) {
+      popup.position({
+        of:        el,
+        within:    this.elLk.wrapper,
+        my:        el.hasClass('select_all') ? 'left bottom+2' : 'left+8 top',
+        at:        el.hasClass('select_all') ? 'left top'      : 'left center',
+        collision: 'flipfit'
+      });
+    }
     
-    el = null;
+    el = popup = null;
     
     return false;
   },
@@ -326,7 +317,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var colTrack  = popup.data('colTrack');
     var isDefault = target.hasClass('default');
     
-    Ensembl.Panel.Configurator.prototype.setTrackConfig.call(this, e, false);
+    this.base(e, false);
     
     if (isDefault) {
       // change all tracks in the popup for select all = default
@@ -349,8 +340,8 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var on    = tracks.map(function () { return $(this).hasClass('on'); }).toArray();
     var off   = renderer === 'off' ? -1 : 1;
     var track;
-      
-    Ensembl.Panel.Configurator.prototype.changeTrackRenderer.call(this, tracks, renderer, false);
+    
+    this.base(tracks, renderer, false);
     
     if (isColumn) {
       if (this.params.defaultRenderers) {
@@ -365,7 +356,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
         });
       }
       
-      this.setDefaultRenderer(this.elLk.subtracks.filter(function () { return $(this).data('colTrack').el[0] === tracks[0]; }), tracks.data('track').renderer);
+      this.setDefaultRenderer(this.elLk.subtracks.filter(function () { return tracks.filter($(this).data('colTrack').el[0]).length; }), tracks.data('track').renderer);
       this.updateLinkCount();
     }
     
