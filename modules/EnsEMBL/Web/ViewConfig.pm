@@ -414,17 +414,18 @@ sub build_imageconfig_form {
   my $extra_menus  = $image_config->{'extra_menus'};
   my $tree         = $self->tree;
   my $form         = $self->get_form;
+  my %node_options = ( availability => 1, url => '#', rel => 'multi' );
   my $track_order;
   
-  $tree->append($tree->create_node('active_tracks',    { caption => 'Active tracks',    availability => 1, url => '#', class => 'active_tracks',    rel => 'multi' })) if $extra_menus->{'active_tracks'};
-  $tree->append($tree->create_node('favourite_tracks', { caption => 'Favourite tracks', availability => 1, url => '#', class => 'favourite_tracks', rel => 'multi' })) if $extra_menus->{'favourite_tracks'};
+  $tree->append($tree->create_node('active_tracks',    { caption => 'Active tracks',    class => 'active_tracks',    %node_options })) if $extra_menus->{'active_tracks'};
+  $tree->append($tree->create_node('favourite_tracks', { caption => 'Favourite tracks', class => 'favourite_tracks', %node_options })) if $extra_menus->{'favourite_tracks'};
   
   if ($extra_menus->{'track_order'}) {
-    $tree->append($tree->create_node('track_order', { caption => 'Track order', availability => 1, url => '#', class => 'track_order' }));
-    $self->{'track_order'} = { map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => $_->get('order') } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
+    $tree->append($tree->create_node('track_order', { caption => 'Track order', class => 'track_order', %node_options, rel => undef }));
+    $self->{'json'}{'order'} = { map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => $_->get('order') } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
   }
   
-  $tree->append($tree->create_node('search_results', { caption => 'Search results', availability => 1, url => '#', class => 'search_results disabled', rel => 'multi' })) if $extra_menus->{'search_results'};
+  $tree->append($tree->create_node('search_results', { caption => 'Search results', class => 'search_results disabled', %node_options })) if $extra_menus->{'search_results'};
   
   # Delete all tracks where menu = no, and parent nodes if they are now empty
   # Do this after creating track order, so that unconfigurable but displayed tracks are still considered in the ordering process
@@ -473,7 +474,7 @@ sub build_imageconfig_form {
         foreach (@child_nodes) {
           my $id = $_->id;
           
-          $self->build_imageconfig_menus($_, $div->append_child('div', { class => "subset $first$id" }), $section);
+          $self->build_imageconfig_menus($_, $div->append_child('div', { class => "subset $first$id" }), $section, $id);
           
           $first = '';
           
@@ -517,14 +518,14 @@ sub build_imageconfig_form {
     $form->append_child('div', { class => 'config favourite_tracks', inner_HTML => qq{You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites} });
   }
   
-  $form->append_child('div', { class => 'config track_order', inner_HTML => '<h1 class="track_order">Track order</h1><ul class="config_menu"></ul>' }) if $self->{'track_order'};
+  $form->append_child('div', { class => 'config track_order', inner_HTML => '<h1 class="track_order">Track order</h1><ul class="config_menu"></ul>' }) if $self->{'json'}{'order'};
   $form->append_child('div', { class => 'config no_search',   inner_HTML => 'Sorry, your search did not find any tracks' });
   $form->prepend_child('h1', { class => 'search_results',     inner_HTML => 'Search results' });
   $form->prepend_child('h1', { class => 'active_tracks',      inner_HTML => 'Active tracks'  });
 }
 
 sub build_imageconfig_menus {
-  my ($self, $node, $parent, $menu_class) = @_;
+  my ($self, $node, $parent, $menu_class, $submenu_class) = @_;
   
   my $menu_type = $node->get('menu');
   
@@ -535,6 +536,7 @@ sub build_imageconfig_menus {
   
   if ($node->get('node_type') eq 'menu') {
     my $caption = $node->get('caption');
+    my $element;
     
     if ($parent->node_name eq 'ul') {
       if ($external) {
@@ -544,8 +546,6 @@ sub build_imageconfig_menus {
       }
     }
     
-    my $element;
-    
     # If the children are all non external menus, add another wrapping div so there can be distinct groups in a submenu, with unlinked enable/disable all controls
     if (!scalar(grep $_->get('node_type') ne 'menu', @{$node->child_nodes}) && scalar(grep !$_->get('external'), @{$node->child_nodes})) {
       $element = $parent->append_child('div', { class => $menu_type eq 'hidden' ? ' hidden' : '' });
@@ -553,7 +553,7 @@ sub build_imageconfig_menus {
       $element = $parent->append_child('ul', { class => "config_menu $menu_class" . ($menu_type eq 'hidden' ? ' hidden' : '') });
     }
     
-    $self->build_imageconfig_menus($_, $element, $menu_class) for @{$node->child_nodes};
+    $self->build_imageconfig_menus($_, $element, $menu_class, $submenu_class) for @{$node->child_nodes};
     $self->add_select_all($node, $element, $id) if $element->node_name eq 'ul';
   } else {
     my $img_url     = $self->img_url;
@@ -564,26 +564,16 @@ sub build_imageconfig_menus {
     my $desc        = $node->get('description');
     my $controls    = $node->get('controls');
     my $subset      = $node->get('subset');
-    my $features    = $node->get('features');
     my $name        = encode_entities($node->get('name'));
-    my $icon        = $external ? sprintf '<img src="%strack-%s.gif" class="external" alt="%s" />', $img_url, lc $external, $external : ''; # Exernal data icons, etc
-    my @classes     = ($id, 'track');
+    my @classes     = ('track', $external ? 'external' : '', lc $external);
     my $menu_header = scalar @states > 4 ? qq{<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>} : '';
     my ($selected, $menu, $help);
     
     while (my ($renderer, $label) = splice @states, 0, 2) {
-      my $html;
-      
       $label = encode_entities($label);
+      $menu .= qq{<li class="$renderer">$label</li>};
       
-      if ($renderer eq $display) {
-        $selected = qq{<input type="hidden" class="track_name" name="$id" value="$renderer" /><img title="$label" alt="$label" src="${img_url}render/$renderer.gif" class="menu_option" />};
-        $html     = qq{<img class="tick" src="${img_url}tick.png" alt="Selected" title="Selected" /><span class="current">$label</span>};
-      } else {
-        $html = "<span>$label</span>";
-      }
-      
-      $menu .= qq{<li class="$renderer"><img title="$label" alt="$label" src="${img_url}render/$renderer.gif" class="$menu_class" />$html</li>};
+      push @classes, $renderer if $renderer eq $display;
       
       my $p = $node;
       
@@ -593,7 +583,7 @@ sub build_imageconfig_menus {
       }
     }
     
-    $menu .= sprintf '<li class="subset subset_%s"><img src="%s16/setting.png" /><a href="#">Configure track options</a></li>', $subset, $img_url if $subset;
+    $menu .= sprintf '<li class="setting subset subset_%s"><a href="#">Configure track options</a></li>', $subset, $img_url if $subset;
     
     if ($display ne 'off') {
       $self->{'enabled_tracks'}{$menu_class}++;
@@ -615,13 +605,9 @@ sub build_imageconfig_menus {
     push @classes, "subset_$subset" if $subset;
     
     my $child = $parent->append_child('li', {
+      id         => $id,
       class      => join(' ', @classes),
-      inner_HTML => qq{
-        <ul class="popup_menu">
-          $menu_header
-          $menu
-        </ul>
-        $selected<span class="menu_option">$icon$name</span>
+      inner_HTML => qq{$name
         <div class="controls">
           $controls
           <div class="favourite sprite fave_icon" title="Favorite this track"></div>
@@ -641,7 +627,19 @@ sub build_imageconfig_menus {
     $self->{'menu_count'}{$menu_class} ||= 0;
     $self->{'menu_order'}{$parent}       = $self->{'menu_count'}{$menu_class}++ unless defined $self->{'menu_order'}{$parent};
     
-    push @{$self->{'tracks'}{$menu_class}[$self->{'menu_order'}{$parent}]}, [ $id, $child->render, $self->{'favourite_tracks'}{$id}, $display, lc $name, lc $self->strip_HTML($desc) ];
+    push @{$self->{'json'}{'tracksByType'}{$menu_class}[$self->{'menu_order'}{$parent}]}, $id;
+    push @{$self->{'json'}{'trackIds'}}, $id; # use an array of tracks rather than a hash so that gzip can compress the json mmore effectively.
+    push @{$self->{'json'}{'tracks'}}, {  # trackIds are used to convert tracks into a hash in javascript.
+      id       => $id,
+      type     => $menu_class,
+      name     => lc $name,
+      links    => "a.$menu_class" . ($subset || $submenu_class ? ', a.' . ($subset || "$menu_class-$submenu_class") : ''),
+      renderer => $display,
+      fav      => $self->{'favourite_tracks'}{$id},
+      desc     => lc $self->strip_HTML($desc),
+      html     => $child->render,
+      popup    => qq{<ul class="popup_menu">$menu_header$menu</ul>},
+    };
   }
 }
 
@@ -676,7 +674,7 @@ sub add_select_all {
     $caption = $external ? $parent->get('caption') : 'tracks' if $single_menu;
     
     if (scalar keys %counts != 1) {
-      $popup .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$id" /><span>$_->[1]</span></li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+      $popup .= qq{<li class="$_->[0]">$_->[1]</li>} for [ 'off', 'Off' ], [ 'all_on', 'On' ];
     } else {
       $popup = $self->{'select_all_menu'}{$id};
     }
@@ -688,7 +686,7 @@ sub add_select_all {
           <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
           $popup
         </ul>
-        <strong class="menu_option">Enable/disable all $caption</strong>
+        <strong>Enable/disable all $caption</strong>
       }
     });
   } elsif ($caption && !$external) {

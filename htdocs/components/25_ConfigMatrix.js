@@ -5,6 +5,7 @@
   only column nodes appear in track order - need all sortable nodes somehow
   
   TODO: 
+  make child of Configurator?
   update link count correctly when column track in main panel is turned on/off
   filter subtracks
   filter classes (<select>) for datahubs?
@@ -12,12 +13,22 @@
   (look at hiding rows outside the viewport to increase interaction speed in ie)
   (look at appending popup to cell, rather than wrapper)
   (remove column and row hovers from initial DOM (build template, attach/detach))
-  
-  find other TODO and FIXME in this file and deal with them
 **/
 
 Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   constructor: function (id, params) {
+    var i      = params.trackIds.length;
+    var tracks = {};
+    
+    while (i--) {
+      tracks[params.trackIds[i]] = params.tracks[i]; // convert tracks from an array into a hash
+    }
+    
+    this.tracks = tracks;
+    
+    delete params.tracks;
+    delete params.trackIds;
+  
     this.base(id, params);
     
     Ensembl.EventManager.register('mouseUp',             this, this.dragStop);
@@ -44,14 +55,25 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     this.elLk.noResults     = this.elLk.wrapper.children('.no_results');
     this.elLk.table         = this.elLk.tableWrapper.children('table.config_matrix');
     this.elLk.headers       = this.elLk.table.children('thead').children('tr:first').children('th');
-    this.elLk.renderers     = this.elLk.table.children('thead').children('tr.renderers').children('th');
+    this.elLk.configMenus   = this.elLk.table.children('thead').children('tr.config_menu').children('th');
     this.elLk.rows          = this.elLk.table.children('tbody').children('tr');
-    this.elLk.trackNames    = this.elLk.renderers.children('.track_name').each(function () { panel.imageConfig[this.name] = { renderer: this.value, el: panel.params.imageConfig[this.name].el }; });
-    this.elLk.menus         = this.elLk.renderers.children('.popup_menu');
-    this.elLk.columnHeaders = this.elLk.headers.add(this.elLk.renderers).not('.first');
+    this.elLk.columnHeaders = this.elLk.headers.add(this.elLk.configMenus).not('.first');
     this.elLk.cols          = [].slice.call($.map(this.elLk.table[0].rows[0].cells, function (c, i) { if (i) { return [[]]; } }));
+    this.elLk.popup         = $();
     this.elLk.subtracks     = $();
     this.elLk.hiddenCells   = $();
+    this.elLk.tracks        = this.elLk.configMenus.not('.select_all').each(function () {
+      var track = panel.tracks[this.id];
+      
+      panel.imageConfig[this.id] = { renderer: track.renderer };
+      $.extend(track, { el: $(this), linkedEls: panel.params.parentTracks[this.id].el });
+      $(this).data('track', track);
+      
+      if (track.renderer !== panel.params.parentTracks[this.id].renderer) {
+        $(this).removeClass(track.renderer).addClass(panel.params.parentTracks[this.id].renderer);
+        track.renderer = panel.params.parentTracks[this.id].renderer;
+      }
+    }).removeAttr('id');
     
     this.elLk.tableWrapper.data('maxWidth', this.elLk.tableWrapper[0].style.width).width('auto');
     
@@ -69,6 +91,8 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       this.configCode  = 'opt_matrix_' + panel.id + '_' + this.title; // configCode is used to set the correct values for the ViewConfig
       this.searchTerms = $.trim(this.parentNode.className + ' ' + panel.elLk.headers.eq(el.index()).children('p').html() + ' ' + this.title).toLowerCase();
       panel.viewConfig[this.configCode] = el.hasClass('on') ? 'on' : 'off';
+      
+      el = null;
     });
     
     this.setEventHandlers();
@@ -78,7 +102,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     // Fix z-index for popups in IE6 and 7
     if (Ensembl.browser.ie67) {
       this.elLk.headers.css('zIndex',   function (i) { return 200 - i; });
-      this.elLk.renderers.css('zIndex', function (i) { return 100 - i; });
+      this.elLk.configMenus.css('zIndex', function (i) { return 100 - i; });
     }
   },
   
@@ -145,8 +169,8 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       });
     }
     
-    this.elLk.table.children('thead').children('tr.renderers')
-    .on('click', '.menu_option',   $.proxy(Ensembl.Panel.Configurator.prototype.showConfigMenu, this))
+    this.elLk.table.children('thead').children('tr.config_menu')
+    .on('click', 'th',             $.proxy(Ensembl.Panel.Configurator.prototype.showConfigMenu, this))
     .on('click', '.popup_menu li', $.proxy(this.setColumnConfig, this));
     
     // Display a select all popup for columns
@@ -204,19 +228,15 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       e.stopPropagation();
     });
     
-    // FIXME: too slow - find a way to do this without triggering loads of individual events
-    this.elLk.renderers.filter('.select_all').children('.popup_menu').children('li:not(.header)').on('click', function () {
-      $(this).parents('.popup_menu').hide().parent().siblings().filter(function () {
-        return this.style.display !== 'none';
-      }).find('.popup_menu li' + (this.className === 'all_on' ? '.off +' : '.' + this.className)).trigger('click');
-      
+    this.elLk.configMenus.filter('.select_all').children('.popup_menu').children('li:not(.header)').on('click', function () {
+      panel.changeTrackRenderer($(this).parent().hide().parent().siblings().filter(function () { return this.style.display !== 'none'; }), this.className, true);
       return false;
     });
     
     this.elLk.table.children('tbody').on('click', '.opt', function () {
       var el         = $(this).toggleClass('on');
       var cellTracks = panel.params.cellTracks ? panel.params.cellTracks[this.title] : false;
-      var popup;
+      var popup, colTrack;
       
       if (cellTracks && el.hasClass('on')) {
         panel.removePopups();
@@ -224,44 +244,31 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
         popup = el.data('subtracks');
         
         if (!popup) {
-          popup = $(panel.params.cellTracks[this.title]);
+          popup = $(cellTracks);
           
-          $('.menu_option',   popup).on('click', $.proxy(panel.showConfigMenu, panel));
-          $('.popup_menu li', popup).on('click', $.proxy(panel.setTrackConfig, panel));
-          
-          $('> ul.config_menu > li.track', popup).on('click', function (e) {
-            if (e.target === this) {
-              $(this).children('img.menu_option').trigger('click');
-            }
-            
-            return false;
-          });
+          $('.popup_menu li',                           popup).on('click', $.proxy(panel.setTrackConfig, panel));
+          $('> ul.config_menu > li.track, .select_all', popup).on('click', $.proxy(panel.showConfigMenu, panel)).not('.select_all').each(function () {
+            $(this).data({ track: $.extend(panel.tracks[this.id], { el: $(this) }), popup: $(this).children('.popup_menu') });
+          }).removeAttr('id');
           
           popup.children('.close').on('click', function () {
             panel.removePopups($(this).parent());
             return false;
           });
           
+          colTrack = panel.elLk.configMenus.eq(el.index()).data('track');
+          
+          panel.setDefaultRenderer(popup.data({ cell: el, colTrack: colTrack }), colTrack.renderer);
           el.data('subtracks', popup);
-          popup.data({ cell: el, renderer: panel.elLk.renderers.eq(el.index()).children('.track_name') });
           
           panel.elLk.subtracks.push(popup[0]);
-          panel.elLk.trackNames.push.apply(panel.elLk.trackNames, popup.find('.track_name').each(function () { panel.imageConfig[this.name] = { renderer: this.value }; }).toArray());
+          panel.elLk.tracks.push.apply(panel.elLk.tracks, popup.find('.track').each(function () {
+            var track = $(this).data('track');
+            panel.imageConfig[track.id] = { renderer: track.renderer };
+          }).toArray());
         }
         
-        var colRenderer = popup.data('renderer').siblings('img.menu_option')[0];
-        
-        $('> ul.config_menu > li.track > input.track_name[value=default]', popup).siblings('img.menu_option').attr({
-          src:   colRenderer.src, 
-          alt:   colRenderer.alt,
-          title: colRenderer.title
-        }).parent()[$(colRenderer.parentNode).hasClass('on') ? 'addClass' : 'removeClass']('on');
-        
-        $('ul.popup_menu > li.default > img:not(.tick)', popup).attr('src', colRenderer.src);
-        
         popup.appendTo(panel.elLk.wrapper).position({ of: this, within: panel.elLk.wrapper, my: 'left top', collision: 'flipfit' });
-        
-        colRenderer = null;
       } 
       
       if (cellTracks) {
@@ -277,88 +284,96 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   },
   
   showConfigMenu: function (e) {
-    var el     = $(e.currentTarget);
-    var parent = el.parent();
+    var el = $(e.currentTarget);
     
     Ensembl.Panel.Configurator.prototype.showConfigMenu.call(this, e);
     
-    el.siblings('.popup_menu').position({
-      of:        parent,
+    el.data('popup').position({
+      of:        el,
       within:    this.elLk.wrapper,
-      my:        parent.hasClass('select_all') ? 'left bottom+2' : 'left+8 top',
-      at:        parent.hasClass('select_all') ? 'left top'      : 'left center',
+      my:        el.hasClass('select_all') ? 'left bottom+2' : 'left+8 top',
+      at:        el.hasClass('select_all') ? 'left top'      : 'left center',
       collision: 'flipfit'
     });
     
-    el = parent = null;
+    el = null;
     
     return false;
   },
   
-  setColumnConfig: function (e, options) {
-    var panel = this;
-    var th    = $(e.target).parents('th');
-    var on    = th.hasClass('on');
-    var off   = e.currentTarget.className === 'off' ? -1 : 1;
+  setColumnConfig: function (e) {
+    var target = $(e.target);
     
-    Ensembl.Panel.Configurator.prototype.setTrackConfig.call(this, e, $.extend(options, { updateCount: false }));
+    if (!target.is('.header') && !target.filter('.close').parents('.popup_menu').hide().length) {
+      this.changeTrackRenderer(target.parent().hide().parent(), target[0].className, true);
+    }
     
-    if ($(e.target).hasClass('close') || $(e.currentTarget).hasClass('header')) {
+    target = null;
+    
+    return false;
+  },
+  
+  setTrackConfig: function (e) {
+    var target = $(e.target);
+    
+    if (target.is('.header') || target.filter('.close').parents('.popup_menu').hide().length) {
+      target = null;
       return false;
     }
     
-    if (panel.params.defaultRenderers && th.hasClass('on') !== on) {
-      this.elLk.options.filter('.' + this.elLk.headers[th.index()].className).find('.on').html(function (i, html) {
-        return parseInt(html, 10) + panel.params.defaultRenderers[$(this).parents('td.opt')[0].title] * off;
-      });
+    var popup     = target.parents('.subtracks');
+    var cell      = popup.data('cell');
+    var colTrack  = popup.data('colTrack');
+    var isDefault = target.hasClass('default');
+    
+    Ensembl.Panel.Configurator.prototype.setTrackConfig.call(this, e, false);
+    
+    if (isDefault) {
+      // change all tracks in the popup for select all = default
+      target.parents('.track').add(target.parents('.select_all').siblings('ul.config_menu').children('.track'))[colTrack.renderer === 'off' ? 'removeClass' : 'addClass']('on');
     }
     
-    this.elLk.subtracks.filter(function () { return this.parentNode; }).find('> ul.config_menu > li.track > input.track_name[value=default]').siblings('img.menu_option').attr({
-      src:   e.target.src, 
-      alt:   e.target.alt,
-      title: e.target.title
-    }).parent()[th.hasClass('on') ? 'addClass' : 'removeClass']('on');
+    this.params.defaultRenderers[cell[0].title] = $('> ul.config_menu > li.default', popup).length;
     
-    $('ul.popup_menu > li.default > img:not(.tick)', this.elLk.subtracks).attr('src', e.target.src);
+    cell.find('span.on').html(popup.find('li.track.on').length);
     
     this.updateLinkCount();
     
-    th = null;
+    target = popup = cell = null;
     
     return false;
   },
   
-  setTrackConfig: function (e, options) {
-    var li        = $(e.currentTarget);
-    var popup     = li.parents('.subtracks');
-    var cell      = popup.data('cell');
-    var isDefault = e.currentTarget.className === 'default';
-    
-    if (isDefault) {
-      e.currentTarget.className = this.elLk.renderers.eq(cell.index()).children('input.track_name').val();
-    }
-    
-    Ensembl.Panel.Configurator.prototype.setTrackConfig.call(this, e, $.extend(options, { updateCount: false }));
-    
-    if (isDefault) {
-      e.currentTarget.className = 'default';
+  changeTrackRenderer: function (tracks, renderer, isColumn) {
+    var panel = this;
+    var on    = tracks.map(function () { return $(this).hasClass('on'); }).toArray();
+    var off   = renderer === 'off' ? -1 : 1;
+    var track;
       
-      if (!li.parent().siblings('input.track_name').val('default').length) {
-        popup.find('li.track').children('input.track_name').val('default'); // change all tracks in the popup for select all = default
+    Ensembl.Panel.Configurator.prototype.changeTrackRenderer.call(this, tracks, renderer, false);
+    
+    if (isColumn) {
+      if (this.params.defaultRenderers) {
+        tracks.each(function (i) {
+          track = $(this);
+          
+          if (track.hasClass('on') !== on[i]) {
+            panel.elLk.options.filter('.' + track.data('track').colClass).find('.on').html(function (j, html) {
+              return parseInt(html, 10) + panel.params.defaultRenderers[$(this).parents('td.opt')[0].title] * off;
+            });
+          }
+        });
       }
+      
+      this.setDefaultRenderer(this.elLk.subtracks.filter(function () { return $(this).data('colTrack').el[0] === tracks[0]; }), tracks.data('track').renderer);
+      this.updateLinkCount();
     }
     
-    this.params.defaultRenderers[cell[0].title] = $('> ul.config_menu > li > input.track_name[value=default]', popup).length;
-    
-    if (!($(e.target).hasClass('close') || li.hasClass('header'))) {
-      cell.find('span.on').html(popup.find('li.track.on').length);
-    }
-    
-    this.updateLinkCount();
-    
-    li = popup = cell = null;
-    
-    return false;
+    tracks = track = null;
+  },
+  
+  setDefaultRenderer: function (tracks, renderer) {
+    tracks.find('li.default').filter('.track')[renderer === 'off' ? 'removeClass' : 'addClass']('on').end().children('div').removeClass().addClass(renderer);
   },
   
   // FIXME: often called multiple times for one operation
@@ -371,7 +386,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     if (this.params.cellTracks) {
       this.elLk.options.filter('.on').find('.on').each(function () { on += parseInt(this.innerHTML, 10); });
     } else {
-      on = this.elLk.renderers.filter('.on').length;
+      on = this.elLk.configMenus.filter('.on').length;
     }
     
     link.html(on);
@@ -491,7 +506,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
   // so they will be recalculated the next time the th mouseover is triggered.
   resetSelectAll: function (cells) {
     var reset = { row: {}, col: {} };
-    var i, className, renderer, off, on;
+    var i, className, col, data, off, on;
     
     cells.each(function () {
       reset.row[$(this).parent().index()] = 1;
@@ -504,18 +519,14 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     
     for (i in reset.col) {
       className = $('.select_all_column', this.elLk.headers[i]).data('selectAll', false).parent().attr('class');
-      renderer  = this.elLk.renderers.filter('.' + className).find('.track_name');
-      on        = !!this.elLk.rows.children('.' + className + '.on').length;
-      off       = renderer.val() === 'off';
+      col       = this.elLk.configMenus.filter('.' + className);
+      data      = col.data();
+      on        = !!this.elLk.rows.children('.on.' + className).length;
+      off       = data.track.renderer === 'off';
       
       if (off === on) {
-        renderer.siblings('.popup_menu').children(':not(.header):eq(' + (on ? 1 : 0) + ')').trigger('click');
-        
-        this.elLk.subtracks.map(function () {
-          if ($(this).hasClass(className) && $(this).children('track_name').val() === 'default') {
-            return $(this).find('.popup_menu').children(':not(.header):eq(' + (on ? 1 : 0) + ')')[0];
-          }
-        }).trigger('click', true); // FIXME: find a way to do this without triggering loads of events
+        data.popup = data.popup || $(data.track.popup).prependTo(col);
+        data.popup.children().removeClass('current').filter('li.off' + (on ? ' +' : '')).trigger('click'); // Doesn't trigger renderer change correctly if "current" class is not removed first
       }
     }
     
@@ -523,7 +534,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       this.updateLinkCount();
     }
     
-    cells = null;
+    cells = col = null;
   },
   
   // Called by triggerSpecific from the parent Configurator panel.
@@ -547,9 +558,11 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
       }
     });
     
-    this.elLk.trackNames.each(function () {
-      if (panel.imageConfig[this.name].renderer !== this.value) {
-        config.imageConfig[this.name] = { renderer: this.value };
+    this.elLk.tracks.each(function () {
+      var track = $(this).data('track');
+      
+      if (panel.imageConfig[track.id].renderer !== track.renderer) {
+        config.imageConfig[track.id] = { renderer: track.renderer };
         diff = true;
       }
     });
@@ -650,7 +663,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var rows       = [];
     var rowMatches = {};
     var colMatches = {};
-    var values, match, options, els, i;
+    var values, match, options, els, i, j;
     
     if (value) {
       options = this.elLk.options.filter(function () { return this.style.display !== 'none'; });
@@ -670,8 +683,8 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
         options.each(function () {
           match = true;
           
-          for (i in value) {
-            if (this.searchTerms.indexOf(value[i]) === -1) {
+          for (j in value) {
+            if (this.searchTerms.indexOf(value[j]) === -1) {
               match = false;
               break;
             }
@@ -725,7 +738,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.ModalContent.extend({
     var shown = this.elLk.rows.filter(function () { return this.style.display !== 'none' && this.className.indexOf('hidden') === -1; }).length;
     
     if (!shown) {
-      this.elLk.menus.hide();
+      this.elLk.popup.hide();
     }
     
     if (this.showTutorial) {

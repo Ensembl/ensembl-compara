@@ -166,7 +166,6 @@ sub form_matrix {
   my @axis_labels   = map { s/([a-z])([A-Z])([a-z])/$1_$2$3/g; s/_/ /g; s/( [Tt]ype|s$)//g; lc; } $conf->{'axes'}{'x'}, $conf->{'axes'}{'y'};
   my $width         = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
   my %filters       = ( '' => 'All classes' );
-  my $tick          = qq{<img class="tick" src="${img_url}tick.png" alt="Selected" title="Selected" />};
   my (@rows, $rows_html, @headers_html, $last_class, %gaps, $track_style_header);
   
   $self->{'panel_type'} = 'ConfigMatrix';
@@ -190,7 +189,7 @@ sub form_matrix {
   
   my @renderer_template = (
     qq{<ul class="popup_menu"><li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>},
-    qq{<li class="%s"><img title="%s" alt="%s" src="${img_url}render/%s.gif" class="${menu}_$set" />%s<span%s>%s</span></li>},
+    qq{<li class="%s">%s</li>},
     '</ul>'
   );
   
@@ -198,10 +197,10 @@ sub form_matrix {
   my ($k, $v, $renderer_html);
   
   if (scalar keys %counts != 1) {
-    $renderer_html .= sprintf $renderer_template[1], $_->[2], $_->[1], $_->[1], $_->[0], '', '', $_->[1] for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+    $renderer_html .= sprintf $renderer_template[1], @$_ for [ 'off', 'Off' ], [ 'all_on', 'On' ];
   } else {
     my $renderers = $self->deepcopy($conf->{'columns'}[0]{'renderers'});
-    $renderer_html .= sprintf $renderer_template[1], $k, $v, $v, $k, '', '', $v while ($k, $v) = splice @$renderers, 0, 2;
+    $renderer_html .= sprintf $renderer_template[1], $k, $v, while ($k, $v) = splice @$renderers, 0, 2;
   }
   
   $headers_html[1] = "$renderer_template[0]$renderer_html$renderer_template[2]";
@@ -239,43 +238,41 @@ sub form_matrix {
         
         if (ref $conf->{'features'}{$x}{$id} eq 'ARRAY') {
           # TODO: renderers. Currently assuming that subtrack renderers match parent renderers.
-          my @r = @{$self->deepcopy($_->{'renderers'})};
-          
-          unshift @r, 'default', 'Default';
-          
-          my %renderers = @r;
+          my @renderers = @{$self->deepcopy($_->{'renderers'})};
           my $total     = scalar @{$conf->{'features'}{$x}{$id}};
           my $on        = 0;
           my ($subtracks, $select_all);
+          
+          unshift @renderers, 'default', 'Default';
           
           foreach my $feature (@{$conf->{'features'}{$x}{$id}}) {
             my $display  = $user_settings->{$feature->{'name'}}{'display'} || 'default';
             my $renderer = $user_settings->{$feature->{'name'}}{'display'} || $col_renderer;
             my $li_class = $renderer eq 'off' ? '' : ' on';
-            my $menu;
+            my $popup_menu;
             
-            for (my $i = 0; $i < scalar @r; $i += 2) {
-              $menu .= sprintf $renderer_template[1], $r[$i], $r[$i+1], $r[$i+1], $r[$i] eq 'default' ? $col_renderer : $r[$i], $r[$i] eq $display ? ($tick, ' class="current"') : ('', ''), $r[$i+1];
+            for (my $i = 0; $i < scalar @renderers; $i += 2) {
+              $popup_menu .= sprintf $renderer_template[1], $renderers[$i], ($renderers[$i] eq 'default' ? qq{<div class="$col_renderer"></div>} : '') . $renderers[$i+1];
             }
             
-            $subtracks .= qq{
-              <li class="$x_class$li_class track">
-                $renderer_template[0]
-                $menu
-                $renderer_template[2]
-                <input type="hidden" class="track_name" name="$feature->{'name'}" value="$display" />
-                <img class="menu_option" title="$renderers{$renderer}" alt="$renderers{$renderer}" src="${img_url}render/$renderer.gif" />
-                <span class="menu_option">$feature->{'source_name'}</span>
-              </li>
-            };
+            $subtracks .= sprintf(
+              qq{<li id="$feature->{'name'}" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]$feature->{'source_name'}</li>},
+              $display eq 'default' ? qq{<div class="$col_renderer"></div>} : ''
+            );
             
             $on++ if $renderer ne 'off';
-            $self->{'json_params'}{'defaultRenderers'}{"$x:$id"}++ if $display eq 'default';
-            $select_all ||= "$renderer_template[0]$menu$renderer_template[2]";
+            $select_all ||= "$renderer_template[0]$popup_menu$renderer_template[2]";
+            
+            $self->{'json'}{'defaultRenderers'}{"$x:$id"}++ if $display eq 'default';
+            push @{$self->{'json'}{'trackIds'}}, $feature->{'name'};
+            push @{$self->{'json'}{'tracks'}}, {
+              id       => $feature->{'name'},
+              renderer => $display,
+            };
           }
           
-          $self->{'json_params'}{'defaultRenderers'}{"$x:$id"} ||= 0;
-          $self->{'json_params'}{'cellTracks'}{"$x:$id"}        = sprintf('
+          $self->{'json'}{'defaultRenderers'}{"$x:$id"} ||= 0;
+          $self->{'json'}{'cellTracks'}{"$x:$id"}         = sprintf('
             <div class="subtracks info_popup">
               <span class="close"></span>
               %s
@@ -314,7 +311,7 @@ sub form_matrix {
   my %tutorials = (
     row       => sprintf('Hover on %s names to select or deselect %s types', @axis_labels),
     col       => sprintf('Hover on %s names to select or deselect %s types', reverse @axis_labels),
-    track     => sprintf('Click the boxes to choose %s style', lc $track_style_header),
+    style     => sprintf('Click the boxes to choose %s style', lc $track_style_header),
     fil       => sprintf('%s %s or %s type search terms', scalar keys %filters > 1 ? sprintf 'Choose a%s %s class and/or enter', $axis_labels[1] =~ /^[aeiou]/ ? 'n' : '', $axis_labels[1] : 'Enter', @axis_labels),
     drag      => 'Click and drag with your mouse to turn on/off more than one box',
     all_track => 'Click to change all track styles at once',
@@ -345,28 +342,32 @@ sub form_matrix {
   my $i = 0;
   
   foreach (@columns) {
-    my $x         = $_->{'x'};
-    (my $x_class  = lc $x) =~ s/[^\w-]/_/g;
-    my $display   = $_->{'display'};
-    my $name      = $_->{'name'};
-    my %renderers = @{$_->{'renderers'}};
-    my $menu      = $renderer_template[0];
-       $menu     .= sprintf $renderer_template[1], $k, $v, $v, $k, $k eq $display ? ($tick, ' class="current"') : ('', ''), $v while ($k, $v) = splice @{$_->{'renderers'}}, 0, 2;
-       $menu     .= $renderer_template[2];
+    my $x           = $_->{'x'};
+    (my $x_class    = lc $x) =~ s/[^\w-]/_/g;
+    my $display     = $_->{'display'};
+    my $name        = $_->{'name'};
+    my $i           = 0;
+    my $classes     = join ' ', grep { ++$i % 2 } @{$_->{'renderers'}};
+    my $popup_menu  = $renderer_template[0];
+       $popup_menu .= sprintf $renderer_template[1], $k, $v while ($k, $v) = splice @{$_->{'renderers'}}, 0, 2;
+       $popup_menu .= $renderer_template[2];
     
     $headers_html[0] .= sprintf(
       qq{<th class="$x_class"><p>$x</p>$select_all_col%s</th>},
       $x, $x_class, $x_class, $x_class, $i == $tutorial_col - 2 ? $tutorials{'row'} : ''
     );
     
-    $headers_html[2] .= sprintf(qq{
-      <th class="$x_class $name%s">
-        %s
-        $menu
-        <input type="hidden" class="track_name" name="$name" value="$display" />
-        <img class="menu_option" title="$renderers{$display}" alt="$renderers{$display}" src="${img_url}render/$display.gif" />
-      </th>
-    }, $display eq 'off' ? '' : ' on', $i++ ? '' : $tutorials{'track'});
+    # FIXME: don't double up class with id
+    $headers_html[2] .= sprintf qq{<th id="$name" class="$x_class $name $display track%s">%s</th>}, $display eq 'off' ? '' : ' on', $i++ ? '' : $tutorials{'track'};
+    
+    push @{$self->{'json'}{'trackIds'}}, $name;
+    push @{$self->{'json'}{'tracks'}}, {
+      id              => $name,
+      renderer        => $display,
+      rendererClasses => $classes,
+      colClass        => $x_class,
+      popup           => $popup_menu,
+    };
   }
   
   my $html = sprintf(qq{
@@ -401,7 +402,7 @@ sub form_matrix {
               <th class="first"></th>
               %s
             </tr>
-            <tr class="renderers">
+            <tr class="config_menu">
               <th class="first select_all">
                 <div class="menu_option"><h2>$track_style_header style:</h2><em>Enable/disable all</em></div>
                 %s

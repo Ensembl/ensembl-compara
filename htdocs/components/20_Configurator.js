@@ -2,6 +2,22 @@
 
 Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   constructor: function (id, params) {
+    if (params.trackIds) {
+      var i      = params.trackIds.length;
+      var tracks = {};
+      
+      while (i--) {
+        tracks[params.trackIds[i]] = params.tracks[i]; // convert tracks from an array into a hash
+      }
+      
+      this.tracks = tracks;
+      
+      delete params.tracks;
+      delete params.trackIds;
+    } else {
+      params.tracksByType = {}; // Make sure ViewConfigs don't break
+    }
+    
     this.base(id, params);
     
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
@@ -18,14 +34,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   init: function () {
     var panel = this;
     var track, type, group, i, j;
-    
-    function setFavourite(trackName, li) {
-      if (!panel.favourites[type]) {
-        panel.favourites[type] = {};
-      }
-      
-      panel.favourites[type][trackName] = [ i, li ];
-    }
     
     this.base();
     
@@ -57,7 +65,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.saveAsSubmit      = $('.fbutton', this.elLk.saveAs);
     this.elLk.saveAsBg          = this.el.siblings('#config_save_as_bg');
     this.elLk.modalClose        = this.el.siblings('.modal_title').children('.modal_close');
-    this.elLk.menus             = $();
+    this.elLk.popup             = $();
     this.elLk.help              = $();
     
     this.component          = $('input.component', this.elLk.form).val();
@@ -78,38 +86,29 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.elLk.configDivs.filter('.move_to_top').insertBefore(this.elLk.configDivs.first()).removeClass('move_to_top');
     }
     
-    for (type in this.params.tracks) {
-      group = this.params.tracks[type];
+    for (type in this.params.tracksByType) {
+      group = this.params.tracksByType[type];
       i     = group.length;
       
       while (i--) {
         for (j in group[i]) {
-          track = group[i][j];
+          track = this.tracks[group[i][j]];
           
-          if (track[1].match('config_menu')) {
-            $('li.fav', track[1]).each(function () {
-              setFavourite($(this).children('input.track_name')[0].name, this);
-            });
-          } else if (track[2]) {
-            setFavourite(track[0], track[1]);
+          if (track.fav) {
+            if (!this.favourites[type]) {
+              this.favourites[type] = {};
+            }
+            
+            this.favourites[type][group[i][j]] = [ i, track.html ];
           }
         }
       }
     }
     
     this.elLk.tracks.each(function () {
-      var input  = $('input.track_name', this)[0];
-      var type   = $('.popup_menu img:not(.close)', this)[0].className;
-      var subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
-      
-      $(this).data('links', [
-        'a.' + type, 
-        'a.' + (subset ? subset[1] : type + '-' + $(this).parents('.subset').attr('class').replace(/subset|active|first|\s/g, ''))
-      ].join(', '));
-      
-      panel.imageConfig[input.name] = { renderer: input.value, favourite: $(this).hasClass('fav'), el: $(this) };
-      
-      input = null;
+      var track = panel.tracks[this.id];
+      track.el = $(this).data('track', track).removeAttr('id');
+      panel.imageConfig[track.id] = { renderer: track.renderer, favourite: track.fav };
     });
     
     this.elLk.viewConfigInputs.each(function () {
@@ -121,27 +120,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     this.elLk.configDivs.not('.view_config')
-    .on('click', '.menu_option',   $.proxy(this.showConfigMenu, this)) // Popup menus - displaying
-    .on('click', '.popup_menu li', $.proxy(this.setTrackConfig, this)) // Popup menus - setting values
-    .on('click', 'ul.config_menu > li.track', function (e) {
-      if (e.target === this) {
-        $(this).children('img.menu_option').trigger('click');
-      }
-      
-      return e.target.nodeName === 'A';
-    }).on('click', '.config_header', function () { // Header on search results and active tracks sections will act like the links on the left
-      var link = $(this).parent().attr('class').replace(/\s*config\s*/, '');
-      $('a.' + link, panel.elLk.links).trigger('click');
+    .on('click', 'ul.config_menu > li.track, .select_all', $.proxy(this.showConfigMenu, this)) // Popup menus - displaying
+    .on('click', '.popup_menu li',                         $.proxy(this.setTrackConfig, this)) // Popup menus - setting values
+    .on('click', '.config_header', function () {                                               // Header on search results and active tracks sections will act like the links on the left
+      $('a.' + this.parentNode.className.replace(/\s*config\s*/, ''), panel.elLk.links).trigger('click');
       return false;
     }).on('click', '.favourite', function () {
-      Ensembl.EventManager.trigger(
-        'changeFavourite', 
-        $(this).parent().siblings('input.track_name')[0].name,
-        $(this).parents('li.track').hasClass('fav') ? 0 : 1,
-        $(this).parents('div.config')[0].className.replace(/config /, ''),
-        panel.id
-      );
-      
+      var track = $(this).parents('li.track').data('track');
+      Ensembl.EventManager.trigger('changeFavourite', track.id, track.fav ? 0 : 1, track.type, panel.id);
       return false;
     }).on('click', '.menu_help', function () {
       panel.toggleDescription(this);
@@ -274,132 +260,134 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   showConfigMenu: function (e) {
-    var el       = $(e.currentTarget);
-    var menu     = el.siblings('.popup_menu');
-    var current  = menu.find('span.current');
-    var selected = el.siblings('input.track_name').val();
+    if (e.target.nodeName === 'A') {
+      return true;
+    }
     
-    if (menu.children().length === 2 && !el.parent().hasClass('select_all')) {
-      menu.children(':not(.' + selected + ')').trigger('click');
+    var el        = $(e.currentTarget);
+    var selectAll = el.hasClass('select_all');
+    
+    if (selectAll && e.target === e.currentTarget) {
+      return false; // Stop clicks for select all firing unless you click on the actual text, not the div
+    }
+    
+    var data = el.data();
+    
+    if (!data.popup || data.popup.parentNode !== el[0]) {
+      var existing = el.children('.popup_menu');
+      
+      data.popup = existing.length ? existing : $(data.track.popup).prependTo(el);
+      
+      if (selectAll) {
+        existing.children('.current').removeClass('current');
+      }
+      
+      existing = null;
+    }
+    
+    if (data.popup.children().length === 2 && !selectAll) {
+      data.popup.children(':not(.' + data.track.renderer + ')').trigger('click');
     } else {
-      this.elLk.menus.filter(':visible').not(menu.toggle()).hide();        
-      this.elLk.menus = this.elLk.menus.add(menu).filter(function () { return this.style.display !== 'none'; });
+      this.elLk.popup.not(data.popup.show()).hide();
+      this.elLk.popup = data.popup;
     }
     
-    if (current.parent().attr('class') !== selected) {
-      current.removeClass('current').siblings('img.tick').detach().insertBefore(menu.find('.' + selected + ' span').addClass('current'));
+    if (!selectAll) {
+      var renderer = data.popup.children('.' + data.track.renderer);
+      
+      if (!renderer.hasClass('.current')) {
+        renderer.addClass('current').siblings('.current').removeClass('current');
+      }
+      
+      renderer = null;
     }
     
-    menu = current = el = null;
+    el = null;
     
     return false;
   },
   
-  setTrackConfig: function (e, options) {
-    if ($(e.target).filter('.close').parents('.popup_menu').hide().length) {
+  setTrackConfig: function (e, updateCount) {
+    var target = $(e.target);
+    
+    if (target.is('.header') || target.filter('.close').parents('.popup_menu').hide().length) {
+      target = null;
       return false;
     }
     
-    var li = $(e.currentTarget);
+    var renderer = e.target.className;
+    var popup    = target.parent().hide();
+    var track    = popup.parent();
+    var current  = renderer.match(/\s*current\s*/);
+    var subset   = e.currentTarget.className.match(/\s*subset_(\w+)\s*/); // use currentTarget since target can be either the li or the a inside it
     
-    if (li.hasClass('header')) {
-      li = null;
-      return false;
-    }
-    
-    var panel  = this;
-    var val    = e.currentTarget.className;
-    var menu   = li.parent();
-    var subset = val.match(/\s*subset_(\w+)\s*/) || false;
-    
-    if (subset) {
-      menu.hide();
-      this.elLk.links.children('a.' + subset[1]).trigger('click');
-      return false;
-    }
-    
-    var img     = li.children('img');
-    var track   = menu.parent();
-    var change  = 0;
-    var updated = {};
-        options = options || {};
-    
-    if (track.hasClass('select_all')) {
-      track = track.next().find('li.track:not(.hidden)');
-      
-      if (val === 'all_on') {
-        // Use the first renderer after "off" as default on setting.
-        track.find('li.off +').each(function () {
-          var text = $(this).text();
-          
-          $(this).parent().siblings('img.menu_option:not(.select_all)').attr({ 
-            src:   '/i/render/' + this.className + '.gif', 
-            alt:   text,
-            title: text
-          }).siblings('input.track_name').data('newVal', this.className).parent()[this.className === 'off' ? 'removeClass' : 'addClass']('on');
-        });
+    if (current || subset) {
+      if (subset) {
+        this.elLk.links.children('a.' + subset[1]).trigger('click'); // li has a link which opens a subset - helps users find matrix config for tracks
       }
+    } else {
+      this.changeTrackRenderer(track.hasClass('select_all') ? track.next().find('li.track:not(.hidden)') : track, renderer, updateCount);
     }
     
-    track.children('input.track_name').each(function () {
-      var input = $(this);
+    popup = track = target = null;
+    
+    return false;
+  },
+  
+  changeTrackRenderer: function (tracks, renderer, updateCount) {
+    var change = 0;
+    
+    if (renderer === 'all_on') {
+      tracks.each(function () {
+        var data = $(this).data();
+        data.track.newRenderer = (data.popup = data.popup || $(data.track.popup).prependTo(this)).children('li.off +')[0].className; // Use the first renderer after "off" as default on setting.
+      });
+    }
+    
+    tracks.each(function () {
+      var track = $(this).data('track');
+      var els   = track.el.add(track.linkedEls);
       
-      if (this.value === 'off' ^ val === 'off') {
-        change += (val === 'off' ? -1 : 1);
+      els.removeClass(track.renderer + ' on');
+      
+      if (track.renderer === 'off' ^ renderer === 'off') {
+        change += (renderer === 'off' ? -1 : 1);
       }
       
-      input.val(input.data('newVal') || val).removeData('newVal');
+      els.each(function () {
+        $(this).data('track').renderer = track.newRenderer || renderer;
+      }).addClass(track.renderer + (track.renderer === 'off' ? '' : ' on')); // track.renderer is changed during the each, above
       
-      updated[this.name] = [ this.value, li.text() ];
+      delete track.newRenderer;
       
-      input = null;
+      els = null;
     });
     
-    if (val !== 'all_on') {
-      track.children('img.menu_option').attr({ 
-        src:   '/i/render/' + val + '.gif', 
-        alt:   li.text(),
-        title: li.text()
-      }).end()[val === 'off' ? 'removeClass' : 'addClass']('on');
-    }
-    
-    if (options.updateCount !== false) {
-      this.elLk.links.children(track.data('links')).siblings('.count').children('.on').html(function (i, html) {
+    if (updateCount !== false) {
+      this.elLk.links.children(tracks.data('track').links).siblings('.count').children('.on').html(function (i, html) {
         return parseInt(html, 10) + change;
       });
     }
     
-    menu.hide();
-    
-    $.each(updated, function (trackName, attrs) {
-      if (panel.imageConfig[trackName] && panel.imageConfig[trackName].el) {
-        panel.imageConfig[trackName].el.add(panel.imageConfig[trackName].linked).not(li).children('img.menu_option').attr({ 
-          src:   '/i/render/' + attrs[0] + '.gif', 
-          alt:   attrs[1],
-          title: attrs[1]
-        }).siblings('input.track_name').val(attrs[0]).parent()[attrs[0] === 'off' ? 'removeClass' : 'addClass']('on');
-      }
-    });
-    
-    menu = track = img = li = null;
-    
-    return false;
+    tracks = null;
   },
   
   addTracks: function (type) {
-    if (this.populated[type] || !this.params.tracks[type]) {
+    if (this.populated[type] || !this.params.tracksByType[type]) {
       return;
     }
     
-    var tracks      = this.params.tracks[type];
-    var configs     = this.elLk.configDivs.filter('.' + type).find('ul.config_menu').each(function (i) { $.data(this, 'index', i); });
-    var i           = tracks.length;
-    var configMenus = $();
-    var data        = { imageConfigs: [], html: [], submenu: [] };
-    var j, track, li, ul, lis, link, subset;
+    var tracksByType = this.params.tracksByType[type];
+    var tracks       = this.tracks;
+    var configs      = this.elLk.configDivs.filter('.' + type).find('ul.config_menu').each(function (i) { $.data(this, 'index', i); });
+    var hasPopup     = this.elLk.popup.length ? this.elLk.popup.parent().data('track') : false;
+    var configMenus  = $();
+    var data         = { imageConfigs: [], html: [], submenu: [] };
+    var i            = tracksByType.length;
+    var j, track, li, ul, lis, link;
     
     while (i--) {
-      j  = tracks[i].length;
+      j  = tracksByType[i].length;
       ul = configs.eq(i);
       
       data.html[i]         = [];
@@ -407,21 +395,21 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       data.submenu[i]      = false;
       
       while (j--) {
-        track = tracks[i][j];
+        track = tracks[tracksByType[i][j]];
         
-        if (this.imageConfig[track[0]]) {
-          ul.children('.' + track[0]).remove();
-          data.html[i].unshift(this.imageConfig[track[0]].el[0].outerHTML || [ '<li class="', this.imageConfig[track[0]].el[0].className , '">', this.imageConfig[track[0]].el[0].innerHTML, '</li>' ].join(''));
+        if (tracks[track.id].el) {
+          tracks[track.id].el.remove();
+          data.html[i].unshift([ '<li class="', tracks[track.id].el[0].className , '" id="', track.id, '">', tracks[track.id].el[0].innerHTML, '</li>' ].join(''));
         } else {
-          data.html[i].unshift(track[1]);
+          data.html[i].unshift(track.html);
         }
         
-        data.imageConfigs[i][j] = track[0];
+        data.imageConfigs[i][j] = track.id;
       }
       
       if (ul[0].innerHTML) {
         ul.children().each(function () {
-          data.html[i].push('<li class="', this.className, '">');
+          data.html[i].push('<li class="', this.className, '" id="', this.id, '">');
           
           $.each(this.childNodes, function () {
             var index = $.data(this, 'index');
@@ -449,7 +437,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       data.html[i] = data.html[i].join('');
     }
     
-    i = tracks.length;
+    i = tracksByType.length;
     
     while (i--) {
       if (data.html[i]) {
@@ -458,7 +446,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     // must loop forwards here, since parent uls will write the content of child uls 
-    for (i = 0; i < tracks.length; i++) {
+    for (i = 0; i < tracksByType.length; i++) {
       ul   = configs.eq(i);
       j    = data.imageConfigs[i].length;
       link = ul.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '');
@@ -468,27 +456,24 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         lis.children('ul.config_menu').each(function (k) { configs[i + k + 1] = this; }); // alter the configs entry for all child uls after adding the content
       }
       
-      lis.filter('.track').each(function () {
-        subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
-        
-        $.data(this, 'links', [
-          'a.' + type,
-          'a.' + (subset ? subset[1] : type + '-' + link) 
-        ].join(', '));
-      });
+      lis.filter('.track').each(function () { $.data(this, 'track', tracks[this.id]); }).removeAttr('id');
       
       while (j--) {
         li    = lis.eq(j);
         track = data.imageConfigs[i][j];
         
-        if (this.imageConfig[track]) {
-          this.imageConfig[track].el = li;
-        } else {
-          this.imageConfig[track] = { renderer: 'off', favourite: !!this.favourites[type] && this.favourites[type][track], el: li };
+        tracks[track].el = li;
+        
+        if (!this.imageConfig[track]) {
+          this.imageConfig[track] = { renderer: 'off', favourite: !!this.favourites[type] && this.favourites[type][track] };
         }
         
         this.externalFavourite(track, li);
       }
+    }
+    
+    if (hasPopup) {
+      this.elLk.popup = tracks[hasPopup.id].el.children('.popup_menu');
     }
     
     this.updateElLk(type, configMenus);
@@ -512,7 +497,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   show: function (active) {
-    this.elLk.menus.hide();
+    this.elLk.popup.hide();
     
     if (active) {
       this.elLk.links.removeClass('active').find('.' + active).parent().addClass('active');
@@ -528,34 +513,29 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var url, configDiv, subset;
     
     function favouriteTracks() {
-      var trackName, li, favs, type;
+      var trackId, li, type;
       var external = $.extend({}, panel.externalFavourites);
       var added    = [];
       
-      for (trackName in external) {
-        if (external[trackName]) {
-          panel.addTracks(external[trackName][1]);
+      for (trackId in external) {
+        if (external[trackId]) {
+          panel.addTracks(external[trackId][1]);
         } else {
-          delete panel.favourites[external[trackName][1]][trackName];
+          delete panel.favourites[external[trackId][1]][trackId];
         }
       }
       
       for (type in panel.favourites) {
-        for (trackName in panel.favourites[type]) {
-         li = panel.elLk.tracks.filter('.' + trackName);
-          
-          if (!li.length) {
-            li = $(panel.favourites[type][trackName][1]).appendTo(panel.elLk.configDivs.filter('.' + type).find('ul.config_menu').eq(panel.favourites[type][trackName][0]));
-            li.data('links', [
-              'a.' + type,
-              'a.' + (subset ? subset[1] : type + '-' + li.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')) 
-            ].join(', '));
+        for (trackId in panel.favourites[type]) {
+          if (!panel.imageConfig[trackId]) {
+            li = $(panel.favourites[type][trackId][1]).appendTo(panel.elLk.configDivs.filter('.' + type).find('ul.config_menu').eq(panel.favourites[type][trackId][0]));
             
-            panel.imageConfig[trackName] = { renderer: 'off', favourite: 1, el: li };
+            panel.tracks[trackId].el = li.data('track', panel.tracks[trackId]);
+            panel.imageConfig[trackId] = { renderer: 'off', favourite: 1 };
             added.push(li[0]);
+            
+            li = null;
           }
-          
-          li = null;
         }
       }
       
@@ -563,9 +543,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         panel.updateElLk(added);
       }
       
-      favs = panel.elLk.configs.hide().filter('.track.fav').show().each(function () { $(this).show().parents('li, div.subset, div.config').show(); }).length;
-      
-      panel.elLk.favouritesMsg[favs ? 'hide' : 'show']();
+      panel.elLk.favouritesMsg[panel.elLk.configs.hide().filter('.track.fav').show().parents('li, div.subset, div.config').show().length ? 'hide' : 'show']();
     }
     
     function trackOrder() {
@@ -573,23 +551,24 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var lis    = ul.children();
       var strand = [ 'f', 'r' ];
       var tracks = [];
-      var i, trackName, order, li;
+      var i, track, trackId, fav, order, li;
       
       panel.elLk.tracks.filter('.on').each(function () {
         var el    = $(this);
-        trackName = el.children('input.track_name')[0].name;
-        order     = panel.params.order[trackName];
+            track = el.data('track');
+            fav   = track.fav ? ' fav' : '';
+            order = panel.params.order[track.id];
         
-        if (typeof order !== 'undefined' && !lis.filter('.' + trackName).length) {
-          tracks.push([ order, el, trackName ]);
+        if (typeof order !== 'undefined' && !lis.filter('.' + track.id).length) {
+          tracks.push([ order, el, track.id ]);
           return;
         }
         
         for (i in strand) {
-          order = panel.params.order[trackName + '.' + strand[i]];
+          order = panel.params.order[track.id + '.' + strand[i]];
           
-          if (typeof order !== 'undefined' && !lis.filter('.' + trackName + '.' + strand[i]).length) {
-            tracks.push([ order, el, trackName + ' ' + strand[i] + (el.hasClass('fav') ? ' fav' : ''), '<div class="strand" title="' + (strand[i] === 'f' ? 'Forward' : 'Reverse') + ' strand"></div>' ]);
+          if (typeof order !== 'undefined' && !lis.filter('.' + track.id + '.' + strand[i]).length) {
+            tracks.push([ order, el, track.id + ' ' + strand[i] + fav, '<div class="strand" title="' + (strand[i] === 'f' ? 'Forward' : 'Reverse') + ' strand"></div>' ]);
           }
         }
         
@@ -600,8 +579,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       if (lis.length) {
         $.each(tracks, function () {
-          i  = lis.length;
-          li = this[1].clone(true).data('order', this[0]).removeClass().addClass(this[2]).children('.controls').prepend(this[3]).end();
+          trackId = this[2].split(' ')[0];
+          i       = lis.length;
+          li      = this[1].clone(true).data({
+            order:     this[0],
+            trackName: this[2],
+            trackId:   trackId
+          }).removeAttr('id').removeClass('track').addClass(this[2]).children('.controls').prepend(this[3]).end();
           
           while (i--) {
             if ($(lis[i]).data('order') < this[0]) {
@@ -614,14 +598,20 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             li.insertBefore(lis[0]);
           }
           
-          panel.imageConfig[this[2].split(' ')[0]].linked = (panel.imageConfig[this[2].split(' ')[0]].linked || $()).add(li);
+          panel.tracks[trackId].linkedEls = (panel.tracks[trackId].linkedEls || $()).add(li);
           
           li = null;
         });
       } else {
         $.each(tracks, function () {
-          panel.imageConfig[this[2].split(' ')[0]].linked = (panel.imageConfig[this[2].split(' ')[0]].linked || $()).add(
-            this[1].clone(true).data('order', this[0]).removeClass().addClass(this[2]).children('.controls').prepend(this[3]).end().appendTo(ul).children('.popup_menu').hide().end()
+          trackId = this[2].split(' ')[0];
+          
+          panel.tracks[trackId].linkedEls = (panel.tracks[trackId].linkedEls || $()).add(
+            this[1].clone(true).data({
+              order:     this[0],
+              trackName: this[2],
+              trackId:   trackId
+            }).removeAttr('id').addClass(this[2]).children('.controls').prepend(this[3]).end().appendTo(ul).children('.popup_menu').hide().end()
           );
         });
       }
@@ -640,36 +630,27 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       $.ajax({
         url: url,
-        data: { time: new Date().getTime() }, // Cache buster for IE
+        cache: false, // Cache buster for IE
         dataType: 'json',
         success: function (json) {
           var width = configDiv.width(); // Calculate width of div before adding content - much faster to do it now
           
-          configDiv.detach().html(json.content).insertAfter(panel.elLk.form); // fix for Chrome (23) being slow when inserting a large content into an already large form.
+          configDiv.detach().html(json.content).insertAfter(panel.elLk.form); // fix for Chrome being slow when inserting a large content into an already large form.
           
           var panelDiv = $('.js_panel', configDiv);
           
           if (panelDiv.length) {
             Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, $.extend(json.params, {
-              links:       panel.elLk.links.filter('.active').parents('li.parent').andSelf(),
-              imageConfig: panel.imageConfig,
-              width:       width
+              links:        panel.elLk.links.filter('.active').parents('li.parent').andSelf(),
+              parentTracks: panel.tracks,
+              width:        width
             }));
             
             panel.subPanels.push(panelDiv[0].id);
             
-            $('input.track_name', panelDiv).each(function () {
-              var track  = panel.elLk.tracks.filter('.' + this.name);
-              var val    = this.value;
-              var newVal = track.children('input.track_name').val();
-              
-              if (val !== newVal) {
-                $(this).siblings('.popup_menu').children('.' + newVal).trigger('click', { updateCount: false });
-              }
-              
-              panel.imageConfig[this.name].linked = (panel.imageConfig[this.name].linked || $()).add(this.parentNode);
-              
-              track = null;
+            $('.track', panelDiv).each(function () {
+              var track = $(this).data('track');
+              panel.tracks[track.id].linkedEls = (panel.tracks[track.id].linkedEls || $()).add(this);
             });
           } else {
             panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
@@ -802,25 +783,21 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.elLk.tracks.each(function () {
-      var fav       = $(this).hasClass('fav');
-      var input     = $('input.track_name', this)[0];
-      var trackName = input.name;
-      var favourite = !panel.imageConfig[trackName].favourite &&  fav ? 1 : // Making a track a favourite
-                       panel.imageConfig[trackName].favourite && !fav ? 0 : // Making a track not a favourite
+      var track   = $(this).data('track');
+      var favourite = !panel.imageConfig[track.id].favourite &&  track.fav ? 1 : // Making a track a favourite
+                       panel.imageConfig[track.id].favourite && !track.fav ? 0 : // Making a track not a favourite
                        false;
       
-      if (panel.imageConfig[trackName].renderer !== input.value) {
-        imageConfig[trackName] = { renderer: input.value };
+      if (panel.imageConfig[track.id].renderer !== track.renderer) {
+        imageConfig[track.id] = { renderer: track.renderer };
         diff = true;
       }
       
       if (favourite !== false) {
-        imageConfig[trackName] = imageConfig[trackName] || {};
-        imageConfig[trackName].favourite = favourite;
+        imageConfig[track.id] = imageConfig[track.id] || {};
+        imageConfig[track.id].favourite = favourite;
         diff = true;
       }
-      
-      input = null;
     });
     
     this.elLk.viewConfigInputs.each(function () {
@@ -879,11 +856,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         if (json.updated) {
           Ensembl.EventManager.trigger('queuePageReload', panel.component, !delayReload);
-          
-          if (json.imageConfig) {
-            $.each(json.trackTypes, function (i, type) { panel.addTracks(type); });
-            panel.externalChange(json.imageConfig);
-          }
         } else if (json.redirect) {
           Ensembl.redirect(json.redirect);
         }
@@ -931,10 +903,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.trackOrderList.sortable({
       axis: 'y',
-      handle: 'span.menu_option',
       containment: 'parent',
       update: function (e, ui) {
-        var track = ui.item[0].className.replace(' ', '.');
+        var track = ui.item.data('trackName').replace(' ', '.');
         var p     = ui.item.prev().data('order') || 0;
         var n     = ui.item.next().data('order') || 0;
         var o     = p || n;
@@ -968,7 +939,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var els         = { show: [], hide : [], showDesc: [] };
     var searchCache = $.extend([], this.searchCache);
     var added       = [];
-    var div, divs, show, menu, ul, tracks, track, i, j, match, type, subset;
+    var div, divs, show, menu, ul, tracks, track, i, j, match, type;
     
     function search(n, name, desc, li) {
       match = name.indexOf(panel.query) !== -1;
@@ -976,16 +947,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       if (match || desc.indexOf(panel.query) !== -1) {
         if (!panel.imageConfig[n]) {
           li                   = $(li).appendTo(menu);
-          subset               = li[0].className.match(/\s*subset_(\w+)\s*/) || false;
-          panel.imageConfig[n] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][n], el: li };
+          panel.imageConfig[n] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][n] };
           
           added.push(li[0]);
           panel.externalFavourite(n, li);
-          
-          li.data('links', [
-            'a.' + type,
-            'a.' + (subset ? subset[1] : type + '-' + menu.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')) 
-          ].join(', '));
+          panel.tracks[n].el = li.data('track', panel.tracks[n]);
         }
         
         if (!match) {
@@ -1034,19 +1000,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     } else {
       els.hide.push(this.elLk.configDivs.toArray(), this.elLk.configDivs.children('.subset').toArray());
       
-      for (type in this.params.tracks) {
+      for (type in this.params.tracksByType) {
         show   = false;
         div    = this.elLk.configDivs.filter('.' + type);
         ul     = div.find('ul.config_menu');
-        tracks = this.params.tracks[type];
+        tracks = this.params.tracksByType[type];
         i      = tracks.length;
         
         while (i--) {
           menu = ul.eq(i);
           
           for (j in tracks[i]) {
-            track = tracks[i][j];
-            search(track[0], track[4], track[5], this.imageConfig[track[0]] ? this.imageConfig[track[0]].el : track[1]);
+            track = this.tracks[tracks[i][j]];
+            search(track.id, track.name, track.desc, track.el || track.html);
           }
         }
         
@@ -1104,17 +1070,20 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.help = this.elLk.help.add(button).filter('.open');
   }, 
   
-  changeFavourite: function (trackName, selected, type, id) {
-    var li = this.elLk.tracks.filter('.' + trackName).toggleClass('fav');
-    var div;
+  changeFavourite: function (trackId, selected, type, id) {
+    var li, div;
+    
+    if (this.tracks[trackId].el) {
+      li = this.tracks[trackId].el.toggleClass('fav');
+      this.tracks[trackId].fav = !this.tracks[trackId].fav;
+    }
     
     if (this.sortable) {
-      this.elLk.trackOrderList.children('.' + trackName).toggleClass('fav');
+      this.elLk.trackOrderList.children('.' + trackId).toggleClass('fav');
     }
     
     if (this.elLk.links.filter('.active').children('a')[0].className === 'favourite_tracks') {
-      li.hide(); // Always hide, since the only way a click can come here is from a selected track
-      div = li.parents('div.config');
+      div = li.hide().parents('div.config'); // Always hide, since the only way a click can come here is from a selected track
       
       if (!div.find('li:visible').length) {
         div.hide();
@@ -1127,26 +1096,27 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     if (this.id !== id) {
       if (type) {
-        this.externalFavourites[trackName] = [ selected, type ];
+        this.externalFavourites[trackId] = [ selected, type ];
       }
       
-      if (this.imageConfig[trackName]) {
-        this.imageConfig[trackName].favourite = selected;
+      if (this.imageConfig[trackId]) {
+        this.imageConfig[trackId].favourite = selected;
       }
     }
     
     li = div = null;
   },
   
-  externalFavourite: function (trackName, el) {
-    if (typeof this.externalFavourites[trackName] !== 'undefined') {
-      this.imageConfig[trackName].favourite = this.externalFavourites[trackName][0];
+  externalFavourite: function (trackId, el) {
+    if (typeof this.externalFavourites[trackId] !== 'undefined') {
+      this.imageConfig[trackId].favourite = this.externalFavourites[trackId][0];
       
-      if (el.hasClass('fav') !== this.imageConfig[trackName].favourite) {
-        el[this.imageConfig[trackName].favourite ? 'addClass' : 'removeClass']('fav');
+      if (this.tracks[trackId].fav !== this.imageConfig[trackId].favourite) {
+        el[this.imageConfig[trackId].favourite ? 'addClass' : 'removeClass']('fav');
+        this.tracks[trackId].fav = this.imageConfig[trackId].favourite;
       }
       
-      delete this.externalFavourites[trackName];
+      delete this.externalFavourites[trackId];
     }
   },
   
@@ -1160,9 +1130,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       tracks = args;
     }
     
-    for (var trackName in tracks) {
-      this.elLk.tracks.filter('.' + trackName).find('.popup_menu .' + tracks[trackName]).trigger('click');
-      this.imageConfig[trackName].renderer = tracks[trackName];
+    for (var trackId in tracks) {
+      if (this.tracks[trackId]) { // FIXME: subtracks aren't included in main panel
+        this.changeTrackRenderer(this.tracks[trackId].el, tracks[trackId]);
+        this.imageConfig[trackId].renderer = tracks[trackId];
+      }
     }
   },
   
@@ -1188,13 +1160,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   // Called when track order is changed on the image
-  externalOrder: function (trackName, order) {
+  externalOrder: function (trackId, order) {
     var lis = this.elLk.trackOrderList.children();
     var i   = lis.length;
     var li;
     
     if (i) {
-      li = lis.filter('.' + trackName).detach();
+      li = lis.filter('.' + trackId).detach();
       
       while (i--) {
         if ($(lis[i]).data('order') < order) {
@@ -1207,14 +1179,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         li.insertBefore(lis[0]);
       }
     } else {
-      this.params.order[trackName] = order;
+      this.params.order[trackId] = order;
     }
     
     lis = li = null;
   },
   
   destructor: function () {
-    this.imageConfig = this.searchCache = null;
+    this.imageConfig = this.searchCache = this.tracks = null;
     this.base.apply(this, arguments);
   }
 });
