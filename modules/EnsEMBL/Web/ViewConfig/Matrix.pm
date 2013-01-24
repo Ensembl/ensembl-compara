@@ -278,7 +278,7 @@ sub form_matrix {
               %s
               <ul class="config_menu">%s</ul>
             </div>',
-            $total > 1 ? qq{<div class="select_all">$select_all<strong class="menu_option">Enable/disable all $cell->{'title'}</strong></div>} : '',
+            $total > 1 ? qq{<div class="select_all config_menu">$select_all<strong class="menu_option">Enable/disable all $cell->{'title'}</strong></div>} : '',
             $subtracks
           );
           
