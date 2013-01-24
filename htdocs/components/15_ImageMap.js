@@ -40,17 +40,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
     
-    this.elLk.drag        = $('.drag_select',   this.el);
-    this.elLk.map         = $('map',            this.el);
-    this.elLk.areas       = $('area',           this.elLk.map);
-    this.elLk.exportMenu  = $('.iexport_menu',  this.el).appendTo('body').css('left', this.el.offset().left);
-    this.elLk.resizeMenu  = $('.image_resize_menu',this.el).appendTo('body').css('left', this.el.offset().left);
-    this.elLk.img         = $('img.imagemap',   this.el);
-    this.elLk.hoverLabels = $('.hover_label',   this.el);
-    this.elLk.boundaries  = $('.boundaries',    this.el);
-    this.elLk.toolbars    = $('.image_toolbar', this.el)    
-    this.elLk.helpTips    = $('a',              this.elLk.toolbars).helptip({ 'static': true });
-    this.elLk.popupLinks  = $('a.popup',        this.elLk.toolbars);
+    this.elLk.drag        = $('.drag_select',       this.el);
+    this.elLk.map         = $('map',                this.el);
+    this.elLk.areas       = $('area',               this.elLk.map);
+    this.elLk.exportMenu  = $('.iexport_menu',      this.el).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.resizeMenu  = $('.image_resize_menu', this.el).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.img         = $('img.imagemap',       this.el);
+    this.elLk.hoverLabels = $('.hover_label',       this.el);
+    this.elLk.boundaries  = $('.boundaries',        this.el);
+    this.elLk.toolbars    = $('.image_toolbar',     this.el)    
+    this.elLk.popupLinks  = $('a.popup',            this.elLk.toolbars);
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
@@ -77,12 +76,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.dropFileUpload();
     }
     
-    if (this.elLk.areas.filter('.nav').length) {
-      this.elLk.helpTips.push(this.elLk.img.helptip('', { delay: false })[0]);
-    }
-    
+    $('a',         this.elLk.toolbars).helptip({ track: false });
     $('a.iexport', this.elLk.toolbars).data('popup', this.elLk.exportMenu);
-    $('a.resize', this.elLk.toolbars).data('popup', this.elLk.resizeMenu);
+    $('a.resize',  this.elLk.toolbars).data('popup', this.elLk.resizeMenu);
     
     this.elLk.popupLinks.on('click', function () {
       var popup = $(this).data('popup');
@@ -228,14 +224,22 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var hover = false;
         
         if (area && area.a && $(area.a).hasClass('nav')) { // Add helptips on navigation controls in multi species view
-          if (tip != area.a.alt) {
+          if (tip !== area.a.alt) {
             tip = area.a.alt;
-            panel.elLk.img.helptip(tip, { show: true });
+            
+            if (!panel.elLk.navHelptip) {
+              panel.elLk.navHelptip = $('<div class="ui-tooltip helptip-bottom"><div class="ui-tooltip-content"></div></div>');
+            }
+            
+            panel.elLk.navHelptip.children().html(tip).end().appendTo('body').position({
+              of: { pageX: panel.imgOffset.left + area.l + 10, pageY: panel.imgOffset.top + area.t - 48, preventDefault: true }, // fake an event
+              my: 'center top'
+            });
           }
         } else {
           if (tip) {
             tip = false;
-            panel.elLk.img.helptip('');
+            panel.elLk.navHelptip.detach().css({ top: 0, left: 0 });
           }
           
           if (area && area.a && $(area.a).hasClass('label')) {
@@ -273,6 +277,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           
           if (!active.has(e.relatedTarget).length) {
             active.removeClass('active').hide();
+          }
+          
+          if (panel.elLk.navHelptip) {
+            panel.elLk.navHelptip.detach();
           }
           
           active = null;

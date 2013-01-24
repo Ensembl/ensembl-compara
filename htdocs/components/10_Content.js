@@ -77,8 +77,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       Ensembl.EventManager.trigger('destroyPanel', this.id); // destroy all sub panels
     });
     
-    this.elLk.helpTips.helptip(false); // Destroy helptips based on this panel
-    
     params = params || this.params;
     url    = url    || Ensembl.replaceTimestamp(params.updateURL);
     el     = el     || this.el.empty();
@@ -263,7 +261,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
 
   helpTips: function () {
-    this.elLk.helpTips.not('._ht_static').helptip().end().filter('._ht_static').helptip({'static': true});
+    this.elLk.helpTips.helptip();
   },
   
   wrapping: function () {
