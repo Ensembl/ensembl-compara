@@ -11,9 +11,9 @@ sub process {
   my $self = shift;
   my $object = $self->object;
 
-  my $mailer = EnsEMBL::Web::Mailer::User->new{
+  my $mailer = EnsEMBL::Web::Mailer::User->new({
     to => $object->param('email')
-  };
+  });
   
   $mailer->send_activation_email($object);
   
