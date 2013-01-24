@@ -6,14 +6,13 @@ taillog - script to tail -f the current log
 
 =head1 SYNOPSIS
 
-    ctrl_scripts/taillog [--access] [--host=hostname]
+    ctrl_scripts/taillog [--access] 
 
 =head1 DESCRIPTION
 
 This script starts a "tail -f" on the current apache log.
 By default, it tails the latest error log for the current host, but
-specifying --access tails the access log instead, and --host=hostname 
-changes the host
+specifying --access tails the access log instead
 
 =head1 LICENCE
 
@@ -33,7 +32,6 @@ no warnings 'uninitialized';
 use Getopt::Long;
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
-use Sys::Hostname::Long;
 
 my $serverroot;
 
