@@ -30,7 +30,7 @@ sub get_json {
   return {
     wrapper   => qq{<div class="modal_wrapper config_wrapper"></div>},
     content   => $self->content,
-    params    => { tracks => $self->{'tracks'}, order => $self->{'track_order'}, %{$self->{'json_params'} || {}} },
+    params    => $self->{'json'},
     panelType => $self->{'panel_type'}
   };
 }
@@ -108,7 +108,7 @@ sub init_config {
   $self->tree    = $view_config->tree;
   $self->caption = 'Configure view';
   
-  $self->{$_} = $view_config->{$_} || {} for qw(tracks track_order json_params);
+  $self->{'json'} = $view_config->{'json'} || {};
   
   $self->add_image_config_notes($controller) if $image_config;
 }
