@@ -350,12 +350,12 @@ foreach my $spp (@valid_spp) {
     unless ($pre) {
         ( $gene_stats{'transcript'} )= &query( $db,
           "select count(distinct t.transcript_id)
-          from transcript t
+           from transcript t
            join seq_region sr using (seq_region_id)
            join coord_system cs using (coord_system_id)
            where cs.species_id=$spp_id 
            and t.seq_region_id not in (
-          select sa.seq_region_id
+             select sa.seq_region_id
              from seq_region_attrib sa
              join attrib_type at using (attrib_type_id) 
              where at.code = 'non_ref'
@@ -920,14 +920,14 @@ sub regions_table {
   my $table_id=$csname . "_table";
   
   my $table = new EnsEMBL::Web::Document::Table([
-    { key=>'sequence',  title=>'Sequence', align => 'left',  width=>'45%' },
-    { key=>'length',    sort=>'numeric',    title=>'Length (bp)',   align => 'right', width=>'10%' }, 
+    { key=>'sequence',  title=>'Sequence', align => 'left',  width=>'auto' },
+    { key=>'length',    sort=>'numeric',    title=>'Length (bp)',   align => 'right', width=>'auto' }, 
     ],
     $table_rows,
     {
       code=>1,
       data_table => 1,
-      width => '400px',
+     #width => 'auto',
       sorting => [ 'sequence asc' ],
       exportable => 0,
       toggleable => 1,
