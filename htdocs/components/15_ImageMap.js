@@ -297,7 +297,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     $('a.config', this.elLk.hoverLabels).on('click', function () {
       var config = this.rel;
-      var update = this.href.split(';').reverse()[0].split('='); // update = [ trackName, renderer ]
+      var update = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
       var fav    = '';
       
       if ($(this).hasClass('favourite')) {
@@ -469,8 +469,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     return order;
   },
   
-  changeFavourite: function (trackName) {
-    this.elLk.hoverLabels.filter(function () { return this.className.match(trackName); }).children('a.favourite').toggleClass('selected');
+  changeFavourite: function (trackId) {
+    this.elLk.hoverLabels.filter(function () { return this.className.match(trackId); }).children('a.favourite').toggleClass('selected');
   },
   
   dragStart: function (e) {
