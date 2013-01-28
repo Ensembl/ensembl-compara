@@ -5,6 +5,8 @@ package EnsEMBL::Web::Document::Table;
 use strict;
 
 use JSON qw(from_json to_json);
+use Sanger::Graphics::ColourMap;
+use Scalar::Util qw(looks_like_number);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -353,6 +355,14 @@ sub process {
     push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq( $_="$col->{$_}") : () } qw(id class title style colspan rowspan)), $label;
   }
   
+  ## Heatmap styling
+  my $heatmap = $self->{'options'}{'heatmap'};
+  my ($colourmap, @gradient);
+  if ($heatmap) {
+    $colourmap = Sanger::Graphics::ColourMap->new;
+    @gradient = $colourmap->build_linear_gradient(@{$heatmap->{'settings'}});
+  } 
+      
   $head[1] = ' class="ss_header"';
   
   foreach my $row (@{$self->{'rows'}}) {
@@ -372,8 +382,21 @@ sub process {
       $style{'text-align'} ||= $columns->[$i]{'align'} if $columns->[$i]{'align'};
       $style{'width'}      ||= $columns->[$i]{'width'} if $columns->[$i]{'width'};
       
+      if ($heatmap && looks_like_number($cell->{'value'})) {
+        my $i = abs($cell->{'value'} * $heatmap->{'settings'}[0]);
+        $style{'background-color'} = '#'.$gradient[$i];
+        if ($heatmap->{'mode'} eq 'text') {
+          my ($r, $g, $b) = $colourmap->rgb_by_hex($gradient[$i]);
+          my $brightness  = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+          $style{'color'} = $brightness > 120 ? '#000000' : '#ffffff';
+        }
+        else {
+          $style{'color'} = 'transparent';
+        }
+      } 
+
       $cell->{'style'} = join ';', map { join ':', $_, $style{$_} } keys %style;
-      
+
       $cell = sprintf '<td%s>%s</td>', join('', map { $cell->{$_} ? qq( $_="$cell->{$_}") : () } qw(id class title style colspan rowspan)), $cell->{'value'};
       
       $i++;
