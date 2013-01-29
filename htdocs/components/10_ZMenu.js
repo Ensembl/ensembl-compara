@@ -67,7 +67,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }).on('click', 'a.location_change', function () {
       var locationMatch = this.href.match(Ensembl.locationMatch);
       
-      if (locationMatch && locationMatch !== Ensembl.coreParams.r) {
+      if (locationMatch && locationMatch[1] !== Ensembl.coreParams.r) {
         Ensembl.updateLocation(locationMatch[1]);
         panel.hide();
         return false;
