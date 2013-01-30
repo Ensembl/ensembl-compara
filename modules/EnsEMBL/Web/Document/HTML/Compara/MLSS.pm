@@ -164,75 +164,139 @@ sub-chain is chosen in each region on the reference species.</p>',
     $html .= '</table>';
   }
 
-  ## PIE CHARTS
+  my $blocks = $self->thousandify($alignment_results->{'num_blocks'});
   $html .= qq{
     <h2>Results</h2>
-    <p>Number of alignment blocks: $alignment_results->{'num_blocks'}</p>
+    <p>Number of alignment blocks: $blocks</p>
+    };
+
+  ## PIE CHARTS
+  $html .= qq{
     <div class="js_panel">
-      <input class="panel_type" type="hidden" value="Piechart" />
-      <input class="graph_config" type="hidden" name="colors" value="['#1751A7','#FFFFFF']" />
-      <input class="graph_config" type="hidden" name="stroke" value="'#999'" />
-      <input class="graph_dimensions" type="hidden" value="[80,80,75]" />
   };
 
-  ## Create HTML blocks for piechart code
+  my $graph_defaults = qq{
+      <input class="panel_type" type="hidden" value="Piechart" />
+      <input class="graph_config" type="hidden" name="stroke" value="'#999'" />
+      <input class="graph_config" type="hidden" name="legendpos" value="'east'" />
+      <input class="graph_dimensions" type="hidden" value="[80,80,75]" />
+      <input class="graph_config" type="hidden" name="colors" value="['#dddddd','#6699ff','#ffcc00','#990099']" />
+  };
+  my $key = {};
   my $i = 0;
-  
+
+  ## Genome coverage charts
+  $html .= qq{
+    <div>
+      $graph_defaults
+  };
+
   foreach my $sp ($ref_sp, $nonref_sp) {
     my $results = $i ? $non_ref_results : $ref_results; 
+    my $sp_type = $i ? 'non_ref' : 'ref';
 
-    foreach my $type ('alignment', 'alignment_exon') {
-      my $coverage = $results->{"${type}_coverage"};
-      my $total    = $type eq 'alignment' ? $results->{'length'} : $results->{'coding_exon_length'};
+    my $total     = $results->{'length'};
+    if ($total) {
+      my $coverage  = $results->{"alignment_coverage"};
+      my $inverse   = $total - $coverage;
+
+      $key->{$sp_type}{'genome'} = sprintf('<p>
+                                              <b>Uncovered</b>: %s out of %s<br />
+                                              <b>Covered</b>: %s out of %s
+                                            </p>',
+                                $self->thousandify($inverse), $self->thousandify($total),
+                                $self->thousandify($coverage), $self->thousandify($total),
+                                );
+
       my $percent  = round($coverage/$total * 100);
-      my $inverse  = 100 - $percent;
-
-      $html .= qq{<input class="graph_data" type="hidden" value="[$percent,$inverse]" />};
-      $i++;
+      my $invperc  = 100 - $percent;
+      $html .= qq{
+          <input class="graph_data" type="hidden" value="[[$invperc,'Uncovered'],[$percent, 'Covered']]" />
+      };
     }
+    $i++;
   }
+  $html .= '</div>';
 
-  $html .= '
-    <table style="width:100%">
-    <tr>
-      <th></th>
-      <th style="text-align:center">Genome coverage (bp)</th>
-      <th style="text-align:center">Coding exon coverage (bp)</th>
-    </tr>
-  ';
+  ##Exon coverage charts
+  $html .= qq{
+    <div>
+      $graph_defaults
+  };
 
-  $i = 0;
-  
   foreach my $sp ($ref_sp, $nonref_sp) {
-    $html .= qq{
-      <tr>
-        <th style="vertical-align:middle">$sp</th>
-    };
-    
     my $results = $i ? $non_ref_results : $ref_results; 
+    my $sp_type = $i ? 'non_ref' : 'ref';
 
-    foreach my $type ('alignment', 'alignment_exon') {
-      $html .= '<td style="text-align:center;padding:12px">';
-    
-      my $coverage = $results->{"${type}_coverage"};
-      my $total    = $type eq 'alignment' ? $results->{'length'} : $results->{'coding_exon_length'}; 
-      my $percent  = round($coverage/$total * 100);
-      my $inverse  = 100 - $percent;
+    my $total         = $results->{'coding_exon_length'};
+    if ($total) { 
+      my $matches     = $results->{'matches'};
+      my $mismatches  = $results->{'mis-matches'};
+      my $insertions  = $results->{'insertions'};
+      my $uncovered   = $results->{'uncovered'};
+
+      $key->{$sp_type}{'exon'} = sprintf('<p>
+                                            <b>Uncovered</b>: %s out of %s<br />
+                                            <b>Matches</b>: %s out of %s<br />
+                                            <b>Mismatches</b>: %s out of %s<br />
+                                            <b>Insertions</b>: %s out of %s
+                                          </p>',
+                                $self->thousandify($uncovered), $self->thousandify($total),
+                                $self->thousandify($matches), $self->thousandify($total),
+                                $self->thousandify($mismatches), $self->thousandify($total),
+                                $self->thousandify($insertions), $self->thousandify($total),
+                                );
+
+      my $match_pc  = round($matches/$total * 100); 
+      my $mis_pc    = round($mismatches/$total * 100); 
+      my $ins_pc    = round($insertions/$total * 100); 
+      my $uncov_pc  = 100 - ($match_pc + $mis_pc + $ins_pc); 
 
       $html .= qq{
-        <div id="graphHolder$i" style="width:160px;height:160px;margin:0 auto"></div>
-        <p><b>$percent%</b></p>
+          <input class="graph_data" type="hidden" value="[[$uncov_pc,'Uncovered'],[$match_pc, 'Matches'],[$mis_pc,"Mismatches'],[$ins_pc,'Insertions']]" />
       };
-      
-      $html .= '<p>' . $self->thousandify($coverage) . ' out of ' . $self->thousandify($total).'</p>';
-      $html .= '</td>';
-      $i++;
     }
-
-    $html .= '</tr>';
+    $i++;
   }
+  $html .= '</div>';
 
-  $html .= '</table></div>';
+  ## Draw table
+  my $graph_style = 'width:300px;height:160px;margin:0 auto';
+  $html .= sprintf(
+    '<table style="width:100%">
+      <tr>
+        <th></th>
+        <th style="text-align:center">Genome coverage (bp)</th>
+        <th style="text-align:center">Coding exon coverage (bp)</th>
+      </tr>
+      <tr>
+        <th style="vertical-align:middle">%s</th>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder0" style="%s"></div>%s
+        </td>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder2" style="%s"></div>%s
+        </td>
+      </tr>
+      <tr>
+        <th style="vertical-align:middle">%s</th>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder1" style="%s"></div>%s
+        </td>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder3" style="%s"></div>%s
+        </td>
+      </tr>
+    </table>',
+    $ref_sp, 
+    $graph_style, $key->{'ref'}{'genome'}, 
+    $graph_style, $key->{'ref'}{'exon'}, 
+    $nonref_sp, 
+    $graph_style, $key->{'non_ref'}{'genome'}, 
+    $graph_style, $key->{'non_ref'}{'exon'}, 
+  );
+
+  $html .= '</div>';
 
   return $html;
 }
@@ -275,16 +339,23 @@ sub fetch_input {
     $ref_results->{'name'}                    = $ref_genome_db->name;
     $ref_results->{'assembly'}                = $ref_genome_db->assembly;
     $ref_results->{'length'}                  = $mlss->get_value_for_tag('ref_genome_length');
-    $ref_results->{'coding_exon_length'}      = $mlss->get_value_for_tag('ref_coding_length');
     $ref_results->{'alignment_coverage'}      = $mlss->get_value_for_tag('ref_genome_coverage');
-    $ref_results->{'alignment_exon_coverage'} = $mlss->get_value_for_tag('ref_coding_coverage');
+    $ref_results->{'coding_exon_length'}      = $mlss->get_value_for_tag('ref_coding_exon_length');
+    $ref_results->{'matches'}                 = $mlss->get_value_for_tag('ref_matches');
+    $ref_results->{'mis-matches'}             = $mlss->get_value_for_tag('ref_mis_matches');
+    $ref_results->{'insertions'}              = $mlss->get_value_for_tag('ref_insertions');
+    $ref_results->{'uncovered'}                 = $mlss->get_value_for_tag('ref_uncovered');
+
     
     $non_ref_results->{'name'}                    = $non_ref_genome_db->name;
     $non_ref_results->{'assembly'}                = $non_ref_genome_db->assembly;
     $non_ref_results->{'length'}                  = $mlss->get_value_for_tag('non_ref_genome_length');
-    $non_ref_results->{'coding_exon_length'}      = $mlss->get_value_for_tag('non_ref_coding_length');
     $non_ref_results->{'alignment_coverage'}      = $mlss->get_value_for_tag('non_ref_genome_coverage');
-    $non_ref_results->{'alignment_exon_coverage'} = $mlss->get_value_for_tag('non_ref_coding_coverage');
+    $non_ref_results->{'coding_exon_length'}      = $mlss->get_value_for_tag('non_ref_coding_exon_length');
+    $non_ref_results->{'matches'}                 = $mlss->get_value_for_tag('non_ref_matches');
+    $non_ref_results->{'mis-matches'}             = $mlss->get_value_for_tag('non_ref_mis_matches');
+    $non_ref_results->{'insertions'}              = $mlss->get_value_for_tag('non_ref_insertions');
+    $non_ref_results->{'uncovered'}               = $mlss->get_value_for_tag('non_ref_uncovered');
 
     $pair_aligner_config->{'method_link_type'} = $mlss->method->type;
     $pair_aligner_config->{'ensembl_release'}  = $mlss->get_value_for_tag('ensembl_release');
@@ -305,7 +376,6 @@ sub fetch_input {
     } else {
       foreach my $param (split ' ', $pairwise_params) {
         my ($p, $v) = split '=', $param;
-        warn ">>> Parameter $p";
         
         if ($p eq 'Q' && $v =~ /^\/nfs/) {
           ## slurp in the matrix file
