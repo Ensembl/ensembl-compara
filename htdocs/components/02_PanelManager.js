@@ -15,18 +15,21 @@ Ensembl.PanelManager.extend({
     this.panelNumber = 0;
     this.zIndex      = 101;
     
+    function ajaxLoaded() {
+      if (!$('.ajax_load').length) {
+        Ensembl.EventManager.trigger('ajaxComplete');
+      }
+    }
+
     Ensembl.EventManager.register('createPanel',  this, this.createPanel);
     Ensembl.EventManager.register('destroyPanel', this, this.destroyPanel);
     Ensembl.EventManager.register('addPanel',     this, this.addPanel);
     Ensembl.EventManager.register('panelToFront', this, this.panelToFront);
-    
-    Ensembl.EventManager.register('ajaxLoaded', this, function () {
-      if (!$('.ajax_load').length) {
-        Ensembl.EventManager.trigger('ajaxComplete');
-      }
-    });
+    Ensembl.EventManager.register('ajaxLoaded',   this, ajaxLoaded); 
     
     this.init($('.js_panel'));
+    
+    ajaxLoaded();
   },
   
   init: function (panels) {
