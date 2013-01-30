@@ -621,13 +621,15 @@ sub store {
 
 
   my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_name,
+                              gene_member_id,
                               taxon_id, genome_db_id, description,
                               chr_name, chr_start, chr_end, chr_strand,display_label)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 
   my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
                   $member->source_name,
+                  $member->gene_member_id,
                   $member->taxon_id,
                   $member->genome_db_id,
                   $member->description,
