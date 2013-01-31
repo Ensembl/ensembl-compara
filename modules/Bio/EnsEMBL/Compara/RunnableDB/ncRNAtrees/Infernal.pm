@@ -60,6 +60,7 @@ use Data::Dumper;
 
 use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
+use Bio::EnsEMBL::Compara::HMMProfile;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -102,8 +103,6 @@ sub fetch_input {
 
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
-    print STDERR Dumper $self->param('model_id_hash') if ($self->debug);
-
     $self->param('infernal_starttime', time()*1000);
 }
 
@@ -140,6 +139,7 @@ sub write_output {
     my $self = shift @_;
 
     $self->parse_and_store_alignment_into_tree;
+    $self->store_refined_profile;
     $self->_store_aln_tags;
 
     my $gene_tree_id = $self->param('gene_tree_id');
@@ -166,8 +166,6 @@ sub write_output {
 sub dump_sequences_to_workdir {
   my $self = shift;
   my $cluster = shift;
-
-  print STDERR Dumper $cluster if ($self->debug);
 
   my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->root_id . ".fasta";
   print STDERR "fastafile: $fastafile\n" if($self->debug);
@@ -303,7 +301,7 @@ sub run_infernal {
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $self->param('input_fasta');
 
-#  $DB::single=1;1; ## What for?
+#  $DB::single=1;1;
   my $command = $self->run_command($cmd);
   if ($command->exit_code) {
       $self->throw("error running infernal, $!\n");
@@ -345,13 +343,13 @@ sub run_infernal {
   }
 
   $self->param('stk_output', $refined_stk_output);
+  $self->param('refined_profile', $refined_profile);
 
   # Reformat with sreformat
   my $fasta_output = $self->worker_temp_directory . "output.fasta";
   my $cmd = "/usr/local/ensembl/bin/sreformat a2m $refined_stk_output > $fasta_output";
   $command = $self->run_command($cmd);
   if($command->exit_code) {
-    print STDERR "$cmd\n";
     $self->throw("error running sreformat, $!\n");
   }
 
@@ -365,12 +363,15 @@ sub dump_model {
   my $field = shift;
   my $model_id = shift;
 
-  my $sql = 
-    "SELECT hc_profile FROM hmm_profile ".
-      "WHERE $field=\"$model_id\"";
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute();
-  my $nc_profile  = $sth->fetchrow;
+  my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_by_model_id($model_id)->profile();
+
+#   my $sql = 
+#     "SELECT hc_profile FROM hmm_profile ".
+#       "WHERE $field=\"$model_id\"";
+#   my $sth = $self->compara_dba->dbc->prepare($sql);
+#   $sth->execute();
+#   my $nc_profile  = $sth->fetchrow;
+
   unless (defined($nc_profile)) {
     return 1;
   }
@@ -526,5 +527,23 @@ sub _store_aln_tags {
 
 }
 
+sub store_refined_profile {
+    my ($self) = @_;
+    my $model_id = $self->param('model_id');
+    my $type = "infernal-refined";
+    my $refined_profile_file = $self->param('refined_profile');
+    my $hmmProfile_Adaptor = $self->compara_dba->get_HMMProfileAdaptor();
+    my $name = $hmmProfile_Adaptor->fetch_by_model_id($model_id)->name();
+
+    my $refined_profile = $self->_slurp($refined_profile_file);
+
+    my $new_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
+    $new_profile->model_id($model_id);
+    $new_profile->name($name);
+    $new_profile->type($type);
+    $new_profile->profile($refined_profile);
+
+    $hmmProfile_Adaptor->store($new_profile);
+}
 
 1;
