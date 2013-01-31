@@ -157,11 +157,11 @@ sub run {
 sub write_output {
     my ($self) = @_;
     # To CAFETable
-    $self->dataflow_output_id (
-                               {
-                                'cafe_tree_string_meta_key', $self->param('cafe_tree_string_meta_key'),
-                               }, 1
-                              );
+#     $self->dataflow_output_id (
+#                                {
+#                                 'cafe_tree_string_meta_key', $self->param('cafe_tree_string_meta_key'),
+#                                }, 1
+#                               );
 }
 
 
