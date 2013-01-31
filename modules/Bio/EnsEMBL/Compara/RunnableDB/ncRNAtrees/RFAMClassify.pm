@@ -76,6 +76,7 @@ use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::HMMProfile;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
@@ -227,13 +228,13 @@ sub build_hash_cms {
   my $self = shift;
   my $field = shift;
 
-  my $sql = "SELECT $field from hmm_profile";
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute;
-  while( my $ref  = $sth->fetchrow_arrayref() ) {
-    my ($field_value) = @$ref;
-    $self->param('rfamcms')->{$field}{$field_value} = 1;
+  die "I don't expect a field value different than model_id, but $field has been passed" unless($field eq "model_id");
+
+  my $ids = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_column_names([$field],'infernal');
+  for my $id (@$ids) {
+      $self->param('rfamcms')->{$field}{$id->{$field}} = 1;
   }
+
 }
 
 sub load_names_model_id {
@@ -243,14 +244,12 @@ sub load_names_model_id {
   $self->param('model_id_names', {});
   $self->param('model_name_ids', {});
 
-  my $sql = "SELECT model_id, name from hmm_profile";
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute;
-  while( my $ref  = $sth->fetchrow_arrayref() ) {
-    my ($model_id, $name) = @$ref;
-    $self->param('model_id_names')->{$model_id} = $name;
-    $self->param('model_name_ids')->{$name} = $model_id;
+  my $ids = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_column_names(['model_id', 'name'],'infernal');
+  for my $id (@$ids) {
+      $self->param('model_id_names')->{$id->{model_id}} = $id->{name};
+      $self->param('model_name_ids')->{$id->{name}} = $id->{model_id};
   }
+
 }
 
 sub load_mirbase_families {
