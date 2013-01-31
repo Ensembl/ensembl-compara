@@ -201,7 +201,9 @@ sub get_ancestor_species_hash
         print "super-tree leaf=", $node->node_id, " children=", $node->get_child_count, "\n";
         my $child = $node->children->[0];
         my $leaves = $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
-        $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2) if ($self->param('dataflow_subclusters'));
+        eval {
+            $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2) if ($self->param('dataflow_subclusters'));
+        };
         $child->disavow_parent;
 
         foreach my $leaf (@$leaves) {
