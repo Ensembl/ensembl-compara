@@ -66,6 +66,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM;
 use strict;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
+use Bio::EnsEMBL::Compara::HMMProfile;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
@@ -115,11 +116,17 @@ sub fetch_input {
         $members = $newmembers;
     }
 
-    $self->param('done', 1) if scalar(@$members) < 2;
+    if (scalar @$members < 2) {
+        $self->input_job->incomplete(0);
+        die "No HMM will be buid (only ", scalar @$members, ") members\n";
+    }
+
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
     my $buildhmm_exe = $self->param('buildhmm_exe') or die "'buildhmm_exe' is an obligatory parameter";
     die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
+
+    return
 }
 
 
@@ -136,10 +143,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
-
-    unless($self->param('done')) {
-        $self->run_buildhmm;
-    }
+    $self->run_buildhmm;
 }
 
 
@@ -157,9 +161,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    unless($self->param('done')) {
-        $self->store_hmmprofile;
-    }
+    $self->store_hmmprofile;
 }
 
 
@@ -198,7 +200,7 @@ sub run_buildhmm {
             $stk_file
     );
     my $cmd_out = $self->run_command($cmd);
-    die 'Could not run $buildhmm_exe: ', $cmd_out->out if $cmd_out->exit_code;
+    die 'Could not run $buildhmm_exe: ', $cmd_out->out if ($cmd_out->exit_code);
 
     $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $cmd_out->runtime_msec);
 }
@@ -213,13 +215,25 @@ sub run_buildhmm {
 sub store_hmmprofile {
   my $self = shift;
   my $hmm_file =  $self->param('hmm_file');
-  
+
   #parse hmmer file
   print("load from file $hmm_file\n") if($self->debug);
   my $hmm_text = $self->_slurp($hmm_file);
 
-  my $sth = $self->compara_dba->dbc->prepare('REPLACE INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
-  $sth->execute(sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type')), 'hmmer', $hmm_text);
+  my $model_id = sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type'));
+  my $type = "tree_hmm_" . $self->param('hmm_type');
+  my $hc_profile = $hmm_text;
+
+  my $hmmProfile = Bio::EnsEMBL::Compara::HMMProfile->new();
+  $hmmProfile->model_id($model_id);
+  $hmmProfile->name($model_id);
+  $hmmProfile->type($type);
+  $hmmProfile->profile($hc_profile);
+
+  $self->compara_dba->get_HMMProfileAdaptor()->store($hmmProfile);
+
+#  my $sth = $self->compara_dba->dbc->prepare('REPLACE INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
+#  $sth->execute(sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type')), 'hmmer', $hmm_text);
 }
 
 1;
