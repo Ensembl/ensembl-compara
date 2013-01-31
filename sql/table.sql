@@ -849,7 +849,7 @@ CREATE TABLE hmm_profile (
   hc_profile                  mediumtext,
   consensus                   mediumtext,
 
-  PRIMARY KEY (model_id)
+  PRIMARY KEY (model_id,type)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
