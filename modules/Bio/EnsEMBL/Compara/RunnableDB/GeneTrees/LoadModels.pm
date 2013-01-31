@@ -49,6 +49,7 @@ use File::Path qw/remove_tree/;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use LWP::Simple;
 
+use Bio::EnsEMBL::Compara::HMMProfile;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub download_models {
@@ -104,21 +105,22 @@ sub store_hmmprofile {
         } elsif ($line =~ /^\/\//) {
             # End of profile, let's store it
             $self->throw("Error loading profile [$hmm_name, $name, $model_id]\n") unless (defined($model_id) && defined ($profile_content));
-            $self->load_hmmprofile($profile_content, $model_id, $name, $consensus);
+
+            # We create a new HMMProfile object and store it
+            my $hmm_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
+            $hmm_profile->model_id($model_id);
+            $hmm_profile->name($name);
+            $hmm_profile->type($self->param('type'));
+            $hmm_profile->profile($profile_content);
+            $hmm_profile->consensus($consensus);
+
+            $self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
+
             $model_id = undef;
             $profile_content = undef;
         }
 
     }
-}
-
-sub load_hmmprofile {
-    my ($self, $cm_profile, $model_id, $model_name, $consensus) = @_;
-    my $table_name = 'hmm_profile';
-    my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?,?)");
-    $sth->execute($model_id, $model_name, $self->param('type'), $cm_profile, $consensus || undef);
-    $sth->finish;
-    return;
 }
 
 sub clean_directory {

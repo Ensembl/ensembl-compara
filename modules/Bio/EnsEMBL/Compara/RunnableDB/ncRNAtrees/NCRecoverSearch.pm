@@ -229,12 +229,14 @@ sub dump_model {
   my $field = shift;
   my $model_id = shift;
 
-  my $sql = 
-    "SELECT hc_profile FROM hmm_profile ".
-      "WHERE $field=\"$model_id\"";
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute();
-  my $nc_profile  = $sth->fetchrow;
+  my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_by_model_id($model_id)->profile();
+
+#   my $sql = 
+#     "SELECT hc_profile FROM hmm_profile ".
+#       "WHERE $field=\"$model_id\"";
+#   my $sth = $self->compara_dba->dbc->prepare($sql);
+#   $sth->execute();
+#  my $nc_profile  = $sth->fetchrow;
   unless (defined($nc_profile)) {
     return 1;
   }
