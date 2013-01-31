@@ -141,10 +141,6 @@ Ensembl.extend({
     if (match) {
       this.location = { name: match[1], start: parseInt(match[2], 10), end: parseInt(match[3], 10) };
       this.location.length = this.location.end - this.location.start + 1;
-      
-      if (this.location.length > 1000000) {
-        this.location.length = 1000000;
-      }
     }
     
     match = url.match(/s\d+=([^;&]+)/g);

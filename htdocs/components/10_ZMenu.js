@@ -19,10 +19,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.imageId    = data.imageId;
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
+    this.maxLength  = 1e6;
     this.location   = 0;
     
     if (area.hasClass('das')) {
-      this.das = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
+      this.das       = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
       this.logicName = area.attr('class').replace(/das/, '').replace(/(pseudo)?group/, '').replace(/ /g, '');
     }
     
@@ -53,8 +54,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   
   init: function () {
     var panel = this;
-    
-    var r = new RegExp('([\\?;]r' + (this.multi || '') + '=)[^;]+;?', 'g'); // The r parameter to remove from the current URL for this.baseURL
+    var r     = new RegExp('([\\?;]r' + (this.multi || '') + '=)[^;]+;?', 'g'); // The r parameter to remove from the current URL for this.baseURL
     
     this.base();
     
@@ -175,8 +175,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   populateAjax: function (url, expand) {
     var timeout = this.timeout;
     var caption = this.elLk.caption.html();
-    
-    url = url || this.href;
+        url     = url || this.href;
     
     if (this.group) {
       url += ';click_start=' + this.coords.clickStart + ';click_end=' + this.coords.clickEnd;
@@ -243,15 +242,17 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
       
       this.show();
+      
       return;
     }
     
     var extra = '';
-    var loc = this.title.match(/Location: (\S+)/);
+    var loc   = this.title.match(/Location: (\S+)/);
     var r;
     
     if (loc) {          
       r = loc[1].split(/\W/);
+      
       this.location = parseInt(r[1], 10) + (r[2] - r[1]) / 2;
       
       extra += '<tr><th></th><td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
@@ -262,8 +263,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populateRegion: function () {
-    var panel = this;
-    
+    var panel        = this;
     var min          = this.start;
     var max          = this.end;
     var locationView = !!window.location.pathname.match(/\/Location\//);
@@ -273,10 +273,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     // Gene, transcript views
     function notLocation() {
-      url = url.replace(/.+\?/, '?');
-      
+      url  = url.replace(/.+\?/, '?');
       menu = [
-        '<a href="' + panel.speciesPath + '/Location/View' + url + '">Jump to location View</a>',
+        '<a href="' + panel.speciesPath + '/Location/View'       + url + '">Jump to location View</a>',
         '<a href="' + panel.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
       ];
     }
@@ -284,8 +283,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     // Multi species view
     function multi() {
       var label = start ? 'region' : 'location';
-      
-      menu = [ '<a href="' + url.replace(/;action=primary;id=\d+/, '') + '">Realign using this ' + label + '</a>' ];
+          menu  = [ '<a href="' + url.replace(/;action=primary;id=\d+/, '') + '">Realign using this ' + label + '</a>' ];
         
       if (panel.multi) {
         menu.push('<a href="' + url + '">Use ' + label + ' as primary</a>');
@@ -316,13 +314,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         end   = tmp;
       }
       
-      if (start < min) {
-        start = min;
-      }
-      
-      if (end > max) {
-        end = max;
-      }
+      start = Math.max(start, min);
+      end   = Math.min(end,   max);
       
       if (this.strand === 1) {
         this.location = (start + end) / 2;
@@ -389,12 +382,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populateVRegion: function () {
+    var min    = this.start;
+    var max    = this.end;
+    var scale  = (max - min + 1) / (this.areaCoords.b - this.areaCoords.t);
+    var length = Math.min(Ensembl.location.length, this.maxLength) / 2;
     var start, end, view, menu, caption, tmp, url;
-    
-    var min = this.start;
-    var max = this.end;
-    
-    var scale = (max - min + 1) / (this.areaCoords.b - this.areaCoords.t);
     
     if (scale === max) {
       scale /= 2; // For very small images, halve the scale. This will stop start > end problems
@@ -402,8 +394,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     // Region select
     if (this.coords.r) {
-      view = 'Overview';
-      
+      view  = 'Overview';
       start = Math.floor(min + (this.coords.s - this.areaCoords.t) * scale);
       end   = Math.floor(min + (this.coords.s + this.coords.r - this.areaCoords.t) * scale);
       
@@ -413,36 +404,23 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         end   = tmp;
       }
       
-      if (start < min) {
-        start = min;
-      }
-      
-      if (end > max) {
-        end = max;
-      }
+      start   = Math.max(start, min);
+      end     = Math.min(end,   max);
+      caption = this.chr + ': ' + start + '-' + end;
       
       this.location = (start + end) / 2;
-      
-      caption = this.chr + ': ' + start + '-' + end;
     } else {
-      view = 'View';
-      
       this.location = Math.floor(min + (this.coords.y - this.areaCoords.t) * scale);
       
-      start = Math.floor(this.location - (Ensembl.location.length / 2));
-      end   = Math.floor(this.location + (Ensembl.location.length / 2));
-      
-      if (start < 1) {
-        start = 1;
-      }
-      
+      view    = 'View';
+      start   = Math.max(Math.floor(this.location - length), 1);
+      end     =          Math.floor(this.location + length);
       caption = this.chr + ': ' + this.location;
     }
     
-    url = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
-    
+    url  = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
     menu = [
-      '<a href="' + this.speciesPath + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
+      '<a href="' + this.speciesPath + '/Location/' + view    + url + '">Jump to location ' + view + '</a>',
       '<a href="' + this.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
     ];
     
@@ -451,7 +429,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   
   buildMenu: function (content, caption, link, extra) {
     var body = [];
-    var i = content.length;
+    var i    = content.length;
     var menu, title, parse, j, row;
     
     caption = caption || 'Menu';
@@ -470,11 +448,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         
         for (j = 0; j < parse.length; j += 2) {
           parse[j] = parse[j].split(':');
-          row = '<td style="color:#' + parse[j][1] + '">' + parse[j][0] + '</td>';
+          row      = '<td style="color:#' + parse[j][1] + '">' + parse[j][0] + '</td>';
           
           if (parse[j+1]) {
             parse[j+1] = parse[j+1].split(':');
-            row += '<td style="color:#' + parse[j+1][1] + '">' + parse[j+1][0] + '</td>';
+            row       += '<td style="color:#' + parse[j+1][1] + '">' + parse[j+1][0] + '</td>';
           } else {
             row += '<td></td>';
           }
@@ -499,7 +477,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   zoomURL: function (scale) {
-    var w = Ensembl.location.length * scale;
+    var w = Math.min(Ensembl.location.length, this.maxLength) * scale;
     
     if (w < 1) {
       return '';
@@ -525,8 +503,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var scrollLeft  = $(window).scrollLeft();
     
     var css = {
-      left: this.position.left, 
-      top:  this.position.top,
+      left:     this.position.left, 
+      top:      this.position.top,
       position: 'absolute'
     };
     
