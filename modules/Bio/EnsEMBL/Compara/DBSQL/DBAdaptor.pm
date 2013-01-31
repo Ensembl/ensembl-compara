@@ -145,6 +145,7 @@ sub get_available_adaptors {
         'MethodLinkSpeciesSet'  => 'Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor',
         'NCBITaxon'             => 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor',
         'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
+        'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
 
             # genomic:
         'DnaFrag'               => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor',
