@@ -339,7 +339,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           multi();
         } else {
           menu = [
-            '<a class="location_change" href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
+            '<a class="location_change" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>',
             '<a class="location_change" href="' + this.zoomURL(1) + '">Centre here</a>'
           ];
         }
