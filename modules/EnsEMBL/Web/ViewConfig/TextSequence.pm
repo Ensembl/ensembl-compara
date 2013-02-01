@@ -26,6 +26,8 @@ sub variation_options {
   my $hub    = $self->hub;
   my %markup = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
   
+  $markup{'snp_display'}{'label'} = $options->{'label'} if $options->{'label'};
+  
   push @{$markup{'snp_display'}{'values'}}, { value => 'snp_link', name => 'Yes and show links' } unless $options->{'snp_link'} eq 'no';
   push @{$markup{'snp_display'}{'values'}}, @{$options->{'snp_display'}} if $options->{'snp_display'};
   
