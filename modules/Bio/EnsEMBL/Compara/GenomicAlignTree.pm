@@ -626,13 +626,18 @@ sub restrict_between_alignment_positions {
   }
   my $final_alignment_length = $end - $start + 1;
 
+  #Only need to do this once per tree since the length is the same for all the nodes.
+  my $length = $genomic_align_tree->get_all_leaves->[0]->length;
+
   #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
   #remove the internal nodes
   foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
     my $genomic_align_group = $this_node->genomic_align_group;
     next if (!$genomic_align_group);
     my $new_genomic_aligns = [];
-    my $length = $this_node->length;
+
+   # my $length = $this_node->length;
+
     foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
       my $restricted_genomic_align = $this_genomic_align->restrict($start, $end, $length);
 
@@ -1007,6 +1012,7 @@ sub reverse_complement {
 sub length {
   my ($self, $length) = @_;
  
+
   if (defined($length)) {
       $self->{'length'} = $length;
   } elsif (!defined($self->{'length'})) {
