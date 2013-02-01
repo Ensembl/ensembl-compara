@@ -22,10 +22,10 @@ sub content {
   my @track_order = ('rnaseq', 'dna_align', 'data_file'); 
   my $columns = [
     { key => 'tissue',    'title' => 'Tissue',                align => 'left', width => '10%'},
-    { key => 'all',       'title' => 'All data',              align => 'left', width => '15%'},
-    { key => 'rnaseq',    'title' => 'RNASeq gene models',    align => 'left', width => '25%'},
-    { key => 'dna_align', 'title' => 'Intron-spanning reads', align => 'left', width => '25%'},
-    { key => 'data_file', 'title' => 'RNASeq alignments',     align => 'left', width => '25%'},
+    { key => 'all',       'title' => 'All data',              align => 'center', width => '15%'},
+    { key => 'rnaseq',    'title' => 'RNASeq gene models',    align => 'center', width => '25%'},
+    { key => 'dna_align', 'title' => 'Intron-spanning reads', align => 'center', width => '25%'},
+    { key => 'data_file', 'title' => 'RNASeq alignments',     align => 'center', width => '25%'},
   ];
 
   my $rows = [];
@@ -61,8 +61,15 @@ sub content {
 
     foreach (@track_order) {
       my $track = $track_info->{$tissue}{$_};
-      push @configs, $track->[0];
-      $row->{$_} = $track->[1];
+      if ($track) {
+        push @configs, $track->[0];
+        my $desc = $_ eq 'rnaseq' ? $track->[1] 
+                    : sprintf('<span class="_ht" title="%s">Y</span>', $self->strip_HTML($track->[1]));
+        $row->{$_} = $desc;
+      }
+      else {
+        $row->{$_} = '-';
+      }
     }
 
     my $url = $hub->url({'type'=>'Location','action'=>'View', 'contigviewbottom' => join(',', @configs)});
