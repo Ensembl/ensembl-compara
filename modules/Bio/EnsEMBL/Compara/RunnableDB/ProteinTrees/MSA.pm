@@ -60,7 +60,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'use_exon_boundaries'   => 0,                       # careful: 0 and undef have different meanings here
         'escape_branch'         => -1,
     };
 }
@@ -108,7 +107,7 @@ sub fetch_input {
   # Protein Tree input.
     #$self->param('protein_tree')->flatten_tree; # This makes retries safer
     # The extra option at the end adds the exon markers
-    $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree'), $self->param('use_exon_boundaries')) );
+    $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree')) );
 
 #  if ($self->param('redo')) {
 #    # Redo - take previously existing alignment - post-process it
@@ -264,12 +263,11 @@ sub update_single_peptide_tree {
 sub dumpProteinTreeToWorkdir {
   my $self = shift;
   my $tree = shift;
-  my $use_exon_boundaries = shift;
 
-  my $fastafile =$self->worker_temp_directory.($use_exon_boundaries ? 'proteintree_exon_' : 'proteintree_').($tree->root_id).'.fasta';
+  my $fastafile =$self->worker_temp_directory.'proteintree_'.($tree->root_id).'.fasta';
 
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if((-e $fastafile) and not $use_exon_boundaries);
+  return $fastafile if (-e $fastafile);
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
   open(OUTSEQ, ">$fastafile")
@@ -303,11 +301,7 @@ sub dumpProteinTreeToWorkdir {
       $seq_id_hash->{$member->sequence_id} = 1;
 
       my $seq = '';
-      if ($use_exon_boundaries) {
-          $seq = $member->sequence_exon_bounded;
-      } else {
-          $seq = $member->sequence;
-      }
+      $seq = $member->sequence;
       $residues += $member->seq_length;
       $seq =~ s/(.{72})/$1\n/g;
       chomp $seq;
@@ -338,9 +332,6 @@ sub parse_and_store_alignment_into_proteintree {
   my $format = 'fasta';
   my $tree = $self->param('protein_tree');
 
-  if (2 == $self->param('use_exon_boundaries')) {
-    $msa_output .= ".overaln";
-  }
   return 0 unless($msa_output and -e $msa_output);
 
   #

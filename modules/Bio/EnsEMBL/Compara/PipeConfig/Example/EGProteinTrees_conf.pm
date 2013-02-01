@@ -105,7 +105,6 @@ sub default_options {
     outgroups => [],
 
     #Trees
-    use_exon_boundaries     =>  0,
     use_genomedb_id         =>  0,
    # tree_dir                =>  $self->o('ensembl_cvs_root_dir').'/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
 #    species_tree_input_file =>  $self->o('tree_dir').'/'.$self->o('division_name').'.peptide.nh',

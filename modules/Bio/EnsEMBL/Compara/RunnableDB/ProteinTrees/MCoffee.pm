@@ -179,16 +179,6 @@ sub get_msa_command_line {
     open(OUTPARAMS, ">$paramsfile") or $self->throw("Error opening $paramsfile for write");
 
     my $extra_output = '';
-    if ($self->param('use_exon_boundaries')) {
-        if (1 == $self->param('use_exon_boundaries')) {
-            $method_string .= ", exon_pair";
-            my $exon_file = $self->param('input_fasta_exons');
-            print OUTPARAMS "-template_file=$exon_file\n";
-        } elsif (2 == $self->param('use_exon_boundaries')) {
-            $self->param('mcoffee_scores', undef);
-            $extra_output .= ',overaln  -overaln_param unalign -overaln_P1 99999 -overaln_P2 1'; # overaln_P1 150 and overaln_P2 30 was dealigning too aggressively
-        }
-    }
     $method_string .= "\n";
 
     print OUTPARAMS $method_string;

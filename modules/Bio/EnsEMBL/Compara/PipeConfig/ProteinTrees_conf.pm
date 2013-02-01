@@ -95,7 +95,6 @@ sub default_options {
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
-        'use_exon_boundaries'       => 0,       # affects 'mcoffee' and 'mcoffee_himem'
         'use_genomedb_id'           => 0,       # affects 'njtree_phyml' and 'ortho_tree'
         'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
 
@@ -918,7 +917,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
                 'method'                => 'cmcoffee',
-                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
                 'mcoffee_exe'           => $self->o('mcoffee_exe'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
@@ -932,7 +930,6 @@ sub pipeline_analyses {
         {   -logic_name => 'mafft',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
-                'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
@@ -947,7 +944,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
                 'method'                => 'cmcoffee',
-                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
                 'mcoffee_exe'           => $self->o('mcoffee_exe'),
                 'escape_branch'         => -2,
             },
@@ -961,7 +957,6 @@ sub pipeline_analyses {
         {   -logic_name => 'mafft_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
-                'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
