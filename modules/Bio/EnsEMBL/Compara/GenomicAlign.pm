@@ -903,7 +903,6 @@ sub aligned_sequence {
       # ...from the corresponding cigar_line (using a fake seq)
       $aligned_sequence = _get_fake_aligned_sequence_from_cigar_line(
           $self->{'cigar_line'});
-    
     } elsif (defined($self->cigar_line) and defined($self->original_sequence)) {
       my $original_sequence = $self->original_sequence;
       # ...from the corresponding orginial_sequence and cigar_line
@@ -1301,9 +1300,12 @@ sub _get_fake_aligned_sequence_from_cigar_line {
   my $seq_pos = 0;
 
   my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
-  for my $cigElem ( @cig ) {
-    my $cigType = substr( $cigElem, -1, 1 );
-    my $cigCount = substr( $cigElem, 0 ,-1 );
+  #for my $cigElem ( @cig ) {
+  #    my $cigType = substr( $cigElem, -1, 1 );
+  #    my $cigCount = substr( $cigElem, 0 ,-1 );
+  while ($cigar_line =~ /(\d*)([GMDXI])/g) {
+    my $cigCount = $1;
+    my $cigType = $2;
     $cigCount = 1 if ($cigCount eq "");
 
     if( $cigType eq "M" ) {
@@ -2018,11 +2020,13 @@ sub restrict {
   delete($restricted_genomic_align->{original_sequence});
   delete($restricted_genomic_align->{aligned_sequence});
   delete($restricted_genomic_align->{cigar_line});
-  $restricted_genomic_align->{_original_dbID} = $self->dbID if ($self->dbID);
+  $restricted_genomic_align->{_original_dbID} = $self->{dbID} if ($self->{dbID});
 
   # Need to calculate the original aligned sequence length myself
   if (!$aligned_seq_length) {
-    my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
+
+    my @cigar = ( $self->cigar_line =~ /(\d*[GMDXI])/g );
+
     foreach my $num_type (@cigar) {
       my $type = substr($num_type, -1, 1, "");
       $num_type = 1 if ($num_type eq "");
@@ -2034,7 +2038,7 @@ sub restrict {
   my $number_of_columns_to_trim_from_the_start = $start - 1;
   my $number_of_columns_to_trim_from_the_end = $aligned_seq_length - $end;
 
-  my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
+  my @cigar = ( $self->cigar_line =~ /(\d*[GMDXI])/g );
 
   ## Trim start of cigar_line if needed
   if ($number_of_columns_to_trim_from_the_start >= 0) {
@@ -2097,6 +2101,7 @@ sub restrict {
     my $counter_of_trimmed_columns_from_the_end = 0;
     my $counter_of_trimmed_base_pairs = 0; # num of bp we trim (from the start)
     ## Loop through the cigar pieces
+
     while (my $cigar = pop(@cigar)) {
       # Parse each cigar piece
       my $type = substr( $cigar, -1, 1 );
