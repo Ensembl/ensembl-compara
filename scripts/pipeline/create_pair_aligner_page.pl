@@ -286,16 +286,21 @@ if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" ||
 #Set html template variables for results
 $template->param(NUM_BLOCKS => $alignment_results->{num_blocks});
 
+my $ref_uncovered = $ref_results->{length}-$ref_results->{alignment_coverage};
 
 $template->param(REF_GENOME_SIZE => format_number($ref_results->{length}));
-$template->param(REF_ALIGN => format_number($ref_results->{alignment_coverage}));
+$template->param(REF_GENOME_COVERED => format_number($ref_results->{alignment_coverage}));
+$template->param(REF_GENOME_UNCOVERED => format_number($ref_uncovered));
+
+#print "covered " . $ref_results->{alignment_coverage} . " " . $ref_results->{length} . " " . ($ref_results->{length}-$ref_results->{alignment_coverage}) . " " . $ref_uncovered . "\n";
+
 #$template->param(REF_ALIGN_PERC => sprintf "%.2f",($ref_results->{alignment_coverage} / $ref_results->{length} * 100));
 $template->param(REF_CODEXON => format_number($ref_results->{coding_exon_length}));
 #$template->param(REF_CODEXON_PERC => sprintf "%.2f",($ref_results->{coding_exon_length} / $ref_results->{length}* 100));
 $template->param(REF_MATCHES => format_number($ref_results->{matches}));
 $template->param(REF_MISMATCHES => format_number($ref_results->{mis_matches}));
 $template->param(REF_INSERTIONS => format_number($ref_results->{ref_insertions}));
-$template->param(REF_UNCOVERED => format_number($ref_results->{uncovered}));
+$template->param(REF_UNCOVERED => format_number($ref_uncovered));
 
 
 #$template->param(REF_ALIGN_CODEXON_PERC => sprintf "%.2f",($ref_results->{alignment_exon_coverage} / $ref_results->{coding_exon_length} * 100));
@@ -309,8 +314,12 @@ create_coding_exon_pie_chart($mlss_id,$ref_results->{matches}, $ref_results->{mi
 $template->param(REF_ALIGN_PIE => "$file_ref_align_pie");
 $template->param(REF_ALIGN_CODEXON_PIE => "$file_ref_cod_align_pie");
 
+my $non_ref_uncovered = $non_ref_results->{length}-$non_ref_results->{alignment_coverage};
+
 $template->param(NON_REF_GENOME_SIZE =>  format_number($non_ref_results->{length}));
-$template->param(NON_REF_ALIGN => format_number($non_ref_results->{alignment_coverage}));
+$template->param(NON_REF_GENOME_COVERED => format_number($non_ref_results->{alignment_coverage}));
+$template->param(NON_REF_GENOME_UNCOVERED => format_number($non_ref_uncovered));
+
 #$template->param(NON_REF_ALIGN_PERC => sprintf "%.2f",($non_ref_results->{alignment_coverage} / $non_ref_results->{length} * 100));
 $template->param(NON_REF_CODEXON => format_number($non_ref_results->{coding_exon_length}));
 
@@ -482,7 +491,7 @@ sub create_pie_chart {
     print FILE "par(\"mai\"=c(0,0,0,0.3))\n";
     print FILE "align<- c($perc, " . (100-$perc) . ")\n";
     print FILE "labels <- c(\"$perc%\",\"\")\n";
-    print FILE "colours <- c(\"red\", \"white\")\n";
+    print FILE "colours <- c(\"grey\", \"white\")\n";
     print FILE "pie(align, labels=labels, clockwise=T, radius=0.9, col=colours)\n";
     print FILE "dev.off()\n";
     close $fileR;
