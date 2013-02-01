@@ -3622,9 +3622,3 @@
 50039	501	34711	Gerp Conservation Scores (19 amniota vertebrates)	ensembl	mysql://ensro@compara1:3306/kb3_pecan_19way_68
 50040	501	34879	Gerp Conservation Scores (35 eutherian mammals)	ensembl	
 556	19	32416	H.sap-H.sap lastz-patch	ensembl	
-604	14	34881	16 eutherian mammals EPO_LOW_COVERAGE	ensembl	16 eutherian mammals EPO_LOW_COVERAGE => 604
-605	11	34881	Gerp Constrained Elements (16 eutherian mammals)	ensembl	
-50041	501	34881	Gerp Conservation Scores (16 eutherian mammals)	ensembl	
-606	10	34882	13 amniota vertebrates Pecan	ensembl	
-607	11	34882	Gerp Constrained Elements (13 amniota vertebrates)	ensembl	
-50042	501	34882	Gerp Conservation Scores (13 amniota vertebrates)	ensembl	

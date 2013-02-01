@@ -1,3 +1,33 @@
+CREATE TABLE `CAFE_data` (
+  `fam_id` varchar(20) NOT NULL,
+  `tree` mediumtext NOT NULL,
+  `tabledata` mediumtext NOT NULL,
+  PRIMARY KEY (`fam_id`)
+) ENGINE=MyISAM ;
+
+CREATE TABLE `CAFE_gene_family` (
+  `cafe_gene_family_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `root_id` int(10) unsigned NOT NULL,
+  `lca_id` int(10) unsigned NOT NULL,
+  `gene_tree_root_id` int(10) unsigned NOT NULL,
+  `pvalue_avg` double(5,4) DEFAULT NULL,
+  `lambdas` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`cafe_gene_family_id`),
+  KEY `lca_id` (`lca_id`),
+  KEY `root_id` (`root_id`),
+  KEY `gene_tree_root_id` (`gene_tree_root_id`)
+) ENGINE=MyISAM ;
+
+CREATE TABLE `CAFE_species_gene` (
+  `cafe_gene_family_id` int(10) unsigned NOT NULL,
+  `node_id` int(10) unsigned NOT NULL,
+  `taxon_id` int(10) unsigned DEFAULT NULL,
+  `n_members` int(4) unsigned NOT NULL,
+  `pvalue` double(5,4) DEFAULT NULL,
+  KEY `node_id` (`node_id`),
+  KEY `cafe_gene_family_id` (`cafe_gene_family_id`)
+) ENGINE=MyISAM ;
+
 CREATE TABLE `CAFE_tree` (
   `root_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
@@ -5,7 +35,7 @@ CREATE TABLE `CAFE_tree` (
   `lambdas` varchar(100) DEFAULT NULL,
   `p_value_lim` double(5,4) DEFAULT NULL,
   PRIMARY KEY (`root_id`)
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM ;
 
 CREATE TABLE `CAFE_tree_attr` (
   `node_id` int(10) unsigned NOT NULL,
@@ -28,7 +58,7 @@ CREATE TABLE `CAFE_tree_node` (
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`,`left_index`),
   KEY `root_id_2` (`root_id`,`right_index`)
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM ;
 
 CREATE TABLE `backup_homology_member` (
   `homology_id` int(10) unsigned NOT NULL,
@@ -118,7 +148,7 @@ CREATE TABLE `family` (
   UNIQUE KEY `stable_id` (`stable_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`),
   KEY `description` (`description`)
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM ;
 
 CREATE TABLE `family_member` (
   `family_id` int(10) unsigned NOT NULL,
@@ -129,11 +159,19 @@ CREATE TABLE `family_member` (
   KEY `member_id` (`member_id`)
 ) ENGINE=MyISAM ;
 
-CREATE TABLE `gene_tree_member` (
-  `node_id` int(10) unsigned NOT NULL,
+CREATE TABLE `gene_align` (
+  `gene_align_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `seq_type` varchar(40) DEFAULT NULL,
+  `aln_method` varchar(40) NOT NULL DEFAULT '',
+  `aln_length` int(10) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`gene_align_id`)
+) ENGINE=MyISAM  ;
+
+CREATE TABLE `gene_align_member` (
+  `gene_align_id` int(10) unsigned NOT NULL,
   `member_id` int(10) unsigned NOT NULL,
   `cigar_line` mediumtext,
-  PRIMARY KEY (`node_id`),
+  PRIMARY KEY (`gene_align_id`,`member_id`),
   KEY `member_id` (`member_id`)
 ) ENGINE=MyISAM ;
 
@@ -141,14 +179,16 @@ CREATE TABLE `gene_tree_node` (
   `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `parent_id` int(10) unsigned DEFAULT NULL,
   `root_id` int(10) unsigned DEFAULT NULL,
-  `left_index` int(10) NOT NULL,
-  `right_index` int(10) NOT NULL,
+  `left_index` int(10) NOT NULL DEFAULT '0',
+  `right_index` int(10) NOT NULL DEFAULT '0',
   `distance_to_parent` double NOT NULL DEFAULT '1',
+  `member_id` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
-  KEY `root_id` (`root_id`,`left_index`),
-  KEY `root_id_2` (`root_id`,`right_index`)
-) ENGINE=MyISAM  ;
+  KEY `member_id` (`member_id`),
+  KEY `root_id_left_index` (`root_id`,`left_index`),
+  KEY `root_id` (`root_id`)
+) ENGINE=MyISAM ;
 
 CREATE TABLE `gene_tree_node_attr` (
   `node_id` int(10) unsigned NOT NULL,
@@ -157,7 +197,6 @@ CREATE TABLE `gene_tree_node_attr` (
   `taxon_name` varchar(255) DEFAULT NULL,
   `bootstrap` tinyint(3) unsigned DEFAULT NULL,
   `duplication_confidence_score` double(5,4) DEFAULT NULL,
-  `tree_support` set('phyml_nt','nj_ds','phyml_aa','nj_dn','nj_mm','quicktree') DEFAULT NULL,
   PRIMARY KEY (`node_id`)
 ) ENGINE=MyISAM ;
 
@@ -166,9 +205,7 @@ CREATE TABLE `gene_tree_node_tag` (
   `tag` varchar(50) NOT NULL,
   `value` mediumtext NOT NULL,
   KEY `node_id_tag` (`node_id`,`tag`),
-  KEY `tag_node_id` (`tag`,`node_id`),
-  KEY `node_id` (`node_id`),
-  KEY `tag` (`tag`)
+  KEY `node_id` (`node_id`)
 ) ENGINE=MyISAM ;
 
 CREATE TABLE `gene_tree_root` (
@@ -177,12 +214,16 @@ CREATE TABLE `gene_tree_root` (
   `tree_type` enum('clusterset','supertree','tree') NOT NULL,
   `clusterset_id` varchar(20) NOT NULL,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
+  `gene_align_id` int(10) unsigned DEFAULT NULL,
+  `ref_root_id` int(10) unsigned DEFAULT NULL,
   `stable_id` varchar(40) DEFAULT NULL,
   `version` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`root_id`),
   UNIQUE KEY `stable_id` (`stable_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`),
-  KEY `tree_type` (`tree_type`)
+  KEY `tree_type` (`tree_type`),
+  KEY `ref_root_id` (`ref_root_id`),
+  KEY `gene_align_id` (`gene_align_id`)
 ) ENGINE=MyISAM ;
 
 CREATE TABLE `gene_tree_root_tag` (
@@ -250,8 +291,7 @@ CREATE TABLE `genomic_align_tree` (
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`),
-  KEY `left_index` (`left_index`),
-  KEY `right_index` (`right_index`)
+  KEY `left_index` (`root_id`,`left_index`)
 ) ENGINE=MyISAM  ;
 
 CREATE TABLE `hmm_profile` (
@@ -280,7 +320,7 @@ CREATE TABLE `homology` (
   KEY `method_link_species_set_id` (`method_link_species_set_id`),
   KEY `ancestor_node_id` (`ancestor_node_id`),
   KEY `tree_node_id` (`tree_node_id`)
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM ;
 
 CREATE TABLE `homology_member` (
   `homology_id` int(10) unsigned NOT NULL,
@@ -296,14 +336,6 @@ CREATE TABLE `homology_member` (
   KEY `peptide_member_id` (`peptide_member_id`)
 ) ENGINE=MyISAM  MAX_ROWS=300000000;
 
-CREATE TABLE `lr_index_offset` (
-  `lr_index_offset_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `table_name` varchar(64) NOT NULL,
-  `lr_index` int(10) unsigned DEFAULT '0',
-  PRIMARY KEY (`lr_index_offset_id`),
-  UNIQUE KEY `table_name` (`table_name`)
-) ENGINE=MyISAM  ;
-
 CREATE TABLE `mapping_session` (
   `mapping_session_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `type` enum('family','tree') DEFAULT NULL,
@@ -313,7 +345,7 @@ CREATE TABLE `mapping_session` (
   `prefix` char(4) NOT NULL,
   PRIMARY KEY (`mapping_session_id`),
   UNIQUE KEY `type` (`type`,`rel_from`,`rel_to`,`prefix`)
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM ;
 
 CREATE TABLE `member` (
   `member_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -324,6 +356,7 @@ CREATE TABLE `member` (
   `genome_db_id` int(10) unsigned DEFAULT NULL,
   `sequence_id` int(10) unsigned DEFAULT NULL,
   `gene_member_id` int(10) unsigned DEFAULT NULL,
+  `canonical_member_id` int(10) unsigned DEFAULT NULL,
   `description` text,
   `chr_name` char(40) DEFAULT NULL,
   `chr_start` int(10) DEFAULT NULL,
@@ -338,7 +371,7 @@ CREATE TABLE `member` (
   KEY `sequence_id` (`sequence_id`),
   KEY `gene_member_id` (`gene_member_id`),
   KEY `gdb_name_start_end` (`genome_db_id`,`chr_name`,`chr_start`,`chr_end`)
-) ENGINE=MyISAM   MAX_ROWS=100000000;
+) ENGINE=MyISAM  MAX_ROWS=100000000;
 
 CREATE TABLE `meta` (
   `meta_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -390,8 +423,8 @@ CREATE TABLE `ncbi_taxa_node` (
   `parent_id` int(10) unsigned NOT NULL,
   `rank` char(32) NOT NULL DEFAULT '',
   `genbank_hidden_flag` tinyint(1) NOT NULL DEFAULT '0',
-  `left_index` int(10) NOT NULL,
-  `right_index` int(10) NOT NULL,
+  `left_index` int(10) NOT NULL DEFAULT '0',
+  `right_index` int(10) NOT NULL DEFAULT '0',
   `root_id` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`taxon_id`),
   KEY `parent_id` (`parent_id`),
@@ -399,6 +432,16 @@ CREATE TABLE `ncbi_taxa_node` (
   KEY `left_index` (`left_index`),
   KEY `right_index` (`right_index`)
 ) ENGINE=MyISAM ;
+
+CREATE TABLE `other_member_sequence` (
+  `member_id` int(10) unsigned NOT NULL,
+  `seq_type` varchar(40) NOT NULL,
+  `length` int(10) NOT NULL,
+  `sequence` longtext NOT NULL,
+  PRIMARY KEY (`member_id`,`seq_type`),
+  KEY `seq_type` (`seq_type`,`member_id`),
+  KEY `sequence` (`sequence`(18))
+) ENGINE=MyISAM  MAX_ROWS=10000000 AVG_ROW_LENGTH=60000;
 
 CREATE TABLE `peptide_align_feature` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -419,9 +462,8 @@ CREATE TABLE `peptide_align_feature` (
   `perc_pos` int(10) DEFAULT NULL,
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
-  PRIMARY KEY (`peptide_align_feature_id`),
-  KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+  PRIMARY KEY (`peptide_align_feature_id`)
+) ENGINE=MyISAM  MAX_ROWS=100000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_ailuropoda_melanoleuca_109` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -444,7 +486,7 @@ CREATE TABLE `peptide_align_feature_ailuropoda_melanoleuca_109` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_anolis_carolinensis_111` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -467,7 +509,7 @@ CREATE TABLE `peptide_align_feature_anolis_carolinensis_111` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_bos_taurus_122` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -490,7 +532,7 @@ CREATE TABLE `peptide_align_feature_bos_taurus_122` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_caenorhabditis_elegans_133` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -513,7 +555,7 @@ CREATE TABLE `peptide_align_feature_caenorhabditis_elegans_133` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_callithrix_jacchus_117` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -536,7 +578,7 @@ CREATE TABLE `peptide_align_feature_callithrix_jacchus_117` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_canis_familiaris_135` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -559,7 +601,7 @@ CREATE TABLE `peptide_align_feature_canis_familiaris_135` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_cavia_porcellus_69` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -582,7 +624,7 @@ CREATE TABLE `peptide_align_feature_cavia_porcellus_69` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_choloepus_hoffmanni_78` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -605,7 +647,7 @@ CREATE TABLE `peptide_align_feature_choloepus_hoffmanni_78` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_ciona_intestinalis_128` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -629,7 +671,7 @@ CREATE TABLE `peptide_align_feature_ciona_intestinalis_128` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_ciona_savignyi_27` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -652,7 +694,7 @@ CREATE TABLE `peptide_align_feature_ciona_savignyi_27` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_danio_rerio_110` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -675,7 +717,7 @@ CREATE TABLE `peptide_align_feature_danio_rerio_110` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_dasypus_novemcinctus_86` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -698,7 +740,7 @@ CREATE TABLE `peptide_align_feature_dasypus_novemcinctus_86` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_dipodomys_ordii_83` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -721,7 +763,7 @@ CREATE TABLE `peptide_align_feature_dipodomys_ordii_83` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_drosophila_melanogaster_105` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -744,7 +786,7 @@ CREATE TABLE `peptide_align_feature_drosophila_melanogaster_105` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_echinops_telfairi_33` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -767,7 +809,7 @@ CREATE TABLE `peptide_align_feature_echinops_telfairi_33` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_equus_caballus_61` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -790,7 +832,7 @@ CREATE TABLE `peptide_align_feature_equus_caballus_61` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_erinaceus_europaeus_49` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -813,7 +855,7 @@ CREATE TABLE `peptide_align_feature_erinaceus_europaeus_49` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_felis_catus_66` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -836,7 +878,7 @@ CREATE TABLE `peptide_align_feature_felis_catus_66` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_gadus_morhua_126` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -859,7 +901,7 @@ CREATE TABLE `peptide_align_feature_gadus_morhua_126` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_gallus_gallus_42` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -882,7 +924,7 @@ CREATE TABLE `peptide_align_feature_gallus_gallus_42` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_gasterosteus_aculeatus_36` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -905,7 +947,7 @@ CREATE TABLE `peptide_align_feature_gasterosteus_aculeatus_36` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_gorilla_gorilla_123` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -928,7 +970,7 @@ CREATE TABLE `peptide_align_feature_gorilla_gorilla_123` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_homo_sapiens_90` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -951,7 +993,7 @@ CREATE TABLE `peptide_align_feature_homo_sapiens_90` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_ictidomys_tridecemlineatus_131` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -974,7 +1016,7 @@ CREATE TABLE `peptide_align_feature_ictidomys_tridecemlineatus_131` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_latimeria_chalumnae_129` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -997,7 +1039,7 @@ CREATE TABLE `peptide_align_feature_latimeria_chalumnae_129` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_loxodonta_africana_98` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1020,7 +1062,7 @@ CREATE TABLE `peptide_align_feature_loxodonta_africana_98` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_macaca_mulatta_31` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1043,7 +1085,7 @@ CREATE TABLE `peptide_align_feature_macaca_mulatta_31` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_macropus_eugenii_91` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1066,7 +1108,7 @@ CREATE TABLE `peptide_align_feature_macropus_eugenii_91` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_meleagris_gallopavo_112` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1089,7 +1131,7 @@ CREATE TABLE `peptide_align_feature_meleagris_gallopavo_112` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_microcebus_murinus_58` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1112,7 +1154,7 @@ CREATE TABLE `peptide_align_feature_microcebus_murinus_58` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_monodelphis_domestica_46` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1135,7 +1177,7 @@ CREATE TABLE `peptide_align_feature_monodelphis_domestica_46` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_mus_musculus_134` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1158,7 +1200,7 @@ CREATE TABLE `peptide_align_feature_mus_musculus_134` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_myotis_lucifugus_118` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1181,7 +1223,7 @@ CREATE TABLE `peptide_align_feature_myotis_lucifugus_118` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_nomascus_leucogenys_115` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1204,7 +1246,7 @@ CREATE TABLE `peptide_align_feature_nomascus_leucogenys_115` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_ochotona_princeps_67` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1227,7 +1269,7 @@ CREATE TABLE `peptide_align_feature_ochotona_princeps_67` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_oreochromis_niloticus_130` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1250,7 +1292,7 @@ CREATE TABLE `peptide_align_feature_oreochromis_niloticus_130` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_ornithorhynchus_anatinus_43` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1273,7 +1315,7 @@ CREATE TABLE `peptide_align_feature_ornithorhynchus_anatinus_43` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_oryctolagus_cuniculus_108` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1296,7 +1338,7 @@ CREATE TABLE `peptide_align_feature_oryctolagus_cuniculus_108` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_oryzias_latipes_37` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1319,7 +1361,7 @@ CREATE TABLE `peptide_align_feature_oryzias_latipes_37` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_otolemur_garnettii_124` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1342,7 +1384,7 @@ CREATE TABLE `peptide_align_feature_otolemur_garnettii_124` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_pan_troglodytes_125` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1365,7 +1407,7 @@ CREATE TABLE `peptide_align_feature_pan_troglodytes_125` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_pelodiscus_sinensis_136` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1388,7 +1430,7 @@ CREATE TABLE `peptide_align_feature_pelodiscus_sinensis_136` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_petromyzon_marinus_120` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1411,7 +1453,7 @@ CREATE TABLE `peptide_align_feature_petromyzon_marinus_120` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_pongo_abelii_60` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1434,7 +1476,7 @@ CREATE TABLE `peptide_align_feature_pongo_abelii_60` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_procavia_capensis_79` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1457,7 +1499,7 @@ CREATE TABLE `peptide_align_feature_procavia_capensis_79` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_pteropus_vampyrus_85` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1480,7 +1522,7 @@ CREATE TABLE `peptide_align_feature_pteropus_vampyrus_85` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_rattus_norvegicus_3` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1503,7 +1545,7 @@ CREATE TABLE `peptide_align_feature_rattus_norvegicus_3` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_saccharomyces_cerevisiae_127` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1526,7 +1568,7 @@ CREATE TABLE `peptide_align_feature_saccharomyces_cerevisiae_127` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_sarcophilus_harrisii_121` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1549,7 +1591,7 @@ CREATE TABLE `peptide_align_feature_sarcophilus_harrisii_121` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_sorex_araneus_55` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1572,7 +1614,7 @@ CREATE TABLE `peptide_align_feature_sorex_araneus_55` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_sus_scrofa_132` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1595,7 +1637,7 @@ CREATE TABLE `peptide_align_feature_sus_scrofa_132` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_taeniopygia_guttata_87` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1618,7 +1660,7 @@ CREATE TABLE `peptide_align_feature_taeniopygia_guttata_87` (
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`),
   KEY `hmember_hit` (`hmember_id`,`hit_rank`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_takifugu_rubripes_4` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1641,7 +1683,7 @@ CREATE TABLE `peptide_align_feature_takifugu_rubripes_4` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_tarsius_syrichta_82` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1664,7 +1706,7 @@ CREATE TABLE `peptide_align_feature_tarsius_syrichta_82` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_tetraodon_nigroviridis_65` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1687,7 +1729,7 @@ CREATE TABLE `peptide_align_feature_tetraodon_nigroviridis_65` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_tupaia_belangeri_48` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1710,7 +1752,7 @@ CREATE TABLE `peptide_align_feature_tupaia_belangeri_48` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_tursiops_truncatus_80` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1733,7 +1775,7 @@ CREATE TABLE `peptide_align_feature_tursiops_truncatus_80` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_vicugna_pacos_84` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1756,7 +1798,7 @@ CREATE TABLE `peptide_align_feature_vicugna_pacos_84` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `peptide_align_feature_xenopus_tropicalis_116` (
   `peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1779,23 +1821,7 @@ CREATE TABLE `peptide_align_feature_xenopus_tropicalis_116` (
   `hit_rank` int(10) DEFAULT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM   MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
-
-CREATE TABLE `protein_tree_hmmprofile` (
-  `node_id` int(10) unsigned NOT NULL,
-  `type` varchar(40) NOT NULL DEFAULT '',
-  `hmmprofile` mediumtext,
-  UNIQUE KEY `type_node_id` (`type`,`node_id`),
-  KEY `node_id` (`node_id`)
-) ENGINE=MyISAM ;
-
-CREATE TABLE `protein_tree_member_score` (
-  `node_id` int(10) unsigned NOT NULL,
-  `member_id` int(10) unsigned NOT NULL,
-  `cigar_line` mediumtext,
-  UNIQUE KEY `node_id` (`node_id`),
-  KEY `member_id` (`member_id`)
-) ENGINE=MyISAM ;
+) ENGINE=MyISAM  MAX_ROWS=300000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `sequence` (
   `sequence_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1803,22 +1829,6 @@ CREATE TABLE `sequence` (
   `sequence` longtext NOT NULL,
   PRIMARY KEY (`sequence_id`),
   KEY `sequence` (`sequence`(18))
-) ENGINE=MyISAM   MAX_ROWS=10000000 AVG_ROW_LENGTH=19000;
-
-CREATE TABLE `sequence_cds` (
-  `member_id` int(10) unsigned NOT NULL,
-  `length` int(10) NOT NULL,
-  `sequence_cds` longtext NOT NULL,
-  PRIMARY KEY (`member_id`),
-  KEY `sequence_cds` (`sequence_cds`(64))
-) ENGINE=MyISAM  MAX_ROWS=10000000 AVG_ROW_LENGTH=60000;
-
-CREATE TABLE `sequence_exon_bounded` (
-  `member_id` int(10) unsigned NOT NULL,
-  `length` int(10) NOT NULL,
-  `sequence_exon_bounded` longtext NOT NULL,
-  PRIMARY KEY (`member_id`),
-  KEY `sequence_exon_bounded` (`sequence_exon_bounded`(18))
 ) ENGINE=MyISAM  MAX_ROWS=10000000 AVG_ROW_LENGTH=19000;
 
 CREATE TABLE `sitewise_aln` (
@@ -1853,6 +1863,37 @@ CREATE TABLE `species_set_tag` (
   UNIQUE KEY `tag_species_set_id` (`species_set_id`,`tag`)
 ) ENGINE=MyISAM ;
 
+CREATE TABLE `species_tree_node` (
+  `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int(10) unsigned DEFAULT NULL,
+  `root_id` int(10) unsigned DEFAULT NULL,
+  `left_index` int(10) NOT NULL DEFAULT '0',
+  `right_index` int(10) NOT NULL DEFAULT '0',
+  `distance_to_parent` double DEFAULT '1',
+  PRIMARY KEY (`node_id`),
+  KEY `parent_id` (`parent_id`),
+  KEY `root_id` (`root_id`,`left_index`)
+) ENGINE=MyISAM ;
+
+CREATE TABLE `species_tree_node_tag` (
+  `node_id` int(10) unsigned NOT NULL,
+  `tag` varchar(50) NOT NULL,
+  `value` mediumtext NOT NULL,
+  KEY `node_id_tag` (`node_id`,`tag`),
+  KEY `tag_node_id` (`tag`,`node_id`),
+  KEY `node_id` (`node_id`),
+  KEY `tag` (`tag`)
+) ENGINE=MyISAM ;
+
+CREATE TABLE `species_tree_root` (
+  `root_id` int(10) unsigned NOT NULL,
+  `method_link_species_set_id` int(10) unsigned NOT NULL,
+  `species_tree` mediumtext,
+  `pvalue_lim` double(5,4) DEFAULT NULL,
+  PRIMARY KEY (`root_id`),
+  KEY `method_link_species_set_id` (`method_link_species_set_id`)
+) ENGINE=MyISAM ;
+
 CREATE TABLE `stable_id_history` (
   `mapping_session_id` int(10) unsigned NOT NULL,
   `stable_id_from` varchar(40) NOT NULL DEFAULT '',
@@ -1869,7 +1910,7 @@ CREATE TABLE `subset` (
   `dump_loc` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`subset_id`),
   UNIQUE KEY `description` (`description`)
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM ;
 
 CREATE TABLE `subset_member` (
   `subset_id` int(10) unsigned NOT NULL,
