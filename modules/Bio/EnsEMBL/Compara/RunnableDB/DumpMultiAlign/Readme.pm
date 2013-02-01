@@ -233,12 +233,12 @@ sequences of practically arbitrary length. As input it takes a set of
 sequences and a phylogenetic tree. The parameters and heuristics it employs
 are highly user configurable, it is written entirely in Java and also
 requires the installation of Exonerate.
-Read more about Pecan: http://www.ebi.ac.uk/~bjp/pecan/
+Read more about Pecan: http://github.com/benedictpaten/pecan
 
 Ortheus is a probabilistic method for the inference of ancestor (a.k.a tree)
 alignments. The main contribution of Ortheus is the use of a phylogenetic
 model incorporating gaps to infer insertion and deletion events.
-Read more about Ortheus: http://www.ebi.ac.uk/~bjp/ortheus/
+Read more about Ortheus: http://github.com/benedictpaten/ortheus
 
 Alignments are grouped by $species chromosome. Each file contains up to " . $self->param('split_size') . " alignments. The file named *.others_*." . $self->param('format') . ".gz contain alignments that do not
 include any $species region. Alignments containing duplications in $species are
@@ -319,12 +319,12 @@ sequences of practically arbitrary length. As input it takes a set of
 sequences and a phylogenetic tree. The parameters and heuristics it employs 
 are highly user configurable, it is written entirely in Java and also 
 requires the installation of Exonerate. 
-Read more about Pecan: http://www.ebi.ac.uk/~bjp/pecan/
+Read more about Pecan: http://github.com/benedictpaten/pecan
 
 Ortheus is a probabilistic method for the inference of ancestor (a.k.a tree) 
 alignments. The main contribution of Ortheus is the use of a phylogenetic 
 model incorporating gaps to infer insertion and deletion events. 
-Read more about Ortheus: http://www.ebi.ac.uk/~bjp/ortheus/
+Read more about Ortheus: http://github.com/benedictpaten/ortheus 
 
 GERP scores the conservation of each position in the alignment and defines
 constrained elements based on these conservation scores.
@@ -372,7 +372,7 @@ methodology for significant numbers of sequences of practically arbitrary
 length. As input it takes a set of sequences and a phylogenetic tree. The 
 parameters and heuristics it employs are highly user configurable, it is 
 written entirely in Java and also requires the installation of Exonerate. 
-Read more about Pecan: http://www.ebi.ac.uk/~bjp/pecan/. 
+Read more about Pecan: http://github.com/benedictpaten/pecan
 
 Alignments are grouped by human chromosome. Each file contains up to " . $self->param('split_size') . "
 alignments. The file named *.others_*." . $self->param('format') . ".gz contain alignments that do 
