@@ -564,7 +564,7 @@ sub y_axis_max {
 sub packed {
     my ($self, $packed) = @_;
 
-    if($packed) {
+    if(defined $packed) {
 	$self->{'packed'} = $packed;
     }
     return $self->{'packed'};
@@ -640,10 +640,7 @@ sub _reverse_score {
 	}
     } else {
 	my @scores = split ' ', $score_str;
-	my $rev_str;
-	for (my $i = $num_scores-1; $i >= 0; $i--) {
-	    $rev_str .= $scores[$i];	
-	} 
+        $rev_str = join " ", (reverse @scores);
     }
     return $rev_str;
 }
