@@ -62,7 +62,7 @@ sub form {
     ]
   });
   
-  $self->variation_options({ consequence => 'no' }) if $variations;
+  $self->variation_options({ consequence => 'no', label => 'Highlight resequencing differences' }) if $variations;
   $self->add_form_element($general_markup_options{'line_numbering'});
   $self->add_form_element($other_markup_options{'codons_display'});
   $self->add_form_element($other_markup_options{'title_display'});
