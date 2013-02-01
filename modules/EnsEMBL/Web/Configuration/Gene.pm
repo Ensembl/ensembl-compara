@@ -53,6 +53,13 @@ sub populate_tree {
     )],
     { 'availability' => 'regulation not_patch' }
   );
+
+  $self->create_node('Expression', 'Expression',
+    [qw(
+      rnaseq_table  EnsEMBL::Web::Component::Gene::ExpressionTable
+    )],
+    { 'availability' => 'gene database:rnaseq' }
+  );
   
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
