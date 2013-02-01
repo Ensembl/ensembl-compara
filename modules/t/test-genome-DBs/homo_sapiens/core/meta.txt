@@ -1,5 +1,5 @@
 1717	1	xref.timestamp	2012-06-20 23:23:29
-1	\N	schema_version	68
+1	\N	schema_version	70
 2	\N	patch	patch_52_53_a.sql|schema_version
 3	\N	patch	patch_52_53_b.sql|external_db_type_enum
 4	\N	patch	patch_52_53_c.sql|identity_xref_rename
@@ -160,3 +160,9 @@
 1709	1	species.classification	Metazoa
 1710	1	species.classification	Opisthokonta
 1711	1	species.classification	Eukaryota
+1719	\N	patch	patch_68_69_a.sql|schema_version
+1720	\N	patch	patch_69_70_a.sql|schema_version
+1721	\N	patch	patch_69_70_b.sql|add_mapping_set_history
+1722	\N	patch	patch_69_70_c.sql|column_datatype_consistency
+1723	\N	patch	patch_69_70_d.sql|data_file_id_auto_increment
+1724	\N	patch	patch_69_70_e.sql|protein_feature_hit_description

@@ -1,4 +1,4 @@
-1	\N	schema_version	68
+1	\N	schema_version	70
 8	1	assembly.mapping	scaffold:MMUL_1|contig:MMUL_1
 1117	1	xref.timestamp	2011-05-12 11:51:30
 184	1	assembly.default	MMUL_1
@@ -215,3 +215,9 @@
 1631	1	species.classification	Opisthokonta
 1632	1	species.classification	Eukaryota
 1637	\N	patch	patch_67_68_e.sql|fix_67_68_e_xref_index
+1638	\N	patch	patch_68_69_a.sql|schema_version
+1639	\N	patch	patch_69_70_a.sql|schema_version
+1640	\N	patch	patch_69_70_b.sql|add_mapping_set_history
+1641	\N	patch	patch_69_70_c.sql|column_datatype_consistency
+1642	\N	patch	patch_69_70_d.sql|data_file_id_auto_increment
+1643	\N	patch	patch_69_70_e.sql|protein_feature_hit_description
