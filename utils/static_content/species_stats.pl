@@ -423,8 +423,11 @@ foreach my $spp (@valid_spp) {
       $b_coordsys=qq{<h3>Coordinate Systems</h3>\n<table class="ss tint species-stats">};
       my $sa = $db_adaptor->get_adaptor('slice');
       my $csa = $db_adaptor->get_adaptor('coordsystem');
+      #EG - hide some coord systems
+      my @hidden = @{ $SD->get_config($spp,'HIDDEN_COORDSYS') || [] };
       my $row_count=0;
       foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all_by_attrib('default_version') || []}){
+        next if (grep {$_ eq $cs->name} @hidden);
         my @regions = @{$sa->fetch_all($cs->name)};
         my $count_regions = scalar @regions;
       	print join ' : ', $cs->name, $cs->version , $count_regions, "\n" if ($DEBUG) ;
