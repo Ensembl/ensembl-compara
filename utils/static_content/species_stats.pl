@@ -903,9 +903,9 @@ sub regions_table {
     $start = 1 if $start < 1;
     $end = $slice->end if $end > $slice->end;
     my $seqname=$slice->seq_region_name;
-    my $seq_order=0;
-    if($seqname =~ /([0-9.]+)$/){$seq_order=$1;}
-    my $seq_link=sprintf('<span class="hidden">%06d</span><a href="/%s/Location/View?r=%s:%d-%d">%s</a>',$seq_order,$species,$slice->seq_region_name,$start,$end,$seqname);
+    my $seq_order = $seqname;
+    $seq_order =~ s/([0-9]+)/sprintf('%06d',$1)/ge;
+    my $seq_link=sprintf('<span class="hidden">%s</span><a href="/%s/Location/View?r=%s:%d-%d">%s</a>',$seq_order,$species,$slice->seq_region_name,$start,$end,$seqname);
     my $row_data = {order=>$seq_order, sequence=>$seq_link, length=>$slice->length};
     $table_row_data{$seq_order}=[] unless $table_row_data{$seq_order};
     push(@{$table_row_data{$seq_order}},$row_data);
