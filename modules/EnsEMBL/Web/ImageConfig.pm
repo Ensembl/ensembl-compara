@@ -529,7 +529,9 @@ sub load_user_tracks {
   my (%url_sources, %upload_sources);
   
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
-    next if     $self->get_node('das_' . $source->logic_name);
+    my $node = $self->get_node('das_' . $source->logic_name);
+
+    next if     $node && $node->get('node_type') eq 'track';
     next unless $source->is_on($self->{'type'});
     
     $self->add_das_tracks('user_data', $source);
