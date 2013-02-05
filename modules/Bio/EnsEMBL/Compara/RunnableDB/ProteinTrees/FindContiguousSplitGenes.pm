@@ -77,6 +77,7 @@ sub param_defaults {
             'include_ns_in_core_region'     => 1,
             'normalize_maximum_occupancy'   => 1,
             'core_region_threshold'         => .9,
+            'minimum_coverage_on_core'      => .4,
 
     };
 }
@@ -133,10 +134,13 @@ sub compute_core_region_length {
     my @is_core  = ((0) x $len);
     foreach my $member (@$proteins) {
         my $seq = uc $member->alignment_string;
+        my @is_char = ((0) x $len);
         foreach my $i (1..$len) {
             my $c = substr($seq, $i-1, 1);
-            $coverage[$i-1]++ if ($c ne '-' and ($self->param('include_ns_in_core_region') or $c ne 'N') );
+            $is_char[$i-1] = 1 if ($c ne '-' and ($self->param('include_ns_in_core_region') or $c ne 'N') );
+            $coverage[$i-1]++ if $is_char[$i-1];
         }
+        $member->{bool_chars} = \@is_char;
     }
     $self->param('protein_tree')->store_tag('core_occup', join(' ', @coverage));
 
@@ -153,6 +157,35 @@ sub compute_core_region_length {
 
     foreach my $i (1..$len) {
         $is_core[$i-1] = 1 if $coverage[$i-1] >= $max;
+    }
+
+    foreach my $member (@$proteins) {
+        my $core_cov = 0;
+        my $seq_cov  = 0;
+        my $is_char = $member->{bool_chars};
+        foreach my $i (1..$len) {
+            if ($is_char->[$i-1]) {
+                $seq_cov++;
+                $core_cov++ if $is_core[$i-1];
+            }
+        }
+        $member->store_tag('seq_length', $seq_cov);
+        $member->store_tag('core_seq_length', $core_cov);
+
+        my $aos = 0;
+        foreach my $other_member (@$proteins) {
+            next if $other_member->member_id eq $member->member_id;
+            my $other_char = $other_member->{bool_chars};
+            my $overlap = 0;
+            my $other_len = 0;
+            foreach my $i (1..$len) {
+                $overlap++ if $is_char->[$i-1] and $other_char->[$i-1];
+                $other_len++ if $other_char->[$i-1];
+            }
+            $aos += $overlap/$other_len;
+        }
+        $aos /= (scalar(@$proteins)-1);
+        $member->store_tag('aos', $aos);
     }
 }
 
