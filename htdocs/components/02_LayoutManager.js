@@ -107,7 +107,9 @@ Ensembl.LayoutManager.extend({
         if (!e.target.tagName) {
           var width = Ensembl.width;
           
-          Ensembl.setWidth(undefined, Ensembl.dynamicWidth);
+          if (Ensembl.dynamicWidth) {
+            Ensembl.setWidth(undefined, true);
+          }
           
           Ensembl.EventManager.trigger('windowResize');
           
