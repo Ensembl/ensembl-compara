@@ -898,20 +898,21 @@ sub regions_table {
   my $html = "";
   my $num_regions = scalar @$regions;
   foreach my $slice (@$regions){
+    my ($rank) = @{$slice->get_all_Attributes('karyotype_rank')};
+    next unless defined $rank;
     my $start = $slice->length/2 - 2000;
     my $end = $slice->length/2 + 2000;
     $start = 1 if $start < 1;
     $end = $slice->end if $end > $slice->end;
     my $seqname=$slice->seq_region_name;
-    my $seq_order = $seqname;
+    my $seq_order = sprintf("%s_%s\n",$rank->value,$seqname);
     $seq_order =~ s/([0-9]+)/sprintf('%06d',$1)/ge;
     my $seq_link=sprintf('<span class="hidden">%s</span><a href="/%s/Location/View?r=%s:%d-%d">%s</a>',$seq_order,$species,$slice->seq_region_name,$start,$end,$seqname);
     my $row_data = {order=>$seq_order, sequence=>$seq_link, length=>$slice->length};
     $table_row_data{$seq_order}=[] unless $table_row_data{$seq_order};
     push(@{$table_row_data{$seq_order}},$row_data);
-  # push(@{$table_rows},$row_data);
   }
-  foreach my $seq_num ( sort {$a <=> $b} keys %table_row_data){
+  foreach my $seq_num ( sort keys %table_row_data){
     push(@$table_rows, @{$table_row_data{$seq_num}});
   }
     
@@ -930,7 +931,6 @@ sub regions_table {
     {
       code=>1,
       data_table => 1,
-     #width => 'auto',
       sorting => [ 'sequence asc' ],
       exportable => 0,
       toggleable => 1,
