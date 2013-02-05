@@ -201,9 +201,7 @@ Ensembl.extend({
   updateLocation: function (r) {
     this.historyReady = true;
     
-    this.updateURL({ r: r });
-    
-    if (this.locationURL === 'search') {
+    if (this.updateURL({ r: r }) === true && this.locationURL === 'search') {
       this.setCoreParams();
       this.EventManager.trigger('hashChange', r);
     }
@@ -224,10 +222,14 @@ Ensembl.extend({
       return url;
     }
     
-    if (this.locationURL === 'hash') {
-      window.location.hash = url;
-    } else {
-      window.history.pushState({}, '', url);
+    if (window.location[this.locationURL] !== url) {
+      if (this.locationURL === 'hash') {
+        window.location.hash = url;
+      } else {
+        window.history.pushState({}, '', url);
+      }
+      
+      return true;
     }
   },
   
