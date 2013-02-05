@@ -74,9 +74,10 @@ sub param_defaults {
             'small_overlap_percentage'      => 10,      # Max %ID and %pos to define a 'small' overlap
             'max_nb_genes_small_overlap'    => 0,       # Number of genes between two genes that slightly overlap
 
-            'include_gaps_in_core_region'   => 1,
+            'include_ns_in_core_region'     => 1,
             'normalize_maximum_occupancy'   => 1,
             'core_region_threshold'         => .9,
+
     };
 }
 
@@ -134,15 +135,19 @@ sub compute_core_region_length {
         my $seq = uc $member->alignment_string;
         foreach my $i (1..$len) {
             my $c = substr($seq, $i-1, 1);
-            $coverage[$i-1]++ if ($c ne '-' and ($self->param('include_gaps_in_core_region') or $c ne 'N') );
+            $coverage[$i-1]++ if ($c ne '-' and ($self->param('include_ns_in_core_region') or $c ne 'N') );
         }
     }
+    $self->param('protein_tree')->store_tag('core_occup', join(' ', @coverage));
+
+
     my $nseq = scalar(@$proteins);
     if ($self->param('normalize_maximum_occupancy')) {
         $nseq = 0;
         foreach my $c (@coverage) {
             $nseq = $c if $c > $nseq;
         }
+        $self->param('protein_tree')->store_tag('core_max_occup', $nseq);
     }
     my $max = $nseq * $self->param('core_region_threshold');
 
