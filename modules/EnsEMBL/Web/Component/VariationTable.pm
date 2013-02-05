@@ -554,7 +554,7 @@ sub configure {
   }
 
   # If doing subtable or can't calculate consequence counts
-  if ($consequence || !exists($gene_object->__data->{'conscounts'})) {
+  if ($consequence || !exists($gene_object->__data->{'conscounts'}) || scalar @$vf_objs < 50) {
     $gene_object->store_TransformedSNPS(\@so_terms,$vf_objs); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
   }
 
