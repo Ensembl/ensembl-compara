@@ -680,7 +680,7 @@ sub add_select_all {
     }
     
     $menu->before('div', {
-      class      => 'select_all',
+      class      => 'select_all config_menu',
       inner_HTML => qq{
         <ul class="popup_menu">
           <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
