@@ -6,6 +6,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub cache_key        { return $_[0]->code eq 'cell_line' ? '' : $_[0]->SUPER::cache_key; }
 sub load_user_tracks { return $_[0]->SUPER::load_user_tracks($_[1]) unless $_[0]->code eq 'set_evidence_types'; } # Stops unwanted cache tags being added for the main page (not the component)
 
 sub init {
