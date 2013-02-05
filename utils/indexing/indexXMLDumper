@@ -165,7 +165,7 @@ foreach my $index (@indexes) {
       $single_species = 1;
       my $website = $SD->multidb->{DATABASE_WEBSITE};
       $conf->{'website'}{'name'} = $website->{'NAME'};
-      $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}", $website->{'USER'}, $website->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+      $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}", $website->{'USER'}, $website->{'PASS'}, { PrintError => 1, RaiseError => 0} );
     }
 
     else {
@@ -182,7 +182,7 @@ foreach my $index (@indexes) {
     print LOG "Starting: $index $species\n";
     while ($no_success) {
       $c++;
-      $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+      $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 1, RaiseError => 0} );
       if ( ! $conf->{'dbh'}) {
         print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}.", will retry\n";
         $no_success = 0;
@@ -2935,9 +2935,9 @@ sub dumpRegulatoryFeature {
   my $params;
 
   my $prefix = ($dbspecies =~/Mus/) ? 'ENSMUSR' : 'ENSR';
-  my $d = $conf->{'dbh'}->selectall_arrayref( 
+  my $d = $conf->{'dbh'}->selectall_arrayref(
     "select concat('$prefix', lpad(rf.stable_id, 11, 0)),
-            sr.name, rf.bound_seq_region_start, rf.bound_seq_region_end, ft.name
+            sr.name, (rf.seq_region_start - rf.bound_start_length), (rf.seq_region_end + rf.bound_end_length), ft.name
        from $dbname.regulatory_feature rf, $dbname.seq_region sr, $dbname.coord_system cs,
             $dbname.feature_type ft, $dbname.feature_set fs
       where fs.name='RegulatoryFeatures:MultiCell' and fs.feature_set_id=rf.feature_set_id and
