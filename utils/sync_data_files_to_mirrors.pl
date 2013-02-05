@@ -1,14 +1,11 @@
 #!/usr/local/bin/perl
 
 #TODO: 
-#      create symlink in datafiles for files on other volumes (datafiles_2, datafiles_3)
-#      run fdt for 3 mirrors in parallel
-#      adding time when each fdt command start
-#      There has been an error once where the previous file transfer didnt finish and got connection refused with an error coming back but then any further transfer to that specific server was hanging. The solution to this will be to use open in perl to output the fdt command in there and use while loop to continuously check the output and the fdt command if it is hanging on one specific file transfer. If it is go to the destination server and kill the fdt and restart it again.
 #      Dry run to include what mirrors are setup, 
 #      before copying files check partitions are present on the mirrors and are empty
-#      option to only rsync in case there is file updates (dry run option as well)
+#      option to only rsync in case there are file updates (1 or 2 files change, fdt is not required, just rsync based on species to all servers -  dry run option as well)
 #      moving server name and destination dir. to a configuration file
+#      There has been an error once where the previous file transfer didnt finish and got connection refused with an error coming back but then any further transfer to that specific server was hanging. The solution to this will be to use the time start for the fdt command and use while loop to continuously check the output and if it is hanging on one specific file transfer. If it is go to the destination server and kill the fdt and restart it again. Might have been one off.
 
 use strict;
 
@@ -18,6 +15,8 @@ use File::Spec;
 use File::Path     qw(mkpath);
 use FindBin        qw($Bin);
 use Getopt::Long;
+use IO::Select;
+use POSIX qw(strftime);
 
 BEGIN {
   local $SIG{'__WARN__'} = sub { my $str = "@_"; print STDERR @_ unless $str =~ /Retrieving conf/; };
@@ -41,14 +40,15 @@ my $delete     = 0;
 my $dryrun     = 0;
 my $level      = 0;
 
-#my %ips         = (
-#    test  => 'ec2-23-22-173-8.compute-1.amazonaws.com'
-#);
-my %ips        = (
-  useast => 'ec2-23-20-142-217.compute-1.amazonaws.com',
-  uswest => 'ec2-184-169-223-224.us-west-1.compute.amazonaws.com',
-  asia   => 'ec2-54-251-84-118.ap-southeast-1.compute.amazonaws.com'
+my %ips         = (
+    useast  => 'ec2-23-22-173-8.compute-1.amazonaws.com',
+    asia    => 'ec2-54-251-95-197.ap-southeast-1.compute.amazonaws.com'
 );
+#my %ips        = (
+#  useast => 'ec2-23-20-142-217.compute-1.amazonaws.com',
+#  uswest => 'ec2-184-169-223-224.us-west-1.compute.amazonaws.com',
+#  asia   => 'ec2-54-251-84-118.ap-southeast-1.compute.amazonaws.com'
+#);
 
 my ($servers, $species_set, %targets, %hash);
 
@@ -61,20 +61,26 @@ GetOptions(
 );
 
 #my $rsync   = sprintf 'rsync -havu%s%s --no-group --no-perms', $dryrun ? 'n' : 'W', $delete ? ' --delete' : '';
-my @servers = $servers ? grep exists $ips{$_}, split ',', $servers :qw(useast uswest asia); #qw(test); #qw(useast uswest asia);
+my @servers = $servers ? grep exists $ips{$_}, split ',', $servers :qw(useast asia); #qw(useast uswest asia);
 my %species = map { $_ => 1 } $species_set ? map $sd->valid_species($sd->species_full_name(lc) || ucfirst), split ',', $species_set : @$SiteDefs::ENSEMBL_DATASETS;
 my $clean   = !$level++ && $delete && scalar keys %species == 1;
-
 die sprintf "Valid servers are:\n\t%s\n", join "\n\t", sort keys %ips                    unless @servers;
 die sprintf "Valid species are:\n\t%s\n", join "\n\t", sort @$SiteDefs::ENSEMBL_DATASETS unless keys %species;
 
 set_targets(); #create hash of files that needs to be copied across
-open(STDERR, "> fdt_output.txt") || die "Can't create file:$!\n" if(!$dryrun);
+
+#creating file handle for the output file for each mirrors
+open(FH_USEAST, "> fdt_output_useast.txt") || die "Can't create file:$!\n" if(!$dryrun);
+open(FH_USWEST, "> fdt_output_uswest.txt") || die "Can't create file:$!\n" if(!$dryrun);
+open(FH_ASIA,   "> fdt_output_asia.txt")   || die "Can't create file:$!\n" if(!$dryrun);
 
 if (scalar @servers >= 1) {
-  my @process_list;
- 
-  delete_unused($servers) if $delete;
+   
+   # preparing keys for ssh
+   my @keys=qw(e59-asia.pem ensweb-key uswest-web);
+   my $keyline = join("; ",'eval `ssh-agent -s`',(map { "ssh-add ~/.ssh/$_" } @keys),'');
+   my $kp = join(" ",map { "-i ~/.ssh/$_" } @keys);
+
 #use Data::Dumper;warn Dumper(%hash);  
   my $size_check;
   my $partition_number = 1;
@@ -82,6 +88,7 @@ if (scalar @servers >= 1) {
 
   #Sorting species based on the total files size, bigger at the top and smaller at the bottom. 
   foreach my $species_size(sort{$hash{$a} <=> $hash{$b}} keys %hash) {
+    my %commands;
     $print_counter++;
     $size_check += $hash{$species_size};
 
@@ -89,6 +96,10 @@ if (scalar @servers >= 1) {
     if($size_check >= 1048000000000) {
       $size_check = 0; #reset counter
       $partition_number++; #increment partition_number to reflect the new partition where files have to go to.      
+      
+      #if we have more than 1 partition, we need to create symlink in /exports/datafiles for the species in the other partitions
+      my $symlink_command = "ln -s /nfs/ensnfs-live_$partition_number/".lc($species_size)." ".lc($species_size);
+      $commands{"symlink_command"} = $symlink_command;
     }
 
     #accessing each species files and copying the files to the partition using fdt
@@ -101,34 +112,91 @@ if (scalar @servers >= 1) {
 
         if(!$dryrun) {
           #do the fdt here
-          my $fdt_command = "/software/bin/java -jar ~/fdt.jar -N -r -P 150 -c $ips{$remote_server} -d $_ $file_list 2>&1";
-          print(STDERR "$fdt_command \n") if(!$dryrun);
-#warn "\n$fdt_command \n\n";
-          my $fdt_output = `$fdt_command`;# if($file_list =~ /H1ESC_5mC_Lister2009_PMID19829295/);
-          print(STDERR "$fdt_output \n") if(!$dryrun);
+           my $fdt_command = "/software/bin/java -jar ~/fdt.jar -N -r -P 150 -c $ips{$remote_server} -d $_ $file_list";
+           $commands{"fdt_$remote_server"} = $fdt_command;
 
-          print "ERROR!!! FDT is not running on the destination server.... \n\n" if($fdt_output =~ /Connection refused/);
-          print "ERROR IN TRANSFERRING FILES FOR $species_size!!!!\n$fdt_command \n\n" if($fdt_output =~ /Exit Status: Not OK/); 
- 
-          # if successful transfer do rsync to update timestamp 
-          if($fdt_output =~ /Exit Status: OK/) {
-            print "\n $ips{$remote_server}: Successful transfer of files for $species_size \n";
-            print "Running dry rsync to update timestamp \n";
-            my $rsync_command = "rsync -aWv $file_list $ips{$remote_server}:$_ 2>&1";
-            print(STDERR "$rsync_command \n\n\n") if(!$dryrun);
-            my $rsync_output = `$rsync_command`;            
+           my $rsync_command = "rsync -aWv $file_list $ips{$remote_server}:$_ 2>&1";
+           $commands{"rsync_$remote_server"} = $rsync_command;
+
+           if($commands{"symlink_command"}) {
+             print "\n$remote_server: Creating symlink [$commands{symlink_command}]";
+             my $ssh_command = "ssh -o StrictHostKeyChecking=no $kp $ips{$remote_server} 'cd /exports/datafiles; $commands{symlink_command}'";
+             my $ssh_out = `$ssh_command`;             
+           }
+          
+           my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
+           print "\n$remote_server($now_string): Starting file transfer for $species_size \n" if(!$dryrun);
+
+           print(FH_USEAST "$fdt_command \n") if(!$dryrun && $remote_server eq 'useast');
+           print(FH_USWEST "$fdt_command \n") if(!$dryrun && $remote_server eq 'uswest');
+           print(FH_ASIA "$fdt_command \n") if(!$dryrun && $remote_server eq 'asia');
+        }
+      
+      } #end of for loop for generating command for sending files to each server
+
+#use Data::Dumper;warn Dumper(%commands);
+      # Transferring the files to all 3 servers at the same tiem 
+      my $read_set = IO::Select->new;
+      my %fhs;
+      foreach my $k (keys %commands) {
+        if($k =~ /fdt_/) {     #only run fdt command
+          open(my $fd,"$commands{$k} 2>&1 |") or die;
+          $fhs{fileno($fd)} = $k;
+          $fhs{fileno($fd)} =~ s/fdt_//;
+          $read_set->add($fd);
+        }
+      }
+
+      #reading output line from running parallel command above
+      while($read_set->count()) {
+        my ($got_set) = IO::Select->select($read_set,undef,undef,0);
+        foreach my $got (@$got_set) {
+          # Some data available on file descriptor $got
+          my $line = <$got>;
+          my $mirror_server = $fhs{fileno($got)}; #which server is the output from
+
+          unless($line) {
+            # This gets called when a command finishes 
+            # close all output file first
+            close (FH_USEAST) if(!$dryrun && $mirror_server eq 'useast');
+            close (FH_USWEST) if(!$dryrun && $mirror_server eq 'uswest');
+            close (FH_ASIA) if(!$dryrun && $mirror_server eq 'asia');
+
+            $read_set->remove($got);
+            next;
+          }
+
+          # This is a line from a command
+          print(FH_USEAST $line) if ($mirror_server eq 'useast');
+          print(FH_USWEST $line) if ($mirror_server eq 'uswest');
+          print(FH_ASIA $line)   if ($mirror_server eq 'asia');
+
+          if($line =~ /Connection refused/) {
+            print "ERROR!!! FDT is not running on the destination server.... Stopping script, restart fdt on the server and run script again!!!\n\n";
+            exit;
+          }
+          print "ERROR IN TRANSFERRING FILES FOR $species_size!!!!\n$commands{$fhs{fileno($got)}} \n\n" if($line =~ /Exit Status: Not OK/);
+          if($line =~ /Exit Status: OK/) {
+            my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
+            print "\n$mirror_server($now_string): Successful transfer of files for $species_size \n";
+            print "$mirror_server: Running dry rsync to update timestamp \n";
+            print(FH_USEAST "$commands{\"rsync_$mirror_server\"} \n\n\n") if(!$dryrun && $mirror_server eq 'useast');
+            print(FH_USWEST "$commands{\"rsync_$mirror_server\"} \n\n\n") if(!$dryrun && $mirror_server eq 'uswest');
+            print(FH_ASIA "$commands{\"rsync_$mirror_server\"} \n\n\n") if(!$dryrun && $mirror_server eq 'asia');
+            
+            my $rsync_output = `$commands{"rsync_$mirror_server"}`;
+
           }
           
         }
+      } #end of while loop for reading output line
+
       
-      } #end of for loop for sending files to each server
+    } # end of for loop for accessing each species
 
-    }
+  } #end of for loop for species_size, sorting file based on size
 
-  } #end of for loop for sorting file based on size
-
-close (STDERR) if(!$dryrun);
-}
+} # end of if scalar @servers
 
 sub set_targets {
   Bio::EnsEMBL::DBSQL::DataFileAdaptor->global_base_path($SiteDefs::DATAFILE_BASE_PATH);
