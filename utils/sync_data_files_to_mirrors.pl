@@ -1,11 +1,10 @@
 #!/usr/local/bin/perl
 
 #TODO: 
-#      Dry run to include what mirrors are setup, 
-#      before copying files check partitions are present on the mirrors and are empty
+#      before copying files check partitions are present on the mirrors
 #      option to only rsync in case there are file updates (1 or 2 files change, fdt is not required, just rsync based on species to all servers -  dry run option as well)
 #      moving server name and destination dir. to a configuration file
-#      There has been an error once where the previous file transfer didnt finish and got connection refused with an error coming back but then any further transfer to that specific server was hanging. The solution to this will be to use the time start for the fdt command and use while loop to continuously check the output and if it is hanging on one specific file transfer. If it is go to the destination server and kill the fdt and restart it again. Might have been one off.
+#      There was an error once where the previous file transfer didnt finish and got connection refused with an error coming back but then any further transfer to that specific server was hanging. The solution to this will be to use the time start for the fdt command and use while loop to continuously check the output and if it is hanging on one specific file transfer. If it is go to the destination server and kill the fdt and restart it again. Might have been one off.
 
 use strict;
 
@@ -40,15 +39,15 @@ my $delete     = 0;
 my $dryrun     = 0;
 my $level      = 0;
 
-my %ips         = (
-    useast  => 'ec2-23-22-173-8.compute-1.amazonaws.com',
-    asia    => 'ec2-54-251-95-197.ap-southeast-1.compute.amazonaws.com'
-);
-#my %ips        = (
-#  useast => 'ec2-23-20-142-217.compute-1.amazonaws.com',
-#  uswest => 'ec2-184-169-223-224.us-west-1.compute.amazonaws.com',
-#  asia   => 'ec2-54-251-84-118.ap-southeast-1.compute.amazonaws.com'
+#my %ips         = (
+#    useast  => 'ec2-23-22-173-8.compute-1.amazonaws.com',
+#    asia    => 'ec2-54-251-95-197.ap-southeast-1.compute.amazonaws.com'
 #);
+my %ips        = (
+  useast => 'ec2-23-20-142-217.compute-1.amazonaws.com',
+  uswest => 'ec2-184-169-223-224.us-west-1.compute.amazonaws.com',
+  asia   => 'ec2-54-251-84-118.ap-southeast-1.compute.amazonaws.com'
+);
 
 my ($servers, $species_set, %targets, %hash);
 
