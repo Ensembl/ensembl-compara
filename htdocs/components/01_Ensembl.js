@@ -35,7 +35,7 @@ Ensembl.extend({
     if (this.dynamicWidth && !window.name.match(/^popup_/)) {
       var width = this.imageWidth();
       
-      if (this.width !== width) {
+      if (width > 0 && this.width !== width) {
         this.width = width;
         this.cookie.set('ENSEMBL_WIDTH', width);
       }
