@@ -73,6 +73,10 @@ sub param_defaults {
             'max_dist_small_overlap'        => 500000,  # Max distance between genes that slightly overlap
             'small_overlap_percentage'      => 10,      # Max %ID and %pos to define a 'small' overlap
             'max_nb_genes_small_overlap'    => 0,       # Number of genes between two genes that slightly overlap
+
+            'include_gaps_in_core_region'   => 1,
+            'normalize_maximum_occupancy'   => 1,
+            'core_region_threshold'         => .9,
     };
 }
 
@@ -93,6 +97,7 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
+    $self->compute_core_region_length;
     $self->check_for_split_genes
 }
 
@@ -117,6 +122,34 @@ sub post_cleanup {
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
+
+sub compute_core_region_length {
+    my $self = shift;
+    my $proteins = $self->param('protein_tree')->get_all_Members;
+
+    my $len = length($proteins->[0]->alignment_string);
+    my @coverage = ((0) x $len);
+    my @is_core  = ((0) x $len);
+    foreach my $member (@$proteins) {
+        my $seq = uc $member->alignment_string;
+        foreach my $i (1..$len) {
+            my $c = substr($seq, $i-1, 1);
+            $coverage[$i-1]++ if ($c ne '-' and ($self->param('include_gaps_in_core_region') or $c ne 'N') );
+        }
+    }
+    my $nseq = scalar(@$proteins);
+    if ($self->param('normalize_maximum_occupancy')) {
+        $nseq = 0;
+        foreach my $c (@coverage) {
+            $nseq = $c if $c > $nseq;
+        }
+    }
+    my $max = $nseq * $self->param('core_region_threshold');
+
+    foreach my $i (1..$len) {
+        $is_core[$i-1] = 1 if $coverage[$i-1] >= $max;
+    }
+}
 
 
 sub check_for_split_genes {
