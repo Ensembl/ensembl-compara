@@ -84,14 +84,15 @@ sub new {
 }
 
 sub initialize {
-  my $self    = shift;
-  my $class   = ref $self;
-  my $species = $self->species;
-  my $code    = $self->code;
-  my $cache   = $self->hub->cache;
+  my $self      = shift;
+  my $class     = ref $self;
+  my $species   = $self->species;
+  my $code      = $self->code;
+  my $cache     = $self->hub->cache;
+  my $cache_key = $self->cache_key;
   
   # Check memcached for defaults
-  if (my $defaults = $cache ? $cache->get("::${class}::${species}::$code") : undef) {
+  if (my $defaults = $cache && $cache_key ? $cache->get($cache_key) : undef) {
     my $user_data = $self->tree->user_data;
     
     $self->{$_} = $defaults->{$_} for keys %$defaults;
@@ -101,7 +102,7 @@ sub initialize {
     $self->init;
     $self->modify;
     
-    if ($cache) {
+    if ($cache && $cache_key) {
       $self->tree->hide_user_data;
       
       my $defaults = {
@@ -110,7 +111,7 @@ sub initialize {
         extra_menus => $self->{'extra_menus'},
       };
       
-      $cache->set("::${class}::${species}::$code", $defaults, undef, 'IMAGE_CONFIG', $species);
+      $cache->set($cache_key, $defaults, undef, 'IMAGE_CONFIG', $species);
       $self->tree->reveal_user_data;
     }
   }
@@ -224,6 +225,7 @@ sub transform           { return $_[0]->{'transform'};                          
 sub tree                { return $_[0]->{'_tree'};                                             }
 sub species             { return $_[0]->{'species'};                                           }
 sub multi_species       { return 0;                                                            }
+sub cache_key           { return join '::', '', ref $_[0], $_[0]->species, $_[0]->code;        }
 sub bgcolor             { return $_[0]->get_parameter('bgcolor') || 'background1';             }
 sub bgcolour            { return $_[0]->bgcolor;                                               }
 sub get_node            { return shift->tree->get_node(@_);                                    }
