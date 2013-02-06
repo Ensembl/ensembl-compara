@@ -51,7 +51,7 @@ Ensembl.Share = {
     $.ajax({
       url: url,
       dataType: 'json',
-      data: { species: JSON.stringify(this.shareOptions.species) },
+      data: { species: JSON.stringify(this.shareOptions.species), hash: window.location.hash.replace('#', '') },
       success: function (json) {
         clearTimeout(panel.shareTimeout);
         

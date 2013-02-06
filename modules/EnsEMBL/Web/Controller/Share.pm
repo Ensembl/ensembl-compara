@@ -107,8 +107,10 @@ sub create {
   my $species      = from_json($hub->param('species'));
   my $species_defs = $hub->species_defs;
   my $version      = $species_defs->ENSEMBL_VERSION;
+  my $hash         = $hub->param('hash');
   my $url          = $referer->{'absolute_url'};
      $url          =~ s/www(\.ensembl\.org)/e$version$1/; # filthy hack to force correct site version usage for live ensembl website
+     $url         .= "#$hash" if $hash && $url !~ /#$hash/;
   my $data         = {};
   
   foreach my $view_config (@view_configs) {
