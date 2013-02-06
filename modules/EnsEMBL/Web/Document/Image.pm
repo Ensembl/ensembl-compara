@@ -66,7 +66,7 @@ sub render_toolbar {
 
   return unless $icon_mapping;
 
-  my ($toolbar, $export, $top, $bottom);
+  my ($toolbar, $export, $top, $bottom, $image_resize, $image_sizes);
   my $hub       = $self->hub;
   my $component = $self->component;
   
@@ -80,7 +80,27 @@ sub render_toolbar {
     $toolbar .= qq{<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>} if $self->{'image_configs'}[0]->get_node('user_data');
     $toolbar .= qq{<a href="$share_url" class="share popup" title="$icon_mapping->{'share'}{'title'}"></a>};
   }
-  
+  ## Increase/decrease image size icon  
+  if (grep $_->image_resize, @{$self->{'image_configs'}}) {
+    my $resize_url = $hub->url;
+    
+    # add best fit option
+    $image_sizes .= qq{<div><a href="$resize_url" class="image_resize"><div>Best Fit</div></a></div>};
+    
+    # get current image_width and provide size of +- 100 three times    
+    for (my $counter = ($self->image_width-300);$counter <= ($self->image_width+300); $counter+=100) {      
+      my $selected_size = 'class="current"' if($counter eq $self->image_width);      
+      $image_sizes .= qq{<div><a href="$resize_url" class="image_resize"><div $selected_size>$counter px</div></a></div>};
+    }
+    
+    $image_resize = qq{
+       <div class="toggle image_resize_menu">
+          <div class="header">Resize image to:</div>
+          $image_sizes    
+       </div>    
+    };    
+    $toolbar   .= qq{<a href="$resize_url" class="resize popup" title="Resize this image"></a>};    
+  }  
   ## Image export popup menu
   if ($self->{'export'}) {
     my @formats = (
@@ -132,7 +152,7 @@ sub render_toolbar {
     }
     
     $export = qq{
-      <div class="iexport_menu">
+      <div class="toggle iexport_menu">
         <div class="header">Export as:</div>
         $export
       </div>
@@ -142,7 +162,7 @@ sub render_toolbar {
   }
 
   if ($toolbar) {
-    $top    = $self->toolbars->{'top'}                       ? sprintf '<div class="image_toolbar top print_hide">%s</div>%s',    $toolbar, $export             : '';
+    $top    = $self->toolbars->{'top'}                       ? sprintf '<div class="image_toolbar top print_hide">%s</div>%s%s',  $toolbar, $export, $image_resize  : '';
     $bottom = ($self->toolbars->{'bottom'} || $height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $export : '';
   }
 
