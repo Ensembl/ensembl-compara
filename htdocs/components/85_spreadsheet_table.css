@@ -12,14 +12,14 @@ table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; }
 table.tint tr.bg2       { background-color: [[TINT_BG]];    }
 table.ss   tr.highlight { background-color: [[HIGHLIGHT2]];   }
 
-table.fixed         { table-layout: fixed; }
+table.fixed            { table-layout: fixed; }
 table.fixed th.wrap,
-table.fixed td.wrap { word-wrap: break-word; word-break: break-all; padding-left: 10px; padding-right: 10px; }
+table.fixed td.wrap    { word-wrap: break-word; word-break: break-all; padding-left: 10px; padding-right: 10px; }
 body.ie table.fixed,
 body.ienew table.fixed { table-layout: auto; }
 
 table.padded-cell td,
-table.padded-cell th    { padding: 8px; }
+table.padded-cell th   { padding: 8px; }
  
 table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
@@ -33,8 +33,8 @@ table.toggle_table th div            { padding: 0; }
 
 .dataTables_top,
 .dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
-.dataTables_top    { border-bottom: 0; height: auto;}
-.dataTables_bottom { border-top: 0; height: auto;}
+.dataTables_top    { border-bottom: 0; }
+.dataTables_bottom { border-top: 0; }
 
 .dataTables_info     { float: left; line-height: 20px; }
 .dataTables_length   { float: left; width: 33%; }
@@ -64,9 +64,7 @@ body.ie6 .dataTables_filter input { height: 20px; }
 .dataTables_export .floating_popup a { display: block; padding: 0 2px 3px }
 
 .col_toggle              { float: left; width: 34%; text-align: center; color: [[PAGE_TEXT]]; }
-.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; 
-                           border: 2px outset [[TINT_BG]]; 
-                            width: 125px; padding: 1px 5px; margin: auto; }
+.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; width: 125px; padding: 1px 5px; margin: auto; }
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; text-align: center; }
 .col_toggle ul           { border: 1px solid; border-top: 0; margin: 3px 0 0 -8px; padding: 0; display: none; width: auto; min-width: 137px; }
@@ -94,7 +92,7 @@ div.up_arrow   { width: 0; height: 0; border-left: 8px solid transparent; border
 div.down_arrow { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top:    15px solid red;   }
 div.no_arrow   { width: 15px; height: 15px; background: grey; }
 
-div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 50px; color: white; text-align:center; }
+div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 50px; color: white; text-align: center; }
 div.score_good    { background: green;  }
 div.score_ok      { background: orange; }
 div.score_bad     { background: red;    }
