@@ -161,8 +161,8 @@ sub render_toolbar {
   }
 
   if ($toolbar) {
-    $top    = $self->toolbars->{'top'}                       ? sprintf '<div class="image_toolbar top print_hide">%s</div>%s%s',  $toolbar, $export, $image_resize  : '';
-    $bottom = ($self->toolbars->{'bottom'} || $height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $export : '';
+    $top    = $self->toolbars->{'top'} ? qq{<div class="image_toolbar top print_hide">$toolbar</div>$export$image_resize} : '';
+    $bottom = ($self->toolbars->{'bottom'} || $height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : "$export$image_resize" : '';
   }
 
   return ($top, $bottom);
