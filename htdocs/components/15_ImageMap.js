@@ -37,6 +37,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.imageConfig      = $('input.image_config', this.el).val();
     this.lastImage        = Ensembl.images.total > 1 && this.el.parents('.image_panel')[0] === Ensembl.images.last;
     this.hashChangeReload = this.lastImage || $('.hash_change_reload', this.el).length;
+    this.zMenus           = {};
     
     this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
     
@@ -128,8 +129,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   getContent: function () {
-    this.elLk.exportMenu.add(this.elLk.hoverLabels).remove();
-    this.elLk.resizeMenu.add(this.elLk.hoverLabels).remove();
+    this.elLk.exportMenu.add(this.elLk.hoverLabels).add(this.elLk.resizeMenu).remove();
+    
+    for (var id in this.zMenus) {
+      Ensembl.EventManager.trigger('destroyPanel', id);
+    }
+    
     this.removeShare();
     this.base.apply(this, arguments);
   },
@@ -606,6 +611,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     Ensembl.EventManager.trigger('makeZMenu', id, { position: { left: e.pageX, top: e.pageY }, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false });
+    
+    this.zMenus[id] = 1;
   },
   
   /**
