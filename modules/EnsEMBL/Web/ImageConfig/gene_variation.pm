@@ -27,6 +27,7 @@ sub init {
   ));
   
   $self->load_tracks;
+  $self->image_resize = 1;
   
   $self->get_node('transcript')->set('caption', 'Other genes');
   

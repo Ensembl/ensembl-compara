@@ -24,6 +24,7 @@ sub init {
   );
   
   $self->storable = 0;
+  $self->image_resize = 1;
   $self->{extra_menus} = {'display_options' => 1};
 }
 

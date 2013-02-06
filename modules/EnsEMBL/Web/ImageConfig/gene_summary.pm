@@ -26,6 +26,7 @@ sub init {
     other
     information
   ));
+  $self->image_resize = 1;
 
   $self->add_tracks('other',    
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],

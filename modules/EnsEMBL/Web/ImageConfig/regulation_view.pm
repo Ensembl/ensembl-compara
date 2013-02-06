@@ -39,6 +39,7 @@ sub init {
   
   $self->load_tracks;
   $self->load_configured_das('functional');
+  $self->image_resize = 1;
   
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r' }]

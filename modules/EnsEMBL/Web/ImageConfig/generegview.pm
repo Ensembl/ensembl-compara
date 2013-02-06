@@ -23,6 +23,7 @@ sub init {
   ));
 
   $self->load_tracks;
+  $self->image_resize = 1;
  
   $self->add_tracks('other',
     [ 'ruler',     '',  'ruler',     { display => 'normal', strand => 'r', name => 'Ruler', description => 'Shows the length of the region being displayed' }],

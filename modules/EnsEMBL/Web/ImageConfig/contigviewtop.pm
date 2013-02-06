@@ -33,6 +33,7 @@ sub init {
   $self->add_track('information', 'info',   'Information', 'text',            { display => 'normal'                });
   
   $self->load_tracks;
+  $self->image_resize = 1;
 
   $self->modify_configs([ 'transcript', 'misc_feature_lrg' ], { render => 'gene_label', strand => 'r' });
   $self->modify_configs([ 'variation', 'somatic' ],           { display => 'off', menu => 'no'        });

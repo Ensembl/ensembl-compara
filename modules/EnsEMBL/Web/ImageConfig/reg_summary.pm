@@ -40,6 +40,7 @@ sub init {
   
   $self->load_tracks;
   $self->load_configured_das;
+  $self->image_resize = 1;
   
   $self->modify_configs(
     [ 'regulatory_features', 'functional_other_regulatory_regions' ],

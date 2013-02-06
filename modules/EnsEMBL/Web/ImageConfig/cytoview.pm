@@ -51,6 +51,7 @@ sub init {
 
   $self->load_tracks;
   $self->load_configured_das({ strand => 'r' });
+  $self->image_resize = 1;
   
   $self->modify_configs(
     [ 'transcript' ],
