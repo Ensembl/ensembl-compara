@@ -5,8 +5,9 @@ package EnsEMBL::Web::Document::Table;
 use strict;
 
 use JSON qw(from_json to_json);
-use Sanger::Graphics::ColourMap;
 use Scalar::Util qw(looks_like_number);
+
+use Sanger::Graphics::ColourMap;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -27,8 +28,10 @@ sub new {
   };
   
   bless $self, $class;
-  $self->preprocess_widths();
-  $self->preprocess_hyphens();
+  
+  $self->preprocess_widths;
+  $self->preprocess_hyphens;
+  
   return $self;
 }
 
@@ -41,70 +44,77 @@ sub filename   :lvalue { $_[0]{'filename'};   }
 sub has_rows { return ! !@{$_[0]{'rows'}}; }
 
 sub preprocess_widths {
-  my ($self) = @_;
-  
+  my $self           = shift;
   my $perc_remaining = 100;
-  my $units_used = 0;
+  my $units_used     = 0;
   my @unitcols;
+  
   foreach my $column (@{$self->{'columns'}}) {
-          local $_ = $column->{'width'};
-          my $units = -1;
-          if(/(\d+)%/) {
-                  $perc_remaining -= $1;
-          } elsif(/(\d+)px/) {
-                  return;
-          } elsif(/(\d+)u/) {
-                  $units_used += $1;
-                  push @unitcols,{ units => $1, column => $column, percent => 0 };
-          }
+    local $_  = $column->{'width'};
+    my $units = -1;
+    
+    if (/(\d+)%/) {
+      $perc_remaining -= $1;
+    } elsif (/(\d+)px/) {
+      return;
+    } elsif (/(\d+)u/) {
+      $units_used += $1;
+      push @unitcols, { units => $1, column => $column, percent => 0 };
+    }
   }
+  
   return unless $units_used;
+  
   # careful alg. to avoid 99%, 101% tables due to rounding.
   my $perc_per_unit = $perc_remaining / $units_used;
-  my $total = -0.5; # correct for rounding bias
+  my $total         = -0.5; # correct for rounding bias
+  
   foreach (@unitcols) {
-          $_->{'total'} = $_->{'units'}*$perc_per_unit + $total;
-          $total += $_->{'units'}*$perc_per_unit;
+    $_->{'total'} = $_->{'units'}*$perc_per_unit + $total;
+    $total       += $_->{'units'}*$perc_per_unit;
   }
+  
   my $col = 0;
-  for(my $i=0;$i<$perc_remaining;$i++) {
-          $col++ if($i>$unitcols[$col]->{'total'} && $col < @unitcols);
-          $unitcols[$col]->{'percent'}++;
-  }       
-  $_->{'column'}->{'width'} = $_->{'percent'}."%" for (@unitcols);
+  
+  for (my $i = 0; $i < $perc_remaining; $i++) {
+    $col++ if $i > $unitcols[$col]->{'total'} && $col < @unitcols;
+    $unitcols[$col]->{'percent'}++;
+  }
+  
+  $_->{'column'}{'width'} = "$_->{'percent'}%" for @unitcols;
 }
 
 # \f -- optional hyphenation point
 # \v -- optional break point (no hyphen)
 sub hyphenate {
-  my ($self,$data,$key) = @_;
+  my ($self, $data, $key) = @_;
 
   return unless exists $data->{$key};
-  my $any = ($data->{$key} =~ s/\f/&shy;/g or 
-             $data->{$key} =~ s/\v/&#8203;/g   );
+  
+  my $any = ($data->{$key} =~ s/\f/&shy;/g || $data->{$key} =~ s/\v/&#8203;/g);
+  
   return $any;
 }
 
 sub preprocess_hyphens {
-  my ($self) = @_;
+  my $self = shift;
 
-  foreach my $c (@{$self->{'columns'}}) {
-    my $h = 0;
-    $h ||= $self->hyphenate($c,'label') if $c->{'label'};
-    $c->{'class'} .= ' hyphenated' if $h;
+  foreach (@{$self->{'columns'}}) {
+    my $h = $_->{'label'} ? $self->hyphenate($_, 'label') : 0;
+    $_->{'class'} .= ' hyphenated' if $h;
   }
 }
 
 sub export_options {
-  my $self = shift;
-
-  my @options;
+  my $self  = shift;
   my $index = -1;
-  foreach my $column (@{$self->{'columns'}}) {
+  my @options;
+  
+  foreach (@{$self->{'columns'}}) {
     $index++;
-    next unless defined $column->{'export_options'};
-    $options[$index] = $column->{'export_options'};
+    $options[$index] = $_->{'export_options'} if defined $_->{'export_options'};
   }
+  
   return to_json(\@options);
 }
 
@@ -168,22 +178,21 @@ sub render {
 
   if ($options->{'header_repeat'} && !$data_table) { ## can't use both these options together
     my $repeat = $options->{'header_repeat'};
-    my $i = 1;
+    my $i      = 1;
+    
     foreach (@$body) {
       $tbody .= sprintf '<tr%s>%s</tr>', $_->[1], join('', @{$_->[0]});
       $tbody .= $thead unless ($i % $repeat);
       $i++;
     }
-  }
-  else { 
+  } else { 
     $tbody = join '', map { sprintf '<tr%s>%s</tr>', $_->[1], join('', @{$_->[0]}) } @$body;
   }
    
   $thead  = "<thead>$thead</thead>" if $thead;
   $tbody  = "<tbody>$tbody</tbody>" if $tbody;
-  
   $style  = join ';', @$style, "width: $width";
-
+  
   my $table = qq(
     <table$table_id class="$class" style="$style" cellpadding="$padding" cellspacing="$spacing">
       $thead
@@ -196,8 +205,8 @@ sub render {
     my $id       = $options->{'id'};
        $id       =~ s/[\W_]table//g;
     my $filename = join '-', grep $_, $id, $self->filename;
+    my $options  = sprintf '<input type="hidden" name="expopts" value="%s" />', $self->export_options;
     
-    my $options =  sprintf(qq{<input type="hidden" name='expopts' value='%s' />},$self->export_options);
     $table .= qq{
       <form class="data_table_export" action="/Ajax/table_export" method="post">
         <input type="hidden" name="filename" value="$filename" />
@@ -207,7 +216,7 @@ sub render {
     };
   }
     
-  $table .= sprintf qq{<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>}, $self->export_url if $self->export_url;
+  $table .= sprintf '<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>}', $self->export_url if $self->export_url;
   
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
   if ($data_table) {
@@ -239,6 +248,7 @@ sub _strip_outer_HTML {
   
   s/^\s*<.*?>//;
   s/<.*?>\s*$//;
+  
   return $_;
 }
 
@@ -278,7 +288,8 @@ sub render_Excel {
 sub csv_escape {
   my $self  = shift;
   my $value = $self->strip_HTML(shift);
-  $value    =~ s/"/""/g;
+     $value =~ s/"/""/g;
+  
   return $value;
 }
 
@@ -289,6 +300,7 @@ sub data_table_config {
   my $col_count = scalar @{$self->{'columns'}};
   
   return unless $code && scalar @{$self->{'rows'}} && $col_count;
+  
   my $i            = 0;
   my %columns      = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
   my $session_data = $self->session ? $self->session->get_data(type => 'data_table', code => $code) : {};
@@ -323,7 +335,7 @@ sub data_table_config {
     $config .= qq{<input type="hidden" name="$_" value="$val" />};
   }
   
-  $config .= sprintf(qq{<input type="hidden" name='expopts' value='%s' />},$self->export_options);
+  $config .= sprintf '<input type="hidden" name="expopts" value="%s" />', $self->export_options;
  
   return qq{<form class="data_table_config" action="#">$config</form>};
 }
@@ -332,14 +344,16 @@ sub process {
   my $self        = shift;
   my $columns     = $self->{'columns'};
   my @row_colours = $self->{'options'}{'data_table'} ? () : exists $self->{'options'}{'rows'} ? @{$self->{'options'}{'rows'}} : ('bg1', 'bg2');
-  my (@head, @body);
+  my $heatmap     = $self->{'options'}{'heatmap'};
+  my (@head, @body, $colourmap, @gradient);
   
-  # Allow unit style widths
-  
+  if ($heatmap) {
+    $colourmap = Sanger::Graphics::ColourMap->new;
+    @gradient  = $colourmap->build_linear_gradient(@{$heatmap->{'settings'}});
+  } 
   
   foreach my $col (@$columns) {
-    my $label = exists $col->{'label'} ? $col->{'label'} 
-                : exists $col->{'title'} ? $col->{'title'} : $col->{'key'};
+    my $label = exists $col->{'label'} ? $col->{'label'} : exists $col->{'title'} ? $col->{'title'} : $col->{'key'};
     my %style = $col->{'style'} ? ref $col->{'style'} eq 'HASH' ? %{$col->{'style'}} : map { s/(^\s+|\s+$)//g; split ':' } split ';', $col->{'style'} : ();
     
     $style{'text-align'} ||= $col->{'align'} if $col->{'align'};
@@ -347,6 +361,7 @@ sub process {
     
     $col->{'style'}  = join ';', map { join ':', $_, $style{$_} } keys %style;
     $col->{'class'} .= ($col->{'class'} ? ' ' : '') . "sort_$col->{'sort'}" if $col->{'sort'};
+    
     if ($col->{'help'}) {
       delete $col->{'title'};
       $label = qq(<span class="ht _ht" title="$col->{'help'}">$label</span>);
@@ -354,14 +369,6 @@ sub process {
     
     push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq( $_="$col->{$_}") : () } qw(id class title style colspan rowspan)), $label;
   }
-  
-  ## Heatmap styling
-  my $heatmap = $self->{'options'}{'heatmap'};
-  my ($colourmap, @gradient);
-  if ($heatmap) {
-    $colourmap = Sanger::Graphics::ColourMap->new;
-    @gradient = $colourmap->build_linear_gradient(@{$heatmap->{'settings'}});
-  } 
       
   $head[1] = ' class="ss_header"';
   
@@ -384,13 +391,14 @@ sub process {
       
       if ($heatmap && looks_like_number($cell->{'value'})) {
         my $i = abs($cell->{'value'} * $heatmap->{'settings'}[0]);
-        $style{'background-color'} = '#'.$gradient[$i];
+        
+        $style{'background-color'} = "#$gradient[$i]";
+        
         if ($heatmap->{'mode'} eq 'text') {
           my ($r, $g, $b) = $colourmap->rgb_by_hex($gradient[$i]);
           my $brightness  = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
-          $style{'color'} = $brightness > 120 ? '#000000' : '#ffffff';
-        }
-        else {
+          $style{'color'} = $brightness > 120 ? '#000000' : '#FFFFFF';
+        } else {
           $style{'color'} = 'transparent';
         }
       } 
@@ -413,15 +421,15 @@ sub add_option {
   my $key  = shift;
   
   if ($key eq 'class') {
-    $self->{'options'}->{'class'} .= ($self->{'options'}->{'class'} ? ' ' : '') . $_[0];
-  } elsif (ref $self->{'options'}->{$key} eq 'HASH') {
-    $self->{'options'}->{$key} = { %{$self->{'options'}->{$key}}, %{$_[0]} };
-  } elsif (ref $self->{'options'}->{$key} eq 'ARRAY') {
-    push @{$self->{'options'}->{$key}}, @_;
+    $self->{'options'}{'class'} .= ($self->{'options'}{'class'} ? ' ' : '') . $_[0];
+  } elsif (ref $self->{'options'}{$key} eq 'HASH') {
+    $self->{'options'}{$key} = { %{$self->{'options'}{$key}}, %{$_[0]} };
+  } elsif (ref $self->{'options'}{$key} eq 'ARRAY') {
+    push @{$self->{'options'}{$key}}, @_;
   } elsif (scalar @_ == 1) {
-    $self->{'options'}->{$key} = ref $_[0] eq 'ARRAY' ? [ $_[0] ] : $_[0];
+    $self->{'options'}{$key} = ref $_[0] eq 'ARRAY' ? [ $_[0] ] : $_[0];
   } else {
-    $self->{'options'}->{$key} = \@_;
+    $self->{'options'}{$key} = \@_;
   }
 }
 
