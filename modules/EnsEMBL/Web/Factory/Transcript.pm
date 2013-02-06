@@ -104,7 +104,7 @@ sub createObjects {
     }
     
     $self->param('t', $transcript->stable_id) unless $transcript->isa('Bio::EnsEMBL::PredictionTranscript');
-    $self->delete_param($_) for qw(transcript peptide protein exon);
+    $self->delete_param($_) for qw(transcript peptide protein);
   }
 }
 
