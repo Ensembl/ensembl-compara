@@ -39,10 +39,10 @@ sub new {
   return $self;
 }
 
-sub hub                :lvalue { $_[0]->{'hub'};       }
-sub component          :lvalue { $_[0]->{'component'}; }
+sub hub                :lvalue { $_[0]->{'hub'};                }
+sub component          :lvalue { $_[0]->{'component'};          }
 sub drawable_container :lvalue { $_[0]->{'drawable_container'}; }
-sub centred            :lvalue { $_[0]->{'centred'};   }
+sub centred            :lvalue { $_[0]->{'centred'};            }
 sub imagemap           :lvalue { $_[0]->{'imagemap'};           }
 sub button             :lvalue { $_[0]->{'button'};             }
 sub button_id          :lvalue { $_[0]->{'button_id'};          }
@@ -54,10 +54,9 @@ sub introduction       :lvalue { $_[0]->{'introduction'};       }
 sub tailnote           :lvalue { $_[0]->{'tailnote'};           }
 sub caption            :lvalue { $_[0]->{'caption'};            }
 sub format             :lvalue { $_[0]->{'format'};             }
-sub toolbars           :lvalue { $_[0]->{'toolbars'};  }
+sub toolbars           :lvalue { $_[0]->{'toolbars'};           }
 
-sub image_width { $_[0]->drawable_container->{'config'}->get_parameter('image_width'); }
-
+sub image_width  { return $_[0]->{'image_configs'}[0]->get_parameter('image_width'); }
 sub has_toolbars { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
 
 sub render_toolbar {
