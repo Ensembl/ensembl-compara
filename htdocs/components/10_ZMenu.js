@@ -266,18 +266,20 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var panel        = this;
     var min          = this.start;
     var max          = this.end;
-    var locationView = !!window.location.pathname.match(/\/Location\//);
+    var locationView = !!window.location.pathname.match('/Location/') && !window.location.pathname.match('/Chromosome');
     var scale        = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
     var url          = this.baseURL;
     var menu, caption, start, end, tmp;
     
     // Gene, transcript views
     function notLocation() {
-      url  = url.replace(/.+\?/, '?');
-      menu = [
-        '<a href="' + panel.speciesPath + '/Location/View'       + url + '">Jump to location View</a>',
-        '<a href="' + panel.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
-      ];
+      var view = end - start + 1 > Ensembl.maxRegionLength ? 'Overview' : 'View';
+          url  = url.replace(/.+\?/, '?');
+          menu = [ '<a href="' + panel.speciesPath + '/Location/' + view + url + '">Jump to location ' + view.toLowerCase() + '</a>' ];
+      
+      if (!window.location.pathname.match('/Chromosome')) {
+        menu.push('<a href="' + panel.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>');
+      }
     }
     
     // Multi species view
@@ -394,9 +396,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     // Region select
     if (this.coords.r) {
-      view  = 'Overview';
       start = Math.floor(min + (this.coords.s - this.areaCoords.t) * scale);
       end   = Math.floor(min + (this.coords.s + this.coords.r - this.areaCoords.t) * scale);
+      view  = end - start + 1 > Ensembl.maxRegionLength ? 'Overview' : 'View';
       
       if (start > end) {
         tmp   = start;
@@ -419,10 +421,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     url  = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
-    menu = [
-      '<a href="' + this.speciesPath + '/Location/' + view    + url + '">Jump to location ' + view + '</a>',
-      '<a href="' + this.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
-    ];
+    menu = [ '<a href="' + this.speciesPath + '/Location/' + view + url + '">Jump to location ' + view.toLowerCase() + '</a>' ];
+    
+    if (!window.location.pathname.match('/Chromosome')) {
+      menu.push('<a href="' + this.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>');
+    }
     
     this.buildMenu(menu, caption);
   },
