@@ -450,6 +450,7 @@ sub html_template {
   
   my $species_path        = $self->species_defs->species_path;
   my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
+  my $max_region_length   = 1000100 * ($self->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $core_params         = $self->hub ? $self->hub->core_params : {};
   my $core_params_html    = join '',   map qq(<input type="hidden" name="$_" value="$core_params->{$_}" />), keys %$core_params;
   my $html_tag            = join '',   $self->doc_type, $self->html_tag;
@@ -512,6 +513,7 @@ sub html_template {
   </form>
   <input type="hidden" id="species_path" name="species_path" value="$species_path" />
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
+  <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
   $elements->{'modal'}
   $elements->{'body_javascript'}
 </body>
