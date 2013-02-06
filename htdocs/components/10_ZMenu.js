@@ -266,7 +266,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var panel        = this;
     var min          = this.start;
     var max          = this.end;
-    var locationView = !!window.location.pathname.match('/Location/') && !window.location.pathname.match('/Chromosome');
+    var locationView = !!window.location.pathname.match('/Location/') && !window.location.pathname.match(/\/(Chromosome|Synteny)/);
     var scale        = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
     var url          = this.baseURL;
     var menu, caption, start, end, tmp;
