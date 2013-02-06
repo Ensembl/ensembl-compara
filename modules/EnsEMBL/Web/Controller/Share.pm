@@ -333,12 +333,12 @@ sub accept {
       code     => 'configuration',
       order    => 101,
       message  => sprintf('
-        <p>The URL you just used has changed the configuration for this page. You may want to:</p>
+        <p>The URL you just used has changed the configuration for this page%s. You may want to:</p>
         <p class="tool_buttons" style="width:225px">
           %s
           %s
         </p>
-      ', join('', map { sprintf $_->[0], scalar @revert > 1 ? $_->[1] : '' } @revert), $manage)
+      ', $manage ? ', and your previous configuration has been saved' : '', join('', map { sprintf $_->[0], scalar @revert > 1 ? $_->[1] : '' } @revert), $manage)
     );
   }
   
