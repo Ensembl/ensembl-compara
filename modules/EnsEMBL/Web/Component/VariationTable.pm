@@ -1,6 +1,9 @@
+# $Id$
+
 package EnsEMBL::Web::Component::VariationTable;
 
 use strict;
+
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::Component::Variation);
@@ -12,26 +15,21 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub = $self->hub;
-  my $object_type = $self->hub->type;
+  my $self             = shift;
+  my $hub              = $self->hub;
+  my $object_type      = $self->hub->type;
   my $consequence_type = $hub->param('sub_table');
-  my $table_id = $hub->param('table_id');
-  my $icontext = $hub->param('context') || 100;
-  my $sum_type = $hub->param('summary_type') || 'table';
-  my $gene_object = $self->configure($icontext, $consequence_type);
-  my ($count, $msg, $html);
-
+  my $icontext         = $hub->param('context') || 100;
+  my $sum_type         = $hub->param('summary_type') || 'table';
+  my $gene_object      = $self->configure($icontext, $consequence_type);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
-
-  if ($object_type eq 'Transcript'){
-    my @temp;
-    foreach (@transcripts){ 
-      push (@temp, $_) if $_->stable_id eq $hub->param('t');
-    }
-    @transcripts = @temp;
+  my ($count, $msg, $html);
+  
+  if ($object_type eq 'Transcript') {
+    my $t = $hub->param('t');
+    @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
- 
+  
   $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} for @transcripts;
 
   if ($icontext) {
@@ -40,9 +38,10 @@ sub content {
     } else {
       $msg = "<p>Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
     }
+    
     $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
-
   }
+  
   $msg .= qq(<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/docs/variation/predicted_data.html#consequence_type_table">More information about this table</a>.</p>);
 
   if ($consequence_type || $count < 25) {
@@ -51,7 +50,7 @@ sub content {
     my $table_rows = $self->variation_table($consequence_type, \@transcripts);
     my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
 
-    $html = $self->render_content($table, $consequence_type, $table_id);
+    $html = $self->render_content($table, $consequence_type);
   } else {
     $html  = $self->_hint('snp_table', 'Configuring the page', $msg);
     $html .= $self->render_content($sum_type eq 'tree' ? $self->tree(\@transcripts, $gene_object) : $self->stats_table(\@transcripts, $gene_object)->render); # no sub-table selected, just show stats
@@ -64,19 +63,19 @@ sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
   my $hub      = $self->hub;
   my $glossary = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
-
+  
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
-    { key => 'ID',       width => '12u', sort => 'html'                                                                                         },
-    { key => 'chr' ,     width => '10u', sort => 'position', label => 'Chr: bp'                                                                 },
-    { key => 'Alleles',  width => '16u', sort => 'string',   label => "Alle\fles",  align => 'center'                                           },
-    { key => 'class',    width => '11u', sort => 'string',   label => 'Class',      align => 'center'                                           },
-    { key => "Source",   width => '8u',  sort => 'string', label => "Sour\fce",                                                                                       },
+    { key => 'ID',       width => '12u', sort => 'html'                                                                                                                  },
+    { key => 'chr' ,     width => '10u', sort => 'position', label => 'Chr: bp'                                                                                          },
+    { key => 'Alleles',  width => '16u', sort => 'string',   label => "Alle\fles",  align => 'center'                                                                    },
+    { key => 'class',    width => '11u', sort => 'string',   label => 'Class',      align => 'center'                                                                    },
+    { key => "Source",   width => '8u',  sort => 'string',   label => "Sour\fce",                                                                                        },
     { key => 'status',   width => '6u',  sort => 'string',   label => "Val\fi\fda\ftion", align => 'center', help => $self->strip_HTML($glossary->{'Validation status'}) },
-    { key => 'snptype',  width => '12u', sort => 'string',   label => 'Type',                                                                   },
-    { key => 'aachange', width => '6u',  sort => 'string',   label => 'AA',         align => 'center', help => 'Amino Acid'                     },
-    { key => 'aacoord',  width => '6u',  sort => 'position', label => "AA co\ford",   align => 'center', help => "Amino Acid Co-ordinate"         },
+    { key => 'snptype',  width => '12u', sort => 'string',   label => 'Type',                                                                                            },
+    { key => 'aachange', width => '6u',  sort => 'string',   label => 'AA',         align => 'center', help => 'Amino Acid'                                              },
+    { key => 'aacoord',  width => '6u',  sort => 'position', label => "AA co\ford", align => 'center', help => "Amino Acid Co-ordinate"                                  },
   ];
   
   # submitter data for LRGs
@@ -95,35 +94,35 @@ sub make_table {
     splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $self->strip_HTML($glossary->{'Global MAF'}) };
   }
  
-  if ($self->hub->type ne 'Transcript'){
-   push @$columns, { key => 'Transcript', sort => 'string', width => '11u' };
+  if ($hub->type ne 'Transcript') {
+    push @$columns, { key => 'Transcript', sort => 'string', width => '11u' };
   }
 
   return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
 } 
 
 sub render_content {
-  my ($self, $table, $consequence_type, $table_id) = @_;
+  my ($self, $table, $consequence_type) = @_;
   my $stable_id = $self->object->stable_id;
   my $html;
-
+  
   if ($consequence_type) {
-    my $consequence_label = ucfirst($self->hub->param('table_title') || $table_id || $consequence_type);
-    $consequence_label =~ s/_/ /g;
-    $consequence_label =~ s/children/\(with children\)/;
-    #$consequence_label .='s';
+    my $table_id          = $self->hub->param('table_title') || $consequence_type;
+    my $consequence_label = ucfirst $table_id;
+       $consequence_label =~ s/_/ /g;
+       $consequence_label =~ s/children/\(with children\)/;
+    
     $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   } else {
-    my $hub = $self->hub;
-    my $current = $hub->param('summary_type') || 'table';
+    my $hub      = $self->hub;
+    my $current  = $hub->param('summary_type') || 'table';
     my $switched = $current eq 'tree' ? 'table' : 'tree';
-    my $url = $hub->url({summary_type => $switched});
+    my $url      = $hub->url({ summary_type => $switched });
     
     $html = qq{
       <a id="$self->{'id'}_top"></a>
       <span style="float:right;">
         <a href="$url">Switch to $switched view <img src="/i/16/reload.png" height="12px"/></a>
-        
       </span>
       <h2>Summary of variation consequences in $stable_id</h2>
     } . $table;
@@ -135,42 +134,37 @@ sub render_content {
 
 sub stats_table {
   my ($self, $transcripts, $gene_object) = @_;
-  
-  my $hub         = $self->hub;
-  
+  my $hub     = $self->hub;
   my $columns = [
     { key => 'count', title => 'Number of variant consequences', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
-    { key => 'view',  title => '',                   sort => 'none',           width => '5%',  align => 'center' },   
-    { key => 'key',   title => '',                   sort => 'none',           width => '2%',  align => 'center' },
-    { key => 'type',  title => 'Type',               sort => 'numeric_hidden', width => '20%'                    },   
-    { key => 'desc',  title => 'Description',        sort => 'none',           width => '53%'                    },
+    { key => 'view',  title => '',                               sort => 'none',           width => '5%',  align => 'center' },   
+    { key => 'key',   title => '',                               sort => 'none',           width => '2%',  align => 'center' },
+    { key => 'type',  title => 'Type',                           sort => 'numeric_hidden', width => '20%'                    },   
+    { key => 'desc',  title => 'Description',                    sort => 'none',           width => '53%'                    },
   ];
   
-  my (%counts, %total_counts, %ranks, %descriptions, %labels, %colours);
-  my $total_counts;
+  my (%counts, $total_counts, %ranks, %descriptions, %labels, %colours);
   
   # colour stuff
   my $species_defs = $hub->species_defs;
   my $var_styles   = $species_defs->colour('variation');
   my $colourmap    = $hub->colourmap;
+  my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
-  my @all_cons = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  
-  foreach my $con(@all_cons) {
+  foreach my $con (@all_cons) {
     next if $con->SO_accession =~ /x/i;
     
     my $term = $con->SO_term;
     
     $labels{$term}       = $con->label;
-    $descriptions{$term} = $con->description.' <span class="small">('.$hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession).')</span' unless $descriptions{$term};
-    $colours{$term}      = $colourmap->hex_by_name($var_styles->{lc($con->SO_term)}->{default});
-    $ranks{$term}        = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
+    $descriptions{$term} = $con->description.' <span class="small">(' . $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession) . ')</span>' unless $descriptions{$term};
+    $colours{$term}      = $colourmap->hex_by_name($var_styles->{lc $con->SO_term}->{'default'});
+    $ranks{$term}        = $con->rank if $con->rank < $ranks{$term} || !defined $ranks{$term};
   }
 
   if (!exists($gene_object->__data->{'conscounts'})) {
-# Generate the data the hard way - from all the vfs and tvs
-    my %counts_hash;
-    my %total_counts_hash;
+    # Generate the data the hard way - from all the vfs and tvs
+    my (%counts_hash, %total_counts_hash);
 
     foreach my $tr (@$transcripts) { 
       my $tr_stable_id = $tr->stable_id;
@@ -199,15 +193,11 @@ sub stats_table {
       }
     }
     
-    foreach my $con (keys %descriptions) {
-      $counts{$con} = scalar keys %{$counts_hash{$con}};
-    }
+    $counts{$_}   = scalar keys %{$counts_hash{$_}} for keys %descriptions;
     $total_counts = scalar keys %total_counts_hash;
-
   } else {
-# Use the results of the TV count queries
-    %counts = %{$gene_object->__data->{'conscounts'}};
-
+    # Use the results of the TV count queries
+    %counts       = %{$gene_object->__data->{'conscounts'}};
     $total_counts = $counts{'ALL'};
   }
   
@@ -215,7 +205,7 @@ sub stats_table {
   my @rows;
   
   foreach my $con (keys %descriptions) {
-    my $colour_block = sprintf('<div style="background-color: %s; width: 10px;">&nbsp;</div>', $colours{$con});
+    my $colour_block = sprintf '<div style="background-color: %s; width: 10px;">&nbsp;</div>', $colours{$con};
     
     if ($counts{$con}) {
       my $count = $counts{$con};
@@ -223,7 +213,7 @@ sub stats_table {
       
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
-        desc  => $descriptions{$con}.' '.$warning,
+        desc  => "$descriptions{$con} $warning",
         count => $count,
         view  => $self->ajax_add($self->ajax_url(undef, { sub_table => $con, update_panel => 1 }), $con),
         key   => $colour_block,
@@ -240,15 +230,15 @@ sub stats_table {
   }
   
   # add the row for ALL variations if there are any
-  if (my $total = $total_counts) {
-    my $hidden_span = qq{<span class="hidden">-</span>}; # create a hidden span to add so that ALL is always last in the table
-    my $warning     = $total > 10000 ? $warning_text : '';
+  if ($total_counts) {
+    my $hidden_span = '<span class="hidden">-</span>'; # create a hidden span to add so that ALL is always last in the table
+    my $warning     = $total_counts > 10000 ? $warning_text : '';
     
     push @rows, {
       type  => $hidden_span . 'ALL',
       view  => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 }), 'ALL'),
       desc  => "All variations $warning",
-      count => $hidden_span . $total,
+      count => $hidden_span . $total_counts,
     };
   }
 
@@ -257,19 +247,13 @@ sub stats_table {
 
 sub tree {
   my ($self, $transcripts, $gene_object) = @_;
-  
   my $hub         = $self->hub;
-  
-  # define top-level SO term
-  my $top_SO_term = 'feature_variant';
-  
-  # get counts
+  my $top_SO_term = 'feature_variant'; # define top-level SO term
   my %counts;
   
-  if (!exists($gene_object->__data->{'conscounts'})) {
+  if (!exists $gene_object->__data->{'conscounts'}) {
     # Generate the data the hard way - from all the vfs and tvs
-    my %counts_hash;
-    my %total_counts_hash;
+    my (%counts_hash, %total_counts_hash);
 
     foreach my $tr (@$transcripts) { 
       my $tr_stable_id = $tr->stable_id;
@@ -297,12 +281,9 @@ sub tree {
       }
     }
     
-    foreach my $con (keys %counts_hash) {
-      $counts{$con} = scalar keys %{$counts_hash{$con}};
-    }
+    $counts{$_} = scalar keys %{$counts_hash{$_}} for keys %counts_hash;
   } else {
-    # Use the results of the TV count queries
-    %counts = %{$gene_object->__data->{'conscounts'}};
+    %counts = %{$gene_object->__data->{'conscounts'}}; # Use the results of the TV count queries
   }
   
   # get SO tree
@@ -318,13 +299,7 @@ sub tree {
   
   $self->add_colours_to_tree($tree, $var_styles, $colourmap);
   
-  my $html = '<ul class="tree">';
-  
-  $html .= $self->tree_html($tree, 1);
-  
-  $html .= '</ul>';
-  
-  return $html;
+  return sprintf '<ul class="tree variation_consequence_tree">%s</ul>', $self->tree_html($tree, 1);
 }
 
 
@@ -344,8 +319,8 @@ sub variation_table {
   });
   
   if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-    my $gene_stable_id     = $transcripts->[0] && $transcripts->[0]->gene ? $transcripts->[0]->gene->stable_id : undef;
-    $url_transcript_prefix = 'lrgt';
+    my $gene_stable_id        = $transcripts->[0] && $transcripts->[0]->gene ? $transcripts->[0]->gene->stable_id : undef;
+       $url_transcript_prefix = 'lrgt';
     
     $base_trans_url = $hub->url({
       type    => 'LRG',
@@ -357,13 +332,12 @@ sub variation_table {
     my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
     
     my @var_ids =
-      map {$_->{_variation_id}}
-      map {$_->[0]}
-      map {@{$_->__data->{transformed}{gene_snps}}}
+      map $_->{'_variation_id'},
+      map $_->[0],
+      map @{$_->__data->{'transformed'}{'gene_snps'}},
       @$transcripts;
     
     %handles = %{$vfa->_get_all_subsnp_handles_from_variation_ids(\@var_ids)};
-    
   } else {
     $url_transcript_prefix = 't';
     
@@ -400,7 +374,7 @@ sub variation_table {
           $skip = 0;
         } elsif ($tva) {
           foreach my $con (map {$_->SO_term} @{$tva->get_all_OverlapConsequences}) {
-            if (grep {$con eq $_} split(/\,/, $consequence_type)) {
+            if (grep $con eq $_, split /\,/, $consequence_type) {
               $skip = 0;
               last;
             }
@@ -435,8 +409,7 @@ sub variation_table {
           
           # Adds LSDB/LRG sources
           if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-            my $var = $snp->variation;
-            
+            my $var         = $snp->variation;
             my $syn_sources = $var->get_all_synonym_sources;
             
             foreach my $s_source (@$syn_sources) {
@@ -449,10 +422,9 @@ sub variation_table {
           
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
-
-          my $status = join '', map {qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}} @$validation; # validation
+          my $status = join '', map qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}, @$validation; # validation
           
-          my $row = {
+          push @rows, {
             ID         => qq{<a href="$url">$variation_name</a>},
             class      => $var_class,
             Alleles    => $allele_string,
@@ -461,7 +433,7 @@ sub variation_table {
             status     => $status || '-',
             chr        => "$chr:$start" . ($start == $end ? '' : "-$end"),
             Source     => $source,
-            Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
+            Submitters => %handles && defined $handles{$snp->{'_variation_id'}} ? join ', ', @{$handles{$snp->{'_variation_id'}}} : undef,
             snptype    => $type,
             Transcript => qq{<a href="$trans_url">$transcript_stable_id</a>},
             aachange   => $aachange,
@@ -470,8 +442,6 @@ sub variation_table {
             polyphen   => $poly,
             HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
           };
-          
-          push @rows, $row;
         }
       }
     }
@@ -481,21 +451,13 @@ sub variation_table {
 }
 
 sub create_so_term_subsets {
-  my ($self) = @_;
-
+  my $self     = shift;
   my @all_cons = grep $_->feature_class =~ /Bio::EnsEMBL::(Feature|Transcript)/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-
   my %so_term_subsets;
   
   foreach my $con (@all_cons) {
     next if $con->SO_accession =~ /x/i;
-    
-    my $term = $con->SO_term;
-    
-    if (!exists($so_term_subsets{$term})) {
-      $so_term_subsets{$term} = [];
-    }
-    push @{$so_term_subsets{$term}}, $con->SO_term;
+    push @{$so_term_subsets{$con->SO_term}}, $con->SO_term;
   }
 
   return \%so_term_subsets;
@@ -503,23 +465,27 @@ sub create_so_term_subsets {
 
 sub configure {
   my ($self, $context, $consequence) = @_;
-  my $object = $self->object;
+  my $object      = $self->object;
   my $object_type = $self->hub->type;
-  my $extent = $context eq 'FULL' ? 5000 : $context;
-  my $gene_object;
-  my $transcript_object;
+  my $extent      = $context eq 'FULL' ? 5000 : $context;
+  my %cons        = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %selected_so = map { $_ => 1 } defined $consequence && $consequence ne 'ALL' ? split /\,/, $consequence : (); # map the selected consequence type to SO terms
+  my @so_terms    = keys %selected_so;
+  my ($gene_object, $transcript_object);
 
   if ($object->isa('EnsEMBL::Web::Object::Gene')){ #|| $object->isa('EnsEMBL::Web::Object::LRG')){
     $gene_object = $object;
   } elsif ($object->isa('EnsEMBL::Web::Object::LRG')){
-    my @genes       = @{$object->Obj->get_all_Genes('LRG_import')||[]};
-    my $gene = $genes[0];  
-    my $factory = $self->builder->create_factory('Gene');  
+    my @genes   = @{$object->Obj->get_all_Genes('LRG_import')||[]};
+    my $gene    = $genes[0];  
+    my $factory = $self->builder->create_factory('Gene');
+    
     $factory->createObjects($gene);
+    
     $gene_object = $factory->object;
   } else {
     $transcript_object = $object;
-    $gene_object = $self->hub->core_objects->{'gene'};
+    $gene_object       = $self->hub->core_objects->{'gene'};
   }
   
   $gene_object->get_gene_slices(
@@ -528,36 +494,24 @@ sub configure {
     [ 'gene',        'normal', '33%'   ],
     [ 'transcripts', 'munged', $extent ]
   );
-
-  # map the selected consequence type to SO terms
-  my %cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  my %selected_so;
   
-  if(defined($consequence) && $consequence ne 'ALL') {
-    $selected_so{$_} = 1 for split /\,/, $consequence;
-  }
-  
-  my @so_terms = keys %selected_so;
-
-  $gene_object->store_TransformedTranscripts;      ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
+  $gene_object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
  
   my $transcript_slice = $gene_object->__data->{'slices'}{'transcripts'}[1];
-  my (undef, $snps)    = $gene_object->getVariationsOnSlice($transcript_slice, $gene_object->__data->{'slices'}{'transcripts'}[2], undef,  scalar(@so_terms) ? \@so_terms : undef);
-
-
-  my $vf_objs = [ map $_->[2], @$snps];
-
+  my (undef, $snps)    = $gene_object->getVariationsOnSlice($transcript_slice, $gene_object->__data->{'slices'}{'transcripts'}[2], undef, scalar @so_terms ? \@so_terms : undef);
+  my $vf_objs          = [ map $_->[2], @$snps];
+  
   # For stats table (no $consquence) without a set intron context ($context). Also don't try for a single transcript (because its slower)
   if (!$consequence && !$transcript_object && $context eq 'FULL') {
     my $so_term_subsets = $self->create_so_term_subsets;
     $gene_object->store_ConsequenceCounts($so_term_subsets, $vf_objs);
   }
-
+  
   # If doing subtable or can't calculate consequence counts
   if ($consequence || !exists($gene_object->__data->{'conscounts'}) || scalar @$vf_objs < 50) {
     $gene_object->store_TransformedSNPS(\@so_terms,$vf_objs); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
   }
-
+  
   ## Map SNPs for the last SNP display  
   my @gene_snps = map {[
     $_->[2], $transcript_slice->seq_region_name,
@@ -565,13 +519,13 @@ sub configure {
       ( $transcript_slice->start + $_->[2]->start - 1, $transcript_slice->start + $_->[2]->end   - 1 ) :
       ( $transcript_slice->end   - $_->[2]->end   + 1, $transcript_slice->end   - $_->[2]->start + 1 )
   ]} @$snps;
-
+  
   foreach (@{$gene_object->get_all_transcripts}) {
     next if $object_type eq 'Transcript' && $_->stable_id ne $self->hub->param('t'); 
     $_->__data->{'transformed'}{'extent'}    = $extent;
     $_->__data->{'transformed'}{'gene_snps'} = \@gene_snps;
   }
-
+  
   return $gene_object;
 }
 
@@ -585,10 +539,9 @@ sub get_hgvs {
     if (length $hgvs_c > 35) {
       my $display_hgvs_c  = substr($hgvs_c, 0, 35) . '...';
          $display_hgvs_c .= $self->trim_large_string($hgvs_c, 'hgvs_c_' . $tva->dbID);
-
-      $hgvs_c = $display_hgvs_c;
+         $hgvs_c          = $display_hgvs_c;
     }
-
+    
     $hgvs .= $hgvs_c;
   }
 
@@ -596,128 +549,97 @@ sub get_hgvs {
     if (length $hgvs_p > 35) {
       my $display_hgvs_p  = substr($hgvs_p, 0, 35) . '...';
          $display_hgvs_p .= $self->trim_large_string($hgvs_p, 'hgvs_p_'. $tva->dbID);
-
-      $hgvs_p = $display_hgvs_p;
+         $hgvs_p          = $display_hgvs_p;
     }
-
+    
     $hgvs .= "<br />$hgvs_p";
   }
-
+  
   return $hgvs;
 }
 
 sub get_SO_tree {
   my ($self, $top_SO_term) = @_;
-  
-  my $oa = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
-  
+  my $oa           = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
   my ($top_SO_obj) = @{$oa->fetch_all_by_name($top_SO_term)};
-  
   return $top_SO_obj;
 }
 
 sub add_counts_to_tree {
   my ($self, $term_obj, $counts) = @_;
+  my $count = 0;
   
   $self->add_counts_to_tree($_, $counts) for @{$term_obj->children};
   
-  my $count = 0;
+  $term_obj->{'this_count'} = defined $counts->{$term_obj->name} ? $counts->{$term_obj->name} : 0;
+  $count += $term_obj->{'this_count'};
+  $count += defined $_->{'count'} ? $_->{'count'} : 0 for @{$term_obj->children};
   
-  $term_obj->{this_count} = defined($counts->{$term_obj->name}) ? $counts->{$term_obj->name} : 0;
-  $count += $term_obj->{this_count};
-  $count += (defined $_->{count} ? $_->{count} : 0) for @{$term_obj->children};
+  push @{$term_obj->{'term_list'}}, ($term_obj->name, map {@{$_->{'term_list'}}} @{$term_obj->children});
   
-  push @{$term_obj->{term_list}}, ($term_obj->name, map {@{$_->{term_list}}} @{$term_obj->children});
-  
-  $term_obj->{count} = $count;
+  $term_obj->{'count'} = $count;
 }
 
 sub add_colours_to_tree {
   my ($self, $term_obj, $var_styles, $colourmap) = @_;
-  $term_obj->{colour} = $colourmap->hex_by_name($var_styles->{lc($term_obj->name)}->{default}) if defined $var_styles->{lc($term_obj->name)};
+  $term_obj->{'colour'} = $colourmap->hex_by_name($var_styles->{lc $term_obj->name}->{'default'}) if defined $var_styles->{lc $term_obj->name};
   $self->add_colours_to_tree($_, $var_styles, $colourmap) for @{$term_obj->children};
 }
 
 sub tree_html {
   my ($self, $term_obj, $last) = @_;
-  
-  my $con = $term_obj->name;
-  $con =~ s/\_/ /g;
-  $con = "\u$con";
-  
-  $con = 'All variants' if $con eq 'Feature variant';
-  
-  my %include_cons = map {$_->SO_term => 1} values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  
-  my @children = grep {$_->{count}} @{$term_obj->children};
+  my $con          = $term_obj->name;
+     $con          =~ s/\_/ /g;
+     $con          = "\u$con";
+     $con          = 'All variants' if $con eq 'Feature variant';
+  my %include_cons = map { $_->SO_term => 1 } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my @children     = grep $_->{'count'}, @{$term_obj->children};
  
   # don't go further in these cases only
   #undef @children if $term_obj->name =~ /feature.+ation/i;
-  my $side_padding = @children ? '7px' : '5px';
+  my $side_padding = '7px'; #scalar @children ? '7px' : '5px';
+  
   my $html = sprintf(
-    '<li%s>%s<span title="%s">%s%s',
-    
-    # last css class
-    ($last ? ' class="last"' : (@children ? ' class="parent top_level"' : '')),
-    
-    # toggle bit
-    (@children ? '<a href="#" class="toggle open" rel="'.$term_obj->name.'"/>' : '<img src="/i/leaf.gif">'),
-    
-    # consequence definition etc
-    (split /\"/, $term_obj->definition)[1],
-    
-    # colour block
-    
-    (defined($term_obj->{colour}) ? sprintf('<div style="background-color: %s; color: %s; width: 10px; display: inline; margin: 0 3px 0 0; padding: 0 %s;"> </div>', $term_obj->{colour}, $term_obj->{colour}, $side_padding) : ''),
-    
-    # name and link
-    $con,
+    '<li%s>%s<span title="%s" class="_ht%s">%s%s</span>',
+    $last ? ' class="last"' : scalar @children ? ' class="parent top_level"' : '',                                              # last css class
+    @children ? '<a href="#" class="toggle open leaf" rel="' . $term_obj->name . '">&nbsp;</a>' : '<img src="/i/leaf.gif" />',  # toggle bit
+    (split /\"/, $term_obj->definition)[1],                                                                                     # consequence definition etc
+    defined $term_obj->{'colour'} ? '' : ' no_colour',                                                                          # span class
+    defined $term_obj->{'colour'} ? qq{<span class="colour" style="background-color:$term_obj->{'colour'}">&nbsp;</span>} : '', # colour block
+    $con,                                                                                                                       # name and link
   );
   
   # this term only
-  if($term_obj->{this_count} || $term_obj->{count}) {
-    
-    my $sub_table = @children ? join(",", grep {defined($include_cons{$_})} @{$term_obj->{term_list}}) : $term_obj->name;
-    
-    my $link = $self->ajax_add(
-      $self->ajax_url(
-        undef,
-        {
-          sub_table => $sub_table,
-          update_panel => 1,
-          table_title => $term_obj->name,
-        }
-      ),
-      $term_obj->name,
+  if ($term_obj->{'this_count'} || $term_obj->{'count'}) {
+    my $sub_table = scalar @children ? join ',', grep defined $include_cons{$_}, @{$term_obj->{'term_list'}} : $term_obj->name;
+    my $link      = $self->ajax_add($self->ajax_url(undef, {
+        sub_table    => $sub_table,
+        update_panel => 1,
+        table_title  => $term_obj->name,
+      }),
+      $term_obj->name
     );
     
-    $html .= sprintf(
-      ' | %s (%i)',
-      $link,
-      $term_obj->{count},
-    );
-    
+    $html .= sprintf ' | %s (%i)', $link, $term_obj->{'count'};
   }
   
-  $html .= '<span class="small"> | '.$self->hub->get_ExtURL_link($term_obj->accession, 'SEQUENCE_ONTOLOGY', $term_obj->accession).'</span>' unless $con eq 'All variants';
+  $html .= ' | <span class="small">' . $self->hub->get_ExtURL_link($term_obj->accession, 'SEQUENCE_ONTOLOGY', $term_obj->accession) . '</span>' unless $con eq 'All variants';
   
-  my $warning_text = $term_obj->{count} > 10000 ? qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>} : '';
+  my $warning_text = $term_obj->{'count'} > 10000 ? qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>} : '';
 
-  $html .= "</span> $warning_text";
- 
-  
+  $html .= " $warning_text";
+
   # iterate  
-  if(@children) {
-    
+  if (scalar @children) {
     @children = sort {
       ($b->name =~ /stream/) <=> ($a->name =~ /stream/) ||
       scalar @{$a->children} <=> scalar @{$b->children}
     } @children;
     
-    $html .= '<div class="'.$term_obj->name.'" ><ul style="line-height: 24px;" class="toggleable">';
+    $html .= sprintf '<div class="%s" ><ul class="toggleable">', $term_obj->name;
     
-    for(my $i=0; $i<@children; $i++) {
-      $html .= $self->tree_html($children[$i], ($i + 1 == @children ? 1 : 0));
+    for (my $i = 0; $i < scalar @children; $i++) {
+      $html .= $self->tree_html($children[$i], $i + 1 == scalar @children ? 1 : 0);
     }
     
     $html .= '</ul></div>';
@@ -727,6 +649,5 @@ sub tree_html {
   
   return $html;
 }
-
 
 1;
