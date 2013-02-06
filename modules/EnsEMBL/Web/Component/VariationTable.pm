@@ -84,6 +84,12 @@ sub make_table {
   # HGVS
   splice @$columns, 3, 0, { key => 'HGVS', width => '10u', sort => 'string', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
 
+  # add SIFT for supported species
+  if ($hub->species =~ /bos_taurus|canis_familiaris|danio_rerio|gallus_gallus|mus_musculus|rattus_norvegicus|sus_scrofa/i) {
+    push @$columns, (
+      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\vFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'}) });
+  }
+
   # add GMAF, SIFT and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
