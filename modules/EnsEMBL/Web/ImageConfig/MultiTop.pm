@@ -10,10 +10,9 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    sortable_tracks   => 1,     # allow the user to reorder tracks
-    opt_empty_tracks  => 0,     # include empty tracks
-    opt_lines         => 1,     # draw registry lines
-    opt_restrict_zoom => 1,     # when we get "zoom" working draw restriction enzyme info on it 
+    sortable_tracks  => 1,     # allow the user to reorder tracks
+    opt_empty_tracks => 0,     # include empty tracks
+    opt_lines        => 1,     # draw registry lines
   });
 
   $self->create_menus(qw(

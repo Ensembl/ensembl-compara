@@ -10,12 +10,11 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
-    show_labels       => 'yes',  # show track names on left-hand side
-    opt_halfheight    => 1,      # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks  => 0,      # include empty tracks..
-    opt_lines         => 1,      # draw registry lines
-    opt_restrict_zoom => 1,      # when we get "zoom" working draw restriction enzyme info on it!!
+    sortable_tracks  => 'drag', # allow the user to reorder tracks on the image
+    show_labels      => 'yes',  # show track names on left-hand side
+    opt_halfheight   => 1,      # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks => 0,      # include empty tracks..
+    opt_lines        => 1,      # draw registry lines
   });
   
   $self->create_menus(qw(

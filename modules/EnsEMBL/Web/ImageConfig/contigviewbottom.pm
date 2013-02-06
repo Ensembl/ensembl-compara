@@ -25,12 +25,11 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    toolbars          => { top => 1, bottom => 1 },
-    sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
-    datahubs          => 1,      # allow datahubs
-    opt_halfheight    => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_lines         => 1,      # draw registry lines
-    opt_restrict_zoom => 1       # when we get "zoom" working draw restriction enzyme info on it
+    toolbars        => { top => 1, bottom => 1 },
+    sortable_tracks => 'drag', # allow the user to reorder tracks on the image
+    datahubs        => 1,      # allow datahubs
+    opt_halfheight  => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_lines       => 1,      # draw registry lines
   });
   
   # First add menus in the order you want them for this display
