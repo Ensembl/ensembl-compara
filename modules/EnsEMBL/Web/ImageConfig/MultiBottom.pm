@@ -42,6 +42,7 @@ sub init {
   # Add in additional tracks
   $self->load_tracks;
   $self->load_configured_das;
+  $self->image_resize = 1;
     
   $self->add_tracks('sequence', 
     [ 'contig', 'Contigs',  'contig',   { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
