@@ -75,7 +75,7 @@ sub param_defaults {
             'max_nb_genes_small_overlap'    => 0,       # Number of genes between two genes that slightly overlap
 
             'include_ns_in_core_region'     => 1,
-            'normalize_maximum_occupancy'   => 1,
+            'min_core_region_length'        => .1,
             'core_region_threshold'         => .9,
             'minimum_coverage_on_core'      => .4,
 
@@ -100,14 +100,14 @@ sub run {
     my $self = shift;
 
     $self->compute_core_region_length;
-    $self->check_for_split_genes
+    #$self->check_for_split_genes
 }
 
 
 sub write_output {
     my $self = shift;
 
-    $self->store_split_genes;
+    #$self->store_split_genes;
 }
 
 
@@ -119,7 +119,7 @@ sub post_cleanup {
         $protein_tree->release_tree;
         $self->param('protein_tree', undef);
     }
-    $self->param('connected_split_genes')->holding_node->cascade_unlink;
+    #$self->param('connected_split_genes')->holding_node->cascade_unlink;
 
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
@@ -131,7 +131,6 @@ sub compute_core_region_length {
 
     my $len = length($proteins->[0]->alignment_string);
     my @coverage = ((0) x $len);
-    my @is_core  = ((0) x $len);
     foreach my $member (@$proteins) {
         my $seq = uc $member->alignment_string;
         my @is_char = ((0) x $len);
@@ -140,42 +139,38 @@ sub compute_core_region_length {
             $is_char[$i-1] = 1 if ($c ne '-' and ($self->param('include_ns_in_core_region') or $c ne 'N') );
             $coverage[$i-1]++ if $is_char[$i-1];
         }
-        $member->{bool_chars} = \@is_char;
+        $member->{is_char} = \@is_char;
     }
-    $self->param('protein_tree')->store_tag('core_occup', join(' ', @coverage));
+    #$self->param('protein_tree')->store_tag('core_occup', join(' ', @coverage));
 
 
-    my $nseq = scalar(@$proteins);
-    if ($self->param('normalize_maximum_occupancy')) {
-        $nseq = 0;
-        foreach my $c (@coverage) {
-            $nseq = $c if $c > $nseq;
-        }
-        $self->param('protein_tree')->store_tag('core_max_occup', $nseq);
-    }
-    my $max = $nseq * $self->param('core_region_threshold');
+    my @copy = sort {$b <=> $a} @coverage;
+    my $core_threshold = $copy[int($len * $self->param('min_core_region_length'))] * $self->param('core_region_threshold');
 
+    my @is_core = ((0) x $len);
     foreach my $i (1..$len) {
-        $is_core[$i-1] = 1 if $coverage[$i-1] >= $max;
+        $is_core[$i-1] = 1 if $coverage[$i-1] >= $core_threshold;
     }
+
 
     foreach my $member (@$proteins) {
         my $core_cov = 0;
-        my $seq_cov  = 0;
-        my $is_char = $member->{bool_chars};
+        my $seq_length  = 0;
+        my $is_char = $member->{is_char};
         foreach my $i (1..$len) {
             if ($is_char->[$i-1]) {
-                $seq_cov++;
+                $seq_length++;
                 $core_cov++ if $is_core[$i-1];
             }
         }
-        $member->store_tag('seq_length', $seq_cov);
+        #$member->store_tag('seq_length', $seq_length);
         $member->store_tag('core_seq_length', $core_cov);
 
         my $aos = 0;
         foreach my $other_member (@$proteins) {
+            next;
             next if $other_member->member_id eq $member->member_id;
-            my $other_char = $other_member->{bool_chars};
+            my $other_char = $other_member->{is_char};
             my $overlap = 0;
             my $other_len = 0;
             foreach my $i (1..$len) {
@@ -185,7 +180,7 @@ sub compute_core_region_length {
             $aos += $overlap/$other_len;
         }
         $aos /= (scalar(@$proteins)-1);
-        $member->store_tag('aos', $aos);
+        #$member->store_tag('aos', $aos);
     }
 }
 
