@@ -90,8 +90,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     el.append('<' + node + ' class="spinner">Loading component</' + node + '>');
     
-    Ensembl.EventManager.trigger('hideZMenu', this.id); // Hide ZMenus based on this panel
-    
     if (newContent === true) {
       window.location.hash = el[0].id; // Jump to the newly added div
     } else if (newContent) {

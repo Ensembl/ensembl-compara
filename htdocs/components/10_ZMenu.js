@@ -49,7 +49,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     delete this.areaCoords.a;
     
     Ensembl.EventManager.register('showExistingZMenu', this, this.showExisting);
-    Ensembl.EventManager.register('hideZMenu',         this, this.hide);
   },
   
   init: function () {
@@ -545,8 +544,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
   },
   
-  hide: function (imageId) {
-    if (this.el && (!imageId || imageId === this.imageId)) {
+  hide: function () {
+    if (this.el) {
       this.base();
       
       if (this.relatedEl) {
