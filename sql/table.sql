@@ -1149,7 +1149,8 @@ SET character_set_client = @saved_cs_client;
 # ------------------------ End of CAFE tables --------------------------------------
 
 # Auto add schema version to database (this will override whatever hive puts there)
-REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '70');
+DELETE FROM meta WHERE meta_key='schema_version';
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '71');
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
@@ -1162,3 +1163,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_70_71_b.sql|member_xref');
 
+# Patch identifier
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_70_71_c.sql|schema_version');
