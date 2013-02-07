@@ -458,12 +458,12 @@ CREATE TABLE `external_db` (
 #
 
 CREATE TABLE `member_xref` (
-  `member_id` int(10) unsigned NOT NULL DEFAULT '0',
-  `dbprimary_acc` varchar(10) NOT NULL DEFAULT '',
-  `external_db_id` int(10) unsigned NOT NULL DEFAULT '',
-  PRIMARY KEY (`member_id`,`dbprimary_acc`,`db_name`)
+  `member_id` int(10) unsigned NOT NULL,
+  `dbprimary_acc` varchar(10) NOT NULL,
+  `external_db_id` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`member_id`,`dbprimary_acc`,`external_db_id`),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
-  FOREIGN KEY (external_db_id) REFERENCES external_db(external_db_id),
+  FOREIGN KEY (external_db_id) REFERENCES external_db(external_db_id)
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 #
@@ -1156,9 +1156,9 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_a.sql|other_member_sequence_keys')
+  VALUES (NULL, 'patch', 'patch_70_71_a.sql|other_member_sequence_keys');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_b.sql|member_xref')
+  VALUES (NULL, 'patch', 'patch_70_71_b.sql|member_xref');
 
