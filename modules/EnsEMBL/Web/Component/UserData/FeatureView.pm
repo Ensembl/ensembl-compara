@@ -100,9 +100,7 @@ sub content {
     'value'   => 'Show features',
     'class'   => 'submit'
   });
-
-  $form->force_reload_on_submit;
-
+  
   return $form->render;
 }
 
