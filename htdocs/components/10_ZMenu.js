@@ -546,7 +546,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   hide: function (imageId) {
-    if (!imageId || imageId === this.imageId) {
+    if (this.el && (!imageId || imageId === this.imageId)) {
       this.base();
       
       if (this.relatedEl) {
