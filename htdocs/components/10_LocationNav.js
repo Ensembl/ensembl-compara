@@ -113,7 +113,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         panel.elLk.locationInput.val(json.shift());
         
         panel.elLk.navLinks.attr('href', function () {
-          return this.href.replace(Ensembl.locationReplace, '$1' + json.shift() + '$2');
+          return this.href.replace(Ensembl.locationReplace, '$1$2' + json.shift() + '$3');
         });
       }
     });
