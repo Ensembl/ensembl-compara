@@ -328,8 +328,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         success: function (json) {
           if (json.updated) {
             panel.elLk.hoverLabels.remove(); // Deletes elements moved to body
-            Ensembl.EventManager.trigger('hideHoverLabels'); // Hide labels and z menus on other ImageMap panels
-            Ensembl.EventManager.trigger('hideZMenu');
+            Ensembl.EventManager.trigger('hideHoverLabels'); // Hide labels on other ImageMap panels
             Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
             Ensembl.EventManager.trigger('reloadPage', panel.id);
           }
