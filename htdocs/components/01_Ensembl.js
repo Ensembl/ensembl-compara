@@ -16,7 +16,7 @@ Ensembl.extend({
     
     this.browser         = {};
     this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
-    this.hashParamRegex  = '([#?;&]__PARAM__=)[^;&]+((;&)?)';
+    this.hashParamRegex  = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch   = new RegExp(/[#?;&]r=([^;&]+)/);
     this.locationReplace = new RegExp(this.hashParamRegex.replace('__PARAM__', 'r'));
     this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
@@ -212,12 +212,16 @@ Ensembl.extend({
     var url = inputURL ? (inputURL + (inputURL.match(/\?/) ? '' : '?')) : window.location[this.locationURL];
     
     for (var i in params) {
-      if (url.match(i + '=')) {
-        url = url.replace(new RegExp(this.hashParamRegex.replace('__PARAM__', i)), '$1' + params[i] + '$2');
+      if (params[i] === false) {
+        url = url.replace(new RegExp(this.hashParamRegex.replace('__PARAM__', i)), '$1');
+      } else if (url.match(i + '=')) {
+        url = url.replace(new RegExp(this.hashParamRegex.replace('__PARAM__', i)), '$1$2' + params[i] + '$3');
       } else {
         url += (url ? ';' : '') + i + '=' + params[i];
       }
     }
+    
+    url = url.replace(/([?;]);+/g, '$1');
     
     if (inputURL) {
       return url;
