@@ -88,8 +88,9 @@ sub render_toolbar {
     
     # get current image_width and provide size of +- 100 three times    
     for (my $counter = ($self->image_width-300);$counter <= ($self->image_width+300); $counter+=100) {      
-      my $selected_size = 'class="current"' if($counter eq $self->image_width);      
-      $image_sizes .= qq{<div><a href="$resize_url" class="image_resize"><div $selected_size>$counter px</div></a></div>};
+      my $selected_size = 'class="current"' if($counter eq $self->image_width);
+      my $hidden_width = ($counter < 500) ? "style='display:none'" : '';      
+      $image_sizes .= qq{<div $hidden_width><a href="$resize_url" class="image_resize"><div $selected_size>$counter px</div></a></div>};
     }
     
     $image_resize = qq{
