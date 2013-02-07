@@ -216,7 +216,7 @@ sub render {
     };
   }
     
-  $table .= sprintf '<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>}', $self->export_url if $self->export_url;
+  $table .= sprintf '<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>', $self->export_url if $self->export_url;
   
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
   if ($data_table) {
