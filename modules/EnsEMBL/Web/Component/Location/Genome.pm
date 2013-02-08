@@ -134,7 +134,7 @@ sub _render_features {
             unless ($assoc_name) {
               $assoc_name = $xref_type.' ';
               $assoc_name .= $id;
-              $assoc_name .= " ($xref_name)";
+              $assoc_name .= " ($xref_name)" if $xref_name;
             }
           }
 
