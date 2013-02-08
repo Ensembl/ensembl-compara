@@ -131,7 +131,7 @@ sub variation_source {
     $sname       = 'DBSNP';
     $source_link = $hub->get_ExtURL_link("View in $source", $sname, $name);
   } elsif ($source =~ /SGRP/) {
-    $source_link = $hub->get_ExtURL_link("View in $source", 'SGRP', $name);
+    $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
     $sname       = 'COSMIC';
     my $cname = ($name =~ /^COSM(\d+)/) ? $1 : $name;
