@@ -418,18 +418,15 @@ sub fetch_all_by_GenomicAlignBlock {
     my $align_start = $start;
     my $align_end = $end;
 
-    #print "restricted start " . $genomic_align_block->{'restricted_aln_start'} . " end " . $genomic_align_block->{'restricted_aln_end'} . " gab length " . $genomic_align_block->length . "\n";
-
     #If the GenomicAlignBlock has been restricted, use these values in 
     #align_start and align_end
-    if (defined $genomic_align_block->{'restricted_aln_start'}) {
-	$align_start += $genomic_align_block->{'restricted_aln_start'} - 1;
+    if (defined $genomic_align_block->{'_restricted_aln_start'}) {
+	$align_start += $genomic_align_block->{'_restricted_aln_start'} - 1;
     }
-    if (defined $genomic_align_block->{'restricted_aln_end'}) {
+    if (defined $genomic_align_block->{'_restricted_aln_end'}) {
 	
-	$align_end = $genomic_align_block->{'restricted_aln_end'} - ($genomic_align_block->length-$align_end);
+	$align_end = $genomic_align_block->{'_restricted_aln_end'} - ($genomic_align_block->length-$align_end);
     }
-
     #set up bucket object for storing bucket_size number of scores 
     my $bucket_size = ($slice_length)/$display_size;
     
