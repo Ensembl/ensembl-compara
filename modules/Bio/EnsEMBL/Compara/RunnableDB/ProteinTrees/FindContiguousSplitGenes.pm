@@ -148,9 +148,13 @@ sub compute_core_region_length {
     my $core_threshold = $copy[int($len * $self->param('min_core_region_length'))] * $self->param('core_region_threshold');
 
     my @is_core = ((0) x $len);
+    my $core_length = 0;
     foreach my $i (1..$len) {
         $is_core[$i-1] = 1 if $coverage[$i-1] >= $core_threshold;
+        $core_length++ if $is_core[$i-1] = 1;
     }
+    $self->param('protein_tree')->store_tag('core_length', $core_length);
+    return;
 
 
     foreach my $member (@$proteins) {
