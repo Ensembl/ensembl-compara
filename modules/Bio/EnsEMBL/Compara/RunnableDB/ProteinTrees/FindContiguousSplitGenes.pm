@@ -155,6 +155,20 @@ sub check_for_split_genes {
 
     foreach my $genepairlink (@sorted_genepairlinks) {
         my ($protein1, $protein2) = @$genepairlink;
+
+        # Compute the sequence overlap
+        my $aln = 0;
+        my $len1 = 0;
+        my @aln1 = split(//, $protein1->alignment_string);
+        my $len2 = 0;
+        my @aln2 = split(//, $protein2->alignment_string);
+
+        for (my $i=0; $i <= $#aln1; $i++) {
+            $len1++ if ($aln1[$i] ne '-');
+            $len2++ if ($aln2[$i] ne '-');
+            $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
+        }
+ 
         my $pair = new Bio::EnsEMBL::Compara::AlignedMemberSet;
         $pair->add_Member($protein1);
         $pair->add_Member($protein2);
@@ -169,6 +183,7 @@ sub check_for_split_genes {
         my $name1 = $gene_member1->chr_name; my $name2 = $gene_member2->chr_name;
 
         # Checking for gene_split cases
+        #if ($aln == 0)
         if (0 == $protein1->perc_id && 0 == $protein2->perc_id && 0 == $protein1->perc_pos && 0 == $protein2->perc_pos) {
 
             # Condition A1: If same seq region and less than 1MB distance
@@ -190,6 +205,7 @@ sub check_for_split_genes {
                     }
                     next;
                 }
+                $self->warning(sprintf('A pair: %s %s', $protein1->stable_id, $protein2->stable_id));
                 $connected_split_genes->add_connection($protein1->node_id, $protein2->node_id);
             }
 
@@ -204,6 +220,8 @@ sub check_for_split_genes {
         # "skid marks" in the alignment view.
 
         # Condition B1: all 4 percents below 10
+        #} elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
+        #        && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
         } elsif ($protein1->perc_id < $self->param('small_overlap_percentage') && $protein2->perc_id < $self->param('small_overlap_percentage')
               && $protein1->perc_pos < $self->param('small_overlap_percentage') && $protein2->perc_pos < $self->param('small_overlap_percentage')) {
 
@@ -226,12 +244,7 @@ sub check_for_split_genes {
                     next;
                 }
 
-                # Condition B4: discard if the smaller protein is 1/10 or less of the larger and all percents above 2
-                my $len1 = length($protein1->sequence); my $len2 = length($protein2->sequence); my $temp;
-                if ($len1 < $len2) { $temp = $len1; $len1 = $len2; $len2 = $temp; }
-                if ($len1/$len2 > 10 && $protein2->perc_id > 2 && $protein2->perc_id > 2 && $protein1->perc_pos > 2 && $protein2->perc_pos > 2) {
-                    next;
-                }
+                $self->warning(sprintf('B pair: %s %s', $protein1->stable_id, $protein2->stable_id));
                 $connected_split_genes->add_connection($protein1->node_id, $protein2->node_id);
             }
         }
