@@ -100,7 +100,7 @@ sub root {
 sub release_tree {
     my $self = shift;
 
-    if (defined $self->tree) {
+    if (defined $self->{'_tree'}) {
         delete $self->{'_tree'}->{'_root'};
         delete $self->{'_tree'};
     }

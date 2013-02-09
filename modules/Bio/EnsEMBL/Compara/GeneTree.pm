@@ -100,20 +100,6 @@ sub new {
 }
 
 
-=head2 DESTROY
-
-  Description : Deletes the reference to the root node and breaks
-                the circular reference.
-  Returntype  : None
-  Caller      : System
-
-=cut
-
-sub DESTROY {
-    my $self = shift;
-    delete $self->{'_root'};
-}
-
 
 #####################
 # Object attributes #
@@ -447,6 +433,28 @@ sub add_Member {
 }
 
 
+=head2 release_tree
+
+  Overview   : Removes the to/from GeneTree reference to
+               allow freeing memory
+  Example    : $self->release_tree;
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub release_tree {
+    my $self = shift;
+
+    $self->root->release_tree;
+    foreach my $member (@{$self->{'_member_array'}}) {
+        delete $member->{'_tree'};
+    }
+}
+
+
+
 ########
 # Misc #
 ########
@@ -458,7 +466,6 @@ sub add_Member {
                               find_leaf_by_node_id find_leaf_by_name find_node_by_node_id
                               find_node_by_name remove_nodes build_leftright_indexing flatten_tree
                               newick_format nhx_format string_tree print_tree
-                              release_tree
                             )) {
         my $full_name = "Bio::EnsEMBL::Compara::GeneTree::$func_name";
         *$full_name = sub {
