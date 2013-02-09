@@ -153,8 +153,7 @@ sub compute_core_region_length {
         $is_core[$i-1] = 1 if $coverage[$i-1] >= $core_threshold;
         $core_length++ if $is_core[$i-1] = 1;
     }
-    $self->param('protein_tree')->store_tag('core_length', $core_length);
-    return;
+    #$self->param('protein_tree')->store_tag('core_length', $core_length);
 
 
     foreach my $member (@$proteins) {
@@ -168,19 +167,26 @@ sub compute_core_region_length {
             }
         }
         #$member->store_tag('seq_length', $seq_length);
-        $member->store_tag('core_seq_length', $core_cov);
+        #$member->store_tag('core_seq_length', $core_cov);
 
         my $aos = 0;
         foreach my $other_member (@$proteins) {
-            next;
             next if $other_member->member_id eq $member->member_id;
+
+            next unless ($other_member->genome_db_id == $member->genome_db_id);
+
             my $other_char = $other_member->{is_char};
             my $overlap = 0;
+            my $union = 0;
             my $other_len = 0;
             foreach my $i (1..$len) {
                 $overlap++ if $is_char->[$i-1] and $other_char->[$i-1];
+                $union++ if $is_char->[$i-1] or $other_char->[$i-1];
                 $other_len++ if $other_char->[$i-1];
             }
+            $member->store_tag('overlap_'.($other_member->stable_id), $overlap);
+            $member->store_tag('union_'.($other_member->stable_id), $union);
+
             $aos += $overlap/$other_len;
         }
         $aos /= (scalar(@$proteins)-1);
