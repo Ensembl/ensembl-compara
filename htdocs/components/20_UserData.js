@@ -1,22 +1,14 @@
 // $Revision$
+// JavaScript to dynamically change form action on the UserData upload page according to the option selected (or radio buttons checked) and do validation on the form
 
-/*
- * JavaScript to dynamically change form action on the UserData upload page according to the option selected (or radio buttons checked) and do validation on the form
- */
-
-Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({
+Ensembl.Panel.UserData = Ensembl.Panel.extend({
   init: function () {
     var panel = this;
     
     this.base();
     
-    // in case this panel is added by addSubPanel method, it misses getting references to content and links
-    if (!this.elLk.content.length) {
-      this.elLk.content = this.el.parents('.modal_wrapper');
-      this.elLk.links   = this.elLk.content.siblings('.modal_nav').find('ul.local_context li');
-    }
-    
-    this.elLk.form            = this.el.find('form').validate().off('.UserData').on('submit.UserData', function (e) { e.preventDefault(); panel.formSubmit($(this)); });
+    this.elLk.activeLink      = this.el.parents('.modal_wrapper').siblings('.modal_nav').find('ul.local_context li.active');
+    this.elLk.form            = this.el.find('form').validate().off('.UserData').on('submit.UserData', function (e) { e.preventDefault(); panel.formSubmit(); });
     this.elLk.requiredInputs  = this.elLk.form.find(':input.required');
     this.elLk.errorMessage    = this.elLk.form.find('label._userdata_upload_error').addClass('invalid');
     this.elLk.actionInputs    = this.elLk.form.find(':input._action').each(function () {
@@ -57,15 +49,14 @@ Ensembl.Panel.UserData = Ensembl.Panel.ModalContent.extend({
     }).filter('select').validate(true).end(); // not to forget validating the dropdown to select the format
   },
   
-  formSubmit: function(form, data) {
-  
+  formSubmit: function () {
     if (!this.elLk.requiredInputs.filter(':visible:not([value=""])').length) {
       this.elLk.errorMessage.show();
       return false;
     }
     
-    this.elLk.links.removeClass('active');
+    this.elLk.activeLink.removeClass('active');
     
-    return this.base(form, data);
+    return Ensembl.EventManager.trigger('modalFormSubmit', this.elLk.form);
   }
 });
