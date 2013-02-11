@@ -23,8 +23,8 @@ sub render_normal {
   if ($cafe) {
     $self->add_vgroup_to_legend([
       { legend => 'N number of members',   colour => 'blue',    style => 'nsymbol'           },
-      { legend => 'Expansion',             colour => '#800000', style => 'line', height => 1 },
-      { legend => 'Contraction',           colour => '#008000', style => 'line', height => 1 },
+      { legend => 'Significant Expansion',             colour => '#800000', style => 'line', height => 1 },
+      { legend => 'Significant Contraction',           colour => '#008000', style => 'line', height => 1 },
       { legend => 'No significant change', colour => 'blue',    style => 'line'              },
     ], '');
   } else {
