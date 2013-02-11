@@ -99,6 +99,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     if ((escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) || this.pageReload === 'force') {
       this.setPageReload(false, true);
+    } else if ($('.modal_reload', this.el).length) {
+      this.setPageReload(false, true, true);
     }
   },
   
