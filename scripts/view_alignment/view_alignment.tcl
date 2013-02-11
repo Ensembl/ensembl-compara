@@ -1,12 +1,32 @@
-# AUTHOR:
-# Kathryn Beal (kbeal@ebi.ac.uk)
-# COPYRIGHT:
-# This script is part of the Ensembl project http://www.ensembl.org
+#LICENSE
+#
+#  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+#  Genome Research Limited.  All rights reserved.
+#
+#  This software is distributed under a modified Apache license.
+#  For license details, please see
+#
+#    http://www.ensembl.org/info/about/code_licence.html
+#
+#CONTACT
+#
+#  Please email comments or questions to the public Ensembl
+#  developers list at <dev@ensembl.org>.
+#
+#  Questions may also be sent to the Ensembl help desk at
+#  <helpdesk@ensembl.org>.
+#
 # DESCRIPTION:
 # This file is called from view_alignment.pl. Please see this file for
 # documentation and usage
+
+#Set up GTAGDB envrionment variable
+#\
+    GTAGDB=${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/view_alignment/GTAGDB
+
 #\
 exec stash "$0" ${@+"$@"} || exit 1
+#exec wish "$0" ${@+"$@"} || exit 1
 
 #open gap4 database 
 proc open_database {name} {
@@ -38,7 +58,9 @@ proc close_database {io} {
     }
 }
 
-tkinit
+#tkinit
+package require Tk
+
 wm withdraw .
 
 load_package gap
@@ -84,6 +106,7 @@ set WinCnt [llength $allcontigs]
 
 for {set j 0} {$j < [llength $allcontigs]} {incr j} {
     set winList($j) [edit_contig -io $io -contig [lindex $allcontigs $j]]
+
     bind $winList($j) <Destroy> {+close_database $io}
 }
 
