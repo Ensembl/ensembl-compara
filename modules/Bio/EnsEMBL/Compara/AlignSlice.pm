@@ -314,7 +314,7 @@ sub new {
 	    }
         }
     }
-  } else {
+  } elsif ($genomic_align_blocks) {
     $self->_create_underlying_Slices($genomic_align_blocks, $self->{expanded},
         $self->{solve_overlapping}, $preserve_blocks, $species_order);
   }
@@ -785,13 +785,13 @@ sub get_all_ConstrainedElements {
   if ($species_set) {
     $key_cache .= "::" . join("-", sort map {s/\W/_/g} map {$_->name} @$species_set);
   } else {
-    $species_set = $self->{_method_link_species_set}->species_set;
+    $species_set = $self->{_method_link_species_set}->species_set_obj->genome_dbs;
   }
 
   if (!defined($self->{$key_cache})) {
     my $method_link_species_set_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor();
     my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
-        $method_link_type, $self->{_method_link_species_set}->species_set);
+        $method_link_type, $self->{_method_link_species_set}->species_set_obj->genome_dbs);
 
     if ($method_link_species_set) {
       my $constrained_element_adaptor = $self->adaptor->db->get_ConstrainedElementAdaptor();
@@ -825,6 +825,7 @@ sub get_all_ConstrainedElements {
             }
           }
         }
+
         $this_constrained_element->slice($self);
         $this_constrained_element->start($reference_slice_start);
         $this_constrained_element->end($reference_slice_end);
@@ -868,7 +869,6 @@ sub _create_underlying_Slices {
 
   my $ref_genome_db = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_Slice($self->reference_Slice);
   my $big_mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
-
   my $sorted_genomic_align_blocks;
 
   if ($solve_overlapping eq "restrict") {
@@ -1146,6 +1146,10 @@ sub _add_GenomicAlign_to_a_Slice {
       $this_block_start = $this_block->start if (!defined($this_block_start) or $this_block->start < $this_block_start);
       $this_block_end = $this_block->end if (!defined($this_block_end) or $this_block->end > $this_block_end);
     }
+ }
+  #Skip if only have X and no sequence then $this_block_start and $this_block_end are undefined.
+  if (!defined $this_block_start && !defined $this_block_end) {
+      return;
   }
 
   # Choose the appropriate AS::Slice for adding this bit of the alignment
@@ -1191,18 +1195,20 @@ sub _choose_underlying_Slice {
     push(@{$self->{slices}->{lc($species)}}, $underlying_slice);
     return $underlying_slice;
   }
-
   if ($species_order) {
     my $preset_underlying_slice = undef;
-    foreach my $this_underlying_slice (@{$self->{_slices}}) {
-      if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
-        $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
-      }
-      if (grep {$_ == $this_genomic_align->{_original_dbID}}
-          @{$this_underlying_slice->{genomic_align_ids}}) {
-        $preset_underlying_slice = $this_underlying_slice;
-      }
+    
+    foreach my $this_underlying_slice (@{$self->{slices}->{lc($species)}}) {
+        if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
+            $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
+        }
+        if (grep {$_ == $this_genomic_align->{_original_dbID}}
+            @{$this_underlying_slice->{genomic_align_ids}}) {
+            $preset_underlying_slice = $this_underlying_slice;
+            last;
+        }
     }
+
     if ($preset_underlying_slice) {
       my $overlap = 0;
       my $slice_mapper_pairs = $preset_underlying_slice->get_all_Slice_Mapper_pairs();
