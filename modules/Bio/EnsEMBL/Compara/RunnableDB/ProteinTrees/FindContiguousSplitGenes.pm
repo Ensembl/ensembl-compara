@@ -184,8 +184,8 @@ sub compute_core_region_length {
                 $union++ if $is_char->[$i-1] or $other_char->[$i-1];
                 $other_len++ if $other_char->[$i-1];
             }
-            $member->store_tag('overlap_'.($other_member->stable_id), $overlap);
-            $member->store_tag('union_'.($other_member->stable_id), $union);
+            $member->store_tag('overlap_'.($other_member->node_id), $overlap);
+            $member->store_tag('union_'.($other_member->node_id), $union);
 
             $aos += $overlap/$other_len;
         }
