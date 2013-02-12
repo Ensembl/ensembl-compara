@@ -138,3 +138,5 @@ Base = Base.extend({
 		return String(this.valueOf());
 	}
 });
+
+window.Base = Base;
