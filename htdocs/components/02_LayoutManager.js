@@ -67,12 +67,12 @@ Ensembl.LayoutManager.extend({
       
       return false;
     }).on({
-      keyup: function (event) {
+      'keyup.ensembl': function (event) {
         if (event.keyCode === 27) {
           Ensembl.EventManager.trigger('modalClose', true); // Close modal window if the escape key is pressed
         }
       },
-      mouseup: function (e) {
+      'mouseup.ensembl': function (e) {
         // only fired on left click
         if (!e.which || e.which === 1) {
           Ensembl.EventManager.trigger('mouseUp', e);
@@ -84,20 +84,8 @@ Ensembl.LayoutManager.extend({
     
     this.validateForms(document);
     
-    function popState() {
-      if (
-        Ensembl.historyReady && // stops popState executing on initial page load in Chrome. This value is set to true in Ensembl.updateLocation
-        // there is an r param in the hash/search EXCEPT WHEN the browser supports history API, and there is a hash which doesn't have an r param (ajax added content)
-        ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) && !(Ensembl.locationURL === 'search' && window.location.hash && !window.location.hash.match(Ensembl.locationMatch))) ||
-        (!window.location.hash && Ensembl.hash.match(Ensembl.locationMatch))) // there is no location.hash, but Ensembl.hash (previous hash value) had an r param (going back from no hash url to hash url)
-      ) {
-        Ensembl.setCoreParams();
-        Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
-      }
-    }
-    
     $(window).on({
-      resize: function (e) {
+      'resize.ensembl': function (e) {
         if (window.name.match(/^popup_/)) {
           return false;
         }
@@ -119,8 +107,8 @@ Ensembl.LayoutManager.extend({
           }
         }
       },
-      hashchange: popState,
-      popstate  : popState
+      'hashchange.ensembl': $.proxy(this.popState, this),
+      'popstate.ensembl'  : $.proxy(this.popState, this)
     });
     
     var userMessage = unescape(Ensembl.cookie.get('user_message'));
@@ -212,6 +200,18 @@ Ensembl.LayoutManager.extend({
       $('form.seq_blast', toolButtons).submit();
       return false;
     });
+  },
+  
+  popState: function () {
+    if (
+      Ensembl.historyReady && // stops popState executing on initial page load in Chrome. This value is set to true in Ensembl.updateLocation
+      // there is an r param in the hash/search EXCEPT WHEN the browser supports history API, and there is a hash which doesn't have an r param (ajax added content)
+      ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) && !(Ensembl.locationURL === 'search' && window.location.hash && !window.location.hash.match(Ensembl.locationMatch))) ||
+      (!window.location.hash && Ensembl.hash.match(Ensembl.locationMatch))) // there is no location.hash, but Ensembl.hash (previous hash value) had an r param (going back from no hash url to hash url)
+    ) {
+      Ensembl.setCoreParams();
+      Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+    }
   },
   
   hashChange: function (r) {
