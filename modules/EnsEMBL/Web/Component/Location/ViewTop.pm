@@ -18,20 +18,21 @@ sub content {
   my $hub    = $self->hub;
   my $object = $self->object;
 
-  return if $hub->param('show_top_panel') eq 'no';
+  return if $hub->param('show_panel') eq 'no';
   
   my $flanking     = $hub->param('flanking');
-  my $threshold    = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
+  my $flank_length = $flanking ? $object->length + (2 * $flanking) : 0;
   my $image_config = $hub->get_imageconfig('contigviewtop');
+  my $threshold    = $image_config->get_parameter('min_size');
   my ($seq_region_type, $seq_region_name, $seq_region_length) = map $object->$_, qw(seq_region_type seq_region_name seq_region_length);
   my $slice;
   
   if ($object->length > $threshold) {
     $slice = $object->slice;
+  } elsif ($flanking && $flank_length <= $threshold && $flank_length <= $seq_region_length) {
+    $slice = $object->slice->expand($flanking, $flanking);
   } elsif ($seq_region_length < $threshold) {
     $slice = $hub->database('core')->get_SliceAdaptor->fetch_by_region($seq_region_type, $seq_region_name, 1, $seq_region_length, 1);
-  } elsif ($flanking && $object->length + (2 * $flanking) <= $threshold) {
-    $slice = $object->slice->expand($flanking, $flanking);
   } else {
     my $c = int $object->centrepoint;
     my $s = ($c - $threshold/2) + 1;
@@ -40,7 +41,7 @@ sub content {
     
     if ($e > $seq_region_length) {
       $e = $seq_region_length;
-      $s = $e - $threshold - 1;
+      $s = $e - $threshold + 1;
     }
     
     $slice = $hub->database('core')->get_SliceAdaptor->fetch_by_region($seq_region_type, $seq_region_name, $s, $e, 1);
