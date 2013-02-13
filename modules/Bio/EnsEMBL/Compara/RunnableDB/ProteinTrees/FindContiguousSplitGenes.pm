@@ -74,10 +74,8 @@ sub param_defaults {
             'small_overlap_percentage'      => 10,      # Max %ID and %pos to define a 'small' overlap
             'max_nb_genes_small_overlap'    => 0,       # Number of genes between two genes that slightly overlap
 
-            'include_ns_in_core_region'     => 1,
             'min_core_region_length'        => .1,
             'core_region_threshold'         => .9,
-            'minimum_coverage_on_core'      => .4,
 
     };
 }
@@ -136,24 +134,27 @@ sub compute_core_region_length {
         my @is_char = ((0) x $len);
         foreach my $i (1..$len) {
             my $c = substr($seq, $i-1, 1);
-            $is_char[$i-1] = 1 if ($c ne '-' and ($self->param('include_ns_in_core_region') or $c ne 'N') );
+            $is_char[$i-1] = 1 if ($c ne '-' and $c ne 'X');
             $coverage[$i-1]++ if $is_char[$i-1];
         }
         $member->{is_char} = \@is_char;
     }
-    #$self->param('protein_tree')->store_tag('core_occup', join(' ', @coverage));
+    $self->param('protein_tree')->store_tag('core_occup', join(' ', @coverage));
 
 
     my @copy = sort {$b <=> $a} @coverage;
     my $core_threshold = $copy[int($len * $self->param('min_core_region_length'))] * $self->param('core_region_threshold');
+    $self->param('protein_tree')->store_tag('core_max_occup', $copy[0]);
+    $self->param('protein_tree')->store_tag('core_90_occup', $copy[int($len * $self->param('min_core_region_length'))]);
+    $self->param('protein_tree')->store_tag('core_threshold', $core_threshold);
 
     my @is_core = ((0) x $len);
     my $core_length = 0;
     foreach my $i (1..$len) {
         $is_core[$i-1] = 1 if $coverage[$i-1] >= $core_threshold;
-        $core_length++ if $is_core[$i-1] = 1;
+        $core_length++ if $is_core[$i-1] == 1;
     }
-    #$self->param('protein_tree')->store_tag('core_length', $core_length);
+    $self->param('protein_tree')->store_tag('core_length', $core_length);
 
 
     foreach my $member (@$proteins) {
@@ -166,8 +167,8 @@ sub compute_core_region_length {
                 $core_cov++ if $is_core[$i-1];
             }
         }
-        #$member->store_tag('seq_length', $seq_length);
-        #$member->store_tag('core_seq_length', $core_cov);
+        $member->store_tag('seq_length', $seq_length);
+        $member->store_tag('core_seq_length', $core_cov);
 
         my $aos = 0;
         foreach my $other_member (@$proteins) {
@@ -190,7 +191,7 @@ sub compute_core_region_length {
             $aos += $overlap/$other_len;
         }
         $aos /= (scalar(@$proteins)-1);
-        #$member->store_tag('aos', $aos);
+        $member->store_tag('aos', $aos);
     }
 }
 
