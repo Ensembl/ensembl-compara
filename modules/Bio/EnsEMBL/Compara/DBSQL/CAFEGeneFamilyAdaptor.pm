@@ -145,6 +145,17 @@ sub fetch_all_children_for_node {
     return $node;
 }
 
+sub member_id_has_gene_gain_loss_tree {
+    my ($self, $member_id) = @_;
+
+    my $sql = "SELECT count(*) FROM CAFE_gene_family cgf JOIN gene_tree_root gtr ON(cgf.gene_tree_root_id = gtr.root_id) JOIN gene_tree_node gtn ON(gtr.root_id = gtn.root_id) JOIN member mp USING (member_id) JOIN member mg ON (mp.member_id = mg.canonical_member_id) WHERE mg.source_name = 'ENSEMBLGENE' AND mg.stable_id = ?;";
+
+    my $sth = $self->dbc->prepare($sql);
+    $sth->execute($member_id);
+    my ($count) = $sth->fetchrow_array();
+    $sth->finish();
+    return $count;
+}
 
 ## Stores a family gene
 ## Assumes a CAFE species tree already exists
