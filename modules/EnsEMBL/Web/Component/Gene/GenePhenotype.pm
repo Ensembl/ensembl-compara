@@ -403,7 +403,7 @@ sub gene_phenotypes {
   my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
   my (@rows, %list, $list_html);
   
-  $self->_sort_similarity_links($output_as_table, @similarity_links);
+  $self->_sort_similarity_links($output_as_table, undef, undef, @similarity_links);
   
   # to preserve the order, we use @links for access to keys
   foreach my $link (map @{$object->__data->{'links'}{$_} || []}, @keys) {
