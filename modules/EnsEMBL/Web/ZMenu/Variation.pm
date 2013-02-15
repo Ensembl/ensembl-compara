@@ -180,7 +180,7 @@ sub content {
   my $allele_list = $feature->get_all_Alleles;
   foreach (@$allele_list) {
     my $pop_obj = $_->population;
-    if ($pop_obj) {
+    if ($pop_obj && $pop_obj->{freqs}) {
       $self->add_entry({
         'label_html' => 'Population genetics',
         'link' => $hub->url({
