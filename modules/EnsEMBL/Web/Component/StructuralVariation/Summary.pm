@@ -188,17 +188,17 @@ sub location {
       $location_link = sprintf(
         ' | <a href="%s" class="constant">View in location tab</a>',
         $hub->url({
-          type              => 'Location',
-          action            => 'View',
-          r                 => $region . ':' . ($start - 500) . '-' . ($end + 500),
-          sv                => $name,
-          svf               => $svf,
-          contigviewbottom  => 'variation_feature_structural=normal'
+          type             => 'Location',
+          action           => 'View',
+          r                => $region . ':' . ($start - 500) . '-' . ($end + 500),
+          sv               => $name,
+          svf              => $svf,
+          contigviewbottom => 'variation_feature_structural_larger=normal,variation_feature_structural_smaller=normal'
         })
       );
     }
   }
-  
+
   if ($count > 1) {
     my $params    = $hub->core_params;
     my @locations = ({ value => 'null', name => 'None selected' });
@@ -265,8 +265,8 @@ sub location {
   }
   
   my $current_svf = $mappings->{$svf};
-
-  return ['Location', sprintf("$location$location_link%s%s", $self->get_outer_coordinates($current_svf), $self->get_inner_coordinates($current_svf))];
+  
+  return ['Location', "$location$location_link".$self->get_outer_coordinates($current_svf).$self->get_inner_coordinates($current_svf)];
 } 
 
 sub get_outer_coordinates {
