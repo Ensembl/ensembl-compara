@@ -629,7 +629,7 @@ sub store {
   my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
                   $member->source_name,
-                  $member->gene_member_id,
+                  $member->isa('Bio::EnsEMBL::Compara::SeqMember') ? $member->gene_member_id : undef,
                   $member->taxon_id,
                   $member->genome_db_id,
                   $member->description,
@@ -659,7 +659,7 @@ sub store {
 
   # insert in sequence table to generate new
   # sequence_id to insert into member table;
-  if(defined($member->sequence) and $member->sequence_id == 0) {
+  if($member->isa('Bio::EnsEMBL::Compara::SeqMember') and defined($member->sequence) and $member->sequence_id == 0) {
     $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
 
     my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");

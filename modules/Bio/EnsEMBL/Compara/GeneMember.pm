@@ -278,6 +278,20 @@ sub get_canonical_SeqMember {
 
 
 
+=head2 canonical_member_id
+
+  Arg [1]    : (opt) integer
+  Returntype : Getter/Setter for the canonical_member_id
+
+=cut
+
+sub canonical_member_id {
+  my $self = shift;
+  $self->{'_canonical_member_id'} = shift if(@_);
+  return $self->{'_canonical_member_id'};
+}
+
+
 
 ### SECTION 8 ###
 #
