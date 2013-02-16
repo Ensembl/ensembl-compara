@@ -55,6 +55,7 @@ sub param_defaults {
         'include_reference'     => 1,
         'include_nonreference'  => 0,
         'store_genes'           => 1, # whether the genes are also stored as members
+        'allow_pyrrolysine'     => 1,
     };
 }
 
@@ -299,6 +300,11 @@ sub store_gene_and_all_transcripts {
     }
 
     $pep_member->gene_member_id($gene_member->dbID);
+    if ($pep_member->sequence =~ /O/ and not $self->param('allow_pyrrolysine')) {
+        my $seq = $pep_member->sequence;
+        $seq =~ s/O/X/g;
+        $pep_member->sequence($seq);
+    }
     $seq_member_adaptor->store($pep_member);
     if ($self->param('store_related_pep_sequences')) {
         $sequence_adaptor->store_other_sequence($pep_member, $pep_member->sequence_cds, 'cds');

@@ -564,6 +564,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {
                 'store_related_pep_sequences' => 1,
+                'allow_pyrrolysine'             => 0,
             },
             -hive_capacity => -1,
             -rc_name => '2Gb_job',
