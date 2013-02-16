@@ -340,7 +340,7 @@ sub pipeline_analyses {
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
-            -hive_capacity => -1,
+            -analysis_capacity  => 1,
         },
 
 # ---------------------------------------------[turn all tables except 'genome_db' to InnoDB]---------------------------------------------
@@ -362,7 +362,6 @@ sub pipeline_analyses {
                 'sql'         => 'ALTER TABLE #table_name# ENGINE=InnoDB',
             },
             -batch_size     => 100,
-            -hive_capacity => -1,
         },
 
 # ---------------------------------------------[generate two empty species_sets for reuse / non-reuse (to be filled in at a later stage)]---------
@@ -381,7 +380,6 @@ sub pipeline_analyses {
                     'INSERT INTO meta (meta_key,meta_value) VALUES ("nonreuse_ss_id", #_insert_id_3#)',
                 ],
             },
-            -hive_capacity => -1,
             -flow_into => [ 'load_genomedb_factory' ],
         },
 
@@ -398,7 +396,6 @@ sub pipeline_analyses {
 
                 'fan_branch_code'       => 2,
             },
-            -hive_capacity => -1,
             -flow_into => {
                 '2->A' => [ 'load_genomedb' ],
                 'A->1' => [ 'finish_species_sets' ],
@@ -413,7 +410,6 @@ sub pipeline_analyses {
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
             -batch_size => 500,
-            -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'check_reusability' ],
             },
@@ -457,7 +453,6 @@ sub pipeline_analyses {
                     'ALTER TABLE member ADD KEY gene_list_index (source_name, taxon_id, chr_name, chr_strand, chr_start)',
                 ],
             },
-            -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'make_species_tree' ],
             },
@@ -471,7 +466,6 @@ sub pipeline_analyses {
                 'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
                 'mlss_id'                 => $self->o('mlss_id'),
             },
-            -hive_capacity => -1,
             -flow_into  => {
                 3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
             },
@@ -485,7 +479,6 @@ sub pipeline_analyses {
                 'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#',
                 'fan_branch_code'   => 2,
             },
-            -hive_capacity => -1,
             -flow_into => {
                 '2->A' => [ 'sequence_table_reuse' ],
                 'A->1' => [ 'genome_loadfresh_factory' ],
@@ -545,7 +538,6 @@ sub pipeline_analyses {
                 'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"',
                 'fan_branch_code'   => 2,
             },
-            -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'load_fresh_members' ],
                 1 => [ 'genome_loadfresh_fromfile_factory' ],
@@ -558,7 +550,6 @@ sub pipeline_analyses {
                 'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator NOT LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"',
                 'fan_branch_code'   => 2,
             },
-            -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'load_fresh_members_fromfile' ],
             },
@@ -570,7 +561,6 @@ sub pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_pyrrolysine'             => 0,
             },
-            -hive_capacity => -1,
             -rc_name => '2Gb_job',
         },
 
@@ -579,7 +569,6 @@ sub pipeline_analyses {
             -parameters => {
                 -need_cds_seq   => 1,
             },
-            -hive_capacity => -1,
             -rc_name => '2Gb_job',
         },
 
@@ -592,7 +581,6 @@ sub pipeline_analyses {
                 'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#',
                 'fan_branch_code'   => 2,
             },
-            -hive_capacity => -1,
             -flow_into => {
                 '2->A' => [ 'paf_table_reuse' ],
                 '1->A' => [ 'paf_noreuse_factory' ],
@@ -606,7 +594,6 @@ sub pipeline_analyses {
                 'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#',
                 'fan_branch_code'   => 2,
             },
-            -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'paf_create_empty_table' ],
             },
@@ -631,7 +618,6 @@ sub pipeline_analyses {
                 ],
             },
             -batch_size     =>  100,  # they can be really, really short
-            -hive_capacity  => -1,
         },
 
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
@@ -696,7 +682,6 @@ sub pipeline_analyses {
                              'cluster_dir'        => $self->o('cluster_dir'),
                              'mlss_id'            => $self->o('mlss_id'),
                             },
-             -hive_capacity => -1,
              -rc_name => '8Gb_job',
              -flow_into => [ 'run_qc_tests' ],
             },
@@ -726,7 +711,6 @@ sub pipeline_analyses {
                 'fasta_dir'                 => $self->o('fasta_dir'),
             },
             -batch_size    =>  20,  # they can be really, really short
-            -hive_capacity => -1,
         },
 
         {   -logic_name => 'blast_species_factory',
@@ -798,7 +782,6 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'hcluster_merge_factory',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -hive_capacity => -1,
             -flow_into => {
                 '1->A' => {
                     'hcluster_merge_inputs' => [{'ext' => 'txt'}, {'ext' => 'cat'}],
@@ -813,7 +796,6 @@ sub pipeline_analyses {
                 'cluster_dir'   => $self->o('cluster_dir'),
                 'cmd'           => 'cat #cluster_dir#/*.hcluster.#ext# > #cluster_dir#/hcluster.#ext#',
             },
-            -hive_capacity => -1,
         },
 
         {   -logic_name    => 'hcluster_run',
@@ -824,7 +806,6 @@ sub pipeline_analyses {
                 'hcluster_exe'                  => $self->o('hcluster_exe'),
                 'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
             },
-            -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
             },
@@ -838,7 +819,6 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
             },
-            -hive_capacity => -1,
             -rc_name => '2Gb_job',
             -flow_into => [ 'run_qc_tests' ],
         },
@@ -1010,7 +990,6 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'ktreedist',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist',
-            -hive_capacity => -1,
             -parameters    => {
                                'treebest_exe'  => $self->o('treebest_exe'),
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
@@ -1093,7 +1072,6 @@ sub pipeline_analyses {
                 'taxlevels'             => $self->o('taxlevels'),
                 'filter_high_coverage'  => $self->o('filter_high_coverage'),
             },
-            -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'mlss_factory' ],
             },
@@ -1104,7 +1082,6 @@ sub pipeline_analyses {
             -parameters => {
                 'method_link_types'  => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES'],
             },
-            -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'homology_factory' ],
             },
