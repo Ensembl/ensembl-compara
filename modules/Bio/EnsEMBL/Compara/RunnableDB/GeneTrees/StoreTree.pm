@@ -263,6 +263,8 @@ sub parse_newick_into_tree {
         $newnode->add_child($othernode);
         $newnode->add_child($node);
         $newnode->add_tag('gene_split', 1);
+        $newnode->add_tag('T', $othernode->get_tagvalue('T'));
+        $othernode->remove_tag('T');
         $newnode->print_tree(10) if $self->debug;
     }
   }
