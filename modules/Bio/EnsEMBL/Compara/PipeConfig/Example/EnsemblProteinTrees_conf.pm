@@ -85,7 +85,7 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '70',
+        'release'               => '71',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
@@ -199,7 +199,7 @@ sub default_options {
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'sf5_ensembl_compara_69',
+           -dbname => 'sf5_ensembl_compara_70',
         },
         #'reuse_db' => {   # current release if we are testing after production
         #    -host   => 'compara1',
