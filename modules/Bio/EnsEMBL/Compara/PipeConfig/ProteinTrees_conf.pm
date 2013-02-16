@@ -184,6 +184,10 @@ sub default_options {
 
 sub pipeline_create_commands {
     my ($self) = @_;
+
+    # If the pipeline should use genome_db_ids, the user MUST provide a species tree
+    die if $self->o('use_genomedb_id') and not $self->o('species_tree_input_file');
+
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
