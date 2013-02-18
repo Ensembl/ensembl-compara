@@ -128,8 +128,8 @@ Data will be copied to this instance.
 
 =item B<--mlss method_link_species_set_id>
 
-Copy data for this species only. This option can be used several times in order to restrict
-the copy to several species.
+Copy data for this mlss only. This option can be used several times in order to restrict
+the copy to several mlss.
 
 =item B<[--merge boolean]>
 
@@ -155,8 +155,9 @@ my $from_name = undef;
 my $to_name = undef;
 my $from_url = undef;
 my $to_url = undef;
-my $mlss_id = undef;
+my @mlss_id = undef;
 my $re_enable = 1;
+my $method_link = undef;
 
 #If true, then trust the TO database tables and update the FROM tables if 
 #necessary. Currently only applies to differences in the dnafrag table and 
@@ -178,15 +179,16 @@ GetOptions(
            "to=s"      => \$to_name,
            "from_url=s" => \$from_url,
            "to_url=s"  => \$to_url,
-           "mlss_id=i" => \$mlss_id,
+           "mlss_id=i@" => \@mlss_id,
            "trust_to!" => \$trust_to,
            "merge!"    => \$merge,
            'trust_ce!' => \$trust_ce,
            're_enable=i' => \$re_enable,
+           'method_link=s' => \$method_link,
   );
 
 # Print Help and exit if help is requested
-if ($help or (!$from_name and !$from_url) or (!$to_name and !$to_url) or !$mlss_id) {
+if ($help or (!$from_name and !$from_url) or (!$to_name and !$to_url) or (!scalar(@mlss_id) and !$method_link)) {
   exec("/usr/bin/env perldoc $0");
 }
 
@@ -194,36 +196,57 @@ Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_name or $to_name);
 my $from_dba = get_DBAdaptor($from_url, $from_name);
 my $to_dba = get_DBAdaptor($to_url, $to_name);
 
-my $method_link_species_set = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-if (!$method_link_species_set) {
-  print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID ($mlss_id)\n";
-  exit(1);
+my @all_method_link_species_sets;
+
+foreach my $one_mlss_id (@mlss_id) {
+  my $mlss = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($one_mlss_id);
+  if (!$mlss) {
+    print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID ($one_mlss_id)\n";
+    exit(1);
+  }
+  push @all_method_link_species_sets, $one_mlss_id;
 }
 
-my $class = $method_link_species_set->method->class;
+if ($method_link) {
+  my $all_mlss = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method_link);
+  if (!scalar(@$all_mlss)) {
+    print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this method_link_type ($method_link)\n";
+    exit(1);
+  }
+  push @all_method_link_species_sets, @$all_mlss;
+}
 
-exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
+my $ini_re_enable = $re_enable;
+
+while (my $method_link_species_set = shift @all_method_link_species_sets) {
+
+  my $mlss_id = $method_link_species_set->dbID;
+  my $class = $method_link_species_set->method->class;
+  $re_enable = scalar(@all_method_link_species_sets) ? 0 : $ini_re_enable;
+
+  exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
     "method_link_id = ".$method_link_species_set->method->dbID);
-exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
+  exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
 
-#Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
-copy_data($from_dba, $to_dba,
+  #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
+  copy_data($from_dba, $to_dba,
 	  "method_link_species_set_tag",
 	  undef, undef, undef,
 	  "SELECT method_link_species_set_id, tag, value" .
 	  " FROM method_link_species_set_tag " .
 	  " WHERE method_link_species_set_id = $mlss_id");
 
-if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
-  copy_genomic_align_blocks($from_dba, $to_dba, $method_link_species_set);
-} elsif ($class =~ /^ConservationScore.conservation_score/) {
-  copy_conservation_scores($from_dba, $to_dba, $method_link_species_set);
-} elsif ($class =~ /^ConstrainedElement.constrained_element/) {
-  copy_constrained_elements($from_dba, $to_dba, $mlss_id);
-} else {
-  print " ** ERROR **  Copying data of class $class is not supported yet!\n";
-  exit(1);
+  if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
+    copy_genomic_align_blocks($from_dba, $to_dba, $method_link_species_set);
+  } elsif ($class =~ /^ConservationScore.conservation_score/) {
+    copy_conservation_scores($from_dba, $to_dba, $method_link_species_set);
+  } elsif ($class =~ /^ConstrainedElement.constrained_element/) {
+    copy_constrained_elements($from_dba, $to_dba, $mlss_id);
+  } else {
+    print " ** ERROR **  Copying data of class $class is not supported yet!\n";
+    exit(1);
+  }
 }
 
 exit(0);
