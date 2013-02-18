@@ -112,7 +112,7 @@ Sometimes it's done by the pairwise guys as they want to start building earlier.
 eg. (May have been run by kb3 or sf5 -- please ask. Make sure that the genomedb_id is added in the confluence page)
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl \
  --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
- --compara compara_master --species "gadus_morhua"
+ --compara compara_master --species "gadus_morhua" --collection ensembl
 
 This script may take a while if the species you are adding is new. You can check the progress by counting dnaFrag entries in the master database:
 
@@ -151,12 +151,6 @@ $ perl create_mlss.pl --method_link_type  BLASTZ_NET --genome_db_id 22,51 --sour
 
 7.1. Create MLSS entries for homology side pipelines:
 
-## generate the species_set and check it :
-
-$ export ALL_GENOMEDB_IDS=`mysql -hcompara1 -uensro sf5_ensembl_compara_master -N -e "select group_concat(genome_db_id order by genome_db_id) from genome_db where (assembly_default=1 and taxon_id is not NULL)" | cat`
-$ echo $ALL_GENOMEDB_IDS
-
-
 ## choose a temp. directory where the output will be generated:
 
 $ export MLSS_DIR="/tmp/mlss_creation"
@@ -169,32 +163,32 @@ $ mkdir $MLSS_DIR
 # orthologues
 $ echo -e "201\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
 --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
---pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.err
+--pw --collection ensembl 1>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.err
 
 # paralogues btw
 $ echo -e "202\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
 --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
---pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.err
+--pw --collection ensembl 1>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.err
 
 # paralogues wth
 $ echo -e "202\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
 --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
---sg --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.err
+--sg --collection ensembl 1>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.err
 
 # proteintrees
 $ echo -e "401\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
 --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
---name "protein trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.out 2>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.err
+--name "protein trees" --collection ensembl 1>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.out 2>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.err
 
 # nctrees
 $ echo -e "402\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
 --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
---name "nc trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.NC_TREES.402.out 2>$MLSS_DIR/create_mlss.NC_TREES.402.err
+--name "nc trees" --collection ensembl 1>$MLSS_DIR/create_mlss.NC_TREES.402.out 2>$MLSS_DIR/create_mlss.NC_TREES.402.err
 
 # families
 $ echo -e "301\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
 --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
---name "families" --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.FAMILY.301.out 2>$MLSS_DIR/create_mlss.FAMILY.301.err
+--name "families" --collection ensembl 1>$MLSS_DIR/create_mlss.FAMILY.301.out 2>$MLSS_DIR/create_mlss.FAMILY.301.err
 
 Record the MLSSids in the confluence page.
 

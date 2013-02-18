@@ -128,6 +128,10 @@ of its name (which is normally of the form H.sap).
 
 Set the name for this species_set.
 
+=head2 --collection
+
+Use all the species in that collection (more practical than giving a long list of genome_db_ids
+
 =head2 Examples
 
 perl create_mlss.pl
@@ -164,6 +168,7 @@ my $pairwise = 0;
 my $singleton = 0;
 my $use_genomedb_ids = 0;
 my $species_set_name;
+my $collection;
 
 GetOptions(
     "help" => \$help,
@@ -179,15 +184,20 @@ GetOptions(
     "sg" => \$singleton,
     "use_genomedb_ids" => \$use_genomedb_ids,
     "species_set_name|species_set_tag=s" => \$species_set_name,
+    "collection=s" => \$collection,
   );
 
 if ($pairwise && $singleton) {
-  warn("You can store pairwise way and singleton way at the same time. Please choose one.\n");
+  warn("You cannot store pairwise way and singleton way at the same time. Please choose one.\n");
+  exit 1;
+}
+
+if (scalar(@input_genome_db_ids) && $collection) {
+  warn("You cannot define the species set with both genome_db_id collection. Please choose one.\n");
   exit 1;
 }
 
 @input_genome_db_ids = split(/,/,join(',',@input_genome_db_ids));
-
 
 # Print Help and exit if help is requested
 if ($help) {
@@ -219,6 +229,17 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 if (!$method_link_type) {
   $method_link_type = ask_for_method_link_type($compara_dba);
   print "METHOD_LINK_TYPE = $method_link_type\n";
+}
+
+if ($collection) {
+  my $ssa = $compara_dba->get_SpeciesSetAdaptor();
+  my $ss = $ssa->fetch_all_by_tag_value('name', "collection-$collection");
+  if (scalar(@$ss) == 0) {
+    die "Cannot find the collection '$collection'";
+  } elsif (scalar(@$ss) > 1) {
+    die "There are multiple collections '$collection'";
+  }
+  @input_genome_db_ids = map {$_->dbID} @{$ss->[0]->genome_dbs};
 }
 
 my @new_input_genome_db_ids;

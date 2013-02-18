@@ -138,6 +138,10 @@ the copy to several species.
 Copy data for this method-link-species-set only. This option can be used several times in order to restrict
 the copy to several MLSS_ids.
 
+=item B<[--collection "Collection name"]>
+
+Copy data for the species of that collection only. This option supersedes --species
+
 =item B<[--[no]skip-data]>
 
 Do not store DNA-DNA alignments nor synteny data.
@@ -178,6 +182,7 @@ my $mlsss = [];
 my $exact_species_name_match = 0;
 my $only_show_intentions = 0;
 my $MT_only = 0;
+my $collection = undef;
 
 GetOptions(
     "help" => \$help,
@@ -191,6 +196,7 @@ GetOptions(
     'exact_species_name_match' => \$exact_species_name_match,
     'n|intentions' => \$only_show_intentions,
     'MT_only=i' => \$MT_only,
+    'collection=s' => \$collection,
   );
 
 
@@ -243,7 +249,7 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 @$mlsss = split(/,/, join(',', @$mlsss));
 
 ## Get all the genome_dbs with a default assembly
-my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, $species, $mlsss);
+my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, $species, $mlsss, $collection);
 
 ## Get all the MethodLinkSpeciesSet for the default assemblies
 my $all_default_method_link_species_sets = get_all_method_link_species_sets($master_dba, $all_default_genome_dbs, $mlsss);
@@ -422,12 +428,20 @@ sub update_schema_version {
 =cut
 
 sub get_all_default_genome_dbs {
-  my ($compara_dba, $species_names, $mlss_ids) = @_;
+  my ($compara_dba, $species_names, $mlss_ids, $collection) = @_;
 
   throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
       unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
 
   my $all_species;
+
+  if ($collection) {
+    my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor();
+    my $ss = $ss_adaptor->fetch_all_by_tag_value("name", "collection-$collection");
+    die "Cannot find the collection '$collection'" unless scalar(@$ss);
+    die "There are several collections '$collection'" if scalar(@$ss) > 1;
+    return $ss->[0]->genome_dbs;
+  }
 
   if (@$mlss_ids) {
     my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
