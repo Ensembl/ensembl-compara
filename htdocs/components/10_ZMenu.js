@@ -19,7 +19,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.imageId    = data.imageId;
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
-    this.maxLength  = 1e6;
     this.location   = 0;
     
     if (area.hasClass('das')) {
@@ -386,7 +385,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var min    = this.start;
     var max    = this.end;
     var scale  = (max - min + 1) / (this.areaCoords.b - this.areaCoords.t);
-    var length = Math.min(Ensembl.location.length, this.maxLength) / 2;
+    var length = Math.min(Ensembl.location.length, Ensembl.maxRegionLength) / 2;
     var start, end, view, menu, caption, tmp, url;
     
     if (scale === max) {
@@ -479,7 +478,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   zoomURL: function (scale) {
-    var w = Math.min(Ensembl.location.length, this.maxLength) * scale;
+    var w = Math.min(Ensembl.location.length, Ensembl.maxRegionLength) * scale;
     
     if (w < 1) {
       return '';
