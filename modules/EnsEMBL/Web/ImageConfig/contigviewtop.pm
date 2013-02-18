@@ -33,7 +33,7 @@ sub init {
   $self->load_tracks;
   $self->image_resize = 1;
 
-  $self->modify_configs([ 'transcript', 'misc_feature_lrg' ], { render => 'gene_label', strand => 'r' });
+  $self->modify_configs([ 'transcript'                     ], { render => 'gene_label', strand => 'r' });
   $self->modify_configs([ 'variation',  'variation_legend' ], { display => 'off', menu => 'no'        });
   $self->modify_configs([ 'variation_feature_structural'   ], { display => 'off', menu => 'yes'       });
   
