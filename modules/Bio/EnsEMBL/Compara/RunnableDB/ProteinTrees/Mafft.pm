@@ -66,7 +66,7 @@ sub get_msa_command_line {
     my $mafft_binaries = $self->param('mafft_binaries') or die "'mafft_binaries' is an obligatory parameter";
     $ENV{MAFFT_BINARIES} = $mafft_binaries;
 
-    return sprintf('%s --auto %s > %s', $mafft_exe, $self->param('input_fasta'), $self->param('msa_output'));
+    return sprintf('%s --anysymbol --auto %s > %s', $mafft_exe, $self->param('input_fasta'), $self->param('msa_output'));
 }
 
 1;
