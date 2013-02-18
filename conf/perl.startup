@@ -14,7 +14,7 @@ use Apache2::Status;
 use Apache2::SizeLimit;
 use Apache2::ServerUtil;
 
-$Apache2::SizeLimit::MAX_PROCESS_SIZE = 1000000; # Kill httpd over 1000Mb
+$Apache2::SizeLimit::MAX_PROCESS_SIZE = 2000000; # Kill httpd over 2000Mb. For upload files ~9MB (BED and others) limit of 20000Mb should be enough
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
 use DBI;
