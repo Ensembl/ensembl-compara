@@ -39,7 +39,7 @@ sub format_list {
 
   if ($list && scalar(@{$list||[]})) {
     foreach (@$list) {
-      my ($species_order, $info) = $self->mlss_species_info($method, $_->{'name'});
+     my ($species_order, $info) = $self->mlss_species_info($method, $_->{'name'});
 
       if ($species_order && scalar(@{$species_order||[]})) {
         my $count = scalar(@$species_order);
@@ -125,15 +125,21 @@ sub get_species_info {
 ## Returns an array of species information, optionally sorted according to a taxonomic tree
   my ($self, $species_order, $by_tree) = @_;
   my $hub = $self->hub;
-  my $lookup = {};
+  my $info = {};
 
   if ($by_tree) {
     ## Get all species from compara database
     my $compara_db = $self->hub->database('compara');
     return [] unless $compara_db;
+    my $lookup = {};
 
     my $tree = $compara_db->get_adaptor('SpeciesTree')->create_species_tree();
-    my %lookup = map { $_ => 1 } @$species_order;
+    ## Compara now uses full trinomials for all species
+    foreach (@$species_order) {
+      my $full_name = $hub->species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME');
+      $full_name =~ s/ /_/g;
+      $lookup->{$full_name} = $_;
+    }
     $species_order = []; ## now we override the original order
 
     my $all_leaves = $tree->get_all_leaves;
@@ -150,7 +156,7 @@ sub get_species_info {
 
     foreach my $this_leaf (@$all_leaves) {
       (my $name = $this_leaf->name) =~ s/ /_/g;
-      push @$species_order, $name if $lookup{$name};
+      push @$species_order, $lookup->{$name} if $lookup->{$name};
     }
   }
 
@@ -160,13 +166,13 @@ sub get_species_info {
     (my $short_name = $sp) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]+/$1.$2/; ## e.g. H.sap
     (my $formatted_name = $display_name) =~ s/ /<br>/; ## Only replace first space
 
-    $lookup->{$sp}{'long_name'}      = $display_name;
-    $lookup->{$sp}{'short_name'}     = $short_name;
-    $lookup->{$sp}{'formatted_name'} = $formatted_name; 
-    $lookup->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
+    $info->{$sp}{'long_name'}      = $display_name;
+    $info->{$sp}{'short_name'}     = $short_name;
+    $info->{$sp}{'formatted_name'} = $formatted_name; 
+    $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
   }
 
-  return $species_order, $lookup;
+  return $species_order, $info;
 }
 
 sub draw_stepped_table {
