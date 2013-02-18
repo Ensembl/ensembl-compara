@@ -69,6 +69,9 @@ perl update_genome.pl
         from that number (and we will assign according to the current number
         of Genome DBs exceeding the offset). First ID will be equal to the
         offset+1
+    [--collection "collection name"]
+        Adds the new / updated genome_db_id to the collection. This option
+        can be used multiple times
 
 =head1 OPTIONS
 
@@ -140,6 +143,11 @@ from that number (and we will assign according to the current number
 of Genome DBs exceeding the offset). First ID will be equal to the
 offset+1
 
+=item B<[--collection "Collection name"]>
+
+Adds the new / updated genome_db_id to the collection. This option
+can be used multiple times
+
 =back
 
 =head1 INTERNAL METHODS
@@ -184,6 +192,9 @@ perl update_genome.pl
         from that number (and we will assign according to the current number
         of Genome DBs exceeding the offset). First ID will be equal to the
         offset+1
+    [--collection "Collection name"]
+        Adds the new / updated genome_db_id to the collection. This option
+        can be used multiple times
 };
 
 my $help;
@@ -195,6 +206,7 @@ my $species_name;
 my $taxon_id;
 my $force = 0;
 my $offset = 0;
+my @collection = ();
 
 GetOptions(
     "help" => \$help,
@@ -205,6 +217,7 @@ GetOptions(
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
+    "collection=s@" => \@collection,
   );
 
 $| = 0;
@@ -236,6 +249,8 @@ throw ("Cannot connect to database [$compara]") if (!$compara_db);
 
 my $genome_db = update_genome_db($species_db, $compara_db, $force);
 print "Bio::EnsEMBL::Compara::GenomeDB->dbID: ", $genome_db->dbID, "\n\n";
+
+update_collection($compara_db, $genome_db, \@collection);
 
 # delete_genomic_align_data($compara_db, $genome_db);
 
@@ -367,6 +382,41 @@ sub update_genome_db {
     );
   }
   return $genome_db;
+}
+
+=head2 update_collection
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg[3]      : Array reference of strings
+  Description : This method updates all the collection species sets to
+                include the new genome_db
+  Returns     : -none-
+  Exceptions  : throw if any SQL statment fails
+
+=cut
+
+sub update_collection {
+  my ($compara_dba, $genome_db, $all_collections) = @_;
+  my $ssa = $compara_dba->get_SpeciesSetAdaptor;
+  foreach my $collection (@$all_collections) {
+    my $all_ss = $ssa->fetch_all_by_tag_value("name", "collection-$collection");
+    if (scalar(@$all_ss) == 0) {
+      warn "cannot find the collection '$collection'";
+    } elsif (scalar(@$all_ss) > 1) {
+      warn "There are multiple collections '$collection'";
+    } else {
+      my $ini_genome_dbs = $all_ss->[0]->genome_dbs;
+      my $new_genome_dbs = [grep {$_->name ne $genome_db->name} @$ini_genome_dbs];
+      push @$new_genome_dbs, $genome_db;
+      my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $new_genome_dbs );
+      $ssa->store($species_set);
+      my $sql = 'UPDATE species_set_tag SET species_set_id = ? WHERE species_set_id = ? AND tag = "name"';
+      my $sth = $compara_dba->dbc->prepare($sql);
+      $sth->execute($species_set->dbID, $all_ss->[0]->dbID);
+      $sth->finish();
+    }
+  }
 }
 
 =head2 delete_genomic_align_data
