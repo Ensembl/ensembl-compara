@@ -274,16 +274,6 @@ sub root {
   return $self->parent->root;
 }
 
-sub subroot {
-  deprecate('subroot() should not be used and will be removed in release 70.
-  If you are using it, please contact the dev mailing-list dev@ensembl.org');
-  my $self = shift;
-
-  return undef unless($self->parent);
-  return $self unless(defined($self->parent->parent));
-  return $self->parent->subroot;
-}
-
 
 =head2 children
 
@@ -1521,15 +1511,6 @@ sub _recursive_get_all_leaves {
   }
 }
 
-
-sub get_all_leaves_indexed {
-  my $self = shift;
-  deprecate("Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor->fetch_all_leaves_indexed() method instead. get_all_leaves_indexed() will be removed in release 70.");
-
-  my @leaf_list = @{$self->adaptor->fetch_all_leaves_indexed($self)};
-
-  return \@leaf_list;
-}
 
 =head2 max_distance
 
