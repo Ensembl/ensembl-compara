@@ -33,7 +33,6 @@ foreach my $gene (@$genes) {
 
   # Fetch the gene tree
   my $tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);
-  # get_all_leaves_indexed would be much faster, but it would crash find_first_shared_ancestor
   my $all_leaves = $tree->get_all_leaves();
 
   my $node_h;
