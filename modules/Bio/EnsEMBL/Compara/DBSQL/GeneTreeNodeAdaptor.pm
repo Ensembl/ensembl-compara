@@ -141,7 +141,6 @@ sub fetch_by_gene_Member_root_id {
   Description: Transforms the member into an AlignedMember. If the member is
                not an ENSEMBLGENE, it has to be canoncal, otherwise, the
                function would return an empty array
-               NB: This function currently returns an array of at most 1 element
   Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general
@@ -153,7 +152,7 @@ sub fetch_all_AlignedMember_by_Member {
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
     # Discard the UNIPROT members
-    return if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
     my $member_id = (ref($member) ? $member->dbID : $member);
     my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
@@ -178,6 +177,38 @@ sub fetch_all_AlignedMember_by_Member {
 
     my $join = [[['gene_tree_root', 'tr'], 't.root_id = tr.root_id']];
     return $self->generic_fetch($constraint, $join);
+}
+
+
+=head2 fetch_default_AlignedMember_for_Member
+
+  Arg[1]     : Member or member_id
+  Example    : $align_member = $genetreenode_adaptor->fetch_adefault_AlignedMember_for_Member($member);
+  Description: Transforms the member into an AlignedMember. If the member is
+               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
+               function would return undef
+  Returntype : Bio::EnsEMBL::Compara::AlignedMember
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_default_AlignedMember_for_Member {
+    my ($self, $member) = @_;
+
+    # Discard the UNIPROT members
+    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+
+    my $member_id = (ref($member) ? $member->dbID : $member);
+    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+
+
+    $constraint .= ' AND (tr.clusterset_id = "default")';
+
+    my $join = [[['gene_tree_root', 'tr'], 't.root_id = tr.root_id']];
+    return $self->generic_fetch_one($constraint, $join);
 }
 
 
