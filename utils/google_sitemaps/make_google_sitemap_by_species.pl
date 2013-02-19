@@ -97,7 +97,9 @@ foreach (@sitemaps) {
   ));
 }
 $index->write("${ouput_dir}/sitemap-index.xml");
-
+print ("Moving sitemaps to /ensemblweb/www/server/htdocs/ \n");
+system("rm -r /ensemblweb/www/server/htdocs/sitemaps") if(-d "/ensemblweb/www/server/htdocs/sitemaps");
+system("mv /ensemblweb/www/server/utils/google_sitemaps/sitemaps /ensemblweb/www/server/htdocs/");
 exit;
 
 #------------------------------------------------------------------------------
