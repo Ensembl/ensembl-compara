@@ -1680,7 +1680,6 @@ sub dumpSequence {
           AND ma.attrib_type_id = at.attrib_type_id
         ORDER by mf.misc_feature_id, at.code));
     $sth->execute();
-
     my ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$NAMES,$ftype);
     while( my($ID,$sr,$sr_type,$start,$end,$len,$ms_id,$code,$val) = $sth->fetchrow_array() ) {
       if($ID == $old_ID) {
@@ -1766,9 +1765,6 @@ sub dumpSequence {
   }
 
 
-  ## haplotypes
-
-
   #for vega - get ensembl chromosome names if they're different from the vega names
   my %enames = ();
   if ($sitetype eq 'Vega') {
@@ -1805,6 +1801,21 @@ sub dumpSequence {
     }
   }
 
+  ## haplotypes
+  $sth = $conf->{'dbh'}->prepare(qq(
+       SELECT sr.name, ae.seq_region_start, ae.seq_region_end
+         FROM assembly_exception ae, seq_region sr
+        WHERE ae.seq_region_id = sr.seq_region_id
+          AND ae.exc_type = 'HAP'));
+  $sth->execute;
+  while (my ($name, $start, $end) = $sth->fetchrow_array() ) {
+    $patch_hap_dets{$name} = {
+      'name' => $name,
+      'start'=> $start,
+      'end'   => $end,
+    };
+  }
+
   #get all seq_regions
   $sth = $conf->{'dbh'}->prepare(qq(
        SELECT sr.name, sr.length, cs.name, cs.coord_system_id, srs.synonym
@@ -1818,6 +1829,7 @@ sub dumpSequence {
   while( my($name,$length,$type,$cs_id,$syn) = $sth->fetchrow_array() ) {
     my ($prev_name,$prev_length,$mapping_text);
     next if $type eq 'lrg';
+    next if $type eq 'supercontig' && $patch_hap_dets{$name};
     if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
       # if this is an old seq_region mapped to a new one of the same name then skip it
       if ($mapped_ids->{$cs_id}{$name}) {
@@ -1854,7 +1866,9 @@ sub dumpSequence {
       if ($patch_hap_dets{$old_name}) {
         $old_end = $patch_hap_dets{$old_name}{'end'};
         $old_start = $patch_hap_dets{$old_name}{'start'};
-        push @$synonyms, $patch_hap_dets{$old_name}{'syn'} unless (grep {$syn eq $_} @$synonyms);
+        if ($patch_hap_dets{$old_name}{'syn'}) {
+          push @$synonyms, $patch_hap_dets{$old_name}{'syn'} unless (grep {$syn eq $_} @$synonyms);
+        }
       }
       else {
         $old_end = $length;
