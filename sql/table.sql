@@ -1133,18 +1133,6 @@ CREATE TABLE `CAFE_species_gene` (
   KEY `cafe_gene_family_id` (`cafe_gene_family_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
--- Table structure for table `CAFE_data`                                              
-                                                                                      
-SET @saved_cs_client     = @@character_set_client;                                    
-SET character_set_client = utf8;                                                      
-CREATE TABLE `CAFE_data` (                                                            
-  `fam_id` varchar(20) NOT NULL,                                                      
-  `tree` mediumtext NOT NULL,                                                         
-  `tabledata` mediumtext NOT NULL,                                                    
-  PRIMARY KEY (`fam_id`)                                                              
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;                                               
-SET character_set_client = @saved_cs_client;
-
 
 # ------------------------ End of CAFE tables --------------------------------------
 
