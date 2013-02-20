@@ -24,6 +24,10 @@ Ensembl.extend({
     this.hideHints       = {};
     this.initialPanels   = $('.initial_panel');
     this.minWidthEl      = $('#min_width_container');
+    this.maxRegionLength = parseInt($('#max_region_length').val() || 0, 10);
+    this.speciesPath     = $('#species_path').val()        || '';
+    this.speciesCommon   = $('#species_common_name').val() || '';
+    this.species         = this.speciesPath.split('/').pop();
     this.images          = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
     
     for (var i in bodyClass) {
@@ -120,15 +124,11 @@ Ensembl.extend({
     var lastR       = this.coreParams ? this.coreParams.r : '';
     var match, m, i, r;
     
-    this.hash            = hash;
-    this.coreParams      = {};
-    this.initialR        = $('input[name=r]', '#core_params').val();
-    this.location        = { length: 100000 };
-    this.speciesPath     = $('#species_path').val()        || '';
-    this.speciesCommon   = $('#species_common_name').val() || '';
-    this.maxRegionLength = parseInt($('#max_region_length').val() || 0, 10);
-    this.species         = this.speciesPath.split('/').pop();
-    this.multiSpecies    = {};
+    this.hash         = hash;
+    this.coreParams   = {};
+    this.initialR     = $('input[name=r]', '#core_params').val();
+    this.location     = { length: 100000 };
+    this.multiSpecies = {};
     
     $('input', '#core_params').each(function () {
       var hashMatch = locationURL.match(regex.replace('%s', this.name));
