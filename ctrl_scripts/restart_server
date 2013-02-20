@@ -58,7 +58,7 @@ if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
   close LOG;
 }
 
-my ($help, $rmconfig, $delay, $single, $tail, $flush, $species);
+my ($help, $rmconfig, $delay, $single, $tail, $flush, $species,@defines);
 
 &GetOptions(
   "sp=s"     => \$species,
@@ -73,6 +73,7 @@ my ($help, $rmconfig, $delay, $single, $tail, $flush, $species);
   "h"        => \$help,
   "t"        => \$tail,
   "taillog"  => \$tail,
+  "D=s"      => \@defines,
 );
 
 if ($help) {
@@ -92,6 +93,7 @@ Options:
     -h, --help      : print this help message
     -sp             : rm conf/packed/species_name.*, or rm conf/packed/* if -s eq all
     -t, --taillog   : end the command with ./ctrl/taillog
+    -D              : extra defines for apache
 );
 
   exit;
@@ -121,8 +123,9 @@ if ($species) {
   `$rebuild` if -e $rebuild;
 }
 
+my $defines = join(" ",map { "-D $_ " } @defines);
 my $stop_args  = $delay ? "-d $delay" : '';
-my $start_args = join ' ', $rmconfig ? '-r' : '', $single ? '-X' : '', $flush ? '-f' : '';
+my $start_args = join ' ', $rmconfig ? '-r' : '', $single ? '-X' : '', $flush ? '-f' : '',$defines;
 
 # stop and start the server
 system("perl $Bin/stop_server $stop_args")   == 0 or exit;
