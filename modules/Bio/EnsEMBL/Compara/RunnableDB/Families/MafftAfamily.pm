@@ -65,7 +65,7 @@ sub run {
     my $self = shift @_;
 
     my $family_id               = $self->param('family_id');
-    my $mafft_root_dir          = $self->param('mafft_root_dir') || '/software/ensembl/compara/mafft-6.522';
+    my $mafft_root_dir          = $self->param('mafft_root_dir') || die "'mafft_root_dir' is an obligatory parameter";
     my $mafft_executable        = $self->param('mafft_exec')     || ( $mafft_root_dir . '/bin/mafft' );
     my $mafft_args              = $self->param('mafft_args')     || '';
 

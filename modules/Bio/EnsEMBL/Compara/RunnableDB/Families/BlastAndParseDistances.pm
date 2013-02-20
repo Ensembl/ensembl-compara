@@ -155,7 +155,7 @@ sub run {
     my $start_seq_id            = $self->param('sequence_id');
     my $minibatch               = $self->param('minibatch')     || 1;
 
-    my $blast_bin_dir           = $self->param('blast_bin_dir') || '/software/ensembl/compara/ncbi-blast-2.2.23+/bin';
+    my $blast_bin_dir           = $self->param('blast_bin_dir') || die "'blast_bin_dir' is an obligatory parameter";
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
