@@ -27,6 +27,9 @@ use URI::Escape           qw(uri_escape uri_unescape);
 use Apache2::RequestUtil;
 use Geo::IP;
 
+# Used to enable symbolic debugging support in dynamic_use.
+use Inline C => "void lvalues_nodebug(CV* cv) { CvNODEBUG_on(cv); }";
+
 my %FAILED_MODULES;
 
 sub new {
@@ -131,6 +134,25 @@ sub is_valid_module_name {
   return $classname =~ /^[a-zA-Z_]\w*(::\w+)*$/;
 }
 
+# Hack to allow symbollic debugging in face of lvalues,
+# despite perl bug #7013. Only run when in debug mode.
+sub _fix_lvalues_r {
+  no strict;
+  my ($name,$here) = @_; 
+
+  foreach my $t (values %$here) {
+    next unless *{"$t"}{CODE} and grep { $_ eq 'lvalue' } attributes::get(*{"$t"}{CODE});
+    lvalues_nodebug(*{"$t"}{CODE});
+  }
+  _fix_lvalues_r("$name$_",\%{"$name$_"}) for keys %$here;
+}
+sub _fix_lvalues {
+  no strict;
+  my $classname = shift;
+  _fix_lvalues_r("EnsEMBL::",\%{"EnsEMBL::"});
+}
+# End hack
+
 # Equivalent of USE - but used at runtime
 sub dynamic_use {
   my ($self, $classname) = @_;
@@ -170,6 +192,7 @@ sub dynamic_use {
     return 0;
   }
   
+  _fix_lvalues($classname) if $ENV{'PERLDB'};
   $classname->import;
   return 1;
 }
