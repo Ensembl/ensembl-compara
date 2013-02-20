@@ -420,32 +420,6 @@ sub fetch_all_by_genome_pair {
 }
 
 
-=head2 fetch_all_by_MethodLinkSpeciesSet_orthology_type
-
-  Description: DEPRECATED. Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type) instead
-
-=cut
-
-sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
-    my ($self, $method_link_species_set, $orthology_type) = @_;
-    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type) instead. fetch_all_by_MethodLinkSpeciesSet_orthology_type() will be removed in release 70.');
-    return $self->fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type);
-}
-
-
-=head2 fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype
-
-  Description: DEPRECATED. Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype) instead
-
-=cut
-
-sub fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype {
-    my ($self, $method_link_species_set, $orthology_type, $subtype) = @_;
-    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype) instead. fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype() will be removed in release 70.');
-    return $self->fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype);
-}
-
-
 =head2 fetch_all_in_paralogues_from_Member_NCBITaxon
 
   Arg [1]    : member (Bio::EnsEMBL::Compara::Member)
