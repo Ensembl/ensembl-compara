@@ -127,9 +127,9 @@ sub variation_source {
   (my $description = $object->source_description) =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2" class="constant">$1<\/a>/; 
   
   # Source link
-  if ($source eq 'dbSNP') {
+  if ($source =~ /dbSNP/) {
     $sname       = 'DBSNP';
-    $source_link = $hub->get_ExtURL_link("View in $source", $sname, $name);
+    $source_link = $hub->get_ExtURL_link("View in dbSNP", $sname, $name);
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
