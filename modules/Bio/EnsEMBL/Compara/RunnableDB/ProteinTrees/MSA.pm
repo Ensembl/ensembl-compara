@@ -303,6 +303,8 @@ sub dumpProteinTreeToWorkdir {
       my $seq = '';
       $seq = $member->sequence;
       $residues += $member->seq_length;
+      $seq =~ s/\*/X/g;
+      $member->sequence($seq);
       $seq =~ s/(.{72})/$1\n/g;
       chomp $seq;
 
@@ -391,7 +393,7 @@ sub parse_and_store_alignment_into_proteintree {
       my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
       # Sum up the M lengths
       my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
-      my $member_sequence = $member->sequence; $member_sequence =~ s/\*//g;
+      my $member_sequence = $member->sequence;
       if ($seq_cigar_length != length($member_sequence)) {
         print $member_sequence."\n".$member->cigar_line."\n" if ($self->debug);
         $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
