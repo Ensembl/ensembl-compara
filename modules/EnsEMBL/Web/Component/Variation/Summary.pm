@@ -25,7 +25,8 @@ sub content {
     $self->alleles($feature_slice),
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
-    $self->validation_status,
+    #$self->validation_status,
+    $self->evidence_status,
     $self->clinical_significance,
     $self->synonyms,
     $self->hgvs,
@@ -400,7 +401,7 @@ sub location {
   return [ 'Location', "$location$location_link" ];
 }
 
-
+## to be removed - replaced by evidence status
 sub validation_status {
   my $self           = shift;
   my $hub            = $self->hub;
@@ -464,6 +465,64 @@ sub validation_status {
   
   return ['Validation status', $html];
 }
+
+sub evidence_status {
+  my $self           = shift;
+  my $hub            = $self->hub;
+  my $object         = $self->object;
+  my $status         = $object->evidence_status;
+
+  my (@status_list, %main_status);
+
+  if (scalar @$status) {
+    my $snp_name = $object->name;
+
+    foreach (@$status) {
+      my $st;
+
+      if ($_ eq 'HapMap') {
+        $st = 'HapMap', $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
+        $main_status{'HapMap'} = 1;
+
+      } elsif ($_ =~ /1000Genome/i) {
+        $st = '1000 Genomes';
+        $main_status{'1000 Genomes'} = 1;
+
+      }
+      else{
+        $_ =~ s/Multiple_observations/Multiple observations/;
+        $st = $_;
+
+         push @status_list, $st;
+      }
+    }
+  }
+
+  my $status_count = scalar @status_list;
+
+  return unless $status_count;
+
+  my $html;
+
+  if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
+    my $show = $self->hub->get_cookie_value('toggle_status') eq 'open';
+    my $showed_line;
+
+    foreach my $st (sort keys %main_status) {
+      $showed_line .= ', ' if $showed_line;
+      $showed_line .= "<b>$st</b>";
+      $status_count --;
+    }
+
+    $showed_line .= ', ' . join ', ', sort @status_list if $status_count > 0;
+    $html        .= $showed_line;
+  } else {
+    $html .= join ', ', sort @status_list;
+  }
+
+  return ['Evidence status', $html];
+}
+
 
 sub clinical_significance {
   my $self   = shift;
