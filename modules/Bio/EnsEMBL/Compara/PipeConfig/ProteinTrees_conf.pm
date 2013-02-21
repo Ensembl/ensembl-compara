@@ -106,7 +106,7 @@ sub default_options {
     # executable locations:
         #'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
-        #'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
+        #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
         #'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
         #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
@@ -901,7 +901,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
                 'method'                => 'cmcoffee',
-                'mcoffee_exe'           => $self->o('mcoffee_exe'),
+                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mafft_home'            => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
@@ -927,7 +928,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
                 'method'                => 'cmcoffee',
-                'mcoffee_exe'           => $self->o('mcoffee_exe'),
+                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mafft_home'            => $self->o('mafft_home'),
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),

@@ -60,6 +60,10 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
+        'mafft_bin_dir'         => '/bin/',                 # where to find the mafft binaroes from $mafft_home
+        'mcoffee_exe_name'      => 't_coffee',              # where to find the t_coffee executable from $mcoffee_home/$mcoffee_exe_dir
+        'mcoffee_exe_dir'       => '/bin/',                 # where to find the t_coffee executable rirectory from $mcoffee_home
+        'mcoffee_bin_dir'       => '/plugins/linux',        # where to find the mcoffee binaries from $mcoffee_home
         'method'                => 'fmcoffee',              # the style of MCoffee to be run for this alignment
         'options'               => '',
         'cutoff'                => 2,                       # for filtering
@@ -198,12 +202,17 @@ sub get_msa_command_line {
     my $cmd       = '';
     my $prefix    = '';
 
-    my $mcoffee_exe = $self->param('mcoffee_exe')
-        or die "'mcoffee_exe' is an obligatory parameter";
+    my $mcoffee_home = $self->param('mcoffee_home') or die "'mcoffee_home' is an obligatory parameter";
+    my $mcoffee_bin_dir = $self->param('mcoffee_bin_dir') or die "'mcoffee_bin_dir' is an obligatory parameter";
+    my $mcoffee_exe_name = $self->param('mcoffee_exe_name') or die "'mcoffee_exe_name' is an obligatory parameter";
+    my $mcoffee_exe_dir = $self->param('mcoffee_exe_dir') or die "'mcoffee_exe_dir' is an obligatory parameter";
+    die "Cannot find directory '$mcoffee_bin_dir' in '$mcoffee_home'" unless(-d $mcoffee_home.'/'.$mcoffee_bin_dir);
+    
+    my $mafft_home = $self->param('mafft_home') or die "'mafft_home' is an obligatory parameter";
+    my $mafft_bin_dir = $self->param('mafft_bin_dir') or die "'mafft_bin_dir' is an obligatory parameter";
+    die "Cannot find directory '$mafft_bin_dir' in '$mafft_home'" unless(-d $mafft_home.'/'.$mafft_bin_dir);
 
-    die "Cannot execute '$mcoffee_exe'" unless(-x $mcoffee_exe);
-
-    $cmd = $mcoffee_exe;
+    $cmd = "$mcoffee_home/$mcoffee_exe_dir/$mcoffee_exe_name";
     if ($self->param('redo_alnname') and ($self->param('method') eq 'unalign') ) {
         $cmd .= ' '. $self->param('options');
         $cmd .= ' '. $method_string;
@@ -220,10 +229,8 @@ sub get_msa_command_line {
     $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
     $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
 
-    print "Using default mafft location\n" if $self->debug();
-    $prefix .= 'export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
-    # path to t_coffee components:
-    $prefix .= 'export PATH=$PATH:/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
+    # Add the paths to the t_coffee built-in binaries + mafft (installed on its own)
+    $prefix .= "export PATH=$mafft_home/$mafft_bin_dir:\$PATH:$mcoffee_home/$mcoffee_exe_dir/:$mcoffee_home/$mcoffee_bin_dir;";
 
     return "$prefix $cmd";
 }
