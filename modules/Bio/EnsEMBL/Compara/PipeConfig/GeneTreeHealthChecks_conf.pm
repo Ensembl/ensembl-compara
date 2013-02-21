@@ -538,7 +538,7 @@ sub analysis_tree_globally {
         {   -logic_name => 'hc_tree_rootroot_links_to_rootnode',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT FROM gene_tree_root gtr JOIN gene_tree_node gtn ON gtr.root_id = gtn.node_id WHERE gtr.root_id != gtn.root_id',
+                'inputquery'    => 'SELECT * FROM gene_tree_root gtr JOIN gene_tree_node gtn ON gtr.root_id = gtn.node_id WHERE gtr.root_id != gtn.root_id',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -flow_into  => [ 'hc_members_unique_in_clusterset', 'hc_clusterset_is_flat_tree', 'hc_hierarchy_tree_types' ],
