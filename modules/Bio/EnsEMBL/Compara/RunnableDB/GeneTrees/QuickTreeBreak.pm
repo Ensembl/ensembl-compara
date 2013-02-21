@@ -82,7 +82,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 =head2 fetch_input
@@ -102,6 +102,9 @@ sub fetch_input {
     my $gene_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' must be defined";
     my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
     $self->param('gene_tree', $gene_tree);
+
+    # We reload the cigar lines in case the subtrees are partially written
+    $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
 
     $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 
@@ -138,10 +141,26 @@ sub run {
             -clusterset_id => $supertree->clusterset_id,
             );
 
+    my %cigars;
+    foreach my $member (@{$self->param('cigar_lines')}) {
+        $cigars{$member->member_id} = $member->cigar_line;
+    }
+    print STDERR scalar(keys %cigars), " cigars loaded\n" if $self->debug;
+
     foreach my $member (@{$supertree->get_all_Members}) {
         $tree->add_Member($member);
+        $member->cigar_line($cigars{$member->member_id});
     }
+    print STDERR scalar(@{$supertree->get_all_Members}), " members found in the super-tree\n" if $self->debug;
 
+    # Nodes from a previous QTB run
+    # They are in reverse order to make sure we delete the roots at the end
+    print STDERR $supertree->root->string_tree if $self->debug;
+    my @nodes_to_delete = reverse($supertree->root->get_all_subnodes);;
+    $self->param('nodes_to_delete', \@nodes_to_delete);
+    print STDERR "found ", scalar(@nodes_to_delete), " to delete\n";
+
+    $supertree->root->release_children;
     $supertree->clear();
     $supertree->root->add_child($tree->root);
 
@@ -158,8 +177,6 @@ sub print_supertree {
     print $indent; $node->print_node;
     if ($node->tree->tree_type eq 'tree') {
         print $indent, "TREE: ", scalar(@{$node->get_all_leaves}), "\n";
-        if (scalar(@{$node->get_all_leaves}) == 1) {
-        }
     } else {
         print $indent, "SUPERTREE\n";
         $indent .= "\t";
@@ -185,6 +202,17 @@ sub write_output {
     my $self = shift @_;
 
     $self->compara_dba->get_GeneTreeAdaptor->store($self->param('gene_tree'));
+
+    my $dbc = $self->compara_dba->dbc;
+    foreach my $node (@{$self->param('nodes_to_delete')}) {
+        if ($node->node_id == $node->{_root_id}) {
+            my $root_id = $node->{_root_id};
+            $dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
+            $dbc->do("DELETE FROM gene_tree_root     WHERE root_id = $root_id");
+        }
+        $self->compara_dba->get_GeneTreeNodeAdaptor->delete_node($node);
+    }
+
     $self->rec_update_tags($self->param('gene_tree')->root);
 }
 
