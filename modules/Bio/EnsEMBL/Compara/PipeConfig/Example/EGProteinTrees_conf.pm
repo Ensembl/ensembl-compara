@@ -123,6 +123,7 @@ sub default_options {
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
+        'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
 
     #DNDS

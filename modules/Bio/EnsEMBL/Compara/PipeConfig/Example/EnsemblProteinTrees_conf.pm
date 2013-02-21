@@ -86,7 +86,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '71',
-        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => 'b',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # dependent parameters: updating 'work_dir' should be enough
@@ -143,6 +143,7 @@ sub default_options {
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
+        'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
 
     # connection parameters to various databases:
