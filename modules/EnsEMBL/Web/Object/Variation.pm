@@ -395,7 +395,8 @@ sub consequence_type {
  
   return $consequence_type;
 }
-
+## This is replaced by ensembl evidence_status
+## To be removed
 sub status { 
 
   ### Variation_object_calls
@@ -407,6 +408,16 @@ sub status {
   return $self->vari->get_all_validation_states;
 }
 
+sub evidence_status { 
+
+  ### Variation_object_calls
+  ### 
+  ### Example    : my $evidence_status = $object->get_all_evidence_states;
+  ### Returns List of supporting evidence types for variation
+
+  my $self = shift;
+  return $self->vari->get_all_evidence_values;
+}
 
 
 sub flanking_seq {
