@@ -359,6 +359,7 @@ sub parse_and_store_alignment_into_proteintree {
   # Convert alignment strings into cigar_lines
   #
   my $alignment_length;
+  my %align_string;
   foreach my $id (keys %align_hash) {
       next if ($id eq 'cons');
     my $alignment_string = $align_hash{$id};
@@ -371,6 +372,7 @@ sub parse_and_store_alignment_into_proteintree {
     }
     # Call the method to do the actual conversion
     $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
+    $align_string{$id} = uc($alignment_string);
     #print "The cigar_line of $id is: ", $align_hash{$id}, "\n";
   }
   $tree->aln_length($alignment_length);
@@ -395,7 +397,7 @@ sub parse_and_store_alignment_into_proteintree {
       my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
       my $member_sequence = $member->sequence;
       if ($seq_cigar_length != length($member_sequence)) {
-        print $member_sequence."\n".$member->cigar_line."\n" if ($self->debug);
+        print $member->sequence_id.":$seq_cigar_length:".length($member_sequence).":".$member_sequence."\n".$member->cigar_line."\n".$align_string{$member->sequence_id}."\n" if ($self->debug);
         $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
       }
   }
