@@ -228,6 +228,8 @@ sub save {
   my $content = $self->content(shift);
   my $params  = shift || {};
   
+  map { $self->{$_} = $params->{$_} if defined $params->{$_} } keys %$params;
+
   foreach my $driver ($self->drivers) {
     return 1 
       if $driver && $driver->save($self);    
