@@ -837,8 +837,9 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
-                2 => [ 'per_genome_qc' ],
-                1 => [ 'overall_qc' ],
+                '2->A' => [ 'per_genome_qc' ],
+                '1->A' => [ 'overall_qc' ],
+                'A->1' => [ 'clusterset_backup' ],
             },
         },
 
@@ -861,6 +862,16 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
         },
+
+        {   -logic_name    => 'clusterset_backup',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters    => {
+                'sql'         => 'INSERT INTO protein_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL',
+            },
+            -analysis_capacity => 1,
+            -meadow_type    => 'LOCAL',
+        },
+
 
 # ---------------------------------------------[main tree fan]-------------------------------------------------------------
 
@@ -1057,10 +1068,22 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '250Mb_job',
             -flow_into => {
-                '2->A' => [ 'mafft' ],
+                '2->A' => [ 'tree_backup' ],
                 'A->2' => [ 'split_genes' ],
             },
         },
+
+        {   -logic_name    => 'tree_backup',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters    => {
+                'sql'         => 'INSERT INTO protein_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+            },
+            -analysis_capacity => 1,
+            -meadow_type    => 'LOCAL',
+            -flow_into      => [ 'mafft' ],
+        },
+
+
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
 
