@@ -96,19 +96,26 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'backbone_hc_start',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name => 'count_number_species',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'    => 'SELECT "species_count" AS meta_key, COUNT(*) AS meta_value FROM genome_db',
+                'fan_branch_code'   => 2,
+            },
             -input_ids  => [ {} ],
-            -flow_into  => [ 'species_factory', 'tree_factory', 'hc_factory_members_globally', 'hc_factory_global_trees' ],
+            -flow_into => {
+                1 => [ 'species_factory', 'tree_factory', 'hc_factory_members_globally', 'hc_factory_global_trees' ],
+                2 => [ 'mysql:////meta' ],
+            },
             -meadow_type    => 'LOCAL',
         },
- 
+
+
         {   -logic_name => 'species_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT genome_db_id, name FROM genome_db',
-
-                'fan_branch_code'       => 2,
+                'fan_branch_code'   => 2,
             },
             -flow_into  => {
                 2 => [ 'hc_factory_members_per_genome', 'hc_factory_pafs' ],
@@ -267,7 +274,7 @@ sub analysis_pafs {
         {   -logic_name => 'hc_paf_hit_against_each_species',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT COUNT(DISTINCT hgenome_db_id) FROM peptide_align_feature_#name#_#genome_db_id#',
+                'inputquery'    => 'SELECT DISTINCT hgenome_db_id FROM peptide_align_feature_#name#_#genome_db_id#',
                 'expected_size' => '= #species_count#',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
