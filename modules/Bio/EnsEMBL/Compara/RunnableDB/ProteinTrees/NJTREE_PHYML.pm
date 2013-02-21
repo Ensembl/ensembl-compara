@@ -157,24 +157,24 @@ sub run_njtree_phyml {
     my $starttime = time()*1000;
     
 
-    if (scalar(@{$protein_tree->root->get_all_leaves}) == 2) {
+    if (scalar(@{$protein_tree->get_all_Members}) == 2) {
 
         warn "Number of elements: 2 leaves, N/A split genes\n";
-        my @goodgenes = map {$self->_name_for_prot($_)} @{$protein_tree->root->get_all_leaves};
+        my @goodgenes = map {$self->_name_for_prot($_)} @{$protein_tree->get_all_Members};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
     } else {
 
         my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($protein_tree);
         
-        warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$protein_tree->root->get_all_leaves}), scalar(keys %{$self->param('split_genes')}));
+        warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$protein_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
 
-        my $genes_for_treebest = scalar(@{$protein_tree->root->get_all_leaves}) - scalar(keys %{$self->param('split_genes')});
+        my $genes_for_treebest = scalar(@{$protein_tree->get_all_Members}) - scalar(keys %{$self->param('split_genes')});
         $self->throw("Cannot build a tree with $genes_for_treebest genes (exclud. split genes)") if $genes_for_treebest < 2;
 
         if ($genes_for_treebest == 2) {
 
-            my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {$self->_name_for_prot($_)} @{$protein_tree->root->get_all_leaves});
+            my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {$self->_name_for_prot($_)} @{$protein_tree->get_all_Members});
             $newick = $self->run_treebest_sdi_genepair(@goodgenes);
 
         } else {

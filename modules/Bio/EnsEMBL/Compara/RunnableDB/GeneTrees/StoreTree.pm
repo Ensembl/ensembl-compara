@@ -238,8 +238,8 @@ sub parse_newick_into_tree {
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
   my %leaves;
-  foreach my $node (@{$tree->root->get_all_leaves}) {
-    $leaves{$node->member_id} = $node if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
+  foreach my $node (@{$tree->get_all_Members}) {
+    $leaves{$node->member_id} = $node;
   }
 
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
