@@ -297,3 +297,13 @@ CREATE TABLE split_genes (
 	FOREIGN KEY member_id (member_id) REFERENCES member (member_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+
+CREATE TABLE protein_tree_backup (
+	member_id	int(10) unsigned NOT NULL,
+	root_id	int(10) unsigned NOT NULL,
+
+	PRIMARY KEY (member_id),
+	KEY (root_id)
+
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
