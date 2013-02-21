@@ -60,6 +60,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -384,6 +387,8 @@ sub pipeline_analyses {
                     'INSERT INTO species_set VALUES ()',
                     'DELETE FROM species_set WHERE species_set_id=#_insert_id_3#',
                     'INSERT INTO meta (meta_key,meta_value) VALUES ("nonreuse_ss_id", #_insert_id_3#)',
+                    # Counts the number of species
+                    'INSERT INTO meta (meta_key,meta_value) SELECT "species_count", COUNT(*) FROM genome_db',
                 ],
             },
             -flow_into => [ 'load_genomedb_factory' ],
@@ -537,6 +542,7 @@ sub pipeline_analyses {
             -rc_name => '1Gb_job',
             -flow_into => {
                 2 => [ 'mysql:////other_member_sequence' ],
+                1 => [ 'hc_factory_members_per_genome' ],
             },
         },
 
@@ -550,8 +556,9 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
-                2 => [ 'load_fresh_members' ],
-                1 => [ 'genome_loadfresh_fromfile_factory' ],
+                '2->A' => [ 'load_fresh_members' ],
+                '1->A' => [ 'genome_loadfresh_fromfile_factory' ],
+                'A->1' => [ 'hc_factory_members_globally' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -575,6 +582,7 @@ sub pipeline_analyses {
                 'allow_pyrrolysine'             => 0,
             },
             -rc_name => '2Gb_job',
+            -flow_into => [ 'hc_factory_members_per_genome' ],
         },
 
         {   -logic_name => 'load_fresh_members_fromfile',
@@ -583,6 +591,7 @@ sub pipeline_analyses {
                 -need_cds_seq   => 1,
             },
             -rc_name => '2Gb_job',
+            -flow_into => [ 'hc_factory_members_per_genome' ],
         },
 
 
@@ -753,7 +762,8 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                2 => [ 'blastp_with_reuse' ],
+                'A->1' => [ 'hc_factory_pafs' ],
+                '2->A' => [ 'blastp_with_reuse' ],
             },
         },
 
@@ -904,7 +914,8 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                '2' => [ 'msa_chooser' ],
+                '2->A' => [ 'msa_chooser' ],
+                'A->1' => [ 'hc_factory_global_trees' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -941,6 +952,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
             -flow_into => {
+                1 => [ 'hc_factory_align' ],
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
             },
@@ -954,6 +966,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
             -flow_into => {
+                1 => [ 'hc_factory_align' ],
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
         },
@@ -969,6 +982,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
             -flow_into => {
+                1 => [ 'hc_factory_align' ],
                -2 => [ 'mafft_himem' ],
             },
         },
@@ -980,6 +994,9 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
+            -flow_into => {
+                1 => [ 'hc_factory_align' ],
+            },
         },
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
@@ -988,7 +1005,7 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '250Mb_job',
             -batch_size     => 20,
-            -flow_into      => [ 'njtree_phyml' ],
+            -flow_into      => [ 'njtree_phyml', 'build_HMM_aa', 'build_HMM_cds' ],
         },
 
         {   -logic_name => 'njtree_phyml',
@@ -1005,8 +1022,14 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -rc_name => '2Gb_job',
             -flow_into => {
-                1 => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds', 'ktreedist' ],
-                2 => [ 'ortho_tree_annot' ],
+                '1->A' => {
+                    'hc_factory_align' => {'occurrence' => 2},
+                    'hc_factory_trees' => undef,
+                },
+                'A->1' => [ 'ortho_tree' ],
+                 1     => [ 'ktreedist' ],
+                '2->B' => [ 'hc_factory_trees' ],
+                'B->2' => [ 'ortho_tree_annot' ],
             }
         },
 
@@ -1019,6 +1042,7 @@ sub pipeline_analyses {
             },
             -hive_capacity      => $self->o('ortho_tree_capacity'),
             -rc_name => '500Mb_job',
+            -flow_into  => [ 'hc_factory_tree_attributes', 'hc_factory_homologies' ],
         },
 
         {   -logic_name    => 'ktreedist',
@@ -1041,6 +1065,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('ortho_tree_annot_capacity'),
             -rc_name => '500Mb_job',
+            -flow_into  => [ 'hc_factory_tree_attributes' ],
         },
 
         {   -logic_name => 'build_HMM_aa',
@@ -1051,6 +1076,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 10,
+            -priority             => -10,
             -rc_name => '250Mb_job',
         },
 
@@ -1063,6 +1089,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 10,
+            -priority             => -10,
             -rc_name => '500Mb_job',
         },
 
@@ -1158,6 +1185,18 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
         },
+
+
+# --------------------------------------------- [health-checks] -----------------------------------------------------------------------
+
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_members_per_genome($self)},
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_members_globally($self)},
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_pafs($self)},
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_alignment($self)},
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_tree_structure($self)},
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_tree_attr($self)},
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_homologies($self)},
+        @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_tree_globally($self)},
 
     ];
 }
