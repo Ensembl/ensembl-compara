@@ -1,0 +1,79 @@
+=pod 
+
+=head1 NAME
+
+Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrate;
+
+=cut
+
+=head1 DESCRIPTION
+
+This module perform calibration on HMM profile
+
+=cut
+package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrate;
+
+use strict;
+use warnings;
+
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+=head2 fetch_input
+
+    Title   :   fetch_input
+    Usage   :   $self->fetch_input
+    Function:   Retrieving required parameters
+    Returns :   none
+    Args    :   none
+
+=cut
+my $hmmprofile;my $hmmcalibrate;my $hmmLib_dir;
+my $hmmLib_subdir;
+
+sub fetch_input {
+    my $self = shift @_;
+    
+     $hmmcalibrate = $self->param('hmmcalibrate'); 
+     $hmmprofile   = $self->param('hmmprofile');
+     $hmmLib_dir   = $self->param('hmmLib_dir');
+     
+     if($hmmprofile =~/(.*cluster.*)\_output/){
+      	 $hmmLib_subdir = $1;
+         $hmmLib_dir    = $hmmLib_dir.'/'.$hmmLib_subdir;   
+     }
+
+return;
+}
+
+=head2 run
+
+  Arg[1]     : -none-
+  Example    : $self->run;
+XX  Function   : Retrieve msa alignment and for each create a single hmmbuild job
+  Returns    : 1 on successful completion
+  Exceptions : dies if runnable throws an unexpected error
+
+=cut
+sub run {
+    my $self = shift @_;
+
+    if($hmmprofile =~/hmm$/){
+	my $hmmprofile  = $hmmLib_dir.'/'.$hmmprofile;
+	my $command     = "hmmcalibrate $hmmprofile"; 
+    	my $result      = system($command);
+    }
+
+return;
+}
+
+
+sub write_output {
+    my $self = shift @_;
+
+return;
+}
+
+
+1;
