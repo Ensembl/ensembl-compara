@@ -100,6 +100,7 @@ sub write_output {
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
     $self->store_genetree($self->param('protein_tree'), \@ref_support);
 
+    my @dataflow = ();
     if ($self->param('store_intermediate_trees')) {
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
@@ -108,7 +109,7 @@ sub write_output {
             next if $clusterset_id eq 'phyml';
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
             my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('protein_tree'));
-            $self->dataflow_output_id({'gene_tree_id' => $newtree->root_id}, 2);
+            push @dataflow, $newtree->root_id;
         }
     }
 
@@ -119,6 +120,11 @@ sub write_output {
 
     if (defined $self->param('output_dir')) {
         system(sprintf('cd %s; zip -r -9 %s/%d.zip', $self->worker_temp_directory, $self->param('output_dir'), $self->param('gene_tree_id')));
+    }
+
+    # Only dataflows at the end, if everything went fine
+    foreach my $root_id (@dataflow) {
+        $self->dataflow_output_id({'gene_tree_id' => $root_id}, 2);
     }
 }
 
