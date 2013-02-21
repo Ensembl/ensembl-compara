@@ -215,6 +215,7 @@ sub pipeline_analyses {
                 '1->A'  => [ 'copy_table_factory', 'innodbise_table_factory' ],
                 'A->1'  => [ 'backbone_fire_species_list_prepare' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'backbone_fire_species_list_prepare',
@@ -223,6 +224,7 @@ sub pipeline_analyses {
                 '1->A'  => [ 'prepare_species_sets' ],
                 'A->1'  => [ 'backbone_fire_genome_load' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'backbone_fire_genome_load',
@@ -315,6 +317,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'backbone_pipeline_finished',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------
@@ -331,6 +334,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'copy_table'  ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'copy_table',
@@ -340,6 +344,7 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
             -analysis_capacity  => 1,
+            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[turn all tables except 'genome_db' to InnoDB]---------------------------------------------
@@ -353,6 +358,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'innodbise_table'  ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'innodbise_table',
@@ -360,7 +366,8 @@ sub pipeline_analyses {
             -parameters    => {
                 'sql'         => 'ALTER TABLE #table_name# ENGINE=InnoDB',
             },
-            -batch_size     => 100,
+            -analysis_capacity => 1,
+            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[generate two empty species_sets for reuse / non-reuse (to be filled in at a later stage)]---------
@@ -380,6 +387,7 @@ sub pipeline_analyses {
                 ],
             },
             -flow_into => [ 'load_genomedb_factory' ],
+            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -399,6 +407,7 @@ sub pipeline_analyses {
                 '2->A' => [ 'load_genomedb' ],
                 'A->1' => [ 'finish_species_sets' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'load_genomedb',
@@ -408,10 +417,11 @@ sub pipeline_analyses {
                 'db_version'    => $self->o('release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
-            -batch_size => 500,
+            -analysis_capacity => 1,
             -flow_into => {
                 1 => [ 'check_reusability' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
@@ -455,6 +465,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_species_tree' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
@@ -482,6 +493,7 @@ sub pipeline_analyses {
                 '2->A' => [ 'sequence_table_reuse' ],
                 'A->1' => [ 'genome_loadfresh_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
 
@@ -541,6 +553,7 @@ sub pipeline_analyses {
                 2 => [ 'load_fresh_members' ],
                 1 => [ 'genome_loadfresh_fromfile_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'genome_loadfresh_fromfile_factory',
@@ -552,6 +565,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'load_fresh_members_fromfile' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'load_fresh_members',
@@ -585,6 +599,7 @@ sub pipeline_analyses {
                 '1->A' => [ 'paf_noreuse_factory' ],
                 'A->1' => [ 'blastdb_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'paf_noreuse_factory',
@@ -596,6 +611,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'paf_create_empty_table' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'paf_table_reuse',
@@ -616,7 +632,8 @@ sub pipeline_analyses {
                             'ALTER TABLE peptide_align_feature_#name#_#genome_db_id# DISABLE KEYS',
                 ],
             },
-            -batch_size     =>  100,  # they can be really, really short
+            -analysis_capacity => 1,
+            -meadow_type    => 'LOCAL',
         },
 
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
@@ -697,11 +714,11 @@ sub pipeline_analyses {
 
                 'fan_branch_code'       => 2,
             },
-            -rc_name       => '250Mb_job',
             -flow_into  => {
                 '2->A'  => [ 'dump_subset_create_blastdb' ],
                 'A->1'  => [ 'blast_species_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'dump_subset_create_blastdb',
@@ -709,20 +726,22 @@ sub pipeline_analyses {
             -parameters => {
                 'fasta_dir'                 => $self->o('fasta_dir'),
             },
-            -batch_size    =>  20,  # they can be really, really short
+            -rc_name       => '250Mb_job',
+            -hive_capacity => $self->o('reuse_capacity'),
         },
 
         {   -logic_name => 'blast_species_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
                 'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'name' => 'name' },
 
                 'fan_branch_code'       => 2,
             },
             -flow_into  => {
                 '2'  => [ 'blast_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
 
@@ -767,6 +786,7 @@ sub pipeline_analyses {
                 '2->A' => [ 'hcluster_dump_input_per_genome' ],
                 'A->1' => [ 'hcluster_merge_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'hcluster_dump_input_per_genome',
@@ -787,6 +807,7 @@ sub pipeline_analyses {
                 },
                 'A->1' => [ 'hcluster_run' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'hcluster_merge_inputs',
@@ -841,6 +862,7 @@ sub pipeline_analyses {
                 '1->A' => [ 'overall_qc' ],
                 'A->1' => [ 'clusterset_backup' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'overall_qc',
@@ -884,6 +906,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 '2' => [ 'msa_chooser' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'msa_chooser',
@@ -893,8 +916,8 @@ sub pipeline_analyses {
                 'mafft_gene_count'      => $self->o('mafft_gene_count'),
                 'mafft_runtime'         => $self->o('mafft_runtime'),
             },
-            -batch_size => 1000,
-            -hive_capacity => 500,
+            -batch_size => 50,
+            -hive_capacity => 100,
             -rc_name => '500Mb_job',
             -flow_into => {
                 '2->A' => [ 'mcoffee' ],
@@ -1097,6 +1120,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'mlss_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'mlss_factory',
@@ -1107,6 +1131,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'homology_factory' ],
             },
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'homology_factory',
