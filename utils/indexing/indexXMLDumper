@@ -1791,6 +1791,7 @@ sub dumpSequence {
                  AND sr.seq_region_id    = sra2.seq_region_id
                  AND sra2.attrib_type_id = at2.attrib_type_id
                  AND at2.code            = 'embl_version'));
+    $sth->execute;
     while (my ($name, $grc_name, $start, $end) = $sth->fetchrow_array() ) {
       $patch_hap_dets{$name} = {
         'name' => $name,
