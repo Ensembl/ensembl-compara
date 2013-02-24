@@ -485,7 +485,7 @@ sub analysis_homologies {
         {   -logic_name => 'hc_tree_no_null_in_homologies',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT * FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id = #gene_tree_id# AND (description IS NULL OR peptide_member_id IS NULL OR cigar_line IS NULL OR LENGTH(cigar_line) = 0 OR perc_id IS NULL OR perc_pos IS NULL',
+                'inputquery'    => 'SELECT * FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id = #gene_tree_id# AND (description IS NULL OR peptide_member_id IS NULL OR cigar_line IS NULL OR LENGTH(cigar_line) = 0 OR perc_id IS NULL OR perc_pos IS NULL)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -flow_into => [ 'hc_tree_homologies_link_to_genes', 'hc_tree_true_one2one' ],
