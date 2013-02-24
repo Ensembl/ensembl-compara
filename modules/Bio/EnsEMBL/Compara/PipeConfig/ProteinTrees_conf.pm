@@ -331,7 +331,6 @@ sub pipeline_analyses {
                 'db_conn'      => $self->o('master_db'),
                 'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link', 'method_link_species_set', 'species_set' ],
                 'column_names' => [ 'table' ],
-                'input_id'     => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
                 'fan_branch_code' => 2,
             },
             -flow_into => {
@@ -343,6 +342,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'copy_table',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
+                'src_db_conn'   => $self->o('master_db'),
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
@@ -858,13 +858,8 @@ sub pipeline_analyses {
         {   -logic_name => 'run_qc_tests',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'mlss_id'               => $self->o('mlss_id'),
-
                 'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'input_id'              => {'genome_db_id' => '#genome_db_id#'},
-
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
