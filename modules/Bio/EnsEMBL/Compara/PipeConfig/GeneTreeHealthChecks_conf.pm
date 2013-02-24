@@ -392,6 +392,15 @@ sub analysis_tree_structure {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
+
+        {   -logic_name => 'hc_tree_gene_count',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'inputquery'    => 'SELECT root_id, COUNT(member_id) AS count, value FROM gene_tree_node JOIN gene_tree_root_tag USING (root_id) WHERE root_id = #gene_tree_id# AND tag = "gene_count" GROUP BY root_id HAVING count != value',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+        },
+
     ];
 }
 
@@ -444,14 +453,6 @@ sub analysis_tree_attr {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
                 'inputquery'    => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_tag gtnt ON gtn.node_id = gtnt.node_id AND tag = "tree_support" WHERE member_id IS NULL AND tag IS NULL',
-            },
-            -analysis_capacity  => $self->o('hc_capacity'),
-        },
-
-        {   -logic_name => 'hc_tree_gene_count',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
-            -parameters => {
-                'inputquery'    => 'SELECT root_id FROM gene_tree_node JOIN gene_tree_root_tag USING (root_id) WHERE root_id = #gene_tree_id# AND tag = "gene_count" GROUP BY root_id HAVING COUNT(member_id) != value',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
