@@ -1018,7 +1018,7 @@ sub pipeline_analyses {
             -rc_name => '2Gb_job',
             -flow_into => {
                 '1->A' => {
-                    'hc_factory_align' => {'occurrence' => 2},
+                    'hc_factory_align' => {'gene_tree_id' => '#gene_tree_id#', 'post_treebest' => 1},
                     'hc_factory_trees' => undef,
                 },
                 'A->1' => [ 'ortho_tree' ],
