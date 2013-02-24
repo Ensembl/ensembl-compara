@@ -130,7 +130,20 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                2 => [ 'hc_factory_align', 'hc_factory_trees', 'hc_factory_tree_attributes', 'hc_factory_homologies' ],
+                1 => [ 'homology_tree_factory' ],
+                2 => [ 'hc_factory_align', 'hc_factory_trees', 'hc_factory_tree_attributes' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'homology_tree_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default"',
+                'fan_branch_code'   => 2,
+            },
+            -flow_into  => {
+                2 => [ 'hc_factory_homologies' ],
             },
             -meadow_type    => 'LOCAL',
         },
