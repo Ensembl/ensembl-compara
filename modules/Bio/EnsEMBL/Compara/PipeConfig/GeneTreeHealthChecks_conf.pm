@@ -560,7 +560,7 @@ sub analysis_tree_globally {
         {   -logic_name => 'hc_members_unique_in_clusterset',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT clusterset_id, member_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) GROUP BY clusterset_id, member_id HAVING COUNT(*) > 1',
+                'inputquery'    => 'SELECT clusterset_id, member_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE member_id IS NOT NULL GROUP BY clusterset_id, member_id HAVING COUNT(*) > 1',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
