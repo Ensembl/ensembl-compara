@@ -428,7 +428,16 @@ sub draw_wiggle_points {
     $height *= $pix_per_score;
     
     # alter colour if the intron supporting feature has a name of non_canonical
-    $this_colour = $parameters->{'non_can_score_colour'} || $colour if ref $f ne 'HASH' && $f->can('display_id') && $f->display_id =~ /non canonical$/ && $f->analysis->logic_name =~ /_intron$/;
+    if(ref $f ne 'HASH' and 
+       $f->can('display_id') and
+       $f->analysis->logic_name =~ /_intron/) {
+      my $can_type = [ split(/:/,$f->display_id) ]->[-1];
+      $can_type =~ s/_/ /g;
+      if($can_type and length($can_type)>3 and 
+         substr("non canonical",0,length($can_type)) eq $can_type) {
+        $this_colour = $parameters->{'non_can_score_colour'} || $colour;
+      }
+    }
  
     my $dets = {
       y         => $offset + $red_line_offset + $y,

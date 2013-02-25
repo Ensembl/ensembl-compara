@@ -99,7 +99,12 @@ sub render_histogram {
       $f->score($self->{'max_score'}) if $f->score > $self->{'max_score'};
       
       # sort into canonical and non-canonical
-      if ($f->display_id =~ /non canonical$/) {
+      # if it ends with a prefix of the string "non canonical" of length
+      #   over 3, it's non canonical. (Often gets truncated).
+      my $can_type = [ split(/:/,$f->display_id) ]->[-1];
+      $can_type =~ s/_/ /g;
+      if($can_type and length($can_type)>3 and 
+         substr("non canonical",0,length($can_type)) eq $can_type) {
         push @$sorted_non_can_feats, $f;
       } else {
         push @$sorted_can_feats, $f;
