@@ -509,7 +509,7 @@ foreach my $spp (@valid_spp) {
       while (my($k, $v) = splice(@summary_stats, 0, 2)) {
         $rowcount++;
         $row = stripe_row($rowcount);
-        printf STATS (qq(%s <td class="data">%s</td> <td class="value">%s</td> </tr>),
+        printf STATS (qq(%s <td class="data">%s:</td> <td class="value">%s</td> </tr>),
           $row, $k, $v)
           if $v;
       }
