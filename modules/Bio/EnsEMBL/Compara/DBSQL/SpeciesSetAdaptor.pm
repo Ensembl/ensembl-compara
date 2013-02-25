@@ -30,8 +30,10 @@ sub object_class {
 sub store {
     my ($self, $species_set, $store_components_first) = @_;
 
+    my $genome_dbs = $species_set->genome_dbs;
+
         # check whether all the GenomeDB objects have genome_db_ids:
-    foreach my $genome_db (@{$species_set->genome_dbs}) {
+    foreach my $genome_db (@$genome_dbs) {
         if( $store_components_first ) {
             my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor();
             $genome_db_adaptor->store( $genome_db );
@@ -45,7 +47,7 @@ sub store {
     my $dbID = $species_set->dbID;
   
         # Could we have a species_set in the DB with the given contents already?
-    if ( my $stored_dbID = $self->find_species_set_id_by_GenomeDBs_mix( $species_set->genome_dbs ) ) {
+    if ( my $stored_dbID = scalar(@$genome_dbs) && $self->find_species_set_id_by_GenomeDBs_mix( $genome_dbs ) ) {
         if($dbID and $dbID!=$stored_dbID) {
             die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)";
         } else {
@@ -55,7 +57,7 @@ sub store {
         if($dbID) { # dbID is set in the object, but may refer to an object with different contents
 
             if($self->fetch_by_dbID( $dbID )) {
-                die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data", join("/", map {$_->dbID} @{$species_set->genome_dbs}  ));
+                die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data", join("/", map {$_->dbID} @$genome_dbs ));
             }
 
         } else { # grab a new species_set_id by using AUTO_INCREMENT:
@@ -72,10 +74,10 @@ sub store {
             }
         }
 
-        # Add the data into the DB
+            # Add the data into the DB
         my $sql = "INSERT INTO species_set (species_set_id, genome_db_id) VALUES (?, ?)";
         my $sth = $self->prepare($sql);
-        foreach my $genome_db (@{$species_set->genome_dbs}) {
+        foreach my $genome_db (@$genome_dbs) {
             $sth->execute($dbID, $genome_db->dbID);
         }
         $sth->finish();
