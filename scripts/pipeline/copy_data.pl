@@ -155,7 +155,7 @@ my $from_name = undef;
 my $to_name = undef;
 my $from_url = undef;
 my $to_url = undef;
-my @mlss_id = undef;
+my @mlss_id = ();
 my $re_enable = 1;
 my $method_link = undef;
 
