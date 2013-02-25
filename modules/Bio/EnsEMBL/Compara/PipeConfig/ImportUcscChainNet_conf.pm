@@ -240,12 +240,9 @@ sub pipeline_analyses {
 		-parameters => {
 				'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
 				'mlss_id'       => $self->o('mlss_id'),
-				
-				'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
-				'adaptor_method'        => 'fetch_by_dbID',
-				'method_param_list'     => [ '#mlss_id#' ],
-				'object_method'         => 'species_set',
-				
+
+				'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
+
 				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
 
 				'fan_branch_code'       => 2,
