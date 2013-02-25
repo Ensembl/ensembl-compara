@@ -259,12 +259,7 @@ sub insdc_accession {
     }
   }
   return undef unless $slice;
-  my $name;
-  # Should be INSDC only by e71. At this point remove these. -- ds23
-  foreach my $edbname (qw(INSDC EMBL)) {
-    $name = $self->_insdc_synonym($slice,$edbname);
-    last if $name;
-  }
+  my $name = $self->_insdc_synonym($slice,'INSDC');
   return undef unless $name;
   return join(':',$slice->coord_system->name,$csv,$name,
                   $slice->start,$slice->end,$slice->strand);
