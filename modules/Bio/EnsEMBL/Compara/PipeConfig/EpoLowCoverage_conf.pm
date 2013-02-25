@@ -147,8 +147,8 @@ sub pipeline_analyses {
 			       },
 		-input_ids => [{}],
 		-flow_into => {
-			       2 => [ 'innodbise_table'  ],
-			       1 => [ 'populate_new_database' ],
+			       '2->A' => [ 'innodbise_table'  ],
+			       'A->1' => [ 'populate_new_database' ],
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -159,7 +159,6 @@ sub pipeline_analyses {
 				   'sql'         => "ALTER TABLE #table_name# ENGINE='InnoDB'",
 				  },
 		-hive_capacity => 10,
-		-can_be_empty  => 1,
 		-rc_name => '100Mb',
 	    },
 
@@ -173,11 +172,10 @@ sub pipeline_analyses {
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
 				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
 				 },
-	       -wait_for  => [ 'innodbise_table' ],
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
-		-rc_name => '100Mb',
+		-rc_name => '1Gb',
 	    },
 
 # -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------
@@ -215,19 +213,15 @@ sub pipeline_analyses {
 		-parameters => {
 				'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
 				'mlss_id'       => $self->o('low_epo_mlss_id'),
-				
-				'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
-				'adaptor_method'        => 'fetch_by_dbID',
-				'method_param_list'     => [ '#mlss_id#' ],
-				'object_method'         => 'species_set',
-				
+				'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
+
 				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
 				
 				'fan_branch_code'       => 2,
 			       },
 		-flow_into => {
-			       2 => [ 'load_genomedb' ],
-			       1 => [ 'load_genomedb_funnel' ],    # backbone
+			       '2->A' => [ 'load_genomedb' ],
+			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -242,9 +236,16 @@ sub pipeline_analyses {
 
 	    {   -logic_name => 'load_genomedb_funnel',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-		-wait_for => [ 'load_genomedb' ],
+                -meadow_type=> 'LOCAL',
 		-flow_into => {
-		    1 => [ 'create_default_pairwise_mlss'],
+                    '1->A' => {
+                               'make_species_tree' => [
+                                                       {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
+                                                       {'newick_format'     => 'njtree' },                                                   #taxon_tree
+                                                       ],
+                               },
+
+		    'A->1' => [ 'create_default_pairwise_mlss'],
 		},
 		-rc_name => '100Mb',
         },
@@ -254,12 +255,6 @@ sub pipeline_analyses {
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
 				  },
-		-input_ids     => [
-				   {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
-				   {'newick_format'     => 'njtree' },                                                   #taxon_tree
-				  ],
-		-hive_capacity => -1,   # to allow for parallelization
-		-wait_for => [ 'load_genomedb_funnel' ],
 	        -flow_into  => {
                    3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'taxon_tree', 'value' => '#species_tree_string#' } },
 		   4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
@@ -296,7 +291,6 @@ sub pipeline_analyses {
 				'from_db_url'                      => $self->o('epo_db'),
                                 'step'                             => $self->o('step'),
 			       },
-		-wait_for  => [ 'create_default_pairwise_mlss', 'make_species_tree'],
 		-flow_into => {
 			       1 => [ 'create_low_coverage_genome_jobs' ],
 			      },
@@ -311,8 +305,8 @@ sub pipeline_analyses {
 				'fan_branch_code' => 2,
 			       },
 		-flow_into => {
-			       1 => [ 'delete_alignment' ],
-			       2 => [ 'low_coverage_genome_alignment' ],
+			       '2->A' => [ 'low_coverage_genome_alignment' ],
+			       'A->1' => [ 'delete_alignment' ],
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -346,7 +340,6 @@ sub pipeline_analyses {
 			       },
 		-batch_size      => 5,
 		-hive_capacity   => 30,
-                -can_be_empty  => 1,
 		-flow_into => {
 			       2 => [ 'gerp' ],
 			      },
@@ -373,8 +366,6 @@ sub pipeline_analyses {
 					  'DELETE FROM genomic_align_block WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
 					 ],
 			       },
-		#-input_ids => [{}],
-		-wait_for  => [ 'low_coverage_genome_alignment', 'gerp', 'low_coverage_genome_alignment_again' ],
 		-flow_into => {
 			       1 => [ 'update_max_alignment_length' ],
 			      },
@@ -402,8 +393,8 @@ sub pipeline_analyses {
 				'fan_branch_code' => 2,
 			       },
 		-flow_into => {
-			       1 => [ 'conservation_score_healthcheck' ],
-			       2 => [ 'set_neighbour_nodes' ],
+			       '2->A' => [ 'set_neighbour_nodes' ],
+			       'A->1' => [ 'healthcheck_factory' ],
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -417,13 +408,21 @@ sub pipeline_analyses {
 		-rc_name => '1.8Gb',
 	    },
 # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
+            {   -logic_name => 'healthcheck_factory',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -meadow_type=> 'LOCAL',
+                -flow_into => {
+                               1 => {
+                                     'conservation_score_healthcheck'  => [
+                                                                           {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
+                                                                           {'test' => 'conservation_scores','method_link_species_set_id'=>$self->o('cs_mlss_id')},
+                                                                ],
+                                    },
+                              },
+            },
+
 	    {   -logic_name => 'conservation_score_healthcheck',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
-		-wait_for   => [ 'set_neighbour_nodes' ],
-		-input_ids  => [
-				{'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
-				{'test' => 'conservation_scores','method_link_species_set_id'=>$self->o('cs_mlss_id')},
-			       ],
 		-rc_name => '100Mb',
 	    },
 
