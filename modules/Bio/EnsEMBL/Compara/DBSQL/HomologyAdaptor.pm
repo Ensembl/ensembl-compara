@@ -251,7 +251,7 @@ sub fetch_by_Member_Member_method_link_type {
 =cut
 
 sub fetch_by_Member_id_Member_id {
-  my ($self, $member_id1, $member_id2,$allow_duplicates) = @_;
+  my ($self, $member_id1, $member_id2) = @_;
 
   unless ($member_id1 ne $member_id2) {
     throw("The members should be different");
@@ -264,11 +264,7 @@ sub fetch_by_Member_id_Member_id {
   # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
 
-  my $homology = $self->generic_fetch($constraint, $join);
-
-  return undef unless (defined $homology || 0 == scalar @$homology);
-
-  return shift @{$homology};
+  return $self->generic_fetch_one($constraint, $join);
 }
 
 =head2 fetch_by_PMember_id_PMember_id
@@ -285,7 +281,7 @@ sub fetch_by_Member_id_Member_id {
 =cut
 
 sub fetch_by_PMember_id_PMember_id {
-  my ($self, $member_id1, $member_id2,$allow_duplicates) = @_;
+  my ($self, $member_id1, $member_id2) = @_;
 
   unless ($member_id1 ne $member_id2) {
     throw("The members should be different");
@@ -298,18 +294,7 @@ sub fetch_by_PMember_id_PMember_id {
   # See in fetch_by_PMember what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
 
-  my $homology = $self->generic_fetch($constraint, $join);
-
-  return undef unless (defined $homology || 0 == scalar @$homology);
-
-  # At production time, we may have more than one entry due to the
-  # OtherParalogs code, so we allow fetching with the extra parameter,
-  # but the duplicity is cleaned up afterwards
-  if (1 < scalar @$homology && !defined($allow_duplicates)) {
-    throw("Returns more than one element");
-  }
-
-  return shift @{$homology};
+  return $self->generic_fetch_one($constraint, $join);
 }
 
 
