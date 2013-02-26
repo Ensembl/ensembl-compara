@@ -28,6 +28,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
   $member = $member->get_canonical_SeqMember if ($member->isa('Bio::EnsEMBL::Compara::GeneMember'));
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = "hm.peptide_member_id = " .$member->dbID;
@@ -119,9 +120,7 @@ sub fetch_all_by_Member_paired_species {
 sub fetch_all_by_Member_method_link_type {
   my ($self, $member, $method_link_type) = @_;
 
-  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
-  }
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
   unless ($member->genome_db_id) {
     warning("Cannot get Homologues for a Bio::EnsEMBL::Compara::Member (".$member->source_name.
@@ -167,13 +166,9 @@ sub fetch_all_by_Member_method_link_type {
 sub fetch_all_by_Member_MethodLinkSpeciesSet {
   my ($self, $member, $method_link_species_set) = @_;
 
-  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
-  }
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
   #$member = $member->get_canonical_SeqMember;
-
-  throw("method_link_species_set arg is required\n")
-    unless ($method_link_species_set);
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
@@ -208,12 +203,8 @@ sub fetch_by_Member_Member_method_link_type {
   unless ($member1->stable_id ne $member2->stable_id) {
     throw("The members should be different");
   }
-  unless ($member1->isa('Bio::EnsEMBL::Compara::Member')) {
-    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member1");
-  }
-  unless ($member2->isa('Bio::EnsEMBL::Compara::Member')) {
-    throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member2");
-  }
+  assert_ref($member1, 'Bio::EnsEMBL::Compara::Member');
+  assert_ref($member2, 'Bio::EnsEMBL::Compara::Member');
 
   $method_link_type = 'ENSEMBL_ORTHOLOGUES' unless (defined($method_link_type));
   my $genome_dbs = [$member1->genome_db, $member2->genome_db];
@@ -697,8 +688,7 @@ sub _objs_from_sth {
 sub store {
   my ($self,$hom) = @_;
   
-  $hom->isa('Bio::EnsEMBL::Compara::Homology') ||
-    throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom");
+  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology');
 
   $hom->adaptor($self);
 
@@ -706,11 +696,8 @@ sub store {
     $self->db->get_MethodLinkSpeciesSetAdaptor->store($hom->method_link_species_set);
   }
 
-  if (! defined $hom->method_link_species_set) {
-    throw("Homology object has no set MethodLinkSpecies object. Can not store Homology object\n");
-  } else {
-    $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
-  }
+  assert_ref($hom->method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpecies');
+  $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   
   unless($hom->dbID) {
     my $sql = 'INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?)';
@@ -745,8 +732,7 @@ sub update_genetic_distance {
   my $self = shift;
   my $hom = shift;
 
-  throw("You have to store a Bio::EnsEMBL::Compara::Homology object, not a $hom")
-    unless($hom->isa('Bio::EnsEMBL::Compara::Homology'));
+  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology');
 
   throw("homology object must have dbID")
     unless ($hom->dbID);
@@ -794,8 +780,7 @@ sub fetch_all_orphans_by_GenomeDB {
   my $self = shift;
   my $gdb = shift;
 
-  throw("genome_db arg is required\n")
-    unless ($gdb);
+  assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
 
   my $sql = 'SELECT mg.member_id FROM member mg LEFT JOIN homology_member hm ON (mg.canonical_member_id = hm.member_id) WHERE hm.member_id IS NULL AND mg.genome_db_id = ?';
   my $sth = $self->dbc->prepare($sql);
