@@ -224,7 +224,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_species_list_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => [ 'prepare_species_sets' ],
+                '1->A'  => [ 'create_reuse_ss' ],
                 'A->1'  => [ 'backbone_fire_genome_load' ],
             },
             -meadow_type    => 'LOCAL',
@@ -375,21 +375,37 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[generate two empty species_sets for reuse / non-reuse (to be filled in at a later stage)]---------
 
-        {   -logic_name => 'prepare_species_sets',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+        {   -logic_name => 'create_reuse_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
             -parameters => {
-                'sql' => [
-                    # Creates a new species set id
-                    'INSERT INTO species_set VALUES ()',
-                    'DELETE FROM species_set WHERE species_set_id=#_insert_id_0#',
-                    'INSERT INTO meta (meta_key,meta_value) VALUES ("reuse_ss_id", #_insert_id_0#)',
-                    # Creates a new species set id
-                    'INSERT INTO species_set VALUES ()',
-                    'DELETE FROM species_set WHERE species_set_id=#_insert_id_3#',
-                    'INSERT INTO meta (meta_key,meta_value) VALUES ("nonreuse_ss_id", #_insert_id_3#)',
+                'object_type'   => 'SpeciesSet',
+                'arglist'       => [
+                    -genome_dbs => [],
                 ],
             },
-            -flow_into => [ 'load_genomedb_factory' ],
+            -flow_into => {
+                1 => [ 'create_nonreuse_ss' ],
+                2 => {
+                    'mysql:////meta'    => { 'meta_key' => 'reuse_ss_id', 'meta_value' => '#dbID#' },
+                },
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'create_nonreuse_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
+            -parameters => {
+                'object_type'   => 'SpeciesSet',
+                'arglist'       => [
+                    -genome_dbs => [],
+                ],
+            },
+            -flow_into => {
+                1 => [ 'load_genomedb_factory' ],
+                2 => {
+                    'mysql:////meta'    => { 'meta_key' => 'nonreuse_ss_id', 'meta_value' => '#dbID#' },
+                },
+            },
             -meadow_type    => 'LOCAL',
         },
 
