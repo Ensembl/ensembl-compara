@@ -84,8 +84,8 @@ sub tag {
       push @tags,{
         style  => 'somatic_breakpoint',
         colour => 'gold',
+        border => 'black',
         start  => $coord,
-        end    => $coord + 10
       };
     }
   } else {
@@ -191,7 +191,7 @@ sub render_tag {
     @glyph = (
       $self->Poly({
         z      => 5,
-        colour => 'black',
+        colour => $tag->{'border'},
         points => [ 
           $x - $scale / 5,   0,          # 1
           $x + $scale * 1.6, 0,          # 2
@@ -229,7 +229,6 @@ sub render_tag {
   
   return @glyph;
 }
-
 
 sub href {
   my ($self, $f) = @_;
