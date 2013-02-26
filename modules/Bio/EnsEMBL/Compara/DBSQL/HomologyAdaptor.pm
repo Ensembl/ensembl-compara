@@ -28,9 +28,9 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
-  #$member = $member->get_canonical_SeqMember;
+  $member = $member->get_canonical_SeqMember if ($member->isa('Bio::EnsEMBL::Compara::GeneMember'));
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = "hm.member_id = " .$member->dbID;
+  my $constraint = "hm.peptide_member_id = " .$member->dbID;
 
   # This internal variable is used by add_Member method 
   # in Bio::EnsEMBL::Compara::MemberSet to make sure that the first element
