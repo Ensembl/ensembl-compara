@@ -796,8 +796,7 @@ sub fetch_homology_species_hash {
   return {} unless $database;
   $self->timer_push( 'starting to fetch' , 6 );
 
-  my $member_adaptor = $database->get_MemberAdaptor;
-  my $query_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$geneid);
+  my $query_member = $database->get_GeneMemberAdaptor->fetch_by_source_stable_id("ENSEMBLGENE",$geneid);
 
   return {} unless defined $query_member ;
   my $homology_adaptor = $database->get_HomologyAdaptor;
@@ -883,10 +882,10 @@ sub get_compara_Member{
   unless( defined( $self->{$cachekey} ) ){ # Look in cache
     # Prepare the adaptors
     my $compara_dba = $self->database( $compara_db )           || &$error( "No compara db" );
-    my $member_adaptor = $compara_dba->get_adaptor('Member') || &$error( "Cannot COMPARA->get_adaptor('Member')" );
+    my $genemember_adaptor = $compara_dba->get_adaptor('GeneMember') || &$error( "Cannot COMPARA->get_adaptor('GeneMember')" );
     # Fetch the object
     my $id = $self->stable_id;
-    my $member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE',$id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
+    my $member = $genemember_adaptor->fetch_by_source_stable_id('ENSEMBLGENE',$id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
     # Update the cache
     $self->{$cachekey} = $member;
   }

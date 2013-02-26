@@ -1051,8 +1051,7 @@ sub fetch_homologues_of_gene_in_species {
   
   return [] unless $self->database('compara');
 
-  my $ma = $self->database('compara')->get_MemberAdaptor;
-  my $qy_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
+  my $qy_member = $self->database('compara')->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
   
   return [] unless defined $qy_member; 
 

@@ -817,8 +817,8 @@ sub get_compara_Member {
   my $cache_key  = "_compara_member_$compara_db";
   
   if (!$self->{$cache_key}) {
-    my $compara_dba = $self->database($compara_db)        || return;
-    my $adaptor     = $compara_dba->get_adaptor('Member') || return;
+    my $compara_dba = $self->database($compara_db)              || return;
+    my $adaptor     = $compara_dba->get_adaptor('GeneMember')   || return;
     my $member      = $adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $self->stable_id);
     
     $self->{$cache_key} = $member if $member;

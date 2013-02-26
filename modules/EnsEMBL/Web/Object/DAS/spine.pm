@@ -210,8 +210,7 @@ if (0) {
 
 	  if (my $cmpdb = $h->{'compara_pan_ensembl'} || $h->{'compara'}) {
 	      my %homologues;
-	      my $member_adaptor = $cmpdb->get_adaptor('Member');
-	      my $query_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
 
 	      next unless defined $query_member ;
 	      my $homology_adaptor = $cmpdb->get_adaptor('Homology');
