@@ -294,7 +294,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     my ($orthology_type, $subtype) = rearrange([qw(ORTHOLOGY_TYPE SUBTYPE)], @args);
 
     my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    my $constraint =  ' h.method_link_species_set_id = ?';
+    my $constraint = ' h.method_link_species_set_id = ?';
     $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
 
     if (defined $orthology_type) {
@@ -347,7 +347,6 @@ sub fetch_all_by_tree_node_id {
 
 =cut
 
-
 sub fetch_all_by_genome_pair {
     my ($self, $genome_db_id1, $genome_db_id2) = @_;
 
@@ -360,7 +359,7 @@ sub fetch_all_by_genome_pair {
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1, $genome_db_id2]);
     }
 
-    my $constraint =  "h.method_link_species_set_id IN (". join (",", (map {$_->dbID} @all_mlss)) . ")";
+    my $constraint = "h.method_link_species_set_id IN (". join (",", (map {$_->dbID} @all_mlss)) . ")";
 
     return $self->generic_fetch($constraint);
 }
@@ -483,7 +482,7 @@ sub _filter_paralogues_by_ancestral_species {
     my $ncbi_a = $self->db->get_NCBITaxonAdaptor;
 
     # The last common ancestor of $species1 and $species2 defines the boundary
-    my $lca =  $ncbi_a->fetch_first_shared_ancestor_indexed($species1->taxon, $species2);
+    my $lca = $ncbi_a->fetch_first_shared_ancestor_indexed($species1->taxon, $species2);
 
     my @good_paralogues;
     foreach my $hom (@$all_paras) {
@@ -508,7 +507,7 @@ sub _filter_paralogues_by_ancestral_species {
                all connected genes and homologies via connected components clustering.
   Returntype : an array pair of array references.  
                First array_ref is the list of Homology objects in the cluster graph
-	       Second array ref is the list of unique SeqMembers in the cluster
+               Second array ref is the list of unique SeqMembers in the cluster
   Exceptions : none
   Caller     : 
 
@@ -517,10 +516,10 @@ sub _filter_paralogues_by_ancestral_species {
 sub fetch_orthocluster_with_Member {
   my $self = shift;
   my $member = shift;
-
+  
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
   my $member = $member->get_canonical_SeqMember if $member->isa('Bio::EnsEMBL::Compara::GeneMember');
-  
+
   my $ortho_set = {};
   my $member_set = {};
   $self->_recursive_get_orthocluster($member, $ortho_set, $member_set, 0);
