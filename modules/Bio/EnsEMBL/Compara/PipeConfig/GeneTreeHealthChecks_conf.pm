@@ -377,6 +377,7 @@ sub analysis_tree_structure {
             -meadow_type        => 'LOCAL',
         },
 
+        # TODO: extend to super-trees / clustersets
         {   -logic_name => 'hc_tree_is_binary',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
@@ -581,6 +582,10 @@ sub analysis_tree_globally {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
+
+        # TODO: non-trees should not have attributes ? that's not tree: super-trees have node_type ... Investigate that
+        # SELECT COUNT(*) FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN gene_tree_node_attr USING (node_id) WHERE tree_type != "tree";
+
     ];
 }
 
