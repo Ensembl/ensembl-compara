@@ -761,31 +761,5 @@ sub update_genetic_distance {
 }
 
 
-=head2 fetch_all_orphans_by_GenomeDB
-
- Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
- Example    : $HomologyAdaptor->fetch_all_orphans_by_GenomeDB($genome_db);
- Description: fetch the members for a genome_db that have no homologs in the database
- Returntype : an array reference of Bio::EnsEMBL::Compara::Member objects
- Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::GenomeDB
- Caller     : general
-
-=cut
-
-
-sub fetch_all_orphans_by_GenomeDB {
-  my $self = shift;
-  my $gdb = shift;
-
-  assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
-
-  my $sql = 'SELECT mg.member_id FROM member mg LEFT JOIN homology_member hm ON (mg.canonical_member_id = hm.member_id) WHERE hm.member_id IS NULL AND mg.genome_db_id = ?';
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute($gdb->dbID);
-  my $ids = $sth->fetchall_arrayref;
-  $sth->finish;
-  return $self->db->get_GeneMemberAdaptor->fetch_all_by_dbID_list([map {$_->[0]} $ids]);
-}
-
 
 1;
