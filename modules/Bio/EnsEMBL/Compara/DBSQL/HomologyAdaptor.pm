@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
 
 use DBI qw(:sql_types);
 
@@ -26,22 +26,39 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 =cut
 
 sub fetch_all_by_Member {
-  my ($self, $member) = @_;
+  my ($self, $member, @args) = @_;
 
+  my ($method_link_type, $method_link_species_set) = rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET)], @args);
+
+  if (defined $method_link_species_set) {
+    check_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet') || assert_integer($method_link_species_set)
+  }
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-  $member = $member->get_canonical_SeqMember if ($member->isa('Bio::EnsEMBL::Compara::GeneMember'));
+
+  my $peptide_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = 'hm.peptide_member_id = ?';
-  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
+  $self->bind_param_generic_fetch($peptide_member_id, SQL_INTEGER);
+
+  if (defined $method_link_species_set) {
+    $constraint .= ' AND h.method_link_species_set_id = ?';
+    $self->bind_param_generic_fetch(ref($method_link_species_set) ? $method_link_species_set->dbID : $method_link_species_set, SQL_INTEGER);
+  }
 
   # This internal variable is used by add_Member method 
   # in Bio::EnsEMBL::Compara::MemberSet to make sure that the first element
   # of the member array is the one that has been used by the user to fetch the
   # homology object
-  $self->{'_this_one_first'} = $member->stable_id;
+  $self->{'_this_one_first'} = $peptide_member_id;
 
-  return $self->generic_fetch($constraint, $join);
+  my $homologies = $self->generic_fetch($constraint, $join);
+
+  if (defined $method_link_type) {
+    return [grep {$_->method_link_species_set->method->type eq $method_link_type} @$homologies];
+  } else {
+    return $homologies;
+  }
 }
 
 
@@ -70,16 +87,15 @@ sub fetch_all_by_Member {
 sub fetch_all_by_Member_paired_species {
   my ($self, $member, $species, $method_link_types) = @_;
 
-	my $gdb_a = $self->db->get_GenomeDBAdaptor();
   my $gdb1 = $member->genome_db;
-  my $gdb2 = eval {$gdb_a->fetch_by_name_assembly($species)};
+
+  my $gdb_a = $self->db->get_GenomeDBAdaptor();
+  my $gdb2 = eval {$gdb_a->fetch_by_registry_name($species)};
   if(!defined $gdb2) {
-  	my $species_no_underscores = $species;
-  	$species_no_underscores =~ tr/_/ /;
-  	$gdb2 = eval {$gdb_a->fetch_by_name_assembly($species_no_underscores)};
-  	if(!defined $gdb2) {
-  		throw("No GenomeDB found with names [$species | $species_no_underscores]");
-  	}
+      $gdb2 = eval {$gdb_a->fetch_by_name_assembly($species)};
+      if(!defined $gdb2) {
+          throw("No GenomeDB found with name '$species'");
+      }
   }
 
   unless (defined $method_link_types) {
@@ -97,7 +113,7 @@ sub fetch_all_by_Member_paired_species {
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2], "no_warning");
     }
     if (defined $mlss) {
-      my $homologies = $self->fetch_all_by_Member_MethodLinkSpeciesSet($member, $mlss);
+      my $homologies = $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $mlss);
       push @{$all_homologies}, @{$homologies} if (defined $homologies);
     }
   }
@@ -107,83 +123,26 @@ sub fetch_all_by_Member_paired_species {
 
 =head2 fetch_all_by_Member_method_link_type
 
-  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
-  Arg [2]    : string $method_link_type
-  Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member_method_link_type(
-                   $member, "ENSEMBL_ORTHOLOGUES");
-  Description: fetch the homology relationships where the given member is implicated
-               in a relationship of the type defined by $method_link_type.
-  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : none
-  Caller     : 
+  DEPRECATED: Use fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type) instead.
 
 =cut
 
-sub fetch_all_by_Member_method_link_type {
+sub fetch_all_by_Member_method_link_type {  # DEPRECATED
   my ($self, $member, $method_link_type) = @_;
-
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-
-  unless ($member->genome_db_id) {
-    warning("Cannot get Homologues for a Bio::EnsEMBL::Compara::Member (".$member->source_name.
-        "::".$member->stable_id.") with no GenomeDB");
-    return [];
-  }
-  #$member = $member->get_canonical_SeqMember;
-
-  throw("method_link_type arg is required\n")
-    unless ($method_link_type);
-
-  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_GenomeDB($method_link_type,$member->genome_db);
-
-  unless (scalar @{$mlss_arrayref}) {
-    warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
-    return [];
-  }
-
-  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint =  " h.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-
-  $constraint .= ' AND hm.member_id = ?';
-  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
-
-  # See in fetch_all_by_Member what is this internal variable for
-  $self->{'_this_one_first'} = $member->stable_id;
-
-  return $self->generic_fetch($constraint, $join);
+  deprecate('fetch_all_by_Member_method_link_type() is deprecated and will be removed in e74. Use fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type) instead.');
+  return $self->fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type);
 }
 
 =head2 fetch_all_by_Member_MethodLinkSpeciesSet
 
-  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
-  Arg [2]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
-  Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member_MethodLinkSpeciesSet($member, $mlsss);
-  Description: fetch the homology relationships for a given $member and $mlss.
-  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : none
-  Caller     : 
+  DEPRECATED: Use fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $method_link_species_set) instead.
 
 =cut
 
-sub fetch_all_by_Member_MethodLinkSpeciesSet {
+sub fetch_all_by_Member_MethodLinkSpeciesSet {  # DEPRECATED
   my ($self, $member, $method_link_species_set) = @_;
-
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
-  #$member = $member->get_canonical_SeqMember;
-
-  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = ' h.method_link_species_set_id = ?';
-  $self->bind_param_generic_fetch($method_link_species_set->dbID, SQL_INTEGER);
-
-  $constraint .= ' AND hm.member_id = ?';
-  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
-
-  # See in fetch_all_by_Member what is this internal variable for
-  $self->{'_this_one_first'} = $member->stable_id;
-
-  return $self->generic_fetch($constraint, $join);
+  deprecate('fetch_all_by_Member_MethodLinkSpeciesSet() is deprecated and will be removed in e74. Use fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $method_link_species_set) instead.');
+  return $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $method_link_species_set);
 }
 
 
