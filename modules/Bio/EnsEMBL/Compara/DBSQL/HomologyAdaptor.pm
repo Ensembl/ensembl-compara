@@ -30,8 +30,10 @@ sub fetch_all_by_Member {
 
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
   $member = $member->get_canonical_SeqMember if ($member->isa('Bio::EnsEMBL::Compara::GeneMember'));
+
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = "hm.peptide_member_id = " .$member->dbID;
+  my $constraint = 'hm.peptide_member_id = ?';
+  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
 
   # This internal variable is used by add_Member method 
   # in Bio::EnsEMBL::Compara::MemberSet to make sure that the first element
@@ -143,7 +145,8 @@ sub fetch_all_by_Member_method_link_type {
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint =  " h.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
 
-  $constraint .= " AND hm.member_id = " . $member->dbID;
+  $constraint .= ' AND hm.member_id = ?';
+  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
 
   # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member->stable_id;
@@ -171,9 +174,11 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
   #$member = $member->get_canonical_SeqMember;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
+  my $constraint = ' h.method_link_species_set_id = ?';
+  $self->bind_param_generic_fetch($method_link_species_set->dbID, SQL_INTEGER);
 
-  $constraint .= " AND hm.member_id = " . $member->dbID;
+  $constraint .= ' AND hm.member_id = ?';
+  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
 
   # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member->stable_id;
@@ -225,11 +230,14 @@ sub fetch_by_Member_Member_method_link_type {
 
   #  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
-  my $constraint =  " h.method_link_species_set_id =" . $mlss->dbID;
+  my $constraint = ' h.method_link_species_set_id = ?';
+  $self->bind_param_generic_fetch($mlss->dbID, SQL_INTEGER);
 
-  $constraint .= " AND hm1.member_id = " . $member1->dbID;
-  $constraint .= " AND hm2.member_id = " . $member2->dbID;
-#  $constraint .= " AND hm1.member_id<hm2.member_id ";
+  $constraint .= ' AND hm1.member_id = ?';
+  $self->bind_param_generic_fetch($member1->dbID, SQL_INTEGER);
+
+  $constraint .= ' AND hm2.member_id = ?';
+  $self->bind_param_generic_fetch($member2->dbID, SQL_INTEGER);
 
   # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member1->stable_id;
@@ -258,8 +266,10 @@ sub fetch_by_Member_id_Member_id {
   }
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
 
-  my $constraint .= " hm1.member_id = " . $member_id1;
-  $constraint .= " AND hm2.member_id = " . $member_id2;
+  my $constraint .= ' hm1.member_id = ?';
+  $self->bind_param_generic_fetch($member_id1, SQL_INTEGER);
+  $constraint .= ' AND hm2.member_id = ?';
+  $self->bind_param_generic_fetch($member_id2, SQL_INTEGER);
 
   # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
@@ -288,8 +298,10 @@ sub fetch_by_PMember_id_PMember_id {
   }
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
 
-  my $constraint .= " hm1.peptide_member_id = " . $member_id1;
-  $constraint .= " AND hm2.peptide_member_id = " . $member_id2;
+  my $constraint .= ' hm1.peptide_member_id = ?';
+  $self->bind_param_generic_fetch($member_id1, SQL_INTEGER);
+  $constraint .= ' AND hm2.peptide_member_id = ?';
+  $self->bind_param_generic_fetch($member_id2, SQL_INTEGER);
 
   # See in fetch_by_PMember what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
