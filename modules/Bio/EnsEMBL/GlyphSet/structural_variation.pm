@@ -186,42 +186,27 @@ sub render_tag {
   } elsif ($tag->{'style'} eq 'somatic_breakpoint') {
     my $x     = $tag->{'start'};
     my $y     = 2 * ($self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2);
-    my $scale = $y / 4 / $pix_per_bp;
+    my $scale = 1 / $pix_per_bp;
     
-    @glyph = (
-      $self->Poly({
-        z      => 5,
-        colour => $tag->{'border'},
-        points => [ 
-          $x - $scale / 5,   0,          # 1
-          $x + $scale * 1.6, 0,          # 2
-          $x + $scale * 0.8, $y / 3,     # 3
-          $x + $scale * 1.9, $y / 3,     # 4
-          $x + $scale / 10,  $y,         # 5a
-          $x - $scale / 10,  $y,         # 5b 
-          $x - $scale / 5,   $y * 2 / 3, # 6
-          $x - $scale * 1.2, $y * 2 / 3  # 7
-        ],
-      }),
-      $self->Poly({
-        z      => 10,
-        colour => $tag->{'colour'},
-        points => [
-          $x,                1,              # 1
-          $x + $scale,       1,              # 2
-          $x + $scale / 10,  $y / 3 + 1,     # 3
-          $x + $scale * 1.2, $y / 3 + 1,     # 4
-          $x,                $y - 2,         # 5
-          $x,                $y * 2 / 3 - 1, # 6
-          $x - $scale / 2,   $y * 2 / 3 - 1  # 7
-        ],
-      }) 
-    );
+    @glyph = $self->Poly({
+      z            => 10,
+      colour       => $tag->{'colour'},
+      bordercolour => $tag->{'border'},
+      points       => [
+        $x - 0.5 * $scale, 1,
+        $x + 4.5 * $scale, 1,
+        $x + 2.5 * $scale, $y / 3 + 1,
+        $x + 5.5 * $scale, $y / 3 + 1,
+        $x,                $y, 
+        $x + 0.5 * $scale, $y * 2 / 3 - 1,
+        $x - 3.5 * $scale, $y * 2 / 3 - 1
+      ],
+    });
     
     $composite->push($self->Rect({
       z         => 1,
-      x         => $x - $scale * 1.2,
-      width     => $scale * 3.1,
+      x         => $x - 3.5 * $scale,
+      width     => 9 * $scale,
       height    => $y,
       absolutey => 1,
     }));
