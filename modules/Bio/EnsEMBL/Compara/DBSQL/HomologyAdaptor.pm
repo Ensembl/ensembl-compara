@@ -187,62 +187,60 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
 }
 
 
-=head2 fetch_by_Member_Member_method_link_type
+=head2 fetch_by_Member_Member
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
   Arg [2]    : Bio::EnsEMBL::Compara::Member $member
-  Arg [3]    : string $method_link_type
   Example    : $homologies = $HomologyAdaptor->fetch_by_Member_Member_method_link_type(
-                   $member1->gene_member, $member2->gene_member, "ENSEMBL_ORTHOLOGUES");
-  Description: fetch the homology relationships where the given member pair is implicated
-               in a relationship of the type defined by $method_link_type.
-  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+                   $member1->gene_member, $member2->gene_member);
+  Description: fetch the homology relationships with the given member pair.
+  Returntype : a Bio::EnsEMBL::Compara::Homology object or undef
   Exceptions : none
   Caller     : 
 
 =cut
 
-sub fetch_by_Member_Member_method_link_type {
-  my ($self, $member1, $member2, $method_link_type) = @_;
+sub fetch_by_Member_Member {
+  my ($self, $member1, $member2) = @_;
 
-  unless ($member1->stable_id ne $member2->stable_id) {
-    throw("The members should be different");
-  }
   assert_ref($member1, 'Bio::EnsEMBL::Compara::Member');
   assert_ref($member2, 'Bio::EnsEMBL::Compara::Member');
+  my $pid1 = $member1->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member1->canonical_member_id : $member1->dbID;
+  my $pid2 = $member2->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member2->canonical_member_id : $member2->dbID;
+
+  throw("The members should be different") if $pid1 eq $pid2;
+
+  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
+
+  my $constraint .= ' hm1.peptide_member_id = ?';
+  $self->bind_param_generic_fetch($pid1, SQL_INTEGER);
+  $constraint .= ' AND hm2.peptide_member_id = ?';
+  $self->bind_param_generic_fetch($pid2, SQL_INTEGER);
+
+  $self->{'_this_one_first'} = $pid1;
+
+  return $self->generic_fetch_one($constraint, $join);
+}
+
+
+=head2 fetch_by_Member_Member_method_link_type
+
+  DEPRECATED: Use fetch_by_Member_Member() instead and filter by $method_link_type on your side.
+
+=cut
+
+sub fetch_by_Member_Member_method_link_type {  # DEPRECATED
+  my ($self, $member1, $member2, $method_link_type) = @_;
+
+  deprecate('fetch_by_Member_Member_method_link_type() is deprecated and will be removed in e74. Use fetch_by_Member_Member() instead and filter by $method_link_type on your side.');
+  my $homology = $self->fetch_by_Member_Member($member1, $member2);
+  return undef unless defined $homology;
 
   $method_link_type = 'ENSEMBL_ORTHOLOGUES' unless (defined($method_link_type));
-  my $genome_dbs = [$member1->genome_db, $member2->genome_db];
   if ($member1->genome_db_id == $member2->genome_db_id) {
     $method_link_type = 'ENSEMBL_PARALOGUES';
-    $genome_dbs = [$member1->genome_db];
   }
-  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type,$genome_dbs);
-
-  unless (defined($mlss)) {
-    warning("There is no $method_link_type data stored in the database for " . $member1->genome_db->name . " and " . $member2->genome_db->name . "\n");
-    return [];
-  }
-
-  #$member1 = $member1->get_canonical_SeqMember;
-  #$member2 = $member2->get_canonical_SeqMember;
-
-  #  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
-  my $constraint = ' h.method_link_species_set_id = ?';
-  $self->bind_param_generic_fetch($mlss->dbID, SQL_INTEGER);
-
-  $constraint .= ' AND hm1.member_id = ?';
-  $self->bind_param_generic_fetch($member1->dbID, SQL_INTEGER);
-
-  $constraint .= ' AND hm2.member_id = ?';
-  $self->bind_param_generic_fetch($member2->dbID, SQL_INTEGER);
-
-  # See in fetch_all_by_Member what is this internal variable for
-  $self->{'_this_one_first'} = $member1->stable_id;
-
-  return $self->generic_fetch($constraint, $join);
+  return $homology->method_link_species_set->method->type eq $method_link_type ? $homology : undef;
 }
 
 =head2 fetch_by_Member_id_Member_id
@@ -258,8 +256,10 @@ sub fetch_by_Member_Member_method_link_type {
 
 =cut
 
-sub fetch_by_Member_id_Member_id {
+sub fetch_by_Member_id_Member_id {  # DEPRECATED
   my ($self, $member_id1, $member_id2) = @_;
+
+  deprecate('fetch_by_Member_id_Member_id() is deprecated and will be removed in e74. Use fetch_by_Member_Member() instead. If you need to fetch some members for that, please contact us.');
 
   unless ($member_id1 ne $member_id2) {
     throw("The members should be different");
@@ -270,9 +270,6 @@ sub fetch_by_Member_id_Member_id {
   $self->bind_param_generic_fetch($member_id1, SQL_INTEGER);
   $constraint .= ' AND hm2.member_id = ?';
   $self->bind_param_generic_fetch($member_id2, SQL_INTEGER);
-
-  # See in fetch_all_by_Member what is this internal variable for
-  $self->{'_this_one_first'} = $member_id1;
 
   return $self->generic_fetch_one($constraint, $join);
 }
@@ -290,8 +287,10 @@ sub fetch_by_Member_id_Member_id {
 
 =cut
 
-sub fetch_by_PMember_id_PMember_id {
+sub fetch_by_PMember_id_PMember_id {   # DEPRECATED
   my ($self, $member_id1, $member_id2) = @_;
+
+  deprecate('fetch_by_PMember_id_PMember_id() is deprecated and will be removed in e74. Use fetch_by_Member_Member() instead. If you need to fetch some members for that, please contact us.');
 
   unless ($member_id1 ne $member_id2) {
     throw("The members should be different");
@@ -303,7 +302,6 @@ sub fetch_by_PMember_id_PMember_id {
   $constraint .= ' AND hm2.peptide_member_id = ?';
   $self->bind_param_generic_fetch($member_id2, SQL_INTEGER);
 
-  # See in fetch_by_PMember what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
 
   return $self->generic_fetch_one($constraint, $join);
