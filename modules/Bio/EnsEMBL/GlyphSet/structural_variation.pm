@@ -7,76 +7,64 @@ use List::Util qw(min max);
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub somatic    { return $_[0]->{'my_config'}->id =~ /somatic/; }
-sub colour_key { 
-  if($_[1]->is_somatic and $_[1]->breakpoint_order) {
-    return "somatic_breakpoint_variant";
-  }
-  return $_[1]->class_SO_term;
-}
+sub colour_key { return $_[1]->is_somatic && $_[1]->breakpoint_order ? 'somatic_breakpoint_variant' : $_[1]->class_SO_term; }
 
 sub features {
-  my $self     = shift; 
-  my $slice    = $self->{'container'};
-  my $source   = $self->my_config('source');
-  my $set_name = $self->my_config('set_name');
-  my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
-  my $id       = $self->{'my_config'}->id;
-  my ($min_length,$max_length) = split('-', $self->my_config('length'));
-  my $overlap  = $self->my_config('overlap');
+  my $self = shift; 
+  my $id   = $self->{'my_config'}->id;
   
-  my $features;
   if (!$self->cache($id)) {
+    my $slice    = $self->{'container'};
+    my $set_name = $self->my_config('set_name');
     my $features;
-    my @display_features;
     
     if ($set_name) {
-      $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name)) if $set_name;
-    } 
-    else {
+      $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name));
+    } else {
+      my $func    = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
+      my $source  = $self->my_config('source');
+      my $overlap = $self->my_config('overlap');
+      my $start   = $slice->start;
+      my $end     = $slice->end;
       my @display_features;
       
       $features = $slice->$func($source =~ /^\w/ ? $source : undef);
       
       # Dispatch the SV features in the 2 "overlap" tracks
-      if (defined($overlap)) {
-    
-        for (my $i=0;$i<scalar(@$features);$i++) {
+      if (defined $overlap) {
+        for (my $i = 0; $i < scalar @$features; $i++) {
           my $seq_start = $features->[$i]->seq_region_start;
           my $seq_end   = $features->[$i]->seq_region_end;
+          
           if ($overlap == 1) {
-            push (@display_features, $features->[$i]) if ($seq_start >= $slice->start || $seq_end <= $slice->end);
+            push @display_features, $features->[$i] if $seq_start >= $start || $seq_end <= $end;
           } elsif ($overlap == 2) {
-            push (@display_features, $features->[$i]) if ($seq_start < $slice->start && $seq_end > $slice->end);
+            push @display_features, $features->[$i] if $seq_start < $start && $seq_end > $end;
           }
         }
-        $features = \@display_features;
         
-      } 
-      # Display only the correct breakpoint (somatic data)
-      elsif ($self->somatic) {
-      
-        for (my $i=0;$i<scalar(@$features);$i++) {
-          if (!$features->[$i]->{breakpoint_order}) {
-            push (@display_features,$features->[$i]);
+        $features = \@display_features;
+      } elsif ($self->somatic) { # Display only the correct breakpoint (somatic data)
+        for (my $i = 0; $i < scalar @$features; $i++) {
+          if (!$features->[$i]{'breakpoint_order'}) {
+            push @display_features, $features->[$i];
             next;
           }
+          
           my $seq_start = $features->[$i]->seq_region_start;
           my $seq_end   = $features->[$i]->seq_region_end;
-          if (($seq_start >= $slice->start && $seq_start <= $slice->end) || 
-              ($seq_end >= $slice->start && $seq_end <= $slice->end)) 
-          {
-            push (@display_features, $features->[$i]);
-          }
+          
+          push @display_features, $features->[$i] if ($seq_start >= $start && $seq_start <= $end) || ($seq_end >= $start && $seq_end <= $end);
         }
-        $features = \@display_features;
         
+        $features = \@display_features;
       }
     }
+    
     $self->cache($id, $features);
   }
-  my $sv_features = $self->cache($id) || [];
   
-  return $sv_features;
+  return $self->cache($id) || [];
 }
 
 
@@ -87,27 +75,23 @@ sub tag {
   
   if ($f->is_somatic && $f->breakpoint_order) {
     my $slice = $self->{'container'};
-    my $seq_start = $f->seq_region_start;
-    my $seq_end   = $f->seq_region_end;
-      
     my @coords;
-    push (@coords, $f->start) if ($seq_start >= $slice->start && $seq_start <= $slice->end);
-    push (@coords, $f->end) if ($f->start!=$f->end && ($seq_end >= $slice->start && $seq_end <= $slice->end));
-   
-     foreach my $coord (@coords) {
+    
+    push @coords, $f->start if $f->seq_region_start >= $f->seq_region_start && $slice->start <= $slice->end;
+    push @coords, $f->end   if $f->start != $f->end && $f->seq_region_end >= $slice->start && $f->seq_region_end <= $slice->end;
+    
+    foreach my $coord (@coords) {
       push @tags,{
-        style  => $self->my_colour($self->colour_key($f), 'style'),
+        style  => 'somatic_breakpoint',
         colour => 'gold',
         start  => $coord,
-        end    => $coord+10
+        end    => $coord + 10
       };
     }
-  } 
-  else {
+  } else {
     my $border         = 'dimgray';
     my $inner_crossing = $f->inner_start && $f->inner_end && $f->inner_start >= $f->inner_end ? 1 : 0;
-
-  
+    
     if ($inner_crossing && $f->inner_start == $f->seq_region_end) {
       return {
         style  => 'rect',
@@ -199,53 +183,48 @@ sub render_tag {
       height       => $y / $pix_per_bp,
       direction    => $1,
     });
-  } elsif ($tag->{'style'} eq 'none') {
-    my $h     = $self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2;
+  } elsif ($tag->{'style'} eq 'somatic_breakpoint') {
     my $x     = $tag->{'start'};
-    my $y     = $h / 2;
-    my $width = 10 / $self->scalex;
-    $y = $h*2;
-    my $scale = ($y/4)/$pix_per_bp;
-
-    my $points = [ $x,            1,              # 1
-                   $x+$scale,     1,              # 2
-                   $x+$scale/10,  $y/2-$y/6+1,    # 3
-                   $x+$scale*1.2, $y/2-$y/6+1,    # 4
-                   $x,            $y-2,           # 5
-                   $x,            $y-$y/2+$y/6-1, # 6
-                   $x-$scale/2,   $y-$y/2+$y/6-1  # 7
-                 ];
-                          
-    my $points2 = [ $x-$scale/5,   0,             # 1
-                     $x+$scale*1.6, 0,            # 2
-                     $x+$scale*0.8, $y/2-$y/6,    # 3
-                     $x+$scale*1.9, $y/2-$y/6,    # 4
-                     $x+$scale/10,  $y,           # 5a
-                     $x-$scale/10,  $y,           # 5b 
-                     $x-$scale/5,   $y-$y/2+$y/6, # 6
-                     $x-$scale*1.2, $y-$y/2+$y/6  # 7
-                   ];  
+    my $y     = 2 * ($self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2);
+    my $scale = $y / 4 / $pix_per_bp;
+    
     @glyph = (
-             $self->Poly({
-               'points'    => $points2,
-               'colour'    => 'black',
-               'z'         => 5,
-             }),
-             $self->Poly({
-               'points'    => $points,
-               'colour'    => $tag->{'colour'},
-               'z'         => 10,
-             }) 
+      $self->Poly({
+        z      => 5,
+        colour => 'black',
+        points => [ 
+          $x - $scale / 5,   0,          # 1
+          $x + $scale * 1.6, 0,          # 2
+          $x + $scale * 0.8, $y / 3,     # 3
+          $x + $scale * 1.9, $y / 3,     # 4
+          $x + $scale / 10,  $y,         # 5a
+          $x - $scale / 10,  $y,         # 5b 
+          $x - $scale / 5,   $y * 2 / 3, # 6
+          $x - $scale * 1.2, $y * 2 / 3  # 7
+        ],
+      }),
+      $self->Poly({
+        z      => 10,
+        colour => $tag->{'colour'},
+        points => [
+          $x,                1,              # 1
+          $x + $scale,       1,              # 2
+          $x + $scale / 10,  $y / 3 + 1,     # 3
+          $x + $scale * 1.2, $y / 3 + 1,     # 4
+          $x,                $y - 2,         # 5
+          $x,                $y * 2 / 3 - 1, # 6
+          $x - $scale / 2,   $y * 2 / 3 - 1  # 7
+        ],
+      }) 
     );
-    $composite->push(
-             $self->Rect({
-               'z'         => 1,
-               'x'         => $x-$scale*1.2,
-               'width'     => $scale*3.1,
-               'height'    => $y,
-               'absolutey' => 1,
-             })
-    );
+    
+    $composite->push($self->Rect({
+      z         => 1,
+      x         => $x - $scale * 1.2,
+      width     => $scale * 3.1,
+      height    => $y,
+      absolutey => 1,
+    }));
   }
   
   return @glyph;
@@ -291,25 +270,14 @@ sub highlight {
   my $width = max(map $_->width, $composite, @tags);
   my $x     = min(map $_->x,     $composite, @tags);
   
-  if ($f->is_somatic and $f->breakpoint_order) {
-    $self->unshift($self->Rect({
-      x            => $x - 1/$pix_per_bp,
-      y            => $composite->y - 1,
-      width        => $width + 2/$pix_per_bp,
-      height       => $h*2 + 2,
-      bordercolour => 'green',
-      absolutey    => 1,
-    }));
-  } else {
-    $self->unshift($self->Rect({
-      x            => $x - 1/$pix_per_bp,
-      y            => $composite->y - 1,
-      width        => $width + 2/$pix_per_bp,
-      height       => $h + 2,
-      bordercolour => 'green',
-      absolutey    => 1,
-    }));
-  }
+  $self->unshift($self->Rect({
+    x            => $x - 1/$pix_per_bp,
+    y            => $composite->y - 1,
+    width        => $width + 2/$pix_per_bp,
+    height       => $h * ($f->is_somatic && $f->breakpoint_order ? 2 : 1) + 2,
+    bordercolour => 'green',
+    absolutey    => 1,
+  }));
 }
 
 1;
