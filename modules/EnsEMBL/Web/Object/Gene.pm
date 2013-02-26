@@ -751,8 +751,7 @@ sub fetch_homology_species_hash {
   
   $self->timer_push('starting to fetch', 6);
 
-  my $member_adaptor = $database->get_MemberAdaptor;
-  my $query_member   = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $geneid);
+  my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $geneid);
 
   return {} unless defined $query_member;
   
