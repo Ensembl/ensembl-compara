@@ -28,7 +28,7 @@ sub content {
   my $seq          = $hub->param('seq');
   my $text_format  = $hub->param('text_format');
   my $database     = $hub->database($cdb);
-  my $qm           = $database->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
+  my $qm           = $database->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
   my ($homologies, $html, %skipped);
   
   eval {
