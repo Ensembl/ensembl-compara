@@ -543,14 +543,14 @@ sub _filter_paralogues_by_ancestral_species {
 
 =head2 fetch_orthocluster_with_Member
 
-  Arg [1]    : Bio::EnsEMBL::Compara::Member $gene_member (must be ENSEMBLGENE type)
+  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
   Example    : my ($homology_list, $gene_list) = 
-                 $HomologyAdaptor->fetch_orthocluster_with_Member($gene_member);
+                 $HomologyAdaptor->fetch_orthocluster_with_Member($member);
   Description: do a recursive search starting from $gene_member to find the cluster of
                all connected genes and homologies via connected components clustering.
   Returntype : an array pair of array references.  
                First array_ref is the list of Homology objects in the cluster graph
-	       Second array ref is the list of unique gene Members in the cluster
+	       Second array ref is the list of unique SeqMembers in the cluster
   Exceptions : none
   Caller     : 
 
@@ -558,11 +558,14 @@ sub _filter_paralogues_by_ancestral_species {
 
 sub fetch_orthocluster_with_Member {
   my $self = shift;
-  my $gene_member = shift;
+  my $member = shift;
+
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+  my $member = $member->get_canonical_SeqMember if $member->isa('Bio::EnsEMBL::Compara::GeneMember');
   
   my $ortho_set = {};
   my $member_set = {};
-  $self->_recursive_get_orthocluster($gene_member, $ortho_set, $member_set, 0);
+  $self->_recursive_get_orthocluster($member, $ortho_set, $member_set, 0);
 
   my @homologies = values(%{$ortho_set});
   my @genes      = values(%{$member_set});
@@ -589,7 +592,7 @@ sub _recursive_get_orthocluster {
   foreach my $homology (@{$homologies}) {
     next if($ortho_set->{$homology->dbID});
     
-    foreach my $member (@{$homology->get_all_GeneMembers}) {
+    foreach my $member (@{$homology->get_all_Members}) {
       next if($member->dbID == $gene->dbID); #skip query gene
       $member->print_member if($debug);
 
