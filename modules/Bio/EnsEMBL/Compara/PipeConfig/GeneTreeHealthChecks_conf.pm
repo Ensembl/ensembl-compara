@@ -512,7 +512,7 @@ sub analysis_homologies {
         {   -logic_name => 'hc_tree_true_one2one',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT hm.member_id FROM homology h JOIN homology_member hm USING (homology_id) WHERE tree_node_id = #gene_tree_id# GROUP BY method_link_species_set_id, hm.member_id HAVING COUNT(*)>1 AND GROUP_CONCAT(h.description) LIKE "%one2one%"',
+                'inputquery'    => 'SELECT method_link_species_set_id, hm.member_id FROM homology h JOIN homology_member hm USING (homology_id) WHERE tree_node_id = #gene_tree_id# GROUP BY method_link_species_set_id, hm.member_id HAVING COUNT(*)>1 AND GROUP_CONCAT(h.description) LIKE "%one2one%"',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
