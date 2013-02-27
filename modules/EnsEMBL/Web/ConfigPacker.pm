@@ -24,11 +24,11 @@ sub munge {
 sub munge_databases {
   my $self   = shift;
   my @tables = qw(core cdna vega vega_update otherfeatures rnaseq);
-  
   $self->_summarise_core_tables($_, 'DATABASE_' . uc $_) for @tables;
   $self->_summarise_xref_types('DATABASE_' . uc $_) for @tables;
   $self->_summarise_variation_db('variation', 'DATABASE_VARIATION');
   $self->_summarise_funcgen_db('funcgen', 'DATABASE_FUNCGEN');
+  $self->_compare_update_db('vega_update','DATABASE_VEGA_UPDATE');
 }
 
 # creates das.packed
@@ -314,9 +314,8 @@ sub _summarise_core_tables {
          left join external_db using(external_db_id)'
            );
     foreach my $row (@$oref) {
-  push @{$self->db_tree->{'SPECIES_ONTOLOGIES'}}, $row->[0] if ($row->[0]);
+      push @{$self->db_tree->{'SPECIES_ONTOLOGIES'}}, $row->[0] if ($row->[0]);
     }
-
   }
 
 #---------------
@@ -789,8 +788,46 @@ sub _summarise_funcgen_db {
     } 
     $self->db_details($db_name)->{'tables'}{'regbuild_string'}{$key_info[1]}{$key_info[0]} = \%data;
   }
-
   $dbh->disconnect();
+}
+
+sub _compare_update_db {
+  my $self    = shift;
+  my $db_key  = shift;
+  my $db_name = shift;
+  my $dbh     = $self->db_connect( $db_name );
+  return unless $dbh;
+  my $genes;
+  my $update_genes = $dbh->selectall_arrayref(
+    'select x.display_label, edb.db_name, g.stable_id, g.modified_date, g.biotype, sr.name, g.seq_region_start, g.seq_region_end, g.seq_region_strand
+      from seq_region sr, gene g, xref x, external_db edb
+     where sr.seq_region_id = g.seq_region_id
+       and g.display_xref_id = x.xref_id
+       and x.external_db_id = edb.external_db_id
+  order by g.stable_id desc
+');
+  my $core_dbh  = $self->db_connect( 'DATABASE_CORE' );
+  my %core_genes;
+  foreach my $core_gene (@{$core_dbh->selectall_arrayref('select stable_id from gene')}) {
+    $core_genes{$core_gene->[0]}++;
+  }
+  foreach my $update_gene (@$update_genes) {
+    my ($display_label, $source, $stable_id, $modified_date, $biotype, $sr_name, $sr_start, $sr_end, $sr_strand) = @$update_gene;
+    my $status =  $core_genes{$stable_id} ? 'updated' : 'new';
+    my ($update_date, $update_time) = split ' ', $modified_date;
+    my $pos = "$sr_name:$sr_start-$sr_end:$sr_strand";
+    push @$genes, {
+      'stable_id'   => $stable_id,
+      'name'        => $display_label,
+      'update_date' => $update_date,
+      'biotype'     => $biotype,
+      'chr'         => $sr_name,
+      'location'    => "$sr_start-$sr_end",
+      'pos'         => $pos,
+      'status'      => $status,
+    };
+  }
+  $self->db_tree->{'UPDATE_GENES'}{$self->species} = $genes;
 }
 
 #========================================================================#
@@ -1295,7 +1332,7 @@ sub _summarise_go_db {
   #$self->_summarise_generic( $db_name, $dbh );
   # get the list of the available ontologies
   my $t_aref = $dbh->selectall_arrayref(
-     'select ontology.ontology_id, ontology.name, accession, term.name 
+     'select ontology.ontology_id, ontology.name, accession, term.name
       from ontology 
         join term using (ontology_id)
         left join relation on (term_id=child_term_id) 
@@ -1310,6 +1347,24 @@ sub _summarise_go_db {
     description => $description
     };
   }
+
+  #These GO terms were orphans prior to 70 but due to a change in EFO now have parents.
+  #Add these manually for now and sort properly in 71
+  $self->db_tree->{'ONTOLOGIES'}->{1} = {
+    db          => 'GO',
+    root        => 'GO:0008150',
+    description => 'biological_process',
+  };
+  $self->db_tree->{'ONTOLOGIES'}->{2} = {
+    db          => 'GO',
+    root        => 'GO:0005575',
+    description => 'cellular_component',
+  };
+  $self->db_tree->{'ONTOLOGIES'}->{3} = {
+    db          => 'GO',
+    root        => 'GO:0003674',
+    description => 'molecular_function',
+  };
 
   $dbh->disconnect();
 }
