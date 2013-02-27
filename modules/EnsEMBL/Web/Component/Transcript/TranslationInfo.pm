@@ -19,7 +19,7 @@ sub content {
   my $transcript   = $object->Obj;
   my $translation  = $transcript->translation;
 
-  $table->add_row('Ensembl version', $translation->stable_id.'.'.$translation->version);
+  $table->add_row($self->object->species_defs->ENSEMBL_SITETYPE . ' version', $translation->stable_id.'.'.$translation->version);
 
   return $table->render;
 }

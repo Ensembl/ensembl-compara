@@ -64,6 +64,7 @@ Post questions to the EnsEMBL development list dev@ensembl.org
 =cut
 
 =head2 constructor
+
  Colours are in hex format may be preceeded by #, alternatively 'transparent' is allowed for a transparant "colour"
  Arg[1]      : A Bio::EnsEMBL::DBSQL::OntologyTermAdaptor to access the ontology API
  Arg[2]      : The base dir on the local file system, where the generated images can be stored
@@ -102,7 +103,9 @@ Post questions to the EnsEMBL development list dev@ensembl.org
                );
  Description : creates a ne OntologyVisualisation object
  Return type : EnsEMBL::Web::Tools::OntologyVisualisation
+
 =cut
+
 sub new {
   my $class = shift;
   my $self;
@@ -111,7 +114,7 @@ sub new {
   $self->{_img_base_url}= shift;
   $self->{_idurl}= shift;
   $self->{_image_background_colour}=_format_colour_code(shift,'transparent');
-  $self->{_node_fill_colour}=_format_colour_code(shift,'transparent');  
+  $self->{_node_fill_colour}=_format_colour_code(shift,'transparent');
   $self->{_node_font_colour}=_format_colour_code(shift,'000000');
   $self->{_node_border_colour}=_format_colour_code(shift,'000000');
   $self->{_non_highlight_fill_colour}=_format_colour_code(shift,'transparent');
@@ -141,10 +144,13 @@ sub new {
 
 
 =head2 getter/setter for existing_terms
+
  Arg[1]      : An hashref of existing terms (optional)
  Description : getter/setter for existing_terms
  Return type : arrayref
+
 =cut
+
 sub existing_terms{
   my $self=shift;
   my $existing_terms= shift;
@@ -154,10 +160,13 @@ sub existing_terms{
 
 
 =head2 getter/setter for node_descriptions hash
+
  Arg[1]      : An hashref of node_descriptions hash (optional)
  Description : getter/setter for node_descriptions hash
  Return type : arrayref
+
 =cut
+
 sub node_descriptions{
   my $self=shift;
   my $node_descriptions= shift;
@@ -166,10 +175,13 @@ sub node_descriptions{
 }
 
 =head2 getter/setter for existing_edges hash
+
  Arg[1]      : An hashref of existing_edges hash (optional)
  Description : getter/setter for existing_edges hash
  Return type : arrayref
+
 =cut
+
 sub existing_edges{
   my $self=shift;
   my $existing_edges= shift;
@@ -178,10 +190,13 @@ sub existing_edges{
 }
 
 =head2 getter/setter for the base dir on the local file system, where the generated images can be stored
+
  Arg[1]      : An string (base dir) (optional)
  Description : getter/setter for the base dir on the local file system, where the generated images can be stored
  Return type : string (dir)
+
 =cut
+
 sub img_base_dir{
   my $self=shift;
   my $img_base_dir = shift;
@@ -190,10 +205,13 @@ sub img_base_dir{
 }
 
 =head2 getter/setter for the external base url to the base dir
+
  Arg[1]      : An string (base url) (optional)
  Description : getter/setter for the external base url to the base dir
  Return type : string (url)
+
 =cut
+
 sub img_base_url{
   my $self=shift;
   my $img_base_url = shift;
@@ -202,10 +220,13 @@ sub img_base_url{
 }
 
 =head2 getter/setter for the default base url that nodes should lik to, ###ID### will be replaced by the term accession, these can also be set on a per cluster basis
+
  Arg[1]      : An string (id url) (optional)
  Description : getter/setter for the default base url that nodes should lik to, ###ID### will be replaced by the term accession, these can also be set on a per cluster basis
  Return type : string (url)
+
 =cut
+
 sub idurl{
   my $self=shift;
   my $idurl = shift;
@@ -213,11 +234,14 @@ sub idurl{
   return $self->{_idurl};
 }
 =head2 get the id_url for a specific accession on a specific cluster
+
  Arg[1]      : An string accession
  Arg[1]      : An string cluster_name
  Description : getter for a specific accession on a specific cluster
  Return type : string (url)
+
 =cut
+
 sub get_url{
   my $self=shift;
   my $accession=shift;
@@ -236,10 +260,13 @@ sub get_url{
 }
 
 =head2 getter/setter for the background colour for the images
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the background colour for the images
  Return type : string (colour)
+
 =cut
+
 sub image_background_colour{
   my $self=shift;
   my $colour = shift;
@@ -248,10 +275,13 @@ sub image_background_colour{
 }
 
 =head2 getter/setter for the fill colour for normal (non highlighted and non generated) nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the fill colour for normal (non highlighted and non generated) nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub node_fill_colour{
   my $self=shift;
   my $colour = shift;
@@ -267,10 +297,13 @@ sub node_fill_colour{
 }
 
 =head2 getter/setter for the font colour for normal (non highlighted and non generated) nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the font colour for normal (non highlighted and non generated) nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub node_font_colour{
   my $self=shift;
   my $colour = shift;
@@ -286,10 +319,13 @@ sub node_font_colour{
 }
 
 =head2 getter/setter for the border colour for normal (non highlighted and non generated) nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the border colour for normal (non highlighted and non generated) nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub node_border_colour{
   my $self=shift;
   my $colour = shift;
@@ -305,10 +341,13 @@ sub node_border_colour{
 }
 
 =head2 getter/setter for the fill colour for non highlighted nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the fill colour for non highlighted nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub non_highlight_fill_colour{
   my $self=shift;
   my $colour = shift;
@@ -324,10 +363,13 @@ sub non_highlight_fill_colour{
 }
 
 =head2 getter/setter for the font colour for non highlighted nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the font colour for non highlighted nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub non_highlight_font_colour{
   my $self=shift;
   my $colour = shift;
@@ -343,10 +385,13 @@ sub non_highlight_font_colour{
 }
 
 =head2 getter/setter for the border colour for non highlighted nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the border colour for non highlighted nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub non_highlight_border_colour{
   my $self=shift;
   my $colour = shift;
@@ -362,10 +407,13 @@ sub non_highlight_border_colour{
 }
 
 =head2 getter/setter for the fill colour for highlighted nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the fill colour for highlighted nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub highlighted_fill_colour{
   my $self=shift;
   my $colour = shift;
@@ -374,10 +422,13 @@ sub highlighted_fill_colour{
 }
 
 =head2 getter/setter for the font colour for highlighted nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the font colour for highlighted nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub highlighted_font_colour{
   my $self=shift;
   my $colour = shift;
@@ -386,10 +437,13 @@ sub highlighted_font_colour{
 }
 
 =head2 getter/setter for the border colour for highlighted nodes (optional)
+
  Arg[1]      : An string (colour) (optional)
  Description : getter/setter for the border colour for highlighted nodes (optional)
  Return type : string (colour)
+
 =cut
+
 sub highlighted_border_colour{
   my $self=shift;
   my $colour = shift;
@@ -398,10 +452,13 @@ sub highlighted_border_colour{
 }
 
 =head2 getter/setter for an arrayref of normal term accessions
+
  Arg[1]      : An arrayref
  Description : getter/setter for an arrayref of normal term accessions
  Return type : arrayref
+
 =cut
+
 sub normal_term_accessions{
   my $self=shift;
   my @normal_term_accessions = @_;
@@ -410,10 +467,13 @@ sub normal_term_accessions{
 }
 
 =head2 getter/setter for an arrayref of highlighted term accessions
+
  Arg[1]      : An arrayref
  Description : getter/setter for an arrayref of highlighted term accessions
  Return type : arrayref
+
 =cut
+
 sub highlighted_term_accessions{
   my $self=shift;
   my @highlighted_term_accessions = @_;
@@ -422,10 +482,13 @@ sub highlighted_term_accessions{
 }
 
 =head2 getter/setter for an arrayref of highlighted term accessions
+
  Arg[1]      : An arrayref
  Description : getter/setter for an arrayref of highlighted term accessions
  Return type : arrayref
+
 =cut
+
 sub highlighted_subsets{
   my $self=shift;
   my @highlighted_subsets = @_;
@@ -434,10 +497,13 @@ sub highlighted_subsets{
 }
 
 =head2 getter/setter for the Bio::EnsEMBL::DBSQL::OntologyTermAdaptor used to access the ontology API
+
  Arg[1]      : Bio::EnsEMBL::DBSQL::OntologyTermAdaptor
  Description : getter/setter for the Bio::EnsEMBL::DBSQL::OntologyTermAdaptor used to access the ontology API
  Return type : Bio::EnsEMBL::DBSQL::OntologyTermAdaptor
+
 =cut
+
 sub ontology_term_adaptor{
   my $self=shift;
   my $ontology_term_adaptor = shift;
@@ -446,10 +512,13 @@ sub ontology_term_adaptor{
 }
 
 =head2 add a cluster to the OntologyVisualisation for the accession. All children of this term will be in its cluster
+
  Arg[1]      : a string, the accession of the term or which to add a cluster
  Description : add a cluster to the OntologyVisualisation for the accession. All children of this term will be in its cluster
  Return type : void
+
 =cut
+
 sub add_cluster_by_parent_accession{
   my $self=shift;
   my $new_cluster = shift;
@@ -465,9 +534,12 @@ sub add_cluster_by_parent_accession{
 }
 
 =head2 render the html & generate the images
+
  Description : render the html & generate the images
  Return type : string (html), the images are stored in the image_base_dir set
+
 =cut
+
 sub render{
   my $self=shift;
   my $ontology_term_adaptor = $self->ontology_term_adaptor;
@@ -484,7 +556,6 @@ sub render{
 
   my @all_terms =  @{$self->normal_term_accessions} ;
   push(@all_terms,@{$self->highlighted_term_accessions});
-
   for my $key ( @all_terms ) {#add all parents of the nodes we retreived
     my $term = $ontology_term_adaptor->fetch_by_accession($key);
     $self->_add_parents($term,$ontology_term_adaptor);
@@ -559,14 +630,15 @@ sub _add_parents{
   my $ancestors = $ontology_term_adaptor->_fetch_ancestor_chart($term);
   my $cluster_name= $self->_get_cluster_name($term, $ontology_term_adaptor);
   my $cluster = $self->_get_cluster($cluster_name);
-  
+
   foreach my $relation(keys %{$ancestors->{$term->accession}})  {
     if(ref $ancestors->{$term->accession}->{$relation} eq "ARRAY" ){#all parents are in 'name' =>[term,term] form
-      foreach my $trm (@{$ancestors->{$term->accession}->{$relation}}){
+      foreach my $trm (@{$ancestors->{$term->accession}->{$relation} || []}){
+        next unless $trm;
         if(! $self->existing_terms->{$trm->accession}){
-        $self->existing_terms->{$trm->accession}=1;
-        my $node_name = $self->_format_node_name($trm);
-        $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->node_border_colour('',$trm),
+          $self->existing_terms->{$trm->accession}=1;
+          my $node_name = $self->_format_node_name($trm);
+          $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->node_border_colour('',$trm),
         fillcolor=>$self->non_highlight_fill_colour('',$trm), fontcolor=>$self->non_highlight_font_colour('',$trm));
         }
         if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){

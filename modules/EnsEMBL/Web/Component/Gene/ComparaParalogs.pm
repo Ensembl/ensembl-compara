@@ -121,7 +121,7 @@ sub content {
   
   if ($alignview && keys %paralogue_list) {
     $html .= sprintf(
-      '<p><a href="%s">View sequence alignments of all homologues</a>.</p>', 
+      '<p><a href="%s">View sequence alignments of all paralogues</a>.</p>', 
       $hub->url({ action => 'Compara_Paralog', function => 'Alignment' })
     );
   }

@@ -98,7 +98,7 @@ sub content {
 
     $form->add_element(type => 'SubHeader', value => $subheader);
     $form->add_element(type => 'Hidden', name => 'filetype', value => 'Assembly Converter');
-    $form->add_element(type => 'String', name => 'name', label => 'Name for this upload (optional)');
+    $form->add_element(type => 'String', name => 'name', label => 'Name for this data (optional)');
     $form->add_element(type => 'Text',   name => 'text', label => 'Paste data');
     $form->add_element(type => 'File',   name => 'file', label => 'Upload file');
     $form->add_element(type => 'URL',    name => 'url',  label => 'or provide file URL', size => 30);

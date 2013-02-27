@@ -19,6 +19,7 @@ sub content {
   my $self = shift;
   my $hub = $self->hub;
   my $id = shift || $hub->param('id') || $hub->param('feedback');
+  my $just_faq = shift;
   $id+=0;
   my $html;
   
@@ -57,8 +58,9 @@ sub content {
     if (scalar(@faqs) == 1) {
 
       $html .= sprintf('<h3>%s</h3><p>%s</p>', $faqs[0]->{'question'}, $self->parse_help_html($faqs[0]->{'answer'}, $adaptor));
-
-      $html .= qq(<ul><li><a href="/Help/Faq" class="popup">More FAQs</a></li></ul>);
+      if (! $just_faq) {
+        $html .= qq(<ul><li><a href="/Help/Faq" class="popup">More FAQs</a></li></ul>);
+      }
     }
     else {
       $html .= qq(<h2>FAQs</h2>);
@@ -85,11 +87,11 @@ sub content {
       $html .= '</ul>' if $category;
     }
   }
-
-  $html .= qq(<hr /><p style="margin-top:1em">If you have any other questions about Ensembl, please do not hesitate to 
+  if (! $just_faq) {
+    $html .= qq(<hr /><p style="margin-top:1em">If you have any other questions about Ensembl, please do not hesitate to 
 <a href="/Help/Contact" class="popup">contact our HelpDesk</a>. You may also like to subscribe to the 
 <a href="http://www.ensembl.org/info/about/contact/mailing.html" class="cp-external">developers' mailing list</a>.</p>);
-
+  }
   return $html;
 }
 

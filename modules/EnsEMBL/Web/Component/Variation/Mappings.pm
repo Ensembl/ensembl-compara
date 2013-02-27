@@ -79,7 +79,7 @@ sub content {
   
   my @columns = (
     { key => 'gene',      title => 'Gene',                             sort => 'html'                        },
-    { key => 'trans',     title => '<nobr>Transcript (strand)</nobr>', sort => 'html'                        },
+    { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
     { key => 'allele',    title => 'Allele (transcript allele)',       sort => 'string',   width => '7%'     },
     { key => 'type',      title => 'Type'  ,                           sort => 'position_html'               },
     { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'center' },
@@ -246,7 +246,7 @@ sub content {
       my $row = {
         allele    => $allele,
         gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
-        trans     => qq{<nobr><a href="$transcript_url">$trans_name</a> ($strand)</nobr><br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
+        trans     => qq{<a href="$transcript_url">$trans_name</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
         type      => $type,
         trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'},        $transcript_data->{'cdna_end'}),
         cds_pos   => $self->_sort_start_end($transcript_data->{'cds_start'},         $transcript_data->{'cds_end'}),

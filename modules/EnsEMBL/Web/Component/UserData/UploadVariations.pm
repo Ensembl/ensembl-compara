@@ -81,7 +81,7 @@ sub content {
 5  140532  140532  T/C  +);
 
   $form->add_element( type => 'Hidden', name => 'variation_limit', 'value' => $variation_limit);
-  $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
+  $form->add_element( type => 'String', name => 'name', label => 'Name for this data (optional)' );
   $form->add_element( type => 'Text', name => 'text', label => 'Paste data', value => $example );
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );
   $form->add_element( type => 'URL',  name => 'url',  label => 'or provide file URL', size => 30 );
