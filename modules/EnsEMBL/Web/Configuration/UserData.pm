@@ -18,7 +18,7 @@ sub populate_tree {
   my $self = shift;
 
   ## Upload "wizard"
-  $self->create_node( 'SelectFile', "Add a Custom Track",
+  $self->create_node( 'SelectFile', 'Add your data',
     [qw(select_file EnsEMBL::Web::Component::UserData::SelectFile)], 
     { 'availability' => 1 }
   );

@@ -1003,7 +1003,7 @@ sub transcript_table {
 
   my $insdc_accession;
   $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
-  $table->add_row('INSDC Accession',$insdc_accession) if $insdc_accession;
+  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
 
   my $gene = $object->gene;
   

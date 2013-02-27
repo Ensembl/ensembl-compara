@@ -22,7 +22,7 @@ sub form {
   
   $self->add_fieldset('DAS sources');
   
-  foreach my $das (@all_das) { warn $das;
+  foreach my $das (@all_das) {
     $self->add_form_element({
       type  => 'DASCheckBox',
       das   => $das,

@@ -405,35 +405,33 @@ sub parse_referer {
   my $uri          = $ENV{'HTTP_REFERER'};
      $uri          =~ s/^(https?:\/\/.*?)?\///i;
      $uri          =~ s/[;&]$//;
-  
+     
   my ($url, $query_string) = split /\?/, $uri;
 
-  my $info = {
-    absolute_url => $ENV{'HTTP_REFERER'},
-    uri          => "/$uri",
-    external     => 0,
-  };
-
+  my $info = { absolute_url => $ENV{'HTTP_REFERER'} };
   my @path = split /\//, $url;
   
   unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
 
   if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/) {
-    $info->{'external'} = 1; 
+    $info->{'external'} = 1;
+  } else {
+    $info->{'external'} = 0;
+    $info->{'uri'}      = "/$uri";
   }
 
   my @pairs  = split /[&;]/, $query_string;
   my $params = {};
-  
+
   foreach (@pairs) {
     my ($param, $value) = split '=', $_, 2;
-    
+
     next unless defined $param;
-    
+
     $value = '' unless defined $value;
     $param = uri_unescape($param);
     $value = uri_unescape($value);
-    
+
     push @{$params->{$param}}, $value unless $param eq 'time'; # don't copy time
   }
   $info->{'params'} = $params;
@@ -456,17 +454,17 @@ sub parse_referer {
     warn "  ACTION:   $info->{'action'}\n";
     warn "  FUNCTION: $info->{'function'}\n";
     warn "  QS:       $query_string\n";
-    
+
     foreach my $param (sort keys %$params) {
       warn sprintf '%20s = %s\n', $param, $_ for sort @{$params->{$param}};
     }
-    
+
     warn "\n";
     warn "  URI:      $uri\n";
     warn "\n";
     warn "------------------------------------------------------------------------------\n";
   }
-  
+ 
   return $info;
 }
 
