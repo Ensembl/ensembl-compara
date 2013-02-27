@@ -77,7 +77,7 @@ sub tag {
     my $slice = $self->{'container'};
     my @coords;
     
-    push @coords, $f->start if $f->seq_region_start >= $f->seq_region_start && $slice->start <= $slice->end;
+    push @coords, $f->start if $f->seq_region_start >= $slice->start && $f->seq_region_start <= $slice->end;
     push @coords, $f->end   if $f->start != $f->end && $f->seq_region_end >= $slice->start && $f->seq_region_end <= $slice->end;
     
     foreach my $coord (@coords) {
