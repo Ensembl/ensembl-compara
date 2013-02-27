@@ -74,14 +74,8 @@ sub tag {
   my @tags;
   
   if ($f->is_somatic && $f->breakpoint_order) {
-    my $slice = $self->{'container'};
-    my @coords;
-    
-    push @coords, $f->start if $f->seq_region_start >= $slice->start && $f->seq_region_start <= $slice->end;
-    push @coords, $f->end   if $f->start != $f->end && $f->seq_region_end >= $slice->start && $f->seq_region_end <= $slice->end;
-    
-    foreach my $coord (@coords) {
-      push @tags,{
+    foreach my $coord ($f->start, $f->start != $f->end ? $f->end : ()) {
+      push @tags, {
         style  => 'somatic_breakpoint',
         colour => 'gold',
         border => 'black',
@@ -183,7 +177,7 @@ sub render_tag {
       height       => $y / $pix_per_bp,
       direction    => $1,
     });
-  } elsif ($tag->{'style'} eq 'somatic_breakpoint') {
+  } elsif ($tag->{'style'} eq 'somatic_breakpoint' && $img_start < $tag->{'start'} && $img_end < $tag->{'start'}) {
     my $x     = $tag->{'start'};
     my $y     = 2 * ($self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2);
     my $scale = 1 / $pix_per_bp;
