@@ -75,8 +75,7 @@ sub fetch_input {
     my $max_homology_id = $self->param('max_homology_id');
 
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
-    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d', $mlss_id, $min_homology_id, $max_homology_id);
-    $constraint .= ' AND description IN ("within_species_paralog", "other_paralog")';
+    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d AND description NOT IN ("putative_gene_split", "contiguous_gene_split")', $mlss_id, $min_homology_id, $max_homology_id);
     my $homologies = $homology_adaptor->generic_fetch($constraint);
 
     $self->param('homologies', $homologies);
