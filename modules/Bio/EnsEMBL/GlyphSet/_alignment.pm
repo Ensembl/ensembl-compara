@@ -102,7 +102,6 @@ sub render_histogram {
       # if it ends with a prefix of the string "non canonical" of length
       #   over 3, it's non canonical. (Often gets truncated).
       my $can_type = [ split(/:/,$f->display_id) ]->[-1];
-      $can_type =~ s/_/ /g;
       if($can_type and length($can_type)>3 and 
          substr("non canonical",0,length($can_type)) eq $can_type) {
         push @$sorted_non_can_feats, $f;

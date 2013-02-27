@@ -432,7 +432,6 @@ sub draw_wiggle_points {
        $f->can('display_id') and
        $f->analysis->logic_name =~ /_intron/) {
       my $can_type = [ split(/:/,$f->display_id) ]->[-1];
-      $can_type =~ s/_/ /g;
       if($can_type and length($can_type)>3 and 
          substr("non canonical",0,length($can_type)) eq $can_type) {
         $this_colour = $parameters->{'non_can_score_colour'} || $colour;
