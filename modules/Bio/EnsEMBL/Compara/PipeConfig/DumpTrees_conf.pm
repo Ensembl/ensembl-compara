@@ -44,7 +44,7 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 70,                                              # current release number
+        'rel'               => 71,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
         'rel_coord'         => $self->o('ENV', 'USER'),                         # by default, the release coordinator is doing the dumps
@@ -210,8 +210,6 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
                 'query'                 => sprintf 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
-                'input_id'              => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($tree_id))expr#' },
-                'fan_branch_code'       => 2,
             },
             -input_ids => [
                 { 'inputquery' => '#query#', },
@@ -219,7 +217,7 @@ sub pipeline_analyses {
             -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'generate_collations', 'generate_tarjobs', 'remove_hash' ],
-                2 => [ 'dump_a_tree'  ],
+                2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($tree_id))expr#' } },
             },
         },
 
@@ -246,13 +244,11 @@ sub pipeline_analyses {
                 'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
-                'input_id'          => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'},
-                'fan_branch_code'   => 2,
             },
             -hive_capacity => -1,
             -wait_for => [ 'dump_a_tree' ],
             -flow_into => {
-                2 => [ 'collate_dumps'  ],
+                2 => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
             },
         },
 
@@ -277,13 +273,11 @@ sub pipeline_analyses {
                 'ncrna_tree_list'   => [ 'orthoxml.xml', 'orthoxml_possorthol.xml', 'phyloxml.xml' ],
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
-                'input_id'          => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'},
-                'fan_branch_code'   => 2,
             },
             -hive_capacity => -1,
             -wait_for => [ 'dump_a_tree' ],
             -flow_into => {
-                2 => [ 'tar_dumps'  ],
+                2 => { 'tar_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
             },
         },
 
@@ -336,8 +330,6 @@ sub pipeline_analyses {
                     ['cp #readme_dir#/README.#member_type#_trees.xml_dumps #target_dir#/xml/'],
                 ],
                 'column_names'      => [ 'cmd' ],
-                'input_id'          => { 'cmd' => '#cmd#'},
-                'fan_branch_code'   => 2,
             },
             -wait_for => [ 'archive_long_files', 'dump_all_homologies', 'dump_all_trees'],
             -hive_capacity => -1,

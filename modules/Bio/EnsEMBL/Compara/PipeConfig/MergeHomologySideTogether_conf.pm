@@ -117,7 +117,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'column_names' => [ 'table' ],
-                'input_id'     => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
             },
             -input_ids => [
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('master_db'),    'inputlist'  => $self->o('master_copy_tables') },
@@ -144,8 +143,8 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'CAFE\_%'" },
             ],
             -flow_into => {
-                2 => [ 'copy_table'  ],
-                4 => [ 'merge_table' ],
+                2 => { 'copy_table'  => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
+                4 => { 'merge_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
             },
         },
 

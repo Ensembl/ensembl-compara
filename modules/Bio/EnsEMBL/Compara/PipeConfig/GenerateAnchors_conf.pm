@@ -135,7 +135,7 @@ sub pipeline_analyses {
 		-flow_into	=> {
 					1 => [ 'find_pairwise_overlaps' ],
 					3 => [ 'import_entries' ],
-					4 => [ 'mysql:////meta' ],
+					4 => [ ':////meta' ],
 				   },
 				 
 	    },
@@ -155,7 +155,6 @@ sub pipeline_analyses {
                 -parameters => {
                                 'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='" . 
 					$self->o('pipeline_db','-dbname') . "' AND engine='MyISAM' ",
-                                'fan_branch_code' => 2,
                                },  
                 -input_ids => [{}],
                 -flow_into => {
@@ -177,8 +176,8 @@ sub pipeline_analyses {
 		-input_ids => [{}],
 		-wait_for       => [ 'innodbise_table' ],
 		-flow_into => {
-				2 => [ 'mysql:////genome_db?insertion_method=REPLACE' ],
-				3 => [ 'mysql:////species_set?insertion_method=INSERT' ],
+				2 => [ ':////genome_db?insertion_method=REPLACE' ],
+				3 => [ ':////species_set?insertion_method=INSERT' ],
 		},
 	    },
 	    {
@@ -190,7 +189,7 @@ sub pipeline_analyses {
 			'table'         => 'method_link',
 		},
 		-flow_into => {
-			2 => [ 'mysql:////method_link?insertion_method=IGNORE' ],
+			2 => [ ':////method_link?insertion_method=IGNORE' ],
 		},
 	    },
 	    { # this sets values in the method_link_species_set and species_set tables
@@ -218,13 +217,11 @@ sub pipeline_analyses {
 		-parameters => {
 			'inputcmd'        => 'cat ' . $self->o('species_tree_file') . ' | tr \'[A-Z]\' \'[a-z]\'',
             'column_names'    => [ 'the_tree_itself' ],
-			'input_id'        => { 'method_link_species_set_id' => $self->o('pecan_mlssid'), 'tag' => 'species_tree', 'value' => '#the_tree_itself#' },
-			'fan_branch_code' => 2,
 		},
 		-input_ids      => [{}],
 		-wait_for       => [ 'populate_compara_tables' ],
 		-flow_into => {
-				2 => [ 'mysql:////method_link_species_set_tag' ],
+				2 => { ':////method_link_species_set_tag' => { 'method_link_species_set_id' => $self->o('pecan_mlssid'), 'tag' => 'species_tree', 'value' => '#the_tree_itself#' } },
 		},
 	   },
 	   {
@@ -234,7 +231,7 @@ sub pipeline_analyses {
 		-parameters     => { 'overlaps_mlssid' => $self->o('overlaps_mlssid'), },
 		-flow_into	=> {
 					2 => [ 'pecan' ],
-					3 => [ 'mysql:////dnafrag_region?insertion_method=INSERT_IGNORE' ],
+					3 => [ ':////dnafrag_region?insertion_method=INSERT_IGNORE' ],
 				   },
 		-hive_capacity => 100,
 	   },
@@ -292,7 +289,6 @@ sub pipeline_analyses {
 		-input_ids => [{}],
                 -parameters => {
                                 'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align",
-                                'fan_branch_code' => 2,
                                },  
                 -flow_into => {
                                2 => [ 'trim_anchor_align' ],
@@ -315,7 +311,6 @@ sub pipeline_analyses {
 		-input_ids => [{}],
 		-parameters => {
 				'inputquery'  => 'SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE method_link_species_set_id = ' . $self->o('overlaps_mlssid'),
-				'fan_branch_code' => 2,
 			},
 		-flow_into => {
 			2 => [ 'load_anchor_sequence' ],

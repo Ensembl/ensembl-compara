@@ -114,11 +114,9 @@ sub pipeline_analyses {
 #                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_65_ancestral_core' ],   # 6-way primates
                       [ '595' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ancestral_sequences_core_68' ],  # 12-way mammals
                 ],
-                'input_id'          => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
-                'fan_branch_code'   => 2,
             },
             -flow_into => {
-                2 => [ 'merge_an_ancestor' ],
+                2 => { 'merge_an_ancestor' => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' } },
             },
             -rc_name => 'urgent',
         },
