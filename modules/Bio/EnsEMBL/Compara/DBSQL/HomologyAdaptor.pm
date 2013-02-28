@@ -653,7 +653,7 @@ sub store {
     $self->db->get_MethodLinkSpeciesSetAdaptor->store($hom->method_link_species_set);
   }
 
-  assert_ref($hom->method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpecies');
+  assert_ref($hom->method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
   $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   
   unless($hom->dbID) {
