@@ -206,7 +206,7 @@ sub pipeline_create_commands {
         
         'mkdir -p '.$self->o('blastdb_dir'),
         'mkdir -p '.$self->o('mercator_dir'),
-        'lfs setstripe '.$self->o('blastdb_dir').' -c -1',    # stripe
+        'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1 || echo "Striping is not available on this system" ',
     ];
 }
 
@@ -295,30 +295,32 @@ sub pipeline_analyses {
 					   ],
 			       },
 		-flow_into => {
-			       1 => [ 'prepare_species_sets' ],
+			       '1->A' => { 'create_species_sets' => [
+                        { 'species_set_id_name' => 'reuse_ss_id' },
+                        { 'species_set_id_name' => 'nonreuse_ss_id' },
+                    ], },
+			       'A->1' => [ 'load_genomedb_factory' ],
 			      },
 		-rc_name => '100Mb',
 	    },
 
 # ---------------------------------------------[generate two empty species_sets for reuse / non-reuse (to be filled in at a later stage)]---------
 
-        {   -logic_name => 'prepare_species_sets',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+        {   -logic_name => 'create_species_sets',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
             -parameters => {
-                'sql' => [
-                    # Creates a new species set id
-                    'INSERT INTO species_set VALUES ()',
-                    'DELETE FROM species_set WHERE species_set_id=#_insert_id_0#',
-                    'INSERT INTO meta (meta_key,meta_value) VALUES ("reuse_ss_id", #_insert_id_0#)',
-                    # Creates a new species set id
-                    'INSERT INTO species_set VALUES ()',
-                    'DELETE FROM species_set WHERE species_set_id=#_insert_id_3#',
-                    'INSERT INTO meta (meta_key,meta_value) VALUES ("nonreuse_ss_id", #_insert_id_3#)',
+                'object_type'   => 'SpeciesSet',
+                'arglist'       => [
+                    -genome_dbs => [],
                 ],
             },
-            -flow_into => [ 'load_genomedb_factory' ],
+            -flow_into => {
+                2 => {
+                    'mysql:////meta'    => { 'meta_key' => '#species_set_id_name#', 'meta_value' => '#dbID#' },
+                },
+            },
+            -meadow_type    => 'LOCAL',
         },
-
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
