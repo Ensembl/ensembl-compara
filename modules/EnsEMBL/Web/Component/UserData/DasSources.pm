@@ -44,12 +44,12 @@ sub content {
       $already_added = 1;
       $count_added++;
     }
-    $fieldset->add_element(
+    $fieldset->add_element({
          'type'     => 'DASCheckBox',
          'das'      => $source,
          'disabled' => $already_added,
          'checked'  => $already_added,
-    );
+    });
   }
   if ( $count_added ) {
     my $noun    = $count_added > 1 ? 'sources' : 'source';
