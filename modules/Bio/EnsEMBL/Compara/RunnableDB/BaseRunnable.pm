@@ -46,8 +46,9 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub compara_dba {
     my $self = shift @_;
 
-    my $given_compara_db = shift @_ || $self->param('compara_db') || $self;
-    my $given_signature  = stringify ( $given_compara_db );
+    my $given_compara_db = shift @_ || ($self->param_is_defined('compara_db') ? $self->param('compara_db') : $self);
+    my $given_ref = ref( $given_compara_db );
+    my $given_signature  = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_compara_db ) : "$given_compara_db";
 
     if( !$self->{'_cached_compara_db_signature'} or ($self->{'_cached_compara_db_signature'} ne $given_signature) ) {
         $self->{'_cached_compara_db_signature'} = $given_signature;
