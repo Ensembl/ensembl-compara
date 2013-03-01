@@ -153,6 +153,7 @@ sub fetch_input {
 	      return 1;
 	  }
 	  $tree_string = $gat->newick_format("simple");
+          $tree_string=~s/:0;/;/; # Remove unused node at end
 
 	  $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);
 
@@ -415,7 +416,7 @@ sub run_gerp_v2 {
     #run gerpelem
     $command = $gerpelem_path;
 
-    $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;
+    $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;# . " -d 0.35";# hack for birds
     print STDERR "command $command\n";
     unless (system($command) == 0) {
 	throw("gerpelem execution failed\n");
@@ -826,7 +827,7 @@ sub _build_tree_string {
 
     # Remove quotes around node labels
     $tree_string =~ s/"(_\d+_)"/$1/g;
-
+    $tree_string=~s/:0;/;/; # Remove unused node at end
     $tree->release_tree;
  
     $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);
