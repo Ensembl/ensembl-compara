@@ -45,8 +45,8 @@ use base qw(Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf);
 sub _pipeline_db_options {
   my ($self) = @_;
   return {
-    eg_release=>17,
-    release=>70,
+    eg_release=>18,
+    release=>71,
     division_name=>'protists',
 
     prefix => 'ensembl_compara',
@@ -77,13 +77,14 @@ sub default_options {
     exe_dir               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
     base_dir              =>  '/nfs/nobackup/ensemblgenomes/uma/workspace/compara/'.$self->o('ENV', 'USER').'/hive',
     work_dir              =>  $self->o('base_dir').'/'.$self->o('mlss_id').'/PT',
-    blast_tmp_dir         =>  $self->o('work_dir').'/blastTmp',
+    blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'blastTmp',
 
     #Executables
-    wublastp_exe    =>  $self->o('exe_dir').'/wublast/wublastp',
+    wublastp_exe    =>  $self->o('exe_dir').'/wublast/blastp',
     hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
     mcoffee_exe     =>  $self->o('exe_dir').'/t_coffee',
-    mafft_home      =>  $self->o('exe_dir').'/mafft-distro',
+    mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee', 	
+    mafft_home      =>  '/nfs/panda/ensemblgenomes/external/mafft',
     sreformat_exe   =>  $self->o('exe_dir').'/sreformat',
     treebest_exe    =>  $self->o('exe_dir').'/treebest',
     quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
@@ -111,10 +112,10 @@ sub default_options {
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   4,
         'blast_factory_capacity'    =>  50,
-        'blastp_capacity'           => 900,
-        'mcoffee_capacity'          => 600,
-        'split_genes_capacity'      => 600,
-        'njtree_phyml_capacity'     => 400,
+        'blastp_capacity'           => 200,
+        'mcoffee_capacity'          => 200,
+        'split_genes_capacity'      => 200,
+        'njtree_phyml_capacity'     => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -158,13 +159,13 @@ sub default_options {
       -db_version => $self->o('release')
     },
 
-#    staging_1 => {
-#      -host   => '',
-#      -port   => 1,
-#      -user   => '',
-#      -db_version => $self->o('release')
-#    },
-#
+    staging_1 => {
+      -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+      -port   => 4160,
+      -user   => 'ensro',
+      -db_version => $self->o('release')
+    },
+
    	clusterprod_1 => {
       -host   => 'mysql-cluster-eg-prod-1.ebi.ac.uk',
       -port   => 4238,
@@ -174,29 +175,29 @@ sub default_options {
 
     prev_release              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
-    reuse_core_sources_locs   => [],
+    #reuse_core_sources_locs   => [],
     reuse_db                  => q{}, #Set to this to ignore reuse otherwise ....
 
-    do_not_reuse_list => ['giardia_lamblia'], # set this to empty or to the genome db names we should ignore
+    do_not_reuse_list => [], # set this to empty or to the genome db names we should ignore
 
-    #reuse_core_sources_locs   => [ $self->o('staging_2') ],
+    reuse_core_sources_locs   => [ $self->o('staging_1') ],
     curr_core_sources_locs    => [ $self->o('clusterprod_1') ],
     reuse_db                  => {
-       -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-       -port   => 4275,
+       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+       -port   => 4160,
        -user   => 'ensro',
        -pass   => '',
-       -dbname => 'ensembl_compara_protists_16_69',
+       -dbname => 'ensembl_compara_protists_17_70',
     },
 
     #Set these up to perform stable ID mapping
 
     stable_id_prev_rel_db => {
-	    -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-       -port   => 4275,
+	    -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+       -port   => 4160,
        -user   => 'ensro',
        -pass   => '',
-       -dbname => 'ensembl_compara_protists_16_69',
+       -dbname => 'ensembl_compara_protists_17_70',
 
     },
 
@@ -315,7 +316,7 @@ sub _modify_analyses {
       #Get normal flow to send a job to division_tag_protein_trees all the time
       #rather than having the flow do the write; for some reason this old
       #version stopped working
-      push(@{$analysis->{-flow_into}->{1}}, 'divison_tag_protein_trees');
+	push(@{$analysis->{-flow_into}}, 'divison_tag_protein_trees'); 
     }
   }
 
