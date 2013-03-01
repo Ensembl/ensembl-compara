@@ -88,13 +88,16 @@ sub run {
     my $homologies        = $self->param('homologies');
     my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
 
+    my @updated_homologies = ();
+
     foreach my $homology (@$homologies) {
 
+        next if ($homology->ds);
+
         # Compute ds
-        unless ($homology->ds) {
-            eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
-            $self->warning($@) if $@;
-        }
+        eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
+        $self->warning($@) if $@;
+        push @updated_homologies, $homology;
 
         # To save memory
         $homology->clear;
@@ -102,14 +105,15 @@ sub run {
             delete $homology->{$attr};
         }
     }
-
+    $self->param('updated_homologies', \@updated_homologies);
+    $self->param('homologies', []);
 }
 
 
 sub write_output {
     my $self = shift @_;
 
-    my $homologies        = $self->param('homologies');
+    my $homologies        = $self->param('updated_homologies');
 
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
 
