@@ -31,6 +31,14 @@ sub populate_tree {
     { 'availability' => 'gene has_transcripts', 'concise' => 'Splice variants' }
   );
 
+  $self->create_node('TranscriptComparison', 'Transcript comparison',
+    [qw(
+      select EnsEMBL::Web::Component::Gene::TranscriptComparisonSelector
+      seq    EnsEMBL::Web::Component::Gene::TranscriptComparison
+    )],
+    { 'availability' => 'gene has_transcripts' }
+  );
+
   $self->create_node('Evidence', 'Supporting evidence',
     [qw( evidence EnsEMBL::Web::Component::Gene::SupportingEvidence )],
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
