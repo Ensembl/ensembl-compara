@@ -23,9 +23,9 @@ sub load_user_tracks {
   
   $self->SUPER::load_user_tracks($session);
   
-  my $width          = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
-  my %remote_formats = map { lc $_ => 1 } @{$self->hub->species_defs->USERDATA_REMOTE_FORMATS};
-  my $renderers      = $self->_user_track_settings->[1];
+  my $width              = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
+  my %remote_formats     = map { lc $_ => 1 } @{$self->hub->species_defs->USERDATA_REMOTE_FORMATS};
+  my (undef, $renderers) = $self->_user_track_settings;
   
   foreach ($menu->nodes) {
     if ($remote_formats{lc $_->get('format')}
