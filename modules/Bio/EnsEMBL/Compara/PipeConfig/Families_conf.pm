@@ -537,7 +537,7 @@ sub pipeline_analyses {
 =head2 rel.71 stats
 
     sequences to cluster:       4,652,269           [ SELECT count(*) from sequence; ]
-    distances by Blast:         ?                   [ SELECT count(*) from mcl_sparse_matrix; ]
+    distances by Blast:         1,487,577,335       [ SELECT count(*) from mcl_sparse_matrix; ]
 
     non-reference genes:        2414                [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
     non-reference peps:         8729                [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
