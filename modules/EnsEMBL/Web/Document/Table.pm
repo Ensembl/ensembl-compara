@@ -305,7 +305,7 @@ sub data_table_config {
   my %columns      = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
   my $session_data = $self->session ? $self->session->get_data(type => 'data_table', code => $code) : {};
   my $sorting      = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}->{'sorting'} || [];
-  my $hidden       = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : [];
+  my $hidden       = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : $self->{'options'}->{'hidden_columns'} || [];
   my $config       = qq{<input type="hidden" name="code" value="$code" />};
   my $sort         = [];
   
