@@ -77,7 +77,7 @@ sub default_options {
     exe_dir               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
     base_dir              =>  '/nfs/nobackup/ensemblgenomes/uma/workspace/compara/'.$self->o('ENV', 'USER').'/hive',
     work_dir              =>  $self->o('base_dir').'/'.$self->o('mlss_id').'/PT',
-    blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'blastTmp',
+    blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'/blastTmp',
 
     #Executables
     wublastp_exe    =>  $self->o('exe_dir').'/wublast/blastp',
