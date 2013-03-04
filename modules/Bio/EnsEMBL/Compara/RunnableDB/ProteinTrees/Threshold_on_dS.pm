@@ -1,8 +1,3 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
-
 =pod 
 
 =head1 NAME
@@ -11,104 +6,94 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS
 
 =cut
 
-=head1 SYNOPSIS
-
-my $aa = $sdba->get_AnalysisAdaptor;
-my $analysis = $aa->fetch_by_logic_name('Threshold_on_dS');
-my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS(
-                         -input_id   => [[1,2,3,14],[4,13],[11,16]]
-                         -analysis   => $analysis);
-
-$rdb->fetch_input
-$rdb->run;
-
-=cut
-
 =head1 DESCRIPTION
 
-This is a homology compara specific runnableDB, that based on an input
-of arrayrefs of genome_db_ids, calculates the median dS for each paired species
-where dS values are available, and stores 2*median in the threshold_on_ds column
-in the homology table.
+This is a homology compara specific runnableDB, that based on a
+method_link_species_set_id, calculates the median dS where dS
+values are available, and stores 2*median in the threshold_on_ds
+column in the homology table.
 
 =cut
 
 =head1 CONTACT
 
-abel@ebi.ac.uk, jessica@ebi.ac.uk
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =cut
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
-=cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS;
 
 use strict;
+use warnings;
+
 use Statistics::Descriptive;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub run {
+sub fetch_input {
     my $self = shift @_;
+    my $mlss_id = $self->param_required('mlss_id');
 
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
-    $self->calc_threshold_on_dS($mlss_id);
-}
+    my $stats = new Statistics::Descriptive::Full;
 
-
-##########################################
-#
-# internal methods
-#
-##########################################
-
-sub calc_threshold_on_dS {
-    my ($self, $mlss_id) = @_;
-
-    my $compara_dbc = $self->compara_dba->dbc;
-
-    my $sql = "select ds from homology where method_link_species_set_id = ? and ds is not NULL";
-    my $sth = $compara_dbc->prepare($sql);
-
-    my $sql2 = "update homology set threshold_on_ds = ? where method_link_species_set_id = ?";
-    my $sth2 = $compara_dbc->prepare($sql2);
+    my $sql = 'SELECT ds FROM homology WHERE method_link_species_set_id = ? AND ds IS NOT NULL';
+    my $sth = $self->compara_dba->dbc->prepare($sql);
 
     $sth->execute($mlss_id);
 
-    my $stats = new Statistics::Descriptive::Full;
-    my $count = 0;
+    # Gets all the dS values and stores them in the stat object
     my $dS;
-
     $sth->bind_columns(\$dS);
     while ($sth->fetch) {
         $stats->add_data($dS);
-        $count++;
     }
+    $sth->finish;
 
-    if ($count) {
+    $self->param('stats', $stats);
+}
+
+sub run {
+    my $self = shift @_;
+
+    my $stats = $self->param('stats');
+    my $mlss_id = $self->param('mlss_id');
+
+    # Finds the right threshold from the median
+    if ($stats->count) {
         my $median = $stats->median;
         print STDERR "method_link_species_set_id: $mlss_id; median: $median; 2\*median: ",2*$median;
 
         if($median >1.0) {
             print STDERR "  threshold exceeds 2.0 - to distant -> set to 2\n";
-            $median = 1.0;
-        }
-        if($median <1.0) {
+            $self->param('threshold', 2.0);
+        } else {
             print STDERR "  threshold below 1.0 -> set to 1\n";
-            $median = 0.5;
+            $self->param('threshold', 1.0);
         }
-        $sth2->execute(2*$median, $mlss_id);
-        print STDERR " stored\n";
+    } else {
+        $self->param('threshold', undef);
     }
-
-    $sth->finish;
+    $self->param('stats', undef);
 }
+
+
+sub write_output {
+    my $self = shift @_;
+
+    # Updates the table
+    my $sql = 'UPDATE homology SET threshold_on_ds = ? WHERE method_link_species_set_id = ?';
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute($self->param('threshold'), $self->param('mlss_id'));
+    $sth->finish;
+    print STDERR " stored\n";
+}
+
 
 1;
 
