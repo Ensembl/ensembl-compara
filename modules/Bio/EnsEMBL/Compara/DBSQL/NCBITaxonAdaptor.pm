@@ -23,9 +23,35 @@ use strict;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NCBITaxon;
+
+use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
+
 use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+
+
+#
+# Virtual / overriden methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+######################################################################
+
+sub ignore_cache_override {
+    return 1;
+}
+
+sub _build_id_cache {
+    my $self = shift;
+    my $cache = Bio::EnsEMBL::DBSQL::Support::LruIdCache->new($self, 3000);
+    $cache->build_cache();
+    return $cache;
+}
+
+
+#
+# FETCH methods
+#####################
+
+
 
 
 =head2 fetch_node_by_taxon_id
@@ -182,7 +208,7 @@ sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
   
-  my $node = $self->cache_fetch_by_id($rowhash->{'node_id'});
+  my $node = $self->_id_cache->cache->{$rowhash->{'node_id'}};
   return $node if($node);
   
   $node = new Bio::EnsEMBL::Compara::NCBITaxon;
@@ -190,7 +216,7 @@ sub create_instance_from_rowhash {
   
   # The genebuilders has troubles with load_taxonomy.pl when the
   # following line was commented out
-  $self->cache_add_object($node);
+  $self->_id_cache->put($rowhash->{'node_id'}, $node);
 
   return $node;
 }

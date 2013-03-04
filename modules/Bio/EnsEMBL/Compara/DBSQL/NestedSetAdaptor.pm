@@ -327,13 +327,8 @@ sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
 
-  #my $node = $self->cache_fetch_by_id($rowhash->{'node_id'});
-  #return $node if($node);
-
   my $node = new Bio::EnsEMBL::Compara::NestedSet;
   $self->init_instance_from_rowhash($node, $rowhash);
-
-  #$self->cache_add_object($node);
 
   return $node;
 }
@@ -362,56 +357,6 @@ sub init_instance_from_rowhash {
 #
 ##################################
 
-sub new {
-  my $class = shift;
-
-  my $self = $class->SUPER::new(@_);
-
-  $self->{'_node_cache'} = [];
-  return $self;
-}
-
-sub DESTROY {
-  my $self = shift;
-  $self->clear_cache;
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
-}
-
-sub cache_fetch_by_id {
-  my $self = shift;
-  my $node_id = shift;
-
-  for(my $index=0; $index<scalar(@{$self->{'_node_cache'}}); $index++) {
-    my $node = $self->{'_node_cache'}->[$index];
-    if($node->node_id == $node_id) {
-      splice(@{$self->{'_node_cache'}}, $index, 1); #removes from list
-      unshift @{$self->{'_node_cache'}}, $node; #put at front of list
-      return $node;
-    }
-  }
-  return undef;
-}
-
-
-sub cache_add_object
-{
-  my $self = shift;
-  my $node = shift;
-
-  unshift @{$self->{'_node_cache'}}, $node; #put at front of list
-  while(scalar(@{$self->{'_node_cache'}}) > 3000) {
-    my $old = pop @{$self->{'_node_cache'}};
-    #print("shrinking cache : "); $old->print_node;
-  }
-  return undef;
-}
-
-sub clear_cache {
-  my $self = shift;
-
-  $self->{'_node_cache'} = [];
-  return undef;
-}
 
 sub _build_tree_from_nodes {
   my $self = shift;
