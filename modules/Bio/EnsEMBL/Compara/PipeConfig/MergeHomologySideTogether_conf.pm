@@ -67,7 +67,7 @@ sub default_options {
 
         'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_69',
         'genetrees_copy_tables'  => [  ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile' ],
+        'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',
         'families_copy_tables'  => [ 'family', 'family_member' ],
@@ -75,7 +75,7 @@ sub default_options {
 
         'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_69a',
         'nctrees_copy_tables'  => [ ],
-        'nctrees_merge_tables' => [ 'member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile' ],
+        'nctrees_merge_tables' => [ 'member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
         'compara_innodb_schema' => 0,                               # to override the default Compara setting
@@ -132,7 +132,6 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_align%'" },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'homology%'" },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'CAFE\_%'" },
 
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_merge_tables') },
@@ -140,7 +139,6 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'gene\_align%'" },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'homology%'" },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'CAFE\_%'" },
             ],
             -flow_into => {
                 2 => { 'copy_table'  => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
