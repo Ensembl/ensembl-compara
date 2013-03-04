@@ -81,7 +81,7 @@ sub fetch_input {
     $self->SUPER::fetch_input;
 
     my $alignment_id = $self->param('gene_tree')->tree->gene_align_id;
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'seq_with_flanking', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
 
     my %super_align;
     foreach my $member (@{$aln->get_all_Members}) {

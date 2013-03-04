@@ -333,7 +333,7 @@ sub _load_and_dump_alignment {
     my $aln_file = $file_root . ".aln";
     open my $outaln, ">", "$aln_file" or $self->throw("Error opening $aln_file for writing");
 
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'seq_with_flanking', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
 
     my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
     my $bioaln = $aln->get_SimpleAlign(
