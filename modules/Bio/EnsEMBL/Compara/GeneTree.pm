@@ -285,31 +285,30 @@ sub preload {
 
 =head2 attach_alignment
 
-  Arg [1]     : Integer: gene_align_id
-  Description : Method to fetch another multiple alignment of the
-                same members and attach it to the current tree.
+  Arg [1]     : Bio::EnsEMBL::Compara::AlignedMemberSet $gene_align
+  Description : Method to attach another multiple alignment of the
+                same members the current tree.
   Returntype  : GeneTree
-  Example     : $supertree->attach_alignment(15232);
+  Example     : $supertree->attach_alignment($filtered_aln);
   Caller      : General
 
 =cut
 
 sub attach_alignment {
     my $self = shift;
-    my $other_gene_align_id = shift;
+    my $other_gene_align = shift;
 
-    return unless defined $self->adaptor;
+    assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
+
     $self->preload;
-    my $am_adaptor = $self->adaptor->db->get_AlignedMemberAdaptor;
 
     # Gets the alignment
     my %cigars;
-    foreach my $leaf (@{$am_adaptor->fetch_all_by_gene_align_id($other_gene_align_id)}) {
+    foreach my $leaf (@{$other_gene_align->get_all_Members}) {
         $cigars{$leaf->member_id} = $leaf->cigar_line;
     }
 
-    die "'$other_gene_align_id' alignment not found\n" unless scalar(keys %cigars);
-    die "'$other_gene_align_id' alignment has a different size\n" if scalar(keys %cigars) != scalar(@{$self->get_all_Members});
+    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@{$self->get_all_Members});
 
     # Assigns it
     foreach my $leaf (@{$self->get_all_Members}) {
@@ -362,7 +361,7 @@ sub expand_subtrees {
     # To update it at the next get_all_Members call
     delete $self->{'_member_array'};
     # Gets the global alignment
-    $self->attach_alignment($self->gene_align_id);
+    $self->attach_alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id));
 }
 
 
