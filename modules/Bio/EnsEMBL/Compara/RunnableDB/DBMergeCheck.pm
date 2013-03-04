@@ -58,8 +58,6 @@ sub param_defaults {
             'dnafrag_region'        => 'synteny_region_id',
             'constrained_element'   => 'constrained_element_id',
         },
-        # To use string comparison operators instead of < and >
-        'string_primary_keys'       => [qw(hmm_profile)],
 
         # List of tables that are very likely to have overlapping ranges, and small enough so that we can compare the actual values
         'extensive_check_allowed'   => [qw(method_link_species_set_tag sequence member)],
@@ -178,6 +176,13 @@ sub run {
                 }
                 die " -ERROR- No primary key for table '$table'" unless defined $key;
             }
+
+            # Key type
+            my $key_type = $dbconnections->{$curr_rel_name}->db_handle->column_info(undef, undef, $table, $key)->fetch->[5];
+            my $is_string_type = ($key_type =~ /char/i ? 1 : 0);
+            # We only accept char and int
+            die "'$key_type' type is not handled" unless $is_string_type or $key_type =~ /int/i;
+
             my $sql = "SELECT MIN($key), MAX($key) FROM $table";
             my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)->[0] } @dbs};
             my $bad = 0;
@@ -186,7 +191,7 @@ sub run {
             foreach my $db1 (@dbs) {
                 foreach my $db2 (@dbs) {
                     next if $db2 le $db1;
-                    if (grep {$_ eq $table} @{$self->param('string_primary_keys')})  {
+                    if ($is_string_type) {
                         $bad = 1 if $min_max->{$db1}->[1] ge $min_max->{$db2}->[0] and $min_max->{$db2}->[1] ge $min_max->{$db1}->[0];
                     } else {
                         $bad = 1 if $min_max->{$db1}->[1] >= $min_max->{$db2}->[0] and $min_max->{$db2}->[1] >= $min_max->{$db1}->[0];
