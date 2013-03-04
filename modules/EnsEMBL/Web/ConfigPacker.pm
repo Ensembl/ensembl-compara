@@ -563,9 +563,9 @@ sub _summarise_variation_db {
   my %somatic_mutations;
 	# Somatic source(s)
   my $sm_aref =  $dbh->selectall_arrayref(  
-    'select distinct(p.description), va.phenotype_id, s.name 
-     from phenotype p, variation_annotation va, source s, study st
-     where p.phenotype_id=va.phenotype_id and va.study_id = st.study_id
+    'select distinct(p.description), pf.phenotype_id, s.name 
+     from phenotype p, phenotype_feature pf, source s, study st
+     where p.phenotype_id=pf.phenotype_id and pf.study_id = st.study_id
      and st.source_id=s.source_id and s.somatic_status = "somatic"'
   );
   foreach (@$sm_aref){ 
