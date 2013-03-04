@@ -56,6 +56,7 @@ package Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor;
 use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::GeneTree;
 use DBI qw(:sql_types);
@@ -384,9 +385,7 @@ sub store {
 sub delete_tree {
     my ($self, $tree) = @_;
 
-    unless($tree->isa('Bio::EnsEMBL::Compara::GeneTree')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTree] not a $tree");
-    }
+    assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree');
 
     # Remove all the nodes but the root
     my $gene_tree_node_Adaptor = $tree->root->adaptor;

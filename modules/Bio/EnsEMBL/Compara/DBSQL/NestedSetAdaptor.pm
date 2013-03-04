@@ -52,6 +52,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::NestedSet;
 
@@ -110,9 +111,7 @@ sub fetch_node_by_node_id {
 sub fetch_parent_for_node {
     my ($self, $node) = @_;
 
-    unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-    }
+    assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
 
     return $node->{'_parent_link'}->get_neighbor($node) if defined $node->{'_parent_link'};
     my $parent = undef;
@@ -125,9 +124,7 @@ sub fetch_parent_for_node {
 sub fetch_all_children_for_node {
   my ($self, $node) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
 
   my $constraint = 'parent_id = ?';
   $self->bind_param_generic_fetch($node->node_id, SQL_INTEGER);
@@ -140,9 +137,7 @@ sub fetch_all_children_for_node {
 sub fetch_all_leaves_indexed {
   my ($self, $node) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
   my $table= ($self->_tables)[0]->[1];
   $self->bind_param_generic_fetch($node->_root_id, SQL_INTEGER);
   $self->bind_param_generic_fetch($node->left_index, SQL_INTEGER);
@@ -155,9 +150,7 @@ sub fetch_subtree_under_node {
   my $self = shift;
   my $node = shift;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
 
   unless ($node->left_index && $node->right_index) {
     warning("fetch_subtree_under_node subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=".$node->node_id.". Returning node.\n");
@@ -181,9 +174,7 @@ sub fetch_tree_at_node_id {
   my $self = shift;
   my $node_id = shift;
 
-  if (! defined $node_id) {
-    throw ("node_id is undefined");
-  }
+  assert_integer($node_id, 'node_id');
 
   my $node = $self->fetch_node_by_node_id($node_id);
 
@@ -231,9 +222,7 @@ sub fetch_tree_by_root_id {
 sub fetch_root_by_node {
   my ($self, $node) = @_;
 
-  unless(UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
 
   my $alias = ($self->_tables)[0]->[1];
 
@@ -294,9 +283,7 @@ sub fetch_first_shared_ancestor_indexed {
 sub update {
   my ($self, $node) = @_;
 
-  unless(UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
 
  my $table= ($self->_tables)[0]->[0];
   my $sth = $self->prepare("UPDATE $table SET parent_id = ?, root_id = ?, left_index = ?, right_index = ?, distance_to_parent = ? WHERE $table.node_id = ?");

@@ -20,6 +20,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor;
 
 use strict;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NCBITaxon;
 use DBI qw(:sql_types);
@@ -42,9 +43,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 sub fetch_node_by_taxon_id {
   my ($self, $taxon_id) = @_;
 
-  if (! defined $taxon_id) {
-    throw ("taxon_id is not defined");
-  }
+  assert_integer($taxon_id, 'taxon_id');
 
   my $constraint = 't.taxon_id = ?';
   $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
@@ -103,9 +102,7 @@ sub fetch_node_by_name {
 sub fetch_node_by_genome_db_id {
   my ($self, $gdbID) = @_;
 
-  if (! defined $gdbID) {
-    throw "gdbID is undefined";
-  }
+  assert_integer($gdbID, 'genome_db_id');
 
   my $join = [[['genome_db', 'gdb'], 't.taxon_id = gdb.taxon_id']];
   my $constraint = 'gdb.genome_db_id = ?';
@@ -219,9 +216,7 @@ sub _load_tagvalues {
   my $self = shift;
   my $node = shift;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NCBITaxon] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NCBITaxon');
 
   my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_name where taxon_id=?");
   $sth->execute($node->node_id);  
@@ -234,9 +229,7 @@ sub _load_tagvalues {
 sub update {
   my ($self, $node) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
 
   my $table= ($self->_tables)[0]->[0];
   my $sth = $self->dbc->prepare("UPDATE $table SET parent_id = ?, root_id = ?, left_index = ?, right_index = ? WHERE taxon_id = ?");

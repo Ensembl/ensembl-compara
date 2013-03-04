@@ -55,6 +55,7 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
@@ -323,9 +324,7 @@ sub store_nodes_rec {
 sub store_node {
     my ($self, $node) = @_;
 
-    unless($node->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $node");
-    }
+    assert_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode');
 
     my $new_node = 0;
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $node->adaptor eq $self)) {
@@ -357,9 +356,8 @@ sub store_node {
 sub merge_nodes {
   my ($self, $node1, $node2) = @_;
 
-  unless($node1->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $node1");
-  }
+  assert_ref($node1, 'Bio::EnsEMBL::Compara::GeneTreeNode');
+  assert_ref($node2, 'Bio::EnsEMBL::Compara::GeneTreeNode');
 
   # printf("MERGE children from parent %d => %d\n", $node2->node_id, $node1->node_id);
 
@@ -402,9 +400,7 @@ sub delete_nodes_not_in_tree
   my $self = shift;
   my $tree = shift;
 
-  unless($tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $tree");
-  }
+  assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode');
   #print("delete_nodes_not_present under ", $tree->node_id, "\n");
   my $dbtree = $self->fetch_node_by_node_id($tree->node_id);
   my @all_db_nodes = $dbtree->get_all_subnodes;

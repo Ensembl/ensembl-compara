@@ -61,6 +61,9 @@ package Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor;
 use strict;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
 use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
@@ -81,9 +84,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
-  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
-  }
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
   my $constraint = 'fm.member_id = ?';
@@ -116,9 +117,7 @@ sub fetch_by_Member_source_stable_id {
 sub fetch_all_by_Member_method_link_type {
   my ($self, $member, $method_link_type) = @_;
 
-  unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
-  }
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
   $self->throw("method_link_type arg is required\n")
     unless ($method_link_type);
@@ -236,8 +235,7 @@ sub _objs_from_sth {
 sub store {
   my ($self,$fam) = @_;
 
-  $fam->isa('Bio::EnsEMBL::Compara::Family') ||
-    $self->throw("You have to store a Bio::EnsEMBL::Compara::Family object, not a $fam");
+  assert_ref($fam, 'Bio::EnsEMBL::Compara::Family');
 
   $fam->adaptor($self);
 
@@ -287,8 +285,7 @@ sub store {
 sub update {
   my ($self, $fam, $content_only) = @_;
 
-  $fam->isa('Bio::EnsEMBL::Compara::Family') ||
-    $self->throw("You have to store a Bio::EnsEMBL::Compara::Family object, not a $fam");
+  assert_ref($fam, 'Bio::EnsEMBL::Compara::Family');
 
   unless ($content_only) {
     my $sql = 'UPDATE family SET stable_id = ?, version = ?, method_link_species_set_id = ?, description = ?, description_score = ? WHERE family_id = ?';

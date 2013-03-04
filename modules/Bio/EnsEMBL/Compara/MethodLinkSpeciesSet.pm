@@ -63,6 +63,7 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::SpeciesSet;
 
@@ -328,8 +329,7 @@ sub _set_genome_dbs {
 
     my %genome_db_hash = ();
     foreach my $gdb (@$arg) {
-        throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($gdb));
-        throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n") unless $gdb->isa("Bio::EnsEMBL::Compara::GenomeDB");
+        assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
 
         if(defined $genome_db_hash{$gdb->dbID}) {
             warn("GenomeDB (".$gdb->name."; dbID=".$gdb->dbID .") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n");
