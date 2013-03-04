@@ -51,8 +51,6 @@ use strict;
 
 use IO::File;
 
-use Bio::EnsEMBL::Compara::AlignedMemberSet;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA');
 
 
@@ -124,7 +122,7 @@ sub parse_and_store_alignment_into_proteintree {
         printf("Updating the score of %s : %s\n",$member->stable_id,$score_string) if ($self->debug);
         $member->cigar_line($score_string);
     }
-    $self->compara_dba->get_AlignedMemberAdaptor->store($aln_score);
+    $self->compara_dba->get_GeneAlignAdaptor->store($aln_score);
     $self->param('protein_tree')->store_tag('mcoffee_scores', $aln_score->gene_align_id);
     $aln_score->root->release_tree;
     $aln_score->clear;

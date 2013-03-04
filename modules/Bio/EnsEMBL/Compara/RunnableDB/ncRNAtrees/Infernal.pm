@@ -496,7 +496,7 @@ sub parse_and_store_alignment_into_tree {
 #    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
     #$self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
   }
-  $self->compara_dba->get_AlignedMemberAdaptor->store($tree);
+  $self->compara_dba->get_GeneAlignAdaptor->store($tree);
   return undef;
 }
 

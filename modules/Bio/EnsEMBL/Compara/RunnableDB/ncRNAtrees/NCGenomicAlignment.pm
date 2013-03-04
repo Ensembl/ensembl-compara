@@ -343,7 +343,7 @@ sub store_fasta_alignment {
         $sequence_adaptor->store_other_sequence($member, $member->sequence, 'seq_with_flanking');
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+    $self->compara_dba->get_GeneAlignAdaptor->store($aln);
 
     $self->param('alignment_id', $aln->dbID);
     return;

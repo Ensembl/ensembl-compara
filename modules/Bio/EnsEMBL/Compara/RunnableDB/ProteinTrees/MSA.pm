@@ -190,7 +190,7 @@ sub write_output {
         }
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store($self->param('protein_tree'));
+    $self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'));
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
 

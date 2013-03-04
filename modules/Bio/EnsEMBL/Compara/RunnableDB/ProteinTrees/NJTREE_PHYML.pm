@@ -203,7 +203,7 @@ sub store_filtered_align {
     if ($self->param('protein_tree')->has_tag('filtered_alignment')) {
         my $gene_align_id = $self->param('protein_tree')->get_tagvalue('filtered_alignment');
         $aln->dbID($gene_align_id);
-        $aln->adaptor($self->compara_dba->get_AlignedMemberAdaptor);
+        $aln->adaptor($self->compara_dba->get_GeneAlignAdaptor);
     } else {
         foreach my $member (@{$self->param('protein_tree')->get_all_Members}) {
             $aln->add_Member($member->copy());
@@ -222,7 +222,7 @@ sub store_filtered_align {
         $sequence_adaptor->store_other_sequence($member, $member->sequence, 'filtered') if $member->sequence;
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+    $self->compara_dba->get_GeneAlignAdaptor->store($aln);
     $self->param('protein_tree')->store_tag('filtered_alignment', $aln->dbID);
 }
 
