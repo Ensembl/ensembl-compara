@@ -53,8 +53,8 @@ sub param_defaults {
         'primary_keys'      => {
             'gene_tree_root_tag'    => 'root_id',
             'gene_tree_node_tag'    => 'node_id',
-            'hmm_profile'           => 'model_id',
             'species_tree_node_tag' => 'node_id',
+            'CAFE_species_gene'     => 'node_id',
             'dnafrag_region'        => 'synteny_region_id',
             'constrained_element'   => 'constrained_element_id',
         },
@@ -171,9 +171,12 @@ sub run {
             # Check on primary key
             my $key = $primary_keys->{$table};
             unless (defined $key) {
-                my @pk = $dbconnections->{$dbs[0]}->db_handle->primary_key(undef, undef, $table);
-                die " -ERROR- No primary key information" unless scalar(@pk);
-                $key = $pk[-1];
+                my $sth = $dbconnections->{$curr_rel_name}->db_handle->primary_key_info(undef, undef, $table);
+                # We only want the first column of the primary key
+                while (my $row = $sth->fetch) {
+                    $key = $row->[3] if $row->[4] == 1;
+                }
+                die " -ERROR- No primary key for table '$table'" unless defined $key;
             }
             my $sql = "SELECT MIN($key), MAX($key) FROM $table";
             my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)->[0] } @dbs};
