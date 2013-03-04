@@ -59,8 +59,8 @@ sub param_defaults {
             'constrained_element'   => 'constrained_element_id',
         },
 
-        # List of tables that are very likely to have overlapping ranges, and small enough so that we can compare the actual values
-        'extensive_check_allowed'   => [qw(method_link_species_set_tag sequence member)],
+        # Maximum number of elements that we are allowed to fetch to check for a primary key conflict
+        'max_nb_elements_to_fetch'  => 50e6
     };
 }
 
@@ -183,12 +183,14 @@ sub run {
             # We only accept char and int
             die "'$key_type' type is not handled" unless $is_string_type or $key_type =~ /int/i;
 
-            my $sql = "SELECT MIN($key), MAX($key) FROM $table";
+            my $sql = "SELECT MIN($key), MAX($key), COUNT(*) FROM $table";
             my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)->[0] } @dbs};
             my $bad = 0;
 
             # min and max values must not overlap
+            my $max_size = 0;
             foreach my $db1 (@dbs) {
+                $max_size = $min_max->{$db1}->[2] if $min_max->{$db1}->[2] > $max_size;
                 foreach my $db2 (@dbs) {
                     next if $db2 le $db1;
                     if ($is_string_type) {
@@ -202,8 +204,9 @@ sub run {
             }
             if ($bad) {
 
-                if (grep {$_ eq $table} @{$self->param('extensive_check_allowed')}) {
+                if ($max_size <= $self->param('max_nb_elements_to_fetch')) {
 
+                    print " -INFO- comparing the actual values of the primary key\n" if $self->debug;
                     # We really make sure that no value is shared between the tables
                     $sql = "SELECT DISTINCT $key FROM $table";
                     my $all_values = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)} @dbs};
@@ -222,7 +225,7 @@ sub run {
                     }
                     die sprintf(" -ERROR- for the key '%s', the value '%s' is present in %s and %s\n", $key, @$bad) if $bad;
                 } else {
-                    die " -ERROR- ranges of the key '$key' overlap\n", Dumper($min_max);
+                    die " -ERROR- ranges of the key '$key' overlap, and there are too many elements ($max_size) to perform an extensive check\n", Dumper($min_max);
                 }
             }
             print " -INFO- ranges of the key '$key' are fine\n" if $self->debug;
