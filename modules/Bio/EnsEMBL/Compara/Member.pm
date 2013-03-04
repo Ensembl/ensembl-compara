@@ -791,9 +791,9 @@ no strict 'refs';
 
 use Bio::EnsEMBL::ApiVersion;
 
-sub _display_warning {
+sub _text_warning {
     my $msg = shift;
-    print STDERR
+    return
         "\n------------------ DEPRECATED ---------------------\n"
         . "$msg\n"
         . stack_trace_dump(5). "\n"
@@ -805,7 +805,7 @@ sub _display_warning {
 sub _wrap_global_gene {
     my $self = shift;
     my $method = shift;
-    _display_warning(qq{
+    warn _text_warning(qq{
         $method() should not be called from a Member / SeqMember namespaces, but from the GeneMember one. Please review your code and call $method() from the namespace Bio::EnsEMBL::Compara::GeneMember.
     });
     my $method_wrap = "Bio::EnsEMBL::Compara::GeneMember::$method";
@@ -816,7 +816,7 @@ sub _wrap_global_gene {
 sub _wrap_global_seq {
     my $self = shift;
     my $method = shift;
-    _display_warning(qq{
+    warn _text_warning(qq{
         $method() should not be called from the Member / GeneMember namespaces, but from the SeqMember one. Please review your code and call $method() from the namespace Bio::EnsEMBL::Compara::SeqMember.
     });
     my $method_wrap = "Bio::EnsEMBL::Compara::SeqMember::$method";
@@ -827,12 +827,11 @@ sub _wrap_method_seq {
     my $self = shift;
     my $method = shift;
     if ($self->source_name eq 'ENSEMBLGENE') {
-        _display_warning(qq{
+        die _text_warning(qq{
         $method() is not defined for genes. You may want to first call get_canonical_SeqMember() or get_all_SeqMembers() in order to have a SeqMember that will accept $method().
         });
-        die;
     } else {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() should be called on a SeqMember object. Please review your code and bless $self as a SeqMember (then, $method() will work).
         })
     }
@@ -844,11 +843,11 @@ sub _wrap_method_gene {
     my $self = shift;
     my $method = shift;
     if ($self->source_name eq 'ENSEMBLGENE') {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() should be called on a GeneMember object. Please review your code and bless $self as a GeneMember (then, $method() will work).
         })
     } else {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() should not be called on a protein / ncRNA, but on a gene. Perhaps You want to call $self->gene_member()->$method().
         });
     }
@@ -861,15 +860,15 @@ sub _rename_method_gene {
     my $method = shift;
     my $new_name = shift;
     if ($self->isa('Bio::EnsEMBL::Compara::GeneMember')) {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() is renamed to $new_name(). Please review your code and call $new_name() instead.
         });
     } elsif ($self->source_name eq 'ENSEMBLGENE') {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() is renamed to $new_name() and should be called on a GeneMember object. Please review your code: bless $self as a GeneMember, and use $new_name() instead.
         });
     } else {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() is renamed to $new_name() and cannot be called on a protein / ncRNA. Perhaps you want to call $self->gene_member()->$new_name().
         });
     }
@@ -882,18 +881,17 @@ sub _rename_method_seq {
     my $method = shift;
     my $new_name = shift;
     if ($self->isa('Bio::EnsEMBL::Compara::SeqMember')) {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() is renamed to $new_name(). Please review your code and call $new_name() instead.
         });
     } elsif ($self->source_name ne 'ENSEMBLGENE') {
-        _display_warning(qq{
+        warn _text_warning(qq{
         $method() is renamed to $new_name() and should be called on a SeqMember object. Please review your code: bless $self as a SeqMember, and use $new_name() instead.
         });
     } else {
-        _display_warning(qq{
+        die _text_warning(qq{
         $method() is renamed to $new_name() and cannot be called on a gene. Perhaps you want to call $self->get_canonical_SeqMember()->$new_name().
         });
-        die;
     }
     my $method_wrap = "Bio::EnsEMBL::Compara::SeqMember::$new_name";
     return $method_wrap->($self, @_);

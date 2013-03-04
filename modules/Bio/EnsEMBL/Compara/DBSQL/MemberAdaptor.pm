@@ -714,9 +714,9 @@ no strict 'refs';
 
 use Bio::EnsEMBL::ApiVersion;
 
-sub _display_warning {
+sub _text_warning {
     my $msg = shift;
-    print STDERR
+    return
         "\n------------------ DEPRECATED ---------------------\n"
         . "$msg\n"
         . stack_trace_dump(5). "\n"
@@ -731,7 +731,7 @@ sub _warning_member_adaptor {
 
     unless ($self->isa('Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor') or
             $self->isa('Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor')) {
-        _display_warning(qq{
+        warn _text_warning(qq{
             The Member adaptor is deprecated in favour of the more specific GeneMember and SeqMember adaptors.
             Please update your code (change the adaptor) here:
         });
@@ -742,7 +742,7 @@ sub _warning_member_adaptor {
 sub _wrap_method_seq {
     my $self = shift;
     my $method = shift;
-    _display_warning(qq{
+    warn _text_warning(qq{
         $method() should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors).
         Please update your code (change the adaptor) here:
     });
@@ -754,7 +754,7 @@ sub _rename_method_seq {
     my $self = shift;
     my $method = shift;
     my $new_name = shift;
-    _display_warning(qq{
+    warn _text_warning(qq{
         $method() is renamed to $new_name() and should be called on the SeqMember adaptor (not on the Member or GeneMember adaptors).
         Please update your code: change the adaptor, and use $new_name() instead:
     });
