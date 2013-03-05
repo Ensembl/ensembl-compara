@@ -846,7 +846,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     $.ajax({
       url:  this.elLk.form.attr('action'),
       type: this.elLk.form.attr('method'),
-      data: data, 
+      data: $.extend(data, Ensembl.coreParams), 
       dataType: 'json',
       async: false,
       success: function (json) {
