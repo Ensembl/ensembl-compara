@@ -1482,6 +1482,17 @@ sub get_similarity_hash {
   return $DBLINKS  || [];
 }
 
+sub get_rnaseq_tracks {
+  my $self = shift;
+  my $tracks = [];
+  my $rnaseq_db = $self->hub->database('rnaseq');
+  if ($rnaseq_db) {
+    my $aa = $self->hub->get_adaptor('get_AnalysisAdaptor', 'rnaseq');
+    $tracks = $aa->fetch_all;
+  }
+  return $tracks;
+}
+
 sub can_export {
   my $self = shift;
   
