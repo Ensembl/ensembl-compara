@@ -53,11 +53,11 @@ sub get_user_settings {
   if ($self->{'all_species'}) {
     my $species = $self->species;
     $self->{'user_settings'}{$species} = { %{$self->{'user_settings'}{$species} || {}}, %$settings };
-    delete $self->{'user_settings'}{$species} unless scalar keys %{$self->{'user_settings'}{$species}};
-    delete $self->{'user_settings'}{$species}{'track_order'} if $self->{'user_settings'}{$species}{'track_order'} && !scalar keys %{$self->{'user_settings'}{$species}{'track_order'}};
+    delete $self->{'user_settings'}{$species}{'track_order'} unless scalar keys %{$self->{'user_settings'}{$species}{'track_order'}};
+    delete $self->{'user_settings'}{$species}                unless scalar keys %{$self->{'user_settings'}{$species}};
     return $self->{'user_settings'};
   } else {
-    delete $settings->{'track_order'} if $settings->{'track_order'} && !scalar keys %{$settings->{'track_order'}};
+    delete $settings->{'track_order'} unless scalar keys %{$settings->{'track_order'}};
     return $settings;
   }
 }
@@ -131,7 +131,7 @@ sub reset {
         $self->altered = 1;
         delete $self->{'user_settings'}{$species}{'track_order'};
       }
-    } 
+    }
   } else {
     $self->SUPER::reset(@_);
   }
