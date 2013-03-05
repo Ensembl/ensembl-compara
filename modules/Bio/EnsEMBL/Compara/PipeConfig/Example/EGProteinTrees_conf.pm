@@ -269,16 +269,13 @@ sub _new_analyses {
       -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
       -parameters => {
         inputquery      => 'select genome_db_id from species_set ss join method_link_species_set mlss using (species_set_id) where mlss.method_link_species_set_id = '.$self->o('mlss_id'),
-        column_names    => [qw/genome_db_id/],
-        input_id        => { genome_db_ids => ['#genome_db_id#'] },
-        fan_branch_code => 1,
       },
       -input_ids => [
         {}
       ],
       -wait_for => ['backbone_fire_dnds'],
       -flow_into => {
-        1 => [ 'update_member_display_labels' ]
+        2 => { 'update_member_display_labels' => { genome_db_ids => ['#genome_db_id#'] } }
       }
     },
     {
