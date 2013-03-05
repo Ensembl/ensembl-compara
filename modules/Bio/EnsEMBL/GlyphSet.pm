@@ -219,8 +219,7 @@ sub init_label {
       species  => $config->species,
       action   => $component,
       function => undef,
-      submit   => 1,
-      __clear  => 1
+      submit   => 1
     });
     
     if (scalar @renderers > 4) {
