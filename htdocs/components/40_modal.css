@@ -143,6 +143,12 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 
 .modal_content .multi_selector_hint                            { margin: 16px; }
 
+.modal_content .select_by                                      { margin: 16px; clear: left; text-align: center; }
+.modal_content .select_by h3                                   { float: left; padding-right: 10px; margin-top: 3px; }
+.modal_content .select_by select                               { width: 130px; }
+
+body.ie .modal_content .select_by select                       { width: auto; }
+
 /* config manager */
 
 .modal_content .config_manager .dataTables_wrapper,
