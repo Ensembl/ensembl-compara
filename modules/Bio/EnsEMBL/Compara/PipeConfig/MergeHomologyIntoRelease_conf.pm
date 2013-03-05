@@ -40,15 +40,18 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
+
+    my $merged_tables_ref = $self->o('merged_tables');
+
     return {
 
             %{$self->SUPER::default_options},
 
-        'rel'           => 68,
+        'rel'           => 71,
         'pipeline_name' => 'compara_full_merge_'.$self->o('rel'),         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -56,7 +59,7 @@ sub default_options {
         },
 
         'merged_homology_db' => {
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
@@ -74,7 +77,7 @@ sub default_options {
         'merged_tables'     => [ 'method_link_species_set_tag' ],
         'skipped_tables'    => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
                               'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
-                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class', @{$self->o('merged_tables')} ],
+                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class', (ref($merged_tables_ref) ? @$merged_tables_ref : ()) ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
@@ -138,9 +141,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'fan_branch_code' => 2,
+                'merged_tables' => $self->o('merged_tables'),
             },
             -input_ids => [
-                { 'inputlist' => $self->o('merged_tables'), 'column_names' => ['table'] },
+                { 'inputlist' => '#merged_tables#', 'column_names' => ['table'] },
             ],
             -flow_into => {
                 2 => [ 'merge_table'  ],
