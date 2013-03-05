@@ -47,7 +47,7 @@ package Bio::EnsEMBL::Compara::Graph::Link;
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Scalar;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::Taggable');
 
