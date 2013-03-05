@@ -57,6 +57,7 @@ sub content_sub_slice {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
+  $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
   if ($config->{'line_numbering'}) {
@@ -89,6 +90,7 @@ sub get_sequence_data {
   my $hub            = $self->hub;
   my $object         = $self->object;
   my $gene           = $object->Obj;
+  my $gene_name      = $gene->external_name;
   my $subslice_start = $config->{'sub_slice_start'};
   my $subslice_end   = $config->{'sub_slice_end'};
   my $slice          = $object->slice;
@@ -102,14 +104,19 @@ sub get_sequence_data {
   my @sequence       = ([ map {{ letter => $_ }} @gene_seq ]);
   my @markup         = ({});
   
-  push @{$config->{'slices'}}, { slice => $slice, name => $gene->external_name || $gene->stable_id };
+  push @{$config->{'slices'}}, { slice => $slice, name => $gene_name || $gene->stable_id };
   
   $_-- for grep $_, $subslice_start, $subslice_end;
   
   foreach my $transcript (map $_->[1], sort { $a->[0] <=> $b->[0] } @transcripts) {
-    my $mk    = {};
-    my @exons = @{$transcript->get_all_Exons};
-    my @seq   = map {{ letter => $_ }} @gene_seq;
+    my $transcript_id   = $transcript->stable_id;
+    my $transcript_name = $transcript->external_name || $transcript_id;
+       $transcript_name = $transcript_id if $transcript_name eq $gene_name;
+    my @exons           = @{$transcript->get_all_Exons};
+    my @seq             = map {{ letter => $_ }} @gene_seq;
+    my $type            = 'exon1';
+    my $type_change     = -1;
+    my $mk              = {};
     
     my ($crs, $cre, $transcript_start) = map $_ - $start, $transcript->coding_region_start, $transcript->coding_region_end, $transcript->start;
     my ($first_exon, $last_exon)       = map $exons[$_]->stable_id, 0, -1;
@@ -120,6 +127,7 @@ sub get_sequence_data {
     }
     
     for my $exon (@exons) {
+      my $exon_id = $exon->stable_id;
       my ($s, $e) = map $_ - $start, $exon->start, $exon->end;
       
       if ($strand == -1) {
@@ -129,7 +137,7 @@ sub get_sequence_data {
       
       if ($subslice_start || $subslice_end) {        
         if ($e < 0 || $s > $subslice_end) {
-          if (!$config->{'exons_only'} && (($exon->stable_id eq $first_exon && $s > $subslice_end) || ($exon->stable_id eq $last_exon && $e < 0))) {
+          if (!$config->{'exons_only'} && (($exon_id eq $first_exon && $s > $subslice_end) || ($exon_id eq $last_exon && $e < 0))) {
             $seq[$_]{'letter'} = '-' for 0..$#seq;
           }
           
@@ -141,16 +149,12 @@ sub get_sequence_data {
       }
       
       if (!$config->{'exons_only'}) {
-        if ($exon->stable_id eq $first_exon && $s) {
+        if ($exon_id eq $first_exon && $s) {
           $seq[$_]{'letter'} = '-' for 0..$s-1;
-        } elsif ($exon->stable_id eq $last_exon) {
+        } elsif ($exon_id eq $last_exon) {
           $seq[$_]{'letter'} = '-' for $e+1..$#seq;
         }
       }
-      
-      my $id          = $exon->stable_id;
-      my $type        = 'exon1';
-      my $type_change = -1;
       
       if ($exon->phase == -1 && $exon->end_phase == -1) {
         $type = 'eu';
@@ -166,7 +170,7 @@ sub get_sequence_data {
         push @{$mk->{'exons'}{$_}{'type'}}, $type;
         $type = $type eq 'exon1' ? 'eu' : 'exon1' if $_ == $type_change;
         
-        $mk->{'exons'}{$_}{'id'} .= ($mk->{'exons'}{$_}{'id'} ? "\n" : '') . $id unless $mk->{'exons'}{$_}{'id'} =~ /$id/;
+        $mk->{'exons'}{$_}{'id'} .= ($mk->{'exons'}{$_}{'id'} ? "\n" : '') . $exon_id unless $mk->{'exons'}{$_}{'id'} =~ /$exon_id/;
       }
     }
     
@@ -174,11 +178,19 @@ sub get_sequence_data {
       $seq[$_]{'letter'} = '-' for grep !$mk->{'exons'}{$_}, 0..$#seq;
     }
     
-    $self->set_variations($config, $slice, $mk, $transcript, \@seq);
+    $self->set_variations($config, $slice, $mk, $transcript, \@seq) if $config->{'snp_display'};
     
     push @sequence, \@seq;
     push @markup, $mk;
-    push @{$config->{'slices'}}, { slice => $slice, name => $transcript->external_name || $transcript->stable_id };
+    push @{$config->{'slices'}}, {
+      slice => $slice,
+      name  => sprintf(
+        '<a href="%s"%s>%s</a>',
+        $hub->url({ type => 'Transcript', action => 'Summary', t => $transcript_id }),
+        $transcript_id eq $transcript_name ? '' : qq{title="$transcript_id"},
+        $transcript_name
+      )
+    };
   }
   
   $config->{'ref_slice_seq'} = $sequence[0];
@@ -236,12 +248,23 @@ sub set_variations {
   }
 }
 
+sub class_to_style { return $_[0]->{'class_to_style'} ||= { %{$_[0]->SUPER::class_to_style}, intron => [ -1, { color => '#555555' } ] }; }
+
+sub content_key {
+  my $self   = shift;
+  my $config = shift || {};
+  
+  $config->{'key'}{'intron'} = 1;
+  
+  return $self->SUPER::content_key($config);
+}
 
 sub get_key {
   return shift->SUPER::get_key(@_, {
-    exons => {
-      exon1 => { class => 'e1', text => 'Exons' },
-      eu    => { class => 'eu', text => 'UTR'   }
+    intron => { class => 'intron', text => 'Intron or reference sequence' },
+    exons  => {
+      exon1 => { class => 'e1', text => 'Translated sequence' },
+      eu    => { class => 'eu', text => 'UTR'                 }
     }
   });
 }
