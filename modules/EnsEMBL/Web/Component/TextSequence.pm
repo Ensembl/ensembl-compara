@@ -1031,7 +1031,7 @@ sub get_key {
     }
   }
   
-  $image_config->image_width(650);
+  $image_config->image_width(700);
   
   my $key_img = $image_config->{'legend'} ? $self->new_image(EnsEMBL::Web::Fake->new({}), $image_config)->render : '';
   
