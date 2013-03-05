@@ -60,7 +60,7 @@ sub run {
 
     my $compara_dba     = $self->compara_dba()          or die "Definitely need a Compara database to store a Compara object";
     my $object_type     = $self->param('object_type')   or die "Object type has to be specified";
-    my $arglist         = $self->param_substitute( $self->param('arglist') || [] );
+    my $arglist         = $self->param('arglist') || [];
 
     if(my $reference_db = $self->param('reference_db')) {
         my $reference_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $reference_db );

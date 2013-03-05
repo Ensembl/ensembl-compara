@@ -50,7 +50,7 @@ sub fetch_input {
 
     # now that we have an arrayref of things...
 
-    if(my $column_names2getters = $self->param_substitute( $self->param('column_names2getters') ) ) {
+    if(my $column_names2getters = $self->param('column_names2getters') ) {
 
         my @getters             = values %$column_names2getters;
         my @inputlist           = ();

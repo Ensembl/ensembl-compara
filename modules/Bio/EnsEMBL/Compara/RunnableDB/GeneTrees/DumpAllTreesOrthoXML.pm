@@ -80,7 +80,7 @@ sub fetch_input {
     # Defines the file handle
     my $file_handle = *STDOUT;
     if (defined $self->param('file')) {
-        $file_handle = IO::File->new($self->param_substitute($self->param('file')), 'w');
+        $file_handle = IO::File->new( $self->param('file'), 'w');
     }
     $self->param('file_handle', $file_handle);
 
