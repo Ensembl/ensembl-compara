@@ -13,7 +13,7 @@ our @EXPORT    = @EXPORT_OK;
 
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
-use List::MoreUtils qw(distinct);
+use List::MoreUtils qw(uniq);
 
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
@@ -323,7 +323,7 @@ sub _info_panel {
   if(ref($caption) eq 'ARRAY') {
     if(@$caption > 1) {
       my $last = pop @$caption;
-      $caption = join(", ",distinct(@$caption))." and $last";
+      $caption = join(", ",uniq(@$caption))." and $last";
     } elsif(@$caption) {
       $caption = $caption->[0];
     } else {
