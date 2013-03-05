@@ -46,17 +46,18 @@ sub availability {
         return $has_gene_tree;
       };
 
-      $availability->{'history'}       = !!$rows;
-      $availability->{'gene'}          = 1;
-      $availability->{'core'}          = $self->get_db eq 'core';
-      $availability->{'alt_allele'}    = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
-      $availability->{'regulation'}    = !!$funcgen_res; 
-      $availability->{'has_species_tree'} = $self->has_species_tree;
-      $availability->{'has_gene_tree'}    = $self->has_gene_tree;
-      $availability->{'family'}        = !!$counts->{families};
-      $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
-      ## TODO - e63 hack - may need rewriting for subsequent releases
-      $availability->{'not_patch'}     = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1;
+      $availability->{'history'}              = !!$rows;
+      $availability->{'gene'}                 = 1;
+      $availability->{'core'}                 = $self->get_db eq 'core';
+      $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
+      $availability->{'regulation'}           = !!$funcgen_res; 
+      $availability->{'has_species_tree'}     = $self->has_species_tree;
+      $availability->{'has_gene_tree'}        = $self->has_gene_tree;
+      $availability->{'family'}               = !!$counts->{families};
+      $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
+      $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
+      $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
+      
       ## Phenotypes are linked on HGNC names so is fine to do a fast availability call using that for now (e70)
       ## However need a proper call for e71
       if ($self->database('variation')) {
