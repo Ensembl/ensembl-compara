@@ -22,11 +22,17 @@ sub _init {
 sub content_ajax {
   my $self  = shift;
   my $hub   = $self->hub;
-  my %all   = map { $_->stable_id => sprintf '%s (%s)', $_->external_name || $_->stable_id, ucfirst join ' ', split '_', $_->biotype; } @{$self->object->Obj->get_all_Transcripts};
   my %shown = map { $hub->param("t$_") => $_ } grep s/^t(\d+)$/$1/, $hub->param;
+  my %select_by;
   
-  $self->{'all_options'}      = \%all;
+  foreach (@{$self->object->Obj->get_all_Transcripts}) {
+    my $biotype = ucfirst join ' ', split '_', $_->biotype;
+    $self->{'all_options'}{$_->stable_id} = sprintf '%s (%s)', $_->external_name || $_->stable_id, $biotype;
+    $select_by{$_->biotype} = $biotype;
+  }
+  
   $self->{'included_options'} = \%shown;
+  $self->{'select_by'}        = [ [ 'none', 'None' ], map([ $_, $select_by{$_} ], sort { $a cmp $b } keys %select_by), [ 'all', 'All' ] ];
   
   $self->SUPER::content_ajax;
 }
