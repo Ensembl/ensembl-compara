@@ -513,30 +513,21 @@ sub markup_variation {
 
 sub markup_comparisons {
   my ($self, $sequence, $markup, $config) = @_;
-  my $name_length = length($config->{'ref_slice_name'} || $config->{'species'});
-  my $max_length  = $name_length;
-  my $padding     = '';
-  my $i           = 0;
-  my ($species, $length, $length_diff, $pad, $seq, $comparison);
+  my $max_length = 0;
+  my $i          = 0;
+  my ($name, $length, $pad, $seq, $comparison);
   
   foreach (@{$config->{'slices'}}) {
-    $species = $_->{'display_name'} || $_->{'name'};
+    $name = $_->{'display_name'} || $_->{'name'};
     
-    push (@{$config->{'seq_order'}}, $species);
+    push (@{$config->{'seq_order'}}, $name);
     
-    next if $species eq $config->{'species'};
-    
-    $length      = length $species;
-    $length_diff = $length - $name_length;
-
-    if ($length > $max_length) {
-      $max_length = $length;
-      $padding    = ' ' x $length_diff;
-    }
+    $length     = length $self->strip_HTML($name);
+    $max_length = $length if $length > $max_length;
   }
   
   foreach (@{$config->{'seq_order'}}) {
-    $pad = ' ' x ($max_length - length $_);
+    $pad = ' ' x ($max_length - length $self->strip_HTML($_));
     $config->{'padded_species'}{$_} = $_ . $pad;
   }
   
@@ -941,10 +932,7 @@ sub class_to_style {
       co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}->{'default'}" } ],
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ],
-      
-      xxx  => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXON1'}->{'default'}", 'display' => 'inline-block', 'height' => '5px', 'vertical-align' => 'middle' } ],
-      yyy  => [ $i++, { 'background-color' => "#9400d3",                              'display' => 'inline-block', 'height' => '5px', 'vertical-align' => 'middle' } ],
+      bold => [ $i++, { 'font-weight' => 'bold' } ]
     );
     
     foreach (keys %$var_styles) {
