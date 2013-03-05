@@ -113,6 +113,13 @@ sub createObjects {
           }
         }
       }
+      
+      my @transcript_params = grep s/^t(\d+)$/$1/, $self->param;
+      
+      if (scalar @transcript_params) {
+        my %transcript_ids = map { $_->stable_id => 1 } @transcripts;
+        $self->delete_param("t$_") for grep !$transcript_ids{$self->param("t$_")}, @transcript_params;
+      }
     }
     
     # Generate the transcript object for the top tabs, and set the t parameter for the URL
