@@ -248,23 +248,18 @@ sub set_variations {
   }
 }
 
-sub class_to_style { return $_[0]->{'class_to_style'} ||= { %{$_[0]->SUPER::class_to_style}, intron => [ -1, { color => '#555555' } ] }; }
-
-sub content_key {
-  my $self   = shift;
-  my $config = shift || {};
-  
-  $config->{'key'}{'intron'} = 1;
-  
-  return $self->SUPER::content_key($config);
-}
+sub class_to_style { return $_[0]->{'class_to_style'} ||= { %{$_[0]->SUPER::class_to_style}, intron => [ 9e9, { color => '#555555' } ] }; }
 
 sub get_key {
+  $_[1]->{'key'}{'exons/Introns'} = 1;
+  $_[1]->{'key'}{'exons'} = 0;
+  
   return shift->SUPER::get_key(@_, {
-    intron => { class => 'intron', text => 'Intron or reference sequence' },
-    exons  => {
-      exon1 => { class => 'e1', text => 'Translated sequence' },
-      eu    => { class => 'eu', text => 'UTR'                 }
+    exons           => {},
+    'exons/Introns' => {
+      exon1  => { class => 'e1',     text => 'Translated sequence'          },
+      eu     => { class => 'eu',     text => 'UTR'                          },
+      intron => { class => 'intron', text => 'Intron or reference sequence' }
     }
   });
 }
