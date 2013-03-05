@@ -177,8 +177,21 @@ sub populate_tree {
 
 
   ## Data conversion
-  my $convert_menu = $self->create_submenu( 'Conversion', 'Data Converters' );
+  my $convert_menu = $self->create_submenu( 'Conversion', 'Online Tools' );
   my $mappings = $self->hub->species_defs->get_config($self->hub->species, 'ASSEMBLY_MAPPINGS');
+  $convert_menu->append(
+    $self->create_node( 'UploadVariations', 'Variant Effect Predictor',
+      [qw(upload_snps EnsEMBL::Web::Component::UserData::UploadVariations)],
+      {'availability' => 1,},
+    )
+  );
+  $convert_menu->append(
+    $self->create_node( 'SNPConsequence', '', [],
+      {'command' => 'EnsEMBL::Web::Command::UserData::SNPConsequence',
+      'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
+
   $convert_menu->append(
     $self->create_node( 'SelectFeatures', 'Assembly Converter', 
       [qw(select_features EnsEMBL::Web::Component::UserData::SelectFeatures)],
@@ -226,18 +239,6 @@ sub populate_tree {
     $self->create_node( 'PreviewConvertIDs', 'Files Converted',
       [qw(conversion_done EnsEMBL::Web::Component::UserData::PreviewConvertIDs)],
       {'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-  $convert_menu->append(
-    $self->create_node( 'UploadVariations', 'Variant Effect Predictor',
-      [qw(upload_snps EnsEMBL::Web::Component::UserData::UploadVariations)],
-      {'availability' => 1,},
-    )
-  );
-  $convert_menu->append(
-    $self->create_node( 'SNPConsequence', '', [],
-      {'command' => 'EnsEMBL::Web::Command::UserData::SNPConsequence',
-      'availability' => 1, 'no_menu_entry' => 1},
     )
   );
 
