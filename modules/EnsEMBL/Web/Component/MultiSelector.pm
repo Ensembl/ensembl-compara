@@ -27,18 +27,17 @@ sub content {
 }
 
 sub content_ajax {
-  my $self     = shift;
-  my $hub      = $self->hub;
-  my %all      = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
-  my %included = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => order } where order is 1, 2, 3 etc.
-  my $url      = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
-  my ($include_list, $exclude_list, $extra_inputs);
-  
-  $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) for sort keys %{$url->[1]};
-  $include_list .= sprintf '<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_} for sort { $included{$a} <=> $included{$b} } keys %included;
-  $exclude_list .= sprintf '<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_} for sort { $all{$a} cmp $all{$b} } grep !$included{$_}, keys %all;
-  
-  my $content = sprintf('
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my %all          = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
+  my %included     = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => order } where order is 1, 2, 3 etc.
+  my $url          = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
+  my $extra_inputs = join '', map sprintf('<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_})), sort keys %{$url->[1]};
+  my $include_list = join '', map sprintf('<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_}), sort { $included{$a} <=> $included{$b} } keys %included;
+  my $exclude_list = join '', map sprintf('<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_}), sort { $all{$a} cmp $all{$b} } grep !$included{$_}, keys %all;
+  my $select_by    = join '', map sprintf('<option value="%s">%s</option>', @$_), @{$self->{'select_by'} || []};
+     $select_by    = qq{<div class="select_by"><h3>Select:</h3><select><option value="">-------------------------</option>$select_by</select></div>} if $select_by;
+  my $content      = sprintf('
     <div class="content">
       <form action="%s" method="get" class="hidden">%s</form>
       <div class="multi_selector_list">
@@ -73,13 +72,12 @@ sub content_ajax {
     </div>
   };
   
-  
   return $self->jsonify({
     content   => $content,
     panelType => $self->{'panel_type'},
     activeTab => $self->{'rel'},
     wrapper   => qq{<div class="modal_wrapper"><div class="panel"></div></div>},
-    nav       => $hint,
+    nav       => "$select_by$hint",
     params    => { urlParam => $self->{'url_param'} },
   });
 }
