@@ -36,7 +36,7 @@ sub populate_tree {
       select EnsEMBL::Web::Component::Gene::TranscriptComparisonSelector
       seq    EnsEMBL::Web::Component::Gene::TranscriptComparison
     )],
-    { 'availability' => 'gene has_transcripts' }
+    { 'availability' => 'gene multiple_transcripts' }
   );
 
   $self->create_node('Evidence', 'Supporting evidence',
