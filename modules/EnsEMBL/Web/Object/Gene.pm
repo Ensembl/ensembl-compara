@@ -556,8 +556,8 @@ sub get_all_families {
     my $prots = {};
     foreach my $member (@$members) {
       $member->genome_db($genome_db);
-      my $gene = $member->get_Gene;
-      if ($gene) {
+      if ($member->source_name eq 'ENSEMBLPEP') {
+        my $gene = $member->gene_member->get_Gene;
         push @$genes, $gene;
         my $protein = $member->get_Translation;
         if ($protein) {
