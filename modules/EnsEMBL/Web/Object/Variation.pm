@@ -462,11 +462,9 @@ sub alleles {
   map { $alleles{$_->allele} = 1; } @allele_obj;
 
   my $observed_alleles = join "/", (keys %alleles);
-  if (@vari_mappings) {
-    return "$observed_alleles";
-  } else {
-    return "This variation has no mapping.  $observed_alleles";
-  }
+
+  return "$observed_alleles";
+
 }
 
 
