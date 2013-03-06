@@ -44,7 +44,7 @@ sub content {
   
   $self->caption($caption);
   
-#use Data::Dumper;warn Dumper($node) if($node_id eq '3201');    
+#use Data::Dumper;warn Dumper($node) if($node_id eq '3201');
   $self->add_entry({
     type => 'Node ID',
     label => $node_id,  
@@ -69,6 +69,11 @@ sub content {
     type => 'Scientific Name',
     label => $scientific_name,  
   });
+  
+  $self->add_entry({
+    type => 'Lambda',
+    label => $node->lambdas,  
+  });  
 }
 
 1;
