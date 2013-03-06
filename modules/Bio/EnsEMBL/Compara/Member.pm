@@ -847,10 +847,15 @@ sub _wrap_method_gene {
         warn _text_warning(qq{
         $method() should be called on a GeneMember object. Please review your code and bless $self as a GeneMember (then, $method() will work).
         })
-    } else {
+    } elsif ($self->source_name eq 'ENSEMBLPEP' or $self->source_name eq 'ENSEMBLTRANS') {
         warn _text_warning(qq{
         $method() should not be called on a protein / ncRNA, but on a gene. Perhaps You want to call $self->gene_member()->$method().
         });
+    } else {
+        warn _text_warning(qq{
+        $method() should not be called on a non-Ensembl peptide (e.g. Uniprot entries). Now returning undef.
+        });
+        return undef;
     }
     my $method_wrap = "Bio::EnsEMBL::Compara::GeneMember::$method";
     return $method_wrap->($self->source_name eq 'ENSEMBLGENE' ? $self : $self->gene_member, @_);
@@ -868,10 +873,15 @@ sub _rename_method_gene {
         warn _text_warning(qq{
         $method() is renamed to $new_name() and should be called on a GeneMember object. Please review your code: bless $self as a GeneMember, and use $new_name() instead.
         });
-    } else {
+    } elsif ($self->source_name eq 'ENSEMBLPEP' or $self->source_name eq 'ENSEMBLTRANS') {
         warn _text_warning(qq{
         $method() is renamed to $new_name() and cannot be called on a protein / ncRNA. Perhaps you want to call $self->gene_member()->$new_name().
         });
+    } else {
+        warn _text_warning(qq{
+        $method() should not be called on a non-Ensembl peptide (e.g. Uniprot entries). Now returning undef.
+        });
+        return undef;
     }
     my $method_wrap = "Bio::EnsEMBL::Compara::GeneMember::$new_name";
     return $method_wrap->($self->source_name eq 'ENSEMBLGENE' ? $self : $self->gene_member, @_);

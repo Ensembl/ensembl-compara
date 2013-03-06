@@ -642,6 +642,7 @@ sub gene_member {
     assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
     $self->{'_gene_member'} = $gene_member;
   }
+  return undef if ($self->source_name ne 'ENSEMBLPEP');
   if(!defined($self->{'_gene_member'}) and
      defined($self->adaptor) and $self->dbID)
   {
