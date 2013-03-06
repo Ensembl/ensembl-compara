@@ -174,7 +174,7 @@ sub get_expansions {
 sub is_expansion {
     my ($self) = @_;
     if ($self->has_parent) {
-        return $self->parent->is_expansion if ($self->n_members == $self->parent->n_members);
+        return $self->parent->is_expansion if ($self->is_node_significant && ($self->n_members == $self->parent->n_members));
         return 1 if ($self->n_members > $self->parent->n_members);
     }
     return 0;
@@ -183,7 +183,7 @@ sub is_expansion {
 sub is_contraction {
     my ($self) = @_;
     if ($self->has_parent) {
-        return $self->parent->is_contraction if ($self->n_members == $self->parent->n_members);
+        return $self->parent->is_contraction if ($self->is_node_significant && ($self->n_members == $self->parent->n_members));
         return 1 if ($self->n_members < $self->parent->n_members);
     }
     return 0;
