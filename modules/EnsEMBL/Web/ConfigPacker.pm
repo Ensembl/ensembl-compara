@@ -1845,22 +1845,8 @@ sub _configure_blast {
           $type =~ s/.soft/_sm/;
           my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'} || $self->db_tree->{'DB_RELEASE_VERSION'};
           my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $repeat_date, $type ).".fa";
-          # If there is species-specific file info for this data source, then use that... 
-          if ( $tree->{$blast_type.'_DATASOURCES'} ) { 
-            # If there is a value for this specific data source ( eg. CDNA_ALL, RNA_NC etc. ) 
-            # Then include, otherwise we don't use it - some species might not have all data types. 
-            if ( $tree->{$blast_type.'_DATASOURCES'}{$source_type} ) {
-              $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $tree->{$blast_type.'_DATASOURCES'}{$source_type}, 'label' => $source_label};
-            }
-            else { 
-              #warn "DELETING SOURCE FOR THIS BLAST TYPE AND SPECIES\n";
-              delete $tree->{$blast_type.'_DATASOURCES'}{$source_type};
-            }
-          } # ... otherwise generate file name automatically.
-          else {
 #           print "AUTOGENERATING $source_type......$file\n";
-            $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $file, 'label' => $source_label};
-          }
+          $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $file, 'label' => $source_label};
         }
       } 
       else {
