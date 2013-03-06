@@ -202,7 +202,6 @@ sub default_options {
     },
 
     #To skip set prev_rel_db to empty; other params do need to be set though
-    stable_id_prev_release_db => q{},
     stable_id_release => $self->o('eg_release'),
     stable_id_prev_release => q{}, #means default to last -1
 
