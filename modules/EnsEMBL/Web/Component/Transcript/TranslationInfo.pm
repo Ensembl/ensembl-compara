@@ -15,13 +15,10 @@ sub _init {
 sub content {
   my $self         = shift;
   my $object       = $self->object;
-  my $table        = $self->new_twocol;
   my $transcript   = $object->Obj;
   my $translation  = $transcript->translation;
 
-  $table->add_row($self->object->species_defs->ENSEMBL_SITETYPE . ' version', $translation->stable_id.'.'.$translation->version);
-
-  return $table->render;
+  return sprintf('<h3>Protein domains for %s.%s</h3>', $translation->stable_id, $translation->version);
 }
 
 1;
