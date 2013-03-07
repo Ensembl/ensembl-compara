@@ -192,8 +192,8 @@ sub default_options {
 
     #Set these up to perform stable ID mapping
 
-    stable_id_prev_rel_db => {
-	    -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+    stable_id_prev_release_db => {
+       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
        -port   => 4160,
        -user   => 'ensro',
        -pass   => '',
