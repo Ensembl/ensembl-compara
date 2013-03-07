@@ -432,7 +432,7 @@ foreach my $spp (@valid_spp) {
         my $count_regions = scalar @regions;
       	print join ' : ', $cs->name, $cs->version , $count_regions, "\n" if ($DEBUG) ;
         my $regions_html;
-        if(!$row_count && $count_regions < 1000){
+        if($count_regions < 1000){
           $regions_html = regions_table($spp,$cs->name,\@regions);
         }
         else{
