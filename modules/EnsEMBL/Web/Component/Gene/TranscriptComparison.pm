@@ -259,7 +259,7 @@ sub get_key {
     'exons/Introns' => {
       exon1  => { class => 'e1',     text => 'Translated sequence'          },
       eu     => { class => 'eu',     text => 'UTR'                          },
-      intron => { class => 'intron', text => 'Intron or reference sequence' }
+      intron => { class => 'intron', text => 'Intron or gene sequence' }
     }
   });
 }
