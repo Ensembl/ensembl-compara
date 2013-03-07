@@ -376,7 +376,7 @@ sub render_normal {
 
   $self->push($asmbl_label);
 
-  my %archive_info = %{$Config->species_defs->get_config($species, 'ASSEMBLIES')}; 
+  my %archive_info = %{$Config->species_defs->get_config($species, 'ASSEMBLIES') || {}}; 
 
   my @a_colours = ('contigblue1', 'contigblue2');
   my $i =0;
