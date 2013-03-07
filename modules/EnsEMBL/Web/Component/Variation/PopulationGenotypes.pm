@@ -16,9 +16,6 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
 
-  ## Check we have uniquely determined variation
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
- 
   my $freq_data = $object->freqs;
   
   return $self->_info('Variation: ' . $object->name, '<p>No genotypes for this variation</p>') unless %$freq_data;
@@ -33,7 +30,7 @@ sub content {
       1000     => 1,
       HapMap   => 2,
       Other    => 3,
-      Failed   => 4,
+      Inconsistent   => 4,
       Observed => 5,
     );
     
@@ -42,8 +39,8 @@ sub content {
       my ($title, $table) = @$_;
       
       # hide "other" and "failed" table
-      if ($title =~ /other|failed|population/i) {
-        my $id = $title =~ /other/i ? 'other' : ($title =~ /failed/i ? 'failed' : 'nopop');
+      if ($title =~ /other|inconsistent|population/i) {
+        my $id = $title =~ /other/i ? 'other' : ($title =~ /inconsistent/i ? 'inconsistent' : 'nopop');
         my $expanded = ($id eq 'other' && $species ne 'Homo_sapiens') ? 1 : 0;
         $html .= $self->toggleable_table($title, $id, $table, $expanded);
       } else {     
@@ -94,7 +91,7 @@ sub format_frequencies {
     # recurse this method with just the tg_data and a flag to indicate it
     push @table_array,  @{$self->format_frequencies($tg_data, '1000 Genomes')} if $tg_data;
     push @table_array,  @{$self->format_frequencies($hm_data, 'HapMap')}       if $hm_data;
-    push @table_array,  @{$self->format_frequencies($fv_data, 'Failed data')}  if $fv_data;
+    push @table_array,  @{$self->format_frequencies($fv_data, 'Inconsistent data')}  if $fv_data;
     
     # special method for data with no pop/freq data
     push @table_array,  ['Observed variant(s) without frequency or population', $self->no_pop_data($no_pop_data)]  if $no_pop_data;
@@ -141,7 +138,7 @@ sub format_frequencies {
       $pop_row{'Genotype count'}   = join ' / ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
       $pop_row{'pop'}              = $self->pop_url($pop_info->{'Name'}, $pop_info->{'PopLink'});
       $pop_row{'Description'}      = $pop_info->{'Description'} if $is_somatic;
-      $pop_row{'failed'}           = $data->{'failed_desc'}             if $tg_flag =~ /failed/i;
+      $pop_row{'failed'}           = $data->{'failed_desc'}             if $tg_flag =~ /Inconsistent/i;
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
       $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id) if ($pop_info->{Size});;
