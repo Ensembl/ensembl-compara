@@ -28,6 +28,7 @@ use Apache2::RequestUtil;
 use Geo::IP;
 
 # Used to enable symbolic debugging support in dynamic_use.
+use Inline C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_SERVERROOT/cbuild";
 use Inline C => "void lvalues_nodebug(CV* cv) { CvNODEBUG_on(cv); }";
 
 my %FAILED_MODULES;
