@@ -2270,7 +2270,7 @@ filtered or extended sequences, etc...)
       <td>PRI</td>
       <td></td>
       <td></td>
-      <td>Link to member.member_id</td>
+      <td>Link to <a href="#member">member.member_id</a></td>
     </tr>
     <tr>
       <td>seq_type</td>
@@ -4072,7 +4072,7 @@ Contains the data structure of each tree.</p>
       <td>PRI</td>
       <td></td>
       <td>auto_increment</td>
-      <td>Unique key for gene_families. Links to CAFE_species_gene.cafe_gene_family_id</td>
+      <td>Unique key for gene_families. Links to <a href="#CAFE_species_gene">CAFE_species_gene.cafe_gene_family_id</a></td>
     </tr>
     <tr>
       <td>root_id</td>
@@ -4081,7 +4081,7 @@ Contains the data structure of each tree.</p>
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td>Link to species_tree_root.root_id</td>
+      <td>Link to <a href="#species_tree_root">species_tree_root.root_id</a></td>
     </tr>
     <tr>
       <td>lca_id</td>
@@ -4090,7 +4090,7 @@ Contains the data structure of each tree.</p>
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td>Link to species_tree_node.node_id. Refers to the lowest common ancestor of the gene family</td>
+      <td>Link to <a href="#species_tree_node">species_tree_node.node_id</a>. Refers to the lowest common ancestor of the gene family</td>
     </tr>
     <tr>
       <td>gene_tree_root_id</td>
@@ -4099,7 +4099,7 @@ Contains the data structure of each tree.</p>
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td>Link to gene_tree_root.root_id</td>
+      <td>Link to <a href="#gene_tree_root">gene_tree_root.root_id</a></td>
     </tr>
     <tr>
       <td>pvalue_avg</td>
@@ -4153,7 +4153,7 @@ Contains the data structure of each tree.</p>
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td>Link to CAFE_gene_family.cafe_gene_family_id</td>
+      <td>Link to <a href="#CAFE_gene_family">CAFE_gene_family.cafe_gene_family_id</a></td>
     </tr>
     <tr>
       <td>node_id</td>
@@ -4162,7 +4162,7 @@ Contains the data structure of each tree.</p>
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td>Link to species_tree_node.node_id</td>
+      <td>Link to <a href="#species_tree_node">species_tree_node.node_id</a></td>
     </tr>
     <tr>
       <td>taxon_id</td>
@@ -4194,6 +4194,77 @@ Contains the data structure of each tree.</p>
   </tbody>
 </table>
 
+<!--
+#################################################################
+TABLE HMM_PROFILE
+#################################################################
+-->
+<h4 id="hmm_profile">hmm_profile</h4>
+<p>
+This table contains different hmm profiles used and/or created by GeneTree pipelines (Protein Trees and ncRNA trees)
+</p>
+
+<table class="spreadsheet">
+  <caption>hmm_profile table description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>model_id</td>
+      <td>varchar(40)</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td>An ID for the profile. May be internal or coming from an external database (RFAM, for example)</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>varchar(40)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>The name of the profile. May be the same as the model_id. May be internal or coming from an external database</td>
+    </tr>
+    <tr>
+      <td>type</td>
+      <td>varchar(40)</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td>A short description of the profile</td>
+    </tr>
+    <tr>
+      <td>hc_profile</td>
+      <td>mediumtext</td>
+      <td>YES</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>The hmm profile</td>
+    </tr>
+    <tr>
+      <td>consensus</td>
+      <td>mediumtext</td>
+      <td>YES</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>The consensus sequence expressed by the hmm profile</td>
+    </tr>
+  </tbody>
+</table>
 
 <!--
     #####################################################################
