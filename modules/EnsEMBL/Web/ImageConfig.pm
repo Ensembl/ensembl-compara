@@ -463,15 +463,15 @@ sub add_tracks {
   my $self     = shift;
   my $menu_key = shift;
   my $menu     = $self->get_node($menu_key);
-  
+
   return unless $menu;
-  
+
   foreach my $row (@_) {
     my ($key, $caption, $glyphset, $params) = @$row;
     my $node = $self->get_node($key);
-    
+
     next if $node && $node->get('node_type') eq 'track';
-    
+
     $params->{'glyphset'} = $glyphset;
     $menu->append($self->create_track($key, $caption, $params));
   }
@@ -1187,7 +1187,6 @@ sub update_from_input {
     my $track_reorder = 0;
     
     $diff = from_json($diff);
-    
     $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
     
     $reload        = $self->altered;
@@ -1308,9 +1307,9 @@ sub update_from_url {
         }       
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
-        
+
         my $logic_name = $session->add_das_from_string($p, $self->{'type'}, { display => $renderer });
-        
+
         if ($logic_name) {
           $session->add_data(
             type     => 'message',
@@ -1338,19 +1337,19 @@ sub update_from_url {
 sub update_track_renderer {
   my ($self, $key, $renderer, $on_off) = @_;
   my $node = $self->get_node($key);
-  
+
   return unless $node;
-  
+
   my $renderers = $node->data->{'renderers'};
   my %valid     = @$renderers;
   my $flag      = 0;
-  
+
   ## Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
   $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
-  
+
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
   $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
-  
+
   $self->altered = 1 if $flag;
 }
 
@@ -1426,7 +1425,7 @@ sub get_track_key {
   my ($self, $prefix, $obj) = @_;
   
   return if $obj->gene && $obj->gene->isa('Bio::EnsEMBL::ArchiveStableId');
-  
+
   my $logic_name = $obj->gene ? $obj->gene->analysis->logic_name : $obj->analysis->logic_name;
   my $db         = $obj->get_db;
   my $db_key     = 'DATABASE_' . uc $db;
@@ -1476,7 +1475,7 @@ sub load_tracks {
   my $species      = $self->{'species'};
   my $species_defs = $self->species_defs;
   my $dbs_hash     = $self->databases;
-  
+
   my %data_types = (
     core => [
       'add_dna_align_features',     # Add to cDNA/mRNA, est, RNA, other_alignment trees
@@ -1858,29 +1857,31 @@ sub add_ditag_features {
 # depending on which menus are configured
 sub add_genes {
   my ($self, $key, $hashref) = @_;
-  
+
   # Gene features end up in each of these menus
   return unless grep $self->get_node($_), @{$self->{'transcript_types'}};
 
   my ($keys, $data) = $self->_merge($hashref->{'gene'}, 'gene');
   my $colours       = $self->species_defs->colour('gene');
   my $flag          = 0;
-  
+
   foreach my $type (@{$self->{'transcript_types'}}) {
     my $menu = $self->get_node($type);
-    
     next unless $menu;
-    
+
     foreach my $key2 (@$keys) {
       my $t = $type;
-      
-      # hack just for human rnaseq genes to force them into the rna-seq menu
-      $t = 'rnaseq' if $data->{$key2}{'type'} eq 'rnaseq';
-      
+
+      # force genes into a seperate menu if so specified in web_data (ie rna-seq); unless you're on a transcript page that is
+      if ($data->{$key2}{'type'}){
+        unless (ref($self) =~ /transcript/) {
+          $t = $data->{$key2}{'type'};
+        }
+      }
+
       my $menu = $self->get_node($t);
-      
+
       next unless $menu;
-      
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
@@ -1904,11 +1905,10 @@ sub add_genes {
          'gene_label',   'With labels'
         ]
       });
-      
       $flag = 1;
     }
   }
-  
+
   # Need to add the gene menu track here
   $self->add_track('information', 'gene_legend', 'Gene Legend', 'gene_legend', { strand => 'r' }) if $flag;
 }
