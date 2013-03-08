@@ -27,6 +27,20 @@ sub _icon_exonintron {
   return ($self->{'box_width'}*2,$self->{'text_height'});
 }
 
+sub _icon_intron {
+  my ($self,$x,$y,$k) = @_;
+
+  $self->push($self->Rect({
+    x             => $x,
+    y             => $y,
+    width         => $self->{'box_width'},
+    height        => $self->{'text_height'},
+    colour        => $k->{'colour'},
+    absolutey     => 1, absolutex => 1, absolutewidth => 1,
+  }));
+  return ($self->{'box_width'}*2,$self->{'text_height'});
+}
+
 sub _icon_exonintronexon {
   my ($self,$x,$y,$k) = @_;
 
@@ -157,15 +171,16 @@ sub _init {
     $e_type =~ s/est/EST/;
 
     my $legend = ($e_type eq 'evidence_removed') ? 'Evidence removed' : "$e_type evidence";
+    my $style = $features{$f}->{'style'} || 'exonintron';
     $self->add_to_legend({
       legend => $legend,
       colour => $features{$f}->{'colour'},
-      style => 'exonintron',
+      style => $style,
     });
   }
 	
   $self->init_legend(2);
-  $self->newline(); 
+  $self->newline();
 
   # non-canonical 
   push @left_group,{
@@ -174,7 +189,7 @@ sub _init {
     style => 'noncanon'
   };
 
-  # evidence extent 
+  # evidence extent
   unless($o_type =~ /otter/) {
     push @left_group,{
       legend => 'evidence start / ends within exon / CDS',
@@ -184,9 +199,9 @@ sub _init {
       legend => 'evidence extends beyond exon / CDS',
       colour => $self->my_colour('evi_long'),
       style => 'ends',
-    }; 
+    };
   }
- 
+
   # evidence missing / duplicated
   unless ($o_type =~ /otter/) {
     push @right_group,{
