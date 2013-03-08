@@ -59,7 +59,12 @@ sub content {
     type => 'P value',
     label => $node->{_pvalue},  
   });
-  
+
+  $self->add_entry({
+    type => 'Lambda',
+    label => $node->lambdas,  
+  }); 
+      
   $self->add_entry({
     type => 'Taxon ID',
     label => $node->{_taxon_id},  
@@ -70,10 +75,6 @@ sub content {
     label => $scientific_name,  
   });
   
-  $self->add_entry({
-    type => 'Lambda',
-    label => $node->lambdas,  
-  });  
 }
 
 1;
