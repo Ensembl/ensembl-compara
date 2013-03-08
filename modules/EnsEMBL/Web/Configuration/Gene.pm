@@ -36,7 +36,7 @@ sub populate_tree {
       select EnsEMBL::Web::Component::Gene::TranscriptComparisonSelector
       seq    EnsEMBL::Web::Component::Gene::TranscriptComparison
     )],
-    { 'availability' => 'gene multiple_transcripts' }
+    { 'availability' => 'gene multiple_transcripts not_rnaseq' }
   );
 
   $self->create_node('Evidence', 'Supporting evidence',
@@ -59,14 +59,14 @@ sub populate_tree {
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
       features   EnsEMBL::Web::Component::Gene::RegulationTable
     )],
-    { 'availability' => 'regulation not_patch' }
+    { 'availability' => 'regulation not_patch not_rnaseq' }
   );
 
   $self->create_node('Expression', 'Expression',
     [qw(
       rnaseq_table  EnsEMBL::Web::Component::Gene::ExpressionTable
     )],
-    { 'availability' => 'gene database:rnaseq' }
+    { 'availability' => 'gene database:rnaseq not_rnaseq' }
   );
   
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
@@ -175,7 +175,7 @@ sub populate_tree {
       svimage EnsEMBL::Web::Component::Gene::SVImage
       svtable EnsEMBL::Web::Component::Gene::SVTable
     )],
-    { 'availability' => 'gene has_structural_variation' }
+    { 'availability' => 'gene has_structural_variation core not_patch' }
   ));
 
   # External Data tree, including non-positional DAS sources
