@@ -117,7 +117,8 @@ sub _summarise_core_tables {
   my $self   = shift;
   my $db_key = shift;
   my $db_name = shift; 
-  my $dbh    = $self->db_connect( $db_name ); 
+  my $dbh    = $self->db_connect( $db_name );
+
   return unless $dbh; 
 
 # warn "connected to $db_name";
@@ -1333,12 +1334,10 @@ sub _summarise_go_db {
   # get the list of the available ontologies
   my $t_aref = $dbh->selectall_arrayref(
      'select ontology.ontology_id, ontology.name, accession, term.name
-      from ontology 
+      from ontology
         join term using (ontology_id)
-        left join relation on (term_id=child_term_id) 
-      where relation_id is null
-      order by ontology.ontology_id
-        ');
+      where is_root = 1
+      order by ontology.ontology_id');
   foreach my $row (@$t_aref) {
       my ($oid, $ontology, $root_term, $description) = @$row;
       $self->db_tree->{'ONTOLOGIES'}->{$oid} = {
@@ -1347,24 +1346,6 @@ sub _summarise_go_db {
     description => $description
     };
   }
-
-  #These GO terms were orphans prior to 70 but due to a change in EFO now have parents.
-  #Add these manually for now and sort properly in 71
-  $self->db_tree->{'ONTOLOGIES'}->{1} = {
-    db          => 'GO',
-    root        => 'GO:0008150',
-    description => 'biological_process',
-  };
-  $self->db_tree->{'ONTOLOGIES'}->{2} = {
-    db          => 'GO',
-    root        => 'GO:0005575',
-    description => 'cellular_component',
-  };
-  $self->db_tree->{'ONTOLOGIES'}->{3} = {
-    db          => 'GO',
-    root        => 'GO:0003674',
-    description => 'molecular_function',
-  };
 
   $dbh->disconnect();
 }
@@ -1400,10 +1381,10 @@ sub _summarise_datahubs {
       my $source_list = $hub_info->{$self->tree->{'UCSC_GOLDEN_PATH'}};
       
       return unless scalar @$source_list;
-      
+
       ## Get tracks from hub
       my $datahub_config = $parser->parse($base_url . $self->tree->{'UCSC_GOLDEN_PATH'}, $source_list);
-      
+ 
       ## Create Ensembl-style tracks from the datahub configuration
       ## TODO - implement track grouping!
       foreach my $dataset (@$datahub_config) {
