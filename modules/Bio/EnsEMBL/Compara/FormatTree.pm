@@ -252,7 +252,7 @@ my $sp_name_cb = sub {
       $species_name = $self->{tree}->genome_db->name;
       $species_name =~ s/\ /\_/g;
       return $species_name;
-  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')){
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')){
       my $taxon_id = $self->{tree}->taxon_id();
       my $genome_db_adaptor = $self->{tree}->adaptor->db->get_GenomeDBAdaptor;
       my $genome_db;
@@ -271,7 +271,7 @@ my $sp_name_cb = sub {
 my $n_members_cb = sub {
     my ($self) = @_;
     my $n_members;
-    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
         return $self->{tree}->n_members();
     }
     return undef;
@@ -281,8 +281,8 @@ my $n_members_cb = sub {
 my $pvalue_cb = sub {
     my ($self) = @_;
     my $pval;
-    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
-        return $self->{tree}->p_value();
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
+        return $self->{tree}->pvalue();
     }
     return undef;
 };
