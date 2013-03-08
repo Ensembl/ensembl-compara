@@ -899,13 +899,12 @@ sub regions_table {
   my $num_regions = scalar @$regions;
   foreach my $slice (@$regions){
     my ($rank) = @{$slice->get_all_Attributes('karyotype_rank')};
-    next unless defined $rank;
-    my $start = $slice->length/2 - 2000;
+      my $start = $slice->length/2 - 2000;
     my $end = $slice->length/2 + 2000;
     $start = 1 if $start < 1;
     $end = $slice->end if $end > $slice->end;
     my $seqname=$slice->seq_region_name;
-    my $seq_order = sprintf("%s_%s\n",$rank->value,$seqname);
+    my $seq_order = sprintf("%s_%s\n",( $rank ? $rank->value : 0),$seqname);
     $seq_order =~ s/([0-9]+)/sprintf('%06d',$1)/ge;
     my $seq_link=sprintf('<span class="hidden">%s</span><a href="/%s/Location/View?r=%s:%d-%d">%s</a>',$seq_order,$species,$slice->seq_region_name,$start,$end,$seqname);
     my $row_data = {order=>$seq_order, sequence=>$seq_link, length=>$slice->length};
