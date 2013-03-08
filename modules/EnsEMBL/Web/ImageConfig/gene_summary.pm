@@ -17,6 +17,7 @@ sub init {
   $self->create_menus(qw(
     sequence
     transcript
+    rnaseq
     prediction
     variation
     somatic
@@ -28,7 +29,7 @@ sub init {
   ));
   $self->image_resize = 1;
 
-  $self->add_tracks('other',    
+  $self->add_tracks('other',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
