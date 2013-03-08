@@ -80,7 +80,7 @@ sub _content {
   ## Turn on track associated with this db/logic name
   $image_config->modify_configs(
     [ $image_config->get_track_key('TSE_transcript', $object) ],
-    { qw(display supporting_evidence_transcript strand f) }  ## show on the forward strand only
+    { qw(display supporting_evidence_transcript strand f menu no) }  ## show on the forward strand only
   );
 
   ###
@@ -143,7 +143,7 @@ sub _content {
       }
     }
   }
-  
+
   $trans_obj->{'introns_and_exons'} = $intron_exon_slices;
 
   # add info on normalised coding region
@@ -167,6 +167,25 @@ sub _content {
     $s++;
     $e++;
   }
+
+  #intron supporting features
+  my $intron_supporting_features;
+  foreach my $isf (@{$transcript->get_all_IntronSupportingEvidence}) {
+    my $start = $isf->seq_region_start - $offset;
+    my $end   = $isf->seq_region_end - $offset;
+    my $munged_start = $start + $object->munge_gaps('supporting_evidence_transcript', $start);
+    my $munged_end   = $end + $object->munge_gaps('supporting_evidence_transcript', $end);
+    
+    push  @$intron_supporting_features, {
+      real_start => $isf->seq_region_start,
+      real_end   => $isf->seq_region_end,
+      hit_name   => $isf->hit_name,
+      munged_start => $munged_start,
+      munged_end   => $munged_end,
+      score        => $isf->score,
+    };
+  }
+  $al_obj->{'intron_support'} = $intron_supporting_features;
 
   # add info on non_canonical splice site sequences for introns
   my @canonical_sites = (['GT', 'AG'], ['GC', 'AG'], ['AT', 'AC'], ['NN', 'NN']); # these are considered not to be non-canonical
