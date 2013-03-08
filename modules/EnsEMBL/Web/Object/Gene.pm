@@ -3,7 +3,7 @@
 package EnsEMBL::Web::Object::Gene;
 
 ### NAME: EnsEMBL::Web::Object::Gene
-### Wrapper around a Bio::EnsEMBL::Gene object  
+### Wrapper around a Bio::EnsEMBL::Gene object
 
 ### PLUGGABLE: Yes, using Proxy::Object 
 
@@ -45,7 +45,6 @@ sub availability {
         my $has_gene_tree = $gene_tree ? 1 : 0;
         return $has_gene_tree;
       };
-
       $availability->{'history'}              = !!$rows;
       $availability->{'gene'}                 = 1;
       $availability->{'core'}                 = $self->get_db eq 'core';
@@ -54,6 +53,7 @@ sub availability {
       $availability->{'has_species_tree'}     = $self->has_species_tree;
       $availability->{'has_gene_tree'}        = $self->has_gene_tree;
       $availability->{'family'}               = !!$counts->{families};
+      $availability->{'not_rnaseq'}    = $self->get_db eq 'rnaseq' ? 0 : 1;
       $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
@@ -302,7 +302,7 @@ sub count_xrefs {
        AND x.external_db_id = edb.external_db_id
        AND ox.ensembl_object_type = "Gene"
        AND g.gene_id = ?';
-                   
+
   my $sth = $dbc->prepare($sql);
   $sth->execute($self->Obj->dbID);
   while (my ($label,$db_name,$status) = $sth->fetchrow_array) {
@@ -364,7 +364,7 @@ sub get_gene_supporting_evidence {
       my $name = $evi->hseqname;
       my $db_name = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
       #save details of evidence for vega genes for later since we need to combine them 
-      #before we can tellif they match the CDS / UTR 
+      #before we can tell if they match the CDS / UTR
       if ($ln =~ /otter/) {
         push @{$vega_evi{$name}{'data'}}, $evi;
         $vega_evi{$name}->{'db_name'} = $db_name;
@@ -403,6 +403,11 @@ sub get_gene_supporting_evidence {
       }
     }
     $e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
+
+    foreach my $isf (@{$trans->get_all_IntronSupportingEvidence}) {
+      push @{$e->{$tsi}{'intron_supporting_evidence'}},$isf->hit_name;
+    }
+
 
     #make a note of the hit_names of the supporting_features (but don't bother for vega db genes)
     if ($ln !~ /otter/) {
