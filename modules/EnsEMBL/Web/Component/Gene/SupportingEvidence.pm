@@ -20,6 +20,7 @@ sub content {
   my $object     = $self->object;
   my $logic_name = $object->logic_name;
   my $evidence   = $object->get_gene_supporting_evidence;
+  my $db         = $self->object->get_db;
 
   if (!$evidence) {
     my $html = '<dt>No Evidence</dt><dd>';
@@ -53,6 +54,13 @@ sub content {
     pop @cols; # remove Exon support column;
   }
   
+  if ($db eq 'rnaseq') {
+    @cols = (
+      { key => 'transcript', title => 'Transcript',               sort => 'html'    },
+      { key => 'CDS',        title => 'CDS support',              sort => 'html'    },
+      { key => 'intron',     title => 'Intron Support',           sort => 'html'    },
+    );
+  }
   my $width = (100 / scalar @cols) . '%';
   $_->{'width'} = $width for @cols;
   
@@ -67,6 +75,7 @@ sub content {
     
     my $row = { transcript => sprintf('%s [<a href="%s">view evidence</a>]', $transcript, $hub->url(\%url_params)) };
     $row->{'exon'} = scalar keys %{$evidence->{$transcript}{'extra_evidence'}} if $evidence->{$transcript}{'extra_evidence'};
+    $row->{'intron'} = scalar @{$evidence->{$transcript}{'intron_supporting_evidence'}} if $evidence->{$transcript}{'intron_supporting_evidence'};
     
     $url_params{'function'} = 'Alignment';
     
