@@ -240,6 +240,15 @@ sub render_tag {
         height    => $height,
         direction => $tag->{'style'} eq 'delta' ? 'down' : 'up',
       });
+      
+      # invisible box to make inserts more clickable
+      $composite->push($self->Rect({
+        x         => $start - 1 - $box_width/2,
+        y         => 0,
+        absolutey => 1,
+        width     => $box_width,
+        height    => $height,
+      }));
     }
   }
   
@@ -268,6 +277,8 @@ sub highlight {
   
   $composite->z(20);
   
+  my $z = ($f->start > $f->end) ? 0 :18;
+  
   $self->unshift(
     $self->Rect({ # First a black box
       x         => $composite->x - 2 / $pix_per_bp,
@@ -276,7 +287,7 @@ sub highlight {
       height    => $h + 4,
       colour    => 'black',
       absolutey => 1,
-      z         => 18,
+      z         => $z,
     }),
   );
 }
