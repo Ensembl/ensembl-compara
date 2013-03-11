@@ -342,7 +342,7 @@ sub alleles {
           $allele = substr($allele,0,50).'...' if (length $allele > 50);
           my $show2 = $self->hub->get_cookie_value('toggle_Sequence') eq 'open';
           $html  .= sprintf('<em>Note</em>: The reference %s for this mutation (%s) does not match the Ensembl reference %s at this location.
-                             <a class="toggle %s set_cookie" href="#" rel="Sequence" title="Click to toggle Sequence"></a><small>Click the plus to show all of the sequence</small>
+                             <a class="toggle %s set_cookie" href="#" rel="Sequence" title="Click to toggle Sequence"></a><small>Click the plus to show all of the sequence</small></a>
                              <div class="Sequence"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
                             $seq,
                             $allele,
