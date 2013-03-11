@@ -42,7 +42,7 @@ sub availability {
     
       $availability->{"has_$_"} = $counts->{$_} for qw(transcripts supporting_structural_variation);
       
-			$availability->{'has_phenotype'} = 1 if ($self->has_phenotype || $availability->{'has_transcripts'});
+      $availability->{'has_phenotype'} = 1 if ($self->has_phenotype || $availability->{'has_transcripts'});
  
       $self->{'_availability'} = $availability;
     }
@@ -109,13 +109,13 @@ sub count_transcripts {
 sub has_phenotype {
   my $self = shift;
   my @ssvs = @{$self->supporting_sv};
-	foreach my $ssv (@ssvs) {
-	  my $svas = $ssv->get_all_StructuralVariationAnnotations();
-    foreach my $sva (@$svas) {
-		  return 1 if ($sva->phenotype_description);
-		}
-	}
-	return undef;
+  foreach my $ssv (@ssvs) {
+    my $pfs = $ssv->get_all_PhenotypeFeatures();
+    foreach my $pf (@$pfs) {
+      return 1 if ($pf->phenotype);
+    }
+  }
+  return undef;
 }
 
 
@@ -198,7 +198,7 @@ sub get_class_colour {
 
 sub get_structural_variation_annotations {
   my $self = shift;
-  return $self->Obj->get_all_StructuralVariationAnnotations;
+  return $self->Obj->get_all_PhenotypeFeatures;
 }
 
 
