@@ -137,7 +137,7 @@ Ensembl.DataTable = {
     if (length > 10) {
       options.sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
       
-      $.each([ 10, 25, 50, 100 ], function () {
+      $.each([ 5, 10, 25, 50, 100 ], function () {
         if (this < length) {
           menu[0].push(this);
           menu[1].push(this);
