@@ -13,9 +13,9 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object         = $self->object;
+  my $object        = $self->object;
   my $hub           = $self->hub;
-  my $supporting_sv  = $object->supporting_sv;
+  my $supporting_sv = $object->supporting_sv;
   my $html          = $self->supporting_evidence_table($supporting_sv);
   return $html;
 }
@@ -57,12 +57,13 @@ sub supporting_evidence_table {
       my $is_somatic = $ssv_obj->is_somatic;
       
       # Location(s)
-      foreach my $svf (@{$ssv_obj->get_all_StructuralVariationFeatures}) {
+      foreach my $svf (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_StructuralVariationFeatures}) {
         my ($sv_name,$chr_bp);
         my $start  = $svf->seq_region_start;
         my $end    = $svf->seq_region_end;
         my $strand = $svf->seq_region_strand;
            $strand = ' <small>('.($strand > 0 ? 'forward' : 'reverse').' strand)</small>';
+        next if ($start == 0 || $end == 0);
         
         $bp_order = $svf->breakpoint_order;
         my $chr = $svf->seq_region_name.':';
@@ -123,30 +124,28 @@ sub supporting_evidence_table {
        
       # Annotation(s)
       my ($clin, $sample, $strain, $phen);
-      foreach my $annot (@{$ssv_obj->get_all_StructuralVariationAnnotations}) {
-        my $aclin = $annot->clinical_significance;
+      my ($clins, $samples, $strains, $phens);
+      foreach my $annot (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_PhenotypeFeatures}) {
+        next if ($annot->seq_region_start==0 || $annot->seq_region_end==0);
+        
+        my $aclin   = $annot->clinical_significance;
         my $asample = $annot->sample_name;
         my $astrain = $annot->strain_name;
-        my $aphen   = $annot->phenotype_description;
+        my $aphen   = ($annot->phenotype) ? $annot->phenotype->description : undef;
         
-        if ($aclin) {
-          $clin .= ';<br />' if ($clin);
-          $clin .= $aclin;
-        }
-        if ($asample) {
-          $sample .= ';<br />' if ($sample);
-          $sample .= $asample;
-        }
-        if ($astrain) {
-          $strain .= ';<br />' if ($strain);
-          $strain .= $astrain;
-        }
+        $clins->{$aclin} = 1 if ($aclin);
+        $samples->{$asample} = 1 if ($asample);
+        $strains->{$astrain} = 1 if ($astrain);
         if ($aphen) {
-          $phen .= ';<br />' if ($phen);
-          $phen .= $aphen;
+          $phens->{$aphen} = 1;
           $has_phen = 1;
         }    
       }
+      
+      $clin   = join(';<br />', keys(%$clins));
+      $sample = join(';<br />', keys(%$samples));
+      $strain = join(';<br />', keys(%$strains));
+      $phen   = join(';<br />', keys(%$phens));
       
       my %row = (
                   ssv      => $name,
