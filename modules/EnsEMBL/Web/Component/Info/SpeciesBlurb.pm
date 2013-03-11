@@ -55,6 +55,12 @@ sub content {
   
   $html .= '<h2 id="genebuild">Gene annotation</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_annotation.html");
+
+  ## Link to Wikipedia
+  $html .= qq(<h2>More information</h2>
+<p>General information about this species can be found in 
+<a href="http://en.wikipedia.org/wiki/$species" rel="external">Wikipedia</a>.
+</p>);
   
   $html .= '
     </div>
