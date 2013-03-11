@@ -62,6 +62,10 @@ body.ie .open .cell_detail { display: block; }
 .ajax_add span               { display: none;   }
 .ajax_add.closed span.closed { display: inline; }
 .ajax_add.open span.open     { display: inline; }
+.toggle span                 { display: none;   }
+.toggle.closed span.closed   { display: inline; }
+.toggle.open span.open       { display: inline; }
+a.toggle.no_img              { background:none; padding:0; }
 
 div.reorder_species ul li          { cursor: n-resize; }
 body.mac div.reorder_species ul li { cursor: ns-resize; }
