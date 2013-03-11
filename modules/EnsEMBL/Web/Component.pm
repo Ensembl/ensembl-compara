@@ -1046,7 +1046,7 @@ sub transcript_table {
       $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $gene_html};
     }
     
-    my $hide    = $hub->get_cookie_value('toggle_transcripts_table') eq 'closed';
+    my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
@@ -1134,18 +1134,16 @@ sub transcript_table {
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
 
     $table->add_row(
-      sprintf('<a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">%s</a>',
-        $hide ? 'closed' : 'open',
-        $page_type eq 'gene' ? 'Transcripts' : 'Gene',
-      ),
-      $gene_html
+      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
+      $gene_html.sprintf(' [<b><a rel="transcripts_table" class="toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table"><span class="open">Show table</span><span class="closed">Hide table</span></a></b>]',
+        $show ? 'closed' : 'open')
     );
 
     my $table_2 = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' }, iDisplayLength => 5 },
       toggleable        => 1,
-      class             => 'fixed_width' . ($hide ? ' hide' : ''),
+      class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
       exportable        => 0
     });
