@@ -1113,6 +1113,7 @@ sub transcript_table {
         aa_length  => $protein_length,
         biotype    => $self->glossary_mouseover(ucfirst $biotype),
         ccds       => $ccds,
+        has_ccds   => $ccds eq '-' ? 0 : 1,
         cds_tag    => $cds_tag,
         options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' }
       };
@@ -1122,7 +1123,14 @@ sub transcript_table {
       push @{$biotype_rows{$biotype}}, $row;
     }
 
-    # Add rows to transcript table sorted by biotype
+    ## Additionally, sort by CCDS status and length
+    while (my ($k,$v) = each (%biotype_rows)) {
+      my @subsorted = sort {$b->{'has_ccds'} cmp $a->{'has_ccds'}
+                            || $b->{'bp_length'} <=> $a->{'bp_length'}} @$v;
+      $biotype_rows{$k} = \@subsorted;
+    }
+
+    # Add rows to transcript table
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
 
     $table->add_row(
@@ -1135,7 +1143,7 @@ sub transcript_table {
 
     my $table_2 = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
-      data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
+      data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' }, iDisplayLength => 5 },
       toggleable        => 1,
       class             => 'fixed_width' . ($hide ? ' hide' : ''),
       id                => 'transcripts_table',
