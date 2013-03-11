@@ -45,16 +45,21 @@ sub table_data {
   my $object     = $self->object;
   
   my %phenotypes;
+  my %ssv_phen;
                  
   my $count_se = scalar @$supporting_evidences;
                  
   foreach my $evidence (@$supporting_evidences) {
   
-    my $svas = $evidence->get_all_StructuralVariationAnnotations();
+    my $svas = $evidence->get_all_PhenotypeFeatures();
+    my $ssv_name = $evidence->variation_name;
     
     foreach my $sva (@$svas) {
-      my $phe = $sva->phenotype_description;
-      if ($phe) {
+      next if ($sva->seq_region_start==0 || $sva->seq_region_end==0);
+      
+      my $phe = ($sva->phenotype) ? $sva->phenotype->description : undef;
+      if ($phe && !$ssv_phen{$ssv_name}{$phe}) {
+        $ssv_phen{$ssv_name}{$phe} = 1;
         if (exists $phenotypes{$phe}) {
           $phenotypes{$phe}{s_evidence} ++;
         } 
