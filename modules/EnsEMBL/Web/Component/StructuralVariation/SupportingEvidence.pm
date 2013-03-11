@@ -120,7 +120,7 @@ sub supporting_evidence_table {
   
       # Class + class colour
       my $colour = $object->get_class_colour($ssv_obj->class_SO_term);
-      my $sv_class = '<table style="border-spacing:0px"><tr><td style="background-color:'.$colour.';width:5px"></td><td style="margin:0px;padding:0px">&nbsp;'.$ssv_obj->var_class.'</td></tr></table>';
+      my $sv_class = '<div><div style="float:left;background-color:'.$colour.';padding:5px;margin-top:4px"></div> <div style="float:left;margin-left:5px">'.$ssv_obj->var_class.'</div></div>';
        
       # Annotation(s)
       my ($clin, $sample, $strain, $phen);
@@ -167,9 +167,9 @@ sub supporting_evidence_table {
     };
     
     push @$columns, (
-     { key => 'class',  sort => 'string',        title => 'Allele type'           },
-     { key => 'clin',   sort => 'string',        title => 'Clinical significance' },
-     { key => 'sample', sort => 'string',        title => 'Sample name(s)'        },
+     { key => 'class',  sort => 'string', title => 'Allele type'           },
+     { key => 'clin',   sort => 'string', title => 'Clinical significance' },
+     { key => 'sample', sort => 'string', title => 'Sample name(s)'        },
     );
     
     if (defined($has_phen)) {  
