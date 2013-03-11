@@ -39,7 +39,9 @@ sub content {
     $html .= $self->_hint($hints[2],$hints[0],$hints[1]);
   }
   $html .= $self->transcript_table;
-  
+
+## TODO - needs to be moved into help 
+=pod 
   if ($object->gene) {
     $html .= $self->_hint('transcript', 'Transcript and Gene level displays', sprintf('
       <p>
@@ -48,7 +50,8 @@ sub content {
       </p>', $object->species_defs->ENSEMBL_SITETYPE, $object->species_defs->ENSEMBL_SITETYPE
     ));
   }
-  
+=cut
+
   return $html;
 }
 

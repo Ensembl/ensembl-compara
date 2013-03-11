@@ -40,6 +40,9 @@ sub content {
   }
   
   $html .= $self->transcript_table;
+
+## TODO - needs to be moved into help
+=pod
   my $extra = ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ' and manually curated alternative alleles' : ', paralogues, regulatory regions and splice variants';
 
   $html .= $self->_hint('gene', 'Transcript and Gene level displays', sprintf('
@@ -53,6 +56,7 @@ sub content {
       To return to viewing gene level information click on the Gene tab in the menu bar at the top of the page.
     </p>', $object->species_defs->ENSEMBL_SITETYPE, $extra
   ));
+=cut
 
   return $html;
 }
