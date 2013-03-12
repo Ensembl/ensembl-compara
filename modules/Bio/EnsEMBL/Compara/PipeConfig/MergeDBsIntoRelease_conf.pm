@@ -144,6 +144,7 @@ sub pipeline_analyses {
                 'dest_db_conn'  => '#curr_rel_db#',
                 'mode'          => 'topup',
             },
+            -analysis_capacity => 1,                              # we can only have one worker of this kind to avoid conflicts of DISABLE KEYS / ENABLE KEYS / INSERT
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
             # we're waiting for all the backups to complete (even though we only need to wait for one of them)
             $self->o('backup_tables') ? (-wait_for => [ 'backup_table' ]) : (),
