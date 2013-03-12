@@ -603,7 +603,7 @@ sub print_method_link_species_sets_to_update {
     next if ($this_genome_db->name ne $genome_db->name);
     foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
       $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
-          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set})} = $this_method_link_species_set;
+          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs})} = $this_method_link_species_set;
     }
   }
 
@@ -612,8 +612,8 @@ sub print_method_link_species_sets_to_update {
     last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
     foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
       printf "%8d: ", $this_method_link_species_set->dbID,;
-      print $this_method_link_species_set->method_link_type, " (",
-          join(",", map {$_->name} @{$this_method_link_species_set->species_set}), ")\n";
+      print $this_method_link_species_set->method->type, " (",
+          join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
     }
   }
 
@@ -644,7 +644,7 @@ sub create_new_method_link_species_sets {
     next if ($this_genome_db->name ne $genome_db->name);
     foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
       $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
-          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set})} = $this_method_link_species_set;
+          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs})} = $this_method_link_species_set;
     }
   }
 
@@ -653,8 +653,8 @@ sub create_new_method_link_species_sets {
     last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
     foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
       printf "%8d: ", $this_method_link_species_set->dbID,;
-      print $this_method_link_species_set->method_link_type, " (",
-          join(",", map {$_->name} @{$this_method_link_species_set->species_set}), ")\n";
+      print $this_method_link_species_set->method->type, " (",
+          join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
     }
   }
 
