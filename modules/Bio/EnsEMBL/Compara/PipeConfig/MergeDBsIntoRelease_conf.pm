@@ -47,6 +47,9 @@ sub default_options {
         # Do we want ANALYZE TABLE and OPTIMIZE TABLE on the final tables ?
         'analyze_optimize'  => 1,
 
+        # Do we want to backup the target merge table before-hand ?
+        'backup_tables'     => 1,
+
         'urls'              => {
             'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
@@ -119,6 +122,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 2      => [ 'copy_table'  ],
                 '3->A' => [ 'merge_table' ],
+                $self->o('backup_tables') ? ('4->A' => [ 'backup_table' ]) : (),
                 'A->4' => [ 'check_size' ],
             },
         },
@@ -141,6 +145,8 @@ sub pipeline_analyses {
                 'mode'          => 'topup',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            # we're waiting for all the backups to complete (even though we only need to wait for one of them)
+            $self->o('backup_tables') ? (-wait_for => [ 'backup_table' ]) : (),
         },
 
         {   -logic_name => 'check_size',
@@ -151,7 +157,31 @@ sub pipeline_analyses {
                 'inputquery'    => 'SELECT #key# FROM #table#',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
-            -flow_into     => [ $self->o('analyze_optimize') ? ('analyze_optimize') : () ],
+            -flow_into     => [
+                $self->o('analyze_optimize') ? ('analyze_optimize') : (),
+                $self->o('backup_tables') ? ('drop_backup') : ()
+            ],
+        },
+
+        {   -logic_name => 'backup_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'db_conn'   => '#curr_rel_db#',
+                'sql'       => [
+                    'CREATE TABLE DBMERGEBACKUP_#table# LIKE #table#',
+                    'INSERT INTO DBMERGEBACKUP_#table# SELECT * FROM #table#',
+                ]
+            },
+            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+        },
+
+        {   -logic_name => 'drop_backup',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'db_conn'   => '#curr_rel_db#',
+                'sql'       => 'DROP TABLE DBMERGEBACKUP_#table#',
+            },
+            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
 
         {   -logic_name => 'analyze_optimize',
