@@ -479,8 +479,7 @@ sub draw_cigar_difference {
         next;
       }
       my @cigar;
-      # Flipped cigar string, data is in this format in e69.
-      $cigar =~ s/(\D)(\d+)/$2$1/g if($cigar =~ /\d$/);
+      next if($cigar =~ /\d$/); # Skip erroneous duplicate data in e70, e71.
       @cigar = $cigar =~ /(\d*\D)/g;
       my $draw_start = max(0,$f->start);
       my $bump_start = $draw_start*$self->scalex;
