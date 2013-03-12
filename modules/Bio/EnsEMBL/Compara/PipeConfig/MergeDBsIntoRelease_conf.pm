@@ -19,10 +19,6 @@
     A pipeline to merge some production databases onto the release one.
     It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees).
 
-=head1 CONTACT
-
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf;
@@ -44,7 +40,7 @@ sub default_options {
         'rel_suffix'      => 'c',            # an empty string by default, a letter otherwise
 
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
-        'pipeline_name'   => 'db_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
+        'pipeline_name'   => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
 
@@ -55,8 +51,8 @@ sub default_options {
             'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_71',
             'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_70',
 
-            'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
-            #'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_test_final_db2',
+            #'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
+            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_full_merge2',
             'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
         },
 
@@ -85,6 +81,7 @@ sub pipeline_wide_parameters {
 
     return {
         %{$self->SUPER::pipeline_wide_parameters},
+        # Trick to overcome the 2-step substitution of parameters (also used below in the "generate_job_list" analysis
         ref($urls) ? %$urls : (),
     }
 }
@@ -95,12 +92,10 @@ sub pipeline_wide_parameters {
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines three analyses:
-
                     * 'generate_job_list'           generates a list of tables to be copied / merged
-
                     * 'copy_table'                  dumps tables from source_db and re-creates them in pipeline_db
-
                     * 'merge_table'                 dumps tables from source_db and merges them into pipeline_db
+                    * 'check_size'                  checks that the total number of rows in the table is as expected
 
 =cut
 
@@ -116,10 +111,11 @@ sub pipeline_analyses {
                 'only_tables'       => $self->o('only_tables'),
                 'db_aliases'        => [ref($self->o('urls')) ? keys %{$self->o('urls')} : ()],
             },
-            -input_ids => [ {} ],
-            -flow_into => {
-                2 => [ 'copy_table'  ],
-                3 => [ 'merge_table' ],
+            -input_ids  => [ {} ],
+            -flow_into  => {
+                2      => [ 'copy_table'  ],
+                '3->A' => [ 'merge_table' ],
+                'A->4' => [ 'check_size' ],
             },
         },
 
@@ -130,7 +126,7 @@ sub pipeline_analyses {
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
-            -analysis_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
 
         {   -logic_name    => 'merge_table',
@@ -139,8 +135,19 @@ sub pipeline_analyses {
                 'dest_db_conn'  => '#curr_rel_db#',
                 'mode'          => 'topup',
             },
-            -analysis_capacity => 1,    # prevent several workers from updating the same table (brute force)
+            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
+
+        {   -logic_name => 'check_size',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'db_conn'       => '#curr_rel_db#',
+                'expected_size' => '= #n_total_rows#',
+                'inputquery'    => 'SELECT #key# FROM #table#',
+            },
+            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+        },
+
 
     ];
 }
