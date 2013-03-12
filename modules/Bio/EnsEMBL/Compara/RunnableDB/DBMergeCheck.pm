@@ -77,7 +77,7 @@ sub fetch_input {
     $self->param('dbconnections', $dbconnections);
 
     # Gets the list of non-empty tables for each db
-    my $nonempty_tables = {};
+    my $table_size = {};
     foreach my $db (@$db_aliases) {
 
         # Production-only tables
@@ -92,12 +92,42 @@ sub fetch_input {
         my $extra = join("", map {" AND table_name NOT LIKE '$_' "} @wildcards);
 
         my $bad_tables = join(',', map {"'$_'"} @bad_tables_list);
-        my $sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND table_type = 'BASE TABLE' AND table_name NOT IN ($bad_tables) AND table_rows $extra";
+        my $sql = "SELECT table_name, table_rows FROM information_schema.tables WHERE table_schema = ? AND table_type = 'BASE TABLE' AND table_name NOT IN ($bad_tables) AND table_rows $extra";
         my $list = $dbconnections->{$db}->db_handle->selectall_arrayref($sql, undef, $connection_params->{$db}->{-dbname});
-        $nonempty_tables->{$db} = {map {$_->[0] => 1} @$list};
+        $table_size->{$db} = {map {$_->[0] => $_->[1]} @$list};
     }
-    print Dumper($nonempty_tables) if $self->debug;
-    $self->param('nonempty_tables', $nonempty_tables);
+    print Dumper($table_size) if $self->debug;
+    # WARNING: In InnoDB mode, table_rows is an approximation of the true number of rows
+    $self->param('table_size', $table_size);
+}
+
+sub _find_primary_key {
+    my $self = shift @_;
+    my $dbconnection = shift @_;
+    my $table = shift @_;
+
+    my $primary_keys = $self->param('primary_keys');
+
+    # Check on primary key
+    my $key = $primary_keys->{$table};
+    unless (defined $key) {
+        my $sth = $dbconnection->db_handle->primary_key_info(undef, undef, $table);
+        # We only want the first column of the primary key
+        while (my $row = $sth->fetch) {
+            $key = $row->[3] if $row->[4] == 1;
+        }
+        die " -ERROR- No primary key for table '$table'" unless defined $key;
+        $primary_keys->{$table} = $key;
+    }
+
+    # Key type
+    my $key_type = $dbconnection->db_handle->column_info(undef, undef, $table, $key)->fetch->[5];
+    my $is_string_type = ($key_type =~ /char/i ? 1 : 0);
+    # We only accept char and int
+    die "'$key_type' type is not handled" unless $is_string_type or $key_type =~ /int/i;
+
+    return ($key, $is_string_type);
+
 }
 
 sub run {
@@ -105,10 +135,9 @@ sub run {
 
     my $curr_rel_name = $self->param('curr_rel_name');
     my $master_name = $self->param('master_name');
-    my $nonempty_tables = $self->param('nonempty_tables');
+    my $table_size = $self->param('table_size');
     my $exclusive_tables = $self->param('exclusive_tables');
     my $only_tables = $self->param_required('only_tables');
-    my $primary_keys = $self->param('primary_keys');
     my $dbconnections = $self->param('dbconnections');
 
     # Structures the information per table
@@ -122,15 +151,15 @@ sub run {
 
             # If we want some specific tables, they should be non-empty
             foreach my $table (@{$only_tables->{$db}}) {
-                die "'$table' should be non-empty in '$db'" unless exists $nonempty_tables->{$db}->{$table};
+                die "'$table' should be non-empty in '$db'" unless exists $table_size->{$db}->{$table};
                 push @ok_tables, $table;
             }
 
         } else {
 
             # The master database is a reference: most of its tables are discarded
-            foreach my $table (keys %{$nonempty_tables->{$db}}) {
-                next if (exists $nonempty_tables->{$master_name}->{$table} and not grep {$_ eq $table} @{$only_tables->{$master_name}});
+            foreach my $table (keys %{$table_size->{$db}}) {
+                next if (exists $table_size->{$master_name}->{$table} and not grep {$_ eq $table} @{$only_tables->{$master_name}});
                 push @ok_tables, $table;
             }
         }
@@ -153,44 +182,30 @@ sub run {
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
     foreach my $table (keys %$all_tables) {
 
-        if (not exists $nonempty_tables->{$curr_rel_name}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
+        if (not exists $table_size->{$curr_rel_name}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
+
+            my $db = $all_tables->{$table}->[0];
 
             # Single source -> copy
-            print "$table is copied over from ", $all_tables->{$table}->[0], "\n" if $self->debug;
-            $copy{$table} = $all_tables->{$table}->[0];
+            print "$table is copied over from $db\n" if $self->debug;
+            $copy{$table} = $db;
 
         } else {
 
+            my ($key, $is_string_type) = $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
+
             # Multiple source -> merge (possibly with the target db)
             my @dbs = @{$all_tables->{$table}};
-            push @dbs, $curr_rel_name if exists $nonempty_tables->{$curr_rel_name}->{$table};
+            push @dbs, $curr_rel_name if exists $table_size->{$curr_rel_name}->{$table};
             print "$table is merged from ", join(" and ", @dbs), "\n" if $self->debug;
 
-            # Check on primary key
-            my $key = $primary_keys->{$table};
-            unless (defined $key) {
-                my $sth = $dbconnections->{$curr_rel_name}->db_handle->primary_key_info(undef, undef, $table);
-                # We only want the first column of the primary key
-                while (my $row = $sth->fetch) {
-                    $key = $row->[3] if $row->[4] == 1;
-                }
-                die " -ERROR- No primary key for table '$table'" unless defined $key;
-            }
-
-            # Key type
-            my $key_type = $dbconnections->{$curr_rel_name}->db_handle->column_info(undef, undef, $table, $key)->fetch->[5];
-            my $is_string_type = ($key_type =~ /char/i ? 1 : 0);
-            # We only accept char and int
-            die "'$key_type' type is not handled" unless $is_string_type or $key_type =~ /int/i;
-
-            my $sql = "SELECT MIN($key), MAX($key), COUNT(*) FROM $table";
+            my $sql = "SELECT MIN($key), MAX($key), COUNT($key) FROM $table";
             my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)->[0] } @dbs};
             my $bad = 0;
+            map { $table_size->{$_}->{$table} = $min_max->{$_}->[2] } @dbs;
 
             # min and max values must not overlap
-            my $max_size = 0;
             foreach my $db1 (@dbs) {
-                $max_size = $min_max->{$db1}->[2] if $min_max->{$db1}->[2] > $max_size;
                 foreach my $db2 (@dbs) {
                     next if $db2 le $db1;
                     if ($is_string_type) {
@@ -204,28 +219,26 @@ sub run {
             }
             if ($bad) {
 
-                if ($max_size <= $self->param('max_nb_elements_to_fetch')) {
+                unless (grep { $table_size->{$_}->{$table} > $self->param('max_nb_elements_to_fetch') } @dbs) {
 
                     print " -INFO- comparing the actual values of the primary key\n" if $self->debug;
                     # We really make sure that no value is shared between the tables
                     $sql = "SELECT DISTINCT $key FROM $table";
-                    my $all_values = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)} @dbs};
+                    my %all_values = ();
                     foreach my $db (@dbs) {
-                        $all_values = {map {$_->[0] => 1} @{$all_values->{$db}}};
-                    }
-                    $bad = undef;
-                    foreach my $db1 (@dbs) {
-                        foreach my $db2 (@dbs) {
-                            next if $db2 le $db1;
-                            my @overlap = grep {exists $all_values->{$db2}->{$_}} (keys %{$all_values->{$db1}});
-                            $bad = [$overlap[0], $db1, $db2] if scalar(@overlap);
-                            last if $bad;
+                        my $sth = $dbconnections->{$db}->prepare($sql);
+                        $sth->{mysql_use_result} = 1;
+                        $sth->execute;
+                        my $value;
+                        $sth->bind_columns(\$value);
+                        while ($sth->fetch) {
+                            die sprintf(" -ERROR- for the key '%s', the value '%s' is present in several copies\n", $key, $value) if exists $all_values{$value};
+                            $all_values{$value} = 1
                         }
-                        last if $bad;
                     }
-                    die sprintf(" -ERROR- for the key '%s', the value '%s' is present in %s and %s\n", $key, @$bad) if $bad;
+
                 } else {
-                    die " -ERROR- ranges of the key '$key' overlap, and there are too many elements ($max_size) to perform an extensive check\n", Dumper($min_max);
+                    die " -ERROR- ranges of the key '$key' overlap, and there are too many elements to perform an extensive check\n", Dumper($min_max);
                 }
             }
             print " -INFO- ranges of the key '$key' are fine\n" if $self->debug;
@@ -241,6 +254,10 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
+    my $table_size = $self->param('table_size');
+    my $curr_rel_name = $self->param('curr_rel_name');
+    my $primary_keys = $self->param('primary_keys');
+
     # If in write_output, it means that there are no ID conflict. We can safely dataflow the copy / merge operations.
 
     while ( my ($table, $db) = each(%{$self->param('copy')}) ) {
@@ -248,9 +265,12 @@ sub write_output {
     }
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
+        my $n_total_rows = $table_size->{$curr_rel_name}->{$table} || 0;
         foreach my $db (@$dbs) {
             $self->dataflow_output_id( {'src_db_conn' => "#$db#", 'table' => $table}, 3);
+            $n_total_rows += $table_size->{$db}->{$table};
         }
+        $self->dataflow_output_id( {'table' => $table, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 4);
     }
 
 }
