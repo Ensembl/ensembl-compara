@@ -21,6 +21,7 @@ sub populate_tree {
   $self->create_node('Summary', 'Gene summary',
     [qw(
       summary     EnsEMBL::Web::Component::Gene::GeneSummary
+      navbar      EnsEMBL::Web::Component::ViewNav
       transcripts EnsEMBL::Web::Component::Gene::TranscriptsImage
     )],
     { 'availability' => 'gene', 'concise' => 'Gene summary' }
