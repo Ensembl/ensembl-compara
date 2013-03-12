@@ -70,6 +70,7 @@ sub fetch_input {
     my $db_aliases = $self->param_required('db_aliases');
     my $exclusive_tables = $self->param_required('exclusive_tables');
     my $ignored_tables = $self->param_required('ignored_tables');
+    my $curr_rel_name = $self->param('curr_rel_name');
 
     my $connection_params = {map {$_ => url2dbconn_hash($self->param_required($_))} @$db_aliases};
 
@@ -86,10 +87,13 @@ sub fetch_input {
         # We don't care about tables that are exclusive to another db
         push @bad_tables_list, (grep {$exclusive_tables->{$_} ne $db} (keys %$exclusive_tables));
 
+        # We want all the tables on the release database to detect production tables
+        my $extra = $db eq $curr_rel_name ? " IS NOT NULL " : " ";
+
         # We may want to ignore some more tables
         push @bad_tables_list, @{$ignored_tables->{$db}} if exists $ignored_tables->{$db};
         my @wildcards =  grep {$_ =~ /\%/} @{$ignored_tables->{$db}};
-        my $extra = join("", map {" AND table_name NOT LIKE '$_' "} @wildcards);
+        $extra .= join("", map {" AND table_name NOT LIKE '$_' "} @wildcards);
 
         my $bad_tables = join(',', map {"'$_'"} @bad_tables_list);
         my $sql = "SELECT table_name, table_rows FROM information_schema.tables WHERE table_schema = ? AND table_type = 'BASE TABLE' AND table_name NOT IN ($bad_tables) AND table_rows $extra";
@@ -182,7 +186,9 @@ sub run {
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
     foreach my $table (keys %$all_tables) {
 
-        if (not exists $table_size->{$curr_rel_name}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
+        die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n" unless exists $table_size->{$curr_rel_name}->{$table};
+
+        if (not $table_size->{$curr_rel_name}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 
             my $db = $all_tables->{$table}->[0];
 
@@ -196,7 +202,7 @@ sub run {
 
             # Multiple source -> merge (possibly with the target db)
             my @dbs = @{$all_tables->{$table}};
-            push @dbs, $curr_rel_name if exists $table_size->{$curr_rel_name}->{$table};
+            push @dbs, $curr_rel_name if $table_size->{$curr_rel_name}->{$table};
             print "$table is merged from ", join(" and ", @dbs), "\n" if $self->debug;
 
             my $sql = "SELECT MIN($key), MAX($key), COUNT($key) FROM $table";
