@@ -44,6 +44,9 @@ sub default_options {
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
 
+        # Do we want ANALYZE TABLE and OPTIMIZE TABLE on the final tables ?
+        'analyze_optimize'  => 1,
+
         'urls'              => {
             'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
@@ -96,6 +99,7 @@ sub pipeline_wide_parameters {
                     * 'copy_table'                  dumps tables from source_db and re-creates them in pipeline_db
                     * 'merge_table'                 dumps tables from source_db and merges them into pipeline_db
                     * 'check_size'                  checks that the total number of rows in the table is as expected
+                    * 'analyze_optimize'            (optional) runs ANALYZE TABLE and OPTIMIZE TABLE on the final tables
 
 =cut
 
@@ -127,6 +131,7 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -flow_into     => [ $self->o('analyze_optimize') ? ('analyze_optimize') : () ],
         },
 
         {   -logic_name    => 'merge_table',
@@ -146,8 +151,20 @@ sub pipeline_analyses {
                 'inputquery'    => 'SELECT #key# FROM #table#',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -flow_into     => [ $self->o('analyze_optimize') ? ('analyze_optimize') : () ],
         },
 
+        {   -logic_name => 'analyze_optimize',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'db_conn'   => '#curr_rel_db#',
+                'sql'       => [
+                    'ANALYZE TABLE #table#',
+                    'OPTIMIZE TABLE #table#',
+                ]
+            },
+            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+        },
 
     ];
 }
