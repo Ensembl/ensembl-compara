@@ -24,6 +24,42 @@ Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
+=head1 SYNOPSYS
+
+This Runnable needs the following parameters:
+ - db_aliases: hash of 'db_alias' -> URL to connect to the database
+ - curr_rel_name: alias of the target database
+ - master_name: alias of the master database
+
+ - production_tables: list of Compara production tables (should map ensembl-compara/sql/pipeline-tables.sql)
+ - hive_tables: list of eHive tables (should map ensembl-hive/sql/tables.sql)
+
+It works by:
+ 1. Listing all the tables that are non-empty
+ 2. Deciding for each table whether they have to be copied over or merged
+    - a table is copied (replaced) if there is a single source
+    - a table is merged if there are multiple sources (perhaps the target as well)
+ 3. When merging, the runnable checks that the data does not overlap
+    - first by comparing the interval of the primary key
+    - then comparing the actual values if needed
+ 4. If everything is fine, the jobs are all dataflown
+ 
+Primary keys can most of the time be guessed from the schema.
+However, you can define the hash primary_keys as 'table' => 'column_name'
+to override some of the keys / provide them if they are not part of the schema.
+They don't have to be the whole primary key on their own, they can simply be a
+representative column that can be used to check for overlap between databases.
+Currently, only INT anc CHAR columns are allowed.
+
+The Runnable will complain if:
+ - no primary key is defined / can be found for a table that needs to be merged
+ - the primary key is not INT or CHAR
+ - the tables refered by the "only_tables" parameter should all be non-empty
+ - the tables refered by the "exclusive_tables" parameter should all be non-empty
+ - all the non-production and non-eHive tables of the source databases should
+   exist in the target database
+ - some tables that need to be merged share a value of their primary key
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck;
