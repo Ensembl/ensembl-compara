@@ -20,7 +20,7 @@ sub content {
 
   return qq{
       <div class="navbar print_hide" style="width:$image_width">
-        <a href="$url"><img src="/i/48/region_thumb.png" title="Go to Region in Detail for more options" style="border:1px solid #ccc;margin:0 16px;vertical-align:middle" /></a> Go to <a href="$url">Region in Detail</a> for more tracks and navigation options
+        <a href="$url"><img src="/i/48/region_thumb.png" title="Go to Region in Detail for more options" style="border:1px solid #ccc;margin:0 16px;vertical-align:middle" /></a> Go to <a href="$url">Region in Detail</a> for more tracks and navigation options (e.g. zooming)
       </div>};
 }
 
