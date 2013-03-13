@@ -559,11 +559,23 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'supersets'}    = \%super_sets;  
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'}      = \%sub_sets;
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'descriptions'} = \%set_descriptions;
+  
+#--------- Add in phenotype information
+  my $pf_aref = $dbh->selectall_arrayref(qq{
+    SELECT type, count(*)
+    FROM phenotype_feature
+    GROUP BY type
+  });
+  
+  for(@$pf_aref) {
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'rows'} += $_->[1];
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]} = $_->[1];
+  }
 
 #--------- Add in somatic mutation information
   my %somatic_mutations;
 	# Somatic source(s)
-  my $sm_aref =  $dbh->selectall_arrayref(  
+  my $sm_aref =  $dbh->selectall_arrayref(
     'select distinct(p.description), pf.phenotype_id, s.name 
      from phenotype p, phenotype_feature pf, source s, study st
      where p.phenotype_id=pf.phenotype_id and pf.study_id = st.study_id
