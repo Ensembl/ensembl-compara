@@ -328,7 +328,6 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'      => $self->o('master_db'),
                 'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link', 'method_link_species_set', 'species_set' ],
                 'column_names' => [ 'table' ],
                 'fan_branch_code' => 2,
