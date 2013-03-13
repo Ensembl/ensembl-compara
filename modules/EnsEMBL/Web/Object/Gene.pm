@@ -58,8 +58,7 @@ sub availability {
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
       
-      ## Phenotypes are linked on HGNC names so is fine to do a fast availability call using that for now (e70)
-      ## However need a proper call for e71
+      my $phen_avail = 0;
       if ($self->database('variation')) {
         my $pfa = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'PhenotypeFeature');
         $phen_avail = $pfa->count_all_by_Gene($self->Obj) ? 1 : 0;
