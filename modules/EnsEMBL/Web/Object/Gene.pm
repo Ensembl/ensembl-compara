@@ -61,9 +61,23 @@ sub availability {
       ## Phenotypes are linked on HGNC names so is fine to do a fast availability call using that for now (e70)
       ## However need a proper call for e71
       if ($self->database('variation')) {
-        my $hgncs =  $obj->get_all_DBEntries('hgnc') || [];
-        $availability->{'phenotype'} = @$hgncs ? 1 : 0;
+        my $pfa = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'PhenotypeFeature');
+        $phen_avail = $pfa->count_all_by_Gene($self->Obj) ? 1 : 0;
+        
+        if(!$phen_avail) {
+          my $hgncs =  $obj->get_all_DBEntries('hgnc') || [];
+          
+          if(scalar @$hgncs && $hgncs->[0]) {
+            my $hgnc_name = $hgncs->[0]->display_id;
+            if ($hgnc_name) {
+              
+              # this method is super-fast as it uses some direct SQL on a nicely indexed table
+              $phen_avail = ($pfa->_check_gene_by_HGNC($hgnc_name)) ? 1 : 0;
+            }
+          }
+        }
       }
+      $availability->{'phenotype'} = $phen_avail;
 
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
