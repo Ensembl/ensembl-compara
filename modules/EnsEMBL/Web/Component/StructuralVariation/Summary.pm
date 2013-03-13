@@ -27,7 +27,7 @@ sub content {
     $self->get_source($source, $object->source_description),
     $self->get_study,
     scalar(@$sv_sets) ? ['Present in', sprintf '<p><b>%s</b></p>', join(', ',@$sv_sets)] : (),
-    $self->get_annotations,
+    $self->get_phenotypes,
     $self->location($mappings),
     $self->size($mappings),
     $validation ? ['Validation status', $validation] : ()
@@ -301,13 +301,13 @@ sub size {
   )] : ();
 }
 
-sub get_annotations {
+sub get_phenotypes {
   my $self   = shift;
   my $object = $self->object;
   my @strain;
 
-  foreach my $sva (@{$object->get_structural_variation_annotations}) {
-    push(@strain,$sva->strain_name) if ($sva->strain_name);
+  foreach my $pfa (@{$object->get_phenotype_features}) {
+    push(@strain,$pfa->strain_name) if ($pfa->strain_name);
   }
 
   return scalar @strain ? ['Strain', join(', ', @strain)] : ();
