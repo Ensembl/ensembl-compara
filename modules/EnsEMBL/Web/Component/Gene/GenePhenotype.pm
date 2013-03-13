@@ -84,7 +84,7 @@ sub render_content {
 sub stats_table {
   my ($self, $gene_name) = @_;  
   my $hub        = $self->hub;
-  my $va_adaptor = $self->hub->database('variation')->get_VariationAnnotationAdaptor;
+  my $pf_adaptor = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
   my ($total_counts, %phenotypes, @va_ids);
   
   my $columns = [
@@ -100,12 +100,12 @@ sub stats_table {
   }
   push @$columns,  { key => 'source',  title => 'Source(s)',  sort => 'string', width => '11%'};
   
-  foreach my $va (@{$va_adaptor->fetch_all_by_associated_gene($gene_name)}) {
-    my $var_name   = $va->variation->name;  
-    my $phe        = $va->phenotype_description;
-    my $phe_source = $va->source_name;
+  foreach my $pf (@{$pf_adaptor->fetch_all_by_associated_gene($gene_name)}) {
+    my $var_name   = $pf->object->name;  
+    my $phe        = $pf->phenotype->description;
+    my $phe_source = $pf->source;
    
-    $phenotypes{$phe} ||= { id => $va->{'_phenotype_id'} , name => $va->{'_phenotype_name'}};
+    $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} , name => $pf->{'_phenotype_name'}};
     push @{$phenotypes{$phe}{'count'}},  $var_name   unless grep $var_name   eq $_, @{$phenotypes{$phe}{'count'}};
     push @{$phenotypes{$phe}{'source'}}, $phe_source unless grep $phe_source eq $_, @{$phenotypes{$phe}{'source'}};
     
@@ -148,7 +148,7 @@ sub stats_table {
     
     # BioMart link
     if ($hub->species_defs->ENSEMBL_MART_ENABLED && grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
-      if ($va_adaptor->fetch_annotation_number_by_phenotype_id($phenotype->{'id'}) > 250) {
+      if ($pf_adaptor->count_all_by_phenotype_id($phenotype->{'id'}) > 250) {
         my $mart_phe_url = $mart_somatic_url;
         $mart_phe_url =~ s/###PHE###/$_/;
         $mart = qq{<a href="$mart_phe_url">View list in BioMart</a>};
@@ -183,8 +183,8 @@ sub variation_table {
   my $g_end         = $gene_slice->end;
   my $phenotype_sql = $phenotype;
      $phenotype_sql =~ s/'/\\'/; # Escape quote character
-  my $va_adaptor    = $hub->database('variation')->get_VariationAnnotationAdaptor;
-  my (@rows, %list_sources, $list_variations);
+  my $pf_adaptor    = $hub->database('variation')->get_PhenotypeFeatureAdaptor;
+  my (@rows, %list_sources, %list_phe, $list_variations);
   
   # create some URLs - quicker than calling the url method for every variation
   my $base_url = $hub->url({
@@ -195,23 +195,14 @@ sub variation_table {
     source => undef,
   });
   
-  my $phenotype_sql = $phenotype;
-  $phenotype_sql =~ s/'/\\'/; # Escape quote character
-  
-  my $va_adaptor = $self->hub->database('variation')->get_VariationAnnotationAdaptor;
-  
-  my %list_sources;
-  my %list_phe;
-  my $list_variations;
-  
   my $all_flag = ($phenotype eq 'ALL') ? 1 : 0;
       
-  foreach my $va (@{$va_adaptor->fetch_all_by_associated_gene($gene_name)}) {
+  foreach my $pf (@{$pf_adaptor->fetch_all_by_associated_gene($gene_name)}) {
       
-    next if ($phenotype ne $va->phenotype_description && $all_flag == 0);
+    next if ($phenotype ne $pf->phenotype->description && $all_flag == 0);
     
     #### Phenotype ####
-    my $var        = $va->variation;
+    my $var        = $pf->object;
     my $var_name   = $var->name;
     my $list_sources;
 
@@ -247,10 +238,10 @@ sub variation_table {
     }
       
     # List the phenotype sources for the variation
-    my $phe_source = $va->source_name;
-    my $ref_source = $va->external_reference;
+    my $phe_source = $pf->source;
+    my $ref_source = $pf->external_reference;
     
-    $list_phe{$var_name}{$va->phenotype_description} = 1 if ($all_flag == 1);
+    $list_phe{$var_name}{$pf->phenotype->description} = 1 if ($all_flag == 1);
     
     if ($list_sources{$var_name}{$phe_source}) {
       push (@{$list_sources{$var_name}{$phe_source}}, $ref_source) if $ref_source;
@@ -397,6 +388,7 @@ sub gene_phenotypes {
   my $types_list       = shift;
   my $object           = $self->object;
   my $obj              = $object->Obj;
+  my $hub              = $self->hub;
   my $g_name           = $obj->stable_id;
   my @keys             = ('MISC');
   my @similarity_links = @{$object->get_similarity_hash($obj)};
@@ -416,6 +408,31 @@ sub gene_phenotypes {
   while (my($dbtype,$phen) = each(%list)) {
     push @rows, { dbtype => $dbtype, phenotype => $phen };
   }
+  
+  # add rows from Variation DB, PhenotypeFeature
+  if ($hub->database('variation')) {
+    my $pfa = $hub->database('variation')->get_PhenotypeFeatureAdaptor;
+    
+    # OMIA needs tax ID
+    my $tax = $hub->species_defs->TAXONOMY_ID;
+    
+    foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
+      my $phen;
+      my $desc   = $pf->phenotype->description;
+      my $ext_id = $pf->external_id;
+      my $source = $pf->source;
+      
+      if($ext_id && $source) {
+        $ext_id .= '/'.$tax if $source eq 'OMIA';
+        $phen = $hub->get_ExtURL_link($desc, $source, $ext_id);
+      }
+      else {
+        $phen = $desc;
+      }
+      
+      push @rows, { dbtype => $pf->source, phenotype => $phen };
+    }
+  }  
   
   if ($output_as_table) {
     return $html . $self->new_table([ 
