@@ -74,8 +74,8 @@ sub table_data {
                          '&VISIBLEPANEL=resultspanel';
                  
                  
-  foreach my $va (@$external_data) { 
-    my $phenotype = $va->phenotype_description;
+  foreach my $pf (@$external_data) { 
+    my $phenotype = $pf->phenotype->description;
     my $disorder  = $phenotype;
     
     if ($is_somatic) {
@@ -90,18 +90,18 @@ sub table_data {
       @data_row = @{$rows{lc $disorder}};
     }
     
-    my $id                 = $va->{'_phenotype_id'};
-    my $source_name        = $va->source_name;
-    my $study_name         = $va->study_name;
+    my $id                 = $pf->{'_phenotype_id'};
+    my $source_name        = $pf->source;
+    my $study_name         = $pf->study_name;
     my $disease_url        = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }); 
-    my $source             = $self->source_link($source_name, $study_name, $va->external_reference, 1);
-    my $external_reference = $self->external_reference_link($va->external_reference) || $va->external_reference; # use raw value if can't be made into a link
-    my $associated_studies = $va->associated_studies; # List of Study objects
+    my $source             = $self->source_link($source_name, $study_name, $pf->external_reference, 1);
+    my $external_reference = $self->external_reference_link($pf->external_reference) || $pf->external_reference; # use raw value if can't be made into a link
+    my $associated_studies = $pf->associated_studies; # List of Study objects
     
     # Add the supporting evidence source(s)
     my $a_study_source = '';
     if (defined($associated_studies)) {
-      $a_study_source = $self->supporting_evidence_link($associated_studies, $va->external_reference);
+      $a_study_source = $self->supporting_evidence_link($associated_studies, $pf->external_reference);
     }
 
     if ($is_somatic) { 
@@ -114,17 +114,17 @@ sub table_data {
       $external_reference  = $hub->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
     }
    
-    my $gene         = $self->gene_links($va->associated_gene);
-    my $allele       = $self->allele_link($va->external_reference, $va->associated_variant_risk_allele) || $va->associated_variant_risk_allele;
-    my $variant_link = $self->variation_link($va->variation->name);
-    my $pval         = $va->p_value;
+    my $gene         = $self->gene_links($pf->associated_gene);
+    my $allele       = $self->allele_link($pf->external_reference, $pf->risk_allele) || $pf->risk_allele;
+    my $variant_link = $self->variation_link($pf->object->stable_id);
+    my $pval         = $pf->p_value;
     
     my $disease  = qq{<b>$disorder</b>} if $disorder =~ /^\w+/;
     
     # BioMart link
     my $bm_flag = 0;
     if ($disease =~ /COSMIC/) { 
-      if ($va->adaptor->fetch_annotation_number_by_phenotype_id($id) > 250) {
+      if ($pf->adaptor->count_all_by_phenotype_id($id) > 250) {
         $disease_url = $mart_somatic_url;
         $disease_url =~ s/###PHE###/$phenotype/;
         $disease .= qq{<br /><a href="$disease_url">[View list in BioMart]</a>};
@@ -152,7 +152,7 @@ sub table_data {
     }
     
     push @data_row, $row;
-    $rows{lc $va->phenotype_description} = \@data_row;
+    $rows{lc $pf->phenotype->description} = \@data_row;
   } 
 
   return \%rows,$has_evidence;

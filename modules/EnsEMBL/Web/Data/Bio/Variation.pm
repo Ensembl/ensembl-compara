@@ -24,36 +24,36 @@ sub convert_to_drawing_parameters {
   my @phen_ids     = $hub->param('ph');
   my $species      = $hub->species;
   my $vardb        = $hub->database('variation');
-  my $vaa          = $vardb->get_adaptor('VariationAnnotation');
+  my $pfa          = $vardb->get_adaptor('PhenotypeFeature');
   my @results;
   
   my (%associated_phenotypes, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources);
   
   # getting associated phenotypes and associated genes
-  foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($data) || []}) {
-    my $variation_id = $va->{'_variation_id'};
+  foreach my $pf (@{$pfa->fetch_all_by_VariationFeature_list($data) || []}) {
+    my $variation_name = $pf->{'_object_id'};
 
-    $associated_phenotypes{$variation_id}{$va->{'phenotype_description'}} = 1;
-    my $source_name = $va->source_name;
+    $associated_phenotypes{$variation_name}{$pf->phenotype->description} = 1;
+    my $source_name = $pf->source;
        $source_name =~ s/_/ /g;
-    $phenotypes_sources{$variation_id}{$source_name} = 1;
+    $phenotypes_sources{$variation_name}{$source_name} = 1;
     
     
-    if (grep @phen_ids, $va->{'_phenotype_id'}) {      
+    if (grep @phen_ids, $pf->{'_phenotype_id'}) {      
       # only get the p value log 10 for the pointer matching phenotype id and variation id
       #warn ">>> PVAL ".$va->{'p_value'};
-      $p_value_logs{$variation_id} = -(log($va->{'p_value'}) / log(10)) unless $va->{'p_value'} == 0;      
-      $p_values{$variation_id} = $va->{'p_value'};
+      $p_value_logs{$variation_name} = -(log($pf->p_value) / log(10)) unless $pf->p_value == 0;      
+      $p_values{$variation_name} = $pf->p_value;
       
       # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
       my $dbc = $self->hub->database('core');
       my $ga  = $dbc->get_adaptor('Gene');
-      foreach my $id (grep $_, split /,/, $va->{'associated_gene'}) {
+      foreach my $id (grep $_, split /,/, $pf->associated_gene) {
         $id =~ s/\s//g;
         my @genes = @{$ga->fetch_all_by_external_name($id)||[]};
         next unless @genes;
         foreach (@genes) {
-          $associated_genes{$variation_id}{$id} = $_->description;
+          $associated_genes{$variation_name}{$id} = $_->description;
         }
       }
     }
@@ -72,11 +72,10 @@ sub convert_to_drawing_parameters {
     my $end          = $vf->seq_region_end;
     my $name         = $vf->variation_name;
     my $dbID         = $vf->dbID;
-    my $variation_id = $vf->{'_variation_id'};
     
     # preparing the URL for all the associated genes and ignoring duplicate one
     my @assoc_gene_links;
-    while (my ($id, $desc) = each (%{$associated_genes{$variation_id} || {}})) {
+    while (my ($id, $desc) = each (%{$associated_genes{$name} || {}})) {
       next if $id =~ /intergenic|pseudogene/i;
       push @assoc_gene_links, sprintf('<a href="%s" title="%s">%s</a>', 
         $hub->url({ type => 'Gene', action => 'Summary', g => $id, v => $name, vf => $dbID }),
@@ -98,7 +97,7 @@ sub convert_to_drawing_parameters {
       v       => $name,
       vf      => $dbID,
       vdb     => 'variation',
-      p_value => $p_value_logs{$variation_id}
+      p_value => $p_value_logs{$name}
     });
 
     #the html id is used to match the SNP on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
@@ -110,14 +109,14 @@ sub convert_to_drawing_parameters {
       html_id         => qq{${name}_$dbID},
       label           => $name,
       href            => $zmenu_url,       
-      p_value         => $p_value_logs{$variation_id},
+      p_value         => $p_value_logs{$name},
       somatic         => $vf->is_somatic,
       extra           => {
         'source'      => $vf->source,
         'genes'       => join(', ', @assoc_gene_links),
-        'phenotypes'  => join('; ', sort keys %{$associated_phenotypes{$variation_id} || {}}),
-        'phe_sources' => join(', ', sort keys %{$phenotypes_sources{$variation_id} || {}}),
-        'p-values'    => ($p_value_logs{$variation_id} ? sprintf('%.1f', $p_value_logs{$variation_id}) : '-'), 
+        'phenotypes'  => join('; ', sort keys %{$associated_phenotypes{$name} || {}}),
+        'phe_sources' => join(', ', sort keys %{$phenotypes_sources{$name} || {}}),
+        'p-values'    => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
       },
     };
   }

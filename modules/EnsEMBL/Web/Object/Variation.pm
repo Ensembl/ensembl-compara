@@ -698,7 +698,8 @@ sub calculate_allele_freqs_from_genotype {
 
 sub get_external_data {
   my $self = shift;
-  return $self->hub->database('variation')->get_VariationAnnotationAdaptor->fetch_all_by_Variation($self->vari);
+  $self->{'external_data'} ||= $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($self->vari);  
+  return $self->{'external_data'}
 }
 
 sub is_somatic_with_different_ref_base {

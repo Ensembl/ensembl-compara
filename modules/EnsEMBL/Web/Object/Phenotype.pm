@@ -40,8 +40,9 @@ sub get_phenotype_desc {
   my $self = shift;
   return unless $self->hub->param('ph');
   my $vardb   = $self->hub->database('variation');
-  my $vaa     = $vardb->get_adaptor('VariationAnnotation');
-  return $vaa->fetch_phenotype_description_by_id($self->hub->param('ph'));
+  my $pa      = $vardb->get_adaptor('Phenotype');
+  my $p       = $pa->fetch_by_dbID($self->hub->param('ph'));
+  return $p ? $p->description : undef;
 };
 
 sub get_all_phenotypes {

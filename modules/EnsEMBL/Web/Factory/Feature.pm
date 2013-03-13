@@ -97,7 +97,7 @@ sub _create_Phenotype {
   my $dbc        = $self->hub->database('variation');
 	$dbc->include_failed_variations(1);
   my $a          = $dbc->get_adaptor('VariationFeature');
-  my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_annotation' : 'fetch_all_with_annotation';
+  my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_phenotype' : 'fetch_all_with_phenotype';
   my $variations = $a->$func(undef, undef, $id);
   
   return unless $variations and scalar @$variations > 0; 

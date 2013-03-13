@@ -177,7 +177,7 @@ sub linked_var_table {
   
   my $v               = $object->name;
   my $source          = $variation->source;
-  my $vaa             = $variation->adaptor->db->get_VariationAnnotationAdaptor;
+  my $pfa             = $variation->adaptor->db->get_PhenotypeFeatureAdaptor;
   my $ldca            = $variation->adaptor->db->get_LDFeatureContainerAdaptor;
   my $max_distance    = $hub->param('max_distance') || 50000;  
   my $min_r2          = defined $hub->param('min_r2')      ? $hub->param('min_r2')      : 0.8;
@@ -218,7 +218,7 @@ sub linked_var_table {
     { key => 'tags',        title => 'Tags',                    align => 'center', sort => 'string'               },
     { key => 'tagged',      title => 'Tagged by',               align => 'center', sort => 'string'               },
     { key => 'genes',       title => 'Located in gene(s)',      align => 'center', sort => 'html'                 },
-    { key => 'annotations', title => 'Associated phenotype(s)', align => 'center', sort => 'html', width => '30%' },
+    { key => 'pfs',         title => 'Associated phenotype(s)', align => 'center', sort => 'html', width => '30%' },
   ], [], { data_table => 1 });
   
   # do some filtering
@@ -242,11 +242,11 @@ sub linked_var_table {
   
   if (@new_values) {
     # get phenotype data
-    foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list(\@other_vfs)}) {
+    foreach my $pf (@{$pfa->fetch_all_by_VariationFeature_list(\@other_vfs)}) {
       # filter on p-value
-      next if $min_p_log > 0 && defined $va->p_value && (-log($va->p_value) / log(10)) <= $min_p_log;
+      next if $min_p_log > 0 && defined $pf->p_value && (-log($pf->p_value) / log(10)) <= $min_p_log;
       
-      $_->{'annotations'}->{$va->{'_phenotype_id'}} = $va for grep $_->{'other_vf'}->{'_variation_id'} == $va->{'_variation_id'}, @new_values;
+      $_->{'pfs'}->{$pf->{'_phenotype_id'}} = $pf for grep $_->{'other_vf'}->{'_variation_id'} == $pf->{'_variation_id'}, @new_values;
     }
     
     my @sorted = 
@@ -256,7 +256,7 @@ sub linked_var_table {
       @new_values;
      
     foreach my $ld (@sorted) {
-      next if $only_phenotypes && !defined $ld->{'annotations'};
+      next if $only_phenotypes && !defined $ld->{'pfs'};
       
       my $ld_vf          = $ld->{'other_vf'};
       my $variation_name = $ld_vf->variation_name;
@@ -266,41 +266,41 @@ sub linked_var_table {
       my ($start, $end) = ($ld_vf->seq_region_start, $ld_vf->seq_region_end);
          ($start, $end) = ($end, $start) if $start > $end;
       
-      my $va_string;
+      my $pf_string;
       
       # check if any VAs for this variation
-      if ($ld->{'annotations'}) {
-        $va_string .= '<table style="border:none;width:100%;padding:0;margin:0">';
+      if ($ld->{'pfs'}) {
+        $pf_string .= '<table style="border:none;width:100%;padding:0;margin:0">';
         
         # iterate through all VAs
-        foreach my $va (values %{$ld->{'annotations'}}) {
-          my $phenotype_description = $va->phenotype_description;
-          my $p_value               = $va->p_value;
+        foreach my $pf (values %{$ld->{'pfs'}}) {
+          my $phenotype_description = $pf->phenotype->description;
+          my $p_value               = $pf->p_value;
           
-          my $va_url = $hub->url({
+          my $pf_url = $hub->url({
             type           => 'Location',
             action         => 'Genome',
             ftype          => 'Phenotype',
-            id             => $va->{'_phenotype_id'},
+            id             => $pf->{'_phenotype_id'},
             phenotype_name => $phenotype_description,
             v              => $variation_name,
             vf             => $ld_vf_dbID,
           });
           
-          $va_string .= sprintf '<tr><td style="padding:0;margin:0"><a href="%s">%s</a></td><td style="padding:0;margin:;">', $va_url, $va->phenotype_name || $phenotype_description;
+          $pf_string .= sprintf '<tr><td style="padding:0;margin:0"><a href="%s">%s</a></td><td style="padding:0;margin:;">', $pf_url, $pf->phenotype->name || $phenotype_description;
           
           # p value part
           if (defined $p_value) {
             my $p_scaled = sprintf '%.0f', (-log($p_value)/log(10)); # scale the p-value to an integer that might fall in @colour_scale
             my $colour   = $colour_scale[$p_scaled > $#colour_scale ? $#colour_scale : $p_scaled]; # set a colour
             
-            $va_string .= sprintf '<span style="float:right;color:#%s;white-space:nowrap">(%s)</span>', $colour, $p_value;
+            $pf_string .= sprintf '<span style="float:right;color:#%s;white-space:nowrap">(%s)</span>', $colour, $p_value;
           }
             
-          $va_string .= '</td></tr>';
+          $pf_string .= '</td></tr>';
         }
         
-        $va_string .= '</table>';
+        $pf_string .= '</table>';
       }
       
       # get tagging info
@@ -347,7 +347,7 @@ sub linked_var_table {
         tags        => $tagged,
         tagged      => $tagged_by,
         genes       => $genes     || '-',
-        annotations => $va_string || '-',
+        pfs         => $pf_string || '-',
       });
     }
   }

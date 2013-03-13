@@ -281,7 +281,7 @@ sub _create_Phenotype {
   foreach my $chr (@chrs)
   {
     $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);        
-    my $array2 = $slice->get_all_VariationFeatures_with_annotation(undef, undef, $id);
+    my $array2 = $slice->get_all_VariationFeatures_with_phenotype(undef, undef, $id);
 
     push(@$array,@$array2) if (@$array2);
   }  
@@ -761,7 +761,7 @@ sub retrieve_Variation {
   my $results      = [];
   
   # getting associated phenotype with the variation
-  my $variation_array = Bio::EnsEMBL::Registry->get_adaptor($hub->species, 'variation', 'variationannotation')->fetch_all_by_VariationFeature_list($data);
+  my $variation_array = Bio::EnsEMBL::Registry->get_adaptor($hub->species, 'variation', 'phenotypefeature')->fetch_all_by_VariationFeature_list($data);
 
   foreach my $v (@$data) {  
     # getting all genes located in that specific location

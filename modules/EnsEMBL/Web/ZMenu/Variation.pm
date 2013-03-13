@@ -195,7 +195,7 @@ sub content {
     }
   }
 
-  my $ega = $hub->database('variation')->get_VariationAnnotationAdaptor->fetch_all_by_Variation($var);
+  my $ega = $hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($var);
   if (scalar(@{$ega || []})) {
     $self->add_entry({
       'label_html' => 'Phenotype data',

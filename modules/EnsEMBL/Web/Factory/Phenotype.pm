@@ -40,21 +40,21 @@ sub createObjects {
 
       my $adaptor    = $dbc->get_adaptor('VariationFeature');
 
-      push @$variations, @{$adaptor->fetch_all_with_annotation(undef, undef, $id) || []};
-      push @$variations, @{$adaptor->fetch_all_somatic_with_annotation(undef, undef, $id) || []};
+      push @$variations, @{$adaptor->fetch_all_with_phenotype(undef, undef, $id) || []};
+      push @$variations, @{$adaptor->fetch_all_somatic_with_phenotype(undef, undef, $id) || []};
 
       if ($variations and scalar @$variations > 0) {
 
         ## Get associated genes
         my $vardb        = $self->hub->database('variation');
-        my $vaa          = $vardb->get_adaptor('VariationAnnotation');
+        my $pfa          = $vardb->get_adaptor('PhenotypeFeature');
 
         my %associated_gene;
   
-        foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($variations) || []}) {
-          if ($va->{'_phenotype_id'} eq $id) {
+        foreach my $pf (@{$pfa->fetch_all_by_VariationFeature_list($variations) || []}) {
+          if ($pf->{'_phenotype_id'} eq $id) {
             # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
-            foreach my $gene_id (grep $_, split /,/, $va->{'associated_gene'}) {
+            foreach my $gene_id (grep $_, split /,/, $pf->associated_gene) {
               $gene_id =~ s/\s//g;
               next if $gene_id =~ /intergenic/i;
               next unless $gene_id;

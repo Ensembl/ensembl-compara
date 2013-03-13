@@ -140,8 +140,8 @@ sub variation_source {
   } elsif ($source =~ /HGMD/) {
     $version =~ /(\d{4})(\d+)/;
     $version = "$1.$2";
-    my $va          = ($hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
-    my $asso_gene   = $va->associated_gene;
+    my $pf          = ($hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
+    my $asso_gene   = $pf->associated_gene;
        $source_link = $hub->get_ExtURL_link("View in $source", 'HGMD', { ID => $asso_gene, ACC => $name });
   } elsif ($source =~ /ESP/) {
     if ($name =~ /^TMP_ESP_(\d+)_(\d+)/) {
@@ -236,10 +236,10 @@ sub synonyms {
       push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
     } elsif ($db =~ /HGMD/) {
       # HACK - should get its link properly somehow
-      my @annotations = grep $_->source_name =~ /HGMD/, @{$hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj)};
+      my @pfs = grep $_->source_name =~ /HGMD/, @{$hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation')->fetch_all_by_Variation($object->Obj)};
       
       foreach my $id (@ids) {
-        push @urls, $hub->get_ExtURL_link($id, 'HGMD', { ID => $_->associated_gene, ACC => $id }) for @annotations;
+        push @urls, $hub->get_ExtURL_link($id, 'HGMD', { ID => $_->associated_gene, ACC => $id }) for @pfs;
       }
     } elsif ($db =~ /LSDB/) {
       push @urls , $hub->get_ExtURL_link($_, $db, $_) for @ids;
