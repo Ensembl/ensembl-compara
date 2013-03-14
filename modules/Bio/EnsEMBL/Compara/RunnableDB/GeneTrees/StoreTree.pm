@@ -279,7 +279,7 @@ sub parse_newick_into_tree {
     my $old_leaf = $leaves{$member_id};
     if (not $old_leaf) {
       $leaf->print_node;
-      die "unable to find member '$member_id' (from newick '$newick')";
+      die "unable to find member '$member_id' (in '$njtree_phyml_name', from newick '$newick')";
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $leaf->member_id($member_id);
@@ -287,6 +287,7 @@ sub parse_newick_into_tree {
     $leaf->cigar_line($old_leaf->cigar_line);
     $leaf->node_id($old_leaf->node_id);
     $leaf->taxon_id($old_leaf->taxon_id);
+    $leaf->stable_id($old_leaf->stable_id);
     $leaf->adaptor($old_leaf->adaptor);
     $leaf->add_tag('name', $member_id);
     $leaf->{'_children_loaded'} = 1;
