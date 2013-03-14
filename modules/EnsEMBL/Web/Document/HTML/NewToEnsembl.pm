@@ -49,7 +49,7 @@ sub render {
 
   my @did_you_know = (
     '/info/website/tutorials/'                        => "Learn how to use $sitename"             => 'with our video tutorials and walk-throughs',
-    '/info/website/help/control_panel.html#cp-panel'  => 'Add custom tracks'                      => 'using our new Control Panel',
+    '/info/website/help/control_panel.html#cp-data'   => 'Add custom tracks'                      => 'using our control panel',
     '/info/website/upload/index.html'                 => 'Upload and analyse your data'           => $sd->ENSEMBL_LOGINS ? "and save it to your $sitename account" : "and display it alongside $sitename data",
     $sd->ENSEMBL_BLAST_ENABLED ? (
     '/Multi/blastview'                                => 'Search for a DNA or protein sequence'   => 'using BLAST or BLAT'
