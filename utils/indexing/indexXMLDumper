@@ -1235,7 +1235,7 @@ sub dumpGenomicAlignment {
     if ($db eq 'cdna') {
       my $sth    = $conf->{'dbh'}->prepare(
         "select ad.display_label, uo.identifier,  ur.summary_description, 'Unmapped feature'
-           from $dbname.unmapped_object uo, $dbname.unmapped_reason ur, $dbname.analysis a 
+           from $dbname.unmapped_object uo, $dbname.unmapped_reason ur, $dbname.analysis a
                 left join $dbname.analysis_description ad on a.analysis_id = ad.analysis_id
           where a.analysis_id = uo.analysis_id
             and uo.unmapped_reason_id = ur.unmapped_reason_id");
@@ -1725,28 +1725,11 @@ sub dumpSequence {
           AND cs.name = 'chromosome'
           AND m.meta_key = 'assembly.default'));
 
-  #get mappings between toplevel assemblies - used to check there are no name changes on the different assemblies
-  my $sth = $conf->{'dbh'}->prepare(qq(
-       SELECT distinct sr1.name, sr1.length, sr2.name, cs2.coord_system_id
-         FROM coord_system cs1, seq_region sr1, assembly a, seq_region sr2, coord_system cs2
-        WHERE cs1.coord_system_id = sr1.coord_system_id
-          AND sr1.seq_region_id = a.asm_seq_region_id
-          AND a.cmp_seq_region_id = sr2.seq_region_id
-          AND sr2.coord_system_id = cs2.coord_system_id
-          AND cs1.name = 'chromosome'
-          AND cs2.name = 'chromosome'));
-  my $mapped_ids;
-  $sth->execute;
-  while (my ($new_name,$new_length,$prev_name,$prev_coord_system_id) =  $sth->fetchrow_array() ) {
-    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'name'}   = $new_name;
-    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
-  }
-
   my %patch_hap_dets = ();
   # get seq_region_synonyms and start / stop positions for patches (ensembl)
   #  - requires the supercontig (which has the seq_region_synonym) and the chromosome to have the same name
   #  - positions come from assembly_exception table
-  $sth = $conf->{'dbh'}->prepare(qq(
+  my $sth = $conf->{'dbh'}->prepare(qq(
        SELECT sr2.name, srs.synonym, ae.seq_region_start, ae.seq_region_end
          FROM coord_system cs, seq_region sr2, assembly_exception ae, seq_region sr1
             LEFT JOIN seq_region_synonym srs ON sr1.seq_region_id = srs.seq_region_id
@@ -1829,23 +1812,9 @@ sub dumpSequence {
   my $other_names = [];
   while( my($name,$length,$type,$cs_id,$syn) = $sth->fetchrow_array() ) {
     my ($prev_name,$prev_length,$mapping_text);
-    next if $type eq 'lrg';
-    next if $type eq 'supercontig' && $patch_hap_dets{$name};
-    if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
-      # if this is an old seq_region mapped to a new one of the same name then skip it
-      if ($mapped_ids->{$cs_id}{$name}) {
-        $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
-        if ($prev_name ne $name) {
-          print LOG "WARNING: found assembly mapped seq_region $prev_name mapped to $name (rather than $name) - please check this is correct\n";
-        }
-        next;
-      }
-      else {
-	#This was here to remind the genbuilders to remove them, but is really just noise so commented out
-#        print LOG "Not dumping $name on coord_system $cs_id since it's an old assembly with no mapping\n";
-        next;
-      }
-    }
+    next if $type eq 'lrg'; #we've done LRGs already
+    next if $type eq 'supercontig' && $patch_hap_dets{$name}; #don't index the supercontig with PATCH name
+    next if ($type eq 'chromosome') && ($cs_id != $current_cs_id); #don't index chromosomes from previous assemblies
     if ($old_name eq $name) {
       push @$synonyms, $syn if $syn;
     }
