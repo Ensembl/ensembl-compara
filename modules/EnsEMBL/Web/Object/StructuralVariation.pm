@@ -109,13 +109,13 @@ sub count_transcripts {
 sub has_phenotype {
   my $self = shift;
   my @ssvs = @{$self->supporting_sv};
-  foreach my $ssv (@ssvs) {
-    my $pfs = $ssv->get_all_PhenotypeFeatures();
+	foreach my $ssv (@ssvs) {
+	  my $pfs = $ssv->get_all_PhenotypeFeatures();
     foreach my $pf (@$pfs) {
-      return 1 if ($pf->phenotype);
-    }
-  }
-  return undef;
+		  return 1 if ($pf->phenotype && $pf->phenotype->description);
+		}
+	}
+	return undef;
 }
 
 
@@ -196,7 +196,7 @@ sub get_class_colour {
   return $c;
 }
 
-sub get_structural_variation_annotations {
+sub get_phenotype_features {
   my $self = shift;
   return $self->Obj->get_all_PhenotypeFeatures;
 }
