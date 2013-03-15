@@ -246,7 +246,8 @@ sub update_user_history {
       
       $name .= ': ' . ($display_xref ? $display_xref->display_id : $value);
     } elsif ($referer_type eq 'Phenotype') {
-      $name .= ': ' . $hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation', $referer_species)->fetch_phenotype_description_by_id($value);
+      my $phen = $hub->get_adaptor('get_PhenotypeAdaptor', 'variation', $referer_species)->fetch_by_dbID($value);
+      $name .= ': ' . $phen->description if $phen;
     } elsif ($referer_type eq 'Experiment') {
       $value = $value eq 'all' ? 'All' : join(', ', grep !/(cell_type|evidence_type|project|name)/, split chop $value, $value) unless $value =~ s/^name-//;     
       $name .= ": $value";
