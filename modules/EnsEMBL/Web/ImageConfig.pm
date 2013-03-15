@@ -2687,7 +2687,7 @@ sub add_sequence_variations {
     display    => 'off',
   };
   
-  if ($hashref->{'menu'}) {
+  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
     $self->add_sequence_variations_meta($key, $hashref, $options);
   } else {
     $self->add_sequence_variations_default($key, $hashref, $options);
