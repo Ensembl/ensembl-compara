@@ -1043,7 +1043,7 @@ sub transcript_table {
         g      => $gene_id
       });
     
-      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $gene_html};
+      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gene_html};
     }
     
     my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
@@ -1141,7 +1141,7 @@ sub transcript_table {
 
     my $table_2 = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
-      data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' }, iDisplayLength => 5 },
+      data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
       class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
