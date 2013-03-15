@@ -685,30 +685,38 @@ sub dumpVariation {
 #  print LOG "     Retrieved SNP location info ", &date_and_mem, "\n";
 
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ", &date_and_mem, "\n";
-
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
-       "SELECT va.variation_id,
-             group_concat( distinct sta.name SEPARATOR '; ') AS lsi,
-             group_concat( distinct st.external_reference SEPARATOR ';') AS st,
-             group_concat( distinct va.associated_gene SEPARATOR ';') AS gn,
-             group_concat( distinct va.variation_names SEPARATOR ';') AS vars,
-             group_concat( distinct
-               if(
-                 isnull(p.name),
-                 p.description,
-                 concat( p.description,' (',p.name,')' )
-               )
-               SEPARATOR ';'
-             ) AS phen
-        FROM $VariationDB.variation_annotation AS va left join
-             $VariationDB.phenotype AS p ON p.phenotype_id = va.phenotype_id left join
-             $VariationDB.study AS st ON st.study_id=va.study_id left join
-             $VariationDB.associate_study AS sa ON sa.study1_id=st.study_id left join
-             $VariationDB.study AS sta ON sta.study_id=sa.study2_id
-       GROUP BY va.variation_id
-       ORDER BY va.variation_id"
-    )};
+     "SELECT v.variation_id,
+           group_concat( distinct sta.name SEPARATOR '; ') AS lsi,
+           group_concat( distinct st.external_reference SEPARATOR ';') AS st,
+           group_concat( distinct pfa1.value SEPARATOR ';') AS gn,
+           group_concat( distinct pfa2.value SEPARATOR ';') AS vars,
+           group_concat( distinct
+             if(
+               isnull(p.name),
+               p.description,
+               concat( p.description,' (',p.name,')' )
+             )
+             SEPARATOR ';'
+           ) AS phen
+      FROM $VariationDB.phenotype_feature AS va left join
+           $VariationDB.variation AS v ON v.name = va.object_id left join
+           $VariationDB.phenotype AS p ON p.phenotype_id = va.phenotype_id left join
+           $VariationDB.study AS st ON st.study_id=va.study_id left join
+           $VariationDB.associate_study AS sa ON sa.study1_id=st.study_id left join
+           $VariationDB.study AS sta ON sta.study_id=sa.study2_id left join
+           ( $VariationDB.phenotype_feature_attrib AS pfa1
+             join $VariationDB.attrib_type AS at1 on pfa1.attrib_type_id = at1.attrib_type_id and at1.code = 'associated_gene' )
+           on pfa1.phenotype_feature_id = va.phenotype_feature_id left join 
+           ( $VariationDB.phenotype_feature_attrib AS pfa2
+             join $VariationDB.attrib_type AS at2 on pfa2.attrib_type_id = at2.attrib_type_id and at2.code = 'variation_names' )
+           on pfa2.phenotype_feature_id = va.phenotype_feature_id
+     WHERE va.type = 'Variation'
+  GROUP BY v.variation_id
+  ORDER BY v.variation_id"
+   )};
+
 
 #  warn Data::Dumper::Dumper(\%snp_extra);
 
