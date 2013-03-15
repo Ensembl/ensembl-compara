@@ -57,10 +57,7 @@ sub content {
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_annotation.html");
 
   ## Link to Wikipedia
-  $html .= qq(<h2>More information</h2>
-<p>General information about this species can be found in 
-<a href="http://en.wikipedia.org/wiki/$species" rel="external">Wikipedia</a>.
-</p>);
+  $html .= $self->_wikipedia_link; 
   
   $html .= '
     </div>
@@ -85,6 +82,18 @@ sub content {
 </div>';
 
   return $html;  
+}
+
+sub _wikipedia_link {
+## Factored out so that other sites can override it easily
+  my $self = shift;
+  my $species = $self->species;
+  my $html = qq(<h2>More information</h2>
+<p>General information about this species can be found in 
+<a href="http://en.wikipedia.org/wiki/$species" rel="external">Wikipedia</a>.
+</p>); 
+
+  return $html;
 }
 
 1;
