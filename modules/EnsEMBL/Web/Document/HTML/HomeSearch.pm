@@ -9,36 +9,21 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 use EnsEMBL::Web::Form;
 
-sub new {
-  my ($class, $hub) = @_;
-  my $self = $class->SUPER::new(
-    species      => $hub->species || 'Multi',
-    species_defs => $hub->species_defs,
-    favourites   => $hub->get_favourite_species,
-    query        => $hub->param('q'),
-  );
-  
-  bless $self, $class;
-  return $self;
-}
-
-sub species    { return $_[0]->{'species'};  }
-sub favourites { return $_[0]{'favourites'}; }
-
 sub render {
   my $self = shift;
   
   return if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
-  
-  my $species_defs        = $self->species_defs;
-  my $page_species        = $self->species;
+
+  my $hub                 = $self->hub;
+  my $species_defs        = $hub->species_defs;
+  my $page_species        = $hub->species || 'Multi';
   my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->DISPLAY_NAME;
   my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/psychic";
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
   my $is_home_page        = $page_species eq 'Multi';
   my $input_size          = $is_home_page ? 30 : 50;
-  my $favourites          = $self->favourites;
-  my $q                   = $self->{'query'};
+  my $favourites          = $hub->get_favourite_species;
+  my $q                   = $hub->param('q');
 
   # form
   my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => [ $is_home_page ? 'homepage-search-form' : (), 'search-form', 'clear' ]});
