@@ -4,14 +4,13 @@ package EnsEMBL::Web::Document::HTML::SpeciesPage;
 
 use strict;
 
-use POSIX qw(ceil floor);
-use EnsEMBL::Web::RegObj;
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
-
   my ($class, $request) = @_;
 
-  my $species_defs  = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
   my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
 
@@ -90,7 +89,7 @@ sub render {
     );
   }
 
-  my $row_count = ceil(@htmlspecies / 3);
+  my $row_count = int @htmlspecies / 3 + 1;
 
   return sprintf('<h2>%s Species</h2>
     <div class="column-wrapper">
