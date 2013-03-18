@@ -7,7 +7,6 @@ package EnsEMBL::Web::Document::HTML::MovieList;
 
 use strict;
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Document::Table;
 
@@ -15,7 +14,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self    = shift;
-  my $hub     = EnsEMBL::Web::Hub->new;
+  my $hub     = $self->hub;
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   
   my $table = EnsEMBL::Web::Document::Table->new([
@@ -23,7 +22,10 @@ sub render {
     { key => 'mins',  title => 'Running time (minutes)', width => '20%', align => 'left' },
   ]);
 
-  $table->add_row({ title => sprintf('<a href="/Help/Movie?id=%s" class="popup">%s</a>', $_->{'id'}, $_->{'title'}), mins => $_->{'length'} }) for grep $_->{'youtube_id'}, @{$adaptor->fetch_movies};
+  $table->add_row({
+    'title' => sprintf('<a href="%s" class="popup">%s</a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'Movie', 'id' => $_->{'id'}}), $_->{'title'}),
+    'mins'  => $_->{'length'}
+  }) for grep $_->{'youtube_id'}, @{$adaptor->fetch_movies};
   
   return sprintf(qq{
     <p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>
