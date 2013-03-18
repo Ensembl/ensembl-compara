@@ -20,7 +20,7 @@ use Bio::EnsEMBL::VDrawableContainer;
 
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::Table;
-use EnsEMBL::Web::Document::HTML::TwoCol;
+use EnsEMBL::Web::Document::TwoCol;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
@@ -556,9 +556,9 @@ sub new_table {
 }
 
 sub new_twocol {
-  ## Creates and returns a new EnsEMBL::Web::Document::HTML::TwoCol.
+  ## Creates and returns a new EnsEMBL::Web::Document::TwoCol.
   shift;
-  return EnsEMBL::Web::Document::HTML::TwoCol->new(@_);
+  return EnsEMBL::Web::Document::TwoCol->new(@_);
 }
 
 sub new_form {
