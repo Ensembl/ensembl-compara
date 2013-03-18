@@ -8,13 +8,13 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Document::Table;
+
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self            = shift;
-  my $hub             = EnsEMBL::Web::Hub->new;
+  my $hub             = $self->hub;
   my $species_defs    = $hub->species_defs;
   my $rel             = 'release-' . $species_defs->ENSEMBL_VERSION; # Always set to use the release number rather than current to get around the delay in FTP site links updating
   my $required_lookup = $self->required_types_for_species;
@@ -124,14 +124,14 @@ sub render {
     { key => 'ancestral', title => '', align => 'center' }
   ], [{
     database  => 'Comparative genomics',
-    mysql     => qq{<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>},
-    emf       => qq{<a rel="external" title="$title{'emf'}" href="ftp://ftp.ensembl.org/pub/$rel/emf/ensembl-compara/">EMF</a>},
-    bed       => qq{<a rel="external" title="$title{'bed'}" href="ftp://ftp.ensembl.org/pub/$rel/bed/">BED</a>},
-    xml       => qq{<a rel="external" title="$title{'xml'}" href="ftp://ftp.ensembl.org/pub/$rel/xml/ensembl-compara/homologies/">XML</a>},
-    ancestral => qq{<a rel="external" title="$title{'ancestral'}" href="ftp://ftp.ensembl.org/pub/$rel/fasta/ancestral_alleles">Ancestral Alleles</a>},
+    mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
+    emf       => qq(<a rel="external" title="$title{'emf'}" href="ftp://ftp.ensembl.org/pub/$rel/emf/ensembl-compara/">EMF</a>),
+    bed       => qq(<a rel="external" title="$title{'bed'}" href="ftp://ftp.ensembl.org/pub/$rel/bed/">BED</a>),
+    xml       => qq(<a rel="external" title="$title{'xml'}" href="ftp://ftp.ensembl.org/pub/$rel/xml/ensembl-compara/homologies/">XML</a>),
+    ancestral => qq(<a rel="external" title="$title{'ancestral'}" href="ftp://ftp.ensembl.org/pub/$rel/fasta/ancestral_alleles">Ancestral Alleles</a>),
   }, {
     database  => 'BioMart',
-    mysql     => qq{<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>},
+    mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
     emf       => '-',
     bed       => '-',
     xml       => '-',
