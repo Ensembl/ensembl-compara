@@ -23,10 +23,9 @@ our $MEMD = EnsEMBL::Web::Cache->new(
   compress_threshold => 10_000,
 );
 
-
 sub render {
   my $self         = shift;
-  my $hub          = EnsEMBL::Web::Hub->new;
+  my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $html;
 
@@ -96,7 +95,7 @@ sub render {
         }
       
         ## generate HTML
-        $html .= qq{<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong> ($sp_name)</li>\n};
+        $html .= qq|<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong> ($sp_name)</li>\n|;
       }
       $html .= "</ul>\n";
     }

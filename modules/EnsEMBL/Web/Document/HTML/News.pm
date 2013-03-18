@@ -6,7 +6,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
@@ -16,15 +15,15 @@ sub render {
   my $self = shift;
   my $html;
 
-  my $hub = EnsEMBL::Web::Hub->new;
-  my $release_id = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
-  my $release      = $adaptor->fetch_release($release_id);
-  my $release_date = $release->{'date'};
+  my $hub           = $self->hub;
+  my $release_id    = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
+  my $adaptor       = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $release       = $adaptor->fetch_release($release_id);
+  my $release_date  = $release->{'date'};
 
   ## Are we using static news content output from a script?
-  my $file         = '/ssi/whatsnew.html';
-  my $include = EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, $file);
+  my $file          = '/ssi/whatsnew.html';
+  my $include       = EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, $file);
 
   if ($release_id == $hub->species_defs->ENSEMBL_VERSION && $include) {
     $html .= '<h2>Headlines</h2>'.$include;
@@ -32,8 +31,7 @@ sub render {
 
   my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
 
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} 
-      && $first_production && $release_id > $first_production) {
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} && $first_production && $release_id > $first_production) {
     ## get news changes
     my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
     my @changes = ();
