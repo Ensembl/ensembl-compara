@@ -761,7 +761,7 @@ sub _add_datahub_tracks_matrix {
     axes         => { x => $x, y => $y },
   );
   
-  my $link = qq{ <a href="$options{'desc_url'}" rel="external">Go to track description on datahub</a>};
+  my $link = qq( <a href="$options{'desc_url'}" rel="external">Go to track description on datahub</a>);
   my $info = "$config->{'longLabel'}.$link.";
   my (%matrix_columns, %tracks);
   
@@ -849,7 +849,7 @@ sub _add_datahub_tracks {
   };
 
   foreach my $track (@{$dataset->{'tracks'}}) {
-    my $link = qq{ <a href="$options->{'desc_url'}" rel="external">Go to track description on datahub</a>};
+    my $link = qq( <a href="$options->{'desc_url'}" rel="external">Go to track description on datahub</a>);
     # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
     # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
     # means the short label can be very non specific, because the header gives context of what type of
