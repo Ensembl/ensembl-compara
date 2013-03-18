@@ -3,7 +3,9 @@ package EnsEMBL::Web::Component::Info::WhatsNew;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component);
+
 use EnsEMBL::Web::Document::HTML::News;
 
 sub _init {
@@ -14,10 +16,8 @@ sub _init {
 
 
 sub content {
-  my $self   = shift;
-  my $html = EnsEMBL::Web::Document::HTML::News->render($self->hub->param('id')); 
 
-  return $html;
+  return EnsEMBL::Web::Document::HTML::News->new($_[0]->hub)->render;
 }
 
 1;
