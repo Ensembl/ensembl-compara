@@ -11,29 +11,21 @@ use LWP::UserAgent;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my $class = shift;
-  
-  my $hub = EnsEMBL::Web::Hub->new;
+  my ($class, $hub) = @_;
 
-  my $self = { 
-    _hub      => $hub,
+  return bless {
+    _hub      => $hub || EnsEMBL::Web::Hub->new,
     _renderer => undef,
-    @_
-  };
-  
-  bless $self, $class;
-  
-  return $self;
+  }, $class;
 }
 
 sub renderer      :lvalue { $_[0]->{'_renderer'}; }
 sub hub           { return $_[0]->{'_hub'}; }
-sub species_defs  { return $_[0]->{'species_defs'}; }
 
-sub printf { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
-sub print  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
+sub printf        { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
+sub print         { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
 
-sub render {}
+sub render        {}
 
 sub new_panel {
   my ($self, $panel_type, $controller, %params) = @_;
