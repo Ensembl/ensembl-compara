@@ -71,6 +71,7 @@ sub new {
     _cookies       => $cookies,
     _core_objects  => {},
     _core_params   => {},
+    _species_info  => {},
     _components    => [],
   };
 
@@ -194,7 +195,7 @@ sub database {
   if ($_[0] =~ /compara/) {
     return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0], 1);
   } else {
-    return $self->databases->get_DBAdaptor(@_);
+    return $self->species eq 'common' ? undef : $self->databases->get_DBAdaptor(@_);
   }
 }
 
@@ -265,6 +266,33 @@ sub otherspecies {
   return $has_synteny[0];
 }
 
+sub get_species_info {
+  ## Gets info about all valid species or an individual species if url name provided
+  ## @param URL name for a species (String) (optional)
+  ## @return Hashref with keys: key, name, common, scientific and group for single species, OR hashref of hashrefs for { species url name => { species info } .. }
+  my ($self, $species) = @_;
+
+  unless ($self->{'_species_info_loaded'} || $species && $self->{'_species_info'}{$species}) {
+
+    my $species_defs      = $self->species_defs;
+    my @required_species  = $species_defs->valid_species;
+       @required_species  = grep {$species eq $_} @required_species if $species;
+
+    for (@required_species) {
+      $self->{'_species_info'}{$_} = {
+        'key'         => $_,
+        'name'        => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
+        'common'      => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
+        'scientific'  => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+        'group'       => $species_defs->get_config($_, 'SPECIES_GROUP')
+      } unless exists $self->{'_species_info'}{$_};
+    }
+
+    $self->{'_species_info_loaded'} = !$species;
+  }
+
+  return $species ? $self->{'_species_info'}{$species} : $self->{'_species_info'};
+}
 
 # Does an ordinary redirect
 sub redirect {
