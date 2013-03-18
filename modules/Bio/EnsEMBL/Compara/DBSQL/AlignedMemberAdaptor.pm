@@ -59,7 +59,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::AlignedMember;
-use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');

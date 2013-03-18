@@ -272,7 +272,7 @@ my $config = {
             },
             {
                 description => 'Checks that all the relevant fields of the homology table are non-NULL or non-zero',
-                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# AND (description IS NULL OR peptide_member_id IS NULL OR cigar_line IS NULL OR LENGTH(cigar_line) = 0 OR perc_id IS NULL OR perc_pos IS NULL)',
+                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# AND (description IS NULL OR seq_member_id IS NULL OR cigar_line IS NULL OR LENGTH(cigar_line) = 0 OR perc_id IS NULL OR perc_pos IS NULL)',
             },
             {
                 description => 'Checks that the member_id column of the homology_member table only links to ENSEMBLGENE members',
@@ -280,7 +280,7 @@ my $config = {
             },
             {
                 description => 'Checks that the peptide_member_id column of the homology_member table only links to canonical peptides',
-                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) JOIN member USING (member_id) WHERE gene_tree_root_id = #gene_tree_id# AND canonical_member_id != peptide_member_id',
+                query => 'SELECT * FROM homology JOIN homology_member hm USING (homology_id) JOIN gene_member gm USING (gene_member_id) WHERE gene_tree_root_id = #gene_tree_id# AND gm.canonical_member_id != hm.seq_member_id',
             },
             {
                 description => 'Checks that the members involved in one2one orthologies are not involved in any other orthologies',

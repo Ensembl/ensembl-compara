@@ -47,7 +47,7 @@ A Member is a specialized Locus that deals with genes / gene products.
 =head1 SYNOPSIS
 
 Member properties:
- - dbID() or member_id()
+ - dbID()
  - stable_id()
  - version()
  - display_label()
@@ -101,9 +101,6 @@ use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
     Arg [-GENOME_DB_ID] (opt)
         : int $genome_db_id
         (the $genome_db->dbID for a species in the database)
-    Arg [-SEQUENCE_ID] (opt)
-        : int $sequence_id
-        (the $sequence_id for the sequence table in the database)
        Description: Creates a new Member object
        Returntype : Bio::EnsEMBL::Compara::Member
        Exceptions : none
@@ -119,8 +116,8 @@ sub new {
   
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_name, $adaptor, $taxon_id, $genome_db_id, $sequence_id)
-        = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID SEQUENCE_ID)], @args);
+    my ($dbid, $stable_id, $description, $source_name, $adaptor, $taxon_id, $genome_db_id)
+        = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID)], @args);
 
     if ($source_name) {
       if ($source_name eq 'ENSEMBLGENE') {
@@ -136,7 +133,6 @@ sub new {
     $adaptor && $self->adaptor($adaptor);
     $taxon_id && $self->taxon_id($taxon_id);
     $genome_db_id && $self->genome_db_id($genome_db_id);
-    $sequence_id && $self->sequence_id($sequence_id);
   }
 
   return $self;
@@ -209,18 +205,6 @@ sub new_fast {
 ###################
 
 
-
-=head2 member_id
-
-  Arg [1]    : (opt) integer
-  Description: alias for dbID()
-
-=cut
-
-sub member_id {
-  my $self = shift;
-  return $self->dbID(@_);
-}
 
 
 =head2 stable_id
@@ -524,47 +508,5 @@ sub print_member {
             $self->dbID || -1,$self->chr_name,$self->dnafrag_start,$self->dnafrag_end);
 }
 
-
-##
-##
-## These methods calls the raw SQL methods in member adaptor
-##
-#########
-
-sub number_of_families {
-  my ($self) = @_;
-
-  return $self->adaptor->families_for_member($self->stable_id);
-}
-
-sub has_GeneTree {
-  my ($self) = @_;
-
-  return $self->adaptor->member_has_GeneTree($self->stable_id);
-}
-
-sub has_GeneGainLossTree {
-  my ($self) = @_;
-
-  return $self->adaptor->member_has_GeneGainLossTree($self->stable_id);
-}
-
-sub number_of_orthologues {
-  my ($self) = @_;
-
-  return $self->adaptor->orthologues_for_member($self->stable_id);
-}
-
-sub number_of_paralogues {
-  my ($self) = @_;
-
-  return $self->adaptor->paralogues_for_member($self->stable_id);
-}
-
-sub number_of_homoeologues {
-  my ($self) = @_;
-
-  return $self->adaptor->homoeologues_for_member($self->stable_id);
-}
 
 1;

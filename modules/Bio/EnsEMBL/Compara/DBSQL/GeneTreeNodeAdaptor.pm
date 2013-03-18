@@ -100,7 +100,7 @@ sub fetch_all_AlignedMember_by_Member {
     return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
     my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
 
@@ -145,7 +145,7 @@ sub fetch_default_AlignedMember_for_Member {
     return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
     my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
 
@@ -172,7 +172,7 @@ sub fetch_default_AlignedMember_for_Member {
 sub fetch_all_AlignedMember_by_root_id {
   my ($self, $root_id) = @_;
 
-  my $constraint = '(t.member_id IS NOT NULL) AND (t.root_id = ?)';
+  my $constraint = '(t.seq_member_id IS NOT NULL) AND (t.root_id = ?)';
   $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 
@@ -225,7 +225,7 @@ sub store_node {
     my $member_id = undef;
     $member_id = $node->member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
 
-    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, member_id=?  WHERE node_id=?");
+    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, seq_member_id=?  WHERE node_id=?");
     #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
     $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $member_id, $node->node_id);
     $sth->finish;
@@ -335,7 +335,7 @@ sub _columns {
 }
 
 sub _tables {
-  return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['member', 'm']);
+  return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['seq_member', 'm']);
 }
 
 sub _default_where_clause {
@@ -344,8 +344,8 @@ sub _default_where_clause {
 
 sub _left_join {
     return (
-        ['gene_align_member', 'gam.member_id = t.member_id AND gam.gene_align_id = tr.gene_align_id'],
-        ['member', 't.member_id = m.member_id'],
+        ['gene_align_member', 'gam.seq_member_id = t.seq_member_id AND gam.gene_align_id = tr.gene_align_id'],
+        ['seq_member', 't.seq_member_id = m.seq_member_id'],
     );
 }
 

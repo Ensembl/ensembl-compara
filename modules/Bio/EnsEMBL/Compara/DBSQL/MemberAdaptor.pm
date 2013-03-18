@@ -31,8 +31,7 @@ Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
 
 =head1 DESCRIPTION
 
-Base adaptor for Member objects. This adaptor is deprecated: SeqMemberAdaptor
-and GeneMemberAdaptor are supposed to be used to fetch Members.
+Base adaptor for Member objects that cannot be instantiated directly
 
 The methods are still available for compatibility until release 74 (included),
 but the Member object should not be explicitely used.
@@ -61,8 +60,6 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Member;
 
-use Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
@@ -365,76 +362,6 @@ sub fetch_all_by_MemberSet {
 #
 ###################
 
-sub _tables {
-  return (['member', 'm']);
-}
-
-sub _columns {
-  return ('m.member_id',
-          'm.source_name',
-          'm.stable_id',
-          'm.version',
-          'm.taxon_id',
-          'm.genome_db_id',
-          'm.description',
-          'm.chr_name',
-          'm.chr_start',
-          'm.chr_end',
-          'm.chr_strand',
-          'm.sequence_id',
-          'm.gene_member_id',
-          'm.canonical_member_id',
-          'm.display_label'
-          );
-}
-
-sub create_instance_from_rowhash {
-	my ($self, $rowhash) = @_;
-	
-	return Bio::EnsEMBL::Compara::Member->new_fast({
-		adaptor         => $self,
-		dbID            => $rowhash->{member_id},
-		_stable_id      => $rowhash->{stable_id},
-		_version        => $rowhash->{version},
-		_taxon_id       => $rowhash->{taxon_id},
-		_genome_db_id   => $rowhash->{genome_db_id},
-		_description    => $rowhash->{description},
-		_chr_name       => $rowhash->{chr_name},
-		dnafrag_start   => $rowhash->{chr_start} || 0,
-		dnafrag_end     => $rowhash->{chr_end} || 0,
-		dnafrag_strand  => $rowhash->{chr_strand} || 0,
-		_sequence_id    => $rowhash->{sequence_id} || 0,
-		_source_name    => $rowhash->{source_name},
-		_display_label  => $rowhash->{display_label},
-		_gene_member_id => $rowhash->{gene_member_id},
-            _canonical_member_id => $rowhash->{canonical_member_id},
-	});
-}
-
-sub init_instance_from_rowhash {
-  my $self = shift;
-  my $member = shift;
-  my $rowhash = shift;
-
-  $member->member_id($rowhash->{'member_id'});
-  $member->stable_id($rowhash->{'stable_id'});
-  $member->version($rowhash->{'version'});
-  $member->taxon_id($rowhash->{'taxon_id'});
-  $member->genome_db_id($rowhash->{'genome_db_id'});
-  $member->description($rowhash->{'description'});
-  $member->chr_name( $rowhash->{'chr_name'} );
-  $member->dnafrag_start($rowhash->{'chr_start'} || 0 );
-  $member->dnafrag_end( $rowhash->{'chr_end'} || 0 );
-  $member->dnafrag_strand($rowhash->{'chr_strand'} || 0 );
-  $member->sequence_id($rowhash->{'sequence_id'});
-  $member->gene_member_id($rowhash->{'gene_member_id'});
-  $member->source_name($rowhash->{'source_name'});
-  $member->display_label($rowhash->{'display_label'});
-  $member->canonical_member_id($rowhash->{canonical_member_id}) if $member->can('canonical_member_id');
-  $member->adaptor($self) if ref $self;
-
-  return $member;
-}
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -448,71 +375,6 @@ sub _objs_from_sth {
   $sth->finish;
   return \@members
 }
-
-
-#
-# STORE METHODS
-#
-################
-
-
-sub store {
-    my ($self, $member) = @_;
-   
-    $self->_warning_member_adaptor();
-    assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-
-
-  my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_name,
-                              gene_member_id,
-                              taxon_id, genome_db_id, description,
-                              chr_name, chr_start, chr_end, chr_strand,display_label)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
-
-  my $insertCount = $sth->execute($member->stable_id,
-                  $member->version,
-                  $member->source_name,
-                  $member->isa('Bio::EnsEMBL::Compara::SeqMember') ? $member->gene_member_id : undef,
-                  $member->taxon_id,
-                  $member->genome_db_id,
-                  $member->description,
-                  $member->chr_name,
-                  $member->dnafrag_start,
-                  $member->dnafrag_end,
-                  $member->dnafrag_strand,
-                  $member->display_label);
-  if($insertCount>0) {
-    #sucessful insert
-    $member->dbID( $sth->{'mysql_insertid'} );
-    $sth->finish;
-  } else {
-    $sth->finish;
-    #UNIQUE(source_name,stable_id) prevented insert since member was already inserted
-    #so get member_id with select
-    my $sth2 = $self->prepare("SELECT member_id, sequence_id FROM member WHERE source_name=? and stable_id=?");
-    $sth2->execute($member->source_name, $member->stable_id);
-    my($id, $sequence_id) = $sth2->fetchrow_array();
-    warn("MemberAdaptor: insert failed, but member_id select failed too") unless($id);
-    $member->dbID($id);
-    $member->sequence_id($sequence_id) if ($sequence_id) and $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-    $sth2->finish;
-  }
-
-  $member->adaptor($self);
-
-  # insert in sequence table to generate new
-  # sequence_id to insert into member table;
-  if($member->isa('Bio::EnsEMBL::Compara::SeqMember') and defined($member->sequence) and $member->sequence_id == 0) {
-    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
-
-    my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
-    $sth3->execute($member->sequence_id, $member->dbID);
-    $sth3->finish;
-  }
-
-  return $member->dbID;
-}
-
 
 
 

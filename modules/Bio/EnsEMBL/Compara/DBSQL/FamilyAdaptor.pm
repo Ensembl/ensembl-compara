@@ -99,7 +99,7 @@ sub fetch_all_by_Member {
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-  my $constraint = 'fm.member_id = ?';
+  my $constraint = 'fm.seq_member_id = ?';
 
   $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
   return $self->generic_fetch($constraint, $join);
@@ -114,7 +114,7 @@ sub fetch_by_Member_source_stable_id {
   }
 
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'],
-              [['member', 'm'], 'fm.member_id = m.member_id']];
+              [['seq_member', 'm'], 'fm.seq_member_id = m.seq_member_id']];
 
   my $constraint = 'm.stable_id = ? AND m.source_name = ?';
 
@@ -249,7 +249,7 @@ sub store {
     $fam->dbID($sth->{'mysql_insertid'});
   }
 
-  $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
+  $sql = "INSERT IGNORE INTO family_member (family_id, seq_member_id, cigar_line) VALUES (?,?,?)";
   $sth = $self->prepare($sql);
   foreach my $member (@{$fam->get_all_Members}) {   
     # Stores the member if not yet stored
@@ -278,7 +278,7 @@ sub update {
     $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score, $fam->dbID);
   }
 
-  my $sql = 'UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?';
+  my $sql = 'UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND seq_member_id = ?';
   my $sth = $self->prepare($sql);
   foreach my $member (@{$fam->get_all_Members}) {   
     $sth->execute($member->cigar_line, $member->set->dbID, $member->dbID);

@@ -46,6 +46,9 @@ of that gene product.
 
 =head1 SYNOPSIS
 
+Member properties:
+ - gene_member_id() is an alias for dbID()
+
 Links with the Ensembl Core objects:
  - get_Gene()
 
@@ -122,6 +125,26 @@ sub new_from_gene {
   return $self;
 }
 
+
+sub member_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('GeneMember::member_id() is deprecated and will be removed in e79. Please use gene_member_id() instead');
+  return $self->dbID(@_);
+}
+
+
+
+=head2 gene_member_id
+
+  Arg [1]    : (opt) integer
+  Description: alias for dbID()
+
+=cut
+
+sub gene_member_id {
+  my $self = shift;
+  return $self->dbID(@_);
+}
 
 
 #
@@ -239,6 +262,48 @@ sub get_all_SeqMembers {
 
 
     return $able_adaptor->fetch_all_by_gene_member_id($self->dbID);
+}
+
+##
+##
+## These methods calls the raw SQL methods in member adaptor
+##
+#########
+
+sub number_of_families {
+  my ($self) = @_;
+
+  return $self->adaptor->families_for_member($self->stable_id);
+}
+
+sub has_GeneTree {
+  my ($self) = @_;
+
+  return $self->adaptor->member_has_GeneTree($self->stable_id);
+}
+
+sub has_GeneGainLossTree {
+  my ($self) = @_;
+
+  return $self->adaptor->member_has_GeneGainLossTree($self->stable_id);
+}
+
+sub number_of_orthologues {
+  my ($self) = @_;
+
+  return $self->adaptor->orthologues_for_member($self->stable_id);
+}
+
+sub number_of_paralogues {
+  my ($self) = @_;
+
+  return $self->adaptor->paralogues_for_member($self->stable_id);
+}
+
+sub number_of_homoeologues {
+  my ($self) = @_;
+
+  return $self->adaptor->homoeologues_for_member($self->stable_id);
 }
 
 

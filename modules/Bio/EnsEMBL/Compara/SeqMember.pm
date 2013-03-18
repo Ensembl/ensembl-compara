@@ -41,6 +41,9 @@ It is currently used for proteins and RNAs.
 
 =head1 SYNOPSIS
 
+Member properties:
+ - seq_member_id() is an alias for dbID()
+
 Accessors to the sequence (s):
  - sequence() and sequence_id()
  - seq_length()
@@ -234,6 +237,26 @@ sub new_from_transcript {
 }
 
 
+sub member_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('SeqMember::member_id() is deprecated and will be removed in e79. Please use seq_member_id() instead');
+  return $self->dbID(@_);
+}
+
+
+=head2 seq_member_id
+
+  Arg [1]    : (opt) integer
+  Description: alias for dbID()
+
+=cut
+
+sub seq_member_id {
+  my $self = shift;
+  return $self->dbID(@_);
+}
+
+
 
 #
 # Sequence methods
@@ -313,7 +336,7 @@ sub other_sequence {
 
     # First option, we look in the compara db
     if (not defined $self->{$key}) {
-        $self->{$key} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, $seq_type);
+        $self->{$key} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->seq_member_id, $seq_type);
     }
 
     # Second option, we build the sequence from the core db
@@ -350,7 +373,7 @@ sub _prepare_exon_sequences {
 
     # If there is the exon_bounded sequence, it is only a matter of splitting it and alternating the case
     my $exon_bounded_seq = $self->{_sequence_exon_bounded};
-    $exon_bounded_seq = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded') unless $exon_bounded_seq;
+    $exon_bounded_seq = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->seq_member_id, 'exon_bounded') unless $exon_bounded_seq;
     my @exon_sequences = ();
     if ($exon_bounded_seq) {
         $self->{_sequence_exon_bounded} = $exon_bounded_seq;
@@ -497,7 +520,7 @@ sub bioseq {
     my $alphabet = $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
     $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
-    my $seqname = $self->member_id;
+    my $seqname = $self->seq_member_id;
     if ($id_type) {
         $seqname = $self->sequence_id if $id_type =~ m/^SEQ/i;
         $seqname = $self->stable_id if $id_type =~ m/^STA/i;

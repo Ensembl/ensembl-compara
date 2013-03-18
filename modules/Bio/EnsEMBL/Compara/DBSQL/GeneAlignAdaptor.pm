@@ -50,7 +50,7 @@ sub fetch_all_by_SeqMember {
   assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
 
   my $join = [[['gene_align_member', 'gam'], 'ga.gene_align_id = gam.gene_align_id']];
-  my $constraint = 'gam.member_id = ?';
+  my $constraint = 'gam.seq_member_id = ?';
 
   $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
   return $self->generic_fetch($constraint, $join);
@@ -135,10 +135,10 @@ sub store {
         }
     }
  
-    my $sth = $self->prepare('REPLACE INTO gene_align_member (gene_align_id, member_id, cigar_line) VALUES (?,?,?)');
+    my $sth = $self->prepare('REPLACE INTO gene_align_member (gene_align_id, seq_member_id, cigar_line) VALUES (?,?,?)');
 
     foreach my $member (@{$aln->get_all_Members}) {
-        $sth->execute($id, $member->member_id, $member->cigar_line) if $member->cigar_line;
+        $sth->execute($id, $member->seq_member_id, $member->cigar_line) if $member->cigar_line;
     }
 
     $sth->finish;
