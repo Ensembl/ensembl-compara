@@ -1,61 +1,8 @@
-# $Id$
-
 package EnsEMBL::Web::Document::HTML::FavouriteSpecies;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
-
 use base qw(EnsEMBL::Web::Document::HTML);
-
-sub new {
-  my ($class, $hub) = @_;
-  
-  my $self = $class->SUPER::new(
-    species_defs => $hub->species_defs,
-    user         => $hub->user,
-    favourites   => $hub->get_favourite_species
-  );
-  
-  bless $self, $class;
-  
-  $self->{'species_info'} = $self->set_species_info;
-  
-  return $self;
-}
-
-sub user         { return $_[0]{'user'};         }
-sub species_info { return $_[0]{'species_info'}; }
-sub favourites   { return $_[0]{'favourites'};   }
-sub image_type   { return '.png';                }
-
-sub set_species_info {
-  my $self         = shift;
-  my $species_defs = $self->species_defs;
-  
-  if (!$self->{'species_info'}) {
-    my $species_info = {};
-
-    foreach ($species_defs->valid_species) {
-      $species_info->{$_} = {
-        key        => $_,
-        name       => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
-        common     => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
-        scientific => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
-        assembly   => $species_defs->get_config($_, 'ASSEMBLY_NAME')
-      };
-    }
-
-    # give the possibility to add extra info to $species_info via the function
-    $self->modify_species_info($species_info);
-    
-    $self->{'species_info'} = $species_info;
-  }
-  
-  return $self->{'species_info'};
-}
-
-sub modify_species_info {}
 
 sub render {
   my $self      = shift;
@@ -71,18 +18,22 @@ sub render {
       </div>
   ', $self->render_ajax_reorder_list, $full_list);
 
+
+  #warn $html;
+
   return $html;
 }
 
 sub render_species_list {
   my ($self, $fragment) = @_;
-  my $logins       = $self->species_defs->ENSEMBL_LOGINS;
-  my $user         = $self->user;
-  my $species_info = $self->species_info;
+  my $hub           = $self->hub;
+  my $logins        = $hub->species_defs->ENSEMBL_LOGINS;
+  my $user          = $hub->user;
+  my $species_info  = $hub->get_species_info;
   
   my (%check_faves, @ok_faves);
   
-  foreach (@{$self->favourites}) {
+  foreach (@{$hub->get_favourite_species}) {
     push @ok_faves, $species_info->{$_} unless $check_faves{$_}++;
   }
   
@@ -106,11 +57,12 @@ sub render_species_list {
 }
 
 sub render_ajax_reorder_list {
-  my $self         = shift;
-  my $species_defs = $self->species_defs;
-  my $favourites   = $self->favourites;
-  my %species_info = %{$self->species_info};
-  my @fav_list     = map qq\<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>\, map $species_info{$_}, @$favourites;
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+  my $favourites    = $hub->get_favourite_species;
+  my %species_info  = %{$hub->get_species_info};
+  my @fav_list      = map qq\<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>\, map $species_info{$_}, @$favourites;
   
   delete $species_info{$_} for @$favourites;
   
@@ -133,16 +85,16 @@ sub render_ajax_reorder_list {
 
 sub render_with_images {
   my ($self, @species_list) = @_;
-  my $species_defs  = $self->species_defs;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
   my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
-  my $image_type    = $self->image_type;
   my $html;
 
   foreach (@species_list) {
     $html .= qq(
       <div class="species-box">
         <a href="$_->{'key'}/Info/Index">
-          <span class="sp-img"><img src="$static_server/i/species/48/$_->{'key'}$image_type" alt="$_->{'name'}" title="Browse $_->{'name'}" height="48" width="48" /></span>
+          <span class="sp-img"><img src="$static_server/i/species/48/$_->{'key'}.png" alt="$_->{'name'}" title="Browse $_->{'name'}" height="48" width="48" /></span>
           <span>$_->{'common'}</span>
         </a>
         <span>$_->{'assembly'}</span>
