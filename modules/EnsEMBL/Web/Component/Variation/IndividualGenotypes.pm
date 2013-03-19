@@ -18,7 +18,6 @@ sub content {
   my $hub          = $self->hub;
   my $selected_pop = $hub->param('pop');
   
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;  
   
   my $pop_obj  = $selected_pop ? $self->hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_dbID($selected_pop) : undef;
   my %ind_data = %{$object->individual_table($pop_obj)};
@@ -82,6 +81,8 @@ sub content {
     
     if ($other_ind == 1 && scalar(keys %populations) == 0) {  
       push @{$rows{'other_ind'}}, $row;
+      ## need this to display if there is only one genotype for a sequenced individual
+      $pop_names{"other_ind"} = "single individuals";
     }
     else {
       push @{$rows{$_}}, $row foreach keys %populations;
