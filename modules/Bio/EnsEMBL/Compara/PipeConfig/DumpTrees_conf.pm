@@ -68,7 +68,7 @@ sub default_options {
         'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('member_type'),                              # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',                                      # where the template README files are
-        'target_dir'  => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
+        'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
     };
 }
@@ -155,7 +155,6 @@ sub pipeline_analyses {
             -input_ids => [
                 {'cmd' => 'mysql #db_conn# -N -q -e "#query#" > #target_dir#/#file_name#',},
             ],
-            -hive_capacity => -1,
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
             },
@@ -174,7 +173,6 @@ sub pipeline_analyses {
             -input_ids => [
                 {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
             ],
-            -hive_capacity => -1,
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml', },
@@ -196,7 +194,6 @@ sub pipeline_analyses {
                 {'filesuffix' => ''},
                 {'filesuffix' => '_possorthol', 'possible_orth' => 1},
             ],
-            -hive_capacity => -1,
             -rc_name => '1Gb_job',
             -flow_into => {
                 1 => {
@@ -214,7 +211,6 @@ sub pipeline_analyses {
             -input_ids => [
                 { 'inputquery' => '#query#', },
             ],
-            -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'generate_collations', 'generate_tarjobs', 'remove_hash' ],
                 2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($tree_id))expr#' } },
@@ -245,7 +241,6 @@ sub pipeline_analyses {
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
             },
-            -hive_capacity => -1,
             -wait_for => [ 'dump_a_tree' ],
             -flow_into => {
                 2 => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
@@ -274,7 +269,6 @@ sub pipeline_analyses {
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
             },
-            -hive_capacity => -1,
             -wait_for => [ 'dump_a_tree' ],
             -flow_into => {
                 2 => { 'tar_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
@@ -301,7 +295,6 @@ sub pipeline_analyses {
                 'work_dir'    => $self->o('work_dir'),
                 'cmd'         => 'rm -rf #work_dir#',
             },
-            -hive_capacity => -1,
             -wait_for => [ 'collate_dumps', 'tar_dumps' ],
             -flow_into => {
                 1 => [ 'generate_prepare_dir' ],
@@ -313,7 +306,6 @@ sub pipeline_analyses {
             -parameters => {
                 'cmd'         => 'gzip #full_name#',
             },
-            -hive_capacity => -1,
         },
 
         {   -logic_name => 'generate_prepare_dir',
@@ -332,7 +324,6 @@ sub pipeline_analyses {
                 'column_names'      => [ 'cmd' ],
             },
             -wait_for => [ 'archive_long_files', 'dump_all_homologies', 'dump_all_trees'],
-            -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'prepare_dir' ],
             },
@@ -342,7 +333,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
             },
-            -hive_capacity => -1,
         },
     ];
 }
