@@ -23,7 +23,13 @@ sub content {
   my $html;
   
   if (!$self->hub->param('t1')) {
-    $html = $self->_info('No transcripts selected', 'You must select transcripts using the "Select transcripts" button from menu on the left hand side of this page'); 
+    $html = $self->_info(
+      'No transcripts selected',
+      sprintf(
+        'You must select transcripts using the "Select transcripts" button from menu on the left hand side of this page, or by clicking <a href="%s" class="modal_link" rel="modal_select_transcripts">here</a>.',
+        $self->view_config->extra_tabs->[1]
+      )
+    ); 
   } elsif ($length >= $self->{'subslice_length'}) {
     $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
   } else {
