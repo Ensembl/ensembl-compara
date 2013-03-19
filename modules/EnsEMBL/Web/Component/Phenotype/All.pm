@@ -28,7 +28,7 @@ sub content {
     unless ($index{$initial}) {
       push @toc, sprintf('<a href="#phenotypes-%s">%s</a>', $initial, $initial);
     }
-    $list{$initial}{uc($desc)} .= sprintf('<p><a href="/%s/Phenotype/Locations?ph=%s">%s</a></p>', $self->hub->species, $phen->id, ucfirst($desc));
+    $list{$initial}{uc($desc)} .= sprintf('<p><a href="/%s/Phenotype/Locations?ph=%s">%s</a></p>', $self->hub->species, $phen->dbID, ucfirst($desc));
     $index{$initial}++;
   } 
 
