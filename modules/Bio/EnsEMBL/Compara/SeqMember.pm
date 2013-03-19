@@ -642,7 +642,7 @@ sub gene_member {
     assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
     $self->{'_gene_member'} = $gene_member;
   }
-  return undef if ($self->source_name ne 'ENSEMBLPEP');
+  return undef if ($self->source_name ne 'ENSEMBLPEP' and $self->source_name ne 'ENSEMBLTRANS');
   if(!defined($self->{'_gene_member'}) and
      defined($self->adaptor) and $self->dbID)
   {
@@ -694,7 +694,7 @@ sub gene_member {
 sub get_Transcript {
   my $self = shift;
   
-  return undef unless($self->source_name eq 'ENSEMBLPEP');
+  return undef unless($self->source_name eq 'ENSEMBLPEP' or $self->source_name eq 'ENSEMBLTRANS');
   return $self->{'core_transcript'} if($self->{'core_transcript'});
 
   unless($self->genome_db and 
