@@ -301,6 +301,7 @@ sub attach_alignment {
     assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
 
     $self->preload;
+    $self->seq_type($other_gene_align->seq_type);
 
     # Gets the alignment
     my %cigars;
