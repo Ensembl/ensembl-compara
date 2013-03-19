@@ -7,7 +7,7 @@ use strict;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
-  my ($class, $request) = @_;
+  my ($self, $request) = @_;
 
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
