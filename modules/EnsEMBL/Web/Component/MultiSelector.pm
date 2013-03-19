@@ -36,7 +36,7 @@ sub content_ajax {
   my $include_list = join '', map sprintf('<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_}), sort { $included{$a} <=> $included{$b} } keys %included;
   my $exclude_list = join '', map sprintf('<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_}), sort { $all{$a} cmp $all{$b} } grep !$included{$_}, keys %all;
   my $select_by    = join '', map sprintf('<option value="%s">%s</option>', @$_), @{$self->{'select_by'} || []};
-     $select_by    = qq{<div class="select_by"><h3>Select:</h3><select><option value="">-------------------------</option>$select_by</select></div>} if $select_by;
+     $select_by    = qq{<div class="select_by"><h2>Select by type:</h2><select><option value="">----------------------------------------</option>$select_by</select></div>} if $select_by;
   my $content      = sprintf('
     <div class="content">
       <form action="%s" method="get" class="hidden">%s</form>
