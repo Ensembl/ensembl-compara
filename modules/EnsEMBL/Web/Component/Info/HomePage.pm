@@ -335,8 +335,16 @@ sub _variation_text {
       my $phen_url  = $species_defs->species_path.'/Phenotype/Locations?ph='.$sample_data->{'PHENOTYPE_PARAM'};
       $html .= qq(
         <a class="nodeco _ht _ht_track" href="$phen_url" title="Go to phenotype $phen_text"><img src="${img_url}96/phenotype.png" class="bordered" /><span>Example phenotype</span></a>
-    );
-  }
+      );
+    }
+
+    if ($sample_data->{'STRUCTURAL_PARAM'}) {
+      my $sv_text = $sample_data->{'STRUCTURAL_TEXT'}; 
+      my $sv_url  = $species_defs->species_path.'/StructuralVariation/Explore?sv='.$sample_data->{'STRUCTURAL_PARAM'};
+      $html .= qq(
+        <a class="nodeco _ht _ht_track" href="$sv_url" title="Go to structural variant $sv_text"><img src="${img_url}96/struct_var.png" class="bordered" /><span>Example structural variant</span></a>
+      );
+    }
 
     $html .= '
 </div>
