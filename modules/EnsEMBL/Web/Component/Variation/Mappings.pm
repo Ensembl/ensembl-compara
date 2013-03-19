@@ -106,10 +106,11 @@ sub content {
   
   # create a regfeat table as well
   my @reg_columns = (
-    { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
-    { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
-    { key => 'allele',   title => 'Allele',                    sort => 'string',                          },
-    { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
+    { key => 'rf',       title => 'Regulatory feature',    sort => 'html'                             },
+    { key => 'cell_type',title => 'Cell type',              sort => 'string'                           },
+    { key => 'ftype',    title => 'Feature type',           sort => 'string'                           },
+    { key => 'allele',   title => 'Allele',                 sort => 'string',                          },
+    { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
   my @motif_columns = (
@@ -273,7 +274,9 @@ sub content {
     my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
     
     for my $rfv (@{ $vf_obj->get_all_RegulatoryFeatureVariations }) {
-        
+      my $rf_stable_id = $rfv->regulatory_feature->stable_id;
+      my $rfs = $rfa->fetch_all_by_stable_ID($rf_stable_id);
+       
       # create a URL
       my $url = $hub->url({
         type   => 'Regulation',
@@ -283,33 +286,33 @@ sub content {
       });
       
       $url .= ';regulation_view=variation_feature_variation=normal';
-      
-      for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-        
-        my $type;
-        
-        if ($cons_format eq 'so') {
-          $type = join ', ', map { $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$rfva->get_all_OverlapConsequences};
-        } elsif ($cons_format eq 'ncbi') {
-          # not all terms have an ncbi equiv so default to SO
-          $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$rfva->get_all_OverlapConsequences};
-        } else {
-          $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$rfva->get_all_OverlapConsequences};
-        }
-        
-        my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
-        
-        my $row = {
-          rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
-          ftype    => 'Regulatory feature',
-          allele   => $r_allele,
-          type     => $type || '-',
-        };
-        
-        $reg_table->add_row($row);
-        $flag = 1;
-      }
-    }
+        for my $rf (@$rfs) { 
+          for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
+            my $type;
+            if ($cons_format eq 'so') {
+              $type = join ', ', map { $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$rfva->get_all_OverlapConsequences};
+            } elsif ($cons_format eq 'ncbi') {
+              # not all terms have an ncbi equiv so default to SO
+              $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$rfva->get_all_OverlapConsequences};
+            } else {
+              $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$rfva->get_all_OverlapConsequences};
+            }
+            
+            my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
+            
+            my $row = {
+              rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
+              cell_type => $rf->cell_type->name,
+              ftype    => $rf->feature_type->name,
+              allele   => $r_allele,
+              type     => $type || '-',
+            };
+            
+            $reg_table->add_row($row);
+            $flag = 1;
+          } # end rfva loop
+      } # end rf loop
+    } # end rfv loop
     
     for my $mfv (@{ $vf_obj->get_all_MotifFeatureVariations }) {
       my $mf = $mfv->motif_feature;
