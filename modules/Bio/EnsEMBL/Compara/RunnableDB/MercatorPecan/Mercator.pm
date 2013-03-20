@@ -104,8 +104,8 @@ sub write_output {
   foreach my $sr_id (@{$synteny_region_ids}) {
 
     #Flow into pecan
-    my $dataflow_output_id = "{ synteny_region_id=>$sr_id }";
-    $self->dataflow_output_id($dataflow_output_id,1);
+    my $dataflow_output_id = { synteny_region_id => $sr_id };
+    $self->dataflow_output_id($dataflow_output_id,2);
   }
 
   return 1;
