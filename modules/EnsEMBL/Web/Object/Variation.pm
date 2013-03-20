@@ -41,7 +41,11 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations individuals ega alignments ldpops);
+      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations individuals ega);
+      if($self->param('vf')){
+          ## only show these if a mapping available
+          $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
+      }
       $availability->{'is_somatic'}  = $obj->is_somatic;
       $availability->{'not_somatic'} = !$obj->is_somatic;
     }
@@ -588,9 +592,10 @@ sub freqs {
   ### Returns hash of data, 
 
   my $self = shift;
-  return {} unless @_ || $self->param('vf');
-  my $variation_feature = shift || $self->vari->get_VariationFeature_by_dbID($self->param('vf'));
-  my $allele_list = $variation_feature->get_all_Alleles;
+
+
+  ## show genotypes for unmapped variants - get alleles from variation not variation feature
+  my $allele_list = $self->vari->get_all_Alleles;
   return {} unless $allele_list;
   
   my (%data, $allele_missing);
@@ -882,17 +887,41 @@ sub individual_table {
   my $selected_pop = shift;
   my $individual_genotypes = $self->individual_genotypes_obj($selected_pop);
   return {} unless defined $individual_genotypes && @$individual_genotypes; 
+
+  ### limit populations shown to those with population genotypes 
+  ### summarised by dbSNP or added in adaptor for 1KG
+  my $pop_geno_adaptor   = $self->hub->database('variation')->get_PopulationGenotypeAdaptor();
+  my $pop_genos = $pop_geno_adaptor->fetch_all_by_Variation($self->vari);
+
+  my %ip_hash_new;
+  my %synonym;
+  my %pop_seen;
+  foreach my $pop_geno (@{$pop_genos}){
+      my $pop_obj = $pop_geno->population();
+
+      ## look up samples in each population once
+      next if $pop_seen{ $pop_obj->dbID()} ==1;
+      $pop_seen{ $pop_obj->dbID()} =1;
+
+      my $individuals = $pop_obj->get_all_Individuals(); 
+      foreach my $ind_ob (@{$individuals}){
+          ## link on name & apply to geno structure later
+          push @{$ip_hash_new{$ind_ob->name()}}, $pop_obj;
+      }
+
+      ## look up synonyms (for dbSNP link) once
+      $synonym{$pop_obj->name} = $pop_obj->get_all_synonyms(),
+  }
+
   my %data;
-  
-  my @ind_ids;
   
   foreach my $ind_gt_obj ( @$individual_genotypes ) { 
     my $ind_obj   = $ind_gt_obj->individual;
     next unless $ind_obj;
+    next if $ind_obj->name() =~/1000GENOMES:pilot_2/; ## not currently reporting these
+
     my $ind_id    = $ind_obj->dbID;
     
-    push @ind_ids, $ind_id;
-
     $data{$ind_id}{Name}           = $ind_obj->name;
     $data{$ind_id}{Genotypes}      = $self->individual_genotype($ind_gt_obj);
     $data{$ind_id}{Gender}         = $ind_obj->gender;
@@ -901,32 +930,25 @@ sub individual_table {
     $data{$ind_id}{Father}        = $self->parent($ind_obj,"father");
     $data{$ind_id}{Children}      = $self->child($ind_obj);
     $data{$ind_id}{Object}        = $ind_obj;
-  }
   
-  # Bit of trickery here to get the populations
-  # Uses a specially written method in the variation API to get a hash
-  # linking individuals to populations
-  # This means we do 1 query here instead of 1 per individual
-  if(scalar @ind_ids) {
-    my $ia = $individual_genotypes->[0]->individual->adaptor;
-    my $ip_hash = $ia->_get_individual_population_hash(\@ind_ids);
-    
-    my (%pops, %pop_links);
-    my $pa = $ia->db->get_PopulationAdaptor;
-    $pops{$_->dbID} = $_ for @{$pa->fetch_all_by_dbID_list([keys %$ip_hash])};
-    $pop_links{$_->dbID} = $self->pop_links($_) for values %pops;
-    
-    foreach my $pop_id(keys %$ip_hash) {
-      foreach my $ind_id(keys %{$ip_hash->{$pop_id}}) {
-        next unless defined($data{$ind_id});
-        
+    if(defined $ip_hash_new{$ind_obj->name()}->[0]){
+        foreach my $pop_obj(@{$ip_hash_new{$ind_obj->name()}}){
+            push (@{$data{$ind_id}{Population}}, {
+                Name => $pop_obj->name(),
+                Size => $pop_obj->size(),
+                Link => $synonym{$pop_obj->name},
+                ID   => $pop_obj->dbID()
+                });
+        }
+    }
+    else{
+        ## force the rest to the 'Other individuals' table to be reported seperately
         push (@{$data{$ind_id}{Population}}, {
-          Name => $self->pop_name($pops{$pop_id}),
-          Size => $self->pop_size($pops{$pop_id}),
-          Link => $pop_links{$pop_id},
-          ID   => $pop_id
-        });
-      }
+            Name => $ind_obj->name(),
+            Size => 1,
+            Link => [],
+            ID   => 1000000
+            });
     }
   }
   
