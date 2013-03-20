@@ -4,7 +4,6 @@ package EnsEMBL::Web::Document::HTML::TopFAQs;
 
 use strict;
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Document::HTML);
@@ -17,8 +16,7 @@ sub render {
     <h3>Top 5 Frequently Asked Questions</h3>
   ';
 
-  my $hub = EnsEMBL::Web::Hub->new;
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
 
   my $args = {'limit' => 5};
   my @faqs = @{$adaptor->fetch_faqs($args)};

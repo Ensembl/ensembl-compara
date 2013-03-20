@@ -5,14 +5,13 @@ package EnsEMBL::Web::Document::HTML::NewsArchiveLookup;
 
 use strict;
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self            = shift;
-  my $hub             = EnsEMBL::Web::Hub->new;
+  my $hub             = $self->hub;
   my $id              = $hub->param('id');
   my $ensembl_version = $hub->species_defs->ENSEMBL_VERSION;
   my @releases        = $self->get_releases(EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub), $hub->species_defs->ENSEMBL_VERSION);

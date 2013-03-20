@@ -20,7 +20,7 @@ our $MEMD = EnsEMBL::Web::Cache->new(
 
 sub render {
   my $self           = shift;
-  my $hub            = EnsEMBL::Web::Hub->new;
+  my $hub            = $self->hub;
   my $sd             = $hub->species_defs;
   my $static_server  = $sd->ENSEMBL_STATIC_SERVER;
   my $img_url        = $sd->img_url;
