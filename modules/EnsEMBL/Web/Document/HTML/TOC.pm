@@ -6,12 +6,11 @@ package EnsEMBL::Web::Document::HTML::TOC;
 
 use strict;
 
-use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self              = shift;
-  my $tree              = $ENSEMBL_WEB_REGISTRY->species_defs->STATIC_INFO;
+  my $tree              = $self->hub->species_defs->STATIC_INFO;
   (my $location         = $ENV{'SCRIPT_NAME'}) =~ s/index\.html$//;
   my @toplevel_sections = map { ref $tree->{$_} eq 'HASH' ? $_ : () } keys %$tree;
   my %html              = ( left => '', middle => '', right => '' );
