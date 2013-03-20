@@ -67,16 +67,16 @@ sub make_table {
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
-    { key => 'ID',       width => '12u', sort => 'html'                                                                                                                  },
-    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp'                                                                                   },
-    { key => 'Alleles',  width => '16u', sort => 'string',   label => "Alle\fles",  align => 'center'                                                                    },
-    { key => 'class',    width => '11u', sort => 'string',   label => 'Class',      align => 'center'                                                                    },
-    { key => 'Source',   width => '8u',  sort => 'string',   label => "Sour\fce",                                                                                        },
-    { key => 'status',   width => '6u',  sort => 'string',   label => "Val\fi\fda\ftion", align => 'center', help => $self->strip_HTML($glossary->{'Validation status'}) },
-    { key => 'snptype',  width => '12u', sort => 'string',   label => 'Type',                                                                                            },
-    { key => 'aachange', width => '6u',  sort => 'string',   label => 'AA',         align => 'center', help => 'Amino Acid'                                              },
-    { key => 'aacoord',  width => '6u',  sort => 'position', label => "AA co\ford", align => 'center', help => "Amino Acid Co-ordinate"                                  },
-  ];
+    { key => 'ID',       width => '12u', sort => 'html'                                                                                                        },
+    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp'                                                                         },
+    { key => 'Alleles',  width => '16u', sort => 'string',   label => "Alle\fles",  align => 'center'                                                          },
+    { key => 'class',    width => '11u', sort => 'string',   label => 'Class',      align => 'center'                                                          },
+    { key => 'Source',   width => '8u',  sort => 'string',   label => "Sour\fce",                                                                              },
+    { key => 'status',   width => '9u',  sort => 'string',   label => "Evid\fence", align => 'center', help => $self->strip_HTML($glossary->{'Evidence value'})},
+    { key => 'snptype',  width => '12u', sort => 'string',   label => 'Type',                                                                                  }, 
+    { key => 'aachange', width => '6u',  sort => 'string',   label => 'AA',         align => 'center', help => 'Amino Acid'                                    },
+    { key => 'aacoord',  width => '6u',  sort => 'position', label => "AA co\ford", align => 'center', help => "Amino Acid Co-ordinate"                        }
+    ];
   
   # submitter data for LRGs
   splice @$columns, 5, 0, { key => 'Submitters', width => '10u', sort => 'string', align => 'center', export_options => { split_newline => 2 } } if $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
@@ -391,7 +391,7 @@ sub variation_table {
         
         if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
           #my $var                  = $snp->variation;
-          my $validation           = $snp->get_all_validation_states || [];
+          my $evidence             = $snp->get_all_evidence_values || [];
           my $variation_name       = $snp->variation_name;
           my $var_class            = $snp->var_class;
           my $translation_start    = $transcript_variation->translation_start;
@@ -428,7 +428,9 @@ sub variation_table {
           
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
-          my $status = join '', map qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}, @$validation; # validation
+         # my $status = join '', map qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}, @$validation; # validation
+          my $status = join ', ', @$evidence;  # internally-defined evidence status - icons to follow
+	  $status =~ s/\_/ /;
           
           push @rows, {
             ID         => qq{<a href="$url">$variation_name</a>},
