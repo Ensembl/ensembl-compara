@@ -12,7 +12,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 sub render {
   my $self = shift;
 
-  my $component = EnsEMBL::Web::Component::Help::Glossary->new;
+  my $component = EnsEMBL::Web::Component::Help::Glossary->new($self->hub);
 
   return $component->content;
 }
