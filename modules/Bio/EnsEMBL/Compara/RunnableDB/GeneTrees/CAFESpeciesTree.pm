@@ -88,9 +88,9 @@ sub fetch_input {
 
     die "mlss_id is an obligatory parameter\n" unless (defined $self->param('mlss_id'));
 
-    my $cafe_species = $self->param('cafe_species');
+    my $cafe_species = eval $self->param('cafe_species');
+    $self->param('cafe_species', $cafe_species);
     if ((not defined $cafe_species) or ($cafe_species eq '') or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
-#        die "No species for the CAFE tree";
         print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
         $self->param('cafe_species', undef);
     }
