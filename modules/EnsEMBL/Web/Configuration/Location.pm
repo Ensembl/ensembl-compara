@@ -50,6 +50,7 @@ sub populate_tree {
     )],
     { 'availability' => 'slice'}
   );
+  
 
   $self->create_node('View', 'Region in detail',
     [qw(
@@ -126,7 +127,15 @@ sub populate_tree {
     )],
     { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
   ));
-
+  
+  $variation_menu->append($self->create_node('StructuralVariant', 'Structural Variant',
+    [qw(
+      nav               EnsEMBL::Web::Component::Location::ViewBottomNav
+      structuralvariant EnsEMBL::Web::Component::Location::StructuralVariant
+    )],
+    { 'availability' => 'slice has_SV'}
+  ));
+  
   $self->create_node('Marker', 'Markers',
     [qw(
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
