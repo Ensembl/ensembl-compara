@@ -35,13 +35,10 @@ use constant {
 sub new {
   ## @overrides
   ## Creates a new DOM::Node::Element::Form and adds the required attributes before returning it
-  ## @param HashRef with following keys
-  ##  - id                id attribute of the form
-  ##  - action            action attribute
-  ##  - method            method attribute (post as default)
-  ##  - class             Space seperatred class names for class attribute
+  ## @param HashRef with keys that get added as attributes, plus some extra keys as below (these don't get added as attributes)
   ##  - skip_validation   Flag if on, no validation is done on JS end
   ##  - dom               DOM object (optional)
+  ##  - format            Output format - if format is anything other than HTML, the form will not be printed
   my $class = shift;
   my $params = shift;
 
@@ -50,15 +47,16 @@ sub new {
     return $class->_new($params, @_);
   }
   ##compatibility patch ends
-  
-  my $self = $class->SUPER::new($params->{'dom'});
-  
-  $self->{_format} =  exists $params->{'format'} ? $params->{'format'} : 'HTML';  
-  $self->set_attribute('id',      $params->{'id'}) if exists $params->{'id'};
-  $self->set_attribute('action',  $params->{'action'}) if exists $params->{'action'};
-  $self->set_attribute('method',  $params->{'method'} || 'post');
-  $self->set_attribute('class',   exists $params->{'class'} ? $params->{'class'} : $self->CSS_CLASS_DEFAULT);
-  $self->set_attribute('class',   $self->CSS_CLASS_VALIDATION) unless $params->{'skip_validation'};
+
+  my $self = $class->SUPER::new(delete $params->{'dom'});
+
+  $self->{'_format'}    = delete $params->{'format'} || 'HTML';
+  $params->{'method'} ||= 'post';
+  $params->{'class'}  ||= $self->CSS_CLASS_DEFAULT;
+  $params->{'class'}   .= ' '.$self->CSS_CLASS_VALIDATION unless delete $params->{'skip_validation'};
+
+  # add attributes
+  $self->set_attribute($_, $params->{$_}) for keys %$params;
 
   $self->dom->map_element_class ({                            #map all form components to classes for DOM
     'form-fieldset'    => 'EnsEMBL::Web::Form::Fieldset',
