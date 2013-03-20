@@ -79,8 +79,6 @@ sub fetch_input {
 
     if (my $alignment_id = $self->param('alignment_id')) {
         $self->_load_and_dump_alignment();
-        # $self->param('aln_fasta') and/or $self->param('aln_file') are now set
-#        $self->param('input_aln', $self->_load_and_dump_alignment());
         return;
     }
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
@@ -157,12 +155,10 @@ sub _run_fasttree {
     $cmd .= " $aln_file";
     $cmd .= " > $fasttree_output";
 
-    print STDERR "$cmd\n" if ($self->debug);
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    unless(system("$cmd") == 0) {
-        $self->throw("error running FastTree\n$cmd\n");
+    my $runCmd = $self->run_command($cmd);
+    if ($runCmd->exit_code) {
+        $self->throw("error running parsimonator\n$cmd\n");
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
 
     $self->_store_newick_into_nc_tree_tag_string($tag, $fasttree_output);
 
