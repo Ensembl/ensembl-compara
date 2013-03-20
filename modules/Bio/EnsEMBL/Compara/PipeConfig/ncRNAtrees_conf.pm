@@ -33,7 +33,7 @@ sub default_options {
             # parameters that are likely to change from execution to another:
             'mlss_id'             => 40089,
             'release'               => '71',
-            'rel_suffix'            => 'iv',    # an empty string by default, a letter or string otherwise
+            'rel_suffix'            => 't',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
@@ -173,11 +173,11 @@ sub pipeline_analyses {
 
             {   -logic_name => 'backbone_fire_load',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -parameters  => [ {
+                -parameters  => {
                                   'updated_tables'    => 'method_link species_set method_link_species_set ncbi_taxa_name ncbi_taxa_node',   ## Fill
                                   'filename'          => 'snapshot_before_load',
                                   'output_file'       => $self->o('dump_dir').'/#filename#',
-                                } ],
+                                },
                 -flow_into  => {
                                '1->A'   => [ 'load_genomedb_factory' ],
                                'A->1'   => [ 'backbone_fire_tree_building' ],
@@ -186,11 +186,11 @@ sub pipeline_analyses {
 
             {   -logic_name => 'backbone_fire_tree_building',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -parameters  => [ {
+                -parameters  => {
                                   'updated_tables'    => 'genome_db members',   ## Fill -- more?, species_set?
                                   'filename'          => 'snapshot_before_tree_building',
                                   'output_file'       => $self->o('dump_dir').'/#filename#',
-                                 } ],
+                                 },
                 -flow_into  => {
                                 '1->A'  => [ 'rfam_classify' ],
                                 'A->1'  => [ 'backbone_pipeline_finished' ],
@@ -549,7 +549,7 @@ sub pipeline_analyses {
 
             {
              -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
-             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels_noGap',  ## PrepareRAxMLSecModels -- rename
              -hive_capacity => $self->o('raxml_capacity'),
              -parameters => {
                              'raxml_exe' => $self->o('raxml_exe'),
@@ -578,7 +578,7 @@ sub pipeline_analyses {
 #         },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree_noGap', ## SecStrucModels
             -hive_capacity => $self->o('raxml_capacity'),
             -parameters => {
                             'raxml_exe' => $self->o('raxml_exe'),
@@ -592,7 +592,7 @@ sub pipeline_analyses {
 
         {
          -logic_name => 'sec_struct_model_tree_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree_noGap',
          -hive_capacity => $self->o('raxml_capacity'),
          -parameters => {
                          'raxml_exe' => $self->o('raxml_exe'),
@@ -622,7 +622,7 @@ sub pipeline_analyses {
 
             {
              -logic_name => 'fast_trees',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees_noGap',
              -hive_capacity => $self->o('fast_trees_capacity'),
              -parameters => {
                              'fasttree_exe' => $self->o('fasttree_exe'),

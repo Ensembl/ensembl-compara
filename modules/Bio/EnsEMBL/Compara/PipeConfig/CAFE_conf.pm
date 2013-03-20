@@ -31,12 +31,19 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
   Release 68:
 
   ncRNAtrees pipeline:
-  init_pipeline.pl modules/Bio/EnsEMBL/Compara/PipeConfig/CAFE_conf.pm -mlss_id 40084 -work_dir /nfs/users/nfs_m/mp12/ensembl_main/ncrna_trees_68 -analysis_topup  -wait_for db_snapshot_after_Rfam_classify -per_family_table 0 -type nc -pipeline_name compara_nctrees_68 -host compara2
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40084 -work_dir /nfs/users/nfs_m/mp12/ensembl_main/ncrna_trees_68 -analysis_topup  -wait_for db_snapshot_after_Rfam_classify -per_family_table 0 -type nc -pipeline_name compara_nctrees_68 -host compara2
 
   Release 69:
 
   ncRNAtrees pipeline:
-  init_pipeline.pl modules/Bio/EnsEMBL/Compara/PipeConfig/CAFE_conf.pm -mlss_id 40083 -work_dir /nfs/users/nfs_m/mp12/ncrna_trees_68CAFEtest  -analysis_topup -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_name mp12_compara_nctrees_68st -host compara4
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40083 -work_dir /nfs/users/nfs_m/mp12/ncrna_trees_68CAFEtest  -analysis_topup -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_name mp12_compara_nctrees_68st -host compara4
+
+  Release 71:
+  ncRNAtrees pipeline:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40089 -work_dir /lustre/scratch110/ensembl/mp12/nc_trees_71_CAFE -analysis_topup -wait_for backbone_fire_db_prepare
+-per_family_table 0 -type nc -pipeline_name mp12_compara_nctrees_71 -host compara2 -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+  proteinTrees pipeline:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40090 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_71_CAFE -analysis_topup -wait_for backbone_fire_tree_building -per_family_table 1 -type prot -pipeline_name mm14_compara_homology_71 -host compara1
 
 =head1 CONTACT
 
@@ -59,11 +66,10 @@ sub default_options {
 
             # Data needed for CAFE
             'species_tree_meta_key' => 'full_species_tree_string',
-### ncRNA uses only 6 species for CAFE analysis:
-#            'cafe_species'          =>  ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
             'cafe_lambdas'          => '',  # For now, we don't supply lambdas
             'cafe_struct_tree_str'  => '',  # Not set by default
             'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+#            'badiRate_exe'          => '/software/ensembl/compara/badirate-1.35/BadiRate.pl',
 
             'pipeline_db'   => {
                                 -host   => $self->o('host'),
@@ -124,9 +130,20 @@ sub pipeline_analyses {
                             },
              -hive_capacity => -1, # to allow for parallelization
              -flow_into => {
+#                            '1->A' => ['BadiRate'],
                             1 => ['CAFE_table'],
                            },
             },
+
+#            {
+#             -logic_name => 'BadiRate',
+#             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::BadiRate',
+#             -parameters => {
+#                             'mlss_id'               => $self->o('mlss_id'),
+#                             'species_tree_meta_key' => $self->o('species_tree_meta_key'),
+#                             'badiRate_exe'          => $self->o('badiRate_exe'),
+#                            }
+#            },
 
             {
              -logic_name => 'CAFE_table',
