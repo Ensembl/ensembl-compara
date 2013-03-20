@@ -30,7 +30,7 @@ sub createObjects {
 
   return $self->problem('fatal', 'No ID', $self->_help) if (!scalar(@ids) && $self->hub->action ne 'All');
   if (@ids) {
-    my $variations = [];
+    my $pfs = [];
     my $genes = [];
 
     foreach my $id (@ids) {
@@ -38,29 +38,27 @@ sub createObjects {
       return unless $dbc;
 	    $dbc->include_failed_variations(1);
 
-      my $adaptor    = $dbc->get_adaptor('VariationFeature');
+      my $adaptor    = $dbc->get_adaptor('PhenotypeFeature');
 
-      push @$variations, @{$adaptor->fetch_all_with_phenotype(undef, undef, $id) || []};
-      push @$variations, @{$adaptor->fetch_all_somatic_with_phenotype(undef, undef, $id) || []};
+      push @$pfs, @{$adaptor->fetch_all_by_phenotype_id_source_name($id) || []};
 
-      if ($variations and scalar @$variations > 0) {
-
-        ## Get associated genes
-        my $vardb        = $self->hub->database('variation');
-        my $pfa          = $vardb->get_adaptor('PhenotypeFeature');
+      if ($pfs and scalar @$pfs > 0) {
 
         my %associated_gene;
   
-        foreach my $pf (@{$pfa->fetch_all_by_VariationFeature_list($variations) || []}) {
+        foreach my $pf (@{$pfs}) {
           if ($pf->{'_phenotype_id'} eq $id) {
             # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
-            foreach my $gene_id (grep $_, split /,/, $pf->associated_gene) {
-              $gene_id =~ s/\s//g;
-              next if $gene_id =~ /intergenic/i;
-              next unless $gene_id;
-              my $gene_objects = $self->_create_Gene('core', $gene_id);
-              unless ($associated_gene{$gene_id}) {
-                $associated_gene{$gene_id} = $gene_objects;
+            
+            if($pf->associated_gene) {
+              foreach my $gene_id (grep $_, split /,/, $pf->associated_gene) {
+                $gene_id =~ s/\s//g;
+                next if $gene_id =~ /intergenic/i;
+                next unless $gene_id;
+                my $gene_objects = $self->_create_Gene('core', $gene_id);
+                unless ($associated_gene{$gene_id}) {
+                  $associated_gene{$gene_id} = $gene_objects;
+                }
               }
             }
           }
@@ -85,8 +83,8 @@ sub createObjects {
   }
 =cut
     }
-    if ($variations and scalar @$variations > 0) {
-      $features->{'Variation'} = EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations);
+    if ($pfs and scalar @$pfs > 0) {
+      $features->{'Variation'} = EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$pfs);
     }
   }
 

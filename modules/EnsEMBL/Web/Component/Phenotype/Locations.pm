@@ -45,7 +45,7 @@ sub _configure_Variation_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $rows = [];
 
-  my $header = 'Variants associated with phenotype '.$self->object->get_phenotype_desc;
+  my $header = 'Features associated with phenotype '.$self->object->get_phenotype_desc;
   my $table_style = {'sorting' => ['p-values desc']};
 
   my $column_order = [qw(loc names)];
@@ -58,8 +58,8 @@ sub _configure_Variation_table {
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'loc'     => {'value' => $self->_var_location_link($feature)},
-              'names'   => {'value' => $self->_variation_link($feature, $feature_type)},
+              'loc'     => {'value' => $self->_pf_location_link($feature)},
+              'names'   => {'value' => $self->_pf_link($feature)},
               'options' => {'class' => $feature->{'html_id'}},
               };
 
@@ -70,7 +70,7 @@ sub _configure_Variation_table {
           'column_info' => $column_info, 'table_style' => $table_style};
 }
     
-sub _var_location_link {
+sub _pf_location_link {
   my ($self, $f) = @_;
   return 'Unmapped' unless $f->{'region'};
   my $coords = $f->{'region'}.':'.$f->{'start'}.'-'.$f->{'end'};
@@ -92,18 +92,59 @@ sub _var_location_link {
   return $link;
 }
 
-sub _variation_link {
-  my ($self, $f, $type) = @_;
-  my $params = {
-    'type'      => 'Variation',
-    'action'    => 'Phenotype',
-    'v'         => $f->{'label'},
-    ph          => $self->hub->param('ph'),
-    __clear     => 1
-  };
-
-  my $names = sprintf('<a href="%s">%s</a>', $self->hub->url($params), $f->{'label'});
-  return $names;
+sub _pf_link {
+  my ($self, $f) = @_;
+  
+  my $type = $f->{'extra'}->{'feat_type'};
+  
+  my $link;
+  
+  # no links for SSVs yet, link to search
+  if($type eq 'SupportingStructuralVariation') {
+    my $params = {
+      'type'   => 'Search',
+      'action' => 'Results',
+      'q'      => $f->{'label'},
+      __clear  => 1
+    };
+    
+    $link = sprintf('<a href="%s">%s</a>', $self->hub->url($params), $f->{'label'});
+  }
+  
+  # link to ext DB for QTL
+  elsif($type eq 'QTL') {
+    my $source = $f->{'extra'}->{'phe_sources'};
+    $source =~ s/ /\_/g;
+    my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $self->hub->species)));
+    
+    print STDERR "SPECIES IS $species ".$self->hub->species."\n";
+    
+    $link = $self->hub->get_ExtURL_link(
+      $f->{'label'},
+      $source,
+      { ID => $f->{'label'}, SP => $species}
+    );
+  }
+  
+  # link to gene or variation page
+  else {
+    # work out the ID param (e.g. v, g, sv)
+    my $id_param = $type;
+    $id_param =~ s/[a-z]//g;
+    $id_param = lc($id_param);
+    
+    my $params = {
+      'type'      => $type,
+      'action'    => 'Phenotype',
+      'ph'        => $self->hub->param('ph'),
+      $id_param   => $f->{'label'},
+      __clear     => 1
+    };
+  
+    $link = sprintf('<a href="%s">%s</a>', $self->hub->url($params), $f->{'label'});
+  }
+  
+  return $link;
 }
 
 1;

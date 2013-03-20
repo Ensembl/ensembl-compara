@@ -30,7 +30,7 @@ sub convert_to_drawing_parameters {
   my (%associated_phenotypes, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources);
   
   # getting associated phenotypes and associated genes
-  foreach my $pf (@{$pfa->fetch_all_by_VariationFeature_list($data) || []}) {
+  foreach my $pf (@{$data || []}) {
     my $variation_name = $pf->{'_object_id'};
 
     $associated_phenotypes{$variation_name}{$pf->phenotype->description} = 1;
@@ -59,19 +59,21 @@ sub convert_to_drawing_parameters {
     }
   }
   
-  foreach my $vf (@$data) {
-    if (ref($vf) =~ /UnmappedObject/) {
-      my $unmapped = $self->unmapped_object($vf);
+  foreach my $pf (@$data) {
+    if (ref($pf) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($pf);
       push @results, $unmapped;
       next;
     }
     
+    my $object_type = $pf->type;
+    
     # getting all genes located in that specific location
-    my $seq_region   = $vf->seq_region_name;
-    my $start        = $vf->seq_region_start;
-    my $end          = $vf->seq_region_end;
-    my $name         = $vf->variation_name;
-    my $dbID         = $vf->dbID;
+    my $seq_region   = $pf->seq_region_name;
+    my $start        = $pf->seq_region_start;
+    my $end          = $pf->seq_region_end;
+    my $name         = $pf->object_id;
+    my $dbID         = $pf->dbID;
     
     # preparing the URL for all the associated genes and ignoring duplicate one
     my @assoc_gene_links;
@@ -90,41 +92,63 @@ sub convert_to_drawing_parameters {
     }
     
     # make zmenu link
-    my $zmenu_url = $hub->url({
-      type    => 'ZMenu',
-      ftype   => 'Xref',
-      action  => 'Variation',
-      v       => $name,
-      vf      => $dbID,
-      vdb     => 'variation',
-      p_value => $p_value_logs{$name}
-    });
+    my $id_param = $object_type;
+    $id_param =~ s/[a-z]//g;
+    $id_param = lc($id_param);
+    
+    my %url_params = ();
+    
+    if($object_type eq 'Gene' || $object_type eq 'Variation' || $object_type eq 'StructuralVariation') {
+      %url_params = (
+        type      => 'ZMenu',
+        ftype     => 'Xref',
+        action    => $object_type,
+        $id_param => $name,
+        vdb     => 'variation'
+      );
+      
+      $url_params{p_value} = $p_value_logs{$name} if defined($p_value_logs{$name});
+    }
+    
+    # use simple feature for QTL and SupportingStructuralVariation
+    else {
+      %url_params = (
+        type          => 'ZMenu',
+        ftype         => 'Xref',
+        action        => 'SimpleFeature',
+        display_label => $name,
+        logic_name    => $object_type,
+        bp            => $seq_region.":".$start."-".$end,
+      );
+    }
+    
+    my $zmenu_url = $hub->url(\%url_params);
 
-    #the html id is used to match the SNP on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
+    #the html id is used to match the feature on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
     push @results, {
       region          => $seq_region,
       start           => $start,
       end             => $end,
-      strand          => $vf->strand,
+      strand          => $pf->strand,
       html_id         => qq{${name}_$dbID},
       label           => $name,
       href            => $zmenu_url,       
       p_value         => $p_value_logs{$name},
-      somatic         => $vf->is_somatic,
       extra           => {
-        'source'      => $vf->source,
-        'genes'       => join(', ', @assoc_gene_links),
+        'feat_type'   => $object_type,
+        'genes'       => join(', ', @assoc_gene_links) || '-',
         'phenotypes'  => join('; ', sort keys %{$associated_phenotypes{$name} || {}}),
         'phe_sources' => join(', ', sort keys %{$phenotypes_sources{$name} || {}}),
         'p-values'    => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
       },
     };
   }
+  
   my $extra_columns = [
-        {'key' => 'source',      'title' => 'Variant source',         'sort' => ''},
+        {'key' => 'feat_type',   'title' => 'Feature type',           'sort' => ''},
         {'key' => 'genes',       'title' => 'Reported gene(s)',       'sort' => 'html'},
-        {'key' => 'phenotypes',  'title' => 'Phenotype(s) associated with this variant', 'sort' => ''},
-        {'key' => 'phe_sources', 'title' => 'Phenotype(s) source(s)', 'sort' => ''},
+        {'key' => 'phenotypes',  'title' => 'Associated phenotype(s)', 'sort' => ''},
+        {'key' => 'phe_sources', 'title' => 'Annotation source(s)', 'sort' => ''},
         {'key' => 'p-values',    'title' => 'P value (negative log)', 'sort' => 'numeric'},
   ];
   return [\@results, $extra_columns];
