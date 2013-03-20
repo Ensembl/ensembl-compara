@@ -40,7 +40,7 @@ sub init {
   
   foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES || []}) {
     $self->add_track('misc_feature', "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 
-      display       => 'off',  
+      display       => 'off',
       strand        => 'r',  
       colourset     => 'alternative_assembly' ,  
       description   => "Track indicating $alt_assembly assembly", 
@@ -69,7 +69,7 @@ sub init {
   
   $self->modify_configs(
     [ 'variation_feature_structural', 'somatic_sv_feature' ],
-    { display => 'normal', menu => 'yes' }
+    { display => 'off', menu => 'yes' }
   );
   
   $self->modify_configs(
