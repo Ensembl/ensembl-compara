@@ -423,8 +423,7 @@ sub gene_phenotypes {
       my $source = $pf->source;
       
       if($ext_id && $source) {
-        $ext_id .= '/'.$tax if $source eq 'OMIA';
-        $phen = $hub->get_ExtURL_link($desc, $source, $ext_id);
+        $phen = $hub->get_ExtURL_link($desc, $source, { ID => $ext_id, TAX => $tax});
       }
       else {
         $phen = $desc;
