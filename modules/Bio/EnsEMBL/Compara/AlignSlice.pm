@@ -681,6 +681,9 @@ sub _get_expanded_conservation_scores {
 	#offset is the sum of preceding gab lengths
 	$offset += ($this_genomic_align_block->restricted_aln_end - $this_genomic_align_block->restricted_aln_start + 1);
 
+        #Check there are scores present.
+        next unless (scalar @$all_these_conservation_scores);
+
 	#initialise y axis min and max
 	if (!defined $y_axis_max) {
 	    $y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
@@ -695,10 +698,13 @@ sub _get_expanded_conservation_scores {
 	}
 	push (@$all_conservation_scores, @$all_these_conservation_scores);
     }
-    #set overall min and max
-    $all_conservation_scores->[0]->y_axis_min($y_axis_min);
-    $all_conservation_scores->[0]->y_axis_max($y_axis_max);
-
+ 
+    #Check to see if there are any scores found
+    if (@$all_conservation_scores) {
+        #set overall min and max
+        $all_conservation_scores->[0]->y_axis_min($y_axis_min);
+        $all_conservation_scores->[0]->y_axis_max($y_axis_max);
+    }
     return $all_conservation_scores;
 }
 
