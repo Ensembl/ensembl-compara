@@ -18,7 +18,12 @@ sub content {
   my $vf                 = $hub->param('vf');
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
-  my $failed             = $variation->failed_description ? $self->failed($feature_slice) : ''; ## First warn if variation has been failed
+
+  my $info_box;
+  if ($variation->failed_description || scalar keys %{$object->variation_feature_mapping}) { 
+    ## warn if variation has been failed
+    $info_box = $self->multiple_locations($feature_slice, $variation->failed_description); 
+  }
 
   my $summary_table      = $self->new_twocol(
     $self->variation_source,
@@ -33,15 +38,17 @@ sub content {
     $self->sets
   );
 
-  return sprintf qq{<div class="summary_panel">$failed%s</div>}, $summary_table->render;
+  return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
 }
 
-sub failed {
-  my ($self, $feature_slice) = @_;
+sub multiple_locations {
+  my ($self, $feature_slice, $failed) = @_;
   my @descs = @{$self->object->Obj->get_all_failed_descriptions};
   my %mappings = %{$self->object->variation_feature_mapping};
   my $count    = scalar keys %mappings;
   my $html;
+  my $header = $failed ? 'This variation has been flagged as failed'
+                          : "This variation maps to $count locations";
   
   if ($feature_slice) {
     for (0..$#descs) {
@@ -104,8 +111,8 @@ sub failed {
                   $options,
                 );
   }
-  
-  return $self->_warning('This variation has been flagged as failed', $html, '50%');
+
+  return $self->_info($header, $html, '50%');
 }
 
 
