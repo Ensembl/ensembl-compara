@@ -578,12 +578,17 @@ do {
   } else {
       while ((!$split_size or @$genomic_align_blocks < $split_size) and $slice_counter < @query_slices) {
         my $this_slice = $query_slices[$slice_counter];
+        my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+        my $this_dnafrag = $dnafrag_adaptor->fetch_by_Slice($this_slice);
         my $aln_left = 0;
         if ($split_size) {
           $aln_left = $split_size - @$genomic_align_blocks;
         }
-        my $extra_genomic_align_blocks = $genomic_align_set_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-            $method_link_species_set, $this_slice, $aln_left, $start, $restrict);
+        #Call fetch_all_by_MethodLinkSpeciesSet_DnaFrag rather than fetch_all_by_MethodLinkSpeciesSet_Slice because of
+        #issues with the PAR regions. The _Slice method will dumps alignments on the PAR whereas _DnaFrag will not.
+        my $extra_genomic_align_blocks = $genomic_align_set_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+            $method_link_species_set, $this_dnafrag, undef, undef, $aln_left, $start, $restrict);
+
         push(@$genomic_align_blocks, @$extra_genomic_align_blocks);
         if ($split_size and @$genomic_align_blocks >= $split_size) {
           $start += @$extra_genomic_align_blocks;
