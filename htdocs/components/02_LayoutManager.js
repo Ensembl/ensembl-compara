@@ -253,7 +253,9 @@ Ensembl.LayoutManager.extend({
   },
   
   changeWidth: function () {
-    $('.navbar, div.info, div.hint, div.warning, div.error').not('.fixed_width, :parent(#modal_panel)').width(Ensembl.width);
+    var modal = $('#modal_panel');
+    $('.navbar, div.info, div.hint, div.warning, div.error').not('.fixed_width').not(function () { return modal.find(this).length; }).width(Ensembl.width);
+    modal = null;
   }
 });
 
