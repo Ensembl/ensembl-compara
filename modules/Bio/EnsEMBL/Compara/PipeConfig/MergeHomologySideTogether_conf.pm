@@ -49,10 +49,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_homology_merged_69',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_71',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
@@ -62,18 +62,18 @@ sub default_options {
         'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
         'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
 
-        'prevrel_db' => 'mysql://ensro@compara3/mm14_ensembl_compara_68',
+        'prevrel_db' => 'mysql://ensro@compara3/sf5_ensembl_compara_70',
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
-        'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_69',
+        'genetrees_db' => 'mysql://ensro@compara1/mm14_compara_homology_71',
         'genetrees_copy_tables'  => [  ],
         'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
-        'families_db' => 'mysql://ensro@compara4/lg4_compara_families_69',
+        'families_db' => 'mysql://ensro@compara4/lg4_compara_families_71',
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
-        'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_69a',
+        'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
         'nctrees_copy_tables'  => [ ],
         'nctrees_merge_tables' => [ 'member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
