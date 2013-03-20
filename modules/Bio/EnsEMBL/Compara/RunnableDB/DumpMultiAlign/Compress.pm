@@ -49,9 +49,15 @@ sub run {
     #
     my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
 
-    #Check existence of output_file
-    return unless (-e $output_file);
+    #Check existence of output_file (could be a glob for supercontig)
+    my @out_files = glob $output_file;
+    return unless @out_files;
 
+    foreach my $out_file (@out_files) {
+        return unless (-e $out_file);
+    }
+
+    #return unless (-e $output_file);
     my $cmd = "gzip -f -9 " . $output_file;
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
