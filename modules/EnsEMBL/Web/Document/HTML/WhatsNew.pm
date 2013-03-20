@@ -13,7 +13,6 @@ use Encode qw(encode_utf8 decode_utf8);
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Document::HTML);
