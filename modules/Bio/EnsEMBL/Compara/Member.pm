@@ -909,5 +909,33 @@ sub _rename_method_seq {
 }
 
 
+##
+##
+## These methods calls the raw SQL methods in member adaptor
+##
+#########
+sub has_family {
+    my ($self) = @_;
+
+    return $self->adaptor->member_has_family($self);
+}
+
+sub homologies {
+    my ($self) = @_;
+
+    return $self->adaptor->homologies_for_member($self);
+}
+
+sub has_geneTree {
+    my ($self) = @_;
+
+    return $self->adaptor->member_has_geneTree($self);
+}
+
+sub has_geneGainLossTree {
+    my ($self) = @_;
+
+    return $self->adaptor->member_has_geneGainLossTree($self);
+}
 
 1;
