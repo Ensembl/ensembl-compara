@@ -389,13 +389,13 @@ sub run_gerp_v2 {
     my ($self) = @_;
     my $gerpcol_path;
     my $gerpelem_path;
+    my $default_depth_threshold = 0.5;
 
     #change directory to where the temporary mfa and tree file are written
     chdir $self->worker_temp_directory;
     
     $gerpcol_path = $self->param('gerp_exe_dir') . "/gerpcol"; 
     $gerpelem_path = $self->param('gerp_exe_dir') . "/gerpelem"; 
-
 
     throw($gerpcol_path . " is not executable Gerp::run ")
       unless ($gerpcol_path && -x $gerpcol_path);
@@ -417,6 +417,20 @@ sub run_gerp_v2 {
     $command = $gerpelem_path;
 
     $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;# . " -d 0.35";# hack for birds
+
+    #Calculate the neutral_rate of the species tree for use for those alignments where the default 
+    #depth_threshold is too high to call any constrained elements (eg 3way birds)
+    my $species_tree_string = $self->get_species_tree_string;
+    my $neutral_rate = _calculateNeutralRate($species_tree_string);
+
+    if (!defined $self->param('depth_threshold') && $neutral_rate < $default_depth_threshold) {
+        $self->param('depth_threshold', $neutral_rate);
+        print STDERR "Setting depth_threshold to neutral_rate value of $neutral_rate\n";
+    }
+
+    if (defined $self->param('depth_threshold')) {
+        $command .= " -d " . $self->param('depth_threshold');
+    }
     print STDERR "command $command\n";
     unless (system($command) == 0) {
 	throw("gerpelem execution failed\n");
@@ -762,7 +776,6 @@ sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
 
     my $newick;
-    
     if ($self->param('tree_string')) {
 	$newick = $self->param('tree_string');
     } elsif ($self->param('tree_file'))  {
