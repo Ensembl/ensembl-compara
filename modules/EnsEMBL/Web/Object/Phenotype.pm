@@ -25,13 +25,13 @@ sub caption {
 
 sub long_caption {
   my $self = shift;
-  $self->has_variants ? 'Locations of variants associated with '.$self->get_phenotype_desc 
-                      : 'No variants associated with phenotype '.$self->get_phenotype_desc;
+  $self->has_features ? 'Locations of features associated with '.$self->get_phenotype_desc 
+                      : 'No features associated with phenotype '.$self->get_phenotype_desc;
 }
 
 sub phenotype_id      { $_[0]->{'data'}{'phenotype_id'} = $_[1] if $_[1]; return $_[0]->{'data'}{'phenotype_id'}; }
 
-sub has_variants {
+sub has_features {
   my $self = shift;
   return $self->Obj->{'Variation'} ? 1 : 0;
 }

@@ -281,8 +281,8 @@ sub _create_Phenotype {
 
   foreach my $chr (@chrs)
   {
-    $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);        
-    my $array2 = $slice->get_all_VariationFeatures_with_phenotype(undef, undef, $id);
+    $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);
+    my $array2 = $self->database('variation')->get_PhenotypeFeatureAdaptor()->fetch_all_by_phenotype_id_source_name($id);
 
     push(@$array,@$array2) if (@$array2);
   }  
