@@ -217,7 +217,7 @@ sub store {
 
   $self->sync_tags_to_database( $mlss );
 
-  $self->cache_all(1);
+  $self->{'_cache'}->{$dbID} = $mlss;
 
   return $mlss;
 }
@@ -243,7 +243,7 @@ sub delete {
     $sth->execute($method_link_species_set_id);
     $sth->finish();
 
-    $self->cache_all(1);
+    delete $self->{'_cache'}->{$method_link_species_set_id};
 }
 
 
