@@ -155,7 +155,8 @@ sub element_features {
     my $constrained_element = $self->my_config('constrained_element');
     my $adaptor             = $db->get_adaptor($constrained_element ? 'ConstrainedElement' :  'GenomicAlignBlock');
     my $id                  = $constrained_element || $self->my_config('method_link_species_set_id');
-    $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($id), $slice) || [];
+    my $restrict            = 1;
+    $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($id), $slice, undef, undef, $restrict) || [];
   }
   
   foreach my $feature (@$features) {
