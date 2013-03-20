@@ -117,8 +117,6 @@ sub _pf_link {
     $source =~ s/ /\_/g;
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $self->hub->species)));
     
-    print STDERR "SPECIES IS $species ".$self->hub->species."\n";
-    
     $link = $self->hub->get_ExtURL_link(
       $f->{'label'},
       $source,
