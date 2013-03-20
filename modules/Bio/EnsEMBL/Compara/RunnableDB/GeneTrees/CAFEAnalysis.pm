@@ -50,7 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'pvalue_lim' => 0.01,
+            'pvalue_lim' => 0.5,
            };
 }
 
@@ -199,13 +199,13 @@ sub parse_cafe_output {
 
     my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');  # A CAFEGeneFamilyAdaptor
     my $mlss_id = $self->param('mlss_id');
-    my $pvalue_lim = $self->param('pvalue_lim');
+#    my $pvalue_lim = $self->param('pvalue_lim');
     my $cafe_out_file = $self->param('cafe_out_file') . ".cafe";
     my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
 
     print STDERR "CAFE OUT FILE [$cafe_out_file]\n" if ($self->debug);
 
-    open my $fh, "<". $cafe_out_file or die "$!: $cafe_out_file\n";
+    open my $fh, "<". $cafe_out_file or die "$!: $cafe_out_file";
 
     my $tree_line = <$fh>;
     my $tree_str = substr($tree_line, 5, length($tree_line) - 6);
@@ -224,6 +224,7 @@ sub parse_cafe_output {
     print STDERR "CAFE IDs TREE: $ids_tree_str\n" if ($self->debug);
 
     my $idsTree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($ids_tree_str);
+
     print STDERR $idsTree->newick_format('ryo', '%{-n}%{":"d}'), "\n" if ($self->debug);
 
     my %cafeIDs2nodeIDs = ();
@@ -231,15 +232,13 @@ sub parse_cafe_output {
         $cafeIDs2nodeIDs{$node->distance_to_parent()} = $node->node_id;
     }
 
+
     my $format_ids_line = <$fh>;
     my ($formats_ids) = (split /:/, $format_ids_line)[2];
     $formats_ids =~ s/^\s+//;
     $formats_ids =~ s/\s+$//;
     my @format_pairs_cafeIDs = split /\s+/, $formats_ids;
     my @format_pairs_nodeIDs = map {my ($fst,$snd) = $_ =~ /\((\d+),(\d+)\)/; [($cafeIDs2nodeIDs{$fst}, $cafeIDs2nodeIDs{$snd})]} @format_pairs_cafeIDs;
-
-
-# Store the tree
 
     while (<$fh>) {
         last if $. == 10; # We skip several lines and go directly to the family information.
@@ -254,17 +253,18 @@ sub parse_cafe_output {
         my $pvalue_avg = $flds[2];
         my $pvalue_pairs = $flds[3];
 
-
         my $fam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($fam_tree_str . ";");
 
         my %info_by_nodes;
         for my $node (@{$fam_tree->get_all_nodes()}) {
             my $name = $node->name();
+#            my $node_id = $node->node_id();
             my ($n_members) = $name =~ /_(\d+)/;
             $n_members = 0 if (! defined $n_members); ## It may be absent from the orig data (but in the tree)
             $name =~ s/_\d+//;
             $name =~ s/\./_/g;
             $info_by_nodes{$name}{'n_members'} = $n_members;
+#            $info_by_nodes{$node_id}{'n_members'} = $n_members;
 
             my $taxon_id;
             if (! $node->is_leaf()) {
@@ -275,6 +275,8 @@ sub parse_cafe_output {
             }
 
             $info_by_nodes{$name}{'taxon_id'} = $taxon_id;
+#            $info_by_nodes{$node_id}{'taxon_id'} = $taxon_id;
+#            $info_by_nodes{$node_id}{'name'} = $name;
         }
 
         $pvalue_pairs =~ tr/(/[/;
@@ -292,8 +294,10 @@ sub parse_cafe_output {
             $name1 =~ s/\./_/g;
             $name2 =~ s/\./_/g;
 
-            $info_by_nodes{$name1}{'pvalue'} = $val_fst;
-            $info_by_nodes{$name2}{'pvalue'} = $val_snd;
+            $info_by_nodes{$name1}{'pvalue'} = $val_fst if (! defined $info_by_nodes{$name1}{'pvalue'} || $info_by_nodes{$name1}{'pvalue'} > $val_fst);
+            $info_by_nodes{$name2}{'pvalue'} = $val_snd if (! defined $info_by_nodes{$name2}{'pvalue'} || $info_by_nodes{$name2}{'pvalue'} > $val_snd);
+#            $info_by_nodes{$id_fst}{'pvalue'} = $val_fst;
+#            $info_by_nodes{$id_snd}{'pvalue'} = $val_snd;
 
         }
 
@@ -314,10 +318,12 @@ sub parse_cafe_output {
 
 
         # We store the attributes
-        for my $node (@{$tree->get_all_nodes()}) {
+        for my $node (@{$fam_tree->get_all_nodes()}) {
+#            my $id = $node->node_id();
             my $n = $node->name();
-            print STDERR "Storing node name $n\n" if ($self->debug);
             $n =~ s/\./_/g;
+            $n =~ s/_\d+$//;
+            print STDERR "Storing node name $n\n" if ($self->debug);
 
             my $taxon_id = $info_by_nodes{$n}{taxon_id};
             my $n_members = $info_by_nodes{$n}{n_members};
