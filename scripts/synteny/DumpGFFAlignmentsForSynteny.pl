@@ -78,12 +78,17 @@ unless (defined $seq_region) {
 }
 
 foreach my $qy_dnafrag (@{$qy_dnafrags}) {
-  next unless ($qy_dnafrag->name =~ /^\d+[A-Za-z]*$|^W$|^X\d?$|^Y$|^Z$|^A\d$|^B\d$|^C\d$|^D\d$|^E\d$|^F\d$/);
+  #Use whether the dnafrag is part of the karyotype to decide whether to calculate the synteny
+  my $qy_slice = $qy_dnafrag->slice;
+  next unless ($qy_slice->has_karyotype);
+
   my $seq_region_name = $qy_dnafrag->name;
   open SYN,">$seq_region_name.syten.gff";
 
   foreach my $tg_dnafrag (@{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, 'chromosome')}) {
-    next unless ($tg_dnafrag->name =~ /^\d+[A-Za-z]*$|^W$|^X\d?$|^Y$|^Z$|^A\d$|^B\d$|^C\d$|^D\d$|^E\d$|^F\d$/);
+    #Use whether the dnafrag is part of the karyotype to decide whether to calculate the synteny
+    my $tg_slice = $tg_dnafrag->slice;
+    next unless ($tg_slice->has_karyotype);
 
     my $start = 1;
     my $chunk = 5000000;
