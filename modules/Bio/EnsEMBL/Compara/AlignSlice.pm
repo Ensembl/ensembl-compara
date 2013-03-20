@@ -1013,7 +1013,9 @@ sub _create_underlying_Slices {
               -genome_db => $species_def->{genome_db},
               -expanded => $expanded,
           );
-      $new_slice->{genomic_align_ids} = $species_def->{genomic_align_ids};
+      foreach my $this_genomic_align_id (@{$species_def->{genomic_align_ids}}) {
+        $new_slice->{genomic_align_ids}->{$this_genomic_align_id} = 1;
+      }
       push(@{$self->{slices}->{lc($genome_db_name)}}, $new_slice);
       push(@{$self->{_slices}}, $new_slice);
     }
@@ -1203,18 +1205,15 @@ sub _choose_underlying_Slice {
   }
   if ($species_order) {
     my $preset_underlying_slice = undef;
-    
-    foreach my $this_underlying_slice (@{$self->{slices}->{lc($species)}}) {
-        if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
-            $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
-        }
-        if (grep {$_ == $this_genomic_align->{_original_dbID}}
-            @{$this_underlying_slice->{genomic_align_ids}}) {
-            $preset_underlying_slice = $this_underlying_slice;
-            last;
-        }
+    if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
+      $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
     }
-
+    foreach my $this_underlying_slice (@{$self->{slices}->{lc($species)}}) {
+      if ($this_underlying_slice->{genomic_align_ids}->{$this_genomic_align->{_original_dbID}}) {
+        $preset_underlying_slice = $this_underlying_slice;
+        last;
+      }
+    }
     if ($preset_underlying_slice) {
       my $overlap = 0;
       my $slice_mapper_pairs = $preset_underlying_slice->get_all_Slice_Mapper_pairs();
