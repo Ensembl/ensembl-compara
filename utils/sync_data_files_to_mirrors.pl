@@ -44,9 +44,9 @@ my $level      = 0;
 #    asia    => 'ec2-54-251-95-197.ap-southeast-1.compute.amazonaws.com'
 #);
 my %ips        = (
-  useast => 'ec2-23-20-142-217.compute-1.amazonaws.com',
-  uswest => 'ec2-184-169-223-224.us-west-1.compute.amazonaws.com',
-  asia   => 'ec2-54-251-84-118.ap-southeast-1.compute.amazonaws.com'
+  useast => 'ec2-23-20-211-155.compute-1.amazonaws.com',
+  uswest => 'ec2-54-241-205-36.us-west-1.compute.amazonaws.com',
+  asia   => 'ec2-54-251-69-136.ap-southeast-1.compute.amazonaws.com'
 );
 
 my ($servers, $species_set, %targets, %hash);
@@ -60,7 +60,7 @@ GetOptions(
 );
 
 #my $rsync   = sprintf 'rsync -havu%s%s --no-group --no-perms', $dryrun ? 'n' : 'W', $delete ? ' --delete' : '';
-my @servers = $servers ? grep exists $ips{$_}, split ',', $servers :qw(useast asia); #qw(useast uswest asia);
+my @servers = $servers ? grep exists $ips{$_}, split ',', $servers : qw(useast uswest asia);
 my %species = map { $_ => 1 } $species_set ? map $sd->valid_species($sd->species_full_name(lc) || ucfirst), split ',', $species_set : @$SiteDefs::ENSEMBL_DATASETS;
 my $clean   = !$level++ && $delete && scalar keys %species == 1;
 die sprintf "Valid servers are:\n\t%s\n", join "\n\t", sort keys %ips                    unless @servers;
