@@ -22,7 +22,7 @@ sub content {
   my $sv_sets      = $object->get_variation_set_string;
 
   return sprintf qq{<div class="summary_panel">$failed%s</div>}, $self->new_twocol(
-    ['Variation class', $object->class],
+    $self->variation_class,
     $self->get_allele_types($source),
     $self->get_source($source, $object->source_description),
     $self->get_study,
@@ -34,6 +34,14 @@ sub content {
   )->render;
 }
 
+sub variation_class {
+  my $self = shift;
+  my $object = $self->object;
+  my $so_accession = $object->Obj->class_SO_accession;
+  $so_accession = $self->hub->get_ExtURL_link($so_accession, 'SEQUENCE_ONTOLOGY', $so_accession);
+  
+  return ['Variation class', $object->class."<small class=\"_ht\" title=\"SO term: ".$object->Obj->class_SO_term."\" style=\"padding-left:6px\">($so_accession)</small>"];
+}
 
 sub failed {
   my $self = shift;
@@ -68,9 +76,14 @@ sub get_allele_types {
     if (!grep {$ssv->class_SO_term eq $_} @allele_types) {
       push @allele_types, $SO_term;
 
-      $html .= sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
+      my $so_accession = $ssv->class_SO_accession;
+      $so_accession = $self->hub->get_ExtURL_link($so_accession, 'SEQUENCE_ONTOLOGY', $so_accession);
+
+      $html .= sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s<small class="_ht" style="padding-left:6px" title="%s">(%s)</small></p>',
         $object->get_class_colour($SO_term),
-        $ssv->var_class
+        $ssv->var_class,
+        "SO term: $SO_term",
+        $so_accession
       );
     }
   }
@@ -293,11 +306,16 @@ sub get_inner_coordinates {
 sub size {
   my $self     = shift; 
   my $mappings = shift;
-  my $svf      = $self->hub->param('svf');
+  my $SO_term  = shift;
   
-  return $svf || scalar(keys %$mappings) == 1 ? ['Genomic size', sprintf('%s bp%s',
-    $self->thousandify($mappings->{$svf}{'end'} - $mappings->{$svf}{'start'} + 1),
-    (defined($mappings->{$svf}{'breakpoint_order'}) && $mappings->{$svf}{'start'}!=$mappings->{$svf}{'end'}) ? ' (between breakpoints)' : ''
+  return () if (!$self->object->show_size);
+  
+  my $svf = $self->hub->param('svf');
+  
+  return () if (defined($mappings->{$svf}{'breakpoint_order'}));
+  
+  return $svf || scalar(keys %$mappings) == 1 ? ['Genomic size', sprintf('%s bp',
+    $self->thousandify($mappings->{$svf}{'end'} - $mappings->{$svf}{'start'} + 1)
   )] : ();
 }
 
