@@ -19,7 +19,7 @@ Remember that compara has one additional day after the declaration of intentions
 3. Set up a web page with intentions in the Confluence wiki system to
 allow easy tracking of the progress.
 
-Note: The current (rel.69) compara_master database is sf5_ensembl_compara_master on compara1 
+Note: The current (rel.71) compara_master database is sf5_ensembl_compara_master on compara1 
 
 #============================================================================
 # Important environment variables to be set
@@ -55,6 +55,7 @@ $ time mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress 
 # rel.68: 30 sec
 # rel.69: 35 sec
 # rel.70  32 sec
+# rel.71  34 sec
 
 5.2 Update the extant taxon names
 
@@ -96,6 +97,8 @@ Then check that file back into the CVS for everyone else to use.
 >> update meta set meta_value = XX where meta_key = 'schema_version';
 
 6.1.1 Update the release number in sql/table.sql
+
+6.1.2 Create a patch file for the schema_version in sql/table.sql
 
 6.2 Check the free space in the compara servers. Use this url:
 http://www.ebi.ac.uk/~mp/compara_servers_disk_load.html
@@ -259,6 +262,8 @@ $ $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.p
 
 # If you believe some of the entries should NOT be copied, you should manually add 'skip_mlss' and 'skip_ss' entries into master_db's meta table.
 
+Rel.71: NB. There are cases where the mlss will not change but the underlying data does eg the H.sap-H.sap lastz-patch. This has a mlss_id of 556 and is currently set in the skip_mlss. If there are no human patches for the release, this should be removed to allow the data to be copied. If there is a new human patch, it should be added back.
+
 # Now run the copying process (takes ~3 hours on a sunny day)
 
 $ time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl \
@@ -276,6 +281,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_datab
 # rel.68:   1h40m (run on compara3)
 # rel.69:   2.5h
 # rel.70   ~3.5h (compara1 was slow)
+# rel.71    4.1h (compara3)
 
 If new method_link_species_sets are added in the master after this, you use this
 script again to copy the new relevant data. In such case, you will have to:
@@ -527,6 +533,30 @@ $ bsub -q yesterday -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
 # rel.69
 # several hours to copy from the pipeline databases and re-build the indexes
 
+#rel 71.
+#     2m: kb3_hsap_ggal_lastz_71  mlss_id=632
+#     1m  kb3_mmus_ggal_lastz_71  mlss_id=633
+#     1m  kb3_ggal_mgap_lastz_71  mlss_id=634
+#     1m  kb3_ggal_xtro_tblat_71  mlss_id=638
+#     1m  kb3_hsap_ggal_tblat_71  mlss_id=637
+#     1m  sf5_olat_gmor_lastz_71  mlss_id=625
+#     3m  kb3_pecan_20way_71      mlss_id=630
+#     4m  kb3_pecan_20way_71      mlss_id=631
+#    35m  kb3_pecan_20way_71      mlss_id=50045
+#     3m  sf5_compara_epo_6way_71 mlss_id=548
+#     1m  sf5_olat_onil_lastz_71  mlss_id=626
+#     1m  sf5_olat_xmac_lastz_71  mlss_id=627
+#     1m  sf5_epo_low_8way_fish_71 mlss_id=628
+#     2m  sf5_epo_low_8way_fish_71 mlss_id=629
+#     9m  sf5_epo_low_8way_fish_71 mlss_id=50044
+#     1m  kb3_ggal_drer_tblat_71   mlss_id=639
+#     1m  kb3_ggal_csav_tblat_71   mlss_id=640
+#     1m  sf5_ggal_acar_lastz_71   mlss_id=636
+#    91m  sf5_ggal_tgut_lastz_7    mlss_id=635 (re-enable 1)
+#    93m  sf5_compara_epo_3way_birds_71 mlss_id=641 (re-enable 1)
+#    14m  sf5_compara_epo_3way_birds_71 mlss_id=642 (re-enable 1)
+#    16m  sf5_compara_epo_3way_birds_71 mlss_id=50046 (re-enable 1)
+
 10.1.1 Human patches for high coverage blastz-net alignments
 ## Make sure that all the pairwise alignment are in the database
 before loading these (TRANSLATED_BLAT_NET and BlastZ-Net).
@@ -561,6 +591,8 @@ $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/LoadSyntenyData.pl 
 
 10.3 Putting together the database of ancestral sequence is now done using a dedicated Hive-Core mini-pipeline:
 
+     Check you have the most recent core checkout ie the correct schema and patch files are added to the meta table.
+
     Go to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig and open the PipeConfig file AncestralMerge_conf.pm .
 
     Make sure you have edited/checked the following:
@@ -594,6 +626,7 @@ $ init_pipeline.pl AncestralMerge_conf.pm -password $ENSADMIN_PSW
     Make sure all tables are turned into myISAM.
 
 # rel.67  20min
+# rel.71  20min
 
 10.4 Merging GeneTrees+Families+NCTrees together is now done by running a mini-pipeline.
 
@@ -626,19 +659,23 @@ $ init_pipeline.pl MergeHomologySideTogether_conf.pm
 #                 2.7h to execute for release 63
 #                 9.6h to execute for release 65
 #                 ~9h to execute for release 66
+#                 ~3h to execute for release 71
 
-10.4.5 Run the script to include projections of genes as homologies
+10.4.5 Run the script to include projections of genes as homologies for human and mouse
 
    First update the AUTO_INCREMENT of the following tables to 
 > ALTER TABLE member   AUTO_INCREMENT=300000001;
 > ALTER TABLE sequence AUTO_INCREMENT=300000001;
-> ALTER TABLE subset   AUTO_INCREMENT=300000001;
 > ALTER TABLE homology AUTO_INCREMENT=300000001;
    It makes easier to spot the new entries
 
 $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/convert_patch_to_compara_homologies.pl \
-    -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl
+    -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
     -comp_alias compara_homology_merged -species homo_sapiens
+
+$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/convert_patch_to_compara_homologies.pl \
+    -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+    -comp_alias compara_homology_merged -species mus_musculus
 
 # For e70 - human
 #new compara entries:
@@ -646,6 +683,11 @@ $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/convert_patch_to_c
 #1028 projected genes
 #1459 new homologies
 
+#For e71 mouse
+new compara entries:
+10 ref genes
+22 projected genes
+65 new homologies
 
 
 # NB: The underscore in the species name is necessary to match the genome_db name.
@@ -736,6 +778,7 @@ You can use "--compara_db compara_curr" if it is run on the final merged db,
 # rel.67    5m
 # rel.69    10m
 # rel.70    13min
+# rel.71    20min
 
 13. Run the healthchecks:
 
@@ -753,20 +796,29 @@ $ ant
 
 13.1 Run the healthchecks for ancestral database:
 
-$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_ancestral_69 compara-ancestral
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d kb3_ensembl_ancestral_71 compara-ancestral
 # rel.62: 4sec, all successful
 # rel.63: 14sec, all successful after analyzing 3 tables
 # rel.65: 13sec, all successful after analyzing the tables.
 # rel.67: 8sec, all successful
 # rel.68: 8sec, all successful
+# rel.71: 10sec all successful apart from UTR.java (ignore)
 
-13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
+13.2 Update the Meta table. You can use the corresponding healthcheck with the -repair option:
 
-$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_compara_69 -type compara -repair Meta
+$ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d kb3_ensembl_compara_71 -type compara -repair Meta
 # rel.61: 6m30, "no repair needed" (probably after Stephen has already done it)
 # rel.63: 8m (full repair)
 # rel.65: 9m "No repair needed"
 # rel.66: 1s (full repair) -- The healthchecks were ran previously
+
+Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
+time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d kb3_ensembl_compara_71 -type compara -repair MLSSTagMaxAlign
+# rel.71: 2s (after running without the -repair option first)
+
+Update the alignment mlss_id to the conservation score mlss_id
+time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d kb3_ensembl_compara_71 -type compara -repair MLSSTagGERPMSA
+#rel.71: 1s
 
 13.3 Now run the remaining healthchecks:
 
@@ -780,6 +832,7 @@ $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_
 # rel.65:   25m, 1 failure ( taeniopygia_guttata_core_65_1: common_name::zebra finch is not in mp12_ensembl_compara_65 )
 # rel.66:   12m, 1 failure ( taeniopygia_guttata_core_66_1: common_name::zebra finch is not in mp12_ensembl_compara_66 )
 
+#rel.71.         1 failure (ncbi_taxa_name: Lepidion inosimae: common_name "Morid cod" and "morid cod", this was agreed to be OK in rel.70).
 
 $ time $ENSEMBL_CVS_ROOT_DIR/ensj-healthcheck/run-healthcheck.sh -d sf5_ensembl_compara_69 -type compara compara_genomic
 # rel.58:   47m, 7 failures
@@ -823,7 +876,7 @@ and check their data.
 # So if you (suspect that you) have changed anything in the database, do run these two commands just in case -
 # a dry run of each doesn't even take a minute.
 
-$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_compara_69
+$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases kb3_ensembl_compara_71
 
 # rel.56    12min
 # rel.pre57 30+105min
@@ -834,8 +887,9 @@ $ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmi
 # rel.64    16m
 # rel.65    21m
 # rel.66     9m
+# rel.71     7m
 
-$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_compara_69
+$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases kb3_ensembl_compara_71
 # rel.56    2.5 hours
 # rel.pre57 : took several iterations (not all tables were MyISAM initially), last one 132min.
 # rel.57    2+1.6 hours
@@ -844,20 +898,23 @@ $ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadm
 # rel.64    1.5h
 # rel.65    3h
 # rel.66    2h
+# rel.71    2h
 
-$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_ancestral_69
+$ time mysqlcheck --analyze --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases kb3_ensembl_ancestral_71
 # rel.57    took seconds to complete
 # rel.62    1sec
 # rel.63    3sec
 # rel.65    1sec
 # rel.66    4sec
+# rel.71    1sec
 
-$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases sf5_ensembl_ancestral_69
+$ time mysqlcheck --optimize --verbose --host=compara3 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases kb3_ensembl_ancestral_71
 # rel.57    took seconds to complete
 # rel.62
 # rel.63    14m
 # rel.65    3.2s
 # rel.66    0.4s
+# rel.71    8m
 
 16. WHEN EVERYBODY IS HAPPY ABOUT THE DATABASES, actually copy them to the two staging servers
 This is done by a strange script with a clumsy interface, but take heart:
@@ -865,19 +922,19 @@ This is done by a strange script with a clumsy interface, but take heart:
 16.1. First, ssh into the DESTINATION machine:
 
 # NB: ask for the password on staging well in advance - there may be noone around you at the right moment!
-$ ssh mysqlens@ens-staging
+$ ssh mysqlens@ens-staging1
 
 # switch shells, as it is running tcsh by default
 $ bash
 
 16.2. Create a file that will contain one line with the source/destination parameters, like this:
 
-$ cat <<EOF >/tmp/mm14_ensembl_compara_69.copy_options
+$ cat <<EOF >/tmp/kb3_ensembl_compara_71.copy_options
 
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara3        3306        sf5_ensembl_compara_69      ens-staging     3306        ensembl_compara_69
-compara3        3306        sf5_ensembl_ancestral_69    ens-staging     3306        ensembl_ancestral_69
+compara3        3306        kb3_ensembl_compara_71      ens-staging1     3306        ensembl_compara_71
+compara3        3306        kb3_ensembl_ancestral_71    ens-staging1     3306        ensembl_ancestral_71
 EOF
 
 16.3. Set the password into the environment variable
@@ -906,16 +963,17 @@ $ time perl ~mm14/workspace/cvs/head/ensembl/misc-scripts/CopyDBoverServer.pl -p
 #       0h11m to copy over ensembl_ancestral_66
 # rel68 90m39.996s
 # r70 ens-staging2 (1h29m4s)
+# rel71: 1h39m
 
 16.4 Do the same thing in parallel on ens-staging2 :
 
 $ ssh mysqlens@ens-staging2
 $ bash
-$ cat <<EOF >/tmp/mm14_ensembl_compara_69.copy_options
+$ cat <<EOF >/tmp/kb3_ensembl_compara_71.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara3        3306        sf5_ensembl_compara_69      ens-staging2     3306        ensembl_compara_69
-compara3        3306        sf5_ensembl_ancestral_69    ens-staging2     3306        ensembl_ancestral_69
+compara3        3306        kb3_ensembl_compara_71      ens-staging2     3306        ensembl_compara_71
+compara3        3306        kb3_ensembl_ancestral_71    ens-staging2     3306        ensembl_ancestral_71
 EOF
 
 16.5. Set the password into the environment variable
@@ -938,7 +996,7 @@ $ time perl ~mm14/workspace/cvs/head/ensembl/misc-scripts/CopyDBoverServer.pl -p
 #### But your job is not over yet! Carry on:
 
 
-17. Dump both the current and the previous release schemas and compare them.
+17. Create patch files by dumping both the current and the previous release schemas and compare them.
 
 17.1 Create a patch to convert a compara DB from the previous release to the new one.
 
@@ -1020,10 +1078,10 @@ CVS commit these files.
 19.2 Update pipeline diagrams in the docs:
 
 $ cd $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipeline_diagrams
-$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara3/mm14_compara_homology_68 -output ProteinTrees.png
-$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara2/mp12_compara_nctrees_68 -output ncRNAtrees.png
-$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/lg4_compara_families_68 -output Families.png
-$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_pecan_19way_68 -output MercatorPecan.png
+$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/mm14_compara_homology_71 -output ProteinTrees.png
+$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara2/mp12_compara_nctrees_71 -output ncRNAtrees.png
+$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/lg4_compara_families_71 -output Families.png
+$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara3/kb3_pecan_20way_71 -output MercatorPecan.png
 $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/sf5_epo_35way_68 -output EpoLowCoverage.png
 $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/sf5_compara_epo_13way_69 -output Epo.png
 
@@ -1056,7 +1114,8 @@ The .inc files can then be moved to $ENSEMBL_CVS_ROOT_DIR/ensembl-webcode/htdocs
 ## Data Dumps
 # Note: It is probably best practice to ask the person who ran the pipeline to perform the associated dump (if any).
 
-21. DNA dumps.
+21. DNA dumps. 
+These should be done when the production team have given the go ahead ie after mart has been run.
 
 21.1 The instructions are in $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/README.multi_align.dumps
 Kathryn and Stephen normally do these.
@@ -1120,3 +1179,7 @@ You can scp the file to login.ebi.ac.uk:/nfs/ftp/pub/databases/ensembl/ensembl_c
 prev (rel65) /warehouse/ensembl01/sf5/Compara_master_dumpps/sf5_ensembl_compara_master.sql.04_01_12.gz
 rel65  /warehouse/ensembl01/compara/master_dumps/sf5_ensembl_compara_master.sql.04_01_12.gz
 rel66 /warehouse/ensembl01/compara/master_dumps/sf5_ensembl_compara_master.66.gz (3min to dump)
+rel71 /warehouse/ensembl01/compara/master_dumps/sf5_ensembl_compara_master.71.gz (3min to dump)
+
+25. When everything has been handed over, remember to update the Declaration of Intentions on admin.ensembl.org.
+
