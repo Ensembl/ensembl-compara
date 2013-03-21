@@ -50,7 +50,6 @@ sub populate_tree {
     )],
     { 'availability' => 'slice'}
   );
-  
 
   $self->create_node('View', 'Region in detail',
     [qw(
@@ -100,13 +99,16 @@ sub populate_tree {
     { 'no_menu_entry' => 1 }
   ));
   
+  my @coords = split(/[:-]/, $hub->param('r'));
   $align_menu->append($self->create_node('Synteny', 'Synteny ([[counts::synteny]])',
     [qw(
       image    EnsEMBL::Web::Component::Location::SyntenyImage
       homo_nav EnsEMBL::Web::Component::Location::NavigateHomology
       matches  EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
-    { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny'} 
+    { 'availability' => 'chromosome has_synteny', 
+      'concise' => 'Synteny between '.$hub->species_defs->SPECIES_COMMON_NAME.' chromosome '.$coords[0]
+                    .' and '.$hub->species_defs->get_config($hub->otherspecies, 'SPECIES_COMMON_NAME') }
   ));
   
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
@@ -127,15 +129,7 @@ sub populate_tree {
     )],
     { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
   ));
-  
-  $variation_menu->append($self->create_node('StructuralVariant', 'Structural Variant',
-    [qw(
-      nav               EnsEMBL::Web::Component::Location::ViewBottomNav
-      structuralvariant EnsEMBL::Web::Component::Location::StructuralVariant
-    )],
-    { 'availability' => 'slice has_SV'}
-  ));
-  
+
   $self->create_node('Marker', 'Markers',
     [qw(
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav

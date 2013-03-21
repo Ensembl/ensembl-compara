@@ -36,11 +36,7 @@ sub content {
        contigviewbottom => "$id=normal",
      });
   
-  my $count = 0;
-  foreach my $sv (@$svars) {
-    $count ++ if ($sv->seq_region_start < $slice->start && $sv->seq_region_end > $slice->end);
-  }
-
+  my $count = scalar(@$svars);
   my $s = ($count > 1) ? 's' : '';
     
     
@@ -52,25 +48,56 @@ sub content {
     link  => $location_link,
   });
   
-
-  my $length = $end-$start+1;
-  my $zoom_start = ($start-$length > 0) ? $start-$length : 1 ;
-  my $zoom_end   = $end + $length;
-
-
-  $self->add_entry({
-    label => "$count structural variants overlap completely the image",
-  });
-  $self->add_entry({
-      label_html => 'Expanded structural variant view',
-      link       => $hub->url({
-         type   => 'Location',
-         action => 'StructuralVariant',
-         r      => $chr . ':' . $start . '-' . $end,           
-       })
-  });
-
-
+  if ($count <= 20) {
+  
+    $self->add_entry({
+      type  => 'subheader',
+      label => 'Structural variations list'
+    });
+  
+  
+    foreach my $svar (@$svars) {
+      
+      $self->add_entry({
+        label_html => $svar->variation_name.' properties',
+        link       => $hub->url({
+            type   => 'StructuralVariation', 
+          action => 'Summary',
+          sv      => $svar->variation_name,
+          svf     => $svar->dbID
+        })
+      });
+    
+      my $v_start = $svar->seq_region_start;
+      my $v_end   = $svar->seq_region_end;
+       my $position   = "$chr:$v_start";
+    
+      if ($v_end < $v_start) {
+        $position = "between $chr:$v_end &amp; $chr:$v_start";
+      } elsif ($v_end > $v_start) {
+        $position = "$chr:$v_start-$v_end";
+      }
+    }
+  }  
+  else {
+     my $length = $end-$start+1;
+     my $zoom_start = ($start-$length > 0) ? $start-$length : 1 ;
+     my $zoom_end   = $end + $length;
+  
+  
+    $self->add_entry({
+      label => "$count structural variants overlap completely the image",
+    });
+    $self->add_entry({
+        label_html => 'Zoom out x2',
+        link       => $hub->url({
+           type   => 'Location',
+           action => 'View',
+           r      => $chr . ':' . $zoom_start . '-' . $zoom_end,
+           contigviewbottom => "variation_feature_structural_larger=normal,variation_feature_structural_smaller=normal",
+         })
+    });
+  }
 }
 
 1;
