@@ -46,16 +46,21 @@ sub init {
     { display => 'transcript_label' }
   );
   
+  
   # structural variations
   $self->modify_configs(
-    ['variation_feature_structural'],
-    { display => 'normal', depth => 100 }
+    ['variation_feature_structural_larger'],
+    { display => 'compact', depth => 1 }
   );
-  
+  $self->modify_configs(
+    ['variation_feature_structural_smaller'],
+    { display => 'gene_nolabel', depth => 100 }
+  );
+
   # Somatic structural variations
   $self->modify_configs(
-    ['somatic_sv_feature'],
-    { display => 'normal', depth => 50 }
+    [ 'somatic_sv_feature' ],
+    { display => 'gene_nolabel', depth => 50 }
   );
   
   $self->storable = 0;

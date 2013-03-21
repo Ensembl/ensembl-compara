@@ -30,7 +30,8 @@ sub init {
   );
 
    $self->add_tracks('information',
-    [ 'variation_legend', '', 'variation_legend', { display => 'normal', strand => 'r', name => 'Variation Legend', caption => 'Variation legend' }]
+    [ 'variation_legend', '', 'variation_legend', { display => 'normal', strand => 'r', name => 'Variation Legend', caption => 'Variation legend' }],
+    [ 'structural_variation_legend', '', 'structural_variation_legend', { display => 'normal', strand => 'r', name => 'Structural Variation Legend', caption => 'Structural Variation legend' }],
   );
   
   $self->add_tracks('other',
@@ -52,22 +53,18 @@ sub init {
   
   # structural variations
   $self->modify_configs(
-    [ 'variation_feature_structural' ],
-    { display => 'off', depth => 100 }
-  );
-  $self->modify_configs(
     ['variation_feature_structural_larger'],
-    { display => 'normal', depth => 1 }
+    { display => 'compact', depth => 1 }
   );
   $self->modify_configs(
     ['variation_feature_structural_smaller'],
-    { display => 'normal', depth => 100 }
+    { display => 'gene_nolabel', depth => 100 }
   );
-  
+
   # Somatic structural variations
   $self->modify_configs(
     [ 'somatic_sv_feature' ],
-    { display => 'normal', depth => 50 }
+    { display => 'gene_nolabel', depth => 50 }
   );
   
   # CNV probes

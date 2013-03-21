@@ -35,7 +35,7 @@ sub init {
 
   $self->modify_configs([ 'transcript'                     ], { render => 'gene_label', strand => 'r' });
   $self->modify_configs([ 'variation',  'variation_legend' ], { display => 'off', menu => 'no'        });
-  $self->modify_configs([ 'variation_feature_structural'   ], { display => 'off', menu => 'yes'       });
+  $self->modify_configs([ 'variation_feature_structural_larger', 'variation_feature_structural_smaller' ], { display => 'off', menu => 'yes'       });
   
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', menu => 'no'                }],
