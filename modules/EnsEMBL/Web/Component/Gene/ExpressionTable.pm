@@ -16,6 +16,7 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $html;
+  my %glossary = $self->hub->species_defs->multiX('ENSEMBL_GLOSSARY');
 
   $html .= '<p>Expression data is available for the following tissues:</p>';
 
@@ -23,9 +24,12 @@ sub content {
   my $columns = [
     { key => 'tissue',    'title' => 'Tissue',                align => 'left', width => '10%'},
     { key => 'all',       'title' => 'All data',              align => 'center', width => '15%'},
-    { key => 'rnaseq',    'title' => 'RNASeq gene models',    align => 'center', width => '25%'},
-    { key => 'dna_align', 'title' => 'Intron-spanning reads', align => 'center', width => '25%'},
-    { key => 'data_file', 'title' => 'RNASeq alignments',     align => 'center', width => '25%'},
+    { key => 'rnaseq',    'title' => 'RNASeq gene models',    align => 'center', width => '25%',
+      help => $glossary{'RNASeq gene models'}},
+    { key => 'dna_align', 'title' => 'Intron-spanning reads', align => 'center', width => '25%',
+      help => $glossary{'Intron-spanning reads'}},
+    { key => 'data_file', 'title' => 'RNASeq alignments',     align => 'center', width => '25%',
+      help => $glossary{'RNASeq gene alignments'}},
   ];
 
   my $rows = [];
