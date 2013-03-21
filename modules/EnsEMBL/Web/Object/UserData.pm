@@ -722,7 +722,7 @@ sub calculate_consequence_data {
           
           # if this is a variation ID or HGVS, we can use VEP.pm method to parse into VFs
           if($f->isa('EnsEMBL::Web::Text::Feature::ID') || $f->isa('EnsEMBL::Web::Text::Feature::VEP_VCF')) {
-            push @vfs, @{parse_line($vep_config, $f->id)};
+            push @vfs, grep {&validate_vf($vep_config, $_)} @{parse_line($vep_config, $f->id)};
             next;
           }
           
