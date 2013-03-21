@@ -11,6 +11,22 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub colour_key { return lc $_[1]->display_consequence; }
 
+sub my_config { 
+  my $self = shift;
+  my $term = shift;
+
+  if ($term eq 'depth') {
+    my $depth = ($self->{'my_config'}->get($term) > 1) ? $self->{'my_config'}->get($term) : 20;
+    if ($self->{'display'} eq 'normal') {
+      my $length = $self->{'container'}->end - $self->{'container'}->start;
+      return ($length > 200000) ? 1 : $depth;
+    }
+    return 1 if ($self->{'display'} eq 'gradient'); # <=> collapsed in 1 line
+    return $depth;                                  # <=> expanded
+  }
+  return $self->{'my_config'}->get($term);
+}
+
 sub my_label { 
   my $self  = shift;  
   my $label = $self->{'my_config'}->id =~ /somatic/ ? 'Somatic Mutations' : 'Variations'; 
