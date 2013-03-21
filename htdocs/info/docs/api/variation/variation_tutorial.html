@@ -20,7 +20,7 @@ href="/info/docs/variation/index.html">page</a>.
 	<li><a href="#Consequence">Consequence type of variations</a></li>
 	<li><a href="#flanks">Variations, Flanking sequences and Genes</a></li>
 	<li><a href="#failed_variations">Failed variations</a></li>
-	<li><a href="#annotation">Variation annotations</a></li>
+	<li><a href="#phenotype">Phenotype annotations</a></li>
 	<li><a href="#variation_sets">Variation sets</a></li>
 </ul>
 <h2><a href="#ag" style="text-decoration:none">Alleles and Genotypes</a></h2>
@@ -494,12 +494,14 @@ foreach my $vf (@{$vfs}) {
 
 
 <br />
-<h2 id="annotation">Variation annotations</h2>
+<h2 id="phenotype">Phenotype annotations</h2>
 
 <p>
-The Ensembl variation API provides some methods to retrieve phenotype data associated with the variations.
-These data, stored into the Ensembl variation database, are imported from different sources (e.g. NHGRI GWAS catalog, OMIM, UniProt, Open Access GWAS Database, EGA, COSMIC, HGMD).</p>
-The API allows you to get all the phenotypes associated with a given variation.
+The Ensembl variation API provides some methods to retrieve phenotype data
+associated with various Ensembl object types (variations, structural variations,
+genes, and QTLs). These data, stored into the Ensembl variation database, are
+imported from different sources (e.g. NHGRI GWAS catalog, OMIM, UniProt, Open
+Access GWAS Database, EGA, COSMIC, HGMD).</p>
 <pre class="code">
 use strict;
 use warnings;
@@ -516,36 +518,37 @@ $registry->load_registry_from_db(
 my $var_adaptor = $registry->get_adaptor('human', 'variation', 'variation');
 my $var = $var_adaptor->fetch_by_name('rs1421085');
 
-# Fetch all the variation annotations associated with the variation
-my $va_adaptor = $registry->get_adaptor('homo_sapiens', 'variation', 'variationannotation');
-foreach my $va (@{$va_adaptor->fetch_all_by_Variation($var)}) {
-	print "Variation ", $va->variation_names, " is associated with the phenotype '", $va->phenotype_description,
-	      "' in the source ", $va->source_name;
+# Fetch all the phenotype features associated with the variation
+my $pf_adaptor = $registry->get_adaptor('homo_sapiens', 'variation', 'phenotypefeature');
+foreach my $pf (@{$pf_adaptor->fetch_all_by_Variation($var)}) {
+	print "Variation ", $pf->variation_names, " is associated with the phenotype '", $pf->phenotype->description,
+	      "' in source ", $pf->source;
 			
-	print " with a p-value of ",$va->p_value if (defined($va->p_value));
+	print " with a p-value of ",$pf->p_value if (defined($pf->p_value));
 	
 	print ".\n";
 	
-	next unless defined $va->associated_variant_risk_allele;
-	my $risk_allele = (split /\-/, $va->associated_variant_risk_allele)[1];
+	next unless defined $pf->risk_allele;
+	my $risk_allele = (split /\-/, $pf->risk_allele)[1];
 	print "The risk allele is ", $risk_allele, ".\n";
 }
 </pre>
 
-<p>It is also possible to retrieve all variations associated with a phenotype description and a source name.</p>
+<p>It is also possible to retrieve all features associated with a phenotype
+description and an optional source name.</p>
 
 <pre class="code">
 my $source_name = 'NHGRI_GWAS_catalog';
 my $phenotype   = 'Cardiac hypertrophy';
 
-my $va_adaptor = $registry->get_adaptor('homo_sapiens', 'variation', 'variationannotation');
+my $pf_adaptor = $registry->get_adaptor('homo_sapiens', 'variation', 'phenotypefeature');
  
-foreach my $va (@{$va_adaptor->fetch_all_by_phenotype_description_source_name($phenotype,$source_name)}) {
-	my $external_reference = $va->external_reference;
+foreach my $pf (@{$pf_adaptor->fetch_all_by_phenotype_description_source_name($phenotype,$source_name)}) {
+	my $external_reference = $pf->external_reference;
 	$external_reference =~ s/\// ID: /;
 	
-	print "Variation ", $va->variation_names, " is associated with the phenotype '", $phenotype,
-	      "' in the source ", $source_name," (", $external_reference,")\n";
+	print $pf->type, " ", $pf->object_id, " is associated with the phenotype '", $phenotype,
+	      "' in source ", $source_name," (", $external_reference,")\n";
 }		
 </pre>
 
@@ -652,13 +655,13 @@ sub print_set {
   	my $var = $it->next();
   	printf("\t\%s has been found to be associated with:\n",$var->name());
   	
-  	# Get the VariationAnnotation objects for the variation
-  	my $annotations = $var->get_all_VariationAnnotations();
+  	# Get the PhenotypeFeature objects for the variation
+  	my $pfs = $var->get_all_PhenotypeFeatures();
   	
   	# Loop over the annotations and print the phenotypes
-  	foreach my $annotation (@{$annotations}) {
-  		printf("\t\t\%s\t\%s\t\%s\n",$annotation->phenotype_description(),(defined($annotation->p_value) ? sprintf("(\%s, \%s study)",
-  		        $annotation->p_value(),$annotation->study_type()) : ""),$annotation->study_name());
+  	foreach my $pf (@{$pfs}) {
+  		printf("\t\t\%s\t\%s\t\%s\n",$pf->phenotype->description(),(defined($pf->p_value) ? sprintf("(\%s, \%s study)",
+  		        $pf->p_value(),$pf->study->type()) : ""),$pf->study->name());
   	}
   	
   	$fetched++;
