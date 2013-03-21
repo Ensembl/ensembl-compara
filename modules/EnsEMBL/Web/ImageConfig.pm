@@ -2684,6 +2684,7 @@ sub add_sequence_variations {
     bump_width => 0,
     colourset  => 'variation',
     display    => 'off',
+    renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed over a window of 200kb)', 'gradient', 'Collapsed', 'gene_nolabel', 'Expanded' ],
   };
   
   if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
@@ -2982,6 +2983,7 @@ sub add_somatic_mutations {
     bump_width => 0,
     colourset  => 'variation',
     display    => 'off',
+    renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed over a window of 200kb)', 'gradient', 'Collapsed', 'gene_nolabel', 'Expanded' ],
   );
   
   # All sources
