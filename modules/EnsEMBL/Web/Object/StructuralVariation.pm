@@ -109,13 +109,13 @@ sub count_transcripts {
 sub has_phenotype {
   my $self = shift;
   my @ssvs = @{$self->supporting_sv};
-	foreach my $ssv (@ssvs) {
-	  my $pfs = $ssv->get_all_PhenotypeFeatures();
+  foreach my $ssv (@ssvs) {
+    my $pfs = $ssv->get_all_PhenotypeFeatures();
     foreach my $pf (@$pfs) {
-		  return 1 if ($pf->phenotype && $pf->phenotype->description);
-		}
-	}
-	return undef;
+      return 1 if ($pf->phenotype && $pf->phenotype->description);
+    }
+  }
+  return undef;
 }
 
 
@@ -182,13 +182,15 @@ sub get_class_colour {
   my %colour = (
     'copy_number_variation'         => '#000000',
     'insertion'                     => '#FFCC00',
-    'copy_number_gain'              => '#0000FF', 
-    'copy_number_loss'              => '#FF0000',
+    'copy_number_gain'              => '#0000CC', 
+    'copy_number_loss'              => '#CC0000',
     'inversion'                     => '#9933FF', 
     'complex_structural_alteration' => '#99CCFF',
     'tandem_duplication'            => '#732E00',
     'mobile_element_insertion'      => '#FFCC00',
     'translocation'                 => '#C3A4FF',
+    'deletion'                      => '#CC0000',
+    'duplication'                   => '#000000',
   );
   
   my $c = $colour{$class};
@@ -303,9 +305,9 @@ sub not_unique_location {
 
 sub show_size {
   my $self = shift;
-	my $obj  = shift;
-	$obj ||= $self->Obj;
-	my $SO_term = $obj->class_SO_term;
+  my $obj  = shift;
+  $obj ||= $self->Obj;
+  my $SO_term = $obj->class_SO_term;
   return 1 if ($SO_term =~ /copy|deletion|duplication|inversion/);
   return 0;
 }
