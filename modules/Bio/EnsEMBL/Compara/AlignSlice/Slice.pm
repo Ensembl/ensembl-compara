@@ -376,7 +376,6 @@ sub get_all_Genes {
       $strict_order_of_exon_pieces.":".
       $strict_order_of_exons.":".
       $return_unmapped_exons;
-
   if (!defined($self->{$key})) {
     my $all_genes = [];
 
@@ -437,11 +436,11 @@ sub get_all_Genes {
       foreach my $pair (@{$this_slice_coordinates->{pairs}}) {
 # print STDERR "Foreach pair ($pair)...\n";
         foreach my $this_gene (@$these_genes) {
-# print STDERR "1. GENE: $this_gene->{stable_id} ($this_gene->{start} - $this_gene->{end})\n";
+# print STDERR "1. GENE: $this_gene->{stable_id} ($this_gene->{start} - $this_gene->{end} : $this_gene->{strand})\n";
           my $mapped_gene = $self->_get_mapped_Gene($this_gene, $pair, $return_unmapped_exons);
-# print STDERR "2. GENE: $mapped_gene->{stable_id} ($mapped_gene->{start} - $mapped_gene->{end})\n";
 #           $mapped_gene = $self->_get_mapped_Gene($this_gene, $pair);
           if ($mapped_gene and @{$mapped_gene->get_all_Transcripts}) {
+#              print STDERR "2. GENE: $mapped_gene->{stable_id} ($mapped_gene->{start} - $mapped_gene->{end} : $mapped_gene->{strand})\n";
             push(@$all_genes, $mapped_gene);
           }
         }
@@ -1061,7 +1060,8 @@ sub _separate_in_incompatible_sets_of_Exons {
             ## of reverse stranded exons
             $new_exon->start(undef);
             $new_exon->end(undef);
-            $new_exon->strand(undef);
+            #$new_exon->strand(undef);
+            $new_exon->strand(0);
           }
         } else {
           if ($indexes->{"1"}->{$exon->original_rank}) {
@@ -1073,7 +1073,8 @@ sub _separate_in_incompatible_sets_of_Exons {
             ## of forward stranded exons
             $exon->start(undef);
             $exon->end(undef);
-            $exon->strand(undef);
+            #$exon->strand(undef);
+            $exon->strand(0);
           }
         }
       }
