@@ -76,6 +76,12 @@ sub content {
     my $nearest = $self->hub->session->get_data(code => $code) ?  $self->hub->session->get_data(code => $code)->{'nearest'} : undef;
     
     if ($nearest) {
+      ## does location use HGVS format?
+      if ($nearest =~ />/) {
+        $nearest =~ /^(\d+)\D+(\d+)/;
+        $nearest = $1.':'.$2;
+      }
+
       $html .= sprintf(qq{
         <p>or view a sample SNP in <a href="%s">Region in Detail</a></p>
         <p>(You can also view or download your converted file from 'Manage Your Data')</p>
