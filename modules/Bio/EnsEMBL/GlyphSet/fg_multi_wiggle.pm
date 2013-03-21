@@ -233,7 +233,7 @@ sub display_error_message {
   }  
   
   $self->draw_track_name(join(' ', grep $_, ucfirst $set, $class, $cell_line), 'black', -118,  2, 1);
-  $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar @{$config->{'data_by_cell_line'}{$cell_line}{$set}{$_}}, qw(configured available));
+  $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar @{$config->{'data_by_cell_line'}{$cell_line}{$set}{$_}||[]}, qw(configured available));
   
   return 1;
 }
