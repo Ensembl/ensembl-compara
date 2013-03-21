@@ -19,6 +19,7 @@ more ../../scripts/pipeline/species_tree_blength.nh | \
     }' -n > species_tree.nw
 
 Open Dendroscope. Load the file and select the Radial Phylogram (Ctrl+7).
+- Select everything (Ctrl+A) and change the font size to 14 ("Edit" > "Format")
 - In the view menu, deselect "Sparse labels" and choose "Radial labels".
 - Adjust the tree, by rotating it left or right.
 - Remove species not in e! by selecting them and Ctrl+Backspace (their names show as XXXXX.n)
@@ -33,14 +34,13 @@ ls *.png | while read i; do \
 And go to Options -> Load Taxon Images...
 You can change the size of the images in Options -> Set Image Size...
 
-Save the file as an SVG and edit it to replace the images as they usually overlap one another.
+Save the file as an SVG and edit it to replace the images / labels as they usually overlap one another.
 
 Tips:
 1. Use inkscape (from the GNOME project) for relocation the taxa images. Use Ctrl+Shift+G to ungroup all in order to move the images freely.
 2. Add "Image obtained using Dendroscope (D.H. Huson and C Scornavacca, Dendroscope 3: An interactive tool for rooted phylogenetic trees and networks, Systematic Biology, 2012)" at the bottom of the image
-3. Open with Karbon (from the KOffice project) to export the image into a PDF and into a PNG. Remember to shrink the drawing area, especially before exporting to a PNG.
-
-Using inkspace, the resulting PDF might get rotate 90 degrees. Go to the properties of the image and specify the dimensions manually.
+3. Shrink the drawing area to about 1200x900
+4. Export the image into a PDF ("File" > "Save a Copy") and into a PNG ("File" > "Export Bitmap")
 
 Commit the SVG, PDF and PNG in this directory.
 
