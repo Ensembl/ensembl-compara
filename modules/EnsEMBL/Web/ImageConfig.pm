@@ -1,5 +1,3 @@
-# $Id$
-
 package EnsEMBL::Web::ImageConfig;
 
 use strict;
@@ -1507,6 +1505,7 @@ sub load_tracks {
       'add_sequence_variations',          # Add to variation_feature tree
       'add_structural_variations',        # Add to variation_feature tree
       'add_copy_number_variant_probes',   # Add to variation_feature tree
+      'add_phenotypes',                   # Add to variation_feature tree
       'add_somatic_mutations',            # Add to somatic tree
       'add_somatic_structural_variations' # Add to somatic tree
     ],
@@ -2814,6 +2813,44 @@ sub add_sequence_variations_default {
       }
     }
   }
+}
+
+sub add_phenotypes {
+  my ($self, $key, $hashref) = @_;
+  my $menu = $self->get_node('variation');
+  
+  return unless $menu && $hashref->{'phenotypes'}{'rows'} > 0;
+  
+  my $pf_menu = $self->create_submenu('phenotypes', 'Phenotype annotations');
+  
+  my %options = (
+    db => $key,
+    glyphset => 'phenotype_feature',
+    depth      => '5',
+    bump_width => 0,
+    colourset  => 'phenotype_feature',
+    display    => 'off',
+    strand     => 'r',
+    renderers  => [ 'off', 'Off', 'gene_nolabel', 'Expanded', 'compact', 'Compact' ],
+  );
+  
+  $pf_menu->append($self->create_track('phenotype', 'Phenotype annotations (all types)', {
+    %options,
+    caption => 'Phenotypes',
+    type => undef,
+    description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
+  }));
+  
+  foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
+    $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
+      %options,
+      caption => 'Phenotypes ('.$type.'s)',
+      type => $type,
+      description => 'Phenotype annotations on '.$type.'s',
+    }));
+  }
+  
+  $menu->append($pf_menu);
 }
 
 sub add_structural_variations {
