@@ -47,7 +47,7 @@ sub content {
     my $experiment_link = "";
 
     foreach my $source (@{$source_info}){ 
-      my $source_link = sprintf '<a href="%s">%s</a>',
+      my $source_link = sprintf '<a href="%s">%s</a> ',
       $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$feature_set->name}),
       $source->[0];
       $experiment_link .= "$source_link";
