@@ -254,7 +254,7 @@ sub command{
   # Build a list of blast-specific environment variables and set these 
   # explicitly in the command. Apache(2)-safe.
   my $env_command = '';
-  foreach my $env qw( PATH BLASTMAT BLASTFILTER BLASTDB ){
+  foreach my $env (qw( PATH BLASTMAT BLASTFILTER BLASTDB )) {
     my $val = $self->environment_variable( $env );
     $val = $ENV{$env} unless defined( $val );
     $val or  $self->warn( "$env variable not set" ) && next;
