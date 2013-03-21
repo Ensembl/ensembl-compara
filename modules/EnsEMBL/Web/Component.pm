@@ -1204,7 +1204,10 @@ sub structural_variation_table {
     }
     
     # SV size (format the size with comma separations, e.g: 10000 to 10,000)
-    my $sv_size    = $svf->end - $svf->start + 1;
+    my $sv_size = '-';
+    if ($sv->class_SO_term =~ /copy|deletion|duplication|inversion/ && !defined($svf->breakpoint_order)) {
+      $sv_size = $svf->end - $svf->start + 1;
+    }
     my $int_length = length $sv_size;
     
     if ($int_length > 3) {
