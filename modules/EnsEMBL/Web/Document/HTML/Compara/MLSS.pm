@@ -219,6 +219,7 @@ sub-chain is chosen in each region on the reference species.</p>',
   $html .= '</div>';
 
   ##Exon coverage charts
+  $i = 0;
   $html .= qq{
     <div>
       $graph_defaults
