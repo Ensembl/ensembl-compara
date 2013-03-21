@@ -2861,7 +2861,8 @@ sub add_structural_variations {
   
   my $sv_menu             = $self->create_submenu('structural_variation', 'Structural variants');
   my $structural_variants = $self->create_submenu('structural_variants',  'Structural variants');
-  my $desc                = 'For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.';
+  my $desc                = 'The colours correspond to the structural variant classes.';
+     $desc               .= '<br />For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.';
   my %options             = (
     db         => $key,
     glyphset   => 'structural_variation',
@@ -2870,16 +2871,8 @@ sub add_structural_variations {
     height     => 6,
     colourset  => 'structural_variant',
     display    => 'off',
+    renderers  => [ 'off', 'Off', 'compact', 'Compact', 'gene_nolabel', 'Expanded' ],
   );
-  
-  # All
-  $structural_variants->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
-    %options,
-    caption     => 'Structural variants',
-    sources     => undef,
-    description => "Structural variants from all sources. $desc",
-    depth       => 10
-  }));
   
   # Complete overlap (Larger structural variants)
   $structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
@@ -2938,7 +2931,7 @@ sub add_copy_number_variant_probes {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
   
-  return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
+  return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'}})) > 0;
   
   my $sv_menu        = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
   my $cnv_probe_menu = $self->create_submenu('cnv_probe','Copy number variant probes');
@@ -3067,6 +3060,7 @@ sub add_somatic_structural_variations {
     height     => 6,
     colourset  => 'structural_variant',
     display    => 'off',
+    renderers  => [ 'off', 'Off', 'compact', 'Compact', 'gene_nolabel', 'Expanded' ],
   );
   
   $somatic->append($self->create_track('somatic_sv_feature', 'Somatic structural variants (all sources)', {   
