@@ -355,6 +355,31 @@ sub sorted_children {
 }
 
 
+=head2 siblings
+
+  Overview   : returns a ist of NestedSet nodes that share the same parent
+  Example    : my @siblings = @{$object->siblings()};
+  Returntype : array reference of Bio::EnsEMBL::Compara::NestedSet objects (could be empty)
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub siblings {
+    my ($node) = @_;
+    return [] unless ($node->has_parent());
+    my $parent = $node->parent();
+    my $children = $parent->children();
+    my @siblings = ();
+    for my $child (@$children) {
+        if ($child != $node) {
+            push @siblings, $child;
+        }
+    }
+    return [@siblings];
+}
+
+
 =head2 get_all_nodes
 
   Arg 1       : arrayref $node_array [used for recursivity, do not use it!]
