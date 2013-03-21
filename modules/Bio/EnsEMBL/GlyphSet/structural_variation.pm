@@ -26,7 +26,8 @@ sub my_config {
   my $term = shift;
   
   if ($term eq 'depth') {
-    return ($self->{'display'} eq 'compact') ? 1 : 100;
+    my $depth = ($self->{'my_config'}->get($term) > 1) ? $self->{'my_config'}->get($term) : 100;
+    return ($self->{'display'} eq 'compact') ? 1 : $depth;
   }
   
   if ($term eq 'height') {
