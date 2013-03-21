@@ -301,5 +301,14 @@ sub not_unique_location {
   return;
 }
 
+sub show_size {
+  my $self = shift;
+	my $obj  = shift;
+	$obj ||= $self->Obj;
+	my $SO_term = $obj->class_SO_term;
+  return 1 if ($SO_term =~ /copy|deletion|duplication|inversion/);
+  return 0;
+}
+
 
 1;
