@@ -17,7 +17,8 @@ sub new {
     entries        => [],
     stored_entries => {},
     order          => 1,
-    caption        => ''
+    caption        => '',
+    pagination     => {},
   };
   
   bless $self, $class;
@@ -44,6 +45,18 @@ sub caption {
   my $self = shift;
   $self->{'caption'} = shift if @_;
   return $self->{'caption'};
+}
+
+sub highlight {
+  my $self = shift;
+  $self->{'highlight'} = shift if @_;
+  return $self->{'highlight'};
+}
+
+sub pagination {
+  my $self = shift;
+  $self->{'pagination'} = shift if @_;
+  return $self->{'pagination'};
 }
 
 # When adding an entry you can specify ORDER or POSITION.
@@ -168,7 +181,9 @@ sub render {
   
   print $self->jsonify({
     caption => encode_entities($self->{'caption'}),
-    entries => \@entries
+    entries => \@entries,
+    highlight => encode_entities($self->{'highlight'}),
+    pagination  => encode_entities($self->{'pagination'}),
   });
 }
 
