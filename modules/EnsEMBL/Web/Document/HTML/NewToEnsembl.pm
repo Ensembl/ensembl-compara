@@ -27,25 +27,7 @@ sub render {
   my $sitename       = $sd->ENSEMBL_SITETYPE;
   my $html           = ''; 
 
-  my $rss_url = $sd->ENSEMBL_TIPS_RSS;
-  my $tips = $MEMD && $MEMD->get('::TIPS') || [];
-  
-  ## Check the cache, then fetch new tips
-  unless (@$tips && $rss_url) {
-    $tips = $self->get_rss_feed($hub, $rss_url);
-
-    if ($tips && @$tips) {
-      $_->{'content'} = encode_utf8($_->{'content'}) for @$tips;
-      $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
-    }
-  }
-
-  ## Now pick a random tip and display it
-  if (scalar(@$tips)) {
-    $html .= sprintf q(<div class="info-box did-you-know float-right"><h3>Did you know&hellip;?</h3>%s</div>), $tips->[ int(rand(scalar(@$tips))) ]->{'content'};
-  }
-
-  $html .= qq(<h2>New to $sitename?</h2><p>Did you know you can:</p><div class="new-to-ensembl">);
+  $html .= qq(<h2>New to $sitename?</h2><div class="new-to-ensembl">);
 
   my @did_you_know = (
     '/info/website/tutorials/'                        => "Learn how to use $sitename"             => 'with our video tutorials and walk-throughs',
