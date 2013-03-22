@@ -595,6 +595,20 @@ sub _summarise_variation_db {
   } 
 	
   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'} = \%somatic_mutations;
+
+  ## Do we have SIFT and/or PolyPhen predictions?
+  my $prediction_aref = $dbh->selectall_arrayref(
+    'select distinct(a.value) from attrib a, protein_function_predictions p where a.attrib_id = p.analysis_attrib_id'
+  );
+  foreach (@$prediction_aref) {
+    if ($_ =~ /sift/i) {
+      $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SIFT'} = 1;
+    }
+    if ($_ =~ /^polyphen/i) {
+      $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'POLYPHEN'} = 1;
+    }
+  }
+
   $dbh->disconnect();
 }
 
