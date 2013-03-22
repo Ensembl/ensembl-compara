@@ -29,7 +29,7 @@ sub content {
 
   $table->add_columns(
     { key => 'disease',    title => 'Disease/Trait',  align => 'left', sort => 'html' }, 
-    { key => 's_evidence', title => 'Supporting evidence(s) count', align => 'left', sort => 'html' }
+    { key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' }
   );
   
   $table->add_rows(@$table_rows);
@@ -61,22 +61,17 @@ sub table_data {
       if ($phe && !$ssv_phen{$ssv_name}{$phe}) {
         $ssv_phen{$ssv_name}{$phe} = 1;
         if (exists $phenotypes{$phe}) {
-          $phenotypes{$phe}{s_evidence} ++;
+          $phenotypes{$phe}{s_evidence} .= ', '.$sva->object_id;
         } 
         else {
           $phenotypes{$phe} = {
             disease    => qq{<b>$phe</b>},
-            s_evidence => 1 
+            s_evidence => $sva->object_id
           };
         }
       }
     }
   } 
-  
-  foreach my $p (keys %phenotypes) {
-    $phenotypes{$p}{s_evidence} .= " out of $count_se";
-  }
-
   return [values %phenotypes];
 }
 
