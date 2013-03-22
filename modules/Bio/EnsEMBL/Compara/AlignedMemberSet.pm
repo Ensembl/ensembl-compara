@@ -841,6 +841,7 @@ sub update_alignment_stats {
     my @nmatch_id    = (0) x $ngenes; 
     my @nmatch_pos   = (0) x $ngenes; 
     my @nmatch_cov   = (0) x $ngenes; 
+    my @seq_length   = (0) x $ngenes;
     my @alncount     = (1) x $ngenes;
     my @alnstate     = (undef) x $ngenes;
     my @cur_alnstate = (undef) x $ngenes;
@@ -874,6 +875,7 @@ sub update_alignment_stats {
             if ($char_i[$j] eq '-') {
                 $cur_alnstate[$j] = 'D';
             } else {
+                $seq_length[$j]++;
                 $nmatch_cov[$j]++ if $is_cov_match;
                 $cur_alnstate[$j] = 'M';
                 if ($seen{$char_i[$j]} >= $min_seq) {
@@ -912,11 +914,10 @@ sub update_alignment_stats {
             $new_cigars[$j] .= $alncount[$j].$alnstate[$j];
         }
         $genes->[$j]->cigar_line($new_cigars[$j]);
-        my $seq_length = $genes->[$j]->seq_length;
-        unless (0 == $seq_length) {
-            $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length + 0.5)) );
-            $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length + 0.5)) );
-            $genes->[$j]->perc_cov( int((100.0 * $nmatch_cov[$j] / $seq_length + 0.5)) );
+        unless (0 == $seq_length[$j]) {
+            $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length[$j] + 0.5)) );
+            $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length[$j] + 0.5)) );
+            $genes->[$j]->perc_cov( int((100.0 * $nmatch_cov[$j] / $seq_length[$j] + 0.5)) );
         }
     }
 }
