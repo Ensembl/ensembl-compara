@@ -185,7 +185,7 @@ sub location {
               r                 => $region . ':' . ($coord - 500) . '-' . ($coord + 500),
               sv                => $name,
               svf               => $svf,
-              contigviewbottom  => 'somatic_sv_feature=normal'
+              contigviewbottom  => 'somatic_sv_feature=gene_nolabel'
           }), $loc_text
         );
         $loc_link .= ' ('.($strand > 0 ? 'forward' : 'reverse').' strand)';
@@ -206,7 +206,7 @@ sub location {
           r                => $region . ':' . ($start - 500) . '-' . ($end + 500),
           sv               => $name,
           svf              => $svf,
-          contigviewbottom => 'variation_feature_structural_larger=normal,variation_feature_structural_smaller=normal'
+          contigviewbottom => 'variation_feature_structural_larger=compact,variation_feature_structural_smaller=gene_nolabel'
         })
       );
     }
@@ -246,7 +246,7 @@ sub location {
               r                 => $region . ':' . ($start - 500) . '-' . ($end + 500),
               sv                => $name,
               svf               => $svf,
-              contigviewbottom  => 'somatic_sv_feature=normal'
+              contigviewbottom  => 'somatic_sv_feature=gene_nolabel'
           }), $loc_text
         );
         $loc_link .= ' ('.($str > 0 ? 'forward' : 'reverse').' strand)';
