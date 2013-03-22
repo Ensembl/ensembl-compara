@@ -144,7 +144,7 @@ sub content {
     sprintf('
       <p>
         There are %s structural variants overlapping this region. 
-        Some of them might not be displayed as we limit the size of this track to 100 rows.
+        Some of them might not be displayed as we limit the size of each structural variation track to 100 rows.
       </p>
       ', $sv_count)
   ) if $sv_count > 100;
