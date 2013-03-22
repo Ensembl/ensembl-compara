@@ -422,7 +422,7 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
-                '2->A' => [ 'load_genomedb' ],
+                '2->A' => [ 'load_genomedb', 'check_reusability' ],
                 'A->1' => [ 'finish_species_sets' ],
             },
             -meadow_type    => 'LOCAL',
@@ -436,9 +436,6 @@ sub pipeline_analyses {
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
             -analysis_capacity => 1,
-            -flow_into => {
-                1 => [ 'check_reusability' ],
-            },
             -meadow_type    => 'LOCAL',
         },
 
@@ -455,6 +452,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => 10,
             -rc_name => '500Mb_job',
+            -wait_for => [ 'load_genomedb_factory', 'load_genomedb' ],
             -flow_into => {
                 2 => {
                     'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
