@@ -51,7 +51,7 @@ sub content {
     }
 
   } elsif (scalar @movies > 0 && $movies[0]) {
-    $html .= EnsEMBL::Web::Document::HTML::MovieList::render;
+    $html .= EnsEMBL::Web::Document::HTML::MovieList->new($self->hub)->render;
   } else {
     $html .= '<p>Sorry, we have no video tutorials at the moment, as they are being updated for the new site design. Please try again after the next release.</p>';
   }
