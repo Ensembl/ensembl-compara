@@ -1165,12 +1165,12 @@ sub structural_variation_table {
   my $rows;
   
   my $columns = [
-     { key => 'id',          sort => 'string',        title => 'Name'   },
-     { key => 'location',    sort => 'position_html', title => 'Chr:bp' },
-     { key => 'size',        sort => 'string',        title => 'Genomic size (bp)' },
-     { key => 'class',       sort => 'string',        title => 'Class'  },
-     { key => 'source',      sort => 'string',        title => 'Source Study' },
-     { key => 'description', sort => 'string',        title => 'Study description', width => '50%' },
+     { key => 'id',          sort => 'string',         title => 'Name'   },
+     { key => 'location',    sort => 'position_html',  title => 'Chr:bp' },
+     { key => 'size',        sort => 'numeric_hidden', title => 'Genomic size (bp)' },
+     { key => 'class',       sort => 'string',         title => 'Class'  },
+     { key => 'source',      sort => 'string',         title => 'Source Study' },
+     { key => 'description', sort => 'string',         title => 'Study description', width => '50%' },
   ];
   
   my $svfs;
@@ -1208,6 +1208,8 @@ sub structural_variation_table {
     if ($sv->class_SO_term =~ /copy|deletion|duplication|inversion/ && !defined($svf->breakpoint_order)) {
       $sv_size = $svf->end - $svf->start + 1;
     }
+    my $hidden_size  = sprintf(qq{<span class="hidden">%s</span>},($sv_size eq '-') ? 0 : $sv_size);
+
     my $int_length = length $sv_size;
     
     if ($int_length > 3) {
@@ -1241,7 +1243,7 @@ sub structural_variation_table {
     my %row = (
       id          => qq{<a href="$sv_link">$name</a>},
       location    => qq{<a href="$loc_link">$loc_string</a>},
-      size        => $sv_size,
+      size        => $hidden_size.$sv_size,
       class       => $sv_class,
       source      => $source,
       description => $description,
