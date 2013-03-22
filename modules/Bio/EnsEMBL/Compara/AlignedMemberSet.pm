@@ -856,6 +856,7 @@ sub update_alignment_stats {
         my %seen;
         map {$seen{$_}++} @char_i;
         next if $seen{'-'} == $ngenes;
+        my $is_cov_match = ($seen{'-'} <= $ngenes-2);
         delete $seen{'-'};
         
         my %pos_chars = ();
@@ -873,7 +874,7 @@ sub update_alignment_stats {
             if ($char_i[$j] eq '-') {
                 $cur_alnstate[$j] = 'D';
             } else {
-                $nmatch_cov[$j]++;
+                $nmatch_cov[$j]++ if $is_cov_match;
                 $cur_alnstate[$j] = 'M';
                 if ($seen{$char_i[$j]} >= $min_seq) {
                     $nmatch_id[$j]++;
