@@ -635,7 +635,7 @@ sub load_user_tracks {
         external => 'user'
       );
     } elsif (lc $url_sources{$code}{'format'} eq 'datahub') {
-      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'}) if $datahubs;
+      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'}, $code) if $datahubs;
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
@@ -696,7 +696,7 @@ sub load_user_tracks {
 }
 
 sub _add_datahub {
-  my ($self, $menu_name, $url) = @_;
+  my ($self, $menu_name, $url, $code) = @_;
   
   my $parser = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({
     timeout => 10,
@@ -733,9 +733,9 @@ sub _add_datahub {
         my $func = scalar keys %{$dataset->{'config'}{'dimensions'} || {}} ? '_add_datahub_tracks_matrix' : '_add_datahub_tracks';
         
         if ($dataset->{'config'}{'subsets'}) {
-          $self->$func($_, $menu_name, $dataset->{'config'}) for @{$dataset->{'tracks'}};
+          $self->$func($_, $menu_name, $code, $dataset->{'config'}) for @{$dataset->{'tracks'}};
         } else {
-          $self->$func($dataset, $menu_name);
+          $self->$func($dataset, $menu_name, $code);
         }
       }
     }
@@ -743,7 +743,7 @@ sub _add_datahub {
 }
 
 sub _add_datahub_tracks_matrix {
-  my ($self, $dataset, $name, $config) = @_;
+  my ($self, $dataset, $name, $url_code, $config) = @_;
   $config ||= $dataset->{'config'};
   
   my ($x, $y)   = map $config->{'dimensions'}{"dimension$_"} || $config->{'dimensions'}{"dim$_"}, qw(X Y);
@@ -752,6 +752,7 @@ sub _add_datahub_tracks_matrix {
   my %options   = (
     menu_key     => $name,
     menu_name    => $name,
+    url_code     => $url_code,
     submenu_key  => $dataset->{'config'}{'track'},
     submenu_name => $dataset->{'config'}{'shortLabel'},
     view         => $dataset->{'config'}{'view'},
@@ -834,15 +835,16 @@ sub _add_datahub_tracks_matrix {
 }
 
 sub _add_datahub_tracks {
-  my ($self, $dataset, $name, $desc_url) = @_;
+  my ($self, $dataset, $name, $url_code) = @_;
   my %sources_by_type;
 
   my $options = {
     menu_key     => $name,
     menu_name    => $name,
+    url_code     => $url_code,
     submenu_key  => $dataset->{'config'}{'track'},
     submenu_name => $dataset->{'config'}{'shortLabel'},
-    desc_url     => $desc_url || $dataset->{'config'}{'description_url'},
+    desc_url     => $dataset->{'config'}{'description_url'},
     view         => $dataset->{'config'}{'view'},
   };
 
@@ -917,7 +919,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'header'}     = $args{'source'}{'submenu_name'};
   $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}");
-  $args{'options'}{$_}           = $args{'source'}{$_} for qw(label_x features menu_key description info colour axes datahub option_key column_key);
+  $args{'options'}{$_}           = $args{'source'}{$_} for qw(url_code label_x features menu_key description info colour axes datahub option_key column_key);
  
   if ($args{'source'}{'datahub'} eq 'track') {
     $args{'options'}{'menu'}    = 'datahub_subtrack';
@@ -956,7 +958,7 @@ sub load_file_format {
       my $menu_name    = $source->{'menu_name'};
       my $submenu_key  = $source->{'submenu_key'};
       my $submenu_name = $source->{'submenu_name'};
-      my $options      = { external => 1, datahub_menu => !!$source->{'datahub'} };
+      my $options      = { external => 1, datahub_menu => !!$source->{'datahub'}, url_code => $source->{'url_code'} };
       my $main_menu    = $self->get_node($menu_key) || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name, $options));
          $menu         = $self->get_node($submenu_key);
       
@@ -3088,16 +3090,16 @@ sub add_somatic_structural_variations {
 
 sub share {
   # Remove anything from user settings that is:
-  #  Custom data that the user isn't sharing
-  #  A track from a datahub that the user isn't sharing
-  #  Not for the species in the image
+  #   Custom data that the user isn't sharing
+  #   A track from a datahub that the user isn't sharing
+  #   Not for the species in the image
   # Reduced track order of explicitly ordered tracks if they are after custom tracks which aren't shared
   
   my ($self, %shared_custom_tracks) = @_;
   my $user_settings     = EnsEMBL::Web::Root->deepcopy($self->get_user_settings);
   my $species           = $self->species;
   my $user_data         = $self->get_node('user_data');
-  my @unshared_datahubs = grep $_->get('datahub') && !$shared_custom_tracks{$_->id}, @{$self->tree->child_nodes};
+  my @unshared_datahubs = grep $_->get('datahub_menu') && !$shared_custom_tracks{$_->id}, @{$self->tree->child_nodes};
   my @user_tracks       = map { $_ ? $_->nodes : () } $user_data;
   my %user_track_ids    = map { $_->id => 1 } @user_tracks;
   my %datahub_tracks    = map { $_->id => [ map $_->id, $_->nodes ] } @unshared_datahubs;
