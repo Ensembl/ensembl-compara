@@ -17,12 +17,18 @@ sub my_config {
 
   if ($term eq 'depth') {
     my $depth = ($self->{'my_config'}->get($term) > 1) ? $self->{'my_config'}->get($term) : 20;
-    if ($self->{'display'} eq 'normal') {
-      my $length = $self->{'container'}->end - $self->{'container'}->start;
-      return ($length > 200000) ? 1 : $depth;
-    }
+    
     return 1 if ($self->{'display'} eq 'gradient'); # <=> collapsed in 1 line
-    return $depth;                                  # <=> expanded
+    
+    my $length = $self->{'container'}->end - $self->{'container'}->start + 1;
+    
+    return ($length > 200000) ? 1 : $depth if ($self->{'display'} eq 'normal'); # limit 200kb
+
+    if ($self->{'display'} eq 'gene_label') { # <=> expanded with name (limit 10kb)
+      return 1000 if ($length <= 10000);
+      $self->{'display'} = 'gene_nolabel'; # <=> expanded without name
+    }
+    return $depth; # <=> expanded without name
   }
   return $self->{'my_config'}->get($term);
 }
@@ -188,6 +194,24 @@ sub tag {
       start        => $f->start
     };
   }
+  elsif ($self->{'display'} eq 'gene_label') {
+    my $text_colour = $self->my_colour($colours->{'key'}, 'tag');
+    my $pix_per_bp = $self->scalex;
+    
+    my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
+    my $text = $f->variation_name;
+    my (undef, undef, $text_width, undef) = $self->get_text_width(0, $text, '', %font);
+    
+    return {
+      style        => 'underline',
+      colour       => $colour,
+      text_colour  => $text_colour,
+      start        => $f->start,
+      end          => $f->end + (6 + $text_width)/$pix_per_bp,
+      feature      => $f,
+    };
+  
+  }
   
   return { style => 'insertion', colour => $colour, feature => $f } if $f->start > $f->end;
 }
@@ -220,9 +244,9 @@ sub render_tag {
     }));
   } elsif ($start <= $tag->{'start'}) {
     my $box_width = 8 / $pix_per_bp;
+    my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
     
     if ($tag->{'style'} eq 'box') {
-      my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
       my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
       my $width = $text_width / $pix_per_bp;
       my $box_x = $start - 4/$pix_per_bp;
@@ -247,6 +271,7 @@ sub render_tag {
         absolutey => 1,
         %font
       }));
+      
     } elsif ($tag->{'style'} =~ /^(delta|left-snp)$/) {
       push @glyph, $self->Triangle({
         mid_point => [ $start - 0.5, $tag->{'style'} eq 'delta' ? $height : 0 ],
@@ -265,6 +290,32 @@ sub render_tag {
         width     => $box_width,
         height    => $height,
       }));
+      
+    } elsif ($tag->{'style'} eq 'underline') { 
+      # Expanded with name
+      my $text = $tag->{feature}->variation_name;
+      my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $text, '', %font);
+      
+      $composite->push(
+        $self->Text({
+          x         => $tag->{end} - ($text_width + 2)/$pix_per_bp,
+          y         => ($height - $text_height) / 2 - 1,
+          height    => $height,
+          width     => $text_width/$pix_per_bp,
+          halign    => 'left',
+          colour    => (defined($tag->{'text_colour'})) ? $tag->{'text_colour'} : $tag->{'colour'},
+          text      => $text,
+          absolutey => 1,
+          %font
+        }),
+        $self->Rect({
+          x         => $start,
+          y         => 0,
+          absolutey => 1,
+          width     => $tag->{feature}->end-$tag->{feature}->start,
+          height    => $height,
+          colour    => $tag->{'colour'},
+      }));    
     }
   }
   
@@ -295,17 +346,31 @@ sub highlight {
   
   my $z = ($f->start > $f->end) ? 0 :18;
   
-  $self->unshift(
-    $self->Rect({ # First a black box
-      x         => $composite->x - 2 / $pix_per_bp,
-      y         => $composite->y - 2, # + makes it go down
-      width     => $composite->width + 4 / $pix_per_bp,
-      height    => $h + 4,
-      colour    => 'black',
-      absolutey => 1,
-      z         => $z,
-    }),
-  );
+  if ($self->{'display'} eq 'gene_label') {
+    $self->unshift(
+      $self->Rect({ # First a black box
+        x         => $composite->x - 1 / $pix_per_bp,
+        y         => $composite->y - 1, # + makes it go down
+        width     => $composite->width,
+         height    => $h + 2,
+         colour    => 'black',
+         absolutey => 1,
+         z         => $z,
+      })
+    ); 
+  } else {
+    $self->unshift(
+      $self->Rect({ # First a black box
+        x         => $composite->x - 2 / $pix_per_bp,
+        y         => $composite->y - 2, # + makes it go down
+        width     => $composite->width + 4 / $pix_per_bp,
+        height    => $h + 4,
+        colour    => 'black',
+        absolutey => 1,
+         z         => $z,
+      })
+    );
+  }
 }
 
 sub export_feature {
