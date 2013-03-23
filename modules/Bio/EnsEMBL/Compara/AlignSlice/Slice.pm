@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::AlignSlice::Slice
-#
-# Original author: Javier Herrero <jherrero@ebi.ac.uk>
-#
-# Copyright EnsEMBL Team
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# pod documentation - main docs before the code
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -34,23 +41,6 @@ GET VALUES
 Description
 
 =back
-
-=head1 AUTHORS
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2013. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
 
 =head1 APPENDIX
 
@@ -149,7 +139,8 @@ sub new {
   $self->{display_Slice_name} = $self->{seq_region_name};
   $self->{display_Slice_name} =~ s/ /_/g;
   $self->{seq_region_length} = $length;
-  $self->{slice_mapper_pairs} = [];
+  $self->{all_slice_mapper_pairs} = [];
+  $self->{normal_slice_mapper_pairs} = [];
 #   $self->{located_slices} = [];
 
   if (!$self->genome_db) {
@@ -240,15 +231,22 @@ sub add_Slice_Mapper_pair {
     throw("[$slice] must be a Bio::EnsEMBL::Mapper object");
   }
 
-  push(@{$self->{slice_mapper_pairs}}, {
+  if ($slice->coord_system_name ne "alignment") {
+    push(@{$self->{normal_slice_mapper_pairs}}, {
+            slice => $slice,
+            mapper => $mapper,
+            start => $start,
+            end => $end,
+            strand => $strand,
+        });
+  }
+  push(@{$self->{all_slice_mapper_pairs}}, {
           slice => $slice,
           mapper => $mapper,
           start => $start,
           end => $end,
           strand => $strand,
       });
-
-  return $self->{slice_mapper_pairs};
 }
 
 
@@ -279,9 +277,12 @@ sub add_Slice_Mapper_pair {
 
 sub get_all_Slice_Mapper_pairs {
   my ($self, $get_gap_slices) = @_;
-  my $slice_mapper_pairs = ($self->{slice_mapper_pairs} or []);
+  my $slice_mapper_pairs;
+
   if (!$get_gap_slices) {
-    $slice_mapper_pairs = [grep {$_->{slice}->coord_system_name ne "alignment"} @$slice_mapper_pairs];
+    $slice_mapper_pairs = ($self->{normal_slice_mapper_pairs} or []);
+  } else {
+    $slice_mapper_pairs = ($self->{all_slice_mapper_pairs} or []);
   }
 
   return $slice_mapper_pairs;
@@ -1491,11 +1492,20 @@ sub subseq {
 =cut
 
 sub get_cigar_line {
-  my ($self, $start, $end, $strand) = @_;
+  my ($self) = @_;
 
-  $start = $self->start;
-  $end = $self->end;
-  $strand ||= 1;
+  my $cigar_arrarref = $self->get_cigar_arrayref();
+  my $cigar_line = join("", @$cigar_arrarref);
+  
+  return $cigar_line;
+}
+
+sub get_cigar_arrayref {
+  my ($self) = @_;
+
+  my $start = $self->start;
+  my $end = $self->end;
+  my $strand ||= 1;
 
   ## Fix coordinates (needed for sub_Slices)
   if ($self->strand == -1) {
@@ -1508,110 +1518,66 @@ sub get_cigar_line {
     $end += $self->start - 1;
   }
 
-  my $length = ($end - $start + 1);
-  my $seq = "." x $length;
+  my @these_cigar_pieces = ();
+  my $cigar_pos = 1;
+
   foreach my $pair (sort {$a->{start} <=> $b->{start}} @{$self->get_all_Slice_Mapper_pairs("get_gap_slices")}) {
     my $this_slice = $pair->{slice};
     my $mapper = $pair->{mapper};
     my $slice_start = $pair->{start};
     my $slice_end = $pair->{end};
+
+    # This should not happen as we are getting the cigar line for the whole AlignSlice::Slice
     next if ($slice_start > $end or $slice_end < $start);
 
-    # Set slice_start and slice_end in "subseq" coordinates (0 based, for compliance wiht substr() perl func) and trim them
-    $slice_start -= $start; # $slice_start is now in subseq coordinates
-    $slice_start = 0 if ($slice_start < 0);
-    $slice_end -= $start; # $slice_end is now in subseq coordinates
-    $slice_end = $length if ($slice_end > $length);
-
-    # Invert start and end for the reverse strand
-    if ($strand == -1) {
-      my $aux = $slice_end;
-      $slice_end = $length - $slice_start;
-      $slice_start = $length - $aux;
+    # This slice overlaps with the previous mapping. This is not supported.
+    if ($slice_start < $cigar_pos) {
+      die "ERROR in AlignSlice: Trying to get a cigar_line from overlapping Slices is not supported.\n";
     }
 
+    # If there is a gap between this slice and the previous one (or the start of the slice)
+    # Add a "gap" element to the cigar array and set the new cigar_pos.
+    if ($slice_start > $cigar_pos) {
+      push(@these_cigar_pieces, ($slice_start - $cigar_pos), "G");
+      $cigar_pos = $slice_start;
+    }
+    
+
+    # Map the coordinates from this
     my @sequence_coords = $mapper->map_coordinates(
             'alignment',
-            $start,
-            $end,
+            $slice_start,
+            $slice_end,
             $strand,
             'alignment'
         );
-    #####################
-    # $this_pos refers to the starting position of the subseq if requesting the forward strand
-    # or the ending position of the subseq if the reverse strand has been requested:
-    #
-    # FORWARD STRAND (1)
-    # $this_pos = 0
-    #      |
-    #      ---------------------------------------------------------------------->
-    #      <----------------------------------------------------------------------
-    #
-    # REVERSE STRAND (-1)
-    #      ---------------------------------------------------------------------->
-    #      <----------------------------------------------------------------------
-    #                                                                            |
-    #                                                                      $this_pos = 0
-    #
-    # All remaining coordinates work in the same way except the start and end position
-    # of the gaps which correspond to the coordinates in the original Slice...
-    #
-    my $this_pos = 0;
     foreach my $sequence_coord (@sequence_coords) {
       ## $sequence_coord refer to genomic_align (a slice in the [+] strand)
 
-      if ($sequence_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
-        my $subseq = "N" x ($sequence_coord->length);
-        substr($seq, $this_pos, $sequence_coord->length, $subseq);
+      my $sequence_coord_length = $sequence_coord->length;
 
-      } else {  ## Gap or sequence outside of any alignment
-        ############
-        # Get the start and end positions of this gap in "subseq" coordinates
-        my $this_original_start = $sequence_coord->start - $start;
-        my $this_original_end = $sequence_coord->end - $start;
-        if ($strand == -1) {
-          my $aux = $this_original_end;
-          $this_original_end = $length - $this_original_start;
-          $this_original_start = $length - $aux;
+      if (ref($sequence_coord) eq "Bio::EnsEMBL::Mapper::Coordinate") {
+        if ($these_cigar_pieces[-1] eq "M") {
+          $these_cigar_pieces[-2] += $sequence_coord_length;
+        } else {
+          push(@these_cigar_pieces, $sequence_coord_length, "M");
         }
-        if ($this_original_start <= $slice_end and $this_original_end >= $slice_start) {
-          ## This is a gap
-          my $start_position_of_gap_seq = $this_pos;
-          my $end_position_of_gap_seq = $this_pos + $sequence_coord->length;
-          if ($start_position_of_gap_seq < $slice_start) {
-            $start_position_of_gap_seq = $slice_start;
-          }
-          if ($end_position_of_gap_seq > $slice_end + 1) {
-            $end_position_of_gap_seq = $slice_end + 1;
-          }
-          my $length_of_gap_seq = $end_position_of_gap_seq - $start_position_of_gap_seq;
-          substr($seq, $start_position_of_gap_seq, $length_of_gap_seq, "-" x $length_of_gap_seq)
-              if ($length_of_gap_seq > 0);
+      } else {  ## Gap or sequence outside of any alignment
+        if ($these_cigar_pieces[-1] eq "D") {
+          $these_cigar_pieces[-2] += $sequence_coord_length;
+        } else {
+          push(@these_cigar_pieces, $sequence_coord_length, "D");
         }
       }
-      $this_pos += $sequence_coord->length;
+      $cigar_pos += $sequence_coord_length;
     }
   }
-  my $cigar_line = "";
-
-  my @pieces = split(/(\-+|\.+)/, $seq);
-  foreach my $piece (@pieces) {
-    my $mode;
-    if ($piece =~ /\./) {
-      $mode = "G"; # D for gaps (deletions)
-    } elsif ($piece =~ /\-/) {
-      $mode = "D"; # D for gaps (deletions)
-    } else {
-      $mode = "M"; # M for matches/mismatches
-    }
-    if (length($piece) == 1) {
-      $cigar_line .= $mode;
-    } elsif (length($piece) > 1) { #length can be 0 if the sequence starts with a gap
-      $cigar_line .= length($piece).$mode;
-    }
+  if ($cigar_pos <= $end) {
+    push(@these_cigar_pieces, ($end - $cigar_pos + 1), "G");
+    $cigar_pos = $end;
   }
 
-  return $cigar_line;
+  return [@these_cigar_pieces];
 }
 
 
