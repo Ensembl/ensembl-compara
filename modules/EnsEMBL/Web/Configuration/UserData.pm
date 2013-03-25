@@ -17,11 +17,13 @@ sub set_default_action {
 sub populate_tree {
   my $self = shift;
 
+  my $data_menu = $self->create_submenu('CustomData', 'Custom Data');
+
   ## Upload "wizard"
-  $self->create_node( 'SelectFile', 'Add your data',
+  $data_menu->append($self->create_node( 'SelectFile', 'Add your data',
     [qw(select_file EnsEMBL::Web::Component::UserData::SelectFile)], 
     { 'availability' => 1 }
-  );
+  ));
   $self->create_node( 'UploadFile', '',
     [], { 'availability' => 1, 'no_menu_entry' => 1,
     'command' => 'EnsEMBL::Web::Command::UserData::UploadFile'}
@@ -87,10 +89,10 @@ sub populate_tree {
   #               V
   # Component:  DasFeedback                
 
-  $self->create_node( 'SelectServer', "Attach DAS",
+  $data_menu->append($self->create_node( 'SelectServer', "Attach DAS",
    [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)], 
     { 'availability' => 1 }
-  );
+  ));
   $self->create_node( 'CheckServer', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::CheckServer',
     'availability' => 1, 'no_menu_entry' => 1 }
@@ -136,10 +138,10 @@ sub populate_tree {
   );
 
   ## Data management
-  $self->create_node( 'ManageData', "Manage Data",
+  $data_menu->append($self->create_node( 'ManageData', "Manage Data",
     [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)
     ], { 'availability' => 1, 'concise' => 'Manage Data' }
-  );
+  ));
   
   $self->create_node( 'ModifyData', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::ModifyData',
@@ -166,10 +168,10 @@ sub populate_tree {
   ); 
  
   ## FeatureView 
-  $self->create_node('FeatureView', 'Features on Karyotype',
+  $data_menu->append($self->create_node('FeatureView', 'Features on Karyotype',
     [qw(featureview   EnsEMBL::Web::Component::UserData::FeatureView)],
     {'availability' => @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES}},
-  );
+  ));
   $self->create_node ('FviewRedirect', '',
     [], {'command' => 'EnsEMBL::Web::Command::UserData::FviewRedirect', 
       'no_menu_entry' => 1}
