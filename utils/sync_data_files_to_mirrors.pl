@@ -80,34 +80,42 @@ if (scalar @servers >= 1) {
    my $keyline = join("; ",'eval `ssh-agent -s`',(map { "ssh-add ~/.ssh/$_" } @keys),'');
    my $kp = join(" ",map { "-i ~/.ssh/$_" } @keys);
 
-#use Data::Dumper;warn Dumper(%hash);  
+#use Data::Dumper;warn Dumper(%hash);
+
   my $size_check;
   my $partition_number = 1;
   my $print_counter = 0; #using this counter just to print the server details only once
 
+# call for algorithm to sort species to find on the partitions
+  my @sorted_species = SpeciesSizeSorter(%hash);
+#use Data::Dumper;warn Dumper @sorted_species;
+
   #Sorting species based on the total files size, bigger at the top and smaller at the bottom. 
-  foreach my $species_size(sort{$hash{$a} <=> $hash{$b}} keys %hash) {
+  foreach my $species_name(@sorted_species) {
     my %commands;
     $print_counter++;
-    $size_check += $hash{$species_size};
+    $size_check += $hash{$species_name};
 
-    #if size_check(disk space) exceed 976GB then move to another partition
-    if($size_check >= 1048000000000) {
+    #if size_check(disk space) exceed 990GB then move to another partition
+    if($size_check >= 1063000000000) {
       $size_check = 0; #reset counter
       $partition_number++; #increment partition_number to reflect the new partition where files have to go to.      
-      
-      #if we have more than 1 partition, we need to create symlink in /exports/datafiles for the species in the other partitions
-      my $symlink_command = "ln -s /nfs/ensnfs-live_$partition_number/".lc($species_size)." ".lc($species_size);
+    }
+    
+    #if we have more than 1 partition, we need to create symlink in /exports/datafiles for the species in the other partitions
+    if($partition_number > 1) {
+      my $symlink_command = "ln -s /nfs/ensnfs-live_$partition_number/".lc($species_name)." ".lc($species_name);
       $commands{"symlink_command"} = $symlink_command;
     }
 
+
     #accessing each species files and copying the files to the partition using fdt
-    foreach (sort keys %{$targets{$species_size}}) {
-      my $file_list = join ' ', map { /\/result_feature\// ? "$_/*" : $_ } @{$targets{$species_size}{$_}};
+    foreach (sort keys %{$targets{$species_name}}) {
+      my $file_list = join ' ', map { /\/result_feature\// ? "$_/*" : $_ } @{$targets{$species_name}{$_}};
       $_ =~ s/datafiles/datafiles_$partition_number/gi if($partition_number > 1);
 
       foreach my $remote_server (@servers) {
-        warn "\n$remote_server ($ips{$remote_server}): copying the following files:\n $file_list \n TO $_\n\n" if($dryrun && $species_set && $species{$species_size});
+        warn "\n$remote_server ($ips{$remote_server}): copying the following files:\n $file_list \n TO $_\n\n" if($dryrun && $species_set && $species{$species_name});
 
         if(!$dryrun) {
           #do the fdt here
@@ -124,7 +132,7 @@ if (scalar @servers >= 1) {
            }
           
            my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-           print "\n$remote_server($now_string): Starting file transfer for $species_size \n" if(!$dryrun);
+           print "\n$remote_server($now_string): Starting file transfer for $species_name \n" if(!$dryrun);
 
            print(FH_USEAST "$fdt_command \n") if(!$dryrun && $remote_server eq 'useast');
            print(FH_USWEST "$fdt_command \n") if(!$dryrun && $remote_server eq 'uswest');
@@ -174,10 +182,10 @@ if (scalar @servers >= 1) {
             print "ERROR!!! FDT is not running on the destination server.... Stopping script, restart fdt on the server and run script again!!!\n\n";
             exit;
           }
-          print "ERROR IN TRANSFERRING FILES FOR $species_size!!!!\n$commands{$fhs{fileno($got)}} \n\n" if($line =~ /Exit Status: Not OK/);
+          print "ERROR IN TRANSFERRING FILES FOR $species_name!!!!\n$commands{$fhs{fileno($got)}} \n\n" if($line =~ /Exit Status: Not OK/);
           if($line =~ /Exit Status: OK/) {
             my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-            print "\n$mirror_server($now_string): Successful transfer of files for $species_size \n";
+            print "\n$mirror_server($now_string): Successful transfer of files for $species_name \n";
             print "$mirror_server: Running dry rsync to update timestamp \n";
             print(FH_USEAST "$commands{\"rsync_$mirror_server\"} \n\n\n") if(!$dryrun && $mirror_server eq 'useast');
             print(FH_USWEST "$commands{\"rsync_$mirror_server\"} \n\n\n") if(!$dryrun && $mirror_server eq 'uswest');
@@ -193,7 +201,7 @@ if (scalar @servers >= 1) {
       
     } # end of for loop for accessing each species
 
-  } #end of for loop for species_size, sorting file based on size
+  } #end of for loop for species_name, going through each species already sorted by the algorithm
 
 } # end of if scalar @servers
 
@@ -260,7 +268,8 @@ sub set_targets {
     print "$sp\n Regulation: ".HRSize($regulation_filesize,2)." + RNASeq: ".HRSize($rna_filesize,2)." == ".HRSize($filesize,2)." \n" if($filesize && $dryrun); #will display the disk space in dryrun mode
   }
 
-    print "\nTotal Size == ".HRSize($totalsize,2)." (This is the total disk space you will need on the mirrors, create the volumes accordingly and make sure fdt is running!) \n" if($dryrun);
+  print "\nTotal Size == ".HRSize($totalsize,2)." (This is the total disk space you will need on the mirrors, create the volumes accordingly and make sure fdt is running!) \n" if($dryrun);
+#  $hash{"total_size"} = HRSize($totalsize,0); #dont need it for me, be careful if we are adding back again as it will affect the count in SpeciesSizeSorter function.
 
   %species = %target_species;
 }
@@ -320,5 +329,48 @@ sub HRSize {
     $u++;
   }
   if($units[$u]){ return (int($size*$dp)/$dp)." ".$units[$u]; } else{ return int($size); }
+}
+
+
+# Algorithm to sort species file size in order to fit on the partitions.
+# return array of species name (order will be based on which one fit on one partition)
+sub SpeciesSizeSorter {
+  my %hash = @_;
+  
+  my %temp_hash = %hash; #thats because we can't override global %hash
+  my (@species_array, $size_counter, $previous_size, @temp_array);  
+  
+  #keep looping through the hash until there is no element (all species have been sorted)
+  while (scalar keys %temp_hash > 0) {
+    my $count =  scalar keys %temp_hash;  
+    last if(scalar keys %temp_hash eq 0); #this is just a sanity check and preventing from going in infinite loop
+
+    foreach my $species_name(sort{$temp_hash{$b} <=> $temp_hash{$a}} keys %temp_hash) {
+      # calculating total size of species in temp_array up till now
+      foreach (@temp_array) {
+        if($_) {
+          $previous_size += $hash{$_};
+        } else {  
+          $previous_size = 0;
+        }
+      }
+      $size_counter = $previous_size + $temp_hash{$species_name};
+      if($size_counter >= 1063000000000 && $count ne 1) {
+        $count--; # decrease hash element count 
+        next;
+      } elsif ($size_counter >= 1063000000000 && $count eq 1) {
+        push (@species_array,@temp_array); # we got one set set of species which fit one partition, empty temp_array and go through the loop again
+        @temp_array = (); #empty temp_array            
+        $previous_size = 0;
+      }else {
+        push (@temp_array,$species_name);
+        $count--; #decrease hash element count
+        delete $temp_hash{$species_name};  #remove species from $hash
+        push(@species_array,@temp_array) if($count eq 0); #just in case we are at the last element of the hash, push everything
+      }
+    }
+  } # end of while loop
+ 
+  return @species_array;
 }
 1;
