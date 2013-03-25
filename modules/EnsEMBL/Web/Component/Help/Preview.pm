@@ -20,7 +20,7 @@ sub content {
   my $self = shift;
   my $hub = $self->hub;
 
-  my $form = $self->new_form({'id' =>'contact', 'action' => "/Help/SendEmail", 'method' => 'post'});
+  my $form = $self->new_form({'id' =>'contact', 'action' => {qw(type Help action SendEmail)}, 'method' => 'post'});
   my $fieldset = $form->add_fieldset;
   
   $fieldset->add_field([{
