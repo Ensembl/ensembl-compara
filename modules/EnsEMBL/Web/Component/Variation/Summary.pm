@@ -20,7 +20,7 @@ sub content {
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
 
   my $info_box;
-  if ($variation->failed_description || scalar keys %{$object->variation_feature_mapping}) { 
+  if ($variation->failed_description || (scalar keys %{$object->variation_feature_mapping} > 1)) { 
     ## warn if variation has been failed
     $info_box = $self->multiple_locations($feature_slice, $variation->failed_description); 
   }
