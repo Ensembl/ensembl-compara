@@ -53,7 +53,8 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
- #   'release'               => '70',
+    'release_name'          => 'vega_ga_20121112_70_2',
+    'release'               => '70',
     #'dbname'               => '', #Define on the command line via the conf_file
 
     # dependent parameters:
@@ -65,7 +66,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20121112_70',
+      -dbname => $self->o('ENV', 'USER').'_'.$self->o('release_name'),
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -103,8 +104,7 @@ sub default_options {
 	#Default pairaligner config
 	#
     'skip_pairaligner_stats' => 0, #skip this module if set to 1
-#    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
-    'output_dir' => '/lustre/scratch109/ensembl/st3/compara_generation/vega_ga_20121112_70',
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/compara_generation/'.$self->o('release_name'),
     };
 }
 
