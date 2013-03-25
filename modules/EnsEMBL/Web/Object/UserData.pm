@@ -52,12 +52,12 @@ sub data_type :lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_data_type'} = $
 
 sub caption  {
   my $self = shift;
-  return 'Custom Data';
+  return 'Personal Data';
 }
 
 sub short_caption {
   my $self = shift;
-  return 'Data Management';
+  return 'Personal Data';
 }
 
 sub counts {
