@@ -113,7 +113,7 @@ sub init {
   $self->add_entry({
     id      => 'user_data',
     class   => 'fixed_width',
-    caption => 'Custom Data',
+    caption => 'Personal Data',
     url     => $hub->url({
        type    => 'UserData',
        action  => 'ManageData',
