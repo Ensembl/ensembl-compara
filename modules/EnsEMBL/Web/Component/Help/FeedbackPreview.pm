@@ -2,9 +2,8 @@ package EnsEMBL::Web::Component::Help::FeedbackPreview;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Help);
-use EnsEMBL::Web::Form;
 
 sub _init {
   my $self = shift;
@@ -14,113 +13,66 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub = $self->hub;
+  my $self  = shift;
+  my $hub   = $self->hub;
 
-  my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/MovieEmail", 'post' );
+  my $form  = $self->new_form({'id' => 'contact', 'action' => {'type' => 'Help', 'action' => 'MovieEmail'}, 'method' => 'post'});
 
-  $form->add_element(
-    'type'    => 'NoEdit',
+  $form->add_field({
+    'type'    => 'noedit',
     'label'   => 'Subject',
-    'value'   => 'Feedback for Ensembl tutorial movies',
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
     'name'    => 'subject',
     'value'   => 'Feedback for Ensembl tutorial movies',
-  );
+  });
 
-  $form->add_element(
-    'type'    => 'NoEdit',
+  $form->add_field({
+    'type'    => 'noedit',
     'label'   => 'Movie title',
-    'value'   => $hub->param('title'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
     'name'    => 'title',
     'value'   => $hub->param('title'),
-  );
+  });
 
-  $form->add_element(
-    'type'    => 'NoEdit',
+  $form->add_field({
+    'type'    => 'noedit',
     'label'   => 'Your name',
-    'value'   => $hub->param('name'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
     'name'    => 'name',
     'value'   => $hub->param('name'),
-  );
+  });
 
-  $form->add_element(
-    'type'    => 'NoEdit',
+  $form->add_field({
+    'type'    => 'noedit',
     'label'   => 'Your email',
+    'name'    => 'address',
     'value'   => $hub->param('address'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'email',
-    'value'   => $hub->param('address'),
-  );
+  });
 
-  my $problems = {
-    'no_load'   => 'Movie did not appear',
-    'playback'  => 'Playback was jerky',
-    'no_sound'  => 'No sound',
-    'bad_sound' => 'Poor quality sound',
-    'other'     => 'Other (please describe below)',
-  };
-
+  my %problems = map { $_->{'value'} => $_->{'caption'} } @{$self->object->movie_problems};
   my @problems = $hub->param('problem');
-  my $problem_text;
-  if (@problems) {
-    $problem_text .= '<ul>';
-    foreach my $p (@problems) {
-      next unless $p && $problems->{$p};
-      $problem_text .= '<li>'.$problems->{$p}.'</li>';
-      $form->add_element(
-        'type'  => 'Hidden',
-        'name'  => 'problem',
-        'value' => $p,
-      );
-    }
-    $problem_text .= '</ul>';
-  }
-  
-  $form->add_element(
-    'type'    => 'NoEdit',
-    'label'   => 'Problem(s)',
-    'value'  => $problem_text,
-  );
 
-  $form->add_element(
-    'type'    => 'NoEdit',
+  $form->add_field({
+    'type'      => 'noedit',
+    'no_input'  => 1,
+    'is_html'   => 1,
+    'value'     => @problems ? sprintf('<ul>%s</ul>', join('', map { "<li>$problems{$_}</li>" } @problems)) : '',
+  });
+
+  $form->add_hidden({'name' => 'problem', 'value' => $_}) for @problems;
+
+  $form->add_field({
+    'type'    => 'noedit',
     'label'   => 'Additional comments',
+    'name'    => 'text',
     'value'   => $hub->param('text'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'message',
-    'value'   => $hub->param('text'),
-  );
+  });
 
   ## Pass honeypot fields, to weed out any persistent robots!
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'honeypot_1',
-    'value'   => $hub->param('email'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'honeypot_2',
-    'value'   => $hub->param('comments'),
-  );
+  $form->add_hidden({'name' => 'honeypot_1', 'value' => $hub->param('email')});
+  $form->add_hidden({'name' => 'honeypot_2', 'value' => $hub->param('comments')});
 
-  $form->add_element(
-    'type'    => 'Submit',
+  $form->add_button({
     'name'    => 'submit',
     'value'   => 'Send email',
-  );
+  });
 
   return $form->render;
 }

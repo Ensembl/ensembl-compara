@@ -2,9 +2,8 @@ package EnsEMBL::Web::Component::Help::MovieFeedback;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Help);
-use EnsEMBL::Web::Form;
 
 sub _init {
   my $self = shift;
@@ -14,79 +13,65 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub = $self->hub;
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $form  = $self->new_form({'id' => 'contact', 'action' => {qw(type Help action FeedbackPreview)}, 'method' => 'post'});
 
-  my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/FeedbackPreview", 'post' );
+  $form->add_field({
+    'type'        => 'noedit',
+    'name'        => 'subject',
+    'label'       => 'Subject',
+    'value'       => 'Feedback for Ensembl tutorial movies',
+  });
 
-  $form->add_element(
-    'type'    => 'NoEdit',
-    'name'    => 'subject',
-    'label'   => 'Subject',
-    'value'   => 'Feedback for Ensembl tutorial movies',
-  );
+  $form->add_field({
+    'type'        => 'noedit',
+    'label'       => 'Movie title',
+    'name'        => 'title',
+    'value'       => $hub->param('title'),
+  });
 
-  $form->add_element(
-    'type'    => 'NoEdit',
-    'label'   => 'Movie title',
-    'value'   => $hub->param('title'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'title',
-    'value'   => $hub->param('title'),
-  );
+  $form->add_field({
+    'type'        => 'string',
+    'name'        => 'name',
+    'label'       => 'Your name',
+  });
 
-  $form->add_element(
-    'type'    => 'String',
-    'name'    => 'name',
-    'label'   => 'Your name',
-  );
+  $form->add_field({
+    'type'        => 'honeypot',
+    'name'        => 'email',
+    'label'       => 'Address',
+  });
 
-  $form->add_element(
-    'type'    => 'Honeypot',
-    'name'    => 'email',
-    'label'   => 'Address',
-  );
+  $form->add_field({
+    'type'        => 'email',
+    'name'        => 'address',
+    'label'       => 'Your Email',
+  });
 
-  $form->add_element(
-    'type'    => 'Email',
-    'name'    => 'address',
-    'label'   => 'Your Email',
-  );
+  $form->add_field({
+    'type'        => 'dropdown',
+    'name'        => 'problem',
+    'label'       => 'Problem(s)',
+    'values'      => $self->object->movie_problems,
+    'multiple'    => 1
+  });
 
-  my $problems = [
-    {'value' => 'no_load',   'name' => 'Movie did not appear'},
-    {'value' => 'playback',  'name' => 'Playback was jerky'},
-    {'value' => 'no_sound',  'name' => 'No sound'},
-    {'value' => 'bad_sound', 'name' => 'Poor quality sound'},
-    {'value' => 'other',     'name' => 'Other (please describe below)'},
-  ];
-  
-  $form->add_element(
-    'type'    => 'MultiSelect',
-    'name'    => 'problem',
-    'label'   => 'Problem(s)',
-    'values'  => $problems,
-  );
+ $form->add_field({
+    'type'        => 'text',
+    'name'        => 'text',
+    'label'       => 'Additional comments',
+  });
 
- $form->add_element(
-    'type'    => 'Text',
-    'name'    => 'text',
-    'label'   => 'Additional comments',
-  );
+ $form->add_field({
+    'type'        => 'honeypot',
+    'name'        => 'comments',
+    'label'       => 'Message',
+  });
 
- $form->add_element(
-    'type'    => 'Honeypot',
-    'name'    => 'comments',
-    'label'   => 'Message',
-  );
-
-  $form->add_element(
-    'type'    => 'Submit',
-    'name'    => 'submit',
-    'value'   => 'Preview',
-  );
+  $form->add_button({
+    'value'       => 'Preview'
+  });
 
   return $form->render;
 }
