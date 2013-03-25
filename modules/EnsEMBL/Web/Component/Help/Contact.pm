@@ -2,7 +2,6 @@ package EnsEMBL::Web::Component::Help::Contact;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Component::Help);
 
@@ -30,7 +29,7 @@ sub content {
     'type'    => 'String',
     'name'    => 'name',
     'label'   => 'Your name',
-    'value'   => $hub->param('name'),
+    'value'   => $hub->param('name') || '',
   }, {
     'type'    => 'Honeypot',
     'name'    => 'email',
@@ -39,12 +38,12 @@ sub content {
     'type'    => 'Email',
     'name'    => 'address',
     'label'   => 'Your Email',
-    'value'   => $hub->param('address'),
+    'value'   => $hub->param('address') || '',
   }, {
     'type'    => 'String',
     'name'    => 'subject',
     'label'   => 'Subject',
-    'value'   => $hub->param('subject'),
+    'value'   => $hub->param('subject') || '',
   }, {
     'type'    => 'Honeypot',
     'name'    => 'comments',
@@ -53,12 +52,12 @@ sub content {
     'type'    => 'Text',
     'name'    => 'message',
     'label'   => 'Message',
-    'value'   => $hub->param('message'),
+    'value'   => $hub->param('message') || '',
   }]);
   
   $fieldset->add_hidden({
     'name'    => 'string',
-    'value'   => $hub->param('string'),
+    'value'   => $hub->param('string') || '',
   });
 
   $fieldset->add_button({
