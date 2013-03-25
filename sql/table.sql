@@ -1154,3 +1154,12 @@ INSERT INTO meta (species_id, meta_key, meta_value)
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_70_71_c.sql|schema_version');
+
+# Patch identifier
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_70_71_d.sql|hmm_profile_key')
+
+# Patch identifier
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_70_71_e.sql|drop_cafe_data')
+
