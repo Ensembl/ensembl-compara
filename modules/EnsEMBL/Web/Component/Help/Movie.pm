@@ -43,11 +43,7 @@ sub content {
       $html .= $self->help_feedback($movie->{'id'}, return_url => '/Help/Movie', type => 'Movie');
 
       ## Link to movie-specific feedback form
-      $html .= qq(
-        <div class="info-box">
-          If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$movie->{'title'}" class="popup">provide feedback</a> that will help us improve our service. Thank you.
-        </div>
-      );
+      $html .= qq(<p>If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$movie->{'title'}" class="popup">provide feedback</a> that will help us improve our service.</p><p>Thank you.</p>);
     }
 
   } elsif (scalar @movies > 0 && $movies[0]) {
