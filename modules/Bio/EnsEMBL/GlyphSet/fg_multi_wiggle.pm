@@ -83,7 +83,7 @@ sub process_wiggle_data {
   my @labels   = ($label);
   my ($min_score, $max_score, $data_flag) = (0, 0, 0);
   my (@all_features, $legend, @colours);
-
+  
   foreach my $evidence_type (keys %$wiggle_data) {
     my $result_set = $wiggle_data->{$evidence_type}; 
     my @features   = @{$config->{'data_by_cell_line'}{'wiggle_data'}{$evidence_type}};   
@@ -218,21 +218,10 @@ sub get_colours {
 sub display_error_message {
   my ($self, $cell_line, $set, $type) = @_;
   my $config = $self->{'config'}; 
-  my $class; 
   
   return unless $config->get_option('opt_empty_tracks') == 1; 
   
-  if ($type eq 'peaks'){
-    if ($set eq 'core') {
-      $class = 'Evidence';
-    } else {
-      $set = 'Hists & Pols';
-    }
-  } elsif ($type eq 'wiggle') {
-    $class = 'Support';
-  }  
-  
-  $self->draw_track_name(join(' ', grep $_, ucfirst $set, $class, $cell_line), 'black', -118,  2, 1);
+  $self->draw_track_name(join(' ', $config->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info($set)->{'label'}, $cell_line), 'black', -118,  2, 1);
   $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar @{$config->{'data_by_cell_line'}{$cell_line}{$set}{$_}||[]}, qw(configured available));
   
   return 1;
