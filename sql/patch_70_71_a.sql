@@ -9,5 +9,5 @@ ALTER TABLE other_member_sequence DROP KEY seq_type, DROP KEY sequence, MODIFY C
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_a.sql|other_member_sequence_keys')
+  VALUES (NULL, 'patch', 'patch_70_71_a.sql|other_member_sequence_keys');
 

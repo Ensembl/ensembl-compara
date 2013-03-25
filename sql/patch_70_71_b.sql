@@ -39,5 +39,5 @@ CREATE TABLE `member_xref` (
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_b.sql|member_xref')
+  VALUES (NULL, 'patch', 'patch_70_71_b.sql|member_xref');
 
