@@ -164,15 +164,9 @@ if (scalar @servers >= 1) {
 
           unless($line) {
             # This gets called when a command finishes 
-            # close all output file first
-            close (FH_USEAST) if(!$dryrun && $mirror_server eq 'useast');
-            close (FH_USWEST) if(!$dryrun && $mirror_server eq 'uswest');
-            close (FH_ASIA) if(!$dryrun && $mirror_server eq 'asia');
-
             $read_set->remove($got);
             next;
           }
-
           # This is a line from a command
           print(FH_USEAST $line) if ($mirror_server eq 'useast');
           print(FH_USWEST $line) if ($mirror_server eq 'uswest');
@@ -182,7 +176,7 @@ if (scalar @servers >= 1) {
             print "ERROR!!! FDT is not running on the destination server.... Stopping script, restart fdt on the server and run script again!!!\n\n";
             exit;
           }
-          print "ERROR IN TRANSFERRING FILES FOR $species_name!!!!\n$commands{$fhs{fileno($got)}} \n\n" if($line =~ /Exit Status: Not OK/);
+          print "ERROR IN TRANSFERRING FILES FOR $species_name!!!!\n".$commands{"fdt_$fhs{fileno($got)}"}."\n\n" if($line =~ /Exit Status: Not OK|Error/);
           if($line =~ /Exit Status: OK/) {
             my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
             print "\n$mirror_server($now_string): Successful transfer of files for $species_name \n";
@@ -202,6 +196,14 @@ if (scalar @servers >= 1) {
     } # end of for loop for accessing each species
 
   } #end of for loop for species_name, going through each species already sorted by the algorithm
+
+# close all output file first
+if(!$dryrun) {
+  close (FH_USEAST);
+  close (FH_USWEST);
+  close (FH_ASIA); 
+}
+
 
 } # end of if scalar @servers
 
