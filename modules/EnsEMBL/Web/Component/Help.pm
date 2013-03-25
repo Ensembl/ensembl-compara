@@ -2,8 +2,9 @@
 
 package EnsEMBL::Web::Component::Help;
 
-use base qw( EnsEMBL::Web::Component);
 use strict;
+
+use base qw( EnsEMBL::Web::Component);
 
 sub embed_movie {
   my ($self, $movie) = @_;
