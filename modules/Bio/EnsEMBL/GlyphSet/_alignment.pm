@@ -398,7 +398,8 @@ sub render_normal {
           y         => $composite->{'y'} + $h + 2,
           width     => $composite->{'x'} + ($bump_end - $bump_start) / $pix_per_bp,
           height    => $label_h,
-          absolutey => 1
+          absolutey => 1,
+          href  => $self->href($feat[0][2]),
         }));
       }
       
