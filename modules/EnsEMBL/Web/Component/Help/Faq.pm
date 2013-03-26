@@ -65,7 +65,7 @@ sub content {
     else {
       $html .= qq(<h2>FAQs</h2>);
       foreach my $faq (@faqs) {
-        next unless $faq;
+        next unless $faq && $faq->{'question'};
         next if $single_cat && $faq->{'category'} ne $single_cat;
 
         unless ($single_cat) {
