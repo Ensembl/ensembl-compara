@@ -57,7 +57,7 @@ sub content {
 
     if (scalar(@faqs) == 1) {
 
-      $html .= sprintf('<h3>%s</h3><p>%s</p>', $faqs[0]->{'question'}, $self->parse_help_html($faqs[0]->{'answer'}, $adaptor));
+      $html .= sprintf('<h3>%s</h3><p>%s</p>', $self->strip_HTML($faqs[0]->{'question'}), $self->parse_help_html($faqs[0]->{'answer'}, $adaptor));
       if (! $just_faq) {
         $html .= qq(<ul><li><a href="/Help/Faq" class="popup">More FAQs</a></li></ul>);
       }
@@ -75,7 +75,7 @@ sub content {
           }
         }
 
-        $html .= sprintf(qq(<li><a href="/Help/Faq?id=%s" id="faq%s" class="popup">%s</a></li>\n), $faq->{'id'}, $faq->{'id'}, $faq->{'question'});
+        $html .= sprintf(qq(<li><a href="/Help/Faq?id=%s" id="faq%s" class="popup">%s</a></li>\n), $faq->{'id'}, $faq->{'id'}, $self->strip_HTML($faq->{'question'}));
         if ($hub->param('feedback') && $hub->param('feedback') == $faq->{'id'}) {
           $html .= qq(<div>Thank you for your feedback</div>);
         } 
