@@ -1014,6 +1014,7 @@ sub PhenLine {
                     $species,
                     $id);
   $species =~ s/_/ /;
+  $name = &clean($name,'name');
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
