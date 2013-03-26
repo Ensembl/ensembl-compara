@@ -195,7 +195,7 @@ sub database {
   if ($_[0] =~ /compara/) {
     return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0], 1);
   } else {
-    return $self->species eq 'common' ? undef : $self->databases->get_DBAdaptor(@_);
+    return $self->databases->get_DBAdaptor(@_);
   }
 }
 
