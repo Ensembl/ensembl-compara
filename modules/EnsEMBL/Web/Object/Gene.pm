@@ -566,29 +566,21 @@ sub get_all_families {
     ## Explicitly set db connection, as registry is buggy!
     my $family = $self->gene;
     my $dba = $self->database('core', $self->species);
-    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
-    $genome_db->db_adaptor( $dba );
-    my $ga = $dba->get_GeneAdaptor();
-    my $members = $family->get_all_Members;
+    my $genome_db = $self->database($compara_db)->get_GenomeDBAdaptor->fetch_by_name_assembly($self->species);
+    my $members = $family->get_Member_by_source_GenomeDB('ENSEMBLPEP', $genome_db);
     my $info = {'description' => $family->description};
     my $genes = [];
     my $prots = {};
     foreach my $member (@$members) {
-      $member->genome_db($genome_db);
-      if ($member->source_name eq 'ENSEMBLPEP') {
         my $gene = $member->gene_member->get_Gene;
-        next unless $ga->fetch_by_stable_id($gene->stable_id); # Right species?
         push @$genes, $gene;
         my $protein = $member->get_Translation;
-        if ($protein) {
           if ($prots->{$gene->stable_id}) {
             push @{$prots->{$gene->stable_id}}, $protein;
           }
           else {
             $prots->{$gene->stable_id} = [$protein];
           }
-        }
-      }
     }
     $info->{'genes'}    = $genes;
     $info->{'proteins'} = $prots;
