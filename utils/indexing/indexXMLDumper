@@ -92,15 +92,33 @@ unless ($debug) {
   open (STDERR, ">&LOG") or die "Can't open $log: $!";
 }
 
+my @available_indexes;
+foreach my $method (sort keys %indexXMLDumper::) {
+  if ($method =~ s/dump(\w+)/$1/) {
+    push @available_indexes, $method;
+  }
+}
+
 ## HACK 1 - if the INDEX is set to ALL grab all dumper methods...
 if ($indexes_list eq 'ALL'){
   @indexes = ();
   my %ignored;
   @ignored{@ignore_indexes} = ();
-  foreach my $method (sort keys %indexXMLDumper::) {
-    if ($method =~ s/dump(\w+)/$1/) {
-      push @indexes, $method unless exists $ignored{$method};
+  foreach my $index (@available_indexes) {
+    push @indexes, $index unless exists $ignored{$index};
+  }
+}
+else {
+  my @incorrect_indexes;
+  foreach my $asked_for_index (@indexes) {
+    unless (grep {$_ eq $asked_for_index} @available_indexes) {
+      push @incorrect_indexes, $asked_for_index;
     }
+  }
+  if (@incorrect_indexes) {
+    print LOG "WARNING - one or more of your indexes is not recognised, please check your spelling. Available ones are are:\n";
+    print LOG join "\n", @available_indexes;
+    exit;
   }
 }
 
@@ -3332,7 +3350,7 @@ Examples:
 ./indexXMLDumper --species=ALL --index=ALL --dir=input              #all log output to dumping_$release.log; xml to input; all indices for all species
 ./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/web_data/search/lucene/ensembl_$release; Variations for all species but human
 ./indexXMLDumper --species=ALL --ignore_index=Variation --log=no_variations.log  #log output to no_variations.log; xml to  /nfs/web_data/search/lucene/ensembl_$release; All indexes apart from Variations for for all species
-./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log #output in format for solr (for testing, only works for genes as yet)
+./indexXMLDumper --species=ALL --index=Gene --engine lucene  -log dumping.log #output in lucene format for legacy purposes
 
 ABOUT_END
 }
