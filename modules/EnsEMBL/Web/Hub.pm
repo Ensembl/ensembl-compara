@@ -77,7 +77,6 @@ sub new {
 
   bless $self, $class;
   
-  $self->initialize_user($args->{'user_cookie'}) if $args->{'user_cookie'};
   $self->session = EnsEMBL::Web::Session->new($self, $args->{'session_cookie'});
   $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer if $ENSEMBL_WEB_REGISTRY;
   
@@ -718,31 +717,10 @@ sub get_data_from_session {
   return { parser => $parser, name => $name };
 }
 
-sub initialize_user {
-  my ($self, $cookie) = @_;
-  my $id = $cookie->value;
-  
-  if ($id) {
-    # try to log in with user id from cookie
-    eval { 
-      $self->user = EnsEMBL::Web::Data::User->new($id);
-    };
-      
-    if ($@) {
-      # login failed (because the connection to the used db has gone away)
-      # so log the user out by clearing the cookie
-      $cookie->clear;
-      $self->user = undef;
-    }
-  }
-}
-
 sub get_favourite_species {
   my $self         = shift;
-  my $user         = $self->user;
   my $species_defs = $self->species_defs;
-  my @favourites   = $user ? @{$user->favourite_species} : ();
-     @favourites   = @{$species_defs->DEFAULT_FAVOURITES || []} unless scalar @favourites;
+  my @favourites   = @{$species_defs->DEFAULT_FAVOURITES || []};
      @favourites   = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES) unless scalar @favourites;
   return \@favourites;
 }
