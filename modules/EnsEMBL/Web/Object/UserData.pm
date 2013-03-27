@@ -235,7 +235,7 @@ sub delete_upload {
   my @track_names;
   
   if ($user && $id) {
-    my ($upload) = $user->uploads($id);
+    my $upload = $user->uploads($id)->[0];
     
     if ($upload) {
       my @analyses = split ', ', $upload->analyses;

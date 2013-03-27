@@ -106,17 +106,18 @@ sub rename_session_record {
 }
 
 sub rename_user_record {
-  my $self = shift;
-  my $hub  = $self->hub;
-  my $name = $hub->param('value');
-  
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $user  = $hub->user;
+  my $name  = $hub->param('value');
+
   if ($name) {
-    my $method   = $hub->param('source') . 's';
-    my ($record) = $hub->user->$method($hub->param('id'));
+    my $method  = $hub->param('source') . 's';
+    my $record  = $user->$method($hub->param('id'))->[0];
     $record->name($name);
-    $record->save;
+    $record->save(user => $user);
   }
-  
+
   return 'reload';
 }
 
