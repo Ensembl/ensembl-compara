@@ -61,12 +61,14 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
                 : $sitetype eq 'Pre'  ? 'http://pre.ensembl.org/'
                 : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
 
-$search_engine ||= 'lucene';
+$search_engine ||= 'solr';
 
-my %species_boost = (
-  Human => '10.0',
-  Mouse => '8.0',
-  Zebrafish => '6.0',
+my %db_boost = (
+  core => '40.0',
+);
+
+my %region_boost = (
+  'is_ref' => '10.0',
 );
 
 #redirect STDOUT and maybe STDERR to a file
@@ -169,7 +171,7 @@ foreach my $index (@indexes) {
     }
 
     else {
-#      next unless ($species =~ /^[N-Z]/);
+#      next unless ($species =~ /^[I-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
       $conf->{'species'}                = $species;
       $conf->{'species_sci_name'}       = $species;
@@ -1991,9 +1993,14 @@ sub dumpGene {
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+  my $VEGADB    = $conf->{'dbs'}->{'DATABASE_VEGA'};
   my $RNASEQDB = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
+  if ($search_engine eq 'solr') {
+    $dbs{'vega'} = $VEGADB if $VEGADB;
+  }
+
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
 
   my $total_c;
@@ -2095,12 +2102,19 @@ sub dumpGene {
     $sth->finish;
 #    print LOG "    Exon query done ".&date_and_mem()."\n";
 
-    my $gene_locations = $conf->{'dbh'}->selectall_hashref(qq(
-      SELECT g.stable_id, sr.name as sr_name, g.seq_region_start, g.seq_region_end, g.seq_region_strand, cs.name as sr_type, cs.version
-        FROM $dbname.gene g, $dbname.seq_region sr, $dbname.coord_system cs
-       WHERE g.seq_region_id = sr.seq_region_id
-         AND sr.coord_system_id = cs.coord_system_id),
-      'stable_id');
+    $sql = qq(
+      SELECT g.stable_id, sr.name as sr_name, g.seq_region_start, g.seq_region_end, g.seq_region_strand, cs.name as sr_type, cs.version,
+             (SELECT sra.value 
+                FROM $dbname.seq_region_attrib sra, $dbname.attrib_type at
+               WHERE sr.seq_region_id = sra.seq_region_id
+                 AND sra.attrib_type_id = at.attrib_type_id
+                 AND at.code = 'non_ref') as non_ref
+        FROM $dbname.gene g, $dbname.coord_system cs, $dbname.seq_region sr
+       WHERE g.seq_region_id = sr.seq_region_id 
+         AND sr.coord_system_id = cs.coord_system_id);
+
+    my $gene_locations = $conf->{'dbh'}->selectall_hashref($sql,'stable_id');
+#    print LOG "    Location query done ".&date_and_mem()."\n";
 
     $sql = qq(
       SELECT g.gene_id, t.transcript_id, tr.translation_id,
@@ -2317,9 +2331,14 @@ sub dumpTranscript {
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+  my $VEGADB    = $conf->{'dbs'}->{'DATABASE_VEGA'};
   my $RNASEQDB  = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
+  if ($search_engine eq 'solr') {
+    $dbs{'vega'} = $VEGADB if $VEGADB;
+  }
+
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull!
   my $total_c;
 
@@ -2575,6 +2594,11 @@ sub GeneTransLine {
     ($sid,$sid_ver) = each %$id;
   }
 
+  my $boost = 0;
+  $boost += $db_boost{$db};
+  my $is_ref = $feat_loc->{'non_ref'} ? '' : 'is_ref';
+  $boost += $region_boost{$is_ref};
+
   my $url = sprintf(qq(%s/%s/Summary?%s=%s&amp;db=%s),
                     $species,
                     $type,
@@ -2593,9 +2617,11 @@ sub GeneTransLine {
 
   my $xml;
 
+  my $doc = $boost ? qq(doc boost="$boost") : 'doc';
+
   if ($search_engine eq 'solr') {
     $xml = qq(
-<doc>
+<$doc>
   <field name="id">$sid</field>
   <field name="id_ver">$sid.$sid_ver</field>
   <field name="name">$disp_xref</field>
@@ -3197,10 +3223,6 @@ sub common_fields {
   my $xml;
   if ($search_engine eq 'solr') {
     my $species_name = $conf->{'species_common_name'};
-    my $boost = '';
-    if (my $boost_value = $species_boost{$species_name}) {
-      $boost = ' boost="'.$boost_value.'"';
-    }
     $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
@@ -3210,7 +3232,7 @@ sub common_fields {
     }
     else {
       $xml .= qq(
-  <field name="species"$boost>$species_name</field>
+  <field name="species">$species_name</field>
   <field name="species_name">$species</field>);
     }
     if ($db) {
