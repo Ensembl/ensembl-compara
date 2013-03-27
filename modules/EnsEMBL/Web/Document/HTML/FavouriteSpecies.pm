@@ -79,7 +79,7 @@ sub render_ajax_reorder_list {
     <ul class="species list">
       %s
     </ul>
-    <p><span class="link toggle_link">Save selection</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a></p>
+    <p><span class="link toggle_link">Save selection</span> &middot; <a href="/Account/Favourites/Reset">Restore default list</a></p>
   ', join("\n", @fav_list), join("\n", @species_list));
 }
 
