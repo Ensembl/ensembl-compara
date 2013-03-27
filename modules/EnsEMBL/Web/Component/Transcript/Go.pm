@@ -31,7 +31,6 @@ sub content {
   my %clusters    = $hub->species_defs->multiX('ONTOLOGIES');
   my $terms_found = 0;
   my $label       = 'Ontology';
-  my $html        = '';
   my $columns     = [   
     { key => 'go',               title => 'Accession',         sort => 'html', width => '7%',  align => 'left'   },
     { key => 'description',      title => 'Term',              sort => 'text', width => '30%', align => 'left'   },
@@ -43,6 +42,9 @@ sub content {
   
 
 
+  my $html    = '<ul>';
+  my $tables  = '';
+  my $i = 0;
   
   foreach my $oid (sort { $a <=> $b } keys %clusters) {
     my $go_hash = $object->get_go_list($clusters{$oid}{'db'}, $clusters{$oid}{'root'});
@@ -58,10 +60,13 @@ sub content {
       
       $self->process_data($table, $go_hash, $clusters{$oid}{'db'});
       
-      $html       .= "<h2>Descendants of $clusters{$oid}{'db'}: $desc</h2>" . $table->render;
+      $html       .= qq(<li><a href="#ont_$i">$clusters{$oid}{'db'}: $desc</a></li>);
+      $tables     .= qq(<h2 id="ont_$i">Descendants of $clusters{$oid}{'db'}: $desc</h2>) . $table->render;
       $terms_found = 1;
+      $i++;
     }
   }
+  $html .= '</ul>'.$tables;
 
   return $terms_found ? $html : '<p>No ontology terms have been annotated to this entity.</p>';
 }
