@@ -1,6 +1,6 @@
 # $Id$
 
-package EnsEMBL::Web::Configuration::Account;
+package EnsEMBL::Web::Configuration::Account::Retired;
 
 ### Configuration for all views based on the Account hub, including
 ### account management 

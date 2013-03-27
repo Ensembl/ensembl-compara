@@ -1,6 +1,6 @@
 # $Id$
 
-package EnsEMBL::Web::Object::Account;
+package EnsEMBL::Web::Object::Account::Retired;
 
 ### NAME: EnsEMBL::Web::Object::Account
 ### Object for accessing user account information 
