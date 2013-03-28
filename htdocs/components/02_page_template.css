@@ -51,7 +51,6 @@ body.static #main { margin-left: 0; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background: url(/i/[[SITE_LOGO]]) no-repeat 0 0; display: inline-block; width: [[SITE_LOGO_WIDTH]]px; height: [[SITE_LOGO_HEIGHT]]px; }
-#masthead .account_holder                 { position: absolute; top: 5px; right: 10px; }
 #masthead .tools_holder                   { position: relative; top: 10px; }
 #masthead .tools_holder .arrow            { font-size: 8px; position: relative; top: -1px; padding-left: 1px; }
 #masthead .search_holder                  { position: absolute; top: 24px; right: 6px; margin-left: 6px; }
@@ -67,7 +66,6 @@ body.mac #masthead                        { font-size: 13px; }
 body.mac #masthead ul.tabs li             { height: 21px; }
 body.mac #masthead div.more a             { padding: 4px; }
 body.mac #masthead .tools_holder          { top: 13px; }
-body.mac #masthead .account_holder        { top: 5px; }
 
 body.ie #masthead ul.tabs li                      { background: url(/i/tab_on_r.gif) no-repeat right top; margin: 0 2px; background-color: [[MH_TAB]]; }
 body.ie #masthead ul.tabs li.active               { background-color: [[MH_TAB_ACTIVE]]; }
