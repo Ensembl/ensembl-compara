@@ -2926,6 +2926,8 @@ sub add_structural_variations {
     }));
   }
   
+  $self->add_track('information', 'structural_variation_legend', 'Structural Variation Legend', 'structural_variation_legend', { strand => 'r' });
+  
   $sv_menu->append($structural_variants);
   $menu->append($sv_menu);
 }
