@@ -24,7 +24,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       containment: this.el,
       stop: function () {
         $.ajax({
-          url: '/Account/SaveFavourites',
+          url: '/Account/Favourites/Save',
           data: { favourites: favourites.sortable('toArray').join(',').replace(/(favourite|species)-/g, '') },
           dataType: 'json',
           success: function (data) {
