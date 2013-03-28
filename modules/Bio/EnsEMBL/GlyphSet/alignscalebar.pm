@@ -44,49 +44,35 @@ sub render_align_gap {
   my $container = $self->{'container'};
   my $y = $self->strand > 0 ? 8 : 2;
   
-  my $mp = $container->get_all_Slice_Mapper_pairs(1);
-  my $si = 0;
-  my $hs = $mp->[$si];
-  my $gs = $hs->{'start'} - 1;
-  my $ge = $hs->{'end'};
-
-  my $cigar_line = $container->get_cigar_line;
+  my $cigar_arrayref = $container->get_cigar_arrayref;
 
   # Display only those gaps that amount to more than 1 pixel on screen, otherwise screen gets white when you zoom out too much
   my $min_length = 1 / $self->scalex;
 
-  my @inters = split /([MDG])/, $cigar_line;
+  my @inters = @$cigar_arrayref;
   
-  my $ms        = 0;
+  my $cigar_num = 0;
   my $box_start = 0;
   my $box_end   = 0;
   my $colour    = 'white';
   my $join_z    = -10;
 
   while (@inters) {
-    $ms = shift @inters || 1;
+    $cigar_num = shift @inters || 1;
     
-    my $mtype = shift @inters;
+    my $cigar_type = shift @inters;
     
-    $box_end = $box_start + $ms - 1;
-    
-     # Skip normal alignment and gaps in alignments
-    if ($mtype !~ /G|M/) {
-      if ($box_start > $ge) {
-        $hs = $mp->[++$si];
-        
-        return unless $hs;
-        
-        $gs = $hs->{'start'} - 1;
-        $ge = $hs->{'end'};
-      }
+    $box_end = $box_start + $cigar_num - 1;
+
+    # Skip normal alignment (M) and gaps in between alignment blocks (G)
+    if ($cigar_type !~ /G|M/) {
       
-      if ($ms > $min_length && $box_start >= $gs && $box_end < $ge) { 
+      if ($cigar_num > $min_length) { 
         my $glyph = $self->Rect({
           x         => $box_start,
           y         => $y,
           z         => $join_z,
-          width     => abs($box_end - $box_start + 1),
+          width     => $cigar_num,
           height    => 3,
           colour    => $colour, 
           absolutey => 1
