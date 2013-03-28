@@ -282,9 +282,11 @@ sub group_shared_data {
     { key => 'share',   title => '',             width => '20%', align => 'right'                 }
   );
   
-  my ($html, @rows);
+  my $html;
   
   foreach my $group (@groups) {
+  
+    my @rows;
     foreach (grep $_, $user->get_group_records($group, 'uploads'), $user->get_group_records($group, 'urls')) {
       push @rows, {
         %{$self->table_row($_)},
