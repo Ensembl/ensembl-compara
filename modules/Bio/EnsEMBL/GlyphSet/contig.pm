@@ -139,11 +139,49 @@ sub features {
     $feature_slice->{'from_end'}   = $_->from_end;
     $feature_slice->{'name'}       = $name;
     
+    $self->set_absolute_coords_from_overlap($feature_slice, $container, $ctg_slice);
+    
     push @features, $feature_slice;
   }
   
   return \@features;
 }
+
+# Sets start and end on the feature slice to be relative to the chromosome
+sub set_absolute_coords_from_overlap {
+  my ($self, $feature_slice, $ctg_slice) = @_;
+  my $container   = $self->{'container'};
+  my $slice_start = $container->start;
+  my $slice_end   = $container->end;
+  my $check       = $feature_slice->{'from_start'} == 1 ? 'start' : $feature_slice->{'from_end'} == $container->length ? 'end' : ''; # Check if the feature extends beyond the boundaries of the container
+  
+  if ($check) {
+    my $segments  = $ctg_slice->seq_region_Slice->project_to_slice($container->seq_region_Slice);
+    
+    # if there is only one mapping then it must be right, so don't change start/end
+    if (scalar @$segments > 1) {
+      foreach (@$segments) {
+        my $projected_slice = $_->to_Slice;
+        my ($start, $end)   = ($projected_slice->start, $projected_slice->end);
+        my $done            = 0;
+        
+        # When we meet the first projected slice which contains the original container's start position we have
+        # found our correct start (there is only one which can overlap)
+        $done = 1 if ($check eq 'start' && $start <= $slice_start && $end >= $slice_start) || ($check eq 'end' && $start <= $slice_end && $end >= $slice_end);
+        
+        if ($done) {
+          $feature_slice->{'start'} = $start;
+          $feature_slice->{'end'}   = $end;
+          last;
+        }
+      }
+    }
+  } else {
+    $feature_slice->{'start'} = $feature_slice->{'from_start'} + $slice_start - 1;
+    $feature_slice->{'end'}   = $feature_slice->{'from_end'}   + $slice_start - 1;
+  }
+}
+
 
 sub href {
   my ($self, $f) = @_;
@@ -153,7 +191,7 @@ sub href {
     type    => 'Location',
     action  => 'Contig',
     region  => $f->{'name'},
-    r       => undef
+    r       => sprintf('%s:%s-%s', $f->seq_region_name, $f->start, $f->end)
   });
 }
 
