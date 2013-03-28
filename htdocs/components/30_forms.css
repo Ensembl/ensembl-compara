@@ -179,7 +179,8 @@ body.ie6 .inline input.fbutton {
 .ff-checklist label.ff-checklist-label {
   margin: 0 10px;
   font-weight: normal;
-  display: inline-block;
+  display: block;
+  padding-left: 20px;
 }
 .panel p.ff-checklist {
   line-height: 20px;
