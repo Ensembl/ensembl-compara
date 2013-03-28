@@ -89,6 +89,7 @@ if (scalar @servers >= 1) {
 # call for algorithm to sort species to find on the partitions
   my @sorted_species = SpeciesSizeSorter(%hash);
 #use Data::Dumper;warn Dumper @sorted_species;
+#exit;
 
   #Sorting species based on the total files size, bigger at the top and smaller at the bottom. 
   foreach my $species_name(@sorted_species) {
@@ -349,6 +350,7 @@ sub SpeciesSizeSorter {
 
     foreach my $species_name(sort{$temp_hash{$b} <=> $temp_hash{$a}} keys %temp_hash) {
       # calculating total size of species in temp_array up till now
+      $previous_size = 0;
       foreach (@temp_array) {
         if($_) {
           $previous_size += $hash{$_};
@@ -363,9 +365,11 @@ sub SpeciesSizeSorter {
       } elsif ($size_counter >= 1063000000000 && $count eq 1) {
         push (@species_array,@temp_array); # we got one set set of species which fit one partition, empty temp_array and go through the loop again
         @temp_array = (); #empty temp_array            
+#warn "\n\n";
         $previous_size = 0;
       }else {
         push (@temp_array,$species_name);
+#warn " Pushing species : $species_name size: $temp_hash{$species_name}\n";
         $count--; #decrease hash element count
         delete $temp_hash{$species_name};  #remove species from $hash
         push(@species_array,@temp_array) if($count eq 0); #just in case we are at the last element of the hash, push everything
