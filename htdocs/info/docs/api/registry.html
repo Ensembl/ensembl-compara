@@ -85,15 +85,15 @@ new Bio::EnsEMBL::DBSQL::DBAdaptor(
   -host    =&gt; 'ensembldb.ensembl.org',
   -user    =&gt; 'anonymous',
   -port    =&gt; '3306',
-  -species =&gt; 'Homo sapiens',
+  -species =&gt; 'homo_sapiens',
   -group   =&gt; 'core',
   -dbname  =&gt; 'homo_sapiens_core_70_37'
 );
 
-my @aliases = ( 'H_Sapiens', 'human' );
+my @aliases = ( 'H_Sapiens', 'Homo sapiens', 'human' );
 
 Bio::EnsEMBL::Utils::ConfigRegistry-&gt;add_alias(
-  -species =&gt; 'Homo sapiens',
+  -species =&gt; 'homo_sapiens',
   -alias   =&gt; \@aliases
 );
 </pre>
@@ -121,7 +121,9 @@ You should not have two databases with the same name or alias.
 </li>
 
 <li>
-If you intend to use the compara API, you need to use the standard binomial name as the species name and any aliases, as the API relies on this in order to connect to the correct core database.
+If you intend to use the compara API, you need to use the species' production name. This is normally 
+the binomial name lowercased with spaces replaced by underscores e.g. <i>Homo sapiens</i> should be 
+<code>homo_sapiens</code>. Check your database's meta table for the meta key <code>species.production_name</code>
 </li>
 
 </ol>
