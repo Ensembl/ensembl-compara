@@ -77,8 +77,11 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       dataType: 'json',
       context: this,
       success: function (json) {
-        if (json.redirectURL) {
+        if (json.redirectURL && json.redirectType === 'modal') {
           return this.getContent(link, json.redirectURL);
+        }
+        if (json.redirectType === 'page') {
+          return Ensembl.redirect(json.redirectURL);
         }
         
         // Avoid race conditions if the user has clicked another nav link while waiting for content to load
