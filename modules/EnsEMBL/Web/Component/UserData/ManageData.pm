@@ -148,6 +148,8 @@ sub table_row {
                                     link_extra => $title,
                                     class => 'delete_icon' });
   my $download = $self->_no_icon;
+  my $logins   = $hub->species_defs->ENSEMBL_LOGINS;
+  
   if ($file->{'prefix'} && $file->{'prefix'} eq 'download') {
     my $format       = $file->{'format'} eq 'report' ? 'txt' : $file->{'format'};
     $download = $self->_icon({ link => sprintf("/%s/download?file=%s;prefix=download;format=%s",$hub->species,$file->{'filename'},$format),
@@ -166,7 +168,7 @@ sub table_row {
     $url_params{'id'} = $file->id;
     
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
-  } else {
+  } elsif ($logins) {
     my $save_html = $self->_icon({ link_class => 'modal_link',
                                    class => 'save_icon',
                                    title => '%s' });
@@ -242,13 +244,14 @@ sub table_row_das {
   my $img_url = $self->img_url.'16/';
   my $link    = $self->_icon({ link_class => 'modal_link',
                                class => 'delete_icon' });  
+  my $logins  = $hub->species_defs->ENSEMBL_LOGINS;
   my (%url_params, $save);
   
   if ($user_record) {
     %url_params = ( id => $file->id );
     $save       = $self->_icon({ link_class => 'modal_link',
                                 class => 'sprite_disabled save_icon' });
-  } else {
+  } elsif ($logins) {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
     my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
        %url_params  = ( code => $file->logic_name );
