@@ -139,7 +139,7 @@ sub features {
     $feature_slice->{'from_end'}   = $_->from_end;
     $feature_slice->{'name'}       = $name;
     
-    $self->set_absolute_coords_from_overlap($feature_slice, $container, $ctg_slice);
+    $self->set_absolute_coords_from_overlap($feature_slice, $ctg_slice);
     
     push @features, $feature_slice;
   }
@@ -156,7 +156,7 @@ sub set_absolute_coords_from_overlap {
   my $check       = $feature_slice->{'from_start'} == 1 ? 'start' : $feature_slice->{'from_end'} == $container->length ? 'end' : ''; # Check if the feature extends beyond the boundaries of the container
   
   if ($check) {
-    my $segments  = $ctg_slice->seq_region_Slice->project_to_slice($container->seq_region_Slice);
+    my $segments = $ctg_slice->seq_region_Slice->project_to_slice($container->seq_region_Slice);
     
     # if there is only one mapping then it must be right, so don't change start/end
     if (scalar @$segments > 1) {
