@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig;
 
 use strict;
