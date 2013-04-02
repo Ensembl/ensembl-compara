@@ -31,6 +31,7 @@ use Bio::EnsEMBL::Variation::Utils::VEP qw(
 );
 
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
+use Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw($GENOMIC_REGEX);
 
@@ -743,17 +744,49 @@ sub calculate_consequence_data {
           my $new_vf_name = $f->extra || $f->seqname.'_'.$f->rawstart.'_'.$f->allele_string;
           
           # Create VariationFeature
-          my $vf = Bio::EnsEMBL::Variation::VariationFeature->new_fast({
-            start          => $f->rawstart,
-            end            => $f->rawend,
-            chr            => $f->seqname,
-            slice          => $slice,
-            allele_string  => $f->allele_string,
-            strand         => $f->strand,
-            map_weight     => 1,
-            adaptor        => $vep_config->{vfa},
-            variation_name => $new_vf_name,
-          });
+          my $vf;
+          
+          # sv?
+          if($f->allele_string !~ /\//) {
+            my $so_term;
+            
+            # convert to SO term
+            my %terms = (
+              INS  => 'insertion',
+              DEL  => 'deletion',
+              TDUP => 'tandem_duplication',
+              DUP  => 'duplication'
+            );
+            
+            $so_term = defined $terms{$f->allele_string} ? $terms{$f->allele_string} : $f->allele_string;
+            
+            $vf = Bio::EnsEMBL::Variation::StructuralVariationFeature->new_fast({
+              start          => $f->rawstart,
+              end            => $f->rawend,
+              chr            => $f->seqname,
+              slice          => $slice,
+              allele_string  => $f->allele_string,
+              strand         => $f->strand,
+              adaptor        => $vep_config->{svfa},
+              variation_name => $new_vf_name,
+              class_SO_term  => $so_term,
+            });
+          }
+          
+          # normal vf
+          else {
+            $vf = Bio::EnsEMBL::Variation::VariationFeature->new_fast({
+              start          => $f->rawstart,
+              end            => $f->rawend,
+              chr            => $f->seqname,
+              slice          => $slice,
+              allele_string  => $f->allele_string,
+              strand         => $f->strand,
+              map_weight     => 1,
+              adaptor        => $vep_config->{vfa},
+              variation_name => $new_vf_name,
+            });
+          }
           
           next unless &validate_vf($vep_config, $vf);
           
@@ -1231,10 +1264,12 @@ sub configure_vep {
   if (exists $species_dbs{'DATABASE_VARIATION'} ){
     $vep_config{tva} = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation', $species);
     $vep_config{vfa} = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation', $species);
+    $vep_config{svfa} = $self->get_adaptor('get_StructuralVariationFeatureAdaptor', 'variation', $species);
     $vep_config{va} = $self->get_adaptor('get_VariationAdaptor', 'variation', $species);
   } else  { 
     $vep_config{tva} = Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor->new_fake($species);
     $vep_config{vfa} = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($species);
+    $vep_config{svfa} = Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor->new_fake($species);
   }
 
   $vep_config{sa}  = $self->get_adaptor('get_SliceAdaptor', $vep_config{'core_type'}, $species);
