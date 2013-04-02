@@ -88,7 +88,7 @@ q/join CORE.gene g on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene'
 
 my $get_associations_direct = q/
 select dbprimary_acc,count(*) as cnt from gene_tree_root r  
-join gene_tree_node n using (root_id) join gene_tree_member gm using (node_id)  
+join gene_tree_node n using (root_id)  
 join member m using (member_id)  
 join member_xref mg on (m.gene_member_id=mg.member_id)
 join external_db e using (external_db_id)  
@@ -100,8 +100,7 @@ my $get_members_for_xref = q/
 select m.member_id from member_xref mg 
 join member m  on (m.member_id=mg.member_id) 
 join member mp on (mp.gene_member_id=m.member_id) 
-join gene_tree_member gm on (gm.member_id=mp.member_id) 
-join gene_tree_node using (node_id) 
+join gene_tree_node gn on (gn.member_id=mp.member_id) 
 join gene_tree_root r using (root_id) 
 join external_db e using (external_db_id)
 where mg.dbprimary_acc=? and e.db_name=? and r.root_id=?;
@@ -111,8 +110,7 @@ my $get_member_xrefs_for_tree = q/
 select mg.dbprimary_acc as acc, mg.member_id 
 from gene_tree_root r 
 join gene_tree_node n using (root_id) 
-join gene_tree_member gm using (node_id) 
-join member m using (member_id) 
+join member m on (m.member_id=n.member_id) 
 join member_xref mg on (m.gene_member_id=mg.member_id) 
 join external_db e using (external_db_id)
 where r.root_id=? and e.db_name=? order by acc
@@ -269,12 +267,6 @@ sub _member_adaptor {
 		$self->{_member_adaptor} = $self->db->get_MemberAdaptor();
 	}
 	return $self->{_member_adaptor};
-}
-
-sub _same_server {
-	my ( $self, $dbc ) = @_;
-	return (    $self->dbc()->host() eq $dbc->host()
-			 && $self->dbc()->port() eq $dbc->port() ) ? 1 : 0;
 }
 
 1;
