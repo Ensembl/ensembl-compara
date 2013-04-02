@@ -14,7 +14,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.href       = area.attr('href');
     this.title      = area.attr('title') || '';
     this.das        = false;
-    this.position   = data.position;
+    this.event      = data.event;
     this.coords     = data.coords;
     this.imageId    = data.imageId;
     this.relatedEl  = data.relatedEl;
@@ -503,20 +503,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   show: function (loading) {
-    var menuWidth   = parseInt(this.width(), 10);
-    var windowWidth = $(window).width() - 10;
-    var scrollLeft  = $(window).scrollLeft();
-    
-    var css = {
-      left:     this.position.left, 
-      top:      this.position.top,
-      position: 'absolute'
-    };
-    
-    if (this.position.left + menuWidth - scrollLeft > windowWidth) {
-      css.left = windowWidth + scrollLeft - menuWidth;
-    }
-    
     if (!loading && this.elLk.tbody.html()) {
       this.elLk.loading.hide();
       this.elLk.tbody.show();
@@ -524,9 +510,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     Ensembl.EventManager.trigger('panelToFront', this.id);
     
-    this.el.css(css);
-    
-    this.base();
+    this.el.show().position({ of: this.event, my: 'left top', collision: 'flipfit' });
     
     if (this.relatedEl) {      
       this.relatedEl.addClass('highlight');
@@ -534,8 +518,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
 
   showExisting: function (data) {
-    this.position = data.position;
-    this.coords   = data.coords;
+    this.event  = data.event;
+    this.coords = data.coords;
     
     if (this.group || this.drag) {
       this.elLk.tbody.empty();
