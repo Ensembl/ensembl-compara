@@ -2824,7 +2824,7 @@ sub add_phenotypes {
   
   return unless $menu && $hashref->{'phenotypes'}{'rows'} > 0;
   
-  my $pf_menu = $self->create_submenu('phenotypes', 'Phenotype annotations');
+  my $pf_menu = $self->create_submenu('phenotype_features', 'Phenotype annotations');
   
   my %options = (
     db => $key,
@@ -2837,7 +2837,7 @@ sub add_phenotypes {
     renderers  => [ 'off', 'Off', 'gene_nolabel', 'Expanded', 'compact', 'Compact' ],
   );
   
-  $pf_menu->append($self->create_track('phenotype', 'Phenotype annotations (all types)', {
+  $pf_menu->append($self->create_track('phenotype_all', 'Phenotype annotations (all types)', {
     %options,
     caption => 'Phenotypes',
     type => undef,
