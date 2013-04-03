@@ -179,65 +179,64 @@ sub populate_tree {
 
 
   ## Data conversion
-  my $convert_menu = $self->create_submenu( 'Conversion', 'Online Tools' );
-  my $mappings = $self->hub->species_defs->get_config($self->hub->species, 'ASSEMBLY_MAPPINGS');
-  $convert_menu->append(
+  my $tools_menu = $self->create_submenu( 'Conversion', 'Online Tools' );
+  $tools_menu->append(
     $self->create_node( 'UploadVariations', 'Variant Effect Predictor',
       [qw(upload_snps EnsEMBL::Web::Component::UserData::UploadVariations)],
       {'availability' => 1,},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'SNPConsequence', '', [],
       {'command' => 'EnsEMBL::Web::Command::UserData::SNPConsequence',
       'availability' => 1, 'no_menu_entry' => 1},
     )
   );
 
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'SelectFeatures', 'Assembly Converter', 
       [qw(select_features EnsEMBL::Web::Component::UserData::SelectFeatures)],
-      {'availability' => $mappings ? 1 : 0},
+      {'availability' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'CheckConvert', '', [],
       {'command' => 'EnsEMBL::Web::Command::UserData::CheckConvert',
       'availability' => 1, 'no_menu_entry' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'ConvertFeatures', '', [],
       {'command' => 'EnsEMBL::Web::Command::UserData::ConvertFeatures',
       'availability' => 1, 'no_menu_entry' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'PreviewConvert', 'Files Converted', 
       [qw(conversion_done EnsEMBL::Web::Component::UserData::PreviewConvert)],
       {'availability' => 1, 'no_menu_entry' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'MapIDs', '', [],
       {'command' => 'EnsEMBL::Web::Command::UserData::MapIDs',
       'availability' => 1, 'no_menu_entry' => 1},
     )
   );
 
-  $convert_menu->append(
+  $tools_menu->append(
      $self->create_node( 'SelectOutput', '', 
       [qw(command  EnsEMBL::Web::Component::UserData::SelectOutput)],
       {'availability' => 1, 'no_menu_entry' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'UploadStableIDs', 'ID History Converter', 
       [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)],
-      {'availability' => 'has_id_mapping'},
+      {'availability' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'PreviewConvertIDs', 'Files Converted',
       [qw(conversion_done EnsEMBL::Web::Component::UserData::PreviewConvertIDs)],
       {'availability' => 1, 'no_menu_entry' => 1},
@@ -251,26 +250,26 @@ sub populate_tree {
  
 =pod
   ## REGION REPORT
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'SelectReportOptions', 'Region Report',
       [qw(report_options EnsEMBL::Web::Component::UserData::SelectReportOptions)],
       {'availability' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'CheckRegions', '', [],
       {'command' => 'EnsEMBL::Web::Command::UserData::CheckRegions',
       'availability' => 1, 'no_menu_entry' => 1},
     )
   );
 
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'RunRegionTool', '', [],
       {'command' => 'EnsEMBL::Web::Command::UserData::RunRegionTool',
       'availability' => 1, 'no_menu_entry' => 1},
     )
   );
-  $convert_menu->append(
+  $tools_menu->append(
     $self->create_node( 'RegionReportOutput', 'Region Report',
       [qw(region_report EnsEMBL::Web::Component::UserData::RegionReportOutput)],
       {'availability' => 1, 'no_menu_entry' => 1},
