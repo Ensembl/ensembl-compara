@@ -15,7 +15,7 @@ sub features {
   my $display        = $self->my_config('display');
   my $selected_gene  = $self->my_config('g') || $self->core('g');
   my $selected_trans = $self->core('t')      || $self->core('pt');
-  my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /gene/ ? 'highlight2' : 'highlight1' : undef;
+  my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /transcript/ ? 'highlight1' : 'highlight2' : undef;
   my (%highlights, %transcripts, %exons);
   
   if (!scalar @genes) {
