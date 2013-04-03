@@ -139,7 +139,7 @@ sub features {
     $feature_slice->{'from_end'}   = $_->from_end;
     $feature_slice->{'name'}       = $name;
     
-    $self->set_absolute_coords_from_overlap($feature_slice, $ctg_slice);
+    $self->set_absolute_coords_from_overlap($feature_slice, $ctg_slice) unless $container->seq_region_Slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
     
     push @features, $feature_slice;
   }
