@@ -87,6 +87,7 @@ sub content {
   <div class="synteny_image">
     <h2>%s</h2>
     %s
+    <span class="hash_change_reload"></span>
   </div>
   <div class="synteny_forms">
     %s
