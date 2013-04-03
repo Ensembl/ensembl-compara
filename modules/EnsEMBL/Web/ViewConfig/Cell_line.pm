@@ -88,7 +88,7 @@ sub matrix_data {
   
   my $adaptor = $self->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen');
   
-  return map { sort { $a->{'id'} cmp $b->{'id'} } map { id => $_->name, class => $_->class }, @{$adaptor->fetch_all_by_class($_)} } @{$adaptor->get_regulatory_evidence_info($set)->{'classes'}};
+  return map { sort { lc $a->{'id'} cmp lc $b->{'id'} } map { id => $_->name, class => $_->class }, @{$adaptor->fetch_all_by_class($_)} } @{$adaptor->get_regulatory_evidence_info($set)->{'classes'}};
 }
 
 1;
