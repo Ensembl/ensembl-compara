@@ -117,7 +117,7 @@ sub draw_features {
   }
 
   my $error = $self->draw_error_tracks($drawn_wiggle_flag);
-  return 1;
+  return 0;
 }
 
 sub features {
