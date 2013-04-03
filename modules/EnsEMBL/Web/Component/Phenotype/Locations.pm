@@ -74,6 +74,8 @@ sub _pf_location_link {
   my ($self, $f) = @_;
   return 'Unmapped' unless $f->{'region'};
   my $coords = $f->{'region'}.':'.$f->{'start'}.'-'.$f->{'end'};
+  
+  my $type = lc($f->{'extra'}->{'feat_type'});
   my $link = sprintf(
           '<a href="%s">%s:%d-%d(%d)</a>',
           $self->hub->url({
@@ -82,8 +84,7 @@ sub _pf_location_link {
             r       => $coords,
             v       => $f->{'label'},
             ph      => $self->hub->param('ph'),
-            contigviewbottom => $f->{'somatic'} ? 'somatic_mutation_COSMIC=normal' 
-                                                  : 'variation_feature_variation=normal',
+            contigviewbottom => 'phenotype_'.$type.'=gene_nolabel',
             __clear => 1,
           }),
           $f->{'region'}, $f->{'start'}, $f->{'end'},
