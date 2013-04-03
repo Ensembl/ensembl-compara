@@ -219,8 +219,7 @@ sub form_matrix {
       $gaps{$#rows} = 1;
     }
     
-    $last_class    = $class;
-    $filters{$cls} = $class if $class;
+    $last_class = $class;
     
     foreach (@columns) {
       my $x            = $_->{'x'};
@@ -296,7 +295,10 @@ sub form_matrix {
       push @row, $cell;
     }
     
-    push @rows, \@row if $exists;
+    if ($exists) {
+      push @rows, \@row;
+      $filters{$cls} = $class if $class;
+    }
   }
   
   my $cols           = scalar @{$rows[0]} - 1;
