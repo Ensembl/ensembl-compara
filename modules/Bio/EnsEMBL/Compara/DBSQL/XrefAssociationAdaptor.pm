@@ -215,15 +215,15 @@ sub get_members_for_xref {
 	if ( check_ref( $gene_tree, 'Bio::EnsEMBL::Compara::GeneTree' ) ) {
 		$gene_tree = $gene_tree->root_id();
 	}
-	my @member_ids = @{
+	my $member_ids = 
 		$self->dbc()->sql_helper()->execute_simple(
 							 -SQL    => $get_members_for_xref,
 							 -PARAMS => [ $dbprimary_acc, $db_name, $gene_tree ]
-		) };
+		);
 
 	my $members = [];
-	if ( scalar(@member_ids) > 0 ) {
-		$members = $self->_member_adaptor()->fetch_by_dbIDs(@member_ids);
+	if ( scalar(@$member_ids) > 0 ) {
+		$members = $self->_member_adaptor()->fetch_all_by_dbID_list($member_ids);
 	}
 	return $members;
 }
@@ -256,7 +256,7 @@ sub get_all_member_associations {
 			return;
 		} );
 	while ( my ( $x, $ms ) = each %$assocs ) {
-		$assocs->{$x} = $self->_member_adaptor()->fetch_by_dbIDs(@$ms);
+		$assocs->{$x} = $self->_member_adaptor()->fetch_all_by_dbID_list($ms);
 	}
 	return $assocs;
 }
