@@ -286,16 +286,18 @@ sub _init {
     'absolutex'     => 1,
     'absolutewidth' => 1,
   }));
-  $self->unshift($self->Text({
-    'x'          => $im_width - $h - 2 - $top_margin ,
-    'y'          => $outer_padding + $inner_padding*2 + $main_width + 3*$secondary_width/2 - $w * length($other_species_text)/2,
-    'font'       => 'Tiny',
-    'colour'     => $black,
-    'text'       => $other_species_text,
-    'absolutey'  => 1, 
-    'absolutex' => 1,
-    'absolutewidth'=>1,
-  }));
+  if(@chromosomes > 1) {
+    $self->unshift($self->Text({
+      'x'          => $im_width - $h - 2 - $top_margin ,
+      'y'          => $outer_padding + $inner_padding*2 + $main_width + 3*$secondary_width/2 - $w * length($other_species_text)/2,
+      'font'       => 'Tiny',
+      'colour'     => $black,
+      'text'       => $other_species_text,
+      'absolutey'  => 1, 
+      'absolutex' => 1,
+      'absolutewidth'=>1,
+    }));
+  }
   $self->unshift($self->Rect({
     'x'             => 0,
     'y'             => 0,
