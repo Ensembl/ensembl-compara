@@ -848,7 +848,7 @@ sub hits2html {
     print qq(
     <tr class="$classes[0]">
       <td class="bold">$order</td>
-      <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name">$name</a><br />$descr</td>
+      <td><a href="http://www.ebi.ac.uk/interpro/entry/$name">$name</a><br />$descr</td>
       <td><a href="/$species/Location/Genome?ftype=Domain;id=$name">$gene</a></td>
       <td>$count</td>
     </tr>
