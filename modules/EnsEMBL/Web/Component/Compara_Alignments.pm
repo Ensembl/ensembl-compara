@@ -152,7 +152,8 @@ sub get_slices {
   my $self = shift;
   my ($slice, $align, $species, $start, $end, $cdb) = @_;
   my (@slices, @formatted_slices, $length);
-
+  my $underlying_slices = !$self->has_image; # Don't get underlying slices for alignment images - they are only needed for text sequence views, and the process is slow.
+  
   if ($align) {
     push @slices, @{$self->get_alignments(@_)};
   } else {
@@ -162,9 +163,9 @@ sub get_slices {
   foreach (@slices) {
     my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
     
-    push @formatted_slices, { 
+    push @formatted_slices, {
       slice             => $_,
-      underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [ $_ ],
+      underlying_slices => $underlying_slices && $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [ $_ ],
       name              => $name,
       display_name      => $self->get_slice_display_name($name, $_)
     };
