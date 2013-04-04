@@ -241,6 +241,12 @@ sub render_coverage {
   my $max = (sort {$b <=> $a} @coverage)[0];
   return if $max == 0; # nothing to show
 
+  my $viewLimits = $self->my_config('viewLimits');
+  if ($viewLimits) {
+    my ($min_score,$max_score) = split ":",$viewLimits;
+    $max = $max_score;
+  }
+
   my $slice = $self->{'container'};
   my $smax = 100;
   my $scale = 3;
@@ -264,8 +270,13 @@ sub render_coverage {
     my $cvrg = $coverage[$i];
     my $cons = $consensus[$i]; 
     
-    my $sval   = $smax * $cvrg / $max;
     my $title = $cvrg;
+    my $sval;
+
+    if ($cvrg > $max) { $cvrg = $max }; 
+
+    my $sval   = $smax * $cvrg / $max;
+
     my $y = int($smax/$scale - $sval/$scale +0.5);
     # SMJS Calculating height this way was leading to 50% off by ones in pixel coordinates
     #my $h1 = int($sval/$scale + 0.5);
