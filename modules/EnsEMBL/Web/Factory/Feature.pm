@@ -438,6 +438,7 @@ sub _generic_create {
     my $adaptor_name = "get_${object_type}Adaptor";
     my $features     = [];
     
+    $id =~ s/,/ /g;
     $id =~ s/\s+/ /g;
     $id =~ s/^ //;
     $id =~ s/ $//;
