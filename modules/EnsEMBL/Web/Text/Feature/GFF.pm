@@ -35,7 +35,7 @@ sub new {
   $extra->{'feature_type'} = [ $args->[2] ];
   $extra->{'score'}        = [ $args->[5] ];
   $extra->{'frame'}        = [ $args->[7]];
-  my $attribs = { uri_unescape(split(/;\s?|=/,$args->[8])) }; 
+  my $attribs = { map uri_unescape($_), split(/;\s?|=/,$args->[8]) };
   return bless { '__raw__' => $args, 
                  '__extra__' => $extra, 
                  '__attribs__' => $attribs }, $class;
