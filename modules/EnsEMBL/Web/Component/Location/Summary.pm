@@ -5,6 +5,11 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 
+my %SHORT = qw(
+  chromosome Chr.
+  supercontig S'ctg
+);
+
 sub _init {
   my $self = shift;
   $self->cacheable(1);
@@ -35,7 +40,11 @@ sub content {
     $image_config->get_node('annotation_status')->set('menu', 'no');
   };
 
-  $image_config->get_node('ideogram')->set('caption', $object->seq_region_type . ' ' . $object->seq_region_name );
+  my $caption = $object->seq_region_type . ' ' . $object->seq_region_name;
+  if(length($caption) > 12 and $SHORT{$object->seq_region_type}) {
+    $caption = $SHORT{$object->seq_region_type}.' '.$object->seq_region_name;
+  }
+  $image_config->get_node('ideogram')->set('caption', $caption);
   
   my $image = $self->new_image($slice, $image_config);
   

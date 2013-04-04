@@ -9,6 +9,10 @@ use base qw(EnsEMBL::Web::ImageConfig);
 sub init {
   my $self = shift;
   
+  $self->set_parameters({
+    label_width      => 130, # width of labels on left-hand side
+  });
+
   $self->create_menus('decorations');
   
   $self->add_tracks('decorations', 
