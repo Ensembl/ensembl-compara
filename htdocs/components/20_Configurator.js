@@ -316,7 +316,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     var renderer = e.target.className;
-    var popup    = target.parent().hide();
+    var popup    = target.parents('ul.popup_menu').hide();
     var track    = popup.parent();
     var current  = renderer.match(/\s*current\s*/);
     var subset   = e.currentTarget.className.match(/\s*subset_(\w+)\s*/); // use currentTarget since target can be either the li or the a inside it
