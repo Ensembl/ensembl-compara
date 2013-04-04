@@ -280,17 +280,7 @@ sub pip_anno_file_pipmaker {
 # Returns the slice, expanded or flipped as required
 sub slice {
   my $self   = shift;
-  my $hub    = $self->hub;
-  my $flank5 = $hub->param('flank5_display');
-  my $flank3 = $hub->param('flank3_display');
-  my $strand = $hub->param('strand');
- $strand     = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
-  
-  my $slice = $self->object->slice;
-  $slice    = $slice->invert if $strand && $strand != $slice->strand;
-  $slice    = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
-  
-  return $slice;
+  return $self->object->slice;
 }
 
 1;
