@@ -47,7 +47,7 @@ sub multiple_locations {
   my %mappings = %{$self->object->variation_feature_mapping};
   my $count    = scalar keys %mappings;
   my $html;
-  my $header = $failed ? 'This variation has been flagged as failed'
+  my $header = $failed ? 'This variation has been flagged'
                           : "This variation maps to $count locations";
   
   if ($feature_slice) {
