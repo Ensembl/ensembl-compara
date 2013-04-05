@@ -93,6 +93,7 @@ sub init_top {
     [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'f', menu => 'no', name => 'Scale bar' }],
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'f', menu => 'no', name => 'Ruler'     }],
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
+    [ 'draggable',                '', 'draggable',                { display => 'normal', strand => 'b', menu => 'no'                      }]
   );
   
   $_->remove for map $self->get_node($_) || (), keys %{$self->{'reg_feats_tracks'}};
