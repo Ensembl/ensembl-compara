@@ -6,26 +6,20 @@
 
 #static    { margin: 0 16px; }
 
-body.static li { line-height: 16px; padding: 0; margin: 8px 0; }
-
-body.static pre { line-height: 16px; margin: 0 0 16px; }
-
-body.static dl  { margin: 0 0 16px; }
-
-body.static dl.twocol dt  { width: 284px; float: left; clear: left; margin-bottom: -100px; padding: 0 16px 0 0; }
-body.static dl.twocol dd  { padding-left: 300px; line-height: 16px; margin: 0; }
-
-body.static dl.striped     { border: [[NEUTRAL_BORDER]] solid 1px; }
-body.static dl.striped dt  { padding: 8px; }
-body.static dl.striped dd  { padding: 8px 8px 8px 300px; }
-body.static dl.striped dd p { margin: 0; }
-
-body.static h1     { color: [[PAGE_HEADER]];  }
-body.static h2     { color: [[CONTRAST_HEADER]]; }
-body.static h3     { color: [[CONTRAST_HEADER]]; }
-body.static h4     { color: [[CONTRAST_HEADER]]; }
-
-body.static form   { margin-bottom:16px; }
+body.static #main li { line-height: 16px; padding: 0; margin: 8px 0; }
+body.static #main pre { line-height: 16px; margin: 0 0 16px; }
+body.static #main dl  { margin: 0 0 16px; }
+body.static #main dl.twocol dt  { width: 284px; float: left; clear: left; margin-bottom: -100px; padding: 0 16px 0 0; }
+body.static #main dl.twocol dd  { padding-left: 300px; line-height: 16px; margin: 0; }
+body.static #main dl.striped     { border: [[NEUTRAL_BORDER]] solid 1px; }
+body.static #main dl.striped dt  { padding: 8px; }
+body.static #main dl.striped dd  { padding: 8px 8px 8px 300px; }
+body.static #main dl.striped dd p { margin: 0; }
+body.static #main h1     { color: [[PAGE_HEADER]];  }
+body.static #main h2     { color: [[CONTRAST_HEADER]]; }
+body.static #main h3     { color: [[CONTRAST_HEADER]]; }
+body.static #main h4     { color: [[CONTRAST_HEADER]]; }
+body.static #main form   { margin-bottom:16px; }
 
 /***********************************************************************
 **
