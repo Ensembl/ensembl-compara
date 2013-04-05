@@ -43,7 +43,7 @@ sub content {
 		(my $href       = $external_urls->{'LRG'}) =~ s/###ID###//;
     my $description = qq{LRG region <a rel="external" href="$href">$param</a>.};
     my @genes       = @{$lrg->get_all_Genes('LRG_import')||[]};
-    my $db_entry    = $genes[0]->get_all_DBLinks('HGNC');
+    my $display     = $genes[0]->display_xref();
     my $slice       = $lrg->feature_Slice;
     my $source      = $genes[0]->source;
        $source      = 'LRG' if $source =~ /LRG/;
@@ -54,9 +54,9 @@ sub content {
       $hub->url({
         type   => 'Gene',
         action => 'Summary',
-        g      => $db_entry->[0]->display_id,
+        g      => $display->display_id,
       }),
-      $db_entry->[0]->display_id
+      $display->display_id
     );
     
     $description  =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
