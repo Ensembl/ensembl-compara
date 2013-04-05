@@ -145,8 +145,8 @@ sub init {
         type      => 'Account',
         action    => 'Bookmark/Add',
         __clear   => 1,
-        name      => $title->get,
-        shortname => $title->get_short,
+        name      => uri_escape($title->get),
+        shortname => uri_escape($title->get_short),
         url       => uri_escape($hub->species_defs->ENSEMBL_BASE_URL . $hub->url)
       })
     });
