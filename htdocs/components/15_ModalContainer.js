@@ -73,7 +73,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     var $el     = $(el);
     var caption = (el.className ? ((el.className.match(/\bmodal_title_(\w+)\b/) || []).pop() || '').replace('_', ' ') : '') || this.elLk.caption.html() || el.title || $el.text();
     var rel     = (this.el.is(':visible') || $el.hasClass('force') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel).split('-');
-    var tab     = rel.length ? this.elLk.tabs.children('a.' + rel[0]) : [];
+    var tab     = rel[0] ? this.elLk.tabs.children('a.' + rel[0]) : [];
     
     if (tab.length) {
       rel[0] = tab.data('panels').filter('.active').attr('id');
