@@ -72,7 +72,7 @@ sub tag {
   
   return {
     style  => 'join',
-    tag    => "$f->{'start'}-$f->{'end'}",
+    tag    => $f->{'alternate_slice'}->seq_region_name . ":$f->{'start'}-$f->{'end'}",
     colour => $self->my_colour($self->colour_key($f), 'join'),
     zindex => -20
   };
