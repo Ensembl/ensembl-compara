@@ -71,6 +71,11 @@ Ensembl.extend({
     
     this.PanelManager.initialize();
     
+    if (window.location.hash.match('modal_')) {
+      this.EventManager.trigger('modalOpen', $('<a class="force" rel="' + window.location.hash.match(/(modal.+)/)[1] + '"></a>')[0]);
+      window.location.hash = '';
+    }
+    
     if (hashChange) {
       this.EventManager.trigger('hashChange', hashChange[1]); // update links and HTML for the new location
     }

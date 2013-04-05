@@ -72,18 +72,18 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   open: function (el) {
     var $el     = $(el);
     var caption = (el.className ? ((el.className.match(/\bmodal_title_(\w+)\b/) || []).pop() || '').replace('_', ' ') : '') || this.elLk.caption.html() || el.title || $el.text();
-    var rel     = this.el.is(':visible') || $el.hasClass('force') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
-    var tab     = rel ? this.elLk.tabs.children('a.' + rel) : [];
+    var rel     = (this.el.is(':visible') || $el.hasClass('force') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel).split('-');
+    var tab     = rel.length ? this.elLk.tabs.children('a.' + rel[0]) : [];
     
     if (tab.length) {
-      rel = tab.data('panels').filter('.active').attr('id');
+      rel[0] = tab.data('panels').filter('.active').attr('id');
     }
     
     this.elLk.caption.html(caption).show();
     this.elLk.menu.hide();
     this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
     this.show();
-    this.getContent(el.href, rel);
+    this.getContent(el.href || (tab.length ? tab[0].href : ''), rel.join('-'));
     
     tab = null;
     
@@ -110,7 +110,15 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     }
     
     var reload = url.match(/reset=/)  || $('.modal_reload', this.el).remove().length;
-    var hash   = (url.match(/#(.+)$/) || [])[1];
+    var hash;
+    
+    if (id && id.match('-')) {
+      id   = id.split('-');
+      hash = id[1];
+      id   = id[0];
+    } else {
+      hash = (url.match(/#(.+)$/) || [])[1];
+    }
     
     id = id || (hash ? this.activePanel : 'modal_default');
     
