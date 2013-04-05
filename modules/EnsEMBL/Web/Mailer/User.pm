@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Mailer::User;
+package EnsEMBL::Web::Mailer::User::Retired;
 
 use strict;
 use warnings;
