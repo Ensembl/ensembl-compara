@@ -2688,7 +2688,7 @@ sub add_sequence_variations {
     bump_width => 0,
     colourset  => 'variation',
     display    => 'off',
-    renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed over a window of 200kb)', 'gradient', 'Collapsed', 'gene_nolabel', 'Expanded without name', 'gene_label', 'Expanded with name (hidden over a window of 10kb)' ],
+    renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'gradient', 'Collapsed', 'gene_nolabel', 'Expanded without name', 'gene_label', 'Expanded with name (hidden for windows over 10kb)' ],
   };
   
   if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
@@ -2989,7 +2989,7 @@ sub add_somatic_mutations {
     bump_width => 0,
     colourset  => 'variation',
     display    => 'off',
-    renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed over a window of 200kb)', 'gradient', 'Collapsed', 'gene_nolabel', 'Expanded without name', 'gene_label', 'Expanded with name (hidden over a window of 10kb)' ],
+    renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'gradient', 'Collapsed', 'gene_nolabel', 'Expanded without name', 'gene_label', 'Expanded with name (hidden for windows over 10kb)' ],
   );
   
   # All sources
