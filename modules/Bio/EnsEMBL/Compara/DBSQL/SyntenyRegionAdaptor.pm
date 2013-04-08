@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -145,7 +145,7 @@ sub fetch_by_dbID {
    $sr->method_link_species_set_id($method_link_species_set_id);
 
    my $dfra = $self->db->get_DnaFragRegionAdaptor;
-   my $dfrs = $dfra->fetch_by_synteny_region_id($dbID);
+   my $dfrs = $dfra->fetch_all_by_synteny_region_id($dbID);
    $sr->regions($dfrs);
    # while (my $dfr = shift @{$dfrs}) {
    #   $sr->add_child($dfr);
@@ -292,7 +292,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     $sr->method_link_species_set_id($mlss->dbID);
 
     my $dfra = $self->db->get_DnaFragRegionAdaptor;
-    my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
+    my $dfrs = $dfra->fetch_all_by_synteny_region_id($synteny_region_id);
     $sr->regions($dfrs);
     # while (my $dfr = shift @{$dfrs}) {
     #   $sr->add_child($dfr);
@@ -340,7 +340,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     $sr->method_link_species_set_id($mlss->dbID);
 
     my $dfra = $self->db->get_DnaFragRegionAdaptor;
-    my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
+    my $dfrs = $dfra->fetch_all_by_synteny_region_id($synteny_region_id);
     $sr->regions($dfrs);
     # while (my $dfr = shift @{$dfrs}) {
     #   $sr->add_child($dfr);
