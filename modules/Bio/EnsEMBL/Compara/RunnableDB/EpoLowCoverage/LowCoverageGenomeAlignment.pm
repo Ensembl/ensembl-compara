@@ -426,7 +426,7 @@ sub _parse_results {
 			my $num_pads = $num_frag_pads[$i+1];
 			my $ga_length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
 
-			#print "ga-length $ga_length " . $genomic_align->dnafrag_start . " " . $genomic_align->dnafrag_end . " " , $ga_lengths[$i] . "\n";
+			#print "ga-length $ga_length dnafrag_id=" . $genomic_align->dnafrag_id. " start=" . $genomic_align->dnafrag_start . " end=" . $genomic_align->dnafrag_end . " " , $ga_lengths[$i] . " align_offset=$align_offset " . "seq length= " . length($seq) . "\n";
 
 			my ($subseq, $aligned_start, $aligned_end) = _extract_sequence($seq, $align_offset, $ga_lengths[$i]);
 
@@ -444,7 +444,6 @@ sub _parse_results {
 			$end_X = length($seq) - ($start_X+length($subseq));
 
 			print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
-
 			#print "before cigar_line " . $genomic_align->cigar_line . "\n";
 
 			
@@ -1214,7 +1213,7 @@ sub _load_2XGenomes {
       #if there is no overlap, save dnafrags on all duplications
       my $found_overlap;
       my $j = 0;
-    
+
       #Simple case: only found one reference region containing 2x genome 
       #fragments
       if (@$ga_frag_array == 1) {
@@ -1635,13 +1634,15 @@ sub _create_frag_array {
 	print "  " . $ref_ga->dnafrag->name . " " . $ref_ga->dnafrag_start . " " . $ref_ga->dnafrag_end . " " . $ref_ga->dnafrag_strand . "\n" if $self->debug;
 	
 	#find the slice corresponding to the ref_genome
-	my $slice = $ref_ga->get_Slice;
+	#my $slice = $ref_ga->get_Slice;
 
-	print "ref_seq " . $slice->start . " " . $slice->end . " " . $slice->strand . " " . substr($slice->seq,0,120) . "\n" if $self->debug;
+	#print "ref_seq " . $slice->start . " " . $slice->end . " " . $slice->strand . " " . substr($slice->seq,0,120) . "\n" if $self->debug;
 
 	#find the pairwise blocks between ref_genome and the 2x genome
-	my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($pairwise_mlss, $slice, undef,undef,"restrict");
-	
+#	my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($pairwise_mlss, $slice, undef,undef,"restrict");
+
+	my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($pairwise_mlss, $ref_ga->dnafrag, $ref_ga->dnafrag_start, $ref_ga->dnafrag_end, undef,undef,"restrict");
+
 	#sort by reference_genomic_align start position (NB I sort again when parsing
 	#the results if the ref strand is reverse since the fragments will be in the
 	#reverse order ie A-B-C should be C-B-A). Don't do it here because I try to find
@@ -1674,12 +1675,13 @@ sub _create_frag_array {
 			       ref_ga => $ref_ga,
 			      };
 
-	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . substr($ga_fragment->{genomic_align}->get_Slice->seq,0,120) . "\n" if $self->debug;
+	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . $ga_fragment->{genomic_align}->cigar_line . " " . substr($ga_fragment->{genomic_align}->get_Slice->seq,0,120) . "\n" if $self->debug;
 	    push @$ga_frags, $ga_fragment;
 	}
 	#add to array of fragments for each reference genomic_align
 	push @$ga_frag_array, $ga_frags;
     }
+
     return $ga_frag_array;
 }
 
