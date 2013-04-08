@@ -60,12 +60,12 @@ version of the session ID from the <code>%ENV</code> variable (instantiated by t
 <p>Instead of saving all configuration options in the databse, these configuration modules actually store the difference from the default settings. With this implementation new default options will not be overridden by older session information. 
 </p>
 
-<h2>Footnotes on ensembl_web_user_db</h2>
+<h2>Footnotes on ensembl_accounts</h2>
 <ul>
    <li>The <code>UserConfig</code> reads the session ID from the cookie and then looks up the session data in the 
-ensembl web user database (ensembl_web_user_db).  If this database goes down, session data requests back up and 
+ensembl web user database (ensembl_accounts).  If this database goes down, session data requests back up and 
 eventually the whole site does down.</li>
-   <li>Data is not deleted from the ensembl_web_user_db database.</li>
+   <li>Data is not deleted from the ensembl_accounts database.</li>
    <li>The user logins system uses the same database but different tables.</li>
 </ul>
 

@@ -327,7 +327,7 @@ our %__species_aliases = ();
 
 $ENSEMBL_VERSION                = $VERSION;
 $ENSEMBL_USERDB_TYPE            = 'mysql';
-$ENSEMBL_USERDB_NAME            = 'ensembl_web_user_db';
+$ENSEMBL_USERDB_NAME            = 'ensembl_accounts';
 $ENSEMBL_USERDB_USER            = 'mysqluser';
 $ENSEMBL_USERDB_HOST            = 'localhost';
 $ENSEMBL_USERDB_PORT            =  3305;
