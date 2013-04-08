@@ -33,7 +33,7 @@ sub default_options {
             # parameters that are likely to change from execution to another:
             'mlss_id'             => 40089,
             'release'               => '71',
-            'rel_suffix'            => 't',    # an empty string by default, a letter or string otherwise
+            'rel_suffix'            => 'tt',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
             # dependent parameters
@@ -521,7 +521,7 @@ sub pipeline_analyses {
             },
 
             {   -logic_name    => 'infernal',
-                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal_noGaps',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
                 -hive_capacity => $self->o('infernal_capacity'),
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
@@ -549,7 +549,7 @@ sub pipeline_analyses {
 
             {
              -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
-             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels_noGap',  ## PrepareRAxMLSecModels -- rename
+             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
              -hive_capacity => $self->o('raxml_capacity'),
              -parameters => {
                              'raxml_exe' => $self->o('raxml_exe'),
@@ -578,7 +578,7 @@ sub pipeline_analyses {
 #         },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree_noGap', ## SecStrucModels
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
             -hive_capacity => $self->o('raxml_capacity'),
             -parameters => {
                             'raxml_exe' => $self->o('raxml_exe'),
@@ -592,7 +592,7 @@ sub pipeline_analyses {
 
         {
          -logic_name => 'sec_struct_model_tree_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree_noGap',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree',
          -hive_capacity => $self->o('raxml_capacity'),
          -parameters => {
                          'raxml_exe' => $self->o('raxml_exe'),
@@ -622,7 +622,7 @@ sub pipeline_analyses {
 
             {
              -logic_name => 'fast_trees',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees_noGap',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees',
              -hive_capacity => $self->o('fast_trees_capacity'),
              -parameters => {
                              'fasttree_exe' => $self->o('fasttree_exe'),
