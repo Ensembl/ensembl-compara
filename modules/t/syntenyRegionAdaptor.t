@@ -35,12 +35,12 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor fetch_by_dbID($
 
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor store method", sub {
 
-   my $regions = $dnafrag_region_adaptor->fetch_by_synteny_region_id($synteny_region_id);
+   my $regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
    my $synteny_region = new Bio::EnsEMBL::Compara::SyntenyRegion(
                                                                  -method_link_species_set_id => $method_link_species_set_id,
                                                                  -regions  => $regions);
 
-   $multi->hide("compara", "synteny_region");
+   $multi->hide("compara", "synteny_region", "dnafrag_region");
    my $sth = $compara_db_adaptor->dbc->prepare("select * from synteny_region");
    $sth->execute;
    is($sth->rows, 0, "Checking that there is no entries left in the <synteny_region> table after hiding it");
@@ -62,7 +62,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor fetch_all_by_Me
     my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
     my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($method_link_species_set_id);
 
-    my $regions = $dnafrag_region_adaptor->fetch_by_synteny_region_id($synteny_region_id);
+    my $regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
     my $synteny_region = new Bio::EnsEMBL::Compara::SyntenyRegion(-dbID => $synteny_region_id,
                                                                   -method_link_species_set_id => $method_link_species_set_id,
                                                                   -regions  => $regions);

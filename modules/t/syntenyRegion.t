@@ -53,7 +53,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::SyntenyRegion methods", sub {
     ok(test_getter_setter($synteny_region, "dbID", $synteny_region_id));
     ok(test_getter_setter($synteny_region, "method_link_species_set_id", $method_link_species_set_id));
 
-    my $regions = $dnafrag_region_adaptor->fetch_by_synteny_region_id($synteny_region_id);
+    my $regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
 
     ok(test_getter_setter($synteny_region, "regions", $regions));
 
@@ -62,7 +62,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::SyntenyRegion methods", sub {
 
 
 subtest "Test Bio::EnsEMBL::Compara::SyntenyRegion::get_all_DnaFragRegions method", sub {
-    my $regions = $dnafrag_region_adaptor->fetch_by_synteny_region_id($synteny_region_id);
+    my $regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
     my $synteny_region = new Bio::EnsEMBL::Compara::SyntenyRegion(-adaptor => $synteny_region_adaptor,
                                                                   -dbID    => $synteny_region_id,
                                                                  -regions  => $regions);
