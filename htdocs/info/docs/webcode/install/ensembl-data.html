@@ -19,7 +19,7 @@ directory and then to  'mysql'.
 <h2>The MySQL data</h2>
 <p>Each database directory contains a data file for each table in that database an SQL file that contains the SQL commands necessary to build that database's table structure and a checksum file (using a UNIX "sum" utility) so you can verify that the data has downloaded correctly.</p>
 
-<p>Regardless of which species you choose to install, you will also need ensembl_ontology_[[SPECIESDEFS::ENSEMBL_VERSION]], ensembl_website_[[SPECIESDEFS::ENSEMBL_VERSION]] and an empty copy of ensembl_web_user_db - even if you do not use logins, this latter db is needed for session data, e.g. image configurations.</p>
+<p>Regardless of which species you choose to install, you will also need ensembl_ontology_[[SPECIESDEFS::ENSEMBL_VERSION]], ensembl_website_[[SPECIESDEFS::ENSEMBL_VERSION]] and an empty copy of ensembl_accounts - even if you do not use logins, this latter db is needed for session data, e.g. image configurations.</p>
 
 <p>You may optionally want to install the comparative genomics databases as well: ensembl_compara_[[SPECIESDEFS::ENSEMBL_VERSION]] and ensembl_ancestral_[[SPECIESDEFS::ENSEMBL_VERSION]]</p> 
 
@@ -64,10 +64,10 @@ a field escape parameter needs to be specified when using mysqlimport
 
 <p>You have now created and loaded the core Ensembl database for human.</p>
 
-<p>Note that all the databases except the ensembl_web_user_db database only require read access for the
-website to work. The ensembl_web_user_db requires a MySQL user with delete/insert/update
+<p>Note that all the databases except the ensembl_accounts database only require read access for the
+website to work. The ensembl_accounts requires a MySQL user with delete/insert/update
 permissions. Also note that because its the only database that the website writes data into, the
-ensembl_web_user_db has no .table (data) files to download.</p>
+ensembl_accounts has no .table (data) files to download.</p>
 
 <p>NB MySQL needs quite a lot of temporary space to load the databases. It is quite possible that your /
 tmp directory (which MySQL uses by default) is too small, in which case you might see an Error 28 (use
