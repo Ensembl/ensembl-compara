@@ -248,7 +248,6 @@ sub populate_tree {
     'command' => 'EnsEMBL::Web::Command::UserData::DropUpload'}
   );
  
-=pod
   ## REGION REPORT
   $tools_menu->append(
     $self->create_node( 'SelectReportOptions', 'Region Report',
@@ -275,7 +274,6 @@ sub populate_tree {
       {'availability' => 1, 'no_menu_entry' => 1},
     )
   );
-=cut
  
 }
 
