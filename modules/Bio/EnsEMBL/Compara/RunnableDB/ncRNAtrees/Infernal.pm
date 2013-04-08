@@ -97,7 +97,7 @@ sub fetch_input {
 #         die "Only one member in tree $nc_tree_id";
 #     }
 
-    $self->param('nc_tree', $nc_tree);
+    $self->param('gene_tree', $nc_tree);
 
     $self->param('model_id_hash', {});
 
@@ -139,6 +139,7 @@ sub write_output {
     my $self = shift @_;
 
     $self->parse_and_store_alignment_into_tree;
+    print STDERR "ALIGNMENT ID IS: ", $self->param('alignment_id'), "\n";
     $self->store_refined_profile;
     $self->_store_aln_tags;
 
@@ -150,6 +151,7 @@ sub write_output {
                               );
     $self->dataflow_output_id ( {
                                  'gene_tree_id' => $gene_tree_id,
+                                 'alignment_id' => $self->param('alignment_id'),
                                 },1
                               );
 }
@@ -206,6 +208,7 @@ sub dump_sequences_to_workdir {
     $seq_id_hash->{$sequence_id} = 1;
     $count++;
     my $member_model_id = $1;
+
     $self->param('model_id_hash')->{$member_model_id} = 1;
 
     my $seq = $member->sequence;
@@ -249,7 +252,6 @@ sub update_single_peptide_tree {
   }
 }
 
-
 sub run_infernal {
   my $self = shift;
 
@@ -268,7 +270,7 @@ sub run_infernal {
 #     # We revert to the clustering_id tag, which maps to the RFAM
 #     # 'name' field in hmm_profile (e.g. 'mir-135' instead of 'RF00246')
 #     print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
-#     $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+#     $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 #     # $self->throw("This cluster has more than one associated model");
 #   } else {
 #     my @models = keys %{$self->param('model_id_hash')};
@@ -278,7 +280,7 @@ sub run_infernal {
   if (scalar keys %{$self->param('model_id_hash')} > 1) {
       print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
   }
-  $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+  $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 
   $self->param('model_id', $model_id );
 
@@ -286,8 +288,8 @@ sub run_infernal {
   my $ret1 = $self->dump_model('model_id', $model_id );
   my $ret2 = $self->dump_model('name',     $model_id ) if (1 == $ret1);
   if (1 == $ret2) {
-    $self->param('nc_tree')->release_tree;
-    $self->param('nc_tree', undef);
+    $self->param('gene_tree')->release_tree;
+    $self->param('gene_tree', undef);
     $self->input_job->transient_error(0);
     die ("Failed to find '$model_id' both in 'model_id' and 'name' fields of 'hmm_profile' table");
   }
@@ -359,42 +361,32 @@ sub run_infernal {
 }
 
 sub dump_model {
-  my $self = shift;
-  my $field = shift;
-  my $model_id = shift;
+    my ($self, $field, $model_id) = @_;
 
-  my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_by_model_id($model_id)->profile();
+    my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_by_model_id($model_id)->profile();
 
-#   my $sql = 
-#     "SELECT hc_profile FROM hmm_profile ".
-#       "WHERE $field=\"$model_id\"";
-#   my $sth = $self->compara_dba->dbc->prepare($sql);
-#   $sth->execute();
-#   my $nc_profile  = $sth->fetchrow;
+    unless (defined($nc_profile)) {
+        return 1;
+    }
+    my $profile_file = $self->worker_temp_directory . $model_id . "_profile.cm";
+    open FILE, ">$profile_file" or die "$!";
+    print FILE $nc_profile;
+    close FILE;
 
-  unless (defined($nc_profile)) {
-    return 1;
-  }
-  my $profile_file = $self->worker_temp_directory . $model_id . "_profile.cm";
-  open FILE, ">$profile_file" or die "$!";
-  print FILE $nc_profile;
-  close FILE;
-
-  $self->param('profile_file', $profile_file);
-  return 0;
+    $self->param('profile_file', $profile_file);
+    return 0;
 }
 
 sub parse_and_store_alignment_into_tree {
   my $self = shift;
   my $infernal_output =  $self->param('infernal_output');
-  my $tree = $self->param('nc_tree');
+  my $tree = $self->param('gene_tree');
 
   return unless($infernal_output);
 
   #
   # parse SS_cons lines and store into nc_tree_tag
   #
-
   my $stk_output = $self->param('stk_output');
   open (STKFILE, $stk_output) or $self->throw("Couldnt open STK file [$stk_output]");
   my $ss_cons_string = '';
@@ -406,7 +398,6 @@ sub parse_and_store_alignment_into_tree {
     $ss_cons_string .= $1;
   }
   close(STKFILE);
-  $self->param('nc_tree')->store_tag('ss_cons', $ss_cons_string);
 
   #
   # parse alignment file into hash: combine alignment lines
@@ -423,56 +414,16 @@ sub parse_and_store_alignment_into_tree {
   }
   $aln_io->close;
 
-  #
-  # convert alignment string into a cigar_line
-  #
+  my $new_align_hash = $self->remove_gaps_in_alignment($ss_cons_string, {%align_hash});
+  $self->store_fasta_alignment($new_align_hash);
 
-  my $alignment_length;
-  foreach my $id (keys %align_hash) {
-    my $alignment_string = $align_hash{$id};
-    unless (defined $alignment_length) {
-      $alignment_length = length($alignment_string);
-    } else {
-      if ($alignment_length != length($alignment_string)) {
-        $self->throw("While parsing the alignment, some id did not return the expected alignment length\n");
-      }
-    }
+  my $ss_cons_filtered_string = $self->remove_gaps_in_ss_cons($ss_cons_string);
 
-    # From the Infernal UserGuide:
-    # ###########################
-    # In the aligned sequences, a '.' character indicates an inserted column
-    # relative to consensus; the '.' character is an alignment pad. A '-'
-    # character is a deletion relative to consensus.  The symbols in the
-    # consensus secondary structure annotation line have the same meaning
-    # that they did in a pairwise alignment from cmsearch. The #=GC RF line
-    # is reference annotation. Non-gap characters in this line mark
-    # consensus columns; cmalign uses the residues of the consensus sequence
-    # here, with UPPER CASE denoting STRONGLY CONSERVED RESIDUES, and LOWER
-    # CASE denoting WEAKLY CONSERVED RESIDUES. Gap characters (specifically,
-    # the '.' pads) mark insertions relative to consensus. As described below,
-    # cmbuild is capable of reading these RF lines, so you can specify which
-    # columns are consensus and which are inserts (otherwise, cmbuild makes
-    # an automated guess, based on the frequency of gaps in each column)
-    $alignment_string =~ s/\./\-/g;            # Infernal returns dots even though they are gaps
-    $alignment_string = uc($alignment_string); # Infernal can lower-case regions
-    $alignment_string =~ s/\-([A-Z])/\- $1/g;
-    $alignment_string =~ s/([A-Z])\-/$1 \-/g;
+  $self->param('gene_tree')->store_tag('ss_cons', $ss_cons_string);
+  $self->param('gene_tree')->store_tag('ss_cons_filtered', $ss_cons_filtered_string);
 
-    my @cigar_segments = split " ",$alignment_string;
+  my ($cigar_hash, $alignment_length) = $self->get_cigar_lines({%align_hash});
 
-    my $cigar_line = "";
-    foreach my $segment (@cigar_segments) {
-      my $seglength = length($segment);
-      $seglength = "" if ($seglength == 1);
-      if ($segment =~ /^\-+$/) {
-        $cigar_line .= $seglength . "D";
-      } else {
-        $cigar_line .= $seglength . "M";
-      }
-    }
-    $align_hash{$id} = $cigar_line;
-  }
- 
   $tree->aln_method('infernal');
   $tree->aln_length($alignment_length);
 
@@ -484,28 +435,162 @@ sub parse_and_store_alignment_into_tree {
       $self->throw("infernal produced an empty cigar_line for ".$member->stable_id."\n");
     }
 
-    $member->cigar_line($align_hash{$member->sequence_id});
+    $member->cigar_line($cigar_hash->{$member->sequence_id});
+
     ## Check that the cigar length (Ms) matches the sequence length
     my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
     my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
-    my $member_sequence = $member->sequence; $member_sequence =~ s/\*//g;
+    my $member_sequence = $member->sequence(); $member_sequence =~ s/\*//g;
     if ($seq_cigar_length != length($member_sequence)) {
-      $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+        $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
     }
-    #
-#    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
-    #$self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
+
   }
-  $self->compara_dba->get_GeneAlignAdaptor->store($tree);
+  $self->compara_dba->get_AlignedMemberAdaptor->store($tree);
   return undef;
+}
+
+sub get_cigar_lines {
+    my ($self, $align_hash) = @_;
+    #
+    # convert alignment string into a cigar_line
+    #
+    my $cigar_hash;
+    my $alignment_length;
+    foreach my $id (keys %$align_hash) {
+        my $alignment_string = $align_hash->{$id};
+        unless (defined $alignment_length) {
+            $alignment_length = length($alignment_string);
+        } else {
+            if ($alignment_length != length($alignment_string)) {
+                $self->throw("While parsing the alignment, some id did not return the expected alignment length\n");
+            }
+        }
+
+        # From the Infernal UserGuide:
+        # ###########################
+        # In the aligned sequences, a '.' character indicates an inserted column
+        # relative to consensus; the '.' character is an alignment pad. A '-'
+        # character is a deletion relative to consensus.  The symbols in the
+        # consensus secondary structure annotation line have the same meaning
+        # that they did in a pairwise alignment from cmsearch. The #=GC RF line
+        # is reference annotation. Non-gap characters in this line mark
+        # consensus columns; cmalign uses the residues of the consensus sequence
+        # here, with UPPER CASE denoting STRONGLY CONSERVED RESIDUES, and LOWER
+        # CASE denoting WEAKLY CONSERVED RESIDUES. Gap characters (specifically,
+        # the '.' pads) mark insertions relative to consensus. As described below,
+        # cmbuild is capable of reading these RF lines, so you can specify which
+        # columns are consensus and which are inserts (otherwise, cmbuild makes
+        # an automated guess, based on the frequency of gaps in each column)
+        $alignment_string =~ s/\./\-/g;            # Infernal returns dots even though they are gaps
+        $alignment_string = uc($alignment_string); # Infernal can lower-case regions
+        $alignment_string =~ s/\-([A-Z])/\- $1/g;
+        $alignment_string =~ s/([A-Z])\-/$1 \-/g;
+
+        my @cigar_segments = split " ",$alignment_string;
+
+        my $cigar_line = "";
+        foreach my $segment (@cigar_segments) {
+            my $seglength = length($segment);
+            $seglength = "" if ($seglength == 1);
+            if ($segment =~ /^\-+$/) {
+                $cigar_line .= $seglength . "D";
+            } else {
+                $cigar_line .= $seglength . "M";
+            }
+        }
+        $cigar_hash->{$id} = $cigar_line;
+    }
+    return ($cigar_hash, $alignment_length);
+}
+
+sub store_fasta_alignment {
+    my ($self, $new_align_hash) = @_;
+
+    my ($new_cigar_hash, $alignment_length) = $self->get_cigar_lines($new_align_hash);
+
+    my $aln = $self->param('gene_tree')->deep_copy();
+
+    for my $member (@{$aln->get_all_leaves}) {
+
+        if ($new_align_hash->{$member->sequence_id} eq "") {
+            $self->throw("infernal produced an empty cigar_line for ". $member->stable_id . "\n");
+        }
+        print STDERR "NEW CIGAR LINE: ", $new_cigar_hash->{$member->sequence_id}, "\n";
+        $member->cigar_line($new_cigar_hash->{$member->sequence_id});
+
+        ## Check that the cigar length (Ms) matches the sequence length
+#         my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
+#         my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
+#         my $member_sequence = $member->get_other_sequence('filtered');
+#         $member_sequence =~ s/\*//g;
+#         print STDERR "MEMBER_SEQUENCE: $member_sequence\n";
+#         print STDERR "+++ $seq_cigar_length +++ \n";#, length($member_sequence) , "\n";
+#         if ($seq_cigar_length != length($member_sequence)) {
+#             $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+#         }
+    }
+
+
+    bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
+    $aln->seq_type('filtered');
+    $aln->aln_method('infernal');
+    $aln->aln_length($alignment_length);
+
+    my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
+    for my $member (@{$aln->get_all_Members}) {
+        my $seq = $new_align_hash->{$member->sequence_id};
+        $seq =~ s/-//g;
+        $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
+    }
+
+    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+    $self->param('alignment_id', $aln->dbID);
+#    $aln->root->release_tree();
+#    $aln->clear();
+
+    return;
+}
+
+sub remove_gaps_in_ss_cons {
+    my ($self, $str) = @_;
+    $str =~ s/\.//g;
+    return $str;
+}
+
+sub get_filter_positions {
+    my ($self, $str) = @_;
+    my @positions = ();
+    for (my $i = 0; $i < length($str); $i++) {
+        if (substr ($str, $i, 1) eq ".") {
+            push @positions, $i;
+        }
+    }
+    return [reverse @positions];
+}
+
+
+sub remove_gaps_in_alignment {
+    my ($self, $ss_cons, $align_hash) = @_;
+
+    my $filter_positions = $self->get_filter_positions($ss_cons);
+    for my $s (keys %$align_hash) {
+        my $seq = $align_hash->{$s};
+        for my $pos (@$filter_positions) {
+            substr ($seq, $pos, 1, '');
+        }
+        $align_hash->{$s} = $seq;
+    }
+
+    return $align_hash;
 }
 
 sub _store_aln_tags {
     my $self = shift;
-    my $tree = $self->param('nc_tree');
+    my $tree = $self->param('gene_tree');
     return unless($tree);
 
-    print "Storing Alignment tags...\n";
+    print STDERR "Storing Alignment tags...\n" if ($self->debug());
     my $sa = $tree->get_SimpleAlign;
     $DB::single=1;1;
     # Model id

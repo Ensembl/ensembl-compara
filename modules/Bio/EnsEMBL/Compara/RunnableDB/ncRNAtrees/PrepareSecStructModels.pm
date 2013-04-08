@@ -86,10 +86,19 @@ sub fetch_input {
     $self->input_job->transient_error(1);
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
-    $self->param('nc_tree', $nc_tree);
+    $self->param('gene_tree', $nc_tree);
+
+    my $alignment_id = $self->param('alignment_id');
+    $self->throw("alignment_id has to be defined\n") unless(defined $alignment_id);
+    $nc_tree->gene_align_id($alignment_id);
+    print STDERR "ALN INPUT ID: $alignment_id\n" if ($self->debug);
+    my $aln_seq_type = 'filtered';
+    $self->param('aln_seq_type', $aln_seq_type);
+    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    $nc_tree->attach_alignment($alignment_id, 'filtered');
 
 ### !! Struct files are not used in this first tree!!
-    if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
+    if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir() ) {
         $self->param('input_aln', $input_aln);
     } else {
         die "I can't write input alignment";
@@ -110,24 +119,21 @@ sub run {
     my $self = shift @_;
     my $nc_tree_id = $self->param('gene_tree_id');
     # First check the size of the alignents to compute:
-    if ($self->param('tag_residue_count') > 150000) {
-        $self->dataflow_output_id (
-                                   {
-                                    'gene_tree_id' => $nc_tree_id,
-                                   }, -1
-                                  );
-        $self->dataflow_output_id (
-                                   {
-                                    'gene_tree_id' => $nc_tree_id,
-                                   }, 1
-                                  );
-        # Should we die here? Nothing more to do in the Runnable
-        $self->input_job->incomplete(0);
-        die "$nc_tree_id family is too big. Only fast trees will be computed\n";
-    } else {
+#     if ($self->param('tag_residue_count') > 150000) {
+#         $self->dataflow_output_id (
+#                                    {
+#                                     'gene_tree_id' => $nc_tree_id,
+#                                     'alignment_id' => $self->param('alignment_id'),
+#                                     'aln_seq_type' => $self->param('aln_seq_type'),
+#                                    }, -1
+#                                   );
+#         # We die here. Nothing more to do in the Runnable
+#         $self->input_job->incomplete(0);
+#         die "$nc_tree_id family is too big. Only fast trees will be computed\n";
+#     } else {
     # Run RAxML without any structure info first
         $self->_run_bootstrap_raxml;
-    }
+#    }
 }
 
 =head2 write_output
@@ -156,7 +162,8 @@ sub write_output {
         $self->dataflow_output_id ( {
                                      'model' => $model,
                                      'gene_tree_id' => $nc_tree_id,
-                                     'bootstrap_num' => $bootstrap_num
+                                     'bootstrap_num' => $bootstrap_num,
+                                     'alignment_id'  => $self->param('alignment_id'),
                                     }, 2); # fan
     }
 
@@ -174,7 +181,7 @@ sub _run_bootstrap_raxml {
   my $aln_file = $self->param('input_aln');
   return unless (defined($aln_file));
 
-  my $raxml_tag = $self->param('nc_tree')->root_id . "." . $self->worker->process_id . ".raxml";
+  my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
 
   my $raxml_exe = $self->param('raxml_exe')
     or die "'raxml_exe' is an obligatory parameter";
@@ -185,11 +192,11 @@ sub _run_bootstrap_raxml {
   my $tag = 'ml_it_' . $bootstrap_num;
 
   # Checks if the bootstrap tree is already in the DB (is this a rerun?)
-  if ($self->param('nc_tree')->has_tag($tag)) {
+  if ($self->param('gene_tree')->has_tag($tag)) {
     my $eval_tree;
     # Checks the tree string can be parsed succsesfully
     eval {
-      $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('nc_tree')->get_value_for_tag($tag));
+      $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('gene_tree')->get_value_for_tag($tag));
     };
     if (defined($eval_tree) and !$@ and !$self->debug) {
       # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
@@ -241,44 +248,43 @@ sub _run_bootstrap_raxml {
 }
 
 sub _dumpMultipleAlignmentStructToWorkdir {
-  my $self = shift;
-  my $tree = shift;
+    my ($self) = @_;
+    my $tree = $self->param('gene_tree');
 
-  my $leafcount = scalar(@{$tree->get_all_leaves});
-  if($leafcount<4) {
-      $self->input_job->incomplete(0);
-      #printf(STDERR "tree cluster %d has <4 proteins - can not build a raxml tree\n", $tree->node_id);
-      my $tree_id = $tree->root_id;
-      die "tree cluster $tree_id has <4 proteins -- can not build a raxml tree\n";
-  }
+    my $leafcount = scalar(@{$tree->get_all_leaves});
+    if($leafcount<4) {
+        $self->input_job->incomplete(0);
+        my $tree_id = $tree->root_id;
+        die "tree cluster $tree_id has <4 proteins -- can not build a raxml tree\n";
+    }
 
-  my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
-  $file_root    =~ s/\/\//\//g;  # converts any // in path to /
+    my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
+    $file_root    =~ s/\/\//\//g;  # converts any // in path to /
 
-  my $aln_file = $file_root . ".aln";
+    my $aln_file = $file_root . ".aln";
 
-  open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
+    open(OUTSEQ, ">$aln_file")
+        or $self->throw("Error opening $aln_file for write");
 
-  # Using append_taxon_id will give nice seqnames_taxonids needed for
-  # njtree species_tree matching
-  my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
+    # Using append_taxon_id will give nice seqnames_taxonids needed for
+    # njtree species_tree matching
+    my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
 
-  my $sa = $tree->get_SimpleAlign
-    (
-     -id_type => 'MEMBER',
-     %sa_params,
-    );
-  $sa->set_displayname_flat(1);
+    my $sa = $tree->get_SimpleAlign
+        (
+         -id_type => 'MEMBER',
+         %sa_params,
+        );
+    $sa->set_displayname_flat(1);
 
-  # Phylip header
-  print OUTSEQ $sa->no_sequences, " ", $sa->length, "\n";
-  $self->param('tag_residue_count', $sa->no_sequences * $sa->length);
-  # Phylip body
-  my $count = 0;
-  foreach my $aln_seq ($sa->each_seq) {
-    print OUTSEQ $aln_seq->display_id, " ";
-    my $seq = $aln_seq->seq;
+    # Phylip header
+    print OUTSEQ $sa->no_sequences, " ", $sa->length, "\n";
+    $self->param('tag_residue_count', $sa->no_sequences * $sa->length);
+    # Phylip body
+    my $count = 0;
+    foreach my $aln_seq ($sa->each_seq) {
+        print OUTSEQ $aln_seq->display_id, " ";
+        my $seq = $aln_seq->seq;
 
     # Here we do a trick for all Ns sequences by changing the first
     # nucleotide to an A so that raxml can at least do the tree for
@@ -291,7 +297,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   }
   close OUTSEQ;
 
-  my $struct_string = $self->param('nc_tree')->get_tagvalue('ss_cons');
+  my $struct_string = $self->param('gene_tree')->get_tagvalue('ss_cons');
   # Allowed Characters are "( ) < > [ ] { } " and "."
   $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;
   my $struct_file = $file_root . ".struct";
@@ -317,10 +323,10 @@ sub _store_newick_into_nc_tree_tag_string {
   print("load from file $newick_file\n") if($self->debug);
   my $newick = $self->_slurp($newick_file);
 
-  $self->store_alternative_tree($newick, $tag, $self->param('nc_tree'));
+  $self->store_alternative_tree($newick, $tag, $self->param('gene_tree'));
   if (defined($self->param('model'))) {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
+    $self->param('gene_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
 }
 
