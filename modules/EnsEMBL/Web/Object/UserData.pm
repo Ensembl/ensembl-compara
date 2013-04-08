@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Variation::Utils::VEP qw(
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw($GENOMIC_REGEX);
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
@@ -1151,14 +1152,32 @@ sub get_das_sources {
       }
     };
 
+    my $csa =  Bio::EnsEMBL::Registry->get_adaptor($species, "core", "CoordSystem");
+
     # Cache simple caches, not objects
     my $cached = [];
     foreach my $source (@{ $sources }) {
+      my $no_mapping = 0;
       my %copy = %{ $source };
       my @coords = map { my %cs = %{ $_ }; \%cs } @{ $source->coord_systems || [] };
-      $copy{'coords'} = \@coords;
-      push @$cached, \%copy;
-      push @$source_info, EnsEMBL::Web::DASConfig->new_from_hashref( $source );
+
+      # checking if we support mapping. Excluding sources for which we don't support mapping before filtering the results.
+      # $cs - coordinate systems returned from DAS server, tmpfrom - returned by converter.
+      foreach my $cs (@coords) {
+        if ($cs->{name} =~ m/$GENOMIC_REGEX/i || $cs->{name} eq 'toplevel' ) {
+
+          my $tmpfrom = $csa->fetch_by_name( $cs->{name}, $cs->{version} ) || $csa->fetch_by_name( $cs->{name} );
+          if ( !$tmpfrom || ($tmpfrom->version && $tmpfrom->version ne $cs->{version})){
+            $no_mapping = 1;
+            last;
+          }
+        }
+      }
+      if (!$no_mapping) {
+        $copy{'coords'} = \@coords;
+        push @$cached, \%copy;
+        push @$source_info, EnsEMBL::Web::DASConfig->new_from_hashref( $source );
+      }
     }
     ## Cache them for later use
     # Only cache if more than 10 sources, so we don't confuse people in the process of setting
