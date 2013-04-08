@@ -9,6 +9,7 @@ Ensembl.extend({
     var hints       = this.cookie.get('ENSEMBL_HINTS');
     var imagePanels = $('.image_panel');
     var bodyClass   = $('body')[0].className.split(' ');
+    var modalOpen   = window.location.hash.match(/(modal_.+)/);
     
     if (!window.name) {
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
@@ -71,8 +72,8 @@ Ensembl.extend({
     
     this.PanelManager.initialize();
     
-    if (window.location.hash.match('modal_')) {
-      this.EventManager.trigger('modalOpen', $('<a class="force" rel="' + window.location.hash.match(/(modal.+)/)[1] + '"></a>')[0]);
+    if (modalOpen) {
+      this.EventManager.trigger('modalOpen', { className: 'force', rel: modalOpen[1] });
       window.location.hash = '';
     }
     
