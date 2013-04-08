@@ -322,11 +322,11 @@ sub funcgen_text {
     return sprintf('
       <div class="homepage-icon">
         %s
+        %s
       </div>
       <h2>Regulation</h2>
       <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>
       <p><a href="/info/docs/funcgen/" class="nodeco">%sMore about the %s regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html" class="nodeco">microarray annotation</a></p>
-      %s
       %s',
       
       sprintf(
@@ -335,18 +335,18 @@ sub funcgen_text {
         "Go to regulatory feature $sample_data->{'REGULATION_TEXT'}", 'regulation', 'Example regulatory feature'
       ),
       
+      $species eq 'Homo_sapiens' ? '
+        <div class="homepage-icon">
+          <a class="nodeco _ht _ht_track" href="/encode.html" title="Find out about ENCODE data"><img src="/img/ENCODE_logo.jpg" class="bordered" /><span>ENCODE data in Ensembl</span></a>
+        </div>
+      ' : '',
+
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE,
       
       $ftp ? sprintf(
         '<p><a href="%s/release-%s/regulation/%s/" class="nodeco">%sDownload all regulatory features</a> (GFF)</p>', ## Link to FTP site
         $ftp, $species_defs->ENSEMBL_VERSION, lc $species, sprintf($self->{'icon'}, 'download')
       ) : '',
-      
-      $species eq 'Homo_sapiens' ? '
-        <div class="homepage-icon">
-          <a class="nodeco _ht _ht_track" href="/encode.html" title="Find out about ENCODE data"><img src="/img/ENCODE_logo.jpg" class="bordered" /><span>ENCODE data in Ensembl</span></a>
-        </div>
-      ' : ''
     );
   } else {
     return sprintf('
