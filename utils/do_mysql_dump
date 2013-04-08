@@ -123,14 +123,14 @@ foreach my $sp( @SPECIES ){
 
     @sp_dumpdirs= join "_", ("$dumpdir/".lc($sp), $sitedefs_release, "$sp_release/data/mysql");
     $kill_list{"DATABASE_WEBSITE"} = 1;
-    $kill_list{"ensembl_web_user_db"} = 1;
+    $kill_list{"ensembl_accounts"} = 1;
   }
 
   # Work out db ------------------------------------------------------------
   my %all_db_info = %{ $species_defs->get_config($sp,'databases') || {} };
-  $all_db_info{"ensembl_web_user_db"} = {%web_userdb};
+  $all_db_info{"ensembl_accounts"} = {%web_userdb};
   @dbs = ( keys %all_db_info ) unless @dbs;
-  push (@dbs, 'ensembl_web_user_db') if $sp eq 'Multi';
+  push (@dbs, 'ensembl_accounts') if $sp eq 'Multi';
   my $write_user = $species_defs->get_config($sp, 'DATABASE_WRITE_USER');
   my $write_pass = $species_defs->get_config($sp, 'DATABASE_WRITE_PASS');
   my $flag_mart = 0;
@@ -161,7 +161,7 @@ foreach my $sp( @SPECIES ){
     $all_db_info{$db}{dumpdir} = create_dumpdir( $all_db_info{$db}{NAME},
 					       \@sp_dumpdirs, 
 						 $sitedefs_release) ||"";
-    if ( $db eq 'ensembl_web_user_db' or $no_data ) {
+    if ( $db eq 'ensembl_accounts' or $no_data ) {
       $all_db_info{$db}{NODATA} = " --nodata";
     }
 
@@ -240,8 +240,8 @@ sub dump_mysql {
     system( $dump_command_d ) and die( "Cannot $dump_command_d: $!" );
   }
 
-  # Rename ensembl_web_user_db so they include the release number
-  if ( $dumpdir =~ /ensembl_web_user_db|ensembl_website/ ){
+  # Rename ensembl_accounts so they include the release number
+  if ( $dumpdir =~ /ensembl_accounts|ensembl_website/ ){
     rename_files( $DB, $dumpdir );
   }
 
@@ -325,7 +325,7 @@ sub create_dumpdir {
     $db_dumpdir = "$sp_dumpdirs->[0]/ensembl_help"."_$sitedefs_release";
   }
 
-  elsif ($db_name =~ /ensembl_website|ensembl_web_user_db/) {
+  elsif ($db_name =~ /ensembl_website|ensembl_accounts/) {
     $db_dumpdir = "$sp_dumpdirs->[0]/$db_name"."_$sitedefs_release";
   }
 
