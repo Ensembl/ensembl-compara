@@ -587,7 +587,7 @@ do {
         #Call fetch_all_by_MethodLinkSpeciesSet_DnaFrag rather than fetch_all_by_MethodLinkSpeciesSet_Slice because of
         #issues with the PAR regions. The _Slice method will dumps alignments on the PAR whereas _DnaFrag will not.
         my $extra_genomic_align_blocks = $genomic_align_set_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
-            $method_link_species_set, $this_dnafrag, undef, undef, $aln_left, $start, $restrict);
+            $method_link_species_set, $this_dnafrag, $this_slice->start, $this_slice->end, $aln_left, $start, $restrict);
 
         push(@$genomic_align_blocks, @$extra_genomic_align_blocks);
         if ($split_size and @$genomic_align_blocks >= $split_size) {
@@ -823,6 +823,7 @@ sub print_my_emf {
     print join(" ", "SEQ", $species_name, $dnafrag_name,
         $dnafrag_start, $dnafrag_end, $dnafrag_strand,
         "(chr_length=".$dnafrag_length.")"), "\n";
+
     my $aligned_sequence;
     if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
       foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
@@ -845,6 +846,7 @@ sub print_my_emf {
       $aligned_sequence = $this_genomic_align->original_sequence;
     } else {
       $aligned_sequence = $this_genomic_align->aligned_sequence;
+        
     }
       #Fixed memory problem. Don't need these anymore
       if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
