@@ -20,10 +20,14 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $url  = $self->ajax_url('ajax');
-  my $rel  = $self->{'rel'} ? qq( rel="$self->{'rel'}") : '';
   
-  return qq(<div class="other_tool"><p><a class="config modal_link" href="$url"$rel>$self->{'link_text'}</a></p></div>);
+  return sprintf(
+    '<div class="other_tool"><p><a class="config modal_link%s" href="%s"%s>%s</a></p></div>',
+    $self->hub->param("$self->{'url_param'}1") ? '' : ' pulse',
+    $self->ajax_url('ajax'),
+    $self->{'rel'} ? qq( rel="$self->{'rel'}") : '',
+    $self->{'link_text'}
+  );
 }
 
 sub content_ajax {
