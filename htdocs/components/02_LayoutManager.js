@@ -126,6 +126,8 @@ Ensembl.LayoutManager.extend({
         Ensembl.cookie.set('user_message', '');
       });
     }
+    
+    this.pulseToolButton();
   },
   
   reloadPage: function (args, url) {
@@ -200,6 +202,27 @@ Ensembl.LayoutManager.extend({
       $('form.seq_blast', toolButtons).submit();
       return false;
     });
+    
+    this.pulseToolButton();
+    
+    tools = null;
+  },
+  
+  pulseToolButton: function () {
+    $('#page_nav .tool_buttons a.pulse:not(.pulsing)').one('click', function () {
+      clearInterval($(this).stop().removeClass('pulse').css({ backgroundColor: '', color: '' }).data('interval'));
+    }).addClass('pulsing').each(function () {
+      var pulse = $(this).data({
+        dark    : false,
+        interval: setInterval(function () {
+          var data = pulse.data();
+          pulse.toggleClass('pulse', !data.dark, 1000);
+          data.dark = !data.dark;
+        }, 1000)
+      });
+    });
+    
+    els = null;
   },
   
   popState: function () {
