@@ -171,19 +171,15 @@ sub render {
     } else {
       $link = encode_entities($entry->{'label'}) . $entry->{'label_html'};
     }
-
-
-    #quick bug fix:
-    $link =~ s/(\?|;)ac=(.+?)"(.*?)>InterPro</$1ac=$2"$3>$2</g if ($type =~ /View InterPro/);
-    $link =~ s/&amp;amp;/&amp;/g if ($link =~ /&amp;amp;/);
+    
     push @entries, { link => $link, type => $type };
   }
   
   print $self->jsonify({
-    caption => encode_entities($self->{'caption'}),
-    entries => \@entries,
-    highlight => encode_entities($self->{'highlight'}),
-    pagination  => encode_entities($self->{'pagination'}),
+    caption    => encode_entities($self->{'caption'}),
+    entries    => \@entries,
+    highlight  => encode_entities($self->{'highlight'}),
+    pagination => encode_entities($self->{'pagination'}),
   });
 }
 
