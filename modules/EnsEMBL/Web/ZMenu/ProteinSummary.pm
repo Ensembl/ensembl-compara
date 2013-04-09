@@ -27,7 +27,7 @@ sub content {
   if ($interpro_ac) {
     $self->add_entry({
       type  => 'View InterPro',
-      label => 'InterPro',
+      label => $interpro_ac,
       link  => $hub->get_ExtURL('interpro', $interpro_ac)
     });
   }
