@@ -37,17 +37,17 @@ body.ie6 #modal_panel div.modal_title { height: 20px; }
 .modal_reload  { display: none; }
 .modal_caption { position: absolute; bottom: 3px; left: 4px; }
 
-.modal_title ul                    { margin: 0; padding: 0 0 0 6px; position: absolute; bottom: 0; }
-.modal_title li                    { list-style: none; padding: 1px 6px 2px; background-color: #999; margin: 0 6px 0 0; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
-.modal_title li.active             { background-color: [[PANEL_BG]]; color: [[PAGE_TEXT]]; }
-.modal_title li a                  { color: [[PANEL_BG]]; padding: 0 8px; text-decoration: none; outline: none; }
-.modal_title li.active a           { color: [[PAGE_TEXT]]; }
-.modal_title .modal_close          { position: absolute; top: -11px; right: -11px;  height: 22px; width: 22px; margin: 0; display: block; background: url(/i/cp_close.png) no-repeat center; cursor: pointer; }
-.ui-draggable .modal_title         { cursor: move; }
+#modal_panel .modal_title ul            { margin: 0; padding: 0 0 0 6px; position: absolute; bottom: 0; }
+#modal_panel .modal_title li            { list-style: none; padding: 1px 6px 2px; background-color: #999; margin: 0 6px 0 0; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
+#modal_panel .modal_title li.active     { background-color: [[PANEL_BG]]; color: [[PAGE_TEXT]]; }
+#modal_panel .modal_title li a          { color: [[PANEL_BG]]; padding: 0 8px; text-decoration: none; outline: none; }
+#modal_panel .modal_title li.active a   { color: [[PAGE_TEXT]]; }
+#modal_panel .modal_title .modal_close  { position: absolute; top: -11px; right: -11px;  height: 22px; width: 22px; margin: 0; display: block; background: url(/i/cp_close.png) no-repeat center; cursor: pointer; }
+#modal_panel .ui-draggable .modal_title { cursor: move; }
 
-body.mac .modal_title li a         { position: relative; top: 1px; }
-body.ie6 .modal_title ul           { position: relative; }
-body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
+body.mac #modal_panel .modal_title li a         { position: relative; top: 1px; }
+body.ie6 #modal_panel .modal_title ul           { position: relative; }
+body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 
 .modal_content                   { position: absolute; height: 100%; width: 100%; overflow: auto; border: solid [[PANEL_TEXT]]; border-width: 0 1px 1px; background-color: [[PANEL_BG]]; }
 .modal_content .panel            { padding: 0; margin: 0; }
