@@ -317,7 +317,7 @@
 #doxygen .tabs2 { font-size: 10px; }
 #doxygen .tabs3 { font-size: 9px; }
 #doxygen .tablist { margin: 0; padding: 0; display: table; }
-#doxygen .tablist li { float: left; display: table-cell; background-image: url(/info/docs/Doxygen/external-api/tab_b.png); line-height: 36px; list-style: none; }
+#doxygen .tablist li { float: left; display: table-cell; margin-top: 0 !important; background-image: url(/info/docs/Doxygen/external-api/tab_b.png); line-height: 36px !important; list-style: none; }
 #doxygen .tablist a {
   display: block;
   padding: 0 20px;
