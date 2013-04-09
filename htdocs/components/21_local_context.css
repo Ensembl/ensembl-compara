@@ -30,6 +30,7 @@ ul.mobile_context li img  { display: none; }
 .tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 .tool_buttons p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; }
       
+.tool_buttons a.pulse,
 .tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a:visited  { color: [[BUTTON_TEXT]]; }
      
