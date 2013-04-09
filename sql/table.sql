@@ -433,6 +433,21 @@ CREATE TABLE member (
   KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
+#
+# Table structure for member_production_counts
+#
+# This table includes information about members for web fast-lookups
+
+CREATE TABLE `member_production_counts` (
+  `member_id`                int(10) unsigned NOT NULL,
+  `gene_trees`               tinyint(1) unsigned default 0,
+  `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
+  `orthologues`              int(10) unsigned default 0,
+  `paralogues`               int(10) unsigned default 0,
+
+  FOREIGN KEY (member_id) REFERENCES member(member_id)
+)COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
 
 #
 # Table structure for table 'external_db'
