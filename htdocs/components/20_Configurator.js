@@ -242,7 +242,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       panel.elLk.saveAsSubmit.prop('disabled', disabled)[disabled ? 'addClass' : 'removeClass']('disabled');
     }
     
-    this.elLk.saveAsInputs.filter('.name').on('keyup', saveAsState);
+    this.elLk.saveAsInputs.filter('.name').on('keyup blur input', saveAsState);
     this.elLk.existingConfigs.on('change', saveAsState);
     
     this.elLk.saveAsSubmit.on('click', function () {
