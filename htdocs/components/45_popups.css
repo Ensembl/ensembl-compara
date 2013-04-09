@@ -42,3 +42,14 @@ table.zmenu td                    { white-space: normal; }
 table.zmenu tbody.loading         { display: none; }
 
 .glossary_mouseover               { border-bottom: 1px dotted #00c; cursor: pointer; }
+
+.info_popup .zmenu_bottom                 { padding: 2px 0px; background-color: [[BUTTON_BG]]; text-align: center; }
+.info_popup .zmenu_paginate span,
+.info_popup .zmenu_paginate a             { width: 20px; margin-right: 1px; display: inline-block; line-height: 20px; text-decoration: none;  background-color: [[TINT_BG]]; color: [[PAGE_TEXT]]; }
+.info_popup .zmenu_paginate a:hover       { background-color: #BFD0FF; }
+.info_popup .zmenu_paginate a.first_link  { border-radius: 4px 0 0 4px; -moz-border-radius: 4px 0 0 4px; -webkit-border-radius: 4px 0 0 4px; }
+.info_popup .zmenu_paginate a.last_link   { border-radius: 0 4px 4px 0; -moz-border-radius: 0 4px 4px 0; -webkit-border-radius: 0 4px 4px 0; }
+.info_popup .zmenu_paginate a.no_more     { color: [[NEUTRAL_BORDER]]; cursor: default; background-color: [[TINT_BG]]!important; }
+.info_popup .zmenu_paginate a.active_page { background-color: #99B3FF; }
+.info_popup .zmenu_paginate span          { width: auto; padding: 0 1px; }
+.info_popup .zmenu_all                    { color: #FFFFFF; cursor: pointer; text-decoration: underline; }

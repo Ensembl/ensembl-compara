@@ -176,6 +176,33 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
           }
           
           data.link.data('popup', popup); // Store the popup on the reference <a>
+          
+          if (json.length > 1) {
+            function paginate(el) {
+              var data = el.data('paginate') || {};
+              var all  = data.itemsPerPage === 1;
+              
+              data.page = all ? data.currentPage : data.page;
+              
+              el.children('.zmenu_paginate')[all ? 'hide' : 'show']().end().paginate({
+                itemContainer : 'table',
+                navPanel      : '.zmenu_paginate',
+                itemsPerPage  : all ? 9e99 : 1,
+                startPage     : all ? 0 : (data.page || 0),
+                linksToDisplay: 3,
+                navLabelFirst : '<<',
+                navLabelPrev  : '<',
+                navLabelNext  : '>',
+                navLabelLast  : '>>'
+              }).children('.zmenu_all').html(all ? 'Show one feature' : 'Show all features');
+            }
+            
+            popup.append('<div class="zmenu_bottom zmenu_paginate"></div><div class="zmenu_bottom zmenu_all"></div>').children('.zmenu_all').on('click', function () {
+              paginate($(this).parent());
+            });
+            
+            paginate(popup);
+          }
         }
       },
       complete: function () {
