@@ -78,7 +78,7 @@ sub variation_content {
       $lrg_position = $lrg_feature->seq_region_name . ":$lrg_start-$lrg_end";
     }
   }
-   
+  
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
   
   my @entries = (
@@ -105,56 +105,44 @@ sub variation_content {
   
   push @entries, { entry => sprintf $link, $hub->url({ action => 'Phenotype', %url_params }), 'Phenotype Data' } if scalar @{$object->get_external_data};
   
-
-  foreach my $pop (
-      sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} }
-      grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i }
-      values %{$object->freqs($feature)}
-    ) {
+  foreach my $pop (sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} } grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i } values %{$object->freqs($feature)}) {
     my $name = [ split /:/, $pop->{'pop_info'}{'Name'} ]->[-1]; # shorten the population name
        $name =~ /phase_1_(.+)/;
        $name = $1;
-
-    foreach my $ssid (
-        sort { $a->{'submitter'} cmp $b->{'submitter'} }
-        values %{$pop->{ssid}}
-      ) {
-
-      my @afreqs = @{$ssid->{'AlleleFrequency'}};
-      foreach my $allele (@{$ssid->{Alleles}}) {
     
-        push (@{$population_allele{$name}}, $allele) if (!grep {$_ eq $allele} @{$population_allele{$name}});
+    foreach my $ssid (sort { $a->{'submitter'} cmp $b->{'submitter'} } values %{$pop->{'ssid'}}) {
+      my @afreqs = @{$ssid->{'AlleleFrequency'}};
       
-        my $freq = sprintf '%.3f',shift(@afreqs);
-        $population_data{$name}{$ssid->{submitter}}{$allele} = $freq;
+      foreach my $allele (@{$ssid->{'Alleles'}}) {
+        push @{$population_allele{$name}}, $allele unless grep $_ eq $allele, @{$population_allele{$name}};
+        $population_data{$name}{$ssid->{'submitter'}}{$allele} = sprintf '%.3f', shift @afreqs;
       }
     }
   }
     
   push @entries, { cls => 'population', entry => sprintf $link, $hub->url({ action => 'Population', %url_params }), 'Population Allele Frequencies' } if scalar keys %population_data;
   
-  foreach my $name (sort {$b =~ /ALL/ cmp $a =~ /ALL/ || $a cmp $b} keys %population_data) {
+  foreach my $name (sort { $b =~ /ALL/ cmp $a =~ /ALL/ || $a cmp $b } keys %population_data) {
     my %display = reverse %{$population_data{$name}};
     my $i       = 0;
     
     foreach my $submitter (keys %{$population_data{$name}}) {
- 
-      my @freqs;
-      my $af;
+      my (@freqs, $af);
+      
       # Keep the alleles order
       foreach my $al (@{$population_allele{$name}}) {
         if ($population_data{$name}{$submitter}{$al}){
           push @freqs, $al;
           push @freqs, $population_data{$name}{$submitter}{$al};
           $af .= $af ? ', ' : '';
-          $af .= "$al: ".$population_data{$name}{$submitter}{$al};
+          $af .= "$al: $population_data{$name}{$submitter}{$al}";
         }
       }
-
+      
       my $img;
          $img .= sprintf '<span class="freq %s" style="width:%spx"></span>', shift @freqs, 100 * shift @freqs while @freqs;
-
-      $af = qq{<div>$af</div>};
+         $af   = "<div>$af</div>";
+      
       if ($submitter) {
         push @entries, { childOf => 'population', entry => [ $i++ ? '' : $name, $submitter ]};
         push @entries, { childOf => 'population', entry => [ '', $img, $af ]};
@@ -163,6 +151,7 @@ sub variation_content {
       }
     }
   }
+  
   unshift @{$self->{'entries'}}, \@entries;
 }
 
