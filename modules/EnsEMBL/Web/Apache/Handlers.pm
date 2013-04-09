@@ -188,6 +188,11 @@ sub redirect_to_nearest_mirror {
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 
+  foreach my $h (@SiteDefs::REQUEST_START_HOOK) {
+    no strict;
+    $h->($r);
+  }
+
   # Nullify tags
   $ENV{'CACHE_TAGS'} = {};
   
@@ -472,6 +477,10 @@ sub logHandler {
 sub cleanupHandler {
   my $r = shift;  # Get the connection handler
   
+  foreach my $h (@SiteDefs::REQUEST_END_HOOK) {
+    no strict;
+    $h->($r);
+  }
   return if $r->subprocess_env->{'ENSEMBL_ENDTIME'};
   
   my $end_time   = time;
