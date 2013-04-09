@@ -21,10 +21,15 @@
 
 <h2 id="accounts">The main Ensembl website has user accounts - can we enable them on our mirror?</h2>
 <p>
-  To enable accounts set the following to your SiteDefs.pm:
+The 'users' plugin in public-plugins contains user login and user groups functionality.
+This plugin requires use of another plugin, placed in public-plugins folder called 'orm'
+which in turn has a dependency on Rose::DB::Object (<a title="Rose::DB::Object on CPAN" href="http://search.cpan.org/~jsiracusa/Rose-DB-Object/">on CPAN</a>).
+Thus for the users plugin to work, Rose must be installed and the plugins file needs to contain two extra declarations above the EnsEMBL::Ensembl declaration.
 </p>
 <pre>
-  $SiteDefs::ENSEMBL_LOGINS                 = 1;
+'EnsEMBL::Users' => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/users',
+'EnsEMBL::ORM' => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/orm',
+'EnsEMBL::Ensembl' => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
 </pre>
 
 <p>Also make sure that your mail server name and mail command are set correctly,
