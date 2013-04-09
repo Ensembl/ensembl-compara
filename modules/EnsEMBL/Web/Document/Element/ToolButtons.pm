@@ -142,12 +142,12 @@ sub init {
       caption => 'Bookmark this page',
       class   => 'modal_link',
       url     => $hub->url({
-        type      => 'Account',
-        action    => 'Bookmark/Add',
-        __clear   => 1,
-        name      => uri_escape($title->get),
-        shortname => uri_escape($title->get_short),
-        url       => uri_escape($hub->species_defs->ENSEMBL_BASE_URL . $hub->url)
+        type        => 'Account',
+        action      => 'Bookmark/Add',
+        __clear     => 1,
+        name        => uri_escape($title->get_short),
+        description => uri_escape($title->get),
+        url         => uri_escape($hub->species_defs->ENSEMBL_BASE_URL . $hub->url)
       })
     });
   } else {
