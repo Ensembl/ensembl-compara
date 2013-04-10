@@ -182,14 +182,13 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
               var data = el.data('paginate') || {};
               var all  = data.itemsPerPage === 1;
               
-              data.page = all ? data.currentPage : data.page;
-              
-              el.children('.zmenu_paginate')[all ? 'hide' : 'show']().end().paginate({
+              el.paginate({
                 itemContainer : 'table',
                 navPanel      : '.zmenu_paginate',
-                itemsPerPage  : all ? 9e99 : 1,
-                startPage     : all ? 0 : (data.page || 0),
-                linksToDisplay: 3,
+                showAll       : all,
+                itemsPerPage  : 1,
+                startPage     : 0,
+                linksToDisplay: 2,
                 navLabelFirst : '<<',
                 navLabelPrev  : '<',
                 navLabelNext  : '>',
