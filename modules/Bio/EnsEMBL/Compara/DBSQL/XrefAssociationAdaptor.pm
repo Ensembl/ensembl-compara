@@ -60,8 +60,11 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
-my $insert_member_sql = q/insert into member_xref(member_id,dbprimary_acc,external_db_id)
- select member_id,?,? from member where stable_id=? and source_name='ENSEMBLGENE'/;
+my $insert_member_base_sql = q/insert into member_xref(member_id,dbprimary_acc,external_db_id)/;
+
+my $insert_member_sql = $insert_member_base_sql. q/ select member_id,?,? from member where stable_id=? and source_name='ENSEMBLGENE'/;
+ 
+my $get_member_id_sql = q/select member_id from member where stable_id=? and source_name='ENSEMBLGENE'/;
 
 my $delete_member_sql = q/delete mx.* from member_xref mx, member m, genome_db g
 where g.name=? and mx.external_db_id=?
@@ -164,8 +167,11 @@ sub store_member_associations {
 	$self->dbc()->sql_helper()->execute_update(-SQL=>$delete_member_sql, -PARAMS=>[$dba->species(),$external_db_id]);
 	
 	while(my ($sid,$accs) = each %$member_acc_hash) {
-		for my $acc (@{$accs}) {
-			$self->dbc()->sql_helper()->execute_update( -SQL => $insert_member_sql, -PARAMS => [$acc,$external_db_id,$sid] );
+		my ($member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
+		if(defined $member_id) {	
+			my @pars = map {"($member_id,\"$_\",$external_db_id)"} @$accs;	
+			my $sql = $insert_member_base_sql . 'values' . join(',',@pars);
+			$self->dbc()->sql_helper()->execute_update(-SQL=>$sql, -PARAMS=>[]);
 		}
 	}
 	return;
