@@ -188,7 +188,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
                 showAll       : all,
                 itemsPerPage  : 1,
                 startPage     : 0,
-                linksToDisplay: 2,
+                linksToDisplay: 3,
                 navLabelFirst : '<<',
                 navLabelPrev  : '<',
                 navLabelNext  : '>',
