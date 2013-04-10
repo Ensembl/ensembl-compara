@@ -10,13 +10,13 @@
 /**
 @header   General Tables
 @desc     These are general tables used in the Compara schema
-@colour   #22949b
+@colour   #3CB371
 */
 
 /**
 @table meta
 @desc This table stores meta information about the compara database
-@colour   #22949b
+@colour   #3CB371
 
 @example  This query defines which API version must be used to access this database.
     @sql                SELECT * FROM meta WHERE meta_key = "schema_version";
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS meta (
 /**
 @table ncbi_taxa_node
 @desc This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)
-@colour   #22949b
+@colour   #3CB371
 
 @column taxon_id                The NCBI Taxonomy ID
 @column parent_id               The parent taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)
@@ -79,7 +79,7 @@ CREATE TABLE ncbi_taxa_node (
 /**
 @table ncbi_taxa_name
 @desc This table contains different names, aliases and meta data for the taxa used in Ensembl.
-@colour   #22949b
+@colour   #3CB371
 
 @example    Here is an example on how to get the taxonomic ID for a species:
     @sql                          SELECT * FROM ncbi_taxa_name WHERE name_class = "scientific name" AND name = "Homo sapiens";
@@ -112,7 +112,7 @@ CREATE TABLE ncbi_taxa_name (
 /**
 @table genome_db
 @desc  This table contains information about the version of the genome assemblies used in this database
-@colour   #22949b
+@colour   #3CB371
 
 @example   This query shows the entries for human and chicken
    @sql                      SELECT * FROM genome_db WHERE name IN ("Homo_sapiens", "Gallus_gallus");
@@ -147,7 +147,7 @@ CREATE TABLE genome_db (
 /**
 @table species_set
 @desc  Contains groups or sets of species which are used in the @link method_link_species_set table. Each species_set is a set of @link genome_db objects
-@colour   #22949b
+@colour   #3CB371
 
 @example     This query shows the first 10 species_sets having human
    @sql      SELECT species_set_id, GROUP_CONCAT(name) AS species FROM species_set JOIN genome_db USING(genome_db_id) GROUP BY species_set_id HAVING species LIKE '%homo_sapiens%' ORDER BY species_set_id LIMIT 10;
@@ -157,7 +157,7 @@ CREATE TABLE genome_db (
 
 
 @see method_link_species_set
-@genome_db
+@see genome_db
 */
 
 CREATE TABLE species_set (
@@ -174,7 +174,7 @@ CREATE TABLE species_set (
 /**
 @table species_set_tag
 @desc  This table contains descriptive tags for the species_set_ids in the species_set table. It is used to store options on clades and group of species. It has been initially developed for the gene tree view.
-@colour   #22949b
+@colour   #3CB371
 
 @example     This query retrieves all the species_sets tagged as 'primates' and links to the @link genome_db table to retrieve the species names 
      @sql     SELECT species_set_id, name, tag, value FROM species_set JOIN species_set_tag USING(species_set_id) JOIN genome_db USING(genome_db_id) WHERE value = 'primates';
@@ -202,7 +202,7 @@ CREATE TABLE species_set_tag (
 /**
 @table method_link
 @desc  This table specifies which kind of link can exist between entities in compara (dna/dna alignment, synteny regions, homologous gene pairs, etc...)<br/>NOTE: We use method_link_ids between 1 and 100 for DNA-DNA alignments, between 101 and 200 for genomic syntenies, between 201 and 300 for protein homologies, between 301 and 400 for protein families and between 401 and 500 for protein and ncRNA trees. Each category corresponds to data stored in different tables.
-@colour   #22949b
+@colour   #3CB371
 
 @example  These are our current entries:
      @sql                             SELECT * FROM method_link;
@@ -229,7 +229,7 @@ CREATE TABLE method_link (
 /**
 @table method_link_species_set
 @desc  This table contains information about the comparisons stored in the database. A given method_link_species_set_id exist for each comparison made and relates a method_link_id in @link method_link with a set of species (species_set_id) in the @link species_set table.
-@colour   #22949b
+@colour   #3CB371
 
 @example     This query shows all the EPO alignments in this database:
    @sql                                  SELECT * FROM method_link_species_set WHERE method_link_id = 13;
@@ -265,7 +265,7 @@ CREATE TABLE method_link_species_set (
 /**
 @table method_link_species_set_tag
 @desc  Contains serveral tag/value data associated with method_link_species_set entries
-@colour   #22949b
+@colour   #3CB371
 
 @column method_link_species_set_id         External reference to method_link_species_set_id in the @link method_link_species_set table
 @column tag                                Tag name
@@ -628,13 +628,13 @@ CREATE TABLE constrained_element (
 /**
 @header   Gene trees and homologies tables
 @desc     These tables store information about gene alignments, trees and homologies
-@colour   #01D4F7
+@colour   #1E90FF
 */
 
 /**
 @table sequence
 @desc  This table contains the protein sequences present in the member table used in the protein alignment part of the EnsEMBL Compara DB.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column sequence_id     Internal unique ID
 @column length          Length of the sequence
@@ -654,7 +654,7 @@ CREATE TABLE sequence (
 /**
 @table member
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 90) peptide ENSP00000309431
       @sql                          SELECT * FROM member WHERE stable_id = "ENSP00000309431";
@@ -712,7 +712,7 @@ CREATE TABLE member (
 /**
 @table member_production_counts
 @desc  This table includes information about members for web fast-lookups
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column member_id             External reference to member_id in the @link member table.
 @column families              If the member is part of a @link family
@@ -743,7 +743,7 @@ CREATE TABLE `member_production_counts` (
 /**
 @table external_db
 @desc  This table stores data about the external databases in which the objects described in the @link member_xref table are stored.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column external_db_id          Internal unique ID
 @column db_name                 External database name
@@ -777,7 +777,7 @@ CREATE TABLE `external_db` (
 /**
 @table member_xref
 @desc  This table stores cross-references for member sequences derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation" 
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column member_id        External reference to member_id in the @link member table. Indicates the member to which the xref applies.
 @column dbprimary_acc    Accession of xref (e.g. GO term, InterPro accession)
@@ -795,11 +795,6 @@ CREATE TABLE `member_xref` (
   FOREIGN KEY (external_db_id) REFERENCES external_db(external_db_id)
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-/**
-@table subset
-@desc  ??????????
-@colour   #01D4F7
-*/
 
 CREATE TABLE subset (
  subset_id      int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -811,11 +806,6 @@ CREATE TABLE subset (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-/**
-@table subset_member
-@desc  ????????????
-@colour   #01D4F7
-*/
 
 CREATE TABLE subset_member (
   subset_id   int(10) unsigned NOT NULL,
@@ -832,7 +822,7 @@ CREATE TABLE subset_member (
 /**
 @table other_member_sequence
 @desc  This table includes alternative sequences for Member, like sequences with flanking regions
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column member_id               External reference to member_id in the @link member table
 @column seq_type                A short description of this alternative sequence
@@ -858,7 +848,7 @@ CREATE TABLE other_member_sequence (
 /**
 @table peptide_align_feature
 @desc: This table stores the raw HSP local alignment results of peptide to peptide alignments returned by a BLAST run it is translated from a FeaturePair object.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example    Example of peptide_align_feature entry:
      @sql                              SELECT * FROM peptide_align_feature_homo_sapiens_90 WHERE peptide_align_feature_id = 5003775;
@@ -927,7 +917,7 @@ CREATE TABLE peptide_align_feature (
 /**
 @table family
 @desc  This table contains all the group homologies found. There are several family_member entries for each family entry.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example   The following query retrieves families with "CATHELICIDIN" description and description_score of 100
     @sql                                SELECT * FROM family WHERE description like '%CATHELICIDIN%' AND description_score = 100;
@@ -962,7 +952,7 @@ CREATE TABLE family (
 /**
 @table family_member
 @desc  This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example      The following query refers to the four members of the protein family 54177. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
     @sql                   SELECT * FROM family_member WHERE family_id = 29739;
@@ -990,11 +980,6 @@ CREATE TABLE family_member (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
-/**
-@table domain
-@desc  ????????????
-@colour   #01D4F7
-*/
 
 CREATE TABLE domain (
   domain_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
@@ -1010,11 +995,6 @@ CREATE TABLE domain (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
-/**
-@table domain_member
-@desc  ????????????
-@colour   #01D4F7
-*/
 
 CREATE TABLE domain_member (
   domain_id                   int(10) unsigned NOT NULL, # FK domain.domain_id
@@ -1034,7 +1014,7 @@ CREATE TABLE domain_member (
 /**
 @table gene_align
 @desc  This table stores information about alignments for members
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column gene_align_id          Internal unique ID
 @column seq_type               Short description of this alignment
@@ -1058,7 +1038,7 @@ CREATE TABLE gene_align (
 /**
 @table gene_align_member
 @desc  This table allows certain nodes (leaves) to have aligned protein member_scores attached to them
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column gene_align_id      External reference to gene_align_id in the @link gene_align table
 @column member_id          External reference to member_id in the @link member table in many-to-1 relation (single member per node)
@@ -1084,7 +1064,7 @@ CREATE TABLE gene_align_member (
 /**
 @table gene_tree_node
 @desc  This table holds the gene tree data structure, such as root, relation between parent and child, leaves, etc... In our data structure, all the trees of a given clusterset are arbitrarily connected to the same root. This eases to store and query in the same database the data from independant tree building analysis. Hence the "biological roots" of the trees are the children nodes of the main clusterset root. See the examples below.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example    The following query returns the root nodes of the independant protein trees stored in the database
      @sql                           SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_root gtr ON (gtn.parent_id = gtr.root_id) WHERE gtr.tree_type = 'clusterset' AND gtr.member_type = 'protein' LIMIT 10;
@@ -1127,7 +1107,7 @@ CREATE TABLE gene_tree_node (
 /**
 @table gene_tree_root
 @desc  Header table for gene_trees. The database is able to contain several sets of trees computed on the same genes. We call these analysis "clustersets" and they can be distinguished with the clusterset_id field. Traditionally, the compara databases have contained only one clusterset (clusterset_id=1), but currently (starting on release 66) we have at least 2 (one for protein trees and one for ncRNA trees). See the examples below.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example   The following query retrieves all the node_id of the current clustersets
      @sql                                  SELECT * from gene_tree_root where tree_type = 'clusterset';
@@ -1177,7 +1157,7 @@ CREATE TABLE gene_tree_root (
 /**
 @table gene_tree_node_tag
 @desc  This table contains several tag/value data attached to node_ids
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column node_id        External reference to node_id in the @link gene_tree_node table
 @column tag            Tag name for the tag/value pair
@@ -1203,7 +1183,7 @@ CREATE TABLE gene_tree_node_tag (
 /**
 @table gene_tree_root_tag
 @desc  This table contains several tag/value data for gene_tree_roots
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column root_id   External reference to root_id in the @link gene_tree_root table
 @column tag       Tag name for the tag/value pair
@@ -1228,7 +1208,7 @@ CREATE TABLE gene_tree_root_tag (
 /**
 @table gene_tree_node_attr
 @desc  This table contains several gene tree attributes data attached to node_ids
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column node_id                               External reference to node_id in the @link gene_tree_node table
 @column node_type                             Type of homology
@@ -1263,7 +1243,7 @@ CREATE TABLE gene_tree_node_attr (
 /**
 @table hmm_profile
 @desc  This table stores different HMM-based profiles used and produced by gene trees
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column model_id              Model ID of the profile. Can be the external ID in case of imported models
 @column name                  Name of the model
@@ -1287,7 +1267,7 @@ CREATE TABLE hmm_profile (
 /**
 @table homology
 @desc  This table contains all the genomic homologies. There are two homology_member entries for each homology entry for now, but both the schema and the API can handle more than just pairwise relationships. <br />dN, dS, N, S and lnL are statistical values given by the codeml program of the <a href="http://abacus.gene.ucl.ac.uk/software/paml.html">Phylogenetic Analysis by Maximum Likelihood (PAML)</a> package.
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example    The following query defines a pair of paralogous xenopous genes. See @link homology_member for more details
      @sql                                  SELECT * FROM homology WHERE homology_id = 4650;
@@ -1301,9 +1281,8 @@ CREATE TABLE hmm_profile (
 @column n
 @column s
 @column lnl
-@column lnl
 @column threshold_on_ds
-@column ancerstor_node_id
+@column ancestor_node_id
 @column tree_node_id
 
 @homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 4650 GROUP BY homology_id;
@@ -1466,14 +1445,14 @@ The alignment will be:<br />
     </tr>
   </tbody>
 </table>
-@colour   #01D4F7
+@colour   #1E90FF
 
 @example    The following query refers to the two homologue sequences defined by the homology.homology_id 4650. Gene and peptide sequence of the second homologue can retrieved in the same way.
    @sql                       SELECT * FROM homology_member WHERE homology_id = 4650;
 
 @column homology_id        External reference to homology_id in the @link homology table
 @column member_id          External reference to member_id in the @link member table. Refers to the corresponding "ENSMBLGENE" entry
-@column peptide_member_id  External reference to member_id in the @link member table. Refers to the corresponding "ENSEMBLPEPE" entry
+@column peptide_member_id  External reference to member_id in the @link member table. Refers to the corresponding "ENSEMBLPEP" entry
 @column cigar_line         An internal description of the alignment. It contains mathces/mismatches (M) and delations (D) and refers to the corresponding peptide_member_id sequence
 @column perc_cov           Defines the percentage of the peptide which has been aligned
 @column perc_id            Defines the percentage of identity between both homologues
@@ -1505,14 +1484,14 @@ CREATE TABLE homology_member (
 /**
 @table mapping_session
 @desc  This table contains one entry per stable_id mapping session (either for Families or for Protein Trees), which contains the type, the date of the mapping, and which releases were linked together. A single mapping_session is the event when mapping between two given releases for a particular class type ('family' or 'tree') is loaded. The whole event is thought to happen momentarily at 'when_mapped' (used for sorting in historical order).
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column mapping_session_id    Internal unique ID
 @column type                  Type of stable_ids that were mapped during this session
 @column when_mapped           Normally, we use the date of creation of the mapping file being loaded. This prevents the date from chaging even if we accidentally remove the entry and have to re-load it.
 @column rel_from              rel.number from which the stable_ids were mapped during this session. rel_from < rel_to
 @column rel_to                rel.number to which the stable_ids were mapped during this session. rel_from < rel_to
-@column prefix
+@column prefix                Prefix
 */
 
 CREATE TABLE mapping_session (
@@ -1530,7 +1509,7 @@ CREATE TABLE mapping_session (
 /**
 @table stable_id_history
 @desc  This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
-@colour   #01D4F7
+@colour   #1E90FF
 */
 
 CREATE TABLE stable_id_history (
@@ -1551,19 +1530,19 @@ CREATE TABLE stable_id_history (
 /**
 @table sitewise_aln
 @desc  This table contains site-wise omega values found in the multiple alignments underlining the protein trees. 
-@colour   #01D4F7
+@colour   #1E90FF
 
-@column sitewise_id           Internal unique ID
-@column aln_position          The position in the whole GeneTree alignment, even if it is all_gaps in the subtree
-@column node_id               The root of the subtree for which the sitewise is calculated
-@column tree_node_id          The root of the tree. it will be equal to node_id if we are calculating sitewise for the whole tree
-@column omega                 The estimated omega value at the position
-@column omega_lower           The lower bound of the confidence interval
-@column omega_upper           The upper bound of the confidence interval
-@column optimal               ?????????
-@column ncod                  ?????????
-@column threshold_on_brach_ds The used threshold to break a tree into subtrees when the dS value of a given branch is too big. This is defined in the configuration file for the genetree pipeline
-@column type                  The predicted type for the codon/aminoacid
+@column sitewise_id             Internal unique ID
+@column aln_position            The position in the whole GeneTree alignment, even if it is all_gaps in the subtree
+@column node_id                 The root of the subtree for which the sitewise is calculated
+@column tree_node_id            The root of the tree. it will be equal to node_id if we are calculating sitewise for the whole tree
+@column omega                   The estimated omega value at the position
+@column omega_lower             The lower bound of the confidence interval
+@column omega_upper             The upper bound of the confidence interval
+@column optimal                 optimal
+@column ncod                    ncod
+@column threshold_on_branch_ds   The used threshold to break a tree into subtrees when the dS value of a given branch is too big. This is defined in the configuration file for the genetree pipeline
+@column type                   The predicted type for the codon/aminoacid
 */
 
 CREATE TABLE sitewise_aln (
@@ -1592,7 +1571,7 @@ CREATE TABLE sitewise_aln (
 /**
 @table species_tree_node
 @desc  This table contains the nodes of the species tree used in the gene gain/loss analysis
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column node_id                 Internal unique ID
 @column parent_id               Link to the parent node
@@ -1623,7 +1602,7 @@ CREATE TABLE `species_tree_node` (
 /**
 @table species_tree_root
 @desc  This table stores the species tree used in the gene gain/loss analysis (for ncRNA and Protein Trees)
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column root_id                       Internal unique ID
 @column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -1649,7 +1628,7 @@ CREATE TABLE `species_tree_root` (
 /**
 @table species_tree_node_tag
 @desc  This table contains tag/value data for species_tree_nodes
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column node_id           Internal unique ID
 @column tag               Tag name for the tag/value pair
@@ -1677,7 +1656,7 @@ CREATE TABLE `species_tree_node_tag` (
 /**
 @table CAFE_gene_family
 @desc  This table holds information about each CAFE gene family
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column cafe_gene_family_id     Internal unique ID
 @column root_id                 External reference to root_id in the @link species_tree_root table
@@ -1711,7 +1690,7 @@ CREATE TABLE `CAFE_gene_family` (
 /**
 @table CAFE_species_gene
 @desc  This table stores per @link species_tree_node information about expansions/contractions of each @link CAFE_gene_family
-@colour   #01D4F7
+@colour   #1E90FF
 
 @column cafe_gene_family_id      External reference to cafe_gene_family_id in the @link CAFE_gene_family table.
 @column node_id                  External reference to node_id in the @link species_tree_node table
