@@ -37,10 +37,15 @@ sub content {
   my $filter = EnsEMBL::Web::Filter::DAS->new({'object' => $object});
   my $sources = $filter->catch($object->param('das_server'));
 
+  # Also catch duplicates by logicname (DECIPHER has different URL on mirrors)
+  my %logic_name;
+  $logic_name{$_} = 1 for(map { $_->logic_name } values %{$all_das[1]});
+  #  
+
   for my $source (@{ $sources }) {
     my $already_added = 0;
     ## If the source is already in the speciesdefs/session/user, skip it
-    if ( $all_das[1]->{ $source->full_url } ) {
+    if ( $all_das[1]->{ $source->full_url } or exists $logic_name{$source->logic_name} ) {
       $already_added = 1;
       $count_added++;
     }
