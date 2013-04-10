@@ -85,7 +85,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   getPopup: function (el) {
     var data = el.data();
-    var popup = this.elLk.popup.clone().appendTo(this.el).draggable({ handle: 'tr:first' }).css(data.position);
+    var popup = this.elLk.popup.clone().appendTo(this.el).draggable({ handle: 'tr.header' }).css(data.position);
     
     function toggle(e) {
       if (e.target.nodeName !== 'A') {
