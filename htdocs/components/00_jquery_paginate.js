@@ -1,3 +1,5 @@
+// $Revision$
+
 (function ($) {
   $.fn.paginate = function (options) {
     options = $.extend({
@@ -35,22 +37,21 @@
         
         navPanels.each(function () {
           var el    = $(this);
-          var links = el.children('.page_link');
-          var first = links.first();
-          var last  = links.last();
+          var pages = el.children('.item');
+          var first = pages.first();
+          var last  = pages.last();
+          var start = Math.max(data.currentPage - Math.floor(options.linksToDisplay / 2), 0);
+          var end   = Math.min(start + options.linksToDisplay, data.totalLinks);
+              start = Math.max(end - options.linksToDisplay, 0)
           
-          links.removeClass('active_page').filter('[rel=' + data.currentPage + ']').addClass('active_page');
-          
-          if (links.filter('.active_page')[0].style.display === 'none') {
-            links.hide().slice(data.currentPage + (check ? 0 : 1 - options.linksToDisplay), data.currentPage + (check ? options.linksToDisplay : 1)).show();
-          }
+          pages.hide().removeClass('active').filter('[rel=' + data.currentPage + ']').addClass('active').end().slice(start, end).show();
           
           el.children('.more')[last[0].style.display  === 'none' ? 'show' : 'hide']();
           el.children('.less')[first[0].style.display === 'none' ? 'show' : 'hide']();
-          el.children('.next_link,      .last_link')[last.hasClass('active_page')  ? 'addClass' : 'removeClass']('no_more');
-          el.children('.previous_link, .first_link')[first.hasClass('active_page') ? 'addClass' : 'removeClass']('no_more');
+          el.children('.next, .last')[last.hasClass('active')   ? 'addClass' : 'removeClass']('disabled');
+          el.children('.prev, .first')[first.hasClass('active') ? 'addClass' : 'removeClass']('disabled');
           
-          el = links = first = last = null;
+          el = pages = first = last = null;
         });
         
         navInfo.html(options.navLabelInfo.replace('{0}', start + 1).replace('{1}', start + length).replace('{2}', items.length));
@@ -68,23 +69,23 @@
       }
       
       var pages = Math.ceil(items.length / options.itemsPerPage);
-      var more  = '<span class="ellipse more">...</span>';
-      var less  = '<span class="ellipse less">...</span>';
-      var first = !options.showFirstLast ? '' : '<a class="first_link" href="">' + options.navLabelFirst + '</a>';
-      var last  = !options.showFirstLast ? '' : '<a class="last_link" href="">'  + options.navLabelLast  + '</a>';
+      var more  = '<span class="more">...</span>';
+      var less  = '<span class="less">...</span>';
+      var first = !options.showFirstLast ? '' : '<a class="first" href="">' + options.navLabelFirst + '</a>';
+      var last  = !options.showFirstLast ? '' : '<a class="last" href="">'  + options.navLabelLast  + '</a>';
       var html  = '';
       
       for (var i = 0; i < options.navOrder.length; i++) {
         switch (options.navOrder[i]) {
           case 'first': html += first; break;
           case 'last' : html += last; break;
-          case 'next' : html += '<a class="next_link" href="">'     + options.navLabelNext + '</a>'; break;
-          case 'prev' : html += '<a class="previous_link" href="">' + options.navLabelPrev + '</a>'; break;
+          case 'next' : html += '<a class="next" href="">' + options.navLabelNext + '</a>'; break;
+          case 'prev' : html += '<a class="prev" href="">' + options.navLabelPrev + '</a>'; break;
           case 'num'  : html += less;
             var current = 0;
             
             while (pages > current) {
-              html += '<a class="page_link" href="" rel="' + current + '">' + (++current) + '</a>';
+              html += '<a class="item" href="" rel="' + current + '">' + (++current) + '</a>';
             }
             
             html += more;
@@ -99,7 +100,7 @@
         currentPage : 0,
         previousPage: 0,
         itemsPerPage: options.itemsPerPage,
-        totalLinks  : navPanels.first().children('.page_link').length
+        totalLinks  : navPanels.first().children('.item').length
       };
       
       options.linksToDisplay = Math.min(options.linksToDisplay, data.totalLinks);
@@ -108,17 +109,17 @@
       items.hide().slice(0, options.itemsPerPage).show();
       
       navPanels.each(function () {
-        $(this).children('.page_link').hide().eq(options.startPage).addClass('active_page').end().slice(0, options.linksToDisplay).show();
+        $(this).children('.item').hide().eq(options.startPage).addClass('active').end().slice(0, options.linksToDisplay).show();
       });
       
       navPanels.children('a').on('click', function () {
         var page;
         
         switch (this.className) {
-          case 'last_link'    : page = data.totalLinks  - 1; break;
-          case 'previous_link': page = data.currentPage - 1; break;
-          case 'next_link'    : page = data.currentPage + 1; break;
-          default             : page = this.rel || 0;        break;
+          case 'last': page = data.totalLinks  - 1; break;
+          case 'prev': page = data.currentPage - 1; break;
+          case 'next': page = data.currentPage + 1; break;
+          default    : page = this.rel || 0;        break;
         }
         
         jumpTo(page);
