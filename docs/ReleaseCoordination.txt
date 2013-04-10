@@ -1091,10 +1091,14 @@ CVS commit these files.
 
 20. Documentation
 
-20.1 Update the schema compara_schema.html in this directory:
-       $ENSEMBL_CVS_ROOT_DIR/ensembl-webcode/htdocs/info/docs/api/compara/
+20.1 Update the schema documentation by running the sql2html.pl script:
 
-20.1 Update the tutorial documentation compara_tutorial.html in this directory:
+$ perl $ENSEMBL_CVS_ROOT_DIR/ensembl/misc_scripts/sql2html.pl -i sql/table.sql -o sql/compara_schema.html -d Compara -host compara3 -user ensro -dbname kb3_ensembl_compara_71 -sort_headers 0 -sort_tables 0
+
+NOTES: Check the host, database, etc
+       The output file should may not go to sql/compara_schema.html (this should probably be updated here)
+
+20.2 Update the tutorial documentation compara_tutorial.html in this directory:
        $ENSEMBL_CVS_ROOT_DIR/ensembl-webcode/htdocs/info/docs/api/compara/
 
 Perl source files should be in $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/tutorial_examples/
@@ -1104,12 +1108,12 @@ If you don't have 'highlight' installed, you can ask Matthieu to do it
 
 The .inc files can then be moved to $ENSEMBL_CVS_ROOT_DIR/ensembl-webcode/htdocs/info/docs/api/compara/
 
-20.2 Open the URL /info/docs/api/compara/compara_schema.html from a sandbox / test website and export it as a PDF in
+20.3 Open the URL /info/docs/api/compara/compara_schema.html from a sandbox / test website and export it as a PDF in
        $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/ComparaTutorial.pdf
 
-20.3 Don't forget to commit all the modified files / added tutorial examples
+20.4 Don't forget to commit all the modified files / added tutorial examples
 
-20.4 Ask Javier to update the species tree if there are some new species
+20.5 Ask Javier to update the species tree if there are some new species
 
 ## Data Dumps
 # Note: It is probably best practice to ask the person who ran the pipeline to perform the associated dump (if any).
