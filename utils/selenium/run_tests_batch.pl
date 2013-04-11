@@ -74,8 +74,7 @@ foreach (@species_modules) {
   print "Running Module $_ Test \n";
   
   my $species = qq{--species "all"}; #by default all species
-  $species    = qq{--species "mus_musculus"} if ($_ eq 'Regulation'); #Regulation test module needs to be run for mouse only
-  $species    = qq{--species "homo_sapiens"} if ($_ eq 'Variation'); #Variation test module needs to be run for human only  
+  $species    = qq{--species "mus_musculus"} if ($_ eq 'Regulation'); #Regulation test module needs to be run for mouse only  
   
   $cmd = qq{perl run_tests.pl --module "$_" $species $timeout $url --host $host --port $port > "test_reports/$report" 2>&1 };
   $cmd =~ s/\n//g;
