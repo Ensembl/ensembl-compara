@@ -2515,12 +2515,14 @@ sub add_regulation_builds {
   my $type              = $fg_data{$key_2}{'type'};
   
   return unless $type;
-  
+  my $db = $self->hub->database('funcgen',$self->species);
+  return unless defined $db;
+
   $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
   
   my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
   my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
-  my $evidence_info = $self->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info;
+  my $evidence_info = $db->get_FeatureTypeAdaptor->get_regulatory_evidence_info;
   my @cell_lines    = sort keys %{$db_tables->{'cell_type'}{'ids'}};
   my (@renderers, $multi_flag, $core_menu, $non_core_menu, $prev_track);
 
