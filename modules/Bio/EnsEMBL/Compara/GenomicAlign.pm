@@ -189,10 +189,10 @@ use Bio::EnsEMBL::Mapper;
               : (opt.) int $dnafrag_id (the database internal ID for the $dnafrag)
   Arg [-DNAFRAG_START]
               : (opt.) int $dnafrag_start (the starting position of this
-                Bio::EnsEMBL::Compara::GenomicAling within its corresponding $dnafrag)
+                Bio::EnsEMBL::Compara::GenomicAlign within its corresponding $dnafrag)
   Arg [-DNAFRAG_END]
               : (opt.) int $dnafrag_end (the ending position of this
-                Bio::EnsEMBL::Compara::GenomicAling within its corresponding $dnafrag)
+                Bio::EnsEMBL::Compara::GenomicAlign within its corresponding $dnafrag)
   Arg [-DNAFRAG_STRAND]
               : (opt.) int $dnafrag_strand (1 or -1; defines in which strand of its
                 corresponding $dnafrag this Bio::EnsEMBL::Compara::GenomicAlign is)
@@ -204,6 +204,8 @@ use Bio::EnsEMBL::Mapper;
                 the $aligned_sequence of this object)
   Arg [-VISIBLE]
               : (opt.) int $visible. Used in self alignments to ensure only one Bio::EnsEMBL::Compara::GenomicAlignBlock is visible when you have more than 1 block covering the same region.
+  Arg [-NODE_ID]
+              : (opt.) int $node_id (the database internal ID linking the Bio::EnsEMBL::Compara::GenomicAlign object to the Bio::EnsEMBL::Compara::GenomicAlignTree object).
   Example     : my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                         -adaptor => $genomic_align_adaptor,
                         -genomic_align_block => $genomic_align_block,
