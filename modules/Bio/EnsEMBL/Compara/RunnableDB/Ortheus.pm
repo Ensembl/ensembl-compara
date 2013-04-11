@@ -97,6 +97,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 
 use strict;
+use Data::Dumper;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::Config::Compara; #for $PYTHON and $ORTHEUS and $EXONERATE
@@ -139,7 +140,7 @@ my $create_block_frag_array = 1;
 
 sub fetch_input {
   my( $self) = @_;
-
+  $self->param('ga_frag', []);
   my $ortheus_mlssid = $self->param('ortheus_mlssid');
   unless ($ortheus_mlssid) {
     throw("MethodLinkSpeciesSet is not defined for this Ortheus job");
