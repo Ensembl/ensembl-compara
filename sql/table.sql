@@ -519,8 +519,8 @@ The aligned sequence will be:<br />
 @column dnafrag_end                    Ending position within the dnafrag defined by dnafrag_id
 @column dnafrag_strand                 Strand in the dnafrag defined by dnafrag_id
 @column cigar_line                     Internal description of the aligned sequence
-@column visible                        ????????Kathryn
-@column node_id                        ????????Kathryn
+@column visible                        Used in self alignments to ensure only one Bio::EnsEMBL::Compara::GenomicAlignBlock is visible when you have more than 1 block covering the same region
+@column node_id                        External reference to node_id in the @link genomic_align_tree table
 
 @see genomic_align_block
 @see method_link_species_set
@@ -559,8 +559,8 @@ CREATE TABLE genomic_align (
 
 @column genomic_align_block_id   External reference to genomic_align_block_id in the @link genomic_align_block table
 @column window_size              The scores are stored at different resolution levels. This column defines the window size used to calculate the average score
-@column position                 ??????????Kathryn
-@column expected_score           ??????????Kathryn
+@column position                 Position of the first score (in alignment coordinates)
+@column expected_score           Expected score. The observed score can be determined using the diff_score and the expected_score
 @column diff_score               The difference between the expected and observed variation, i.e. the conservation score
 
 @see genomic_align_block
