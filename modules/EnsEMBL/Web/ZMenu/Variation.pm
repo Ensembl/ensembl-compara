@@ -62,7 +62,7 @@ sub content {
   my $bp        = "$chr:$chr_start";
   
   if ($chr_end < $chr_start) {
-    $bp = "$chr: between $chr_end &amp; $chr_start";
+    $bp = "$chr: between $chr_end & $chr_start";
   } elsif ($chr_end > $chr_start) {
     $bp = "$chr:$chr_start-$chr_end";
   }
@@ -80,7 +80,7 @@ sub content {
       $lrg_bp    = $chr_start;
       
       if ($chr_end < $chr_start) {
-        $lrg_bp = "between $chr_end &amp; $chr_start";
+        $lrg_bp = "between $chr_end & $chr_start";
       } elsif ($chr_end > $chr_start) {
         $lrg_bp = "$chr_start-$chr_end";
       }

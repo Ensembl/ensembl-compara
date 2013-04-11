@@ -48,7 +48,7 @@ sub content {
   my $length     = $end - $start;
   
   if ($end < $start) {
-    $position = "$seq_region: between $end &amp; $start";
+    $position = "$seq_region: between $end & $start";
   } elsif ($end > $start) {
     $position = "$seq_region:$start-$end";
   }

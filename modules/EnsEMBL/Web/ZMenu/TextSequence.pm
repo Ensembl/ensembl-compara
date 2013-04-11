@@ -60,7 +60,7 @@ sub variation_content {
   );
   
   if ($chr_end < $chr_start) {
-    $position = "between $seq_region$chr_end &amp; $seq_region$chr_start";
+    $position = "between $seq_region$chr_end & $seq_region$chr_start";
   } elsif ($chr_end > $chr_start) {
     $position = "$seq_region$chr_start-$chr_end";
   }
@@ -73,7 +73,7 @@ sub variation_content {
     $lrg_position   = $lrg_feature->seq_region_name . ":$lrg_start";
     
     if ($lrg_end < $lrg_start) {
-      $lrg_position = "between $lrg_end &amp; $lrg_start on " . $lrg_feature->seq_region_name;
+      $lrg_position = "between $lrg_end & $lrg_start on " . $lrg_feature->seq_region_name;
     } elsif ($lrg_end > $lrg_start) {
       $lrg_position = $lrg_feature->seq_region_name . ":$lrg_start-$lrg_end";
     }
