@@ -1,0 +1,95 @@
+This document describes the process of running the pairwise alignment pipeline for only new patches on the reference species (currently human or mouse) against a selection of other species. 
+
+Note that aligments which are currently BLASTZ_NET will have patches run using LASTZ_NET but they will have the same method_link_species_set_id as the BLASTZ_NET results.
+
+
+1) Find the new patches
+Run the script 'find_assembly_patches.pl' using the latest core database and the previous core database to find just the newest patches.
+
+$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/find_assembly_patches.pl -new_core "mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37?group=core&species=homo_sapiens" -prev_core "mysql://ensro@ens-livemirror:3306/homo_sapiens_core_67_37?group=core&species=homo_sapiens"
+
+This produces output like:
+
+=======================
+NEW patches
+  HG871_PATCH 1000759274 2012-04-27 12:12:07
+  HG1292_PATCH 1000759258 2012-04-27 12:12:07
+  HG1293_PATCH 1000759262 2012-04-27 12:12:07
+  HG1304_PATCH 1000759268 2012-04-27 12:12:07
+  HG962_PATCH 1000759272 2012-04-27 12:12:07
+  HSCHR3_1_CTG1 1000759264 2012-04-27 12:12:07
+  HG1287_PATCH 1000759260 2012-04-27 12:12:07
+  HG1308_PATCH 1000759270 2012-04-27 12:12:07
+  HG271_PATCH 1000759278 2012-04-27 12:12:07
+  HG1322_PATCH 1000759266 2012-04-27 12:12:07
+CHANGED patches
+  HG1211_PATCH new=1000759276 2012-04-27 12:12:07       prev=1000658983 2012-02-09 10:46:34
+DELETED patches
+
+Patches to delete: ("HG1211_PATCH")
+Input for create_patch_pairaligner_conf.pl:
+--patches chromosome:HG1287_PATCH,chromosome:HG1292_PATCH,chromosome:HG1322_PATCH,chromosome:HG962_PATCH,chromosome:HG1211_PATCH,chromosome:HG871_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG1293_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1
+=======================
+
+2) Add the patches to the ensembl-compara-master database
+
+a) You may want to make a backup of the master first:
+eg 
+mysqldump --opt -h compara1 -u ensro ensembl_compara_master > /path/to/dump/dir/ensembl_compara_master.dump
+
+b) Remove any dnafrags which have been CHANGED or DELETED. These are listed in "Patches to delete:" in the output above.
+
+DELETE df FROM dnafrag df JOIN genome_db gdb USING (genome_db_id) WHERE gdb.name = "homo_sapiens" AND df.name IN ("HG1211_PATCH");
+
+c)  Run update_genome.pl
+You need to use the --force option because we are adding additional dnafrags to an existing species
+
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species human --force
+
+The reg.conf file needs to contain the compara_master information.
+
+Check that these have been added.
+
+3) Create the lastz.conf file. 
+This script currently supports homo_sapiens and mus_musculus as reference species. Any additional reference species will need a reference dna_collection specified in the script of the form (eg):
+$dna_collection->{homo_sapiens_mammal} 
+
+An additional dna_collection may be added to deal with species which require different parameters. The list of exception species (eg primates in the case of human) are defined by the --exception_species parameter. The default list used when human is the reference species is: gorilla_gorilla, macaca_mulatta, pan_troglodytes, pongo_abelii, callithrix_jacchus. There are no exception_species for mouse. The dna_collection is specied of the form (eg):
+$dna_collection->{homo_sapiens_exception} 
+
+The default pair aligner options are defined in the variable $pair_aligner->{mammal} and for the exception_species, in $pair_aligner->{exception}. 
+
+The ref_include_non_reference and non_ref_include_non_reference can be left to the default values unless doing non-ref patches against a ref species eg human vs mouse patches. This would have to be done as a isolated run from the other mouse patches where mouse would be the reference species.
+
+The list of patches to use is given in the output of the find_assembly_patches.pl script.
+
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --master_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master --ref_species homo_sapiens --species rattus_norvegicus,macaca_mulatta,pan_troglodytes,gallus_gallus,ornithorhynchus_anatinus,monodelphis_domestica,pongo_abelii,equus_caballus,bos_taurus,sus_scrofa,gorilla_gorilla,callithrix_jacchus,oryctolagus_cuniculus --ref_url mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37 --ensembl_version 68 --host ens-livemirror --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
+
+
+You may get warnings for those pairwise alignments which are still BLASTZ_NET, ie are not yet LASTZ_NET. These can be ignored.
+
+4) Run init_pipeline
+Run the init_pipeline command, setting --conf_file to lastz.conf
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_lastz_hap_68 --password <PASSWORD> --reg_conf reg.conf --conf_file lastz.conf --pipeline_name LASTZ_HAP_68 --skip_set_internal_ids 1
+
+5) Run the beekeeper
+
+6) Check results
+
+select method_link_species_set_id, name, count(*) from genomic_align_block join method_link_species_set using (method_link_species_set_id) where method_link_id in (1,16) group by method_link_species_set_id;
+
+7) Add to release database. Documentation in the Release Document.
+
+8) Remove alignments on CHANGED or DELETED patches from the release database:
+
+dnafrag_id=13705533
+
+select count(*) from genomic_align where dnafrag_id=13705533;
+608
+
+select count(*) FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab WHERE ga1.dnafrag_id=13705533 AND ga1.genomic_align_block_id = ga2.genomic_align_block_id AND ga1.genomic_align_id != ga2.genomic_align_id AND  ga1.genomic_align_block_id = gab.genomic_align_block_id;
+608
+
+DELETE ga1, ga2, gab FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab WHERE ga1.dnafrag_id=13705533 AND ga1.genomic_align_block_id = ga2.genomic_align_block_id AND ga1.genomic_align_id != ga2.genomic_align_id AND ga1.genomic_align_block_id = gab.genomic_align_block_id;
+
+608*3 = 1824
