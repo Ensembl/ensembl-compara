@@ -66,7 +66,7 @@ sub content {
         $not_found++;
       }
       
-      my $row = ref($file) =~ /DAS/ ? $self->table_row_das($file, $user_record) : $self->table_row($file, $sharers);
+      my $row = ref($file) =~ /DAS/ || $user_record && $file->type eq 'das' ? $self->table_row_das($file, $user_record) : $self->table_row($file, $sharers);
       
       my ($type, $id) = $file->{'analyses'} =~ /^(session|user)_(\d+)_/;
          ($id, $type) = (($file->{'code'} =~ /_(\d+)$/), 'session') unless $type;
@@ -250,7 +250,8 @@ sub table_row_das {
   if ($user_record) {
     %url_params = ( id => $file->id );
     $save       = $self->_icon({ link_class => 'modal_link',
-                                class => 'sprite_disabled save_icon' });
+                                class => 'sprite_disabled save_icon',
+                                title => 'Already saved' });
   } elsif ($logins) {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
     my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
