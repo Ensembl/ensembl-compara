@@ -23,7 +23,7 @@ sub render {
   ]);
 
   $table->add_row({
-    'title' => sprintf('<a href="%s" class="popup">%s</a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'Movie', 'id' => $_->{'id'}}), $_->{'title'}),
+    'title' => sprintf('<a href="%s" class="popup">%s</a>', $hub->url({'species' => 'Multi', 'type' => 'Help', 'action' => 'Movie', 'id' => $_->{'id'}}), $_->{'title'}),
     'mins'  => $_->{'length'}
   }) for grep $_->{'youtube_id'}, @{$adaptor->fetch_movies};
   
