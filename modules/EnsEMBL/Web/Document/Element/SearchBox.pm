@@ -14,12 +14,12 @@ sub search_options {
   return (
     ## search_key         Dropdown label                  Input value
     $_[0]->hub->species ?
-    [ 'ensembl',          'Ensembl search this species',  'Search ' . $_[0]->species_defs->SPECIES_COMMON_NAME ] : (),
-    [ 'ensembl_all',      'Ensembl search all species',   'Search all species'                                 ],
-    [ 'ensembl_genomes',  'Ensembl genomes search',       'Search Ensembl genomes'                             ],
-    [ 'vega',             'Vega search',                  'Search Vega'                                        ],
-    [ 'ebi',              'EBI search',                   'Search EBI'                                         ],
-    [ 'sanger',           'Sanger search',                'Search Sanger'                                      ]
+    [ 'ensembl',          'Ensembl search this species',  'Search ' . $_[0]->species_defs->SPECIES_COMMON_NAME, 'species/16/'.$_[0]->hub->species.'.png' ] : (),
+    [ 'ensembl_all',      'Ensembl search all species',   'Search all species', 'search/ensembl.gif'],
+    [ 'ensembl_genomes',  'Ensembl genomes search',       'Search Ensembl genomes', 'search/ensembl_genomes.gif'],
+    [ 'vega',             'Vega search',                  'Search Vega', 'search/vega.gif'],
+    [ 'ebi',              'EBI search',                   'Search EBI', 'search/ebi.gif'],
+    [ 'sanger',           'Sanger search',                'Search Sanger', 'search/sanger.gif'],
   );
 }
 
@@ -31,8 +31,10 @@ sub content {
   my @options        = $self->search_options;
   my $search_code    = lc $self->default_search_code;
      $search_code    = grep({ $_->[0] eq $search_code } @options) ? $search_code : $options[0][0];
-  my $search_options = join '', map qq(<div class="$_->[0]"><img src="${img_url}search/$_->[0].gif" alt="$_->[1]"/>$_->[1]<input type="hidden" value="$_->[2]&hellip;" /></div>\n), @options;
+  my $search_options = join '', map qq(<div class="$_->[0]"><img src="${img_url}$_->[3]" alt="$_->[1]"/>$_->[1]<input type="hidden" value="$_->[2]&hellip;" /></div>\n), @options;
   my ($search_label) = map { $_->[0] eq $search_code ? "$_->[2]&hellip;" : () } @options;
+
+  my $search_icon = $species && $species ne '/' ? "species/16/$species.png" : "search/${search_code}.gif";
 
   return qq(
     <div id="searchPanel" class="js_panel">
@@ -40,7 +42,7 @@ sub content {
       <form action="$search_url">
         <div class="search print_hide">
           <div class="sites button">
-            <img class="search_image" src="${img_url}search/${search_code}.gif" alt="" />
+            <img class="search_image" src="${img_url}$search_icon" alt="" />
             <img src="${img_url}search/down.gif" style="width:7px" alt="" />
             <input type="hidden" name="site" value="$search_code" />
           </div>
