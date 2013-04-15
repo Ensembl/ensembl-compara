@@ -124,6 +124,7 @@ eval {
   chomp $pid;
   
   if ($pid =~ /\d+/) {
+    print "Killing $pid\n";
     kill('TERM', $pid) or warn "Could not stop server: $!.\nSTOP failed.\n";
     
     if ($delay) {
@@ -140,8 +141,16 @@ eval {
           warn "process still exists\n";
           sleep 1;
         }
-        
-        warn "killed process with SIGKILL\n" if kill ('KILL', $pid);
+        warn "killed process with SIGKILL\n" if kill('KILL', -$pid);
+       
+        $begin = time;
+        while(time - $begin < -$delay) {
+          last unless kill(0,$pid);
+          warn "process still exists\n";
+          sleep 1;
+        }
+        warn "*** COULD NOT STOP SERVER: $!.\nSTOP failed.\n" if kill(0,$pid);
+ 
         warn "process gone\n";
       }
     }
