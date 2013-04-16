@@ -4,6 +4,11 @@ use strict;
 
 use base qw(EnsEMBL::Web::Configuration);
 
+sub set_default_action {
+  my $self = shift;
+  $self->{'_data'}{'default'} = 'Sources';
+}
+
 sub caption { return 'Experiment View'; }
 
 sub populate_tree {
