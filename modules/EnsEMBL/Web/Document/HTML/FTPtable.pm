@@ -31,6 +31,7 @@ sub render {
     mysql     => 'All Ensembl MySQL databases are available in text format as are the SQL table definition files',
     emf       => 'Alignments of resequencing data from the ensembl_compara database',
     gvf       => 'Variation data in GVF format',
+    vcf       => 'Variation data in VCF format',
     vep       => 'Cache files for use with the VEP script',
     funcgen   => 'Regulation data in GFF format',
     coll      => 'Additional regulation data (not in database)',
@@ -56,6 +57,7 @@ sub render {
     { key => 'mysql',   title => 'Whole databases',              align => 'center', width => '10%', sort => 'none' },
     { key => 'var1',    title => 'Variation (EMF)',              align => 'center', width => '10%', sort => 'html' },
     { key => 'var2',    title => 'Variation (GVF)',              align => 'center', width => '10%', sort => 'html' },
+    { key => 'var4',    title => 'Variation (VCF)',              align => 'center', width => '10%', sort => 'html' },
     { key => 'var3',    title => 'Variation (VEP)',              align => 'center', width => '10%', sort => 'html' },
     { key => 'funcgen', title => 'Regulation (GFF)',             align => 'center', width => '10%', sort => 'html' },
     { key => 'files',   title => 'Data files',                   align => 'center', width => '10%', sort => 'html' },
@@ -104,6 +106,7 @@ sub render {
       mysql   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>',          $title{'mysql'},   $rel),
       var1    => $required_lookup->{'var1'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/emf/%s/">EMF</a>',                          $title{'emf'},     $rel, $sp_var) : '-',
       var2    => $required_lookup->{'var2'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>',                $title{'gvf'},     $rel, $sp_dir) : '-',
+      var4    => $required_lookup->{'var4'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>',                $title{'vcf'},     $rel, $sp_dir) : '-',
       var3    => $required_lookup->{'var3'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/">VEP</a>',                   $title{'vep'},     $rel)          : '-',
       funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $rel, $sp_dir) : '-',
       bam     => $required_lookup->{'bam'}{$sp_dir}     ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bam/%s/genebuild/">BAM</a>',                $title{'bam'},     $rel, $sp_dir) : '-',
@@ -172,7 +175,17 @@ sub required_types_for_species {
     rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
     pongo_abelii macaca_mulatta
   )};
-  
+
+  # VCF
+  $required_lookup{'var4'} = { map { $_ => 1 } qw(
+    bos_taurus canis_familiaris danio_rerio drosophila_melanogaster 
+    equus_caballus felis_catus gallus_gallus homo_sapiens 
+    saccharomyces_cerevisiae monodelphis_domestica mus_musculus 
+    ornithorhynchus_anatinus pan_troglodytes pongo_pygmaeus 
+    rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
+    pongo_abelii macaca_mulatta
+  )};
+
   # VEP
   $required_lookup{'var3'} = { map { $_ => 1 } qw(
     bos_taurus danio_rerio homo_sapiens mus_musculus rattus_norvegicus
