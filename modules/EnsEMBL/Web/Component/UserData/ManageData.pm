@@ -42,19 +42,8 @@ sub content {
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
-   
-    push @columns, ({ key => 'actions', title => 'Actions', width => '120px', align => 'center', sort => 'none' });
-   
-#    push @columns, ({ key => 'download', title => '', width => '20px', align => 'center', sort => 'none' });
- 
-#    if ($logins && $species_defs->SAVE_UPLOADED_DATA ne '0') {
-#      push @columns, (
-#        { key => 'save',  title => '', width => '22px', align => 'center', sort => 'none' },
-#        { key => 'share', title => '', width => '20px', align => 'center', sort => 'none' }
-#      );
-#    }
     
-#    push @columns, ({ key => 'delete', title => '', width => '20px', align => 'center', sort => 'none' });
+    push @columns, ({ key => 'actions', title => 'Actions', width => '120px', align => 'center', sort => 'none' });
     
     foreach my $file (@data) {
       my $user_record = ref($file) =~ /Record/;
@@ -90,13 +79,11 @@ sub content {
   $html  .= $self->group_shared_data;
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html ||= '<p class="space-below">You have no custom data.</p>';
-  $html .= sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add a custom track</a></p>', $hub->url({'action'=>'SelectFile'});
+  $html  .= sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add a custom track</a></p>', $hub->url({'action'=>'SelectFile'});
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups
-    ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>'
-    : '';
-
+  my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
+  
   return qq{
     <div class="info">
       <h3>Help</h3>
@@ -113,29 +100,28 @@ sub content {
 }
 
 sub _icon_inner {
-  my ($self,$params) = @_;
-
+  my ($self, $params) = @_;
   return qq(<span class="sprite _ht $params->{'class'}" title="$params->{'title'}">&nbsp;</span>);
 }
 
 sub _icon {
-  my ($self,$params) = @_;
-  
+  my ($self, $params) = @_;
   $params->{'link'} ||= '%s';
-  $params->{$_} ||= '' for(qw(link_class link_extra class));
+  $params->{$_} ||= '' for qw(link_class link_extra class);
+  
   my $title = ucfirst $params->{'class'};
-  $title =~ s/_icon$//;
+     $title =~ s/_icon$//;
+  
   $params->{'title'} ||= $title;
+  
   my $inner = $self->_icon_inner($params);
-  return $inner if($params->{'no_link'});
-  return qq(
-    <a href="$params->{'link'}" class="$params->{'link_class'} icon_link" rel="modal_user_data"
-      $params->{'link_extra'}>$inner</a>
-  );
+  
+  return $inner if $params->{'no_link'};
+  return qq{<a href="$params->{'link'}" class="$params->{'link_class'} icon_link" rel="modal_user_data" $params->{'link_extra'}>$inner</a>};
 }
 
 sub _no_icon {
-  return qq(<span class="sprite">&nbsp;</span>);
+  return '<span class="sprite">&nbsp;</span>';
 }
 
 sub table_row {
@@ -144,35 +130,25 @@ sub table_row {
   my $img_url      = $self->img_url.'16/';
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
-  my $delete       = $self->_icon({ link_class => $delete_class,
-                                    link_extra => $title,
-                                    class => 'delete_icon' });
-  my $download = $self->_no_icon;
-  my $logins   = $hub->species_defs->ENSEMBL_LOGINS;
-  
-  if ($file->{'prefix'} && $file->{'prefix'} eq 'download') {
-    my $format       = $file->{'format'} eq 'report' ? 'txt' : $file->{'format'};
-    $download = $self->_icon({ link => sprintf("/%s/download?file=%s;prefix=download;format=%s",$hub->species,$file->{'filename'},$format),
-                               class => 'download_icon',
-                               title => 'Download' });
-  }
-  my $share        = $self->_icon({ link_class => 'modal_link',
-                                    class => 'share_icon' });
-
+  my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
+  my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
+  my $download     = $self->_no_icon;
+  my $logins       = $hub->species_defs->ENSEMBL_LOGINS;
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
   my %url_params   = ( __clear => 1, source => $file->{'url'} ? 'url' : 'upload' );
   my $save;
   
+  if ($file->{'prefix'} && $file->{'prefix'} eq 'download') {
+    my $format   = $file->{'format'} eq 'report' ? 'txt' : $file->{'format'};
+       $download = $self->_icon({ link => sprintf('/%s/download?file=%s;prefix=download;format=%s', $hub->species, $file->{'filename'}, $format), class => 'download_icon', title => 'Download' });
+  }
+  
   if ($user_record) {
     $url_params{'id'} = $file->id;
-    
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
   } elsif ($logins) {
-    my $save_html = $self->_icon({ link_class => 'modal_link',
-                                   class => 'save_icon',
-                                   title => '%s' });
-    
+    my $save_html = $self->_icon({ link_class => 'modal_link', class => 'save_icon', title => '%s' });
     my $save_url  = $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'save_remote' : 'save_upload', code => $file->{'code'}, __clear => 1 });
     
     $url_params{'code'} = $file->{'code'};
@@ -189,7 +165,7 @@ sub table_row {
     })
   );
   
-  if ($file->{'nearest'} and 0) {
+  if ($file->{'nearest'}) {
     $name .= sprintf(
       '<a href="%s;contigviewbottom=%s">View sample location</a><br />',
       $hub->url({
@@ -227,8 +203,9 @@ sub table_row {
   
   $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
   
-  my $share_html = sprintf($share, $hub->url({ action => 'SelectShare', %url_params }));
-  my $delete_html = sprintf($delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params }));
+  my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
+  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
+  
   return {
     type    => $file->{'url'} ? 'URL' : 'Upload',
     name    => { value => $name, class => 'wrap editable' },
@@ -241,29 +218,24 @@ sub table_row {
 sub table_row_das {
   my ($self, $file, $user_record) = @_;
   my $hub     = $self->hub;
-  my $img_url = $self->img_url.'16/';
-  my $link    = $self->_icon({ link_class => 'modal_link',
-                               class => 'delete_icon' });  
+  my $img_url = $self->img_url . '16/';
+  my $link    = $self->_icon({ link_class => 'modal_link', class => 'delete_icon' });  
   my $logins  = $hub->species_defs->ENSEMBL_LOGINS;
+  my $none    = $self->_no_icon;
   my (%url_params, $save);
   
   if ($user_record) {
     %url_params = ( id => $file->id );
-    $save       = $self->_icon({ link_class => 'modal_link',
-                                class => 'sprite_disabled save_icon',
-                                title => 'Already saved' });
+    $save       = $self->_icon({ link_class => 'modal_link', class => 'sprite_disabled save_icon',  title => 'Already saved' });
   } elsif ($logins) {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
     my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
        %url_params  = ( code => $file->logic_name );
-       $save        = $self->_icon({ link_class => 'modal_link',
-                                     class => 'save_icon',
-                                     title => $save_params[1],
-                                     link => $save_params[0] });
+       $save        = $self->_icon({ link_class => 'modal_link', class => 'save_icon', title => $save_params[1], link => $save_params[0] });
   }
   
-  my $none = $self->_no_icon;
   my $delete_html = sprintf($link, $hub->url({ action => 'ModifyData', function => 'delete_remote', source => 'das', __clear => 1, %url_params }));
+  
   return {
     type    => 'DAS',
     name    => { value => $file->label, class => 'wrap' },
@@ -289,8 +261,8 @@ sub group_shared_data {
   my $html;
   
   foreach my $group (@groups) {
-  
     my @rows;
+    
     foreach (grep $_, $user->get_group_records($group, 'uploads'), $user->get_group_records($group, 'urls')) {
       push @rows, {
         %{$self->table_row($_)},
