@@ -386,7 +386,15 @@ sub location {
     my $start    = $mappings{$vf}{'start'};
     my $end      = $mappings{$vf}{'end'};
 
-    $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
+
+    my $coord = "$region:$start-$end";
+    if ($start == $end) {
+      $coord = "$region:$start";
+    } elsif ( $start > $end ) {
+      $coord = "$region</b>: between <b>$end</b> and <b>$start";
+    } 
+    
+    $location = ucfirst(lc $type).' <b>'.$coord . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
       ' | <a href="%s" class="constant">View in location tab</a>',
