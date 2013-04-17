@@ -6,6 +6,10 @@ use Bio::EnsEMBL::Feature;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
+sub label_overlay { return 1; }
+sub fixed         { return 1; }
+sub errorTrack    {}
+
 sub features {
   my ($self) = @_;
   my $start  = 0;
@@ -36,16 +40,12 @@ sub colour_key {
 # What to place on the feature
 sub feature_label {
   my ($self, $f) = @_;
-  return ($f->seqname, 'overlaid');
+  return $f->seqname;
 }
 
 sub title {
   my ($self, $f) = @_;
   return sprintf '%s; Position: %s:%s', $f->seqname, $self->{'container'}->seq_region_name, $f->seq_region_start;
 }
-
-sub fixed { return 1; }
-
-sub errorTrack {}
 
 1;

@@ -4,7 +4,8 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub _das_type {  return 'qtl'; }
+sub _das_type     {  return 'qtl'; }
+sub label_overlay { return 1; }
 
 sub features {
   my ($self) = @_;
@@ -18,7 +19,7 @@ sub colour_key {
 
 sub feature_label {
   my ($self, $f) = @_;
-  return $f->qtl->trait,'overlaid';
+  return $f->qtl->trait;
 }
 
 sub title {

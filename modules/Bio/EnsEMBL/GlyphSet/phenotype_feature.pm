@@ -4,9 +4,8 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub colour_key {
-  return lc($_[1]->type);
-}
+sub colour_key    { return lc $_[1]->type; }
+sub label_overlay { return 1; }
 
 sub my_config { 
   my $self = shift;
@@ -24,7 +23,7 @@ sub my_config {
 
 sub feature_label {
   my ($self, $f) = @_;
-  return $self->{'display'} eq 'compact' ? undef : $f->phenotype->description,'overlaid';
+  return $self->{'display'} eq 'compact' ? undef : $f->phenotype->description;
 }
 
 sub features {

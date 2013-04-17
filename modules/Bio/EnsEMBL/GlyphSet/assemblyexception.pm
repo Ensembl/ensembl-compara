@@ -18,16 +18,15 @@ sub feature_label {
   my ($self, $f) = @_;
   
   return undef if $self->my_config('label') eq 'off';
-  return ($f->{'alternate_slice'}->seq_region_name, 'under') if $self->my_config('short_labels');
+  return $f->{'alternate_slice'}->seq_region_name if $self->my_config('short_labels');
   
-  return(
-    sprintf('%s: %s:%d-%d (%s)',
-      $f->type,
-      $f->{'alternate_slice'}->seq_region_name,
-      $f->{'alternate_slice'}->start,
-      $f->{'alternate_slice'}->end,
-      $self->readable_strand($f->{'alternate_slice'}->strand)
-    ), 'undef'
+  return sprintf(
+    '%s: %s:%d-%d (%s)',
+    $f->type,
+    $f->{'alternate_slice'}->seq_region_name,
+    $f->{'alternate_slice'}->start,
+    $f->{'alternate_slice'}->end,
+    $self->readable_strand($f->{'alternate_slice'}->strand)
   );
 }
 

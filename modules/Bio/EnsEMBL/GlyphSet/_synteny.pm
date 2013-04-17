@@ -88,19 +88,13 @@ sub get_colours {
   };
 }
 
-## Return the image label and the position of the label
-## (overlaid means that it is placed in the centre of the
-## feature.
 sub feature_label {
   my ($self, $f) = @_;
-  
-  return(
-    sprintf('%s%s%s',
-      $f->{'rel_ori'} < 0 ? '< ' : '',
-      $f->{'hit_chr_name'},
-      $f->{'rel_ori'} < 0 ? ''  : ' >'
-    ),
-    'under'
+  return sprintf(
+    '%s%s%s',
+    $f->{'rel_ori'} < 0 ? '< ' : '',
+    $f->{'hit_chr_name'},
+    $f->{'rel_ori'} < 0 ? ''  : ' >'
   );
 }
 

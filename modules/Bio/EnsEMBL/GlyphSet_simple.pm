@@ -7,10 +7,9 @@ use Bio::EnsEMBL::Feature;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub features      { return [];           } 
-sub feature_label { return ('', 'none'); }
-sub class         {}
-sub render_tag    {}
+sub features    { return [];    } 
+sub class       {}
+sub render_tag  {}
 
 sub get_colours {
   my ($self, $f) = @_;
@@ -48,6 +47,8 @@ sub _init {
   return $self->no_features unless scalar @$features; 
   
   my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
+  my $no_label          = $self->my_config('no_label');
+  my $label_overlay     = $self->label_overlay;
   my $bump_width        = $self->my_config('bump_width');
      $bump_width        = 1 unless defined $bump_width;
   my $max_length_nav    = $self->my_config('navigation_threshold') || 15000000;
@@ -82,7 +83,7 @@ sub _init {
     $previous_start = $end;
     $previous_end   = $end;
     
-    my ($label, $style) = $self->feature_label($f);
+    my $label = $no_label ? undef : $self->feature_label($f);
     my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $font, ptsize => $fontsize);
     my ($img_start, $img_end) = ($start, $end);
     my ($tag_start, $tag_end) = ($start, $end);
@@ -90,7 +91,7 @@ sub _init {
     my @tags         = grep ref $_ eq 'HASH', $self->tag($f);
     my $row          = 0;
     
-    if ($label && $style ne 'overlaid') {
+    if ($label && !$label_overlay) {
       $tag_start = ($start + $end - 1 - $bp_textwidth) / 2;
       $tag_start = 1 if $tag_start < 1;
       $tag_end   = $tag_start + $bp_textwidth;
@@ -182,10 +183,10 @@ sub _init {
     
     push @tag_glyphs, $self->render_tags(\@tags, $composite, $slice_length, $height, $start, $end, $img_start, $img_end);
     
-    if ($style && $label) {
+    if ($label) {
       my $font_size = $fontsize;
       
-      if ($style eq 'overlaid') {
+      if ($label_overlay) {
         ## Reduce text size slightly for wider letters (A, M, V, W)
         my $tmp_textwidth = $bp_textwidth;
         

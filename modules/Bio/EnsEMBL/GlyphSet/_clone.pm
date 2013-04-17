@@ -8,6 +8,8 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 ## subset "bac_map" - if we are looking at a long segment then we only
 ## retrieve accessioned clones ("acc_bac_map")
 
+sub label_overlay { return 1; }
+
 sub features {
   my $self = shift;
   my $db   = $self->my_config('db');
@@ -48,13 +50,9 @@ sub colour_key {
   return ($self->my_config('set'), $flag);
 }
 
-## Return the image label and the position of the label
-## (overlaid means that it is placed in the centre of the
-## feature.
-
 sub feature_label {
   my ($self, $f) = @_;
-  return $self->my_config('no_label') ? () : ($f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc)), 'overlaid');
+  return $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc));
 }
 
 ## Link back to this page centred on the map fragment

@@ -2,9 +2,12 @@ package Bio::EnsEMBL::GlyphSet::alternative_assembly;
 
 use strict;
 
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::SimpleFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
+
+sub label_overlay { return 1; }
 
 sub features {
   my $self = shift;
@@ -60,11 +63,8 @@ sub href {
 }
 
 sub feature_label {
-  my ($self, $f ) = @_; 
-  my $assembly = $self->my_config( 'assembly_name' );
-  my $reg = "Bio::EnsEMBL::Registry";
-  my $species = $self->{'config'}->{'species'};
-  return ($f->display_id, 'overlaid');
+  my ($self, $f) = @_; 
+  return $f->display_id;
 }
 
 sub title {

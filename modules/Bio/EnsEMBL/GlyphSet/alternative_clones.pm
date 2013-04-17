@@ -11,6 +11,8 @@ use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
+sub label_overlay { return 1; }
+
 sub my_label {
   my $self = shift;
   return $self->my_config('other') . " clones";
@@ -100,8 +102,8 @@ sub href {
 }
 
 sub feature_label {
-  my ($self, $f ) = @_;
-  return ($f->display_id, 'overlaid');
+  my ($self, $f) = @_;
+  return $f->display_id;
 }
 
 1;

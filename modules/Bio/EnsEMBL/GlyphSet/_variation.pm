@@ -9,7 +9,8 @@ use Bio::EnsEMBL::Variation::VariationFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub colour_key { return lc $_[1]->display_consequence; }
+sub colour_key    { return lc $_[1]->display_consequence; }
+sub label_overlay { return 1; }
 
 sub my_config { 
   my $self = shift;
@@ -172,7 +173,7 @@ sub href {
 sub feature_label {
   my ($self, $f) = @_;
   my $ambig_code = $f->ambig_code;
-  return $ambig_code eq '-' ? undef : ($ambig_code, 'overlaid');
+  return $ambig_code eq '-' ? undef : $ambig_code;
 }
 
 sub tag {
