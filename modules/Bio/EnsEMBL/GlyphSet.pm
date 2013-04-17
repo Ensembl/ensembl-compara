@@ -87,6 +87,7 @@ sub feature_label      { return '';                                             
 sub title              { return '';                                                                                }
 sub href               { return undef;                                                                             }
 sub tag                { return ();                                                                                }
+sub label_overlay      { return undef;                                                                             }
 
 ### Helper functions to wrap round Glyphs
 sub Bezier     { my $self = shift; return Sanger::Graphics::Glyph::Bezier->new(@_);     }
