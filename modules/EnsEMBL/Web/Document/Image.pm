@@ -76,8 +76,8 @@ sub render_toolbar {
     my $share_url  = $hub->url('Share', { action => $component, function => undef, __clear => 1, create => 1, share_type => 'image', time => time });
     
     $toolbar .= sprintf '<a href="%s" class="config modal_link force" title="%s" rel="modal_config_%s"></a>', $config_url, $icon_mapping->{'config'}{'title'}, lc $component;
-    $toolbar .= qq{<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>} if $self->{'image_configs'}[0]->get_node('user_data');
-    $toolbar .= qq{<a href="$share_url" class="share popup" title="$icon_mapping->{'share'}{'title'}"></a>};
+    $toolbar .= qq(<a href="$data_url" class="data modal_link" title="$icon_mapping->{'userdata'}{'title'}" rel="modal_user_data"></a>) if $self->{'image_configs'}[0]->get_node('user_data');
+    $toolbar .= qq(<a href="$share_url" class="share popup" title="$icon_mapping->{'share'}{'title'}"></a>);
   }
   ## Increase/decrease image size icon  
   if (grep $_->image_resize, @{$self->{'image_configs'}}) {
