@@ -12,6 +12,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.areas            = [];
     this.draggables       = [];
     this.speciesCount     = 0;
+    this.minImageWidth    = 500;
+    this.imageResizeTip   = 'Drag to resize';
     
     function resetOffset() {
       delete this.imgOffset;
@@ -34,23 +36,24 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.base();
     
-    this.imageConfig      = $('input.image_config', this.el).val();
-    this.lastImage        = Ensembl.images.total > 1 && this.el.parents('.image_panel')[0] === Ensembl.images.last;
-    this.hashChangeReload = this.lastImage || $('.hash_change_reload', this.el).length;
-    this.zMenus           = {};
+    this.imageConfig        = $('input.image_config', this.el).val();
+    this.lastImage          = Ensembl.images.total > 1 && this.el.parents('.image_panel')[0] === Ensembl.images.last;
+    this.hashChangeReload   = this.lastImage || $('.hash_change_reload', this.el).length;
+    this.zMenus             = {};
     
-    this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
+    this.params.highlight   = (Ensembl.images.total === 1 || !this.lastImage);
     
-    this.elLk.drag        = $('.drag_select',       this.el);
-    this.elLk.map         = $('map',                this.el);
-    this.elLk.areas       = $('area',               this.elLk.map);
-    this.elLk.exportMenu  = $('.iexport_menu',      this.el).appendTo('body').css('left', this.el.offset().left);
-    this.elLk.resizeMenu  = $('.image_resize_menu', this.el).appendTo('body').css('left', this.el.offset().left);
-    this.elLk.img         = $('img.imagemap',       this.el);
-    this.elLk.hoverLabels = $('.hover_label',       this.el);
-    this.elLk.boundaries  = $('.boundaries',        this.el);
-    this.elLk.toolbars    = $('.image_toolbar',     this.el)    
-    this.elLk.popupLinks  = $('a.popup',            this.elLk.toolbars);
+    this.elLk.drag          = $('.drag_select',       this.el);
+    this.elLk.map           = $('map',                this.el);
+    this.elLk.areas         = $('area',               this.elLk.map);
+    this.elLk.exportMenu    = $('.iexport_menu',      this.el).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.resizeMenu    = $('.image_resize_menu', this.el).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.img           = $('img.imagemap',       this.el);
+    this.elLk.hoverLabels   = $('.hover_label',       this.el);
+    this.elLk.boundaries    = $('.boundaries',        this.el);
+    this.elLk.toolbars      = $('.image_toolbar',     this.el);
+    this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
+    this.elLk.resizeHandle  = $('<div class="image_resize_handle"><div></div></div>').appendTo(this.el.find('.image_container')).helptip(this.imageResizeTip);
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
@@ -97,12 +100,53 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     $('a.image_resize', this.elLk.resizeMenu).on('click', function () {
       if (!$(this).has('.current').length) {
-        panel.params.updateURL = Ensembl.updateURL({ image_width: parseInt($(this).text(), 10) || Ensembl.imageWidth() }, panel.params.updateURL);
-        panel.getContent();
+        panel.resize(parseInt($(this).text(), 10) || Ensembl.imageWidth());
       }
       
       return false;
-    }); 
+    });
+
+    this.elLk.resizeHandle.on({
+      'mousedown': function(e) {
+        e.preventDefault();
+        var handle    = panel.elLk.resizeHandle.addClass('dragging');
+        var img       = panel.elLk.img[0].nodeName == 'IMG' ? panel.elLk.img.clone(false).css({'position': 'absolute', 'opacity': '0.5', 'z-index': '99999998'}).css(panel.elLk.img.offset()).appendTo(document.body) : $({});
+        var handleX   = handle.position().left;
+        var currentW  = panel.elLk.img.width();
+        var initialW  = currentW;
+        var initialX  = e.pageX;
+        
+        $('<div></div>').appendTo(document.body).css({'position': 'fixed', 'cursor': 'ew-resize', 'left': '0px', 'top': '0px', 'height': '100%', 'width': '100%', 'z-index': '99999999'}).on({
+          'mousemove': function(event) {
+            var displacement = Math.ceil(Math.abs((event.pageX - initialX)/100) - 0.2) * (event.pageX < initialX ? -100 : 100); //0.2 provides a play of 20 px
+            if (initialW + displacement < panel.minImageWidth) {
+              displacement = panel.minImageWidth - initialW;
+            }
+            var newW = initialW + displacement;
+            if (newW != currentW) {
+              img.width(newW);
+              handle.css({'left': handleX + displacement}).helptip(false).helptip(newW + 'px', {'show': { 'delay': 0, 'duration': 1 }}).tooltip('open'); // FIXME - tooltip should be accessed via helptip
+              currentW = newW;
+            }
+          },
+          'mouseup': function() {
+            if (currentW < panel.minImageWidth) {
+              currentW = panel.minImageWidth;
+            }
+            if (currentW != initialW) {
+              panel.resize(currentW);
+            }
+            handle.removeClass('dragging').helptip({}).helptip(false);
+            img.remove();
+            $(this).remove();
+          }
+        });
+      },
+      'mouseout': function() {
+        panel.elLk.resizeHandle.helptip(panel.imageResizeTip);
+      }
+    });
+
   },
   
   hashChange: function (r) {
@@ -563,6 +607,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     this.highlight(coords, 'rubberband', this.dragRegion.a.href.split('|')[3]);
+  },
+  
+  resize: function(width) {
+    this.params.updateURL = Ensembl.updateURL({ image_width: width }, this.params.updateURL);
+    this.getContent();
   },
   
   makeZMenu: function (e, coords) {
