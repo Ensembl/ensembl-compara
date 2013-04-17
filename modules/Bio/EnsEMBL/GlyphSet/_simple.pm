@@ -4,7 +4,7 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub features  { 
+sub features { 
   my $self     = shift;
   my $call     = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
   my $db_type       = $self->my_config('db');
@@ -13,10 +13,8 @@ sub features  {
   return \@features;
 }
 
-sub colour_key    { return lc $_[1]->analysis->logic_name; }
-sub feature_label { return undef; }
-sub tag           { return undef; }
-sub _das_type     { return 'simple'; }
+sub colour_key { return lc $_[1]->analysis->logic_name; }
+sub _das_type  { return 'simple'; }
 
 sub title {
   my ($self, $f)    = @_;
