@@ -90,7 +90,7 @@ div.image_toolbar a      { float: left; width: 16px; height: 16px; display: bloc
 div.image_toolbar a.config { background-image: url(/i/16/rev/setting.png);      }
 div.image_toolbar a.data   { background-image: url(/i/16/rev/page-user.png);    }
 div.image_toolbar a.export { background-image: url(/i/16/rev/picture.png);      }
-div.image_toolbar a.resize    { background-image: url(/i/16/rev/image_resize.png);}
+div.image_toolbar a.resize { background-image: url(/i/16/rev/image_resize.png);}
 div.image_toolbar a.share  { background-image: url(/i/16/rev/share.png);        }
 
 /* Image exporting */
@@ -112,6 +112,14 @@ div.image_resize_menu div.header      { background-color: [[TABLE_HEADER]]; colo
 div.image_resize_menu div div         { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 110px; }
 div.image_resize_menu div a           { text-decoration: none; font-weight: bold; }
 div.image_resize_menu div div.current { text-decoration: none; font-weight: bold; color: grey; background: url(/i/16/rev/check_grey.png) right no-repeat;}
+
+div.image_resize_handle               { height: 100%; left: 100%; padding: 1px 4px; margin-left: -2px; position: absolute; top: -1px; cursor: ew-resize; }
+div.image_resize_handle:hover,
+div.image_resize_handle.dragging      { padding: 1px 12px; margin-left: -8px; }
+div.image_resize_handle div           { display: none; height: 100%; left: 9px; position: absolute; top: 0; width: 0px; border-left: #999999 solid 1px; }
+div.image_resize_handle:hover div     { display: block; }
+div.image_resize_handle.dragging div  { display: block; border-left: #999999 solid 2px; }
+
 
 body.ie67 div.image_big_menu a { margin-top: -16px; }
 
