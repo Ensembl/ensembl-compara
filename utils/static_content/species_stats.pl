@@ -420,14 +420,18 @@ foreach my $spp (@valid_spp) {
     ##-----------------------List all coord systems region counts----------------
     my $b_coordsys="";
     if($coordsys){
-      $b_coordsys=qq{<h3>Coordinate Systems</h3>\n<table class="ss tint species-stats">};
+      my @hidden = @{ $SD->get_config($spp,'HIDDEN_COORDSYS') || [] };
+      my @coord_systems;
       my $sa = $db_adaptor->get_adaptor('slice');
       my $csa = $db_adaptor->get_adaptor('coordsystem');
-      #EG - hide some coord systems
-      my @hidden = @{ $SD->get_config($spp,'HIDDEN_COORDSYS') || [] };
-      my $row_count=0;
-      foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all_by_attrib('default_version') || []}){
+      foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all() || []}){
         next if (grep {$_ eq $cs->name} @hidden);
+        push(@coord_systems,$cs);
+      }
+      #EG - hide some coord systems
+      my $row_count=0;
+      my $rows_html = "";
+      foreach my $cs (@coord_systems){
         my @regions = @{$sa->fetch_all($cs->name)};
         my $count_regions = scalar @regions;
       	print join ' : ', $cs->name, $cs->version , $count_regions, "\n" if ($DEBUG) ;
@@ -439,7 +443,7 @@ foreach my $spp (@valid_spp) {
           $regions_html = sprintf("%d %s",$count_regions,($count_regions>1)?"sequences":"sequence");
         }
         $row_count++;
-        $b_coordsys .= sprintf(qq{
+        $rows_html .= sprintf(qq{
           %s 
           <td class="data">%s</td>
           <td class="value">%s</td>
@@ -448,7 +452,10 @@ foreach my $spp (@valid_spp) {
           $cs->name,
           $regions_html);
       }
-      $b_coordsys .= "</table>\n";
+      #EG - only print when there is a table to print
+      if($rows_html){
+        $b_coordsys=qq{<h3>Coordinate Systems</h3>\n<table class="ss tint species-stats">$rows_html</table>\n};
+      }
     }
     
     ##--------------------------- DO INTERPRO STATS -----------------------------
