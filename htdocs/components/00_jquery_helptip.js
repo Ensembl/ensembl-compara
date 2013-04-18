@@ -23,8 +23,8 @@
     }, options || {});
     
     options.position = {
-      my:  options.track ? 'center top+24' : 'center top+8',
-      at: 'center bottom',
+      my:    options.track ? 'center top+24' : 'center top+8',
+      at:    'center bottom',
       using: function (position, feedback) {
         if (options.track && feedback.vertical === 'bottom') {
           position.top += 16;
