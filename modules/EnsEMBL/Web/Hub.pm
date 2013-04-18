@@ -82,8 +82,6 @@ sub new {
   
   $self->set_core_params;
   
-  $self->{'_config_adaptor'} = EnsEMBL::Web::DBSQL::ConfigAdaptor->new($self);
-  
   return $self;
 }
 
@@ -110,7 +108,7 @@ sub apache_handle  { return $_[0]{'_apache_handle'};  }
 sub ExtURL         { return $_[0]{'_ext_url'};        }
 sub user_details   { return $_[0]{'_user_details'};   }
 sub species_defs   { return $_[0]{'_species_defs'};   }
-sub config_adaptor { return $_[0]{'_config_adaptor'}; }
+sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::ConfigAdaptor->new($_[0]); }
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return $_[0]{'referer'}    ||= $_[0]->parse_referer;                                  }
