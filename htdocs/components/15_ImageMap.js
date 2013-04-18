@@ -110,7 +110,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       'mousedown': function(e) {
         e.preventDefault();
         var handle    = panel.elLk.resizeHandle.addClass('dragging');
-        var img       = panel.elLk.img[0].nodeName == 'IMG' ? panel.elLk.img.clone(false).css({'position': 'absolute', 'opacity': '0.5', 'z-index': '99999998'}).css(panel.elLk.img.offset()).appendTo(document.body) : $({});
+        var img       = panel.elLk.img.clone(false).empty().css({'position': 'absolute', 'opacity': '0.5', 'z-index': '99999998'}).css(panel.elLk.img.offset()).appendTo(document.body);
         var handleX   = handle.position().left;
         var currentW  = panel.elLk.img.width();
         var initialW  = currentW;
