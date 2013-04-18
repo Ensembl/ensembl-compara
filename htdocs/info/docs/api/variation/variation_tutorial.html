@@ -778,9 +778,16 @@ foreach my $genotype(@{$genotypes}) {
 <br />
 <h2 id="ld">LD calculation</h2>
 
+<div style="width:800px" class="info">
+  <h3>Requirement</h3>
+  <div class="message-pad">
+	  <p>In order to be able to use the LD calculation, you need to compile the C source code and install a Perl module, called <b>IPC::Run</b>.<br />There is more information
+       on how to do this in <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/C_code/README.txt?root=ensembl&amp;view=markup" rel="external">here</a>.
+		</p>
+	</div>
+</div>
+
 <p>
-In order to be able to use the LD calculation, you need to compile the C source code and install a module, called IPC::Run. There is more information
-on how to do this in <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/C_code/README.txt?root=ensembl&amp;view=markup" rel="external"> Use LD calculation </a>
 In the example below, it calculates the LD in a region in human chromosome 6 for a HAPMAP population, but only prints when there is a high LD
 </p>
 
