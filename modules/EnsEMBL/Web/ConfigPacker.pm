@@ -438,7 +438,15 @@ sub _summarise_variation_db {
  }
 
 #---------- Add in information about the display type from the sample table
-   my $d_aref = $dbh->selectall_arrayref( "select name, display from sample where display not like 'UNDISPLAYABLE'" );
+   my $d_aref = [];
+   if ($self->db_details($db_name)->{'tables'}{'sample'}) {
+      $d_aref = $dbh->selectall_arrayref( "select name, display from sample where display not like 'UNDISPLAYABLE'" );
+   } else {
+      my $i_aref = $dbh->selectall_arrayref( "select name, display from individual where display not like 'UNDISPLAYABLE'" );
+      push @$d_aref, @$i_aref;
+      my $p_aref = $dbh->selectall_arrayref( "select name, display from population where display not like 'UNDISPLAYABLE'" );
+      push @$d_aref, @$p_aref; 
+   }
    my (@default, $reference, @display, @ld);
    foreach (@$d_aref){
      my  ($name, $type) = @$_;  
@@ -457,9 +465,9 @@ sub _summarise_variation_db {
 #---------- Add in strains contained in read_coverage_collection table
   if ($self->db_details($db_name)->{'tables'}{'read_coverage_collection'}){
     my $r_aref = $dbh->selectall_arrayref(
-        'select distinct s.name, s.sample_id
-        from sample s, read_coverage_collection r
-        where s.sample_id = r.sample_id' 
+        'select distinct i.name, i.individual_id
+        from individual i, read_coverage_collection r
+        where i.individual_id = r.sample_id' 
      );
      my @strains;
      foreach my $a_aref (@$r_aref){
