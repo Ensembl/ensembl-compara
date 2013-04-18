@@ -210,12 +210,12 @@ sub render_page {
   
   foreach my $element (@order) {
     my $module = $elements->{$element};
-    $module->init($self) if $module->can('init');
+    $module->init($self) if ($module && $module->can('init'));
   }
   
   foreach my $element (@order) {
     my $module = $elements->{$element};
-    $content->{$element} = $module->$func();
+    $content->{$element} = $module->$func() if $module;
   }
   
   my $page_content = $page->render($content);
