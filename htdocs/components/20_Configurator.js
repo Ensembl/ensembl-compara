@@ -196,9 +196,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         panel.hide();
         
-        if (!change.length || !change.children().length) {
+        if (!change.length || !change.children().length || change.data('reload')) {
           Ensembl.EventManager.trigger('updateConfiguration', true);
-          change = change.length ? false : $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
+          change = change.length ? !change.removeData('reload') : $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
           Ensembl.EventManager.trigger('addModalContent', change, this.value, id, 'modal_config_' + panel.component.toLowerCase());
         } else {
           change.find('select.species')[0].selectedIndex = this.selectedIndex;
@@ -884,7 +884,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   activateConfig: function (component) {
     if (!component || component === this.component) {
       Ensembl.EventManager.trigger('modalReload', this.id);
-      this.el[this.params.species === Ensembl.species ? 'addClass' : 'removeClass']('active').empty();
+      
+      if (this.params.species === Ensembl.species) {
+        this.el.addClass('active');
+      } else {
+        this.el.removeClass('active').data('reload', true);
+      }
     }
   },
   
