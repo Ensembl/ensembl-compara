@@ -43,25 +43,31 @@ use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
  my ($self) = @_;
- my $species_name = $self->param('name');
+ my $species_name = $self->param('species_loc_name');
+print Dumper $self->param('main_core_dbs');
 
 # load the species db into the registry
  if($species_name eq "ancestral_sequences"){
   my $species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( %{ $self->param('ancestral_db') } );
+  throw('no ancestral_db found') unless $species_dba;
   Bio::EnsEMBL::Registry->add_DBAdaptor( "$species_name", "core", $species_dba);
- } elsif(my $species_url = $self->param('additional_core_db_urls')->{"$species_name"}){
-  $species_url .= "?group=core&species=$species_name";
-  Bio::EnsEMBL::Registry->load_registry_from_url( "$species_url" );
- } else {
-  Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( @{ $self->param('main_core_dbs') });
+ } elsif($self->param('additional_core_db_urls')) {
+   my $species_url = $self->param('additional_core_db_urls')->{"$species_name"};
+   $species_url .= "?group=core&species=$species_name";
+   if(Bio::EnsEMBL::Registry->get_alias("$species_name")){ # need to remove if species already added from main_core_dbs 
+    Bio::EnsEMBL::Registry->remove_DBAdaptor("$species_name", "core");
+   }
+   Bio::EnsEMBL::Registry->load_registry_from_url( "$species_url" );
+  } else {
+  Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs(@{ $self->param('main_core_dbs') });
  }
- 
 # get the species dba from the registry
  my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor("$species_name", "core");
  my ($user, $host, $port, $dbname, $pass) = ($dba->dbc->username, $dba->dbc->host, $dba->dbc->port, $dba->dbc->dbname, $dba->dbc->password);
@@ -76,10 +82,10 @@ sub write_output {
  my ($self) = @_;
  return unless $self->param('locator_string');
  my $gdb_a = $self->compara_dba->get_adaptor("GenomeDB");
-
+ 
 # store the locator in the db
  foreach my $genome_db (@{ $gdb_a->fetch_all }){
-  if($genome_db->name eq $self->param('name')) {
+  if($genome_db->name eq $self->param('species_loc_name')) {
    $genome_db->locator( $self->param('locator_string') );
    $gdb_a->store($genome_db);
   } 
@@ -87,4 +93,3 @@ sub write_output {
 }
 
 1;
-
