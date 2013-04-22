@@ -43,7 +43,7 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .hover_label div.config ul,
 .hover_label div.config li                { margin: 0; padding: 0; list-style: none; list-style-image: none; }
 .hover_label div.config li                { line-height: 22px; }
-.hover_label div.config li.current        { font-weight: normal; }
+.hover_label div.config li.current        { font-weight: normal!important; }
 .hover_label div.config a                 { font-size: 11px; color: #000; }
 .hover_label div.config li.subset a       { color: [[PAGE_LINK]]; }
 .hover_label div.config li.subset a:hover { color: [[PAGE_HOVER]]; }
