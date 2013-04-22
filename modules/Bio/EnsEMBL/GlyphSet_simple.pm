@@ -95,7 +95,7 @@ sub _init {
     if ($label && !$label_overlay) {
       $tag_start = ($start + $end - 1 - $bp_textwidth) / 2;
       $tag_start = 1 if $tag_start < 1;
-      $tag_end   = $tag_start + $bp_textwidth;
+      $tag_end   = $tag_start + $bp_textwidth + 1;
     }
     
     $img_start = $tag_start if $tag_start < $img_start; 
