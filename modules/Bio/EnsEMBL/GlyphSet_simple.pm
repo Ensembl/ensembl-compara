@@ -55,7 +55,8 @@ sub _init {
   my $navigation        = $self->my_config('navigation')           || 'on';
      $navigation        = $navigation eq 'on' && $slice_length <= $max_length_nav * 1010;
   my $pix_per_bp        = $self->scalex;
-  my $depth             = defined $self->my_config('depth') ? $self->my_config('depth') : 100000;
+  my $depth             = $self->depth;
+     $depth             = 1e5 unless defined $depth;
   my $previous_start    = $slice_length + 1e9;
   my $previous_end      = -1e9 ;
   my $optimizable       = $self->my_config('optimizable') && $depth < 1 ; # at the moment can only optimize repeats

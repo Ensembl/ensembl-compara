@@ -22,7 +22,7 @@ sub _init {
   my $pix_per_bp = $self->scalex;
   my $t_width    = $h * 0.75 / $pix_per_bp;
   
-  $self->_init_bump(undef, $self->my_config('depth') || 1e6);
+  $self->_init_bump(undef, $self->depth || 1e6);
 
   return unless $snps;
   

@@ -20,8 +20,8 @@ sub _init {
   $self->_init_bump;
 
   my $label        = $self->my_config('caption');
-  my $depth        = $self->my_config('depth');
   my $h            = $self->my_config('height') || 4;
+  my $depth        = $self->depth;
   my $font_details = $self->get_text_simple(undef, 'innertext');
   my $pix_per_bp   = $self->scalex;
 

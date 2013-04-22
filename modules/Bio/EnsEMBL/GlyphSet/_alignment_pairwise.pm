@@ -25,7 +25,7 @@ sub render_normal {
   my $feature_key    = lc $self->my_config('type');
   my $other_species  = $self->my_config('species');
   my $other_ori      = $self->my_config('ori');
-  my $depth          = $self->my_config('depth') || 6;
+  my $depth          = $self->depth || 6;
   my $feature_colour = $self->my_colour($feature_key);
   my $join_col       = $self->my_colour($feature_key, 'join')   || 'gold'; 
   my $join_z         = $self->my_colour($feature_key, 'join_z') || 100;
@@ -244,7 +244,7 @@ sub render_compact {
   my $feature_key    = lc $self->my_config('type');
   my $other_species  = $self->my_config('species');
   my $other_ori      = $self->my_config('ori');
-  my $depth          = $self->my_config('depth');
+  my $depth          = $self->depth;
   my $feature_colour = $self->my_colour($feature_key);
   my $join_col       = $self->my_colour($feature_key, 'join')   || 'gold'; 
   my $join_z         = $self->my_colour($feature_key, 'join_z') || 100;
