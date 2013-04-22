@@ -14,7 +14,6 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('reloadPage',    this, this.reloadPage);
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu',     this, this.makeZMenu);
-    Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
     Ensembl.EventManager.register('hashChange',    this, this.hashChange);
     Ensembl.EventManager.register('toggleContent', this, this.toggleContent);
     Ensembl.EventManager.register('changeWidth',   this, this.changeWidth);
@@ -126,8 +125,6 @@ Ensembl.LayoutManager.extend({
         Ensembl.cookie.set('user_message', '');
       });
     }
-    
-    this.pulseToolButton();
   },
   
   reloadPage: function (args, url) {
@@ -163,66 +160,10 @@ Ensembl.LayoutManager.extend({
   
   makeZMenu: function (id, params) {
     if (!$('#' + id).length) {
-      $([
-        '<div class="info_popup floating_popup" id="', id, '">',
-        ' <span class="close"></span>',
-        '  <table class="zmenu" cellspacing="0">',
-        '    <thead>', 
-        '      <tr class="header"><th class="caption" colspan="2"><span class="title"></span></th></tr>',
-        '    </thead>', 
-        '    <tbody class="loading">',
-        '      <tr><td><p class="spinner"></p></td></tr>',
-        '    </tbody>',
-        '    <tbody></tbody>',
-        '  </table>',
-        '</div>'
-      ].join('')).draggable({ handle: 'thead' }).appendTo('body');
+      Ensembl.Panel.ZMenu.template.clone().attr('id', id).appendTo('body');
     }
     
     Ensembl.EventManager.trigger('addPanel', id, 'ZMenu', undefined, undefined, params, 'showExistingZMenu');
-  },
-  
-  relocateTools: function (tools) {
-    var toolButtons = $('#page_nav .tool_buttons');
-    
-    tools.each(function () {
-      var a        = $(this).find('a');
-      var existing = $('.additional .' + a[0].className.replace(' ', '.'), toolButtons);
-      
-      if (existing.length) {
-        existing.replaceWith(a);
-      } else {
-        $(this).children().addClass('additional').appendTo(toolButtons).not('.hidden').show();
-      }
-      
-      a = existing = null;
-    }).remove();
-    
-    $('a.seq_blast', toolButtons).on('click', function () {
-      $('form.seq_blast', toolButtons).submit();
-      return false;
-    });
-    
-    this.pulseToolButton();
-    
-    tools = null;
-  },
-  
-  pulseToolButton: function () {
-    $('#page_nav .tool_buttons a.pulse:not(.pulsing)').one('click', function () {
-      clearInterval($(this).stop().removeClass('pulse').css({ backgroundColor: '', color: '' }).data('interval'));
-    }).addClass('pulsing').each(function () {
-      var pulse = $(this).data({
-        dark    : false,
-        interval: setInterval(function () {
-          var data = pulse.data();
-          pulse.toggleClass('pulse', !data.dark, 1000);
-          data.dark = !data.dark;
-        }, 1000)
-      });
-    });
-    
-    els = null;
   },
   
   popState: function () {
