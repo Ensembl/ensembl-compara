@@ -1,8 +1,5 @@
 # $Id$
 
-### A light-weight menu used on text sequence pages.
-### Skips the standard rendering method in favour of raw content and speed
-
 package EnsEMBL::Web::ZMenu::TextSequence;
 
 use strict;
@@ -11,13 +8,7 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
-sub render {
-  my $self = shift; 
-  $self->_content;
-  print $self->jsonify($self->{'entries'});
-}
-
-sub _content {
+sub content {
   my $self    = shift;
   my $hub     = $self->hub;
   my $object  = $self->object;
@@ -35,6 +26,7 @@ sub _content {
   for (0..$#v) {
     my $variation_object = $self->new_object('Variation', $adaptor->fetch_by_name($v[$_]), $object->__data);
     $self->variation_content($variation_object, $v[$_], $vf[$_]);
+    $self->new_feature;
   }
 }
 
@@ -48,7 +40,6 @@ sub variation_content {
   my $chr_end    = $feature->end;
   my $allele     = $feature->allele_string;
   my @failed     = @{$feature->variation->get_all_failed_descriptions};
-  my $link       = '<a href="%s">%s</a>';
   my $position   = "$seq_region$chr_start";
   my ($lrg_position, %population_data, %population_allele);
   
@@ -81,34 +72,31 @@ sub variation_content {
   
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
   
-  my @entries = (
-    { caption => 'Variation', entry => sprintf $link, $hub->url({ action => 'Summary', %url_params }), $v},
-    { caption => 'Position',  entry => $position },
-  );
+  $self->caption(sprintf('%s: <a href="%s">%s</a>', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $hub->url({ action => 'Summary', %url_params }), $v), 1);
+  
+  my @entries = ({ type => 'Position', label => $position });
   
   if (scalar @failed) {
-    push @entries, { caption => 'Failed status', entry => sprintf '<span style="color:red">%s</span>',shift @failed };
-    push @entries, { caption => '',              entry => sprintf '<span style="color:red">%s</span>',shift @failed } while @failed;
+    push @entries, { type => 'Failed status', label => sprintf '<span style="color:red">%s</span>', shift @failed };
+    push @entries, { type => '',              label => sprintf '<span style="color:red">%s</span>', shift @failed } while @failed;
   }
   
-  #push @entries, { caption => 'Failed status', entry => join ', ', @failed } if scalar @failed;
-  push @entries, { caption => 'LRG position', entry => $lrg_position } if $lrg_position;
+  push @entries, { type => 'LRG position', label => $lrg_position } if $lrg_position;
   
-  my %ct    = map { $_->SO_term => [ $_->SO_term, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %ct    = map { $_->SO_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my %types = map @{$ct{$_}}, @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
   
   push @entries, (
-    { caption => 'Alleles', entry => $allele },
-    { caption => 'Types',   entry => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
-    { entry   => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
+    { type  => 'Alleles', label => $allele },
+    { type  => 'Types',   label_html => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
+    { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
   );
   
-  push @entries, { entry => sprintf $link, $hub->url({ action => 'Phenotype', %url_params }), 'Phenotype Data' } if scalar @{$object->get_external_data};
+  push @entries, { link => $hub->url({ action => 'Phenotype', %url_params }), label => 'Phenotype Data' } if scalar @{$object->get_external_data};
   
   foreach my $pop (sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} } grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i } values %{$object->freqs($feature)}) {
     my $name = [ split /:/, $pop->{'pop_info'}{'Name'} ]->[-1]; # shorten the population name
-       $name =~ /phase_1_(.+)/;
-       $name = $1;
+       $name = $name =~ /phase_1_(.+)/ ? $1 : '';
     
     foreach my $ssid (sort { $a->{'submitter'} cmp $b->{'submitter'} } values %{$pop->{'ssid'}}) {
       my @afreqs = @{$ssid->{'AlleleFrequency'}};
@@ -120,9 +108,9 @@ sub variation_content {
     }
   }
     
-  push @entries, { cls => 'population', entry => sprintf $link, $hub->url({ action => 'Population', %url_params }), 'Population Allele Frequencies' } if scalar keys %population_data;
+  push @entries, { class => 'population', link => $hub->url({ action => 'Population', %url_params }), label => 'Population Allele Frequencies' } if scalar keys %population_data;
   
-  foreach my $name (sort { $b =~ /ALL/ cmp $a =~ /ALL/ || $a cmp $b } keys %population_data) {
+  foreach my $name (sort { !$a <=> !$b || $b =~ /ALL/ cmp $a =~ /ALL/ || $a cmp $b } keys %population_data) {
     my %display = reverse %{$population_data{$name}};
     my $i       = 0;
     
@@ -144,15 +132,15 @@ sub variation_content {
          $af   = "<div>$af</div>";
       
       if ($submitter) {
-        push @entries, { childOf => 'population', entry => [ $i++ ? '' : $name, $submitter ]};
-        push @entries, { childOf => 'population', entry => [ '', $img, $af ]};
+        push @entries, { childOf => 'population', type => $i++ ? ' ' : $name || ' ', label_html => $submitter };
+        push @entries, { childOf => 'population', type => ' ', label_html => "$img$af" };
       } else {
-        push @entries, { childOf => 'population', entry => [ $name, $img, $af ]};
+        push @entries, { childOf => 'population', type => $name, label_html => "$img$af" };
       }
     }
   }
   
-  unshift @{$self->{'entries'}}, \@entries;
+  $self->add_entry($_) for @entries;
 }
 
 1;
