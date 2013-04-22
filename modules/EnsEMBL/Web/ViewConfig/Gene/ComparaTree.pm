@@ -61,7 +61,7 @@ sub form {
   my @groups   = sort { @{$hash->{$b}->{'genome_db_ids'}} <=> @{$hash->{$a}->{'genome_db_ids'}} || $a cmp $b } grep { $hash->{$_}{'genetree_display'} } keys %$hash;
   my $function = $self->hub->referer->{'ENSEMBL_FUNCTION'};
   
-  if ($function eq 'Align') {
+  if ($function eq 'Align' or $function eq 'Align_pan_compara') {
     my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
     
     $self->add_fieldset('Aligment output');
