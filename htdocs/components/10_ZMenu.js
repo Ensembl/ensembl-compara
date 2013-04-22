@@ -15,7 +15,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.title      = area.attr('title') || '';
     this.das        = false;
     this.event      = data.event;
-    this.coords     = data.coords;
+    this.coords     = data.coords || {};
     this.imageId    = data.imageId;
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
@@ -56,9 +56,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.base();
     
-    this.elLk.caption = $('span.title', this.el);
-    this.elLk.tbody   = $('tbody:last', this.el);
-    this.elLk.loading = $('.loading',   this.el);
+    this.elLk.container = $('.container', this.el);
+    this.elLk.loading   = $('.loading',   this.el);
     
     this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
@@ -119,8 +118,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.timeout = setTimeout(function () {
       if (panel.populated === false) {
-        panel.elLk.caption.html('Loading component');
-        panel.elLk.tbody.hide();
+        panel.elLk.container.hide();
         panel.elLk.loading.show();
         panel.show(panel.das);
       }
@@ -176,75 +174,81 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   
   populateAjax: function (url, expand) {
     var timeout = this.timeout;
-    var caption = this.elLk.caption.html();
         url     = url || this.href;
     
-    if (this.group) {
-      url += ';click_start=' + this.coords.clickStart + ';click_end=' + this.coords.clickEnd;
-    }
-    
-    if (url && url.match(/\/ZMenu\//)) {
-      $.ajax({
-        url: url,
+    if (url && url.match('/ZMenu/')) {
+      $.extend($.ajax({
+        url:      url,
+        data:     this.coords.clickStart ? { click_chr: Ensembl.location.name, click_start: this.coords.clickStart, click_end: this.coords.clickEnd } : {},
         dataType: 'json',
-        context: this,
-        success: function (json) {
-          if (timeout === this.timeout) {
-            this.populated = true;
-            
-            if (json.entries.length) {
-              var body = '';
-              var subheader, row;
-              
-              for (var i in json.entries) {
-                if (json.entries[i].type === 'subheader') {
-                  subheader = subheader || json.entries[i].link;
-                  
-                  if (json.entries[i].link !== caption) {
-                    row = '<th class="subheader" colspan="2">' + json.entries[i].link + '</th>';
-                  }
-                } else if (json.entries[i].type) {
-                  row = '<th>' + json.entries[i].type + '</th><td>' + json.entries[i].link + '</td>';
-                } else {
-                  row = '<td colspan="2">' + json.entries[i].link + '</td>';
-                }
-                
-                body += '<tr>' + row + '</tr>';
-              }
-              
-              if (expand) {
-                expand.replaceWith(body);
-                expand = null;
-              } else {
-                this.elLk.tbody.html(function (j, html) { return caption && caption === (subheader || json.caption) ? body : html + body; }).find('a.update_panel').attr('rel', this.imageId);
-                this.elLk.caption.html(json.caption);
-                
-                this.show();
-              }
-            } else {
-              this.populateNoAjax();
-            }
-          }
-        },
-        error: function () {
-          this.populateNoAjax();
-        }
-      });
+        context:  this,
+        success:  $.proxy(this.buildMenuAjax,  this),
+        error:    $.proxy(this.populateNoAjax, this)
+      }), { timeout: timeout, expand: expand });
     } else {
       this.populateNoAjax();
     }
   },
   
+  buildMenuAjax: function (json, status, jqXHR) {
+    var length = json.length;
+    var cols   = Math.min(length, 5);
+    var div, feature, i, j, body, subheader, row;
+    
+    if (jqXHR.timeout !== this.timeout) {
+      return;
+    } else if (length === 0) {
+      return this.populateNoAjax();
+    }
+    
+    this.populated = true;
+    
+    for (var i = 0; i < length; i++) {
+      feature = json[i];
+      
+      if (i === 0 || div.children().length === cols) {
+        div = $('<div></div>').appendTo(this.elLk.container);
+      }
+      
+      if (feature.entries.length) {
+        body = row = '';
+        
+        if (feature.caption) {
+          body += this.header(feature.caption, length > 1);
+        }
+        
+        for (var j = 0; j < feature.entries.length; j++) {
+          if (feature.entries[j].key === 'subheader') {
+            if (feature.entries[j].value !== feature.caption) {
+              row = this.header(feature.entries[j].value, true);
+            }
+          } else {
+            row = this.row(feature.entries[j].key, feature.entries[j].value, feature.entries[j]['class'], feature.entries[j].childOf);
+          }
+          
+          body += row;
+        }
+        
+        if (jqXHR.expand) {
+          jqXHR.expand.replaceWith(body);
+          jqXHR.expand = null;
+        } else {
+          this.makeTable(body).appendTo(div).find('a.update_panel').attr('rel', this.imageId);
+        }
+      }
+    }
+    
+    if (length > 1) {
+      this.elLk.header = $('<div class="header">' + length + ' features</div>').insertBefore(this.elLk.container.addClass('row' + (length > cols ? ' grid' : '')));
+    }
+    
+    this.show();
+  },
+  
   populateNoAjax: function (force) {
     if (this.das && force !== true) {
       this.populated = true;
-      
-      if (this.elLk.caption.html() === 'Loading component') {
-        this.elLk.caption.html(this.title.split('; ')[0]);
-      }
-      
       this.show();
-      
       return;
     }
     
@@ -257,8 +261,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = parseInt(r[1], 10) + (r[2] - r[1]) / 2;
       
-      extra += '<tr><th></th><td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
-      extra += '<tr><th></th><td><a href="' + this.baseURL.replace(/%s/, loc[1]) + '">Zoom to feature</a></td></tr>';
+      extra += this.row(' ', '<a class="location_change" href="' + this.zoomURL(1) + '">Centre on feature</a>');
+      extra += this.row(' ', '<a class="location_change" href="' + this.baseURL.replace(/%s/, loc[1]) + '">Zoom to feature</a>');
     }
     
     this.populate(true, extra);
@@ -442,7 +446,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (link === true && this.href) {
       title = this.title ? this.title.split('; ')[0] : caption;
-      extra = '<tr><th>Link</th><td><a href="' + this.href + '">' + title + '</a></td></tr>' + extra;
+      extra = this.row('Link', '<a href="' + this.href + '">' + title + '</a>') + extra;
     }
     
     while (i--) {
@@ -466,15 +470,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         }
       } else {
         menu = content[i].split(': ');  
-        body.unshift('<tr>' + (menu.length > 1 ? '<th>' + menu.shift() + '</th><td>' + menu.join(': ') + '</td>' : '<td colspan="2">' + content[i] + '</td>') + '</tr>');
+        body.unshift(this.row.apply(this, menu.length > 1 ? [ menu.shift(), menu.join(': ') ] : [ content[i] ]));
       }
     }
     
-    this.elLk.tbody.html(body.join('') + extra);
-    this.elLk.caption.html(caption);
+    this.makeTable(this.header(caption) + body.join('') + extra).appendTo(this.elLk.container);
     
     if (this.das) {
-      this.elLk.tbody.hide();
+      this.elLk.container.hide();
     } else {
       this.populated = true;
       this.show();
@@ -503,27 +506,33 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   show: function (loading) {
-    if (!loading && this.elLk.tbody.html()) {
+    if (!loading && this.elLk.container.html()) {
       this.elLk.loading.hide();
-      this.elLk.tbody.show();
+      this.elLk.container.show();
     }
     
     Ensembl.EventManager.trigger('panelToFront', this.id);
     
-    this.el.show().position({ of: this.event, my: 'left top', collision: 'flipfit' });
+    if (!this.el.css({ top: 0, left: 0, display: 'block' }).position({ of: this.event, my: 'left top', collision: 'fit' }).hasClass('ui-draggable')) {
+      this.el.scrollTop(0).draggable({ handle: '.header:not(.subheader)', containment: 'document' });
+    }
     
     if (this.relatedEl) {      
       this.relatedEl.addClass('highlight');
     }
   },
-
+  
   showExisting: function (data) {
     this.event  = data.event;
     this.coords = data.coords;
     
     if (this.group || this.drag) {
-      this.elLk.tbody.empty();
-      this.elLk.caption.empty();
+      if (this.elLk.header) {
+        this.elLk.header.remove();
+        delete this.elLk.header;
+      }
+      
+      this.elLk.container.empty();
       this.hide();
       this.getContent();
     } else {
@@ -539,5 +548,58 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         this.relatedEl.removeClass('highlight');
       }
     }
+  },
+  
+  makeTable: function (content) {
+    var classes  = {};
+    var table    = $('<table class="zmenu" cellspacing="0"></table>').html(content);
+    var children = table.find('tr.child');
+    var rows     = table.find('tr[class]:not(.child)').each(function () {
+      if (children.filter('.' + this.className).length) {
+        classes[this.className] = 1;
+      }
+    });
+    
+    function toggle(e) {
+      if (e.target.nodeName !== 'A') {
+        var tr = $(this).parent();
+        
+        tr.siblings('.' + tr[0].className).toggle();
+        $(this).toggleClass('closed opened');
+        
+        tr = null;
+      }
+    }
+    
+    for (var c in classes) {
+      rows.filter('.' + c).children(':first').addClass('closed').on('click', toggle);
+      children.filter('.' + c).hide();
+    }
+    
+    rows = children = null;
+    
+    return table;
+  },
+  
+  header: function (caption, subheader) {
+    return '<tr class="header' + (subheader ? ' subheader' : '') + '"><th colspan="2">' + caption + '</th></tr>';
+  },
+  
+  row: function (cell1, cell2, cls, childOf) {
+    return (
+      '<tr' + (cls || childOf ? ' class="' + (cls || childOf).replace(/\W/g, '_') + (childOf ? ' child' : '') + '"' : '') + '>' + 
+        (cell1 && cell2 ? '<th>' + cell1 + '</th><td>' + cell2 + '</td>' : '<td colspan="2">' + (cell1 || cell2) + '</td>') +
+      '</tr>'
+    );
   }
+}, {
+  template: $([
+    '<div class="zmenu_holder">',
+    '  <span class="close"></span>',
+    '  <div class="info_popup floating_popup">',
+    '    <div class="loading"><div>Loading component</div><p class="spinner"></p></div>',
+    '    <div class="container"></div>',
+    '  </div>',
+    '</div>'
+  ].join(''))
 });
