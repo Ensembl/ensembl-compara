@@ -13,6 +13,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     var panel = this;
     
     this.popups = {};
+    this.zmenuId = 1;
     
     this.base();
     this.initPopups();
@@ -33,38 +34,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     }).on('click', '.info_popup .close', function () {
       $(this).parent().hide();
     }).on('click', 'pre a.sequence_info', function (e) {
-        e.preventDefault();
-        
-        var el    = $(this);
-        var data  = el.data();
-        var popup = data.link.data('popup');
-        var position, maxLeft, scrollLeft;
-        
-        if (!data.position) {
-          data.position  = el.position();
-          data.position.top  += 0.75 * el.height();
-          data.position.left += 0.25 * el.width();
-          
-          el.data('position', data.position);
-        }
-        
-        if (popup) {
-          position   = $.extend({}, data.position); // modifying data.position changes the stored value too, so make a fresh copy
-          maxLeft    = $(window).width() - popup.width() - 20;
-          scrollLeft = $(window).scrollLeft();
-          
-          if (position.left > maxLeft + scrollLeft) {
-            position.left = maxLeft + scrollLeft;
-          }
-        
-          popup.show().css(position);
-        } else if (!data.processing) {
-          el.data('processing', true);
-          panel.getPopup(el);
-        }
-        
-        el    = null;
-        popup = null;
+        panel.makeZMenu(e, $(this));
+        return false;
     });
   },
   
@@ -75,140 +46,15 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     
     $('pre a.sequence_info', this.el).each(function () {
       if (!panel.popups[this.href]) {
-        panel.popups[this.href] = $(this);
+        panel.popups[this.href] = 'zmenu_' + panel.id + '_' + (panel.zmenuId++);
       }
       
-      $(this).data('link', panel.popups[this.href]); // Store a single reference <a> for all identical hrefs - don't duplicate the popups
-      $(this).data('position', null);                // Clear the position data
-    }).css('cursor', 'pointer');
+      $(this).data('menuId', panel.popups[this.href]); // Store a single reference <a> for all identical hrefs - don't duplicate the popups
+    });
   },
   
-  getPopup: function (el) {
-    var data = el.data();
-    var popup = this.elLk.popup.clone().appendTo(this.el).draggable({ handle: 'tr.header' }).css(data.position);
-    
-    function toggle(e) {
-      if (e.target.nodeName !== 'A') {
-        var tr = $(this).parent();
-        
-        tr.siblings('.' + tr.attr('class')).toggle();
-        $(this).toggleClass('closed opened');
-        
-        tr = null;
-      }
-    }
-    
-    $.ajax({
-      url: el.attr('href'),
-      dataType: 'json',
-      context: this,
-      success: function (json) {
-        if (json.length) {
-          var classes = {};
-          var i, j, tbody, feature, caption, entry, childOf, cls, css, tag, row, maxLeft, scrollLeft;
-          
-          for (i = 0; i < json.length; i++) {
-            tbody = $('<tbody>').appendTo(popup.children('table'));
-            feature = json[i];
-             
-            for (j = 0; j < feature.length; j++) {
-              entry   = feature[j].entry   || [];
-              childOf = feature[j].childOf || '';
-              cls     = (feature[j].cls    || childOf).replace(/\W/g, '_');
-              css     = childOf ? { paddingLeft: '12px' } : {};
-              tag     = 'td';
-              
-              if (typeof entry !== 'object') {
-                entry = [ entry ];
-              }
-              
-              caption = typeof feature[j].caption === 'undefined' ? entry.shift() : feature[j].caption;
-              
-              if (cls) {
-                classes[cls] = 1;
-              }
-              
-              if (caption && entry.length) {
-                caption += ':';
-              }
-              
-              if (j === 0) {
-                tag = 'th';
-                cls = 'header';
-              }
-              
-              row = $('<tr>', { 'class': cls }).appendTo(tbody);
-              
-              if (typeof caption !== 'undefined' && entry.length) {
-                row.append($('<' + tag + '>', { html: caption, css: css })).append($('<' + tag + '>', { html: entry.join(' ') }));
-              } else {
-                row.append($('<' + tag + '>', { html: (caption || entry.join(' ')), colspan: 2 }));
-              }
-            }
-            
-            tbody.append('<tr style="display:block;padding-bottom:3px;">'); // Add padding to the bottom of the tbody
-          }
-          
-          $('tbody', popup).each(function () {
-            var rows = $('tr', this);
-            var trs;
-            
-            for (var c in classes) {
-              trs = rows.filter('.' + c);
-              
-              if (trs.length > 2) {
-                $(':first', trs[0]).addClass('closed').on('click', toggle);
-                trs.not(':first').hide();
-              }
-            }
-            
-            trs  = null;
-            rows = null;
-          });
-          
-          popup.css('zIndex', ++Ensembl.PanelManager.zIndex).show();
-          
-          maxLeft    = $(window).width() - popup.width() - 20;
-          scrollLeft = $(window).scrollLeft();
-          
-          if (data.position.left > maxLeft + scrollLeft) {
-            popup.css('left', maxLeft + scrollLeft);
-          }
-          
-          data.link.data('popup', popup); // Store the popup on the reference <a>
-          
-          if (json.length > 1) {
-            function paginate(el) {
-              var data = el.data('paginate') || {};
-              var all  = data.itemsPerPage === 1;
-              
-              el.paginate({
-                itemContainer : 'table',
-                navPanel      : '.zmenu_paginate',
-                showAll       : all,
-                itemsPerPage  : 1,
-                startPage     : 0,
-                linksToDisplay: 3,
-                navLabelFirst : '<<',
-                navLabelPrev  : '<',
-                navLabelNext  : '>',
-                navLabelLast  : '>>'
-              }).children('.zmenu_all').html(all ? 'Show one feature' : 'Show all features');
-            }
-            
-            popup.append('<div class="zmenu_bottom zmenu_paginate"></div><div class="zmenu_bottom zmenu_all"></div>').children('.zmenu_all').on('click', function () {
-              paginate($(this).parent());
-            });
-            
-            paginate(popup);
-          }
-        }
-      },
-      complete: function () {
-        el.data('processing', false);
-        popup = null;
-      }
-    });
+  makeZMenu: function (e, el) {
+    Ensembl.EventManager.trigger('makeZMenu', el.data('menuId'), { event: e, area: { a: el } });
   },
   
   sequenceKey: function () {
