@@ -4,43 +4,35 @@ use strict;
 
 use List::Util qw(min max);
 
+use Bio::EnsEMBL::Variation::StructuralVariationFeature;
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub somatic    { return $_[0]->{'my_config'}->id =~ /somatic/; }
+sub somatic { return $_[0]->{'my_config'}->id =~ /somatic/; }
+sub depth   { return $_[0]{'display'} eq 'compact' ? 1 : $_[0]->SUPER::depth; }
 
 sub colour_key {
-
-  return 'copy_number_variation' if ($_[0]->{'display'} eq 'compact');
-  
-  return 'somatic_breakpoint_variant' if ($_[1]->is_somatic and $_[1]->breakpoint_order );
+  return 'copy_number_variation'      if $_[0]->{'display'} eq 'compact';
+  return 'somatic_breakpoint_variant' if $_[1]->is_somatic and $_[1]->breakpoint_order;
   
   if ($_[1]->class_SO_term eq 'copy_number_variation') {
     my $ssv_class = $_[1]->structural_variation->get_all_supporting_evidence_classes;
-    return $ssv_class->[0] if (scalar @$ssv_class == 1);
+    return $ssv_class->[0] if scalar @$ssv_class == 1;
   }
+  
   return $_[1]->class_SO_term;
 }
 
-sub my_config { 
+sub render_compact {
   my $self = shift;
-  my $term = shift;
-  
-  if ($term eq 'depth') {
-    my $depth = ($self->{'my_config'}->get($term) > 1) ? $self->{'my_config'}->get($term) : 100;
-    return ($self->{'display'} eq 'compact') ? 1 : $depth;
-  }
-  
-  if ($term eq 'height') {
-    return ($self->my_config('depth') > 1) ? 6 : 12;
-  }
-  
-  return $self->{'my_config'}->get($term);
+  $self->{'my_config'}->set('height', 12);
+  return $self->render_normal;
 }
 
 sub features {
-  my $self = shift; 
+  my $self   = shift; 
   my $config = $self->{'config'};
-  my $id   = $self->{'my_config'}->id;
+  my $id     = $self->{'my_config'}->id;
   
   if (!$self->cache($id)) {
     my $slice    = $self->{'container'};
@@ -74,41 +66,44 @@ sub features {
         
         # Generate blocks when the track is compacted in one line (except for the Larger Structural Variants track)
         if ($overlap != 2 && $self->{'display'} eq 'compact') {
-        
-          my $slice_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('core')->get_SliceAdaptor;
-          my @list = sort {$a->seq_region_start <=> $b->seq_region_start}  @display_features;
-          @display_features = ();
-          my $block_nb = 1;
-          for (my $i=0;$i<scalar(@list);$i++) {
-            my $svf  = $list[$i];
-            my $start = $svf->seq_region_start;
-            my $end   = $svf->seq_region_end;
+          my $slice_adaptor    = $self->{'container'}->adaptor->db->get_db_adaptor('core')->get_SliceAdaptor;
+          my @list             = sort { $a->seq_region_start <=> $b->seq_region_start } @display_features;
+          my $block_nb         = 1;
+             @display_features = ();
+          
+          for (my $i = 0; $i < scalar @list; $i++) {
+            my $svf     = $list[$i];
+            my $start   = $svf->seq_region_start;
+            my $end     = $svf->seq_region_end;
             my $b_start = $start;
             my $b_end   = $end;
+            
             while ($b_end >= $start) {
-              if ($b_end < $end) {
-                $b_end = $end;
-              }
-              last if ($i == (scalar(@list)-1));
-              my $svf2 = $list[$i+1];
-              $start = $svf2->seq_region_start;
-              $end   = $svf2->seq_region_end;
-              $i ++ if ($b_end >= $start);
+              last if $i == scalar @list - 1;
+              
+              my $svf2  = $list[$i+1];
+                 $b_end = $end if $b_end < $end;
+                 $start = $svf2->seq_region_start;
+                 $end   = $svf2->seq_region_end;
+              
+              $i ++ if $b_end >= $start;
             }
-            $b_end = $self->{'container'}{'end'} if ($b_end > $self->{'container'}{'end'});
-            my $sv_block = Bio::EnsEMBL::Variation::StructuralVariationFeature->new
-                           (
-                             -start => $b_start-$slice->start+1,
-                             -end   => $b_end-$slice->start+1,
-                             -slice => $slice
-                           );
-            $block_nb ++;
-            push (@display_features, $sv_block);
+            
+            $b_end = $self->{'container'}{'end'} if $b_end > $self->{'container'}{'end'};
+            
+            my $sv_block = Bio::EnsEMBL::Variation::StructuralVariationFeature->new(
+              -start => $b_start - $slice->start + 1,
+              -end   => $b_end   - $slice->start + 1,
+              -slice => $slice
+            );
+            
+            $block_nb++;
+            
+            push @display_features, $sv_block;
           }
         }
-
+        
         $features = \@display_features;
-         
       } elsif ($self->somatic) {  # Display only the correct breakpoint (somatic data)
         for (my $i = 0; $i < scalar @$features; $i++) {
           if (!$features->[$i]{'breakpoint_order'}) {
@@ -134,7 +129,6 @@ sub features {
   return $self->cache($id) || [];
 }
 
-
 sub tag {
   my ($self, $f) = @_;
   my $colour = $self->my_colour($self->colour_key($f), 'tag');
@@ -142,7 +136,8 @@ sub tag {
   
   if ($f->is_somatic && $f->breakpoint_order) {
     foreach my $coords ([ $f->start, $f->seq_region_start ], $f->start != $f->end ? [ $f->end, $f->seq_region_end ] : ()) {
-      next if ($coords->[0] < 0);
+      next if $coords->[0] < 0;
+      
       push @tags, {
         style       => 'somatic_breakpoint',
         colour      => 'gold',
@@ -165,9 +160,8 @@ sub tag {
       };
     }
     
-    return @tags if ($self->my_config('depth') <= 1);
+    return if $self->{'display'} eq 'compact';
     
-  
     # start of feature
     if ($f->outer_start && $f->inner_start) {
       if ($f->outer_start != $f->inner_start && !$inner_crossing) {
@@ -229,7 +223,6 @@ sub tag {
   return @tags;
 }
 
-
 sub render_tag {
   my ($self, $tag, $composite, $slice_length, $width, $start, $end, $img_start, $img_end) = @_;
   my $pix_per_bp = $self->scalex;
@@ -290,13 +283,11 @@ sub render_tag {
 sub href {
   my ($self, $f) = @_;
   
-  if ($self->my_config('depth') == 1) {
-    my $start = ($self->{'container'}{'start'} > $f->seq_region_start) ? $self->{'container'}{'start'} : $f->seq_region_start; 
-    my $end   = ($self->{'container'}{'end'} < $f->seq_region_end) ? $self->{'container'}{'end'} : $f->seq_region_end; 
-    
-    my $overlap = ($self->my_config('overlap')) ? $self->my_config('overlap') : undef;
-    
-    my $is_somatic = ($f->is_somatic) ? 1 : undef;
+  if ($self->{'display'} eq 'compact') {
+    my $start      = $self->{'container'}{'start'} > $f->seq_region_start ? $self->{'container'}{'start'} : $f->seq_region_start; 
+    my $end        = $self->{'container'}{'end'}   < $f->seq_region_end   ? $self->{'container'}{'end'}   : $f->seq_region_end; 
+    my $overlap    = $self->my_config('overlap') ? $self->my_config('overlap') : undef;
+    my $is_somatic = $f->is_somatic ? 1 : undef;
     
     return $self->_url({
       species  => $self->species,
@@ -316,7 +307,6 @@ sub href {
   }
 }
 
-
 sub title {
   my ($self, $f) = @_;
   my $id     = $f->variation_name;
@@ -331,7 +321,8 @@ sub title {
 sub highlight {
   my ($self, $f, $composite, $pix_per_bp, $h, undef, @tags) = @_;
   
-  return unless ($self->my_config('depth') > 1 && $self->core('sv') eq $f->variation_name);
+  return if     $self->{'display'} eq 'compact';
+  return unless $self->core('sv') eq $f->variation_name;
   
   my $width = max(map $_->width, $composite, @tags);
   my $x     = min(map $_->x,     $composite, @tags);
