@@ -77,6 +77,7 @@ sub timer_push         { return shift->{'config'}->species_defs->timer->push(shi
 sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                  }
 sub error_track_name   { return $_[0]->my_config('caption');                                                       }
 sub my_label           { return $_[0]->my_config('caption');                                                       }
+sub depth              { return $_[0]->my_config('depth');                                                         }
 sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                  }
 sub my_config          { return $_[0]->{'my_config'}->get($_[1]);                                                  }
 sub type               { return $_[0]->{'my_config'}{'id'};                                                        }
