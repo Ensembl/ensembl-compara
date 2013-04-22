@@ -18,6 +18,11 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     Ensembl.EventManager.register('reloadPage',   this, this.removeShare);
     Ensembl.EventManager.register('ajaxComplete', this, this.shareReady);
     
+    if (!this.el.hasClass('modal_nav')) {
+      Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
+      this.pulseToolButton();
+    }
+    
     this.elLk.links = $('ul.local_context li', this.el);
     
     $('img.toggle', this.elLk.links).on('click', function () {
@@ -44,6 +49,49 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
       
       return false;
     });
+  },
+  
+  relocateTools: function (tools) {
+    var toolButtons = $('.tool_buttons', this.el);
+    
+    tools.each(function () {
+      var a        = $(this).find('a');
+      var existing = $('.additional .' + a[0].className.replace(' ', '.'), toolButtons);
+      
+      if (existing.length) {
+        existing.replaceWith(a);
+      } else {
+        $(this).children().addClass('additional').appendTo(toolButtons).not('.hidden').show();
+      }
+      
+      a = existing = null;
+    }).remove();
+    
+    $('a.seq_blast', toolButtons).on('click', function () {
+      $('form.seq_blast', toolButtons).submit();
+      return false;
+    });
+    
+    this.pulseToolButton();
+    
+    tools = null;
+  },
+  
+  pulseToolButton: function () {
+    $('.tool_buttons a.pulse:not(.pulsing)', this.el).one('click', function () {
+      clearInterval($(this).stop().removeClass('pulse').css({ backgroundColor: '', color: '' }).data('interval'));
+    }).addClass('pulsing').each(function () {
+      var pulse = $(this).data({
+        dark    : false,
+        interval: setInterval(function () {
+          var data = pulse.data();
+          pulse.toggleClass('pulse', !data.dark, 1000);
+          data.dark = !data.dark;
+        }, 1000)
+      });
+    });
+    
+    els = null;
   },
   
   shareReady: function () {
