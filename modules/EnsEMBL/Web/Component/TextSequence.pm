@@ -938,7 +938,7 @@ sub class_to_style {
     foreach (keys %$var_styles) {
       my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}{'default'}) };
       
-      $style->{'color'} = $colourmap->hex_by_name($var_styles->{$_}{'label'}) if $var_styles->{$_}{'label'};
+      $style->{'color'} = $colourmap->hex_by_name($var_styles->{$_}{'overlay'}) if $var_styles->{$_}{'overlay'};
       
       $class_to_style{$_} = [ $i++, $style ];
     }
