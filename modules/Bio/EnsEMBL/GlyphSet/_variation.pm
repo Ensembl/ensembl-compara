@@ -9,29 +9,30 @@ use Bio::EnsEMBL::Variation::VariationFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub colour_key    { return lc $_[1]->display_consequence; }
-sub label_overlay { return 1; }
-
-sub my_config { 
-  my $self = shift;
-  my $term = shift;
-
-  if ($term eq 'depth') {
-    my $depth = ($self->{'my_config'}->get($term) > 1) ? $self->{'my_config'}->get($term) : 20;
-    
-    return 1 if ($self->{'display'} eq 'gradient'); # <=> collapsed in 1 line
-    
-    my $length = $self->{'container'}->end - $self->{'container'}->start + 1;
-    
-    return ($length > 200000) ? 1 : $depth if ($self->{'display'} eq 'normal'); # limit 200kb
-
-    if ($self->{'display'} eq 'gene_label') { # <=> expanded with name (limit 10kb)
-      return 1000 if ($length <= 10000);
-      $self->{'display'} = 'gene_nolabel'; # <=> expanded without name
-    }
-    return $depth; # <=> expanded without name
+sub depth {
+  my $self   = shift;
+  my $length = $self->{'container'}->length;
+  
+  if ($self->{'display'} =~ /labels/ || ($self->{'display'} eq 'normal' && $length <= 2e5)) {
+    return $length > 1e4 ? 20 : undef;
   }
-  return $self->{'my_config'}->get($term);
+  
+  return $self->SUPER::depth;
+}
+
+sub colour_key    { return lc $_[1]->display_consequence; }
+sub feature_label { return $_[1]->variation_name; }
+
+sub render_labels {
+  my ($self, $labels) = @_;
+  $self->{'show_labels'} = 1 if $self->{'container'}->length <= 1e4;
+  return $self->render_normal;
+}
+
+sub _init {
+  my $self = shift;
+  $self->{'my_config'}->set('no_label', 1) unless $self->{'show_labels'};
+  return $self->SUPER::_init(@_);
 }
 
 sub my_label { 
@@ -81,11 +82,10 @@ sub fetch_features {
   my $id        = $self->{'my_config'}->id;
   
   if (!$self->cache($id)) {
-  
     my $variation_db_adaptor = $config->hub->database('variation', $self->species);
-    my $orig_failed_flag = $variation_db_adaptor->include_failed_variations;
-    # Disable the display of failed variations by default
-    $variation_db_adaptor->include_failed_variations(0);
+    my $orig_failed_flag     = $variation_db_adaptor->include_failed_variations;
+    
+    $variation_db_adaptor->include_failed_variations(0); # Disable the display of failed variations by default
   
     # different retrieval method for somatic mutations
     if ($id =~ /somatic/) {
@@ -170,51 +170,39 @@ sub href {
   });
 }
 
-sub feature_label {
-  my ($self, $f) = @_;
-  my $ambig_code = $f->ambig_code;
-  return $ambig_code eq '-' ? undef : $ambig_code;
-}
-
 sub tag {
   my ($self, $f) = @_;
-  
-  my $colours = $self->get_colours($f);
-  my $colour  = $colours->{'feature'};
+  my $colour_key   = $self->colour_key($f);
+  my $colour       = $self->my_colour($colour_key);
+  my $label_colour = $self->my_colour($colour_key, 'overlay');
+     $label_colour = 'black' if !$label_colour || $label_colour eq $colour;
+  my $label        = $f->ambig_code;
+     $label        = '' if $label eq '-';
+  my @tags;
   
   if ($self->my_config('style') eq 'box') {
-    my $style        = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
-    my $label_colour = $colours->{'label'};
-       $label_colour = 'black' if $label_colour eq $colour;
-
-    return {
+    my $style = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
+    
+    push @tags, {
       style        => $style,
       colour       => $colour,
-      letter       => $style eq 'box' ? $f->ambig_code : '',
+      letter       => $style eq 'box' ? $label : '',
       label_colour => $label_colour,
       start        => $f->start
     };
-  }
-  elsif ($self->{'display'} eq 'gene_label') {
-    my $text_colour = $self->my_colour($colours->{'key'}, 'tag');
-    my $pix_per_bp = $self->scalex;
-    
-    my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
-    my $text = $f->variation_name;
-    my (undef, undef, $text_width, undef) = $self->get_text_width(0, $text, '', %font);
-    
-    return {
-      style        => 'underline',
-      colour       => $colour,
-      text_colour  => $text_colour,
-      start        => $f->start,
-      end          => $f->end + (6 + $text_width)/$pix_per_bp,
-      feature      => $f,
+  } elsif ($f->start > $f->end) {
+    push @tags, { style => 'insertion', colour => $colour, feature => $f };
+  } elsif ($label) {
+    push @tags, {
+      style  => 'label',
+      letter => $label,
+      colour => $label_colour,
+      start  => $f->start,
+      end    => $f->end
     };
-  
   }
   
-  return { style => 'insertion', colour => $colour, feature => $f } if $f->start > $f->end;
+  return @tags;
 }
 
 sub render_tag {
@@ -232,11 +220,11 @@ sub render_tag {
       direction  => 'up',
     });
     
-    my $width = min(1, 16/$pix_per_bp);
+    my $width = min(1, 16 / $pix_per_bp);
     
     # invisible box to make inserts more clickable
     $composite->push($self->Rect({
-      x         => $start - 1 - $width/2,
+      x         => $start - 1 - $width / 2,
       y         => 0,
       absolutey => 1,
       width     => $width,
@@ -245,13 +233,13 @@ sub render_tag {
     }));
   } elsif ($start <= $tag->{'start'}) {
     my $box_width = 8 / $pix_per_bp;
-    my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
+    my %font      = $self->get_font_details($self->my_config('font') || 'innertext', 1);
     
     if ($tag->{'style'} eq 'box') {
       my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
-      my $width = $text_width / $pix_per_bp;
-      my $box_x = $start - 4/$pix_per_bp;
-      my $text_x = ($box_width<$width) ? $box_x : $start + 0.5 - ($width/2) ;
+      my $width  = $text_width / $pix_per_bp;
+      my $box_x  = $start - 4 / $pix_per_bp;
+      my $text_x = $box_width < $width ? $box_x : $start + 0.5 - ($width / 2);
       
       $composite->push($self->Rect({
         x         => $box_x - 0.5,
@@ -272,7 +260,6 @@ sub render_tag {
         absolutey => 1,
         %font
       }));
-      
     } elsif ($tag->{'style'} =~ /^(delta|left-snp)$/) {
       push @glyph, $self->Triangle({
         mid_point => [ $start - 0.5, $tag->{'style'} eq 'delta' ? $height : 0 ],
@@ -285,38 +272,29 @@ sub render_tag {
       
       # invisible box to make inserts more clickable
       $composite->push($self->Rect({
-        x         => $start - 1 - $box_width/2,
+        x         => $start - 1 - $box_width / 2,
         y         => 0,
         absolutey => 1,
         width     => $box_width,
         height    => $height,
       }));
+    } elsif ($tag->{'style'} eq 'label') {
+      my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
       
-    } elsif ($tag->{'style'} eq 'underline') { 
-      # Expanded with name
-      my $text = $tag->{feature}->variation_name;
-      my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $text, '', %font);
-      
-      $composite->push(
-        $self->Text({
-          x         => $tag->{end} - ($text_width + 2)/$pix_per_bp,
+      if ($text_width / $pix_per_bp < $tag->{'end'} - $tag->{'start'} + 1) {
+        $composite->push($self->Text({
+          x         => $tag->{'start'} - 1,
           y         => ($height - $text_height) / 2 - 1,
-          height    => $height,
-          width     => $text_width/$pix_per_bp,
-          halign    => 'left',
-          colour    => (defined($tag->{'text_colour'})) ? $tag->{'text_colour'} : $tag->{'colour'},
-          text      => $text,
+          width     => $tag->{'end'} - $tag->{'start'} + 1,
+          textwidth => $text_width,
+          halign    => 'center',
+          height    => $text_height,
+          colour    => $tag->{'colour'},
+          text      => $tag->{'letter'},
           absolutey => 1,
           %font
-        }),
-        $self->Rect({
-          x         => $start,
-          y         => 0,
-          absolutey => 1,
-          width     => $tag->{feature}->end-$tag->{feature}->start,
-          height    => $height,
-          colour    => $tag->{'colour'},
-      }));    
+        }));
+      }
     }
   }
   
@@ -326,8 +304,6 @@ sub render_tag {
 sub highlight {
   my $self = shift; 
   my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
-  
-  ## Get highlights
   my %highlights = map { $_ => 1 } $self->highlights;
 
   if ($self->{'config'}->core_objects->{'variation'}){
@@ -345,32 +321,17 @@ sub highlight {
   
   $composite->z(20);
   
-  my $z = ($f->start > $f->end) ? 0 :18;
+  my $z = $f->start > $f->end ? 0 : 18;
   
-  if ($self->{'display'} eq 'gene_label') {
-    $self->unshift(
-      $self->Rect({ # First a black box
-        x         => $composite->x - 1 / $pix_per_bp,
-        y         => $composite->y - 1, # + makes it go down
-        width     => $composite->width,
-         height    => $h + 2,
-         colour    => 'black',
-         absolutey => 1,
-         z         => $z,
-      })
-    ); 
-  } else {
-    $self->unshift(
-      $self->Rect({ # First a black box
-        x         => $composite->x - 2 / $pix_per_bp,
-        y         => $composite->y - 2, # + makes it go down
-        width     => $composite->width + 4 / $pix_per_bp,
-        height    => $h + 4,
-        colour    => 'black',
-        absolutey => 1,
-         z         => $z,
-      })
-    );
+  foreach (@{$composite->{'composite'}}) {
+    $self->unshift($self->Rect({
+      x      => $composite->x + $_->x - 2 / $pix_per_bp,
+      y      => $composite->y + $_->y - 2,
+      width  => $_->width + 4 / $pix_per_bp,
+      height => $_->height + 4,
+      colour => 'black',
+      z      => $z,
+    }));
   }
 }
 
