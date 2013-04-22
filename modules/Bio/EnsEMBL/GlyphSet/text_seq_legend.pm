@@ -78,7 +78,7 @@ sub _init {
     }
     
     foreach (sort { $legend{$type}{$a}{'text'} cmp $legend{$type}{$b}{'text'} } keys %{$legend{$type}}) {
-      my ($legend, $colour, $label) = ($legend{$type}{$_}{'text'}, $legend{$type}{$_}{'default'}, $legend{$type}{$_}{'label'});
+      my ($legend, $bg_colour, $colour) = ($legend{$type}{$_}{'text'}, $legend{$type}{$_}{'default'}, $legend{$type}{$_}{'overlay'});
       my $pos_x = (($box_width + 20) * $x) + $label_width;
       my $pos_y = $y * ($th + 7) + 2;
       
@@ -87,7 +87,7 @@ sub _init {
         y             => $pos_y,
         width         => $box_width + 6,
         height        => $th + 4,
-        colour        => $colour,
+        colour        => $bg_colour,
         absolutey     => 1,
         absolutex     => 1,
         absolutewidth => 1,
@@ -102,7 +102,7 @@ sub _init {
         halign        => 'left',
         ptsize        => $fontsize,
         font          => $fontname,
-        colour        => $label || '555555',
+        colour        => $colour || '555555',
         text          => $legend,
         absolutey     => 1,
         absolutex     => 1,
@@ -122,4 +122,4 @@ sub _init {
 }
 
 1;
-      
+
