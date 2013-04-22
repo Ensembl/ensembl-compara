@@ -1,26 +1,24 @@
 .floating_popup { 
-  position: absolute!important; 
-  display: none; 
-  background-color: [[TINT_BG]]; 
-  margin: 0;
-  border: 1px outset [[TINT_BORDER]]; 
-  z-index: 200; 
-  font-weight: bold; 
-  padding: 2px; 
-  font-size: 10px; 
-  text-align: left; 
-  width: 20em;
+  position: absolute !important;
+  display: none;
+  background-color: [[TINT_BG]];
+  border: 1px outset [[TINT_BORDER]];
+  z-index: 200;
+  font-weight: bold;
+  padding: 2px;
+  font-size: 10px;
+  text-align: left;
+  width: 200px;
   white-space: normal;
 }
 
-.floating_popup .spinner          { height: 66px!important; margin: 0; }
-body.ie6 .floating_popup .spinner { background-color: [[TINT_BG]]; border: 0; margin: 16px 0; }
+.floating_popup .spinner               { height: 66px !important; margin: 0; }
+body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 0; margin: 16px 0; }
 
 .info_popup                            { width: auto; padding: 0; }
-.info_popup th, .info_popup td         { padding: 2px 3px; white-space: nowrap; }
-.info_popup tr th.subheader,
+.info_popup th,
+.info_popup td                         { padding: 2px 3px; white-space: nowrap; }
 .info_popup tr.header                  { background-color: [[BUTTON_BG]]; }
-.info_popup tr th.subheader,    
 .info_popup tr.header th               { border-bottom: 1px solid black; color: #FFFFFF; }
 .info_popup tr.header a                { color: #FFFFFF; }
 .info_popup span.close                 { position: absolute; top: -8px; right: -12px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; }
@@ -33,22 +31,31 @@ body.ie6 .floating_popup .spinner { background-color: [[TINT_BG]]; border: 0; ma
 .info_popup .G                         { background-color: #FFEC8B; }
 .info_popup ul                         { list-style: none; margin: 0; padding: 0; }
 .info_popup ul li                      { list-style-image: none; }
-.info_popup .zmenu_bottom              { padding: 2px 0px; background-color: [[BUTTON_BG]]; text-align: center; }
-.info_popup .zmenu_paginate span,
-.info_popup .zmenu_paginate a          { width: 20px; margin-right: 1px; display: inline-block; line-height: 20px; text-decoration: none;  background-color: [[TINT_BG]]; color: [[PAGE_TEXT]]; }
-.info_popup .zmenu_paginate a:hover    { background-color: #BFD0FF; }
-.info_popup .zmenu_paginate a.first    { border-radius: 4px 0 0 4px; -moz-border-radius: 4px 0 0 4px; -webkit-border-radius: 4px 0 0 4px; }
-.info_popup .zmenu_paginate a.last     { border-radius: 0 4px 4px 0; -moz-border-radius: 0 4px 4px 0; -webkit-border-radius: 0 4px 4px 0; }
-.info_popup .zmenu_paginate a.disabled { color: [[NEUTRAL_BORDER]]; cursor: default; background-color: [[TINT_BG]]!important; }
-.info_popup .zmenu_paginate a.active   { background-color: #99B3FF; }
-.info_popup .zmenu_paginate span       { width: auto; padding: 0 1px; }
-.info_popup .zmenu_all                 { color: #FFFFFF; cursor: pointer; text-decoration: underline; }
 
-body.ie6 .info_popup span.close   { background-image: url(/i/close2.gif); }
+.zmenu_holder                          { position: absolute !important; display: none; z-index: 200; pointer-events: none; }
+.zmenu_holder *                        { pointer-events: auto; }
+.zmenu_holder .floating_popup          { display: block; position: relative !important; z-index: auto; margin: 8px 10px 0 0; }
+.zmenu_holder .info_popup              { border: 0; }
+.zmenu_holder .zmenu                   { width: 180px; }
+.zmenu_holder .zmenu th,
+.zmenu_holder .zmenu td                { white-space: normal; }
+.zmenu_holder .zmenu tr.child th       { padding-left: 12px; }
+.zmenu_holder span.close               { position: absolute; right: 0; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; z-index: 201; }
+.zmenu_holder div.header,
+.zmenu_holder .container,
+.zmenu_holder .loading                 { border: 1px outset [[TINT_BORDER]]; }
+.zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: #FFFFFF; background-color: [[BUTTON_BG]]; border-bottom: 2px solid [[TINT_BG]]; text-align: center; }
+.zmenu_holder .container               { border-top: 0; }
+.zmenu_holder .loading                 { width: 200px; }
+.zmenu_holder .loading div             { padding: 2px 3px; color: #FFFFFF; background-color: [[BUTTON_BG]]; border-bottom: 1px solid black; }
+.zmenu_holder .row                     { padding: 0 0 2px 2px; }
+.zmenu_holder .row .zmenu              { padding: 0 2px 2px 0; display: inline-block; vertical-align: top; } 
+.zmenu_holder .row .zmenu tr.header th { width: 180px; }
+.zmenu_holder .grid                    { height: 250px; overflow-x: hidden; overflow-y: scroll; }
 
-table.zmenu                       { width: 18em; }
-table.zmenu th,                 
-table.zmenu td                    { white-space: normal; }
-table.zmenu tbody.loading         { display: none; }
+body.ie  .zmenu_holder .grid           { width: 200px; }
+body.ie  .zmenu_holder div.header      { width: 202px; }
+body.ie6 .zmenu_holder span.close,
+body.ie6 .info_popup   span.close      { background-image: url(/i/close2.gif); }
 
-.glossary_mouseover               { border-bottom: 1px dotted #00c; cursor: pointer; }
+.glossary_mouseover                    { border-bottom: 1px dotted #00c; cursor: pointer; }
