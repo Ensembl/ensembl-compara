@@ -73,7 +73,7 @@ sub form {
       label  => 'Output format for sequence alignment',
       values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
     });
-  } elsif ($function eq 'Text') {
+  } elsif ($function eq 'Text' or $function eq 'Text_pan_compara') {
     my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
     
     $self->add_fieldset('Text tree output');
