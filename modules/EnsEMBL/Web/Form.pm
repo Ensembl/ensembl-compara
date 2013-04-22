@@ -53,9 +53,9 @@ sub new {
   $self->{'_format'}    = delete $params->{'format'} || 'HTML';
   $params->{'method'} ||= 'post';
   $params->{'class'}  ||= $self->CSS_CLASS_DEFAULT;
-  $params->{'class'}   .= ' '.$self->CSS_CLASS_VALIDATION unless delete $params->{'skip_validation'};
 
   # add attributes
+  $self->set_attribute('class', $self->CSS_CLASS_VALIDATION) unless delete $params->{'skip_validation'};
   $self->set_attribute($_, $params->{$_}) for keys %$params;
 
   $self->dom->map_element_class ({                            #map all form components to classes for DOM
