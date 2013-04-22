@@ -110,12 +110,12 @@ sub content {
   # Expand all nodes
   if (grep $_ != $node_id, keys %collapsed_ids) {
     $self->add_entry({
-      type  => 'Image',
-      label => 'expand all sub-trees',
-      class => 'update_panel',
-      order => 8,
-      extra => { update_params => '<input type="hidden" class="update_url" name="collapse" value="none" />' },
-      link  => $hub->url('Component', {
+      type          => 'Image',
+      label         => 'expand all sub-trees',
+      link_class    => 'update_panel',
+      order         => 8,
+      update_params => '<input type="hidden" class="update_url" name="collapse" value="none" />',
+      link          => $hub->url('Component', {
         type     => $hub->type,
         action   => $action,
         collapse => 'none' 
@@ -130,12 +130,12 @@ sub content {
     my $collapse = join ',', keys %collapsed_ids, @adjacent_subtree_ids;
     
     $self->add_entry({
-      type  => 'Image',
-      label => 'collapse other nodes',
-      class => 'update_panel',
-      order => 10,
-      extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
-      link  => $hub->url('Component', {
+      type          => 'Image',
+      label         => 'collapse other nodes',
+      link_class    => 'update_panel',
+      order         => 10,
+      update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
+      link          => $hub->url('Component', {
         type     => $hub->type,
         action   => $action,
         collapse => $collapse
@@ -187,12 +187,12 @@ sub content {
       my $collapse = join ',', @collapse_node_ids;
       
       $self->add_entry({
-        type  => 'Image',
-        label => 'show all paralogs',
-        class => 'update_panel',
-        order => 11,
-        extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
-        link  => $hub->url('Component', {
+        type          => 'Image',
+        label         => 'show all paralogs',
+        link_class    => 'update_panel',
+        order         => 11,
+        update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
+        link          => $hub->url('Component', {
           type     => $hub->type,
           action   => $action,
           collapse => $collapse
@@ -251,11 +251,11 @@ sub content {
           
           if ($treefam_link) {
             $self->add_entry({
-              type  => 'Maps to TreeFam',
-              label => $treefam_id,
-              link  => $treefam_link,
-              extra => { external => 1 },
-              order => 6
+              type     => 'Maps to TreeFam',
+              label    => $treefam_id,
+              link     => $treefam_link,
+              external => 1,
+              order    => 6
             });
           }
         }
@@ -276,12 +276,12 @@ sub content {
       
       # Expand this node
       $self->add_entry({
-        type  => 'Image',
-        label => 'expand this sub-tree',
-        class => 'update_panel',
-        order => 7,
-        extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
-        link  => $hub->url('Component', {
+        type          => 'Image',
+        label         => 'expand this sub-tree',
+        link_class    => 'update_panel',
+        order         => 7,
+        update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
+        link          => $hub->url('Component', {
           type     => $hub->type,
           action   => $action,
           collapse => $collapse
@@ -292,12 +292,12 @@ sub content {
       
       # Collapse this node
       $self->add_entry({
-        type  => 'Image',
-        label => 'collapse this node',
-        class => 'update_panel',
-        order => 9,
-        extra => { update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />} },
-        link  => $hub->url('Component', {
+        type          => 'Image',
+        label         => 'collapse this node',
+        link_class    => 'update_panel',
+        order         => 9,
+        update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
+        link          => $hub->url('Component', {
           type     => $hub->type,
           action   => $action,
           collapse => $collapse
@@ -339,28 +339,28 @@ sub content {
     my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
     
     $self->add_entry({
-      type  => 'View Sub-tree',
-      label => 'Alignment: FASTA',
-      link  => $url_align,
-      extra => { external => 1 },
-      order => 14
+      type     => 'View Sub-tree',
+      label    => 'Alignment: FASTA',
+      link     => $url_align,
+      external => 1 ,
+      order    => 14
     });
     
     $self->add_entry({
-      type  => 'View Sub-tree',
-      label => 'Tree: New Hampshire',
-      link  => $url_tree,
-      extra => { external => 1 },
-      order => 15
+      type     => 'View Sub-tree',
+      label    => 'Tree: New Hampshire',
+      link     => $url_tree,
+      external => 1,
+      order    => 15
     });
     
     # Jalview
     $self->add_entry({
-      type  => 'View Sub-tree',
-      label => 'Expand for Jalview',
-      class => 'expand',
-      order => 16,
-      link  => $hub->url({
+      type       => 'View Sub-tree',
+      label      => 'Expand for Jalview',
+      link_class => 'expand',
+      order      => 16,
+      link       => $hub->url({
         type     => 'ZMenu',
         action   => 'Gene',
         function => 'Jalview',

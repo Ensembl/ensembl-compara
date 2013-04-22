@@ -1,6 +1,9 @@
+# $Id$
+
 package EnsEMBL::Web::ZMenu::Transcript::CCDS;
 
 use strict;
+
 use base qw(EnsEMBL::Web::ZMenu::Transcript);
 
 sub content {
@@ -17,14 +20,11 @@ sub content {
     type     => 'CCDS',
     label    => $stable_id,
     link     => $self->hub->get_ExtURL_link($stable_id, 'CCDS', $stable_id),
-    extra    => { abs_url => 1 },
+    abs_url  => 1,
     position => 2,
   });
-
-  $self->delete_entry_by_type('Transcript');
-  $self->delete_entry_by_type('Protein');
-  $self->delete_entry_by_type('Gene type');
-  $self->delete_entry_by_type('Gene');
+  
+  $self->delete_entry_by_type($_) for ('Transcript', 'Protein', 'Gene type', 'Gene');
 }
 
 1;

@@ -40,7 +40,7 @@ sub content {
       type     => 'PhylomeDB',
       label    => 'Gene in PhylomeDB',
       link     => $phy_link,
-      extra    => { external => 1 },
+      external => 1,
       position => 3
     });
   }
@@ -50,7 +50,7 @@ sub content {
       type     => 'Genomicus Synteny',
       label    => 'Gene in Genomicus',
       link     => $dyo_link,
-      extra    => { external => 1 }, 
+      external => 1, 
       position => 4
     });
   }
@@ -60,7 +60,7 @@ sub content {
       type     => 'TreeFam',
       label    => 'Gene in TreeFam',
       link     => $treefam_link,
-      extra    => { external => 1 },
+      external => 1,
       position => 5
     });
   }

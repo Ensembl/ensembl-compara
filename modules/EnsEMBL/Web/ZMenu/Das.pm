@@ -103,7 +103,7 @@ sub content {
       $self->add_entry({ type => 'Strand:', label_html => $strand }) if $strand;
       $self->add_entry({ type => 'Score:',  label_html => $score })  if $score;
       
-      $self->add_entry({ label_html => $_->{'txt'}, link => decode_entities($_->{'href'}), extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
+      $self->add_entry({ label_html => $_->{'txt'}, link => decode_entities($_->{'href'}), external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) }) for @{$_->links};
       
       foreach (map decode_entities($_), @{$_->notes}) {
         my $note = $validator->validate($_) ? encode_entities($_) : $_;

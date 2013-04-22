@@ -24,9 +24,9 @@ sub content {
   
   if ($ext_url) {
     $self->add_entry({
-      label => $display_label,
-      link  => $hub->get_ExtURL($ext_url, $display_label),
-      extra => { external => 1 }
+      label    => $display_label,
+      link     => $hub->get_ExtURL($ext_url, $display_label),
+      external => 1
     });
   }
 }

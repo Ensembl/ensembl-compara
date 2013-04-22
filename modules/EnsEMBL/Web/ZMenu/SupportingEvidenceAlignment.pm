@@ -22,29 +22,25 @@ sub content {
   if ($esid) {
     my $exon_length = $hub->param('exon_length');
 
-    if ($hub->param('er')) {
-      $self->add_entry({
-	label_html => "Entry removed from $hit_db",
-      });
-    }
+    $self->add_entry({ label_html => "Entry removed from $hit_db" }) if $hub->param('er');
 
     $self->add_entry({
       type  => 'View alignments',
       label => "$esid ($tsid)",
       link  => $hub->url({
-	type     => 'Transcript',
-	action   => 'SupportingEvidence',
-	function => 'Alignment',
-	sequence => $hit_name,
-	exon     => $esid
+        type     => 'Transcript',
+        action   => 'SupportingEvidence',
+        function => 'Alignment',
+        sequence => $hit_name,
+        exon     => $esid
       })
     });
 
     $self->add_entry({
-      type  => 'View record',
-      label => $hit_name,
-      link  => $hit_url,
-      extra => { abs_url => 1 }
+      type    => 'View record',
+      label   => $hit_name,
+      link    => $hit_url,
+      abs_url => 1
     });
 
     $self->add_entry({
@@ -67,10 +63,10 @@ sub content {
     }
   } else {
     $self->add_entry({
-      type  => 'View record',
-      labe  => $hit_name,
-      link  => $hit_url,
-      extra => { abs_url => 1 }
+      type    => 'View record',
+      labe    => $hit_name,
+      link    => $hit_url,
+      abs_url => 1
     });
   }
 }

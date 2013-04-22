@@ -29,9 +29,9 @@ sub content {
   });
   
   $self->add_entry({
-    label => "Export $slice_type sequence/features",
-    class => 'modal_link',
-    link  => $hub->url({ 
+    label      => "Export $slice_type sequence/features",
+    link_class => 'modal_link',
+    link       => $hub->url({ 
       type     => 'Export',
       action   => 'Configure',
       function => 'Location',
@@ -69,9 +69,9 @@ sub content {
     $top_level_slice = $new_slice->project('toplevel')->[0]->to_Slice;
 
     $self->add_entry({
-      label => "Export $new_slice_type sequence/features",
-      class => 'modal_link',
-      link  => $hub->url({
+      label      => "Export $new_slice_type sequence/features",
+      link_class => 'modal_link',
+      link       => $hub->url({
         type     => 'Export',
         action   => 'Configure',
         function => 'Location',
@@ -83,17 +83,17 @@ sub content {
       (my $short_name = $new_slice_name) =~ s/\.\d+$//;
       
       $self->add_entry({
-        type  => 'EMBL',
-        label => $new_slice_name,
-        link  => $hub->get_ExtURL('EMBL', $new_slice_name),
-        extra => { external => 1 }
+        type     => 'EMBL',
+        label    => $new_slice_name,
+        link     => $hub->get_ExtURL('EMBL', $new_slice_name),
+        external => 1
       });
       
       $self->add_entry({
-        type  => 'EMBL (latest version)',
-        label => $short_name,
-        link  => $hub->get_ExtURL('EMBL', $short_name),
-        extra => { external => 1 }
+        type     => 'EMBL (latest version)',
+        label    => $short_name,
+        link     => $hub->get_ExtURL('EMBL', $short_name),
+        external => 1
       });
     }
   }

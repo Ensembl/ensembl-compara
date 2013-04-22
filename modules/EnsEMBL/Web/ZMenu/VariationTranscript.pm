@@ -7,8 +7,7 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
+  my $self       = shift;
   my $hub        = $self->hub;
   my $object     = $self->object;
   my $trans_id   = $hub->param('vt') || die 'No transcript stable ID value in params';
@@ -24,30 +23,30 @@ sub content {
   
   if ($hub->type ne 'Transcript') {
     $self->add_entry({
-      type       => 'Gene',
-      label_html => $object->stable_id,
-      link       => $hub->url({ type => 'Gene', action => 'Summary', g => $object->stable_id })
+      type  => 'Gene',
+      label => $object->stable_id,
+      link  => $hub->url({ type => 'Gene', action => 'Summary', g => $object->stable_id })
     });
   }
   
   $self->add_entry({
-    type       => 'Transcript',
-    label_html => $trans_id,
-    link       => $hub->url({ type => 'Transcript', action => 'Summary', t => $trans_id })
+    type  => 'Transcript',
+    label => $trans_id,
+    link  => $hub->url({ type => 'Transcript', action => 'Summary', t => $trans_id })
   });
   
   if ($protein_id) {
     $self->add_entry({
-      type       => 'Protein',
-      label_html => $protein_id,
-      link       => $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $trans_id })
+      type  => 'Protein',
+      label => $protein_id,
+      link  => $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $trans_id })
     });
     
     $self->add_entry({
-      label_html => 'Export Protein',
-      link       => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'peptide', _format => 'Text' }),
-      extra      => { external => 1 },
-      position   => 8
+      label    => 'Export Protein',
+      link     => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'peptide', _format => 'Text' }),
+      external => 1,
+      position => 8
     });
   }
 
@@ -57,9 +56,9 @@ sub content {
   });
   
   $self->add_entry({
-    label_html => 'Export cDNA',
-    link       => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'cdna', _format => 'Text' }),
-    extra      => { external => 1 }
+    label    => 'Export cDNA',
+    link     => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'cdna', _format => 'Text' }),
+    external => 1
   });
 }
 
