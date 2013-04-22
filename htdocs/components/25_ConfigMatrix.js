@@ -162,14 +162,17 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     .on('click', '.popup_menu li', $.proxy(this.setColumnConfig, this));
     
     // Display a select all popup for columns
-    this.elLk.headers.hover(function () {
-      if (panel.mousemove) {
-        return;
+    this.elLk.headers.on({
+      mouseenter: function () {
+        if (panel.mousemove) {
+          return;
+        }
+        
+        panel.selectAllCol($(this).children('div').show());
+      },
+      mouseleave: function () {
+        $(this).children('div').hide();
       }
-      
-      panel.selectAllCol($(this).children('div').show());
-    }, function () {
-      $(this).children('div').hide();
     }).children('.select_all_column').find('input').on('click', function (e) {
       var cls   = this.className;
       var cells = panel.elLk.rows.children('.' + this.name);
@@ -189,21 +192,24 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     });
     
     // Display a select all popup for rows
-    this.elLk.rows.children('th').hover(function () {
-      if (panel.mousemove) {
-        return;
-      }
-    
-      var popup = $(this).children('.select_all_row').show();
+    this.elLk.rows.children('th').on({
+      mouseenter: function () {
+        if (panel.mousemove) {
+          return;
+        }
       
-      if (!popup.data('selectAll')) {
-        popup.children('input').prop('checked', panel.allOnRow(this));
-        popup.data('selectAll', true);
+        var popup = $(this).children('.select_all_row').show();
+        
+        if (!popup.data('selectAll')) {
+          popup.children('input').prop('checked', panel.allOnRow(this));
+          popup.data('selectAll', true);
+        }
+        
+        popup = null;
+      },
+      mouseleave: function () {
+        $(this).children('.select_all_row').hide();
       }
-      
-      popup = null;
-    }, function () {
-      $(this).children('.select_all_row').hide();
     }).children('.select_all_row').on('click', function (e) {
       var input   = $('input', this);
       var checked = panel.allOnRow(this.parentNode);
