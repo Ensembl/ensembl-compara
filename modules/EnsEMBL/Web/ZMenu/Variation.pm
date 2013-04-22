@@ -7,59 +7,49 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self             = shift;
-  my $hub              = $self->hub;
-  my $v_id             = $hub->param('v');
-  my $snp_fake         = $hub->param('snp_fake');
-  my $var_box          = $hub->param('var_box');
-  my $lrg              = $hub->param('lrg');
-  my $db_adaptor       = $hub->database('variation');
-  my $var_adaptor      = $db_adaptor->get_VariationAdaptor;
-  my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor;
-  my $var              = $var_adaptor->fetch_by_name($v_id);
-  my $vf               = $var_feat_adaptor->fetch_all_by_Variation($var);
-  my $tvar_adaptor     = $db_adaptor->get_TranscriptVariationAdaptor;
-  my $type;
-  my $feature;
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $vf    = $hub->param('vf');
+  my @click = map { $hub->param("click_$_") || () } qw(chr start end);
+  my @features;
   
-  my $p_value = $hub->param('p_value');
+  if (scalar @click == 3) {
+    @features = @{$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', @click)->get_all_VariationFeatures};
+    @features = () unless grep $_->dbID eq $vf, @features;
+  }
+  
+  @features = $hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) unless scalar @features;
+  
+  $self->{'feature_count'} = scalar @features;
+  
+  $self->feature_content($_) for @features;
+}
 
-  if (scalar @$vf == 1) {
-    $feature = $vf->[0];
-  } else {
-    foreach (@$vf) {
-      $feature = $_ if $_->dbID eq $hub->param('vf');
-    }
-  }
+sub feature_content {
+  my ($self, $feature) = @_;
+  my $hub           = $self->hub;
+  my $snp_fake      = $hub->param('snp_fake');
+  my $var_box       = $hub->param('var_box');
+  my $lrg           = $hub->param('lrg');
+  my $p_value       = $hub->param('p_value');
+  my $transcript_id = $hub->param('t_id');
+  my $consequence   = $hub->param('consequence');
+  my $chr_start     = $feature->seq_region_start;
+  my $chr_end       = $feature->seq_region_end;
+  my $chr           = $feature->seq_region_name;
+  my $name          = $feature->variation_name;
+  my $dbID          = $feature->dbID;
+  my $name          = $feature->variation_name;
+  my $source        = $feature->source;
+  my $bp            = "$chr:$chr_start";
+  my $types         = $hub->species_defs->colour('variation');
+  my $type          = $consequence && !($snp_fake || $var_box) ? $consequence : $feature->display_consequence;
+  my $allele        = $feature->allele_string;
+  my $alleles       = length $allele < 16 ? $allele : substr($allele, 0, 14) . '..';
+  my $gmaf          = $feature->minor_allele_frequency . ' (' . $feature->minor_allele . ')' if defined $feature->minor_allele;
+  my ($lrg_bp, $codon_change);
   
-  my $trans_variation = $feature->get_all_TranscriptVariations();
-  
-  # alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
-  if (!$trans_variation) {
-    my $trans_id = $hub->param('vt');
-    
-    if ($trans_id) {
-      my $trans_adaptor = $hub->database('core')->get_TranscriptAdaptor;
-      my $transcript   = $trans_adaptor->fetch_by_stable_id($trans_id);
-      
-      foreach my $trv (@{$tvar_adaptor->fetch_all_by_Transcripts([$transcript])}) {
-        $trans_variation = $trv if $trv->variation_feature->variation_name eq $feature->variation_name;
-      }
-    }
-  }
-  
-  if (($snp_fake || $var_box) && $feature) {
-    $type = $feature->display_consequence;
-  } elsif ($hub->param('consequence')) {
-    $type = $hub->param('consequence') || '';
-  } else {
-    $type = $feature->display_consequence;
-  }
-  
-  my $chr_start = $feature->start;
-  my $chr_end   = $feature->end;
-  my $chr       = $feature->seq_region_name;
-  my $bp        = "$chr:$chr_start";
+  $self->new_feature;
   
   if ($chr_end < $chr_start) {
     $bp = "$chr: between $chr_end & $chr_start";
@@ -67,12 +57,12 @@ sub content {
     $bp = "$chr:$chr_start-$chr_end";
   }
   
-  my $lrg_bp;
-  
-  if($snp_fake && $feature && $lrg) {
+  if ($snp_fake && $lrg) {
     my $lrg_slice;
+    
     eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
-    if($lrg_slice) {
+    
+    if ($lrg_slice) {
       my $lrg_feature = $feature->transfer($lrg_slice);
       
       $chr_start = $lrg_feature->start;
@@ -87,125 +77,99 @@ sub content {
     }
   }
   
-  my $source  = join ', ', @{$feature->get_all_sources||[]};
-  my $allele  = $feature->allele_string;
-  my $alleles = length $allele < 16 ? $allele : substr($allele, 0, 14) . '..';
-  my $gmaf    = $feature->minor_allele_frequency." (".$feature->minor_allele.")" if defined($feature->minor_allele);
-  
   my @entries = (
-    [ 'bp',             $bp                  ],
-    [ 'Class',          $feature->var_class  ],
-    [ 'Ambiguity code', $feature->ambig_code ],
-    [ 'Alleles',        $alleles             ],
-    [ 'Source',         $source              ],
-    [ 'Type',           $type                ],
+    [ 'bp',             $bp                                      ],
+    [ 'Class',          $feature->var_class                      ],
+    [ 'Ambiguity code', $feature->ambig_code                     ],
+    [ 'Alleles',        $alleles                                 ],
+    [ 'Source',         join(', ', @{$feature->get_all_sources}) ],
+    [ 'Type',           $types->{$type}{'text'}                  ],
   );
   
-  unshift @entries, [ 'LRG bp', $lrg_bp ] if $lrg_bp;
-  push @entries, [ 'Global MAF', $gmaf ] if defined($gmaf);
-
-
- 
-  my $tc;
-  if ($hub->param('t_id')){
-    foreach ( @{$feature->get_all_TranscriptVariations()} ){
-      if ($hub->param('t_id') eq $_->transcript->stable_id){
+  unshift @entries, [ 'LRG bp',     $lrg_bp ] if $lrg_bp;
+  push    @entries, [ 'Global MAF', $gmaf   ] if defined $gmaf;
+  
+  if ($transcript_id) {
+    foreach (@{$feature->get_all_TranscriptVariations}) {
+      if ($transcript_id eq $_->transcript->stable_id) {
         my $codon = $_->codons;
-        $codon =~s/([A-Z])/<strong>$1<\/strong>/g;
-        next unless $codon =~/\w+/;
-        $tc = "<strong>Codon change </strong> ".$codon;
+           $codon =~ s/([A-Z])/<strong>$1<\/strong>/g;
+           
+        next unless $codon =~ /\w+/;
+        
+        $codon_change = "<strong>Codon change</strong> $codon";
       }
     }  
   }
- 
-  my $type = $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation'; 
-  $self->caption($type .': ' . $feature->variation_name);
+  
+  $self->caption(sprintf '%s: %s', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $name);
   
   $self->add_entry({
-    	label_html => $feature->variation_name .' properties',
-    	link       => $hub->url({
-      	type   => 'Variation', 
-      	action => 'Summary',
-      	v      => $feature->variation_name,
-      	vf     => $feature->dbID,
-      	source => $feature->source
+    label_html => "$name properties",
+    link       => $hub->url({
+      type   => 'Variation', 
+      action => 'Summary',
+      v      => $name,
+      vf     => $dbID,
+      source => $source
     })
   });
   
-  foreach (grep $_->[1], @entries) {
-    $self->add_entry({
-      type  => $_->[0],
-      label => $_->[1]
-    });
-  }
+  $self->add_entry({ type => $_->[0], label => $_->[1] }) for grep $_->[1], @entries;
+  $self->add_entry({ label_html => $codon_change }) if $codon_change;
 
-  if ($tc =~/\w+/) {
+  if ($var_box && $var_box ne '-') {
     $self->add_entry({
-      label_html => "$tc"
+      type     => 'Amino acid',
+      label    => $var_box,
+      position => 5
     });
-  }
-
-  if ($snp_fake) {
-    my $status = join ', ', @{$feature->get_all_validation_states||[]};
+  } elsif ($snp_fake || $hub->type eq 'Variation') {    
     $self->add_entry({
-      type     =>  'Status',
-      label    => $status || '-',
-      position => ($lrg_bp ? 4 : 3)
-    });
-  } elsif ($var_box) {
-    if ($var_box ne '-') {
-      $self->add_entry({
-        type     => 'Amino acid',
-        label    => $var_box,
-        position => 5
-      });
-    }
-  } elsif ($hub->type eq 'Variation') {
-    my $status = join ', ', @{$feature->get_all_validation_states||[]};
-    
-    $self->add_entry({
-      type     => 'status:',
-      label    => $status || '-',
-      position => 3
+      type     => 'Status',
+      label    => join(', ', @{$feature->get_all_validation_states || []}) || '-',
+      position => $snp_fake && $lrg_bp ? 4 : 3
     });
   }
   
-  if(defined($p_value)) {
-    my $type = $hub->param('ftype') eq 'Phenotype' ? 'p-value (negative log)': 'p-value';
+  if (defined $p_value) {
     $self->add_entry({
-      type   => $type,
-      label  => $p_value,
+      type  => $hub->param('ftype') eq 'Phenotype' ? 'p-value (negative log)' : 'p-value',
+      label => $p_value,
     });
   }
-  my $allele_list = $feature->get_all_Alleles;
-  foreach (@$allele_list) {
-    my $pop_obj = $_->population;
-    if ($pop_obj && $pop_obj->{freqs}) {
+  
+  return if $self->{'feature_count'} > 5;
+  
+  foreach (@{$feature->get_all_Alleles}) {
+    my $population = $_->population;
+    
+    if ($population && $population->{'freqs'}) {
       $self->add_entry({
-        'label_html' => 'Population genetics',
-        'link' => $hub->url({
-                    type   => 'Variation',
-                    action => 'Population',
-                    v      => $feature->variation_name,
-                    vf     => $feature->dbID,
-                    source => $feature->source
-                    }),
+        label_html => 'Population genetics',
+        link       => $hub->url({
+          type   => 'Variation',
+          action => 'Population',
+          v      => $name,
+          vf     => $dbID,
+          source => $source
+        }),
       });
+      
       last;
     }
   }
-
-  my $ega = $hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($var);
-  if (scalar(@{$ega || []})) {
+  
+  if (scalar @{$hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_VariationFeature_list([ $feature ]) || []}) {
     $self->add_entry({
-      'label_html' => 'Phenotype data',
-      'link' => $hub->url({
-                    type   => 'Variation',
-                    action => 'Phenotype',
-                    v      => $feature->variation_name,
-                    vf     => $feature->dbID,
-                    source => $feature->source
-                    }),
+      label_html => 'Phenotype data',
+      link       => $hub->url({
+        type   => 'Variation',
+        action => 'Phenotype',
+        v      => $name,
+        vf     => $dbID,
+        source => $source
+      }),
     });
   }
 }
