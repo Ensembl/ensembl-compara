@@ -21,7 +21,8 @@ sub depth {
 }
 
 sub colour_key    { return lc $_[1]->display_consequence; }
-sub feature_label { return $_[1]->variation_name; }
+sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label eq '-'; }
+sub label_overlay { return 1; }
 
 sub render_labels {
   my ($self, $labels) = @_;
@@ -172,34 +173,36 @@ sub href {
 
 sub tag {
   my ($self, $f) = @_;
-  my $colour_key   = $self->colour_key($f);
-  my $colour       = $self->my_colour($colour_key);
-  my $label_colour = $self->my_colour($colour_key, 'overlay');
-     $label_colour = 'black' if !$label_colour || $label_colour eq $colour;
-  my $label        = $f->ambig_code;
-     $label        = '' if $label eq '-';
+  my $colour_key = $self->colour_key($f);
+  my $colour     = $self->my_colour($colour_key);
+  my $label      = $f->ambig_code;
+     $label      = '' if $label eq '-';
   my @tags;
   
   if ($self->my_config('style') eq 'box') {
-    my $style = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
+    my $style        = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
+    my $label_colour = $self->my_colour($colour_key, 'label');
     
     push @tags, {
       style        => $style,
       colour       => $colour,
       letter       => $style eq 'box' ? $label : '',
-      label_colour => $label_colour,
+      label_colour => $label_colour && $label_colour ne $colour ? $label_colour : 'black',
       start        => $f->start
     };
-  } elsif ($f->start > $f->end) {
-    push @tags, { style => 'insertion', colour => $colour, feature => $f };
-  } elsif ($label) {
+  } else {
+    my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
+    my (undef, undef, $text_width) = $self->get_text_width(0, $label, '', $self->get_font_details($self->my_config('font') || 'innertext', 1));
+    
     push @tags, {
       style  => 'label',
-      letter => $label,
-      colour => $label_colour,
-      start  => $f->start,
-      end    => $f->end
+      label  => $label,
+      colour => $self->my_colour($colour_key, 'tag') || $colour,
+      start  => $f->end,
+      end    => $f->end + 1 + $text_width / $self->scalex,
     };
+    
+    push @tags, { style => 'insertion', colour => $colour, feature => $f } if $f->start > $f->end;
   }
   
   return @tags;
@@ -233,9 +236,9 @@ sub render_tag {
     }));
   } elsif ($start <= $tag->{'start'}) {
     my $box_width = 8 / $pix_per_bp;
-    my %font      = $self->get_font_details($self->my_config('font') || 'innertext', 1);
     
     if ($tag->{'style'} eq 'box') {
+      my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
       my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
       my $width  = $text_width / $pix_per_bp;
       my $box_x  = $start - 4 / $pix_per_bp;
@@ -278,24 +281,25 @@ sub render_tag {
         width     => $box_width,
         height    => $height,
       }));
-    } elsif ($tag->{'style'} eq 'label') {
-      my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
-      
-      if ($text_width / $pix_per_bp < $tag->{'end'} - $tag->{'start'} + 1) {
-        $composite->push($self->Text({
-          x         => $tag->{'start'} - 1,
-          y         => ($height - $text_height) / 2 - 1,
-          width     => $tag->{'end'} - $tag->{'start'} + 1,
-          textwidth => $text_width,
-          halign    => 'center',
-          height    => $text_height,
-          colour    => $tag->{'colour'},
-          text      => $tag->{'letter'},
-          absolutey => 1,
-          %font
-        }));
-      }
     }
+  }
+  
+  if ($tag->{'style'} eq 'label') {
+    my %font       = $self->get_font_details($self->my_config('font') || 'innertext', 1);
+    my $text_width = [$self->get_text_width(0, $tag->{'label'}, '', %font)]->[2];
+    
+    $composite->push($self->Text({
+      x         => $tag->{'start'},
+      y         => 0,
+      height    => $height,
+      textwidth => $text_width,
+      width     => $text_width / $pix_per_bp,
+      halign    => 'left',
+      colour    => $tag->{'colour'},
+      text      => $tag->{'label'},
+      absolutey => 1,
+      %font
+    }));
   }
   
   return @glyph;
@@ -327,7 +331,7 @@ sub highlight {
     $self->unshift($self->Rect({
       x      => $composite->x + $_->x - 2 / $pix_per_bp,
       y      => $composite->y + $_->y - 2,
-      width  => $_->width + 4 / $pix_per_bp,
+      width  => $_->width  + 4 / $pix_per_bp,
       height => $_->height + 4,
       colour => 'black',
       z      => $z,
