@@ -810,3 +810,14 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 -- SET @this_name_class='ensembl timetree mya';
 -- insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
+
+/*
+The following query will show entries that are in ncbi_taxa_name but not in ncbi_taxa_node   
+This can happen when nodes have been deprecated in the NCBI taxonomy database but haven't been removed from this file.
+So if the query below displays any entry, you may need to remove the corresponding entry in ncbi_taxa_name, in this file
+and make sure that your code doesn't rely on the deprecated taxon.
+Sending a mail to ensembl-compara@ebi.ac.uk or ensembl-internal@ebi.ac.uk may also be a good idea. 
+*/
+SELECT "ncbi_taxa_name entries that does not correspond with ncbi_taxa_nodes" AS "";
+SELECT "If something is listed below, remove the entry in ncbi_taxa_name, remove the corresponding entries in ensembl_aliases.sql and make sure your code does not rely on the deprecated node" AS "";
+SELECT * FROM ncbi_taxa_name WHERE NOT EXISTS (SELECT NULL FROM ncbi_taxa_node WHERE ncbi_taxa_node.taxon_id = ncbi_taxa_name.taxon_id);
