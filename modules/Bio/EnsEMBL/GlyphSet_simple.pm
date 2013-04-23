@@ -105,7 +105,7 @@ sub _init {
       if ($tag->{'style'} =~ /^(left-snp|delta|box)$/) {
         $tag_start = $start - 1 - 4/$pix_per_bp;
         $tag_end   = $start - 1 + 4/$pix_per_bp;
-      } elsif ($tag->{'style'} =~ /^(underline|fg_ends)$/) {
+      } elsif ($tag->{'style'} =~ /^(underline|fg_ends|label)$/) {
         $tag_start = $tag->{'start'} if defined $tag->{'start'};
         $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
       } else {
@@ -207,7 +207,7 @@ sub _init {
             ptsize    => $font_size,
             halign    => 'center',
             height    => $text_height,
-            colour    => $colours->{'label'},
+            colour    => $colours->{'label'} eq $colours->{'feature'} ? $colours->{'feature'} =~ /^(black|#000000)$/ ? 'white' : 'black' : $colours->{'label'},
             text      => $label,
             absolutey => 1,
           }));
