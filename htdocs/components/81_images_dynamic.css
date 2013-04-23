@@ -119,7 +119,8 @@ div.image_resize_handle.dragging      { padding: 1px 12px; margin-left: -8px; }
 div.image_resize_handle div           { display: none; height: 100%; left: 9px; position: absolute; top: 0; width: 0px; border-left: #999999 solid 1px; }
 div.image_resize_handle:hover div     { display: block; }
 div.image_resize_handle.dragging div  { display: block; border-left: #999999 solid 2px; }
-
+div.image_resize_overlay              { position: fixed; cursor: ew-resize; left: 0; top: 0; height: 100%; width: 100%; z-index: 99999999; }
+img.image_resizing                    { position: absolute; opacity: 0.5; z-index: 99999998; }
 
 body.ie67 div.image_big_menu a { margin-top: -16px; }
 
