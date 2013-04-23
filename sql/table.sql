@@ -714,7 +714,7 @@ CREATE TABLE member (
 @desc  This table includes information about members for web fast-lookups
 @colour   #1E90FF
 
-@column member_id             External reference to member_id in the @link member table.
+@column stable_id             External reference to stable_id in the @link member table.
 @column families              If the member is part of a @link family
 @column gene_trees            If the member has a default gene tree in the @link gene_tree_root table
 @column gene_gain_loss_trees  If the member has a gene gain/loss tree in the @link CAFE_gene_family table
@@ -729,14 +729,14 @@ CREATE TABLE member (
 */
 
 CREATE TABLE `member_production_counts` (
-  `member_id`                int(10) unsigned NOT NULL,
+  `stable_id`                varchar(128) NOT NULL,
   `families`                 tinyint(1) unsigned default 0,
   `gene_trees`               tinyint(1) unsigned default 0,
   `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
   `orthologues`              int(10) unsigned default 0,
   `paralogues`               int(10) unsigned default 0,
 
-  FOREIGN KEY (member_id) REFERENCES member(member_id)
+  FOREIGN KEY (stable_id) REFERENCES member(stable_id)
 )COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
