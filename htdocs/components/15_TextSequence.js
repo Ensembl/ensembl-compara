@@ -22,13 +22,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       $('pre > [title]', this.el).helptip({ track: true });
     }
     
-    this.elLk.popup = $([
-      '<div class="info_popup floating_popup">',
-      ' <span class="close"></span>',
-      ' <table cellspacing="0"></table>',
-      '</div>'
-    ].join(''));
-    
     this.el.on('mousedown', '.info_popup', function () {
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     }).on('click', '.info_popup .close', function () {
