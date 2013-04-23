@@ -191,16 +191,18 @@ sub tag {
       start        => $f->start
     };
   } else {
-    my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
-    my (undef, undef, $text_width) = $self->get_text_width(0, $label, '', $self->get_font_details($self->my_config('font') || 'innertext', 1));
-    
-    push @tags, {
-      style  => 'label',
-      label  => $label,
-      colour => $self->my_colour($colour_key, 'tag') || $colour,
-      start  => $f->end,
-      end    => $f->end + 1 + $text_width / $self->scalex,
-    };
+    if ($self->{'show_labels'}) {
+      my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
+      my (undef, undef, $text_width) = $self->get_text_width(0, $label, '', $self->get_font_details($self->my_config('font') || 'innertext', 1));
+      
+      push @tags, {
+        style  => 'label',
+        label  => $label,
+        colour => $self->my_colour($colour_key, 'tag') || $colour,
+        start  => $f->end,
+        end    => $f->end + 1 + $text_width / $self->scalex,
+      };
+    }
     
     push @tags, { style => 'insertion', colour => $colour, feature => $f } if $f->start > $f->end;
   }
