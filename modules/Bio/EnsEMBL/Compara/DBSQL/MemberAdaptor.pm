@@ -176,7 +176,7 @@ sub fetch_all {
 
   Arg        : (optional) int $cache_size
   Example    : my $memberIter = $memberAdaptor->fetch_all_Iterator();
-               for my $member ($memberIter->next) {
+               while (my $member = $memberIter->next) {
                   #do something with $member
                }
   Description: Returns an iterator over all the members in the database
@@ -195,12 +195,12 @@ sub fetch_all_Iterator {
 }
 
 
-=head2 fetch_all_Iterator
+=head2 fetch_all_by_source_Iterator
 
   Arg[1]     : string $source_name
   Arg[2]     : (optional) int $cache_size
   Example    : my $memberIter = $memberAdaptor->fetch_all_by_source_Iterator("ENSEMBLGENE");
-               for my $member ($memberIter->next) {
+               while (my $member = $memberIter->next) {
                   #do something with $member
                }
   Description: Returns an iterator over all the members corresponding
@@ -771,47 +771,89 @@ sub _rename_method_seq {
 ########################
 
 sub member_has_family {
-    my ($self, $stable_id) = @_;
+  my ($self, $stable_id) = @_;
 
-    my $sql = 'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? and source_name =?';
-    my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
-    return $res;
-}
-
-sub homologies_for_member {
-    my ($self, $stable_id) = @_;
-
-    my $sql = "SELECT ml.type, h.description, count(*) AS N FROM member AS m, homology_member AS hm, homology AS h, method_link AS ml, method_link_species_set AS mlss WHERE m.stable_id = ? AND hm.member_id = m.member_id AND h.homology_id = hm.homology_id AND mlss.method_link_species_set_id = h.method_link_species_set_id AND ml.method_link_id = mlss.method_link_id GROUP BY description";
-    my $res = $self->dbc->db_handle()->selectall_arrayref($sql, {}, $stable_id);
-
-    my $counts = {};
-    foreach (@$res) {
-        if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'possible_ortholog') {
-            $counts->{'paralogs'} += $_->[2];
-        } elsif ($_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
-            $counts->{'orthologs'} += $_->[2];
-        }
-    }
-
-    return $counts;
+  my $sql = 'SELECT families FROM member_production_counts WHERE stable_id = ?';
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
 }
 
 sub member_has_geneTree {
-    my ($self, $stable_id) = @_;
+  my ($self, $stable_id) = @_;
 
-    my $sql = 'SELECT COUNT(*) FROM gene_tree_node JOIN member mp USING (member_id) JOIN member mg ON mp.member_id = mg.canonical_member_id WHERE mg.stable_id = ? AND mg.source_name = ?';
-
-    my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
-    return $res;
+  my $sql = "SELECT gene_trees FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
 }
 
 sub member_has_geneGainLossTree {
-    my ($self, $stable_id) = @_;
+  my ($self, $stable_id) = @_;
 
-    my $sql = 'SELECT count(*) FROM CAFE_gene_family cgf JOIN gene_tree_root gtr ON(cgf.gene_tree_root_id = gtr.root_id) JOIN gene_tree_node gtn ON(gtr.root_id = gtn.root_id) JOIN member mp USING (member_id) JOIN member mg ON (mp.member_id = mg.canonical_member_id) WHERE mg.stable_id = ? AND mg.source_name = ?';
-
-    my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
+  my $sql = "SELECT gene_gain_loss_tree FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
 }
+
+sub orthologues_for_member {
+  my ($self, $stable_id) = @_;
+
+  my $sql = "SELECT orthologues FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
+sub paralogues_for_member {
+  my ($self, $stable_id) = @_;
+
+  my $sql = "SELECT paralogues FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
+
+# sub member_has_family {
+#     my ($self, $stable_id) = @_;
+
+#     my $sql = 'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? and source_name =?';
+#     my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
+#     return $res;
+# }
+#
+#
+# sub homologies_for_member {
+#     my ($self, $stable_id) = @_;
+
+#     my $sql = "SELECT ml.type, h.description, count(*) AS N FROM member AS m, homology_member AS hm, homology AS h, method_link AS ml, method_link_species_set AS mlss WHERE m.stable_id = ? AND hm.member_id = m.member_id AND h.homology_id = hm.homology_id AND mlss.method_link_species_set_id = h.method_link_species_set_id AND ml.method_link_id = mlss.method_link_id GROUP BY description";
+#     my $res = $self->dbc->db_handle()->selectall_arrayref($sql, {}, $stable_id);
+
+#     my $counts = {};
+#     foreach (@$res) {
+#         if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'possible_ortholog') {
+#             $counts->{'paralogs'} += $_->[2];
+#         } elsif ($_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
+#             $counts->{'orthologs'} += $_->[2];
+#         }
+#     }
+
+#     return $counts;
+# }
+
+# sub member_has_geneTree {
+#     my ($self, $stable_id) = @_;
+
+#     my $sql = 'SELECT COUNT(*) FROM gene_tree_node JOIN member mp USING (member_id) JOIN member mg ON mp.member_id = mg.canonical_member_id WHERE mg.stable_id = ? AND mg.source_name = ?';
+
+#     my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
+#     return $res;
+# }
+
+# sub member_has_geneGainLossTree {
+#     my ($self, $stable_id) = @_;
+
+#     my $sql = 'SELECT count(*) FROM CAFE_gene_family cgf JOIN gene_tree_root gtr ON(cgf.gene_tree_root_id = gtr.root_id) JOIN gene_tree_node gtn ON(gtr.root_id = gtn.root_id) JOIN member mp USING (member_id) JOIN member mg ON (mp.member_id = mg.canonical_member_id) WHERE mg.stable_id = ? AND mg.source_name = ?';
+
+#     my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
+# }
 
 
 1;
