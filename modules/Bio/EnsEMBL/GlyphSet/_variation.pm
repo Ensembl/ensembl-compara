@@ -47,7 +47,7 @@ sub features {
   my $max_length   = $self->my_config('threshold') || 1000;
   my $slice_length = $self->{'container'}->length;
   
-  if ($slice_length > $max_length * 1010 ) {
+  if ($slice_length > $max_length * 1010) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
   } else {
@@ -191,7 +191,7 @@ sub tag {
       start        => $f->start
     };
   } else {
-    if ($self->{'show_labels'}) {
+    if (!$self->my_config('no_label')) {
       my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
       my (undef, undef, $text_width) = $self->get_text_width(0, $label, '', $self->get_font_details($self->my_config('font') || 'innertext', 1));
       

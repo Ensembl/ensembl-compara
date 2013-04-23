@@ -47,7 +47,6 @@ sub _init {
   return $self->no_features unless scalar @$features; 
   
   my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
-  my $no_label          = $self->my_config('no_label');
   my $label_overlay     = $self->label_overlay;
   my $bump_width        = $self->my_config('bump_width');
      $bump_width        = 1 unless defined $bump_width;
@@ -84,7 +83,7 @@ sub _init {
     $previous_start = $end;
     $previous_end   = $end;
     
-    my $label = $no_label ? undef : $self->feature_label($f);
+    my $label = $self->feature_label($f);
     my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $font, ptsize => $fontsize);
     my ($img_start, $img_end) = ($start, $end);
     my ($tag_start, $tag_end) = ($start, $end);
