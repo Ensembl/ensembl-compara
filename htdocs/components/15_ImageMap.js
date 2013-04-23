@@ -53,7 +53,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.boundaries    = $('.boundaries',        this.el);
     this.elLk.toolbars      = $('.image_toolbar',     this.el);
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
-    this.elLk.resizeHandle  = $('<div class="image_resize_handle"><div></div></div>').appendTo(this.el.find('.image_container')).helptip(this.imageResizeTip);
+    this.elLk.resizeHandle  = $('<div class="image_resize_handle"><div></div></div>').appendTo(this.el.find('.image_container'));
+    
+    this.elLk.resizeHandle.helptip({ content: this.imageResizeTip });
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
@@ -107,46 +109,53 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     this.elLk.resizeHandle.on({
-      'mousedown': function(e) {
+      mousedown: function (e) {
+        if (e.which && e.which !== 1) {
+          return;
+        }
+        
         e.preventDefault();
-        var handle    = panel.elLk.resizeHandle.addClass('dragging');
-        var img       = panel.elLk.img.clone(false).empty().css({'position': 'absolute', 'opacity': '0.5', 'z-index': '99999998'}).css(panel.elLk.img.offset()).appendTo(document.body);
-        var handleX   = handle.position().left;
+        
+        var img       = panel.elLk.img.clone().empty().addClass('image_resizing').css(panel.elLk.img.offset()).appendTo(document.body);
+        var handleX   = panel.elLk.resizeHandle.addClass('dragging').position().left;
         var currentW  = panel.elLk.img.width();
         var initialW  = currentW;
         var initialX  = e.pageX;
         
-        $('<div></div>').appendTo(document.body).css({'position': 'fixed', 'cursor': 'ew-resize', 'left': '0px', 'top': '0px', 'height': '100%', 'width': '100%', 'z-index': '99999999'}).on({
-          'mousemove': function(event) {
-            var displacement = Math.ceil(Math.abs((event.pageX - initialX)/100) - 0.2) * (event.pageX < initialX ? -100 : 100); //0.2 provides a play of 20 px
+        $('<div class="image_resize_overlay"></div>').appendTo(document.body).on({
+          mousemove: function (event) {
+            var displacement = Math.ceil(Math.abs((event.pageX - initialX) / 100) - 0.2) * (event.pageX < initialX ? -100 : 100); // 0.2 provides a play of 20 px
+            
             if (initialW + displacement < panel.minImageWidth) {
               displacement = panel.minImageWidth - initialW;
             }
+            
             var newW = initialW + displacement;
-            if (newW != currentW) {
+            
+            if (newW !== currentW) {
               img.width(newW);
-              handle.css({'left': handleX + displacement}).helptip(false).helptip(newW + 'px', {'show': { 'delay': 0, 'duration': 1 }}).tooltip('open'); // FIXME - tooltip should be accessed via helptip
+              panel.elLk.resizeHandle.css({ left: handleX + displacement }).helptip('close').helptip('option', { content: newW + 'px', show: { delay: 0, duration: 1 }}).helptip('open');
               currentW = newW;
             }
           },
-          'mouseup': function() {
+          mouseup: function () {
             if (currentW < panel.minImageWidth) {
               currentW = panel.minImageWidth;
             }
+            
+            panel.elLk.resizeHandle.removeClass('dragging').helptip('close');
+            img.add(this).remove();
+            
             if (currentW != initialW) {
               panel.resize(currentW);
             }
-            handle.removeClass('dragging').helptip({}).helptip(false);
-            img.remove();
-            $(this).remove();
           }
         });
       },
-      'mouseout': function() {
-        panel.elLk.resizeHandle.helptip(panel.imageResizeTip);
+      mouseout: function () {
+        panel.elLk.resizeHandle.helptip('option', 'content', panel.imageResizeTip);
       }
     });
-
   },
   
   hashChange: function (r) {
@@ -546,7 +555,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         panel.drag(e2);
         return false;
       };
-    
+      
+      this.elLk.resizeHandle.hide();
       this.elLk.drag.on('mousemove', this.mousemove);
     }
   },
@@ -556,6 +566,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (this.mousemove) {
       this.elLk.drag.off('mousemove', this.mousemove);
+      this.elLk.resizeHandle.show();
       this.mousemove = false;
     }
     
@@ -609,7 +620,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.highlight(coords, 'rubberband', this.dragRegion.a.href.split('|')[3]);
   },
   
-  resize: function(width) {
+  resize: function (width) {
     this.params.updateURL = Ensembl.updateURL({ image_width: width }, this.params.updateURL);
     this.getContent();
   },
@@ -643,20 +654,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       range = this.draggables[speciesNumber] ? this.draggables[speciesNumber].range : undefined;
       
-      if (range) {        
+      if (range) {
         location  = range.start + (range.scale * (coords.x - this.dragRegion.l));
         fuzziness = range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
         
-        coords.clickStart = Math.floor(location - fuzziness);
-        coords.clickEnd   = Math.ceil(location + fuzziness);
-        
-        if (coords.clickStart < range.start) {
-          coords.clickStart = range.start;
-        }
-        
-        if (coords.clickEnd > range.end) {
-          coords.clickEnd = range.end;
-        }
+        coords.clickStart = Math.max(Math.floor(location - fuzziness), range.start);
+        coords.clickEnd   = fuzziness > 1 ? Math.min(Math.ceil(location + fuzziness), range.end) : coords.clickStart;
       }
     }
     
