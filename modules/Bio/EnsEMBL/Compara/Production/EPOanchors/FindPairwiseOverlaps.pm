@@ -8,49 +8,52 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 	
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
 	my ($self) = @_;
-	# $reference_species_dba is the reference species for the pairwise alignments
-	my $reference_species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor( %{ $self->param('reference_db') } );
-	# $compara_dba is the pairwise alignments db
-	my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( %{ $self->param('compara_pairwise_db') } );
-	$self->param('compara_dba', $compara_dba);
-	$self->param('reference_dba', $reference_species_dba);
+	# $compara_pairwise_dba is the pairwise alignments db
+	my $compara_pairwise_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( %{ $self->param('compara_pairwise_db') } );
+	$self->param('compara_pairwise_dba', $compara_pairwise_dba);
 	my $reference_genome_db_id = $self->param('reference_genome_db_id');
+	# $compara_dba is the compara part of the pipeline db
+	my $compara_dba = $self->compara_dba();
 	my $ref_genome_db = $compara_dba->get_GenomedbAdaptor()->fetch_by_dbID($reference_genome_db_id);
+	# $reference_species_dba is the reference species core dba object
+	my $reference_species_dba = $ref_genome_db->connect_to_genome_locator($ref_genome_db->locator);
+	$self->param('reference_dba', $reference_species_dba);
+        
 	$self->param('ref_genome_db', $ref_genome_db);
-	my $non_reference_genome_dbIDs = $self->param('genome_db_ids');
-	my $ref_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($self->param('ref_genome_db')->name, "core", "Slice");
+	my $ref_slice_adaptor = $reference_species_dba->get_SliceAdaptor();
 	my $ref_dnafrag = $compara_dba->get_DnaFragAdaptor()->fetch_by_dbID($self->param('ref_dnafrag_id'));
 	$self->param('ref_dnafrag', $ref_dnafrag);
 	$self->param('dnafrag_chunks', eval{ $self->param('dnafrag_chunks') });
-	my $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
-	my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $genomic_align_block_adaptor = $compara_pairwise_dba->get_GenomicAlignBlockAdaptor;
+	my $method_link_species_set_adaptor = $compara_pairwise_dba->get_MethodLinkSpeciesSetAdaptor;
 	my $ref_slice = $ref_slice_adaptor->fetch_by_region($ref_dnafrag->coord_system_name,
-						$ref_dnafrag->name, @{ $self->param('dnafrag_chunks') });
+				$ref_dnafrag->name, @{ $self->param('dnafrag_chunks') });
 	$self->param('ref_slice_adaptor', $ref_slice_adaptor);
 	my (@multi_gab_overlaps, @mlss);
-	my $method_type_genome_db_ids = $self->param('method_type_genome_db_ids');
-	foreach my $this_method_link_type( keys %{ $method_type_genome_db_ids } ){
-		foreach my $non_reference_genome_dbID( @{ $method_type_genome_db_ids->{$this_method_link_type} }){
-			my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_genome_db_ids(
-				$this_method_link_type, [ $reference_genome_db_id, $non_reference_genome_dbID ]);
-			my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-					$mlss, $ref_slice);
-		
-			foreach my $genomic_align_block( @{ $gabs } ){
-				my $restricted_gab = $genomic_align_block->restrict_between_reference_positions( @{ $self->param('dnafrag_chunks') } );
-				next if $restricted_gab->length < $self->param('min_anchor_size');
-				push( @multi_gab_overlaps, [
-						$restricted_gab->reference_genomic_align->dnafrag_start,
-						$restricted_gab->reference_genomic_align->dnafrag_end,
-						$non_reference_genome_dbID ] );
-			}	
-			push(@mlss, $mlss);
+	my @pairwise_mlss_ids = split(",", $self->param('list_of_pairwise_mlss_ids'));
+	foreach my $mlss_id(@pairwise_mlss_ids) {
+		my $mlss = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
+		my $non_ref_genome_db; 
+		foreach my $genome_db (@{ $mlss->species_set_obj->genome_dbs() }){
+			if($genome_db->dbID != $ref_genome_db->dbID){
+				$non_ref_genome_db = $genome_db;
+			}
 		}
+		my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $ref_slice);
+		foreach my $genomic_align_block( @{ $gabs } ){
+			my $restricted_gab = $genomic_align_block->restrict_between_reference_positions( @{ $self->param('dnafrag_chunks') } );
+			next if $restricted_gab->length < $self->param('min_anchor_size');
+				push( @multi_gab_overlaps, [
+					$restricted_gab->reference_genomic_align->dnafrag_start,
+					$restricted_gab->reference_genomic_align->dnafrag_end,
+					$non_ref_genome_db->dbID ] );
+		}	
+		push(@mlss, $mlss);
 	}
 	$self->param('mlss', \@mlss);
 	# @multi_genomic_align_blocks is a list of [ref_dnafrag_start,ref_dnafrag_end,nonref-species-id] 
@@ -99,17 +102,16 @@ sub run {
 			}
 		}
 	}
-	my $genomic_align_block_adaptor = $self->param('compara_dba')->get_GenomicAlignBlockAdaptor;
-	my $this_method_link_species_set_id = $self->param('overlaps_mlssid');
+	my $genomic_align_block_adaptor = $self->param('compara_pairwise_dba')->get_GenomicAlignBlockAdaptor;
+	my $overlaps_mlssid = $self->param('overlaps_mlssid');
 	foreach my $coord_pair( @$reference_positions ){
 		my $ref_sub_slice =  $self->param('ref_slice_adaptor')->fetch_by_region(
 					$self->param('ref_dnafrag')->coord_system_name,
 					$self->param('ref_dnafrag')->name,
 					@$coord_pair);
-
 		# get a unique id for the synteny_region
 		my $sth = $self->dbc->prepare("INSERT INTO synteny_region (method_link_species_set_id) VALUES (?)");
-		$sth->execute( $this_method_link_species_set_id );
+		$sth->execute( $overlaps_mlssid );
 		my $synteny_region_id = $sth->{'mysql_insertid'};
 		push @$synteny_region_jobs, { 'synteny_region_id' => $synteny_region_id };
 
