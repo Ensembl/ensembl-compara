@@ -242,14 +242,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
         
         Ensembl.cookie.set('ENSEMBL_HINTS', tmp.join(':'));
-      }).prependTo(this.firstChild).helptip('Hide this panel');
+      }).prependTo(this.firstChild).helptip({ content: 'Hide this panel' });
     });
   },
   
   glossary: function () {
     this.elLk.glossary.each(function() {
       var el  = $(this);
-      el.helptip(el.children('.floating_popup').remove().html());
+      el.helptip({ content: el.children('.floating_popup').remove().html() });
     });
   },
   
