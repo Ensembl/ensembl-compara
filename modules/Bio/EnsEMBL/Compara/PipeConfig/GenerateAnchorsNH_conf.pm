@@ -283,7 +283,9 @@ return [
 		2 => [ 'pecan' ],
 		3 => [ 'mysql:////dnafrag_region?insertion_method=INSERT_IGNORE' ],
 	},
- -hive_capacity => 100,
+ -failed_job_tolerance => 5,
+ -hive_capacity => 20,
+ -batch_size    => 10,
 },
 
 {
@@ -313,7 +315,7 @@ return [
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -hive_capacity => 10, 
  -rc_name => 'mem7500',
- -failed_job_tolerance => 5,
+ -failed_job_tolerance => 10,
  -max_retry_count => 1,
  -flow_into      => {
 		1 => [ 'gerp_constrained_element' ],
@@ -326,7 +328,7 @@ return [
  -parameters    => { 'window_sizes' => '[1,10,100,500]', 'gerp_exe_dir' => $self->o('gerp_exe_dir'), 
 	'program_version' => $self->o('gerp_program_version'), 'mlss_id' => $self->o('pecan_mlssid'), },
  -hive_capacity => 100,
- -batch_size    => 5,
+ -batch_size    => 10,
  -failed_job_tolerance => 10,
 },
 
