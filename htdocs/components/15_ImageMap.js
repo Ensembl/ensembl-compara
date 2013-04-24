@@ -119,7 +119,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var range = this.highlightRegions[0][0].region.range;
       r = r.split(/\W/);
       
-      if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end || this.highlightRegions[0][0].region.a.href.split('|')[4] !== r[0]) {
+      if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end || range.chr !== r[0]) {
         reload = true;
       }
     }
@@ -149,7 +149,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vdrag);
     var rect      = [ 'l', 't', 'r', 'b' ];
-    var speciesNumber, c, r, start, end, scale;
+    var speciesNumber, c, r, start, end, scale, vertical;
     
     this.elLk.areas.each(function () {
       c = { a: this };
@@ -165,12 +165,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       if (this.className.match(/drag/)) {
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
-        r     = c.a.href.split('|');
-        start = parseInt(r[5], 10);
-        end   = parseInt(r[6], 10);
-        scale = (end - start + 1) / (c.r - c.l); // bps per pixel on image
+        r        = c.a.href.split('|');
+        start    = parseInt(r[5], 10);
+        end      = parseInt(r[6], 10);
+        vertical = this.className.match(/vdrag/);
+        scale    = (end - start + 1) / (vertical ? (c.b - c.t) : (c.r - c.l)); // bps per pixel on image
         
-        c.range = { start: start, end: end, scale: scale };
+        c.range = { chr: r[4], start: start, end: end, scale: scale, vertical: vertical };
         
         panel.draggables.push(c);
         
@@ -625,30 +626,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
     
-    var id            = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
-    var speciesNumber = 0;
+    var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
     var dragArea, range, location, fuzziness;
     
     if (($(area.a).hasClass('das') || $(area.a).hasClass('group')) && this.highlightRegions) {
-      if (this.speciesCount > 1) {
-        dragArea = this.getArea(coords, true);
-        
-        if (dragArea) {
-          speciesNumber = parseInt(dragArea.a.href.split('|')[1], 10) - 1;
-        }
-        
-        dragArea = null;
-      }
-      
-      range = this.draggables[speciesNumber] ? this.draggables[speciesNumber].range : undefined;
+      dragArea = this.dragRegion || this.getArea(coords, true);
+      range    = dragArea ? dragArea.range : false;
       
       if (range) {
-        location  = range.start + (range.scale * (coords.x - this.dragRegion.l));
+        location  = range.start + (range.scale * (range.vertical ? (coords.y - dragArea.t) : (coords.x - dragArea.l)));
         fuzziness = range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
         
+        coords.clickChr   = range.chr;
         coords.clickStart = Math.max(Math.floor(location - fuzziness), range.start);
         coords.clickEnd   = fuzziness > 1 ? Math.min(Math.ceil(location + fuzziness), range.end) : coords.clickStart;
       }
+      
+      dragArea = null;
     }
     
     Ensembl.EventManager.trigger('makeZMenu', id, { event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false });
