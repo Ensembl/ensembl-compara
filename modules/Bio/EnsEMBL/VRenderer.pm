@@ -41,7 +41,7 @@ sub render {
       if ($self->can($method)) {
         $self->$method($glyph);
       } else {
-        print STDERR "Bio::EnsEMBL::Renderer::render: Do not know how to $method\n";
+        print STDERR "Bio::EnsEMBL::VRenderer::render: Do not know how to $method\n";
       }
     }
   }
@@ -122,7 +122,7 @@ sub render {
       if ($self->can($method)) {        
         $self->$method($_);
       } else {
-        print STDERR "Sanger::Graphics::Renderer::render: Do not know how to $method\n";
+        print STDERR "Bio::EnsEMBL::VRenderer::render: Do not know how to $method\n";
       }
     }
   }
@@ -158,7 +158,8 @@ sub render_Composite {
   }
 }
 
-# empty stub for Blank spacer objects with no rendering at all
-sub render_Blank {}
-sub render_Space {}
+sub render_Blank    {} # empty stub for Blank spacer objects with no rendering at all
+sub render_Space    {}
+sub render_Triangle { return shift->render_Poly(@_); }
+
 1;
