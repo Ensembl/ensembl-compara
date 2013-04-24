@@ -44,7 +44,7 @@ sub new {
   
   $args->{'points'} = [ $x, $y, @$points ];
   
-  delete $args->{$_} for qw(width height mid-point direction no_rectangle);
+  delete $args->{$_} for qw(width height mid_point direction no_rectangle);
   
   my $triangle = $class->SUPER::new($args);
   
