@@ -54,7 +54,10 @@ my $ouput_dir = 'sitemaps';
 my @sitemaps;
 
 my $sitemap_path; # default setting is htdocs root
-GetOptions("sitemap_path=s", \$sitemap_path);
+my $skip_list;
+GetOptions("sitemap_path=s", \$sitemap_path, "skip=s", \$skip_list);
+
+my @skip = split /,/, $skip_list;
 
 if ($sitemap_path) {
   $sitemap_path =~ s/^\///;
@@ -79,6 +82,8 @@ push @sitemaps, "sitemap-common.xml";
 
 # create the sitemaps for each dataset
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
+  next if grep { $_ eq $dataset } @skip;
+  
   print "$dataset\n";
   my $adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core', $dataset);
   if (!$adaptor) {
