@@ -47,7 +47,13 @@ sub fetch_input {
 		my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $ref_slice);
 		foreach my $genomic_align_block( @{ $gabs } ){
 			my $restricted_gab = $genomic_align_block->restrict_between_reference_positions( @{ $self->param('dnafrag_chunks') } );
-			next if $restricted_gab->length < $self->param('min_anchor_size');
+			my $rgab_len;
+			eval{ $rgab_len = $restricted_gab->length };
+			if($@){
+				warning($@);
+				last;
+			}
+			next if $rgab_len < $self->param('min_anchor_size');
 				push( @multi_gab_overlaps, [
 					$restricted_gab->reference_genomic_align->dnafrag_start,
 					$restricted_gab->reference_genomic_align->dnafrag_end,
@@ -120,7 +126,12 @@ sub run {
 			my %non_ref_dnafrags;
 			foreach my $gab(@$gabs){
 				my $rgab = $gab->restrict_between_reference_positions( @$coord_pair );
-				my $restricted_non_reference_genomic_aligns = $rgab->get_all_non_reference_genomic_aligns;
+				my $restricted_non_reference_genomic_aligns;
+				eval{ $restricted_non_reference_genomic_aligns = $rgab->get_all_non_reference_genomic_aligns };
+				if($@){
+					warning($@);
+					last;
+				}
 				my $temp_start = 0;
 				foreach my $non_ref_genomic_align (@$restricted_non_reference_genomic_aligns) {
 					my $non_ref_dnafrag = $non_ref_genomic_align->dnafrag;
