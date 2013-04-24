@@ -1717,28 +1717,15 @@ CREATE TABLE `CAFE_species_gene` (
 
 # Auto add schema version to database (this will override whatever hive puts there)
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '71');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '72');
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_a.sql|other_member_sequence_keys');
+  VALUES (NULL, 'patch', 'patch_71_72_a.sql|schema_version');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_b.sql|member_xref');
-
-# Patch identifier
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_c.sql|schema_version');
-
-# Patch identifier
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_d.sql|hmm_profile_key');
-
-# Patch identifier
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_70_71_e.sql|drop_cafe_data');
-
+  VALUES (NULL, 'patch', 'patch_71_72_b.sql|new member_production_counts table');
