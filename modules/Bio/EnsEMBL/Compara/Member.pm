@@ -921,13 +921,13 @@ sub has_family {
   return $self->adaptor->member_has_family($self->stable_id);
 }
 
-sub has_geneTree {
+sub has_GeneTree {
   my ($self) = @_;
 
   return $self->adaptor->member_has_geneTree($self->stable_id);
 }
 
-sub has_geneGainLossTree {
+sub has_GeneGainLossTree {
   my ($self) = @_;
 
   return $self->adaptor->member_has_geneGainLossTree($self->stable_id);
