@@ -918,19 +918,19 @@ sub _rename_method_seq {
 sub has_Family {
   my ($self) = @_;
 
-  return $self->adaptor->member_has_family($self->stable_id);
+  return $self->adaptor->member_has_Family($self->stable_id);
 }
 
 sub has_GeneTree {
   my ($self) = @_;
 
-  return $self->adaptor->member_has_geneTree($self->stable_id);
+  return $self->adaptor->member_has_GeneTree($self->stable_id);
 }
 
 sub has_GeneGainLossTree {
   my ($self) = @_;
 
-  return $self->adaptor->member_has_geneGainLossTree($self->stable_id);
+  return $self->adaptor->member_has_GeneGainLossTree($self->stable_id);
 }
 
 sub number_of_orthologues {
