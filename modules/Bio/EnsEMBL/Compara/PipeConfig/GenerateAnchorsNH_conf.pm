@@ -1,4 +1,47 @@
 
+=head1 NAME
+
+ Bio::EnsEMBL::Compara::PipeConfig::GenerateAnchorsNH_conf
+
+=head1 SYNOPSIS
+
+    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+
+    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+    #3. Check all default_options, you will probably need to change the following :
+        release
+        pipeline_db (-host)
+        resource_classes 
+
+	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl cvs checkout - set as an environment variable in your shell
+        'password' - your mysql password
+	'compara_pairwise_db' - I'm assuiming that all of you pairwise alignments are in one compara db
+	'reference_genome_db_id' - the genome_db_id which is in all your pairwise alignments
+	'list_of_pairwise_mlss_ids' - a comma separated string containing all the pairwise method_link_species_set_id(s) you wise to use to generate the anchors
+	'main_core_dbs' - the servers(s) hosting most/all of the core (species) dbs
+	'core_db_urls' - any additional core dbs (not in 'main_core_dbs')
+        The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
+
+    #4. Run init_pipeline.pl script:
+        Using command line arguments:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GenerateAnchorsNH_conf.pm
+
+    #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
+
+    #6. Fix the code when it crashes
+
+=head1 DESCRIPTION  
+
+    This configuaration file gives defaults specific for the lastz net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
+    Please see PairAligner_conf.pm for general details of the pipeline.
+
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+=cut
+
 package Bio::EnsEMBL::Compara::PipeConfig::GenerateAnchorsNH_conf;
 
 use strict;
@@ -57,16 +100,16 @@ sub default_options {
 	'chunk_size' => 10000000,
 	  # max block size for pecan to align
 	'pecan_block_size' => 1000000,
-	'pecan_mlid' => 10,
-	'pecan_mlssid' => 10,
-	'gerp_ce_mlid' => 11,
-	'gerp_ce_mlssid' => 20,
+	'pecan_mlid' => 10, # dummy value (change if necessary)
+	'pecan_mlssid' => 10, # dummy value
+	'gerp_ce_mlid' => 11, # dummy value 
+	'gerp_ce_mlssid' => 20, # dummy value
 	'gerp_program_version' => "2.1",
 	'gerp_exe_dir' => "/software/ensembl/compara/gerp/GERPv2.1",
-	'species_set_id' => 10000, # species_set_id for reference and non-reference species
-	'overlaps_mlid' => 10000, 
+	'species_set_id' => 10000, # dummy value for reference and non-reference species
+	'overlaps_mlid' => 10000, # dummy value 
 	'overlaps_method_link_name' => 'GEN_ANCS',
-	'overlaps_mlssid' => 10000, 
+	'overlaps_mlssid' => 10000, # dummy value
 	'max_frag_diff' => 1.5, # max difference in sizes between non-reference dnafrag and reference to generate the overlaps from
 	'min_ce_length' => 40, # min length of each sequence in the constrained elenent 
 	'max_anchor_seq_len' => 100,
