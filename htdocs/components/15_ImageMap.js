@@ -43,19 +43,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.params.highlight   = (Ensembl.images.total === 1 || !this.lastImage);
     
-    this.elLk.drag          = $('.drag_select',       this.el);
-    this.elLk.map           = $('map',                this.el);
+    this.elLk.container     = $('.image_container',   this.el);
+    this.elLk.drag          = $('.drag_select',       this.elLk.container);
+    this.elLk.map           = $('map',                this.elLk.container);
     this.elLk.areas         = $('area',               this.elLk.map);
-    this.elLk.exportMenu    = $('.iexport_menu',      this.el).appendTo('body').css('left', this.el.offset().left);
-    this.elLk.resizeMenu    = $('.image_resize_menu', this.el).appendTo('body').css('left', this.el.offset().left);
-    this.elLk.img           = $('img.imagemap',       this.el);
-    this.elLk.hoverLabels   = $('.hover_label',       this.el);
-    this.elLk.boundaries    = $('.boundaries',        this.el);
-    this.elLk.toolbars      = $('.image_toolbar',     this.el);
+    this.elLk.exportMenu    = $('.iexport_menu',      this.elLk.container).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.resizeMenu    = $('.image_resize_menu', this.elLk.container).appendTo('body').css('left', this.el.offset().left);
+    this.elLk.img           = $('img.imagemap',       this.elLk.container);
+    this.elLk.hoverLabels   = $('.hover_label',       this.elLk.container);
+    this.elLk.boundaries    = $('.boundaries',        this.elLk.container);
+    this.elLk.toolbars      = $('.image_toolbar',     this.elLk.container);
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
-    this.elLk.resizeHandle  = $('<div class="image_resize_handle"><div></div></div>').appendTo(this.el.find('.image_container'));
-    
-    this.elLk.resizeHandle.helptip({ content: this.imageResizeTip });
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
@@ -63,6 +61,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.makeImageMap();
     this.makeHoverLabels();
+    this.makeResizable();
     
     species[this.id] = this.getSpecies();
     $.extend(this, Ensembl.Share);
@@ -106,55 +105,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
       
       return false;
-    });
-
-    this.elLk.resizeHandle.on({
-      mousedown: function (e) {
-        if (e.which && e.which !== 1) {
-          return;
-        }
-        
-        e.preventDefault();
-        
-        var img       = panel.elLk.img.clone().empty().addClass('image_resizing').css(panel.elLk.img.offset()).appendTo(document.body);
-        var handleX   = panel.elLk.resizeHandle.addClass('dragging').position().left;
-        var currentW  = panel.elLk.img.width();
-        var initialW  = currentW;
-        var initialX  = e.pageX;
-        
-        $('<div class="image_resize_overlay"></div>').appendTo(document.body).on({
-          mousemove: function (event) {
-            var displacement = Math.ceil(Math.abs((event.pageX - initialX) / 100) - 0.2) * (event.pageX < initialX ? -100 : 100); // 0.2 provides a play of 20 px
-            
-            if (initialW + displacement < panel.minImageWidth) {
-              displacement = panel.minImageWidth - initialW;
-            }
-            
-            var newW = initialW + displacement;
-            
-            if (newW !== currentW) {
-              img.width(newW);
-              panel.elLk.resizeHandle.css({ left: handleX + displacement }).helptip('close').helptip('option', { content: newW + 'px', show: { delay: 0, duration: 1 }}).helptip('open');
-              currentW = newW;
-            }
-          },
-          mouseup: function () {
-            if (currentW < panel.minImageWidth) {
-              currentW = panel.minImageWidth;
-            }
-            
-            panel.elLk.resizeHandle.removeClass('dragging').helptip('close');
-            img.add(this).remove();
-            
-            if (currentW != initialW) {
-              panel.resize(currentW);
-            }
-          }
-        });
-      },
-      mouseout: function () {
-        panel.elLk.resizeHandle.helptip('option', 'content', panel.imageResizeTip);
-      }
     });
   },
   
@@ -396,6 +346,46 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('hideHoverLabels', this, function () { this.elLk.hoverLabels.hide(); });
   },
   
+  makeResizable: function () {
+    var panel = this;
+    
+    function resizing(e, ui) {
+      panel.imageResize = Math.floor(ui.size.width / 100) * 100; // The image_container has a border, which causes ui.size.width to increase by the border width.
+      resizeHelptip.apply(this, [ ui.helper ].concat(e.type === 'resizestart' ? [ 'Drag to resize', e.pageY ] : panel.imageResize + 'px'));
+    }
+    
+    function resizeHelptip(el, content, y) {
+      if (typeof y === 'number') {
+        el.data('y', y);
+      } else {
+        y = el.data('y');
+      }
+      
+      el.html('<div class="bg"></div><div class="ui-tooltip"><div class="ui-tooltip-content"></div></div>').find('.ui-tooltip-content').html(content).parent().css('top', function () {
+        return y - el.offset().top - $(this).outerHeight(true) / 2;
+      });
+      
+      el = null;
+    }
+    
+    this.elLk.container.resizable({
+      handles: 'e',
+      grid:    [ 100, 0 ],
+      minWidth: this.minImageWidth,
+      maxWidth: $(window).width() - this.el.offset().left,
+      helper:   'image_resize_overlay',
+      start:    resizing,
+      resize:   resizing,
+      stop:     function (e, ui) {
+        if (ui.originalSize.width === ui.size.width) {
+          $(this).css({ width: panel.imageResize, height: '' });
+        } else {
+          panel.resize(panel.imageResize);
+        }
+      }
+    });
+  },
+  
   makeSortable: function () {
     var panel      = this;
     var wrapperTop = $('.boundaries_wrapper', this.el).position().top;
@@ -556,7 +546,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         return false;
       };
       
-      this.elLk.resizeHandle.hide();
       this.elLk.drag.on('mousemove', this.mousemove);
     }
   },
@@ -566,7 +555,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (this.mousemove) {
       this.elLk.drag.off('mousemove', this.mousemove);
-      this.elLk.resizeHandle.show();
       this.mousemove = false;
     }
     
