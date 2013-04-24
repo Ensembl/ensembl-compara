@@ -719,7 +719,7 @@ $ init_pipeline.pl MergeHomologyIntoRelease_conf.pm -password $ENSADMIN_PSW -hiv
 
 # For 72 you should run something like...
 $ time mysql -hcompara3 -uensadmin -pensembl kb3_ensembl_compara_72 < $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/populate_member_production_counts_table.sql
-# Time to complete? 
+# Time to complete? (The last test on 71 compara database took ~58 minutes in a more or less quiet server)
 
 10.7 Cleanup and CVS commit
 
