@@ -778,7 +778,7 @@ sub member_has_family {
   return $res;
 }
 
-sub member_has_geneTree {
+sub member_has_GeneTree {
   my ($self, $stable_id) = @_;
 
   my $sql = "SELECT gene_trees FROM member_production_counts WHERE stable_id = ?";
@@ -786,7 +786,7 @@ sub member_has_geneTree {
   return $res;
 }
 
-sub member_has_geneGainLossTree {
+sub member_has_GeneGainLossTree {
   my ($self, $stable_id) = @_;
 
   my $sql = "SELECT gene_gain_loss_trees FROM member_production_counts WHERE stable_id = ?";
