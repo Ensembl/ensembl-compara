@@ -75,25 +75,6 @@ sub highlight_outbox {
   });
 }
 
-sub highlight_bowtie {
-  my $self = shift;
-  my $details = shift;
-  return $self->Poly({
-    'points'    => [
-      $details->{'mid'},                        $details->{'h_offset'},
-      $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'},
-      $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'},
-      $details->{'mid'},                        $details->{'h_offset'},
-      $details->{'mid'},                        $details->{'h_offset'}+$details->{'wid'},
-      $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},
-      $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},
-      $details->{'mid'},                        $details->{'h_offset'}+$details->{'wid'}
-    ],
-    'colour'    => $details->{'col'},
-    'absolutey' => 1,
-  });
-}
-
 sub highlight_labelline {
   my $self = shift;
   my $details = shift;
@@ -153,33 +134,24 @@ sub highlight_text {
   return $composite;
 }
 
-sub highlight_lharrow {
-  my $self = shift;
-  my $details = shift;
-  return $self->Poly({
-    'points' => [ $details->{'mid'}, $details->{'h_offset'},
-      $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'},
-      $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'}
-    ],
-    'colour' => $details->{'col'},
-    'absolutey' => 1,
-    'href'=>$details->{'href'},'zmenu'  => $details->{'zmenu'}
-  });
-}
+# Direction of arrows is rotated because the image is vertical
+sub highlight_lharrow { return shift->highlight_arrow('down', $_[0]{'h_offset'},                  @_); }
+sub highlight_rharrow { return shift->highlight_arrow('up',   $_[0]{'h_offset'} + $_[0]->{'wid'}, @_); }
+sub highlight_bowtie  { my $self = shift; return ($self->highlight_lharrow(@_), $self->highlight_rharrow(@_)); }
 
-sub highlight_rharrow {
-  my $self = shift;
-  my $details = shift;
-
-  return $self->Poly({
-    'points' => [ 
-      $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},
-      $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},
-      $details->{'mid'}, $details->{'h_offset'}+$details->{'wid'}
-    ],
-    'colour' => $details->{'col'},
-    'absolutey' => 1,
-    'href'=>$details->{'href'},'zmenu'  => $details->{'zmenu'},'id' => $details->{'html_id'},
+sub highlight_arrow {
+  my ($self, $direction, $mid_y, $details) = @_;
+  
+  return $self->Triangle({
+    width     => $details->{'padding2'} * 2,
+    height    => $details->{'padding'},
+    direction => $direction,
+    mid_point => [ $details->{'mid'}, $mid_y ],
+    colour    => $details->{'col'},
+    href      => $details->{'href'},
+    zmenu     => $details->{'zmenu'},
+    id        => $details->{'html_id'},
+    absolutey => 1,
   });
 }
 
