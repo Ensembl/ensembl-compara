@@ -789,7 +789,7 @@ sub member_has_geneTree {
 sub member_has_geneGainLossTree {
   my ($self, $stable_id) = @_;
 
-  my $sql = "SELECT gene_gain_loss_tree FROM member_production_counts WHERE stable_id = ?";
+  my $sql = "SELECT gene_gain_loss_trees FROM member_production_counts WHERE stable_id = ?";
   my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
   return $res;
 }
