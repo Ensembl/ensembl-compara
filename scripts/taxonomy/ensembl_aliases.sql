@@ -479,11 +479,6 @@ SET @this_value='Bilateral animals';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
-SET @this_taxon_id=33316;
-SET @this_value='Coelomate animals';
-SET @this_name_class='ensembl alias name';
-insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
-
 SET @this_taxon_id=376913;
 SET @this_value='Dry-nosed primates';
 SET @this_name_class='ensembl alias name';
