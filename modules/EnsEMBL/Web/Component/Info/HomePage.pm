@@ -90,7 +90,7 @@ sub assembly_text {
   my $ensembl_version = $species_defs->ENSEMBL_VERSION;
   my $assembly        = $species_defs->ASSEMBLY_NAME;
   my $mappings        = $species_defs->ASSEMBLY_MAPPINGS;
-  (my $gca            = $species_defs->ASSEMBLY_ACCESSION) =~ s/_/ /g;
+  my $gca             = $species_defs->ASSEMBLY_ACCESSION;
   my $archive         = $species_defs->get_config($species, 'ENSEMBL_ARCHIVES') || {};
   my $assemblies      = $species_defs->get_config($species, 'ASSEMBLIES')       || {};
   my $pre_species     = $species_defs->get_config('MULTI', 'PRE_SPECIES');
