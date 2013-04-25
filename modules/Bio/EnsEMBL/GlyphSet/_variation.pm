@@ -23,6 +23,7 @@ sub depth {
 sub colour_key    { return lc $_[1]->display_consequence; }
 sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label eq '-'; }
 sub label_overlay { return 1; }
+sub class         { my $depth = $_[0]->depth; return 'group' if defined $depth && $depth <= 1; }
 
 sub render_labels {
   my ($self, $labels) = @_;
@@ -38,7 +39,7 @@ sub _init {
 
 sub my_label { 
   my $self  = shift;  
-  my $label = $self->{'my_config'}->id =~ /somatic/ ? 'Somatic Mutations' : 'Variations'; 
+  my $label = $self->type =~ /somatic/ ? 'Somatic Mutations' : 'Variations'; 
   return $label; 
 }
 
@@ -110,8 +111,8 @@ sub fetch_features {
       my @vari_features;
       
       if ($id =~ /set/) {
-        my $track_set            = $self->my_config('set_name');
-        my $set_object           = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
+        my $track_set  = $self->my_config('set_name');
+        my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
     
         # Enable the display of failed variations in order to display the failed variation track
         $variation_db_adaptor->include_failed_variations(1) if $track_set =~ /failed/i;
@@ -164,10 +165,11 @@ sub href {
   return $self->_url({
     species  => $self->species,
     type     => 'Variation',
-    action   => 'Variation',
     v        => $f->variation_name,
     vf       => $f->dbID,
-    snp_fake => 1
+    snp_fake => 1,
+    config   => $self->{'config'}{'type'},
+    track    => $self->type
   });
 }
 
