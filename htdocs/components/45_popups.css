@@ -51,7 +51,7 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu_holder .row                     { padding: 0 0 2px 2px; }
 .zmenu_holder .row .zmenu              { padding: 0 2px 2px 0; display: inline-block; vertical-align: top; } 
 .zmenu_holder .row .zmenu tr.header th { width: 180px; }
-.zmenu_holder .grid                    { height: 250px; overflow-x: hidden; overflow-y: scroll; }
+.zmenu_holder .grid                    { max-height: 250px; overflow-x: hidden; overflow-y: scroll; }
 
 body.ie  .zmenu_holder .grid           { width: 200px; }
 body.ie  .zmenu_holder div.header      { width: 202px; }
