@@ -314,9 +314,9 @@ sub set_button {
 
 # Having a usemap causes drag selecting to become a real pain, so disabled
 sub extra_html {
-  my $self = shift;
-  
-  my $extra = qq{class="imagemap" };
+  my $self  = shift;
+  my $class =  'imagemap' . ($self->drawable_container->isa('Bio::EnsEMBL::VDrawableContainer') ? ' vertical' : '');
+  my $extra = qq{class="$class"};
 
 #  if ($self->imagemap eq 'yes') {
 #    my $map_name = $self->{'token'};
