@@ -4,9 +4,24 @@ package EnsEMBL::Web::ZMenu::Gene;
 
 use strict;
 
+use EnsEMBL::Web::ZMenu::Transcript;
+
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
+  my $self = shift;
+  
+  if ($self->click_location) {
+    my $hub    = $self->hub;
+    my $object = $self->object;
+    
+    push @{$self->{'features'}}, @{EnsEMBL::Web::ZMenu::Transcript->new($hub, $self->new_object('Transcript', $_, $object->__data))->{'features'}} for @{$object->Obj->get_all_Transcripts};
+  } else {
+    return $self->_content;
+  }
+}
+
+sub _content {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object;
