@@ -13,7 +13,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.draggables       = [];
     this.speciesCount     = 0;
     this.minImageWidth    = 500;
-    this.imageResizeTip   = 'Drag to resize';
     
     function resetOffset() {
       delete this.imgOffset;
@@ -55,13 +54,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.toolbars      = $('.image_toolbar',     this.elLk.container);
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
     
-    this.vdrag = this.elLk.areas.hasClass('vdrag');
-    this.multi = this.elLk.areas.hasClass('multi');
-    this.align = this.elLk.areas.hasClass('align');
+    this.vertical = this.elLk.img.hasClass('vertical');
+    this.multi    = this.elLk.areas.hasClass('multi');
+    this.align    = this.elLk.areas.hasClass('align');
     
     this.makeImageMap();
     this.makeHoverLabels();
-    this.makeResizable();
+    
+    if (!this.vertical) {
+      this.makeResizable();
+    }
     
     species[this.id] = this.getSpecies();
     $.extend(this, Ensembl.Share);
@@ -147,9 +149,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   makeImageMap: function () {
     var panel = this;
     
-    var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vdrag);
+    var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vertical);
     var rect      = [ 'l', 't', 'r', 'b' ];
-    var speciesNumber, c, r, start, end, scale, vertical;
+    var speciesNumber, c, r, start, end, scale;
     
     this.elLk.areas.each(function () {
       c = { a: this };
@@ -168,10 +170,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         r        = c.a.href.split('|');
         start    = parseInt(r[5], 10);
         end      = parseInt(r[6], 10);
-        vertical = this.className.match(/vdrag/);
-        scale    = (end - start + 1) / (vertical ? (c.b - c.t) : (c.r - c.l)); // bps per pixel on image
+        scale    = (end - start + 1) / (this.vertical ? (c.b - c.t) : (c.r - c.l)); // bps per pixel on image
         
-        c.range = { chr: r[4], start: start, end: end, scale: scale, vertical: vertical };
+        c.range = { chr: r[4], start: start, end: end, scale: scale, vertical: this.vertical };
         
         panel.draggables.push(c);
         
@@ -569,7 +570,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       if (Math.abs(diff.x) < 3 && Math.abs(diff.y) < 3) {
         this.clicking = true; // Chrome fires mousemove even when there has been no movement, so catch clicks here
       } else {
-        range = this.vdrag ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
+        range = this.vertical ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
         
         this.makeZMenu(e, range);
         
@@ -629,7 +630,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
     var dragArea, range, location, fuzziness;
     
-    if (($(area.a).hasClass('das') || $(area.a).hasClass('group')) && this.highlightRegions) {
+    if (e.shiftKey || $(area.a).hasClass('das') || $(area.a).hasClass('group')) {
       dragArea = this.dragRegion || this.getArea(coords, true);
       range    = dragArea ? dragArea.range : false;
       
@@ -640,6 +641,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         coords.clickChr   = range.chr;
         coords.clickStart = Math.max(Math.floor(location - fuzziness), range.start);
         coords.clickEnd   = fuzziness > 1 ? Math.min(Math.ceil(location + fuzziness), range.end) : coords.clickStart;
+        
+        id += '_multi';
       }
       
       dragArea = null;
@@ -688,7 +691,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
    */
   highlightImage: function (imageNumber, speciesNumber, start, end) {
     // Make sure each image is highlighted based only on itself or the next image on the page
-    if (!this.draggables.length || this.vdrag || imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
+    if (!this.draggables.length || this.vertical || imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
       return;
     }
     
