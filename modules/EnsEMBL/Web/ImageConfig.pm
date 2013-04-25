@@ -2876,6 +2876,7 @@ sub add_structural_variations {
     strand     => 'r', 
     bump_width => 0,
     height     => 6,
+    depth      => 100,
     colourset  => 'structural_variant',
     display    => 'off',
     renderers  => [ 'off', 'Off', 'compact', 'Compact', 'gene_nolabel', 'Expanded' ],
@@ -2887,9 +2888,7 @@ sub add_structural_variations {
     caption     => 'Larger structural variants',
     sources     => undef,
     description => "Structural variants from all sources overlapping completely the image (i.e. the start and end coordinates are outside the image). $desc",
-    depth       => 1,
     overlap     => 2,
-    height      => 12
   }));
   
   # Partial overlap (Smaller structural variants)
@@ -2908,7 +2907,6 @@ sub add_structural_variations {
       caption     => $key_2,
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
-      depth       => 100
     }));  
   }
   
