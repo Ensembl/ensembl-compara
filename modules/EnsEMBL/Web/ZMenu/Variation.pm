@@ -9,21 +9,14 @@ use Bio::EnsEMBL::GlyphSet::_variation;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self  = shift;
-  my $hub   = $self->hub;
-  my $vf    = $hub->param('vf');
-  my @click = map { $hub->param("click_$_") || () } qw(chr start end);
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $vf         = $hub->param('vf');
+  my $click_data = $self->click_data;
   my @features;
   
-  if (scalar @click == 3) {
-    my $image_config = $hub->get_imageconfig($hub->param('config'));
-    
-    @features = @{Bio::EnsEMBL::GlyphSet::_variation->new({
-      container => $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', @click),
-      config    => $image_config,
-      my_config => $image_config->get_node($hub->param('track'))
-    })->features};
-    
+  if ($click_data) {
+    @features = @{Bio::EnsEMBL::GlyphSet::_variation->new($click_data)->features};
     @features = () unless grep $_->dbID eq $vf, @features;
   }
   
@@ -48,7 +41,6 @@ sub feature_content {
   my $chr           = $feature->seq_region_name;
   my $name          = $feature->variation_name;
   my $dbID          = $feature->dbID;
-  my $name          = $feature->variation_name;
   my $source        = $feature->source;
   my $bp            = "$chr:$chr_start";
   my $types         = $hub->species_defs->colour('variation');
