@@ -133,8 +133,7 @@ sub href {
   
   return $self->_url({
     species => $self->species,
-    type    => 'Location',
-    action  => 'Marker',
+    type    => 'Marker',
     m       => $f->{'drawing_id'},
   });
 }
