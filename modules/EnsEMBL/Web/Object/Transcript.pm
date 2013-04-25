@@ -1007,7 +1007,7 @@ sub transcript_class {
 sub retrieve_remarks {
   my $self = shift;
   my @remarks = map { $_->value } @{ $self->Obj->get_all_Attributes('remark') };
-  foreach my $attrib_code qw(cds_start_NF cds_end_NF mRNA_start_NF mRNA_end_NF) {
+  foreach my $attrib_code (qw(cds_start_NF cds_end_NF mRNA_start_NF mRNA_end_NF)) {
     push @remarks, map {$_->name} grep {$_->value} @{ $self->Obj->get_all_Attributes($attrib_code) };
   }
   return \@remarks;
