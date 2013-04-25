@@ -4,6 +4,8 @@ package EnsEMBL::Web::ZMenu::Variation;
 
 use strict;
 
+use Bio::EnsEMBL::GlyphSet::_variation;
+
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
@@ -14,7 +16,14 @@ sub content {
   my @features;
   
   if (scalar @click == 3) {
-    @features = @{$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', @click)->get_all_VariationFeatures};
+    my $image_config = $hub->get_imageconfig($hub->param('config'));
+    
+    @features = @{Bio::EnsEMBL::GlyphSet::_variation->new({
+      container => $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', @click),
+      config    => $image_config,
+      my_config => $image_config->get_node($hub->param('track'))
+    })->features};
+    
     @features = () unless grep $_->dbID eq $vf, @features;
   }
   
