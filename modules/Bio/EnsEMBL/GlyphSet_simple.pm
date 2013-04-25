@@ -102,8 +102,8 @@ sub _init {
     
     foreach my $tag (@tags) {
       if ($tag->{'style'} =~ /^(left-snp|delta|box)$/) {
-        $tag_start = $start - 1 - 4/$pix_per_bp;
-        $tag_end   = $start - 1 + 4/$pix_per_bp;
+        $tag_start = $start - 1 - 4 / $pix_per_bp;
+        $tag_end   = $start - 1 + 4 / $pix_per_bp;
       } elsif ($tag->{'style'} =~ /^(underline|fg_ends|label)$/) {
         $tag_start = $tag->{'start'} if defined $tag->{'start'};
         $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
@@ -129,10 +129,9 @@ sub _init {
     my $colours   = $self->get_colours($f);
     my $composite = $self->Composite;
     my $rowheight = int($height * 1.5);
+    my $part      = $colours->{'part'};
     my @tag_glyphs;
-   
-    my $part = $colours->{'part'};
- 
+    
     if ($part eq 'line') {
       $composite->push($self->Space({
         x         => $start - 1,
@@ -168,7 +167,7 @@ sub _init {
         absolutey => 1,
         absolutez => 1,
       }));
-    } elsif($part ne 'none') {
+    } elsif ($part ne 'none') {
       my $colour_key = "$colours->{'part'}colour";
       
       $composite->push($self->Rect({
