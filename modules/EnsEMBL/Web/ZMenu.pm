@@ -32,8 +32,7 @@ sub new {
 }
 
 sub content {}
-
-sub hub { return $_[0]{'hub'}; }
+sub hub     { return $_[0]{'hub'}; }
 
 sub object {
   my $self = shift;
@@ -66,6 +65,24 @@ sub new_feature {
   };
   
   push @{$self->{'features'}}, $self->{'feature'};
+}
+
+sub click_location { return map { $_[0]->hub->param("click_$_") || () } qw(chr start end); }
+
+sub click_data {
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my @click = $self->click_location;
+  
+  if (scalar @click == 3) {
+    my $image_config = $hub->get_imageconfig($hub->param('config'));
+    my $node         = $image_config ? $image_config->get_node($hub->param('track')) : undef;
+    my $slice        = $node ? $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', @click) : undef;
+    
+    return { container => $slice, config => $image_config, my_config => $node } if $slice;
+  }
+  
+  return undef;
 }
 
 # When adding an entry you can specify ORDER or POSITION.
