@@ -66,29 +66,29 @@ sub new {
   return $self;
 }
 
-sub species            { return $_[0]->{'config'}{'species'} || $_[0]->{'container'}{'web_species'};               }
-sub species_defs       { return $_[0]->{'config'}->species_defs;                                                   }
-sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);                                           }
-sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                      }
-sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                          }
-sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width; }
-sub _url               { return shift->{'config'}->hub->url('ZMenu', @_);                                          }
-sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');  }
-sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                  }
-sub error_track_name   { return $_[0]->my_config('caption');                                                       }
-sub my_label           { return $_[0]->my_config('caption');                                                       }
-sub depth              { return $_[0]->my_config('depth');                                                         }
-sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                  }
-sub my_config          { return $_[0]->{'my_config'}->get($_[1]);                                                  }
-sub type               { return $_[0]->{'my_config'}{'id'};                                                        }
-sub _pos               { return $_[0]->{'config'}{'_pos'}++;                                                       }
-sub _colour_background { return 1;                                                                                 }
-sub colour_key         { return 'default';                                                                         }
-sub feature_label      { return '';                                                                                }
-sub title              { return '';                                                                                }
-sub href               { return undef;                                                                             }
-sub tag                { return ();                                                                                }
-sub label_overlay      { return undef;                                                                             }
+sub species            { return $_[0]->{'config'}{'species'} || $_[0]->{'container'}{'web_species'};                                                             }
+sub species_defs       { return $_[0]->{'config'}->species_defs;                                                                                                 }
+sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);                                                                                         }
+sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                                                                    }
+sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                                                                        }
+sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
+sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
+sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
+sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
+sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
+sub depth              { return $_[0]->my_config('depth');                                                                                                       }
+sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                                                                }
+sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
+sub my_config          { return $_[0]->{'my_config'}->get($_[1]);                                                                                                }
+sub type               { return $_[0]->{'my_config'}{'id'};                                                                                                      }
+sub _pos               { return $_[0]->{'config'}{'_pos'}++;                                                                                                     }
+sub _colour_background { return 1;                                                                                                                               }
+sub colour_key         { return 'default';                                                                                                                       }
+sub feature_label      { return '';                                                                                                                              }
+sub title              { return '';                                                                                                                              }
+sub href               { return undef;                                                                                                                           }
+sub tag                { return ();                                                                                                                              }
+sub label_overlay      { return undef;                                                                                                                           }
 
 ### Helper functions to wrap round Glyphs
 sub Bezier     { my $self = shift; return Sanger::Graphics::Glyph::Bezier->new(@_);     }
@@ -380,7 +380,6 @@ sub bp_to_nearest_unit {
 
   return "$value $unit";
 }
-
 
 sub commify {
   ### Puts commas into numbers over 1000
