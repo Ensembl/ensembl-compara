@@ -16,8 +16,8 @@
 
 	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl cvs checkout - set as an environment variable in your shell
         'password' - your mysql password
-	'compara_pairwise_db' - I'm assuiming that all of you pairwise alignments are in one compara db
-	'reference_genome_db_id' - the genome_db_id which is in all your pairwise alignments
+	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
+	'reference_genome_db_id' - the genome_db_id (ie the species) which is in all your pairwise alignments
 	'list_of_pairwise_mlss_ids' - a comma separated string containing all the pairwise method_link_species_set_id(s) you wise to use to generate the anchors
 	'main_core_dbs' - the servers(s) hosting most/all of the core (species) dbs
 	'core_db_urls' - any additional core dbs (not in 'main_core_dbs')
@@ -30,11 +30,9 @@
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
     #6. Fix the code when it crashes
-
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults specific for the lastz net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
-    Please see PairAligner_conf.pm for general details of the pipeline.
+    This configuaration file gives defaults for the first part of the EPO pipeline (this part generates the anchors from pairwise alignments). 
 
 =head1 CONTACT
 
@@ -97,7 +95,7 @@ sub default_options {
 	  # location of species core dbs which were used in the pairwise alignments
 	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/71' ],
 	  # alignment chunk size
-	'chunk_size' => 10000000,
+	'chunk_size' => 100000000,
 	  # max block size for pecan to align
 	'pecan_block_size' => 1000000,
 	'pecan_mlid' => 10, # dummy value (change if necessary)
@@ -224,7 +222,7 @@ return [
  },
 },
 
-{
+{ # this sets dummy values into the species_set table
  -logic_name     => 'add_dummy_species_set_info_factory',
  -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
  -parameters => {
@@ -232,8 +230,7 @@ return [
   'species_set_id' => $self->o('species_set_id'), 
  },
  -flow_into => { 2 => { 'mysql:////species_set' => { 'species_set_id' => '#species_set_id#', 'genome_db_id' => '#genome_db_id#' } } }, 
- },
- 
+},
 
 {
  -logic_name => 'set_genome_db_locator_factory',
@@ -275,17 +272,23 @@ return [
   },
 },
 
-{
+{ # populates the dnafrag_region table with overlapping region from the pairwise alignments  
  -logic_name	=> 'find_pairwise_overlaps',
  -module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
-# -parameters    => { 'overlaps_mlssid' => $self->o('overlaps_mlssid'), },
  -flow_into	=> {
-		2 => [ 'pecan' ],
+		'2->A' => [ 'pecan' ],
+		'A->1' => [ 'relief_funnel' ],
 		3 => [ 'mysql:////dnafrag_region?insertion_method=INSERT_IGNORE' ],
 	},
  -failed_job_tolerance => 5,
- -hive_capacity => 20,
- -batch_size    => 10,
+ -hive_capacity => 100,
+},
+
+
+{ # lowers the pressure on the main funnel
+ -logic_name	=> 'relief_funnel',
+ -module	=> 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+ -meadow_type	=> 'LOCAL',
 },
 
 {
