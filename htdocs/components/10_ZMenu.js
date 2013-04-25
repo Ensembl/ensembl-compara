@@ -526,7 +526,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.event  = data.event;
     this.coords = data.coords;
     
-    if (this.group || this.drag) {
+    if (this.group || this.drag || this.event.shiftKey) {
       if (this.elLk.header) {
         this.elLk.header.remove();
         delete this.elLk.header;
