@@ -73,6 +73,8 @@ sub run {
 	([],[],[],[]);
 	my $max_size_diff = $self->param('max_frag_diff');
 	my $overlapping_gabs = $self->param('overlapping_gabs');
+	my $min_number_of_seqs_per_anchor = $self->param('min_number_of_org_hits_per_base');
+	my $max_number_of_seqs_per_anchor = $self->param('max_number_of_org_hits_per_base');
 	for(my$i=0;$i<@{ $overlapping_gabs }-1;$i++) { # find the overlapping gabs for a ref-dnafrag chunk 
 		my $temp_end = $overlapping_gabs->[$i]->[1];
 		for(my$j=$i+1;$j<@{ $overlapping_gabs };$j++) {	
@@ -98,7 +100,7 @@ sub run {
 			}
 		}
 		foreach my $base(sort {$a <=> $b} keys %bases) {
-			if((keys %{$bases{$base}}) >= $self->param('min_number_of_org_hits_per_base')) {
+			if((keys %{$bases{$base}}) >= $min_number_of_seqs_per_anchor) {
 				push(@bases, $base);
 			}
 		}	
@@ -120,9 +122,9 @@ sub run {
 		$sth->execute( $overlaps_mlssid );
 		my $synteny_region_id = $sth->{'mysql_insertid'};
 		push @$synteny_region_jobs, { 'synteny_region_id' => $synteny_region_id };
-
 		foreach my $mlss( @{ $self->param('mlss') } ){
 			my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $ref_sub_slice);
+			next unless(scalar(@$gabs));
 			my %non_ref_dnafrags;
 			foreach my $gab(@$gabs){
 				my $rgab = $gab->restrict_between_reference_positions( @$coord_pair );
@@ -171,14 +173,19 @@ sub run {
 				}
 			}
 		}
-		push( @$genomic_aligns_on_ref_slice, {
-			synteny_region_id => $synteny_region_id,
-			dnafrag_id        => $self->param('ref_dnafrag_id'),
-			dnafrag_start     => $coord_pair->[0],
-			dnafrag_end       => $coord_pair->[1],
-			dnafrag_strand    => $ref_sub_slice->strand,
-			} );	
+		# push on the reference 
+		if(scalar(@$genomic_aligns_on_ref_slice)){
+			push( @$genomic_aligns_on_ref_slice, {
+				synteny_region_id => $synteny_region_id,
+				dnafrag_id        => $self->param('ref_dnafrag_id'),
+				dnafrag_start     => $coord_pair->[0],
+				dnafrag_end       => $coord_pair->[1],
+				dnafrag_strand    => $ref_sub_slice->strand,
+				} );	
+			push @$synteny_region_jobs, { 'synteny_region_id' => $synteny_region_id };
+		}
 	}
+	return if(scalar(@$genomic_aligns_on_ref_slice) <= $min_number_of_seqs_per_anchor or scalar(@$genomic_aligns_on_ref_slice) > $max_number_of_seqs_per_anchor);
 	$self->param('synteny_region_jobs', $synteny_region_jobs);
 	$self->param('genomic_aligns_on_ref_slice', $genomic_aligns_on_ref_slice);
 }	
