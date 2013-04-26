@@ -403,11 +403,17 @@ sub _init {
                 $highlights[$offset - 1]{'end'}   = $_->{'end'}   if $highlights[$offset - 1]{'end'}   < $_->{'end'};
               }
               
+              push @{$highlights[$offset - 1]{'hrefs'}},    $_->{'href'}    || ();
+              push @{$highlights[$offset - 1]{'html_ids'}}, $_->{'html_id'} || ();
+              
               # Deal with colour aggregation
               $is_aggregated = 1 if $_->{'col'} eq $aggregate_colour;
               $highlights[$offset - 1]{'col'} = $aggregate_colour if $is_aggregated;
             } else {
+              push @{$_->{'hrefs'}},    $_->{'href'}    || ();
+              push @{$_->{'html_ids'}}, $_->{'html_id'} || ();
               push @highlights, $_;
+              
               $bin_flag[$bin_id] = @highlights;
               $is_aggregated     = 0;
             }
@@ -433,6 +439,32 @@ sub _init {
           
           # dynamic require of the right type of renderer
           if ($self->can($type)) {
+            my ($href, %queries);
+            
+            foreach (@{$_->{'hrefs'} || []}) {
+              my ($url, $query) = split /\?/;
+              my %params      = map { split /=/ } split /;/, $query;
+              
+              foreach (keys %params) {
+                push @{$queries{$_}}, $queries{'_last'}{$_} eq $params{$_} ? '' : $params{$_};
+                $queries{'_last'}{$_} = $params{$_};
+              }
+              
+              $href ||= "$url?";
+            }
+            
+            delete $queries{'_last'};
+            
+            foreach my $param (sort keys %queries) {
+              if (scalar(grep $_, @{$queries{$param}}) == 1) {
+                $href .= "$param=$queries{$param}[0];";
+              } else {
+                $href .= sprintf '%s=%s;', $param, join ',', @{$queries{$param}};
+              }
+            }
+            
+            $href =~ s/;$//;
+            
             $self->push($self->$type({
               chr      => $chr,
               start    => $start,
@@ -443,8 +475,8 @@ sub _init {
               padding  => $padding,
               padding2 => $padding * $bpperpx * sqrt(3) / 2,
               id       => $_->{'id'},
-              html_id  => $_->{'html_id'},
-              href     => $_->{'href'},
+              html_id  => join(', .', @{$_->{'html_ids'}}),
+              href     => $href || $_->{'href'},
               col      => $_->{'col'},
               strand   => $_->{'strand'},
             }));
