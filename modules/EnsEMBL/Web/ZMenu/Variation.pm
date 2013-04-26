@@ -13,22 +13,32 @@ sub content {
   my $hub        = $self->hub;
   my $vf         = $hub->param('vf');
   my $click_data = $self->click_data;
+  my $i          = 0;
   my @features;
   
   if ($click_data) {
     @features = @{Bio::EnsEMBL::GlyphSet::_variation->new($click_data)->features};
     @features = () unless grep $_->dbID eq $vf, @features;
+  } elsif (!$vf) {
+    my $adaptor         = $hub->database('variation')->get_VariationAdaptor;
+    my @variation_names = split /,/, $hub->param('v');
+    my @regions         = split /,/, $hub->param('regions');
+    
+    for (0..$#variation_names) {
+      my ($chr, $start, $end) = split /\W/, $regions[$_];
+      push @features, grep { $_->seq_region_name eq $chr && $_->seq_region_start == $start && $_->seq_region_end == $end } @{$adaptor->fetch_by_name($variation_names[$_])->get_all_VariationFeatures};
+    }
   }
   
   @features = $hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) unless scalar @features;
   
   $self->{'feature_count'} = scalar @features;
   
-  $self->feature_content($_) for @features;
+  $self->feature_content($_, $i++) for @features;
 }
 
 sub feature_content {
-  my ($self, $feature) = @_;
+  my ($self, $feature, $i) = @_;
   my $hub           = $self->hub;
   my $snp_fake      = $hub->param('snp_fake');
   my $var_box       = $hub->param('var_box');
@@ -134,6 +144,15 @@ sub feature_content {
   }
   
   if (defined $p_value) {
+    if ($p_value =~ /,/) {
+      my @p_values = split /,/, $p_value;
+      
+      for (my $j = $i; $j >= 0; $j--) {
+        $p_value = $p_values[$j];
+        last if $p_value;
+      }
+    }
+    
     $self->add_entry({
       type  => $hub->param('ftype') eq 'Phenotype' ? 'p-value (negative log)' : 'p-value',
       label => $p_value,
