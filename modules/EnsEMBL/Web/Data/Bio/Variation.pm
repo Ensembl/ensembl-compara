@@ -62,19 +62,7 @@ sub convert_to_drawing_parameters {
     my $id_param    = $object_type;
        $id_param    =~ s/[a-z]//g;
        $id_param    = lc $id_param;
-    my (@assoc_gene_links, %url_params);
-    
-    # preparing the URL for all the associated genes and ignoring duplicate one
-    while (my ($id, $desc) = each (%{$associated_genes{$name} || {}})) {
-      next if $id =~ /intergenic|pseudogene/i;
-      
-      push @assoc_gene_links, sprintf(
-        '<a href="%s" title="%s">%s</a>', 
-        $hub->url({ type => 'Gene', action => 'Summary', g => $id, v => $name, vf => $dbID }),
-        $desc,
-        $id
-      );
-    }
+    my %url_params;
  
     # making the location 10kb if it a one base pair
     if ($end == $start) {
@@ -93,7 +81,7 @@ sub convert_to_drawing_parameters {
       );
       
       $url_params{'p_value'} = $p_value_logs{$name} if defined $p_value_logs{$name};
-      $url_params{'vf'}      = $dbID if $object_type eq 'Variation';
+      $url_params{'regions'} = sprintf '%s:%s-%s', $seq_region, $pf->seq_region_start, $pf->seq_region_end if $object_type eq 'Variation';
     } else {
       # use simple feature for QTL and SupportingStructuralVariation
       %url_params = (
@@ -107,17 +95,16 @@ sub convert_to_drawing_parameters {
     }
     
     push @results, {
-      region          => $seq_region,
-      start           => $start,
-      end             => $end,
-      strand          => $pf->strand,
-      html_id         => "${name}_$dbID", # The html id is used to match the feature on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
-      label           => $name,
-      href            => $hub->url(\%url_params),       
-      p_value         => $p_value_logs{$name},
-      extra           => {
+      region  => $seq_region,
+      start   => $start,
+      end     => $end,
+      strand  => $pf->strand,
+      html_id => "${name}_$dbID", # The html id is used to match the feature on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
+      label   => $name,
+      href    => $hub->url(\%url_params),       
+      p_value => $p_value_logs{$name},
+      extra   => {
         feat_type   => $object_type,
-        genes       => join(', ', @assoc_gene_links) || '-',
         phenotypes  => join('; ', sort keys %{$associated_phenotypes{$name} || {}}),
         phe_sources => join(', ', sort keys %{$phenotypes_sources{$name}    || {}}),
         'p-values'  => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
