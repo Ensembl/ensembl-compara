@@ -2887,8 +2887,8 @@ sub add_structural_variations {
     %options,
     caption     => 'Larger structural variants',
     sources     => undef,
-    description => "Structural variants from all sources overlapping completely the image (i.e. the start and end coordinates are outside the image). $desc",
-    overlap     => 2,
+    description => "Structural variants from all sources which are at least 1Mb in length. $desc",
+    min_size    => 1e6,
   }));
   
   # Partial overlap (Smaller structural variants)
@@ -2896,9 +2896,9 @@ sub add_structural_variations {
     %options,
     caption     => 'Smaller structural variants',
     sources     => undef,
-    description => "Structural variants from all sources overlapping partially the image (i.e. start and/or end coordinates are inside the image). $desc",
+    description => "Structural variants from all sources which are less than 1Mb in length. $desc",
     depth       => 10,
-    overlap     => 1
+    max_size    => 1e6 - 1,
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
