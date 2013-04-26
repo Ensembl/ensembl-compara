@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Feature;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub features    { return [];    } 
+sub features    { return []; } 
 sub class       {}
 sub render_tag  {}
 
@@ -15,12 +15,16 @@ sub get_colours {
   my ($self, $f) = @_;
   my ($colour_key, $flag) = $self->colour_key($f);
   
-  return {
-    key     => $colour_key,
-    feature => $self->my_colour($colour_key, $flag),
-    label   => $self->my_colour($colour_key, 'label'),
-    part    => $self->my_colour($colour_key, 'style')
-  };
+  if (!$self->{'feature_colours'}{$colour_key}) {
+    $self->{'feature_colours'}{$colour_key} = {
+      key     => $colour_key,
+      feature => $self->my_colour($colour_key, $flag),
+      label   => $self->my_colour($colour_key, 'label'),
+      part    => $self->my_colour($colour_key, 'style')
+    };
+  }
+  
+  return $self->{'feature_colours'}{$colour_key};
 }
 
 sub _init {
@@ -107,6 +111,10 @@ sub _init {
       } elsif ($tag->{'style'} =~ /^(underline|fg_ends|label)$/) {
         $tag_start = $tag->{'start'} if defined $tag->{'start'};
         $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
+      } elsif ($tag->{'style'} =~ /^bound_triangle_(\w+)$/) {
+        my $x      = $tag->{'start'} + ($tag->{'out'} == ($1 eq 'left') ? 1 : -1) * (($tag->{'out'} ? 1 : ($height / 2) + 1) / $pix_per_bp);
+        $tag_start = $x - ($1 eq 'left'  ? (($height / 2) + 1) / $pix_per_bp : 0);
+        $tag_end   = $x + ($1 eq 'right' ? (($height / 2) + 1) / $pix_per_bp : 0);
       } else {
         $tag_start = $start; 
         $tag_end   = $end;
