@@ -9,18 +9,25 @@ use Bio::EnsEMBL::Variation::StructuralVariationFeature;
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub somatic { return $_[0]->{'my_config'}->id =~ /somatic/; }
-sub depth   { return $_[0]{'display'} eq 'compact' ? 1 : $_[0]->SUPER::depth; }
+sub class   { return 'group' if $_[0]{'display'} eq 'compact'; }
+sub depth   { return $_[0]{'display'} eq 'compact' ? 1 : $_[0]{'container'}->length <= 2e5 && $_[0]->my_config('max_size') ? undef : $_[0]->SUPER::depth; }
 
 sub colour_key {
-  return 'copy_number_variation'      if $_[0]->{'display'} eq 'compact';
-  return 'somatic_breakpoint_variant' if $_[1]->is_somatic and $_[1]->breakpoint_order;
+  my ($self, $f) = @_;
   
-  if ($_[1]->class_SO_term eq 'copy_number_variation') {
-    my $ssv_class = $_[1]->structural_variation->get_all_supporting_evidence_classes;
-    return $ssv_class->[0] if scalar @$ssv_class == 1;
+  if (!$self->{'colours_keys'}{$f}) {
+    return $self->{'colours_keys'}{$f} = 'copy_number_variation'      if $self->{'display'} eq 'compact';
+    return $self->{'colours_keys'}{$f} = 'somatic_breakpoint_variant' if $f->is_somatic && $f->breakpoint_order;
+    
+    if ($f->class_SO_term eq 'copy_number_variation') {
+      my $ssv_class = $f->structural_variation->get_all_supporting_evidence_classes;
+      return $self->{'colours_keys'}{$f} = $ssv_class->[0] if scalar @$ssv_class == 1;
+    }
+    
+    $self->{'colours_keys'}{$f} = $f->class_SO_term;
   }
   
-  return $_[1]->class_SO_term;
+  return $self->{'colours_keys'}{$f};
 }
 
 sub render_compact {
@@ -32,40 +39,34 @@ sub render_compact {
 sub features {
   my $self   = shift; 
   my $config = $self->{'config'};
-  my $id     = $self->{'my_config'}->id;
+  my $id     = $self->type;
   
   if (!$self->cache($id)) {
     my $slice    = $self->{'container'};
     my $set_name = $self->my_config('set_name');
-    my $features;
+    my ($features, %colours);
     
     if ($set_name) {
       $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name));
     } else {
-      my $func    = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
-      my $source  = $self->my_config('source');
-      my $overlap = $self->my_config('overlap');
-      my $start   = $slice->start;
-      my $end     = $slice->end;
+      my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
+      my $source   = $self->my_config('source');
+      my $min_size = $self->my_config('min_size');
+      my $max_size = $self->my_config('max_size');
+      my $start    = $slice->start;
+      my $end      = $slice->end;
       my @display_features;
       
       $features = $slice->$func($source =~ /^\w/ ? $source : undef);
       
-      # Dispatch the SV features in the 2 "overlap" tracks
-      if (defined $overlap) {
+      if ($min_size || $max_size) {
         for (my $i = 0; $i < scalar @$features; $i++) {
-          my $seq_start = $features->[$i]->seq_region_start;
-          my $seq_end   = $features->[$i]->seq_region_end;
-          
-          if ($overlap == 1) {
-            push @display_features, $features->[$i] if $seq_start >= $start || $seq_end <= $end;
-          } elsif ($overlap == 2) {
-            push @display_features, $features->[$i] if $seq_start < $start && $seq_end > $end;
-          }
+          my $length = $features->[$i]->length;
+          push @display_features, $features->[$i] if ($max_size && $length <= $max_size) || ($min_size && $length >= $min_size);
         }
         
         # Generate blocks when the track is compacted in one line (except for the Larger Structural Variants track)
-        if ($overlap != 2 && $self->{'display'} eq 'compact') {
+        if ($max_size && $self->{'display'} eq 'compact') {
           my $slice_adaptor    = $self->{'container'}->adaptor->db->get_db_adaptor('core')->get_SliceAdaptor;
           my @list             = sort { $a->seq_region_start <=> $b->seq_region_start } @display_features;
           my $block_nb         = 1;
@@ -104,7 +105,7 @@ sub features {
         }
         
         $features = \@display_features;
-      } elsif ($self->somatic) {  # Display only the correct breakpoint (somatic data)
+      } elsif ($self->somatic) { # Display only the correct breakpoint (somatic data)
         for (my $i = 0; $i < scalar @$features; $i++) {
           if (!$features->[$i]{'breakpoint_order'}) {
             push @display_features, $features->[$i];
@@ -121,11 +122,14 @@ sub features {
       }
     }
     
-    $self->{'legend'}{'structural_variation_legend'}{$self->colour_key($_)} = $self->get_colours($_)->{'feature'} for @$features;
-
+    foreach (@$features) {
+      my $colour_key = $self->colour_key($_);
+      $self->{'legend'}{'structural_variation_legend'}{$colour_key} = $colours{$colour_key} ||= $self->my_colour($colour_key);
+    }
+    
     $self->cache($id, $features);
   }
-  
+      
   return $self->cache($id) || [];
 }
 
@@ -244,6 +248,8 @@ sub render_tag {
       direction    => $1,
       z            => 10
     });
+    
+    $composite->push(pop @glyph);
   } elsif ($tag->{'style'} eq 'somatic_breakpoint') {
     my $slice = $self->{'container'};
     
@@ -283,28 +289,12 @@ sub render_tag {
 sub href {
   my ($self, $f) = @_;
   
-  if ($self->{'display'} eq 'compact') {
-    my $start      = $self->{'container'}{'start'} > $f->seq_region_start ? $self->{'container'}{'start'} : $f->seq_region_start; 
-    my $end        = $self->{'container'}{'end'}   < $f->seq_region_end   ? $self->{'container'}{'end'}   : $f->seq_region_end; 
-    my $overlap    = $self->my_config('overlap') ? $self->my_config('overlap') : undef;
-    my $is_somatic = $f->is_somatic ? 1 : undef;
-    
-    return $self->_url({
-      species  => $self->species,
-      type     => 'StructuralVariationGroup',
-      r        => $f->seq_region_name.":$start-$end",
-      length   => $self->my_config('length'),
-      group    => $overlap,
-      somatic  => $is_somatic
-    });
-  } else {
-    return $self->_url({
-      type => 'StructuralVariation',
-      sv   => $f->variation_name,
-      svf  => $f->dbID,
-      vdb  => 'variation'
-    });
-  }
+  return $self->_url({
+    type => 'StructuralVariation',
+    sv   => $f->variation_name,
+    svf  => $f->dbID,
+    vdb  => 'variation'
+  });
 }
 
 sub title {
