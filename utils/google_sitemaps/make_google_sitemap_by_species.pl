@@ -48,7 +48,6 @@ BEGIN {
 
 my $hub = new EnsEMBL::Web::Hub;
 my $sd = $hub->species_defs;
-my $release_id  = $sd->ENSEMBL_VERSION;
 my $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT || 'www';
 my $ouput_dir = 'sitemaps'; 
 my @sitemaps;
@@ -103,9 +102,12 @@ foreach (@sitemaps) {
   ));
 }
 $index->write("${ouput_dir}/sitemap-index.xml");
-print ("Moving sitemaps for release $release_id to /ensemblweb/www/www_$release_id/htdocs/ \n");
-system("rm -r /ensemblweb/www/www_$release_id/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$release_id/htdocs/sitemaps");
-system("mv /ensemblweb/www/www_$release_id/utils/google_sitemaps/sitemaps /ensemblweb/www/www_$release_id/htdocs/");
+
+if($domain eq "http://www.ensembl.org") {
+  print ("Moving sitemaps to /ensemblweb/www/server/htdocs/ \n");
+  system("rm -r /ensemblweb/www/server/htdocs/sitemaps") if(-d "/ensemblweb/www/server/htdocs/sitemaps");
+  system("mv sitemaps /ensemblweb/www/server/htdocs/");
+}
 exit;
 
 #------------------------------------------------------------------------------
