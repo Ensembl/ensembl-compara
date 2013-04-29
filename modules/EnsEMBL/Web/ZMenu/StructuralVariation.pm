@@ -15,12 +15,10 @@ sub content {
   
   if ($click_data) {
     @features = @{Bio::EnsEMBL::GlyphSet::structural_variation->new($click_data)->features};
-    @features = () unless grep $_->dbID eq $svf, @features;
+    @features = () if $svf && !(grep $_->dbID eq $svf, @features);
   }
   
-  @features = $hub->database('variation')->get_StructuralVariationFeatureAdaptor->fetch_by_dbID($svf) unless scalar @features;
-  
-  $self->{'feature_count'} = scalar @features;
+  @features = $hub->database('variation')->get_StructuralVariationFeatureAdaptor->fetch_by_dbID($svf) if $svf && !scalar @features;
   
   $self->feature_content($_) for @features;
 }
