@@ -68,7 +68,7 @@ sub default_options {
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_TEST_mammal_anchors_'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_TEST_bird_anchors_'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the pairwise alignments needed to get the overlaps
 	'compara_pairwise_db' => {
@@ -90,8 +90,8 @@ sub default_options {
         ],
 
 	  # genome_db_id from which pairwise alignments will be used
-	'reference_genome_db_id' => 90,
-	'list_of_pairwise_mlss_ids' => "601,602,534",
+	'reference_genome_db_id' => 142,
+	'list_of_pairwise_mlss_ids' => "634,635,636",
 	  # location of species core dbs which were used in the pairwise alignments
 	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/71' ],
 	  # alignment chunk size
@@ -111,6 +111,8 @@ sub default_options {
 	'max_frag_diff' => 1.5, # max difference in sizes between non-reference dnafrag and reference to generate the overlaps from
 	'min_ce_length' => 40, # min length of each sequence in the constrained elenent 
 	'max_anchor_seq_len' => 100,
+	'min_number_of_org_hits_per_base' => 2, # minimum number of sequences in an anchor
+	'max_number_of_org_hits_per_base' => 10, # maximum number of sequences in an anchor
      };
 }
 
@@ -149,7 +151,8 @@ sub pipeline_wide_parameters {
 		'overlaps_mlssid' => $self->o('overlaps_mlssid'),
 		'list_of_pairwise_mlss_ids' => $self->o('list_of_pairwise_mlss_ids'),
 		'min_anchor_size' => 50,
-		'min_number_of_org_hits_per_base' => 2,
+		'min_number_of_org_hits_per_base' => $self->o('min_number_of_org_hits_per_base'),
+		'max_number_of_org_hits_per_base' => $self->o('max_number_of_org_hits_per_base'),
 		'max_frag_diff' => $self->o('max_frag_diff'),
 	        'reference_genome_db_id' => $self->o('reference_genome_db_id'),
 	};
@@ -213,7 +216,7 @@ return [
       'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) VALUES('.
       $self->o('overlaps_mlssid') . ',' . $self->o('overlaps_mlid') . ",\"get_overlaps\"," . $self->o('species_set_id') . '),(' .
       $self->o('pecan_mlssid') . ',' . $self->o('pecan_mlid') . ",\"pecan\"," . $self->o('species_set_id') . '),(' .
-      $self->o('gerp_ce_mlid') . ',' . $self->o('gerp_ce_mlid') . ",\"gerp\"," . $self->o('species_set_id') . ')',
+      $self->o('gerp_ce_mlssid') . ',' . $self->o('gerp_ce_mlid') . ",\"gerp\"," . $self->o('species_set_id') . ')',
       ],
  },
  -flow_into => { 
@@ -283,7 +286,6 @@ return [
  -failed_job_tolerance => 5,
  -hive_capacity => 100,
 },
-
 
 { # lowers the pressure on the main funnel
  -logic_name	=> 'relief_funnel',
