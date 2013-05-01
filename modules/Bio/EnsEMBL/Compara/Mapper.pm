@@ -10,7 +10,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::AlignSlice::Mapper - A specialised Mapper object with the ability to report gaps
+Bio::EnsEMBL::Compara::Mapper - A specialised Mapper object with the ability to report gaps
 
 =head1 DESCRIPTION
 
@@ -20,7 +20,7 @@ construction and returning the bare minimum information.
 
 =cut
 
-package Bio::EnsEMBL::Compara::AlignSlice::Mapper;
+package Bio::EnsEMBL::Compara::Mapper;
 
 use strict;
 use warnings;
