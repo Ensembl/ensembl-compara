@@ -161,7 +161,7 @@ sub counts {
     my $compara_db = $self->database('compara');
     
     if ($compara_db) {
-      my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+      my $compara_dbh = $compara_db->dbc->db_handle;
       
       if ($compara_dbh) {
         $counts = {%$counts, %{$self->count_homologues($compara_dbh)}};
