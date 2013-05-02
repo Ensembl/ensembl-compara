@@ -121,7 +121,6 @@ sub get_sequence_data {
     my @exons           = @{$transcript->get_all_Exons};
     my @seq             = map {{ letter => $_ }} @gene_seq;
     my $type            = 'exon1';
-    my $type_change     = -1;
     my $mk              = {};
     
     my ($crs, $cre, $transcript_start) = map $_ - $start, $transcript->coding_region_start, $transcript->coding_region_end, $transcript->start;
@@ -131,6 +130,8 @@ sub get_sequence_data {
       $_ = $length - $_ - 1, for $crs, $cre;
       ($crs, $cre) = ($cre, $crs);
     }
+    
+    $crs--;
     
     for my $exon (@exons) {
       my $exon_id = $exon->stable_id;
@@ -162,19 +163,15 @@ sub get_sequence_data {
         }
       }
       
-      if ($exon->phase == -1 && $exon->end_phase == -1) {
+      if ($exon->phase == -1) {
         $type = 'eu';
-      } elsif ($exon->phase == -1) {
-        $type        = 'eu';
-        $type_change = $crs - 1;
       } elsif ($exon->end_phase == -1) {
-        $type        = 'exon1';
-        $type_change = $cre;
+        $type = 'exon1';
       }
       
       for ($s..$e) {
         push @{$mk->{'exons'}{$_}{'type'}}, $type;
-        $type = $type eq 'exon1' ? 'eu' : 'exon1' if $_ == $type_change;
+        $type = $type eq 'exon1' ? 'eu' : 'exon1' if $_ == $crs || $_ == $cre;
         
         $mk->{'exons'}{$_}{'id'} .= ($mk->{'exons'}{$_}{'id'} ? "\n" : '') . $exon_id unless $mk->{'exons'}{$_}{'id'} =~ /$exon_id/;
       }
