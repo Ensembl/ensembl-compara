@@ -194,7 +194,7 @@ sub create_chunks
 
   my $chromosomes = [];
   if($self->param('MT_only')){
-	push(@$chromosomes, $SliceAdaptor->fetch_by_region(undef, 'MT')); # Used when aligning only MT chromosomes
+	push(@$chromosomes, $SliceAdaptor->fetch_by_region('toplevel', 'MT')); # Used when aligning only MT chromosomes
   } elsif(defined $self->param('region')) {
     #Support list of regions
     my @regions = split(/,/, $self->param('region'));  
