@@ -68,7 +68,7 @@ sub default_options {
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_TEST_bird_anchors_'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_TEST_bird2_anchors_'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the pairwise alignments needed to get the overlaps
 	'compara_pairwise_db' => {
@@ -270,8 +270,8 @@ return [
    'chunk_size' => $self->o('chunk_size'),
  },
  -flow_into	=> {
-	'2->A' => [ 'find_pairwise_overlaps' ],
-	'A->1' => [ 'transfer_ce_data_to_anchor_align' ],
+	2 => [ 'find_pairwise_overlaps' ],
+	1 => [ 'transfer_ce_data_to_anchor_align' ],
   },
 },
 
@@ -279,19 +279,18 @@ return [
  -logic_name	=> 'find_pairwise_overlaps',
  -module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
  -flow_into	=> {
-		'2->A' => [ 'pecan' ],
-		'A->1' => [ 'relief_funnel' ],
+		2 => [ 'pecan' ],
 		3 => [ 'mysql:////dnafrag_region?insertion_method=INSERT_IGNORE' ],
 	},
  -failed_job_tolerance => 5,
  -hive_capacity => 100,
 },
 
-{ # lowers the pressure on the main funnel
- -logic_name	=> 'relief_funnel',
- -module	=> 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
- -meadow_type	=> 'LOCAL',
-},
+#{ # lowers the pressure on the main funnel
+# -logic_name	=> 'relief_funnel',
+# -module	=> 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+# -meadow_type	=> 'LOCAL',
+#},
 
 {
  -logic_name    => 'pecan',
@@ -347,6 +346,7 @@ return [
 		'constrained_element WHERE (dnafrag_end - dnafrag_start + 1) >= '. $self->o('min_ce_length') .' ORDER BY constrained_element_id',
 	],
   },
+ -wait_for => [ 'gerp_constrained_element','find_pairwise_overlaps' ],
  -flow_into      => { 1 => 'trim_anchor_align_factory' },
 },
 
@@ -357,8 +357,7 @@ return [
     'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align",
  },  
  -flow_into => {
-    '2->A' => [ 'trim_anchor_align' ],
-    'A->1' => [ 'load_anchor_sequence_factory' ],
+    2 => [ 'trim_anchor_align' ],
  },  
 },  
 
@@ -383,6 +382,7 @@ return [
  -flow_into => {
 	2 => [ 'load_anchor_sequence' ],	
   }, 
+  -wait_for => [ 'trim_anchor_align' ],
 },	
 
 {   
