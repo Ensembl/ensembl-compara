@@ -178,7 +178,7 @@ sub counts {
       $counts->{'pairwise_alignments'} = $alignments->{'pairwise'} + $alignments->{'patch'};
     }
     if (my $compara_db = $self->database('compara_pan_ensembl')) {
-      my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+      my $compara_dbh = $compara_db->dbc->db_handle;
 
       my $pan_counts = {};
 
