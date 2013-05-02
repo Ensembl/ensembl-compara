@@ -153,6 +153,14 @@ sub createPairAlignerJobs
     #find the target dnafrag name to check if it is MT. It can only be part of set of 1
     my ($first_db_chunk) = @{$target_dnafrag_chunk_set->get_all_DnaFragChunks};
     my $target_dnafrag_name = $first_db_chunk->dnafrag->name;
+    my $target_slice = $first_db_chunk->dnafrag->slice;
+
+    #Check synonyms for MT
+    foreach my $target_synonym (@{$target_slice->get_all_synonyms}) {
+        if ($target_synonym->name eq "MT") {
+              $target_dnafrag_name = $target_synonym->name;
+          }
+    }
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
       $pairaligner_hash->{'qyChunkSetID'} = undef;
@@ -160,9 +168,17 @@ sub createPairAlignerJobs
       #find the query dnafrag name to check if it is MT. It can only be part of a set of 1
       my ($first_qy_chunk) = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
       my $query_dnafrag_name = $first_qy_chunk->dnafrag->name;
+      my $query_slice = $first_qy_chunk->dnafrag->slice;
+
+      #Check synonyms for MT
+      foreach my $query_synonym (@{$query_slice->get_all_synonyms}) {
+          if ($query_synonym->name eq "MT") {
+              $query_dnafrag_name = $query_synonym->name;
+          }
+      }
 
       $pairaligner_hash->{'qyChunkSetID'} = $query_dnafrag_chunk_set->dbID;
-      
+
       #only allow mitochrondria chromosomes to find matches to each other
       next if (($query_dnafrag_name eq "MT" && $target_dnafrag_name ne "MT") || 
 	      ($query_dnafrag_name ne "MT" && $target_dnafrag_name eq "MT"));
