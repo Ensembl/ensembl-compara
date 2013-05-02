@@ -84,7 +84,10 @@ sub populate_tree {
     )],
     { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
   );
-	
+  $self->create_node('Citations', 'Citations ([[counts::citation]])',
+    [qw( alignment EnsEMBL::Web::Component::Variation::Publication  )],
+    { 'availability' => 'variation has_citation','concise' => 'Citations'  } 
+  );	
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
     [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
