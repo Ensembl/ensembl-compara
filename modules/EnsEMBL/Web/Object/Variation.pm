@@ -41,7 +41,7 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations individuals ega);
+      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations individuals ega citation);
       if($self->param('vf')){
           ## only show these if a mapping available
           $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
@@ -78,7 +78,8 @@ sub counts {
     $counts->{'ega'}         = $self->count_ega;
     $counts->{'ldpops'}      = $self->count_ldpops;
     $counts->{'alignments'}  = $self->count_alignments->{'multi'};
-    
+    $counts->{'citation'}    = $self->count_citations;
+
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
   }
@@ -139,6 +140,12 @@ sub count_ldpops {
   my $count = scalar @{$pa->fetch_all_LD_Populations};
   
   return ($count > 0 ? $count : undef);
+}
+
+sub count_citations{
+    my $self = shift;
+    my $count = scalar @{$self->get_citation_data()};
+    return ($count > 0 ? $count : undef);
 }
 
 sub short_caption {
@@ -1570,5 +1577,16 @@ sub hgvs_url {
   # Return an arrayref with the elements: [0] -> URL, [1] -> display_name, [2] -> the rest of the HGVS string (capped at a maximum length)
   return [ $hub->url($p), encode_entities($refseq), encode_entities($hgvs_string) ];
 }
+
+## extract data for table of publications citing this variant
+sub get_citation_data{
+
+    my $self = shift;
+
+    $self->{'citation_data'} ||= $self->hub->database('variation')->get_PublicationAdaptor->fetch_all_by_Variation($self->vari);
+    return $self->{'citation_data'};
+}
+
+
 
 1;
