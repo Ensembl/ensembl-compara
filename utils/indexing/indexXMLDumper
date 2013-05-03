@@ -61,7 +61,7 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
                 : $sitetype eq 'Pre'  ? 'http://pre.ensembl.org/'
                 : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
 
-$search_engine ||= 'solr';
+$search_engine ||= 'lucene';
 
 my %db_boost = (
   core => '40.0',
@@ -189,7 +189,7 @@ foreach my $index (@indexes) {
     }
 
     else {
-#      next unless ($species =~ /^[I-Z]/);
+#      next unless ($species =~ /^[N-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
       $conf->{'species'}                = $species;
       $conf->{'species_sci_name'}       = $species;
@@ -510,6 +510,7 @@ sub markerLine {
   $counter->();
   return $xml;
 }
+
 
 ########################################################################## Variations
 
@@ -1172,7 +1173,7 @@ sub GenomicAlignmentLine {
 <doc>
   <field name="id">$id</field>
   <field name="description">$desc</field>);
-    $xml .= &common_fields($species,$ftype,$db);
+    $xml .= &common_fields($species,'GenomicAlignment',$db);
     if ($db_name) {
       $xml .= qq(
   <field name="external_source">$db_name</field>);
@@ -1887,7 +1888,6 @@ sub dumpGene {
   if ($search_engine eq 'solr') {
     $dbs{'vega'} = $VEGADB if $VEGADB;
   }
-
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
 
   my $total_c;
@@ -1999,9 +1999,7 @@ sub dumpGene {
         FROM $dbname.gene g, $dbname.coord_system cs, $dbname.seq_region sr
        WHERE g.seq_region_id = sr.seq_region_id 
          AND sr.coord_system_id = cs.coord_system_id);
-
     my $gene_locations = $conf->{'dbh'}->selectall_hashref($sql,'stable_id');
-#    print LOG "    Location query done ".&date_and_mem()."\n";
 
     $sql = qq(
       SELECT g.gene_id, t.transcript_id, tr.translation_id,
@@ -2144,7 +2142,7 @@ sub dumpGene {
     print LOG "    Querying done, added $c entries ".&date_and_mem()."\n";
 
     #archive Stable IDs
-    my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ]);
+    my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ], 'Gene');
 
     print LOG "    Stable_id mapping querying done, added $other_count entries ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
@@ -2163,7 +2161,7 @@ sub dumpGene {
              uo.unmapped_reason_id = ur.unmapped_reason_id and
                uo.ensembl_id = 0
     ),
-        'Transcript' => qq(
+       'Transcript' => qq(
       select a.logic_name, e.db_display_name,
              uo.identifier, ur.summary_description,
              concat( 'Transcript: ', t.stable_id, '; Gene: ',g.stable_id )
@@ -2225,7 +2223,6 @@ sub dumpTranscript {
   if ($search_engine eq 'solr') {
     $dbs{'vega'} = $VEGADB if $VEGADB;
   }
-
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull!
   my $total_c;
 
@@ -2320,13 +2317,17 @@ sub dumpTranscript {
        WHERE t.gene_id = g.gene_id),
      'transcript_id');
 
-    my $trans_locations = $conf->{'dbh'}->selectall_hashref(qq(
-      SELECT t.stable_id, sr.name as sr_name, t.seq_region_start, t.seq_region_end, t.seq_region_strand, cs.name as sr_type, cs.version
+    my $sql = qq(
+      SELECT t.stable_id, sr.name as sr_name, t.seq_region_start, t.seq_region_end, t.seq_region_strand, cs.name as sr_type, cs.version,
+            (SELECT sra.value
+                FROM $dbname.seq_region_attrib sra, $dbname.attrib_type at
+               WHERE sr.seq_region_id = sra.seq_region_id
+                 AND sra.attrib_type_id = at.attrib_type_id
+                 AND at.code = 'non_ref') as non_ref
         FROM $dbname.transcript t, $dbname.seq_region sr, $dbname.coord_system cs
        WHERE t.seq_region_id = sr.seq_region_id
-         AND sr.coord_system_id = cs.coord_system_id),
-      'stable_id');
-
+         AND sr.coord_system_id = cs.coord_system_id);
+    my $trans_locations = $conf->{'dbh'}->selectall_hashref($sql,'stable_id');
     $sql = qq(
       SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
              t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
@@ -2461,7 +2462,7 @@ sub dumpTranscript {
 
     #don't add archive stable IDs for solr, only need them in the gene
     if ($search_engine ne 'solr') {
-      my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(transcript translation) ]);
+      my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(transcript translation) ], 'Transcript');
       print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
     }
     $total_c += footer( $counter->(),$nogzip,$fh);
@@ -2480,7 +2481,6 @@ sub GeneTransLine {
   else {
     ($sid,$sid_ver) = each %$id;
   }
-
   my $boost = 0;
   $boost += $db_boost{$db};
   my $is_ref = $feat_loc->{'non_ref'} ? '' : 'is_ref';
@@ -2507,6 +2507,7 @@ sub GeneTransLine {
   my $doc = $boost ? qq(doc boost="$boost") : 'doc';
 
   if ($search_engine eq 'solr') {
+    $description = $desc;
     $xml = qq(
 <$doc>
   <field name="id">$sid</field>
@@ -2702,7 +2703,7 @@ sub GeneTransLine {
 ## methods for archive stable IDs (called by genes and transcripts) ##
 
 sub do_archive_stable_ids {
-  my ($dbname,$db,$fh,$counter,$types) = @_;
+  my ($dbname,$db,$fh,$counter,$types,$domain_type,) = @_;
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
   my %current_stable_ids =();
@@ -2753,19 +2754,19 @@ sub do_archive_stable_ids {
           $desc .= qq( and $deprecated_id_c deprecated $id);
         }
         $desc .= '.';
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$domain_type,$db,$counter),$nogzip, $fh);
       }
       elsif( @deprecated_sis ) {
         $other_count++;
         my $deprecated_id_c = scalar(@deprecated_sis);
         my $id = $deprecated_id_c > 1 ? 'identifiers' : 'identifier';
         my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $deprecated_id_c deprecated $id.);
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$domain_type,$db,$counter),$nogzip, $fh);
       }
       else {
         $other_count++;
         my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers.);
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,ucfirst($type),$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,ucfirst($type),$domain_type,$db,$counter),$nogzip, $fh);
       }
     }
   }
@@ -2773,7 +2774,7 @@ sub do_archive_stable_ids {
 }
 
 sub StableIdMappingLine {
-  my ($species,$desc,$osi,$type,$db,$counter) = @_;
+  my ($species,$desc,$osi,$type,$domain_type,$db,$counter) = @_;
   my $url = sprintf(qq(%s/%s/Idhistory?%s),
                     $species,
                     ucfirst($type),
@@ -2785,7 +2786,7 @@ sub StableIdMappingLine {
 <doc>
   <field name="id">$osi</field>
   <field name="description">$desc</field>);
-    $xml .= &common_fields($species,'Archived Stable ID',$db);
+    $xml .= &common_fields($species,$domain_type,$db);
     $xml .= qq(
   <field name="domain_url">$url</field>);
     $xml .= qq(
@@ -3077,7 +3078,7 @@ sub header {
     p("<entries>",$nogzip,$fh,1);
   }
   elsif ($search_engine eq 'solr') {
-    p(q(<add overwrite="true" commitWithin="10000">),$nogzip,$fh,1);
+    p(q(<add>),$nogzip,$fh,1);
   }
   else {
     print LOG "Incorrect data format -$search_engine- specified. Please correct\n";
@@ -3219,7 +3220,7 @@ Examples:
 ./indexXMLDumper --species=ALL --index=ALL --dir=input              #all log output to dumping_$release.log; xml to input; all indices for all species
 ./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/web_data/search/lucene/ensembl_$release; Variations for all species but human
 ./indexXMLDumper --species=ALL --ignore_index=Variation --log=no_variations.log  #log output to no_variations.log; xml to  /nfs/web_data/search/lucene/ensembl_$release; All indexes apart from Variations for for all species
-./indexXMLDumper --species=ALL --index=Gene --engine lucene  -log dumping.log #output in lucene format for legacy purposes
+./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log #output in format for solr (for testing, only works for genes as yet)
 
 ABOUT_END
 }
