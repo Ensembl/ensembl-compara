@@ -22,7 +22,6 @@ use Bio::EnsEMBL::ColourMap;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
-use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::DBSQL::ConfigAdaptor;
 use EnsEMBL::Web::ExtIndex;
@@ -192,6 +191,7 @@ sub database {
   if ($_[0] =~ /compara/) {
     return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0], 1);
   } else {
+    warn "Hub::database ".join(' ',@_)."\n";
     return $self->databases->get_DBAdaptor(@_);
   }
 }

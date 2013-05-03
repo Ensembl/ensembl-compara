@@ -12,7 +12,6 @@ use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::Data::Record::History;
 use EnsEMBL::Web::Document::Panel;
 
 use base qw(EnsEMBL::Web::Root);
