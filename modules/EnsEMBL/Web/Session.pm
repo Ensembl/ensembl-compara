@@ -33,6 +33,7 @@ use strict;
 
 use Digest::MD5    qw(md5_hex);
 use HTML::Entities qw(encode_entities);
+use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
@@ -448,6 +449,7 @@ sub add_das_from_string {
   my @existing = $self->hub->get_all_das;
   my $parser   = $self->das_parser;
   my ($server, $identifier) = $parser->parse_das_string($string);
+  $identifier = uri_unescape($identifier); # parse_das_string returns URI escaped identifier
   my $error;
   
   # If we couldn't reliably parse an identifier (i.e. string is not a URL),
