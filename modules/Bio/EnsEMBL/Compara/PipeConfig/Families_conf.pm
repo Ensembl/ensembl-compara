@@ -48,7 +48,7 @@ sub default_options {
 
 #       'mlss_id'         => 30041,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara4',    # where the pipeline database will be created
-        'release'         => '71',          # current ensembl release number
+        'release'         => '72',          # current ensembl release number
         'rel_suffix'      => '',            # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
@@ -67,6 +67,8 @@ sub default_options {
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
 
+        'uniprot_version' => 'uniprot',
+
         'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
         'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
@@ -83,10 +85,10 @@ sub default_options {
         'cons_capacity'   =>  400,
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara1/mm14_compara_homology_71',
+        'homology_db'  => 'mysql://ensro@compara3/mp12_compara_homology_72',
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_ensembl_compara_70',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/kb3_ensembl_compara_71',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -122,6 +124,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
         'mafft_root_dir'    => $self->o('mafft_root_dir'),
+
     };
 }
 
@@ -243,6 +246,9 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'load_uniprot_factory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtIndex',
+            -parameters => {
+                'uniprot_version'   => $self->o('uniprot_version'),
+            },
             -hive_capacity => 3,
             -flow_into => {
                 2 => [ 'load_uniprot' ],
@@ -302,7 +308,7 @@ sub pipeline_analyses {
                 'step'            => 100,
             },
             -flow_into => {
-                '2->A' => { 'blast' => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' } }.
+                '2->A' => { 'blast' => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' } },
                 'A->1' => [ 'snapshot_after_blast' ],
             },
             -rc_name => '2GigMem',
