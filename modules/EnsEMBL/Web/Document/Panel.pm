@@ -404,7 +404,7 @@ sub component_content {
         $html .= $self->component_failure($@, $entry, $module_name);
       } elsif ($content) {
         if ($ajax_request) {
-          my $id         = $function eq 'sub_slice' ? '' : $component->id;
+          my $id         = $component->id;
           my $panel_type = $modal || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
           
           # Only add the wrapper if $content is html, and the update_panel parameter isn't present

@@ -144,7 +144,7 @@ sub content_sub_slice {
       $config->{'padding'}->{'number'}     = $pad[2];
     }
   }
-  
+  $self->id(''); 
   return $self->build_sequence($sequence, $config) . $warnings;
 }
 

@@ -93,7 +93,7 @@ sub content_sub_slice {
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
-    
+  $self->id(''); 
   return $self->build_sequence($sequence, $config);
 }
 
