@@ -123,27 +123,26 @@ sub supporting_evidence_table {
       my $sv_class = '<div><div style="float:left;background-color:'.$colour.';padding:5px;margin-top:4px"></div> <div style="float:left;margin-left:5px">'.$ssv_obj->var_class.'</div></div>';
        
       # Annotation(s)
-      my ($clin, $sample, $strain, $phen);
-      my ($clins, $samples, $strains, $phens);
-      foreach my $annot (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_PhenotypeFeatures}) {
-        next if ($annot->seq_region_start==0 || $annot->seq_region_end==0);
-        
-        my $aclin   = $annot->clinical_significance;
-        my $asample = $annot->sample_name;
-        my $astrain = $annot->strain_name;
-        my $aphen   = ($annot->phenotype) ? $annot->phenotype->description : undef;
-        
-        $clins->{$aclin} = 1 if ($aclin);
-        $samples->{$asample} = 1 if ($asample);
-        $strains->{$astrain} = 1 if ($astrain);
-        if ($aphen) {
-          $phens->{$aphen} = 1;
-          $has_phen = 1;
-        }    
+      my $clin = $ssv_obj->clinical_significance;
+      my ($indiv, $strain, $phen);
+      my ($indivs, $strains, $phens);
+      
+      foreach my $pf (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_PhenotypeFeatures}) {
+        my $a_phen = $pf->phenotype->description;
+        $phens->{$a_phen} = 1;
+        $has_phen = 1;
       }
       
-      $clin   = join(';<br />', keys(%$clins));
-      $sample = join(';<br />', keys(%$samples));
+      foreach my $svs (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_StructuralVariationSamples}) {
+        
+        my $a_indiv  = ($svs->individual) ? $svs->individual->name : undef;
+        my $a_strain = ($svs->strain) ? $svs->strain->name : undef;
+        
+        $indivs->{$a_indiv} = 1 if ($a_indiv);
+        $strains->{$a_strain} = 1 if ($a_strain); 
+      }
+      
+      $indiv  = join(';<br />', keys(%$indivs));
       $strain = join(';<br />', keys(%$strains));
       $phen   = join(';<br />', keys(%$phens));
       
@@ -152,7 +151,7 @@ sub supporting_evidence_table {
                   class    => $sv_class,
                   pos      => $loc,
                   clin     => $clin ? $clin : '-',
-                  sample   => $sample ? $sample : '-',
+                  indiv    => $indiv ? $indiv : '-',
                   strain   => $strain ? $strain : '-',
                   bp_order => $bp_order ? $bp_order : '-',
                   phen     => $phen ? $phen : '-',
@@ -167,9 +166,9 @@ sub supporting_evidence_table {
     };
     
     push @$columns, (
-     { key => 'class',  sort => 'string', title => 'Allele type'           },
-     { key => 'clin',   sort => 'string', title => 'Clinical significance' },
-     { key => 'sample', sort => 'string', title => 'Sample name(s)'        },
+     { key => 'class', sort => 'string', title => 'Allele type'           },
+     { key => 'clin',  sort => 'string', title => 'Clinical significance' },
+     { key => 'indiv', sort => 'string', title => 'Individual name(s)'    },
     );
     
     if (defined($has_phen)) {  
