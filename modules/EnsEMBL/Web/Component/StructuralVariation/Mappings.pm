@@ -87,7 +87,7 @@ sub gene_transcript_table {
       $exon         =~ s/\// of /;
       my $allele    = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
         $self->object->get_class_colour($svf->class_SO_term),
-        $svf->structural_variation->var_class
+        $svf->var_class
       );
       
       my ($gene_url, $transcript_url);
@@ -182,7 +182,7 @@ sub regfeat_table {
       my $ftype     = 'Regulatory feature';
       my $allele    = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
         $self->object->get_class_colour($svf->class_SO_term),
-        $svf->structural_variation->var_class
+        $svf->var_class
       );
       
       # create a URL
