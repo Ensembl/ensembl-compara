@@ -37,6 +37,45 @@ sub get_details {
   return ($member, $tree, $node, $test_tree);
 }
 
+sub content_sub_supertree {
+  my $self = shift;
+  my $hub = $self->hub;
+  my $cdb = $hub->param('cdb') || 'compara';
+  my $object      = $self->object;
+  my $is_genetree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
+  my ($gene, $member, $tree, $node, $test_tree);
+  if ($is_genetree) {
+    $tree   = $object->Obj;
+    $member = undef;
+  } else {
+    $gene = $object;
+    ($member, $tree, $node, $test_tree) = $self->get_details($cdb);
+  }
+  my $html = '';
+  my $parent      = $tree->tree->{'_supertree'};
+  my $tree_stable_id       = $tree->tree->stable_id;
+  my $super_image_config = $hub->get_imageconfig('supergenetreeview');
+  $super_image_config->set_parameters({
+    container_width => 400,
+    image_width     => 400,
+    slice_number    => '1|1',
+    cdb             => $cdb
+  });
+  my $image = $self->new_image($parent->root, $super_image_config, []);
+  $image->image_type       = 'genetree';
+  $image->image_name       = ($hub->param('image_width')) . "-SUPER-$tree_stable_id";
+  $image->imagemap         = 'yes';
+  $image->set_button('drag', 'title' => 'Drag to select region');
+  $html .= sprintf(
+    '<h3>Super-tree (%d trees and %d genes in total)</h3>',
+    scalar @{$parent->root->get_all_leaves},
+    $parent->{'_total_num_leaves'},
+  );
+  $html .= $image->render ;
+  $self->id('');
+  return "<div>$html</div>";
+}
+
 sub content {
   my $self        = shift;
   my $cdb         = shift || 'compara';
@@ -84,24 +123,8 @@ sub content {
   if (defined $parent) {
 
     if ($hub->param('super_tree') eq 'on') {
-      my $super_image_config = $hub->get_imageconfig('supergenetreeview');
-      $super_image_config->set_parameters({
-        container_width => 400,
-        image_width     => 400,
-        slice_number    => '1|1',
-        cdb             => $cdb
-      });
-      my $image = $self->new_image($parent->root, $super_image_config, []);
-      $image->image_type       = 'genetree';
-      $image->image_name       = ($hub->param('image_width')) . "-SUPER-$tree_stable_id";
-      $image->imagemap         = 'yes';
-      $image->set_button('drag', 'title' => 'Drag to select region');
-      $html .= sprintf(
-        '<h3>Super-tree (%d trees and %d genes in total)</h3>',
-        scalar @{$parent->root->get_all_leaves},
-        $parent->{'_total_num_leaves'},
-      );
-      $html .= $image->render ;
+      my $super_url = $self->ajax_url('sub_supertree',{ cdb => $cdb, update_panel => undef });
+      $html .= qq(<div class="ajax"><input type="hidden" class="ajax_load" value="$super_url" /></div>);
     } else {
       $html .= $self->_info(
         sprintf(
