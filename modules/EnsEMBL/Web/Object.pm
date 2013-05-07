@@ -162,6 +162,13 @@ sub seq_region_type_and_name {
   }
 }
 
+sub get_cv_terms {
+  my $self = shift;
+  my @cv_terms = map { $_->value } @{ $self->Obj->get_all_Attributes('havana_cv') };
+  return \@cv_terms;
+}
+
+
 sub gene_description {
   my $self = shift;
   my $gene = shift || $self->gene;
