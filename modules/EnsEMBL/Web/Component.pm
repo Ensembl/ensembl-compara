@@ -1179,21 +1179,20 @@ sub structural_variation_table {
   }
   
   foreach my $svf (@{$svfs}) {
-    my $sv          = $svf->structural_variation;
     my $name        = $svf->variation_name;
-    my $description = $sv->source_description;
-    my $sv_class    = $sv->var_class;
-    my $source      = $sv->source;
+    my $description = $svf->source_description;
+    my $sv_class    = $svf->var_class;
+    my $source      = $svf->source;
     
-    if ($sv->study) {
-      my $ext_ref    = $sv->study->external_reference;
-      my $study_name = $sv->study->name;
-      my $study_url  = $sv->study->url;
+    if ($svf->study) {
+      my $ext_ref    = $svf->study->external_reference;
+      my $study_name = $svf->study->name;
+      my $study_url  = $svf->study->url;
       
       if ($study_name) {
         $source      .= ":$study_name";
         $source       = qq{<a rel="external" href="$study_url">$source</a>} if $study_url;
-        $description .= ': ' . $sv->study->description;
+        $description .= ': ' . $svf->study->description;
       }
       
       if ($ext_ref =~ /pubmed\/(.+)/) {
@@ -1204,10 +1203,9 @@ sub structural_variation_table {
     }
     
     # SV size (format the size with comma separations, e.g: 10000 to 10,000)
-    my $sv_size = '-';
-    if ($sv->class_SO_term =~ /copy|deletion|duplication|inversion/ && !defined($svf->breakpoint_order)) {
-      $sv_size = $svf->end - $svf->start + 1;
-    }
+    my $sv_size = $svf->length;
+       $sv_size ||= '-';
+ 
     my $hidden_size  = sprintf(qq{<span class="hidden">%s</span>},($sv_size eq '-') ? 0 : $sv_size);
 
     my $int_length = length $sv_size;
