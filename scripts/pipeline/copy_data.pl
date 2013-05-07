@@ -204,7 +204,7 @@ foreach my $one_mlss_id (@mlss_id) {
     print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID ($one_mlss_id)\n";
     exit(1);
   }
-  push @all_method_link_species_sets, $one_mlss_id;
+  push @all_method_link_species_sets, $mlss;
 }
 
 if ($method_link) {
@@ -219,7 +219,6 @@ if ($method_link) {
 my $ini_re_enable = $re_enable;
 
 while (my $method_link_species_set = shift @all_method_link_species_sets) {
-
   my $mlss_id = $method_link_species_set->dbID;
   my $class = $method_link_species_set->method->class;
   $re_enable = scalar(@all_method_link_species_sets) ? 0 : $ini_re_enable;
