@@ -20,7 +20,7 @@ sub colour_key {
     return $self->{'colours_keys'}{$f} = 'somatic_breakpoint_variant' if $f->is_somatic && $f->breakpoint_order;
     
     if ($f->class_SO_term eq 'copy_number_variation') {
-      my $ssv_class = $f->structural_variation->get_all_supporting_evidence_classes;
+      my $ssv_class = $f->_get_all_supporting_evidence_classes;
       return $self->{'colours_keys'}{$f} = $ssv_class->[0] if scalar @$ssv_class == 1;
     }
     
@@ -42,12 +42,15 @@ sub features {
   my $id     = $self->type;
   
   if (!$self->cache($id)) {
-    my $slice    = $self->{'container'};
-    my $set_name = $self->my_config('set_name');
+    my $slice      = $self->{'container'};
+    my $set_name   = $self->my_config('set_name');
+    my $study_name = $self->my_config('study_name');
     my ($features, %colours);
     
     if ($set_name) {
       $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name));
+    } elsif ($study_name) {
+      $features = $slice->get_all_StructuralVariationFeatures_by_Study($self->{'config'}->hub->get_adaptor('get_StudyAdaptor', 'variation')->fetch_by_name($study_name));
     } else {
       my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
       my $source   = $self->my_config('source');
