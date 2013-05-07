@@ -37,7 +37,6 @@ use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw($GENOMIC_REGEX);
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
-use EnsEMBL::Web::Data::Record::Upload;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Text::Feature::SNP_EFFECT;
