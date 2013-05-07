@@ -2708,7 +2708,7 @@ sub add_sequence_variations_meta {
   my $menu = $self->get_node('variation');
   
   foreach my $menu_item(@{$hashref->{'menu'}}) {
-    next if $menu_item->{'type'} eq 'sv_set'; # sv_set type
+    next if $menu_item->{'type'} =~  /^sv_/; # exclude structural variant items
     
     my $node;
     
@@ -2912,20 +2912,35 @@ sub add_structural_variations {
   
   # Structural variation sets
   foreach my $menu_item (@{$hashref->{'menu'}}) {
-    next if $menu_item->{'type'} ne 'sv_set';
+    next if $menu_item->{'type'} !~ /^sv_/;
     
-    my $temp_name = $menu_item->{'key'};
-       $temp_name =~ s/^sv_set_//;
     my $node_name = "$menu_item->{'long_name'} (structural variants)";
+    
+    if ($menu_item->{'type'} eq 'sv_set') {
+      my $temp_name = $menu_item->{'key'};
+         $temp_name =~ s/^sv_set_//;
       
-    $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
-      %options,
-      caption     => $node_name,
-      sources     => undef,
-      sets        => [ $menu_item->{'long_name'} ],
-      set_name    => $menu_item->{'long_name'},
-      description => $hashref->{'variation_set'}{'descriptions'}{$temp_name},
-    }));
+      $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
+        %options,
+        caption     => $node_name,
+        sources     => undef,
+        sets        => [ $menu_item->{'long_name'} ],
+        set_name    => $menu_item->{'long_name'},
+        description => $hashref->{'variation_set'}{'descriptions'}{$temp_name},
+      }));
+    }
+    elsif ($menu_item->{'type'} eq 'sv_study') {
+      my $name = $menu_item->{'key'};
+      
+      $structural_variants->append($self->create_track($name, $node_name, {
+        %options,
+        caption     => $node_name,
+        sources     => undef,
+        study       => [ $name ],
+        study_name  => $name,
+        description => $hashref->{'study'}{'descriptions'}{$name},
+      }));  
+    }
   }
   
   $self->add_track('information', 'structural_variation_legend', 'Structural Variation Legend', 'structural_variation_legend', { strand => 'r' });
