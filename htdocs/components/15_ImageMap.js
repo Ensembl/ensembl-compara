@@ -136,13 +136,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   getContent: function () {
-    this.elLk.exportMenu.add(this.elLk.hoverLabels).add(this.elLk.resizeMenu).remove();
+    if (this.elLk.exportMenu) {
+      this.elLk.exportMenu.add(this.elLk.hoverLabels).add(this.elLk.resizeMenu).remove();
+    }
     
     for (var id in this.zMenus) {
       Ensembl.EventManager.trigger('destroyPanel', id);
     }
-    
-    this.removeShare();
+   
+    if (this.removeShare) { 
+      this.removeShare();
+    }
     this.base.apply(this, arguments);
   },
   
