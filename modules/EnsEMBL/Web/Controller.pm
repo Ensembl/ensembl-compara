@@ -18,6 +18,8 @@ use base qw(EnsEMBL::Web::Root);
 
 my @HANDLES_TO_DISCONNECT;
 
+sub update_user_history {} # stub for users plugin
+
 sub new {
   my $class = shift;
   my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
@@ -220,56 +222,6 @@ sub render_page {
   my $page_content = $page->render($content);
   
   $self->set_cached_content($page_content) if $self->page_type =~ /^(Static|Dynamic)$/ && $page->{'format'} eq 'HTML' && !$self->hub->has_a_problem;
-}
-
-sub update_user_history {
-  my $self            = shift;
-  my $hub             = $self->hub;
-  my $user            = $hub->user;
-  my $referer         = $hub->referer;
-  my $referer_type    = $referer->{'ENSEMBL_TYPE'};
-  my $referer_species = $referer->{'ENSEMBL_SPECIES'};
-  my $param           = $hub->object_types->{$referer_type};
-  
-  if ($referer_type && $param) {
-    my @type_history = grep $_->{'object'} eq $referer_type, $user->histories;
-    my $value        = shift || $referer->{'params'}->{$param}->[0] or return;
-    my $name         = $self->species_defs->get_config($referer_species, 'SPECIES_COMMON_NAME');
-    
-    if ($referer_type =~ /^(Gene|Transcript)$/) {
-      my $db           = $referer->{'params'}->{'db'}->[0] || 'core';
-         $db           = 'otherfeatures' if $db eq 'est';
-      my $func         = "get_${referer_type}Adaptor";
-      my $feature      = $hub->get_adaptor($func, $db, $referer_species)->fetch_by_stable_id($value);
-      my $display_xref = $feature ? $feature->display_xref : undef;
-      
-      $name .= ': ' . ($display_xref ? $display_xref->display_id : $value);
-    } elsif ($referer_type eq 'Phenotype') {
-      my $phen = $hub->get_adaptor('get_PhenotypeAdaptor', 'variation', $referer_species)->fetch_by_dbID($value);
-      $name .= ': ' . $phen->description if $phen;
-    } elsif ($referer_type eq 'Experiment') {
-      $value = $value eq 'all' ? 'All' : join(', ', grep !/(cell_type|evidence_type|project|name)/, split chop $value, $value) unless $value =~ s/^name-//;     
-      $name .= ": $value";
-    } else {
-      $name .= $name ? ": $value" : $value;
-    }
-    
-    my $name_check = grep { $_->{'name'} eq $name } @type_history;
-    
-    if ($value && !$name_check && !($referer_type eq $self->type && $hub->param($param) eq $value)) {
-      my $history = EnsEMBL::Web::Data::Record::History::User->new({ user_id => $user->id });
-      $history->name($name);
-      $history->species($referer_species);
-      $history->object($referer_type);
-      $history->param($param);
-      $history->value($value);
-      $history->url($referer->{'absolute_url'});
-      $history->save;
-      
-      ## Limit to 5 entries per object type
-      shift(@type_history)->delete while scalar @type_history >= 5; 
-    }
-  }
 }
 
 sub set_cache_params {
