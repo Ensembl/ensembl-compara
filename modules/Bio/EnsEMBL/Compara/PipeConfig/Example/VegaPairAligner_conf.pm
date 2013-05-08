@@ -53,7 +53,7 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
- #   'release'               => '70',
+    'release'               => '71',
     #'dbname'               => '', #Define on the command line via the conf_file
 
     # dependent parameters:
@@ -65,7 +65,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20121112_70',
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20130211_71',
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -78,7 +78,7 @@ sub default_options {
 #	'conf_file' => '',
 
 	#directory to dump nib files
-    'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+    'dump_dir' => '/lustre/scratch109/sanger/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	#min length to dump dna as nib file
 #	'dump_min_size' => 11500000, 
@@ -102,9 +102,10 @@ sub default_options {
         #
 	#Default pairaligner config
 	#
-    'skip_pairaligner_stats' => 0, #skip this module if set to 1
+#    'skip_pairaligner_stats' => 0, #skip this module if set to 1
 #    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
-    'output_dir' => '/lustre/scratch109/ensembl/st3/compara_generation/vega_ga_20121112_70',
+    'output_dir' => '/lustre/scratch109/sanger/ds23/compara_generation/vega_ga_20130211_71',
+    'bed_dir' => '/lustre/scratch109/sanger/ds23/compara_generation/vega_ga_20130211_71/pair_aligner/bed_dir/release_71/',
     };
 }
 
@@ -177,7 +178,7 @@ sub pipeline_analyses {
         print "Vega fix - removed parameter for $_\n";
         delete $analyses->[$i]{'-parameters'}{$_};
       }
-      my @unwanted_flows = qw(create_alignment_nets_jobs healthcheck create_alignment_chains_jobs no_chunk_and_group_dna pairaligner_stats;);
+      my @unwanted_flows = qw(create_alignment_nets_jobs healthcheck create_alignment_chains_jobs no_chunk_and_group_dna pairaligner_stats);
       foreach my $flow (keys %{$analyses->[$i]{'-flow_into'}}) {
         if (grep {$analyses->[$i]{'-flow_into'}{$flow}[0] eq $_} @unwanted_flows) {
           print "Vega fix - removed flow control rule for ".$analyses->[$i]{'-flow_into'}{$flow}[0] . "\n";
@@ -253,6 +254,8 @@ sub e_analyses {
                      dump_large_nib_for_chains_factory
                      filter_duplicates_himem
                      innodbise_table
+                     coding_exon_stats
+                     coding_exon_stats_summary
                      store_sequence)];
   push @$analyses, '#:subst pair_aligner_logic_name:#_himem1';
   push @$analyses, '#:subst pair_aligner_logic_name:#';
