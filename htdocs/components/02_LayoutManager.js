@@ -50,7 +50,7 @@ Ensembl.LayoutManager.extend({
       if (Ensembl.PanelManager.panels[panelId] && this.href.split('?')[0].match(Ensembl.PanelManager.panels[panelId].params.updateURL.split('?')[0])) {
         var params = {};
         
-        if (!$('.update_url', this).each(function () { params[this.name] = this.value; }).length) {
+        if (!$('.update_url', this).add($(this).siblings('.update_url')).each(function () { params[this.name] = this.value; }).length) {
           params = undefined;
         }
         
@@ -63,6 +63,25 @@ Ensembl.LayoutManager.extend({
           }
         });
       }
+      
+      return false;
+    }).on('submit', 'form.update_panel', function (e) {
+      var params    = $(this).serializeArray();
+      var urlParams = {};
+      var panelId, url, el;
+      
+      for (var i in params) {
+        switch (params[i].name) {
+          case 'panel_id': panelId = params[i].value; break;
+          case 'url'     : url     = params[i].value; break;
+          case 'element' : el      = params[i].value; break;
+          default        : urlParams[params[i].name] = params[i].value; break;
+        }
+      }
+      
+      url = Ensembl.updateURL(urlParams, url);
+      
+      Ensembl.EventManager.triggerSpecific('updatePanel', panelId, url, el, null, urlParams);
       
       return false;
     }).on({
