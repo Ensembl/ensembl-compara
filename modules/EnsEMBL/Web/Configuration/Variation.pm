@@ -23,7 +23,7 @@ sub tree_cache_key {
 
 sub populate_tree {
   my $self    = shift;
-	my $somatic = $self->object ? $self->object->Obj->is_somatic : undef;
+  my $somatic = $self->object ? $self->object->Obj->is_somatic : undef;
 
   $self->create_node('Explore', 'Explore this variation',
     [qw(
@@ -32,11 +32,11 @@ sub populate_tree {
     { 'availability' => 'variation' }
   );
   
-	my $context_menu = $self->create_node('Context', 'Genomic context',
+  my $context_menu = $self->create_node('Context', 'Genomic context',
     [qw( summary EnsEMBL::Web::Component::Variation::Context )],
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
-	
+  
   $context_menu->append($self->create_node('Mappings', 'Genes and regulation ([[counts::transcripts]])',
     [qw( mappings EnsEMBL::Web::Component::Variation::Mappings )],
     { 'availability' => 'variation has_transcripts', 'concise' => 'Genes and regulation' }
@@ -45,11 +45,11 @@ sub populate_tree {
     [qw( flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
     { 'availability' => 'variation' }
   ));  
-		
+    
   $self->create_node('Population', 'Population genetics',
     [qw( 
       graphs  EnsEMBL::Web::Component::Variation::PopulationGraphs
-      table 	EnsEMBL::Web::Component::Variation::PopulationGenotypes 
+      table   EnsEMBL::Web::Component::Variation::PopulationGenotypes 
     )],
     { 'availability' => 'variation has_populations not_somatic', 'concise' => 'Population genetics', 'no_menu_entry' => $somatic }
   );
@@ -60,7 +60,10 @@ sub populate_tree {
   );
   
   $self->create_node('Individual', 'Individual genotypes ([[counts::individuals]])',
-    [qw( individual EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
+    [qw( 
+      search     EnsEMBL::Web::Component::Variation::IndividualGenotypesSearch
+      individual EnsEMBL::Web::Component::Variation::IndividualGenotypes 
+    )],
     { 'availability' => 'variation has_individuals not_somatic', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
   ); 
   
@@ -87,14 +90,15 @@ sub populate_tree {
   $self->create_node('Citations', 'Citations ([[counts::citation]])',
     [qw( alignment EnsEMBL::Web::Component::Variation::Publication  )],
     { 'availability' => 'variation has_citation','concise' => 'Citations'  } 
-  );	
+  );  
+  
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
     [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
     { 'availability' => 'variation' }
   );
   
-   $self->create_subnode(
+  $self->create_subnode(
     'Output', 'Export Variation Data',
     [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'variation', 'no_menu_entry' => 1 }
