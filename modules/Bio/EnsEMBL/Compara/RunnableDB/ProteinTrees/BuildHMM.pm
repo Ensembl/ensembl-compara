@@ -220,7 +220,8 @@ sub store_hmmprofile {
   print("load from file $hmm_file\n") if($self->debug);
   my $hmm_text = $self->_slurp($hmm_file);
 
-  my $model_id = sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type'));
+#  my $model_id = sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type'));
+  my $model_id = $self->param('gene_tree_id');
   my $type = "tree_hmm_" . $self->param('hmm_type');
   my $hc_profile = $hmm_text;
 
