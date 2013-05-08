@@ -73,9 +73,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   getContent: function (url, el, params, newContent) {
     var node;
     
-    $('.js_panel', el || this.el).each(function () {
-      Ensembl.EventManager.trigger('destroyPanel', this.id); // destroy all sub panels
-    });
+    if (typeof el === 'string') {
+      el = $(el, this.el).empty();
+    } else {
+      $('.js_panel', el || this.el).each(function () {
+        Ensembl.EventManager.trigger('destroyPanel', this.id); // destroy all sub panels
+      });
+    }
     
     params = params || this.params;
     url    = url    || Ensembl.replaceTimestamp(params.updateURL);
@@ -98,6 +102,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     this.xhr = $.ajax({
       url: url,
+      data: typeof newContent === 'object' ? newContent : {},
       dataType: 'html',
       context: this,
       success: function (html) {
