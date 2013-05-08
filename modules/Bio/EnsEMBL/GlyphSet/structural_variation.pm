@@ -20,7 +20,7 @@ sub colour_key {
     return $self->{'colours_keys'}{$f} = 'somatic_breakpoint_variant' if $f->is_somatic && $f->breakpoint_order;
     
     if ($f->class_SO_term eq 'copy_number_variation') {
-      my $ssv_class = $f->_get_all_supporting_evidence_classes;
+      my $ssv_class = $f->get_all_supporting_evidence_classes;
       return $self->{'colours_keys'}{$f} = $ssv_class->[0] if scalar @$ssv_class == 1;
     }
     
