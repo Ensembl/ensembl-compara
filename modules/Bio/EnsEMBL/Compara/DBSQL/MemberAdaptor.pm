@@ -770,7 +770,7 @@ sub _rename_method_seq {
 #
 ########################
 
-sub member_has_Family {
+sub families_for_member {
   my ($self, $stable_id) = @_;
 
   my $sql = 'SELECT families FROM member_production_counts WHERE stable_id = ?';

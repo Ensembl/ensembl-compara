@@ -915,7 +915,7 @@ sub _rename_method_seq {
 ##
 #########
 
-sub has_Family {
+sub number_of_families {
   my ($self) = @_;
 
   return $self->adaptor->member_has_Family($self->stable_id);
