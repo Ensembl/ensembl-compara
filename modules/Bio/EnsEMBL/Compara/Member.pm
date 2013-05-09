@@ -918,7 +918,7 @@ sub _rename_method_seq {
 sub number_of_families {
   my ($self) = @_;
 
-  return $self->adaptor->member_has_Family($self->stable_id);
+  return $self->adaptor->families_for_member($self->stable_id);
 }
 
 sub has_GeneTree {
