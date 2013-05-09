@@ -1639,9 +1639,15 @@ sub _create_frag_array {
 	#print "ref_seq " . $slice->start . " " . $slice->end . " " . $slice->strand . " " . substr($slice->seq,0,120) . "\n" if $self->debug;
 
 	#find the pairwise blocks between ref_genome and the 2x genome
-#	my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($pairwise_mlss, $slice, undef,undef,"restrict");
+	#my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($pairwise_mlss, $slice, undef,undef,"restrict");
 
 	my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($pairwise_mlss, $ref_ga->dnafrag, $ref_ga->dnafrag_start, $ref_ga->dnafrag_end, undef,undef,"restrict");
+        #Need to reverse_complement if I use the DnaFrag method (Do not need to do this with the Slice method)
+        foreach my $pairwise_gab (@$pairwise_gabs) {
+             $pairwise_gab->reverse_complement()
+            if ($ref_ga->dnafrag_strand != $pairwise_gab->reference_genomic_align->dnafrag_strand);
+
+        }
 
 	#sort by reference_genomic_align start position (NB I sort again when parsing
 	#the results if the ref strand is reverse since the fragments will be in the
