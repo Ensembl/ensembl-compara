@@ -229,7 +229,7 @@ sub dump_model {
   my $field = shift;
   my $model_id = shift;
 
-  my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_by_model_id($model_id)->profile();
+  my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_model_id_type($model_id)->[0]->profile();
 
 #   my $sql = 
 #     "SELECT hc_profile FROM hmm_profile ".

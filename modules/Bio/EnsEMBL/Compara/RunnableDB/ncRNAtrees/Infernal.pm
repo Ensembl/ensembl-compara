@@ -363,7 +363,7 @@ sub run_infernal {
 sub dump_model {
     my ($self, $field, $model_id) = @_;
 
-    my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_by_model_id($model_id)->profile();
+    my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_model_id_type($model_id)->[0]->profile();
 
     unless (defined($nc_profile)) {
         return 1;
