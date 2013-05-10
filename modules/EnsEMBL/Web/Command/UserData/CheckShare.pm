@@ -4,8 +4,6 @@ package EnsEMBL::Web::Command::UserData::CheckShare;
 
 use strict;
 
-use EnsEMBL::Web::Data::Group;
-
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
