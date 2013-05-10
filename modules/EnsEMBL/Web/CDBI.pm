@@ -314,13 +314,7 @@ sub has_many {
     return $class->SUPER::has_many($accessor => @_);
   } else {
 
-    if ($relation_class =~ /^EnsEMBL::Web::Data::Record/) {
-      my ($owner) = $class =~ /::(\w+)$/;
-      $class->_require_class($relation_class);
-      $relation_class = $relation_class->add_owner($owner);
-    } else {
-      $class->_require_class($relation_class);
-    }
+    $class->_require_class($relation_class);
   
     $class->relations({
       %{ $class->relations },
