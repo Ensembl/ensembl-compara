@@ -114,11 +114,12 @@ sub summary_tables {
   my $od_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
   my $hm_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
   my $tg_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
+  my $mgp_table    = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
   my $ind_table    = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Individual asc' ] });
   my %descriptions = map { $_->dbID => $_->description } @{$hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_by_dbID_list([ keys %$all_pops ])};
   my ($other_row_count, $html);
   
-  foreach ($od_table, $hm_table, $tg_table) {
+  foreach ($od_table, $hm_table, $tg_table, $mgp_table) {
     $_->add_columns(
       { key => 'count',       title => 'Number of genotypes', width => '15%', sort => 'numeric', align => 'right'  },
       { key => 'view',        title => '',                    width => '5%',  sort => 'none',    align => 'center' },
@@ -147,6 +148,8 @@ sub summary_tables {
       $table = $hm_table;
     } elsif($pop_name =~ /1000genomes/i) {        
       $table = $tg_table;
+    } elsif($pop_name =~ /Mouse_Genomes_Project/i) {        
+      $table = $mgp_table;
     } else {
       $table = $od_table;
       $other_row_count++;
@@ -170,6 +173,11 @@ sub summary_tables {
   if ($hm_table->has_rows) {
     $hm_table->add_option('id', 'hapmap_table');
     $html .= '<h2>HapMap</h2>' . $hm_table->render;
+  }
+
+    if ($mgp_table->has_rows) {
+    $mgp_table->add_option('id', 'mouse_genomes_table');
+    $html .= '<h2>Mouse Genomes Project</h2>' . $mgp_table->render;
   }
   
   if ($od_table->has_rows && ($hm_table->has_rows || $tg_table->has_rows)) {
