@@ -6,6 +6,7 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub readable_strand { return $_[1] < 0 ? 'rev' : 'fwd'; }
 sub my_label        { return undef; }
+
 sub features        { return $_[0]->{'container'}->get_all_AssemblyExceptionFeatures; }
 
 sub colour_key {
@@ -18,8 +19,23 @@ sub feature_label {
   my ($self, $f) = @_;
   
   return undef if $self->my_config('label') eq 'off';
+
+=pod
+  my %type_lookup = (
+    'HAP' => 'Haplotype(s)',
+    'PAR' => 'PAR',
+    'PATCH_NOVEL' => 'Novel patch',
+    'PATCH_FIX'   => 'Fix patch',
+  );
+
+  if ($self->my_config('short_labels')) {
+    (my $key = $f->type) =~ s/ REF//;
+    my $label = $type_lookup{$key};
+    return $label;
+  }
+=cut
   return $f->{'alternate_slice'}->seq_region_name if $self->my_config('short_labels');
-  
+
   return sprintf(
     '%s: %s:%d-%d (%s)',
     $f->type,
