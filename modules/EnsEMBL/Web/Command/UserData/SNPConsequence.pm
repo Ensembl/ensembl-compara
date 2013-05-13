@@ -53,7 +53,7 @@ sub process {
     $session_data->{'filename'} = $temp_file->filename;
     $session_data->{'filesize'} = length $temp_file->content;
     $session_data->{'filetype'} = 'Variant Effect Predictor';
-    $session_data->{'format'}   = 'SNP_EFFECT';
+    $session_data->{'format'}   = 'VEP_OUTPUT';
     $session_data->{'strand'}   = 'f';
     $session_data->{'border'}   = 'off'; ## show as unjoined features
     $session_data->{'md5'}      = $temp_file->md5;

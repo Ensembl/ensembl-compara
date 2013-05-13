@@ -180,8 +180,8 @@ sub table_row {
     );
   }
   
-  if ($file->{'format'} eq 'SNP_EFFECT' || $file->{'filetype'}) {
-    my %params = $file->{'format'} eq 'SNP_EFFECT' ? (
+  if ($file->{'format'} eq 'VEP_OUTPUT' || $file->{'filetype'}) {
+    my %params = $file->{'format'} eq 'VEP_OUTPUT' ? (
       action       => 'ConsequenceCalculator',
       data_format  => 'snp',
       convert_file => "$file->{'filename'}:$file->{'name'}",

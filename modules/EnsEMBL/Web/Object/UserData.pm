@@ -39,7 +39,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
-use EnsEMBL::Web::Text::Feature::SNP_EFFECT;
+use EnsEMBL::Web::Text::Feature::VEP_OUTPUT;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
@@ -707,7 +707,7 @@ sub calculate_consequence_data {
   # build a config hash - used by all the VEP methods
   my $vep_config = $self->configure_vep;
   
-  ## Convert the SNP features into SNP_EFFECT features
+  ## Convert the SNP features into VEP_OUTPUT features
   if (my $parser = $data->{'parser'}){ 
     foreach my $track ($parser->{'tracks'}) {
       foreach my $type (keys %{$track}) { 
@@ -799,7 +799,7 @@ sub calculate_consequence_data {
           
           $line->{Extra} = join ';', map { $_.'='.$line->{Extra}->{$_} } keys %{ $line->{Extra} || {} };
           
-          my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
+          my $snp_effect = EnsEMBL::Web::Text::Feature::VEP_OUTPUT->new([
             $line->{Uploaded_variation},
             $line->{Location},
             $line->{Allele},
