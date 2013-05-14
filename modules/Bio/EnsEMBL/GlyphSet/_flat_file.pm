@@ -88,7 +88,7 @@ sub features {
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
 
     ### ensure the display of the VEP features using colours corresponding to their consequence
-    if ($self->my_config('format') eq 'VEP_EFFECT') {
+    if ($self->my_config('format') eq 'VEP_OUTPUT') {
       my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      
       my %cons_lookup = map { $overlap_cons{$_}{'SO_term'} => $overlap_cons{$_}{'rank'} } keys %overlap_cons;
     
