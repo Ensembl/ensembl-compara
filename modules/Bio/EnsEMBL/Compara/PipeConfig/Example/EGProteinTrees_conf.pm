@@ -45,8 +45,8 @@ use base qw(Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf);
 sub _pipeline_db_options {
   my ($self) = @_;
   return {
-    eg_release=>18,
-    release=>71,
+    eg_release=>19,
+    release=>72,
     division_name=>'protists',
 
     prefix => 'ensembl_compara',
@@ -77,7 +77,7 @@ sub default_options {
     exe_dir               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
     base_dir              =>  '/nfs/nobackup/ensemblgenomes/uma/workspace/compara/'.$self->o('ENV', 'USER').'/hive',
     work_dir              =>  $self->o('base_dir').'/'.$self->o('mlss_id').'/PT',
-    blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'/blastTmp',
+  #  blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'/blastTmp',
 
     #Executables
     wublastp_exe    =>  $self->o('exe_dir').'/wublast/blastp',
@@ -178,26 +178,26 @@ sub default_options {
     #reuse_core_sources_locs   => [],
     reuse_db                  => q{}, #Set to this to ignore reuse otherwise ....
 
-    do_not_reuse_list => [], # set this to empty or to the genome db names we should ignore
+    #do_not_reuse_list => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
 
-    reuse_core_sources_locs   => [ $self->o('staging_1') ],
+    reuse_core_sources_locs   => [ $self->o('staging_2') ],
     curr_core_sources_locs    => [ $self->o('clusterprod_1') ],
-    reuse_db                  => {
-       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-       -port   => 4160,
-       -user   => 'ensro',
-       -pass   => '',
-       -dbname => 'ensembl_compara_protists_17_70',
-    },
+   # reuse_db                  => {
+    #   -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+    #   -port   => 4272,
+    #   -user   => 'ensro',
+    #   -pass   => '',
+    #   -dbname => 'ensembl_compara_protists_18_71',
+   # },
 
     #Set these up to perform stable ID mapping
 
     stable_id_prev_release_db => {
-       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-       -port   => 4160,
+       -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+       -port   => 4275,
        -user   => 'ensro',
        -pass   => '',
-       -dbname => 'ensembl_compara_protists_17_70',
+       -dbname => 'ensembl_compara_protists_18_71',
 
     },
 
