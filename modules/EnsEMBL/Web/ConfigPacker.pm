@@ -508,6 +508,13 @@ sub _summarise_variation_db {
   }
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'somatic'}{'counts'} = \%somatic_sv;
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'somatic'}{'descriptions'} = \%somatic_sv_descriptions;  
+#--------- Add in structural variation study information
+  my $study_sv_aref = $dbh->selectall_arrayref("select distinct st.name, st.description from structural_variation sv, study st where sv.study_id=st.study_id");
+  my %study_sv_descriptions;
+  foreach (@$study_sv_aref) {    
+   $study_sv_descriptions{$_->[0]} = $_->[1];
+  }
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'study'}{'descriptions'} = \%study_sv_descriptions;    
 #--------- Add in Variation set information
   # First get all toplevel sets
   my (%super_sets, %sub_sets, %set_descriptions);
