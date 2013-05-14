@@ -1156,7 +1156,7 @@ sub _user_track_settings {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   } else {
-    $strand         = 'b'; 
+    $strand         = $format eq 'VEP_OUTPUT' ? 'f' : 'b'; 
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
   
