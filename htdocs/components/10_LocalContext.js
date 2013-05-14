@@ -90,8 +90,6 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
         }, 1000)
       });
     });
-    
-    els = null;
   },
   
   shareReady: function () {
