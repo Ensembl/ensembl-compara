@@ -116,6 +116,7 @@ sub get_dataset_urls {
   my ($sd, $adaptor, $dataset) = @_;
   
   my %url_template = (
+    'species'    => "/Info/Index",
     'gene'       => "/Gene/Summary?g=",
     'transcript' => "/Transcript/Summary?t=",
   );
@@ -125,8 +126,7 @@ sub get_dataset_urls {
   
   my %species_path = map { $_->[0] => $sd->species_path(valid_species_name($sd, $_->[1])) } @{$sth->fetchall_arrayref};
   
-  my @urls;
-  
+  my @urls = map { $domain . $species_path{$_} . $url_template{'species'} } keys %species_path;
   foreach my $type (qw/gene transcript/) {  
     my $sth = $adaptor->prepare(
       "SELECT g.stable_id, g.${type}_id, cs.species_id 
@@ -170,7 +170,6 @@ sub get_dataset_urls {
       push @urls, $url;       
     }    
   }
-
   print "  Urls " . scalar @urls . "\n"; 
   return @urls;
 }
@@ -226,7 +225,9 @@ sub create_dataset_sitemaps {
     $batch_count++;
     $total_count++;
     
-    if ($batch_count == $batch_size or $total_count == $#urls) {
+    if ($batch_count == $batch_size or $total_count == scalar @urls) {
+# jh15: fixed a bug here, "$total_count == $#urls" was wrong. The loop ended 1 early and last url was never written
+# and no file was written if total_count < batch_count
       my $filename = "sitemap_${dataset}_${suffix}.xml";
       $map->write("${ouput_dir}/$filename");
       print "  Wrote ${ouput_dir}/$filename\n";
