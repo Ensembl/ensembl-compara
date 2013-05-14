@@ -40,7 +40,8 @@ use Storable qw(dclone);
 sub resource_classes {
   my ($self) = @_;
   return {
-    %{$self->SUPER::resource_classes}
+    %{$self->SUPER::resource_classes},
+    'urgent_hcluster'   => {'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]" -q yesterday' },
   };
 }
 
