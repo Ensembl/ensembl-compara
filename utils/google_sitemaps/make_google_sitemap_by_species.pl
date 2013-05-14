@@ -127,13 +127,13 @@ sub get_dataset_urls {
   my %species_path = map { $_->[0] => $sd->species_path(valid_species_name($sd, $_->[1])) } @{$sth->fetchall_arrayref};
   
   my @urls = map { $domain . $species_path{$_} . $url_template{'species'} } keys %species_path;
-	my @analysis_ids = get_analysis_ids($adaptor);
-	if(! @analysis_ids){
-		print "Cannot fetch genes and transcripts - no analysis_ids\n";
-		return @urls;
-	}
+  my @analysis_ids = get_analysis_ids($adaptor);
+  if(! @analysis_ids){
+    print "Cannot fetch genes and transcripts - no analysis_ids\n";
+    return @urls;
+  }
   foreach my $type (qw/gene transcript/) {  
-		my $query = 
+    my $query = 
       "SELECT g.stable_id, g.${type}_id, cs.species_id 
        FROM ${type} g, seq_region sr, coord_system cs
        WHERE g.seq_region_id = sr.seq_region_id   
