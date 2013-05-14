@@ -2910,7 +2910,7 @@ sub add_structural_variations {
     }));  
   }
   
-  # Structural variation sets
+  # Structural variation sets and studies
   foreach my $menu_item (@{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} !~ /^sv_/;
     
@@ -2938,7 +2938,7 @@ sub add_structural_variations {
         sources     => undef,
         study       => [ $name ],
         study_name  => $name,
-        description => $hashref->{'study'}{'descriptions'}{$name},
+        description => 'DGVa study: '.$hashref->{'structural_variation'}{'study'}{'descriptions'}{$name},
       }));  
     }
   }
