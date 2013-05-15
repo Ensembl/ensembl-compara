@@ -139,6 +139,7 @@ sub default_options {
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
+        'ktreedist_capacity'        => 150,
         'merge_supertrees_capacity' => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,

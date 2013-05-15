@@ -138,6 +138,7 @@ sub default_options {
         #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
         #'build_hmm_capacity'        => 200,
+        #'ktreedist_capacity'        =>  50,
         #'merge_supertrees_capacity' => 100,
         #'other_paralogs_capacity'   => 100,
         #'homology_dNdS_capacity'    => 200,
@@ -1060,6 +1061,7 @@ sub pipeline_analyses {
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
                                'mlss_id'       => $self->o('mlss_id'),
                               },
+            -hive_capacity => $self->o('ktreedist_capacity'),
             -rc_name       => '1Gb_job',
         },
 
