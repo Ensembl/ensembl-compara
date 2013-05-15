@@ -508,6 +508,33 @@ sub display_id {
 }
 
 
+=head2 isMT
+
+  Args       : none
+  Example    : my $isMT = $dnafrag->isMT;
+  Description: returns true if this dnafrag has MT as a name or synonym, else returns false
+  Returntype : boolean
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+sub isMT {
+    my ($self) = @_;
+
+    return 1 if ($self->name eq "MT");
+
+    #Check synonyms
+    my $slice = $self->slice;
+    foreach my $synonym (@{$slice->get_all_synonyms}) {
+        if ($synonym->name eq "MT") {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
 #####################################################################
 #####################################################################
 
@@ -578,7 +605,6 @@ sub end {
 
   return $self->length($end);
 }
-
 
 1;
 
