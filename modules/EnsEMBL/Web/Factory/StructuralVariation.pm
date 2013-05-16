@@ -20,6 +20,7 @@ sub createObjects {
     return $self->problem('fatal', 'Structural Variation ID required', $self->_help('A structural variation ID is required to build this page.')) unless $identifier;
     
     $db->include_failed_variations(1);
+    $db->include_non_significant_phenotype_associations(0);
     
     $structural_variation = $db->get_StructuralVariationAdaptor->fetch_by_name($identifier);
   }
@@ -31,11 +32,11 @@ sub createObjects {
     my @sv_features  = @{$structural_variation->get_all_StructuralVariationFeatures};
     my ($sv_feature) = scalar @sv_features == 1 ? $sv_features[0] : $svf[0] ? grep $_->dbID eq $svf[0], @sv_features : undef;
     
-		if ($sv_feature) {
+    if ($sv_feature) {
       my $context = $self->param('context') || 500;
       $self->generate_object('Location', $sv_feature->feature_Slice->expand($context, $context));
-    	$self->param('svf', $sv_feature->dbID) unless scalar @svf > 1; # This check is needed
-		} elsif (scalar @svf) {
+      $self->param('svf', $sv_feature->dbID) unless scalar @svf > 1; # This check is needed
+    } elsif (scalar @svf) {
       $self->delete_param('svf');
     }
     

@@ -36,7 +36,8 @@ sub createObjects {
     foreach my $id (@ids) {
       my $dbc        = $self->hub->database('variation');
       return unless $dbc;
-	    $dbc->include_failed_variations(1);
+      $dbc->include_failed_variations(1);
+      $dbc->include_non_significant_phenotype_associations(0);
 
       my $adaptor    = $dbc->get_adaptor('PhenotypeFeature');
 
