@@ -654,19 +654,24 @@ sub copy_all_dnafrags {
   my $port = $new_dba->dbc->port;
   my $dbname = $new_dba->dbc->dbname;
 
-  my $dnafrag_fetch_sth;
-
-  if( $MT_only ){
-    $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
+  my $dnafrag_fetch_MT_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
      " WHERE genome_db_id = ? AND name = \"MT\""); 
-  } else {
-     $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
+  my $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
      " WHERE genome_db_id = ?");
-  }
 
   foreach my $this_genome_db (@$genome_dbs) {
-    $dnafrag_fetch_sth->execute($this_genome_db->dbID);
-    my $all_rows = $dnafrag_fetch_sth->fetchall_arrayref;
+    my $all_rows;
+    if ( $MT_only ) {
+        #Try first getting just MT
+        $dnafrag_fetch_MT_sth->execute($this_genome_db->dbID);
+        $all_rows = $dnafrag_fetch_MT_sth->fetchall_arrayref;
+        #If getting just MT fails, get all the dnafrags to catch cases where the mitochondrion is not called MT
+    }
+    
+    if (!$all_rows || !@$all_rows) {
+        $dnafrag_fetch_sth->execute($this_genome_db->dbID);
+        $all_rows = $dnafrag_fetch_sth->fetchall_arrayref;
+    }
     if (!@$all_rows) {
       next;
     }
