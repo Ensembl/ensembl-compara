@@ -5,7 +5,7 @@ package EnsEMBL::Web::ImageConfig;
 use strict;
 
 use Digest::MD5 qw(md5_hex);
-use HTML::Entities qw(encode_entities);
+use HTML::Entities qw(encode_entities decode_entities);
 use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
@@ -530,6 +530,8 @@ sub load_user_tracks {
   my $datahubs = $self->get_parameter('datahubs') == 1;
   my (%url_sources, %upload_sources);
   
+  $self->_load_url_feature($menu);
+
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
     my $node = $self->get_node('das_' . $source->logic_name);
 
@@ -693,7 +695,7 @@ sub load_user_tracks {
    
     $menu->append($self->create_track(@$_)) for sort { lc $a->[2]{'source_name'} cmp lc $b->[2]{'source_name'} || lc $a->[1] cmp lc $b->[1] } @tracks;
   }
-  
+ 
   $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 
@@ -934,6 +936,45 @@ sub _add_datahub_extras_options {
   return %args;
 }
 
+sub _load_url_feature {
+## Creates a temporary track based on a single line of a row-based data file,
+## such as VEP output, e.g. 21 9678256 9678256 T/G 1 
+  my ($self, $menu) = @_;
+  return unless $menu;
+
+  my $session_data = $self->hub->session->get_data('code' => 'custom_feature', type => 'custom');
+  my ($format, $data);
+
+  if ($self->hub->param('custom_feature')) {
+    $format  = $self->hub->param('format');
+    $data    = decode_entities($self->hub->param('custom_feature'));
+    $session_data = {'code' => 'custom_feature', 'type' => 'custom', 
+                      'format' => $format, 'data' => $data}; 
+    $self->hub->session->set_data(%$session_data);
+  }
+  elsif ($session_data && ref($session_data) eq 'HASH' && $session_data->{'data'}) {
+    $format = $session_data->{'format'};
+    $data = $session_data->{'data'};
+  }
+  return unless ($data && $format);
+
+  my ($strand, $renderers) = $self->_user_track_settings(undef, $format);
+
+  my $track = $self->create_track('custom_feature', 'Single feature', {
+        external    => 'user',
+        glyphset    => '_flat_file',
+        colourset   => 'classes',
+        sub_type    => 'single_feature',
+        format      => $format,
+        caption     => 'Single feature',
+        renderers   => $renderers,
+        description => 'A single feature that has been loaded via a hyperlink',
+        display     => 'off',
+        strand      => $strand,
+        data        => $data,
+  });
+  $menu->append($track) if $track;
+}
 sub load_configured_bam    { shift->load_file_format('bam');    }
 sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
@@ -1156,7 +1197,7 @@ sub _user_track_settings {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   } else {
-    $strand         = $format eq 'VEP_OUTPUT' ? 'f' : 'b'; 
+    $strand         = uc($format) eq 'VEP_INPUT' ? 'f' : 'b'; 
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
   
