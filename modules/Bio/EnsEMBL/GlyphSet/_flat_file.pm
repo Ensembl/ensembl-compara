@@ -60,7 +60,10 @@ sub features {
   
   $self->{'parser'} = $parser;
   
-  if ($sub_type eq 'url') {
+  if ($sub_type eq 'single_feature') {
+    $parser->parse($self->my_config('data'), $self->my_config('format'));
+  }
+  elsif ($sub_type eq 'url') {
     my $response = EnsEMBL::Web::Tools::Misc::get_url_content($self->my_config('url'));
     
     if (my $data = $response->{'content'}) {
@@ -83,7 +86,7 @@ sub features {
   ## Now we translate all the features to their rightful co-ordinates
   while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
     $_->map($container) for @{$T->{'features'}};
-  
+ 
     ## Set track depth a bit higher if there are lots of user features
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
 
@@ -138,7 +141,7 @@ sub features {
 
     $results{$key} = [$features, $T->{'config'}];
   }
-  
+
   return %results;
 }
 
