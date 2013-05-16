@@ -55,8 +55,15 @@ sub extra           { return $_[0]->{'__extra__'}; }
 
 sub coords {
   my ($self, $data) = @_;
-  my ($seq_region, $start) = split(':|-', $data->[1]);
-  return ($seq_region, $start, $start);
+  ## Not sure why this method is parsing a string, but 
+  ## I don't want to break things by removing it!
+  if ($data->[1] =~ /:|-/) {
+    my ($seq_region, $start) = split(':|-', $data->[1]);
+    return ($seq_region, $start, $start);
+  }
+  else {
+    return @$data[0..2];
+  }
 }
 
 
