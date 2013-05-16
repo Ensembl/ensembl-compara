@@ -23,16 +23,18 @@ sub convert_to_drawing_parameters {
   my $hub      = $self->hub;
   my @phen_ids = $hub->param('ph');
   my $ga       = $hub->database('core')->get_adaptor('Gene');
-  my (@results, %associated_phenotypes, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources);
+  my (@results, %associated_phenotypes, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources, %phenotypes_studies);
   
   # getting associated phenotypes and associated genes
   foreach my $pf (@{$data || []}) {
     my $variation_name = $pf->{'_object_id'};
     my $source_name    = $pf->source;
        $source_name    =~ s/_/ /g;
+    my $study_xref     = ($pf->study) ? $pf->study->external_reference : undef;
     
     $associated_phenotypes{$variation_name}{$pf->phenotype->description} = 1;
     $phenotypes_sources{$variation_name}{$source_name} = 1;
+    $phenotypes_studies{$variation_name}{$study_xref} = 1 if ($study_xref);
     
     # only get the p value log 10 for the pointer matching phenotype id and variation id
     if (grep $pf->{'_phenotype_id'} == $_, @phen_ids) {
@@ -107,6 +109,7 @@ sub convert_to_drawing_parameters {
         feat_type   => $object_type,
         phenotypes  => join('; ', sort keys %{$associated_phenotypes{$name} || {}}),
         phe_sources => join(', ', sort keys %{$phenotypes_sources{$name}    || {}}),
+        phe_studies => $self->_pf_external_reference_link($phenotypes_studies{$name}),
         'p-values'  => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
       },
     };
@@ -117,8 +120,39 @@ sub convert_to_drawing_parameters {
     { key => 'genes',       title => 'Reported gene(s)',        sort => 'html'    },
     { key => 'phenotypes',  title => 'Associated phenotype(s)', sort => ''        },
     { key => 'phe_sources', title => 'Annotation source(s)',    sort => ''        },
+    { key => 'phe_studies', title => 'Study',                   sort => ''        },
     { key => 'p-values',    title => 'P value (negative log)',  sort => 'numeric' },
   ]];
+}
+
+sub _pf_external_reference_link {
+  my ($self, $xrefs) = @_;
+  
+  my $html;
+  
+  foreach my $xref (sort keys(%$xrefs)) {
+    my $link;
+    if($xref =~ /pubmed/) {
+      $link = qq{http://www.ncbi.nlm.nih.gov/$xref};
+      $xref =~ s/\//:/g;
+      $html .= qq{<a rel="external" href="$link">$xref</a>; };
+    }
+    elsif($xref =~ /^MIM\:/) {
+      foreach my $mim (split /\,\s*/, $xref) {
+        my $id = (split /\:/, $mim)[-1];
+        my $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
+        $link .= ', '.$sub_link;
+        $link =~ s/^\, //g;
+      }
+      $html .= "$link; ";
+    }
+    else {
+      $html .= "$xref; ";
+    }
+  }
+  $html =~ s/;\s$//;
+  
+  return $html;
 }
 
 1;
