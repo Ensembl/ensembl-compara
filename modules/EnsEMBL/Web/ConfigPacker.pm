@@ -1803,7 +1803,7 @@ sub _munge_file_formats {
     'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
     'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
     'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
-    'vep_output'=> {'ext' => 'txt', 'label' => 'VEP output','display' => 'feature'},
+    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
     'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
     'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'indexed' => 1},
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
