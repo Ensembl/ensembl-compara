@@ -959,6 +959,7 @@ sub _load_url_feature {
   return unless ($data && $format);
 
   my ($strand, $renderers) = $self->_user_track_settings(undef, $format);
+  my $file_info = $self->hub->species_defs->DATA_FORMAT_INFO;
 
   my $track = $self->create_track('custom_feature', 'Single feature', {
         external    => 'user',
@@ -966,7 +967,7 @@ sub _load_url_feature {
         colourset   => 'classes',
         sub_type    => 'single_feature',
         format      => $format,
-        caption     => 'Single feature',
+        caption     => 'Single '.$file_info->{$format}{'label'}.' feature',
         renderers   => $renderers,
         description => 'A single feature that has been loaded via a hyperlink',
         display     => 'off',
