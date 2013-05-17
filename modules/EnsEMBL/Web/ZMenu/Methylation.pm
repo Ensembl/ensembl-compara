@@ -137,8 +137,10 @@ sub single_base_zmenu {
   my ($chr,) = split(/:/,$r);
   if($self->{'_sent_caption'}) {
     $self->add_subheader($f->display_label." $chr:$s");
+    $self->add_entry({ type => "Location", label => "$chr:$s" });
   } else {
     $self->caption($f->display_label." $chr:$s");
+    $self->add_entry({ type => "Location", label => "$chr:$s" });
     $self->add_entry({ type => "Context", label => $f->context}); 
     $self->add_entry({ type => "Cell type", label => $f->cell_type->name}); 
     $self->add_entry({ type => "Analysis method", label => $f->analysis->display_label}); 
