@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Cookie;
 
 ### Class inherited from actual CGI cookie, to make it easy to access/modify cookie information for all scenarios, including encrypted cookies in Ensembl
-### All the methods in CGI::Cookie that actualy construct a CGI::Cookie object have been overridden to accept apache handle as first argument
+### All the methods in CGI::Cookie that actually construct a CGI::Cookie object have been overridden to accept apache handle as first argument
 
 use strict;
 
