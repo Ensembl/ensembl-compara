@@ -112,9 +112,9 @@ sub fetch_all_by_method_link_type {
     my $join = [ [['method_link_species_set', 'mlss'], "mlss.method_link_species_set_id = $syn.method_link_species_set_id"], [['method'], 'method.method_link_id = mlss.method_link_id'] ];
     my $constraint = 'method.type = ?';
 
-    $self->bind_param_generic_fetch($method_link_type, SQL_INTEGER);
+    $self->bind_param_generic_fetch($method_link_type, SQL_VARCHAR);
 
-    return $self->generic_fetch($constraint);
+    return $self->generic_fetch($constraint, $join);
 }
 
 
