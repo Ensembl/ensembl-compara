@@ -13,7 +13,8 @@ sub summary_zmenu {
   my ($self,$id,$r,$s,$e,$strand,$scalex,$width,$called_from_single) = @_;
 
   # Widen to incldue a few pixels around
-  my $fudge = max(80,8/$scalex);
+  my $fudge = 8/$scalex;
+  $fudge = 0 if $fudge<1;
   
   # Round fudge to 1sf
   my $mult = "1"."0"x(length(int $fudge)-1);
@@ -35,7 +36,7 @@ sub summary_zmenu {
   my ($num,$num_this_strand,$tot_meth,$tot_read) = (0,0,0,0);
   my ($label,@percmeth,@rows);
   my $maxmult = 2; # show multiple zmenus if this many results or fewer
-  $bba->fetch_rows($slice->seq_region_name,$s,$e,sub {
+  $bba->fetch_rows($slice->seq_region_name,$s,$e+1,sub {
     my @row = @_;
     my $f = Bio::EnsEMBL::Funcgen::DNAMethylationFeature->new( 
           -SLICE => $slice, 
