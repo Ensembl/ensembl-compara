@@ -256,6 +256,7 @@ sub pipeline_analyses {
 			       'output_dir' => $self->o('output_dir'),
 			       'split_size' => $self->o('split_size'),
 			       'species_tree_file' => $self->o('species_tree_file'),
+			       'species' => $self->o('species'),
 			       'high_coverage_mlss_id' =>$self->o('high_coverage_mlss_id') ,
 			      },
             -input_ids     =>[ 
