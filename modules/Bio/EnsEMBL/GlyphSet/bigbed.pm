@@ -166,7 +166,7 @@ sub features {
 
   my $slice = $self->{'container'};
   $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
-  my $features = $bba->fetch_features($slice->seq_region_name,$slice->start,$slice->end);
+  my $features = $bba->fetch_features($slice->seq_region_name,$slice->start,$slice->end+1);
   $_->map($slice) for @$features;
   my $config = {};
 
