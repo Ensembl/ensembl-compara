@@ -72,7 +72,7 @@ sub id       {
 sub attribs { my $self = shift; return $self->{'__attribs__'} ? $self->{'__attribs__'} : {} ;  }
 sub hstart  { my $self = shift; return $self->{'__extra__'}{'hstart'}  ? $self->{'__extra__'}{'hstart'}[0]  : undef ;  }
 sub hend    { my $self = shift; return $self->{'__extra__'}{'hend'}    ? $self->{'__extra__'}{'hend'}[0]    : undef ; }
-sub hstrand { my $self = shift; return $self->{'__extra__'}{'hstrand'} ? $self->{'__extra__'}{'hstrand'}[0] : undef ; }
+sub hstrand { my $self = shift; return $self->{'__extra__'}{'hstrand'} ? $self->{'__extra__'}{'hstrand'}[0] : 1 ; }
 sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
 

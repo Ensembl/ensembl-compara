@@ -35,6 +35,7 @@ sub strand   { my $self = shift;
         : -1
         ;
 }
+sub hstrand  { return 1; }
 # Note rawstart has +1 because BED is 'semi-open' coordinates
 sub rawstart { my $self = shift; return $self->{'__raw__'}[1]+1; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
