@@ -95,7 +95,8 @@ sub single_base_zmenu {
   my ($self,$id,$r,$s,$strand,$scalex,$width) = @_;
   
   # how far off can a user be due to scale? 8px or 1bp.
-  my $fudge = max(1,8/$scalex);
+  my $fudge = 8/$scalex;
+  $fudge = 0 if $fudge < 1;
   
   my $sa = $self->hub->database('core')->get_SliceAdaptor;
   my $slice = $sa->fetch_by_toplevel_location($r);
@@ -183,7 +184,7 @@ sub content {
 
   $r =~ s/:.*$/:$s-$e/;
   # We need to defeat js-added fuzz to see if it was an on-target click.
-  if($e-$s+1<2*$scalex) { # range within 1px, assume click.
+  if($e-$s+1<2*$scalex && $s!=$e) { # range within 1px, assume click.
     # fuzz added is symmetric
     $s = ($s+$e-1)/2;
     $e = $s+1;
