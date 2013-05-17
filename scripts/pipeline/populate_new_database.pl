@@ -154,6 +154,12 @@ retrieve the correct species. A more version requiring direct equality
 can be turned on if needed & is necessary when working with very closely related
 species i.e. strains.
 
+=item B<--filter_by_mlss>
+
+Mainly used by Ensembl Genomes.
+This option triggers a copy of genomic_align(_block) based on the method_link_species_set_id
+instead of the range of genomic_align_id
+
 =back
 
 =head2 OLD DATA
@@ -183,6 +189,7 @@ my $exact_species_name_match = 0;
 my $only_show_intentions = 0;
 my $MT_only = 0;
 my $collection = undef;
+my $filter_by_mlss = 0;
 
 GetOptions(
     "help" => \$help,
@@ -197,6 +204,7 @@ GetOptions(
     'n|intentions' => \$only_show_intentions,
     'MT_only=i' => \$MT_only,
     'collection=s' => \$collection,
+    'filter_by_mlss' => \$filter_by_mlss,
   );
 
 
@@ -788,12 +796,14 @@ sub copy_dna_dna_alignements {
     my $where = "genomic_align_block_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_block_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
+    $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
     my $pipe = "$mysqldump -w \"$where\" genomic_align_block | $mysql";
     system($pipe);
     print ".";
     $where = "genomic_align_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
+    $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
     $pipe = "$mysqldump -w \"$where\" genomic_align | $mysql";
     system($pipe);
     print ".";
