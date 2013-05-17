@@ -211,7 +211,7 @@ sub store {
         return;
     }
 
-    print STDERR "The profile is too big... I will divide it in smaller chunks\n" if ($self->debug);
+#    print STDERR "The profile is too big... I will divide it in smaller chunks\n" if ($self->debug);
 
     ## The profile is divided into smaller chunks
     my @chunks = unpack "a$max_size" x ((length($obj->profile)/$max_size)-1) . "a*", $obj->profile;
