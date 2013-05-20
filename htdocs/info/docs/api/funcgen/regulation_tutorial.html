@@ -254,6 +254,13 @@ To obtain the motif features present in a given Regulatory Feature, you just nee
 <pre class="code">
 
 my @motif_features = @{$rf->regulatory_attributes('motif')};
+</pre>
+or
+<pre class="code">
+my $motifFeature_adaptor = $registry->get_adaptor('Human', 'funcgen', 'motiffeature');
+my $slice = $slice_adaptor->fetch_by_region('chromosome',1,54960000,54980000);
+my @motif_features = @{$motifFeature_adaptor->fetch_all_by_Slice($slice)};
+
 
 </pre>
 
