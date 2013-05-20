@@ -94,7 +94,7 @@ sub content {
             <li>Video: <a href="/Help/Movie?id=208">Browsing SNPs and CNVs in Ensembl</a></li>
             <li>Video: <a href="/Help/Movie?id=214">Clip: Genome Variation</a></li>
             <li>Video: <a href="/Help/Movie?id=284">BioMart: Variation IDs to HGNC Symbols</a></li>
-            <li>Exercise: <a href="http://www.ensembl.org/info/website/tutorials/malaria_basic_genetics_exercises_Ensembl.pdf">Genomes and SNPs in Malaria</a></li>
+            <li>Exercise: <a href="/info/website/tutorials/malaria_basic_genetics_exercises_Ensembl.pdf">Genomes and SNPs in Malaria</a></li>
           </ul>
           <h2>Analysing your data</h2>
             <p><a href="/$species/UserData/UploadVariations?db=core"><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own variants with the <a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></p>
@@ -104,13 +104,14 @@ sub content {
         <div class="column-right">
           <h2>Programmatic access</h2>
           <ul>
-            <li>Tutorial: <a href="http://www.ensembl.org/info/docs/api/variation/variation_tutorial.html">Accessing variation data with the Variation API</a></li>
+            <li>Tutorial: <a href="/info/docs/api/variation/variation_tutorial.html">Accessing variation data with the Variation API</a></li>
           </ul>
           <h2>Reference materials</h2>
           <ul>
-            <li><a href="http://www.ensembl.org/info/docs/variation/index.html">Ensembl variation data: background and terminology</a></li>
-            <!--<li><a href="http://www.ensembl.org/info/website/tutorials/variations_worked_example.pdf">Website Walkthrough - Variations</a></li>-->
-            <li><a href="http://www.ensembl.org/info/website/tutorials/Ensembl_variation_quick_reference_card.pdf">Variation Quick Reference card</a></li>
+            <li><a href="/info/docs/variation/index.html">Ensembl variation documentation portal</a></li>
+            <li><a href="/info/docs/variation/data_description.html">Ensembl variation data description</a></li>
+            <!--<li><a href="/info/website/tutorials/variations_worked_example.pdf">Website Walkthrough - Variations</a></li>-->
+            <li><a href="/info/website/tutorials/Ensembl_variation_quick_reference_card.pdf">Variation Quick Reference card</a></li>
           </ul>
         </div>
       </div>

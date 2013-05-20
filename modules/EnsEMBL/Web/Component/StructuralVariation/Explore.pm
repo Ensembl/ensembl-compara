@@ -75,11 +75,12 @@ sub content {
         <div class="column-right">
           <h2>Programmatic access</h2>
           <ul>
-            <li>Tutorial: <a href="http://www.ensembl.org/info/docs/api/variation/variation_tutorial.html">Accessing structural variation data with the Variation API</a></li>
+            <li>Tutorial: <a href="/info/docs/api/variation/variation_tutorial.html#structural">Accessing structural variation data with the Variation API</a></li>
           </ul>
           <h2>Reference materials</h2>
           <ul>
-            <li><a href="http://www.ensembl.org/info/docs/variation/index.html">Ensembl variation data: background and terminology</a></li>
+            <li><a href="/info/docs/variation/index.html">Ensembl variation documentation portal</a></li>
+            <li><a href="/info/docs/variation/data_description.html">Ensembl variation data description</a></li>
           </ul>
         </div>
       </div>
