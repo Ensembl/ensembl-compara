@@ -49,17 +49,17 @@ sub resource_classes {
 # each run you will need to specify and uncomment: mlss_id, release, work_dir, dbname
 sub default_options {
   my ($self) = @_;
-  my $version = 'vega_genetree_20120822_69_2'; #edit this each time
+  my $version = 'vega_genetree_20130211_71_step3'; #edit this each time
   return {
     %{$self->SUPER::default_options},
     # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#    'mlss_id'               => '25',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
-    'release'               => '69',
+    'mlss_id'               => '25',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
+    'release'               => '71',
 
     'rel_suffix'            => 'vega',
-    'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/'.$version,
+    'work_dir'              => '/lustre/scratch109/sanger/'.$ENV{'USER'}.'/compara_generation/'.$version,
     'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
@@ -140,7 +140,6 @@ sub _new_analyses {
       -parameters => {
         inputquery      => 'select genome_db_id from species_set ss join method_link_species_set mlss using (species_set_id) where mlss.method_link_species_set_id = '.$self->o('mlss_id'),
         column_names    => [qw/genome_db_id/],
-        input_id        => { genome_db_ids => ['#genome_db_id#'] },
         fan_branch_code => 1,
       },
       -input_ids => [
@@ -148,7 +147,11 @@ sub _new_analyses {
       ],
       -wait_for => ['backbone_fire_dnds'],
       -flow_into => {
-        1 => [ 'update_member_display_labels' ]
+        1 => {
+            update_member_display_labels => {
+              genome_db_ids => ['#genome_db_id#'],
+            }
+        }
       }
     },
     {
@@ -158,7 +161,8 @@ sub _new_analyses {
         die_if_no_core_adaptor => 1
       },
       -hive_capacity => 10,
-      -batch_size => 1
+      -batch_size => 1,
+      -rc_name        => '8Gb_job',
     },
   ];
 }
