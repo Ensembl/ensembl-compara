@@ -204,7 +204,7 @@ sub store {
     my $sth = $self->prepare($sql);
 
     ## If the profile is too big it is likely to reach the 'max_allowed_packet' in the server
-    my $max_size = 1024 * 1024 * 5; # 5Mb
+    my $max_size = 1024 * 1024 * 15; # 15Mb
     if (length ($obj->profile) < $max_size) {
         $sth->execute($obj->model_id(), $obj->name(), $obj->type(), $obj->profile(), $obj->consensus());
         $sth->finish();
@@ -217,10 +217,10 @@ sub store {
     my @chunks = unpack "a$max_size" x ((length($obj->profile)/$max_size)-1) . "a*", $obj->profile;
 
     $sth->execute($obj->model_id(), $obj->name(), $obj->type(), shift @chunks, $obj->consensus());
-    my $sql2 = "UPDATE hmm_profile SET hc_profile=CONCAT(hc_profile, ?) WHERE model_id = ?";
+    my $sql2 = "UPDATE hmm_profile SET hc_profile=CONCAT(hc_profile, ?) WHERE model_id = ? and type = ?";
     my $sth2  = $self->prepare($sql2);
     for my $chunk (@chunks) {
-        $sth2->execute($chunk, $obj->model_id);
+        $sth2->execute($chunk, $obj->model_id, $obj->type);
     }
     $sth2->finish();
 
