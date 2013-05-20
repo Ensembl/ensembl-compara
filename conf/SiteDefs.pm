@@ -523,6 +523,7 @@ $APACHE_BIN ||= "$APACHE_DIR/bin/httpd";
   $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-orm/modules',
   $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
   $BIOPERL_DIR,
   $MINI_BIOPERL_161_DIR,
