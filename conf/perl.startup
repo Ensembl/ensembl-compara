@@ -33,6 +33,10 @@ use EnsEMBL::Web::Registry;
 
 my $conf = EnsEMBL::Web::SpeciesDefs->new;
 
+# Setup the ORM DB connections before loading files
+eval { require ORM::EnsEMBL::Rose::DbConnection; };
+my $orm_connections = $@ ? {} : ORM::EnsEMBL::Rose::DbConnection->register_from_sitedefs($conf);
+
 # Plugin in .pm files
 # The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
 # Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
@@ -189,6 +193,8 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
  Database Host:      %s
 
+ ORM Databases:      %s
+
  External address:   %s/
  Real address:       %s://%s:%s
 
@@ -213,6 +219,8 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   $conf->ENSEMBL_VERSION,
 
   $conf->DATABASE_HOST,
+
+  (keys %$orm_connections ? join("\n                     ", map { sprintf '%s: %s on %s', $_, $orm_connections->{$_}->database, $orm_connections->{$_}->host } keys %$orm_connections) : 'None'),
 
   $conf->ENSEMBL_BASE_URL,
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
