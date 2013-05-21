@@ -209,7 +209,7 @@ sub _process_genome_db {
 	}
 
 	my @members_to_update;
-	my @sources = qw(ENSEMBLGENE ENSEMBLPEP);
+      my @sources = keys %{$modes->{$self->param('mode')}->{sql_lookups}};
 	foreach my $source_name (@sources) {
 	  print "Working with ${source_name}\n" if $self->debug();
 	  if(!$self->_need_to_process_genome_db_source($genome_db, $source_name) && !$replace) {
