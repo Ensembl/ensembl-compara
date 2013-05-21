@@ -56,7 +56,7 @@ Internal methods are usually preceded with a _
 =cut
 
 # $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/Blat.pm,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 package Bio::EnsEMBL::Analysis::Runnable::Blat;
 
 use warnings ;
@@ -79,8 +79,10 @@ sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
 
-  my ($database) = rearrange([qw(DATABASE)], @args);
+  my ($database, $gapped, $query_hseq) = rearrange([qw(DATABASE GAPPED QUERYHSEQ)], @args);
   $self->database($database) if defined $database;
+  $self->gapped($gapped) if defined $gapped;
+  $self->query_as_hseq($query_hseq) if defined $query_hseq;
 
   throw("You must supply a database") if not $self->database; 
   throw("You must supply a query") if not $self->query;
@@ -128,7 +130,7 @@ sub run {
 	  "', There was " . ($? & 128 ? 'a' : 'no') .
 	  " core dump");
 
-  my $results = parse_results($blat_output_pipe);
+  my $results = $self->parse_results($blat_output_pipe);
   unless(close $blat_output_pipe){
       # checking for failures when closing.
       # we should't get here but if we do then $? is translated 
@@ -146,7 +148,7 @@ sub run {
 #ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Runnable/Blat.pm
 #
 sub parse_results {
-    my ($blat_output_pipe) = @_;
+    my ($self, $blat_output_pipe) = @_;
 
     my @alignments;
 
@@ -234,7 +236,8 @@ sub parse_results {
 	    next;
 	}
 	my $score   = sprintf "%.2f", ( 100 * ( $matches + $mismatches + $rep_matches ) / $q_length );
-	
+	my $percent_id = sprintf "%.2f", ( 100 * ($matches+$rep_matches) / ( $matches + $mismatches + $rep_matches ) );
+
 	# size of each block of alignment (inclusive)
 	my @block_sizes     = split ",",$block_sizes;
 	
@@ -321,6 +324,7 @@ sub parse_results {
 		}
 	    }
 	}
+        my @ungapped_blocks;
 	for (my $i=0; $i<$block_count; $i++ ) {
 	    next if ($block_sizes[$i] < 15);
 	    
@@ -345,14 +349,17 @@ sub parse_results {
 					      -moltype => "dna",
 					      -alphabet => 'dna',
 					      -id => "t_seq");
-	    my ($score, $percent_id, $frame) =
-	      get_best_score_in_all_frames($this_q_bioseq, $this_t_bioseq);
-	    # we put all the features with the same score and percent_id
-	    $feat2 {score}   = $score;
-	    $feat1 {score}   = $feat2 {score};
-	    $feat2 {percent} = $percent_id;
-	    $feat1 {percent} = $feat2 {percent};
-	    
+            if (not $self->gapped) {
+              # calculate a local score and percent id for the block
+              ($score, $percent_id) =
+                  get_best_score_in_all_frames($this_q_bioseq, $this_t_bioseq);
+            }               
+            
+            $feat2 {score}   = $score;
+            $feat1 {score}   = $feat2 {score};
+            $feat2 {percent} = $percent_id;
+            $feat1 {percent} = $feat2 {percent};
+            
 	    # other stuff:
 	    $feat1 {db}         = undef;
 	    $feat1 {db_version} = undef;
@@ -369,21 +376,39 @@ sub parse_results {
 	    
 	    ## make FeaturePair object
 	    my $feature_pair = new Bio::EnsEMBL::FeaturePair;
-	    $feature_pair->seqname($feat2{name});
-	    $feature_pair->start($query_starts[$i]);
-	    $feature_pair->end($query_ends[$i]);
-	    $feature_pair->strand($q_strand);
-	    $feature_pair->hseqname($feat1{name});
-	    $feature_pair->hstart($target_starts[$i]);
-	    $feature_pair->hend($target_ends[$i]);
-	    $feature_pair->hstrand($t_strand);
 	    $feature_pair->score($score);
 	    $feature_pair->percent_id($percent_id);
-	    
-	    # note that the cigar_string is created in Bio::EnsEMBL::BaseAlignFeature
-	    my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => [$feature_pair]);
-	    
-	    push @alignments, $alignment;
+
+            if ($self->query_as_hseq) {
+                $feature_pair->seqname($feat1{name});
+                $feature_pair->start($target_starts[$i]);
+                $feature_pair->end($target_ends[$i]);
+                $feature_pair->strand($t_strand);
+                $feature_pair->hseqname($feat2{name});
+                $feature_pair->hstart($query_starts[$i]);
+                $feature_pair->hend($query_ends[$i]);
+                $feature_pair->hstrand($q_strand);
+            } else {
+                $feature_pair->seqname($feat2{name});
+                $feature_pair->start($query_starts[$i]);
+                $feature_pair->end($query_ends[$i]);
+                $feature_pair->strand($q_strand);
+                $feature_pair->hseqname($feat1{name});
+                $feature_pair->hstart($target_starts[$i]);
+                $feature_pair->hend($target_ends[$i]);
+                $feature_pair->hstrand($t_strand);
+            }              
+
+            if ($self->gapped) {
+                push @ungapped_blocks, $feature_pair;
+            } else {
+              my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => [$feature_pair]);
+              push @alignments, $alignment;
+            }
+        }
+        if ($self->gapped and @ungapped_blocks) {
+          my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@ungapped_blocks);
+          push @alignments, $alignment;
         }
     }
 #foreach my $out (@alignments) {
@@ -597,6 +622,26 @@ sub parse {
 	$self->{_parse} = $parse;
     }
     return $self->{_parse};
+}
+
+############################################################
+
+sub gapped {
+    my ($self, $gapped) = @_;
+    if ($gapped) {
+	$self->{_gapped} = $gapped;
+    }
+    return $self->{_gapped};
+}
+
+############################################################
+
+sub query_as_hseq {
+    my ($self, $qashseq) = @_;
+    if ($qashseq) {
+	$self->{_query_as_hseq} = $qashseq;
+    }
+    return $self->{_query_as_hseq};
 }
 
 ############################################################
