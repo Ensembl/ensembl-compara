@@ -24,13 +24,13 @@ my $species_name = '';
 
 my $no_store = 0;
 
-my $description = q'
+my $description = "
 	PROGRAM: convert_patch_to_compara_homologies.pl
 
 	DESCRIPTION: converts all the gene projections from the core database to compara Members and Homologies.
 
-	EXAMPLE: perl scripts/pipeline/sample_projection_relationship_script.pl -reg_conf scripts/pipeline/production_reg_conf.pl -comp_alias compara_homology_merged -species homo_sapiens 
-';
+	EXAMPLE: $0 -reg_conf scripts/pipeline/production_reg_conf.pl -comp_alias compara_homology_merged -species homo_sapiens
+";
 
 my $help = sub {
 	print $description;
