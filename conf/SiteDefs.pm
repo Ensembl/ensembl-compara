@@ -115,6 +115,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $SOAP_PROXY
   $MINI_BIOPERL_161_DIR
   $UDC_CACHEDIR
+  $ENSEMBL_ORM_DATABASES
   @REQUEST_START_HOOK
   @REQUEST_END_HOOK
 );
@@ -204,6 +205,8 @@ $ENSEMBL_PROTOCOL       = 'http';
 $ENSEMBL_MAIL_COMMAND   = '/usr/bin/Mail -s';               # Mail command
 $ENSEMBL_MAIL_ERRORS    = '0';                              # Do we want to email errors?
 $ENSEMBL_ERRORS_TO      = 'webmaster&#064;mydomain.org';    # ...and to whom?
+
+$ENSEMBL_ORM_DATABASES  = {};
 
 $ENSEMBL_API_VERBOSITY              = 'WARNING';
 #    0 OFF NOTHING NONE
