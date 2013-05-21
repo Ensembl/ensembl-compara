@@ -35,7 +35,7 @@ my $conf = EnsEMBL::Web::SpeciesDefs->new;
 
 # Setup the ORM DB connections before loading files
 eval { require ORM::EnsEMBL::Rose::DbConnection; };
-my $orm_connections = $@ ? {} : ORM::EnsEMBL::Rose::DbConnection->register_from_sitedefs($conf);
+my $orm_connections = $@ ? {} : ORM::EnsEMBL::Rose::DbConnection->register_from_speciesdefs($conf);
 
 # Plugin in .pm files
 # The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
