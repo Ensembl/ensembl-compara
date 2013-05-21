@@ -146,7 +146,7 @@ sub keep_homology_in_mind {
 }
 
 
-
+my @missing_genes = ();
 
 #work out the relationships
 foreach my $proj_gene (@projected_genes){
@@ -187,6 +187,13 @@ TRANSCRIPT:
 
                 my $orig_gene = $core_ga->fetch_by_transcript_stable_id($orig_transcript_id);
                 my $orig_transcript = $core_ta->fetch_by_stable_id($orig_transcript_id);
+
+                if (not defined $orig_gene or not defined $orig_transcript) {
+                    warn "\$core_ga->fetch_by_transcript_stable_id($orig_transcript_id) returned undef" unless $orig_gene;
+                    warn "\$core_ta->fetch_by_stable_id($orig_transcript_id) returned undef" unless $orig_transcript;
+                    push @missing_genes, $orig_transcript_id;
+                    next TRANSCRIPT;
+                }
 
                 # Create the original gene member if necessary
                 my $orig_gene_member = fetch_or_store_gene($orig_gene, \$count_orig_gene);
@@ -241,4 +248,7 @@ print "new compara entries:\n";
 print "$count_orig_gene ref genes\n";
 print "$count_proj_gene projected genes\n";
 print "$count_homology new homologies\n";
+if (scalar(@missing_genes)) {
+    print join("\n", "!! missing genes !!", @missing_genes, "");
+}
 
