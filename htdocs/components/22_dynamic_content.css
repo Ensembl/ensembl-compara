@@ -22,7 +22,7 @@ body.ie6  a.help-header span.sprite { width: 18px; font-size: 14px; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Variation "icons" */
-div.icon-holder { width: 520px; }
+div.icon-holder { width: 650px; }
 img.portal  { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 
 /************************************
