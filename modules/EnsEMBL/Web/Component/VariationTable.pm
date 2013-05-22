@@ -215,7 +215,7 @@ sub stats_table {
     
     if ($counts{$con}) {
       my $count = $counts{$con};
-      my $warning = $count > 10000 ? $warning_text : '';
+      my $warning = $count > 5000 ? $warning_text : '';
       
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
@@ -238,7 +238,7 @@ sub stats_table {
   # add the row for ALL variations if there are any
   if ($total_counts) {
     my $hidden_span = '<span class="hidden">-</span>'; # create a hidden span to add so that ALL is always last in the table
-    my $warning     = $total_counts > 10000 ? $warning_text : '';
+    my $warning     = $total_counts > 5000 ? $warning_text : '';
     
     push @rows, {
       type  => $hidden_span . 'ALL',
@@ -429,8 +429,14 @@ sub variation_table {
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
          # my $status = join '', map qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}, @$validation; # validation
-          my $status = join ', ', @$evidence;  # internally-defined evidence status - icons to follow
-	  $status =~ s/\_/ /;
+          my $status = join("",
+            map {
+              sprintf(
+                '<img src="/i/96/evidence_%s.png" title="%s"/><span class="hidden export">%s,</span>',
+                $_, $_, $_
+              )
+            } @$evidence
+          );
           
           push @rows, {
             ID         => qq{<a href="$url">$variation_name</a>},
