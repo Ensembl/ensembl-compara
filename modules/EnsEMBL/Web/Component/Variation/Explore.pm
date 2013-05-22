@@ -19,7 +19,7 @@ sub content {
 
   my $avail     = $self->object->availability;
 
-  my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url);
+  my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url);
   $seq_url        = $hub->url({'action' => 'Sequence'});
   $context_url    = $hub->url({'action' => 'Context'});
   if ($avail->{'has_transcripts'}) {
@@ -46,6 +46,9 @@ sub content {
   if ($avail->{'has_alignments'}) {
     $phylo_url    = $hub->url({'action' => 'Compara_Alignments'});
   }
+  if ($avail->{'has_citation'}) {
+    $cit_url      = $hub->url({'action' => 'Citations'});
+  }
   
   my ($p_title, $p_img);
   if($avail->{'not_somatic'}) {
@@ -62,6 +65,7 @@ sub content {
     {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',   'url' => $geno_url},
     {'title' => 'LD plots and tables',    'img' => 'linkage_disequilibrium', 'url' => $ld_url},
     {'title' => 'Diseases and traits',    'img' => 'phenotype_data',         'url' => $pheno_url},
+    {'title' => 'Citations',                        'img' => 'citations',    'url' => $cit_url},
     {'title' => 'Sequence conservation via cross-species alignments',   
                                           'img' => 'phylogenetic_context',   'url' => $phylo_url},
     {'title' => 'Upstream and downstream sequence', 'img' => 'flanking_sequence',      'url' => $seq_url},
