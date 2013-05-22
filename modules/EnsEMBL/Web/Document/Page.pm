@@ -461,10 +461,11 @@ sub html_template {
   my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
   my $main_holder         = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
   my $main_class          = $self->isa('EnsEMBL::Web::Document::Page::Fluid') ? 'widemain' : 'main';
+  my $nav_class           = $self->isa('EnsEMBL::Web::Document::Page::Configurator') ? 'cp_nav' : 'nav';
   my $nav;
   
   if ($self->include_navigation) {
-    $nav = qq(<div id="page_nav" class="nav print_hide js_panel">
+    $nav = qq(<div id="page_nav" class="$nav_class print_hide js_panel">
           $elements->{'navigation'}
           $elements->{'tool_buttons'}
           $elements->{'acknowledgements'}
