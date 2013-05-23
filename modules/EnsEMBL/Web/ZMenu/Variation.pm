@@ -138,7 +138,7 @@ sub feature_content {
   } elsif ($snp_fake || $hub->type eq 'Variation') {    
     $self->add_entry({
       type     => 'Status',
-      label    => join(', ', @{$feature->get_all_validation_states || []}) || '-',
+      label    => join(', ', @{$feature->get_all_evidence_values || []}) || '-',
       position => $snp_fake && $lrg_bp ? 4 : 3
     });
   }
@@ -195,4 +195,3 @@ sub feature_content {
 }
 
 1;
-  
