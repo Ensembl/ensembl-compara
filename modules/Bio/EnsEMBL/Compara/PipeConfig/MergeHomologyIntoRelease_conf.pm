@@ -45,7 +45,7 @@ sub default_options {
 
             %{$self->SUPER::default_options},
 
-        'rel'           => 71,
+        'rel'           => 72,
         'pipeline_name' => 'compara_full_merge_'.$self->o('rel'),         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
@@ -57,11 +57,11 @@ sub default_options {
         },
 
         'merged_homology_db' => {
-            -host   => 'compara3',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => sprintf('%s_compara_homology_merged_%s', 'kb3', $self->o('rel')),
+            -dbname => sprintf('%s_compara_homology_merged_%s', $self->o('ENV', 'USER'), $self->o('rel')),
         },
 
         'rel_db' => {
