@@ -523,6 +523,24 @@ sub ancestor {
 }
 
 
+sub clinical_significance_colour {
+  my $self = shift;
+  my $clin_sign = shift;
+     $clin_sign ||= 'default';
+     
+  my %cs_colours = (
+    'non-pathogenic'          => '#090',
+    'begnin'                  => '#090',
+    'pathogenic'              => '#FF0000',
+    'probable-non-pathogenic' => '#FF9000',
+    'probable-pathogenic'     => '#FF9000',
+    'drug-response'           => '#22F',
+    'default'                 => '#779'
+  );
+    
+  return $cs_colours{$clin_sign} ? $cs_colours{$clin_sign} : $cs_colours{'default'}; 
+}
+
 sub clinical_significance {
 
   ### Variation_object_calls 
@@ -532,15 +550,13 @@ sub clinical_significance {
   ### Returns and array
 
   my $self = shift;
-  my %cs_colours = ('non-pathogenic' => '#090',
-                    'begnin'         => '#090',
-                    'pathogenic'     => '#FF0000',
-                    'probable-non-pathogenic'  => '#FF9000',
-                    'probable-pathogenic'     => '#FF9000',
-                    'drug-response'  => '#22F');                  
-  my $cs = $self->vari->clinical_significance;
-  my $colour = $cs_colours{$cs} ? $cs_colours{$cs} : '#779';
-  return $cs,$colour;
+  my $css = $self->vari->clinical_significance;
+  my @cs_list = split(",",$css);
+  my %cs_colour;
+  foreach my $cs (@cs_list) {
+    $cs_colour{$cs} = $self->clinical_significance_colour($cs);
+  }
+  return \%cs_colour;
 }
 
 
@@ -710,7 +726,7 @@ sub calculate_allele_freqs_from_genotype {
 
 sub get_external_data {
   my $self = shift;
-  $self->{'external_data'} ||= $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($self->vari);  
+  $self->{'external_data'} ||= $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($self->vari); 
   return $self->{'external_data'}
 }
 
