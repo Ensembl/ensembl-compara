@@ -25,36 +25,46 @@ sub content {
   
   my $is_somatic = $object->Obj->is_somatic;
   my $study      = $is_somatic ? 'Tumour site' : 'Study'; 
+  
+  my $html;
+  
   my ($table_rows, $supporting_evidence) = $self->table_data($data);
   my $table      = $self->new_table([], [], { data_table => 1 });
    
+  if (scalar keys(%$table_rows) != 0) {
 
-  $table->add_columns(
-    { key => 'disease', title => 'Disease/Trait', align => 'left', sort => 'html' },  
-    { key => 'source',  title => 'Source(s)',     align => 'left', sort => 'html' },
-  );
-  if ($supporting_evidence!=0) {
-     $table->add_columns(
-      { key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' }
-  );
-  }
-  
-  $table->add_columns(
-    { key => 'study',   title => $study,               align => 'left', sort => 'html' },
-    { key => 'genes',   title => 'Reported gene(s)',   align => 'left', sort => 'none' },
-    { key => 'variant', title => 'Associated variant(s)', align => 'left', sort => 'none' },
-  );
-  
-  if (!$is_somatic) {
     $table->add_columns(
-      { key => 'allele',  title => 'Most associated allele', align => 'left', sort => 'none'    },
-      { key => 'pvalue',  title => 'P value',                align => 'left', sort => 'numeric' }
+      { key => 'disease', title => 'Disease/Trait', align => 'left', sort => 'html' },  
+      { key => 'source',  title => 'Source(s)',     align => 'left', sort => 'html' },
     );
+    if ($supporting_evidence!=0) {
+      $table->add_columns(
+        { key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' }
+      );
+    }
+  
+    $table->add_columns(
+      { key => 'study',     title => $study,                  align => 'left', sort => 'html' },
+      { key => 'clin_sign', title => 'Clinical significance', align => 'left', sort => 'html' },
+      { key => 'genes',     title => 'Reported gene(s)',      align => 'left', sort => 'html' },
+      { key => 'variant',   title => 'Associated variant(s)', align => 'left', sort => 'none' },
+    );
+  
+    if (!$is_somatic) {
+      $table->add_columns(
+        { key => 'allele',  title => 'Most associated allele', align => 'left', sort => 'string'    },
+        { key => 'pvalue',  title => 'P value',                align => 'left', sort => 'numeric' }
+      );
+    }
+  
+    $table->add_rows(@$_) for values %$table_rows;
+    $html .= qq{<h3>Significant data</h3>};
+    $html .= $table->render;
   }
   
-  $table->add_rows(@$_) for values %$table_rows;
+  #$html .= $clin_var_table;
   
-  return $table->render;
+  return $html;
 };
 
 
@@ -75,6 +85,7 @@ sub table_data {
                  
                  
   foreach my $pf (@$external_data) { 
+    
     my $phenotype = $pf->phenotype->description;
     my $disorder  = $phenotype;
     
@@ -94,9 +105,16 @@ sub table_data {
     my $source_name        = $pf->source;
     my $study_name         = $pf->study ? $pf->study->name : '';
     my $disease_url        = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }); 
-    my $source             = $study_name ? $self->source_link($source_name, $study_name, $pf->external_reference, 1) : $source_name;
+    my $external_id        = ($pf->external_id) ? $pf->external_id : $study_name;
+    my $source             = $self->source_link($source_name, $external_id, $pf->external_reference, 1);
     my $external_reference = $self->external_reference_link($pf->external_reference) || $pf->external_reference; # use raw value if can't be made into a link
     my $associated_studies = $pf->associated_studies; # List of Study objects
+    
+    my $clin_sign = $pf->clinical_significance;
+    if ($clin_sign) {
+      my $clin_sign_colour = $object->clinical_significance_colour($clin_sign);
+      $clin_sign = qq{<span style="color:$clin_sign_colour">$clin_sign</span>};
+    }
     
     # Add the supporting evidence source(s)
     my $a_study_source = '';
@@ -137,13 +155,14 @@ sub table_data {
     }
   
     my $row = {
-      disease => $disease,
-      source  => $source,
-      study   => $external_reference, 
-      genes   => $gene,
-      allele  => $allele,
-      variant => $variant_link,
-      pvalue  => $pval
+      disease   => $disease,
+      source    => $source,
+      study     => $external_reference,
+      clin_sign => $clin_sign, 
+      genes     => $gene,
+      allele    => $allele,
+      variant   => $variant_link,
+      pvalue    => $pval
     };
   
     if ($a_study_source ne ''){
@@ -157,6 +176,7 @@ sub table_data {
 
   return \%rows,$has_evidence;
 }
+
 
 sub gene_links {
   my ($self, $data) = @_;
@@ -219,33 +239,40 @@ sub gene_links {
 
 
 sub source_link {
-  my ($self, $source, $ega_id, $ext_id, $code) = @_;
+  my ($self, $source, $ext_id, $ext_ref_id, $code) = @_;
   
   my $source_uc = uc $source;
   $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   my $label     = $source;
+  my $name;
   if ($url =~ /ega/) {
-    $label = $ega_id;
-    my @ega_data = split('\.',$ega_id);
-    $ega_id = (scalar(@ega_data) > 1) ? $ega_data[0].'*' : $ega_data[0];
-    $url       =~ s/###ID###/$ega_id/;
-  } elsif ($url =~/gwastudies/) {
-    $ext_id    =~ s/pubmed\///; 
-    $url          =~ s/###ID###/$ext_id/;
-  } elsif ($url =~/omim/) {
+    my @ega_data = split('\.',$ext_id);
+    $name = (scalar(@ega_data) > 1) ? $ega_data[0].'*' : $ega_data[0];
+    $label = $ext_id;
+  } 
+  elsif ($url =~ /gwastudies/) {
+    $ext_ref_id =~ s/pubmed\///; 
+    $name = $ext_ref_id;
+  } 
+  elsif ($url =~ /clinvar/) {
+    $ext_id =~ /^(.+)\.\d+$/;
+    $name = ($1) ? $1 : $ext_id;
+  } 
+  elsif ($url =~ /omim/) {
     if ($code) {
-      my $vname = "search?search=".$self->object->name;
-      $url  =~ s/###ID###/$vname/; 
+      $name = "search?search=".$self->object->name;
     }
     else {
-      $ext_id    =~ s/MIM\://; 
-      $url  =~ s/###ID###/$ext_id/;
+      $ext_ref_id =~ s/MIM\://; 
+      $name = $ext_ref_id;
     }     
   } else {
-    my $name = $self->object->Obj->name;
-    $url =~ s/###ID###/$name/;
+    $name = $self->object->Obj->name;
   }
+  
+  $url =~ s/###ID###/$name/;
+  
   return $source if $url eq "";
   
   return qq{<a rel="external" href="$url">[$label]</a>};
@@ -254,14 +281,14 @@ sub source_link {
 
 sub external_reference_link {
   my ($self, $study, $allele) = @_;
-  
+  my $link;
   if($study =~ /pubmed/) {
-    return qq{<a rel="external" href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
+    $link = qq{http://www.ncbi.nlm.nih.gov/$study};
+    $study =~ s/\//:/g;
+    return qq{<a rel="external" href="$link">$study</a>};
   }
   
   elsif($study =~ /^MIM\:/) {
-    my $link;
-    
     foreach my $mim (split /\,\s*/, $study) {
       my $id = (split /\:/, $mim)[-1];
       my $sub_link;
