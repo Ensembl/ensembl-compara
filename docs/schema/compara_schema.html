@@ -166,20 +166,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   <h2 style="display:inline;color:#000">General Tables</h2>
 </div>
 <p style="width:800px">These are general tables used in the Compara schema</p>
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="meta" style="font-size:11pt;font-weight:bold">meta</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="meta" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">meta</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores meta information about the compara database</p>
 
   <div id="div_meta" style="display:none">
@@ -194,23 +191,20 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">This query defines which API version must be used to access this database. </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM meta WHERE meta_key = "schema_version";</pre> <a id="e_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_meta" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>meta_id</th><th>species_id</th><th>meta_key</th><th>meta_value</th></tr>      <tr><td>1</td><td></td><td>schema_version</td><td>71</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>meta_id</th><th>species_id</th><th>meta_key</th><th>meta_value</th></tr>      <tr><td>1</td><td></td><td>schema_version</td><td>72</td></tr>    </table>
   </div></div>
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="ncbi_taxa_node" style="font-size:11pt;font-weight:bold">ncbi_taxa_node</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_ncbi_taxa_node" style="cursor:pointer;text-decoration:none" onclick="show_hide('ncbi_taxa_node')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="ncbi_taxa_node" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">ncbi_taxa_node</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_ncbi_taxa_node" style="cursor:pointer;text-decoration:none" onclick="show_hide('ncbi_taxa_node')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)</p>
 
   <div id="div_ncbi_taxa_node" style="display:none">
@@ -231,20 +225,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="ncbi_taxa_name" style="font-size:11pt;font-weight:bold">ncbi_taxa_name</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_ncbi_taxa_name" style="cursor:pointer;text-decoration:none" onclick="show_hide('ncbi_taxa_name')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="ncbi_taxa_name" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">ncbi_taxa_name</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_ncbi_taxa_name" style="cursor:pointer;text-decoration:none" onclick="show_hide('ncbi_taxa_name')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains different names, aliases and meta data for the taxa used in Ensembl.</p>
 
   <div id="div_ncbi_taxa_name" style="display:none">
@@ -258,33 +249,30 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">Here is an example on how to get the taxonomic ID for a species: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM ncbi_taxa_name WHERE name_class = "scientific name" AND name = "Homo sapiens";</pre> <a id="e_ncbi_taxa_name1" style="cursor:pointer;text-decoration:none" onclick="show_hide('ncbi_taxa_name1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_ncbi_taxa_name1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>taxon_id</th><th>name</th><th>name_class</th></tr>      <tr><td>9606</td><td>Homo sapiens</td><td>scientific name</td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">This examples shows how to get the lineage for Homo sapiens: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM ncbi_taxa_node WHERE left_index <= 339687 AND right_index >= 339690 ORDER BY left_index;</pre> <a id="e_ncbi_taxa_name2" style="cursor:pointer;text-decoration:none" onclick="show_hide('ncbi_taxa_name2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_ncbi_taxa_name2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>taxon_id</th><th>name</th><th>name_class</th></tr>      <tr><td>1</td><td>0</td><td>no rank</td><td>0</td><td>1</td><td>1974554</td><td>1</td></tr>      <tr class="bg2"><td>131567</td><td>1</td><td>no rank</td><td>1</td><td>186</td><td>1757157</td><td>1</td></tr>      <tr><td>2759</td><td>131567</td><td>superkingdom</td><td>0</td><td>14787</td><td>1204240</td><td>1</td></tr>      <tr class="bg2"><td>33154</td><td>2759</td><td>no rank</td><td>1</td><td>297690</td><td>1144527</td><td>1</td></tr>      <tr><td>33208</td><td>33154</td><td>kingdom</td><td>0</td><td>297941</td><td>966204</td><td>1</td></tr>      <tr class="bg2"><td>6072</td><td>33208</td><td>no rank</td><td>1</td><td>298172</td><td>962191</td><td>1</td></tr>      <tr><td>33213</td><td>6072</td><td>no rank</td><td>1</td><td>298355</td><td>951204</td><td>1</td></tr>      <tr class="bg2"><td>33317</td><td>33213</td><td>no rank</td><td>1</td><td>298458</td><td>804371</td><td>1</td></tr>      <tr><td>1206794</td><td>33317</td><td>no rank</td><td>0</td><td>298463</td><td>753706</td><td>1</td></tr>      <tr class="bg2"><td>88770</td><td>1206794</td><td>no rank</td><td>1</td><td>298590</td><td>740973</td><td>1</td></tr>      <tr><td>6656</td><td>88770</td><td>phylum</td><td>0</td><td>299861</td><td>740972</td><td>1</td></tr>      <tr class="bg2"><td>197563</td><td>6656</td><td>no rank</td><td>1</td><td>299866</td><td>711499</td><td>1</td></tr>      <tr><td>197562</td><td>197563</td><td>no rank</td><td>1</td><td>299867</td><td>708812</td><td>1</td></tr>      <tr class="bg2"><td>6960</td><td>197562</td><td>superclass</td><td>0</td><td>299868</td><td>680651</td><td>1</td></tr>      <tr><td>50557</td><td>6960</td><td>class</td><td>0</td><td>304165</td><td>680650</td><td>1</td></tr>      <tr class="bg2"><td>85512</td><td>50557</td><td>no rank</td><td>1</td><td>304334</td><td>680631</td><td>1</td></tr>      <tr><td>7496</td><td>85512</td><td>no rank</td><td>0</td><td>304335</td><td>680484</td><td>1</td></tr>      <tr class="bg2"><td>33340</td><td>7496</td><td>subclass</td><td>0</td><td>311828</td><td>680483</td><td>1</td></tr>      <tr><td>33341</td><td>33340</td><td>infraclass</td><td>0</td><td>336675</td><td>349492</td><td>1</td></tr>      <tr class="bg2"><td>6970</td><td>33341</td><td>superorder</td><td>0</td><td>336806</td><td>341959</td><td>1</td></tr>      <tr><td>7499</td><td>6970</td><td>order</td><td>0</td><td>338181</td><td>340618</td><td>1</td></tr>      <tr class="bg2"><td>46569</td><td>7499</td><td>family</td><td>0</td><td>338272</td><td>339711</td><td>1</td></tr>      <tr><td>62941</td><td>46569</td><td>subfamily</td><td>0</td><td>339347</td><td>339710</td><td>1</td></tr>      <tr class="bg2"><td>46570</td><td>62941</td><td>genus</td><td>0</td><td>339574</td><td>339709</td><td>1</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>taxon_id</th><th>name</th><th>name_class</th></tr>      <tr><td>1</td><td>0</td><td>no rank</td><td>0</td><td>1</td><td>2029190</td><td>1</td></tr>      <tr class="bg2"><td>131567</td><td>1</td><td>no rank</td><td>1</td><td>2</td><td>1801075</td><td>1</td></tr>      <tr><td>2759</td><td>131567</td><td>superkingdom</td><td>0</td><td>14801</td><td>1226798</td><td>1</td></tr>      <tr class="bg2"><td>33154</td><td>2759</td><td>no rank</td><td>1</td><td>302172</td><td>1166089</td><td>1</td></tr>      <tr><td>33208</td><td>33154</td><td>kingdom</td><td>0</td><td>302209</td><td>980898</td><td>1</td></tr>      <tr class="bg2"><td>6072</td><td>33208</td><td>no rank</td><td>1</td><td>302444</td><td>976845</td><td>1</td></tr>      <tr><td>33213</td><td>6072</td><td>no rank</td><td>1</td><td>302627</td><td>965816</td><td>1</td></tr>      <tr class="bg2"><td>33317</td><td>33213</td><td>no rank</td><td>1</td><td>302730</td><td>816947</td><td>1</td></tr>      <tr><td>1206794</td><td>33317</td><td>no rank</td><td>0</td><td>302735</td><td>765170</td><td>1</td></tr>      <tr class="bg2"><td>88770</td><td>1206794</td><td>no rank</td><td>1</td><td>303032</td><td>752169</td><td>1</td></tr>      <tr><td>6656</td><td>88770</td><td>phylum</td><td>0</td><td>304343</td><td>752168</td><td>1</td></tr>      <tr class="bg2"><td>197563</td><td>6656</td><td>no rank</td><td>1</td><td>304348</td><td>721193</td><td>1</td></tr>      <tr><td>197562</td><td>197563</td><td>no rank</td><td>1</td><td>304349</td><td>718492</td><td>1</td></tr>      <tr class="bg2"><td>6960</td><td>197562</td><td>superclass</td><td>0</td><td>304350</td><td>689845</td><td>1</td></tr>      <tr><td>50557</td><td>6960</td><td>class</td><td>0</td><td>308733</td><td>689844</td><td>1</td></tr>      <tr class="bg2"><td>85512</td><td>50557</td><td>no rank</td><td>1</td><td>308904</td><td>689823</td><td>1</td></tr>      <tr><td>7496</td><td>85512</td><td>no rank</td><td>0</td><td>308905</td><td>689666</td><td>1</td></tr>      <tr class="bg2"><td>33340</td><td>7496</td><td>subclass</td><td>0</td><td>316432</td><td>689665</td><td>1</td></tr>      <tr><td>33342</td><td>33340</td><td>infraclass</td><td>0</td><td>316463</td><td>342370</td><td>1</td></tr>      <tr class="bg2"><td>30259</td><td>33342</td><td>order</td><td>0</td><td>339476</td><td>340363</td><td>1</td></tr>      <tr><td>38127</td><td>30259</td><td>suborder</td><td>0</td><td>339569</td><td>340158</td><td>1</td></tr>      <tr class="bg2"><td>239228</td><td>38127</td><td>infraorder</td><td>0</td><td>339614</td><td>339719</td><td>1</td></tr>      <tr><td>298052</td><td>239228</td><td>superfamily</td><td>0</td><td>339625</td><td>339718</td><td>1</td></tr>      <tr class="bg2"><td>159975</td><td>298052</td><td>family</td><td>0</td><td>339670</td><td>339717</td><td>1</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#ncbi_taxa_node">ncbi_taxa_node</a></li>
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="genome_db" style="font-size:11pt;font-weight:bold">genome_db</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_genome_db" style="cursor:pointer;text-decoration:none" onclick="show_hide('genome_db')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="genome_db" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">genome_db</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_genome_db" style="cursor:pointer;text-decoration:none" onclick="show_hide('genome_db')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains information about the version of the genome assemblies used in this database</p>
 
   <div id="div_genome_db" style="display:none">
@@ -302,7 +290,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">This query shows the entries for human and chicken </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM genome_db WHERE name IN ("Homo_sapiens", "Gallus_gallus");</pre> <a id="e_genome_db" style="cursor:pointer;text-decoration:none" onclick="show_hide('genome_db','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_genome_db" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>genome_db_id</th><th>taxon_id</th><th>name</th><th>assembly</th><th>assembly_default</th><th>genebuild</th><th>locator</th></tr>      <tr><td>142</td><td>9031</td><td>gallus_gallus</td><td>Galgal4</td><td>1</td><td>2011-12-Ensembl</td><td></td></tr>      <tr class="bg2"><td>90</td><td>9606</td><td>homo_sapiens</td><td>GRCh37</td><td>1</td><td>2010-07-Ensembl</td><td></td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -310,20 +298,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="species_set" style="font-size:11pt;font-weight:bold">species_set</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_species_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_set')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="species_set" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">species_set</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_species_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_set')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains groups or sets of species which are used in the <a href="#method_link_species_set">method_link_species_set</a> table. Each species_set is a set of <a href="#genome_db">genome_db</a> objects</p>
 
   <div id="div_species_set" style="display:none">
@@ -336,7 +321,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">This query shows the first 10 species_sets having human </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT species_set_id, GROUP_CONCAT(name) AS species FROM species_set JOIN genome_db USING(genome_db_id) GROUP BY species_set_id HAVING species LIKE '%homo_sapiens%' ORDER BY species_set_id LIMIT 10;  </pre> <a id="e_species_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_set','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_species_set" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>species_set_id</th><th>GROUP_CONCAT(name)ASspecies</th></tr>      <tr><td>32268</td><td>sorex_araneus,homo_sapiens</td></tr>      <tr class="bg2"><td>32270</td><td>ornithorhynchus_anatinus,homo_sapiens</td></tr>      <tr><td>32271</td><td>monodelphis_domestica,homo_sapiens</td></tr>      <tr class="bg2"><td>32275</td><td>procavia_capensis,homo_sapiens</td></tr>      <tr><td>32277</td><td>cavia_porcellus,homo_sapiens</td></tr>      <tr class="bg2"><td>32280</td><td>pongo_abelii,homo_sapiens</td></tr>      <tr><td>32281</td><td>erinaceus_europaeus,homo_sapiens</td></tr>      <tr class="bg2"><td>32282</td><td>tursiops_truncatus,homo_sapiens</td></tr>      <tr><td>32283</td><td>dipodomys_ordii,homo_sapiens</td></tr>      <tr class="bg2"><td>32286</td><td>echinops_telfairi,homo_sapiens</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -345,20 +330,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="species_set_tag" style="font-size:11pt;font-weight:bold">species_set_tag</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_species_set_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_set_tag')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="species_set_tag" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">species_set_tag</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_species_set_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_set_tag')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains descriptive tags for the species_set_ids in the species_set table. It is used to store options on clades and group of species. It has been initially developed for the gene tree view.</p>
 
   <div id="div_species_set_tag" style="display:none">
@@ -372,7 +354,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">This query retrieves all the species_sets tagged as 'primates' and links to the <a href="#genome_db">genome_db</a> table to retrieve the species names  </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT species_set_id, name, tag, value FROM species_set JOIN species_set_tag USING(species_set_id) JOIN genome_db USING(genome_db_id) WHERE value = 'primates';</pre> <a id="e_species_set_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_set_tag','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_species_set_tag" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>species_set_id</th><th>name</th><th>tag</th><th>value</th></tr>      <tr><td>34115</td><td>macaca_mulatta</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34115</td><td>pongo_abelii</td><td>name</td><td>primates</td></tr>      <tr><td>34115</td><td>homo_sapiens</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34115</td><td>callithrix_jacchus</td><td>name</td><td>primates</td></tr>      <tr><td>34115</td><td>gorilla_gorilla</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34115</td><td>pan_troglodytes</td><td>name</td><td>primates</td></tr>      <tr><td>34344</td><td>macaca_mulatta</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34344</td><td>microcebus_murinus</td><td>name</td><td>primates</td></tr>      <tr><td>34344</td><td>pongo_abelii</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34344</td><td>tarsius_syrichta</td><td>name</td><td>primates</td></tr>      <tr><td>34344</td><td>homo_sapiens</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34344</td><td>nomascus_leucogenys</td><td>name</td><td>primates</td></tr>      <tr><td>34344</td><td>callithrix_jacchus</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34344</td><td>gorilla_gorilla</td><td>name</td><td>primates</td></tr>      <tr><td>34344</td><td>otolemur_garnettii</td><td>name</td><td>primates</td></tr>      <tr class="bg2"><td>34344</td><td>pan_troglodytes</td><td>name</td><td>primates</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -381,20 +363,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="method_link" style="font-size:11pt;font-weight:bold">method_link</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_method_link" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="method_link" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">method_link</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_method_link" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table specifies which kind of link can exist between entities in compara (dna/dna alignment, synteny regions, homologous gene pairs, etc...)<br/>NOTE: We use method_link_ids between 1 and 100 for DNA-DNA alignments, between 101 and 200 for genomic syntenies, between 201 and 300 for protein homologies, between 301 and 400 for protein families and between 401 and 500 for protein and ncRNA trees. Each category corresponds to data stored in different tables.</p>
 
   <div id="div_method_link" style="display:none">
@@ -408,7 +387,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">These are our current entries: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM method_link;</pre> <a id="e_method_link" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_method_link" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>method_link_id</th><th>type</th><th>class</th></tr>      <tr><td>1</td><td>BLASTZ_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr class="bg2"><td>7</td><td>TRANSLATED_BLAT_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr><td>10</td><td>PECAN</td><td>GenomicAlignBlock.multiple_alignment</td></tr>      <tr class="bg2"><td>11</td><td>GERP_CONSTRAINED_ELEMENT</td><td>ConstrainedElement.constrained_element</td></tr>      <tr><td>13</td><td>EPO</td><td>GenomicAlignTree.ancestral_alignment</td></tr>      <tr class="bg2"><td>14</td><td>EPO_LOW_COVERAGE</td><td>GenomicAlignTree.tree_alignment</td></tr>      <tr><td>16</td><td>LASTZ_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr class="bg2"><td>19</td><td>LASTZ_PATCH</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr><td>101</td><td>SYNTENY</td><td>SyntenyRegion.synteny</td></tr>      <tr class="bg2"><td>201</td><td>ENSEMBL_ORTHOLOGUES</td><td>Homology.homology</td></tr>      <tr><td>202</td><td>ENSEMBL_PARALOGUES</td><td>Homology.homology</td></tr>      <tr class="bg2"><td>205</td><td>ENSEMBL_PROJECTIONS</td><td>Homology.homology</td></tr>      <tr><td>301</td><td>FAMILY</td><td>Family.family</td></tr>      <tr class="bg2"><td>401</td><td>PROTEIN_TREES</td><td>ProteinTree.protein_tree_node</td></tr>      <tr><td>402</td><td>NC_TREES</td><td>NCTree.nc_tree_node</td></tr>      <tr class="bg2"><td>501</td><td>GERP_CONSERVATION_SCORE</td><td>ConservationScore.conservation_score</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -417,20 +396,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="method_link_species_set" style="font-size:11pt;font-weight:bold">method_link_species_set</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_method_link_species_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link_species_set')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="method_link_species_set" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">method_link_species_set</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_method_link_species_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link_species_set')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains information about the comparisons stored in the database. A given method_link_species_set_id exist for each comparison made and relates a method_link_id in <a href="#method_link">method_link</a> with a set of species (species_set_id) in the <a href="#species_set">species_set</a> table.</p>
 
   <div id="div_method_link_species_set" style="display:none">
@@ -447,7 +423,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">This query shows all the EPO alignments in this database: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM method_link_species_set WHERE method_link_id = 13;</pre> <a id="e_method_link_species_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link_species_set','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_method_link_species_set" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>method_link_species_set_id</th><th>method_link_id</th><th>species_set_id</th><th>name</th><th>source</th><th>url</th></tr>      <tr><td>528</td><td>13</td><td>33241</td><td>5 teleost fish EPO</td><td>ensembl</td><td></td></tr>      <tr class="bg2"><td>548</td><td>13</td><td>34115</td><td>6 primates EPO</td><td>ensembl</td><td></td></tr>      <tr><td>619</td><td>13</td><td>35016</td><td>13 eutherian mammals EPO</td><td>ensembl</td><td></td></tr>      <tr class="bg2"><td>641</td><td>13</td><td>35263</td><td>3 neognath birds EPO</td><td>ensembl</td><td></td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -456,20 +432,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#3CB371"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="method_link_species_set_tag" style="font-size:11pt;font-weight:bold">method_link_species_set_tag</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_method_link_species_set_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link_species_set_tag')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="method_link_species_set_tag" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">method_link_species_set_tag</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_method_link_species_set_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('method_link_species_set_tag')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains serveral tag/value data associated with method_link_species_set entries</p>
 
   <div id="div_method_link_species_set_tag" style="display:none">
@@ -491,20 +464,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   <h2 style="display:inline;color:#000">Genomic alignments tables</h2>
 </div>
 <p style="width:800px">These tables store information about genomic alignments in the Compara schema</p>
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="synteny_region" style="font-size:11pt;font-weight:bold">synteny_region</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_synteny_region" style="cursor:pointer;text-decoration:none" onclick="show_hide('synteny_region')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="synteny_region" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">synteny_region</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_synteny_region" style="cursor:pointer;text-decoration:none" onclick="show_hide('synteny_region')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains all the syntenic relationships found and the relative orientation of both syntenic regions.</p>
 
   <div id="div_synteny_region" style="display:none">
@@ -517,12 +487,12 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">This query shows that the syntenic region 34965 corresponds to a synteny relationship between the Human and Opossum genomes </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM synteny_region WHERE synteny_region_id = 34965;</pre> <a id="e_synteny_region1" style="cursor:pointer;text-decoration:none" onclick="show_hide('synteny_region1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_synteny_region1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>synteny_region_id</th><th>method_link_species_set_id</th></tr>      <tr><td>34965</td><td>10026</td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">Linking with the <a href="#method_link_species_set">method_link_species_set</a> table we get the names: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT synteny_region_id, name FROM synteny_region join method_link_species_set USING(method_link_species_set_id) WHERE synteny_region_id = 34965;</pre> <a id="e_synteny_region2" style="cursor:pointer;text-decoration:none" onclick="show_hide('synteny_region2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_synteny_region2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>synteny_region_id</th><th>name</th></tr>      <tr><td>34965</td><td>H.sap-M.dom synteny</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -530,20 +500,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="dnafrag" style="font-size:11pt;font-weight:bold">dnafrag</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_dnafrag" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnafrag')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="dnafrag" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">dnafrag</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_dnafrag" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnafrag')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table defines the genomic sequences used in the comparative genomics analyisis. It is used by the <a href="#genomic_align_block">genomic_align_block</a> table to define aligned sequences. It is also used by the <a href="#dnafrag_region">dnafrag_region</a> table to define syntenic regions.<br />NOTE: Index <name> has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key <name> is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.</p>
 
   <div id="div_dnafrag" style="display:none">
@@ -560,7 +527,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">This query shows the chromosome 14 of the Human genome (genome_db.genome_db_id = 90 refers to Human genome in this example) which is 107349540 nucleotides long. </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT dnafrag.* FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE dnafrag.name = "14" AND genome_db.name = "homo_sapiens";</pre> <a id="e_dnafrag" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnafrag','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_dnafrag" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>dnafrag.*</th></tr>      <tr><td>12179421</td><td>107349540</td><td>14</td><td>90</td><td>chromosome</td><td>1</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -570,20 +537,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="dnafrag_region" style="font-size:11pt;font-weight:bold">dnafrag_region</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_dnafrag_region" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnafrag_region')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="dnafrag_region" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">dnafrag_region</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_dnafrag_region" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnafrag_region')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the genomic regions corresponding to every synteny relationship found. There are two genomic regions for every synteny relationship.</p>
 
   <div id="div_dnafrag_region" style="display:none">
@@ -599,12 +563,12 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">Example of dnafrag_region query </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM dnafrag_region WHERE synteny_region_id = 34965;</pre> <a id="e_dnafrag_region1" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnafrag_region1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_dnafrag_region1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>synteny_region_id</th><th>dnafrag_id</th><th>dnafrag_start</th><th>dnafrag_end</th><th>dnafrag_strand</th></tr>      <tr><td>34965</td><td>3570451</td><td>388269008</td><td>396465072</td><td>1</td></tr>      <tr class="bg2"><td>34965</td><td>12179428</td><td>3056328</td><td>7918301</td><td>1</td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">When joining to <a href="#dnafrag">dnafrag</a> and <a href="#genome_db">genome_db</a> tables we get more comprehensive information: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 34965;</pre> <a id="e_dnafrag_region2" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnafrag_region2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_dnafrag_region2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>genome_db.name</th><th>dnafrag.name</th><th>dnafrag_start</th><th>dnafrag_end</th><th>dnafrag_strand</th></tr>      <tr><td>monodelphis_domestica</td><td>4</td><td>388269008</td><td>396465072</td><td>1</td></tr>      <tr class="bg2"><td>homo_sapiens</td><td>1</td><td>3056328</td><td>7918301</td><td>1</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -614,20 +578,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="genomic_align_block" style="font-size:11pt;font-weight:bold">genomic_align_block</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_genomic_align_block" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align_block')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="genomic_align_block" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">genomic_align_block</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_genomic_align_block" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align_block')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table is the key table for the genomic alignments. The software used to align the genomic blocks is refered as an external key to the <a href="#method_link">method_link</a> table. Nevertheless, actual aligned sequences are defined in the <a href="#genomic_align">genomic_align</a> table.<br />Tree alignments (EPO alignments) are best accessed through the <a href="#genomic_align_tree">genomic_align_tree</a> table although the alignments are also indexed in this table. This allows the user to also access the tree alignments as normal multiple alignments.<br />NOTE: All queries in the API uses the primary key as rows are always fetched using the genomic_align_block_id. The key 'method_link_species_set_id' is used by MART when fetching all the genomic_align_blocks corresponding to a given method_link_species_set_id</p>
 
   <div id="div_genomic_align_block" style="display:none">
@@ -645,7 +606,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query refers to a primates EPO alignment: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 5480000000010;</pre> <a id="e_genomic_align_block" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align_block','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_genomic_align_block" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>genomic_align_block_id</th><th>method_link_species_set_id</th><th>score</th><th>perc_id</th><th>length</th><th>group_id</th><th>level_id</th></tr>      <tr><td>5480000000010</td><td>548</td><td></td><td></td><td>5201</td><td></td><td>1</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -656,20 +617,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="genomic_align_tree" style="font-size:11pt;font-weight:bold">genomic_align_tree</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_genomic_align_tree" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align_tree')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="genomic_align_tree" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">genomic_align_tree</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_genomic_align_tree" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align_tree')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table is used to index tree alignments, e.g. EPO alignments. These alignments include inferred ancestral sequences. The tree required to index these sequences is stored in this table. This table stores the structure of the tree. Each node links to an entry in the <a href="#genomic_align_group">genomic_align_group</a> table, which links to one or several entries in the <a href="#genomic_align">genomic_align</a> table.<br />NOTE: Left_index and right_index are used to speed up fetching trees from the database. Any given node has its left_index larger than the left_index of its parent node and its right index smaller than the right_index of its parent node. In other words, all descendent nodes of a given node can be obtained by fetching all the node with a left_index (or right_index or both) between the left_index and the right_index of that node.</p>
 
   <div id="div_genomic_align_tree" style="display:none">
@@ -688,12 +646,12 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">The following query corresponds to the root of a tree, because parent_id = 0 and root_id = node_id </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM genomic_align_tree WHERE node_id = root_id LIMIT 1;</pre> <a id="e_genomic_align_tree1" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align_tree1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_genomic_align_tree1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>node_id</th><th>parent_id</th><th>root_id</th><th>left_index</th><th>right_index</th><th>left_node_id</th><th>right_node_id</th><th>distance_to_parent</th></tr>      <tr><td>5280000000001</td><td>0</td><td>5280000000001</td><td>100000019</td><td>100000024</td><td>5280000038222</td><td>5280000015542</td><td>0</td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">In order to fetch all the nodes of this tree, one can use the left_index and right_index values: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM genomic_align_tree WHERE left_index >= 100000019 and left_index <= 100000096;</pre> <a id="e_genomic_align_tree2" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align_tree2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_genomic_align_tree2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>node_id</th><th>parent_id</th><th>root_id</th><th>left_index</th><th>right_index</th><th>left_node_id</th><th>right_node_id</th><th>distance_to_parent</th></tr>      <tr><td>5280000000001</td><td>0</td><td>5280000000001</td><td>100000019</td><td>100000024</td><td>5280000038222</td><td>5280000015542</td><td>0</td></tr>      <tr class="bg2"><td>5280000000002</td><td>5280000000001</td><td>5280000000001</td><td>100000022</td><td>100000023</td><td>5280000038224</td><td>5280000015544</td><td>0.2399</td></tr>      <tr><td>5280000000003</td><td>5280000000001</td><td>5280000000001</td><td>100000020</td><td>100000021</td><td>5280000038223</td><td>5280000015543</td><td>0.1994</td></tr>      <tr class="bg2"><td>5280000000004</td><td>0</td><td>5280000000004</td><td>100000043</td><td>100000048</td><td>0</td><td>0</td><td>0</td></tr>      <tr><td>5280000000005</td><td>5280000000004</td><td>5280000000004</td><td>100000044</td><td>100000045</td><td>5280000022225</td><td>5280000020030</td><td>0.2</td></tr>      <tr class="bg2"><td>5280000000006</td><td>5280000000004</td><td>5280000000004</td><td>100000046</td><td>100000047</td><td>0</td><td>5280000010713</td><td>0.2</td></tr>      <tr><td>5280000000007</td><td>0</td><td>5280000000007</td><td>100000067</td><td>100000072</td><td>0</td><td>0</td><td>0</td></tr>      <tr class="bg2"><td>5280000000008</td><td>5280000000007</td><td>5280000000007</td><td>100000070</td><td>100000071</td><td>5280000022238</td><td>5280000011750</td><td>0.693</td></tr>      <tr><td>5280000000009</td><td>5280000000007</td><td>5280000000007</td><td>100000068</td><td>100000069</td><td>5280000002052</td><td>5280000021318</td><td>0.001</td></tr>      <tr class="bg2"><td>5280000000010</td><td>0</td><td>5280000000010</td><td>100000091</td><td>100000096</td><td>0</td><td>0</td><td>0</td></tr>      <tr><td>5280000000011</td><td>5280000000010</td><td>5280000000010</td><td>100000094</td><td>100000095</td><td>5280000016549</td><td>5280000025457</td><td>0.693</td></tr>      <tr class="bg2"><td>5280000000012</td><td>5280000000010</td><td>5280000000010</td><td>100000092</td><td>100000093</td><td>5280000020144</td><td>5280000000146</td><td>0.001</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -702,20 +660,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="genomic_align" style="font-size:11pt;font-weight:bold">genomic_align</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_genomic_align" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="genomic_align" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">genomic_align</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_genomic_align" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the coordinates and all the information needed to rebuild genomic alignments. Every entry corresponds to one of the aligned sequences. It also contains an external key to the <a href="#method_link_species_set">method_link_species_set</a> which refers to the software and set of species used for getting the corresponding alignment. The aligned sequence is defined by an external reference to the <a href="#dnafrag">dnafrag</a> table, the starting and ending position within this dnafrag, the strand and a cigar_line.<br /> The original aligned sequence is not stored but it can be retrieved using the <b>cigar_line</b> field and the original sequence. The cigar line defines the sequence of matches/mismatches and deletions (or gaps). For example, this cigar line <b>2MD3M2D2M</b> will mean that the alignment contains 2 matches/mismatches, 1 deletion (number 1 is omitted in order to save some space), 3 matches/mismatches, 2 deletions and 2 matches/mismatches. If the original sequence is:<br /> <ul><li>Original sequence: AACGCTT</li></ul> The aligned sequence will be:<br /> <table> <caption>cigar line: 2MD3M2D2M</caption> <thead><tr> <th>M</th> <th>M</th> <th>D</th> <th>M</th> <th>M</th> <th>M</th> <th>D</th> <th>D</th> <th>M</th> <th>M</th> </tr> </thead> <tbody> <tr> <td>A</td> <td>A</td> <td>-</td> <td>C</td> <td>G</td> <td>C</td> <td>-</td> <td>-</td> <td>T</td> <td>T</td> </tr> </tbody> </table></p>
 
   <div id="div_genomic_align" style="display:none">
@@ -729,43 +684,41 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
       <tr class="bg2"><td><b>dnafrag_end</b></td><td>int(10)</td><td>0</td><td>Ending position within the dnafrag defined by dnafrag_id</td><td>key: dnafrag</td></tr>
       <tr class="bg1"><td><b>dnafrag_strand</b></td><td>tinyint(4)</td><td>0</td><td>Strand in the dnafrag defined by dnafrag_id</td><td></td></tr>
       <tr class="bg2"><td><b>cigar_line</b></td><td>mediumtext</td><td></td><td>Internal description of the aligned sequence</td><td></td></tr>
-      <tr class="bg1"><td><b>visible</b></td><td>tinyint(2)</td><td>1</td><td>????????Kathryn</td><td></td></tr>
-      <tr class="bg2"><td><b>node_id</b></td><td>bigint(20)</td><td>NULL</td><td>????????Kathryn</td><td>key: node_id</td></tr>
+      <tr class="bg1"><td><b>visible</b></td><td>tinyint(2)</td><td>1</td><td>Used in self alignments to ensure only one Bio::EnsEMBL::Compara::GenomicAlignBlock is visible when you have more than 1 block covering the same region</td><td></td></tr>
+      <tr class="bg2"><td><b>node_id</b></td><td>bigint(20)</td><td>NULL</td><td>External reference to node_id in the <a href="#genomic_align_tree">genomic_align_tree</a> table</td><td>key: node_id</td></tr>
     </table>
   </div>
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">The following query corresponds to the three sequences included in the alignment described above (see <a href="#genomic_align_block">genomic_align_block</a> table description). </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM genomic_align WHERE genomic_align_block_id = 5480000000010;</pre> <a id="e_genomic_align1" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_genomic_align1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>genomic_align_id</th><th>genomic_align_block_id</th><th>method_link_species_set_id</th><th>dnafrag_id</th><th>dnafrag_start</th><th>dnafrag_end</th><th>dnafrag_strand</th><th>cigar_line</th><th>visible</th><th>node_id</th></tr>      <tr><td>5480000000016</td><td>5480000000010</td><td>548</td><td>13113625</td><td>50651451</td><td>50656259</td><td>1</td><td>166MD235MD269M359D222MD556M2D26M12D181M6D32MD2821M9D301M</td><td>1</td><td>5480000000016</td></tr>      <tr class="bg2"><td>5480000000017</td><td>5480000000010</td><td>548</td><td>4346075</td><td>65230956</td><td>65233520</td><td>-1</td><td>111MD1872M3D189M2631D62MD331M</td><td>1</td><td>5480000000017</td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">Here is a better way to get this by joining the <a href="#dnafrag">dnafrag</a> and <a href="#genome_db">genome_db</a> tables: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE genomic_align_block_id = 5480000000010;</pre> <a id="e_genomic_align2" style="cursor:pointer;text-decoration:none" onclick="show_hide('genomic_align2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_genomic_align2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>genome_db.name</th><th>dnafrag.name</th><th>dnafrag_start</th><th>dnafrag_end</th><th>dnafrag_strandstr</th><th>cigar_line</th></tr>      <tr><td>callithrix_jacchus</td><td>1</td><td>50651451</td><td>50656259</td><td>1</td><td>166MD235MD269M359D222MD556M2D26M12D181M6D32MD2821M9D301M</td></tr>      <tr class="bg2"><td>pongo_abelii</td><td>13</td><td>65230956</td><td>65233520</td><td>-1</td><td>111MD1872M3D189M2631D62MD331M</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#genomic_align_block">genomic_align_block</a></li>
     <li><a href="#method_link_species_set">method_link_species_set</a></li>
     <li><a href="#dnafrag">dnafrag</a></li>
+    <li><a href="#genomic_align_tree">genomic_align_tree</a></li>
     <li><a href="#genome_db">genome_db</a></li>
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="conservation_score" style="font-size:11pt;font-weight:bold">conservation_score</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_conservation_score" style="cursor:pointer;text-decoration:none" onclick="show_hide('conservation_score')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="conservation_score" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">conservation_score</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_conservation_score" style="cursor:pointer;text-decoration:none" onclick="show_hide('conservation_score')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains conservation scores calculated from the whole-genome multiple alignments stored in the <a href="#genomic_align_block">genomic_align_block</a> table. Several scores are stored per row. expected_score and diff_score are binary columns and you need to use the Perl API to access these data.</p>
 
   <div id="div_conservation_score" style="display:none">
@@ -773,8 +726,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
       <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
       <tr class="bg1"><td><b>genomic_align_block_id</b></td><td>bigint</td><td></td><td>External reference to genomic_align_block_id in the <a href="#genomic_align_block">genomic_align_block</a> table</td><td>key: </td></tr>
       <tr class="bg2"><td><b>window_size</b></td><td>smallint</td><td></td><td>The scores are stored at different resolution levels. This column defines the window size used to calculate the average score</td><td>key: </td></tr>
-      <tr class="bg1"><td><b>position</b></td><td>int</td><td></td><td>??????????Kathryn</td><td></td></tr>
-      <tr class="bg2"><td><b>expected_score</b></td><td>blob</td><td></td><td>??????????Kathryn</td><td></td></tr>
+      <tr class="bg1"><td><b>position</b></td><td>int</td><td></td><td>Position of the first score (in alignment coordinates)</td><td></td></tr>
+      <tr class="bg2"><td><b>expected_score</b></td><td>blob</td><td></td><td>Expected score. The observed score can be determined using the diff_score and the expected_score</td><td></td></tr>
       <tr class="bg1"><td><b>diff_score</b></td><td>blob</td><td></td><td>The difference between the expected and observed variation, i.e. the conservation score</td><td></td></tr>
     </table>
   </div>
@@ -784,20 +737,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF8500"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="constrained_element" style="font-size:11pt;font-weight:bold">constrained_element</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_constrained_element" style="cursor:pointer;text-decoration:none" onclick="show_hide('constrained_element')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="constrained_element" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">constrained_element</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_constrained_element" style="cursor:pointer;text-decoration:none" onclick="show_hide('constrained_element')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains constrained elements calculated from the whole-genome multiple alignments stored in the <a href="#genomic_align_block">genomic_align_block</a> table</p>
 
   <div id="div_constrained_element" style="display:none">
@@ -816,12 +766,12 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">Example entry for a constrained_element: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM constrained_element LIMIT 1;</pre> <a id="e_constrained_element1" style="cursor:pointer;text-decoration:none" onclick="show_hide('constrained_element1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_constrained_element1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>constrained_element_id</th><th>dnafrag_id</th><th>dnafrag_start</th><th>dnafrag_end</th><th>dnafrag_strand</th><th>method_link_species_set_id</th><th>p_value</th><th>score</th></tr>      <tr><td>5290000000001</td><td>35987</td><td>75256</td><td>75482</td><td>1</td><td>529</td><td>3.55484e-19</td><td>120.3</td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">There are 2 other elements in the same constrained_element: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT constrained_element_id, genome_db.name, dnafrag.name FROM constrained_element JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE constrained_element_id = 5290000000001;</pre> <a id="e_constrained_element2" style="cursor:pointer;text-decoration:none" onclick="show_hide('constrained_element2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_constrained_element2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
       <tr><th>constrained_element_id</th><th>genome_db.name</th><th>dnafrag.name</th></tr>      <tr><td>5290000000001</td><td>takifugu_rubripes</td><td>scaffold_101</td></tr>      <tr class="bg2"><td>5290000000001</td><td>gasterosteus_aculeatus</td><td>groupXIII</td></tr>      <tr><td>5290000000001</td><td>oryzias_latipes</td><td>9</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
@@ -836,20 +786,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   <h2 style="display:inline;color:#000">Gene trees and homologies tables</h2>
 </div>
 <p style="width:800px">These tables store information about gene alignments, trees and homologies</p>
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="sequence" style="font-size:11pt;font-weight:bold">sequence</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_sequence" style="cursor:pointer;text-decoration:none" onclick="show_hide('sequence')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="sequence" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">sequence</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_sequence" style="cursor:pointer;text-decoration:none" onclick="show_hide('sequence')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the protein sequences present in the member table used in the protein alignment part of the EnsEMBL Compara DB.</p>
 
   <div id="div_sequence" style="display:none">
@@ -861,20 +808,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="member" style="font-size:11pt;font-weight:bold">member</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('member')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="member" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">member</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('member')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table links sequences to the EnsEMBL core DB or to external DBs.</p>
 
   <div id="div_member" style="display:none">
@@ -900,8 +844,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 90) peptide ENSP00000309431 </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM member WHERE stable_id = "ENSP00000309431";</pre> <a id="e_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('member','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_member" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>member_id</th><th>stable_id</th><th>version</th><th>source_name</th><th>taxon_id</th><th>genome_db_id</th><th>sequence_id</th><th>gene_member_id</th><th>canonical_member_id</th><th>description</th><th>chr_name</th><th>chr_start</th><th>chr_end</th><th>chr_strand</th><th>display_label</th></tr>      <tr><td>7084686</td><td>ENSP00000309431</td><td>0</td><td>ENSEMBLPEP</td><td>9606</td><td>90</td><td>3062989</td><td>7084684</td><td></td><td>Transcript:ENST00000308911 Gene:ENSG00000173213 Chr:18 Start:47225 End:73545</td><td>18</td><td>47390</td><td>49557</td><td>-1</td><td>RP11-683L23.1-201</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>member_id</th><th>stable_id</th><th>version</th><th>source_name</th><th>taxon_id</th><th>genome_db_id</th><th>sequence_id</th><th>gene_member_id</th><th>canonical_member_id</th><th>description</th><th>chr_name</th><th>chr_start</th><th>chr_end</th><th>chr_strand</th><th>display_label</th></tr>      <tr><td>7597744</td><td>ENSP00000309431</td><td>0</td><td>ENSEMBLPEP</td><td>9606</td><td>90</td><td>3346780</td><td>7597742</td><td></td><td>Transcript:ENST00000308911 Gene:ENSG00000173213 Chr:18 Start:47225 End:73545</td><td>18</td><td>47390</td><td>49557</td><td>-1</td><td>RP11-683L23.1-201</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#sequence">sequence</a></li>
@@ -911,26 +855,23 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="member_production_counts" style="font-size:11pt;font-weight:bold">member_production_counts</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_member_production_counts" style="cursor:pointer;text-decoration:none" onclick="show_hide('member_production_counts')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="member_production_counts" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">member_production_counts</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_member_production_counts" style="cursor:pointer;text-decoration:none" onclick="show_hide('member_production_counts')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table includes information about members for web fast-lookups</p>
 
   <div id="div_member_production_counts" style="display:none">
     <table style="border:1px outset #222222">
       <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> table.</td><td></td></tr>
+      <tr class="bg1"><td><b>stable_id</b></td><td>varchar(128)</td><td></td><td>External reference to stable_id in the <a href="#member">member</a> table.</td><td></td></tr>
       <tr class="bg2"><td><b>families</b></td><td>tinyint(1)</td><td>0</td><td>If the member is part of a <a href="#family">family</a></td><td></td></tr>
       <tr class="bg1"><td><b>gene_trees</b></td><td>tinyint(1)</td><td>0</td><td>If the member has a default gene tree in the <a href="#gene_tree_root">gene_tree_root</a> table</td><td></td></tr>
       <tr class="bg2"><td><b>gene_gain_loss_trees</b></td><td>tinyint(1)</td><td>0</td><td>If the member has a gene gain/loss tree in the <a href="#CAFE_gene_family">CAFE_gene_family</a> table</td><td></td></tr>
@@ -949,20 +890,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="external_db" style="font-size:11pt;font-weight:bold">external_db</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_external_db" style="cursor:pointer;text-decoration:none" onclick="show_hide('external_db')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="external_db" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">external_db</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_external_db" style="cursor:pointer;text-decoration:none" onclick="show_hide('external_db')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores data about the external databases in which the objects described in the <a href="#member_xref">member_xref</a> table are stored.</p>
 
   <div id="div_external_db" style="display:none">
@@ -986,20 +924,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="member_xref" style="font-size:11pt;font-weight:bold">member_xref</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_member_xref" style="cursor:pointer;text-decoration:none" onclick="show_hide('member_xref')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="member_xref" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">member_xref</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_member_xref" style="cursor:pointer;text-decoration:none" onclick="show_hide('member_xref')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores cross-references for member sequences derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation" </p>
 
   <div id="div_member_xref" style="display:none">
@@ -1017,20 +952,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="other_member_sequence" style="font-size:11pt;font-weight:bold">other_member_sequence</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_other_member_sequence" style="cursor:pointer;text-decoration:none" onclick="show_hide('other_member_sequence')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="other_member_sequence" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">other_member_sequence</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_other_member_sequence" style="cursor:pointer;text-decoration:none" onclick="show_hide('other_member_sequence')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table includes alternative sequences for Member, like sequences with flanking regions</p>
 
   <div id="div_other_member_sequence" style="display:none">
@@ -1049,20 +981,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="peptide_align_feature" style="font-size:11pt;font-weight:bold">peptide_align_feature</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_peptide_align_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('peptide_align_feature')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="peptide_align_feature" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">peptide_align_feature</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_peptide_align_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('peptide_align_feature')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">: This table stores the raw HSP local alignment results of peptide to peptide alignments returned by a BLAST run it is translated from a FeaturePair object.</p>
 
   <div id="div_peptide_align_feature" style="display:none">
@@ -1091,13 +1020,13 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">Example of peptide_align_feature entry: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM peptide_align_feature_homo_sapiens_90 WHERE peptide_align_feature_id = 5003775;</pre> <a id="e_peptide_align_feature1" style="cursor:pointer;text-decoration:none" onclick="show_hide('peptide_align_feature1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_peptide_align_feature1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>peptide_align_feature_id</th><th>qmember_id</th><th>hmember_id</th><th>qgenome_db_id</th><th>hgenome_db_id</th><th>qstart</th><th>qend</th><th>hstart</th><th>hend</th><th>score</th><th>evalue</th><th>align_length</th><th>identical_matches</th><th>perc_ident</th><th>positive_matches</th><th>perc_pos</th><th>hit_rank</th><th>cigar_line</th></tr>      <tr><td>5003775</td><td>7074132</td><td>5980186</td><td>90</td><td>60</td><td>13</td><td>131</td><td>177</td><td>313</td><td>155.0000</td><td>9.7e-12</td><td>140</td><td>56</td><td>40</td><td>74</td><td>52</td><td>5</td><td>2M2I15M3D8M4D6M2D6M4D5MI5M5D14M3D55M</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>peptide_align_feature_id</th><th>qmember_id</th><th>hmember_id</th><th>qgenome_db_id</th><th>hgenome_db_id</th><th>qstart</th><th>qend</th><th>hstart</th><th>hend</th><th>score</th><th>evalue</th><th>align_length</th><th>identical_matches</th><th>perc_ident</th><th>positive_matches</th><th>perc_pos</th><th>hit_rank</th><th>cigar_line</th></tr>      <tr><td>5003775</td><td>7488629</td><td>683615</td><td>90</td><td>65</td><td>40</td><td>283</td><td>252</td><td>483</td><td>209.0000</td><td>2.3e-15</td><td>245</td><td>72</td><td>29</td><td>116</td><td>47</td><td>15</td><td>15MI41M2I15M3I9M4I6MI26MD23MI16MI80M</td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">The following query corresponds to a particular hit found between a Homo sapiens protein and a Anolis carolinensis protein: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_homo_sapiens_90 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 5003775;</pre> <a id="e_peptide_align_feature2" style="cursor:pointer;text-decoration:none" onclick="show_hide('peptide_align_feature2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_peptide_align_feature2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>g1.nameasqgenome</th><th>m1.stable_idasqstable_id</th><th>g2.nameashgenome</th><th>m2.stable_idashstable_id</th><th>score</th><th>evalue</th></tr>      <tr><td>homo_sapiens</td><td>ENSP00000302189</td><td>pongo_abelii</td><td>ENSPPYP00000002500</td><td>155.0000</td><td>9.7e-12</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>g1.nameasqgenome</th><th>m1.stable_idasqstable_id</th><th>g2.nameashgenome</th><th>m2.stable_idashstable_id</th><th>score</th><th>evalue</th></tr>      <tr><td>homo_sapiens</td><td>ENSP00000262394</td><td>tetraodon_nigroviridis</td><td>ENSTNIP00000012865</td><td>209.0000</td><td>2.3e-15</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#member">member</a></li>
@@ -1105,20 +1034,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="family" style="font-size:11pt;font-weight:bold">family</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_family" style="cursor:pointer;text-decoration:none" onclick="show_hide('family')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="family" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">family</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_family" style="cursor:pointer;text-decoration:none" onclick="show_hide('family')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains all the group homologies found. There are several family_member entries for each family entry.</p>
 
   <div id="div_family" style="display:none">
@@ -1135,28 +1061,25 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query retrieves families with "CATHELICIDIN" description and description_score of 100 </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM family WHERE description like '%CATHELICIDIN%' AND description_score = 100;</pre> <a id="e_family" style="cursor:pointer;text-decoration:none" onclick="show_hide('family','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_family" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>family_id</th><th>stable_id</th><th>version</th><th>method_link_species_set_id</th><th>description</th><th>description_score</th></tr>      <tr><td>29057</td><td>ENSFM00350000109081</td><td>2</td><td>30041</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr class="bg2"><td>30017</td><td>ENSFM00710001442147</td><td>1</td><td>30041</td><td>CATHELICIDIN PRECURSOR CATH FOWLICIDIN</td><td>100</td></tr>      <tr><td>64664</td><td>ENSFM00500000451410</td><td>4</td><td>30041</td><td>CATHELICIDIN FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>76711</td><td>ENSFM00640001106201</td><td>2</td><td>30041</td><td>CATHELICIDIN 3 FRAGMENT</td><td>100</td></tr>      <tr><td>97217</td><td>ENSFM00550000766356</td><td>1</td><td>30041</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr class="bg2"><td>97218</td><td>ENSFM00540000722157</td><td>1</td><td>30041</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE PRECURSOR CATHELICIDIN RELATED</td><td>100</td></tr>      <tr><td>99939</td><td>ENSFM00310000089953</td><td>1</td><td>30041</td><td>CATHELICIDIN B1 PRECURSOR CATH B1</td><td>100</td></tr>      <tr class="bg2"><td>147267</td><td>ENSFM00520000549325</td><td>1</td><td>30041</td><td>CATHELICIDIN 1</td><td>100</td></tr>      <tr><td>280688</td><td>ENSFM00660001176414</td><td>1</td><td>30041</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr class="bg2"><td>280689</td><td>ENSFM00700001402163</td><td>1</td><td>30041</td><td>CATHELICIDIN 2 FRAGMENT</td><td>100</td></tr>      <tr><td>311724</td><td>ENSFM00690001368966</td><td>1</td><td>30041</td><td>CATHELICIDIN AL</td><td>100</td></tr>      <tr class="bg2"><td>366057</td><td>ENSFM00700001405472</td><td>1</td><td>30041</td><td>CATHELICIDIN 1 FRAGMENT</td><td>100</td></tr>      <tr><td>366058</td><td>ENSFM00660001186067</td><td>1</td><td>30041</td><td>CATHELICIDIN</td><td>100</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>family_id</th><th>stable_id</th><th>version</th><th>method_link_species_set_id</th><th>description</th><th>description_score</th></tr>      <tr><td>28254</td><td>ENSFM00350000109081</td><td>2</td><td>30041</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr class="bg2"><td>30410</td><td>ENSFM00710001442147</td><td>1</td><td>30041</td><td>CATHELICIDIN PRECURSOR CATH FOWLICIDIN</td><td>100</td></tr>      <tr><td>65936</td><td>ENSFM00500000451410</td><td>4</td><td>30041</td><td>CATHELICIDIN FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>65938</td><td>ENSFM00500000314317</td><td>1</td><td>30041</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr><td>78642</td><td>ENSFM00640001106201</td><td>2</td><td>30041</td><td>CATHELICIDIN 3 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>100184</td><td>ENSFM00540000722157</td><td>1</td><td>30041</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE PRECURSOR CATHELICIDIN RELATED</td><td>100</td></tr>      <tr><td>100186</td><td>ENSFM00550000766356</td><td>1</td><td>30041</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr class="bg2"><td>100785</td><td>ENSFM00310000089953</td><td>1</td><td>30041</td><td>CATHELICIDIN B1 PRECURSOR CATH B1</td><td>100</td></tr>      <tr><td>142512</td><td>ENSFM00500000376284</td><td>1</td><td>30041</td><td>CATHELICIDIN 3 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>148735</td><td>ENSFM00520000549325</td><td>1</td><td>30041</td><td>CATHELICIDIN 1</td><td>100</td></tr>      <tr><td>312415</td><td>ENSFM00660001176414</td><td>1</td><td>30041</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr class="bg2"><td>312417</td><td>ENSFM00700001402163</td><td>1</td><td>30041</td><td>CATHELICIDIN 2 FRAGMENT</td><td>100</td></tr>      <tr><td>314932</td><td>ENSFM00720001501210</td><td>1</td><td>30041</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr class="bg2"><td>340455</td><td>ENSFM00690001368966</td><td>1</td><td>30041</td><td>CATHELICIDIN AL</td><td>100</td></tr>      <tr><td>361559</td><td>ENSFM00700001405472</td><td>1</td><td>30041</td><td>CATHELICIDIN 1 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>361560</td><td>ENSFM00660001186067</td><td>1</td><td>30041</td><td>CATHELICIDIN</td><td>100</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#method_link_species_set">method_link_species_set</a></li>
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="family_member" style="font-size:11pt;font-weight:bold">family_member</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_family_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('family_member')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="family_member" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">family_member</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_family_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('family_member')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry</p>
 
   <div id="div_family_member" style="display:none">
@@ -1170,8 +1093,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query refers to the four members of the protein family 54177. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines. </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM family_member WHERE family_id = 29739;</pre> <a id="e_family_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('family_member','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_family_member" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>family_id</th><th>member_id</th><th>cigar_line</th></tr>      <tr><td>29739</td><td>6894417</td><td></td></tr>      <tr class="bg2"><td>29739</td><td>6894418</td><td>9D15M2D9M29D6M3D12M2D11M3D17M2DM13D3M2D47M6D126M2D21MD</td></tr>      <tr><td>29739</td><td>201404012</td><td>7D91M3D4M11D21M2D31M2D14M3D145M8D</td></tr>      <tr class="bg2"><td>29739</td><td>201628265</td><td>96D2M3D36M2D31M2D145M2D23M</td></tr>      <tr><td>29739</td><td>201834917</td><td>22D13M49D5MD8M3D36M2D31M2D145M2D23M</td></tr>      <tr class="bg2"><td>29739</td><td>201928606</td><td>9D15M2D9M29D6M6D9M2D11M3D6MD4MD8M13D3M2D47M6D126M2D21MD</td></tr>      <tr><td>29739</td><td>201935738</td><td>22D13M49D5MD8M3D36M2D31M2D145M2D23M</td></tr>      <tr class="bg2"><td>29739</td><td>202146837</td><td>28D7M49D14M3D7M4D9M2D14M2D31M2D14M3D128M2D8M4D11M</td></tr>      <tr><td>29739</td><td>202286170</td><td>22D13M49D14M3D36M2D31M2D145M2D23M</td></tr>      <tr class="bg2"><td>29739</td><td>202543656</td><td>92D6M14D9MD22M29D6MD137M2D23M</td></tr>      <tr><td>29739</td><td>202940175</td><td>9D26M29D21M2D11M8D15M13D3M2D47M6D126M2D21MD</td></tr>      <tr class="bg2"><td>29739</td><td>203435275</td><td>9D15M2D9M29D9M3D22M3D12M5D3M13D3M2D47M6D149MD</td></tr>      <tr><td>29739</td><td>203463079</td><td>9D4MD10M2D9M30D5M6D3M5DM2D20MD13M13D3M2D47M6D126M2D21MD</td></tr>      <tr class="bg2"><td>29739</td><td>203604973</td><td>35M49D14M3D7M4D5MD3M2D14M2D31M2D14M3D128M2D8M4D11M</td></tr>      <tr><td>29739</td><td>203613304</td><td>28D7M49D14M3D7M4D9M2D14M2D31M2D14M3D128M2D8M4D11M</td></tr>      <tr class="bg2"><td>29739</td><td>203659940</td><td>9D15M2D9M29D6M3D12M2D11M3D17M2DM13D3M2D47M6D126M2D21MD</td></tr>      <tr><td>29739</td><td>203821196</td><td>22D13M49D14M3D36M2D31M2D145M2D23M</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>family_id</th><th>member_id</th><th>cigar_line</th></tr>      <tr><td>29739</td><td>201107764</td><td>21M28D31M32D7M31D71M2D57MD3MD54M36D</td></tr>      <tr class="bg2"><td>29739</td><td>201464968</td><td>114D5M31D134MD9M6D6M18D6M4D6M5D29MD</td></tr>      <tr><td>29739</td><td>201484203</td><td>42D38M32D7M31D125MD8M2D8M6D3M23D4M4D6M5D29MD</td></tr>      <tr class="bg2"><td>29739</td><td>201525664</td><td>17D63M32D7M31D126MD7MD9M6D6M18D6M4D3M2DM5D5M2D22MD</td></tr>      <tr><td>29739</td><td>201587551</td><td>23D57M32D7M31D123M3D6M3D9M8D4M18D6M24D18M3D</td></tr>      <tr class="bg2"><td>29739</td><td>201827731</td><td>114D5M31D96M39D9M6D6M18D6M4D3M2DM5D29MD</td></tr>      <tr><td>29739</td><td>201844637</td><td>21D59M32D7M31D125MD8M2D8M6D6M18D6M4D40MD</td></tr>      <tr class="bg2"><td>29739</td><td>201873346</td><td>3D36M8D33M32D7M31D71M2D61MD9MD17M6D12MD7M37D</td></tr>      <tr><td>29739</td><td>201912590</td><td>8D72M32D7M31D71M2D47M3D39M12D6M4D7M34D</td></tr>      <tr class="bg2"><td>29739</td><td>201983725</td><td>114D5M31D125MD18M6D6M18D6M4D10MD13M4D13M</td></tr>      <tr><td>29739</td><td>202028120</td><td>16D205M2D34M38D11M15D17M37D</td></tr>      <tr class="bg2"><td>29739</td><td>202033169</td><td>21D24MD34M32D7M31D96M7D23MD7MD9M6D6M18D6M4D3M2DM5D20MD8MD</td></tr>      <tr><td>29739</td><td>202135287</td><td>49D31M32D7M31D125MD8M2DMD6M81D</td></tr>      <tr class="bg2"><td>29739</td><td>202231437</td><td>19D61M32D7M31D144M6D6M18D6M4D7M4D16MD12MD</td></tr>      <tr><td>29739</td><td>202272150</td><td>42D38M32D7M31D125MD8M2D8M6D3M23D4M4D6M5D29MD</td></tr>      <tr class="bg2"><td>29739</td><td>202279555</td><td>27D53M32D7M31D156M18D30M2D17M2D</td></tr>      <tr><td>29739</td><td>202322487</td><td>22D58M32D7M31D115M110D</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#family">family</a></li>
@@ -1180,20 +1103,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="gene_align" style="font-size:11pt;font-weight:bold">gene_align</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_gene_align" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_align')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="gene_align" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">gene_align</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_gene_align" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_align')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores information about alignments for members</p>
 
   <div id="div_gene_align" style="display:none">
@@ -1212,20 +1132,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="gene_align_member" style="font-size:11pt;font-weight:bold">gene_align_member</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_gene_align_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_align_member')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="gene_align_member" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">gene_align_member</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_gene_align_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_align_member')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table allows certain nodes (leaves) to have aligned protein member_scores attached to them</p>
 
   <div id="div_gene_align_member" style="display:none">
@@ -1243,20 +1160,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="gene_tree_node" style="font-size:11pt;font-weight:bold">gene_tree_node</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_gene_tree_node" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_node')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="gene_tree_node" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">gene_tree_node</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_gene_tree_node" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_node')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds the gene tree data structure, such as root, relation between parent and child, leaves, etc... In our data structure, all the trees of a given clusterset are arbitrarily connected to the same root. This eases to store and query in the same database the data from independant tree building analysis. Hence the "biological roots" of the trees are the children nodes of the main clusterset root. See the examples below.</p>
 
   <div id="div_gene_tree_node" style="display:none">
@@ -1274,8 +1188,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query returns the root nodes of the independant protein trees stored in the database </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_root gtr ON (gtn.parent_id = gtr.root_id) WHERE gtr.tree_type = 'clusterset' AND gtr.member_type = 'protein' LIMIT 10;</pre> <a id="e_gene_tree_node" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_node','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_gene_tree_node" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>gtn.node_id</th></tr>      <tr><td>2</td></tr>      <tr class="bg2"><td>1434</td></tr>      <tr><td>2848</td></tr>      <tr class="bg2"><td>4135</td></tr>      <tr><td>5402</td></tr>      <tr class="bg2"><td>6641</td></tr>      <tr><td>7792</td></tr>      <tr class="bg2"><td>8934</td></tr>      <tr><td>10067</td></tr>      <tr class="bg2"><td>11187</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>gtn.node_id</th></tr>      <tr><td>2</td></tr>      <tr class="bg2"><td>1438</td></tr>      <tr><td>2700</td></tr>      <tr class="bg2"><td>3952</td></tr>      <tr><td>5191</td></tr>      <tr class="bg2"><td>6427</td></tr>      <tr><td>7564</td></tr>      <tr class="bg2"><td>8699</td></tr>      <tr><td>9834</td></tr>      <tr class="bg2"><td>10944</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#gene_tree_root">gene_tree_root</a></li>
@@ -1285,20 +1199,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="gene_tree_root" style="font-size:11pt;font-weight:bold">gene_tree_root</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_gene_tree_root" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_root')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="gene_tree_root" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">gene_tree_root</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_gene_tree_root" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_root')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Header table for gene_trees. The database is able to contain several sets of trees computed on the same genes. We call these analysis "clustersets" and they can be distinguished with the clusterset_id field. Traditionally, the compara databases have contained only one clusterset (clusterset_id=1), but currently (starting on release 66) we have at least 2 (one for protein trees and one for ncRNA trees). See the examples below.</p>
 
   <div id="div_gene_tree_root" style="display:none">
@@ -1318,13 +1229,13 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">The following query retrieves all the node_id of the current clustersets </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * from gene_tree_root where tree_type = 'clusterset';</pre> <a id="e_gene_tree_root1" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_root1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_gene_tree_root1" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>root_id</th><th>member_type</th><th>tree_type</th><th>clusterset_id</th><th>method_link_species_set_id</th><th>gene_align_id</th><th>ref_root_id</th><th>stable_id</th><th>version</th></tr>      <tr><td>1</td><td>protein</td><td>clusterset</td><td>default</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1107398</td><td>protein</td><td>clusterset</td><td>phyml-aa</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1107399</td><td>protein</td><td>clusterset</td><td>phyml-nt</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1107400</td><td>protein</td><td>clusterset</td><td>nj-dn</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1107401</td><td>protein</td><td>clusterset</td><td>nj-ds</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1107402</td><td>protein</td><td>clusterset</td><td>nj-mm</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100000001</td><td>ncrna</td><td>clusterset</td><td>default</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161385</td><td>ncrna</td><td>clusterset</td><td>pg_it_nj</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161386</td><td>ncrna</td><td>clusterset</td><td>ml_it_10</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161387</td><td>ncrna</td><td>clusterset</td><td>pg_it_phyml</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161388</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161389</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6a</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161390</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16a</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161391</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6b</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161392</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16b</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161393</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6c</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161394</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6d</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161395</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6e</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161396</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7a</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161397</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7b</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161398</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7c</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161399</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7d</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161400</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7e</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161401</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7f</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161402</td><td>ncrna</td><td>clusterset</td><td>ft_it_ml</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161403</td><td>ncrna</td><td>clusterset</td><td>ft_it_nj</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100161404</td><td>ncrna</td><td>clusterset</td><td>ftga_it_ml</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100161405</td><td>ncrna</td><td>clusterset</td><td>ftga_it_nj</td><td>40089</td><td></td><td></td><td></td><td></td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>root_id</th><th>member_type</th><th>tree_type</th><th>clusterset_id</th><th>method_link_species_set_id</th><th>gene_align_id</th><th>ref_root_id</th><th>stable_id</th><th>version</th></tr>      <tr><td>1</td><td>protein</td><td>clusterset</td><td>default</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1107483</td><td>protein</td><td>clusterset</td><td>phyml-aa</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1107484</td><td>protein</td><td>clusterset</td><td>phyml-nt</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1107485</td><td>protein</td><td>clusterset</td><td>nj-dn</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1107486</td><td>protein</td><td>clusterset</td><td>nj-ds</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1107487</td><td>protein</td><td>clusterset</td><td>nj-mm</td><td>40090</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100000001</td><td>ncrna</td><td>clusterset</td><td>default</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168009</td><td>ncrna</td><td>clusterset</td><td>pg_it_nj</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168010</td><td>ncrna</td><td>clusterset</td><td>ml_it_10</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168011</td><td>ncrna</td><td>clusterset</td><td>pg_it_phyml</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168012</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168013</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6a</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168014</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16a</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168015</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6b</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168016</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16b</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168017</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6c</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168018</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6d</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168019</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6e</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168020</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7a</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168021</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7b</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168022</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7c</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168023</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7d</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168024</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7e</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168025</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7f</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168026</td><td>ncrna</td><td>clusterset</td><td>ft_it_ml</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168027</td><td>ncrna</td><td>clusterset</td><td>ft_it_nj</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100168028</td><td>ncrna</td><td>clusterset</td><td>ftga_it_ml</td><td>40089</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100168029</td><td>ncrna</td><td>clusterset</td><td>ftga_it_nj</td><td>40089</td><td></td><td></td><td></td><td></td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">To get the number of trees of each type </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT member_type, tree_type, COUNT(*) FROM gene_tree_root GROUP BY member_type, tree_type;</pre> <a id="e_gene_tree_root2" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_root2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_gene_tree_root2" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>member_type</th><th>tree_type</th><th>COUNT(*)</th></tr>      <tr><td>protein</td><td>clusterset</td><td>6</td></tr>      <tr class="bg2"><td>protein</td><td>supertree</td><td>446</td></tr>      <tr><td>protein</td><td>tree</td><td>92777</td></tr>      <tr class="bg2"><td>ncrna</td><td>clusterset</td><td>22</td></tr>      <tr><td>ncrna</td><td>supertree</td><td>20</td></tr>      <tr class="bg2"><td>ncrna</td><td>tree</td><td>12418</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>member_type</th><th>tree_type</th><th>COUNT(*)</th></tr>      <tr><td>protein</td><td>clusterset</td><td>6</td></tr>      <tr class="bg2"><td>protein</td><td>supertree</td><td>435</td></tr>      <tr><td>protein</td><td>tree</td><td>92577</td></tr>      <tr class="bg2"><td>ncrna</td><td>clusterset</td><td>22</td></tr>      <tr><td>ncrna</td><td>supertree</td><td>30</td></tr>      <tr class="bg2"><td>ncrna</td><td>tree</td><td>15924</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#gene_tree_node">gene_tree_node</a></li>
@@ -1335,20 +1246,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="gene_tree_node_tag" style="font-size:11pt;font-weight:bold">gene_tree_node_tag</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_gene_tree_node_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_node_tag')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="gene_tree_node_tag" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">gene_tree_node_tag</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_gene_tree_node_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_node_tag')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains several tag/value data attached to node_ids</p>
 
   <div id="div_gene_tree_node_tag" style="display:none">
@@ -1366,20 +1274,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="gene_tree_root_tag" style="font-size:11pt;font-weight:bold">gene_tree_root_tag</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_gene_tree_root_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_root_tag')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="gene_tree_root_tag" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">gene_tree_root_tag</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_gene_tree_root_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_root_tag')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains several tag/value data for gene_tree_roots</p>
 
   <div id="div_gene_tree_root_tag" style="display:none">
@@ -1396,20 +1301,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="gene_tree_node_attr" style="font-size:11pt;font-weight:bold">gene_tree_node_attr</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_gene_tree_node_attr" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_node_attr')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="gene_tree_node_attr" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">gene_tree_node_attr</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_gene_tree_node_attr" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_node_attr')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains several gene tree attributes data attached to node_ids</p>
 
   <div id="div_gene_tree_node_attr" style="display:none">
@@ -1432,20 +1334,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="hmm_profile" style="font-size:11pt;font-weight:bold">hmm_profile</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_hmm_profile" style="cursor:pointer;text-decoration:none" onclick="show_hide('hmm_profile')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="hmm_profile" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">hmm_profile</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_hmm_profile" style="cursor:pointer;text-decoration:none" onclick="show_hide('hmm_profile')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores different HMM-based profiles used and produced by gene trees</p>
 
   <div id="div_hmm_profile" style="display:none">
@@ -1459,20 +1358,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="homology" style="font-size:11pt;font-weight:bold">homology</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_homology" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="homology" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">homology</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_homology" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains all the genomic homologies. There are two homology_member entries for each homology entry for now, but both the schema and the API can handle more than just pairwise relationships. <br />dN, dS, N, S and lnL are statistical values given by the codeml program of the <a href="http://abacus.gene.ucl.ac.uk/software/paml.html">Phylogenetic Analysis by Maximum Likelihood (PAML)</a> package.</p>
 
   <div id="div_homology" style="display:none">
@@ -1495,8 +1391,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query defines a pair of paralogous xenopous genes. See <a href="#homology_member">homology_member</a> for more details </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM homology WHERE homology_id = 4650;</pre> <a id="e_homology" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_homology" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>homology_id</th><th>method_link_species_set_id</th><th>description</th><th>subtype</th><th>dn</th><th>ds</th><th>n</th><th>s</th><th>lnl</th><th>threshold_on_ds</th><th>ancestor_node_id</th><th>tree_node_id</th></tr>      <tr><td>4650</td><td>21255</td><td>other_paralog</td><td>Chordata</td><td>1.31530</td><td>44.71590</td><td>659.9</td><td>243.1</td><td>-2371.036</td><td>2.00000</td><td>279922</td><td>279922</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>homology_id</th><th>method_link_species_set_id</th><th>description</th><th>subtype</th><th>dn</th><th>ds</th><th>n</th><th>s</th><th>lnl</th><th>threshold_on_ds</th><th>ancestor_node_id</th><th>tree_node_id</th></tr>      <tr><td>4650</td><td>28935</td><td>other_paralog</td><td>Bilateria</td><td></td><td></td><td></td><td></td><td></td><td></td><td>253241</td><td>253241</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#homology_member">homology_member</a></li>
@@ -1504,20 +1400,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="homology_member" style="font-size:11pt;font-weight:bold">homology_member</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_homology_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology_member')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="homology_member" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">homology_member</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_homology_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology_member')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the sequences corresponding to every genomic homology relationship found. There are two homology_member entries for each pairwise homology entry. As written in the homology table section, both schema and API can deal with more than pairwise relationships.<br /> The original alignment is not stored but it can be retrieved using the cigar_line field and the original sequences. The cigar line defines the sequence of matches or mismatches and deletions in the alignment. <ul> <li><b>First peptide sequence</b>: SERCQVVVISIGPISVLSMILDFY</li> <li><b>Second peptide sequence</b>: SDRCQVLVISILSMIGLDFY</li> <li><b>First corresponding cigar line</b>: 20MD4M</li> <li><b>Second corresponding cigar line</b>: 11M5D9M</li> </ul> The alignment will be:<br /> <table class="spreadsheet"> <caption>Example of alignment reconstruction</caption> <tbody> <tr> <th>First peptide cigar line</th> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>D</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> </tr> <tr> <th>First aligned peptide</th> <td>S</td> <td>E</td> <td>R</td> <td>C</td> <td>Q</td> <td>V</td> <td>V</td> <td>V</td> <td>I</td> <td>S</td> <td>I</td> <td>G</td> <td>P</td> <td>I</td> <td>S</td> <td>V</td> <td>L</td> <td>S</td> <td>M</td> <td>I</td> <td>-</td> <td>L</td> <td>D</td> <td>F</td> <td>Y</td> </tr> <tr> <th>Second aligned peptide</th> <td>S</td> <td>D</td> <td>R</td> <td>C</td> <td>Q</td> <td>V</td> <td>L</td> <td>V</td> <td>I</td> <td>S</td> <td>I</td> <td>-</td> <td>-</td> <td>-</td> <td>-</td> <td>-</td> <td>L</td> <td>S</td> <td>M</td> <td>I</td> <td>G</td> <td>L</td> <td>D</td> <td>F</td> <td>Y</td> </tr> <tr> <th>Second peptide cigar line</th> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>D</td> <td>D</td> <td>D</td> <td>D</td> <td>D</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> </tr> </tbody> </table></p>
 
   <div id="div_homology_member" style="display:none">
@@ -1535,8 +1428,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query refers to the two homologue sequences defined by the homology.homology_id 4650. Gene and peptide sequence of the second homologue can retrieved in the same way. </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM homology_member WHERE homology_id = 4650;</pre> <a id="e_homology_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology_member','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_homology_member" style="display:none;">
-    <table class="ss" style="width:80%;margin-top:20px;margin-left:10px">
-      <tr><th>homology_id</th><th>member_id</th><th>peptide_member_id</th><th>cigar_line</th><th>perc_cov</th><th>perc_id</th><th>perc_pos</th></tr>      <tr><td>4650</td><td>6755859</td><td>6755860</td><td>23D4M2D7MD2MD27MD5M120D9M147D14M30D96M2D2M25D23MD40M5D10M14D61M2D36M157D9M8D14M</td><td>100</td><td>19</td><td>35</td></tr>      <tr class="bg2"><td>4650</td><td>6841242</td><td>6841243</td><td>25M2D6MD9M2D8M4D489M2D63M8D3M14D30M2D10M4D5M7D7M9D161MD24M2D</td><td>100</td><td>8</td><td>15</td></tr>    </table>
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px">
+      <tr><th>homology_id</th><th>member_id</th><th>peptide_member_id</th><th>cigar_line</th><th>perc_cov</th><th>perc_id</th><th>perc_pos</th></tr>      <tr><td>4650</td><td>4904459</td><td>4904460</td><td>18M6D11M5D10MD18M3D16M4D27M4D3MD41M2D14MD12MDM2D18MD30M4D7MD7MD13M6D25M2D28M2D28MD27M6D41MD14M</td><td>70</td><td>18</td><td>31</td></tr>      <tr class="bg2"><td>4650</td><td>4926215</td><td>4926216</td><td>17D9M2D12M4D48M12D5M3D4MD10M3D8M12D9MD4MD23M2D11M9D14MD18MDM5D20M13D6M25D20M2D12M5D2MD12MD24MD70M</td><td>84</td><td>22</td><td>37</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#member">member</a></li>
@@ -1544,20 +1437,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="mapping_session" style="font-size:11pt;font-weight:bold">mapping_session</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_mapping_session" style="cursor:pointer;text-decoration:none" onclick="show_hide('mapping_session')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="mapping_session" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">mapping_session</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_mapping_session" style="cursor:pointer;text-decoration:none" onclick="show_hide('mapping_session')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains one entry per stable_id mapping session (either for Families or for Protein Trees), which contains the type, the date of the mapping, and which releases were linked together. A single mapping_session is the event when mapping between two given releases for a particular class type ('family' or 'tree') is loaded. The whole event is thought to happen momentarily at 'when_mapped' (used for sorting in historical order).</p>
 
   <div id="div_mapping_session" style="display:none">
@@ -1572,20 +1462,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="stable_id_history" style="font-size:11pt;font-weight:bold">stable_id_history</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_stable_id_history" style="cursor:pointer;text-decoration:none" onclick="show_hide('stable_id_history')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="stable_id_history" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">stable_id_history</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_stable_id_history" style="cursor:pointer;text-decoration:none" onclick="show_hide('stable_id_history')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.</p>
 
   <div id="div_stable_id_history" style="display:none">
@@ -1594,20 +1481,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="sitewise_aln" style="font-size:11pt;font-weight:bold">sitewise_aln</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_sitewise_aln" style="cursor:pointer;text-decoration:none" onclick="show_hide('sitewise_aln')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="sitewise_aln" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">sitewise_aln</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_sitewise_aln" style="cursor:pointer;text-decoration:none" onclick="show_hide('sitewise_aln')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains site-wise omega values found in the multiple alignments underlining the protein trees. </p>
 
   <div id="div_sitewise_aln" style="display:none">
@@ -1627,20 +1511,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="species_tree_node" style="font-size:11pt;font-weight:bold">species_tree_node</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_species_tree_node" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_tree_node')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="species_tree_node" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">species_tree_node</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_species_tree_node" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_tree_node')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the nodes of the species tree used in the gene gain/loss analysis</p>
 
   <div id="div_species_tree_node" style="display:none">
@@ -1663,20 +1544,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="species_tree_root" style="font-size:11pt;font-weight:bold">species_tree_root</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_species_tree_root" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_tree_root')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="species_tree_root" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">species_tree_root</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_species_tree_root" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_tree_root')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores the species tree used in the gene gain/loss analysis (for ncRNA and Protein Trees)</p>
 
   <div id="div_species_tree_root" style="display:none">
@@ -1695,20 +1573,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="species_tree_node_tag" style="font-size:11pt;font-weight:bold">species_tree_node_tag</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_species_tree_node_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_tree_node_tag')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="species_tree_node_tag" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">species_tree_node_tag</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_species_tree_node_tag" style="cursor:pointer;text-decoration:none" onclick="show_hide('species_tree_node_tag')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains tag/value data for species_tree_nodes</p>
 
   <div id="div_species_tree_node_tag" style="display:none">
@@ -1726,20 +1601,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="CAFE_gene_family" style="font-size:11pt;font-weight:bold">CAFE_gene_family</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_CAFE_gene_family" style="cursor:pointer;text-decoration:none" onclick="show_hide('CAFE_gene_family')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="CAFE_gene_family" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">CAFE_gene_family</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_CAFE_gene_family" style="cursor:pointer;text-decoration:none" onclick="show_hide('CAFE_gene_family')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds information about each CAFE gene family</p>
 
   <div id="div_CAFE_gene_family" style="display:none">
@@ -1762,20 +1634,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   </ul>
 
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1E90FF"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="CAFE_species_gene" style="font-size:11pt;font-weight:bold">CAFE_species_gene</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_CAFE_species_gene" style="cursor:pointer;text-decoration:none" onclick="show_hide('CAFE_species_gene')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="CAFE_species_gene" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">CAFE_species_gene</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_CAFE_species_gene" style="cursor:pointer;text-decoration:none" onclick="show_hide('CAFE_species_gene')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores per <a href="#species_tree_node">species_tree_node</a> information about expansions/contractions of each <a href="#CAFE_gene_family">CAFE_gene_family</a></p>
 
   <div id="div_CAFE_species_gene" style="display:none">
