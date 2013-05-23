@@ -26,6 +26,7 @@ sub content {
     $self->get_allele_types($source),
     $self->get_source($source, $object->source_description),
     $self->get_study,
+    $self->get_alias,
     scalar(@$sv_sets) ? ['Present in', sprintf '<p><b>%s</b></p>', join(', ',@$sv_sets)] : (),
     $self->get_strains,
     $self->location($mappings),
@@ -125,6 +126,25 @@ sub get_study {
   return ['Study', "$study_line - $study_description"];
 }
 
+
+sub get_alias {
+  my $self   = shift;
+  my $object = $self->object;
+  my $alias  = $object->Obj->alias;
+  
+  return unless $alias;
+  
+  my $er_url = $object->external_reference;
+  if ($er_url =~ /cosmic/) {
+    $alias =~ /(\d+)/;
+    my $cosmic_id = ($1) ? $1 : '';   
+    $alias = $self->hub->get_ExtURL_link($alias, 'COSMIC_SV', $cosmic_id);
+  }
+  
+  return ['Alias', $alias];
+}
+
+
 # Method to add a pubmed link to the expression "PMID:xxxxxxx"
 # in the source or study description, if it is present.
 sub add_pubmed_link {
@@ -145,7 +165,17 @@ sub add_pubmed_link {
     }
   } 
   elsif ($er_url && $er_url =~ /^http|ftp/){
-    $description .= " | <a href=\"$er_url\" rel=\"external\">Go to website</a>";
+    my $url;
+    if ($er_url =~ /cosmic/) {
+      my $alias = $self->object->Obj->alias;
+         $alias =~ /(\d+)/;
+      my $cosmic_id = ($1) ? $1 : '';   
+      $url = $hub->get_ExtURL_link('View in COSMIC website', 'COSMIC_SV', $cosmic_id);
+    } 
+    else { 
+      $url = qq{<a href="$er_url" rel="external">Go to the website</a>};
+    }
+    $description .= " | $url";
   } 
   
   return $description;
