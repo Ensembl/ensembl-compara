@@ -73,12 +73,14 @@ sub content_results {
   my $hub    = $self->hub;
   my $indiv  = $hub->param('ind');
   
-  if (defined($indiv)) {
-    $indiv =~ s/^\W+//;
-    $indiv =~ s/\s+$//;
-  }
-  
   return qq{<div class="results"></div>} if (!defined($indiv) || $indiv eq '');
+  
+  my $indiv_ori = $indiv;
+  
+  $indiv =~ s/^\W+//;
+  $indiv =~ s/\s+$//;
+  
+  return sprintf (qq{<div class="results">%s</div>},$self->warning_message($indiv_ori)) if (!defined($indiv) || $indiv eq '');
   
   my %rows;
   my $flag_children = 0;
@@ -151,7 +153,7 @@ sub content_results {
     $html .= '<div style="margin:0px 0px 50px;padding:0px"><h2>Results for "'.$indiv.'" ('.scalar @$rows.')</h2>'.$ind_table->render.'</div>';
 
   } else {
-    $html .= $self->_warning('Not found', qq{No genotype associated with this variant was found for the individual name '<b>$indiv</b>'!});
+    $html .= $self->warning_message($indiv);
   }
 
   return qq{<div class="results">$html</div>};
@@ -166,6 +168,14 @@ sub get_all_populations {
   
   return (scalar @pop_names > 0) ? join('; ',sort(@pop_names)) : '-';
 }
+
+sub warning_message {
+  my $self  = shift;
+  my $indiv = shift;
+  
+  return $self->_warning('Not found', qq{No genotype associated with this variant was found for the individual name '<b>$indiv</b>'!});
+}
+
 
 
 1;
