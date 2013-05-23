@@ -14,18 +14,20 @@ sub _init {
 }
 
 sub content {
-  my $self         = shift;
-  my $object       = $self->object;
-  my $hub          = $self->hub;
-  my $indiv        = $hub->param('ind');
+  my $self   = shift;
+  my $object = $self->object;
+  my $hub    = $self->hub;
+  my $indiv  = $hub->param('ind');
   
   return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;  
 
   my $url = $self->ajax_url('results', { ind => undef });  
   my $id  = $self->id;  
 
-  $indiv =~ s/^\s+// if defined($indiv);
-  $indiv =~ s/\s+$// if defined($indiv);
+  if (defined($indiv)) {
+    $indiv =~ s/^\W+//;
+    $indiv =~ s/\s+$//;
+  }
 
   # From
   my $html = qq{
@@ -71,10 +73,12 @@ sub content_results {
   my $hub    = $self->hub;
   my $indiv  = $hub->param('ind');
   
-  return qq{<div class="results"></div>} if (!defined($indiv) || $indiv eq '' || $indiv =~ /^\W+$/);
+  if (defined($indiv)) {
+    $indiv =~ s/^\W+//;
+    $indiv =~ s/\s+$//;
+  }
   
-  $indiv =~ s/^\s+//  if defined($indiv);
-  $indiv =~ s/\s+$//  if defined($indiv);
+  return qq{<div class="results"></div>} if (!defined($indiv) || $indiv eq '');
   
   my %rows;
   my $flag_children = 0;
