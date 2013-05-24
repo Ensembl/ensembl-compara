@@ -176,6 +176,7 @@ sub menus {
     variation           => 'Variation',
     somatic             => 'Somatic mutations',
     ld_population       => 'Population features',
+    recombination       => [ 'Recombination & Accessibility', 'variation' ],
     
     # Regulation
     functional          => 'Regulation',
