@@ -6,6 +6,8 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+
 use base qw(EnsEMBL::Web::ViewConfig);
 
 # TODO: Support other datahub dimensions as filters?
@@ -310,6 +312,7 @@ sub form_matrix {
   
   $track_style_header ||= 'Track';
   
+  my %help      = $hub->species_defs->multiX('ENSEMBL_HELP');
   my %tutorials = (
     row       => sprintf('Hover on %s names to select or deselect %s types', @axis_labels),
     col       => sprintf('Hover on %s names to select or deselect %s types', reverse @axis_labels),
@@ -317,6 +320,7 @@ sub form_matrix {
     fil       => sprintf('%s %s or %s type search terms', scalar keys %filters > 1 ? sprintf 'Choose a%s %s class and/or enter', $axis_labels[1] =~ /^[aeiou]/ ? 'n' : '', $axis_labels[1] : 'Enter', @axis_labels),
     drag      => 'Click and drag with your mouse to turn on/off more than one box',
     all_track => 'Click to change all track styles at once',
+    video     => sprintf('<a href="%s" class="popup">Click to view a tutorial video</a>', $hub->url({ type => 'Help', action => 'View', id => $help{'Config/Matrix'}, __clear => 1 })),
   );
   
   $tutorials{$_} = qq{<b class="tutorial $_">$tutorials{$_}</b>} for keys %tutorials;
@@ -341,7 +345,7 @@ sub form_matrix {
     $rows_html .= qq{<tr class="$row_class">$row_html</tr>};
   }
   
-  my $i = 0;
+  my $c = 0;
   
   foreach (@columns) {
     my $x           = $_->{'x'};
@@ -360,7 +364,7 @@ sub form_matrix {
     );
     
     # FIXME: don't double up class with id
-    $headers_html[2] .= sprintf qq{<th id="$name" class="$x_class $name $display track%s">%s</th>}, $display eq 'off' ? '' : ' on', $i++ ? '' : $tutorials{'track'};
+    $headers_html[2] .= sprintf qq{<th id="$name" class="$x_class $name $display track%s">%s</th>}, $display eq 'off' ? '' : ' on', $c++ ? '' : $tutorials{'style'};
     
     push @{$self->{'json'}{'trackIds'}}, $name;
     push @{$self->{'json'}{'tracks'}}, {
@@ -375,6 +379,7 @@ sub form_matrix {
   my $html = sprintf(qq{
     <h1>$conf->{'section'}</h1>
     <div class="toggle_tutorial"></div>
+    $tutorials{'video'}
     <div class="header_wrapper">
       <h2>%s</h2> 
       <div class="sprite info_icon help" title="Click for more information">&nbsp;</div>
