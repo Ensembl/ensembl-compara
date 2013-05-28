@@ -54,10 +54,10 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
   },
   
   updateSearch: function (type) {
-    var label = type ? $('.' + type + ' input', this.elLk.menu).val() : false;
+    var label = type ? this.elLk.menu.find('.' + type + ' input').val() : false;
     
     if (label) {
-      this.elLk.img.attr('src', '/i/search/' + type + '.gif');
+      this.elLk.img.attr('src', this.elLk.menu.find('.' + type + ' img').attr('src'));
       this.elLk.siteInput.val(type);
       
       if (this.elLk.input.val() === this.label) {
