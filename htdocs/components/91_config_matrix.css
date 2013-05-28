@@ -119,6 +119,10 @@ div.config div.config_matrix .tutorial.row:after        { border-width: 10px 43p
 div.config div.config_matrix .tutorial.fil              { width: 180px; top: 3px; left: 310px; padding: 4px; border-radius: 0; }
 div.config div.config_matrix .tutorial.fil:before       { border-width: 40px 40px 0 0; bottom: 50%; left: -40px; }
 div.config div.config_matrix .tutorial.fil:after        { border-width: 0 40px 40px 0; top:    50%; left: -40px; }
+div.config div.config_matrix .tutorial.video            { top: 45px; right: 5px; }
+div.config div.config_matrix .tutorial.video a          { color: #FFF!important; }
+div.config div.config_matrix .tutorial.video:before,    
+div.config div.config_matrix .tutorial.video:after      { display: none; }
 
 body.ie67  div.config div.config_matrix .tutorial,
 body.ie67  div.config div.config_matrix .toggle_tutorial,
