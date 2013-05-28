@@ -7,6 +7,7 @@ package EnsEMBL::Web::Document::Element::PageNav;
 use strict;
 
 use HTML::Entities qw(encode_entities);
+use URI::Escape    qw(uri_escape);
 
 use base qw(EnsEMBL::Web::Document::Element::Navigation);
 
