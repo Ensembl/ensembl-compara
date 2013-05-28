@@ -486,54 +486,16 @@ sub evidence_status {
   my $hub            = $self->hub;
   my $object         = $self->object;
   my $status         = $object->evidence_status;
-
-  my (@status_list, %main_status);
-
-  if (scalar @$status) {
-    my $snp_name = $object->name;
-
-    foreach (@$status) {
-      my $st;
-
-      if ($_ eq 'HapMap') {
-        $st = 'HapMap', $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
-        $main_status{'HapMap'} = 1;
-
-      } elsif ($_ =~ /1000Genome/i) {
-        $st = '1000 Genomes';
-        $main_status{'1000 Genomes'} = 1;
-
-      }
-      else{
-        $_ =~ s/Multiple_observations/Multiple observations/;
-        $st = $_;
-
-         push @status_list, $st;
-      }
-    }
-  }
-
-  my $status_count = scalar @status_list;
-
-  return unless $status_count;
-
-  my $html;
-
-  if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
-    my $show = $self->hub->get_cookie_value('toggle_status') eq 'open';
-    my $showed_line;
-
-    foreach my $st (sort keys %main_status) {
-      $showed_line .= ', ' if $showed_line;
-      $showed_line .= "<b>$st</b>";
-      $status_count --;
-    }
-
-    $showed_line .= ', ' . join ', ', sort @status_list if $status_count > 0;
-    $html        .= $showed_line;
-  } else {
-    $html .= join ', ', sort @status_list;
-  }
+  
+  my $html = join("",
+    map {
+      sprintf(
+        '<img style="margin-right: 5px; vertical-align:top;" src="/i/96/evidence_%s.png" title="%s"/>',
+        #$_ =~ /1000|hap/i ? '#336' : 'white',
+        $_, $_
+      )
+    } sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$status
+  );
 
   return ['Evidence status', $html];
 }
