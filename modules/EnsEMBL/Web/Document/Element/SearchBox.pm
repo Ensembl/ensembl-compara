@@ -11,30 +11,37 @@ use base qw(EnsEMBL::Web::Document::Element);
 sub default_search_code { return $_[0]->{'_default'} ||= $_[0]->hub->get_cookie_value('ENSEMBL_SEARCH') || $_[0]->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl'; }
 
 sub search_options {
-  return (
-    ## search_key         Dropdown label                  Input value
-    $_[0]->hub->species ?
-    [ 'ensembl',          'Ensembl search this species',  'Search ' . $_[0]->species_defs->SPECIES_COMMON_NAME, 'species/16/'.$_[0]->hub->species.'.png' ] : (),
-    [ 'ensembl_all',      'Ensembl search all species',   'Search all species', 'search/ensembl.gif'],
-    [ 'ensembl_genomes',  'Ensembl genomes search',       'Search Ensembl genomes', 'search/ensembl_genomes.gif'],
-    [ 'vega',             'Vega search',                  'Search Vega', 'search/vega.gif'],
-    [ 'ebi',              'EBI search',                   'Search EBI', 'search/ebi.gif'],
-    [ 'sanger',           'Sanger search',                'Search Sanger', 'search/sanger.gif'],
-  );
+  my $self          = shift;
+  my $species       = $self->hub->species;
+  my $species_name  = $species ? $self->species_defs->SPECIES_COMMON_NAME : '';
+
+  return [ $species ? (
+    'ensembl'         => { 'label' => "Search $species_name",   'icon' => "species/16/${species}.png"   }) : (),
+    'ensembl_all'     => { 'label' => 'Search all species',     'icon' => 'search/ensembl.gif'          },
+    'ensembl_genomes' => { 'label' => 'Search Ensembl genomes', 'icon' => 'search/ensembl_genomes.gif'  },
+    'vega'            => { 'label' => 'Search Vega',            'icon' => 'search/vega.gif'             },
+    'ebi'             => { 'label' => 'Search EBI',             'icon' => 'search/ebi.gif'              },
+    'sanger'          => { 'label' => 'Sanger search',          'icon' => 'search/sanger.gif'           }
+  ];
 }
 
 sub content {
-  my $self           = shift;
-  my $img_url        = $self->img_url;
-  my $species        = $self->home_url . $self->hub->species;
-  my $search_url     = $species && $species ne '/' ? "$species/psychic" : '/common/psychic';
-  my @options        = $self->search_options;
-  my $search_code    = lc $self->default_search_code;
-     $search_code    = grep({ $_->[0] eq $search_code } @options) ? $search_code : $options[0][0];
-  my $search_options = join '', map qq(<div class="$_->[0]"><img src="${img_url}$_->[3]" alt="$_->[1]"/>$_->[1]<input type="hidden" value="$_->[2]&hellip;" /></div>\n), @options;
-  my ($search_label) = map { $_->[0] eq $search_code ? "$_->[2]&hellip;" : () } @options;
-
-  my $search_icon = $species && $species ne '/' ? "species/16/$species.png" : "search/${search_code}.gif";
+  my $self            = shift;
+  my $hub             = $self->hub;
+  my $img_url         = $self->img_url;
+  my $species         = $hub->species;
+  my $search_url      = sprintf '%s%s/psychic', $self->home_url, $species || 'Multi';
+  my $options         = $self->search_options;
+  my %options_hash    = @$options;
+  my $search_code     = lc $self->default_search_code;
+     $search_code     = $options->[0] unless exists $options_hash{$search_code};
+  my $search_options  = join '', map {
+    if ($_ % 2 == 0) {
+      my $code    = $options->[$_];
+      my $details = $options->[$_ + 1];
+      qq(<div class="$code"><img src="${img_url}$details->{'icon'}" alt="$details->{'label'}"/>$details->{'label'}<input type="hidden" value="$details->{'label'}&hellip;" /></div>\n);
+    }
+  } 0..scalar @$options;
 
   return qq(
     <div id="searchPanel" class="js_panel">
@@ -42,15 +49,15 @@ sub content {
       <form action="$search_url">
         <div class="search print_hide">
           <div class="sites button">
-            <img class="search_image" src="${img_url}$search_icon" alt="" />
+            <img class="search_image" src="${img_url}$options_hash{$search_code}{'icon'}" alt="" />
             <img src="${img_url}search/down.gif" style="width:7px" alt="" />
             <input type="hidden" name="site" value="$search_code" />
           </div>
           <div>
             <label class="hidden" for="se_q">Search terms</label>
-            <input class="query inactive" id="se_q" type="text" name="q" value="$search_label" />
+            <input class="query inactive" id="se_q" type="text" name="q" value="$options_hash{$search_code}{'label'}&hellip;" />
           </div>
-          <div class="button"><input type="image" src="${img_url}16/search.png" alt="Search&gt;&gt;" /></div>
+          <div class="button"><input type="image" src="${img_url}16/search.png" alt="Search&nbsp;&raquo;" /></div>
         </div>
         <div class="site_menu hidden">
           $search_options
