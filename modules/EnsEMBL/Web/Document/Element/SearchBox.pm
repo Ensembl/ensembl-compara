@@ -20,7 +20,7 @@ sub search_options {
     'ensembl_genomes' => { 'label' => 'Search Ensembl genomes', 'icon' => 'search/ensembl_genomes.gif'  },
     'vega'            => { 'label' => 'Search Vega',            'icon' => 'search/vega.gif'             },
     'ebi'             => { 'label' => 'Search EBI',             'icon' => 'search/ebi.gif'              },
-    'sanger'          => { 'label' => 'Sanger search',          'icon' => 'search/sanger.gif'           }
+    'sanger'          => { 'label' => 'Search Sanger',          'icon' => 'search/sanger.gif'           }
   ];
 }
 
