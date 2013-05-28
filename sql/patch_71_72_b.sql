@@ -13,7 +13,6 @@ CREATE TABLE `member_production_counts` (
 CREATE TEMPORARY TABLE temp_member_family_counts (
        stable_id varchar(128) NOT NULL,
        families INT(10) UNSIGNED DEFAULT 0,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
 );
 
 INSERT INTO temp_member_family_counts(stable_id, families) SELECT stable_id, COUNT(*) FROM family_member JOIN member USING (member_id) GROUP BY member_id;
@@ -25,7 +24,6 @@ UPDATE member_production_counts mpc JOIN temp_member_family_counts t USING(stabl
 CREATE TEMPORARY TABLE temp_member_tree_counts (
        stable_id varchar(128) NOT NULL,
        default_gene_tree_root INT(10) UNSIGNED,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
 );
 
 INSERT INTO temp_member_tree_counts (stable_id, default_gene_tree_root) SELECT member.stable_id, gene_tree_root.root_id FROM member JOIN gene_tree_node ON(member.canonical_member_id = gene_tree_node.member_id) JOIN gene_tree_root USING(root_id) WHERE member.source_name = 'ENSEMBLGENE' AND clusterset_id = 'default' AND tree_type = 'tree';
@@ -39,7 +37,6 @@ UPDATE member_production_counts JOIN temp_member_tree_counts t USING(stable_id) 
 CREATE TEMPORARY TABLE temp_member_orthologues_counts (
        stable_id varchar(128) NOT NULL,
        orthologues INT(10) UNSIGNED DEFAULT 0,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
 );
 INSERT INTO temp_member_orthologues_counts(stable_id, orthologues) SELECT stable_id, count(*) FROM member_production_counts JOIN member USING(stable_id) JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%ortholog%' GROUP BY member_id;
 
@@ -49,7 +46,6 @@ UPDATE member_production_counts mpc JOIN temp_member_orthologues_counts USING(st
 CREATE TEMPORARY TABLE temp_member_paralogues_counts (
        stable_id varchar(128) NOT NULL,
        paralogues INT(10) UNSIGNED DEFAULT 0,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
 );
 
 INSERT INTO temp_member_paralogues_counts(stable_id, paralogues) SELECT stable_id, count(*) FROM member_production_counts JOIN member USING(stable_id) JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%paralog%' GROUP BY member_id;
