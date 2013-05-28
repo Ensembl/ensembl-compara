@@ -1888,6 +1888,7 @@ sub dumpGene {
   if ($search_engine eq 'solr') {
     $dbs{'vega'} = $VEGADB if $VEGADB;
   }
+
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
 
   my $total_c;
@@ -2142,7 +2143,7 @@ sub dumpGene {
     print LOG "    Querying done, added $c entries ".&date_and_mem()."\n";
 
     #archive Stable IDs
-    my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ], 'Gene');
+    my $other_count = &do_archive_stable_ids( [ 'gene' ], $dbname, $db, $fh, $counter );
 
     print LOG "    Stable_id mapping querying done, added $other_count entries ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
@@ -2460,11 +2461,9 @@ sub dumpTranscript {
     }
     print LOG "    Transcript info query done and xml generated, $c entries added ".&date_and_mem()."\n";
 
-    #don't add archive stable IDs for solr, only need them in the gene
-    if ($search_engine ne 'solr') {
-      my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(transcript translation) ], 'Transcript');
-      print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
-    }
+    my $other_count = &do_archive_stable_ids(  [ (qw(transcript translation)) ], $dbname, $db, $fh, $counter );
+    print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
+
     $total_c += footer( $counter->(),$nogzip,$fh);
   }
   return $total_c;
@@ -2703,70 +2702,79 @@ sub GeneTransLine {
 ## methods for archive stable IDs (called by genes and transcripts) ##
 
 sub do_archive_stable_ids {
-  my ($dbname,$db,$fh,$counter,$types,$domain_type,) = @_;
+  my ($types,$dbname,$db,$fh,$counter) = @_;
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
   my %current_stable_ids =();
   foreach my $type (@$types) {
     $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.$type" )}};
   }
+  my $types = join "','",@$types;
   my $species = $conf->{'species'};
   my $sth = $conf->{'dbh'}->prepare( qq(
     SELECT sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id),
            ms.old_release*1.0 as X, ms.new_release*1.0 as Y
       FROM $dbname.mapping_session as ms, $dbname.stable_id_event as sie
-     WHERE ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
+     WHERE ms.mapping_session_id = sie.mapping_session_id 
+       AND sie.type in ('$types')
+       AND ( old_stable_id != new_stable_id or isnull(new_stable_id) )
      ORDER by Y desc, X desc
   ));
 
   $sth->execute();
   my %mapping = ();
-  while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
-    next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
-    $mapping{$type}{$osi}{$nsi} = 1;
-    if($mapping{$type}{$nsi}) {
-      foreach( keys %{$mapping{$type}{$nsi}} ) {
-        $mapping{$type}{$osi}{$_} = 1;
+  while( my($type,$osi,$nsi,$old_release,$new_release) = $sth->fetchrow_array() ) {
+    next if $current_stable_ids{$type}{$osi}; ## Don't want to show current stable IDs.
+    next if $osi eq $nsi; ##
+    #if the mapped ID is current set it as an example, as long as it's post release 62
+    if ( ! $mapping{$type}{$osi}{'example'} && $new_release > 62) {
+      if ($current_stable_ids{$type}{$nsi}) {
+        $mapping{$type}{$osi}{'example'} = $nsi;
       }
     }
+    $mapping{$type}{$osi}{'matches'}{$nsi}++;
   }
   my $other_count = 0;
   foreach my $type ( keys %mapping ) {
     foreach my $osi ( keys %{$mapping{$type}} ) {
       my @current_sis = ();
       my @deprecated_sis = ();
-      foreach ( keys %{$mapping{$type}{$osi}} ) {
-        next if $osi eq $_;
-        if( $current_stable_ids{$type}{$_} ) {
-          push @current_sis,$_;
+      foreach my $nsi ( keys %{$mapping{$type}{$osi}{'matches'}} ) {
+        if( $current_stable_ids{$type}{$nsi} ) {
+          push @current_sis,$nsi;
         } elsif( $_ ne 'NULL' ) {
-          push @deprecated_sis,$_;
+          push @deprecated_sis,$nsi;
         }
       }
       if( @current_sis ) {
         $other_count++;
+        my $example_id   = $mapping{$type}{$osi}{'example'};
         my $current_id_c = scalar(@current_sis );
-        my $id = $current_id_c > 1 ? 'identifiers' : 'identifier';
+        my $cur_txt = $current_id_c > 1 ? "$current_id_c current identifiers" : "$current_id_c current identifier";
+        $cur_txt .= $example_id ? " (eg $example_id)" : '';
+        my $desc = qq(Ensembl $type $osi is no longer in the database.);
         my $deprecated_id_c = scalar(@deprecated_sis);
-        my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $current_id_c current $id);
         if ($deprecated_id_c) {
-          $id = $deprecated_id_c > 1 ? 'identifiers' : 'identifier';
-          $desc .= qq( and $deprecated_id_c deprecated $id);
+          my $dep_txt = $deprecated_id_c > 1 ? "$deprecated_id_c deprecated identifiers" : "$deprecated_id_c deprecated identifier";
+          $desc .= " It has been mapped to $dep_txt";
+          $desc .= $current_id_c ? " and $cur_txt." : '.'
         }
-        $desc .= '.';
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$domain_type,$db,$counter),$nogzip, $fh);
+        elsif ($current_id_c) {
+          $desc .= "It has been mapped to $cur_txt.";
+        }
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
       }
       elsif( @deprecated_sis ) {
         $other_count++;
         my $deprecated_id_c = scalar(@deprecated_sis);
         my $id = $deprecated_id_c > 1 ? 'identifiers' : 'identifier';
         my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $deprecated_id_c deprecated $id.);
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$domain_type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
       }
       else {
         $other_count++;
         my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers.);
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,ucfirst($type),$domain_type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
       }
     }
   }
@@ -2774,7 +2782,7 @@ sub do_archive_stable_ids {
 }
 
 sub StableIdMappingLine {
-  my ($species,$desc,$osi,$type,$domain_type,$db,$counter) = @_;
+  my ($species,$desc,$osi,$type,$db,$counter) = @_;
   my $url = sprintf(qq(%s/%s/Idhistory?%s),
                     $species,
                     ucfirst($type),
@@ -2786,7 +2794,7 @@ sub StableIdMappingLine {
 <doc>
   <field name="id">$osi</field>
   <field name="description">$desc</field>);
-    $xml .= &common_fields($species,$domain_type,$db);
+    $xml .= &common_fields($species,ucfirst($type),$db);
     $xml .= qq(
   <field name="domain_url">$url</field>);
     $xml .= qq(
@@ -2798,7 +2806,7 @@ sub StableIdMappingLine {
   <description>$desc</description>
   <name>"Retired Ensembl $type stable ID"</name>
   <additional_fields>);
-    $type = 'IDHistory_'.lc($type);
+    $type = 'IDHistory_'.$type;
 
     $xml .= &common_fields($species,$type);
     $xml .= qq(
