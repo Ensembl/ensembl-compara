@@ -180,7 +180,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       $.extend($.ajax({
         url:      url,
         data:     this.coords.clickStart ? { click_chr: this.coords.clickChr || Ensembl.location.name, click_start: this.coords.clickStart, click_end: this.coords.clickEnd } : {},
-        dataType: 'json',
+        dataType: this.crossOrigin ? 'jsonp' : 'json',
         context:  this,
         success:  $.proxy(this.buildMenuAjax,  this),
         error:    $.proxy(this.populateNoAjax, this)
