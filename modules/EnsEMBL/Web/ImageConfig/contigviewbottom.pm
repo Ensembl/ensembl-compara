@@ -51,6 +51,7 @@ sub init {
     genome_attribs
     misc_feature
     variation
+    recombination
     somatic
     functional
     multiple_align
