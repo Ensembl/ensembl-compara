@@ -8,11 +8,10 @@ use strict;
                                                                                 
 use base qw(EnsEMBL::Web::Document::Element);
 
-sub default_search_code { return $_[0]->{'_default'} ||= $_[0]->hub->get_cookie_value('ENSEMBL_SEARCH') || $_[0]->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl'; }
-
 sub search_options {
+  ## Returns the options for the search dropdown based upon the current species
   my $self          = shift;
-  my $species       = $self->hub->species;
+  my $species       = $self->species;
   my $species_name  = $species ? $self->species_defs->SPECIES_COMMON_NAME : '';
 
   return [ $species ? (
@@ -25,11 +24,21 @@ sub search_options {
   ];
 }
 
+sub default_search_code {
+  ## Returns the search code either set by the user previously by selecting one of the options in the drodpown, or defaults to the one specified in sitedefs
+  return $_[0]->{'_default'} ||= $_[0]->hub->get_cookie_value('ENSEMBL_SEARCH') || $_[0]->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl';
+}
+
+sub species {
+  ## Ignores common and Multi as species names
+  my $species = $_[0]->hub->species;
+  return $species =~ /multi|common/i ? '' : $species;
+}
+
 sub content {
   my $self            = shift;
-  my $hub             = $self->hub;
   my $img_url         = $self->img_url;
-  my $species         = $hub->species;
+  my $species         = $self->species;
   my $search_url      = sprintf '%s%s/psychic', $self->home_url, $species || 'Multi';
   my $options         = $self->search_options;
   my %options_hash    = @$options;
@@ -41,7 +50,7 @@ sub content {
       my $details = $options->[$_ + 1];
       qq(<div class="$code"><img src="${img_url}$details->{'icon'}" alt="$details->{'label'}"/>$details->{'label'}<input type="hidden" value="$details->{'label'}&hellip;" /></div>\n);
     }
-  } 0..scalar @$options;
+  } 0..scalar @$options - 1;
 
   return qq(
     <div id="searchPanel" class="js_panel">
