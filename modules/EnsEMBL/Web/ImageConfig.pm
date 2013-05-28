@@ -140,13 +140,13 @@ sub menus {
   return $_[0]->{'menus'} ||= {
     # Sequence
     seq_assembly        => 'Sequence and assembly',
-    sequence            => [ 'Sequence',          'seq_assembly' ],
-    misc_feature        => [ 'Clones',            'seq_assembly' ],
-    genome_attribs      => [ 'Genome attributes', 'seq_assembly' ],
-    marker              => [ 'Markers',           'seq_assembly' ],
-    simple              => [ 'Simple features',   'seq_assembly' ],
-    ditag               => [ 'Ditag features',    'seq_assembly' ],
-    dna_align_other     => [ 'GRC alignments',    'seq_assembly' ],
+    sequence            => [ 'Sequence',                'seq_assembly' ],
+    misc_feature        => [ 'Clones & misc. regions',  'seq_assembly' ],
+    genome_attribs      => [ 'Genome attributes',       'seq_assembly' ],
+    marker              => [ 'Markers',                 'seq_assembly' ],
+    simple              => [ 'Simple features',         'seq_assembly' ],
+    ditag               => [ 'Ditag features',          'seq_assembly' ],
+    dna_align_other     => [ 'GRC alignments',          'seq_assembly' ],
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
@@ -174,9 +174,9 @@ sub menus {
     
     # Variations
     variation           => 'Variation',
+    recombination       => [ 'Recombination & Accessibility', 'variation' ],
     somatic             => 'Somatic mutations',
     ld_population       => 'Population features',
-    recombination       => [ 'Recombination & Accessibility', 'variation' ],
     
     # Regulation
     functional          => 'Regulation',
@@ -1553,6 +1553,7 @@ sub load_tracks {
       'add_structural_variations',        # Add to variation_feature tree
       'add_copy_number_variant_probes',   # Add to variation_feature tree
       'add_phenotypes',                   # Add to variation_feature tree
+      'add_recombination',                # Add to recombination tree
       'add_somatic_mutations',            # Add to somatic tree
       'add_somatic_structural_variations' # Add to somatic tree
     ],
@@ -2901,6 +2902,32 @@ sub add_phenotypes {
   }
   
   $menu->append($pf_menu);
+}
+
+sub add_recombination {
+  my ($self, $key, $hashref) = @_;
+  my $menu = $self->get_node('variation');
+  return unless $menu;
+  
+  my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
+  
+  foreach (grep !$data->{$_}{'transcript_associated'}, @$keys) {  
+    # Allow override of default glyphset, menu etc.
+    next unless $self->get_node($data->{$_}{'menu'}) eq 'variation';
+    
+    my $glyphset = $data->{$_}{'glyphset'} ? $data->{$_}{'glyphset'}: '_simple';
+    my %options  = (
+      glyphset  => $glyphset,
+      colourset => 'simple',
+      strand    => 'r',
+    );
+
+    foreach my $opt ('renderers', 'height') {
+      $options{$opt} = $data->{$_}{$opt} if $data->{$_}{$opt};
+    }
+    
+    $self->generic_add($menu, $key, "simple_${key}_$_", $data->{$_}, \%options);
+  }
 }
 
 sub add_structural_variations {
