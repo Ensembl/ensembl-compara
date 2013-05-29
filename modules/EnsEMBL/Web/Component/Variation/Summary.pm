@@ -507,7 +507,7 @@ sub clinical_significance {
   my $hub    = $self->hub; 
   my $clin_sign = $object->clinical_significance;
   my $c_link = $hub->get_ExtURL_link("View explanation", "DBSNP_CLIN", '');
-  if (defined($clin_sign)) {
+  if (scalar(keys(%$clin_sign))) {
     my $cs_content;
     while (my ($cs,$colour) = each %$clin_sign) {
       $cs_content .= ($cs_content) ? ', ' : '<p>';
