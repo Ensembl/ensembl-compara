@@ -8,8 +8,9 @@ use strict;
 use EnsEMBL::Web::SpeciesDefs;
 use base qw(Class::DBI::Sweet);
 
-## Setup sonfig on startup time
+## Setup config on startup time
 __PACKAGE__->mk_classdata(species_defs => EnsEMBL::Web::SpeciesDefs->new);
+__PACKAGE__->mk_classdata(__driver     => 'mysql');
 
 ##
 ## Patch for accessor name without '_id' 
