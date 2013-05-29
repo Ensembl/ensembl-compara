@@ -23,31 +23,32 @@ sub convert_to_drawing_parameters {
   my $hub      = $self->hub;
   my @phen_ids = $hub->param('ph');
   my $ga       = $hub->database('core')->get_adaptor('Gene');
-  my (@results, %associated_phenotypes, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources, %phenotypes_studies);
+  my (@results, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources, %phenotypes_studies);
   
   # getting associated phenotypes and associated genes
   foreach my $pf (@{$data || []}) {
-    my $variation_name = $pf->{'_object_id'};
-    my $source_name    = $pf->source;
-       $source_name    =~ s/_/ /g;
-    my $study_xref     = ($pf->study) ? $pf->study->external_reference : undef;
+    my $object_id   = $pf->object_id;
+    my $source_name = $pf->source;
+       $source_name =~ s/_/ /g;
+    my $study_xref  = ($pf->study) ? $pf->study->external_reference : undef;
     
-    $associated_phenotypes{$variation_name}{$pf->phenotype->description} = 1;
-    $phenotypes_sources{$variation_name}{$source_name} = 1;
-    $phenotypes_studies{$variation_name}{$study_xref} = 1 if ($study_xref);
+    $phenotypes_sources{$object_id}{$source_name} = 1;
+    $phenotypes_studies{$object_id}{$study_xref} = 1 if ($study_xref);
     
     # only get the p value log 10 for the pointer matching phenotype id and variation id
     if (grep $pf->{'_phenotype_id'} == $_, @phen_ids) {
-      $p_value_logs{$variation_name} = -(log($pf->p_value) / log(10)) unless $pf->p_value == 0;      
-      $p_values{$variation_name}     = $pf->p_value;
+      $p_value_logs{$object_id} = -(log($pf->p_value) / log(10)) unless $pf->p_value == 0;      
+      $p_values{$object_id}     = $pf->p_value;
       
       # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
       foreach my $id (grep $_, split /,/, $pf->associated_gene) {
         $id =~ s/\s//g;
-        $associated_genes{$variation_name}{$id} = $_->description for @{$ga->fetch_all_by_external_name($id) || []};
+        $associated_genes{$object_id}{$id} = $_->description for @{$ga->fetch_all_by_external_name($id) || []};
       }
     }
   }
+  
+  my %seen;
   
   foreach my $pf (@$data) {
     if (ref($pf) =~ /UnmappedObject/) {
@@ -55,11 +56,15 @@ sub convert_to_drawing_parameters {
       next;
     }
     
-    my $object_type = $pf->type;
+    # unique key on name and location
+    my $name        = $pf->object_id;
     my $seq_region  = $pf->seq_region_name;
     my $start       = $pf->seq_region_start;
+    next if $seen{$name.$seq_region.$start};
+    $seen{$name.$seq_region.$start} = 1;
+    
+    my $object_type = $pf->type;
     my $end         = $pf->seq_region_end;
-    my $name        = $pf->object_id;
     my $dbID        = $pf->dbID;
     my $id_param    = $object_type;
        $id_param    =~ s/[a-z]//g;
@@ -107,7 +112,6 @@ sub convert_to_drawing_parameters {
       p_value => $p_value_logs{$name},
       extra   => {
         feat_type   => $object_type,
-        phenotypes  => join('; ', sort keys %{$associated_phenotypes{$name} || {}}),
         phe_sources => join(', ', sort keys %{$phenotypes_sources{$name}    || {}}),
         phe_studies => $self->_pf_external_reference_link($phenotypes_studies{$name}),
         'p-values'  => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
@@ -118,7 +122,6 @@ sub convert_to_drawing_parameters {
   return [ \@results, [
     { key => 'feat_type',   title => 'Feature type',            sort => ''        },
     { key => 'genes',       title => 'Reported gene(s)',        sort => 'html'    },
-    { key => 'phenotypes',  title => 'Associated phenotype(s)', sort => ''        },
     { key => 'phe_sources', title => 'Annotation source(s)',    sort => ''        },
     { key => 'phe_studies', title => 'Study',                   sort => ''        },
     { key => 'p-values',    title => 'P value (negative log)',  sort => 'numeric' },
