@@ -505,12 +505,21 @@ sub clinical_significance {
   my $self   = shift;
   my $object = $self->object;
   my $hub    = $self->hub; 
-  my ($clin_sign,$colour) = $object->clinical_significance;
+  my $clin_sign = $object->clinical_significance;
   my $c_link = $hub->get_ExtURL_link("View explanation", "DBSNP_CLIN", '');
-  return $clin_sign ? [
+  if (defined($clin_sign)) {
+    my $cs_content;
+    while (my ($cs,$colour) = each %$clin_sign) {
+      $cs_content .= ($cs_content) ? ', ' : '<p>';
+      $cs_content .= qq{<span style="color:$colour">$cs</span>};
+    }
+    return [
     {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance'},
-    qq{<p><span style="color:$colour">$clin_sign</span> (from dbSNP) | $c_link</p>}
-  ] : ();
+    qq{$cs_content (from dbSNP) | $c_link</p>}]
+  }
+  else {
+    return ();
+  }
 }
 
 sub hgvs {
