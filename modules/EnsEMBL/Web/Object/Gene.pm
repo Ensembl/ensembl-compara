@@ -36,22 +36,19 @@ sub availability {
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
-      my $counts      = $self->counts;
+      my $member      = $self->database('compara') ? $self->database('compara')->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $obj->stable_id) : undef;
+      my $pan_member  = $self->database('compara_pan_ensembl') ? $self->database('compara_pan_ensembl')->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $obj->stable_id) : undef;
+      my $counts      = $self->counts($member, $pan_member);
       my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
       my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
 
-      my $gene_tree_sub = sub {
-        my $gene_tree = $self->get_GeneTree($database_synonym);
-        my $has_gene_tree = $gene_tree ? 1 : 0;
-        return $has_gene_tree;
-      };
       $availability->{'history'}              = !!$rows;
       $availability->{'gene'}                 = 1;
       $availability->{'core'}                 = $self->get_db eq 'core';
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
-      $availability->{'has_species_tree'}     = $self->has_species_tree;
-      $availability->{'has_gene_tree'}        = $self->has_gene_tree;
+      $availability->{'has_species_tree'}     = $member->has_GeneGainLossTree;
+      $availability->{'has_gene_tree'}        = $member->has_GeneTree;
       $availability->{'family'}               = !!$counts->{families};
       $availability->{'not_rnaseq'}    = $self->get_db eq 'rnaseq' ? 0 : 1;
       $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
@@ -80,7 +77,7 @@ sub availability {
 
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
-        $availability->{'has_gene_tree_pan'}  = $gene_tree_sub->('compara_pan_ensembl');
+        $availability->{'has_gene_tree_pan'}  = $pan_member->$member->has_GeneTree;
         $availability->{"has_$_"}             = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
       }
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
@@ -92,39 +89,6 @@ sub availability {
   return $self->{'_availability'};
 }
 
-sub has_gene_tree {
-  my $self = shift;
-  my $compara_db = $self->database('compara');
-  my $stable_id = $self->Obj->stable_id;
-  my $c = 0;
-  if ($compara_db) {
-    my $compara_dbh = $compara_db->db_handle;
-    ($c) = $compara_dbh->selectrow_array(qq(
-      SELECT COUNT(*)
-        FROM gene_tree_node JOIN member mp
-             USING (member_id) JOIN member mg ON mp.member_id = mg.canonical_member_id
-       WHERE mg.source_name = "ENSEMBLGENE"
-         AND mg.stable_id = '$stable_id'));
-  }
-  return $c;
-}
-
-sub has_species_tree {
-  my $self = shift;
-  my $compara_db = $self->database('compara');
-  my $stable_id = $self->Obj->stable_id;
-  my $c = 0;
-  if ($compara_db) {
-    my $compara_dbh = $compara_db->db_handle;
-    ($c) = $compara_dbh->selectrow_array(qq(
-      SELECT COUNT(*)
-        FROM CAFE_gene_family cgf JOIN gene_tree_root gtr ON(cgf.gene_tree_root_id = gtr.root_id) JOIN gene_tree_node gtn ON(gtr.root_id = gtn.root_id) JOIN member mp
-       USING (member_id) JOIN member mg ON (mp.member_id = mg.canonical_member_id)
-       WHERE mg.source_name = 'ENSEMBLGENE' AND mg.stable_id = '$stable_id'));
-  }
-  return $c;
-}
-
 sub analysis {
   my $self = shift;
   return $self->Obj->analysis;
@@ -133,7 +97,7 @@ sub analysis {
 sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? 'Idhistory' : $_[0]->Obj->isa('Bio::EnsEMBL::Compara::Family') ? 'Family' : 'Summary'; }
 
 sub counts {
-  my $self = shift;
+  my ($self, $member, $pan_member) = @_;
   my $obj = $self->Obj;
 
   return {} unless $obj->isa('Bio::EnsEMBL::Gene');
@@ -158,49 +122,27 @@ sub counts {
       my $vdb = $self->species_defs->get_config($self->species,'databases')->{'DATABASE_VARIATION'};
       $counts->{structural_variation} = $vdb->{'tables'}{'structural_variation'}{'rows'};
     }
-    my $compara_db = $self->database('compara');
-    
-    if ($compara_db) {
-      my $compara_dbh = $compara_db->dbc->db_handle;
-      
-      if ($compara_dbh) {
-        $counts = {%$counts, %{$self->count_homologues($compara_dbh)}};
-      
-        my ($res) = $compara_dbh->selectrow_array(
-          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? and source_name =?',
-          {}, $obj->stable_id, 'ENSEMBLGENE'
-        );
-        
-        $counts->{'families'} = $res;
-      }
-      my $alignments = $self->count_alignments;
-      $counts->{'alignments'} = $alignments->{'all'} if $self->get_db eq 'core';
-      $counts->{'pairwise_alignments'} = $alignments->{'pairwise'} + $alignments->{'patch'};
+    if ($member) {
+      $counts->{'orthologs'}  = $member->number_of_orthologues;
+      $counts->{'paralogs'}   = $member->number_of_paralogues;
+      $counts->{'families'}   = $member->number_of_families;
     }
-    if (my $compara_db = $self->database('compara_pan_ensembl')) {
-      my $compara_dbh = $compara_db->dbc->db_handle;
+    my $alignments = $self->count_alignments;
+    $counts->{'alignments'} = $alignments->{'all'} if $self->get_db eq 'core';
+    $counts->{'pairwise_alignments'} = $alignments->{'pairwise'} + $alignments->{'patch'};
 
-      my $pan_counts = {};
+    ## Add pan-compara if available 
+    if ($pan_member) {
+      my $compara_dbh = $self->database('compara_pan_ensembl')->dbc->db_handle;
 
-      if ($compara_dbh) {
-        $pan_counts = $self->count_homologues($compara_dbh);
-      
-        my ($res) = $compara_dbh->selectrow_array(
-          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? and source_name =?',
-          {}, $obj->stable_id, 'ENSEMBLGENE'
-        );
-        
-        $pan_counts->{'families'} = $res;
-      }
-      
-      $pan_counts->{'alignments'} = $self->count_alignments('DATABASE_COMPARA_PAN_ENSEMBL')->{'all'} if $self->get_db eq 'core';
+      $counts->{'orthologs_pan'}  = $pan_member->number_of_orthologues;
+      $counts->{'paralogs_pan'}   = $pan_member->number_of_paralogues;
+      $counts->{'families_pan'}   = $pan_member->number_of_families;
 
-      foreach (keys %$pan_counts) {
-        my $key = $_."_pan";
-        $counts->{$key} = $pan_counts->{$_};
-      }
-    }
+      $counts->{'alignments_pan'} = $self->count_alignments('DATABASE_COMPARA_PAN_ENSEMBL')->{'all'} if $self->get_db eq 'core';
+    }    
 
+    ## Add counts from plugins
     $counts = {%$counts, %{$self->_counts}};
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
