@@ -18,65 +18,64 @@ use base qw(EnsEMBL::Web::Root);
 
 my @HANDLES_TO_DISCONNECT;
 
-sub update_user_history {} # stub for users plugin
+sub OBJECT_PARAMS {
+  [
+    [ 'Phenotype'           => 'ph'  ],
+    [ 'Location'            => 'r'   ],
+    [ 'Gene'                => 'g'   ],
+    [ 'Transcript'          => 't'   ],
+    [ 'Variation'           => 'v'   ],
+    [ 'StructuralVariation' => 'sv'  ],
+    [ 'Regulation'          => 'rf'  ],
+    [ 'Experiment'          => 'ex'  ],
+    [ 'Marker'              => 'm'   ],
+    [ 'LRG'                 => 'lrg' ],
+    [ 'GeneTree'            => 'gt'  ]
+  ];
+}
 
 sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $input = CGI->new;
-  
-  my $object_params = [
-    [ 'Phenotype',           'ph'  ],
-    [ 'Location',            'r'   ],
-    [ 'Gene',                'g'   ],
-    [ 'Transcript',          't'   ],
-    [ 'Variation',           'v'   ],
-    [ 'StructuralVariation', 'sv'  ],
-    [ 'Regulation',          'rf'  ],
-    [ 'Experiment',          'ex'  ],
-    [ 'Marker',              'm'   ],
-    [ 'LRG',                 'lrg' ],
-    [ 'GeneTree',            'gt'  ],
-  ];
-  
-  my $object_types = { map { $_->[0] => $_->[1] } @$object_params };
-  
-  my $hub = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    input          => $input,
-    object_types   => $object_types,
-    session_cookie => $args->{'session_cookie'},
-    user_cookie    => $args->{'user_cookie'},
+  my $class         = shift;
+  my $r             = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $args          = shift || {};
+  my $input         = CGI->new;
+
+  my $object_params = $class->OBJECT_PARAMS;
+  my $object_types  = { map { $_->[0] => $_->[1] } @$object_params };
+
+  my $hub           = EnsEMBL::Web::Hub->new({
+    apache_handle     => $r,
+    input             => $input,
+    object_types      => $object_types,
+    session_cookie    => $args->{'session_cookie'},
+    user_cookie       => $args->{'user_cookie'},
   });
   
-  my $builder = EnsEMBL::Web::Builder->new({
-    hub           => $hub,
-    object_params => $object_params
+  my $builder       = EnsEMBL::Web::Builder->new({
+    hub               => $hub,
+    object_params     => $object_params
   });
   
-  my $self = {
-    r             => $r,
-    input         => $input,
-    hub           => $hub,
-    builder       => $builder,
-    cache         => $hub->cache,
-    type          => $hub->type,
-    action        => $hub->action,
-    function      => $hub->function,
-    command       => undef,
-    filters       => undef,
-    errors        => [],
-    page_type     => 'Dynamic',
-    renderer_type => 'String',
+  my $self          = bless {
+    r                 => $r,
+    input             => $input,
+    hub               => $hub,
+    builder           => $builder,
+    cache             => $hub->cache,
+    type              => $hub->type,
+    action            => $hub->action,
+    function          => $hub->function,
+    command           => undef,
+    filters           => undef,
+    errors            => [],
+    page_type         => 'Dynamic',
+    renderer_type     => 'String',
     %$args
-  };
+  }, $class;
   
-  bless $self, $class;
+  my $species_defs  = $hub->species_defs;
   
-  my $species_defs = $hub->species_defs;
-  
-  $CGI::POST_MAX = $species_defs->CGI_POST_MAX; # Set max upload size
+  $CGI::POST_MAX    = $species_defs->CGI_POST_MAX; # Set max upload size
   
   if ($self->cache && $self->request ne 'modal') {
     # Add parameters useful for caching functions
@@ -94,6 +93,8 @@ sub new {
 }
 
 sub init {}
+
+sub update_user_history {} # stub for users plugin
 
 sub r             { return $_[0]->{'r'};              }
 sub input         { return $_[0]->{'input'};          }
