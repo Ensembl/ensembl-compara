@@ -68,7 +68,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MERGE
-    -host => 'compara3',
+    -host => 'compara1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
