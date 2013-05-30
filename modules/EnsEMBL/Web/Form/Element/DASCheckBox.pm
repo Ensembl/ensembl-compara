@@ -24,7 +24,10 @@ sub configure {
   $params->{'label'}  ||= $das->label;
   $params->{'id'}     ||= $self->unique_id;
 
-  $self->set_attributes({'class' => [$self->CSS_CLASS, $params->{'wrapper_class'} || ()], $params->{'wrapper_id'} ? ('id' => $params->{'wrapper_id'}) : ()});
+  $self->set_attribute('class', $self->CSS_CLASS);
+  $self->set_attribute('class', $params->{'wrapper_class'})  if $params->{'wrapper_class'};
+  $self->set_attribute('id',    $params->{'wrapper_id'})     if $params->{'wrapper_id'};
+
   $self->append_children({
     'node_name'   => 'p',
     'class'       => $self->CSS_CLASS_CHECKBOX_WRAPPER,
