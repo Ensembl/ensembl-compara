@@ -44,7 +44,7 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 71,                                              # current release number
+        'rel'               => 72,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
         'rel_coord'         => $self->o('ENV', 'USER'),                         # by default, the release coordinator is doing the dumps
@@ -67,7 +67,7 @@ sub default_options {
 
         'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('member_type'),                              # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
-        'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',                                      # where the template README files are
+        'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/pipelines/READMEs',                    # where the template README files are
         'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
     };
@@ -211,6 +211,7 @@ sub pipeline_analyses {
             -input_ids => [
                 { 'inputquery' => '#query#', },
             ],
+            -meadow_type => 'LOCAL',
             -flow_into => {
                 1 => [ 'generate_collations', 'generate_tarjobs', 'remove_hash' ],
                 2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($tree_id))expr#' } },
@@ -242,6 +243,7 @@ sub pipeline_analyses {
                 'column_names'      => [ 'extension' ],
             },
             -wait_for => [ 'dump_a_tree' ],
+            -meadow_type => 'LOCAL',
             -flow_into => {
                 2 => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
             },
@@ -270,6 +272,7 @@ sub pipeline_analyses {
                 'column_names'      => [ 'extension' ],
             },
             -wait_for => [ 'dump_a_tree' ],
+            -meadow_type => 'LOCAL',
             -flow_into => {
                 2 => { 'tar_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
             },
@@ -281,7 +284,7 @@ sub pipeline_analyses {
                 'work_dir'      => $self->o('work_dir'),
                 'target_dir'    => $self->o('target_dir'),
                 'member_type'     => $self->o('member_type'),
-                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | tar cf #target_dir#/xml/#dump_file_name#.tar -T /dev/stdin --transform "s/^.*\//#member_type#/"',
+                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n | tar cf #target_dir#/xml/#dump_file_name#.tar -C #work_dir# -T /dev/stdin --transform "s:^.*/:#member_type#:"',
             },
             -hive_capacity => 2,
             -flow_into => {
@@ -318,12 +321,13 @@ sub pipeline_analyses {
                 'inputlist'     => [
                     ['cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#member_type#_trees'],
                     ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#member_type#_trees'],
-                    ['cp #readme_dir#/README.#member_type#_trees.dumps #target_dir#/emf/'],
-                    ['cp #readme_dir#/README.#member_type#_trees.xml_dumps #target_dir#/xml/'],
+                    ['cp #readme_dir#/#member_type#_trees.dumps.txt #target_dir#/emf/README.#member_type#_trees.dumps.txt'],
+                    ['cp #readme_dir#/#member_type#_trees.xml_dumps.txt #target_dir#/xml/README.#member_type#_trees.xml_dumps.txt'],
                 ],
                 'column_names'      => [ 'cmd' ],
             },
             -wait_for => [ 'archive_long_files', 'dump_all_homologies', 'dump_all_trees'],
+            -meadow_type => 'LOCAL',
             -flow_into => {
                 2 => [ 'prepare_dir' ],
             },
@@ -333,6 +337,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
             },
+            -meadow_type => 'LOCAL',
         },
     ];
 }
