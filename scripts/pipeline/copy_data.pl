@@ -170,7 +170,7 @@ my $trust_ce = 0;
 #If true, then add new data to existing set of alignments
 my $merge = 0;
 
-my $patch_merge = 0; #special case for merging old patches again
+my $patch_merge = 0; #special case for merging patches where the dbIDs are not consecutive
 
 GetOptions(
            "help"      => \$help,
@@ -185,6 +185,7 @@ GetOptions(
            'trust_ce!' => \$trust_ce,
            're_enable=i' => \$re_enable,
            'method_link=s' => \$method_link,
+           'patch_merge!' => \$patch_merge,
   );
 
 # Print Help and exit if help is requested
