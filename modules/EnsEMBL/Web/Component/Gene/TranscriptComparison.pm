@@ -6,48 +6,12 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
-sub _init {
-  my $self = shift;
-  my $hub  = $self->hub;
-  
-  $self->cacheable(1);
-  $self->ajaxable(1);
-  
-  $self->{'subslice_length'} = $hub->param('force') || 100 * ($hub->param('display_width') || 60) if $hub;
-}
+sub _init { $_[0]->SUPER::_init(100); }
 
-sub content {
-  my $self   = shift;
-  my $slice  = $self->object->slice; # Object for this section is the slice
-  my $length = $slice->length;
-  my $html;
-  
-  if (!$self->hub->param('t1')) {
-    $html = $self->_info(
-      'No transcripts selected',
-      sprintf(
-        'You must select transcripts using the "Select transcripts" button from menu on the left hand side of this page, or by clicking <a href="%s" class="modal_link" rel="modal_select_transcripts">here</a>.',
-        $self->view_config->extra_tabs->[1]
-      )
-    ); 
-  } elsif ($length >= $self->{'subslice_length'}) {
-    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
-  } else {
-    $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
-  }
-  
-  return $html;
-}
-
-sub content_sub_slice {
-  my ($self, $slice) = @_;
+sub initialize {
+  my ($self, $slice, $start, $end) = @_;
   my $hub         = $self->hub;
-  my $start       = $hub->param('subslice_start');
-  my $end         = $hub->param('subslice_end');
-  my $length      = $hub->param('length');
   my @consequence = $hub->param('consequence_filter');
-     $slice     ||= $self->object->slice;
-     $slice       = $slice->sub_Slice($start, $end) if $start && $end;
   
   my $config = {
     display_width   => $hub->param('display_width') || 60,
@@ -78,6 +42,44 @@ sub content_sub_slice {
   $self->markup_comparisons($sequence, $markup, $config);
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
+  return ($sequence, $config);
+}
+
+sub content {
+  my $self   = shift;
+  my $slice  = $self->object->slice; # Object for this section is the slice
+  my $length = $slice->length;
+  my $html;
+  
+  if (!$self->hub->param('t1')) {
+    $html = $self->_info(
+      'No transcripts selected',
+      sprintf(
+        'You must select transcripts using the "Select transcripts" button from menu on the left hand side of this page, or by clicking <a href="%s" class="modal_link" rel="modal_select_transcripts">here</a>.',
+        $self->view_config->extra_tabs->[1]
+      )
+    ); 
+  } elsif ($length >= $self->{'subslice_length'}) {
+    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
+  } else {
+    $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
+  }
+  
+  return $html;
+}
+
+sub content_sub_slice {
+  my ($self, $slice) = @_;
+  my $hub    = $self->hub;
+  my $start  = $hub->param('subslice_start');
+  my $end    = $hub->param('subslice_end');
+  my $length = $hub->param('length');
+  
+  $slice ||= $self->object->slice;
+  $slice   = $slice->sub_Slice($start, $end) if $start && $end;
+  
+  my ($sequence, $config) = $self->initialize($slice, $start, $end);
+  
   if ($end && $end == $length) {
     $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
@@ -87,7 +89,8 @@ sub content_sub_slice {
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
-    
+  $self->id('');
+  
   return $self->build_sequence($sequence, $config);
 }
 
