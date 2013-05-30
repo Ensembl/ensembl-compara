@@ -21,12 +21,12 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
 
-  $params->{'class'} = join ' ', $params->{'class'} || '', $self->VALIDATION_CLASS || '', $params->{'required'} ? $self->CSS_CLASS_REQUIRED : $self->CSS_CLASS_OPTIONAL;
-  
-  exists $params->{'value'} and $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
+  $params->{'value'}  = $self->encode_htmlentities($params->{'value'}) if exists $params->{'value'} && !$params->{'is_encoded'};
 
-  exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name value size class maxlength style);
-  $params->{$_} and $self->$_(1) for qw(disabled readonly);
+  $self->set_attribute($_, $params->{$_}) for grep exists $params->{$_}, qw(id name value size class maxlength style);
+  $self->set_attribute('class', [$self->VALIDATION_CLASS, $params->{'required'} ? $self->CSS_CLASS_REQUIRED : $self->CSS_CLASS_OPTIONAL]);
+
+  $self->$_(1) for grep $params->{$_}, qw(disabled readonly);
 
   $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'} && !$params->{'no_asterisk'};
   $self->{'__shortnote'} = $params->{'shortnote'} if exists $params->{'shortnote'};
