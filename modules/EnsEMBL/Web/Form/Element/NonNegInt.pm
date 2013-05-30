@@ -12,8 +12,14 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
   if ($params->{'max'}) {
-    $params->{'shortnote'}  .= sprintf '(Maximum of %s)', $params->{'max'};
-    $params->{'class'}      .= ' max_'.$params->{'max'};
+    $params->{'shortnote'}   .= sprintf '(Maximum of %s)', $params->{'max'};
+    $params->{'class'}        = [] unless exists $params->{'class'} && defined $params->{'class'};
+
+    if (ref $params->{'class'}) {
+      push @$params->{'class'}, 'max_'.$params->{'max'};
+    } else {
+      $params->{'class'} .= ' max_'.$params->{'max'};
+    }
   }
   $self->SUPER::configure($params);
 }
