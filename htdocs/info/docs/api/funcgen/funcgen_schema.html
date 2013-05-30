@@ -5,18 +5,35 @@
 <title>Funcgen (Regulation) Schema Documentation</title>
 
 <script language="Javascript" type="text/javascript">
+  var img_plus   = '<img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>';
+  var img_minus  = '<img src="/i/16/minus-button.png" style="width:12px;height:12px;vertical-align:middle;margin-right:6px" alt="hide"/>';
+  var link_text  = 'columns';
+  var span_open  = ' <span style="vertical-align:middle">';
+  var span_close = '</span>';
+
   // Function to show/hide the columns table
-  function show_hide (param) {
-    div   = document.getElementById('div_'+param);
-    alink = document.getElementById('a_'+param);
+  function show_hide (param, type) {
+    // Example tables
+    if (type === 'example') {
+      div    = document.getElementById('ex_'+param);
+      alink  = document.getElementById('e_'+param);
+      a_text = 'query results'; 
+    } 
+    // Schema tables
+    else { 
+      div    = document.getElementById('div_'+param);
+      alink  = document.getElementById('a_'+param);
+      a_text = link_text;
+    }  
+    
     if (div.style.display=='inline') {
       div.style.display='none';
-      alink.innerHTML='Show';
+      alink.innerHTML=img_plus+span_open+'Show '+a_text+span_close;
     }
     else {
       if (div.style.display=='none') {
         div.style.display='inline';
-        alink.innerHTML='Hide';
+        alink.innerHTML=img_minus+span_open+'Hide '+a_text+span_close;
       }
     }
   }
@@ -33,11 +50,11 @@
       if (div && alink) {
         if (expand_flag.value=='0') {
           div.style.display='inline';
-          alink.innerHTML='Hide';
+          alink.innerHTML=img_minus+span_open+'Hide '+link_text+span_close;
         }
         else {
           div.style.display='none';
-          alink.innerHTML='Show';
+          alink.innerHTML=img_plus+span_open+'Show '+link_text+span_close;
         }
       }
     }
@@ -51,20 +68,17 @@
 </script>
 
 </head>
-
 <body>
+
 <h1>Ensembl Funcgen (Regulation) Schema Documentation</h1>
-
 <h2>Introduction</h2>
-
 <p>
 This document gives a describes the tables that make up the Ensembl Regulation schema. Tables are grouped logically by their function, and the purpose of each table is explained. This document refers to version 70 of the Ensembl Regulation schema.<br />
 <br />
 A simplified entity relationship diagram of the schema is available <a href="./trimmed_funcgen_schema.png">here</a>. Core, core like and some ancilliary tables have been omitted from the schema diagram.
 <br />
-</p>
+<p><br />
 
-<br /><br />
 <h3 id="top">List of the tables:</h3>
 <div>
 
@@ -73,8 +87,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <div style="background-color:#FFCC66;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Main feature tables</h2>
     </div>
-    <table style="padding-right:10px"><tr><td>
-      <ul style="padding-left:20px">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#regulatory_feature"><b>regulatory_feature</b></a></li>
         <li><a href="#regulatory_attribute"><b>regulatory_attribute</b></a></li>
         <li><a href="#segmentation_feature"><b>segmentation_feature</b></a></li>
@@ -87,17 +100,14 @@ A simplified entity relationship diagram of the schema is available <a href="./t
         <li><a href="#probe_feature"><b>probe_feature</b></a></li>
         <li><a href="#feature_type"><b>feature_type</b></a></li>
         <li><a href="#associated_feature_type"><b>associated_feature_type</b></a></li>
-      </ul>
-    </td></tr></table>
-  </div>
+      </ul>  </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <div style="background-color:#66CCFF;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Set tables</h2>
     </div>
-    <table style="padding-right:10px"><tr><td>
-      <ul style="padding-left:20px">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#data_set"><b>data_set</b></a></li>
         <li><a href="#supporting_set"><b>supporting_set</b></a></li>
         <li><a href="#feature_set"><b>feature_set</b></a></li>
@@ -106,42 +116,34 @@ A simplified entity relationship diagram of the schema is available <a href="./t
         <li><a href="#dbfile_registry"><b>dbfile_registry</b></a></li>
         <li><a href="#input_set"><b>input_set</b></a></li>
         <li><a href="#input_subset"><b>input_subset</b></a></li>
-      </ul>
-    </td></tr></table>
-  </div>
+      </ul>  </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <div style="background-color:#FF6666;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Array design tables</h2>
     </div>
-    <table style="padding-right:10px"><tr><td>
-      <ul style="padding-left:20px">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#array"><b>array</b></a></li>
         <li><a href="#array_chip"><b>array_chip</b></a></li>
         <li><a href="#probe_set"><b>probe_set</b></a></li>
         <li><a href="#probe"><b>probe</b></a></li>
         <li><a href="#probe_design"><b>probe_design</b></a></li>
-      </ul>
-    </td></tr></table>
-  </div>
+      </ul>  </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <div style="background-color:#00FF00;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Experiment tables</h2>
     </div>
-    <table style="padding-right:10px"><tr><td>
-      <ul style="padding-left:20px">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#experiment"><b>experiment</b></a></li>
         <li><a href="#experimental_group"><b>experimental_group</b></a></li>
         <li><a href="#mage_xml"><b>mage_xml</b></a></li>
         <li><a href="#experimental_chip"><b>experimental_chip</b></a></li>
         <li><a href="#channel"><b>channel</b></a></li>
         <li><a href="#result"><b>result</b></a></li>
-      </ul>
-    </td></tr></table>
-  </div>
+      </ul>  </div>
   <div style="clear:both" />
 </div>
 
@@ -151,55 +153,46 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <div style="background-color:#808000;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Ancilliary tables</h2>
     </div>
-    <table style="padding-right:10px"><tr><td>
-      <ul style="padding-left:20px">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#cell_type"><b>cell_type</b></a></li>
         <li><a href="#cell_type_lineage"><b>cell_type_lineage</b></a></li>
         <li><a href="#lineage"><b>lineage</b></a></li>
-        <li><a href="#experimental_design"><b>experimental_design</b></a></li>
-        <li><a href="#design_type"><b>design_type</b></a></li>
         <li><a href="#status"><b>status</b></a></li>
         <li><a href="#status_name"><b>status_name</b></a></li>
         <li><a href="#regbuild_string"><b>regbuild_string</b></a></li>
-      </ul>
-    </td></tr></table>
-  </div>
+      </ul>  </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <div style="background-color:#000000;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Core tables</h2>
     </div>
-    <table style="padding-right:10px"><tr><td>
-      <ul style="padding-left:20px">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#analysis"><b>analysis</b></a></li>
         <li><a href="#analysis_description"><b>analysis_description</b></a></li>
         <li><a href="#meta"><b>meta</b></a></li>
         <li><a href="#meta_coord"><b>meta_coord</b></a></li>
+        <li><a href="#associated_xref"><b>associated_xref</b></a></li>
+        <li><a href="#associated_group"><b>associated_group</b></a></li>
         <li><a href="#identity_xref"><b>identity_xref</b></a></li>
         <li><a href="#external_synonym"><b>external_synonym</b></a></li>
         <li><a href="#external_db"><b>external_db</b></a></li>
         <li><a href="#ontology_xref"><b>ontology_xref</b></a></li>
         <li><a href="#unmapped_reason"><b>unmapped_reason</b></a></li>
-      </ul>
-    </td></tr></table>
-  </div>
+      </ul>  </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <div style="background-color:#000000;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Core like tables</h2>
     </div>
-    <table style="padding-right:10px"><tr><td>
-      <ul style="padding-left:20px">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#xref"><b>xref</b></a></li>
         <li><a href="#object_xref"><b>object_xref</b></a></li>
         <li><a href="#unmapped_object"><b>unmapped_object</b></a></li>
         <li><a href="#coord_system"><b>coord_system</b></a></li>
         <li><a href="#seq_region"><b>seq_region</b></a></li>
-      </ul>
-    </td></tr></table>
-  </div>
+      </ul>  </div>
 
   <div style="clear:both" />
 </div>
@@ -217,7 +210,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="regulatory_feature" style="font-size:11pt;font-weight:bold">regulatory_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_regulatory_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('regulatory_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_regulatory_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('regulatory_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -241,7 +238,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>projected</b></td><td>boolean</td><td>FALSE</td><td>Boolean, defines whether reg feat structure has been projected to this cell type</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#seq_region">seq_region</a></li>
     <li><a href="#feature_set">feature_set</a></li>
@@ -255,7 +252,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="regulatory_attribute" style="font-size:11pt;font-weight:bold">regulatory_attribute</span></td>
-      <td style="width:180px;text-align:right"><a id="a_regulatory_attribute" style="cursor:pointer;text-decoration:underline" onclick="show_hide('regulatory_attribute')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_regulatory_attribute" style="cursor:pointer;text-decoration:none" onclick="show_hide('regulatory_attribute')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -269,7 +270,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>attribute_feature_table</b></td><td>enum('annotated', 'motif')</td><td>NULL</td><td>Table name of attribute feature</td><td>primary key<br />key: attribute_feature_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#annotated_feature">annotated_feature</a></li>
     <li><a href="#motif_feature">motif_feature</a></li>
@@ -282,7 +283,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="segmentation_feature" style="font-size:11pt;font-weight:bold">segmentation_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_segmentation_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('segmentation_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_segmentation_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('segmentation_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -302,7 +307,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>display_label</b></td><td>varchar(60)</td><td>NULL</td><td>Text display label</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#seq_region">seq_region</a></li>
     <li><a href="#feature_set">feature_set</a></li>
@@ -316,7 +321,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="annotated_feature" style="font-size:11pt;font-weight:bold">annotated_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_annotated_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('annotated_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_annotated_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('annotated_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -336,7 +345,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>summit</b></td><td>int(10)</td><td>NULL</td><td>Represents peak summit for those analyses which provide it (e.g. Swembl)</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#seq_region">seq_region</a></li>
     <li><a href="#feature_set">feature_set</a></li>
@@ -349,7 +358,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="motif_feature" style="font-size:11pt;font-weight:bold">motif_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_motif_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('motif_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_motif_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('motif_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -369,7 +382,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>interdb_stable_id</b></td><td>mediumint(8)</td><td>NULL</td><td>Unique key, provides linkability between DBs</td><td>unique key: interdb_stable_id_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#associated_motif_feature">associated_motif_feature</a></li>
     <li><a href="#regulatory_attribute">regulatory_attribute</a></li>
@@ -384,7 +397,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="associated_motif_feature" style="font-size:11pt;font-weight:bold">associated_motif_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_associated_motif_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('associated_motif_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_associated_motif_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('associated_motif_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -397,7 +414,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>motif_feature_id</b></td><td>int(10)</td><td></td><td><a href="#motif_feature">motif_feature</a> table ID</td><td>primary key<br />key: motif_feature_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#associated_motif_feature">associated_motif_feature</a></li>
     <li><a href="#regulatory_attribute">regulatory_attribute</a></li>
@@ -412,7 +429,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="binding_matrix" style="font-size:11pt;font-weight:bold">binding_matrix</span></td>
-      <td style="width:180px;text-align:right"><a id="a_binding_matrix" style="cursor:pointer;text-decoration:underline" onclick="show_hide('binding_matrix')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_binding_matrix" style="cursor:pointer;text-decoration:none" onclick="show_hide('binding_matrix')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -430,7 +451,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>threshold</b></td><td>double</td><td>NULL</td><td>Minimum score for Motif Features for this matrix</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#motif_feature">motif_feature</a></li>
     <li><a href="#feature_type">feature_type</a></li>
@@ -444,7 +465,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="external_feature" style="font-size:11pt;font-weight:bold">external_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_external_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_external_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('external_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -464,7 +489,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>interdb_stable_id</b></td><td>mediumint(8)</td><td>NULL</td><td>Unique key, provides linkability between DBs</td><td>unique key: interdb_stable_id_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#seq_region">seq_region</a></li>
     <li><a href="#feature_set">feature_set</a></li>
@@ -478,7 +503,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="result_feature" style="font-size:11pt;font-weight:bold">result_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_result_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_result_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('result_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -496,7 +525,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>scores</b></td><td>longblob</td><td></td><td>BLOB of window scores for this region</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#result_set">result_set</a></li>
     <li><a href="#seq_region">seq_region</a></li>
@@ -509,11 +538,15 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="probe_feature" style="font-size:11pt;font-weight:bold">probe_feature</span></td>
-      <td style="width:180px;text-align:right"><a id="a_probe_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_feature')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_probe_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('probe_feature')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">The table contains genomic alignments @link probe entries.</p>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">The table contains genomic alignments <a href="#probe">probe</a> entries.</p>
 
   <div id="div_probe_feature" style="display:none">
     <table style="border:1px outset #222222">
@@ -529,7 +562,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>cigar_line</b></td><td>varchar(50)</td><td>NULL</td><td>Extended cigar line format representation of the alignment as defined here http://samtools.sourceforge.net/SAM-1.3.pdf.<br>In summary: <br>&nbsp;&nbsp;&nbsp;&nbsp;= Seq/Alignment Match <br>&nbsp;&nbsp;&nbsp;&nbsp;M Alignment match/Seq mismatch <br>&nbsp;&nbsp;&nbsp;&nbsp;X Seq/Alignment mismatch <br>&nbsp;&nbsp;&nbsp;&nbsp;D Deletion <br>&nbsp;&nbsp;&nbsp;&nbsp;S Soft clipping, used for overhanging cdna alignments where genomic seq is unknown</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#probe">probe</a></li>
     <li><a href="#seq_region">seq_region</a></li>
@@ -543,7 +576,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="feature_type" style="font-size:11pt;font-weight:bold">feature_type</span></td>
-      <td style="width:180px;text-align:right"><a id="a_feature_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('feature_type')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_feature_type" style="cursor:pointer;text-decoration:none" onclick="show_hide('feature_type')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -561,7 +598,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>so_name</b></td><td>varchar(255)</td><td>NULL</td><td>Sequence ontology name</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#associated_feature_type">associated_feature_type</a></li>
     <li><a href="#feature_set">feature_set</a></li>
@@ -580,7 +617,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="associated_feature_type" style="font-size:11pt;font-weight:bold">associated_feature_type</span></td>
-      <td style="width:180px;text-align:right"><a id="a_associated_feature_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('associated_feature_type')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_associated_feature_type" style="cursor:pointer;text-decoration:none" onclick="show_hide('associated_feature_type')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -594,7 +635,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td></td><td>Internal table_id of linked <a href="#feature_type">feature_type</a></td><td>primary key<br />key: feature_type_index</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#feature_type">feature_type</a></li>
   </ul>
@@ -611,7 +652,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="data_set" style="font-size:11pt;font-weight:bold">data_set</span></td>
-      <td style="width:180px;text-align:right"><a id="a_data_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('data_set')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_data_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('data_set')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -625,7 +670,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>name</b></td><td>varchar(100)</td><td>NULL</td><td>Name of data set</td><td>unique key: name_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#feature_set">feature_set</a></li>
     <li><a href="#supporting_set">supporting_set</a></li>
@@ -638,21 +683,25 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="supporting_set" style="font-size:11pt;font-weight:bold">supporting_set</span></td>
-      <td style="width:180px;text-align:right"><a id="a_supporting_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('supporting_set')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_supporting_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('supporting_set')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Defines association between @link data_set and underlying/supporting data.</p>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Defines association between <a href="#data_set">data_set</a> and underlying/supporting data.</p>
 
   <div id="div_supporting_set" style="display:none">
     <table style="border:1px outset #222222">
       <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
       <tr class="bg1"><td><b>data_set_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
       <tr class="bg2"><td><b>supporting_set_id</b></td><td>int(10)</td><td></td><td>Table ID of supporting set</td><td>primary key</td></tr>
-      <tr class="bg1"><td><b>type</b></td><td>enum('result','feature','input')</td><td>NULL</td><td>Type of supporting set e.g. result, feature or input set.</td><td>key: type_idx</td></tr>
+      <tr class="bg1"><td><b>type</b></td><td>enum('result','feature','input')</td><td>NULL</td><td>Type of supporting set e.g. result, feature or input set.</td><td>primary key<br />key: type_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#data_set">data_set</a></li>
     <li><a href="#result_set">result_set</a></li>
@@ -667,7 +716,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="feature_set" style="font-size:11pt;font-weight:bold">feature_set</span></td>
-      <td style="width:180px;text-align:right"><a id="a_feature_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('feature_set')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_feature_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('feature_set')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -687,7 +740,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>input_set_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID for <a href="#input_set">input_set</a></td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#data_set">data_set</a></li>
     <li><a href="#cell_type">cell_type</a></li>
@@ -706,7 +759,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="result_set" style="font-size:11pt;font-weight:bold">result_set</span></td>
-      <td style="width:180px;text-align:right"><a id="a_result_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_set')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_result_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('result_set')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -723,7 +780,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>feature_class</b></td><td>enum('result', 'dna_methylation')</td><td>NULL</td><td>Defines the class of the feature</td><td>unique key: unique_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#result_set_input">result_set_input</a></li>
     <li><a href="#cell_type">cell_type</a></li>
@@ -740,11 +797,15 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="result_set_input" style="font-size:11pt;font-weight:bold">result_set_input</span></td>
-      <td style="width:180px;text-align:right"><a id="a_result_set_input" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_set_input')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_result_set_input" style="cursor:pointer;text-decoration:none" onclick="show_hide('result_set_input')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Link table between @link result_set and it's contstituents which can vary between an array experiment (experimental_chip / channel) and a sequencing experiment (input_set). Note the joint primary key as inputs can be re-used between result sets.</p>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Link table between <a href="#result_set">result_set</a> and it's contstituents which can vary between an array experiment (experimental_chip / channel) and a sequencing experiment (input_set). Note the joint primary key as inputs can be re-used between result sets.</p>
 
   <div id="div_result_set_input" style="display:none">
     <table style="border:1px outset #222222">
@@ -755,7 +816,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>table_name</b></td><td>enum('experimental_chip','channel','input_set')</td><td>NULL</td><td>Table name for input e.g. <a href="#input_set">input_set</a>, <a href="#experimental_chip">experimental_chip</a>, <a href="#channel">channel</a></td><td>unique key: rset_table_idname_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#result_set">result_set</a></li>
     <li><a href="#input_set">input_set</a></li>
@@ -770,7 +831,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="dbfile_registry" style="font-size:11pt;font-weight:bold">dbfile_registry</span></td>
-      <td style="width:180px;text-align:right"><a id="a_dbfile_registry" style="cursor:pointer;text-decoration:underline" onclick="show_hide('dbfile_registry')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_dbfile_registry" style="cursor:pointer;text-decoration:none" onclick="show_hide('dbfile_registry')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -784,7 +849,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>path</b></td><td>varchar(255)</td><td></td><td>Either a full filepath or a directory which the API will use to build the filepath</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#result_set">result_set</a></li>
     <li><a href="#analysis">analysis</a></li>
@@ -797,7 +862,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="input_set" style="font-size:11pt;font-weight:bold">input_set</span></td>
-      <td style="width:180px;text-align:right"><a id="a_input_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('input_set')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_input_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('input_set')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -817,7 +886,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>replicate</b></td><td>tinyint(3)</td><td></td><td>Number of the replicate. 0 represents  a pooled subset, 255 is a subset we have not processed</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#experiment">experiment</a></li>
     <li><a href="#cell_type">cell_type</a></li>
@@ -833,7 +902,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="input_subset" style="font-size:11pt;font-weight:bold">input_subset</span></td>
-      <td style="width:180px;text-align:right"><a id="a_input_subset" style="cursor:pointer;text-decoration:underline" onclick="show_hide('input_subset')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_input_subset" style="cursor:pointer;text-decoration:none" onclick="show_hide('input_subset')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -851,7 +924,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>is_control</b></td><td>tinyint(3)</td><td></td><td>Subset is a control</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#input_set">input_set</a></li>
   </ul>
@@ -868,7 +941,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FF6666"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="array" style="font-size:11pt;font-weight:bold">array</span></td>
-      <td style="width:180px;text-align:right"><a id="a_array" style="cursor:pointer;text-decoration:underline" onclick="show_hide('array')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_array" style="cursor:pointer;text-decoration:none" onclick="show_hide('array')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -886,7 +963,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>class</b></td><td>varchar(20)</td><td>NULL</td><td>Array class e.g. AFFY_ST, ILLUMINA_INFINIUM</td><td>unique key: class_name_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#array_chip">array_chip</a></li>
   </ul>
@@ -898,7 +975,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FF6666"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="array_chip" style="font-size:11pt;font-weight:bold">array_chip</span></td>
-      <td style="width:180px;text-align:right"><a id="a_array_chip" style="cursor:pointer;text-decoration:underline" onclick="show_hide('array_chip')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_array_chip" style="cursor:pointer;text-decoration:none" onclick="show_hide('array_chip')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -913,7 +994,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>name</b></td><td>varchar(100)</td><td>NULL</td><td>Name of array_chip</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#array">array</a></li>
     <li><a href="#probe">probe</a></li>
@@ -927,7 +1008,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FF6666"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="probe_set" style="font-size:11pt;font-weight:bold">probe_set</span></td>
-      <td style="width:180px;text-align:right"><a id="a_probe_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_set')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_probe_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('probe_set')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -942,7 +1027,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>family</b></td><td>varchar(20)</td><td>NULL</td><td>Generic descriptor for probe_set e.g. ENCODE_REGIONS, RANDOM etc. Currently not used</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#probe">probe</a></li>
   </ul>
@@ -954,7 +1039,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FF6666"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="probe" style="font-size:11pt;font-weight:bold">probe</span></td>
-      <td style="width:180px;text-align:right"><a id="a_probe" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_probe" style="cursor:pointer;text-decoration:none" onclick="show_hide('probe')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -972,7 +1061,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>description</b></td><td>varchar(255)</td><td>NULL</td><td>Text description</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#probe_feature">probe_feature</a></li>
     <li><a href="#probe_set">probe_set</a></li>
@@ -986,7 +1075,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#FF6666"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="probe_design" style="font-size:11pt;font-weight:bold">probe_design</span></td>
-      <td style="width:180px;text-align:right"><a id="a_probe_design" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_design')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_probe_design" style="cursor:pointer;text-decoration:none" onclick="show_hide('probe_design')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1001,7 +1094,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>score</b></td><td>double</td><td>NULL</td><td>Double analysis score value</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#probe">probe</a></li>
     <li><a href="#analysis">analysis</a></li>
@@ -1020,7 +1113,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#00FF00"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="experiment" style="font-size:11pt;font-weight:bold">experiment</span></td>
-      <td style="width:180px;text-align:right"><a id="a_experiment" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experiment')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_experiment" style="cursor:pointer;text-decoration:none" onclick="show_hide('experiment')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1038,7 +1135,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>mage_xml_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#mage_xml">mage_xml</a> table_id for array experiments</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#experimental_group">experimental_group</a></li>
     <li><a href="#mage_xml">mage_xml</a></li>
@@ -1053,7 +1150,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#00FF00"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="experimental_group" style="font-size:11pt;font-weight:bold">experimental_group</span></td>
-      <td style="width:180px;text-align:right"><a id="a_experimental_group" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_group')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_experimental_group" style="cursor:pointer;text-decoration:none" onclick="show_hide('experimental_group')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1071,7 +1172,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>is_project</b></td><td>boolean</td><td>False</td><td>Large or small scale project</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#experiment">experiment</a></li>
   </ul>
@@ -1083,7 +1184,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#00FF00"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="mage_xml" style="font-size:11pt;font-weight:bold">mage_xml</span></td>
-      <td style="width:180px;text-align:right"><a id="a_mage_xml" style="cursor:pointer;text-decoration:underline" onclick="show_hide('mage_xml')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_mage_xml" style="cursor:pointer;text-decoration:none" onclick="show_hide('mage_xml')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1096,7 +1201,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>xml</b></td><td>text</td><td></td><td>XML text field</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#experiment">experiment</a></li>
   </ul>
@@ -1108,11 +1213,15 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#00FF00"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="experimental_chip" style="font-size:11pt;font-weight:bold">experimental_chip</span></td>
-      <td style="width:180px;text-align:right"><a id="a_experimental_chip" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_chip')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_experimental_chip" style="cursor:pointer;text-decoration:none" onclick="show_hide('experimental_chip')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Represents the physical instance of an @link array_chip used in an @link experiment.</p>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Represents the physical instance of an <a href="#array_chip">array_chip</a> used in an <a href="#experiment">experiment</a>.</p>
 
   <div id="div_experimental_chip" style="display:none">
     <table style="border:1px outset #222222">
@@ -1127,7 +1236,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>technical_replicate</b></td><td>varchar(100)</td><td>NULL</td><td>Name of technical replicate</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#array_chip">array_chip</a></li>
     <li><a href="#experiment">experiment</a></li>
@@ -1144,7 +1253,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#00FF00"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="channel" style="font-size:11pt;font-weight:bold">channel</span></td>
-      <td style="width:180px;text-align:right"><a id="a_channel" style="cursor:pointer;text-decoration:underline" onclick="show_hide('channel')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_channel" style="cursor:pointer;text-decoration:none" onclick="show_hide('channel')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1160,7 +1273,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>type</b></td><td>varchar(20)</td><td>NULL</td><td>Type of channel i.e. EXPERIMENTAL or TOTAL (input)</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#experimental_chip">experimental_chip</a></li>
     <li><a href="#external_chip">external_chip</a></li>
@@ -1173,7 +1286,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#00FF00"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="result" style="font-size:11pt;font-weight:bold">result</span></td>
-      <td style="width:180px;text-align:right"><a id="a_result" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_result" style="cursor:pointer;text-decoration:none" onclick="show_hide('result')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1190,7 +1307,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>Y</b></td><td>smallint(4)</td><td>NULL</td><td>Y coordinate of probe location on experimental_chip</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#probe">probe</a></li>
     <li><a href="#result_set_input">result_set_input</a></li>
@@ -1208,7 +1325,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#808000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="cell_type" style="font-size:11pt;font-weight:bold">cell_type</span></td>
-      <td style="width:180px;text-align:right"><a id="a_cell_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('cell_type')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_cell_type" style="cursor:pointer;text-decoration:none" onclick="show_hide('cell_type')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1226,7 +1347,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>tissue</b></td><td>varchar(50)</td><td>NULL</td><td>Tissue origin/type</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#feature_set">feature_set</a></li>
     <li><a href="#result_set">result_set</a></li>
@@ -1241,7 +1362,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#808000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="cell_type_lineage" style="font-size:11pt;font-weight:bold">cell_type_lineage</span></td>
-      <td style="width:180px;text-align:right"><a id="a_cell_type_lineage" style="cursor:pointer;text-decoration:underline" onclick="show_hide('cell_type_lineage')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_cell_type_lineage" style="cursor:pointer;text-decoration:none" onclick="show_hide('cell_type_lineage')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1255,7 +1380,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>most_specific</b></td><td>boolean</td><td>NULL</td><td>Denotes most specific term for this cell_type</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#cell_type">cell_type</a></li>
     <li><a href="#lineage">lineage</a></li>
@@ -1268,7 +1393,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#808000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="lineage" style="font-size:11pt;font-weight:bold">lineage</span></td>
-      <td style="width:180px;text-align:right"><a id="a_lineage" style="cursor:pointer;text-decoration:underline" onclick="show_hide('lineage')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_lineage" style="cursor:pointer;text-decoration:none" onclick="show_hide('lineage')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1283,7 +1412,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>parent_lineage_id</b></td><td>int(10)</td><td>NULL</td><td>Internal ID of immediate parent term</td><td>key: parent_linage_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#cell_type_lineage">cell_type_lineage</a></li>
     <li><a href="#cell_type">cell_type</a></li>
@@ -1295,59 +1424,12 @@ A simplified entity relationship diagram of the schema is available <a href="./t
     <tr style="vertical-align:middle">
       <td style="padding:0px;width:10px;background-color:#808000"></td>
       <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="experimental_design" style="font-size:11pt;font-weight:bold">experimental_design</span></td>
-      <td style="width:180px;text-align:right"><a id="a_experimental_design" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_design')">Show</a> columns
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Denormalised link table to allow many to many design_type associations.</p>
-
-  <div id="div_experimental_design" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>design_type_id</b></td><td>int(10)</td><td></td><td><a href="#design_type">design_type</a> table ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>table_name</b></td><td>varchar(40)</td><td>NULL</td><td>Name of linked table</td><td>primary key</td></tr>
-      <tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID of linked record</td><td>primary key</td></tr>
-    </table>
-  </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
-  <ul>
-    <li><a href="#design_type">design_type</a></li>
-  </ul>
-
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#808000"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="design_type" style="font-size:11pt;font-weight:bold">design_type</span></td>
-      <td style="width:180px;text-align:right"><a id="a_design_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('design_type')">Show</a> columns
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains extra information about experimental designs, preferably ontology terms.</p>
-
-  <div id="div_design_type" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>design_type_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td>NULL</td><td>Name of design type</td><td>key: design_name_idx</td></tr>
-    </table>
-  </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
-  <ul>
-    <li><a href="#experimental_design">experimental_design</a></li>
-  </ul>
-
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#808000"></td>
-      <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="status" style="font-size:11pt;font-weight:bold">status</span></td>
-      <td style="width:180px;text-align:right"><a id="a_status" style="cursor:pointer;text-decoration:underline" onclick="show_hide('status')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_status" style="cursor:pointer;text-decoration:none" onclick="show_hide('status')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1361,7 +1443,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>status_name_id</b></td><td>int(10)</td><td></td><td><a href="#status_name">status_name</a> table ID</td><td>primary key</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#status_name">status_name</a></li>
   </ul>
@@ -1373,7 +1455,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#808000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="status_name" style="font-size:11pt;font-weight:bold">status_name</span></td>
-      <td style="width:180px;text-align:right"><a id="a_status_name" style="cursor:pointer;text-decoration:underline" onclick="show_hide('status_name')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_status_name" style="cursor:pointer;text-decoration:none" onclick="show_hide('status_name')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1386,7 +1472,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>name</b></td><td>varchar(20)</td><td>NULL</td><td>Name of status e.g. IMPORTED, DISPLAYBLE etc.</td><td>unique key: status_name_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#status">status</a></li>
   </ul>
@@ -1398,7 +1484,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#808000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="regbuild_string" style="font-size:11pt;font-weight:bold">regbuild_string</span></td>
-      <td style="width:180px;text-align:right"><a id="a_regbuild_string" style="cursor:pointer;text-decoration:underline" onclick="show_hide('regbuild_string')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_regbuild_string" style="cursor:pointer;text-decoration:none" onclick="show_hide('regbuild_string')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1413,7 +1503,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>string</b></td><td>text</td><td></td><td>Comma separated list of internal IDs</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#feature_set">feature_set</a></li>
   </ul>
@@ -1430,7 +1520,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="analysis" style="font-size:11pt;font-weight:bold">analysis</span></td>
-      <td style="width:180px;text-align:right"><a id="a_analysis" style="cursor:pointer;text-decoration:underline" onclick="show_hide('analysis')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_analysis" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1441,7 +1535,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
       <tr class="bg1"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
       <tr class="bg2"><td><b>created</b></td><td>datetime</td><td>'0000-00-00</td><td>Date to distinguish newer and older versions off the same analysis.</td><td></td></tr>
-      <tr class="bg1"><td><b>logic_name</b></td><td>varchar(100)</td><td></td><td>String to identify the analysis. Used mainly inside pipeline.</td><td>unique key: logic_name<br />key: logic_name_idx</td></tr>
+      <tr class="bg1"><td><b>logic_name</b></td><td>varchar(100)</td><td></td><td>String to identify the analysis. Used mainly inside pipeline.</td><td>unique key: logic_name_idx</td></tr>
       <tr class="bg2"><td><b>db</b></td><td>varchar(120)</td><td>NULL</td><td>Database name.</td><td></td></tr>
       <tr class="bg1"><td><b>db_version</b></td><td>varchar(40)</td><td>NULL</td><td>Database version.</td><td></td></tr>
       <tr class="bg2"><td><b>db_file</b></td><td>varchar(120)</td><td>NULL</td><td>File system location of the database.</td><td></td></tr>
@@ -1455,7 +1549,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>gff_feature</b></td><td>varchar(40)</td><td>NULL</td><td>How to make a gff dump from features with this analysis.</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#analysis_description">analysis_description</a></li>
   </ul>
@@ -1467,7 +1561,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="analysis_description" style="font-size:11pt;font-weight:bold">analysis_description</span></td>
-      <td style="width:180px;text-align:right"><a id="a_analysis_description" style="cursor:pointer;text-decoration:underline" onclick="show_hide('analysis_description')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_analysis_description" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_description')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1483,7 +1581,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>web_data</b></td><td>text</td><td></td><td>Other data used by the EnsEMBL web site.</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#analysis">analysis</a></li>
   </ul>
@@ -1495,7 +1593,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="meta" style="font-size:11pt;font-weight:bold">meta</span></td>
-      <td style="width:180px;text-align:right"><a id="a_meta" style="cursor:pointer;text-decoration:underline" onclick="show_hide('meta')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1517,7 +1619,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="meta_coord" style="font-size:11pt;font-weight:bold">meta_coord</span></td>
-      <td style="width:180px;text-align:right"><a id="a_meta_coord" style="cursor:pointer;text-decoration:underline" onclick="show_hide('meta_coord')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_meta_coord" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta_coord')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1531,7 +1637,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>max_length</b></td><td>int(11)</td><td>NULL</td><td>Longest sequence length.</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#coord_system">coord_system</a></li>
   </ul>
@@ -1542,8 +1648,73 @@ A simplified entity relationship diagram of the schema is available <a href="./t
     <tr style="vertical-align:middle">
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="associated_xref" style="font-size:11pt;font-weight:bold">associated_xref</span></td>
+      <td style="width:200px;text-align:right">
+        <a id="a_associated_xref" style="cursor:pointer;text-decoration:none" onclick="show_hide('associated_xref')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
+        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table associates extra associated annotations with a given ontology xref evidence and source under a specific condition.   For GO this allows qualifiers (with/from) or annotation extensions to be added to a given ontology annotation.</p>
+
+  <div id="div_associated_xref" style="display:none">
+    <table style="border:1px outset #222222">
+      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+      <tr class="bg1"><td><b>associated_xref_id</b></td><td>int(10)</td><td></td><td>Associated xref id. Primary key, internal identifier</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>object_xref_id</b></td><td>int(10)</td><td>'0'</td><td>Object xref id this associated xref is linked to. Foreign key linked to the <a href="#object_xref">object_xref</a> table</td><td>unique key: object_associated_source_type_idx<br />key: associated_object_idx</td></tr>
+      <tr class="bg1"><td><b>xref_id</b></td><td>int(10)</td><td>'0'</td><td>Xref which is the associated term. Foreign key linked to the <a href="#xref">xref</a> table</td><td>unique key: object_associated_source_type_idx<br />key: associated_idx</td></tr>
+      <tr class="bg2"><td><b>source_xref_id</b></td><td>int(10)</td><td>NULL</td><td>Xref which is source of this association. Foreign key linked to the <a href="#xref">xref</a> table</td><td>unique key: object_associated_source_type_idx<br />key: associated_source_idx</td></tr>
+      <tr class="bg1"><td><b>condition_type</b></td><td>varchar(128)</td><td>NULL</td><td>The type of condition this link occurs in e.g. evidence, from, residue or assigned_by</td><td>unique key: object_associated_source_type_idx</td></tr>
+      <tr class="bg2"><td><b>associated_group_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key to allow for <a href="#associated_group">associated_group</a></td><td>unique key: object_associated_source_type_idx<br />key: associated_group_idx</td></tr>
+      <tr class="bg1"><td><b>rank</b></td><td>int(10)</td><td>'0'</td><td>The rank in which the association occurs within an <a href="#associated_group">associated_group</a></td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#object_xref">object_xref</a></li>
+    <li><a href="#associcated_group">associcated_group</a></li>
+    <li><a href="#xref">xref</a></li>
+    <li><a href="#associated_group">associated_group</a></li>
+  </ul>
+
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="associated_group" style="font-size:11pt;font-weight:bold">associated_group</span></td>
+      <td style="width:200px;text-align:right">
+        <a id="a_associated_group" style="cursor:pointer;text-decoration:none" onclick="show_hide('associated_group')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
+        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Groups together xref associations under a single description. Used when more than one associated xref term must be used to describe a condition</p>
+
+  <div id="div_associated_group" style="display:none">
+    <table style="border:1px outset #222222">
+      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+      <tr class="bg1"><td><b>associated_group_id</b></td><td>int(10)</td><td></td><td>Associated group id. Primary key, internal identifier</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>description</b></td><td>varchar(128)</td><td>NULL</td><td>Optional description for this group</td><td></td></tr>
+    </table>
+  </div>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="identity_xref" style="font-size:11pt;font-weight:bold">identity_xref</span></td>
-      <td style="width:180px;text-align:right"><a id="a_identity_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('identity_xref')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_identity_xref" style="cursor:pointer;text-decoration:none" onclick="show_hide('identity_xref')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1564,7 +1735,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>evalue</b></td><td>DOUBLE</td><td></td><td>Match evalue.</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#object_xref">object_xref</a></li>
   </ul>
@@ -1576,7 +1747,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="external_synonym" style="font-size:11pt;font-weight:bold">external_synonym</span></td>
-      <td style="width:180px;text-align:right"><a id="a_external_synonym" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_synonym')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_external_synonym" style="cursor:pointer;text-decoration:none" onclick="show_hide('external_synonym')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1589,7 +1764,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>synonym</b></td><td>VARCHAR(100)</td><td></td><td>Synonym</td><td>primary key<br />key: name_index</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#xref">xref</a></li>
   </ul>
@@ -1601,7 +1776,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="external_db" style="font-size:11pt;font-weight:bold">external_db</span></td>
-      <td style="width:180px;text-align:right"><a id="a_external_db" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_db')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_external_db" style="cursor:pointer;text-decoration:none" onclick="show_hide('external_db')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1623,7 +1802,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>description</b></td><td>TEXT</td><td></td><td>Description.</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#xref">xref</a></li>
     <li><a href="#unmapped_object">unmapped_object</a></li>
@@ -1636,7 +1815,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="ontology_xref" style="font-size:11pt;font-weight:bold">ontology_xref</span></td>
-      <td style="width:180px;text-align:right"><a id="a_ontology_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('ontology_xref')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_ontology_xref" style="cursor:pointer;text-decoration:none" onclick="show_hide('ontology_xref')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1650,7 +1833,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>linkage_type</b></td><td>ENUM('IC', 'IDA', 'IEA', 'IEP', 'IGI', 'IMP',<br />'IPI', 'ISS', 'NAS', 'ND', 'TAS', 'NR', 'RCA')</td><td></td><td>Defines type of linkage</td><td>unique</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#object_xref">object_xref</a></li>
     <li><a href="#xref">xref</a></li>
@@ -1663,7 +1846,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="unmapped_reason" style="font-size:11pt;font-weight:bold">unmapped_reason</span></td>
-      <td style="width:180px;text-align:right"><a id="a_unmapped_reason" style="cursor:pointer;text-decoration:underline" onclick="show_hide('unmapped_reason')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_unmapped_reason" style="cursor:pointer;text-decoration:none" onclick="show_hide('unmapped_reason')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1677,7 +1864,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>full_description</b></td><td>varchar(255)</td><td>NULL</td><td>Full description.</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#unmapped_object">unmapped_object</a></li>
   </ul>
@@ -1694,7 +1881,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="xref" style="font-size:11pt;font-weight:bold">xref</span></td>
-      <td style="width:180px;text-align:right"><a id="a_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('xref')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_xref" style="cursor:pointer;text-decoration:none" onclick="show_hide('xref')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1713,7 +1904,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>info_text</b></td><td>varchar(255)</td><td>''</td><td>Text @see</td><td>unique key: id_index</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#external_db">external_db</a></li>
     <li><a href="#external_synonym">external_synonym</a></li>
@@ -1727,7 +1918,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="object_xref" style="font-size:11pt;font-weight:bold">object_xref</span></td>
-      <td style="width:180px;text-align:right"><a id="a_object_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('object_xref')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_object_xref" style="cursor:pointer;text-decoration:none" onclick="show_hide('object_xref')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1744,7 +1939,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg2"><td><b>analysis_id</b></td><td>SMALLINT(5)</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>unique key: xref_idx<br />key: analysis_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#xref">xref</a></li>
     <li><a href="#identity_xref">identity_xref</a></li>
@@ -1759,7 +1954,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="unmapped_object" style="font-size:11pt;font-weight:bold">unmapped_object</span></td>
-      <td style="width:180px;text-align:right"><a id="a_unmapped_object" style="cursor:pointer;text-decoration:underline" onclick="show_hide('unmapped_object')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_unmapped_object" style="cursor:pointer;text-decoration:none" onclick="show_hide('unmapped_object')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1781,7 +1980,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>parent</b></td><td>varchar(255)</td><td>NULL</td><td>Foreign key references to the <a href="#dependent_xref">dependent_xref</a> table, in case the unmapped object is dependent on a primary external reference which wasn't mapped to an ensembl one. Not currently used for efg.</td><td>unique index: unique_unmapped_obj_idx</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#unmapped_reason">unmapped_reason</a></li>
     <li><a href="#external_db">external_db</a></li>
@@ -1797,7 +1996,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="coord_system" style="font-size:11pt;font-weight:bold">coord_system</span></td>
-      <td style="width:180px;text-align:right"><a id="a_coord_system" style="cursor:pointer;text-decoration:underline" onclick="show_hide('coord_system')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_coord_system" style="cursor:pointer;text-decoration:none" onclick="show_hide('coord_system')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1817,7 +2020,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>is_current</b></td><td>boolean</td><td>True</td><td>This flags which coord_system entries are current with respect to mart(/website)</td><td></td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#seq_region">seq_region</a></li>
     <li><a href="#meta_coord">meta_coord</a></li>
@@ -1830,7 +2033,11 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="seq_region" style="font-size:11pt;font-weight:bold">seq_region</span></td>
-      <td style="width:180px;text-align:right"><a id="a_seq_region" style="cursor:pointer;text-decoration:underline" onclick="show_hide('seq_region')">Show</a> columns
+      <td style="width:200px;text-align:right">
+        <a id="a_seq_region" style="cursor:pointer;text-decoration:none" onclick="show_hide('seq_region')">
+          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+          <span style="vertical-align:middle">Show columns</span>
+        </a>
         &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
     </tr>
   </table>
@@ -1846,7 +2053,7 @@ A simplified entity relationship diagram of the schema is available <a href="./t
       <tr class="bg1"><td><b>schema_build</b></td><td>varchar(10)</td><td>''</td><td>Indentifies the schema_build version for the source core DB</td><td>primary key</td></tr>
     </table>
   </div>
-  <p style="padding-top:5px"><b>See also:</b></p>
+  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#coord_system">coord_system</a></li>
   </ul>
