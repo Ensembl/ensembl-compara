@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS meta (
 @desc This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)
 @colour   #3CB371
 
+@example    This examples shows how to get the lineage for Homo sapiens:
+    @sql    SELECT * FROM ncbi_taxa_node WHERE left_index <= 339687 AND right_index >= 339690 ORDER BY left_index;
+
 @column taxon_id                The NCBI Taxonomy ID
 @column parent_id               The parent taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)
 @column rank                    E.g. kingdom, family, genus, etc.
@@ -83,9 +86,6 @@ CREATE TABLE ncbi_taxa_node (
 
 @example    Here is an example on how to get the taxonomic ID for a species:
     @sql                          SELECT * FROM ncbi_taxa_name WHERE name_class = "scientific name" AND name = "Homo sapiens";
-
-@example    This examples shows how to get the lineage for Homo sapiens:
-    @sql    SELECT * FROM ncbi_taxa_node WHERE left_index <= 339687 AND right_index >= 339690 ORDER BY left_index;
 
 @column taxon_id              External reference to taxon_id in @link ncbi_taxa_node
 @column name                  Information assigned to this taxon_id
@@ -1113,6 +1113,9 @@ CREATE TABLE gene_tree_node (
      @sql                                  SELECT * from gene_tree_root where tree_type = 'clusterset';
 @example   To get the number of trees of each type
      @sql                                  SELECT member_type, tree_type, COUNT(*) FROM gene_tree_root GROUP BY member_type, tree_type;
+
+@example KK
+     @sql                                  SELECT * FROM subset_member;
 
 @column root_id     	              Internal unique ID
 @column member_type                   The type of members used in the tree
