@@ -258,6 +258,17 @@ sub handler {
   my @raw_path = split m|/|, $file;
   shift @raw_path; # Always empty
 
+  ## Simple redirect to VEP
+  if ($raw_path[0] && $raw_path[0] =~ /^VEP$/i) {
+    $r->uri('/info/vep.html');
+    $r->headers_out->add('Location' => $r->uri);
+    $r->child_terminate;
+      
+    $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
+    
+    return HTTP_MOVED_PERMANENTLY;
+  }
+
   my $aliases = $species_defs->multi_val('SPECIES_ALIASES') || {};
   my %species_map = (
     %$aliases,
