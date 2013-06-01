@@ -48,6 +48,7 @@ $tree_id = $new_id eq '' ? $tree_id : $new_id;
 my $tree_Adaptor = $compara_dba->get_GeneTreeAdaptor();
 my $tree = $tree_Adaptor->fetch_by_dbID($tree_id);
 die "The ID supplied ($tree_id) is not a valid ProteinTree ID or NCTree ID\n" unless (defined $tree);
+$tree->preload;
 
 print "Running the script with ncRNA tree with ID: $tree_id\n\n";
 print "The new 'role-your-own' option in NestedSet's format_newick method allows you to specify the format you want for your tree\n";
