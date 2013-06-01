@@ -224,13 +224,13 @@ my $transcriptid_cb = sub {
 # C(gene_member,stable_id)
 my $stable_id_cb = sub {  ## only if we are in a leaf?
   my ($self) = @_;
-  return $self->{tree}->gene_member->stable_id;
+  return $self->{tree}->is_leaf ? $self->{tree}->gene_member->stable_id : undef;
 };
 
-# C(get_canonical_SeqMember,stable_id)
+# C(stable_id)
 my $prot_id_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->get_canonical_SeqMember->stable_id;
+  return $self->{tree}->is_leaf ? $self->{tree}->stable_id : undef;
 };
 
 # C(member_id)
