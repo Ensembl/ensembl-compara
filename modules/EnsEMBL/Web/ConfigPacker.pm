@@ -869,7 +869,7 @@ sub _compare_update_db {
       'status'      => $status,
     };
   }
-  $self->db_tree->{'UPDATE_GENES'}{$self->species} = $genes;
+  $self->db_tree->{'UPDATE_GENES'} = $genes;
 }
 
 #========================================================================#

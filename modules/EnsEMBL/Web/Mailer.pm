@@ -36,7 +36,7 @@ sub url {
 sub email_footer {
   ## Returns the generic email footer
   ## @return Text String
-  return sprintf "\n\nMany thanks,\n\nThe %s web team\n\n%1\$s Privacy Statement: %s/info/about/legal/privacy.html\n\n", $_[0]->site_name, $_[0]->{'base_url'};
+  return sprintf "\n\nMany thanks,\n\nThe %s web team\n\n%1\$s Privacy Statement: www.ensembl.org/info/about/legal/privacy.html\n\n", $_[0]->site_name;
 }
 
 sub hub         :lvalue { $_[0]->{'hub'};         }

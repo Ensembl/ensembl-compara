@@ -156,6 +156,8 @@ sub get_species_info {
 
     foreach my $this_leaf (@$all_leaves) {
       (my $name = $this_leaf->name) =~ s/ /_/g;
+      ## Filthy branch-only hack for error in compara database!
+      $name = 'Ictidomys_tridecemlineatus' if $name eq 'Spermophilus_tridecemlineatus';
       push @$species_order, $lookup->{$name} if $lookup->{$name};
     }
   }
