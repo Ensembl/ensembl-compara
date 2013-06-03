@@ -114,10 +114,10 @@ Below is a non-exhaustive list of EnsEMBL Compara adaptors that are most often u
 <li>DnaAlignFeatureAdaptor to fetch Bio::EnsEMBL::DnaDnaAlignFeature objects
 (note that this adaptor returns an EnsEMBL Core object)</li>
 <li>SyntenyAdaptor to fetch Bio::EnsEMBL::Compara::SyntenyRegion objects</li>
-<li>MemberAdaptor to fetch Bio::EnsEMBL::Compara::Member objects</li>
+<li>GeneMemberAdaptor to fetch Bio::EnsEMBL::Compara::GeneMember objects</li>
+<li>GeneTreeAdaptor to fetch Bio::EnsEMBL::Compara::GeneTree objects</li>
 <li>HomologyAdaptor to fetch Bio::EnsEMBL::Compara::Homology objects</li>
 <li>FamilyAdaptor to fetch Bio::EnsEMBL::Compara::Family objects</li>
-<li>PeptideAlignFeatureAdaptor to fetch Bio::EnsEMBL::Compara::PeptideAlignFeature objects</li>
 </ul>
 
 <p>
@@ -215,33 +215,44 @@ Here is an example script with all of this:
 <h2>Homologies and Protein clusters</h2>
 
 <p>
-All the homologies and families refer to Members. Homology objects store orthologous and paralogous relationships between Members and Family objects are clusters of Members.
+All the homologies and families refer to GeneMembers and SeqMembers. Homology objects store orthologous and paralogous relationships between members and Family objects are clusters of members.
 </p>
 
 
-<h3>Member objects</h3>
+<h3>*Member objects</h3>
 
 <p>
-A Member represent either a gene or a protein. Most of them
+A member represent either a gene (GeneMember) or a sequence-bearing locus, e.g. a protein or a transcript (SeqMember). Most of them
 are defined in the corresponding EnsEMBL core database. For
 instance, the sequence for the human gene ENSG00000004059
 is stored in the human core database.
 </p>
 
 <p>
-The fetch_by_source_stable_id method of the MemberAdaptor takes two arguments. The first one is the
-source of the Member and can be:
+The fetch_by_source_stable_id method of the corresponding *MemberAdaptor takes two arguments. The first one is the
+source of the member and can be:
 </p>
 
-<ul>
-<li>ENSEMBLPEP, derived from an EnsEMBL translation</li>
-<li>ENSEMBLGENE, derived from an EnsEMBL gene</li>
-<li>Uniprot/SWISSPROT, derived from a Uniprot/Swissprot entry</li>
-<li>Uniprot/SPTREMBL, derived from a Uniprot/SP-TrEMBL entry</li>
-</ul>
+<dl>
+<dt>for GeneMember</dt>
+<dd>
+	<ul>
+	<li>ENSEMBLGENE, derived from an EnsEMBL gene</li>
+	</ul>
+</dd>
+<dt>for SeqMember</dt>
+<dd>
+	<ul>
+	<li>ENSEMBLPEP, derived from an EnsEMBL translation</li>
+	<li>ENSEMBLTRANS, derived from an EnsEMBL transcript</li>
+	<li>Uniprot/SWISSPROT, derived from a Uniprot/Swissprot entry</li>
+	<li>Uniprot/SPTREMBL, derived from a Uniprot/SP-TrEMBL entry</li>
+	</ul>
+</dd>
+</dl>
 
 <p>
-The second argument is the identifier for the Member. Here is a simple example:
+The second argument is the identifier for the member. Here is a simple example:
 </p>
 
 <pre class="code">
@@ -249,11 +260,11 @@ The second argument is the identifier for the Member. Here is a simple example:
 </pre>
 
 <p>
-The Member object has several attributes:
+The *Member objects have several attributes:
 </p>
 <ul>
-<li><code>source_name</code> and <code>stable_id</code> define this Member.</li>
-<li><code>chr_name</code>, <code>chr_start</code>, <code>chr_end</code>, <code>chr_strand</code> locate this Member on the genome but
+<li><code>source_name</code> and <code>stable_id</code> define this member.</li>
+<li><code>chr_name</code>, <code>chr_start</code>, <code>chr_end</code>, <code>chr_strand</code> locate this member on the genome but
 are only available for ENSEMBLGENE and ENSEMBLPEP.</li>
 <li><code>taxon_id</code> corresponds to the NCBI taxonomy identifier (see
 <a href="http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/">http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/</a>
@@ -281,14 +292,13 @@ classification:	sapiens Homo Hominidae Catarrhini Haplorrhini Primates Euarchont
 <h3>Homology Objects</h3>
 
 <p>
-A Homology object represents either an orthologous or paralogous relationships between two
-or more Members.
+A Homology object represents either an orthologous or paralogous relationships between two members.
 </p>
 
 <p>
 Typically you want to get homologies for a given gene. The HomologyAdaptor has a
-fetching method called fetch_all_by_Member(). You will need the Member object for your
-query gene, therefore you will fetch the Member first like in this example:
+fetching method called fetch_all_by_Member(). You will need the GeneMember object for your
+query gene, therefore you will fetch the GeneMember first like in this example:
 </p>
 
 <pre class="code">
@@ -296,9 +306,9 @@ query gene, therefore you will fetch the Member first like in this example:
 </pre>
 
 <p>
-Each homology relation has 2 or more members, you should find there the initial member used as a query.
-The get_all_Members method returns an array of Member objects. The Member is actually an AlignedMember
-(for the underlying protein) and contains information about how this Member has been aligned.
+Each homology relation has exactly 2 members, you should find there the initial member used as a query.
+The get_all_Members method returns an array of SeqMember objects. The SeqMember is actually an AlignedMember
+(for the underlying protein) and contains information about how this SeqMember has been aligned.
 </p>
 
 <pre class="code">

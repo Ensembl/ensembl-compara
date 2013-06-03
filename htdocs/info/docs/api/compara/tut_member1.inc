@@ -1,9 +1,9 @@
 <span class="comp_tut slc"># get the MemberAdaptor</span>
-<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$member_adaptor</span> <span class="comp_tut opt">=</span> Bio<span class="comp_tut opt">::</span>EnsEMBL<span class="comp_tut opt">::</span>Registry<span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">get_adaptor</span><span class="comp_tut opt">(</span>
-    <span class="comp_tut str">'Multi'</span><span class="comp_tut opt">,</span><span class="comp_tut str">'compara'</span><span class="comp_tut opt">,</span><span class="comp_tut str">'Member'</span><span class="comp_tut opt">);</span>
+<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$genemember_adaptor</span> <span class="comp_tut opt">=</span> Bio<span class="comp_tut opt">::</span>EnsEMBL<span class="comp_tut opt">::</span>Registry<span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">get_adaptor</span><span class="comp_tut opt">(</span>
+    <span class="comp_tut str">'Multi'</span><span class="comp_tut opt">,</span><span class="comp_tut str">'compara'</span><span class="comp_tut opt">,</span><span class="comp_tut str">'GeneMember'</span><span class="comp_tut opt">);</span>
 
 <span class="comp_tut slc"># fetch a Member</span>
-<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$member</span> <span class="comp_tut opt">=</span> <span class="comp_tut kwb">$member_adaptor</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">fetch_by_source_stable_id</span><span class="comp_tut opt">(</span>
+<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$member</span> <span class="comp_tut opt">=</span> <span class="comp_tut kwb">$genemember_adaptor</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">fetch_by_source_stable_id</span><span class="comp_tut opt">(</span>
     <span class="comp_tut str">'ENSEMBLGENE'</span><span class="comp_tut opt">,</span><span class="comp_tut str">'ENSG00000004059'</span><span class="comp_tut opt">);</span>
 
 <span class="comp_tut slc"># print out some information about the Member</span>
