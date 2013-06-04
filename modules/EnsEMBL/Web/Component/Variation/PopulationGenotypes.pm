@@ -38,14 +38,18 @@ sub content {
     my $species = $self->hub->species;
     foreach (sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @$table_array) {
       my ($title, $table) = @$_;
+      my $id;
       
       # hide "other" and "failed" table
       if ($title =~ /other|inconsistent|population/i) {
-        my $id = $title =~ /other/i ? 'other' : ($title =~ /inconsistent/i ? 'inconsistent' : 'nopop');
+        $id = $title =~ /other/i ? 'other' : ($title =~ /inconsistent/i ? 'inconsistent' : 'nopop');
         my $expanded = ($id eq 'other' && $species ne 'Homo_sapiens') ? 1 : 0;
         $html .= $self->toggleable_table($title, $id, $table, $expanded);
-      } else {     
-        $html .= "<h2>$title</h2>" . $table->render;
+      } else {
+        $id = lc($title);
+        $id =~ s/ //g;
+        $id = (split(/\(/,$id))[0];
+        $html .= $self->toggleable_table($title, $id, $table, 1);
       }
     }
   }
