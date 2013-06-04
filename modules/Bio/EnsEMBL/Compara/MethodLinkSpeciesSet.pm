@@ -106,11 +106,11 @@ sub new {
 
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-    my ($method, $method_link_id, $method_link_type, $method_link_class,
+    my ($method, $method_link_type, $method_link_class,
         $species_set_obj, $species_set, $species_set_id,
         $name, $source, $url, $max_alignment_length) =
             rearrange([qw(
-                METHOD METHOD_LINK_ID METHOD_LINK_TYPE METHOD_LINK_CLASS
+                METHOD METHOD_LINK_TYPE METHOD_LINK_CLASS
                 SPECIES_SET_OBJ SPECIES_SET SPECIES_SET_ID
                 NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
 
@@ -121,7 +121,6 @@ sub new {
   }
 
     # the following three should generate a deprecated warning:
-  $self->method_link_id($method_link_id) if (defined ($method_link_id));
   $self->method_link_type($method_link_type) if (defined ($method_link_type));
   $self->method_link_class($method_link_class) if (defined ($method_link_class));
 
@@ -201,46 +200,6 @@ sub species_set_obj {
     }
 
     return $self->{'species_set'};
-}
-
-
-=head2 method_link_id
- 
-  Arg [1]    : (opt.) integer method_link_id
-  Example    : my $meth_lnk_id = $method_link_species_set->method_link_id();
-  Example    : $method_link_species_set->method_link_id(23);
-  Description: get/set for attribute method_link_id
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->method->dbID instead
- 
-=cut
-
-sub method_link_id {
-    my $self = shift @_;
-
-    deprecate("MLSS->method_link_id() is DEPRECATED, please use MLSS->method->dbID(). method_link_id() will be removed in release 70.");
-
-    if(@_) {
-        if($self->method) {
-            $self->method->dbID( @_ );
-        } else {
-            $self->method( Bio::EnsEMBL::Compara::Method->new(-dbID => @_) );
-        }
-    }
-
-        # type is known => fetch the method from DB and set all of its attributes
-    if (!$self->method->dbID and $self->adaptor and my $type = $self->method->type) {
-        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
-        if( my $fetched_method = $method_adaptor->fetch_by_type( $type ) ) {
-            $self->method( $fetched_method );
-        } else {
-            warning("Could not fetch method by type '$type'");
-        }
-    }
-
-    return $self->method->dbID();
 }
 
 

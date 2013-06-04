@@ -217,7 +217,7 @@ while (my @values = $old_sth->fetchrow_array) {
   if (!defined($method_link_species_sets->{$genomes_key}->{$method_link_id})) {
     $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet();
     $method_link_species_set->dbID(0);
-    $method_link_species_set->method_link_id($method_link_id);
+    $method_link_species_set->method($new_db->get_MethodAdaptor->fetch_by_dbID($method_link_id));
     $method_link_species_set->species_set([
             $consensus_dnafrag->genome_db,
             $query_dnafrag->genome_db

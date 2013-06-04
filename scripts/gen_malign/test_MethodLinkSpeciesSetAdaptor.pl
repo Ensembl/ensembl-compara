@@ -59,7 +59,7 @@ my $mlss;
 print "Test fetch_all\n";
   $mlss = $mlssa->fetch_all;
   foreach my $this_mlss (sort {$a->dbID <=> $b->dbID } @$mlss) {
-    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method_link_id,
+    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method->dbID,
         ") is: ", join(" - ", map {$_->name} @{$this_mlss->species_set}), "\n";
   }
   print "\n";
@@ -67,7 +67,7 @@ print "Test fetch_all\n";
 print "Test fetch_by_dbID(1)\n";
   $mlss = $mlssa->fetch_by_dbID(1);
   if (defined($mlss)){
-    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method_link_id, ") is: ";
+    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method->dbID, ") is: ";
     print join(" - ", map {$_->name} @{$mlss->species_set}), "\n";
   }
   print "\n";
@@ -75,7 +75,7 @@ print "Test fetch_by_dbID(1)\n";
 print "Test fetch_by_dbID(0) [SHOULD BE NULL]\n";
   $mlss = $mlssa->fetch_by_dbID(0);
   if (defined($mlss)){
-    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method_link_id, ") is: ";
+    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method->dbID, ") is: ";
     print join(" - ", map {$_->name} @{$mlss->species_set}), "\n";
   }
   print "\n";
@@ -83,7 +83,7 @@ print "Test fetch_by_dbID(0) [SHOULD BE NULL]\n";
 print "Test fetch_all_by_method_link(1)\n";
   $mlss = $mlssa->fetch_all_by_method_link(1);
   foreach my $this_mlss (sort {$a->dbID <=> $b->dbID } @$mlss) {
-    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method_link_id,
+    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method->dbID,
         ") is: ", join(" - ", map {$_->name} @{$this_mlss->species_set}), "\n";
   }
   print "\n";
@@ -91,7 +91,7 @@ print "Test fetch_all_by_method_link(1)\n";
 print "Test fetch_all_by_method_link(\"BLASTZ_NET\")\n";
   $mlss = $mlssa->fetch_all_by_method_link("BLASTZ_NET");
   foreach my $this_mlss (sort {$a->dbID <=> $b->dbID } @$mlss) {
-    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method_link_id,
+    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method->dbID,
         ") is: ", join(" - ", map {$_->name} @{$this_mlss->species_set}), "\n";
   }
   print "\n";
@@ -99,7 +99,7 @@ print "Test fetch_all_by_method_link(\"BLASTZ_NET\")\n";
 print "Test fetch_all_by_method_link_type(\"BLASTZ_NET\")\n";
   $mlss = $mlssa->fetch_all_by_method_link_type("BLASTZ_NET");
   foreach my $this_mlss (sort {$a->dbID <=> $b->dbID } @$mlss) {
-    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method_link_id,
+    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method->dbID,
         ") is: ", join(" - ", map {$_->name} @{$this_mlss->species_set}), "\n";
   }
   print "\n";
@@ -107,7 +107,7 @@ print "Test fetch_all_by_method_link_type(\"BLASTZ_NET\")\n";
 print "Test fetch_by_method_link_and_genome_db_ids(\"BLASTZ_NET\", [1, 2])\n";
   $mlss = $mlssa->fetch_by_method_link_and_genome_db_ids("BLASTZ_NET", [1, 2]);
   if (defined($mlss)){
-    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method_link_id, ") is: ";
+    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method->dbID, ") is: ";
     print join(" - ", map {$_->name} @{$mlss->species_set}), "\n";
   }
   print "\n";
@@ -115,7 +115,7 @@ print "Test fetch_by_method_link_and_genome_db_ids(\"BLASTZ_NET\", [1, 2])\n";
 print "Test fetch_by_method_link_and_genome_db_ids(\"BLASTZ_NET\", [1]) [SHOULD BE NULL]\n";
   $mlss = $mlssa->fetch_by_method_link_and_genome_db_ids("BLASTZ_NET", [1]);
   if (defined($mlss)){
-    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method_link_id, ") is: ";
+    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method->dbID, ") is: ";
     print join(" - ", map {$_->name} @{$mlss->species_set}), "\n";
   }
   print "\n";
@@ -124,7 +124,7 @@ print "Test store method (dbID=1)\n";
   $mlss = $mlssa->fetch_by_dbID(1);
   $mlss = $mlssa->store($mlss);
   if (defined($mlss)){
-    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method_link_id, ") is: ";
+    print " + ", $mlss->dbID, " - ", $mlss->method_link_type, " (", $mlss->method->dbID, ") is: ";
     print join(" - ", map {$_->name} @{$mlss->species_set}), "\n";
   }
   print "\n";
