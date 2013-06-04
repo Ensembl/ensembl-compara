@@ -289,7 +289,7 @@ sub update_genome_db {
   if (defined($species_name)) {
     $primary_species_binomial_name = $species_name;
   } else {
-    $primary_species_binomial_name = $genome_db_adaptor->get_species_name_from_core_MetaContainer($meta_container);
+    $primary_species_binomial_name = $meta_container->get_production_name();
     if (!$primary_species_binomial_name) {
       throw "Cannot get the species name from the database. Use the --species_name option";
     }

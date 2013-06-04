@@ -579,8 +579,7 @@ sub fetch_by_method_link_type_registry_aliases {
         $gdb = $gdba->fetch_by_name_assembly($binomial);
       } catch {
         my $meta_c = Bio::EnsEMBL::Registry->get_adaptor($alias, 'core', 'MetaContainer');
-        $binomial=$gdba->get_species_name_from_core_MetaContainer($meta_c);
-        $gdb = $gdba->fetch_by_name_assembly($binomial);
+        $gdb = $gdba->fetch_by_name_assembly($meta_c->get_production_name());
       };
       push @genome_dbs, $gdb;
     } else {

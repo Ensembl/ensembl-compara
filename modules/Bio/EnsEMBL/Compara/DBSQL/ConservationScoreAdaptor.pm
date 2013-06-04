@@ -1783,7 +1783,7 @@ sub _get_all_ref_genomic_aligns {
 
     my $gdb_a = $self->db->get_GenomeDBAdaptor();
     my $meta_container = $slice->adaptor->db->get_MetaContainer();
-    my $primary_species_name = $gdb_a->get_species_name_from_core_MetaContainer($meta_container);
+    my $primary_species_name = $meta_container->get_production_name();
     my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
     my $primary_species_assembly = $highest_cs->version();
     my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;

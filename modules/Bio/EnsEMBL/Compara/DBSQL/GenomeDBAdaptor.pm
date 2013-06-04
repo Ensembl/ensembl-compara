@@ -284,38 +284,12 @@ sub fetch_all_by_ancestral_taxon_id {
 
 sub fetch_by_core_DBAdaptor {
 	my ($self, $core_dba) = @_;
-	my $mc = $core_dba->get_MetaContainer();
-	my $species_name = $self->get_species_name_from_core_MetaContainer($mc);
+	my $species_name = $core_dba->get_MetaContainer->get_production_name();
 	my ($highest_cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
   my $species_assembly = $highest_cs->version();
   return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
-
-=head2 get_species_name_from_core_MetaContainer
-
-  Arg [1]     : Bio::EnsEMBL::MetaContainer
-  Example     : $gdba->get_species_name_from_core_MetaContainer($slice->adaptor->db->get_MetaContainer);
-  Description : Returns the name of a species which was used to
-                name the GenomeDB from a meta container. Can be
-                the species binomial name or the value of the
-                meta item species.compara_name
-  Returntype  : Scalar string
-  Exceptions  : thrown if no name is found
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub get_species_name_from_core_MetaContainer {
-	my ($self, $meta_container) = @_;
-  my ($species_name) = @{$meta_container->list_value_by_key('species.production_name')};
-  unless(defined $species_name) {
-    $species_name = $meta_container->get_Species->binomial;
-	}
-  throw('Species name was still empty/undefined after looking for species.production_name and binomial name') unless $species_name;
-  return $species_name;
-}
 
 
 sub synchronise {
