@@ -70,64 +70,6 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 # FETCH methods
 ###########################
 
-=head2 fetch_all
-
-  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all(-tree_type=>"tree") instead
-                            (possibly with a -member_type option)
-
-=cut
-
-# This function must stay here to override the one from NestedSetAdaptor
-sub fetch_all {
-    my $self = shift;
-    deprecate('See Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all(-tree_type=>"tree") instead (possibly with a member_type constraint)');
-    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all(-tree_type => 'tree'));
-}
-
-
-=head2 fetch_all_roots
-
-  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all(-tree_type=>"clusterset") instead
-                            (possibly with a -member_type option)
-
-=cut
-
-sub fetch_all_roots {
-    my $self = shift;
-    deprecat_('See Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all(-tree_type=>"clusterset") instead (possibly with a member_type constraint)');
-    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset'));
-}
-
-
-=head2 fetch_by_Member_root_id
-
-  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all_by_Member() instead
-                            (possibly with a -clusterset_id option)
-
-=cut
-
-sub fetch_by_Member_root_id {
-    my ($self, $member, $clusterset_id) = @_;
-    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all_by_Member instead. fetch_by_Member_root_id() will be removed in release 70.');
-    $clusterset_id = 'default' if ((not defined $clusterset_id) or ($clusterset_id == 0) or ($clusterset_id == 1));
-    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id))->[0];
-}
-
-
-=head2 fetch_by_gene_Member_root_id
-
-  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all_by_Member() instead
-                            (possibly with a -clusterset_id option)
-
-=cut
-
-sub fetch_by_gene_Member_root_id {
-    my ($self, $member, $clusterset_id) = @_;
-    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all_by_Member instead. fetch_by_gene_Member_root_id() will be removed in release 70.');
-    $clusterset_id = 'default' if ((not defined $clusterset_id) or ($clusterset_id == 0) or ($clusterset_id == 1));
-    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id))->[0];
-}
-
 
 =head2 fetch_all_AlignedMember_by_Member
 
@@ -213,47 +155,6 @@ sub fetch_default_AlignedMember_for_Member {
 }
 
 
-=head2 fetch_AlignedMember_by_member_id_root_id
-
-  Description: DEPRECATED. Use fetch_all_AlignedMember_by_Member() instead
-
-=cut
-
-sub fetch_AlignedMember_by_member_id_root_id {
-    my ($self, $member_id, $clusterset_id) = @_;
-    deprecate('Use fetch_all_AlignedMember_by_Member($member_id, -clusterset_id=>$clusterset_id) instead. fetch_AlignedMember_by_member_id_root_id() will be removed in release 70.');
-    $clusterset_id = 'default' if ((not defined $clusterset_id) or ($clusterset_id == 0) or ($clusterset_id == 1));
-    return $self->fetch_all_AlignedMember_by_Member($member_id, -clusterset_id => $clusterset_id)->[0];
-}
-
-
-=head2 fetch_AlignedMember_by_member_id_mlssID
-
-  Description: DEPRECATED. Use fetch_all_AlignedMember_by_Member() instead
-
-=cut
-
-sub fetch_AlignedMember_by_member_id_mlssID {
-    my ($self, $member_id, $mlss_id) = @_;
-    deprecate('Use fetch_all_AlignedMember_by_Member($member_id, -method_link_species_set=>$mlss_id) instead. fetch_AlignedMember_by_member_id_mlssID() will be removed in release 70.');
-    return $self->fetch_all_AlignedMember_by_Member($member_id, -method_link_species_set => $mlss_id)->[0];
-}
-
-
-=head2 gene_member_id_is_in_tree
-
-  Description: DEPRECATED. Use fetch_all_by_Member($member_id) instead
-
-=cut
-
-sub gene_member_id_is_in_tree {
-    my ($self, $member_id) = @_;
-    deprecate('Use fetch_all_by_Member($member_id) instead. gene_member_id_is_in_tree() will be removed in release 70.');
-    my $trees = $self->fetch_all_AlignedMember_by_Member($member_id);
-    return $trees->[0]->root_id if scalar(@$trees);
-}
-
-
 =head2 fetch_all_AlignedMember_by_root_id
 
   Arg[1]     : int: root_id: ID of the root node of the tree
@@ -273,24 +174,6 @@ sub fetch_all_AlignedMember_by_root_id {
   $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 
-}
-
-###########################
-# stable_id mapping
-###########################
-
-
-=head2 fetch_by_stable_id
-
-  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_by_stable_id instead.
-
-=cut
-
-sub fetch_by_stable_id {
-    my $self = shift;
-    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_by_stable_id instead. fetch_by_stable_id() will be removed in release 71.');
-    my $tree = $self->db->get_GeneTreeAdaptor->fetch_by_stable_id(@_);
-    return $tree->root if (not defined $self->_default_member_type) or ($tree->member_type eq $self->_default_member_type);
 }
 
 
@@ -504,19 +387,6 @@ sub init_instance_from_rowhash {
     return $node;
 }
 
-
-# Used as convenience to map the GeneTree objects to GeneTreeNode
-# This method is actually only used by deprecated methods
-sub _extract_roots_from_trees {
-    my $self = shift;
-    my $treearray_ref = shift;
-    my @nodearray = ();
-    #print scalar(@$treearray_ref), " elements to convert\n";
-    foreach my $tree (@{$treearray_ref}) {
-        push @nodearray, $tree->root if (not defined $self->_default_member_type) or ($tree->member_type eq $self->_default_member_type);
-    }
-    return \@nodearray;
-}
 
 
 sub _default_member_type {
