@@ -44,9 +44,9 @@ my $level      = 0;
 #    asia    => 'ec2-54-251-95-197.ap-southeast-1.compute.amazonaws.com'
 #);
 my %ips        = (
-  useast => 'ec2-23-20-211-155.compute-1.amazonaws.com',
-  uswest => 'ec2-54-241-205-36.us-west-1.compute.amazonaws.com',
-  asia   => 'ec2-54-251-69-136.ap-southeast-1.compute.amazonaws.com'
+  useast => 'ec2-54-224-173-109.compute-1.amazonaws.com',
+  uswest => 'ec2-54-215-90-246.us-west-1.compute.amazonaws.com',
+  asia   => 'ec2-54-251-27-196.ap-southeast-1.compute.amazonaws.com',
 );
 
 my ($servers, $species_set, %targets, %hash);
