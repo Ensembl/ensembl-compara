@@ -106,24 +106,19 @@ sub new {
 
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-    my ($method, $method_link_class,
+    my ($method,
         $species_set_obj, $species_set, $species_set_id,
         $name, $source, $url, $max_alignment_length) =
             rearrange([qw(
-                METHOD METHOD_LINK_CLASS
+                METHOD
                 SPECIES_SET_OBJ SPECIES_SET SPECIES_SET_ID
                 NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
 
   if($method) {
       $self->method($method);
   } else {
-      warning("Please consider using -method to set the method instead of older/deprecated ways to do it");
+      warning("method has not been set in MLSS->new");
   }
-
-    # the following three should generate a deprecated warning:
-  $self->method_link_class($method_link_class) if (defined ($method_link_class));
-
-  warning("method has not been set in MLSS->new") unless($self->method());
 
   $self->species_set_obj($species_set_obj) if (defined ($species_set_obj));
   $self->species_set($species_set) if (defined ($species_set));
@@ -199,46 +194,6 @@ sub species_set_obj {
     }
 
     return $self->{'species_set'};
-}
-
-
-=head2 method_link_class
- 
-  Arg [1]    : (opt.) string method_link_class
-  Example    : my $meth_lnk_class = $method_link_species_set->method_link_class();
-  Example    : $method_link_species_set->method_link_class("GenomicAlignBlock.multiple_alignment");
-  Description: get/set for attribute method_link_class
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->method->class instead
- 
-=cut
-
-sub method_link_class {
-    my $self = shift @_;
-
-    deprecate("MLSS->method_link_class() is DEPRECATED, please use MLSS->method->class(). method_link_class() will be removed in release 70.");
-
-    if(@_) {
-        if($self->method) {
-            $self->method->class( @_ );
-        } else {
-            $self->method( Bio::EnsEMBL::Compara::Method->new(-class => @_) );
-        }
-    }
-
-        # dbID is known => fetch the method from DB and set all of its attributes
-    if (!$self->method->class and $self->adaptor and my $dbID = $self->method->dbID) {
-        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
-        if( my $fetched_method = $method_adaptor->fetch_by_dbID( $dbID ) ) {
-            $self->method( $fetched_method );
-        } else {
-            warning("Could not fetch method by dbID '$dbID'");
-        }
-    }
-
-    return $self->method->class();
 }
 
 
