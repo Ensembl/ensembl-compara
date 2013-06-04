@@ -188,23 +188,6 @@ sub fetch_all_by_gene_align_id {
 
 
 #
-# Store an AlignedMemberSet
-##############################
-
-=head2 store
-
- Description: AlignedMemberAdaptor::store() is deprecated and will be removed in e72. Use GeneAlignAdaptor instead.')
-
-=cut
-
-sub store {    # DEPRECATED
-    my $self = shift;
-    deprecate('AlignedMemberAdaptor::store() is deprecated and will be removed in e72. Use GeneAlignAdaptor instead.');
-    return $self->db->get_GeneAlignAdaptor->store(@_);
-}
-
-
-#
 # Redirections to MemberAdaptor
 ################################
 
