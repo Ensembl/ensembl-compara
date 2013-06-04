@@ -183,8 +183,6 @@ sub get_available_adaptors {
 
             # obsolete:
         'Subset'                => 'Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor',
-        'ProteinTree'           => 'Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor',
-        'NCTree'                => 'Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor',
         'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
         'SitewiseOmega'         => 'Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor',
     );
