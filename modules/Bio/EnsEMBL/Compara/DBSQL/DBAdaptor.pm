@@ -182,7 +182,6 @@ sub get_available_adaptors {
         'CAFEGeneFamily'        => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor',
 
             # obsolete:
-        'Subset'                => 'Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor',
         'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
         'SitewiseOmega'         => 'Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor',
     );
