@@ -339,10 +339,12 @@ sub _feature_table {
     ## Add "extra" columns (unique to particular table types)
     my $extras = $feature_set->[1];
     foreach $col (@$extras) {
+      my %column_extra = %{$column_info->{$col->{'key'}}||{}};
       push @$columns, {
                   'key'   => $col->{'key'}, 
                   'title' => $col->{'title'}, 
-                  'sort'  => $col->{'sort'}
+                  'sort'  => $col->{'sort'},
+                  %column_extra,
                   }; 
     }
       
