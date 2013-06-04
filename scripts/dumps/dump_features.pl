@@ -132,8 +132,7 @@ my $mlss;
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor if ($compara_dba);
 my $track_name;
 my $description;
-my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->
-    list_value_by_key("schema_version")->[0];
+my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_schema_version();
 
 if ($feature =~ /^top/) {
   $track_name = "top-level.e$version";

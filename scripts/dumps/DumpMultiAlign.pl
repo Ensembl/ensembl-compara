@@ -433,8 +433,6 @@ if ($method_link_species_set_id) {
       if (!$method_link_species_set);
 }
 
-my $meta_container = $compara_dba->get_MetaContainer();
-
 my $conservation_score_mlss;
 if ($method_link_species_set->method->class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
@@ -493,7 +491,7 @@ if ($method_link_species_set->method->class =~ /GenomicAlignTree/) {
 #Need if get genomic_align_blocks from file_of_genomic_align_block_ids
 my  $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 
-my $release = $meta_container->list_value_by_key("schema_version")->[0];
+my $release = $compara_dba->get_MetaContainer()->get_schema_version();
 my $date = scalar(localtime());
 
 

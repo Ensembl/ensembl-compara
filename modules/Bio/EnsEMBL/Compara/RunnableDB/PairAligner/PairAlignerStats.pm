@@ -115,7 +115,7 @@ sub fetch_input {
 
   #Get ensembl schema version from meta table if not defined
   if (!defined $self->param('ensembl_release')) {
-      $self->param('ensembl_release', $self->compara_dba->get_MetaContainer->list_value_by_key("schema_version")->[0]);
+      $self->param('ensembl_release', $self->compara_dba->get_MetaContainer->get_schema_version());
   }
 
   return 1;
