@@ -107,11 +107,11 @@ sub new {
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
     my ($method,
-        $species_set_obj, $species_set, $species_set_id,
+        $species_set_obj, $species_set,
         $name, $source, $url, $max_alignment_length) =
             rearrange([qw(
                 METHOD
-                SPECIES_SET_OBJ SPECIES_SET SPECIES_SET_ID
+                SPECIES_SET_OBJ SPECIES_SET
                 NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
 
   if($method) {
@@ -122,7 +122,6 @@ sub new {
 
   $self->species_set_obj($species_set_obj) if (defined ($species_set_obj));
   $self->species_set($species_set) if (defined ($species_set));
-  $self->species_set_id($species_set_id) if (defined ($species_set_id));
 
   warning("species_set_obj has not been set in MLSS->new") unless($self->species_set_obj());
 
@@ -221,33 +220,6 @@ sub _set_genome_dbs {
     $self->species_set_obj( $ss_obj );
 }
 
-
-
-=head2 species_set_id
-
-  Arg [1]    : (opt.) integer species_set_id
-  Example    : my $species_set_id = $method_link_species_set->species_set_id();
-  Example    : $method_link_species_set->species_set_id(23);
-  Description: get/set for attribute species_set_id
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->species_set_obj->dbID instead
-
-=cut
-
-sub species_set_id {
-    my $self = shift @_;
-
-    deprecate("MLSS->species_set_id() is DEPRECATED, please use MLSS->species_set_obj->dbID(). species_set_id() will be removed in release 70.");
-
-    if(my $species_set_obj = $self->species_set_obj) {
-        return $species_set_obj->dbID( @_ );
-    } else {
-        warning("SpeciesSet object has not been set, so cannot deal with its dbID");
-        return undef;
-    }
-}
 
 
 =head2 species_set
