@@ -158,7 +158,7 @@ my $conf = {};
 foreach my $index (@indexes) {
 
   my $start = time;
-  if ($index eq 'Help') {
+  if ($search_engine eq 'lucene' && $index eq 'Help') {
     foreach my $type (qw(View Glossary FAQ)) {
       $conf->{"directory_$type"} = "$dir/".lc($sitetype)."_$type";
       mkdir $conf->{"directory_$type"}, 0777 unless -e $conf->{"directory_$type"};
@@ -270,23 +270,24 @@ sub dumpHelp {
   my $start_time = time;
   my $total_c;
   my @types = $sitetype eq 'Vega' ? qw(Glossary) : qw(View Glossary FAQ);
+  my ($file,$fh,$counter);
+  my $dbname    = $conf->{'website'}{'name'};
+  if ($search_engine eq 'solr') {
+    $file = $conf->{'directory'}.'/'.$conf->{'website'}{'name'}.'_Help.xml';
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
+    $counter   = make_counter(0);
+    print LOG "  Dumping $dbname Help to $file ... ", format_datetime($start_time), "\n";
+    header( $dbname, 'Help', 'Help', $nogzip, $fh, $release );
+  }
   foreach my $type (@types) {
-    my $counter   = make_counter(0);
-    my $file = $conf->{'directory_'.$type}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
-    $file .= ".gz" unless $nogzip;
-    my $dbname    = $conf->{'website'}{'name'};
     my $db_type   = $type;
-    my $fh;
-    unless ($nogzip) {
-      $fh = new IO::Zlib;
-      $fh->open( "$file", "wb9" )
-        or die("Can't open compressed stream to $file: $!");
-    }
-    else {
+    if ($search_engine eq 'lucene') {
+      $file = $conf->{'directory_'.$type}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
       open( $fh, ">$file" ) or die "Can't open $file: $!";
+      $counter   = make_counter(0);
+      print LOG "  Dumping $dbname $type to $file ... ", format_datetime($start_time), "\n";
+      header( $dbname, 'Help', $db_type, $nogzip, $fh, $release );
     }
-    print LOG "  Dumping $dbname $type to $file ... ", format_datetime($start_time), "\n";
-    header( $dbname, 'Help', $db_type, $nogzip, $fh, $release );
 
     if ($type eq 'View') {
       my $sth = $conf->{'website'}{'dbh'}->prepare(qq(
@@ -296,7 +297,6 @@ sub dumpHelp {
           AND type = lower('$type')
           AND hr.help_record_id = hl.help_record_id
       ));
-
       $sth->execute;
 
       my ($id, $keywords, $content, $page_url);
@@ -304,10 +304,10 @@ sub dumpHelp {
       while (($id, $keywords, $content, $page_url) = $sth->fetchrow_array) {
         my $data        = eval($content);
         my $description = $data->{'content'};
-        my $name        = "$page_url View";
-           $name        =~ s/\// /g;
-        
-        &p(helpLine($id, $name, $keywords, $description, undef, $type, $counter), $nogzip, $fh); #### need to parse it
+        my $title        = "$page_url View";
+           $title        =~ s/\// /g;
+
+        &p(helpLine($id, $title, $keywords, $description, undef, $type, $counter), $nogzip, $fh); #### need to parse it
       }
     } else {
       my $sth = $conf->{'website'}{'dbh'}->prepare(qq(
@@ -316,36 +316,38 @@ sub dumpHelp {
         WHERE status = 'live'
           AND type = lower('$type')
       ));
-      
       $sth->execute;
-      
-      my ($id, $keywords, $content);
 
+      my ($id, $keywords, $content);
       while (($id, $keywords, $content) = $sth->fetchrow_array) {
-        my ($extra, $description, $name);
+        my ($extra, $description, $title);
         my $data = eval($content);
-        
         if ($type eq 'Glossary') {
           $description = $data->{'meaning'};
-          $name        = $data->{'word'};
+          $title        = $data->{'word'};
           push @$extra, $data->{'expanded'} if $data->{'expanded'};
         } elsif ($type eq 'FAQ') {
           $description = $data->{'answer'};
-          $name        = $data->{'question'};
+          $title        = $data->{'question'};
         }
-        
-        &p(helpLine($id, $name, $keywords, $description, $extra, $type, $counter), $nogzip, $fh); #### need to parse it
+
+        &p(helpLine($id, $title, $keywords, $description, $extra, $type, $counter), $nogzip, $fh); #### need to parse it
       }
     }
-
-    $total_c += footer($counter->(), $nogzip, $fh, $type);
+    if ($search_engine eq 'lucene') {
+      $total_c += footer($counter->(), $nogzip, $fh, $type);
+    }
   }
-
-  return $total_c;
+  if ($search_engine eq 'solr') {
+    footer($counter->(), $nogzip, $fh, 'Help');
+  }
+  else {
+    return $total_c;
+  }
 }
 
 sub helpLine {
-  my ($id, $name, $keywords, $desc, $extra,  $type, $counter) = @_;
+  my ($id, $title, $keywords, $desc, $extra,  $type, $counter) = @_;
   my @keywords = map { s/^ //; $_; } split ',', $keywords if $keywords;
 
   #remove all HTML markup, extra whitespace and extra lines. Escape any characters that might have slipped through
@@ -356,8 +358,8 @@ sub helpLine {
   $hs->eof;
 
   #remove markup from headers and escape just to be sure
-  $name =~ s/<\/?\w+>//g;
-  $name = &clean($name);
+  $title =~ s/<\/?\w+>//g;
+  $title = &clean($title);
 
   my $xml;
   if ($search_engine eq 'solr') {
@@ -370,13 +372,14 @@ sub helpLine {
 <doc>
   <field name="id">$id</field>
   <field name="description">$description</field>
-  <field name="featuretype">$type</field>
-  <field name="displayname">$name</field>);
+  <field name="article_title">$title</field>);
     foreach my $kw (@keywords) {
       $xml .= qq(
   <field name="keyword">$kw</field>);
     }
-    $xml .= &common_fields('All',$type,'');
+    $xml .= &common_fields('All','Documentation','');
+    $xml .= qq(
+  <field name="feature_subtype">$type</field>);
     $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
@@ -387,7 +390,7 @@ sub helpLine {
   <description>$description</description>
   <additional_fields>
     <field name="featuretype">$type</field>
-    <field name="displayname">$name</field>);
+    <field name="displayname">$title</field>);
     foreach my $kw (@keywords) {
       $xml .= qq(
     <field name="keyword">$kw</field>);
@@ -910,7 +913,7 @@ sub PhenLine {
     $xml = qq(
 <doc>
   <field name="id">$id</field>
-  <field name="description">$name</field>);
+  <field name="name">$name</field>);
     foreach my $syn (@$synonyms) {
       $xml .= qq(
   <field name="synonym">$syn</field>);
@@ -1027,7 +1030,7 @@ sub StrucVarLine {
   <field name="description">$desc</field>);
     foreach (split ',', $evidence) {
       $xml .= qq(
-  <field name="evidence">$_</field>);
+  <field name="supporting_evidence">$_</field>);
     }
     if ($study) {
       $xml .= qq(
