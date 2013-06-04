@@ -271,18 +271,6 @@ sub method_link_type {  # DEPRECATED
 }
 
 
-=head2 method_link_id
-
-    DEPRECATED. Use method_link_species_set()->method()->dbID() instead. This is not a setter any more.
-
-=cut
-
-sub method_link_id {  # DEPRECATED
-    my $self = shift;
-    deprecate('Use method_link_species_set()->method()->dbID() instead. This is not a setter any more.');
-    return $self->method_link_species_set->method->dbID if defined $self->{'_method_link_species_set_id'};
-}
-
 =head2 adaptor
 
   Arg [1]    : string $adaptor (optional)
