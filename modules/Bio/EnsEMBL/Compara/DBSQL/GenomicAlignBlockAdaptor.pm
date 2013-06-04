@@ -460,7 +460,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
   if ($reference_slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
     return $reference_slice->get_all_GenomicAlignBlocks(
-        $method_link_species_set->method_link_type, $method_link_species_set->species_set);
+        $method_link_species_set->method->type, $method_link_species_set->species_set);
   }
 
   ## Get the Bio::EnsEMBL::Compara::GenomeDB object corresponding to the

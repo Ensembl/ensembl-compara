@@ -290,7 +290,7 @@ sub get_features_from_SyntenyRegions {
     push @$features, {
         'id'    => $synteny_region_id,
         'label' => "Synteny Region #$synteny_region_id",
-        'method'=> $method_link_species_set->method_link_type,
+        'method'=> $method_link_species_set->method->type,
         'start' => $reference_dnafrag_region->dnafrag_start,
         'end'   => $reference_dnafrag_region->dnafrag_end,
         'ori'   => ($reference_dnafrag_region->dnafrag_strand() == 1 ? '+' : '-'),
@@ -425,7 +425,7 @@ sub get_features_from_GenomicAlingBlocks {
     push @$features, {
         'id'    => $id,
         'label' => $label,
-        'method'=> $method_link_species_set->method_link_type,
+        'method'=> $method_link_species_set->method->type,
         'start' => $genomic_align1->dnafrag_start,
         'end'   => $genomic_align1->dnafrag_end,
         'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),

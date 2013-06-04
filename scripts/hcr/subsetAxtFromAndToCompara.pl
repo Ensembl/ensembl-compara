@@ -120,9 +120,10 @@ my $tg_gdb = $gdba->fetch_by_name_assembly($tg_binomial);
 my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($src_method_link_type, [$qy_gdb->dbID, $tg_gdb->dbID]);
 my %repeated_alignment;
 
-my $dest_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-$dest_mlss->species_set([$tg_gdb, $qy_gdb]);
-$dest_mlss->method_link_type($dest_method_link_type);
+my $dest_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+    -method => Bio::EnsEMBL::Compara::Method->new( -type => $dest_method_link_type ),
+    -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$tg_gdb, $qy_gdb] ),
+);
 
 while (1)  {
   my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $qy_dnafrag, undef, undef, $limit_number, $limit_index_start);

@@ -75,7 +75,7 @@ sub fetch_input {
     my $mlss_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
     $self->param('mlss_id', $self->param('dump_mlss_id'));
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-    if ($mlss->method_link_type eq "GERP_CONSERVATION_SCORE") {
+    if ($mlss->method->type eq "GERP_CONSERVATION_SCORE") {
       $self->param('mlss_id', $mlss->get_value_for_tag('msa_mlss_id'));
     }
 

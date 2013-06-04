@@ -139,8 +139,8 @@ sub store_synteny {
     my $gdb = $gdba->fetch_by_dbID($gdb_id);
     push @genome_dbs, $gdb;
   }
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-    (-method_link_type => $self->param('method_link_type'),
+  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+     -method => new Bio::EnsEMBL::Compara::Method( -type => $self->param('method_link_type') ),
      -species_set => \@genome_dbs);
   $mlssa->store($mlss);
 

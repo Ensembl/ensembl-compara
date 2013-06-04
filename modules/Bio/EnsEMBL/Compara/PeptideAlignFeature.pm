@@ -75,7 +75,6 @@ sub create_homology
   }
   $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
   $homology->stable_id($stable_id);
-  $homology->method_link_type("ENSEMBL_ORTHOLOGUES");
 
   #
   # QUERY member

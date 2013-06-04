@@ -198,7 +198,7 @@ if ($feature =~ /^top/) {
   print join("\n", map {$_->dbID.": ".$_->name} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($1)}), "\n";
   exit(0);
 } elsif ($feature =~ /mlss/) {
-  my %types = map {$_->method_link_type => 1} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all()};
+  my %types = map {$_->method->type => 1} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all()};
   print join("\n", keys %types), "\n";
   exit(0);
 } else {

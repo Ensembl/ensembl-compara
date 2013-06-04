@@ -421,17 +421,15 @@ if ($show_matrix_to_be_used) {
   exit 0;
 }
 
-# Create and save (if needed) the MethodLinkSpeciesSet
+# Self alignments, or pairwise alignments ?
+my $gdbs = ($tgdb->dbID == $qgdb->dbID) ? [$tgdb] : [$tgdb, $qgdb];
 my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-if ($tgdb->dbID == $qgdb->dbID) {
-  ## Self alignments
-  $mlss->species_set([$tgdb]);
-} else {
-  ## Pairwise alignments
-  $mlss->species_set([$tgdb, $qgdb]);
-}
-$mlss->method_link_type($method_link_type);
 $mlssa->store($mlss); # Sets the dbID if already exists, creates and sets the dbID if not!
+my $dest_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+    -method => Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type ),
+    -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $gdbs ),
+);
+
 
 my $nb_of_net = 0;
 my $nb_of_daf_loaded = 0;

@@ -190,7 +190,7 @@ my $url = "file://[".hostname."]".realpath($input_file);
 
 my $enredo_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
 	-adaptor => $to_db_mlss_a,
-	-method_link_type => "ENREDO",
+      -method => Bio::EnsEMBL::Compara::Method->new( -type => 'ENREDO' ),
 	-species_set => $genome_dbs,
 	-name => "enredo",
 	-source => "ensembl",

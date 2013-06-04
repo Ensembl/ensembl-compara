@@ -659,7 +659,7 @@ sub print_header {
   my ($output_format, $method_link_species_set, $date, $release, $num) = @_;
 
   if ($output_format =~ /^maf$/i) {
-    print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
+    print "##maf version=1 program=", $method_link_species_set->method->type, "\n";
     print "#\n";
   } elsif ($output_format =~ /^emf$/i) {
     print
