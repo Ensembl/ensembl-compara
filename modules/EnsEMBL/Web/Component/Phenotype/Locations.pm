@@ -48,12 +48,16 @@ sub _configure_Variation_table {
   my $header = 'Features associated with phenotype '.$self->object->get_phenotype_desc;
   my $table_style = {'sorting' => ['p-values desc']};
 
-  my $column_order = [qw(loc names)];
+  my $column_order = [qw(names loc)];
   my $column_info = {
-    'names'   => {'title' => 'Name(s)', 'sort' => 'html'},
-    'loc'     => {'title' => 'Genomic location (strand)', 'sort' => 'position_html'},
+    'names'   => {'label' => 'Name(s)', 'title' => 'Feature type ID (e.g. variant ID: rs123, gene ID:ENSG00000000001)', 'sort' => 'html'},
+    'loc'     => {'label' => 'Genomic location (strand)', 'title' => 'Position of the feature (e.g. chromosome number, start and end coordinates, forward or reverse strand)', 'sort' => 'position_html'},
+    'feat_type' => {'label' => 'Feature type', 'title' => 'Variant, gene, or QTL'},
+    'genes'   => {'label' => 'Reported gene(s)', 'title' => 'The gene reported to be associated with the phenotype'},
+    'phe_sources' => {'label' => 'Annotation source(s)', 'title' => 'Project or database reporting the association'},
+    'phe_studies' => {'label' => 'Study', 'title' => 'Link to the pubmed article or other source showing the association', 'sort' => 'html'},
+    'p-values' => {'label' => 'P value (negative log)', 'title' => 'The probability that the association is significant (a higher number indicates a higher probability)'},
   };
-
 
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
@@ -67,7 +71,7 @@ sub _configure_Variation_table {
     push @$rows, $row;
   }
   return {'header' => $header, 'column_order' => $column_order, 'rows' => $rows,
-          'column_info' => $column_info, 'table_style' => $table_style};
+          'custom_columns' => $column_info, 'table_style' => $table_style};
 }
     
 sub _pf_location_link {
