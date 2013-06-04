@@ -408,7 +408,7 @@ sub get_features_from_GenomicAlingBlocks {
           $group_start2, $group_end2));
     }
 
-    if (@{$method_link_species_set->species_set} <= 2) {
+    if (@{$method_link_species_set->species_set_obj->genome_dbs} <= 2) {
       ## for pairwise and self-alignments
       my $ga = $gab->get_all_non_reference_genomic_aligns()->[0];
       $label = $ga->dnafrag->name.": ".$ga->dnafrag_start."-".$ga->dnafrag_end;

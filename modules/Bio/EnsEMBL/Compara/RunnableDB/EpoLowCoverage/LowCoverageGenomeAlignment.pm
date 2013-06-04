@@ -265,7 +265,7 @@ sub _write_gerp_dataflow {
     my ($self, $gab_id, $mlss) = @_;
     
     my $species_set = "[";
-    my $genome_db_set  = $mlss->species_set;
+    my $genome_db_set  = $mlss->species_set_obj->genome_dbs;
     
     foreach my $genome_db (@$genome_db_set) {
 	$species_set .= $genome_db->dbID . ","; 
@@ -1167,8 +1167,7 @@ sub _load_2XGenomes {
       my $pairwise_mlss = $p_mlss_adaptor->fetch_by_dbID($mlss_id);
 
       #find non_reference species name in pairwise alignment
-      my $species_set = $pairwise_mlss->species_set;
-      foreach my $genome_db (@$species_set) {
+      foreach my $genome_db (@{$pairwise_mlss->species_set_obj->genome_dbs}) {
 	  if ($genome_db->name ne $self->param('reference_species')) {
 	      $target_species = $genome_db->name;
 	      last;
@@ -1329,14 +1328,13 @@ sub _construct_pairwise_locations {
     my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
 
     my $low_coverage_species_set;
-    my $species_set = $low_mlss->species_set;
 
     my %all_species_set;
-    foreach my $genome_db (@$species_set) {
+    foreach my $genome_db (@{$low_mlss->species_set_obj->genome_dbs}) {
 	$all_species_set{$genome_db->dbID} = 1;
     }
     #Find only low coverage species by removing the high coverage ones from the list of all of them
-    foreach my $high_species (@{$high_epo_mlss->species_set}) {
+    foreach my $high_species (@{$high_epo_mlss->species_set_obj->genome_dbs}) {
 	$all_species_set{$high_species->dbID} = 2;
     }
     foreach my $genome_db_id (keys %all_species_set) {
@@ -1362,7 +1360,7 @@ sub _construct_pairwise_locations {
 		my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
 		$species = $genome_db_adaptor->fetch_by_dbID($genome_db_id)->name;
 		
-		foreach my $this_spp (@{$mlss->species_set}) {
+		foreach my $this_spp (@{$mlss->species_set_obj->genome_dbs}) {
 		    if ($this_spp->name ne $self->param('reference_species')) {
 			if ($this_spp->dbID == $genome_db_id) {
 			    $found = 1;

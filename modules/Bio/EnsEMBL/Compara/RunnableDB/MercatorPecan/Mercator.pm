@@ -141,7 +141,7 @@ sub store_synteny {
   }
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
      -method => new Bio::EnsEMBL::Compara::Method( -type => $self->param('method_link_type') ),
-     -species_set => \@genome_dbs);
+     -genome_dbs => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => \@genome_dbs ));
   $mlssa->store($mlss);
 
   my $synteny_region_ids;

@@ -299,8 +299,8 @@ sub crossref_genes_to_best_homology {
     my $type2 = '_new';
     if (defined $homology1) {
       $type1 = $homology1->description;
-      if (scalar @{$homology1->method_link_species_set->species_set} == 1) {
-        my ($gdb) = @{$homology1->method_link_species_set->species_set};
+      if (scalar @{$homology1->method_link_species_set->species_set_obj->genome_dbs} == 1) {
+        my ($gdb) = @{$homology1->method_link_species_set->species_set_obj->genome_dbs};
         $type1 .= "_".$gdb->dbID;
         unless (defined $homology_description_ranking_set1->{$type1}) {
           $homology_description_ranking_set1->{$type1} = $homology_description_ranking_set1->{$homology1->description};
@@ -309,8 +309,8 @@ sub crossref_genes_to_best_homology {
     }
     if (defined $homology2) {
       $type2 = $homology2->description;
-      if (scalar @{$homology2->method_link_species_set->species_set} == 1) {
-        my ($gdb) = @{$homology2->method_link_species_set->species_set};
+      if (scalar @{$homology2->method_link_species_set->species_set_obj->genome_dbs} == 1) {
+        my ($gdb) = @{$homology2->method_link_species_set->species_set_obj->genome_dbs};
         $type2 .= "_".$gdb->dbID;
         unless (defined $homology_description_ranking_set2->{$type2}) {
           $homology_description_ranking_set2->{$type2} = $homology_description_ranking_set2->{$homology2->description};

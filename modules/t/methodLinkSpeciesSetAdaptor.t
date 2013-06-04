@@ -88,7 +88,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_a
     isa_ok($this_method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet");
 
     #species string ends up being too long
-    #$species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set});
+    #$species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs});
 
     my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs});
     if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
