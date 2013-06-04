@@ -2867,9 +2867,19 @@ sub add_sequence_variations_default {
 
 sub add_phenotypes {
   my ($self, $key, $hashref) = @_;
-  my $menu = $self->get_node('variation');
   
-  return unless $menu && $hashref->{'phenotypes'}{'rows'} > 0;
+  return unless $hashref->{'phenotypes'}{'rows'} > 0;
+  
+  my $p_menu = $self->get_node('phenotype');
+  
+  unless($p_menu) {
+    my $menu = $self->get_node('variation');
+    return unless $menu;
+    $p_menu = $self->create_submenu('phenotype', 'Phenotype annotations');
+    $menu->append($p_menu);
+  }
+  
+  return unless $p_menu;
   
   my $pf_menu = $self->create_submenu('phenotype_features', 'Phenotype annotations');
   
@@ -2900,7 +2910,7 @@ sub add_phenotypes {
     }));
   }
   
-  $menu->append($pf_menu);
+  $p_menu->append($pf_menu);
 }
 
 sub add_structural_variations {
