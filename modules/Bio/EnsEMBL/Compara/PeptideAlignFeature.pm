@@ -8,8 +8,6 @@
       # one for each member used alternatively as query and database
       # (hit) in the blast run
 
-      my $pafs = $homology->get_all_PeptideAlignFeature;
-
       foreach my $paf (@{$pafs}) {
         print $paf->query_member->stable_id," ",$self->hit_member->stable_id," ",$paf->evalue,"\n";
       }
