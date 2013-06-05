@@ -58,11 +58,20 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
 
+
+#############################################################
+# Implements Bio::EnsEMBL::Compara::RunnableDB::ObjectStore #
+#############################################################
+
 sub object_class {
     return 'Bio::EnsEMBL::Compara::GenomeDB';
 }
 
 
+
+###################
+# fetch_* methods #
+###################
 
 =head2 fetch_by_name_assembly
 
@@ -250,6 +259,11 @@ sub fetch_by_core_DBAdaptor {
 
 
 
+
+##################
+# store* methods #
+##################
+
 =head2 store
 
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $gdb
@@ -295,8 +309,11 @@ sub store {
 
 
 
-sub _tables {
+########################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
+########################################################
 
+sub _tables {
     return (['genome_db', 'g'])
 }
 

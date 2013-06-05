@@ -56,33 +56,40 @@ use Bio::EnsEMBL::Compara::Method;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
 
+
+#############################################################
+# Implements Bio::EnsEMBL::Compara::RunnableDB::ObjectStore #
+#############################################################
+
 sub object_class {
     return 'Bio::EnsEMBL::Compara::Method';
 }
 
 
-sub _build_id_cache {
-    my $self = shift;
 
-    my $dbID_cache = $self->SUPER::_build_id_cache(@_);
-    my %type_cache;
-    foreach my $method (values %{$dbID_cache}) {
-        $type_cache{$method->type()} = lc $method;
-    }
-    $self->{_type_cache} = \%type_cache;
-    return $dbID_cache;
+#################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
+#################################################################
+
+sub _add_to_cache {
+    my ($self, $method) = @_;
+    $self->SUPER::_add_to_cache($method);
+    $self->{_type_cache}->{lc $method->type()} = $method;
 }
 
 
-sub _tables {
 
+########################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
+########################################################
+
+sub _tables {
     return (['method_link','m'])
 }
 
 
 sub _columns {
-
-        #warning _objs_from_sth implementation depends on ordering
+    # warning _objs_from_sth implementation depends on ordering
     return qw (
         m.method_link_id
         m.type
@@ -114,6 +121,11 @@ sub _objs_from_sth {
     return \@methods;
 }
 
+
+
+###################
+# fetch_* methods #
+###################
 
 =head2 fetch_by_type
 
@@ -154,6 +166,11 @@ sub fetch_all_by_class_pattern {
 }
 
 
+
+##################
+# store* methods #
+##################
+
 =head2 store
 
   Arg [1]     : Bio::EnsEMBL::Compara::Method $method
@@ -184,7 +201,6 @@ sub store {
         }
     }
 
-    $self->{_type_cache}{$method->type} = $method;
     $self->_add_to_cache($method);
     return $method;
 }

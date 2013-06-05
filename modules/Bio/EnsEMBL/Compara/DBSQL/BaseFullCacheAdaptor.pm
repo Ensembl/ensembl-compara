@@ -67,19 +67,16 @@ sub _id_cache {
 sub _build_id_cache {
     my $self = shift;
 
-    my %cache;
+    $self->{_id_cache} = {};
     my $objs = $self->generic_fetch();
     foreach my $obj (@{$objs}) {
-        $cache{$obj->dbID()} = $obj;
+        $self->_add_to_cache($obj);
     }
-    $self->{_id_cache} = \%cache;
 
     # If there are tags, load them all
     if ($self->isa('Bio::EnsEMBL::Compara::DBSQL::TagAdaptor')) {
         $self->_load_tagvalues_multiple(-ALL_OBJECTS => 1, @{$objs});
     }
-
-    return \%cache;
 }
 
 
@@ -128,7 +125,7 @@ sub fetch_all {
 sub _add_to_cache {
     my ($self, $object) = @_;
 
-    $self->_id_cache->{$object->dbID()} = $object;
+    $self->{_id_cache}->{$object->dbID()} = $object;
 }
 
 

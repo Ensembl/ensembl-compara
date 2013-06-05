@@ -26,8 +26,9 @@ sub object_class {
 
 sub _ids_string {
 
+    my $genome_dbs = shift;
     my @genome_db_ids;
-    foreach my $genome_db (@{$_[0]}) {
+    foreach my $genome_db (@{$genome_dbs}) {
         if (looks_like_number($genome_db)) {
             push @genome_db_ids, $genome_db;
         } elsif($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
@@ -52,28 +53,19 @@ sub _ids_string {
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
 #################################################################
 
-sub _build_id_cache {
-    my $self = shift;
-
-    my $dbID_cache = $self->SUPER::_build_id_cache(@_);
-    my %genomedb_cache;
-    my %tag_cache;
-    foreach my $ss (values %{$dbID_cache}) {
-        $genomedb_cache{_ids_string($ss->genome_dbs)} = $ss;
-        foreach my $tag ($ss->get_all_tags()) {
-            push @{$tag_cache{lc $tag}}, $ss;
-        }
+sub _add_to_cache {
+    my ($self, $ss) = @_;
+    $self->SUPER::_add_to_cache($ss);
+    $self->{_genomedb_cache}->{_ids_string($ss->genome_dbs)} = $ss;
+    foreach my $tag ($ss->get_all_tags()) {
+        push @{$self->{_tag_cache}->{lc $tag}}, $ss;
     }
-    $self->{_genomedb_cache} = \%genomedb_cache;
-    $self->{_tag_cache} = \%tag_cache;
-    return $dbID_cache;
 }
 
 
-
-#################
-# store methods #
-#################
+##################
+# store* methods #
+##################
 
 =head2 store
 
