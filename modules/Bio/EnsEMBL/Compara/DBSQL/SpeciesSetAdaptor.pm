@@ -6,15 +6,23 @@ use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
-require Digest::JHash;
-
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
+
+
+#############################################################
+# Implements Bio::EnsEMBL::Compara::RunnableDB::ObjectStore #
+#############################################################
 
 sub object_class {
     return 'Bio::EnsEMBL::Compara::SpeciesSet';
 } 
 
+
+
+#################
+# Class methods #
+#################
 
 sub _ids_string {
 
@@ -39,19 +47,33 @@ sub _ids_string {
 }
 
 
+
+#################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
+#################################################################
+
 sub _build_id_cache {
     my $self = shift;
 
     my $dbID_cache = $self->SUPER::_build_id_cache(@_);
-    my %jhash_cache;
+    my %genomedb_cache;
+    my %tag_cache;
     foreach my $ss (values %{$dbID_cache}) {
-        my $hash = Digest::JHash::jhash(_ids_string($ss->genome_dbs));
-        push @{$jhash_cache{$hash}}, $ss;
+        $genomedb_cache{_ids_string($ss->genome_dbs)} = $ss;
+        foreach my $tag ($ss->get_all_tags()) {
+            push @{$tag_cache{lc $tag}}, $ss;
+        }
     }
-    $self->{_jhash_cache} = \%jhash_cache;
+    $self->{_genomedb_cache} = \%genomedb_cache;
+    $self->{_tag_cache} = \%tag_cache;
     return $dbID_cache;
 }
 
+
+
+#################
+# store methods #
+#################
 
 =head2 store
 
@@ -130,16 +152,18 @@ sub store {
 }
 
 
-sub _tables {
-    my $self = shift @_;
 
+########################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
+########################################################
+
+sub _tables {
     return ( ['species_set', 'ss'] );
 }
 
 
 sub _columns {
-
-        #warning _objs_from_sth implementation depends on ordering
+    # warning _objs_from_sth implementation depends on ordering
     return qw (
         ss.species_set_id
         ss.genome_db_id
@@ -179,6 +203,11 @@ sub _objs_from_sth {
 }
 
 
+
+###################
+# fetch_* methods #
+###################
+
 =head2 fetch_all_by_tag
 
   Arg [1]     : string $tag
@@ -194,7 +223,7 @@ sub _objs_from_sth {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
-    return $self->_fetch_cached_by_sql('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ?', $tag);
+    return $self->{_tag_cache}->{lc $tag} || [];
 }
 
 
@@ -216,7 +245,14 @@ sub fetch_all_by_tag {
 sub fetch_all_by_tag_value {
     my ($self, $tag, $value) = @_;
 
-    return $self->_fetch_cached_by_sql('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ? AND value = ?', $tag, $value);
+    # Only scalar values are accepted
+    return [] if ref $value;
+
+    my @good_ss;
+    foreach my $ss (@{$self->fetch_all_by_tag($tag)}) {
+        push @good_ss, $ss if grep {$_ eq $value} @{$ss->get_all_values_for_tag($tag)};
+    }
+    return \@good_ss;
 }
 
 
@@ -254,29 +290,24 @@ sub fetch_by_GenomeDBs {
 =cut
 
 sub find_species_set_id_by_GenomeDBs_mix {
-  my ($self, $genome_dbs) = @_;
+    my ($self, $genome_dbs) = @_;
 
-  my @matches;
-  my $str_ids = _ids_string($genome_dbs);
-  my $hash = Digest::JHash::jhash($str_ids);
-  foreach my $ss (@{$self->{_jhash_cache}}) {
-    push @matches, $ss if ($str_ids eq _ids_string($ss->genome_dbs));
-  }
-
-  if (!@matches) {
-    return undef;
-  } elsif (@matches > 1) {
-    warning("Several SpeciesSets([$str_ids]) have been found, species_set_ids: ".join(', ', map {$_->dbID} @matches));
-  }
-  return $matches[0]->dbID;
+    my @matches;
+    my $str_ids = _ids_string($genome_dbs);
+    my $ss = $self->{_genomedb_cache}->{$str_ids};
+    if ($str_ids eq _ids_string($ss->genome_dbs)) {
+        return $ss;
+    } else {
+        #TODO can really happen ??!
+        return undef;
+    }
 }
 
 
-###################################
-#
-# tagging 
-#
-###################################
+
+#######################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::TagAdaptor #
+#######################################################
 
 sub _tag_capabilities {
     return ("species_set_tag", undef, "species_set_id", "dbID");
