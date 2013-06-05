@@ -222,51 +222,45 @@ sub run_analysis {
   #Accomplish by creating a fully connected graph between all the
   #genes under the tree (hybrid graph structure) and then analyze each
   #gene/gene link
+  printf("%d genes in tree\n", scalar(@{$gene_tree->get_all_leaves})) if $self->debug;
   printf("build fully linked graph\n") if($self->debug);
   my @genepairlinks;
   my $graphcount = 0;
-  while (my $gene1 = shift @all_gene_leaves) {
-    foreach my $gene2 (@all_gene_leaves) {
-      my $ancestor = $gene1->find_first_shared_ancestor($gene2);
-      # Line below will only become faster than above if we find a way to calculate long parent->parent journeys.
-      # This is probably doable by looking at the right1/left1 right2/left2 distances between the 2 genes
-      # my $ancestor = $self->param('treeDBA')->fetch_first_shared_ancestor_indexed($gene1,$gene2);
-      my $distance = $gene1->distance_to_ancestor($ancestor) +
-                     $gene2->distance_to_ancestor($ancestor);
-      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2, $distance);
+
+  foreach my $ancestor (reverse @{$gene_tree->get_all_nodes}) {
+    next unless scalar(@{$ancestor->children});
+    my ($child1, $child2) = @{$ancestor->children};
+    my $leaves1 = $child1->get_all_leaves;
+    my $leaves2 = $child2->get_all_leaves;
+    foreach my $gene1 (@$leaves1) {
+     foreach my $gene2 (@$leaves2) {
+      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2);
       $genepairlink->add_tag("ancestor", $ancestor);
       $genepairlink->add_tag("tree_node_id", $tree_node_id);
       push @genepairlinks, $genepairlink;
-      print STDERR "build graph $graphcount\n" if ($graphcount++ % 10 == 0);
+      print STDERR "build graph $graphcount\n" if ($graphcount++ % 100 == 0);
+     }
     }
   }
+  printf("%d pairings\n", $graphcount) if $self->debug;
 
   $gene_tree->print_tree($self->param('tree_scale')) if($self->debug);
 
-  #sort the gene/gene links by distance
-  #   makes debug display easier to read, not required by algorithm
-  printf("sort links\n") if($self->debug);
-  my @sorted_genepairlinks = 
-    sort {$a->distance_between <=> $b->distance_between} @genepairlinks;
-
   #analyze every gene pair (genepairlink) to get its classification
   printf("analyze links\n") if($self->debug);
-  printf("%d links\n", scalar(@genepairlinks)) if ($self->debug);
   $self->param('orthotree_homology_counts', {});
-  foreach my $genepairlink (@sorted_genepairlinks) {
+  foreach my $genepairlink (@genepairlinks) {
     $self->analyze_genepairlink($genepairlink);
   }
   
   #display summary stats of analysis 
   if($self->debug) {
-    printf("%d genes in tree\n", scalar(@{$gene_tree->get_all_leaves}));
-    printf("%d pairings\n", scalar(@genepairlinks));
     printf("orthotree homologies\n");
     foreach my $type (keys(%{$self->param('orthotree_homology_counts')})) {
       printf ( "  %13s : %d\n", $type, $self->param('orthotree_homology_counts')->{$type} );
     }
   }
-  $self->param('homology_links', \@sorted_genepairlinks);
+  $self->param('homology_links', \@genepairlinks);
 }
 
 
