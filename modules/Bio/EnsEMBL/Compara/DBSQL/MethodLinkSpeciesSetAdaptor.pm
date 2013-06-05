@@ -78,6 +78,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Method;
@@ -155,7 +156,7 @@ sub store {
 
       my $columns = '(method_link_species_set_id, method_link_id, species_set_id, name, source, url)';
       my $mlss_placeholders = '?, ?, ?, ?, ?';
-      my @mlss_data = ($method->dbID, $species_set_obj->dbID, $mlss->name or '', $mlss->source or '', $mlss->url or '');
+      my @mlss_data = ($method->dbID, $species_set_obj->dbID, $mlss->name || '', $mlss->source || '', $mlss->url || '');
 
       $dbID = $mlss->dbID();
       if (!$dbID) {
