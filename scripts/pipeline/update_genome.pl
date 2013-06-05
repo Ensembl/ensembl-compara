@@ -343,7 +343,7 @@ sub update_genome_db {
   else {
 
     if (!defined($taxon_id)) {
-      ($taxon_id) = @{$meta_container->list_value_by_key('species.taxonomy_id')};
+      $taxon_id = $meta_container->get_taxonomy_id();
     }
     if (!defined($taxon_id)) {
       throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
