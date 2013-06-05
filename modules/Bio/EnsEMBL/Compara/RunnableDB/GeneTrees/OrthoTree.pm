@@ -227,7 +227,6 @@ sub run_analysis {
       my $distance = $gene1->distance_to_ancestor($ancestor) +
                      $gene2->distance_to_ancestor($ancestor);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2, $distance);
-      $genepairlink->add_tag("hops", 0);
       $genepairlink->add_tag("ancestor", $ancestor);
       $genepairlink->add_tag("taxon_name", $taxon_level->name);
       $genepairlink->add_tag("tree_node_id", $tree_node_id);
@@ -308,10 +307,10 @@ sub display_link_analysis
   #display raw feature analysis
   my ($gene1, $gene2) = $genepairlink->get_nodes;
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  printf("%21s(%7d) - %21s(%7d) : %10.3f dist : %3d hops : ", 
+  printf("%21s(%7d) - %21s(%7d) : %10.3f dist : ",
     $gene1->gene_member->stable_id, $gene1->gene_member->member_id,
     $gene2->gene_member->stable_id, $gene2->gene_member->member_id,
-    $genepairlink->distance_between, $genepairlink->get_tagvalue('hops'));
+    $genepairlink->distance_between);
 
   if($genepairlink->get_tagvalue('has_dups')) { printf("%5s ", 'DUP');
   } else { printf("%5s ", ""); }
@@ -582,22 +581,18 @@ sub genepairlink_check_dups
 
     my $ancestor = $genepairlink->get_tagvalue('ancestor');
     my $has_dup = 0;
-    my $hops = 0;
     my $tnode = $pep1;
     do {
         $tnode = $tnode->parent;
         $has_dup = 1 if ($tnode->get_tagvalue('node_type', '') eq 'duplication');
-        $hops ++;
     } while(!($tnode->equals($ancestor)));
 
     $tnode = $pep2;
     do {
         $tnode = $tnode->parent;
         $has_dup = 1 if ($tnode->get_tagvalue('node_type', '') eq 'duplication');
-        $hops ++;
     } while(!($tnode->equals($ancestor)));
 
-    $genepairlink->add_tag("hops", $hops - 1);
     $genepairlink->add_tag("has_dups", $has_dup);
 }
 
