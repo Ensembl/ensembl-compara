@@ -277,9 +277,6 @@ sub analyze_genepairlink {
 
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
-  #run feature detectors: precalcs and caches into metadata
-  $self->genepairlink_check_dups($genepairlink);
-
   #do classification analysis : as filter stack
   if($self->inspecies_paralog_test($genepairlink)) { }
   elsif($self->direct_ortholog_test($genepairlink)) { } 
@@ -319,9 +316,7 @@ sub display_link_analysis
     $gene2->gene_member->stable_id, $gene2->gene_member->member_id,
     $genepairlink->distance_between);
 
-  if($genepairlink->get_tagvalue('has_dups')) { printf("%5s ", 'DUP');
-  } else { printf("%5s ", ""); }
-
+  printf("%5s ", "");
   printf("%5s ", "");
 
   print("ancestor:(");
@@ -531,30 +526,6 @@ sub delete_old_homologies {
     $sth2->finish;
 }
 
-
-sub genepairlink_check_dups
-{
-    my $self = shift;
-    my $genepairlink = shift;
-
-    my ($pep1, $pep2) = $genepairlink->get_nodes;
-
-    my $ancestor = $genepairlink->get_tagvalue('ancestor');
-    my $has_dup = 0;
-    my $tnode = $pep1;
-    do {
-        $tnode = $tnode->parent;
-        $has_dup = 1 if ($tnode->get_tagvalue('node_type', '') eq 'duplication');
-    } while(!($tnode->equals($ancestor)));
-
-    $tnode = $pep2;
-    do {
-        $tnode = $tnode->parent;
-        $has_dup = 1 if ($tnode->get_tagvalue('node_type', '') eq 'duplication');
-    } while(!($tnode->equals($ancestor)));
-
-    $genepairlink->add_tag("has_dups", $has_dup);
-}
 
 
 ########################################################
