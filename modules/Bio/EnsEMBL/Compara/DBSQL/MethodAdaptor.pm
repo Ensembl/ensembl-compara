@@ -53,7 +53,7 @@ package Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor;
 use strict;
 
 use Bio::EnsEMBL::Compara::Method;
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
 
 sub object_class {
@@ -101,31 +101,39 @@ sub _objs_from_sth {
   Arg [1]     : string $type
   Example     : my $bzn_method = $method_adaptor->fetch_by_type('BLASTZ_NET');
   Description : Fetches the Method object(s) with a given type
-  Returntype  : Bio::EnsEMBL::Compara::Method arrayref
+  Returntype  : Bio::EnsEMBL::Compara::Method
 
 =cut
 
 sub fetch_by_type {
     my ($self, $type) = @_;
 
-    my ($method) = @{ $self->generic_fetch( "m.type = '$type'" ) };
-    return $method;
+    foreach my $method (@{$self->fetch_all}) {
+        return $method if $method->type eq $type;
+    }
+    return undef;
 }
 
 
 =head2 fetch_all_by_class_pattern
 
   Arg [1]     : string $class_pattern
-  Example     : my @tree_methods = @{ $method_adaptor->fetch_by_class_pattern('%tree_node') };
+  Example     : my @tree_methods = @{ $method_adaptor->fetch_by_class_pattern('.*tree_node') };
   Description : Fetches the Method object(s) with a class matching the given pattern
   Returntype  : Bio::EnsEMBL::Compara::Method arrayref
 
 =cut
 
+# TODO used ??
+
 sub fetch_all_by_class_pattern {
     my ($self, $class_pattern) = @_;
 
-    return $self->generic_fetch( "m.class LIKE '$class_pattern'" );
+    my @matched_methods;
+    foreach my $method (@{$self->fetch_all}) {
+        push @matched_methods, $method if $method->class =~ m/$class_pattern/;
+    }
+    return \@matched_methods
 }
 
 
