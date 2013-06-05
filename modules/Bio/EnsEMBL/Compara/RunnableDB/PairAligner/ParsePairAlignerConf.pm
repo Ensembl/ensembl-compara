@@ -1392,7 +1392,7 @@ sub update_genome_db {
 	$sth->finish();
 
         # force reload of the cache:
-	$genome_db_adaptor->cache_all(1);
+	$genome_db_adaptor->_build_id_cache();
 
 	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
 								$primary_species_binomial_name,
