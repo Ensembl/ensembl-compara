@@ -6,12 +6,51 @@ use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
+require Digest::JHash;
+
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
 sub object_class {
     return 'Bio::EnsEMBL::Compara::SpeciesSet';
 } 
+
+
+sub _ids_string {
+
+    my @genome_db_ids;
+    foreach my $genome_db (@{$_[0]}) {
+        if (looks_like_number($genome_db)) {
+            push @genome_db_ids, $genome_db;
+        } elsif($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
+            if(my $genome_db_id = $genome_db->dbID) {
+                push @genome_db_ids, $genome_db_id;
+            } else {
+                throw "[$genome_db] must have a dbID";
+            }
+        } else {
+            throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID";
+        }
+    }
+
+    my @sorted_ids = sort {$a <=> $b} @genome_db_ids;
+    my $string_ids = join ',', @sorted_ids;
+    return $string_ids;
+}
+
+
+sub _build_id_cache {
+    my $self = shift;
+
+    my $dbID_cache = $self->SUPER::_build_id_cache(@_);
+    my %jhash_cache;
+    foreach my $ss (values %{$dbID_cache->cache}) {
+        my $hash = Digest::JHash::jhash(_ids_string($ss->genome_dbs));
+        push @{$jhash_cache{$hash}}, $ss;
+    }
+    $self->{_jhash_cache} = \%jhash_cache;
+    return $dbID_cache;
+}
 
 
 =head2 store
@@ -217,39 +256,19 @@ sub fetch_by_GenomeDBs {
 sub find_species_set_id_by_GenomeDBs_mix {
   my ($self, $genome_dbs) = @_;
 
-  my @genome_db_ids = ();
-  foreach my $genome_db (@$genome_dbs) {
-    if(looks_like_number($genome_db)) {
-        push @genome_db_ids, $genome_db;
-    } elsif($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
-        if(my $genome_db_id = $genome_db->dbID) {
-            push @genome_db_ids, $genome_db_id;
-        } else {
-            throw "[$genome_db] must have a dbID";
-        }
-    } else {
-        throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID";
-    }
+  my @matches;
+  my $str_ids = _ids_string($genome_dbs);
+  my $hash = Digest::JHash::jhash($str_ids);
+  foreach my $ss (@{$self->{_jhash_cache}}) {
+    push @matches, $ss if ($str_ids eq _ids_string($ss->genome_dbs));
   }
 
-  unless(@genome_db_ids) {
-    warning("Empty genome_dbs list, nothing to look for");
+  if (!@matches) {
     return undef;
+  } elsif (@matches > 1) {
+    warning("Several SpeciesSets([$str_ids]) have been found, species_set_ids: ".join(', ', map {$_->dbID} @matches));
   }
-  my $gc = join(',', sort {$a <=> $b} @genome_db_ids);
-
-  my $sql = "SELECT species_set_id FROM species_set GROUP BY species_set_id HAVING GROUP_CONCAT(genome_db_id ORDER BY genome_db_id)='$gc'";
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  my $all_rows = $sth->fetchall_arrayref();
-  $sth->finish();
-
-  if (!@$all_rows) {
-    return undef;
-  } elsif (@$all_rows > 1) {
-    warning("Several SpeciesSets([$gc]) have been found, species_set_ids: ".join(', ', map {$_->[0]} @$all_rows));
-  }
-  return $all_rows->[0]->[0];
+  return $matches[0]->dbID;
 }
 
 
