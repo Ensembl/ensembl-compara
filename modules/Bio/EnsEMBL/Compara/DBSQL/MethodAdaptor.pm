@@ -172,6 +172,8 @@ sub store {
             $sth->finish();
         }
     }
+
+    $self->_add_to_cache($method);
     return $method;
 }
 
