@@ -78,13 +78,13 @@ sub db_connect {
   my $dbname  = $self->tree->{'databases'}->{$db_name}{'NAME'};
   return unless $dbname;
 
-  #warn "Connecting to $db_name";
   my $dbhost  = $self->tree->{'databases'}->{$db_name}{'HOST'};
   my $dbport  = $self->tree->{'databases'}->{$db_name}{'PORT'};
   my $dbuser  = $self->tree->{'databases'}->{$db_name}{'USER'};
   my $dbpass  = $self->tree->{'databases'}->{$db_name}{'PASS'};
   my $dbdriver= $self->tree->{'databases'}->{$db_name}{'DRIVER'};
   my ($dsn, $dbh);
+  # warn "Connecting to $dbname ($db_name) with args: $dbuser\@$dbhost:$dbport\n";
   eval {
     if( $dbdriver eq "mysql" ) {
       $dsn = "DBI:$dbdriver:database=$dbname;host=$dbhost;port=$dbport";
