@@ -192,13 +192,10 @@ sub store {
         my $sth = $self->prepare( $sql ) or die "Could not prepare $sql";
 
         my $return_code = $sth->execute( $method->dbID(), $method->type(), $method->class() )
-                # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
             or die "Could not store ".$method->toString;
 
-        if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
-            $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
-            $sth->finish();
-        }
+        $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
+        $sth->finish();
     }
 
     $self->_add_to_cache($method);
