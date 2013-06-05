@@ -133,17 +133,36 @@ sub _load_tagvalues_multiple {
     my $self = shift;
 
     # Assumes that all the objects have the same type
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($_[0]);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname);
 
-    map {$_->{'_tags'} = {}} (grep {not exists $_->{'_tags'}} @_);
+    my $use_where = 1;
+    my %perl_keys = ();
+    foreach my $val (@_) {
+        if (ref $val) {
+            unless (%perl_keys) {
+                ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($val);
+            }
+            $val->{'_tags'} = {} unless exists $val->{'_tags'};
+            $perl_keys{$val->$perl_keyname} = $val;
+        } else {
+            # This flag means that @_ contains all the objects from the database
+            # In that case, we don't need to restrict the SELECT statements with a WHERE constraint
+            if (lc $val eq '-all_objects') {
+                $use_where = 0;
+            }
+        }
+    };
 
-    my %perl_keys = map {$_->$perl_keyname => $_} @_;
-    my $where_constraint = join(',', keys %perl_keys);
+    my $where_constraint = '';
+    if ($use_where) {
+        $where_constraint = "WHERE $db_keyname IN (".join(',', keys %perl_keys).")";
+    }
 
     # Tags (multiple values are allowed)
-    my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable WHERE $db_keyname IN ($where_constraint)");
+    my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable $where_constraint");
     $sth->execute();
     while (my ($obj_id, $tag, $value) = $sth->fetchrow_array()) {
+        next if not $use_where and not exists $perl_keys{$obj_id};
         $perl_keys{$obj_id}->add_tag($tag, $value, 1);
         #warn "adding $value to $tag of $obj_id";
     }
@@ -151,7 +170,7 @@ sub _load_tagvalues_multiple {
    
     # Attributes ?
     if (defined $db_attrtable) {
-        $sth = $self->prepare("SELECT * FROM $db_attrtable WHERE $db_keyname IN ($where_constraint)");
+        $sth = $self->prepare("SELECT * FROM $db_attrtable $where_constraint");
         $sth->execute();
         # Retrieve data
         while (my $attrs = $sth->fetchrow_hashref()) {
