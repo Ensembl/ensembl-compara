@@ -155,7 +155,10 @@ sub db_adaptor {
     }
 
     unless($self->{'_db_adaptor'}) {
-        $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
+
+        eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
+        warn "The locator could not be loaded because: $@" if $@;
+
     }
 
     return $self->{'_db_adaptor'};
@@ -362,30 +365,6 @@ sub locator {
   $self->{'locator'} = shift if (@_);
   $self->{'locator'}='' unless(defined($self->{'locator'}));
   return $self->{'locator'};
-}
-
-=head2 connect_to_genome_locator
-
-  Arg [1]    : string
-  Description: uses the locator string to connect to the external genome database
-  Returntype : DBConnection/DBAdaptor defined in locator string
-              (usually a Bio::EnsEMBL::DBSQL::DBAdaptor)
-              return undef if locator undefined or unable to connect
-  Exceptions : none
-  Caller     : internal private method 
-  Status     : Stable
-
-=cut
-
-sub connect_to_genome_locator {
-  my $self = shift;
-
-  return undef if($self->locator eq '');
-
-  my $genomeDBA = undef;
-  eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
-  warn "The locator could not be loaded because: $@" if $@;
-  return $genomeDBA;
 }
 
 

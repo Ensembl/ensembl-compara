@@ -21,7 +21,7 @@ sub fetch_input {
 	my $compara_dba = $self->compara_dba();
 	my $ref_genome_db = $compara_dba->get_GenomedbAdaptor()->fetch_by_dbID($reference_genome_db_id);
 	# $reference_species_dba is the reference species core dba object
-	my $reference_species_dba = $ref_genome_db->connect_to_genome_locator($ref_genome_db->locator);
+	my $reference_species_dba = $ref_genome_db->db_adaptor;
 	$self->param('reference_dba', $reference_species_dba);
         
 	$self->param('ref_genome_db', $ref_genome_db);
