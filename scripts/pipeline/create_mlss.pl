@@ -385,16 +385,13 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
                                                                  -name => $name,
                                                                  -source => $source,
                                                                  -url => $url);
-  
+
   $mlssa->store($new_mlss);
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
   $name = undef if ($pairwise || $singleton);
 
   if ($species_set_name) {
-      my $sql = "INSERT INTO species_set_tag (species_set_id, tag, value) VALUES (?, 'name', ?)";
-      my $sth = $compara_dba->dbc->prepare($sql);
-      $sth->execute($new_mlss->species_set_obj->dbID, $species_set_name);
-      $sth->finish();
+      $new_mlss-store_tag('name', $species_set_name);
   }
 
 }
