@@ -253,12 +253,15 @@ sub _objs_from_sth {
     my $method_adaptor = $self->db->get_MethodAdaptor;
     my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
 
+    my $method_hash = $self->db->get_MethodAdaptor()->_id_cache->cache;
+    my $species_set_hash = $self->db->get_SpeciesSetAdaptor()->_id_cache->cache;
+
     my ($dbID, $method_link_id, $species_set_id, $name, $source, $url);
     $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url);
     while ($sth->fetch()) {
 
-            my $method          = $method_adaptor->fetch_by_dbID($method_link_id) or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
-            my $species_set_obj = $species_set_adaptor->fetch_by_dbID($species_set_id) or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
+            my $method          = $method_hash->{$method_link_id} or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
+            my $species_set_obj = $species_set_hash->{$species_set_id} or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
 
             if($method and $species_set_obj) {
                 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(

@@ -151,12 +151,12 @@ sub _objs_from_sth {
 
     my %ss_content_hash = ();
     my %ss_incomplete   = ();
-    my $gdb_adaptor = $self->db->get_GenomeDBAdaptor;
+    my $gdb_cache = $self->db->get_GenomeDBAdaptor->_id_cache->cache;
 
     while ( my ($species_set_id, $genome_db_id) = $sth->fetchrow() ) {
 
             # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
-        if( my $gdb = $gdb_adaptor->fetch_by_dbID( $genome_db_id) ) {
+        if( my $gdb = $gdb_cache->{$genome_db_id} ) {
             push @{$ss_content_hash{$species_set_id}}, $gdb;
         } else {
             warning("Species set with dbID=$species_set_id is missing genome_db entry with dbID=$genome_db_id, so it will not be fetched");
