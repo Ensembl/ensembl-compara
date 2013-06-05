@@ -276,6 +276,8 @@ sub fetch_by_core_DBAdaptor {
 sub store {
     my ($self, $gdb) = @_;
 
+    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+
     if(my $reference_dba = $self->db->reference_dba()) {
         $reference_dba->get_GenomeDBAdaptor->store( $gdb );
     }
@@ -308,6 +310,37 @@ sub store {
     return $gdb;
 }
 
+
+=head2 update
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $gdb
+  Example    : $gdba->update($gdb);
+  Description: Updates the GenomeDB object in the database
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub update {
+    my ($self, $gdb) = @_;
+
+    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+
+    if(my $reference_dba = $self->db->reference_dba()) {
+        $reference_dba->get_GenomeDBAdaptor->update( $gdb );
+    }
+
+    my $sql = 'UPDATE genome_db SET name=?, assembly=?, genebuild=?, taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
+    my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'";
+    $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
+
+    $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
+    $self->_add_to_cache($gdb);
+
+    return $gdb;
+}
 
 
 ########################################################
