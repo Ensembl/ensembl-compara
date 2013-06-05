@@ -102,6 +102,56 @@ sub fetch_all {
 }
 
 
+=head2 _add_to_cache
+
+  Description: Adds the entry to the cache
+  Caller     : Any derived adaptor (usually, its store() method)
+
+=cut
+
+sub _add_to_cache {
+    my ($self, $object) = @_;
+
+    $self->_id_cache->cache->{$object->dbID()} = $object;
+}
+
+
+=head2 _remove_from_cache
+
+  Description: Removes an entry from the cache
+  Caller     : Any derived adaptor (usually, its delete() method)
+
+=cut
+
+sub _remove_from_cache {
+    my ($self, $object) = @_;
+
+    if (ref($object)) {
+        delete $self->_id_cache->cache->{$object->dbID()};
+    } else {
+        delete $self->_id_cache->cache->{$object};
+    }
+}
+
+
+=head2 _read_cache_from_dbid_query
+
+  Description: Executes a query that is supposed to return dbIDs,
+               and get the corresponding objects from the cache
+  Caller:    : Any derived adaptor
+
+=cut
+
+sub _read_cache_from_dbid_query {
+    my ($self, $sql, @args) = @_;
+
+    my $sth = $self->execute($sql);
+    $sth->execute(@args);
+    my @dbid_list = map {$_->[0]} @{$sth->fetchall_arrayref};
+    $sth->finish;
+    return $self->fetch_all_by_dbID_list(\@dbid_list);
+}
+
 
 1;
 
