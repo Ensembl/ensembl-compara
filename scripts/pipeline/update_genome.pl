@@ -302,10 +302,11 @@ sub update_genome_db {
       )};
 
   if ($genome_db and $genome_db->dbID) {
-    return $genome_db if ($force);
-    throw "GenomeDB with this name [$species_production_name] and assembly".
+    if (not $force) {
+      throw "GenomeDB with this name [$species_production_name] and assembly".
         " [$primary_species_assembly] is already in the compara DB [$compara]\n".
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
+    }
   } elsif ($force) {
     print "GenomeDB with this name [$species_production_name] and assembly".
         " [$primary_species_assembly] is not in the compara DB [$compara]\n".
@@ -325,7 +326,6 @@ sub update_genome_db {
   ## New genebuild!
   if ($genome_db) {
 
-    $genome_db->assembly( $primary_species_assembly );
     $genome_db->genebuild( $genebuild );
     $genome_db_adaptor->update($genome_db);
 
