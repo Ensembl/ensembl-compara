@@ -403,7 +403,6 @@ sub get_ancestor_species_hash
     return $species_hash if($species_hash);
 
     $species_hash = {};
-    my $is_dup = 0;
 
     if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
         my $node_genome_db_id = $node->genome_db_id;
@@ -418,17 +417,8 @@ sub get_ancestor_species_hash
             unless(defined($species_hash->{$genome_db_id})) {
                 $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id};
             } else {
-                $is_dup = 1;
                 $species_hash->{$genome_db_id} += $t_species_hash->{$genome_db_id};
             }
-        }
-    }
-
-    if ($is_dup) {
-        my $original_node_type = $node->get_tagvalue('node_type');
-        if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
-            $self->warning(sprintf("fixing node_type of %d\n", $node->node_id));
-            $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
         }
     }
 
