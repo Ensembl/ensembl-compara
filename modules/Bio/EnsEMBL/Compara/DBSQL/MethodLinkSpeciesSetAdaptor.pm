@@ -84,7 +84,7 @@ use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
 sub object_class {
@@ -214,10 +214,8 @@ sub store {
   }
 
   $self->attach( $mlss, $dbID);
-
+  $self->_add_to_cache($mlss);
   $self->sync_tags_to_database( $mlss );
-
-  $self->{'_cache'}->{$dbID} = $mlss;
 
   return $mlss;
 }
@@ -243,39 +241,24 @@ sub delete {
     $sth->execute($method_link_species_set_id);
     $sth->finish();
 
-    delete $self->{'_cache'}->{$method_link_species_set_id};
+    $self->_remove_from_cache($method_link_species_set_id);
 }
 
 
-=head2 cache_all
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
 
-  Arg [1]    : none
-  Example    : none
-  Description: Caches all the MLSS entries hashed by dbID; loads from db when necessary or asked
-  Returntype : Hash of {mlss_id -> mlss}
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
+    my @mlss_list = ();
 
-=cut
+    my $method_adaptor = $self->db->get_MethodAdaptor;
+    my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
 
-sub cache_all {
-    my ($self, $force_reload) = @_;
+    my ($dbID, $method_link_id, $species_set_id, $name, $source, $url);
+    $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url);
+    while ($sth->fetch()) {
 
-    if(!$self->{'_cache'} or $force_reload) {
-
-        $self->{'_cache'} = {};
-
-        my $method_hash       = { map { $_->dbID => $_} @{ $self->db->get_MethodAdaptor()->fetch_all()} };
-        my $species_set_hash  = { map { $_->dbID => $_} @{ $self->db->get_SpeciesSetAdaptor()->fetch_all()} };
-
-        my $sql = 'SELECT method_link_species_set_id, method_link_id, species_set_id, name, source, url FROM method_link_species_set';
-        my $sth = $self->prepare($sql);
-        $sth->execute();
-
-        while( my ($dbID, $method_link_id, $species_set_id, $name, $source, $url) = $sth->fetchrow_array()) {
-            my $method          = $method_hash->{$method_link_id} or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
-            my $species_set_obj = $species_set_hash->{$species_set_id} or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
+            my $method          = $method_adaptor->fetch_by_dbID($method_link_id) or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
+            my $species_set_obj = $species_set_adaptor->fetch_by_dbID($species_set_id) or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
 
             if($method and $species_set_obj) {
                 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
@@ -289,53 +272,35 @@ sub cache_all {
                     -source             => $source,
                     -url                => $url,
                 );
-
-                $self->{'_cache'}->{$dbID} = $mlss;
+                push @mlss_list, $mlss;
             }
-        }
-        $sth->finish();
     }
-
-    return $self->{'_cache'};
+    $sth->finish();
+    return \@mlss_list;
 }
 
-=head2 fetch_by_dbID
+sub _tables {
 
-  Arg [1]    : int $dbid
-  Example    : my $this_mlss = $mlssa->fetch_by_dbID(12345);
-  Description: Retrieves a MethodLinkSpeciesSet object via its internal identifier
-  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
+    return (['method_link_species_set', 'm'])
+}
 
-=cut
-
-sub fetch_by_dbID {
-    my ($self, $dbid) = @_;
-
-    throw("dbID must be defined and nonzero") unless($dbid);
-
-    return $self->cache_all->{$dbid};
+sub _columns {
+    return qw(
+        m.method_link_species_set_id
+        m.method_link_id
+        m.species_set_id
+        m.name
+        m.source
+        m.url
+    )
 }
 
 
-=head2 fetch_all
-
-  Args       : none
-  Example    : my $method_link_species_sets = $mlssa->fetch_all();
-  Description: Retrieve all possible Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
-  Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub fetch_all {
-    my ($self) = @_;
-
-    return [ values %{ $self->cache_all } ];
+sub _unique_attributes {
+    return qw(
+        method_link_id
+        species_set_id
+    )
 }
 
 
