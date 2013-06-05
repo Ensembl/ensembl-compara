@@ -223,12 +223,7 @@ sub fetch_all_by_ancestral_taxon_id {
     $sql .= " AND gdb.default_assembly = 1";
   }
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($taxon_id);
-  my @gdb_id_list = map {$_->[0]} @{$sth->fetchall_arrayref;};
-  $sth->finish;
-
-  return $self->fetch_all_by_dbID_list(\@gdb_id_list);
+  return $self->_read_cache_from_dbid_query($sql, $taxon_id);
 }
 
 
@@ -293,7 +288,7 @@ sub store {
         }
     }
 
-    $self->_full_cache->{$gdb->dbID} = $gdb;
+    $self->_add_to_cache($gdb);
 
     return $gdb;
 }
