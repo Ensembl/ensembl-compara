@@ -6,7 +6,7 @@ use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
 sub object_class {
@@ -84,7 +84,7 @@ sub store {
     }
 
     $self->attach( $species_set, $dbID );
-
+    $self->_add_to_cache($species_set);
     $self->sync_tags_to_database( $species_set );
 
     return $species_set;
@@ -155,9 +155,7 @@ sub _objs_from_sth {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
-    my $entries = $self->generic_fetch("sst.tag='$tag'", [[['species_set_tag', 'sst'], 'sst.species_set_id=ss.species_set_id', ['sst.tag', 'sst.value']]] );
-
-    return $entries;
+    return $self->_read_cache_from_dbid_query('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ?', $tag);
 }
 
 
@@ -179,9 +177,7 @@ sub fetch_all_by_tag {
 sub fetch_all_by_tag_value {
     my ($self, $tag, $value) = @_;
 
-    my $entries = $self->generic_fetch("sst.tag='$tag' AND sst.value='$value'", [[['species_set_tag', 'sst'], 'sst.species_set_id=ss.species_set_id', ['sst.tag', 'sst.value']]] );
-
-    return $entries;
+    return $self->_read_cache_from_dbid_query('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ? AND value = ?', $tag, $value);
 }
 
 
