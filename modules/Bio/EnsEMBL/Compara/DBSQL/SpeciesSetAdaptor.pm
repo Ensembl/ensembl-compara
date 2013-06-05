@@ -56,7 +56,7 @@ sub _ids_string {
 sub _add_to_cache {
     my ($self, $ss) = @_;
     $self->SUPER::_add_to_cache($ss);
-    $self->{_genomedb_cache}->{_ids_string($ss->genome_dbs)} = $ss;
+    $self->{_genomedbs_cache}->{_ids_string($ss->genome_dbs)} = $ss;
     foreach my $tag ($ss->get_all_tags()) {
         push @{$self->{_tag_cache}->{lc $tag}}, $ss;
     }
@@ -267,7 +267,7 @@ sub fetch_by_GenomeDBs {
 
     $self->_id_cache;
     my $str_ids = _ids_string($genome_dbs);
-    return $self->{_genomedb_cache}->{$str_ids};
+    return $self->{_genomedbs_cache}->{$str_ids};
 }
 
 
