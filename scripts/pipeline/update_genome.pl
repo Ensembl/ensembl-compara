@@ -285,29 +285,29 @@ sub update_genome_db {
   my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
   my $meta_container = $species_dba->get_MetaContainer;
 
-  my $primary_species_binomial_name;
+  my $species_production_name;
   if (defined($species_name)) {
-    $primary_species_binomial_name = $species_name;
+    $species_production_name = $species_name;
   } else {
-    $primary_species_binomial_name = $meta_container->get_production_name();
-    if (!$primary_species_binomial_name) {
+    $species_production_name = $meta_container->get_production_name();
+    if (!$species_production_name) {
       throw "Cannot get the species name from the database. Use the --species_name option";
     }
   }
   my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
   my $primary_species_assembly = $highest_cs->version();
   my $genome_db = eval {$genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_binomial_name,
+          $species_production_name,
           $primary_species_assembly
       )};
 
   if ($genome_db and $genome_db->dbID) {
     return $genome_db if ($force);
-    throw "GenomeDB with this name [$primary_species_binomial_name] and assembly".
+    throw "GenomeDB with this name [$species_production_name] and assembly".
         " [$primary_species_assembly] is already in the compara DB [$compara]\n".
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
   } elsif ($force) {
-    print "GenomeDB with this name [$primary_species_binomial_name] and assembly".
+    print "GenomeDB with this name [$species_production_name] and assembly".
         " [$primary_species_assembly] is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
     print "Press [Enter] to continue or Ctrl+C to cancel...";
@@ -316,27 +316,18 @@ sub update_genome_db {
 
 	my $genebuild = $meta_container->get_genebuild();
 	if (! $genebuild) {
-			warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
+			warning "Cannot find genebuild.version in meta table for $species_production_name";
 			$genebuild = '';
 	}
 
   print "New assembly and genebuild: ", join(" -- ", $primary_species_assembly, $genebuild),"\n\n";
 
-	#Have to define these since they were removed from the above meta queries
-	#and the rest of the code expects them to be defined
-  my $sql;
-  my $sth;
-
   ## New genebuild!
   if ($genome_db) {
-  	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =?, WHERE genome_db_id =?');
-  	$sth->execute($primary_species_assembly, $genebuild, $genome_db->dbID());
-  	$sth->finish();
 
-    $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-            $primary_species_binomial_name,
-            $primary_species_assembly
-        );
+    $genome_db->assembly( $primary_species_assembly );
+    $genome_db->genebuild( $genebuild );
+    $genome_db_adaptor->update($genome_db);
 
   }
   ## New genome or new assembly!!
@@ -346,41 +337,31 @@ sub update_genome_db {
       $taxon_id = $meta_container->get_taxonomy_id();
     }
     if (!defined($taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
+      throw "Cannot find species.taxonomy_id in meta table for $species_production_name.\n".
           "   You can use the --taxon_id option";
     }
-    print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $primary_species_assembly\n\n";
+    print "New genome in compara. Taxon #$taxon_id; Name: $species_production_name; Assembly $primary_species_assembly\n\n";
 
-    $sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
-    my $nrows = $sth->execute($primary_species_binomial_name);
-    $sth->finish();
-    print "$nrows of the species '$primary_species_binomial_name' were un-defaulted\n";
+    $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
+    $genome_db->taxon_id( $taxon_id );
+    $genome_db->name( $species_production_name );
+    $genome_db->assembly( $primary_species_assembly );
+    $genome_db->genebuild( $genebuild );
 
     #New ID search if $offset is true
-    my @args = ($taxon_id, $primary_species_binomial_name, $primary_species_assembly, $genebuild);
+
     if($offset) {
-    	$sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
-    	$sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
+    	my $sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
     	$sth->execute($offset);
     	my ($max_id) = $sth->fetchrow_array();
     	$sth->finish();
     	if(!$max_id) {
     		$max_id = $offset;
     	}
-    	unshift(@args, $max_id+1);
-    }
-    else {
-    	$sql = 'INSERT INTO genome_db (taxon_id, name, assembly, genebuild) values (?,?,?,?)';
+      $genome_db->dbID($max_id + 1);
     }
 
-    $sth = $compara_dba->dbc->prepare($sql);
-    $sth->execute(@args);
-    $sth->finish();
-    $genome_db_adaptor->cache_all(1);                           # reload the adaptor cache to update with the new species
-    $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-         $primary_species_binomial_name,
-         $primary_species_assembly
-    );
+    $genome_db_adaptor->store($genome_db);
   }
   return $genome_db;
 }
