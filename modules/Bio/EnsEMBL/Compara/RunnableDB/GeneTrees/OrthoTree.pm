@@ -125,18 +125,6 @@ sub fetch_input {
     }
     $self->param('taxon_tree', $self->load_species_tree_from_string( $self->get_species_tree_string ) );
 
-    # Loads all the homology MLSSs in order to save DB queries later
-    my %mlss_hash;
-    $self->param('mlss_hash', \%mlss_hash);
-    foreach my $mlss (@{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all}) {
-        my $mlss_type = $mlss->method->type;
-        next if ($mlss_type ne 'ENSEMBL_PARALOGUES' and $mlss_type ne 'ENSEMBL_ORTHOLOGUES');
-        my $gdbs = $mlss->species_set_obj->genome_dbs;
-        # This should be unique to a pair of genome_db_ids, and equal if we switch the two genome_dbs
-        # WARNING: This trick is valid for genome_db_id up to 10000
-        my $mlss_key = sprintf("%s_%d", $mlss_type, $gdbs->[0]->dbID * $gdbs->[-1]->dbID + 100000000*($gdbs->[0]->dbID + $gdbs->[-1]->dbID));
-        $mlss_hash{$mlss_key} = $mlss;
-    }
 }
 
 
@@ -852,36 +840,21 @@ sub store_gene_link_as_homology {
 
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
-  # get or create method_link_species_set
-  my $mlss;
-  {
-      my $mlss_type;
-      if ((not $type =~ /^ortholog/) and (not $type =~ /^apparent_ortholog/)) {
-          $mlss_type = "ENSEMBL_PARALOGUES";
-      } else {
-          $mlss_type = "ENSEMBL_ORTHOLOGUES";
-      }
-    # This should be unique to a pair of genome_db_ids, and equal if we switch the two genome_dbs
-    # WARNING: This trick is valid for genome_db_id up to 10000
-      my $mlss_key = sprintf("%s_%d", $mlss_type, $gene1->genome_db->dbID * $gene2->genome_db->dbID + 100000000*($gene1->genome_db->dbID+$gene2->genome_db->dbID));
-
-      if (exists $self->param('mlss_hash')->{$mlss_key}) {
-          $mlss = $self->param('mlss_hash')->{$mlss_key};
-      } else {
-          my $gdbs;
-          if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
-              $gdbs = [$gene1->genome_db];
-          } else {
-              $gdbs = [$gene1->genome_db, $gene2->genome_db];
-          }
-          $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-                  -method => ($self->compara_dba->get_MethodAdaptor->fetch_by_type($mlss_type) || new Bio::EnsEMBL::Compara::Method(-type => $mlss_type, -class => 'Homology.homology')),
-                  -species_set_obj => ($self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($gdbs) || new Bio::EnsEMBL::Compara::SpeciesSet(-genome_dbs => $gdbs)),
-                  );
-          $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
-          $self->param('mlss_hash')->{$mlss_key} = $mlss;
-      }
+  # get the mlss from the database
+  my $mlss_type;
+  if ((not $type =~ /^ortholog/) and (not $type =~ /^apparent_ortholog/)) {
+      $mlss_type = "ENSEMBL_PARALOGUES";
+  } else {
+      $mlss_type = "ENSEMBL_ORTHOLOGUES";
   }
+  my $gdbs;
+  if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
+      $gdbs = [$gene1->genome_db];
+  } else {
+      $gdbs = [$gene1->genome_db, $gene2->genome_db];
+  }
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss_type, $gdbs);
+
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
