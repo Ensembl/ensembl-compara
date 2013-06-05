@@ -223,7 +223,7 @@ sub fetch_all_by_ancestral_taxon_id {
     $sql .= " AND gdb.default_assembly = 1";
   }
 
-  return $self->_read_cache_from_dbid_query($sql, $taxon_id);
+  return $self->_fetch_cached_by_sql($sql, $taxon_id);
 }
 
 

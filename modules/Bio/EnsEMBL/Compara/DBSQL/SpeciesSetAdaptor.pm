@@ -194,7 +194,7 @@ sub _objs_from_sth {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
-    return $self->_read_cache_from_dbid_query('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ?', $tag);
+    return $self->_fetch_cached_by_sql('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ?', $tag);
 }
 
 
@@ -216,7 +216,7 @@ sub fetch_all_by_tag {
 sub fetch_all_by_tag_value {
     my ($self, $tag, $value) = @_;
 
-    return $self->_read_cache_from_dbid_query('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ? AND value = ?', $tag, $value);
+    return $self->_fetch_cached_by_sql('SELECT DISTINCT species_set_id FROM species_set_tag WHERE tag = ? AND value = ?', $tag, $value);
 }
 
 

@@ -121,7 +121,7 @@ sub _remove_from_cache {
 }
 
 
-=head2 _read_cache_from_dbid_query
+=head2 _fetch_cached_by_sql
 
   Description: Executes a query that is supposed to return dbIDs,
                and get the corresponding objects from the cache
@@ -129,7 +129,7 @@ sub _remove_from_cache {
 
 =cut
 
-sub _read_cache_from_dbid_query {
+sub _fetch_cached_by_sql {
     my ($self, $sql, @args) = @_;
 
     my $sth = $self->execute($sql);
