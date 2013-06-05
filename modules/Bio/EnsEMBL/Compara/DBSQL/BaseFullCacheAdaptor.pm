@@ -158,11 +158,12 @@ sub _remove_from_cache {
 sub _fetch_cached_by_sql {
     my ($self, $sql, @args) = @_;
 
-    my $sth = $self->execute($sql);
+    my $_id_cache = $self->_id_cache;
+    my $sth = $self->prepare($sql);
     $sth->execute(@args);
-    my @dbid_list = map {$_->[0]} @{$sth->fetchall_arrayref};
+    my @obj = map {$_id_cache->{$_->[0]}} @{$sth->fetchall_arrayref};
     $sth->finish;
-    return $self->fetch_all_by_dbID_list(\@dbid_list);
+    return \@obj;
 }
 
 
