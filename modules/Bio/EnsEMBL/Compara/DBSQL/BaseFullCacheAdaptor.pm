@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor
 =head1 DESCRIPTION
 
 This adaptor extends the Compara BaseAdaptor and adds convenient
-methods to use the FullIdCache from Core.
+methods to build a full cache of the data
 
 =head1 APPENDIX
 
@@ -36,22 +36,23 @@ package Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::DBSQL::Support::FullIdCache;
-
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
-=head2 ignore_cache_override
+=head2 _id_cache
 
   Description: Overwritten from Bio::EnsEMBL::DBSQL::BaseAdaptor.
-               Returns 1 to force caching even, if the NO_CACHE
-               directive is given.
+               [Meaning changed]: Now returns the hash by itself,
+               instead of an instance of BaseCache
   Caller     : Bio::EnsEMBL::DBSQL::BaseAdaptor
 
 =cut
 
-sub ignore_cache_override {
-    return 1;
+sub _id_cache {
+    my $self = shift;
+
+    $self->_build_id_cache unless exists $self->{_id_cache};
+    return $self->{_id_cache};
 }
 
 
@@ -65,15 +66,43 @@ sub ignore_cache_override {
 
 sub _build_id_cache {
     my $self = shift;
-    my $cache = Bio::EnsEMBL::DBSQL::Support::FullIdCache->new($self);
+
+    my %cache;
+    my $objs = $self->generic_fetch();
+    foreach my $obj (@{$objs}) {
+        $cache{$obj->dbID()} = $obj;
+    }
+    $self->{_id_cache} = \%cache;
 
     # If there are tags, load them all
     if ($self->isa('Bio::EnsEMBL::Compara::DBSQL::TagAdaptor')) {
-        $self->_load_tagvalues_multiple(-ALL_OBJECTS => 1, values %{$cache->cache});
+        $self->_load_tagvalues_multiple(-ALL_OBJECTS => 1, @{$objs});
     }
-    return $cache;
+
+    return \%cache;
 }
 
+
+=head2 fetch_by_dbID
+
+  Description: Returns the object identified by its dbID
+  Caller     : general
+
+=cut
+
+sub fetch_by_dbID {
+    my $self = shift;
+    my $id = shift;
+    return $self->_id_cache->{$id};
+}
+
+
+sub fetch_all_by_dbID_list {
+    my $self = shift;
+    my $id_list = shift;
+    my $_id_cache = $self->_id_cache;
+    return [map {$_id_cache->{$_}} @{$id_list}];
+}
 
 =head2 fetch_all
 
@@ -85,7 +114,7 @@ sub _build_id_cache {
 sub fetch_all {
     my ($self) = @_;
 
-    return [ values %{ $self->_id_cache->cache } ];
+    return [ values %{ $self->_id_cache() } ];
 }
 
 
@@ -99,7 +128,7 @@ sub fetch_all {
 sub _add_to_cache {
     my ($self, $object) = @_;
 
-    $self->_id_cache->cache->{$object->dbID()} = $object;
+    $self->_id_cache->{$object->dbID()} = $object;
 }
 
 
@@ -114,9 +143,9 @@ sub _remove_from_cache {
     my ($self, $object) = @_;
 
     if (ref($object)) {
-        delete $self->_id_cache->cache->{$object->dbID()};
+        delete $self->_id_cache->{$object->dbID()};
     } else {
-        delete $self->_id_cache->cache->{$object};
+        delete $self->_id_cache->{$object};
     }
 }
 

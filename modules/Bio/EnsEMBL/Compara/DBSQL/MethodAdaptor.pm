@@ -66,7 +66,7 @@ sub _build_id_cache {
 
     my $dbID_cache = $self->SUPER::_build_id_cache(@_);
     my %type_cache;
-    foreach my $method (values %{$dbID_cache->cache}) {
+    foreach my $method (values %{$dbID_cache}) {
         $type_cache{$method->type()} = lc $method;
     }
     $self->{_type_cache} = \%type_cache;

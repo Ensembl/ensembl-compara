@@ -44,7 +44,7 @@ sub _build_id_cache {
 
     my $dbID_cache = $self->SUPER::_build_id_cache(@_);
     my %jhash_cache;
-    foreach my $ss (values %{$dbID_cache->cache}) {
+    foreach my $ss (values %{$dbID_cache}) {
         my $hash = Digest::JHash::jhash(_ids_string($ss->genome_dbs));
         push @{$jhash_cache{$hash}}, $ss;
     }
@@ -151,7 +151,7 @@ sub _objs_from_sth {
 
     my %ss_content_hash = ();
     my %ss_incomplete   = ();
-    my $gdb_cache = $self->db->get_GenomeDBAdaptor->_id_cache->cache;
+    my $gdb_cache = $self->db->get_GenomeDBAdaptor->_id_cache;
 
     while ( my ($species_set_id, $genome_db_id) = $sth->fetchrow() ) {
 

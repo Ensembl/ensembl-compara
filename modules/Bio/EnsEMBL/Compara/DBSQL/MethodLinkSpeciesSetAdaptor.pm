@@ -253,8 +253,8 @@ sub _objs_from_sth {
     my $method_adaptor = $self->db->get_MethodAdaptor;
     my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
 
-    my $method_hash = $self->db->get_MethodAdaptor()->_id_cache->cache;
-    my $species_set_hash = $self->db->get_SpeciesSetAdaptor()->_id_cache->cache;
+    my $method_hash = $self->db->get_MethodAdaptor()->_id_cache;
+    my $species_set_hash = $self->db->get_SpeciesSetAdaptor()->_id_cache;
 
     my ($dbID, $method_link_id, $species_set_id, $name, $source, $url);
     $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url);
