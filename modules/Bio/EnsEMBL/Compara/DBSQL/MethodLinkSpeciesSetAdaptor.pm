@@ -478,9 +478,10 @@ sub fetch_by_method_link_type_genome_db_ids {
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
         or die "Could not fetch Method with type='$method_link_type'";
     my $method_link_id = $method->dbID;
-    my $species_set_id = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_db_ids )->dbID;
+    my $species_set = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_db_ids );
 
-    return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
+    return undef unless $species_set;
+    return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
 }
 
 
