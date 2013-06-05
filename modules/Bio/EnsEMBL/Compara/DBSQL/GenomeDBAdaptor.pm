@@ -79,7 +79,7 @@ sub _add_to_cache {
     $self->{_name_asm_cache}->{lc $genome_db->name}->{lc $genome_db->assembly} = $genome_db;
     if ($genome_db->assembly_default) {
         $self->{_name_asm_cache}->{lc $genome_db->name}->{''} = $genome_db;
-        $self->{_taxon_cache}->{$genome_db->taxon_id} = $genome_db;
+        $self->{_taxon_cache}->{$genome_db->taxon_id} = $genome_db if $genome_db->taxon_id;
     }
 }
 
