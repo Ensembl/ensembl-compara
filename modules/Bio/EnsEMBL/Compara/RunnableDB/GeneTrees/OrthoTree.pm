@@ -332,9 +332,8 @@ sub display_link_analysis
   printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
 
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
-  printf(" %s %s %s\n", 
+  printf(" %s %s\n",
          $genepairlink->get_tagvalue('orthotree_type'), 
-         $genepairlink->get_tagvalue('orthotree_subtype'),
          $taxon_level->name
         );
 
@@ -623,8 +622,6 @@ sub direct_ortholog_test
 
   #passed all the tests -> it's a simple ortholog
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
-  my $taxon = $self->get_ancestor_taxon_level($ancestor);
-  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
 
@@ -642,7 +639,6 @@ sub inspecies_paralog_test
   return undef unless($pep1->genome_db_id == $pep2->genome_db_id);
 
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $taxon = $self->get_ancestor_taxon_level($ancestor);
 
   #my $species_hash = $self->get_ancestor_species_hash($ancestor);
   #foreach my $gdbID (keys(%$species_hash)) {
@@ -653,7 +649,6 @@ sub inspecies_paralog_test
 #  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
   $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("orthotree_type", 'contiguous_gene_split') if $ancestor->get_tagvalue('node_type') eq 'gene_split';
-  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   # Duplication_confidence_score
   if (not $ancestor->has_tag("duplication_confidence_score")) {
     $self->duplication_confidence_score($ancestor);
@@ -693,8 +688,6 @@ sub ancient_residual_test
 #  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
   if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
-    my $taxon = $self->get_ancestor_taxon_level($ancestor);
-    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
     # Duplication_confidence_score
     if (not $ancestor->has_tag("duplication_confidence_score")) {
       $self->duplication_confidence_score($ancestor);
@@ -702,8 +695,6 @@ sub ancient_residual_test
     }
   } else {
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
-    my $taxon = $self->get_ancestor_taxon_level($ancestor);
-    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   }
   return 1;
 }
@@ -744,8 +735,6 @@ sub one2many_ortholog_test
 
   #passed all the tests -> it's a one2many ortholog
   $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
-  my $taxon = $self->get_ancestor_taxon_level($ancestor);
-  $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   return 1;
 }
 
@@ -763,12 +752,10 @@ sub outspecies_test
   return undef if($pep1->genome_db_id == $pep2->genome_db_id);
 
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $taxon = $self->get_ancestor_taxon_level($ancestor);
 
   #ultra simple ortho/paralog classification
   if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
     $genepairlink->add_tag("orthotree_type", 'possible_ortholog');
-    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
     # duplication_confidence_score
     if (not $ancestor->has_tag("duplication_confidence_score")) {
       $self->duplication_confidence_score($ancestor);
@@ -776,7 +763,6 @@ sub outspecies_test
     }
   } else {
       $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
-      $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   }
   return 1;
 }
@@ -818,8 +804,8 @@ sub store_gene_link_as_homology {
 
   my $type = $genepairlink->get_tagvalue('orthotree_type');
   return unless($type);
-  my $subtype = $genepairlink->get_tagvalue('taxon_name');
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  my $subtype = $ancestor->get_tagvalue('taxon_name');
   warn "Tag tree_node_id undefined\n" unless $genepairlink->has_tag('tree_node_id');
   my $tree_node_id = $genepairlink->get_tagvalue('tree_node_id');
 
