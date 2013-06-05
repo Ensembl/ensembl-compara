@@ -472,7 +472,7 @@ sub fetch_by_method_link_type_GenomeDBs {
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
         or die "Could not fetch Method with type='$method_link_type'";
     my $method_link_id = $method->dbID;
-    my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
+    my $species_set_id = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_dbs )->dbID;
 
     my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
     if (!$method_link_species_set and !$no_warning) {
@@ -510,7 +510,7 @@ sub fetch_by_method_link_type_genome_db_ids {
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
         or die "Could not fetch Method with type='$method_link_type'";
     my $method_link_id = $method->dbID;
-    my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_db_ids );
+    my $species_set_id = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_db_ids )->dbID;
 
     return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
 }

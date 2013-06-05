@@ -100,7 +100,8 @@ sub store {
     my $dbID = $species_set->dbID;
   
         # Could we have a species_set in the DB with the given contents already?
-    if ( my $stored_dbID = scalar(@$genome_dbs) && $self->find_species_set_id_by_GenomeDBs_mix( $genome_dbs ) ) {
+    if ( my $stored_ss = scalar(@$genome_dbs) && $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
+        my $stored_dbID = $stored_ss->dbID;
         if($dbID and $dbID!=$stored_dbID) {
             die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)";
         } else {
@@ -215,6 +216,7 @@ sub _objs_from_sth {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
+    $self->_id_cache;
     return $self->{_tag_cache}->{lc $tag} || [];
 }
 
@@ -263,36 +265,9 @@ sub fetch_all_by_tag_value {
 sub fetch_by_GenomeDBs {
     my ($self, $genome_dbs) = @_;
 
-    my $species_set_id = $self->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
-
-    return $species_set_id && $self->fetch_by_dbID($species_set_id);
-}
-
-
-=head2 find_species_set_id_by_GenomeDBs_mix
-
-  Arg [1]     : listref of Bio::EnsEMBL::Compara::GenomeDB objects or their dbIDs
-  Example     : my $species_set = $species_set_adaptor->find_species_set_id_by_GenomeDBs_mix($genome_dbs);
-  Description : Fetches the SpeciesSet object for that set of GenomeDBs
-  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
-  Exceptions  : thrown if a GenomeDB has no dbID. Warns if more than one SpeciesSet has
-                this set of GenomeDBs
-  Caller      : general
-
-=cut
-
-sub find_species_set_id_by_GenomeDBs_mix {
-    my ($self, $genome_dbs) = @_;
-
-    my @matches;
+    $self->_id_cache;
     my $str_ids = _ids_string($genome_dbs);
-    my $ss = $self->{_genomedb_cache}->{$str_ids};
-    if ($str_ids eq _ids_string($ss->genome_dbs)) {
-        return $ss;
-    } else {
-        #TODO can really happen ??!
-        return undef;
-    }
+    return $self->{_genomedb_cache}->{$str_ids};
 }
 
 
