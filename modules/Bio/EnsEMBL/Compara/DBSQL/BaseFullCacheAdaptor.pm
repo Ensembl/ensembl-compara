@@ -82,6 +82,9 @@ sub _build_id_cache {
 
 =head2 fetch_by_dbID
 
+  Arg [1]    : int $id
+               The unique database identifier for the object to be obtained
+  Example    : $human_gdb = $genomedb_adpator->fetch_by_dbID(90);
   Description: Returns the object identified by its dbID
   Caller     : general
 
@@ -94,6 +97,15 @@ sub fetch_by_dbID {
 }
 
 
+=head2 fetch_all_by_dbID_list
+
+  Arg[1]     : listref of integers $id_list
+               The unique database identifiers for the features to be obtained
+  Description: Returns an array-ref of all the objects with a matching dbID
+  Caller     : general
+
+=cut
+
 sub fetch_all_by_dbID_list {
     my $self = shift;
     my $id_list = shift;
@@ -101,9 +113,10 @@ sub fetch_all_by_dbID_list {
     return [map {$_id_cache->{$_}} @{$id_list}];
 }
 
+
 =head2 fetch_all
 
-  Description: Returns all the objects stored in the cache
+  Description: Returns all the objects from this adaptor
   Caller     : general
 
 =cut
