@@ -83,6 +83,8 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
@@ -112,9 +114,7 @@ sub object_class {
 sub store {
   my ($self, $mlss, $store_components_first) = @_;
 
-  throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
-    unless ($mlss && ref $mlss &&
-        $mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
 
   my $method            = $mlss->method()           or die "No Method defined, cannot store";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
@@ -128,32 +128,11 @@ sub store {
   }
 
   if (!$dbID) {
-    ## Lock the table in order to avoid a concurrent process to store the same object with a different dbID
-    # from mysql documentation 13.4.5 :
-    #   "If your queries refer to a table using an alias, then you must lock the table using that same alias.
-    #   "It will not work to lock the table without specifying the alias"
-    #Thus we need to lock method_link_species_set as a, method_link_species_set as b, and method_link_species_set
 
-	my $original_dwi = $self->dbc()->disconnect_when_inactive();
-  	$self->dbc()->disconnect_when_inactive(0);
+      my $columns = '(method_link_species_set_id, method_link_id, species_set_id, name, source, url)';
+      my $mlss_placeholders = '?, ?, ?, ?, ?';
+      my @mlss_data = ($method->dbID, $species_set_obj->dbID, $mlss->name or '', $mlss->source or '', $mlss->url or '');
 
-    $self->dbc->do(qq{ LOCK TABLES
-                        method_link_species_set WRITE,
-                        method_link_species_set as mlss WRITE,
-                        method_link_species_set as mlss1 WRITE,
-                        method_link_species_set as mlss2 WRITE,
-                        method_link WRITE,
-                        method_link as m WRITE,
-                        method_link as ml WRITE
-   });
-
-        # check again if the object has not been stored in the meantime (tables are locked)
-    if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
-        $dbID = $already_stored_method_link_species_set->dbID;
-    }
-
-    # If the object still does not exist in the DB, store it
-    if (!$dbID) {
       $dbID = $mlss->dbID();
       if (!$dbID) {
         ## Use conversion rule for getting a new dbID. At the moment, we use the following ranges:
@@ -166,51 +145,42 @@ sub store {
         ## => the method_link_species_set_id must be between 10000 times the hundreds in the
         ## method_link_id and the next hundred.
 
-        my $method_link_id    = $method->dbID;
-        my $sth2 = $self->prepare("SELECT
-            MAX(mlss1.method_link_species_set_id + 1)
-            FROM method_link_species_set mlss1 LEFT JOIN method_link_species_set mlss2
-              ON (mlss2.method_link_species_set_id = mlss1.method_link_species_set_id + 1)
-            WHERE mlss2.method_link_species_set_id IS NULL
-              AND mlss1.method_link_species_set_id > 10000 * ($method_link_id DIV 100)
-              AND mlss1.method_link_species_set_id < 10000 * (1 + $method_link_id DIV 100)
-            ");
-        $sth2->execute();
-        my $count;
-        ($dbID) = $sth2->fetchrow_array();
-        #If we got no dbID i.e. we have exceeded the bounds of the range then
-        #assign to the next available identifeir
-        if (!defined($dbID)) {
-          $sth2->finish();
-          $sth2 = $self->prepare("SELECT MAX(mlss1.method_link_species_set_id + 1) FROM method_link_species_set mlss1");
-          $sth2->execute();
-          ($dbID) = $sth2->fetchrow_array();
-        }
-        $sth2->finish();
-      }
+        my $mlss_id_factor = int($method->dbID / 100);
+        my $min_mlss_id = 10000 * $mlss_id_factor + 1;
+        my $max_mlss_id = 10000 * ($mlss_id_factor + 1);
 
-      my $method_link_species_set_sql = qq{
-            INSERT IGNORE INTO method_link_species_set (
-              method_link_species_set_id,
-              method_link_id,
-              species_set_id,
-              name,
-              source,
-              url)
-            VALUES (?, ?, ?, ?, ?, ?)
-      };
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new( -DB_CONNECTION => $self->dbc );
+        my $val = $helper->transaction(
+            -RETRY => 2,
+            -CALLBACK => sub {
+                $self->dbc->do('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
+                my $sth2 = $self->prepare("INSERT INTO method_link_species_set $columns SELECT
+                    IF(
+                        MAX(method_link_species_set_id) = $max_mlss_id,
+                        NULL,
+                        IFNULL(
+                            MAX(method_link_species_set_id) + 1,
+                            $min_mlss_id
+                        )
+                    ), $mlss_placeholders
+                    FROM method_link_species_set
+                    WHERE method_link_species_set_id BETWEEN $min_mlss_id AND $max_mlss_id
+                    ");
+                my $r = $sth2->execute(@mlss_data);
+                $dbID = $sth2->{'mysql_insertid'};
+                $sth2->finish();
+                return $r;
+            }
+        );
+      } else {
+
+      my $method_link_species_set_sql = qq{INSERT INTO method_link_species_set $columns VALUES (?, $mlss_placeholders)};
 
       my $sth3 = $self->prepare($method_link_species_set_sql);
-      $sth3->execute(($dbID or undef), $method->dbID, $species_set_obj->dbID,
-          ($mlss->name or undef), ($mlss->source or undef),
-          ($mlss->url or ""));
-      $dbID = $sth3->{'mysql_insertid'};
+      $sth3->execute($dbID, @mlss_data);
       $sth3->finish();
     }
 
-    ## Unlock tables
-    $self->dbc->do("UNLOCK TABLES");
-    $self->dbc()->disconnect_when_inactive($original_dwi);
   }
 
   $self->attach( $mlss, $dbID);
