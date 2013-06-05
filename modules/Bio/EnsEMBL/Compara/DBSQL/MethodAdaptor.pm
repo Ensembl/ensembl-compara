@@ -61,6 +61,19 @@ sub object_class {
 }
 
 
+sub _build_id_cache {
+    my $self = shift;
+
+    my $dbID_cache = $self->SUPER::_build_id_cache(@_);
+    my %type_cache;
+    foreach my $method (values %{$dbID_cache->cache}) {
+        $type_cache{$method->type()} = lc $method;
+    }
+    $self->{_type_cache} = \%type_cache;
+    return $dbID_cache;
+}
+
+
 sub _tables {
 
     return (['method_link','m'])
@@ -114,10 +127,8 @@ sub _objs_from_sth {
 sub fetch_by_type {
     my ($self, $type) = @_;
 
-    foreach my $method (@{$self->fetch_all}) {
-        return $method if $method->type eq $type;
-    }
-    return undef;
+    $self->_id_cache;
+    return $self->{_type_cache}->{lc $type};
 }
 
 
@@ -173,9 +184,11 @@ sub store {
         }
     }
 
+    $self->{_type_cache}{$method->type} = $method;
     $self->_add_to_cache($method);
     return $method;
 }
+
 
 
 1;
