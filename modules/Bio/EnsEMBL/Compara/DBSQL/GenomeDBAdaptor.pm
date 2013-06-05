@@ -284,6 +284,7 @@ sub store {
     }
 
     if($self->_synchronise($gdb)) {
+        # fields that are not covered by _synchronise: secondary fields, not involved in unique keys
         my $sql = 'UPDATE genome_db SET taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
         my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
         $sth->execute( $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
