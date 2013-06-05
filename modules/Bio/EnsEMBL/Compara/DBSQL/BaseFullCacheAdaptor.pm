@@ -82,7 +82,7 @@ sub _build_id_cache {
 
     # If there are tags, load them all
     if ($self->isa('Bio::EnsEMBL::Compara::DBSQL::TagAdaptor')) {
-        $self->_load_tagvalues_multiple(-ALL_OBJECTS => 1, @{$objs});
+        $self->_load_tagvalues_multiple($objs, 1);
     }
 
     foreach my $obj (@{$objs}) {

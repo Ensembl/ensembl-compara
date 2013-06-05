@@ -122,8 +122,9 @@ sub _load_tagvalues {
 
   Description: similar to _load_tagvalues, but applies on a whole list
                of objects (assumed to be all of the same type)
-  Arg [1..n] : <scalar> reference object
-  Example    : $genetreenode_adaptor->_load_tagvalues_multiples($node1, $node2);
+  Arg [1]    : $objs: Array ref to the list of object
+  Arg [2]    : (optional) Boolean: does $objs contain all the objects from the db ?
+  Example    : $genetreenode_adaptor->_load_tagvalues_multiples( [$node1, $node2] );
   Returntype : none
   Exceptions : none
   Caller     : internal
@@ -131,31 +132,21 @@ sub _load_tagvalues {
 =cut
 
 sub _load_tagvalues_multiple {
-    my $self = shift;
+    my ($self, $objs, $all_objects) = @_;
+
+    return unless scalar(@{$objs});
 
     # Assumes that all the objects have the same type
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objs->[0]);
 
-    my $use_where = 1;
     my %perl_keys = ();
-    foreach my $val (@_) {
-        if (ref $val) {
-            unless (%perl_keys) {
-                ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($val);
-            }
-            $val->{'_tags'} = {} unless exists $val->{'_tags'};
-            $perl_keys{$val->$perl_keyname} = $val;
-        } else {
-            # This flag means that @_ contains all the objects from the database
-            # In that case, we don't need to restrict the SELECT statements with a WHERE constraint
-            if (lc $val eq '-all_objects') {
-                $use_where = 0;
-            }
-        }
+    foreach my $val (@{$objs}) {
+        $val->{'_tags'} = {} unless exists $val->{'_tags'};
+        $perl_keys{$val->$perl_keyname} = $val;
     };
 
     my $where_constraint = '';
-    if ($use_where) {
+    if (not $all_objects) {
         $where_constraint = "WHERE $db_keyname IN (".join(',', keys %perl_keys).")";
     }
 
@@ -163,7 +154,7 @@ sub _load_tagvalues_multiple {
     my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable $where_constraint");
     $sth->execute();
     while (my ($obj_id, $tag, $value) = $sth->fetchrow_array()) {
-        next if not $use_where and not exists $perl_keys{$obj_id};
+        next if $all_objects and not exists $perl_keys{$obj_id};
         $perl_keys{$obj_id}->add_tag($tag, $value, 1);
         #warn "adding $value to $tag of $obj_id";
     }

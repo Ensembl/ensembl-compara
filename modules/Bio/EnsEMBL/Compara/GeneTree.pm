@@ -268,7 +268,7 @@ sub preload {
     }
 
     # Loads all the tags in one go
-    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple(@{$self->root->get_all_nodes});
+    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $self->root->get_all_nodes );
 
     # Loads all the gene members in one go
     my %leaves;
