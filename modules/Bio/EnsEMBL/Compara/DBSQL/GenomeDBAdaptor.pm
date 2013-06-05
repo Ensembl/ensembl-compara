@@ -294,7 +294,13 @@ sub store {
 
         $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
         $sth->finish();
+    }
 
+    if ($gdb->assembly_default) {
+        # Let's now un-default the other genome_dbs
+        my $sth = $self->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name = ? AND genome_db_id != ?');
+        my $nrows = $sth->execute($gdb->name, $gdb->dbID);
+        $sth->finish();
     }
 
     $self->_add_to_cache($gdb);
