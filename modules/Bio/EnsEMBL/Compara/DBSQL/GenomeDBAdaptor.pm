@@ -55,6 +55,8 @@ use strict;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
 
+use Bio::EnsEMBL::DBSQL::Support::FullIdCache;
+
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
@@ -63,45 +65,25 @@ sub object_class {
 }
 
 
-=head2 fetch_by_dbID
+#
+# Virtual / overriden methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+######################################################################
 
-  Arg [1]    : int $dbid
-  Example    : $genome_db = $gdba->fetch_by_dbID(1);
-  Description: Retrieves a GenomeDB object via its internal identifier
-  Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
+sub ignore_cache_override {
+    return 1;
+}
 
-=cut
-
-sub fetch_by_dbID {
-    my ($self, $dbid) = @_;
-
-    throw("dbID must be defined and nonzero") unless($dbid);
-
-    return $self->cache_all->{$dbid};
+sub _build_id_cache {
+    my $self = shift;
+    my $cache = Bio::EnsEMBL::DBSQL::Support::FullIdCache->new($self);
+    $cache->build_cache();
+    return $cache;
 }
 
 
-=head2 fetch_all
-
-  Args       : none
-  Example    : my $all_genome_dbs = $genome_db_adaptor->fetch_all();
-  Description: gets all GenomeDBs for this compara database
-  Returntype : listref Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub fetch_all {
-    my ($self) = @_;
-
-    return [ values %{ $self->cache_all } ];
-}
-
+#
+# FETCH methods
+#####################
 
 =head2 fetch_by_name_assembly
 
@@ -123,7 +105,7 @@ sub fetch_by_name_assembly {
     throw("name argument is required") unless($name);
 
     my $found_gdb;
-    foreach my $gdb (@{ $self->fetch_all }) {
+    foreach my $gdb (values %{$self->_id_cache->cache}) {
         if( (lc($gdb->name) eq lc($name)) and ($assembly ? (lc($gdb->assembly) eq lc($assembly)) : $gdb->assembly_default)) {
             if($found_gdb) {
                 warning("Multiple matches found for name '$name' and assembly '".($assembly||'--undef--')."', returning the first one");
@@ -159,7 +141,7 @@ sub fetch_by_taxon_id {
 
     throw("taxon_id argument is required") unless($taxon_id);
     my $found_gdb;
-    foreach my $gdb (@{ $self->fetch_all }) {
+    foreach my $gdb (values %{$self->_id_cache->cache}) {
         #Must test for $gdb->taxon_id since ancestral_sequences do not have a taxon_id
         if( ($gdb->taxon_id and  $gdb->taxon_id == $taxon_id) and $gdb->assembly_default ) {
             if($found_gdb) {
@@ -254,7 +236,6 @@ sub fetch_all_by_ancestral_taxon_id {
   unless($taxon_id) {
     throw('taxon_id argument is required');
   }
-  my $all_genome_dbs = $self->cache_all; # loads the cache
 
   my $sql = "SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb
     WHERE ntn1.taxon_id = ? AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index
@@ -265,7 +246,10 @@ sub fetch_all_by_ancestral_taxon_id {
 
   my $sth = $self->prepare($sql);
   $sth->execute($taxon_id);
-  return [map {$all_genome_dbs->{$_->[0]}} @{$sth->fetchall_arrayref}];
+  my @gdb_id_list = map {$_->[0]} @{$sth->fetchall_arrayref;};
+  $sth->finish;
+
+  return $self->fetch_all_by_dbID_list(\@gdb_id_list);
 }
 
 
@@ -375,55 +359,53 @@ sub store {
         }
     }
 
-    $self->cache_all(1);    # reload the adaptor cache
+    $self->_id_cache->cache->{$gdb->dbID} = $gdb;
 
     return $gdb;
 }
 
 
-=head2 cache_all
 
-  Arg [1]    : none
-  Example    : none
-  Description: Caches all the entries from genome_db table hashed by dbID; loads from db when necessary or asked
-  Returntype : Hash of {dbID->GenomeDB}
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
+sub _tables {
 
-=cut
+    return (['genome_db', 'g'])
+}
 
-sub cache_all {
-    my ( $self, $force_reload ) = @_;
+sub _columns {
+    return qw(
+        g.genome_db_id
+        g.name
+        g.assembly
+        g.taxon_id
+        g.assembly_default
+        g.genebuild
+        g.locator
+    )
+}
 
-    if(!$self->{'_cache'} or $force_reload) {
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+    my @genome_db_list = ();
 
-        $self->{'_cache'} = {};
-        my $sth = $self->prepare('SELECT genome_db_id, name, assembly, taxon_id, assembly_default, genebuild, locator FROM genome_db');
-        $sth->execute;
+    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
+    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
+    while ($sth->fetch()) {
 
-        my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
-        $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
-        while ($sth->fetch()) {
+        my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
+            'adaptor'   => $self,           # field name in sync with Bio::EnsEMBL::Storable
+            'dbID'      => $dbid,           # field name in sync with Bio::EnsEMBL::Storable
+            'name'      => $name,
+            'assembly'  => $assembly,
+            'assembly_default' => $assembly_default,
+            'genebuild' => $genebuild,
+            'taxon_id'  => $taxon_id,
+            'locator'   => $locator,
+        } );
+        $self->sync_with_registry($gdb);
 
-            my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
-                'adaptor'   => $self,           # field name in sync with Bio::EnsEMBL::Storable
-                'dbID'      => $dbid,           # field name in sync with Bio::EnsEMBL::Storable
-                'name'      => $name,
-                'assembly'  => $assembly,
-                'assembly_default' => $assembly_default,
-                'genebuild' => $genebuild,
-                'taxon_id'  => $taxon_id,
-                'locator'   => $locator,
-            } );
-
-            $self->{'_cache'}->{$dbid} = $gdb;
-        }
-        $sth->finish();
-
-        $self->sync_with_registry();
+        push @genome_db_list, $gdb;
     }
-    return $self->{'_cache'};
+    return \@genome_db_list;
 }
 
 
@@ -447,9 +429,8 @@ sub sync_with_registry {
   return unless(eval "require Bio::EnsEMBL::Registry");
 
   #print("Registry eval TRUE\n");
-  my $genomeDBs = $self->fetch_all();
 
-  foreach my $genome_db (@{$genomeDBs}) {
+  my $genome_db = shift;
     next if $genome_db->locator and not $genome_db->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
     my $coreDBA;
     my $registry_name;
@@ -481,7 +462,6 @@ sub sync_with_registry {
         }
       }
     }
-  }
 }
 
 
