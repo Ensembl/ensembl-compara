@@ -69,13 +69,14 @@ sub _build_id_cache {
 
     $self->{_id_cache} = {};
     my $objs = $self->generic_fetch();
-    foreach my $obj (@{$objs}) {
-        $self->_add_to_cache($obj);
-    }
 
     # If there are tags, load them all
     if ($self->isa('Bio::EnsEMBL::Compara::DBSQL::TagAdaptor')) {
         $self->_load_tagvalues_multiple(-ALL_OBJECTS => 1, @{$objs});
+    }
+
+    foreach my $obj (@{$objs}) {
+        $self->_add_to_cache($obj);
     }
 }
 
