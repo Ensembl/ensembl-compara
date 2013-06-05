@@ -389,5 +389,60 @@ sub toString {
         ."'";
 }
 
+=head2 sync_with_registry
+
+  Example    :
+  Description: Synchronize all the cached genome_db objects
+               db_adaptor (connections to core databases)
+               with those set in Bio::EnsEMBL::Registry.
+               Order of presidence is Registry.conf > ComparaConf > genome_db.locator
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+  Status     : At risk
+
+=cut
+
+sub sync_with_registry {
+  my $self = shift;
+
+  return unless(eval "require Bio::EnsEMBL::Registry");
+
+  #print("Registry eval TRUE\n");
+
+    next if $self->locator and not $self->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
+    my $coreDBA;
+    my $registry_name;
+    if ($self->assembly) {
+      $registry_name = $self->name ." ". $self->assembly;
+      if(Bio::EnsEMBL::Registry->alias_exists($registry_name)) {
+        $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
+      }
+    }
+    if(!defined($coreDBA) and Bio::EnsEMBL::Registry->alias_exists($self->name)) {
+      $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($self->name, 'core');
+      Bio::EnsEMBL::Registry->add_alias($self->name, $registry_name) if ($registry_name);
+    }
+
+    if($coreDBA) {
+      #defined in registry so override any previous connection
+      #and set in GenomeDB object (ie either locator or compara.conf)
+      $self->db_adaptor($coreDBA);
+    } elsif ($self->locator) {
+      #fetch from genome_db which may be from a compara.conf or from a locator
+      $coreDBA = $self->db_adaptor();
+      if(defined($coreDBA)) {
+        if (Bio::EnsEMBL::Registry->alias_exists($self->name)) {
+          Bio::EnsEMBL::Registry->add_alias($self->name, $registry_name) if ($registry_name);
+        } else {
+          Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
+          Bio::EnsEMBL::Registry->add_alias($registry_name, $self->name) if ($registry_name);
+        }
+      }
+    }
+}
+
+
+
 
 1;

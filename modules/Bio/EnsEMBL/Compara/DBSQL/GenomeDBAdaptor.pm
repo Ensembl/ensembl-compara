@@ -391,69 +391,13 @@ sub _objs_from_sth {
             'taxon_id'  => $taxon_id,
             'locator'   => $locator,
         } );
-        $self->sync_with_registry($gdb);
+
+        $gdb->sync_with_registry();
 
         push @genome_db_list, $gdb;
     }
     return \@genome_db_list;
 }
-
-
-=head2 sync_with_registry
-
-  Example    :
-  Description: Synchronize all the cached genome_db objects
-               db_adaptor (connections to core databases)
-               with those set in Bio::EnsEMBL::Registry.
-               Order of presidence is Registry.conf > ComparaConf > genome_db.locator
-  Returntype : none
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Status     : At risk
-
-=cut
-
-sub sync_with_registry {
-  my $self = shift;
-
-  return unless(eval "require Bio::EnsEMBL::Registry");
-
-  #print("Registry eval TRUE\n");
-
-  my $genome_db = shift;
-    next if $genome_db->locator and not $genome_db->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
-    my $coreDBA;
-    my $registry_name;
-    if ($genome_db->assembly) {
-      $registry_name = $genome_db->name ." ". $genome_db->assembly;
-      if(Bio::EnsEMBL::Registry->alias_exists($registry_name)) {
-        $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
-      }
-    }
-    if(!defined($coreDBA) and Bio::EnsEMBL::Registry->alias_exists($genome_db->name)) {
-      $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core');
-      Bio::EnsEMBL::Registry->add_alias($genome_db->name, $registry_name) if ($registry_name);
-    }
-
-    if($coreDBA) {
-      #defined in registry so override any previous connection
-      #and set in GenomeDB object (ie either locator or compara.conf)
-      $genome_db->db_adaptor($coreDBA);
-    } else {
-      #fetch from genome_db which may be from a compara.conf or from
-      #a locator
-      $coreDBA = $genome_db->db_adaptor();
-      if(defined($coreDBA)) {
-        if (Bio::EnsEMBL::Registry->alias_exists($genome_db->name)) {
-          Bio::EnsEMBL::Registry->add_alias($genome_db->name, $registry_name) if ($registry_name);
-        } else {
-          Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
-          Bio::EnsEMBL::Registry->add_alias($registry_name, $genome_db->name) if ($registry_name);
-        }
-      }
-    }
-}
-
 
 1;
 
