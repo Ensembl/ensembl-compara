@@ -113,10 +113,6 @@ sub fetch_input {
     $gene_tree->preload();
     $self->param('gene_tree', $gene_tree->root);
 
-    $self->delete_old_homologies;
-    $self->delete_old_orthotree_tags;
-    $self->fill_easy_values;
-
     if($self->debug) {
         $self->param('gene_tree')->print_tree($self->param('tree_scale'));
     }
@@ -160,6 +156,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
+    $self->delete_old_homologies;
     $self->store_homologies;
 }
 
@@ -206,6 +203,16 @@ sub run_analysis {
   if($self->debug) {
     $gene_tree->print_tree($self->param('tree_scale'));
     printf("%d genes in tree\n", scalar(@all_gene_leaves));
+  }
+
+  # duplication confidence scores
+  foreach my $node (@{$gene_tree->get_all_nodes}) {
+      next unless scalar(@{$node->children});
+      if ($node->get_tagvalue('node_type') ne 'speciation') {
+          $self->duplication_confidence_score($node);
+      } else {
+          $node->delete_tag('duplication_confidence_score');
+      }
   }
 
   #compare every gene in the tree with every other each gene/gene
@@ -503,25 +510,6 @@ sub duplication_confidence_score {
 }
 
 
-sub delete_old_orthotree_tags
-{
-    my $self = shift;
-
-    my $tree_node_id = $self->param('gene_tree')->node_id;
-
-    print "deleting old orthotree tags\n" if ($self->debug);
-
-    my $sql1 = 'UPDATE gene_tree_node JOIN gene_tree_node_attr USING (node_id) SET taxon_id = NULL, taxon_name = NULL, duplication_confidence_score = NULL WHERE root_id = ?';
-    my $sth1 = $self->compara_dba->dbc->prepare($sql1);
-    $sth1->execute($tree_node_id);
-    $sth1->finish;
-
-    my $sql2 = 'DELETE FROM gene_tree_root_tag WHERE tag LIKE "OrthoTree_%" AND root_id = ?';
-    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
-    $sth2->execute($tree_node_id);
-    $sth2->finish;
-}
-
 sub delete_old_homologies {
     my $self = shift;
 
@@ -538,23 +526,6 @@ sub delete_old_homologies {
 
     # And then the homologies
     my $sql2 = 'DELETE FROM homology WHERE tree_node_id=?';
-    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
-    $sth2->execute($tree_node_id);
-    $sth2->finish;
-}
-
-sub fill_easy_values
-{
-    my $self = shift;
-
-    my $tree_node_id = $self->param('gene_tree')->node_id;
-
-    my $sql1 = 'UPDATE gene_tree_node JOIN gene_tree_node_attr USING (node_id) SET duplication_confidence_score = 0 WHERE root_id = ? AND node_type = "dubious"';
-    my $sth1 = $self->compara_dba->dbc->prepare($sql1);
-    $sth1->execute($tree_node_id);
-    $sth1->finish;
-
-    my $sql2 = 'UPDATE gene_tree_node JOIN gene_tree_node_attr USING (node_id) SET duplication_confidence_score = 1 WHERE root_id = ? AND node_type = "gene_split"';
     my $sth2 = $self->compara_dba->dbc->prepare($sql2);
     $sth2->execute($tree_node_id);
     $sth2->finish;
@@ -649,11 +620,6 @@ sub inspecies_paralog_test
 #  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
   $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("orthotree_type", 'contiguous_gene_split') if $ancestor->get_tagvalue('node_type') eq 'gene_split';
-  # Duplication_confidence_score
-  if (not $ancestor->has_tag("duplication_confidence_score")) {
-    $self->duplication_confidence_score($ancestor);
-    $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
-  }
   return 1;
 }
 
@@ -689,10 +655,6 @@ sub ancient_residual_test
   if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     # Duplication_confidence_score
-    if (not $ancestor->has_tag("duplication_confidence_score")) {
-      $self->duplication_confidence_score($ancestor);
-      $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
-    }
   } else {
     $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
   }
@@ -756,11 +718,6 @@ sub outspecies_test
   #ultra simple ortho/paralog classification
   if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
     $genepairlink->add_tag("orthotree_type", 'possible_ortholog');
-    # duplication_confidence_score
-    if (not $ancestor->has_tag("duplication_confidence_score")) {
-      $self->duplication_confidence_score($ancestor);
-     $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
-    }
   } else {
       $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
   }
