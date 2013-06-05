@@ -328,6 +328,7 @@ sub _unique_attributes {
 sub fetch_by_method_link_id_species_set_id {
     my ($self, $method_link_id, $species_set_id, $no_warning) = @_;
 
+    $self->_id_cache;
     my $mlss = $self->{_meth_ss_cache}->{$method_link_id}->{$species_set_id};
 
     if (not $mlss and not $no_warning) {
@@ -353,6 +354,7 @@ sub fetch_by_method_link_id_species_set_id {
 sub fetch_all_by_method_link_type {
     my ($self, $method_link_type) = @_;
 
+    $self->_id_cache;
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
     return [values %{$self->{_meth_ss_cache}->{$method->dbID}}];
 }
@@ -379,6 +381,7 @@ sub fetch_all_by_GenomeDB {
     my $genome_db_id = $genome_db->dbID
         or throw "[$genome_db] must have a dbID";
 
+    $self->_id_cache;
     return $self->{_gdb_cache}->{$genome_db_id} || [];
 }
 
@@ -405,6 +408,7 @@ sub fetch_all_by_method_link_type_GenomeDB {
   my $genome_db_id = $genome_db->dbID;
   throw "[$genome_db] must have a dbID" if (!$genome_db_id);
 
+  $self->_id_cache;
   return $self->{_gdb_meth_cache}->{$genome_db_id}->{$method_link_type} || [];
 }
 
