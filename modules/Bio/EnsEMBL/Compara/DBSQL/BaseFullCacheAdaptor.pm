@@ -75,19 +75,6 @@ sub _build_id_cache {
 }
 
 
-=head2 _full_cache
-
-  Description: Returns the previously-created instance of FullIdCache.
-  Caller     : Any derived adaptor
-
-=cut
-
-sub _full_cache {
-    my $self = shift;
-    return $self->_id_cache->cache;
-}
-
-
 =head2 fetch_all
 
   Description: Returns all the objects stored in the cache
