@@ -208,6 +208,7 @@ sub run_analysis {
   # duplication confidence scores
   foreach my $node (@{$gene_tree->get_all_nodes}) {
       next unless scalar(@{$node->children});
+      $self->get_ancestor_taxon_level($node);
       if ($node->get_tagvalue('node_type') ne 'speciation') {
           $self->duplication_confidence_score($node);
       } else {
@@ -230,12 +231,10 @@ sub run_analysis {
       # Line below will only become faster than above if we find a way to calculate long parent->parent journeys.
       # This is probably doable by looking at the right1/left1 right2/left2 distances between the 2 genes
       # my $ancestor = $self->param('treeDBA')->fetch_first_shared_ancestor_indexed($gene1,$gene2);
-      my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
       my $distance = $gene1->distance_to_ancestor($ancestor) +
                      $gene2->distance_to_ancestor($ancestor);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2, $distance);
       $genepairlink->add_tag("ancestor", $ancestor);
-      $genepairlink->add_tag("taxon_name", $taxon_level->name);
       $genepairlink->add_tag("tree_node_id", $tree_node_id);
       push @genepairlinks, $genepairlink;
       print STDERR "build graph $graphcount\n" if ($graphcount++ % 10 == 0);
@@ -333,10 +332,9 @@ sub display_link_analysis
   printf("%9s)", $ancestor->node_id);
   printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
 
-  my $taxon_level = $ancestor->get_tagvalue('taxon_level');
   printf(" %s %s\n",
          $genepairlink->get_tagvalue('orthotree_type'), 
-         $taxon_level->name
+         $ancestor->get_tagvalue('taxon_name'),
         );
 
   return undef;
@@ -431,13 +429,11 @@ sub get_ancestor_species_hash
 sub get_ancestor_taxon_level {
   my ($self, $ancestor) = @_;
 
-  my $taxon_level = $ancestor->get_tagvalue('taxon_level');
-  return $taxon_level if($taxon_level);
-
-  printf("\ncalculate ancestor taxon level for node_id=%d\n", $ancestor->node_id) if $self->debug;
+  printf("calculate ancestor taxon level for node_id=%d\n", $ancestor->node_id) if $self->debug;
   my $taxon_tree = $self->param('taxon_tree');
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
 
+  my $taxon_level;
   foreach my $gdbID (keys(%$species_hash)) {
       my $taxon;
 
@@ -457,11 +453,8 @@ sub get_ancestor_taxon_level {
       $taxon_level = $taxon;
     }
   }
-  $ancestor->add_tag("taxon_level", $taxon_level);
   $ancestor->store_tag('taxon_id', $taxon_level->get_tagvalue('taxon_id'));
   $ancestor->store_tag('taxon_name', $taxon_level->name);
-
-  return $taxon_level;
 }
 
 
