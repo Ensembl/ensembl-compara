@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::Compara::SpeciesSet;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -59,7 +60,7 @@ sub genome_dbs {
             throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($gdb));
 
             if(ref($gdb) eq 'HASH') {
-                $gdb = Bio::EnsEMBL::Compara::GenomeDB->new( %$gdb ) or die "Could not automagically create a GenomeDB";
+                $gdb = Bio::EnsEMBL::Compara::GenomeDB->new( %$gdb ) or die "Could not automagically create a GenomeDB\n";
             }
 
             my $hash_key = join('--', $gdb->name, $gdb->assembly, $gdb->genebuild );

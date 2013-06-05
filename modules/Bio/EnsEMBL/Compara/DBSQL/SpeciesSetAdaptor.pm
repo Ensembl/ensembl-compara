@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor;
 
 use strict;
+use warnings;
 
 use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::SpeciesSet;
@@ -103,7 +104,7 @@ sub store {
     if ( my $stored_ss = scalar(@$genome_dbs) && $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
         my $stored_dbID = $stored_ss->dbID;
         if($dbID and $dbID!=$stored_dbID) {
-            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)";
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
         } else {
             $dbID = $stored_dbID;
         }
@@ -111,20 +112,20 @@ sub store {
         if($dbID) { # dbID is set in the object, but may refer to an object with different contents
 
             if($self->fetch_by_dbID( $dbID )) {
-                die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data", join("/", map {$_->dbID} @$genome_dbs ));
+                die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data\n", join("/", map {$_->dbID} @$genome_dbs ));
             }
 
         } else { # grab a new species_set_id by using AUTO_INCREMENT:
 
             my $grab_id_sql = 'INSERT INTO species_set VALUES ()';
-            $self->db->dbc->do( $grab_id_sql ) or die "Could not perform '$grab_id_sql'";
+            $self->db->dbc->do( $grab_id_sql ) or die "Could not perform '$grab_id_sql'\n";
 
             if( $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_set', 'species_set_id') ) {
 
                 my $empty_sql = "DELETE FROM species_set where species_set_id = $dbID";
-                $self->db->dbc->do( $empty_sql ) or die "Could not perform '$empty_sql'";
+                $self->db->dbc->do( $empty_sql ) or die "Could not perform '$empty_sql'\n";
             } else {
-                die "Failed to obtain a species_set_id for the species_set being stored";
+                die "Failed to obtain a species_set_id for the species_set being stored\n";
             }
         }
 

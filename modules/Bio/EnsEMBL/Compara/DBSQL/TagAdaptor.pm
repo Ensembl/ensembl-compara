@@ -44,6 +44,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::DBSQL::TagAdaptor;
 
 use strict;
+use warnings;
 
 
 =head2 _tag_capabilities

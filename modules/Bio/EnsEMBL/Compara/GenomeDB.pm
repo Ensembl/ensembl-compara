@@ -64,6 +64,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::GenomeDB;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
@@ -157,7 +158,7 @@ sub db_adaptor {
     unless($self->{'_db_adaptor'}) {
 
         eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
-        warn "The locator could not be loaded because: $@" if $@;
+        warn "The locator could not be loaded because: $@\n" if $@;
 
     }
 
@@ -295,9 +296,9 @@ sub assembly_default {
 
 sub genebuild {
   my $self = shift;
-  $self->{'genebuild'} = shift if (@_);
-  $self->{'genebuild'}='' unless(defined($self->{'genebuild'}));
-  return $self->{'genebuild'};
+  my $genebuild = shift;
+  $self->{'genebuild'} = $genebuild if $genebuild;
+  return $self->{'genebuild'} || '';
 }
 
 
@@ -362,9 +363,9 @@ sub taxon {
 
 sub locator {
   my $self = shift;
-  $self->{'locator'} = shift if (@_);
-  $self->{'locator'}='' unless(defined($self->{'locator'}));
-  return $self->{'locator'};
+  my $locator = shift;
+  $self->{'locator'} = $locator if $locator;
+  return $self->{'locator'} || '';
 }
 
 
@@ -419,7 +420,7 @@ sub sync_with_registry {
         $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
       }
     }
-    if(!defined($coreDBA) and Bio::EnsEMBL::Registry->alias_exists($self->name)) {
+    if( not defined($coreDBA) and Bio::EnsEMBL::Registry->alias_exists($self->name)) {
       $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($self->name, 'core');
       Bio::EnsEMBL::Registry->add_alias($self->name, $registry_name) if ($registry_name);
     }

@@ -27,7 +27,8 @@ methods to build a full cache of the data
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with a _
 
 =cut
 
@@ -35,6 +36,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
@@ -42,9 +44,12 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 =head2 _id_cache
 
   Description: Overwritten from Bio::EnsEMBL::DBSQL::BaseAdaptor.
-               [Meaning changed]: Now returns the hash by itself,
-               instead of an instance of BaseCache
-  Caller     : Bio::EnsEMBL::DBSQL::BaseAdaptor
+               [Meaning changed]: Now returns the dbID-hash itself,
+               instead of an instance of B::E::DBSQL::Support::BaseCache.
+               Calls _build_id_cache to actually build the cache
+               if necessary. _id_cache() should be used by any
+               method that needs to read the cache directly
+  Caller     : Any derived adaptor
 
 =cut
 
@@ -59,8 +64,13 @@ sub _id_cache {
 =head2 _build_id_cache
 
   Description: Overwritten from Bio::EnsEMBL::DBSQL::BaseAdaptor.
-               Returns a new instance of a FullIdCache.
-  Caller     : Bio::EnsEMBL::DBSQL::BaseAdaptor
+               Builds the cache by:
+               (1) Getting all the objects with generic_fetch()
+               (2) Loading all the object tags if needed
+               (3) Adding each object to the cache, with _add_to_cache()
+  Caller     : Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor
+               and any adaptor that explicitely needs to rebuild
+               the cache
 
 =cut
 
@@ -132,7 +142,9 @@ sub fetch_all {
 =head2 _add_to_cache
 
   Description: Adds the entry to the cache
-  Caller     : Any derived adaptor (usually, its store() method)
+               This method can be redefined in a sub-class
+               to index the data on other fields
+  Caller     : _build_id_cache(), store(), update()
 
 =cut
 

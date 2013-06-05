@@ -60,6 +60,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -158,7 +159,7 @@ sub method {
 
     if($method) {
         if(ref($method) eq 'HASH') {
-            $method = Bio::EnsEMBL::Compara::Method->new( %$method ) or die "Could not automagically create a Method";
+            $method = Bio::EnsEMBL::Compara::Method->new( %$method ) or die "Could not automagically create a Method\n";
         }
 
         $self->{'method'} = $method;
@@ -185,7 +186,7 @@ sub species_set_obj {
 
     if($species_set_obj) {
         if(ref($species_set_obj) eq 'HASH') {
-            $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new( %$species_set_obj ) or die "Could not automagically create a SpeciesSet";
+            $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new( %$species_set_obj ) or die "Could not automagically create a SpeciesSet\n";
         }
 
         $self->{'species_set'} = $species_set_obj;
@@ -326,9 +327,10 @@ sub get_common_classification {
 
 sub max_alignment_length {
     my $self = shift @_;
+    my $max_align = shift;
 
-    if(@_) {
-        $self->add_tag('max_align', shift @_);
+    if($max_align) {
+        $self->add_tag('max_align', $max_align);
     }
 
     return $self->get_value_for_tag('max_align') || $DEFAULT_MAX_ALIGNMENT;

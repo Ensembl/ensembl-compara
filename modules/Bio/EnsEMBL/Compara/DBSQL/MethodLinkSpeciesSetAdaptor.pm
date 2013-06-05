@@ -141,10 +141,10 @@ sub store {
 
   assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
 
-  my $method            = $mlss->method()           or die "No Method defined, cannot store";
+  my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
-  my $species_set_obj   = $mlss->species_set_obj()  or die "No SpeciesSet defined, cannot store";
+  my $species_set_obj   = $mlss->species_set_obj()  or die "No SpeciesSet defined, cannot store\n";
   $self->db->get_SpeciesSetAdaptor->store( $species_set_obj, $store_components_first );
 
   my $dbID;
@@ -438,12 +438,12 @@ sub fetch_by_method_link_type_GenomeDBs {
     my ($self, $method_link_type, $genome_dbs, $no_warning) = @_;
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
-        or die "Could not fetch Method with type='$method_link_type'";
+        or die "Could not fetch Method with type='$method_link_type'\n";
     my $method_link_id = $method->dbID;
     my $species_set_id = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_dbs )->dbID;
 
     my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id, $no_warning);
-    if (!$method_link_species_set and !$no_warning) {
+    if (not $method_link_species_set and not $no_warning) {
         my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
             "  <$method_link_type> and ".  join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
         warning($warning);

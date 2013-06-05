@@ -51,6 +51,7 @@ Database adaptor to store and fetch Method objects
 package Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::Method;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
@@ -189,10 +190,10 @@ sub store {
 
     unless($self->_synchronise($method)) {
         my $sql = 'INSERT INTO method_link (method_link_id, type, class) VALUES (?, ?, ?)';
-        my $sth = $self->prepare( $sql ) or die "Could not prepare $sql";
+        my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
 
         my $return_code = $sth->execute( $method->dbID(), $method->type(), $method->class() )
-            or die "Could not store ".$method->toString;
+            or die "Could not store ".$method->toString."\n";
 
         $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
         $sth->finish();

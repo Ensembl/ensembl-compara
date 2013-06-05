@@ -51,6 +51,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
@@ -284,15 +285,15 @@ sub store {
 
     if($self->_synchronise($gdb)) {
         my $sql = 'UPDATE genome_db SET taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
-        my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'";
+        my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
         $sth->execute( $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
         $sth->finish();
         $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
     } else {
         my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'";
+        my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
         my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator )
-            or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')";
+            or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')\n";
 
         $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
         $sth->finish();
@@ -333,7 +334,7 @@ sub update {
     }
 
     my $sql = 'UPDATE genome_db SET name=?, assembly=?, genebuild=?, taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
-    my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'";
+    my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
     $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
 
     $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
