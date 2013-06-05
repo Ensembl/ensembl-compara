@@ -54,6 +54,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
@@ -67,6 +68,20 @@ sub object_class {
     return 'Bio::EnsEMBL::Compara::GenomeDB';
 }
 
+
+#################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
+#################################################################
+
+sub _add_to_cache {
+    my ($self, $genome_db) = @_;
+    $self->SUPER::_add_to_cache($genome_db);
+    $self->{_name_asm_cache}->{lc $genome_db->name}->{lc $genome_db->assembly} = $genome_db;
+    if ($genome_db->assembly_default) {
+        $self->{_name_asm_cache}->{lc $genome_db->name}->{''} = $genome_db;
+        $self->{_taxon_cache}->{$genome_db->taxon_id} = $genome_db;
+    }
+}
 
 
 ###################
@@ -92,16 +107,8 @@ sub fetch_by_name_assembly {
 
     throw("name argument is required") unless($name);
 
-    my $found_gdb;
-    foreach my $gdb (@{ $self->fetch_all }) {
-        if( (lc($gdb->name) eq lc($name)) and ($assembly ? (lc($gdb->assembly) eq lc($assembly)) : $gdb->assembly_default)) {
-            if($found_gdb) {
-                warning("Multiple matches found for name '$name' and assembly '".($assembly||'--undef--')."', returning the first one");
-            } else {
-                $found_gdb = $gdb;
-            }
-        }
-    }
+    $self->_id_cache;
+    my $found_gdb = $self->{_name_asm_cache}->{lc $name}->{lc $assembly || ''};
     
     throw("No matches found for name '$name' and assembly '".($assembly||'--undef--')."'") unless($found_gdb);
 
@@ -128,17 +135,9 @@ sub fetch_by_taxon_id {
     my ($self, $taxon_id) = @_;
 
     throw("taxon_id argument is required") unless($taxon_id);
-    my $found_gdb;
-    foreach my $gdb (@{ $self->fetch_all }) {
-        #Must test for $gdb->taxon_id since ancestral_sequences do not have a taxon_id
-        if( ($gdb->taxon_id and  $gdb->taxon_id == $taxon_id) and $gdb->assembly_default ) {
-            if($found_gdb) {
-                warning("Multiple matches found for taxon_id '$taxon_id', returning the first one");
-            } else {
-                $found_gdb = $gdb;
-            }
-        }
-    }
+
+    $self->_id_cache;
+    my $found_gdb = $self->{_taxon_cache}->{$taxon_id};
     
     throw("No matches found for taxon_id '$taxon_id'") unless($found_gdb);
 
@@ -192,9 +191,7 @@ sub fetch_by_registry_name {
 sub fetch_by_Slice {
   my ($self, $slice) = @_;
 
-  unless (UNIVERSAL::isa($slice, "Bio::EnsEMBL::Slice")) {
-    throw("[$slice] must be a Bio::EnsEMBL::Slice");
-  }
+  assert_ref($slice, 'Bio::EnsEMBL::Slice');
   unless ($slice->adaptor) {
     throw("[$slice] must have an adaptor");
   }
