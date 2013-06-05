@@ -66,7 +66,11 @@ sub ignore_cache_override {
 sub _build_id_cache {
     my $self = shift;
     my $cache = Bio::EnsEMBL::DBSQL::Support::FullIdCache->new($self);
-    $cache->build_cache();
+
+    # If there are tags, load them all
+    if ($self->isa('Bio::EnsEMBL::Compara::DBSQL::TagAdaptor')) {
+        $self->_load_tagvalues_multiple(-ALL_OBJECTS => 1, values %{$cache->cache});
+    }
     return $cache;
 }
 
