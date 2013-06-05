@@ -64,11 +64,11 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
 $search_engine ||= 'lucene';
 
 my %db_boost = (
-  core => '40.0',
+  core => '40',
 );
 
 my %region_boost = (
-  'is_ref' => '10.0',
+  'is_ref' => '10',
 );
 
 #redirect STDOUT and maybe STDERR to a file
@@ -2516,6 +2516,14 @@ sub GeneTransLine {
   <field name="id_ver">$sid.$sid_ver</field>
   <field name="name">$disp_xref</field>
   <field name="description">$description</field>);
+    if (my $db_boost_value = $db_boost{$db}) {
+      $xml .= qq(
+  <field name="db_boost">$db_boost_value</field>);
+    }
+    if (my $ref_boost_value = $region_boost{$is_ref}) {
+      $xml .= qq(
+  <field name="ref_boost">$ref_boost_value</field>);
+    }
     $xml .= &common_fields($species,$type,$db);
     my (%seen_labels,%seen_syns,%seen_sources);
     foreach my $xref (@$xrefs) {
