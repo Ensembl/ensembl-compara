@@ -330,7 +330,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   
   #################################################
   ## Check if the MethodLinkSpeciesSet already exits
-  my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids);
+  my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids, 1);
   if ($mlss) {
     print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
       join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n",
