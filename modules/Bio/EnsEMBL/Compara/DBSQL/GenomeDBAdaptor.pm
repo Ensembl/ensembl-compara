@@ -55,29 +55,11 @@ use strict;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::DBSQL::Support::FullIdCache;
-
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
 
 sub object_class {
     return 'Bio::EnsEMBL::Compara::GenomeDB';
-}
-
-
-#
-# Virtual / overriden methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
-######################################################################
-
-sub ignore_cache_override {
-    return 1;
-}
-
-sub _build_id_cache {
-    my $self = shift;
-    my $cache = Bio::EnsEMBL::DBSQL::Support::FullIdCache->new($self);
-    $cache->build_cache();
-    return $cache;
 }
 
 
@@ -105,7 +87,7 @@ sub fetch_by_name_assembly {
     throw("name argument is required") unless($name);
 
     my $found_gdb;
-    foreach my $gdb (values %{$self->_id_cache->cache}) {
+    foreach my $gdb (values %{$self->_full_cache}) {
         if( (lc($gdb->name) eq lc($name)) and ($assembly ? (lc($gdb->assembly) eq lc($assembly)) : $gdb->assembly_default)) {
             if($found_gdb) {
                 warning("Multiple matches found for name '$name' and assembly '".($assembly||'--undef--')."', returning the first one");
@@ -141,7 +123,7 @@ sub fetch_by_taxon_id {
 
     throw("taxon_id argument is required") unless($taxon_id);
     my $found_gdb;
-    foreach my $gdb (values %{$self->_id_cache->cache}) {
+    foreach my $gdb (values %{$self->_full_cache}) {
         #Must test for $gdb->taxon_id since ancestral_sequences do not have a taxon_id
         if( ($gdb->taxon_id and  $gdb->taxon_id == $taxon_id) and $gdb->assembly_default ) {
             if($found_gdb) {
@@ -359,7 +341,7 @@ sub store {
         }
     }
 
-    $self->_id_cache->cache->{$gdb->dbID} = $gdb;
+    $self->_full_cache->{$gdb->dbID} = $gdb;
 
     return $gdb;
 }
