@@ -442,7 +442,7 @@ sub fetch_by_method_link_type_GenomeDBs {
     my $method_link_id = $method->dbID;
     my $species_set_id = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_dbs )->dbID;
 
-    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
+    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id, $no_warning);
     if (!$method_link_species_set and !$no_warning) {
         my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
             "  <$method_link_type> and ".  join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
