@@ -83,5 +83,21 @@ sub _full_cache {
     return $self->_id_cache->cache;
 }
 
+
+=head2 fetch_all
+
+  Description: Returns all the objects stored in the cache
+  Caller     : general
+
+=cut
+
+sub fetch_all {
+    my ($self) = @_;
+
+    return [ values %{ $self->_id_cache->cache } ];
+}
+
+
+
 1;
 

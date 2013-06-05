@@ -63,9 +63,6 @@ sub object_class {
 }
 
 
-#
-# FETCH methods
-#####################
 
 =head2 fetch_by_name_assembly
 
@@ -87,7 +84,7 @@ sub fetch_by_name_assembly {
     throw("name argument is required") unless($name);
 
     my $found_gdb;
-    foreach my $gdb (values %{$self->_full_cache}) {
+    foreach my $gdb (@{ $self->fetch_all }) {
         if( (lc($gdb->name) eq lc($name)) and ($assembly ? (lc($gdb->assembly) eq lc($assembly)) : $gdb->assembly_default)) {
             if($found_gdb) {
                 warning("Multiple matches found for name '$name' and assembly '".($assembly||'--undef--')."', returning the first one");
@@ -123,7 +120,7 @@ sub fetch_by_taxon_id {
 
     throw("taxon_id argument is required") unless($taxon_id);
     my $found_gdb;
-    foreach my $gdb (values %{$self->_full_cache}) {
+    foreach my $gdb (@{ $self->fetch_all }) {
         #Must test for $gdb->taxon_id since ancestral_sequences do not have a taxon_id
         if( ($gdb->taxon_id and  $gdb->taxon_id == $taxon_id) and $gdb->assembly_default ) {
             if($found_gdb) {
