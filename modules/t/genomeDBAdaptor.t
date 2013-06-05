@@ -150,26 +150,23 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::synchronise", sub {
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::GenomeDB::cache_all and Bio::EnsEMBL::Compara::GenomeDB::store", sub {
+subtest "Test Bio::EnsEMBL::Compara::GenomeDB::store", sub {
 
     my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
 
     $multi->hide('compara', 'genome_db');
 
     ## List of genomes are cached in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    $genome_db_adaptor->cache_all(1); # force reload
     my $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), 0, "Checking hide method");
 
     $genome_db_adaptor->store($genome_db);
     ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    $genome_db_adaptor->cache_all; # reset globals
     $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), 1, "Checking store method");
     
     $multi->restore('compara', 'genome_db');
     ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    $genome_db_adaptor->cache_all(1); # reset globals
     $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), $num_of_genomes, "Checking restore method");
 
