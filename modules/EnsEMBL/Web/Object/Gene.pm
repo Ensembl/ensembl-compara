@@ -47,8 +47,8 @@ sub availability {
       $availability->{'core'}                 = $self->get_db eq 'core';
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
-      $availability->{'has_species_tree'}     = $member->has_GeneGainLossTree;
-      $availability->{'has_gene_tree'}        = $member->has_GeneTree;
+      $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
+      $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0;  
       $availability->{'family'}               = !!$counts->{families};
       $availability->{'not_rnaseq'}    = $self->get_db eq 'rnaseq' ? 0 : 1;
       $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
@@ -77,7 +77,7 @@ sub availability {
 
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
-        $availability->{'has_gene_tree_pan'}  = $pan_member->$member->has_GeneTree;
+        $availability->{'has_gene_tree_pan'}  = $member ? $pan_member->has_GeneTree;
         $availability->{"has_$_"}             = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
       }
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
