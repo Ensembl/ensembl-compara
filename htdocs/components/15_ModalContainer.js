@@ -57,10 +57,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       if (!li.hasClass('active')) {
         Ensembl.EventManager.trigger('updateConfiguration', true);
         
-        panel.elLk.tabs.removeClass('active');
-        li.addClass('active');
-        
-        panel.getContent(this.href, $(this).data('panels').filter('.active').attr('id'));
+        if (this.el) { // updateConfiguration can cause a redirect from MultiSelector, destroying this.el, so check that this hasn't happened before continuing
+          panel.elLk.tabs.removeClass('active');
+          li.addClass('active');
+          
+          panel.getContent(this.href, $(this).data('panels').filter('.active').attr('id'));
+        }
       }
       
       li = null;
