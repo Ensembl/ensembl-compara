@@ -77,7 +77,7 @@ sub availability {
 
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
-        $availability->{'has_gene_tree_pan'}  = $member ? $pan_member->has_GeneTree;
+        $availability->{'has_gene_tree_pan'}  = $member if  $pan_member->has_GeneTree ;
         $availability->{"has_$_"}             = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
       }
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
