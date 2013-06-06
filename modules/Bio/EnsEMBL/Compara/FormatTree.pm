@@ -212,6 +212,9 @@ my $label_ext_cb = sub {
 # C(genome_db,short_name)
 my $sp_short_name_cb = sub {
   my ($self) = @_;
+  if (!defined $self->{tree}->genome_db) {
+    return;
+  }
   return $self->{tree}->genome_db->short_name;
 };
 
@@ -456,9 +459,9 @@ sub _internal_format_newick {
 # %{n-} --> The token applies only to internal nodes
 
 # + Tokens can be applied conditionally:
-# %{p:n} --> Give the "peptide_member_stable_id" or (if it is undefined), the name
-# %{-p:n} --> Same as below, but only for leaves
-# %{n:-p} --> Give the name, but for leaves give the peptide_id.
+# %{p|n} --> Give the "peptide_member_stable_id" or (if it is undefined), the name
+# %{-p|n} --> Same as below, but only for leaves
+# %{n|-p} --> Give the name, but for leaves give the peptide_id.
 
 # + string literals can be inserted outside or inside tokens (the meaning is slightly different):
 # _%{n} --> Put an underscore and the name.
