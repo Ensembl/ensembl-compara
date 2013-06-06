@@ -16,7 +16,7 @@ sub configure {
     $params->{'class'}        = [] unless exists $params->{'class'} && defined $params->{'class'};
 
     if (ref $params->{'class'}) {
-      push @$params->{'class'}, 'max_'.$params->{'max'};
+      push @{$params->{'class'}}, 'max_'.$params->{'max'};
     } else {
       $params->{'class'} .= ' max_'.$params->{'max'};
     }
