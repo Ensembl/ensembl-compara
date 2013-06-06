@@ -87,13 +87,13 @@ sub make_table {
   # add SIFT for supported species
   if ($hub->species =~ /bos_taurus|canis_familiaris|danio_rerio|gallus_gallus|mus_musculus|rattus_norvegicus|sus_scrofa/i) {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\vFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'}) });
+      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'}) });
   }
 
   # add GMAF, SIFT and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\vFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'})     },
+      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'})     },
       { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $self->strip_HTML($glossary->{'PolyPhen'}) },
     );
 

@@ -85,13 +85,13 @@ sub preprocess_widths {
 }
 
 # \f -- optional hyphenation point
-# \v -- optional break point (no hyphen)
+# \a -- optional break point (no hyphen)
 sub hyphenate {
   my ($self, $data, $key) = @_;
 
   return unless exists $data->{$key};
   
-  my $any = ($data->{$key} =~ s/\f/&shy;/g || $data->{$key} =~ s/\v/&#8203;/g);
+  my $any = ($data->{$key} =~ s/\f/&shy;/g | $data->{$key} =~ s/\a/&#8203;/g);
   
   return $any;
 }
