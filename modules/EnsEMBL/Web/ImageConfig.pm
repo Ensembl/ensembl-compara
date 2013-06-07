@@ -1553,6 +1553,7 @@ sub load_tracks {
       'add_structural_variations',        # Add to variation_feature tree
       'add_copy_number_variant_probes',   # Add to variation_feature tree
       'add_phenotypes',                   # Add to variation_feature tree
+      'add_recombination',                # Moves recombination menu to the end of the variation_feature tree
       'add_somatic_mutations',            # Add to somatic tree
       'add_somatic_structural_variations' # Add to somatic tree
     ],
@@ -3040,6 +3041,17 @@ sub add_copy_number_variant_probes {
   }
   
   $sv_menu->append($cnv_probe_menu);
+}
+
+# The recombination menu contains tracks with information pertaining to variation project, but these tracks actually simple_features stored in the core database
+# As core databases are loaded before variation databases, the recombination submenu appears at the top of the variation menu tree, which isn't desirable.
+# This function moves it to the end of the tree.
+sub add_recombination {
+  my ($self, @args) = @_;
+  my $menu   = $self->get_node('recombination');
+  my $parent = $self->get_node('variation');
+  
+  $parent->append($menu) if $menu && $parent;
 }
 
 sub add_somatic_mutations {
