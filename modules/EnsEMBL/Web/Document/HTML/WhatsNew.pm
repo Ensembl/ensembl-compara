@@ -8,7 +8,8 @@ package EnsEMBL::Web::Document::HTML::WhatsNew;
 
 use strict;
 
-use Encode qw(encode_utf8 decode_utf8);
+use Encode          qw(encode_utf8 decode_utf8);
+use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
@@ -145,7 +146,7 @@ sub _include_blog {
     $html .= "<ul>";
     foreach my $item (@$items) {
       my $title = $item->{'title'};
-      my $link  = $item->{'link'};
+      my $link  = encode_entities($item->{'link'});
       my $date = $item->{'date'} ? $item->{'date'}.': ' : '';
 
       $html .= qq(<li>$date<a href="$link">$title</a></li>);
