@@ -57,7 +57,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       if (!li.hasClass('active')) {
         Ensembl.EventManager.trigger('updateConfiguration', true);
         
-        if (this.el) { // updateConfiguration can cause a redirect from MultiSelector, destroying this.el, so check that this hasn't happened before continuing
+        if (panel.el) { // updateConfiguration can cause a redirect from MultiSelector, destroying this.el, so check that this hasn't happened before continuing
           panel.elLk.tabs.removeClass('active');
           li.addClass('active');
           
