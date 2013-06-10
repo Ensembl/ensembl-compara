@@ -121,6 +121,8 @@ sub get_databases     { return shift->databases->get_databases(@_);         }
 sub databases_species { return shift->databases->get_databases_species(@_); }
 sub delete_param      { shift->input->delete(@_); }
 
+sub users_available   { return 0; } # overridden in users plugin
+
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
 sub has_problem_type   { return scalar @{$_[0]{'_problem'}{$_[1]}||[]}; }
