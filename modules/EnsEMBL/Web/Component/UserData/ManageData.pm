@@ -24,7 +24,6 @@ sub content {
   my $session_id   = $session->session_id;
   my $user         = $hub->user;
   my $species_defs = $hub->species_defs;
-  my $logins       = $species_defs->ENSEMBL_LOGINS;
   my $not_found    = 0;
   my (@data, $html);  
  
@@ -117,7 +116,7 @@ sub _icon {
   my $inner = $self->_icon_inner($params);
   
   return $inner if $params->{'no_link'};
-  return qq{<a href="$params->{'link'}" class="$params->{'link_class'} icon_link" rel="modal_user_data" $params->{'link_extra'}>$inner</a>};
+  return qq(<a href="$params->{'link'}" class="$params->{'link_class'} icon_link" rel="modal_user_data" $params->{'link_extra'}>$inner</a>);
 }
 
 sub _no_icon {
@@ -133,7 +132,6 @@ sub table_row {
   my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
-  my $logins       = $hub->species_defs->ENSEMBL_LOGINS;
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
   my %url_params   = ( __clear => 1, source => $file->{'url'} ? 'url' : 'upload' );
@@ -147,7 +145,7 @@ sub table_row {
   if ($user_record) {
     $url_params{'id'} = $file->id;
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
-  } elsif ($logins) {
+  } elsif ($hub->users_available) {
     my $save_html = $self->_icon({ link_class => 'modal_link', class => 'save_icon', title => '%s' });
     my $save_url  = $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'save_remote' : 'save_upload', code => $file->{'code'}, __clear => 1 });
     
@@ -220,14 +218,13 @@ sub table_row_das {
   my $hub     = $self->hub;
   my $img_url = $self->img_url . '16/';
   my $link    = $self->_icon({ link_class => 'modal_link', class => 'delete_icon' });  
-  my $logins  = $hub->species_defs->ENSEMBL_LOGINS;
   my $none    = $self->_no_icon;
   my (%url_params, $save);
   
   if ($user_record) {
     %url_params = ( id => $file->id );
     $save       = $self->_icon({ link_class => 'modal_link', class => 'sprite_disabled save_icon',  title => 'Already saved' });
-  } elsif ($logins) {
+  } elsif ($hub->users_available) {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
     my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
        %url_params  = ( code => $file->logic_name );

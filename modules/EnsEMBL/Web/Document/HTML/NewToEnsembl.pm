@@ -1,6 +1,6 @@
 package EnsEMBL::Web::Document::HTML::NewToEnsembl;
 
-### This module outputs a list of tips plus a random item from the Wordpress "minifeed" RSS feed 
+### This module outputs a list of tips plus a random item from the Wordpress "minifeed" RSS feed
 
 use strict;
 use warnings;
@@ -8,7 +8,6 @@ use warnings;
 use LWP::UserAgent;
 use Encode qw(encode_utf8);
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Document::HTML);
@@ -25,14 +24,14 @@ sub render {
   my $static_server  = $sd->ENSEMBL_STATIC_SERVER;
   my $img_url        = $sd->img_url;
   my $sitename       = $sd->ENSEMBL_SITETYPE;
-  my $html           = ''; 
+  my $html           = '';
 
   $html .= qq(<h2>New to $sitename?</h2><div class="new-to-ensembl">);
 
   my @did_you_know = (
     '/info/website/tutorials/'                        => "Learn how to use $sitename"             => 'with our video tutorials and walk-throughs',
     '/info/website/help/control_panel.html#cp-data'   => 'Add custom tracks'                      => 'using our control panel',
-    '/info/website/upload/index.html'                 => 'Upload and analyse your data'           => $sd->ENSEMBL_LOGINS ? "and save it to your $sitename account" : "and display it alongside $sitename data",
+    '/info/website/upload/index.html'                 => 'Upload and analyse your data'           => $hub->users_available ? "and save it to your $sitename account" : "and display it alongside $sitename data",
     $sd->ENSEMBL_BLAST_ENABLED ? (
     '/Multi/blastview'                                => 'Search for a DNA or protein sequence'   => 'using BLAST or BLAT'
     ) : (),
@@ -47,8 +46,8 @@ sub render {
     $html .= qq(<p><a href="$url">$heading</a><span>$extra</span></p>);
   }
 
-  $html .= qq(</div><p>Still got questions? Try our <a href="/Help/Faq" class="popup">FAQs</a> or <a href="/Help/Glossary" class="popup">glossary</a></p>); 
-   
+  $html .= qq(</div><p>Still got questions? Try our <a href="/Help/Faq" class="popup">FAQs</a> or <a href="/Help/Glossary" class="popup">glossary</a></p>);
+
   return $html;
 }
 

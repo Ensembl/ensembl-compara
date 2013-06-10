@@ -27,7 +27,7 @@ sub render {
 sub render_species_list {
   my ($self, $fragment) = @_;
   my $hub           = $self->hub;
-  my $logins        = $hub->species_defs->ENSEMBL_LOGINS;
+  my $logins        = $hub->users_available;
   my $user          = $hub->user;
   my $species_info  = $hub->get_species_info;
   

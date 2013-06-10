@@ -185,7 +185,7 @@ sub populate_tree {
     { 'availability' => 'gene' }
   );
   
-  if ($species_defs->ENSEMBL_LOGINS) {
+  if ($hub->users_available) {
     $external->append($self->create_node('UserAnnotation', 'Personal annotation',
       [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
       { 'availability' => 'logged_in gene' }

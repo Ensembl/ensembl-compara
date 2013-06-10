@@ -141,7 +141,7 @@ sub populate_tree {
     { 'availability' => 'transcript' }
   );
   
-  if ($self->hub->species_defs->ENSEMBL_LOGINS) {
+  if ($self->hub->users_available) {
     $external->append($self->create_node('UserAnnotation', 'Personal annotation',
       [qw( manual_annotation EnsEMBL::Web::Component::Transcript::UserAnnotation )],
       { 'availability' => 'logged_in transcript' }
