@@ -14,15 +14,18 @@
       <a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadVariations" class="modal_link">
       <img src="/i/vep_logo_sm.png" title="Launch the online VEP!" alt="Variant Effect Predictor" /></a>
 
-<p>The VEP determines the effect of your polymorphisms on genes, transcripts, 
-and protein sequence.  Simply input the genomic coordinates of SNPs, insertions 
-or deletions, along with any nucleotides at those positions, and export:</p>
+<p>
+The VEP determines the effect of your variants (SNPs, insertions,
+deletions, CNVs or structural variants) on genes, transcripts, and
+protein sequence, as well as regulatory regions. Simply input the
+coordinates of your variants and the nucleotide changes to find out the:</p>
 <ul>
-<li>genes affected by the changes</li>
-<li>where the variants are located with respect to cDNAs (e.g. upstream, 
-downstream, in the coding sequence)</li>
-<li>if the substitutions, insertions or deletions have changed the protein sequence</li>
-<li>SIFT and PolyPhen scores, if the protein sequence is changed</li>
+<li>genes affected by the variants</li>
+<li>location of the variants (e.g. upstream of a transcript, in coding sequence, in non-coding RNA, in regulatory regions)</li>
+<li>consequence your variants on the protein sequence (e.g. stop gained, missense, stop lost, frameshift)</li>
+<li>known variants that match yours, and the associated minor allele frequencies</li>
+<li>SIFT and PolyPhen scores for changes protein sequence</li>
+<li>... And more!</li>
 </ul>
       <p class="center"><a
 href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadVariations"
@@ -37,33 +40,30 @@ class="modal_link"><strong><i>Launch the online VEP tool!</i></strong></a></p>
     <div class="column-right" style="padding-left:2em">
 <h2>How to access the Variant Effect Predictor</h2>
 <p>
-Ensembl provides the facility to predict the functional consequences of known and unknown variants
-using the Variant Effect Predictor (VEP). There are three primary ways to use
-the functionality of the VEP:
+There are two ways to use the Variant Effect Predictor (VEP) for
+predicting functional consequences of known and unknown variants:
 </p>
 
 <ul>
-  <li> through the web interface | <a href="#web">Documentation</a> | <a
+  <li>web interface | <a href="#web">Documentation</a> | <a
 href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadVariations"
 class="modal_link">Launch web interface</a></li>
-  <li> using the standalone perl script | <a href="vep_script.html">Documentation</a> | <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]">Download latest version</a></li>
-  <li> using Ensembl's perl API | <a href="/info/docs/api/variation/index.html">Documentation</a></li>
+  <li>standalone perl script | <a href="vep_script.html">Documentation</a> | <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]">Download latest version</a> <!--</li>
+  <li> using Ensembl's perl API | <a href="/info/docs/api/variation/index.html">Documentation</a></li>-->
 </ul>
 
 <p>
-The web version is suitable for users with small volumes of data or those who
-prefer not to use command-line utilities. The script version is the most
-flexible of the VEP, and allows users to process large volumes of data using
-their own compute resources. The API is suitable for perl programmers looking to
-incorporate features of the VEP into their own code.
+Use the web version if you have relatively small volumes of data or
+prefer to avoid command-line scripts. The script version is more
+flexible and allows processing of large volumes of data (it is written
+using the Ensembl perl API, and can be incorporated into your own code
+and extended).
 </p>
 
 <h2>Ensembl Variation</h2>
-
-<p>For a comprehensive list of the consequence types used in Ensembl (including VEP results), 
-have a look at our <a href="/info/docs/variation/data_description.html#classes">documentation</a>.  
-Our online documentation also provides descriptions of <a href="/info/docs/variation/index.html">data and analyses in Ensembl variation</a>.
-Read more about the VEP in <b>McClaren et. al.</b> (<a href="http://www.ncbi.nlm.nih.gov/pubmed/20562413">doi:10.1093/bioinformatics/btq330</a>).</p>
+<p>For a comprehensive list of the consequence types used in Ensembl and the VEP, look at our <a href="/info/docs/variation/data_description.html#classes">documentation</a>.  
+It also provides descriptions of the <a href="/info/docs/variation/index.html">data and analyses in Ensembl Variation</a>.
+Read more about the VEP in <b>McLaren et. al.</b> (<a href="http://www.ncbi.nlm.nih.gov/pubmed/20562413">doi:10.1093/bioinformatics/btq330</a>).</p>
     </div>
   </div>
 </div>
