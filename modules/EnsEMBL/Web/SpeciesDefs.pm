@@ -692,56 +692,6 @@ sub timer_push {
 
 sub img_url { return $_[0]->ENSEMBL_STATIC_SERVER . ($_[0]->ENSEMBL_IMAGE_ROOT || '/i/'); }
 
-sub _userdb_fault {
-  my ($self,$value) = @_;
-
-  my $timeout = $SiteDefs::ENSEMBL_USERDBFAULTTIMEOUT;
-  $timeout = 60 unless defined $timeout;
-  my $file = $SiteDefs::ENSEMBL_USERDBFAULTFILE;
-  my $first_file = "$file.first";
-  my $curval = -e $file;
-  if(defined $value) { # set/reset
-    if($value) {
-      if(!-e $first_file and open(USERDBFAULTFIRST,">$first_file")) {
-        print USERDBFAULTFIRST scalar(localtime)."\n";
-        close USERDBFAULTFIRST;
-      }
-      if(!$curval and open(USERDBFAULT,">$file")) {
-        print USERDBFAULT scalar(localtime)."\n";
-        close USERDBFAULT;
-      }
-      utime(time,time,$file);
-    } elsif($curval and not $value) {
-      unlink $file;
-      unlink $first_file;
-    }
-  }
-  return undef if (time - [stat($first_file)]->[9]) < $timeout;
-  return undef if (time - [stat($file)]->[9]) > $timeout;
-  return $curval;
-}
-
-sub has_userdb {
-  my $self = shift;
-
-  return 0 if($self->_userdb_fault);
-
-  my $dsn = sprintf(
-    'DBI:mysql:database=%s;host=%s;port=%s',
-    $self->ENSEMBL_USERDB_NAME,
-    $self->ENSEMBL_USERDB_HOST,
-    $self->ENSEMBL_USERDB_PORT
-  );
-  my $dbh;
-  eval {
-    $dbh = DBI->connect($dsn, $self->ENSEMBL_USERDB_USER, $self->ENSEMBL_USERDB_PASS);
-  };
-  my $val = (!$@ and defined $dbh);
-  $dbh->disconnect() if defined $dbh;
-  $self->_userdb_fault(!$val);
-  return $val;
-}
-
 sub marts {
   my $self = shift;
   return exists( $CONF->{'_storage'}{'MULTI'}{'marts'} ) ? $CONF->{'_storage'}{'MULTI'}{'marts'} : undef;
