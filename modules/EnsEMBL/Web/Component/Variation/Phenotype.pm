@@ -137,7 +137,7 @@ sub table_data {
     my $variant_link = $self->variation_link($pf->object->stable_id);
     my $pval         = $pf->p_value;
     
-    my $disease  = qq{<b>$disorder</b>} if $disorder =~ /^\w+/;
+    my $disease  = qq{<b>$disorder</b>};
     
     # BioMart link
     my $bm_flag = 0;
@@ -153,7 +153,7 @@ sub table_data {
     if ($bm_flag == 0) {
       $disease .= qq{<br /><a href="$disease_url">[View on Karyotype]</a>} unless ($disease =~ /HGMD/);
     }
-  
+
     my $row = {
       disease   => $disease,
       source    => $source,
