@@ -239,6 +239,9 @@ my $prot_id_cb = sub {
 # C(member_id)
 my $member_id_cb = sub {
   my ($self) = @_;
+  unless ($self->{tree}->can('member_id')) {
+      return;
+  }
   return $self->{tree}->member_id;
 };
 
