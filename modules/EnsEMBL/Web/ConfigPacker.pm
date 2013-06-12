@@ -1621,6 +1621,7 @@ sub _munge_meta {
   my %keys = qw(
     species.taxonomy_id           TAXONOMY_ID
     species.url                   SPECIES_URL
+    species.stable_id_prefix      SPECIES_PREFIX
     species.display_name          SPECIES_COMMON_NAME
     species.production_name       SPECIES_PRODUCTION_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
