@@ -96,7 +96,7 @@ sub get_page_data {
     next unless @$consequences && @$allele_info;
     
     my ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
-    my @coverage_obj = @$raw_coverage_obj ? sort { $a->start <=> $b->start } @$raw_coverage_obj : ();
+    my @coverage_obj = @{$raw_coverage_obj||[]} ? sort { $a->start <=> $b->start } @$raw_coverage_obj : ();
     my $index        = 0;
     
     foreach my $allele_ref (@$allele_info) {
