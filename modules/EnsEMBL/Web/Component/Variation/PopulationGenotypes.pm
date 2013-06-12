@@ -29,10 +29,11 @@ sub content {
     my %table_order = (
       1000     => 1,
       HapMap   => 2,
-      Mouse    => 3,
-      Other    => 4,
-      Inconsistent   => 5,
-      Observed => 6,
+      ESP      => 3,
+      Mouse    => 4,
+      Other    => 5,
+      Inconsistent   => 6,
+      Observed => 7,
     );
     
     my $species = $self->hub->species;
@@ -67,7 +68,7 @@ sub format_frequencies {
   
   # split off 1000 genomes, HapMap and failed if present
   if (!$tg_flag) {
-    my ($tg_data, $hm_data, $fv_data, $no_pop_data, $mgp_data);
+    my ($tg_data, $hm_data, $fv_data, $no_pop_data, $mgp_data, $esp_data);
     
     foreach my $pop_id (keys %$freq_data) {
       if ($pop_id eq 'no_pop') {
@@ -92,6 +93,9 @@ sub format_frequencies {
         } elsif ($name =~ /^Mouse_Genomes_project/i) {
           $mgp_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
           $mgp_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
+        } elsif ($name =~ /^ESP/i) {
+          $esp_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+          $esp_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
         }
       }
     }
@@ -101,7 +105,8 @@ sub format_frequencies {
     push @table_array,  @{$self->format_frequencies($hm_data, 'HapMap')}       if $hm_data;
     push @table_array,  @{$self->format_frequencies($fv_data, 'Inconsistent data')}  if $fv_data;
     push @table_array,  @{$self->format_frequencies($mgp_data, 'Mouse Genomes Project')}  if $mgp_data;
- 
+    push @table_array,  @{$self->format_frequencies($esp_data, 'ESP')}  if $esp_data;
+
     # special method for data with no pop/freq data
     push @table_array,  ['Observed variant(s) without frequency or population', $self->no_pop_data($no_pop_data)]  if $no_pop_data;
   }
