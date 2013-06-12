@@ -166,18 +166,21 @@ sub summary_tables {
   $html .= qq{<a id="$self->{'id'}_top"></a>};
   
   if ($tg_table->has_rows) {
-    $tg_table->add_option('id', '1000genomes_table');
-    $html .= '<h2>1000 Genomes</h2>' . $tg_table->render;      
+    my $tg_id = '1000genomes_table';
+    $tg_table->add_option('id', $tg_id);
+    $html .= $self->toggleable_table('1000 Genomes', $tg_id, $tg_table, 1);      
   }
   
   if ($hm_table->has_rows) {
-    $hm_table->add_option('id', 'hapmap_table');
-    $html .= '<h2>HapMap</h2>' . $hm_table->render;
+    my $hm_id = 'hapmap_table';
+    $hm_table->add_option('id', $hm_id);
+    $html .= $self->toggleable_table('HapMap', $hm_id, $hm_table, 1);
   }
 
-    if ($mgp_table->has_rows) {
-    $mgp_table->add_option('id', 'mouse_genomes_table');
-    $html .= '<h2>Mouse Genomes Project</h2>' . $mgp_table->render;
+  if ($mgp_table->has_rows) {
+    my $mgp_id = 'mouse_genomes_table';
+    $mgp_table->add_option('id', $mgp_id);
+    $html .= $self->toggleable_table('Mouse Genomes Project', $mgp_id, $mgp_table, 1);
   }
   
   if ($od_table->has_rows && ($hm_table->has_rows || $tg_table->has_rows)) {
