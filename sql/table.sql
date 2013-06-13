@@ -796,29 +796,6 @@ CREATE TABLE `member_xref` (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
-CREATE TABLE subset (
- subset_id      int(10) unsigned NOT NULL AUTO_INCREMENT,
- description    varchar(255),
- dump_loc       varchar(255),
-
- PRIMARY KEY (subset_id),
- UNIQUE (description)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-CREATE TABLE subset_member (
-  subset_id   int(10) unsigned NOT NULL,
-  member_id   int(10) unsigned NOT NULL,
-
-  FOREIGN KEY (subset_id) REFERENCES subset(subset_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
-
-  KEY (member_id),
-  PRIMARY KEY subset_member_id (subset_id, member_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
 /**
 @table other_member_sequence
 @desc  This table includes alternative sequences for Member, like sequences with flanking regions
