@@ -51,7 +51,7 @@ sub configure {
   ##  - is_binary       Flag kept on if values for a 'yesno' dropdown, the values to the option are 1 and 0 for Yes and No respectively instead of default 'yes' and 'no'
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
-  ##  - class           Class attribute (space seperated string for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
+  ##  - class           Class attribute (space seperated string or arrayref for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - element_class   Class attribute for the element div
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
