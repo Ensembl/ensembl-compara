@@ -867,7 +867,7 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '250Mb_job',
             -flow_into => [ 'run_qc_tests' ],
         },
 
@@ -942,7 +942,6 @@ sub pipeline_analyses {
             },
             -batch_size => 50,
             -hive_capacity => 100,
-            -rc_name => '500Mb_job',
             -flow_into => {
                 '2->A' => [ 'mcoffee' ],
                 '3->A' => [ 'mafft' ],
@@ -1054,7 +1053,7 @@ sub pipeline_analyses {
                 'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity      => $self->o('ortho_tree_capacity'),
-            -rc_name => '500Mb_job',
+            -rc_name => '250Mb_job',
             -flow_into  => [ 'hc_factory_tree_attributes', 'hc_factory_homologies' ],
         },
 
@@ -1066,7 +1065,7 @@ sub pipeline_analyses {
                                'mlss_id'       => $self->o('mlss_id'),
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
-            -rc_name       => '1Gb_job',
+            -rc_name       => '2Gb_job',
         },
 
         {   -logic_name => 'ortho_tree_annot',
@@ -1078,7 +1077,7 @@ sub pipeline_analyses {
                 'store_homologies'  => 0,
             },
             -hive_capacity        => $self->o('ortho_tree_annot_capacity'),
-            -rc_name => '500Mb_job',
+            -rc_name => '250Mb_job',
             -flow_into  => [ 'hc_factory_tree_attributes' ],
         },
 
