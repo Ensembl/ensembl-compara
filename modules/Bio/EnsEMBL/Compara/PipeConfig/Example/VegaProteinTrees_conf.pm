@@ -85,9 +85,10 @@ sub default_options {
     },
 
     # switch off the reuse:
-    'reuse_core_sources_locs'   => [ ],
+    'prev_core_sources_locs'   => [ ],
     'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-    'reuse_db'                  => 0,
+    'reuse_from_prev_rel_db'    => 0,
+    'do_stable_id_mapping'      => 0,
 
     # hive_capacity values for some analyses:
     'store_sequences_capacity'  => 50,
@@ -122,49 +123,8 @@ sub pipeline_analyses {
     }
   }
 
-  my $new_analyses = $self->_new_analyses();
-  push(@{$analyses}, @{$new_analyses});
   return $analyses;
 
-}
-
-#add any new analyses
-sub _new_analyses {
-  my ($self) = @_;
-
-  #update_display_member labels (borrowed from EG)
-  return [
-    {
-      -logic_name => 'member_display_labels_factory',
-      -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-      -parameters => {
-        inputquery      => 'select genome_db_id from species_set ss join method_link_species_set mlss using (species_set_id) where mlss.method_link_species_set_id = '.$self->o('mlss_id'),
-        column_names    => [qw/genome_db_id/],
-        fan_branch_code => 1,
-      },
-      -input_ids => [
-        {}
-      ],
-      -wait_for => ['backbone_fire_dnds'],
-      -flow_into => {
-        1 => {
-            update_member_display_labels => {
-              genome_db_ids => ['#genome_db_id#'],
-            }
-        }
-      }
-    },
-    {
-      -logic_name => 'update_member_display_labels',
-      -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-      -parameters => {
-        die_if_no_core_adaptor => 1
-      },
-      -hive_capacity => 10,
-      -batch_size => 1,
-      -rc_name        => '8Gb_job',
-    },
-  ];
 }
 
 1;

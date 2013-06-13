@@ -1,4 +1,20 @@
-=pod
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -173,26 +189,7 @@ sub default_options {
       -db_version => $self->o('release')
     },
 
-    prev_release              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-
-    #reuse_core_sources_locs   => [],
-    reuse_db                  => q{}, #Set to this to ignore reuse otherwise ....
-
-    #do_not_reuse_list => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
-
-    reuse_core_sources_locs   => [ $self->o('staging_2') ],
-    curr_core_sources_locs    => [ $self->o('clusterprod_1') ],
-   # reuse_db                  => {
-    #   -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-    #   -port   => 4272,
-    #   -user   => 'ensro',
-    #   -pass   => '',
-    #   -dbname => 'ensembl_compara_protists_18_71',
-   # },
-
-    #Set these up to perform stable ID mapping
-
-    stable_id_prev_release_db => {
+    prev_release_db => {
        -host   => 'mysql-eg-staging-2.ebi.ac.uk',
        -port   => 4275,
        -user   => 'ensro',
@@ -201,9 +198,15 @@ sub default_options {
 
     },
 
-    #To skip set prev_rel_db to empty; other params do need to be set though
-    stable_id_release => $self->o('eg_release'),
-    stable_id_prev_release => q{}, #means default to last -1
+    prev_release              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+
+    #reuse_core_sources_locs   => [],
+    reuse_from_prev_rel_db    => 0,  #Set this to 1 to enable the reuse
+
+    #do_not_reuse_list => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
+
+    prev_core_sources_locs   => [ $self->o('staging_2') ],
+    curr_core_sources_locs    => [ $self->o('clusterprod_1') ],
 
   );
 
@@ -263,44 +266,6 @@ sub _new_analyses {
         1 => { 'mysql:////gene_tree_root_tag' => { root_id => '#gene_tree_id#', tag => 'division', value => $self->o('division_name') } }
       }
     },
-    {
-      -logic_name => 'member_display_labels_factory',
-      -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-      -parameters => {
-        inputquery      => 'select genome_db_id from species_set ss join method_link_species_set mlss using (species_set_id) where mlss.method_link_species_set_id = '.$self->o('mlss_id'),
-      },
-      -input_ids => [
-        {}
-      ],
-      -wait_for => ['backbone_fire_dnds'],
-      -flow_into => {
-        2 => { 'update_member_display_labels' => { genome_db_ids => ['#genome_db_id#'] } }
-      }
-    },
-    {
-      -logic_name => 'update_member_display_labels',
-      -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-      -parameters => {
-        die_if_no_core_adaptor => 1
-      },
-      -hive_capacity => 10,
-      -batch_size => 1
-    },
-    {
-      -logic_name => 'stable_id_mapping',
-      -module => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
-      -parameters => {
-        master_db => $self->o('master_db'),
-        prev_rel_db => $self->o('stable_id_prev_release_db'),
-        release => $self->o('stable_id_release'),
-        type => 't',
-        prev_release => $self->o('stable_id_prev_release')
-      },
-      -input_ids => [
-        {}
-      ],
-      -wait_for => ['backbone_fire_dnds']
-    }
   ];
 }
 

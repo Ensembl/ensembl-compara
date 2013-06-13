@@ -1,4 +1,4 @@
-=heada LICENSE
+=head1 LICENSE
 
   Copyright (c) 1999-2013 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
@@ -106,6 +106,12 @@ sub default_options {
         'taxlevels'                 => [],
         'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
+    # mapping parameters:
+        'do_stable_id_mapping'      => 1,
+        'do_treefam_xref'           => 0,
+        'do_display_label_update'   => 1,
+        'wait_for_display_label_update' => 0,
+
     # executable locations:
         #'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
@@ -143,13 +149,15 @@ sub default_options {
         #'other_paralogs_capacity'   => 100,
         #'homology_dNdS_capacity'    => 200,
         #'qc_capacity'               =>   4,
+        #'hc_capacity'               =>   4,
         #'HMMer_classify_capacity'   => 100,
 
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
 
-        #'pipeline_db' => {                      # the production database itself (will be created)
+        # the production database itself (will be created)
+        #'pipeline_db' => {
         #    -host   => 'compara3',
         #    -port   => 3306,
         #    -user   => 'ensadmin',
@@ -157,7 +165,8 @@ sub default_options {
         #    -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
         #},
 
-        #'master_db' => {                        # the master database for synchronization of various ids
+        # the master database for synchronization of various ids
+        #'master_db' => {
         #    -host   => 'compara1',
         #    -port   => 3306,
         #    -user   => 'ensro',
@@ -169,15 +178,20 @@ sub default_options {
         #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
-        # Add the database entries for the reused core databases and update 'reuse_db'
-        #'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        #'reuse_db' => {   # usually previous release database on compara1
+        # Add the database entries for the core databases of the previous release
+        #'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+
+        # Add the database location of the previous Compara release
+        #'prev_rel_db' => {
         #   -host   => 'compara3',
         #   -port   => 3306,
         #   -user   => 'ensro',
         #   -pass   => '',
         #   -dbname => 'mm14_compara_homology_67',
         #},
+
+        # Are we reusing the blastp alignments ?
+        'reuse_from_prev_rel_db'    => 0,
 
         'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
@@ -216,7 +230,7 @@ sub pipeline_analyses {
                 'output_file'   => $self->o('dump_dir').'/#filename#',
             } ],
             -flow_into  => {
-                '1->A'  => [ 'copy_table_factory', 'innodbise_table_factory' ],
+                '1->A'  => [ 'copy_table_factory' ],
                 'A->1'  => [ 'backbone_fire_species_list_prepare' ],
             },
             -meadow_type    => 'LOCAL',
@@ -315,9 +329,23 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'group_genomes_under_taxa' ],
+                'A->1'  => [ 'backbone_fire_name_mapping' ],
+            },
+        },
+
+        {   -logic_name => 'backbone_fire_name_mapping',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature_%',
+                'exclude_list'  => 1,
+                'filename'      => 'snapshot_6_before_name_mapping.sql',
+            },
+            -flow_into  => {
+                '1->A'  => [ 'fire_enabled_mappings' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
+
 
         {   -logic_name => 'backbone_pipeline_finished',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
@@ -347,29 +375,6 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
             -analysis_capacity  => 1,
-            -meadow_type    => 'LOCAL',
-        },
-
-# ---------------------------------------------[turn all tables except 'genome_db' to InnoDB]---------------------------------------------
-
-        {   -logic_name => 'innodbise_table_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'      => 'SELECT table_name FROM information_schema.tables WHERE table_schema ="'.$self->o('pipeline_db','-dbname').'" AND table_name!="meta" AND engine="MyISAM" ',
-                'fan_branch_code' => 2,
-            },
-            -flow_into => {
-                2 => [ 'innodbise_table'  ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name    => 'innodbise_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters    => {
-                'sql'         => 'ALTER TABLE #table_name# ENGINE=InnoDB',
-            },
-            -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
         },
 
@@ -423,7 +428,7 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
-                '2->A' => [ 'load_genomedb', 'check_reusability' ],
+                '2->A' => [ 'load_genomedb' ],
                 'A->1' => [ 'finish_species_sets' ],
             },
             -meadow_type    => 'LOCAL',
@@ -436,6 +441,7 @@ sub pipeline_analyses {
                 'db_version'    => $self->o('release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
+            -flow_into => [ 'check_reusability' ],
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
         },
@@ -445,8 +451,8 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
-                'reuse_db'          => $self->o('reuse_db'),
-                'registry_dbs'      => $self->o('reuse_core_sources_locs'),
+                $self->o('reuse_from_prev_rel_db' ) ? ('reuse_db' => $self->o('prev_rel_db')) : (),
+                'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'release'           => $self->o('release'),
                 'prev_release'      => $self->o('prev_release'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
@@ -518,7 +524,7 @@ sub pipeline_analyses {
         {   -logic_name => 'sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                            'db_conn'    => $self->o('reuse_db'),
+                            'db_conn'    => $self->o('prev_rel_db'),
                             'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
@@ -533,7 +539,7 @@ sub pipeline_analyses {
         {   -logic_name => 'member_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('reuse_db'),
+                'src_db_conn'   => $self->o('prev_rel_db'),
                 'table'         => 'member',
                 'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                 'mode'          => 'insertignore',
@@ -547,7 +553,7 @@ sub pipeline_analyses {
         {   -logic_name => 'other_sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                            'db_conn'    => $self->o('reuse_db'),
+                            'db_conn'    => $self->o('prev_rel_db'),
                             'inputquery' => 'SELECT s.member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id# AND seq_type IN ("cds", "exon_bounded") AND member_id <= '.$self->o('protein_members_range'),
                             'fan_branch_code' => 2,
             },
@@ -639,7 +645,7 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('reuse_db'),
+                'src_db_conn'   => $self->o('prev_rel_db'),
                 'table'         => 'peptide_align_feature_#name#_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
@@ -784,7 +790,6 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
                 'mlss_id'                   => $self->o('mlss_id'),
-                'reuse_db'                  => $self->o('reuse_db'),
                 'blast_options'             => $self->o('blast_options'),
                 'blast_tmp_dir'             => $self->o('blast_tmp_dir'),
                 'fasta_dir'                 => $self->o('fasta_dir'),
@@ -886,7 +891,7 @@ sub pipeline_analyses {
         {   -logic_name => 'overall_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
             -parameters => {
-                'reuse_db'                  => $self->o('reuse_db'),
+                'reuse_db'                  => $self->o('prev_rel_db'),
                 'cluster_dir'               => $self->o('cluster_dir'),
             },
             -hive_capacity  => $self->o('qc_capacity'),
@@ -897,7 +902,7 @@ sub pipeline_analyses {
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
             -parameters => {
-                'reuse_db'                  => $self->o('reuse_db'),
+                'reuse_db'                  => $self->o('prev_rel_db'),
             },
             -hive_capacity => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
@@ -1143,6 +1148,75 @@ sub pipeline_analyses {
         },
 
 
+
+# -------------------------------------------[name mapping step]---------------------------------------------------------------------
+
+        {   -logic_name => 'fire_enabled_mappings',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [
+                $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
+                $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
+                $self->o('do_display_label_update') ? 'member_display_labels_factory' : (),
+            ],
+        },
+
+        {
+            -logic_name => 'stable_id_mapping',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
+            -parameters => {
+                'master_db'     => $self->o('master_db'),
+                'prev_rel_db'   => $self->o('prev_rel_db'),
+                'release'       => $self->o('release'),
+                'prev_release'  => $self->o('prev_release'),
+                'type'          => 't',
+            },
+            -rc_name => '1Gb_job',
+        },
+
+        {   -logic_name    => 'treefam_xref_idmap',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper',
+            -parameters    => {
+                'release'     => $self->o('release'),
+                'tf_release'  => 9,
+                'tag_prefix'  => '',
+            },
+            -rc_name => '1Gb_job',
+        },
+
+        {
+            -logic_name => 'member_display_labels_factory',
+            -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'    => 'SELECT genome_db_id FROM genome_db',
+            },
+            -flow_into => {
+                2 => { 'update_member_display_labels' => { genome_db_ids => ['#genome_db_id#'] } },
+            },
+            -wait_for       => [ $self->o('wait_for_display_label_update') ? 'member_display_labels_factory' : () ],
+            -meadow_type    => 'LOCAL',
+        },
+
+        {
+            -logic_name => 'update_member_display_labels',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -parameters => {
+                'die_if_no_core_adaptor'  => 1,
+                'replace'                 => 1,
+            },
+            -flow_into => [ 'update_member_descriptions' ],
+            -rc_name => '500Mb_job',
+        },
+
+        {
+            -logic_name => 'update_member_descriptions',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -parameters => {
+                'die_if_no_core_adaptor'  => 1,
+                'replace'                 => 1,
+                'mode'                    => 'description',
+            },
+            -rc_name => '500Mb_job',
+        },
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
 
