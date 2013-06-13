@@ -395,34 +395,6 @@ sub fetch_all_by_MemberSet {
 
 
 
-=head2 fetch_all_by_subset_id
-
-  Arg [1]    : int subset_id
-  Example    : @members = @{$memberAdaptor->fetch_all_by_subset_id($subset_id)};
-  Description: given a subset_id, does a join to the subset_member table
-               to return a list of Member objects in this subset
-  Returntype : list by reference of Compara::Member objects
-  Exceptions : $subset_id not defined
-  Caller     : general
-
-=cut
-
-sub fetch_all_by_subset_id {
-  my ($self, $subset_id) = @_;
-
-  $self->_warning_member_adaptor();
-  throw() unless (defined $subset_id);
-
-  my $constraint = "sm.subset_id = '$subset_id'";
-
-  my $join = [[['subset_member', 'sm'], 'm.member_id = sm.member_id']];
-
-  return $self->generic_fetch($constraint, $join);
-}
-
-
-
-
 
 
 #
