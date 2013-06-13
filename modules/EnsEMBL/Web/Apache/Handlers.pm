@@ -286,10 +286,15 @@ sub handler {
   ## Check for stable id URL (/id/ENSG000000nnnnnn)
   if ($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) {
     my $stable_id = $raw_path[1];
-    $stable_id =~ s/\.[0-9]+$//; ## Remove versioning
     my ($object_type, $db_type, $uri);
+    my $unstripped_stable_id = $stable_id;
+    $stable_id =~ s/\.[0-9]+$//; ## Remove versioning
     ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
-    
+    if(!$species || !$object_type) {
+      ## Maybe that wasn't versioning after all!
+      ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id);
+      $stable_id = $unstripped_stable_id if($species && $object_type);
+    }
     if ($species && $object_type) {
       $uri = "/$species/";
       
