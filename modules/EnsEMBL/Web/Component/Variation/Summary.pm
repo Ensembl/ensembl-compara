@@ -487,6 +487,8 @@ sub evidence_status {
   my $object         = $self->object;
   my $status         = $object->evidence_status;
   
+  return unless (scalar @$status);
+  
   my $html = join("",
     map {
       sprintf(
