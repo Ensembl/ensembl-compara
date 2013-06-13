@@ -73,10 +73,7 @@ sub fetch_input {
 
         } else {    # not using registry names here to avoid clashes with previous release registry entries:
 
-            my $do_not_reuse_candidate_genome_db = $genome_db_adaptor->fetch_by_name_assembly( $do_not_reuse_candidate )
-                or die "Could not fetch genome_db with name='$do_not_reuse_candidate', please check the 'do_not_reuse_list' parameter";
-
-            if( $do_not_reuse_candidate_genome_db == $genome_db ) {
+            if( $do_not_reuse_candidate eq $genome_db->name ) {
                 $self->param('reuse_this', 0);
                 return;
             }

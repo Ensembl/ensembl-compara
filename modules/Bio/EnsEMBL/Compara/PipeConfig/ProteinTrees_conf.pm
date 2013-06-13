@@ -453,7 +453,6 @@ sub pipeline_analyses {
             },
             -hive_capacity => 10,
             -rc_name => '500Mb_job',
-            -wait_for => [ 'load_genomedb_factory', 'load_genomedb' ],
             -flow_into => {
                 2 => {
                     'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
