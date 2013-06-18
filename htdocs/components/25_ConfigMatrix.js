@@ -229,7 +229,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     
     this.elLk.table.children('tbody').on('click', '.opt', function () {
       var el         = $(this).toggleClass('on');
-      var cellTracks = panel.params.cellTracks ? panel.params.cellTracks[this.title] : false;
+      var cellTracks = panel.params.cellTracks ? $.trim(panel.params.cellTracks[this.title]) : false;
       var popup, colTrack;
       
       if (cellTracks && el.hasClass('on')) {
