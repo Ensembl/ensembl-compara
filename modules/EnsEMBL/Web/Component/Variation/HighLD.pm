@@ -228,7 +228,7 @@ sub linked_var_table {
   
   foreach my $ld (@old_values) {
     next unless $ld->{'variation1'}->dbID == $vf_dbID || $ld->{'variation2'}->dbID == $vf_dbID;
-    next unless $ld->{'sample_id'} == $pop_id;
+    next unless $ld->{'population_id'} == $pop_id;
     next unless $ld->{'r2'}        >= $min_r2;
     next unless $ld->{'d_prime'}   >= $min_d_prime;
     
