@@ -10,8 +10,7 @@ INSERT INTO member_production_counts (stable_id) SELECT stable_id FROM member WH
 SELECT "Creating temporary temp_member_family_counts table" AS "";
 CREATE TEMPORARY TABLE temp_member_family_counts (
        stable_id varchar(128) NOT NULL,
-       families INT(10) UNSIGNED DEFAULT 0,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
+       families INT(10) UNSIGNED DEFAULT 0
 );
 
 SELECT "Populating the temporary temp_member_family_counts table" AS "";
@@ -28,8 +27,7 @@ UPDATE member_production_counts mpc JOIN temp_member_family_counts t USING(stabl
 SELECT "Creating temporary temp_member_tree_counts table" AS "";
 CREATE TEMPORARY TABLE temp_member_tree_counts (
        stable_id varchar(128) NOT NULL,
-       default_gene_tree_root INT(10) UNSIGNED,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
+       default_gene_tree_root INT(10) UNSIGNED
 );
 
 SELECT "Populating the temporary temp_member_tree_counts table" AS "";
@@ -49,13 +47,12 @@ UPDATE member_production_counts JOIN temp_member_tree_counts t USING(stable_id) 
 SELECT "Creating temporary temp_member_orthologues_counts table" AS "";
 CREATE TEMPORARY TABLE temp_member_orthologues_counts (
        stable_id varchar(128) NOT NULL,
-       orthologues INT(10) UNSIGNED DEFAULT 0,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
+       orthologues INT(10) UNSIGNED DEFAULT 0
 );
 
 
 SELECT "Populating the temporary temp_member_orthologues_counts table" AS "";
-INSERT INTO temp_member_orthologues_counts(stable_id, orthologues) SELECT stable_id, count(*) FROM member_production_counts JOIN member USING(stable_id) JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%ortholog%' GROUP BY member_id;
+INSERT INTO temp_member_orthologues_counts(stable_id, orthologues) SELECT stable_id, count(*) FROM member JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%ortholog%' GROUP BY member_id;
 
 SELECT "Populating the orthologues column in member_production_counts" AS "";
 UPDATE member_production_counts mpc JOIN temp_member_orthologues_counts USING(stable_id) SET mpc.orthologues = temp_member_orthologues_counts.orthologues;
@@ -64,12 +61,11 @@ UPDATE member_production_counts mpc JOIN temp_member_orthologues_counts USING(st
 SELECT "Creating temporary temp_member_paralogues_counts table" AS "";
 CREATE TEMPORARY TABLE temp_member_paralogues_counts (
        stable_id varchar(128) NOT NULL,
-       paralogues INT(10) UNSIGNED DEFAULT 0,
-       FOREIGN KEY (stable_id) REFERENCES member_production_counts(stable_id)
+       paralogues INT(10) UNSIGNED DEFAULT 0
 );
 
 SELECT "Populating the temporary temp_member_paralogues_counts table" AS "";
-INSERT INTO temp_member_paralogues_counts(stable_id, paralogues) SELECT stable_id, count(*) FROM member_production_counts JOIN member USING(stable_id) JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%paralog%' GROUP BY member_id;
+INSERT INTO temp_member_paralogues_counts(stable_id, paralogues) SELECT stable_id, count(*) FROM member JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%paralog%' GROUP BY member_id;
 
 SELECT "Populating the paralogues column in member_production_counts" AS "";
 UPDATE member_production_counts mpc JOIN temp_member_paralogues_counts USING(stable_id) SET mpc.paralogues = temp_member_paralogues_counts.paralogues;
