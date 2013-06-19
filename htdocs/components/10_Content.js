@@ -21,7 +21,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     $.extend(this.elLk, fnEls);
-    
+
+    this.toggleable();  
+
     for (var fn in fnEls) {
       if (fnEls[fn].length) {
         this[fn]();
@@ -45,7 +47,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
     }
     
-    this.toggleable();
   },
   
   ajaxLoad: function () {
