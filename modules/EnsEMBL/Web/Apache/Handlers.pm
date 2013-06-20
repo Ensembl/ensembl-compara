@@ -164,7 +164,7 @@ sub redirect_to_nearest_mirror {
                   ? $ip_location->{ $geo_details->[1] } || $ip_location->{DEFAULT}
                   : $ip_location;
 
-                if ($mirror) {
+                if ($mirror and grep { $_ eq $mirror } @SiteDefs::ENSEMBL_MIRRORS_UP) {
                     return DECLINED if $mirror eq $species_defs->ENSEMBL_SERVERNAME;
 
                     ## Deleting cookie for current site
