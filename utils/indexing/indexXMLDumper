@@ -593,19 +593,19 @@ sub dumpVariation {
              )
              SEPARATOR ';'
            ) AS phen
-      FROM $VariationDB.phenotype_feature AS va left join
-           $VariationDB.variation AS v ON v.name = va.object_id left join
-           $VariationDB.phenotype AS p ON p.phenotype_id = va.phenotype_id left join
-           $VariationDB.study AS st ON st.study_id=va.study_id left join
+      FROM $VariationDB.phenotype_feature AS pf left join
+           $VariationDB.variation AS v ON v.name = pf.object_id left join
+           $VariationDB.phenotype AS p ON p.phenotype_id = pf.phenotype_id left join
+           $VariationDB.study AS st ON st.study_id=pf.study_id left join
            $VariationDB.associate_study AS sa ON sa.study1_id=st.study_id left join
            $VariationDB.study AS sta ON sta.study_id=sa.study2_id left join
            ( $VariationDB.phenotype_feature_attrib AS pfa1
              join $VariationDB.attrib_type AS at1 on pfa1.attrib_type_id = at1.attrib_type_id and at1.code = 'associated_gene' )
-           on pfa1.phenotype_feature_id = va.phenotype_feature_id left join 
+           on pfa1.phenotype_feature_id = pf.phenotype_feature_id left join 
            ( $VariationDB.phenotype_feature_attrib AS pfa2
              join $VariationDB.attrib_type AS at2 on pfa2.attrib_type_id = at2.attrib_type_id and at2.code = 'variation_names' )
-           on pfa2.phenotype_feature_id = va.phenotype_feature_id
-     WHERE va.type = 'Variation'
+           on pfa2.phenotype_feature_id = pf.phenotype_feature_id
+     WHERE pf.type = 'Variation'
   GROUP BY v.variation_id
   ORDER BY v.variation_id"
    )};
@@ -750,7 +750,7 @@ sub dumpVariation {
           }
         }
         push @syns,       split ';', $x->[1];
-        push @syns, split ';', $x->[4];
+        push @syns,       split ';', $x->[4];
         push @phenotypes, $x->[5] if $x->[5];
         push @studies,    split ';', $x->[2];
       }
