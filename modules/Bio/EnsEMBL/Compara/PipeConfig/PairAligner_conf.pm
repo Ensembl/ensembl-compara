@@ -228,6 +228,9 @@ sub default_options {
 #	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
 	'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
 	'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+            
+        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+
     };
 }
 
@@ -271,10 +274,10 @@ sub resource_classes {
     my ($self) = @_;
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb' => { 'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'   => { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600000 -R"select[mem>3600] rusage[mem=3600]"' },
+            '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
+            '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
+            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
+            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 
