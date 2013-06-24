@@ -47,6 +47,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats;
 
 use strict;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
+use Bio::EnsEMBL::Utils::URI;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -94,9 +95,13 @@ sub fetch_input {
   my $ref_db = $ref_genome_db->db_adaptor;
   my $non_ref_db = $non_ref_genome_db->db_adaptor;
 
-  #Modify url to make it a valid core url
-  $self->param('ref_dbc_url', $ref_db->dbc->url . "?group=core\\&species=" . $self->param('ref_species'));
-  $self->param('non_ref_dbc_url', $non_ref_db->dbc->url . "?group=core\\&species=" . $self->param('non_ref_species'));
+  #Create url from dbc
+  my $ref_url = generate_url($ref_db->dbc, $self->param('ref_species'));
+  my $non_ref_url = generate_url($non_ref_db->dbc, $self->param('non_ref_species'));
+
+  #Need to protect with quotes
+  $self->param('ref_dbc_url', "\"$ref_url\"");
+  $self->param('non_ref_dbc_url', "\"$non_ref_url\"");
 
   my $perl_path = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
 
@@ -350,6 +355,24 @@ sub run_create_pair_aligner_page {
     unless (system($cmd) == 0) {
 	die("$cmd execution failed\n");
     }
+}
+
+sub generate_url {
+    my ($dbc, $species) = @_;
+
+    my $uri = Bio::EnsEMBL::Utils::URI->new("mysql");
+    $uri->user($dbc->username);
+    $uri->pass($dbc->password);
+    $uri->port($dbc->port);
+    $uri->host($dbc->host);
+    my $db_params;
+    %$db_params = (dbname => $dbc->dbname);
+    $uri->{db_params} = $db_params;
+    
+    $uri->add_param("group", "core");
+    $uri->add_param("species", $species);
+    
+    return ($uri->generate_uri);
 }
 
 1;
