@@ -59,6 +59,8 @@ sub default_options {
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 87 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
+        'species_set' => undef, 
+
     # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'PECAN_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
@@ -78,6 +80,9 @@ sub default_options {
     #update_max_alignment_length
     'quick' => 1, #use quick method for calculating the max_alignment_length (genomic_align_block->length 
                   #instead of genomic_align->dnafrag_end - genomic_align->dnafrag_start + 1
+
+    'do_transactions'   => 1, #use transactions in Pecan and Gerp modules
+
 
     # Mercator default parameters
     'strict_map'        => 1,
@@ -100,14 +105,25 @@ sub default_options {
     #Gerp default parameters
     'window_sizes'      => "[1,10,100,500]",
     'gerp_version'      => 2.1,
-
 	    
     #Location of executables (or paths to executables)
     'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
     'gerp_exe_dir'              => '/software/ensembl/compara/gerp/GERPv2.1',
     'mercator_exe'              => '/software/ensembl/compara/mercator',
-    'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.23+/bin',
+    'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
+    'exonerate_exe'             => '/software/ensembl/compara/exonerate/exonerate',
 
+    'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+    'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
+
+    #
+    #Default statistics
+    #
+    'skip_multiplealigner_stats' => 0, #skip this module if set to 1
+    'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+    'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+
+    'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
 
     # connection parameters to various databases:
 
@@ -207,7 +223,9 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('blastdb_dir'),
         'mkdir -p '.$self->o('mercator_dir'),
         'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1 || echo "Striping is not available on this system" ',
-    ];
+        'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
+        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
+     ];
 }
 
 
@@ -215,13 +233,13 @@ sub resource_classes {
     my ($self) = @_;
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	 '100Mb' =>  { 'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' }, 
-	 '1Gb' =>    { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },  
-	 '1.8Gb' =>  { 'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },  
-         '3.6Gb' =>  { 'LSF' => '-C0 -M3600000 -R"select[mem>3600] rusage[mem=3600]"' },
-         '7.5Gb' =>  { 'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' }, 
-         '11.4Gb' => { 'LSF' => '-C0 -M11400000 -R"select[mem>11400] rusage[mem=11400]"' }, 
-         '14Gb' =>   { 'LSF' => '-C0 -M14000000 -R"select[mem>14000] rusage[mem=14000]"' }, 
+	 '100Mb' =>  { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' }, 
+	 '1Gb' =>    { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },  
+	 '1.8Gb' =>  { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },  
+         '3.6Gb' =>  { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
+         '7.5Gb' =>  { 'LSF' => '-C0 -M7500' . $self->o('memory_suffix') .' -R"select[mem>7500] rusage[mem=7500]"' }, 
+         '11.4Gb' => { 'LSF' => '-C0 -M11400' . $self->o('memory_suffix') .' -R"select[mem>11400] rusage[mem=11400]"' }, 
+         '14Gb' =>   { 'LSF' => '-C0 -M14000' . $self->o('memory_suffix') .' -R"select[mem>14000] rusage[mem=14000]"' }, 
     };
 }
 
@@ -229,31 +247,6 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-
-# ---------------------------------------------[Turn all tables except 'genome_db' to InnoDB]---------------------------------------------
-	    {   -logic_name => 'innodbise_table_factory',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-parameters => {
-				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
-				'fan_branch_code' => 2,
-			       },
-		-input_ids => [{}],
-		-flow_into => {
-			       '2->A' => [ 'innodbise_table'  ],
-			       'A->1' => [ 'populate_new_database' ],
-			      },
-		-rc_name => '100Mb',
-	    },
-
-	    {   -logic_name    => 'innodbise_table',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-		-parameters    => {
-				   'sql'         => "ALTER TABLE #table_name# ENGINE='InnoDB'",
-				  },
-		-hive_capacity => 1,
-		-rc_name => '100Mb',
-	    },
-
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
 	    {  -logic_name => 'populate_new_database',
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -266,6 +259,7 @@ sub pipeline_analyses {
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
 				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
 				 },
+               -input_ids => [{}],
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
@@ -637,6 +631,8 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options'),
                  'mlss_id'                    => $self->o('mlss_id'),
 		 'jar_file'                   => $self->o('jar_file'),
+                 'exonerate'                  => $self->o('exonerate_exe'),
+                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -711,6 +707,7 @@ sub pipeline_analyses {
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
                  'mlss_id'         => $self->o('mlss_id'),  #to retrieve species_tree from mlss_tag table
+                 'do_transactions' => $self->o('do_transactions'),
 #                 'constrained_element_method_link_type' => $self->o('constrained_element_type'),
              },
              -hive_capacity => 500,  
@@ -738,9 +735,11 @@ sub pipeline_analyses {
 			    'method_link_species_set_id' => $self->o('mlss_id'),
 
 			   },
-            -flow_into => {
-                           1 => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
-                           },
+	    -flow_into => { 
+			    '2->A' => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
+			    'A->1' => ['stats_factory'],
+			   },
+
 	    -rc_name => '100Mb',
 	 },
 
@@ -763,7 +762,35 @@ sub pipeline_analyses {
                                 'method_link_type' => 'PECAN',
              },
 	    -rc_name => '100Mb',
-	},
+ 	},
+
+        {   -logic_name => 'stats_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                'fan_branch_code'       => 2,
+            },
+            -flow_into  => {
+                2 => [ 'multiplealigner_stats' ],
+            },
+        },
+
+        { -logic_name => 'multiplealigner_stats',
+	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats',
+	      -parameters => {
+			      'skip' => $self->o('skip_multiplealigner_stats'),
+			      'dump_features' => $self->o('dump_features_exe'),
+			      'compare_beds' => $self->o('compare_beds_exe'),
+			      'bed_dir' => $self->o('bed_dir'),
+			      'ensembl_release' => $self->o('release'),
+			      'output_dir' => $self->o('output_dir'),
+                              'mlss_id'   => $self->o('mlss_id'),
+			     },
+	      -rc_name => '3.6Gb',             
+              -hive_capacity => 100,  
+	    },
 
     ];
 
