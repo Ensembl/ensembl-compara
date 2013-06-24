@@ -79,13 +79,25 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::Runnable::Pecan;
-use Bio::EnsEMBL::Analysis::Config::Compara; #for $PYTHON and $ORTHEUS and $EXONERATE
 use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    return {
+            'do_transactions' => 1, #set default to do transactions
+            'trim' => undef,
+            'species_order' => undef, #local
+            'species_tree' => undef, #local
+            'tree_file' => undef, #local
+            'species_tree_string' => undef, #local
+            'species_tree_file' => undef, #local
+            'fasta_files' => undef, #local
+           };
+}
 
 =head2 fetch_input
 
@@ -103,20 +115,8 @@ sub fetch_input {
   #set default to 0. Run Ortheus to create the tree if a duplication is found
   $self->param('found_a_duplication', 0);
 
-  if (!$self->param('mlss_id')) {
-    throw("MethodLinkSpeciesSet->dbID is not defined for this Pecan job");
-  }
-
-  #set default to do transactions
-  if (!defined $self->param('do_transactions')) {
-      $self->param('do_transactions', 1);
-  }
-
-  #set default exonerate
-  if (!defined $self->param('exonerate')) {
-      $self->param('exonerate', $EXONERATE);
-  }
-
+  #Check that mlss_id has been defined
+  $self->param_required('mlss_id');
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
