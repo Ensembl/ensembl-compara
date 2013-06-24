@@ -55,6 +55,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis::Runnable::Mercator;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
+use Bio::EnsEMBL::Analysis;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
