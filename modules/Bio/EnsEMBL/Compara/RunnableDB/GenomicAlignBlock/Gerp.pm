@@ -74,6 +74,13 @@ $| = 1;
 sub param_defaults {
     return {
 	    'program_version' => 2.1,
+            'do_transactions' => 1, #set default to do transactions
+            #flag as to whether to write out conservation scores to the conservation_score
+            #table. Default is to write them out.
+            'no_conservation_scores' => 0,
+            'tree_string' => undef, #local parameter only
+            'tree_file' => undef, #local parameter only
+            'depth_threshold'=> undef,  #local parameter only
     };
 }
 
@@ -96,17 +103,6 @@ sub fetch_input {
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
-  #set default to do transactions
-  if (!defined $self->param('do_transactions')) {
-      $self->param('do_transactions', 1);
-  }
-
-  #flag as to whether to write out conservation scores to the conservation_score
-  #table. Default is to write them out.
-  unless (defined $self->param('no_conservation_scores')) {
-      $self->param('no_conservation_scores', 0);
-  }
-
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($self->param('genomic_align_block_id'));
 
@@ -122,6 +118,7 @@ sub fetch_input {
       #decide whether to use GenomicAlignTree object or species tree.
       my $mlss = $gab->method_link_species_set;
       my $method_class = $mlss->method->class;
+      $self->param('mlss_id', $mlss->dbID); #Need to set for use with get_species_tree_string
 
       my $tree_string;
       if ($method_class =~ /GenomicAlignTree/) {
