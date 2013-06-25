@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmProfileFactory
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmProfileFactory
 
 =cut
 
@@ -12,6 +12,7 @@ Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmProfileFactory
 
 =cut
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmProfileFactory;
+#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmProfileFactory;
 
 use strict;
 use warnings;
@@ -57,19 +58,16 @@ sub run {
     my @msa_subdir = readdir DIR;
    
     foreach my $msa_subdir (@msa_subdir){
-      
       next unless $msa_subdir =~/^msa/;  
       my $dir = $msa_dir.'/'.$msa_subdir;
       opendir(DIR_2, $dir) or die "Error openining dir '$dir' : $!";
 
       while ((my $filename = readdir (DIR_2))) {
-
+        my $filesize = -s "$filename";
+	#next unless $filesize > 0; #filter out alignments with file size 0
         next unless $filename =~/^cluster/;
-
-        $filename = $dir.'/'.$filename;
-	 	
+        $filename    = $dir.'/'.$filename;
         $self->dataflow_output_id( { 'msa' => $filename }, 2 ); 
-
         } 
     }
 return;

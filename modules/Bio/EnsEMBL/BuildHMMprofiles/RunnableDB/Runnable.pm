@@ -5,11 +5,11 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::Runnable
+Bio::EnsEMBL::Analysis::Runnable
 
 =head1 SYNOPSIS
 
-  my $repeat_masker = Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::RepeatMasker->
+  my $repeat_masker = Bio::EnsEMBL::Analysis::Runnable::RepeatMasker->
   new(
       -query => 'slice',
       -program => 'repeatmasker',
@@ -61,8 +61,8 @@ in the ensembl-doc cvs module
 Post questions to the Ensembl development list: dev@ensembl.org
 
 =cut
-
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::Runnable;
+#package Bio::EnsEMBL::Analysis::Runnable;
 
 use strict;
 use warnings;

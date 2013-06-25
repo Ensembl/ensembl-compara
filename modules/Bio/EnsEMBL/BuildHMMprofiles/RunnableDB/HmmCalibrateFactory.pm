@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrateFactory
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory
 
 =cut
 
@@ -12,6 +12,7 @@ Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrateFactory
 
 =cut
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrateFactory;
+#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory;
 
 use strict;
 use warnings;

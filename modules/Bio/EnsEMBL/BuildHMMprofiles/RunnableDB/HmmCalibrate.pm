@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrate;
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
 
 =cut
 
@@ -11,7 +11,9 @@ Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrate;
 This module perform calibration on HMM profile
 
 =cut
+
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrate;
+#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
 
 use strict;
 use warnings;
@@ -59,12 +61,17 @@ XX  Function   : Retrieve msa alignment and for each create a single hmmbuild jo
 sub run {
     my $self = shift @_;
 
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
+
     if($hmmprofile =~/hmm$/){
 	my $hmmprofile  = $hmmLib_dir.'/'.$hmmprofile;
 	my $command     = "hmmcalibrate $hmmprofile"; 
     	my $result      = system($command);
     }
-
+    #$self->compara_dba->dbc->disconnect_when_inactive(0);
+    #$self->compara_dba->dbc->reconnect_when_lost(1);  
+ 
 return;
 }
 

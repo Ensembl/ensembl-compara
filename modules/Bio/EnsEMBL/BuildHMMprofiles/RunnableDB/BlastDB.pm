@@ -1,4 +1,5 @@
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::BlastDB;
+#package Bio::EnsEMBL::Analysis::Tools::BlastDB;
 
 use strict;
 no warnings;
@@ -186,7 +187,7 @@ sub discover_command{
     if($self->molecule_type eq "DNA"){
       $self->format_command('xdformat -n -I');
     }elsif($self->molecule_type eq "PROTEIN"){
-      $self->format_command("$xdformat_exe -p -I -o");
+      $self->format_command("$xdformat_exe -k -p -I -o");
       #$self->format_command('xdformat -p -I');
     }else{
       throw("Don't recognise mol type ".$self->molecule_type);

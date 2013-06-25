@@ -20,11 +20,11 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::Blast - 
+Bio::EnsEMBL::Analysis::Runnable::Blast - 
 
 =head1 SYNOPSIS
 
-  my $blast = Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::Blast->
+  my $blast = Bio::EnsEMBL::Analysis::Runnable::Blast->
   new(
       -query => $slice,
       -program => 'wublastn',
@@ -55,14 +55,13 @@ Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::Blast -
 
 =cut
 
-
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::Blast;
+#package Bio::EnsEMBL::Analysis::Runnable::Blast;
 
 use strict;
 use warnings;
 
-#use Bio::EnsEMBL::Analysis::Runnable;
-use Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::Runnable;
+use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::Analysis::Config::Blast qw( BLASTDB );
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::Argument qw( rearrange );

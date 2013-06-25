@@ -1,6 +1,6 @@
 =head1 NAME
 
-  Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::PeptideAlignFeatureAdaptor
+  Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
 
 =head1 SYNOPSIS
 
@@ -20,8 +20,8 @@
 
 =cut
 
-
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::PeptideAlignFeatureAdaptor;
+#package Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 #use Bio::EnsEMBL::Compara::SyntenyPair;

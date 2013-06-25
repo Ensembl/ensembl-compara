@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::BlastpWithFasta
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithFasta
 
 =cut
 
@@ -11,8 +11,8 @@ Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::BlastpWithFasta
 This module take in a sequence and perform blastp
 
 =cut
-
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::BlastpWithFasta;
+#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithFasta;
 
 use strict;
 use warnings;
@@ -49,8 +49,7 @@ sub fetch_input {
     my $self = shift @_;
    
     # Getting the sequence object to perform blast 
-    $seq = $self->param('seq'); 
-
+    $seq            = $self->param('seq'); 
     # Define BLAST Runnable parameters
     $output_dir     = $self->param('output_dir');
     $wublastp_exe   = $self->param('wublastp_exe') or die "'wublastp_exe' is an obligatory parameter";
@@ -67,9 +66,9 @@ sub fetch_input {
 
     # Define BLAST Parser Filter Object parameters
     # From Bio/EnsEMBL/Analysis/Config/Blast.pm
-    $regex    = $self->param('regex') || '^(\S+)\s*';
-    $thr_type = $self->param('-threshold_type');
-    $thr      = $self->param('-threshold');
+    $regex         = $self->param('regex') || '^(\S+)\s*';
+    $thr_type      = $self->param('-threshold_type');
+    $thr           = $self->param('-threshold');
         
     unless($thr_type and $thr) {
       ($thr_type, $thr) = ('PVALUE', 1e-10);
@@ -120,6 +119,7 @@ sub run {
 		);
 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
 
      ## call runnable run method in eval block
      eval { $runnable->run($blast_tmp_dir); };
@@ -131,27 +131,22 @@ sub run {
            	} else {
                         die("$@$_");
                 }
-      	}
-     
-     $self->compara_dba->dbc->disconnect_when_inactive(0);
+     }
+     #$self->compara_dba->dbc->disconnect_when_inactive(0);
      #since the Blast runnable takes in analysis parameters rather than an
      #analysis object, it creates new Analysis objects internally
      #(a new one for EACH FeaturePair generated)
      #which are a shadow of the real analysis object ($self->analysis)
      #The returned FeaturePair objects thus need to be reset to the real analysis object
- 
      my %cross_pafs = ();# for storing blast output
 
      foreach my $feature (@{$runnable->output}) {
-        
 	if($feature->isa('Bio::EnsEMBL::FeaturePair')) {
  		$feature->{null_cigar} = 1 if ($self->param('null_cigar'));
         }
-		#print STDERR "$id\t".$feature->{hseqname}."\t".$feature->{score}."\n";	        
-		push @{$cross_pafs{'1'}}, $feature; # using 1 as genome_db ID for all sequences
+	  push @{$cross_pafs{'1'}}, $feature; # using 1 as genome_db ID for all sequences
      }
      $self->param('cross_pafs',\%cross_pafs);
-
      undef $seq;
 
 return;	
@@ -162,9 +157,7 @@ sub write_output {
     my $self = shift @_;
 
     print STDERR "Inserting blast output into peptide_align_feature tables...\n" if ($self->debug);
-
     my $cross_pafs = $self->param('cross_pafs');
-
     $self->compara_dba->get_PeptideAlignFeatureAdaptor->store(@{$cross_pafs->{'1'}});
 
 return;

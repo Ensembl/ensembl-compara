@@ -2,11 +2,12 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::CreateBlastDB
+Bio::EnsEMBL::Compara::RunnableDB::CreateBlastDB
 
 =head1 DESCRIPTION
 
-This module takes in a sequence file in Fasta format and creates a Blastp database from this file.
+This module takes in a sequence file in Fasta format 
+and creates a Blast database from this file.
 
 =head1 MAINTAINER
 
@@ -17,6 +18,7 @@ $Author$
 =cut
 
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::CreateBlastDB;
+#package Bio::EnsEMBL::Compara::RunnableDB::CreateBlastDB;
 
 use strict;
 use Data::Dumper;
@@ -89,7 +91,7 @@ sub check_directory {
     unless (-e $output_dir) { ## Make sure the directory exists
         print STDERR "$output_dir doesn't exists. I will try to create it\n" if ($self->debug());
         print STDERR "mkdir $output_dir (0755)\n" if ($self->debug());
-        die "Impossible create directory $output_dir\n" unless (mkdir($output_dir, 0755));
+        die "Impossible create directory $output_dir\n" unless (mkdir $output_dir, 0755 );
     }
 
 return;

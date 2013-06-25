@@ -2,17 +2,18 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmBuild;
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild;
 
 =cut
 
 =head1 DESCRIPTION
 
-This module reads in a msa alignment file, creating HMMer
+This module reads in a msa alignment file, creating HMM
 profile for each of the alignment.
 
 =cut
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmBuild;
+#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild;
 
 use strict;
 use warnings;
@@ -54,7 +55,7 @@ return;
 
   Arg[1]     : -none-
   Example    : $self->run;
-  Function   : Retrieve msa alignment and for each run a hmmbuild job
+  Function   : Retrieve msa alignment and for each run hmmbuild job
   Returns    : 1 on successful completion
   Exceptions : dies if runnable throws an unexpected error
 
@@ -64,7 +65,7 @@ sub run {
   
     my $input_file  = $msa;
     my $dir         = $1 if ($msa =~/(cluster.+)\_(output.msa)/);
-    $dir  = $division.'_'.$dir;
+    $dir  	    = $division.'_'.$dir;
     my $hmm_dir     = $hmmLib_dir.'/'.$dir;
  
     unless (-e $hmm_dir) { ## Make sure the directory exists
@@ -75,11 +76,14 @@ sub run {
 
     my $hmmLib_file = $hmm_dir.'/'.$dir.'.hmm'; 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
-#    my $command     = "$hmmbuild_exe --informat afa $hmmLib_file $input_file"; 
-    my $command     = "$hmmbuild_exe $hmmLib_file $input_file"; # HMMer2
-    my $result      = system($command);
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-#   unlink $input_file if (defined $result);
+    $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
+    my $command     = "$hmmbuild_exe $hmmLib_file $input_file"; 
+    #my $command     = "$hmmbuild_exe --informat afa $hmmLib_file $input_file"; 
+    system($command);
+    #my $result      = system($command) or die $!;
+    #$self->compara_dba->dbc->disconnect_when_inactive(0);
+    #$self->compara_dba->dbc->reconnect_when_lost(1);
+    #unlink $input_file if (defined $result);
 
 return;
 }

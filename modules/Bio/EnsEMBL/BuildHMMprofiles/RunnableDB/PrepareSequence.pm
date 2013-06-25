@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::PrepareSequence
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence
 
 =cut
 
@@ -14,9 +14,8 @@ parallelization of the blastp step.
 
 =cut
 package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::PrepareSequence;
+#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence;
 
-use strict;
-use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;
@@ -49,7 +48,7 @@ return;
 
   Arg[1]     : -none-
   Example    : $self->run;
-  Function   : Retrieve protein sequence and single blast job for each of them
+  Function   : Retrieve protein sequence and create single blast job for each of them
   Returns    : 1 on successful completion
   Exceptions : dies if runnable throws an unexpected error
 
@@ -57,14 +56,16 @@ return;
 sub run {
     my $self = shift @_;
 
-    my $fasta_seq = Bio::SeqIO->new(-file => $fasta_file,-format => 'fasta');
+    my $fasta_seq   = Bio::SeqIO->new(-file => $fasta_file,-format => 'fasta');
+    my $count       = 0;
  
     while ( my $seq = $fasta_seq->next_seq() )
     {
-        my $len = length($seq->seq);
+    	#next unless $count < 10;
+        $count++;
+        my $len     = length($seq->seq);
 	next unless ($len > 2);	   
         $self->dataflow_output_id( { 'seq' => $seq }, 2 );
-        
         undef $seq;
     } 
     undef $fasta_seq;
