@@ -88,9 +88,9 @@ sub fetch_input {
 
     die "mlss_id is an obligatory parameter\n" unless (defined $self->param('mlss_id'));
 
-    my $cafe_species = $self->param('cafe_species');
+    my $cafe_species = eval $self->param('cafe_species');
+    $self->param('cafe_species', $cafe_species);
     if ((not defined $cafe_species) or ($cafe_species eq '') or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
-#        die "No species for the CAFE tree";
         print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
         $self->param('cafe_species', undef);
     }
@@ -373,7 +373,7 @@ sub fix_zeros_1 {
             $to_add++;
             $node->distance_to_parent(1);
         }
-        my $siblings = siblings($node);
+        my $siblings = $node->siblings;
         die "too many siblings" if (scalar @$siblings > 1);
         $siblings->[0]->distance_to_parent($siblings->[0]->distance_to_parent() + $to_add);
         $node = $node->parent();
@@ -402,7 +402,7 @@ sub remove_nodes {
         if (is_in($node->name, $nodes)) {
             if ($node->has_parent()) {
                 my $parent = $node->parent();
-                my $siblings = siblings($node);
+                my $siblings = $node->siblings;
                 if (scalar @$siblings > 1) {
                     die "The tree is not binary";
                 }
@@ -421,20 +421,6 @@ sub remove_nodes {
         }
     }
     return $tree;
-}
-
-sub siblings {
-    my ($node) = @_;
-    return undef unless ($node->has_parent());
-    my $parent = $node->parent();
-    my $children = $parent->children();
-    my @siblings = ();
-    for my $child (@$children) {
-        if ($child != $node) {
-            push @siblings, $child;
-        }
-    }
-    return [@siblings];
 }
 
 sub check_tree {

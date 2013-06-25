@@ -273,7 +273,7 @@ sub run_ncrecoverepo {
               # See if we can match the RFAM name or RFAM id
               my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$found_gene_stable_id);
               next unless (defined($gene_member));
-              # FIXME: this code cannot work
+              # FIXME: this code cannot work because nctree_adaptor is not defined !
               my $other_tree = $self->param('nctree_adaptor')->fetch_by_Member_root_id($gene_member);
               if (defined($other_tree)) {
                 my $other_tree_id = $other_tree->node_id;

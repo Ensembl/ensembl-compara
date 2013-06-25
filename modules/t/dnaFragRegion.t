@@ -17,10 +17,12 @@ my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 my $dnafrag_region_adaptor = $compara_db_adaptor->get_DnaFragRegionAdaptor();
 my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
 
-my $sth = $compara_db_adaptor->dbc->prepare("SELECT synteny_region_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LIMIT 1");
+my $sth = $compara_db_adaptor->dbc->prepare("SELECT synteny_region_id, genome_db.name, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) LIMIT 1");
 $sth->execute();
-my ($synteny_region_id, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = $sth->fetchrow_array();
+my ($synteny_region_id, $genome_db_name, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = $sth->fetchrow_array();
 $sth->finish();
+
+my $core_dba = Bio::EnsEMBL::Test::MultiTestDB->new($genome_db_name);
 
 my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
 
@@ -77,6 +79,8 @@ subtest "Test Bio::EnsEMBL::Compara::DnaFragRegion::slice method", sub {
                                                                   -dnafrag_id        => $dnafrag_id);
 
     my $slice = $dnafrag_region->slice;
+print STDERR $slice, "\n";
+print STDERR $slice->name, "\n";
     isa_ok($slice, "Bio::EnsEMBL::Slice", "check object");
     is($slice->length, $dnafrag_region->dnafrag->length, "length");
     is($slice->seq_region_name, $dnafrag_region->dnafrag->name, "name");

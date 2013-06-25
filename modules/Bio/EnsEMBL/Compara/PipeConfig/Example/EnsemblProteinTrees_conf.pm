@@ -1,4 +1,4 @@
-=heada LICENSE
+=head1 LICENSE
 
   Copyright (c) 1999-2013 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
@@ -23,33 +23,6 @@
 =head1 DESCRIPTION
 
     The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
-
-=head2 rel.63 stats
-
-    sequences to cluster:       1,198,678           [ SELECT count(*) from sequence; ]
-    reused core dbs:            48                  [ SELECT count(*) FROM analysis JOIN job USING(analysis_id) WHERE logic_name='paf_table_reuse'; ]
-    newly loaded core dbs:       5                  [ SELECT count(*) FROM analysis JOIN job USING(analysis_id) WHERE logic_name='load_fresh_members'; ]
-
-    total running time:         8.7 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM worker;  ]  # NB: stable_id mapping phase not included
-    blasting time:              1.9 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM worker JOIN analysis USING (analysis_id) WHERE logic_name='blastp_with_reuse'; ]
-
-=head2 rel.62 stats
-
-    sequences to cluster:       1,192,544           [ SELECT count(*) from sequence; ]
-    reused core dbs:            46                  [ number of 'load_reuse_members' jobs ]
-    newly loaded core dbs:       7                  [ number of 'load_fresh_members' jobs ]
-
-    total running time:         6 days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-    blasting time:              2.7 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='blastp_with_reuse'; ]
-
-=head2 rel.61 stats
-
-    sequences to cluster:       1,173,469           [ SELECT count(*) from sequence; ]
-    reused core dbs:            46                  [ number of 'load_reuse_members' jobs ]
-    newly loaded core dbs:       6                  [ number of 'load_fresh_members' jobs ]
-
-    total running time:         6 days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-    blasting time:              1.4 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name like 'blast%' or logic_name like 'SubmitPep%'; ]
 
 =head1 AUTHORSHIP
 
@@ -86,14 +59,12 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '71',
-        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => 'b',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # dependent parameters: updating 'work_dir' should be enough
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
         'pipeline_name'         => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-
-    # dump parameters:
 
     # blast parameters:
 
@@ -105,6 +76,10 @@ sub default_options {
     # homology_dnds parameters:
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
         'filter_high_coverage'      => 1,   # affects 'group_genomes_under_taxa'
+
+    # mapping parameters:
+        'do_treefam_xref'           => 1,
+        'wait_for_display_label_update' => 1,
 
     # executable locations:
         'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
@@ -139,16 +114,20 @@ sub default_options {
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
+        'ktreedist_capacity'        => 150,
         'merge_supertrees_capacity' => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
+        'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
 
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
-        'pipeline_db' => {                      # the production database itself (will be created)
+
+        # the production database itself (will be created)
+        'pipeline_db' => {
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
@@ -156,7 +135,8 @@ sub default_options {
             -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
         },
 
-        'master_db' => {                        # the master database for synchronization of various ids
+        # the master database for synchronization of various ids
+        'master_db' => {
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
@@ -164,7 +144,7 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master',
         },
 
-        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+        # Ensembl-specific databases
         'staging_loc1' => {                     # general location of half of the current release core databases
             -host   => 'ens-staging',
             -port   => 3306,
@@ -179,35 +159,37 @@ sub default_options {
             -pass   => '',
         },
 
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
-
-        # Add the database entries for the reused core databases and update 'reuse_db'
         'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
-        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
-        'reuse_db' => {   # usually previous release database on compara1
+        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
+
+        # Add the database entries for the core databases of the previous release
+        'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+        #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+
+        # Add the database location of the previous Compara release
+        'prev_rel_db' => {
            -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
            -dbname => 'sf5_ensembl_compara_70',
         },
-        #'reuse_db' => {   # current release if we are testing after production
-        #    -host   => 'compara1',
-        #    -port   => 3306,
-        #    -user   => 'ensro',
-        #    -pass   => '',
-        #    -dbname => 'sf5_ensembl_compara_61',
-        #},
+
+        # Are we reusing the blastp alignments ?
+        'reuse_from_prev_rel_db'    => 1,
+
+        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
         #'prev_release'            => $self->o('release'),
+
 
     };
 }

@@ -15,6 +15,7 @@
 
     In rel.64 it took ~30min to run.
     In rel.65 it took ~38min to run.
+    In rel.71 it took 
 
 =head1 CONTACT
 
@@ -35,7 +36,7 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-        'rel'               => 68,                                                  # current release number
+        'rel'               => 71,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
 
@@ -51,7 +52,7 @@ sub default_options {
             -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
         },
 
-            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara3/mm14_ensembl_ancestral_67',
+            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara3/sf5_ensembl_ancestral_70',
 #         'prev_ancestral_db' => {
 #             -driver => 'mysql',
 #             -host   => 'compara1',
@@ -106,19 +107,18 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
                         # copying from previous release:
-                                        [ '505' => $self->o('prev_ancestral_db'), ],     # 3-way birds
+#                                        [ '505' => $self->o('prev_ancestral_db'), ],     # 3-way birds
                                         [ '528' => $self->o('prev_ancestral_db'), ],     # 5-way fish
-                                        [ '548' => $self->o('prev_ancestral_db'), ],     # 6-way primates
+#                                        [ '548' => $self->o('prev_ancestral_db'), ],     # 6-way primates
+                                        [ '619' => $self->o('prev_ancestral_db'), ],     # 13 eutherian mammals
 
                         # copying from new sources:
-#                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_65_ancestral_core' ],   # 6-way primates
-                      [ '595' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ancestral_sequences_core_68' ],  # 12-way mammals
+                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_ancestral_sequences_core_71' ],   # 6-way primates
+                     [ '641' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_3birds_ancestral_sequences_core_71' ],  # 3-way birds
                 ],
-                'input_id'          => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
-                'fan_branch_code'   => 2,
             },
             -flow_into => {
-                2 => [ 'merge_an_ancestor' ],
+                2 => { 'merge_an_ancestor' => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' } },
             },
             -rc_name => 'urgent',
         },

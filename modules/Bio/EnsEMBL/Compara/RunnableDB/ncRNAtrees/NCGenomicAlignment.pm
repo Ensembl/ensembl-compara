@@ -21,6 +21,8 @@ sub fetch_input {
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
+    $self->param('aln_seq_type', "seq_with_flanking");
+
     # Autovivification
     $self->param("method_treefile", {});
 }
@@ -50,6 +52,7 @@ sub run {
                                     'fastTreeTag' => "ftga_it_nj",
                                     'raxmlLightTag' => "ftga_it_ml",
                                     'alignment_id' => $self->param('alignment_id'),
+                                    'aln_seq_type' => $self->param('aln_seq_type'),
                                    },3
                                   );
 
@@ -188,7 +191,6 @@ sub run_mafft {
 sub run_RAxML {
     my ($self) = @_;
 
-#    return if ($self->param('too_few_sequences') == 1);  # return? die? $self->throw? This has been checked before
     my $nc_tree_id = $self->param('gene_tree_id');
     my $aln_file = $self->param('phylip_output');
     return unless (defined $aln_file);
@@ -257,7 +259,6 @@ sub run_prank {
     my $input_fasta = $self->param('input_fasta');
     my $tree_file = $self->param('raxml_output');
 #    $self->throw("$tree_file does not exist\n") unless (-e $tree_file);
-    print STDERR "Tree file is not given. Prank will generate its own tree (and we have ", $self->param('tag_gene_count'), " genes)\n" if ($self->debug);
 
     ## FIXME -- The alignment has to be passed to NCGenomicTree. We have several options:
     # 1.- Store the alignments in the database
@@ -331,10 +332,11 @@ sub store_fasta_alignment {
     my $nc_tree_id = $self->param('gene_tree_id');
     my $uniq_alignment_id = "$param" . "_" . $self->input_job->dbID ;
     my $aln_file = $self->param($param);
+    my $aln_seq_type = $self->param('aln_seq_type');
 
     my $aln = $self->param('gene_tree')->deep_copy();
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
-    $aln->seq_type('seq_with_flanking');
+    $aln->seq_type($aln_seq_type);
     $aln->aln_method('prank');
     $aln->load_cigars_from_fasta($aln_file, 1);
 
@@ -344,7 +346,6 @@ sub store_fasta_alignment {
     }
 
     $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
-
     $self->param('alignment_id', $aln->dbID);
     return;
 }

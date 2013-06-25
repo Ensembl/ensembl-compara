@@ -47,6 +47,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains;
 
 use strict;
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
+use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;

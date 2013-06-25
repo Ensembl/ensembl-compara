@@ -142,10 +142,9 @@ sub run_rfamclassify {
     my $counter = 1;
     foreach my $cm_id (keys %{$self->param('rfamcms')->{'model_id'}}) {
         print STDERR "++ $cm_id\n" if ($self->debug);
+        print STDERR Dumper $self->param('rfamclassify');
         next if not defined($self->param('rfamclassify')->{$cm_id});
         my @cluster_list = keys %{$self->param('rfamclassify')->{$cm_id}};
-
-        print STDERR Dumper \@cluster_list if ($self->debug);
         # If it's a singleton, we don't store it as a nc tree
         next if (scalar(@cluster_list < 2));
 
@@ -310,7 +309,7 @@ sub tag_assembly_coverage_depth {
   my @low_coverage  = ();
   my @high_coverage = ();
 
-  foreach my $gdb (@{$self->param('cluster_mlss')->species_set}) {
+  foreach my $gdb (@{$self->param('cluster_mlss')->species_set_obj->genome_dbs()}) {
     my $name = $gdb->name;
     my $coreDBA = $gdb->db_adaptor;
     my $metaDBA = $coreDBA->get_MetaContainerAdaptor;

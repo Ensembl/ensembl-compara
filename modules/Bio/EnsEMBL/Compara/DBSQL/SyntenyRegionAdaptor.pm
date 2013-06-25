@@ -1,20 +1,27 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::SyntenyRegionAdaptor
-#
-# Cared for by Abel Ureta-Vidal <abel@ebi.ac.uk>
-#
-# Copyright GRL and EBI
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# POD documentation - main docs before the code
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor - Object to access data in the synteny_region
-and dnafrag_region tables
+Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor
 
 =head1 SYNOPSIS
+
 
 =head2 Get the adaptor from the Registry
 
@@ -28,27 +35,34 @@ and dnafrag_region tables
   my $synteny_region_adaptor = $reg->get_adaptor(
       "Multi", "compara", "SyntenyRegion");
 
+
 =head2 Store method
 
   $synteny_region_adaptor->store($synteny_region);
 
+
 =head2 Fetching methods
 
-  my $synteny_region = $synteny_region_adaptor->fetch_by_dbID(1);
+  my $synteny_region = $synteny_region_adaptor->fetch_by_dbID(1); # Used for production purposes
+
   my $synteny_regions = $synteny_region_adaptor->
-      fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
-          $mlss, $dnafrag, $start, $end);
+      fetch_all_by_MethodLinkSpeciesSet($mlss);
+
+  my $synteny_regions = $synteny_region_adaptor->
+      fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $dnafrag, $start, $end);
+
+  my $synteny_regions = $synteny_region_adaptor->
+      fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
 
 
 =head2 Example script
 
-  use strict;
   use Bio::EnsEMBL::Registry;
 
   my $reg = "Bio::EnsEMBL::Registry";
 
   $reg->load_registry_from_db(
-      -host=>"ensembldb.ensembl.org", -user=>"anonymous", -software_version => 38);
+      -host=>"ensembldb.ensembl.org", -user=>"anonymous");
 
   my $method_link_species_set_adaptor = $reg->get_adaptor(
       "Multi", "compara", "MethodLinkSpeciesSet");
@@ -60,7 +74,7 @@ and dnafrag_region tables
   my $genome_db_adaptor = $reg->get_adaptor(
       "Multi", "compara", "GenomeDB");
   my $genome_db = $genome_db_adaptor->
-      fetch_by_name_assembly("Homo sapiens", undef);
+      fetch_by_name_assembly("homo_sapiens");
 
   my $dnafrag_adaptor = $reg->get_adaptor(
       "Multi", "compara", "DnaFrag");
@@ -75,35 +89,16 @@ and dnafrag_region tables
           $dnafrag, 100000, 200000);
 
   foreach my $this_synteny_region (@$synteny_regions) {
-    my $these_dnafrag_regions = $this_synteny_region->children();
+    my $these_dnafrag_regions = $this_synteny_region->get_all_DnaFragRegions();
     foreach my $this_dnafrag_region (@$these_dnafrag_regions) {
       print $this_dnafrag_region->dnafrag->genome_db->name, ": ", $this_dnafrag_region->slice->name, "\n";
     }
     print "\n";
-  }
-
-=head1 DESCRIPTION
-
-This object is intended for accessing data in the synteny_region and dnafrag_region tables.
-
-=head1 INHERITANCE
-
-This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::BaseAdaptor
-
-=head1 SEE ALSO
-
- - Bio::EnsEMBL::Compara::SyntenyRegion
- - Bio::EnsEMBL::Compara::DnaFragRegion
- - Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
- - Bio::EnsEMBL::Compara::GenomeDB
-
-=head1 CONTACT
-
-Ensembl - dev@ensembl.org
+  } 
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+  The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
 
 =cut
 
@@ -129,10 +124,11 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
   Returntype : Bio::EnsEMBL::Compara::SyntenyRegion object
   Exception  : Thrown if the argument is not defined
   Caller     :
+  Status     : Stable
 
 =cut
 
-sub fetch_by_dbID{
+sub fetch_by_dbID {
    my ($self,$dbID) = @_;
 
    if( !defined $dbID ) {
@@ -149,7 +145,7 @@ sub fetch_by_dbID{
    $sr->method_link_species_set_id($method_link_species_set_id);
 
    my $dfra = $self->db->get_DnaFragRegionAdaptor;
-   my $dfrs = $dfra->fetch_by_synteny_region_id($dbID);
+   my $dfrs = $dfra->fetch_all_by_synteny_region_id($dbID);
    $sr->regions($dfrs);
    # while (my $dfr = shift @{$dfrs}) {
    #   $sr->add_child($dfr);
@@ -168,10 +164,11 @@ sub fetch_by_dbID{
   Exception  : Thrown if the argument is not a
                Bio::EnsEMBL::Compara::SyntenyRegion object
   Caller     :
+  Status     : Stable
 
 =cut
 
-sub store{
+sub store {
    my ($self,$sr) = @_;
 
    if( !ref $sr || !$sr->isa("Bio::EnsEMBL::Compara::SyntenyRegion") ) {
@@ -207,7 +204,7 @@ sub store{
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::SyntenyRegion object can be retrieved
   Caller     : $object->method_name
-  Status     : Medium risk
+  Status     : Stable
 
 =cut
 
@@ -295,7 +292,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     $sr->method_link_species_set_id($mlss->dbID);
 
     my $dfra = $self->db->get_DnaFragRegionAdaptor;
-    my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
+    my $dfrs = $dfra->fetch_all_by_synteny_region_id($synteny_region_id);
     $sr->regions($dfrs);
     # while (my $dfr = shift @{$dfrs}) {
     #   $sr->add_child($dfr);
@@ -343,7 +340,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     $sr->method_link_species_set_id($mlss->dbID);
 
     my $dfra = $self->db->get_DnaFragRegionAdaptor;
-    my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
+    my $dfrs = $dfra->fetch_all_by_synteny_region_id($synteny_region_id);
     $sr->regions($dfrs);
     # while (my $dfr = shift @{$dfrs}) {
     #   $sr->add_child($dfr);

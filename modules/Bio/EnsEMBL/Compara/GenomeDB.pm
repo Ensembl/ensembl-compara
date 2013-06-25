@@ -64,6 +64,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::GenomeDB;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
@@ -155,7 +156,10 @@ sub db_adaptor {
     }
 
     unless($self->{'_db_adaptor'}) {
-        $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
+
+        eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
+        warn "The locator could not be loaded because: $@\n" if $@;
+
     }
 
     return $self->{'_db_adaptor'};
@@ -292,9 +296,9 @@ sub assembly_default {
 
 sub genebuild {
   my $self = shift;
-  $self->{'genebuild'} = shift if (@_);
-  $self->{'genebuild'}='' unless(defined($self->{'genebuild'}));
-  return $self->{'genebuild'};
+  my $genebuild = shift;
+  $self->{'genebuild'} = $genebuild if $genebuild;
+  return $self->{'genebuild'} || '';
 }
 
 
@@ -359,33 +363,9 @@ sub taxon {
 
 sub locator {
   my $self = shift;
-  $self->{'locator'} = shift if (@_);
-  $self->{'locator'}='' unless(defined($self->{'locator'}));
-  return $self->{'locator'};
-}
-
-=head2 connect_to_genome_locator
-
-  Arg [1]    : string
-  Description: uses the locator string to connect to the external genome database
-  Returntype : DBConnection/DBAdaptor defined in locator string
-              (usually a Bio::EnsEMBL::DBSQL::DBAdaptor)
-              return undef if locator undefined or unable to connect
-  Exceptions : none
-  Caller     : internal private method 
-  Status     : Stable
-
-=cut
-
-sub connect_to_genome_locator {
-  my $self = shift;
-
-  return undef if($self->locator eq '');
-
-  my $genomeDBA = undef;
-  eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
-  warn "The locator could not be loaded because: $@" if $@;
-  return $genomeDBA;
+  my $locator = shift;
+  $self->{'locator'} = $locator if $locator;
+  return $self->{'locator'} || '';
 }
 
 
@@ -409,6 +389,61 @@ sub toString {
         ."', locator='".$self->locator
         ."'";
 }
+
+=head2 sync_with_registry
+
+  Example    :
+  Description: Synchronize all the cached genome_db objects
+               db_adaptor (connections to core databases)
+               with those set in Bio::EnsEMBL::Registry.
+               Order of presidence is Registry.conf > ComparaConf > genome_db.locator
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
+  Status     : At risk
+
+=cut
+
+sub sync_with_registry {
+  my $self = shift;
+
+  return unless(eval "require Bio::EnsEMBL::Registry");
+
+  #print("Registry eval TRUE\n");
+
+    next if $self->locator and not $self->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
+    my $coreDBA;
+    my $registry_name;
+    if ($self->assembly) {
+      $registry_name = $self->name ." ". $self->assembly;
+      if(Bio::EnsEMBL::Registry->alias_exists($registry_name)) {
+        $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
+      }
+    }
+    if( not defined($coreDBA) and Bio::EnsEMBL::Registry->alias_exists($self->name)) {
+      $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($self->name, 'core');
+      Bio::EnsEMBL::Registry->add_alias($self->name, $registry_name) if ($registry_name);
+    }
+
+    if($coreDBA) {
+      #defined in registry so override any previous connection
+      #and set in GenomeDB object (ie either locator or compara.conf)
+      $self->db_adaptor($coreDBA);
+    } elsif ($self->locator) {
+      #fetch from genome_db which may be from a compara.conf or from a locator
+      $coreDBA = $self->db_adaptor();
+      if(defined($coreDBA)) {
+        if (Bio::EnsEMBL::Registry->alias_exists($self->name)) {
+          Bio::EnsEMBL::Registry->add_alias($self->name, $registry_name) if ($registry_name);
+        } else {
+          Bio::EnsEMBL::Registry->add_DBAdaptor($registry_name, 'core', $coreDBA);
+          Bio::EnsEMBL::Registry->add_alias($registry_name, $self->name) if ($registry_name);
+        }
+      }
+    }
+}
+
+
 
 
 1;

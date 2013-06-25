@@ -118,7 +118,6 @@ sub write_output {
 
     print "WRITE OUTPUT\n" if ($self->debug);
 
-
     #Store locator for genome_db
     my $speciesList = $self->param('species');
     foreach my $species (@{$speciesList}) {
@@ -136,42 +135,16 @@ sub write_output {
         $pair_aligner_collection_names->{$pair_aligner->{'non_reference_collection_name'}} = 1;
     }
 
-    foreach my $dna_collection (keys %$pair_aligner_collection_names) {
-        #print "dna_collection $dna_collection\n";
-
-        #
-	#dataflow to chunk_and_group_dna
-	#
-	my $output_hash = {};
-        
-        #Set collection_name (hash key of this dna_collection)
-	$output_hash->{'collection_name'} = $dna_collection;
-	while (my ($key, $value) = each %{$dna_collections->{$dna_collection}}) {
-	    if (not ref($value)) {
-		if (defined $value) {
-		    $output_hash->{$key} = $value;
-		}
-	    } elsif ($key eq "genome_db") {
-		#genome_db_id
-		$output_hash->{'genome_db_id'} = $value->dbID;
-	    }
-	}
-	$self->dataflow_output_id($output_hash,2);
-        if (defined $dna_collections->{$dna_collection}->{'dump_loc'}) {
-	    $self->dataflow_output_id($output_hash, 9);
-        }
-
-    }
 
     #Write method_link and method_link_species_set database entries for pair_aligners
     foreach my $pair_aligner (@{$self->param('pair_aligners')}) {
 	my ($method_link_id, $method_link_type) = @{$pair_aligner->{'method_link'}};
 	my $ref_genome_db = $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'genome_db'};
-	
 	#If include_non_reference is in auto-detect mode (-1), need to auto-detect!
 	#Auto-detect if need to use patches ie only use patches if the non-reference species has chromosomes
 	#(because these are the only analyses that we keep up-to-date by running the patch-pipeline)
+
 	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} && 
             $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} == -1) {
 	    if (defined $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'}) {
@@ -207,6 +180,33 @@ sub write_output {
 
     #Create dataflows for pair_aligner parts of the pipeline
     $self->create_pair_aligner_dataflows();
+
+    #Write dataflow to chunk_and_group_dna (2) and dump_dna_factory(9)
+    foreach my $dna_collection (keys %$pair_aligner_collection_names) {
+        #print "dna_collection $dna_collection\n";
+
+        #
+	#dataflow to chunk_and_group_dna
+	#
+	my $output_hash = {};
+        
+        #Set collection_name (hash key of this dna_collection)
+	$output_hash->{'collection_name'} = $dna_collection;
+	while (my ($key, $value) = each %{$dna_collections->{$dna_collection}}) {
+	    if (not ref($value)) {
+		if (defined $value) {
+		    $output_hash->{$key} = $value;
+		}
+	    } elsif ($key eq "genome_db") {
+		#genome_db_id
+		$output_hash->{'genome_db_id'} = $value->dbID;
+	    }
+	}
+	$self->dataflow_output_id($output_hash,2);
+        if (defined $dna_collections->{$dna_collection}->{'dump_loc'}) {
+	    $self->dataflow_output_id($output_hash, 9);
+        }
+    }
 
     #Write method_link and method_link_species_set entries for chains and nets
     foreach my $chain_config (@{$self->param('chain_configs')}) {
@@ -717,15 +717,14 @@ sub parse_defaults {
 	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
 	}
 	#Store include_non_reference, if defined, in the chain_config for use in no_chunk_and_group_dna
-	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
-	    $dna_collections->{$chain_config->{'reference_collection_name'}}->{'include_non_reference'} = 
-	      $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'};
-	}
-	if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'}) {
-	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'include_non_reference'} = 
-	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'};
-	}
-	
+#	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
+#	    $dna_collections->{$chain_config->{'reference_collection_name'}}->{'include_non_reference'} = 
+#	      $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'};
+#	}
+#	if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'}) {
+#	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'include_non_reference'} = 
+#	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'};
+#	}
 	
 	push @$pair_aligners, $pair_aligner;
 	push @$chain_configs, $chain_config;
@@ -941,8 +940,13 @@ sub create_chain_dataflows {
     my $chain_configs = $self->param('chain_configs');
     my $net_configs = $self->param('net_configs');
     my $all_configs = $self->param('all_configs');
-
     foreach my $chain_config (@$chain_configs) {
+
+	my ($input_method_link_id, $input_method_link_type) = @{$chain_config->{'input_method_link'}};
+
+	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
+	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
+
 	#
 	#dataflow to no_chunk_and_group_dna
 	#
@@ -956,6 +960,10 @@ sub create_chain_dataflows {
 		$output_hash->{'genome_db_id'} = $value->dbID;
 	    }
 	}
+        #Set include_non_reference from the corresponding pair_aligner config
+        if (defined $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{include_non_reference}) {
+            $output_hash->{'include_non_reference'} = $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{include_non_reference};
+        }
 	$self->dataflow_output_id($output_hash,4);
 
 	$output_hash = {};
@@ -968,12 +976,16 @@ sub create_chain_dataflows {
 		$output_hash->{'genome_db_id'} = $value->dbID;
 	    }
 	}
+        #Set include_non_reference from the corresponding pair_aligner config
+        if (defined $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{include_non_reference}) {
+            $output_hash->{'include_non_reference'} = $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{include_non_reference};
+        }
 	$self->dataflow_output_id($output_hash,4);
 	
-	my ($input_method_link_id, $input_method_link_type) = @{$chain_config->{'input_method_link'}};
+#	my ($input_method_link_id, $input_method_link_type) = @{$chain_config->{'input_method_link'}};
 
-	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
-	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
+#	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
+#	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
 
 	#
 	#dataflow to create_alignment_chains_jobs
@@ -1261,7 +1273,7 @@ sub update_genome_db {
     if (defined($species_name)) {
 	$primary_species_binomial_name = $species_name;
     } else {
-	$primary_species_binomial_name = $genome_db_adaptor->get_species_name_from_core_MetaContainer($meta_container);
+	$primary_species_binomial_name = $meta_container->get_production_name();
 	if (!$primary_species_binomial_name) {
 	    throw "Cannot get the species name from the database. Use the --species_name option";
 	}
@@ -1380,7 +1392,7 @@ sub update_genome_db {
 	$sth->finish();
 
         # force reload of the cache:
-	$genome_db_adaptor->cache_all(1);
+	$genome_db_adaptor->_build_id_cache();
 
 	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
 								$primary_species_binomial_name,

@@ -123,12 +123,6 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_core_DBAdaptor", sub {
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::GenomeDB::get_species_name_from_core_MetaContainer", sub {
-    my $species_name = $genome_db_adaptor->get_species_name_from_core_MetaContainer($meta_container);
-    is ($species_name, $name, "Get species name from core meta container");
-    done_testing();
-};
-
 subtest "Test Bio::EnsEMBL::Compara::GenomeDB::synchronise", sub {
 
     my $syn_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(-taxon_id => $taxon_id);
@@ -156,26 +150,23 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::synchronise", sub {
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::GenomeDB::cache_all and Bio::EnsEMBL::Compara::GenomeDB::store", sub {
+subtest "Test Bio::EnsEMBL::Compara::GenomeDB::store", sub {
 
     my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
 
     $multi->hide('compara', 'genome_db');
 
     ## List of genomes are cached in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    $genome_db_adaptor->cache_all(1); # force reload
     my $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), 0, "Checking hide method");
 
     $genome_db_adaptor->store($genome_db);
     ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    $genome_db_adaptor->cache_all; # reset globals
     $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), 1, "Checking store method");
     
     $multi->restore('compara', 'genome_db');
     ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    $genome_db_adaptor->cache_all(1); # reset globals
     $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), $num_of_genomes, "Checking restore method");
 

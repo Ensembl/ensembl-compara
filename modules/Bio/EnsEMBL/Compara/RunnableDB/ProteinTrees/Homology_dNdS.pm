@@ -75,8 +75,7 @@ sub fetch_input {
     my $max_homology_id = $self->param('max_homology_id');
 
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
-    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d', $mlss_id, $min_homology_id, $max_homology_id);
-    $constraint .= ' AND description IN ("within_species_paralog", "other_paralog")';
+    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d AND description NOT IN ("putative_gene_split", "contiguous_gene_split")', $mlss_id, $min_homology_id, $max_homology_id);
     my $homologies = $homology_adaptor->generic_fetch($constraint);
 
     $self->param('homologies', $homologies);
@@ -89,13 +88,16 @@ sub run {
     my $homologies        = $self->param('homologies');
     my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
 
+    my @updated_homologies = ();
+
     foreach my $homology (@$homologies) {
 
+        next if ($homology->ds);
+
         # Compute ds
-        unless ($homology->ds) {
-            eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
-            $self->warning($@) if $@;
-        }
+        eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
+        $self->warning($@) if $@;
+        push @updated_homologies, $homology;
 
         # To save memory
         $homology->clear;
@@ -103,14 +105,15 @@ sub run {
             delete $homology->{$attr};
         }
     }
-
+    $self->param('updated_homologies', \@updated_homologies);
+    $self->param('homologies', []);
 }
 
 
 sub write_output {
     my $self = shift @_;
 
-    my $homologies        = $self->param('homologies');
+    my $homologies        = $self->param('updated_homologies');
 
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
 

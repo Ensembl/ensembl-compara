@@ -20,11 +20,38 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor;
 
 use strict;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NCBITaxon;
+
+use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
+
 use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+
+
+#
+# Virtual / overriden methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+######################################################################
+
+sub ignore_cache_override {
+    return 1;
+}
+
+sub _build_id_cache {
+    my $self = shift;
+    my $cache = Bio::EnsEMBL::DBSQL::Support::LruIdCache->new($self, 3000);
+    $cache->build_cache();
+    return $cache;
+}
+
+
+#
+# FETCH methods
+#####################
+
+
 
 
 =head2 fetch_node_by_taxon_id
@@ -42,9 +69,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 sub fetch_node_by_taxon_id {
   my ($self, $taxon_id) = @_;
 
-  if (! defined $taxon_id) {
-    throw ("taxon_id is not defined");
-  }
+  assert_integer($taxon_id, 'taxon_id');
 
   my $constraint = 't.taxon_id = ?';
   $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
@@ -103,9 +128,7 @@ sub fetch_node_by_name {
 sub fetch_node_by_genome_db_id {
   my ($self, $gdbID) = @_;
 
-  if (! defined $gdbID) {
-    throw "gdbID is undefined";
-  }
+  assert_integer($gdbID, 'genome_db_id');
 
   my $join = [[['genome_db', 'gdb'], 't.taxon_id = gdb.taxon_id']];
   my $constraint = 'gdb.genome_db_id = ?';
@@ -185,7 +208,7 @@ sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
   
-  my $node = $self->cache_fetch_by_id($rowhash->{'node_id'});
+  my $node = $self->_id_cache->cache->{$rowhash->{'node_id'}};
   return $node if($node);
   
   $node = new Bio::EnsEMBL::Compara::NCBITaxon;
@@ -193,7 +216,7 @@ sub create_instance_from_rowhash {
   
   # The genebuilders has troubles with load_taxonomy.pl when the
   # following line was commented out
-  $self->cache_add_object($node);
+  $self->_id_cache->put($rowhash->{'node_id'}, $node);
 
   return $node;
 }
@@ -219,9 +242,7 @@ sub _load_tagvalues {
   my $self = shift;
   my $node = shift;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NCBITaxon] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NCBITaxon');
 
   my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_name where taxon_id=?");
   $sth->execute($node->node_id);  
@@ -234,9 +255,7 @@ sub _load_tagvalues {
 sub update {
   my ($self, $node) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
 
   my $table= ($self->_tables)[0]->[0];
   my $sth = $self->dbc->prepare("UPDATE $table SET parent_id = ?, root_id = ?, left_index = ?, right_index = ? WHERE taxon_id = ?");

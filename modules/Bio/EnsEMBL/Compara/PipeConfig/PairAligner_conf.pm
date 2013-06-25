@@ -22,7 +22,7 @@
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
 
         Using a configuration file:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password ensembl --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password <your_password> --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
@@ -56,7 +56,7 @@ sub default_options {
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '70',
+	'release'               => '72',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
@@ -91,7 +91,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 70,
+	    -db_version => 71,
         },
 
 	'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
@@ -228,6 +228,9 @@ sub default_options {
 #	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
 	'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
 	'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+            
+        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+
     };
 }
 
@@ -271,10 +274,10 @@ sub resource_classes {
     my ($self) = @_;
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb' => { 'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'   => { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600000 -R"select[mem>3600] rusage[mem=3600]"' },
+            '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
+            '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
+            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
+            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 
@@ -283,30 +286,6 @@ sub pipeline_analyses {
 
     return [
 	    # ---------------------------------------------[Turn all tables except 'genome_db' to InnoDB]---------------------------------------------
-	    {   -logic_name => 'innodbise_table_factory',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-parameters => {
-				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
-				'fan_branch_code' => 2,
-			       },
-		-input_ids => [{}],
-		-flow_into => {
-			       2 => [ 'innodbise_table'  ],
-			       1 => [ 'get_species_list' ],
-			      },
-	       -rc_name => '100Mb',
-	    },
-
-	    {   -logic_name    => 'innodbise_table',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-		-parameters    => {
-				   'sql'         => "ALTER TABLE #table_name# ENGINE='InnoDB'",
-				  },
-		-hive_capacity => 1,
-		-can_be_empty  => 1,
- 	        -rc_name => '100Mb',
-	    },
-
 	    {   -logic_name    => 'get_species_list',
 		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf',
 		-parameters    => { 
@@ -317,7 +296,7 @@ sub pipeline_analyses {
 				  'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'get_species_list' => 1,
 				  }, 
-		-wait_for  => [ 'innodbise_table' ],
+                -input_ids => [{}],
 		-flow_into      => {
 				    1 => ['populate_new_database'],
 				   },
@@ -530,6 +509,7 @@ sub pipeline_analyses {
  	    {  -logic_name => 'no_chunk_and_group_dna',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
  	       -parameters => {
+			       'MT_only' => $self->o('MT_only'),
 			       'flow_to_store_sequence' => 0,
 			      },
 	       -flow_into => {
@@ -544,6 +524,7 @@ sub pipeline_analyses {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
 			       'dump_min_size' => $self->o('dump_min_size'),
+                               'MT_only' => $self->o('MT_only'),
 			      },
 	       -hive_capacity => 1,
 	       -flow_into => {
@@ -582,7 +563,7 @@ sub pipeline_analyses {
 			      1 => [ 'remove_inconsistencies_after_chain' ],
 			      2 => [ 'alignment_chains' ],
 			     },
- 	       -wait_for => [ 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
+ 	       -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
 	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'alignment_chains',

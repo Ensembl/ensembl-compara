@@ -32,20 +32,6 @@ sub fetch_other_sequence_by_member_id_type {
 }
 
 
-sub fetch_sequence_exon_bounded_by_member_id {
-  my ($self, $member_id) = @_;
-  deprecate('fetch_sequence_exon_bounded_by_member_id() is deprecated and will be removed in e72. Use fetch_other_sequence_by_member_id_type($member_id, "exon_bounded") instead.');
-  return $self->fetch_other_sequence_by_member_id_type($member_id, 'exon_bounded');
-}
-
-sub fetch_sequence_cds_by_member_id {
-  my ($self, $member_id) = @_;
-
-  deprecate('fetch_sequence_cds_by_member_id() is deprecated and will be removed in e72. Use fetch_other_sequence_by_member_id_type($member_id, "cds") instead.');
-  return $self->fetch_other_sequence_by_member_id_type($member_id, 'cds');
-}
-
-
 #
 # STORE METHODS
 #

@@ -212,6 +212,9 @@ my $label_ext_cb = sub {
 # C(genome_db,short_name)
 my $sp_short_name_cb = sub {
   my ($self) = @_;
+  if (!defined $self->{tree}->genome_db) {
+    return;
+  }
   return $self->{tree}->genome_db->short_name;
 };
 
@@ -224,18 +227,21 @@ my $transcriptid_cb = sub {
 # C(gene_member,stable_id)
 my $stable_id_cb = sub {  ## only if we are in a leaf?
   my ($self) = @_;
-  return $self->{tree}->gene_member->stable_id;
+  return $self->{tree}->is_leaf ? $self->{tree}->gene_member->stable_id : undef;
 };
 
-# C(get_canonical_SeqMember,stable_id)
+# C(stable_id)
 my $prot_id_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->get_canonical_SeqMember->stable_id;
+  return $self->{tree}->is_leaf ? $self->{tree}->stable_id : undef;
 };
 
 # C(member_id)
 my $member_id_cb = sub {
   my ($self) = @_;
+  unless ($self->{tree}->can('member_id')) {
+      return;
+  }
   return $self->{tree}->member_id;
 };
 
@@ -252,7 +258,7 @@ my $sp_name_cb = sub {
       $species_name = $self->{tree}->genome_db->name;
       $species_name =~ s/\ /\_/g;
       return $species_name;
-  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')){
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')){
       my $taxon_id = $self->{tree}->taxon_id();
       my $genome_db_adaptor = $self->{tree}->adaptor->db->get_GenomeDBAdaptor;
       my $genome_db;
@@ -271,7 +277,7 @@ my $sp_name_cb = sub {
 my $n_members_cb = sub {
     my ($self) = @_;
     my $n_members;
-    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
         return $self->{tree}->n_members();
     }
     return undef;
@@ -281,8 +287,8 @@ my $n_members_cb = sub {
 my $pvalue_cb = sub {
     my ($self) = @_;
     my $pval;
-    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
-        return $self->{tree}->p_value();
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
+        return $self->{tree}->pvalue();
     }
     return undef;
 };
@@ -456,9 +462,9 @@ sub _internal_format_newick {
 # %{n-} --> The token applies only to internal nodes
 
 # + Tokens can be applied conditionally:
-# %{p:n} --> Give the "peptide_member_stable_id" or (if it is undefined), the name
-# %{-p:n} --> Same as below, but only for leaves
-# %{n:-p} --> Give the name, but for leaves give the peptide_id.
+# %{p|n} --> Give the "peptide_member_stable_id" or (if it is undefined), the name
+# %{-p|n} --> Same as below, but only for leaves
+# %{n|-p} --> Give the name, but for leaves give the peptide_id.
 
 # + string literals can be inserted outside or inside tokens (the meaning is slightly different):
 # _%{n} --> Put an underscore and the name.

@@ -1,0 +1,201 @@
+#!/usr/bin/env perl
+
+#
+# You may distribute this module under the same terms as perl itself
+#
+
+=pod
+
+=head1 NAME
+
+    Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict
+
+=head1 DESCRIPTION
+
+This script creates secondary structure plots based on the
+secondary structures (in bracket notation) created by Infernal.
+In addition to secondary structure plots for the whole alignments 
+of the family, plots for individual members are also created.
+
+=head1 CONTACT
+
+   Please email comments or questions to the public Ensembl
+   developers list at <dev@ensembl.org>.
+
+   Questions may also be sent to the Ensembl help desk at
+   <helpdesk@ensembl.org>
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+
+Internal methods are usually preceded with an underscore (_)
+
+=cut
+
+use strict;
+use warnings;
+use Data::Dumper;
+#use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+use Bio::EnsEMBL::Registry;
+use Getopt::Long;
+
+my $reg = "Bio::EnsEMBL::Registry";
+
+my $r2r_exe = "/software/ensembl/compara/R2R-1.0.3/src/r2r";
+my $registry_file;
+my $url;
+my $compara_url;
+my $member_id;
+my $thumbnail;
+my $help;
+
+GetOptions(
+           "r2r_exe=s"       => \$r2r_exe,
+           "url=s"           => \$url,
+           "compara_url=s"   => \$compara_url,
+           "conf|registry=s" => \$registry_file,
+           "id|member_id:s"  => \$member_id,
+           "thumbnail"       => \$thumbnail,
+           "help"            => \$help,
+          );
+
+if ($help) {
+      print <<'EOH';
+GenerateSSPict.pl -- Generate secondary structure of Ensembl ncRNA trees
+./GenerateSSPict.pl -compara_url <compara_url> -id <gene_member_stable_id>
+
+Options:
+    --url                 [Optional] URL for Ensembl databases
+    --compara_url         [Optional] URL for Ensembl Compara database
+    --conf | --registry    [Optional] Path to a configuration file
+    --id   | --member_id              Ensembl gene member stable id
+    --r2r_exe                        Path to the r2r executable
+                                    [Defaults to /software/ensembl/compara/R2R-1.0.3/src/r2r]
+    --thumbnail           [Optional] If present, only a thumbnail of the family is created
+    --help                [Optional] Print this message & exit
+
+EOH
+exit
+}
+
+
+if ($registry_file) {
+  die if (!-e $registry_file);
+  $reg->load_all($registry_file);
+} elsif ($url) {
+  $reg->load_registry_from_url($url);
+} elsif (!$compara_url) {
+  $reg->load_all();
+}
+
+my $compara_dba;
+if ($compara_url) {
+    require Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+    $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
+} else {
+  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+}
+
+my $geneMemberAdaptor = $compara_dba->get_GeneMemberAdaptor();
+my $seqMemberAdaptor  = $compara_dba->get_SeqMemberAdaptor();
+my $geneTreeAdaptor   = $compara_dba->get_GeneTreeAdaptor();
+
+my $member = $geneMemberAdaptor->fetch_by_source_stable_id(undef, $member_id);
+my $peptide = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($member->member_id);
+
+my $geneTree = $geneTreeAdaptor->fetch_default_for_Member($member);
+my $model_name = $geneTree->get_tagvalue('model_name');
+my $ss_cons = $geneTree->get_tagvalue('ss_cons');
+my $input_aln = $geneTree->get_SimpleAlign( -id => 'MEMBER' );
+my $aln_filename = dumpMultipleAlignment($input_aln, $model_name, $ss_cons);
+
+if ($thumbnail) {
+    getThumbnail($aln_filename, $geneTree);
+} else {
+    getPlot($aln_filename, $geneTree, $peptide->stable_id);
+}
+
+sub dumpMultipleAlignment {
+    my ($aln, $model_name, $ss_cons) = @_;
+    if ($ss_cons =~ /^\.+$/) {
+        die "The tree has no structure\n";
+    }
+
+    my $aln_filename = "${model_name}.sto";
+    open my $aln_fh, ">", $aln_filename or die "I can't open file $aln_filename: $!\n";
+    print $aln_fh "# STOCKHOLM 1.0\n";
+    for my $aln_seq ($aln->each_seq) {
+        printf $aln_fh ("%-20s %s\n", $aln_seq->display_id, $aln_seq->seq);
+    }
+    printf $aln_fh ("%-20s\n", "#=GF R2R keep allpairs");
+    printf $aln_fh ("%-20s %s\n//\n", "#=GC SS_cons", $ss_cons);
+
+    close($aln_fh);
+    return $aln_filename;
+}
+
+sub getAlnFile {
+    my ($aln_file) = @_;
+
+    my $out_aln_file = $aln_file . ".cons";
+    # For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
+    run_r2r_and_check("--GSC-weighted-consensus", $aln_file, $out_aln_file, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
+
+    return $out_aln_file;
+}
+
+sub getPlot {
+    my ($aln_file, $tree, $peptide_id) = @_;
+
+    my $out_aln_file = getAlnFile($aln_file);
+
+    member_pic($peptide_id, $aln_file, $out_aln_file);
+}
+
+sub getThumbnail {
+    my ($aln_file, $tree) = @_;
+
+    my $out_aln_file = getAlnFile($aln_file);
+    thumbnail($aln_file, $out_aln_file);
+}
+
+sub thumbnail {
+    my ($aln_file, $out_aln_file) = @_;
+    my $meta_file_thumbnail = $aln_file . "-thumbnail.meta";
+    my $svg_thumbnail_pic = "${out_aln_file}.thumbnail.svg";
+    open my $meta_thumbnail_fh, ">", $meta_file_thumbnail or die $!;
+    print $meta_thumbnail_fh "$out_aln_file\tskeleton-with-pairbonds\n";
+    close($meta_thumbnail_fh);
+    run_r2r_and_check("", $meta_file_thumbnail, $svg_thumbnail_pic, "");
+    return;
+}
+
+
+sub member_pic {
+    my ($member_id, $aln_file, $out_aln_file) = @_;
+
+    my $meta_file = $aln_file . ".meta";
+    open my $meta_fh, ">", $meta_file or die $!;
+    print $meta_fh "$out_aln_file\n";
+    print $meta_fh "$aln_file\toneseq\t$member_id\n";
+    close ($meta_fh);
+    my $svg_pic_filename = "${out_aln_file}-${member_id}.svg";
+    run_r2r_and_check("", $meta_file, $svg_pic_filename, "");
+    return;
+}
+
+sub run_r2r_and_check {
+    my ($opts, $infile, $outfile, $extra_params) = @_;
+#    my $r2r_exe = "/software/ensembl/compara/R2R-1.0.3/src/r2r";
+    die "$r2r_exe doesn't exist\n" unless (-e $r2r_exe);
+
+    my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
+    print STDERR "CMD: $cmd\n";
+    system($cmd);
+    if (! -e $outfile) {
+        die "Problem running r2r: $outfile doesn't exist\nThis is the command I tried to run:\n$cmd\n";
+    }
+    return;
+}

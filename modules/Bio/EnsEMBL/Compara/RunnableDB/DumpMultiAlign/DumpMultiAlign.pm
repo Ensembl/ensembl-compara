@@ -57,9 +57,6 @@ sub run {
         $self->param('tmp_file', $tmp_file);
     }
 
-    #substitute any hashes in analysis parameters with the correct values from analysis_job
-    $cmd = $self->param_substitute($cmd);
-
     #Convert compara_db into either a url or a name
     if ($self->param('compara_db') =~ /^mysql:\/\//) {
 	$cmd .= " --compara_url " . $self->param('compara_db');

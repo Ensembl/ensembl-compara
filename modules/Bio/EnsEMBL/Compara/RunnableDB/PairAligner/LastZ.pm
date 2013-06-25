@@ -47,6 +47,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ;
 
 use strict;
 use Bio::EnsEMBL::Analysis::Runnable::Lastz;
+use Bio::EnsEMBL::Analysis;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);

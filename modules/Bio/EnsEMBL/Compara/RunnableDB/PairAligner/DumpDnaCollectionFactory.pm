@@ -101,10 +101,14 @@ sub dumpNibFilesFactory {
   unless (defined $dump_loc) {
     die("dump_loc directory is not defined, can not dump nib files\n");
   }
+
   foreach my $dnafrag_chunk_set (@{$dna_collection->get_all_DnaFragChunkSets}) {
       my $output_id;
       foreach my $dnafrag_chunk (@{$dnafrag_chunk_set->get_all_DnaFragChunks}) {
           next if ($dnafrag_chunk->length <= $self->param('dump_min_size'));
+
+          #Assume MT will have a length less than dump_min_size and would not get here
+          next  if ($self->param('MT_only'));
 
           my $nibfile = "$dump_loc/". $dnafrag_chunk->dnafrag->name . ".nib";
           

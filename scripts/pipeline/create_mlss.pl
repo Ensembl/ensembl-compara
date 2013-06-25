@@ -330,7 +330,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   
   #################################################
   ## Check if the MethodLinkSpeciesSet already exits
-  my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids);
+  my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids, 1);
   if ($mlss) {
     print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
       join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n",
@@ -385,16 +385,13 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
                                                                  -name => $name,
                                                                  -source => $source,
                                                                  -url => $url);
-  
+
   $mlssa->store($new_mlss);
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
   $name = undef if ($pairwise || $singleton);
 
   if ($species_set_name) {
-      my $sql = "INSERT INTO species_set_tag (species_set_id, tag, value) VALUES (?, 'name', ?)";
-      my $sth = $compara_dba->dbc->prepare($sql);
-      $sth->execute($new_mlss->species_set_obj->dbID, $species_set_name);
-      $sth->finish();
+      $new_mlss-store_tag('name', $species_set_name);
   }
 
 }

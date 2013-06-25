@@ -31,21 +31,8 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::JobFactory', 'Bio::EnsEMBL::Compara::
 sub fetch_input {
     my $self = shift @_;
 
-    my $call_list               = $self->param_substitute( $self->param('call_list') );
-
-    unless($call_list) {
-
-        warn "This is the deprecated way of configuring this Runnable; please set 'call_list' parameter for more flexibility";
-
-        my $adaptor_name            = $self->param('adaptor_name')   or die "'adaptor_name' is an obligatory parameter";
-        my $adaptor_method          = $self->param('adaptor_method') or die "'adaptor_method' is an obligatory parameter";
-
-        my $method_param_list       = $self->param_substitute( $self->param('method_param_list') || [] );
-
-        my $object_method           = $self->param('object_method');
-
-        $call_list = [ 'compara_dba', 'get_'.$adaptor_name, [ $adaptor_method, @$method_param_list ], ($object_method ? $object_method : ()) ];
-    }
+    my $call_list               = $self->param('call_list')
+        or die "The old way of configuring this runnable is no longer supported; please set 'call_list' parameter and get more flexibility";
 
     my $current_result = $self;
 
@@ -57,7 +44,13 @@ sub fetch_input {
         $current_result = $current_result->$method( @$call ) || die "Calling $current_result -> $method(".stringify(@$call).") returned a False";
     }
 
-    if(my $column_names2getters = $self->param_substitute( $self->param('column_names2getters') ) ) {
+    if( ref($current_result) ne 'ARRAY') {
+        $current_result = [ $current_result ];
+    }
+
+    # now that we have an arrayref of things...
+
+    if(my $column_names2getters = $self->param('column_names2getters') ) {
 
         my @getters             = values %$column_names2getters;
         my @inputlist           = ();
@@ -68,13 +61,9 @@ sub fetch_input {
         $self->param('column_names', [ keys %$column_names2getters ] );
         $self->param('inputlist',    \@inputlist);
 
-    } elsif( ref($current_result) eq 'ARRAY') {   # caller should set 'column_names' for better results
+    } else {   # caller should set 'column_names' for better results
 
         $self->param('inputlist', $current_result);
-
-    } else {
-
-        die "Expected an arrayref instead of ".stringify($current_result);
     }
 }
 

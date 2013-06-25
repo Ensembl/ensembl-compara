@@ -32,13 +32,13 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'       => 68,
+	'release'       => 71,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
         'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
 
         'pipeline_db' => {                               # connection parameters
-            -host   => 'compara1',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -256,6 +256,7 @@ sub pipeline_analyses {
 			       'output_dir' => $self->o('output_dir'),
 			       'split_size' => $self->o('split_size'),
 			       'species_tree_file' => $self->o('species_tree_file'),
+			       'species' => $self->o('species'),
 			       'high_coverage_mlss_id' =>$self->o('high_coverage_mlss_id') ,
 			      },
             -input_ids     =>[ 

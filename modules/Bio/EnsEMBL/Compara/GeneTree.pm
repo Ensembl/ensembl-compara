@@ -268,7 +268,7 @@ sub preload {
     }
 
     # Loads all the tags in one go
-    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple(@{$self->root->get_all_nodes});
+    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $self->root->get_all_nodes );
 
     # Loads all the gene members in one go
     my %leaves;
@@ -285,39 +285,36 @@ sub preload {
 
 =head2 attach_alignment
 
-  Arg [1]     : String: clusterset_id
-  Description : Method to fetch the alternative tree with the given
-                clusterset_id and attach its multiple alignment to
-                the current tree. The alternative tree is returned.
+  Arg [1]     : Bio::EnsEMBL::Compara::AlignedMemberSet $gene_align
+  Description : Method to attach another multiple alignment of the
+                same members the current tree.
   Returntype  : GeneTree
-  Example     : $supertree->attach_alignment('super-align');
+  Example     : $supertree->attach_alignment($filtered_aln);
   Caller      : General
 
 =cut
 
 sub attach_alignment {
     my $self = shift;
-    my $other_clusterset_id = shift;
-    return unless defined $self->adaptor;
+    my $other_gene_align = shift;
 
-    # Gets the other tree
-    my $others = $self->adaptor->fetch_all_linked_trees($self);
-    my @good_others = grep {$_->clusterset_id eq $other_clusterset_id} @$others;
-    die "'$other_clusterset_id' tree not found\n" unless scalar(@good_others);
+    assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
+
+    $self->preload;
+    $self->seq_type($other_gene_align->seq_type);
 
     # Gets the alignment
     my %cigars;
-
-    foreach my $leaf (@{$self->adaptor->fetch_by_root_id($good_others[0]->root_id)->get_all_Members()}) {
+    foreach my $leaf (@{$other_gene_align->get_all_Members}) {
         $cigars{$leaf->member_id} = $leaf->cigar_line;
     }
 
+    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@{$self->get_all_Members});
+
     # Assigns it
-    foreach my $leaf (@{$self->root->get_all_leaves}) {
+    foreach my $leaf (@{$self->get_all_Members}) {
         $leaf->cigar_line($cigars{$leaf->member_id});
     }
-
-    return $good_others[0];
 }
 
 
@@ -333,22 +330,39 @@ sub attach_alignment {
 
 sub expand_subtrees {
     my $self = shift;
-    return unless defined $self->adaptor;
 
-    # Gets the subtrees
-    my %subtrees;
-    foreach my $subtree (@{$self->adaptor->fetch_subtrees($self)}) {
-        $subtree->preload;
-        $subtrees{$subtree->root->_parent_id} = $subtree->root;
+    unless (defined $self->adaptor) {
+        warn '$self->adaptor() must be defined in expand_subtrees()';
+    }
+    unless ($self->tree_type eq 'supertree') {
+        warn 'expand_subtrees() is only valid on super-trees';
     }
 
-    # Attaches them
-    $self->preload;
-    foreach my $leaf (@{$self->root->get_all_leaves}) {
-        next unless exists $subtrees{$leaf->node_id};
-        $leaf->parent->add_child($subtrees{$leaf->node_id});
-        $leaf->disavow_parent;
+    # The tree is not loaded yet, we can do a fast-loading procedure
+    if (not defined $self->{'_root'}) {
+
+        # The current tree
+        $self->preload;
+
+        # Gets the subtrees
+        my %subtrees;
+        foreach my $subtree (@{$self->adaptor->fetch_subtrees($self)}) {
+            $subtree->preload;
+            $subtrees{$subtree->root->_parent_id} = $subtree->root;
+        }
+
+        # Attaches them
+        foreach my $leaf (@{$self->root->get_all_leaves}) {
+            die "All the leaves of a super-tree should be linkable to a tree" unless exists $subtrees{$leaf->node_id};
+            $leaf->parent->add_child($subtrees{$leaf->node_id});
+            $leaf->disavow_parent;
+        }
     }
+
+    # To update it at the next get_all_Members call
+    delete $self->{'_member_array'};
+    # Gets the global alignment
+    $self->attach_alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id));
 }
 
 

@@ -132,8 +132,7 @@ my $mlss;
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor if ($compara_dba);
 my $track_name;
 my $description;
-my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->
-    list_value_by_key("schema_version")->[0];
+my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_schema_version();
 
 if ($feature =~ /^top/) {
   $track_name = "top-level.e$version";
@@ -199,7 +198,7 @@ if ($feature =~ /^top/) {
   print join("\n", map {$_->dbID.": ".$_->name} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($1)}), "\n";
   exit(0);
 } elsif ($feature =~ /mlss/) {
-  my %types = map {$_->method_link_type => 1} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all()};
+  my %types = map {$_->method->type => 1} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all()};
   print join("\n", keys %types), "\n";
   exit(0);
 } else {

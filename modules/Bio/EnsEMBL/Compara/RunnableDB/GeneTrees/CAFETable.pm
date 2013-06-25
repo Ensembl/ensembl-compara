@@ -20,7 +20,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFETable
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable;
 use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneGainLossCommon');
 
 sub param_defaults {
     return {
@@ -86,8 +86,10 @@ sub fetch_input {
     $self->param('adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     if ($self->param('perFamTable')) {
+        print STDERR "PER FAMILY CAFE ANALYSIS\n";
         $self->warning("Per-family CAFE Analysis");
     } else {
+        print STDERR "ONLY ONE CAFE ANALYSIS\n";
         $self->warning("One CAFE Analysis for all the families");
     }
 
@@ -142,131 +144,39 @@ sub write_output {
 ## Internal methods #######################
 ###########################################
 
-sub get_tree_string_from_mlss_tag {
-    my ($self) = @_;
-    my $mlss_id = $self->param('mlss_id');
-
-    my $sql = "SELECT value FROM method_link_species_set_tag WHERE tag = 'cafe_tree_string' AND method_link_species_set_id = ?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($mlss_id);
-
-    my ($cafe_tree_string) = $sth->fetchrow_array();
-    $sth->finish;
-    print STDERR "CAFE_TREE_STRING: $cafe_tree_string\n" if ($self->debug());
-    return $cafe_tree_string;
-}
-
-sub get_cafe_tree_from_string {
-    my ($self) = @_;
-    my $cafe_tree_string = $self->param('cafe_tree_string');
-    print STDERR "$cafe_tree_string\n" if ($self->debug());
-    my $cafe_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($cafe_tree_string);
-    $self->param('cafe_tree', $cafe_tree);
-    return;
-}
-
-sub load_split_genes {
-    my ($self) = @_;
-    my $member_id_to_gene_split_id;
-    my $gene_split_id_to_member_ids;
-    my $sql = "SELECT member_id, gene_split_id FROM split_genes";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute();
-    my $n_split_genes = 0;
-    while (my ($member_id, $gene_split_id) = $sth->fetchrow_array()) {
-        $n_split_genes++;
-        $member_id_to_gene_split_id->{$member_id} = $gene_split_id;
-        push @{$gene_split_id_to_member_ids->{$gene_split_id}}, $member_id;
-    }
-    if ($n_split_genes == 0) {
-        $self->param('no_split_genes', 1);
-    }
-    $self->param('member_id_to_gene_split_id', $member_id_to_gene_split_id);
-    $self->param('gene_split_id_to_member_ids', $gene_split_id_to_member_ids);
-
-    return;
-}
-
-sub filter_split_genes {
-    my ($self, $all_members) = @_;
-    my $member_id_to_gene_split_id = $self->param('member_id_to_gene_split_id');
-    my $gene_split_id_to_member_ids = $self->param('gene_split_id_to_member_ids');
-
-    my %members_to_delete = ();
-
-    my @filtered_members;
-    for my $member (@$all_members) {
-        my $member_id = $member->dbID;
-        if ($members_to_delete{$member_id}) {
-            delete $members_to_delete{$member_id};
-            print STDERR "$member_id has been removed because of split_genes filtering" if ($self->debug());
-            next;
-        }
-        if (exists $member_id_to_gene_split_id->{$member_id}) {
-            my $gene_split_id = $member_id_to_gene_split_id->{$member_id};
-            my @member_ids_to_delete = grep {$_ ne $member_id} @{$gene_split_id_to_member_ids->{$gene_split_id}};
-            for my $new_member_to_delete (@member_ids_to_delete) {
-                $members_to_delete{$new_member_to_delete} = 1;
-            }
-        }
-        push @filtered_members, $member;
-    }
-    if (scalar keys %members_to_delete) {
-        my $msg = "Still have some members to delete!: \n";
-        $msg .= Dumper \%members_to_delete;
-        die $msg;
-    }
-
-    return [@filtered_members];
-}
-
 sub get_full_cafe_table_from_db {
     my ($self) = @_;
     my $cafe_tree = $self->param('cafe_tree');
-    my $species = $self->param('cafe_species');
-    unless (ref $species eq "ARRAY") { ## if we don't have an arrayref, all the species are used
+    my $species   = $self->param('cafe_species');
+
+    unless (ref $species eq "ARRAY" and scalar @$species) { ## if we don't have an arrayref or have an arrayref that is empty
         my @sps;
         for my $sp (@{$cafe_tree->get_all_leaves()}) {
             push @sps, $sp->name();
         }
         $species = [@sps];
     }
-    my $adaptor = $self->param('adaptor');
-
-    my $mlss_id = $self->param('mlss_id');
 
     my $table = "FAMILY_DESC\tFAMILY\t" . join("\t", @$species);
     $table .= "\n";
 
-    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree', -clusterset_id => 'default');
-    print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
+    my $all_trees = $self->get_all_trees($species); ## Returns a closure
     my $ok_fams = 0;
-    for my $tree (@$all_trees) {
-        $tree->preload();
-        my $root_id = $tree->root_id;
-        my $name = $self->get_name($tree);
-        my $full_tree_members = $tree->get_all_leaves();
-        my $tree_members = $self->param('no_split_genes') ? $full_tree_members : $self->filter_split_genes($full_tree_members);
 
+    while (my ($name, $id, $vals) = $all_trees->()) {
         my %species;
-        for my $member (@$tree_members) {
-            my $sp;
-            eval {$sp = $member->genome_db->name};
-            next if ($@);
-            $sp =~ s/_/\./g;
-            $species{$sp}++;
+        for my $href (@$vals) {
+            $species{$href->{species}} = $href->{members};
         }
 
-        my @flds = ($name, $root_id);
-        for my $sp (@$species) {
-            push @flds, ($species{$sp} || 0);
-        }
-        if ($self->has_member_at_root([keys %species])) {
+        last unless (defined $name);
+        my @species_in_tree = grep {$species{$_} != 0} keys %species;
+        if ($self->has_member_at_root([@species_in_tree])) {
+            my @vals = map {$_->{members}} @$vals;
             $ok_fams++;
-            $table .= join ("\t", @flds);
+            $table .= join ("\t", ($name, $id, @vals));
             $table .= "\n";
         }
-        $tree->release_tree();
     }
 
     print STDERR "$ok_fams families in final table\n" if ($self->debug());
@@ -277,49 +187,40 @@ sub get_full_cafe_table_from_db {
 sub get_per_family_cafe_table_from_db {
     my ($self) = @_;
     my $fmt = $self->param('tree_fmt');
-    my $adaptor = $self->param('adaptor');
-    my $sp_tree = $self->param('cafe_tree');
-    my $mlss_id = $self->param('mlss_id');
+    my $cafe_tree = $self->param('cafe_tree');
 
-    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree', -clusterset_id => 'default');
-    print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
+    my $species;
+    for my $sp (@{$cafe_tree->get_all_leaves()}) {
+        push @$species, $sp->name();
+    }
+
+    my $all_trees = $self->get_all_trees($species); ## Returns a closure
     my $ok_fams = 0;
-    my @all_fams;
-    for my $tree (@$all_trees) {
-        $tree->preload();
-        my $root_id = $tree->root_id();
-        print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
-        my $name = $self->get_name($tree);
-        print STDERR "MODEL_NAME: $name\n" if ($self->debug());
-        my $full_tree_members = $tree->get_all_leaves();
-        my $tree_members = $self->param('no_split_genes') ? $full_tree_members : $self->filter_split_genes($full_tree_members);
-        print STDERR "NUMBER_OF_LEAVES: ", scalar @$tree_members, "\n" if ($self->debug());
+    my @all_fams = ();
+    while (my ($name, $id, $vals) = $all_trees->()) {
         my %species;
-        for my $member (@$tree_members) {
-            my $sp;
-            eval {$sp = $member->genome_db->name};
-            next if ($@);
-            $sp =~ s/_/\./g;
-            $species{$sp}++;
+        for my $href (@$vals) {
+            $species{$href->{species}} = $href->{members};
         }
-        print STDERR scalar (keys %species) , " species for this tree\n";
-        next if (scalar (keys %species) < 4);
 
-        ## TODO: Should we filter out low-coverage genomes?
-        my $species = [keys %species];
+        last unless (defined $name);
+        my @species_in_tree = grep {$species{$_} != 0} keys %species;
 
+        print STDERR scalar @species_in_tree , " species for this tree\n";
+        next if (scalar @species_in_tree < 4);
+
+        #TODO: Should we filter out low-coverage genomes?
         my @leaves = ();
-        for my $node (@{$sp_tree->get_all_leaves}) {
-            if (is_in($node->name, $species)) {
+        for my $node (@{$cafe_tree->get_all_leaves}) {
+            if (is_in($node->name, \@species_in_tree)) {
                 push @leaves, $node;
             }
         }
         next unless (scalar @leaves > 1);
-
-        my $lca = $sp_tree->find_first_shared_ancestor_from_leaves([@leaves]);
+        my $lca = $cafe_tree->find_first_shared_ancestor_from_leaves([@leaves]);
         next unless (defined $lca);
         my $lca_str = $lca->newick_format('ryo', $fmt);
-        print STDERR "TREE FOR THIS FAM:\n$lca_str\n" if ($self->debug());
+        print STDERR "TREE FOR THIS FAM: \n$lca_str\n" if ($self->debug());
         my $fam_table = "FAMILY_DESC\tFAMILY";
         my $all_species_in_tree = $lca->get_all_leaves();
         for my $sp_node (@$all_species_in_tree) {
@@ -328,22 +229,18 @@ sub get_per_family_cafe_table_from_db {
         }
         $fam_table .= "\n";
 
-        my @flds = ($name, $root_id);
+        my @flds = ($name, $id);
         for my $sp_node (@$all_species_in_tree) {
             my $sp = $sp_node->name();
             push @flds, ($species{$sp} || 0);
         }
-
         $fam_table .= join ("\t", @flds), "\n";
         print STDERR "TABLE FOR THIS FAM:\n$fam_table\n" if ($self->debug());
         $ok_fams++;
-
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
         $sth->execute($name, $lca_str, $fam_table);
         $sth->finish();
-
         push @all_fams, $name;
-        $tree->release_tree;
     }
 
     print STDERR "$ok_fams families in final table\n" if ($self->debug());
@@ -353,8 +250,8 @@ sub get_per_family_cafe_table_from_db {
 
 sub has_member_at_root {
     my ($self, $sps) = @_;
-    my $sp_tree = $self->param('cafe_tree');
-    my $tree_leaves = $sp_tree->get_all_leaves();
+    my $cafe_tree = $self->param('cafe_tree');
+    my $tree_leaves = $cafe_tree->get_all_leaves();
     my @leaves;
     for my $sp (@$sps) {
         my $leaf = get_leaf($sp, $tree_leaves);
@@ -365,7 +262,7 @@ sub has_member_at_root {
     if (scalar @leaves == 0) {
         return 0;
     }
-    my $lca = $sp_tree->find_first_shared_ancestor_from_leaves([@leaves]);
+    my $lca = $cafe_tree->find_first_shared_ancestor_from_leaves([@leaves]);
     return !$lca->has_parent();
 }
 
@@ -551,5 +448,9 @@ sub stdev {
     return sqrt($var / (scalar @items));
 }
 
+
+sub n_headers {
+    return 2;
+}
 
 1;

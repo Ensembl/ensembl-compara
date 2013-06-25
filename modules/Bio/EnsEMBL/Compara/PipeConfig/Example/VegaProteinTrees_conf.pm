@@ -40,7 +40,8 @@ use Storable qw(dclone);
 sub resource_classes {
   my ($self) = @_;
   return {
-    %{$self->SUPER::resource_classes}
+    %{$self->SUPER::resource_classes},
+    'urgent_hcluster'   => {'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]" -q yesterday' },
   };
 }
 
@@ -48,17 +49,17 @@ sub resource_classes {
 # each run you will need to specify and uncomment: mlss_id, release, work_dir, dbname
 sub default_options {
   my ($self) = @_;
-  my $version = 'vega_genetree_20120822_69_2'; #edit this each time
+  my $version = 'vega_genetree_20130211_71_step3'; #edit this each time
   return {
     %{$self->SUPER::default_options},
     # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#    'mlss_id'               => '25',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
-    'release'               => '69',
+    'mlss_id'               => '25',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
+    'release'               => '71',
 
     'rel_suffix'            => 'vega',
-    'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/'.$version,
+    'work_dir'              => '/lustre/scratch109/sanger/'.$ENV{'USER'}.'/compara_generation/'.$version,
     'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
@@ -84,9 +85,10 @@ sub default_options {
     },
 
     # switch off the reuse:
-    'reuse_core_sources_locs'   => [ ],
+    'prev_core_sources_locs'   => [ ],
     'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-    'reuse_db'                  => 0,
+    'reuse_from_prev_rel_db'    => 0,
+    'do_stable_id_mapping'      => 0,
 
     # hive_capacity values for some analyses:
     'store_sequences_capacity'  => 50,
@@ -121,45 +123,8 @@ sub pipeline_analyses {
     }
   }
 
-  my $new_analyses = $self->_new_analyses();
-  push(@{$analyses}, @{$new_analyses});
   return $analyses;
 
-}
-
-#add any new analyses
-sub _new_analyses {
-  my ($self) = @_;
-
-  #update_display_member labels (borrowed from EG)
-  return [
-    {
-      -logic_name => 'member_display_labels_factory',
-      -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-      -parameters => {
-        inputquery      => 'select genome_db_id from species_set ss join method_link_species_set mlss using (species_set_id) where mlss.method_link_species_set_id = '.$self->o('mlss_id'),
-        column_names    => [qw/genome_db_id/],
-        input_id        => { genome_db_ids => ['#genome_db_id#'] },
-        fan_branch_code => 1,
-      },
-      -input_ids => [
-        {}
-      ],
-      -wait_for => ['backbone_fire_dnds'],
-      -flow_into => {
-        1 => [ 'update_member_display_labels' ]
-      }
-    },
-    {
-      -logic_name => 'update_member_display_labels',
-      -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-      -parameters => {
-        die_if_no_core_adaptor => 1
-      },
-      -hive_capacity => 10,
-      -batch_size => 1
-    },
-  ];
 }
 
 1;

@@ -258,30 +258,6 @@ sub method_link_species_set_id {
     return $self->{'_method_link_species_set_id'};
 }
 
-=head2 method_link_type
-
-    DEPRECATED. Use method_link_species_set()->method()->type() instead. This is not a setter any more.
-
-=cut
-
-sub method_link_type {  # DEPRECATED
-    my $self = shift;
-    deprecate('Use method_link_species_set()->method()->type() instead. This is not a setter any more.');
-    return $self->method_link_species_set->method->type() if defined $self->{'_method_link_species_set_id'};
-}
-
-
-=head2 method_link_id
-
-    DEPRECATED. Use method_link_species_set()->method()->dbID() instead. This is not a setter any more.
-
-=cut
-
-sub method_link_id {  # DEPRECATED
-    my $self = shift;
-    deprecate('Use method_link_species_set()->method()->dbID() instead. This is not a setter any more.');
-    return $self->method_link_species_set->method->dbID if defined $self->{'_method_link_species_set_id'};
-}
 
 =head2 adaptor
 
@@ -385,7 +361,7 @@ sub add_Member {
     my $genome_db_id = $member->genome_db_id();
     #print "adding $source_name: ", $member->dbID, "\n";
 
-    if (defined $self->{'_this_one_first'} && $self->{'_this_one_first'} eq $member->stable_id) {
+    if (defined $self->{'_this_one_first'} && $self->{'_this_one_first'} eq $member->dbID) {
         unshift @{$self->{'_member_array'}}, $member ;
         unshift @{$self->{'_members_by_source'}{$source_name}}, $member;
         unshift @{$self->{'_members_by_source_taxon'}{"${source_name}_${taxon_id}"}}, $member;

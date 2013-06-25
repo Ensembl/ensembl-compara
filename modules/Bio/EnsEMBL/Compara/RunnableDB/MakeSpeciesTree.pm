@@ -89,6 +89,7 @@ sub write_output {
     my $self = shift @_;
 
     my $species_tree_string = $self->param('species_tree_string');
+    $species_tree_string=~s/:0;/;/;
     my $output_branch = $self->param('blength_tree_file') ? 4 : 3;
 
     $self->dataflow_output_id( { 'species_tree_string'   => $species_tree_string }, $output_branch);

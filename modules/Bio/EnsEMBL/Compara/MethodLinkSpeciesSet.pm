@@ -35,7 +35,7 @@ SET VALUES
   $method_link_species_set->dbID( 12 );
   $method_link_species_set->adaptor( $mlss_adaptor );
   $method_link_species_set->method( Bio::EnsEMBL::Compara::Method->new( -type => 'MULTIZ') );
-  $method_link_species_set->species_set( Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2, $gdb3]) );
+  $method_link_species_set->species_set_obj( Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2, $gdb3]) );
   $method_link_species_set->max_alignment_length( 10000 );
 
 GET VALUES
@@ -60,9 +60,11 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::SpeciesSet;
 
@@ -89,7 +91,7 @@ my $DEFAULT_MAX_ALIGNMENT = 20000;
   Example     : my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                        -adaptor => $method_link_species_set_adaptor,
                        -method => Bio::EnsEMBL::Compara::Method->new( -type => 'MULTIZ' ),
-                       -species_set => [$gdb1, $gdb2, $gdb3],
+                       -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2, $gdb3] ),
                        -max_alignment_length => 10000,
                    );
   Description : Creates a new MethodLinkSpeciesSet object
@@ -105,32 +107,23 @@ sub new {
 
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-    my ($method, $method_link_id, $method_link_type, $method_link_class,
-        $species_set_obj, $species_set, $species_set_id,
+    my ($method, $species_set_obj,
         $name, $source, $url, $max_alignment_length) =
             rearrange([qw(
-                METHOD METHOD_LINK_ID METHOD_LINK_TYPE METHOD_LINK_CLASS
-                SPECIES_SET_OBJ SPECIES_SET SPECIES_SET_ID
+                METHOD SPECIES_SET_OBJ
                 NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
 
   if($method) {
       $self->method($method);
   } else {
-      warning("Please consider using -method to set the method instead of older/deprecated ways to do it");
+      warning("method has not been set in MLSS->new");
   }
 
-    # the following three should generate a deprecated warning:
-  $self->method_link_id($method_link_id) if (defined ($method_link_id));
-  $self->method_link_type($method_link_type) if (defined ($method_link_type));
-  $self->method_link_class($method_link_class) if (defined ($method_link_class));
-
-  warning("method has not been set in MLSS->new") unless($self->method());
-
-  $self->species_set_obj($species_set_obj) if (defined ($species_set_obj));
-  $self->species_set($species_set) if (defined ($species_set));
-  $self->species_set_id($species_set_id) if (defined ($species_set_id));
-
-  warning("species_set_obj has not been set in MLSS->new") unless($self->species_set_obj());
+  if ($species_set_obj) {
+      $self->species_set_obj($species_set_obj);
+  } else {
+      warning("species_set_obj has not been set in MLSS->new");
+  }
 
   $self->name($name) if (defined ($name));
   $self->source($source) if (defined ($source));
@@ -166,7 +159,7 @@ sub method {
 
     if($method) {
         if(ref($method) eq 'HASH') {
-            $method = Bio::EnsEMBL::Compara::Method->new( %$method ) or die "Could not automagically create a Method";
+            $method = Bio::EnsEMBL::Compara::Method->new( %$method ) or die "Could not automagically create a Method\n";
         }
 
         $self->{'method'} = $method;
@@ -193,7 +186,7 @@ sub species_set_obj {
 
     if($species_set_obj) {
         if(ref($species_set_obj) eq 'HASH') {
-            $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new( %$species_set_obj ) or die "Could not automagically create a SpeciesSet";
+            $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new( %$species_set_obj ) or die "Could not automagically create a SpeciesSet\n";
         }
 
         $self->{'species_set'} = $species_set_obj;
@@ -203,214 +196,6 @@ sub species_set_obj {
 }
 
 
-=head2 method_link_id
- 
-  Arg [1]    : (opt.) integer method_link_id
-  Example    : my $meth_lnk_id = $method_link_species_set->method_link_id();
-  Example    : $method_link_species_set->method_link_id(23);
-  Description: get/set for attribute method_link_id
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->method->dbID instead
- 
-=cut
-
-sub method_link_id {
-    my $self = shift @_;
-
-    deprecate("MLSS->method_link_id() is DEPRECATED, please use MLSS->method->dbID(). method_link_id() will be removed in release 70.");
-
-    if(@_) {
-        if($self->method) {
-            $self->method->dbID( @_ );
-        } else {
-            $self->method( Bio::EnsEMBL::Compara::Method->new(-dbID => @_) );
-        }
-    }
-
-        # type is known => fetch the method from DB and set all of its attributes
-    if (!$self->method->dbID and $self->adaptor and my $type = $self->method->type) {
-        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
-        if( my $fetched_method = $method_adaptor->fetch_by_type( $type ) ) {
-            $self->method( $fetched_method );
-        } else {
-            warning("Could not fetch method by type '$type'");
-        }
-    }
-
-    return $self->method->dbID();
-}
-
-
-=head2 method_link_type
- 
-  Arg [1]    : (opt.) string method_link_type
-  Example    : my $meth_lnk_type = $method_link_species_set->method_link_type();
-  Example    : $method_link_species_set->method_link_type("BLASTZ_NET");
-  Description: get/set for attribute method_link_type
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->method->type instead
- 
-=cut
-
-sub method_link_type {
-    my $self = shift @_;
-
-    deprecate("MLSS->method_link_type() is DEPRECATED, please use MLSS->method->type(). method_link_type() will be removed in release 70.");
-
-    if(@_) {
-        if($self->method) {
-            $self->method->type( @_ );
-        } else {
-            $self->method( Bio::EnsEMBL::Compara::Method->new(-type => @_) );
-        }
-    }
-
-        # dbID is known => fetch the method from DB and set all of its attributes
-    if (!$self->method->type and $self->adaptor and my $dbID = $self->method->dbID) {
-        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
-        if( my $fetched_method = $method_adaptor->fetch_by_dbID( $dbID ) ) {
-            $self->method( $fetched_method );
-        } else {
-            warning("Could not fetch method by dbID '$dbID'");
-        }
-    }
-
-    return $self->method->type();
-}
-
-
-=head2 method_link_class
- 
-  Arg [1]    : (opt.) string method_link_class
-  Example    : my $meth_lnk_class = $method_link_species_set->method_link_class();
-  Example    : $method_link_species_set->method_link_class("GenomicAlignBlock.multiple_alignment");
-  Description: get/set for attribute method_link_class
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->method->class instead
- 
-=cut
-
-sub method_link_class {
-    my $self = shift @_;
-
-    deprecate("MLSS->method_link_class() is DEPRECATED, please use MLSS->method->class(). method_link_class() will be removed in release 70.");
-
-    if(@_) {
-        if($self->method) {
-            $self->method->class( @_ );
-        } else {
-            $self->method( Bio::EnsEMBL::Compara::Method->new(-class => @_) );
-        }
-    }
-
-        # dbID is known => fetch the method from DB and set all of its attributes
-    if (!$self->method->class and $self->adaptor and my $dbID = $self->method->dbID) {
-        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
-        if( my $fetched_method = $method_adaptor->fetch_by_dbID( $dbID ) ) {
-            $self->method( $fetched_method );
-        } else {
-            warning("Could not fetch method by dbID '$dbID'");
-        }
-    }
-
-    return $self->method->class();
-}
-
-
-sub _set_genome_dbs {
-    my ($self, $arg) = @_;
-
-    my %genome_db_hash = ();
-    foreach my $gdb (@$arg) {
-        throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($gdb));
-        throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n") unless $gdb->isa("Bio::EnsEMBL::Compara::GenomeDB");
-
-        if(defined $genome_db_hash{$gdb->dbID}) {
-            warn("GenomeDB (".$gdb->name."; dbID=".$gdb->dbID .") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n");
-        } else {
-            $genome_db_hash{$gdb->dbID} = $gdb;
-        }
-    }
-    my $genome_dbs = [ values %genome_db_hash ] ;
-
-    my $species_set_id = $self->adaptor && $self->adaptor->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
-
-    my $ss_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
-        -genome_dbs     => $genome_dbs,
-        $species_set_id ? (-species_set_id => $species_set_id) : (),
-    );
-    $self->species_set_obj( $ss_obj );
-}
-
-
-
-=head2 species_set_id
-
-  Arg [1]    : (opt.) integer species_set_id
-  Example    : my $species_set_id = $method_link_species_set->species_set_id();
-  Example    : $method_link_species_set->species_set_id(23);
-  Description: get/set for attribute species_set_id
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->species_set_obj->dbID instead
-
-=cut
-
-sub species_set_id {
-    my $self = shift @_;
-
-    deprecate("MLSS->species_set_id() is DEPRECATED, please use MLSS->species_set_obj->dbID(). species_set_id() will be removed in release 70.");
-
-    if(my $species_set_obj = $self->species_set_obj) {
-        return $species_set_obj->dbID( @_ );
-    } else {
-        warning("SpeciesSet object has not been set, so cannot deal with its dbID");
-        return undef;
-    }
-}
-
-
-=head2 species_set
- 
-  Arg [1]    : (opt.) listref of Bio::EnsEMBL::Compara::GenomeDB objects
-  Example    : my $meth_lnk_species_set = $method_link_species_set->species_set();
-  Example    : $method_link_species_set->species_set([$gdb1, $gdb2, $gdb3]);
-  Description: get/set for attribute species_set
-  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB objects
-  Exceptions : Thrown if any argument is not a Bio::EnsEMBL::Compara::GenomeDB
-               object or a GenomeDB entry appears several times
-  Caller     : general
-  Status     : DEPRECATED, use $mlss->species_set_obj->genome_dbs instead
- 
-=cut
-
-sub species_set {
-    my ($self, $arg) = @_;
-
-    deprecate("MLSS->species_set() is DEPRECATED, please use MLSS->species_set_obj->genome_dbs(). species_set() will be removed in release 70.");
-
-    if($arg) {
-        if(UNIVERSAL::isa($arg, 'Bio::EnsEMBL::Compara::SpeciesSet')) {
-
-            $self->species_set_obj( $arg );
-
-        } elsif((ref($arg) eq 'ARRAY') and @$arg) {
-
-            $self->_set_genome_dbs( $arg );
-
-        } else {
-            die "Wrong type of argument to $self->species_set()";
-        }
-    }
-    return $self->species_set_obj->genome_dbs;      # for compatibility, we shall keep this method until everyone has switched to using species_set_obj()
-}
 
 
 =head2 name
@@ -503,9 +288,9 @@ sub get_common_classification {
   my ($self) = @_;
   my $common_classification;
 
-  my $species_set = $self->species_set();
+  my $species_set = $self->species_set_obj();
 
-  foreach my $this_genome_db (@$species_set) {
+  foreach my $this_genome_db (@{$species_set->genome_dbs}) {
     my @classification = split(" ", $this_genome_db->taxon->classification);
     if (!defined($common_classification)) {
       @$common_classification = @classification;
@@ -542,9 +327,10 @@ sub get_common_classification {
 
 sub max_alignment_length {
     my $self = shift @_;
+    my $max_align = shift;
 
-    if(@_) {
-        $self->add_tag('max_align', shift @_);
+    if($max_align) {
+        $self->add_tag('max_align', $max_align);
     }
 
     return $self->get_value_for_tag('max_align') || $DEFAULT_MAX_ALIGNMENT;

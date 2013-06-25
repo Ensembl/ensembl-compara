@@ -21,9 +21,9 @@ $sth->finish();
 
 my ($num_dnafrag_regions) = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT count(*) FROM dnafrag_region WHERE synteny_region_id=$synteny_region_id");
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor fetch_by_synteny_region_id($synteny_region_id) method", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor fetch_all_by_synteny_region_id($synteny_region_id) method", sub {
 
-   my $dnafrag_regions = $dnafrag_region_adaptor->fetch_by_synteny_region_id($synteny_region_id);
+   my $dnafrag_regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
 
    is(@$dnafrag_regions, $num_dnafrag_regions, "number of dnafrag_regions");
 
@@ -55,7 +55,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor store method", 
    is($sth->rows, 1, "Checking that there is 1 entry in the <dnafrag_region> table after store");
 
    #This returns an array so maybe it should be called fetch_all_by_synteny_region_id?
-   my $new_dnafrag_regions = $dnafrag_region_adaptor->fetch_by_synteny_region_id($synteny_region_id);
+   my $new_dnafrag_regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
    is_deeply($dnafrag_region, $new_dnafrag_regions->[0]);
 
    $multi->restore();

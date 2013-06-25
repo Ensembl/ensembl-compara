@@ -147,18 +147,20 @@ sub write_output {
 	    my $dump_output_file = $output_file;
 	    $dump_output_file =~ s/\.$format/$this_suffix/;
 
-	    #Write out cmd from DumpMultiAlign
+            my $coord_system = ""; #Needs to be set to something to avoid errors in DumMultiAlign
 
+	    #Write out cmd from DumpMultiAlign
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
 	    my $output_id = {
-            'start'                 =>  $start_gab_id,
-            'end'                   =>  $end_gab_id,
-	        'output_file'           =>  $output_file,
-            'extra_args'            =>  " --skip_species $species --chunk_num $chunk",
-            'num_blocks'            =>  $this_num_blocks,
-            'dumped_output_file'    =>  $dump_output_file,
-        };
+                             'start'                 =>  $start_gab_id,
+                             'end'                   =>  $end_gab_id,
+                             'output_file'           =>  $output_file,
+                             'extra_args'            =>  " --skip_species $species --chunk_num $chunk",
+                             'num_blocks'            =>  $this_num_blocks,
+                             'dumped_output_file'    =>  $dump_output_file,
+                             'coord_system'          =>  $coord_system,
+                            };
 
 	    #print "skip $output_id\n";
 	    $self->dataflow_output_id($output_id, 2);

@@ -329,23 +329,6 @@ sub print_homology {
 }
 
 
-=head2 get_all_PeptideAlignFeature
-
-  Description: returns a reference to an empty array as we don't have any
-               PeptideAlignFeatures associated to the homologies
-  Returntype : array ref
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub get_all_PeptideAlignFeature {
-
-    deprecate("Homologies don't have PeptideAlignFeatures any more. Use DBSQL::PeptideAlignFeatureAdaptor::fetch_all_by_qmember_id_hmember_id() instead. get_all_PeptideAlignFeature() will be removed in release 70");
-    return [];
-}
-
-
 
 
 =head2 homology_key

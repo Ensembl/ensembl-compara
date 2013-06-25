@@ -155,7 +155,7 @@ my $from_name = undef;
 my $to_name = undef;
 my $from_url = undef;
 my $to_url = undef;
-my @mlss_id = undef;
+my @mlss_id = ();
 my $re_enable = 1;
 my $method_link = undef;
 
@@ -170,7 +170,7 @@ my $trust_ce = 0;
 #If true, then add new data to existing set of alignments
 my $merge = 0;
 
-my $patch_merge = 0; #special case for merging old patches again
+my $patch_merge = 0; #special case for merging patches where the dbIDs are not consecutive
 
 GetOptions(
            "help"      => \$help,
@@ -185,6 +185,7 @@ GetOptions(
            'trust_ce!' => \$trust_ce,
            're_enable=i' => \$re_enable,
            'method_link=s' => \$method_link,
+           'patch_merge!' => \$patch_merge,
   );
 
 # Print Help and exit if help is requested
@@ -204,7 +205,7 @@ foreach my $one_mlss_id (@mlss_id) {
     print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID ($one_mlss_id)\n";
     exit(1);
   }
-  push @all_method_link_species_sets, $one_mlss_id;
+  push @all_method_link_species_sets, $mlss;
 }
 
 if ($method_link) {
@@ -219,7 +220,6 @@ if ($method_link) {
 my $ini_re_enable = $re_enable;
 
 while (my $method_link_species_set = shift @all_method_link_species_sets) {
-
   my $mlss_id = $method_link_species_set->dbID;
   my $class = $method_link_species_set->method->class;
   $re_enable = scalar(@all_method_link_species_sets) ? 0 : $ini_re_enable;

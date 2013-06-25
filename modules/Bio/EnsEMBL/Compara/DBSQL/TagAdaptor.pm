@@ -44,6 +44,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::DBSQL::TagAdaptor;
 
 use strict;
+use warnings;
 
 
 =head2 _tag_capabilities
@@ -121,8 +122,9 @@ sub _load_tagvalues {
 
   Description: similar to _load_tagvalues, but applies on a whole list
                of objects (assumed to be all of the same type)
-  Arg [1..n] : <scalar> reference object
-  Example    : $genetreenode_adaptor->_load_tagvalues_multiples($node1, $node2);
+  Arg [1]    : $objs: Array ref to the list of object
+  Arg [2]    : (optional) Boolean: does $objs contain all the objects from the db ?
+  Example    : $genetreenode_adaptor->_load_tagvalues_multiples( [$node1, $node2] );
   Returntype : none
   Exceptions : none
   Caller     : internal
@@ -130,20 +132,29 @@ sub _load_tagvalues {
 =cut
 
 sub _load_tagvalues_multiple {
-    my $self = shift;
+    my ($self, $objs, $all_objects) = @_;
+
+    return unless scalar(@{$objs});
 
     # Assumes that all the objects have the same type
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($_[0]);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objs->[0]);
 
-    map {$_->{'_tags'} = {}} (grep {not exists $_->{'_tags'}} @_);
+    my %perl_keys = ();
+    foreach my $val (@{$objs}) {
+        $val->{'_tags'} = {} unless exists $val->{'_tags'};
+        $perl_keys{$val->$perl_keyname} = $val;
+    };
 
-    my %perl_keys = map {$_->$perl_keyname => $_} @_;
-    my $where_constraint = join(',', keys %perl_keys);
+    my $where_constraint = '';
+    if (not $all_objects) {
+        $where_constraint = "WHERE $db_keyname IN (".join(',', keys %perl_keys).")";
+    }
 
     # Tags (multiple values are allowed)
-    my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable WHERE $db_keyname IN ($where_constraint)");
+    my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable $where_constraint");
     $sth->execute();
     while (my ($obj_id, $tag, $value) = $sth->fetchrow_array()) {
+        next if $all_objects and not exists $perl_keys{$obj_id};
         $perl_keys{$obj_id}->add_tag($tag, $value, 1);
         #warn "adding $value to $tag of $obj_id";
     }
@@ -151,7 +162,7 @@ sub _load_tagvalues_multiple {
    
     # Attributes ?
     if (defined $db_attrtable) {
-        $sth = $self->prepare("SELECT * FROM $db_attrtable WHERE $db_keyname IN ($where_constraint)");
+        $sth = $self->prepare("SELECT * FROM $db_attrtable $where_constraint");
         $sth->execute();
         # Retrieve data
         while (my $attrs = $sth->fetchrow_hashref()) {

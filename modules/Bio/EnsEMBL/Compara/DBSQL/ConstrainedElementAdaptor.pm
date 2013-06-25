@@ -176,21 +176,33 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 		throw("undefined Bio::EnsEMBL::Slice object");
 	}
 
-	my $dnafrag_adp = $self->db->get_DnaFragAdaptor;
-	my $dnafrag = $dnafrag_adp->fetch_by_Slice($slice_obj);
-	my $sql = qq{
+        my $filter_projections = 1;
+        my $projection_segments = $slice_obj->adaptor->fetch_normalized_slice_projection($slice_obj, $filter_projections);
+        return [] if(!@$projection_segments);
+
+        my $constrained_elements;
+        foreach my $this_projection_segment (@$projection_segments) {
+            my $offset    = $this_projection_segment->from_start();
+            
+            my $this_slice = $this_projection_segment->to_Slice;
+            
+            #print $this_slice->seq_region_name . " " . $this_slice->start . " " . $this_slice->end . " offset=$offset\n";
+            
+            my $dnafrag_adp = $self->db->get_DnaFragAdaptor;
+            my $dnafrag = $dnafrag_adp->fetch_by_Slice($this_slice);
+            my $sql = qq{
 		WHERE
 		method_link_species_set_id = ?
 		AND
 		dnafrag_id = ? 
-	};
-	my (@constrained_elements, $lower_bound);
+	    };
+            my (@these_constrained_elements, $lower_bound);
 
-	if(defined($slice_obj->start) && defined($slice_obj->end) && 
-		($slice_obj->start <= $slice_obj->end)) {
-			my $max_alignment_length = $mlss_obj->max_alignment_length;
-			$lower_bound = $slice_obj->start - $max_alignment_length;
-			$sql .= qq{
+            if(defined($this_slice->start) && defined($this_slice->end) && 
+               ($this_slice->start <= $this_slice->end)) {
+                my $max_alignment_length = $mlss_obj->max_alignment_length;
+                $lower_bound = $this_slice->start - $max_alignment_length;
+                $sql .= qq{
 				AND
 				dnafrag_end >= ?
 				AND
@@ -199,10 +211,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 				dnafrag_start >= ?
 			};
 	}
-	
-	$self->_fetch_all_ConstrainedElements($sql, \@constrained_elements,
-		$mlss_obj->dbID, $dnafrag->dbID, $slice_obj->start, $slice_obj->end, $lower_bound, $slice_obj);
-	return \@constrained_elements;
+            
+            $self->_fetch_all_ConstrainedElements($sql, \@these_constrained_elements,
+                                                  $mlss_obj->dbID, $dnafrag->dbID, $this_slice->start, $this_slice->end, $lower_bound, $this_slice, $offset);
+
+            push @$constrained_elements, @these_constrained_elements;
+        }
+
+	return $constrained_elements;
 }
 
 =head2 fetch_all_by_MethodLinkSpeciesSet_Dnafrag
@@ -266,7 +282,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Dnafrag {
 
 sub _fetch_all_ConstrainedElements {#used when getting constrained elements by slice or dnafrag
 	my ($self) = shift;
-	my ($sql, $constrained_elements, $mlss_id, $dnafrag_id, $start, $end, $lower_bound, $slice) = @_;
+	my ($sql, $constrained_elements, $mlss_id, $dnafrag_id, $start, $end, $lower_bound, $slice, $offset) = @_;
 	$sql = qq{
        		SELECT
        		constrained_element_id,
@@ -288,8 +304,8 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 				'adaptor' => $self,
 				'dbID' => $dbID,
 				'slice' => $slice,
-				'start' =>  ($ce_start - $start + 1), 
-				'end' => ($ce_end - $start + 1),
+				'start' =>  ($ce_start - $start + $offset), 
+				'end' => ($ce_end - $start + $offset),
 			        'strand' => $ce_strand,
 				'method_link_species_set_id' => $mlss_id,
 				'score' => $score,

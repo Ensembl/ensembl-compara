@@ -37,7 +37,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 =cut
 
-sub fetch_by_name {
+sub fetch_all_by_type {
     my ($self, $type) = @_;
 
     throw ("type is undefined") unless (defined $type);
@@ -48,48 +48,61 @@ sub fetch_by_name {
 }
 
 
+=head2 fetch_all_by_model_id_type
 
-=head2 fetch_by_model_id
-
-  Arg [1]       : (string) The database model_id for a hmm_profile
-  Example       : $profile = $hmmProfileAdaptor->fetch_by_model_id($model_id);
-  Description   : Returns a HMMProfile object for the given model_id
-  ReturnType    : Bio::EnsEMBL::Compara::HMMProfile
+  Arg [1]       : The database model_id for the hmm_profile/s
+  Arg [2]       : (optional) The type of the hmm_profile to retrieve
+  Example       : $profiles = $hmmProfileAdaptor->fetch_all_by_model_id($model_id);
+  Description   : Returns the HMMProfile/s object/s for the given model_id
+  ReturnType    : Arrayref of Bio::EnsEMBL::Compara::HMMProfile's
   Exceptions    : If $model_id is not defined
   Caller        : General
 
 =cut
 
-sub fetch_by_model_id {
-    my ($self, $model_id) = @_;
+sub fetch_all_by_model_id_type {
+    my ($self, $model_id, $type) = @_;
 
     throw ("model_id is undefined") unless (defined $model_id);
 
     my $constraint = 'h.model_id = ?';
     $self->bind_param_generic_fetch($model_id, SQL_VARCHAR);
-    return $self->generic_fetch_one($constraint);
+
+    if (defined $type) {
+        $constraint .= ' AND h.type = ?';
+        $self->bind_param_generic_fetch($type, SQL_VARCHAR);
+    }
+
+    return $self->generic_fetch($constraint);
 }
 
 
-=head2 fetch_by_name
+=head2 fetch_all_by_name_type
 
-  Arg [1]       : (string) The database name for a hmm_profile
-  Example       : $profile = $hmmProfileAdaptor->fetch_by_name($name);
-  Description   : Returns a HMMProfile object for the given name
-  ReturnType    : Bio::EnsEMBL::Compara::HMMProfile
+  Arg [1]       : The database name for the hmm_profile/s
+  Arg [2]       : (optional) The type of the hmm_profile to retrieve
+  Example       : $profiles = $hmmProfileAdaptor->fetch_all_by_name($name);
+  Description   : Returns the HMMProfile/s object/s for the given name
+  ReturnType    : Arrayref of Bio::EnsEMBL::Compara::HMMProfile's
   Exceptions    : If $name is not defined
   Caller        : General
 
 =cut
 
-sub fetch_by_name {
-    my ($self, $name) = @_;
+sub fetch_all_by_name_type {
+    my ($self, $name, $type) = @_;
 
     throw ("name is undefined") unless (defined $name);
 
     my $constraint = 'h.name = ?';
     $self->bind_param_generic_fetch($name, SQL_VARCHAR);
-    return $self->generic_fetch_one($constraint);
+
+    if (defined $type) {
+        $constraint .= ' AND h.type = ?';
+        $self->bind_param_generic_fetch($type, SQL_VARCHAR);
+    }
+
+    return $self->generic_fetch($constraint);
 }
 
 =head2 fetch_all_model_ids
@@ -187,9 +200,29 @@ sub store {
         throw("set arg must be a [Bio::EnsEMBL::Compara::HMMProfile] not a $obj");
     }
 
-    my $sth = $self->prepare("REPLACE INTO hmm_profile(model_id, name, type, hc_profile, consensus) VALUES (?,?,?,?,?)");
-    $sth->execute($obj->model_id(), $obj->name(), $obj->type(), $obj->profile(), $obj->consensus());
-    $sth->finish();
+    my $sql = "REPLACE INTO hmm_profile(model_id, name, type, hc_profile, consensus) VALUES (?,?,?,?,?)";
+    my $sth = $self->prepare($sql);
+
+    ## If the profile is too big it is likely to reach the 'max_allowed_packet' in the server
+    my $max_size = 1024 * 1024 * 15; # 15Mb
+    if (length ($obj->profile) < $max_size) {
+        $sth->execute($obj->model_id(), $obj->name(), $obj->type(), $obj->profile(), $obj->consensus());
+        $sth->finish();
+        return;
+    }
+
+#    print STDERR "The profile is too big... I will divide it in smaller chunks\n" if ($self->debug);
+
+    ## The profile is divided into smaller chunks
+    my @chunks = unpack "a$max_size" x ((length($obj->profile)/$max_size)-1) . "a*", $obj->profile;
+
+    $sth->execute($obj->model_id(), $obj->name(), $obj->type(), shift @chunks, $obj->consensus());
+    my $sql2 = "UPDATE hmm_profile SET hc_profile=CONCAT(hc_profile, ?) WHERE model_id = ? and type = ?";
+    my $sth2  = $self->prepare($sql2);
+    for my $chunk (@chunks) {
+        $sth2->execute($chunk, $obj->model_id, $obj->type);
+    }
+    $sth2->finish();
 
     return;
 }

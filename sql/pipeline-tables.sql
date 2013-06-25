@@ -302,8 +302,8 @@ CREATE TABLE protein_tree_backup (
 	member_id	int(10) unsigned NOT NULL,
 	root_id	int(10) unsigned NOT NULL,
 
-	PRIMARY KEY (member_id),
-	KEY (root_id)
+	PRIMARY KEY (root_id, member_id),
+	KEY (member_id)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 

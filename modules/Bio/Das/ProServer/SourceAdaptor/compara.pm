@@ -290,7 +290,7 @@ sub get_features_from_SyntenyRegions {
     push @$features, {
         'id'    => $synteny_region_id,
         'label' => "Synteny Region #$synteny_region_id",
-        'method'=> $method_link_species_set->method_link_type,
+        'method'=> $method_link_species_set->method->type,
         'start' => $reference_dnafrag_region->dnafrag_start,
         'end'   => $reference_dnafrag_region->dnafrag_end,
         'ori'   => ($reference_dnafrag_region->dnafrag_strand() == 1 ? '+' : '-'),
@@ -408,7 +408,7 @@ sub get_features_from_GenomicAlingBlocks {
           $group_start2, $group_end2));
     }
 
-    if (@{$method_link_species_set->species_set} <= 2) {
+    if (@{$method_link_species_set->species_set_obj->genome_dbs} <= 2) {
       ## for pairwise and self-alignments
       my $ga = $gab->get_all_non_reference_genomic_aligns()->[0];
       $label = $ga->dnafrag->name.": ".$ga->dnafrag_start."-".$ga->dnafrag_end;
@@ -425,7 +425,7 @@ sub get_features_from_GenomicAlingBlocks {
     push @$features, {
         'id'    => $id,
         'label' => $label,
-        'method'=> $method_link_species_set->method_link_type,
+        'method'=> $method_link_species_set->method->type,
         'start' => $genomic_align1->dnafrag_start,
         'end'   => $genomic_align1->dnafrag_end,
         'ori'   => ($genomic_align1->dnafrag_strand() == 1 ? '+' : '-'),

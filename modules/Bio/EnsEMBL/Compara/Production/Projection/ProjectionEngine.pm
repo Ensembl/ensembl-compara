@@ -345,7 +345,7 @@ sub _get_mlss {
   my ($self, $target_genome_db) = @_;
   my $mlssa = $self->dba()->get_MethodLinkSpeciesSetAdaptor();
   my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs(
-    $self->method_link_type(), [$self->genome_db(), $target_genome_db]);
+    $self->method->type(), [$self->genome_db(), $target_genome_db]);
   return $mlss;
 }
 

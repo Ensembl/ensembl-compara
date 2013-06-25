@@ -47,6 +47,7 @@ package Bio::EnsEMBL::Compara::Graph::Link;
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::Taggable');
 
@@ -72,10 +73,8 @@ sub new {
   my $node2 = shift;
   my $dist = shift;
 
-  throw("arg1 must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node1]")
-        unless(defined($node1) and $node1->isa('Bio::EnsEMBL::Compara::Graph::Node'));
-  throw("arg2 must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node2]")
-        unless(defined($node2) and $node2->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  assert_ref($node1, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($node2, 'Bio::EnsEMBL::Compara::Graph::Node');
 
   my $self = {};
   bless $self, "Bio::EnsEMBL::Compara::Graph::Link";

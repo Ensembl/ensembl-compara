@@ -640,7 +640,7 @@ sub _reverse_score {
 	}
     } else {
 	my @scores = split ' ', $score_str;
-        $rev_str = join " ", (reverse @scores);
+        $rev_str = join " ", (CORE::reverse @scores);
     }
     return $rev_str;
 }

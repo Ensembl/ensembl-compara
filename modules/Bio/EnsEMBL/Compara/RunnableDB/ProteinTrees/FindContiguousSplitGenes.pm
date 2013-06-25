@@ -126,7 +126,7 @@ sub check_for_split_genes {
 
     my $tmp_time = time();
 
-    my @all_protein_leaves = @{$protein_tree->get_all_leaves};
+    my @all_protein_leaves = @{$protein_tree->get_all_Members};
     my @good_leaves = grep {defined $_->chr_start and defined $_->chr_end and defined $_->chr_name and defined $_->chr_strand and defined $_->taxon_id} @all_protein_leaves;
 
     if($self->debug) {

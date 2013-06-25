@@ -174,7 +174,7 @@ sub delete_by_genomic_align_block_id {
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet_Slice {
-    my ($self, $method_link_species_set, $slice, $display_size, $display_type, $window_size) = @_;
+    my ($self, $method_link_species_set, $orig_slice, $display_size, $display_type, $window_size) = @_;
 
     my $scores = [];
 
@@ -189,138 +189,164 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	return $scores;
     }
 
-    my $light_genomic_aligns = $self->_get_all_ref_genomic_aligns($ma_mlss, $slice);
+    my $filter_projections = 1;
+    my $projection_segments = $orig_slice->adaptor->fetch_normalized_slice_projection($orig_slice, $filter_projections);
 
-    if (scalar(@$light_genomic_aligns == 0)) {
-	#print "no genomic_align_blocks found for this slice\n";
-	return $scores;
-    }
+    foreach my $this_projection_segment (@$projection_segments) {
+        my $offset    = $this_projection_segment->from_start();
 
-    #default display_size is 700
-    if (!defined $display_size) {
-	$display_size = 700;
-    }
+        my $these_scores = [];
+        my $slice = $this_projection_segment->to_Slice;
+        
+        #print $slice->seq_region_name . " " . $slice->start . " " . $slice->end . " offset=$offset\n";
 
-     #default display_mode is AVERAGE
-    if (!defined $display_type) {
-	$display_type = "AVERAGE";
-    }
+        my $light_genomic_aligns = $self->_get_all_ref_genomic_aligns($ma_mlss, $slice);
+        
+        if (scalar(@$light_genomic_aligns == 0)) {
+            #print "no genomic_align_blocks found for this slice\n";
+            #return $scores;
+            next;
+        }
+        
+        #default display_size is 700
+        if (!defined $display_size) {
+            $display_size = 700;
+        }
+        
+        #default display_mode is AVERAGE
+        if (!defined $display_type) {
+            $display_type = "AVERAGE";
+        }
+        
+        #set up bucket object for storing bucket_size number of scores 
+        my $bucket_size = ($orig_slice->end-$orig_slice->start+1)/$display_size;
+        
+        #default window size is the largest bucket that gives at least 
+        #display_size values ie get speed but reasonable resolution
+        my @window_sizes = (1, 10, 100, 500);
+        
+        #check if valid window_size
+        my $found = 0;
+        if (defined $window_size) {
+            foreach my $win_size (@window_sizes) {
+                if ($win_size == $window_size) {
+                    $found = 1;
+                    last;
+                }
+            }
+            if (!$found) {
+                warning("Invalid window_size $window_size");
+                return $scores;
+            }
+        }
+    
+        if (!defined $window_size) {
+            #set window_size to be the largest for when for loop fails
+            $window_size = $window_sizes[scalar(@window_sizes)-1];
+            for (my $i = 1; $i < scalar(@window_sizes); $i++) {
+                if ($bucket_size < $window_sizes[$i]) {
+                    $window_size = $window_sizes[$i-1];
+                    last;
+                }
+            }
+        }
 
-    #set up bucket object for storing bucket_size number of scores 
-    my $bucket_size = ($slice->end-$slice->start+1)/$display_size;
+        #print "window_size $window_size bucket_size $bucket_size slice length " . ($slice->end - $slice->start + 1) . "\n";
+        
+        $_bucket = {diff_score => 0,
+                    start_pos => 0,
+                    end_pos => 0,
+                    start_seq_region_pos => $slice->start,
+                    end_seq_region_pos => $slice->end,
+                    called => 0,
+                    cnt => 0,
+                    size => $bucket_size,
+                    current => 0};
+        foreach my $light_genomic_align (@$light_genomic_aligns) { 
+            my $genomic_align_block_id = $light_genomic_align->{genomic_align_block_id};
+            my $cigar_line = $light_genomic_align->{cigar_line};
+            my $dnafrag_start = $light_genomic_align->{dnafrag_start};
+            my $dnafrag_end = $light_genomic_align->{dnafrag_end};
+            my $dnafrag_strand = $light_genomic_align->{dnafrag_strand};
+            my $gab_length = $light_genomic_align->{length};
+            
+            my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block_id, $window_size, $PACKED);
+            if (scalar(@$conservation_scores) == 0) {
+                next;
+            }
+            
+            #reset _score_index for new conservation_scores
+            $_score_index = 0;
+            
+            #print "slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
+            
+            #if dnafrag_strand is -1, reverse cigar_line, scores so that they 
+            #are always on the forward strand
+            if ($dnafrag_strand == -1) {
+                
+                $cigar_line = join("", reverse ($cigar_line=~(/(\d*[GDMIX])/g)));
+                $conservation_scores = _reverse($conservation_scores, $gab_length);
+                $dnafrag_strand = 1;
+            }
 
-    #default window size is the largest bucket that gives at least 
-    #display_size values ie get speed but reasonable resolution
-    my @window_sizes = (1, 10, 100, 500);
+            #print "after slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
+            #if want one score per base in the alignment, use faster method 
+            #doesn't bother with any binning
+            if ($window_size == 1 && ($display_size == ($slice->end - $slice->start + 1))) {
+                $these_scores = _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $these_scores);
+            } else {
+                $these_scores = _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $these_scores);
+                
+            } 
+        }
+        
+        if (scalar(@$these_scores) == 0) {
+            #return $scores;
+            next;
+        }
+        
+        #need to reverse scores
+        if ($slice->strand == -1) {
+            #reverse scores array
+            @$these_scores = reverse(@$these_scores);
+            #reverse positions
+            foreach my $score (@$these_scores) {
+                $score->position($slice->end - $score->seq_region_pos + 1);
+            }
+            #print "reverse scores\n";
+        } 
 
-    #check if valid window_size
-    my $found = 0;
-    if (defined $window_size) {
-	foreach my $win_size (@window_sizes) {
-	    if ($win_size == $window_size) {
-		$found = 1;
-		last;
-	    }
-	}
-	if (!$found) {
-	    warning("Invalid window_size $window_size");
-	    return $scores;
-	}
+        #Add offset to position
+        if ($offset > 1) {
+            foreach my $score (@$these_scores) {
+                $score->position($score->position + $offset - 1);
+            }
+        }
+        
+        #remove _no_score_values from aligned_scores array
+        my $i = 0;
+        while ($i < scalar(@$these_scores)) {
+            if (!defined($_no_score_value) && 
+                !defined($these_scores->[$i]->diff_score)) {
+                splice @$these_scores, $i, 1;
+            } elsif (defined($_no_score_value) && 
+                     $these_scores->[$i]->diff_score == $_no_score_value) {
+                splice @$these_scores, $i, 1;
+            } else {
+                $i++;
+            }
+        }
+        #foreach my $score (@$these_scores) {
+        #    print "pos1 " . $score->position . " " . $score->diff_score . "\n";
+        #}
+        
+        push @$scores, @$these_scores;
     }
     
-    if (!defined $window_size) {
-	#set window_size to be the largest for when for loop fails
-	$window_size = $window_sizes[scalar(@window_sizes)-1];
-	for (my $i = 1; $i < scalar(@window_sizes); $i++) {
-	    if ($bucket_size < $window_sizes[$i]) {
-		$window_size = $window_sizes[$i-1];
-		last;
-	    }
-	}
-    }
-
-    #print "window_size $window_size bucket_size $bucket_size slice length " . ($slice->end - $slice->start + 1) . "\n";
-
-    $_bucket = {diff_score => 0,
-		start_pos => 0,
-		end_pos => 0,
-		start_seq_region_pos => $slice->start,
-		end_seq_region_pos => $slice->end,
-		called => 0,
-		cnt => 0,
-		size => $bucket_size,
-	       current => 0};
-    foreach my $light_genomic_align (@$light_genomic_aligns) { 
-	my $genomic_align_block_id = $light_genomic_align->{genomic_align_block_id};
-	my $cigar_line = $light_genomic_align->{cigar_line};
-	my $dnafrag_start = $light_genomic_align->{dnafrag_start};
-	my $dnafrag_end = $light_genomic_align->{dnafrag_end};
-	my $dnafrag_strand = $light_genomic_align->{dnafrag_strand};
-	my $gab_length = $light_genomic_align->{length};
-
-	my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block_id, $window_size, $PACKED);
-	if (scalar(@$conservation_scores) == 0) {
-	    next;
-	}
-
-	#reset _score_index for new conservation_scores
-	$_score_index = 0;
-
-	#print "slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
-
-	#if dnafrag_strand is -1, reverse cigar_line, scores so that they 
-	#are always on the forward strand
-	if ($dnafrag_strand == -1) {
-
-	    $cigar_line = join("", reverse ($cigar_line=~(/(\d*[GDMIX])/g)));
-            $conservation_scores = _reverse($conservation_scores, $gab_length);
-            $dnafrag_strand = 1;
-	}
-
-	#print "after slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
-	#if want one score per base in the alignment, use faster method 
-	#doesn't bother with any binning
-	if ($window_size == 1 && ($display_size == ($slice->end - $slice->start + 1))) {
-	    $scores = _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $scores);
-	} else {
-	    $scores = _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $scores);
-	    
-	} 
-    }
-
-    if (scalar(@$scores) == 0) {
-	return $scores;
-    }
-
-    #need to reverse scores
-    if ($slice->strand == -1) {
-	#reverse scores array
-	@$scores = reverse(@$scores);
-	#reverse positions
-	foreach my $score (@$scores) {
-	    $score->position($slice->end - $score->seq_region_pos + 1);
-	}
-	#print "reverse scores\n";
-    }
-    
-    #remove _no_score_values from aligned_scores array
-    my $i = 0;
-     while ($i < scalar(@$scores)) {
- 	if (!defined($_no_score_value) && 
- 	    !defined($scores->[$i]->diff_score)) {
- 	    splice @$scores, $i, 1;
- 	} elsif (defined($_no_score_value) && 
- 		 $scores->[$i]->diff_score == $_no_score_value) {
- 	    splice @$scores, $i, 1;
- 	} else {
- 	    $i++;
- 	}
-     }
-
     #Find the min and max scores for y axis scaling. Save in first
     #conservation score object
     my ($min_y_axis, $max_y_axis) =  _find_min_max_score($scores);
-
+    
     #add min and max scores to the first conservation score object
     if ((scalar @$scores) > 0) {
 	$scores->[0]->y_axis_min($min_y_axis);
@@ -1757,7 +1783,7 @@ sub _get_all_ref_genomic_aligns {
 
     my $gdb_a = $self->db->get_GenomeDBAdaptor();
     my $meta_container = $slice->adaptor->db->get_MetaContainer();
-    my $primary_species_name = $gdb_a->get_species_name_from_core_MetaContainer($meta_container);
+    my $primary_species_name = $meta_container->get_production_name();
     my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
     my $primary_species_assembly = $highest_cs->version();
     my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
@@ -1814,7 +1840,6 @@ sub _get_all_ref_genomic_aligns {
     }  
     return $light_genomic_aligns;
 }
-
 
 1;
 

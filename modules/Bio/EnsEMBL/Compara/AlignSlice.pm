@@ -681,6 +681,9 @@ sub _get_expanded_conservation_scores {
 	#offset is the sum of preceding gab lengths
 	$offset += ($this_genomic_align_block->restricted_aln_end - $this_genomic_align_block->restricted_aln_start + 1);
 
+        #Check there are scores present.
+        next unless (scalar @$all_these_conservation_scores);
+
 	#initialise y axis min and max
 	if (!defined $y_axis_max) {
 	    $y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
@@ -695,10 +698,13 @@ sub _get_expanded_conservation_scores {
 	}
 	push (@$all_conservation_scores, @$all_these_conservation_scores);
     }
-    #set overall min and max
-    $all_conservation_scores->[0]->y_axis_min($y_axis_min);
-    $all_conservation_scores->[0]->y_axis_max($y_axis_max);
-
+ 
+    #Check to see if there are any scores found
+    if (@$all_conservation_scores) {
+        #set overall min and max
+        $all_conservation_scores->[0]->y_axis_min($y_axis_min);
+        $all_conservation_scores->[0]->y_axis_max($y_axis_max);
+    }
     return $all_conservation_scores;
 }
 
@@ -1007,7 +1013,9 @@ sub _create_underlying_Slices {
               -genome_db => $species_def->{genome_db},
               -expanded => $expanded,
           );
-      $new_slice->{genomic_align_ids} = $species_def->{genomic_align_ids};
+      foreach my $this_genomic_align_id (@{$species_def->{genomic_align_ids}}) {
+        $new_slice->{genomic_align_ids}->{$this_genomic_align_id} = 1;
+      }
       push(@{$self->{slices}->{lc($genome_db_name)}}, $new_slice);
       push(@{$self->{_slices}}, $new_slice);
     }
@@ -1059,12 +1067,20 @@ sub _create_underlying_Slices {
       }
     }
   }
-  #It is possible for the same region in the ref species (eg Gibbon) to align to 2 different blocks (pairwise to human in the case of the EPO low coverage alignments). In this case, although the incoming  $genomic_align_blocks will have 2 blocks, the $sorted_genomic_align_blocks will only contain 1 of the blocks. It may happen that one species occurs in one block (eg gorilla) but not in the other. However, the $species_order will contain gorilla but the $sorted_genomic_align_blocks may not. This results in a slice being created for gorilla but it has no slice_mapper_pairs. Must check the slices and remove any that have {'slice_mapper_pairs'} as undef (no alignment comes out as a GAP).
+
+  # It is possible for the same region in the ref species (eg Gibbon) to align to 2 different blocks
+  # (pairwise to human in the case of the EPO low coverage alignments). In this case, although the
+  # incoming  $genomic_align_blocks will have 2 blocks, the $sorted_genomic_align_blocks will only
+  # contain 1 of the blocks. It may happen that one species occurs in one block (eg gorilla) but not
+  # in the other. However, the $species_order will contain gorilla but the $sorted_genomic_align_blocks
+  # may not. This results in a slice being created for gorilla but it has no slice_mapper_pairs. Must
+  # check the slices and remove any that have {'slice_mapper_pairs'} as undef (no alignment comes out
+  # as a GAP).
 
   if ($species_order) {
       my $slices = $self->{_slices};
       for (my $i = (@$slices-1); $i >= 0; --$i) {
-	  if (@{$slices->[$i]->{'slice_mapper_pairs'}} == 0) {
+	  if (@{$slices->[$i]->get_all_Slice_Mapper_pairs()} == 0) {
 	      #remove from {slices}
 	      delete $self->{slices}->{$slices->[$i]->genome_db->name};
 	      #remove from {_slices}
@@ -1105,7 +1121,7 @@ sub _add_GenomicAlign_to_a_Slice {
   my $this_core_slice = $this_genomic_align->get_Slice();
   if (!$this_core_slice) {
     $this_core_slice = new Bio::EnsEMBL::Slice(
-          -coord_system => $aligngap_coord_system,
+          -coord_system => $aligngap_coord_system, #set coord_system_name to "alignment"
           -seq_region_name => "GAP",
           -start => $this_block_start,
           -end => $this_block_end,
@@ -1134,19 +1150,43 @@ sub _add_GenomicAlign_to_a_Slice {
     }
   }
 
+
   my $this_mapper = $this_genomic_align->get_Mapper(0, !$expanded);
   # Fix block start and block end for composite segments (2X genomes)
   if ($this_genomic_align->cigar_line =~ /^(\d*)X/ or $this_genomic_align->cigar_line =~ /(\d*)X$/) {
-    $this_block_start = undef;
-    $this_block_end = undef;
-    my @blocks = $this_mapper->map_coordinates("sequence", $this_genomic_align->dnafrag_start,
-          $this_genomic_align->dnafrag_end, $this_genomic_align->dnafrag_strand, "sequence");
-    foreach my $this_block (@blocks) {
-      next if ($this_block->isa("Bio::EnsEMBL::Mapper::Gap"));
-      $this_block_start = $this_block->start if (!defined($this_block_start) or $this_block->start < $this_block_start);
-      $this_block_end = $this_block->end if (!defined($this_block_end) or $this_block->end > $this_block_end);
+
+    my $cigar_arrayref = $this_genomic_align->get_cigar_arrayref();
+    my $matches = 0;
+    for (my $i =0; $i<@$cigar_arrayref; $i++) {
+      my $cigar_type = substr($cigar_arrayref->[$i], -1, 1);
+      my $cigar_num = substr($cigar_arrayref->[$i], 0 , -1);
+      $cigar_num = 1 if ($cigar_num eq "");
+
+      if ($cigar_type eq "M") {
+        $matches = 1;
+        last;
+      } elsif ($cigar_type =~ /[XD]/) {
+        $this_block_start += $cigar_num;
+      }
     }
- }
+    if ($matches) {
+      for (my $j = @$cigar_arrayref - 1; $j>=0; $j--) {
+        my $cigar_type = substr($cigar_arrayref->[$j], -1, 1);
+        my $cigar_num = substr($cigar_arrayref->[$j], 0 , -1);
+        $cigar_num = 1 if ($cigar_num eq "");
+
+        if ($cigar_type eq "M") {
+          last;
+        } elsif ($cigar_type =~ /[XD]/) {
+          $this_block_end -= $cigar_num;
+        }
+      }
+    } else {
+      $this_block_start = undef;
+      $this_block_end = undef;
+    }
+  }
+
   #Skip if only have X and no sequence then $this_block_start and $this_block_end are undefined.
   if (!defined $this_block_start && !defined $this_block_end) {
       return;
@@ -1197,18 +1237,15 @@ sub _choose_underlying_Slice {
   }
   if ($species_order) {
     my $preset_underlying_slice = undef;
-    
-    foreach my $this_underlying_slice (@{$self->{slices}->{lc($species)}}) {
-        if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
-            $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
-        }
-        if (grep {$_ == $this_genomic_align->{_original_dbID}}
-            @{$this_underlying_slice->{genomic_align_ids}}) {
-            $preset_underlying_slice = $this_underlying_slice;
-            last;
-        }
+    if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
+      $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
     }
-
+    foreach my $this_underlying_slice (@{$self->{slices}->{lc($species)}}) {
+      if ($this_underlying_slice->{genomic_align_ids}->{$this_genomic_align->{_original_dbID}}) {
+        $preset_underlying_slice = $this_underlying_slice;
+        last;
+      }
+    }
     if ($preset_underlying_slice) {
       my $overlap = 0;
       my $slice_mapper_pairs = $preset_underlying_slice->get_all_Slice_Mapper_pairs();

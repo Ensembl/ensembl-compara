@@ -8,8 +8,6 @@
       # one for each member used alternatively as query and database
       # (hit) in the blast run
 
-      my $pafs = $homology->get_all_PeptideAlignFeature;
-
       foreach my $paf (@{$pafs}) {
         print $paf->query_member->stable_id," ",$self->hit_member->stable_id," ",$paf->evalue,"\n";
       }
@@ -77,7 +75,6 @@ sub create_homology
   }
   $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
   $homology->stable_id($stable_id);
-  $homology->method_link_type("ENSEMBL_ORTHOLOGUES");
 
   #
   # QUERY member

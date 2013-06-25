@@ -42,6 +42,8 @@ Method is a data object that roughly represents the type of pipeline run and the
 package Bio::EnsEMBL::Compara::Method;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
@@ -89,8 +91,9 @@ sub new {
 
 sub type {
     my $self = shift;
+    my $type = shift;
 
-    $self->{'_type'} = shift if(@_);
+    $self->{'_type'} = $type if ($type);
 
     return $self->{'_type'};
 }
@@ -108,8 +111,9 @@ sub type {
 
 sub class {
     my $self = shift;
+    my $class = shift;
 
-    $self->{'_class'} = shift if(@_);
+    $self->{'_class'} = $class if ($class);
 
     return $self->{'_class'};
 }

@@ -54,7 +54,7 @@ package Bio::EnsEMBL::Compara::DBSQL::AlignedMemberAdaptor;
 use strict; 
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::AlignedMember;
@@ -184,61 +184,6 @@ sub fetch_all_by_gene_align_id {
 
     $self->bind_param_generic_fetch($id, SQL_INTEGER);
     return $self->generic_fetch($constraint, $join);
-}
-
-
-#
-# Store an AlignedMemberSet
-##############################
-
-=head2 store
-
- Arg [1]    : Bio::EnsEMBL::Compara::AlignedMemberSet $aln
- Example    : $AlignedMemberAdaptor->store($fam)
- Description: Stores an AlignedMemberSet object into a Compara database
- Returntype : none
- Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::AlignedMemberSet
- Caller     : general
-
-=cut
-
-sub store {
-    my ($self, $aln) = @_;
-    assert_ref($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
-  
-    # dbID for GeneTree is too dodgy
-    my $id = $aln->isa('Bio::EnsEMBL::Compara::GeneTree') ? $aln->gene_align_id() : $aln->dbID();
-
-    if ($id) {
-        my $sth = $self->prepare('UPDATE gene_align SET seq_type = ?, aln_length = ?, aln_method = ? WHERE gene_align_id = ?');
-        $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method, $id);
-    } else {
-        my $sth = $self->prepare('INSERT INTO gene_align (seq_type, aln_length, aln_method) VALUES (?,?,?)');
-        $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method);
-        $id = $sth->{'mysql_insertid'};
-
-        if ($aln->isa('Bio::EnsEMBL::Compara::GeneTree')) {
-            $aln->gene_align_id($id);
-        } else {
-            $aln->dbID($id);
-        }
-    }
- 
-    my $sth = $self->prepare('REPLACE INTO gene_align_member (gene_align_id, member_id, cigar_line) VALUES (?,?,?)');
-
-    foreach my $member (@{$aln->get_all_Members}) {
-        $sth->execute($id, $member->member_id, $member->cigar_line) if $member->cigar_line;
-    }
-
-    $sth->finish;
-
-    # let's store the link between gene_tree_root and gene_align
-    if ($aln->isa('Bio::EnsEMBL::Compara::GeneTree') and defined $aln->root_id) {
-        $sth = $self->prepare('UPDATE gene_tree_root SET gene_align_id = ? WHERE root_id = ?');
-        $sth->execute($aln->gene_align_id,  $aln->root_id);
-        $sth->finish;
-    }
-
 }
 
 

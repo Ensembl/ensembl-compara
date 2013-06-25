@@ -132,7 +132,7 @@ sub filter_duplicates {
   $self->param('delete_hash', {}); #all the genomic_align_blocks that need to be deleted
 
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('method_link_species_set_id'));
-#  my ($gdb1, $gdb2) = @{$mlss->species_set};
+#  my ($gdb1, $gdb2) = @{$mlss->species_set_obj->genome_dbs};
 #  if($gdb1->dbID > $gdb2->dbID) {
 #    my $tmp = $gdb1; $gdb1=$gdb2; $gdb2=$tmp;
 #  }

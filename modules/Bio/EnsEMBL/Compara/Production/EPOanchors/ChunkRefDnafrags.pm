@@ -45,7 +45,7 @@ sub fetch_input {
 							$method_link_type, $reference_genome_db);
 		}
 		foreach my $mlss( @$method_link_species_sets ) {
-			foreach my $genome_db( @{ $mlss->species_set } ){
+			foreach my $genome_db( @{ $mlss->species_set_obj->genome_dbs } ){
 				next if ($genome_db->dbID == $reference_species_id);
 				push(@{ $non_reference_genome_db_ids{ $method_link_type } }, $genome_db->dbID );
 

@@ -148,6 +148,7 @@ sub new_from_transcript {
   $self->chr_start($transcript->coding_region_start);
   $self->chr_end($transcript->coding_region_end);
   $self->chr_strand($transcript->seq_region_strand);
+  $self->display_name($transcript->display_xref->display_id);
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
     if(not defined($transcript->translation)) {
@@ -642,6 +643,7 @@ sub gene_member {
     assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
     $self->{'_gene_member'} = $gene_member;
   }
+  return undef if ($self->source_name ne 'ENSEMBLPEP' and $self->source_name ne 'ENSEMBLTRANS');
   if(!defined($self->{'_gene_member'}) and
      defined($self->adaptor) and $self->dbID)
   {
@@ -693,7 +695,7 @@ sub gene_member {
 sub get_Transcript {
   my $self = shift;
   
-  return undef unless($self->source_name eq 'ENSEMBLPEP');
+  return undef unless($self->source_name eq 'ENSEMBLPEP' or $self->source_name eq 'ENSEMBLTRANS');
   return $self->{'core_transcript'} if($self->{'core_transcript'});
 
   unless($self->genome_db and 

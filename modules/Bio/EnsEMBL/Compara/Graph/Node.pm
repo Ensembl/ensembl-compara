@@ -49,6 +49,7 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::Graph::Link;
 
@@ -195,10 +196,7 @@ sub create_link_to_node {
   my $node = shift;
   my $distance = shift;
 
-  throw("neighbor not defined") 
-     unless(defined($node));
-  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
-     unless($node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
   
   #print("create_link_to_node\n");  $self->print_node; $node->print_node;
   
@@ -218,10 +216,7 @@ sub create_directed_link_to_node {
   my $node = shift;
   my $distance = shift;
 
-  throw("neighbor not defined") 
-     unless(defined($node));
-  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
-     unless($node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
   
   #print("create_link_to_node\n");  $self->print_node; $node->print_node;
   
@@ -270,9 +265,7 @@ sub _unlink_node_in_hash {
 sub unlink_neighbor {
   my ($self, $node) = @_;
 
-  throw("neighbor not defined") unless(defined($node));
-  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
-     unless($node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
 
   my $link = $self->link_for_neighbor($node);  
   throw("$self not my neighbor $node") unless($link);
@@ -367,8 +360,7 @@ sub link_for_neighbor {
   my $self = shift;
   my $node = shift;
 
-  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$node]")
-     unless($node and $node->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
 
   return $self->{'_obj_id_to_link'}->{$node};
 }
@@ -420,8 +412,7 @@ sub equals {
 sub like {
   my $self = shift;
   my $other = shift;
-  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$other]")
-        unless($other and $other->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  assert_ref($other, 'Bio::EnsEMBL::Compara::Graph::Node');
   return 1 if($self eq $other);
   return 0 unless($self->link_count == $other->link_count);
   foreach my $link (@{$self->links}) {
@@ -435,8 +426,7 @@ sub has_neighbor {
   my $self = shift;
   my $node = shift;
   
-  throw "[$node] must be a Bio::EnsEMBL::Compara::Graph::Node object"
-       unless ($node and $node->isa("Bio::EnsEMBL::Compara::Graph::Node"));
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
   
   return 1 if(defined($self->{'_obj_id_to_link'}->{$node}));
   return 0;

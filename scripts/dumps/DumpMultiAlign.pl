@@ -433,8 +433,6 @@ if ($method_link_species_set_id) {
       if (!$method_link_species_set);
 }
 
-my $meta_container = $compara_dba->get_MetaContainer();
-
 my $conservation_score_mlss;
 if ($method_link_species_set->method->class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
@@ -493,7 +491,7 @@ if ($method_link_species_set->method->class =~ /GenomicAlignTree/) {
 #Need if get genomic_align_blocks from file_of_genomic_align_block_ids
 my  $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 
-my $release = $meta_container->list_value_by_key("schema_version")->[0];
+my $release = $compara_dba->get_MetaContainer()->get_schema_version();
 my $date = scalar(localtime());
 
 
@@ -578,12 +576,17 @@ do {
   } else {
       while ((!$split_size or @$genomic_align_blocks < $split_size) and $slice_counter < @query_slices) {
         my $this_slice = $query_slices[$slice_counter];
+        my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+        my $this_dnafrag = $dnafrag_adaptor->fetch_by_Slice($this_slice);
         my $aln_left = 0;
         if ($split_size) {
           $aln_left = $split_size - @$genomic_align_blocks;
         }
-        my $extra_genomic_align_blocks = $genomic_align_set_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-            $method_link_species_set, $this_slice, $aln_left, $start, $restrict);
+        #Call fetch_all_by_MethodLinkSpeciesSet_DnaFrag rather than fetch_all_by_MethodLinkSpeciesSet_Slice because of
+        #issues with the PAR regions. The _Slice method will dumps alignments on the PAR whereas _DnaFrag will not.
+        my $extra_genomic_align_blocks = $genomic_align_set_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+            $method_link_species_set, $this_dnafrag, $this_slice->start, $this_slice->end, $aln_left, $start, $restrict);
+
         push(@$genomic_align_blocks, @$extra_genomic_align_blocks);
         if ($split_size and @$genomic_align_blocks >= $split_size) {
           $start += @$extra_genomic_align_blocks;
@@ -656,7 +659,7 @@ sub print_header {
   my ($output_format, $method_link_species_set, $date, $release, $num) = @_;
 
   if ($output_format =~ /^maf$/i) {
-    print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
+    print "##maf version=1 program=", $method_link_species_set->method->type, "\n";
     print "#\n";
   } elsif ($output_format =~ /^emf$/i) {
     print
@@ -818,6 +821,7 @@ sub print_my_emf {
     print join(" ", "SEQ", $species_name, $dnafrag_name,
         $dnafrag_start, $dnafrag_end, $dnafrag_strand,
         "(chr_length=".$dnafrag_length.")"), "\n";
+
     my $aligned_sequence;
     if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
       foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
@@ -840,6 +844,7 @@ sub print_my_emf {
       $aligned_sequence = $this_genomic_align->original_sequence;
     } else {
       $aligned_sequence = $this_genomic_align->aligned_sequence;
+        
     }
       #Fixed memory problem. Don't need these anymore
       if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {

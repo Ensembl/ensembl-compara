@@ -125,7 +125,7 @@ sub _create_specific_readme {
     my $filename = $self->param('output_dir') . "/README." . lc($method_link) . "_" . @$species_set . "_way";
 
     #Get first schema_version
-    my $schema_version = $meta_container->list_value_by_key('schema_version')->[0];
+    my $schema_version = $meta_container->get_schema_version();
 
     if ($mlss->method->type eq "PECAN") {
 	$self->_create_specific_pecan_readme($compara_dba, $mlss, $species_set, $filename, $schema_version, $newick_species_tree);

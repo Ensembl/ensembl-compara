@@ -34,6 +34,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::TreeIO;
 use Bio::EnsEMBL::Compara::Graph::Node;
@@ -132,8 +133,7 @@ sub add_child {
   
   throw("child not defined") 
      unless(defined($child));
-  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
-     unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
+  assert_ref($child, 'Bio::EnsEMBL::Compara::NestedSet');
   
   #printf("add_child: parent(%s) <-> child(%s)\n", $self->node_id, $child->node_id);
   
@@ -229,8 +229,7 @@ sub has_parent {
 sub has_ancestor {
   my $self = shift;
   my $ancestor = shift;
-  throw "[$ancestor] must be a Bio::EnsEMBL::Compara::NestedSet object"
-       unless ($ancestor and $ancestor->isa("Bio::EnsEMBL::Compara::NestedSet"));
+  assert_ref($ancestor, 'Bio::EnsEMBL::Compara::NestedSet');
   my $node = $self->parent;
   while($node) {
     return 1 if($node->equals($ancestor));
@@ -353,6 +352,31 @@ sub sorted_children {
             $a->distance_to_parent <=> $b->distance_to_parent
           }  @{$self->children;};
   return \@sortedkids;
+}
+
+
+=head2 siblings
+
+  Overview   : returns a ist of NestedSet nodes that share the same parent
+  Example    : my @siblings = @{$object->siblings()};
+  Returntype : array reference of Bio::EnsEMBL::Compara::NestedSet objects (could be empty)
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub siblings {
+    my ($node) = @_;
+    return [] unless ($node->has_parent());
+    my $parent = $node->parent();
+    my $children = $parent->children();
+    my @siblings = ();
+    for my $child (@$children) {
+        if ($child != $node) {
+            push @siblings, $child;
+        }
+    }
+    return [@siblings];
 }
 
 
@@ -995,8 +1019,7 @@ sub newick_simple_format {
 sub has_child {
   my $self = shift;
   my $child = shift;
-  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$child]")
-        unless($child->isa('Bio::EnsEMBL::Compara::NestedSet'));
+  assert_ref($child, 'Bio::EnsEMBL::Compara::NestedSet');
   $self->load_children_if_needed;
   my $link = $self->link_for_neighbor($child);
   return 0 unless($link);
@@ -1029,8 +1052,7 @@ sub is_leaf {
 sub merge_children {
   my $self = shift;
   my $nset = shift;
-  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$nset]")
-        unless($nset->isa('Bio::EnsEMBL::Compara::NestedSet'));
+  assert_ref($nset, 'Bio::EnsEMBL::Compara::NestedSet');
   foreach my $child_node (@{$nset->children}) {
     $self->add_child($child_node, $child_node->distance_to_parent);
   }
@@ -1249,8 +1271,7 @@ sub delete_lineage {
   my $self = shift;
   my $del_me = shift;
 
-  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$self]") 
-    unless ($self->isa('Bio::EnsEMBL::Compara::NestedSet'));
+  assert_ref($del_me, 'Bio::EnsEMBL::Compara::NestedSet');
 
   my $parent = $del_me->parent;
   while ($parent) {

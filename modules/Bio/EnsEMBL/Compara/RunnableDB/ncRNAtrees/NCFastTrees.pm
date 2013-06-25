@@ -77,12 +77,12 @@ sub fetch_input {
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
     $self->param('nc_tree', $nc_tree);
 
-    if (my $alignment_id = $self->param('alignment_id')) {
-        $self->_load_and_dump_alignment();
-        # $self->param('aln_fasta') and/or $self->param('aln_file') are now set
-#        $self->param('input_aln', $self->_load_and_dump_alignment());
-        return;
-    }
+    my $alignment_id = $self->param('alignment_id');
+    my $aln_seq_type = $self->param('aln_seq_type');
+    $nc_tree->gene_align_id($alignment_id);
+    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    $nc_tree->attach_alignment($alignment_id, $aln_seq_type);
+
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
     } else {
@@ -157,12 +157,10 @@ sub _run_fasttree {
     $cmd .= " $aln_file";
     $cmd .= " > $fasttree_output";
 
-    print STDERR "$cmd\n" if ($self->debug);
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    unless(system("$cmd") == 0) {
-        $self->throw("error running FastTree\n$cmd\n");
+    my $runCmd = $self->run_command($cmd);
+    if ($runCmd->exit_code) {
+        $self->throw("error running parsimonator\n$cmd\n");
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
 
     $self->_store_newick_into_nc_tree_tag_string($tag, $fasttree_output);
 
@@ -251,10 +249,6 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   $file_root    =~ s/\/\//\//g;  # converts any // in path to /
 
   my $aln_file = $file_root . ".aln";
-#   if($self->debug) {
-#     printf("dumpMultipleAlignmentStructToWorkdir : %d members\n", $leafcount);
-#     print("aln_file = '$aln_file'\n");
-#   }
 
   open(OUTSEQ, ">$aln_file")
     or $self->throw("Error opening $aln_file for write");
@@ -302,7 +296,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
     print OUTSEQ "$seq\n";
     $count++;
-    print STDERR "sequences $count\n" if ($count % 50 == 0);
+    print STDERR "sequences $count\n" if (($count % 50 == 0) && ($self->debug()));
   }
   close OUTSEQ;
 
@@ -322,54 +316,6 @@ sub _store_newick_into_nc_tree_tag_string {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
     $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
-}
-
-sub _load_and_dump_alignment {
-    my ($self) = @_;
-
-    my $root_id = $self->param('gene_tree_id');
-    my $alignment_id = $self->param('alignment_id');
-    my $file_root = $self->worker_temp_directory. "nctree_" . $root_id;
-    my $aln_file = $file_root . ".aln";
-    open my $outaln, ">", "$aln_file" or $self->throw("Error opening $aln_file for writing");
-
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'seq_with_flanking', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-
-    my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-    my $bioaln = $aln->get_SimpleAlign(
-                                       -ID_TYPE => 'MEMBER',
-                                       %sa_params,
-                                      );
-
-
-    my @all_aln_seq;
-    foreach my $seq ($bioaln->each_seq) {
-        push @all_aln_seq, $seq;
-    }
-
-    my $seqLen = length($all_aln_seq[0]->seq);
-    if ($seqLen >= 5000) {
-        # It is better to feed FastTree with aln in fasta format
-        my $aln_fasta = $file_root . ".fa";
-        open my $aln_fasta_fh, ">", $aln_fasta or $self->throw("Error opening $aln_fasta for writing");
-        for my $seq (@all_aln_seq) {
-            print $aln_fasta_fh ">" . $seq->display_id . "\n";
-            print $aln_fasta_fh $seq->seq . "\n";
-        }
-        close ($aln_fasta_fh);
-        $self->param('aln_fasta', $aln_fasta);
-    }
-
-    print $outaln scalar(@all_aln_seq), " ", $seqLen, "\n";
-    for my $seq (@all_aln_seq) {
-        my $aln_seq = $seq->seq;
-        $aln_seq =~ s/^N/A/;  # To avoid RAxML failure
-        print $outaln $seq->display_id, " ", $aln_seq, "\n";
-    }
-    close($outaln);
-
-    $self->param('input_aln', $aln_file);
-    return;
 }
 
 

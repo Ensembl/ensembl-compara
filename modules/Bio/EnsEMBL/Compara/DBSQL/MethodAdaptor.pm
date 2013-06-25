@@ -51,29 +51,56 @@ Database adaptor to store and fetch Method objects
 package Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::Method;
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
+
+
+#############################################################
+# Implements Bio::EnsEMBL::Compara::RunnableDB::ObjectStore #
+#############################################################
 
 sub object_class {
     return 'Bio::EnsEMBL::Compara::Method';
 }
 
 
-sub _tables {
 
+#################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
+#################################################################
+
+sub _add_to_cache {
+    my ($self, $method) = @_;
+    $self->SUPER::_add_to_cache($method);
+    $self->{_type_cache}->{lc $method->type()} = $method;
+}
+
+
+
+########################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
+########################################################
+
+sub _tables {
     return (['method_link','m'])
 }
 
 
 sub _columns {
-
-        #warning _objs_from_sth implementation depends on ordering
+    # warning _objs_from_sth implementation depends on ordering
     return qw (
         m.method_link_id
         m.type
         m.class
+    );
+}
+
+sub _unique_attributes {
+    return qw(
+        type
     );
 }
 
@@ -96,75 +123,55 @@ sub _objs_from_sth {
 }
 
 
+
+###################
+# fetch_* methods #
+###################
+
 =head2 fetch_by_type
 
   Arg [1]     : string $type
   Example     : my $bzn_method = $method_adaptor->fetch_by_type('BLASTZ_NET');
   Description : Fetches the Method object(s) with a given type
-  Returntype  : Bio::EnsEMBL::Compara::Method arrayref
+  Returntype  : Bio::EnsEMBL::Compara::Method
 
 =cut
 
 sub fetch_by_type {
     my ($self, $type) = @_;
 
-    my ($method) = @{ $self->generic_fetch( "m.type = '$type'" ) };
-    return $method;
+    $self->_id_cache;
+    return $self->{_type_cache}->{lc $type};
 }
 
 
 =head2 fetch_all_by_class_pattern
 
   Arg [1]     : string $class_pattern
-  Example     : my @tree_methods = @{ $method_adaptor->fetch_by_class_pattern('%tree_node') };
+  Example     : my @tree_methods = @{ $method_adaptor->fetch_by_class_pattern('.*tree_node') };
   Description : Fetches the Method object(s) with a class matching the given pattern
   Returntype  : Bio::EnsEMBL::Compara::Method arrayref
 
 =cut
 
+# TODO used ??
+
 sub fetch_all_by_class_pattern {
     my ($self, $class_pattern) = @_;
 
-    return $self->generic_fetch( "m.class LIKE '$class_pattern'" );
+    my @matched_methods;
+    foreach my $method (@{$self->fetch_all}) {
+        push @matched_methods, $method if $method->class =~ m/$class_pattern/;
+    }
+    return \@matched_methods
 }
 
 
-sub synchronise {    # return autoinc_id/undef
-    my ( $self, $method ) = @_;
 
-    unless(defined $method && ref $method && $method->isa('Bio::EnsEMBL::Compara::Method') ) {
-        throw("The argument to synchronise() must be a Method, not [$method]");
-    }
+##################
+# store* methods #
+##################
 
-    my $dbID            = $method->dbID();
-
-    my $dbid_check      = $dbID ? "method_link_id=$dbID" : 0;
-    my $unique_data_check   = "( type = '".$method->type."' )";
-
-    my $sth = $self->prepare( "SELECT method_link_id, $unique_data_check FROM method_link WHERE $dbid_check OR $unique_data_check" );
-    $sth->execute();
-
-    my $vectors = $sth->fetchall_arrayref();
-    $sth->finish();
-
-    if( scalar(@$vectors) >= 2 ) {
-        die "Attempting to store an object with dbID=$dbID experienced partial collisions on both dbID and data in the db";
-    } elsif( scalar(@$vectors) == 1 ) {
-        my ($stored_dbID, $unique_key_check) = @{$vectors->[0]};
-
-        if(!$unique_key_check) {
-            die "Attempting to store an object with dbID=$dbID experienced a collision with same dbID but different data";
-        } elsif($dbID and ($dbID!=$stored_dbID)) {
-            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)";
-        } else {
-            return $self->attach( $method, $stored_dbID);
-        }
-    } else {
-        return undef;   # not found, safe to insert
-    }
-}
-
-    
 =head2 store
 
   Arg [1]     : Bio::EnsEMBL::Compara::Method $method
@@ -181,21 +188,21 @@ sub store {
         $reference_dba->get_MethodAdaptor->store( $method );
     }
 
-    unless($self->synchronise($method)) {
+    unless($self->_synchronise($method)) {
         my $sql = 'INSERT INTO method_link (method_link_id, type, class) VALUES (?, ?, ?)';
-        my $sth = $self->prepare( $sql ) or die "Could not prepare $sql";
+        my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
 
         my $return_code = $sth->execute( $method->dbID(), $method->type(), $method->class() )
-                # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
-            or die "Could not store ".$method->toString;
+            or die "Could not store ".$method->toString."\n";
 
-        if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
-            $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
-            $sth->finish();
-        }
+        $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
+        $sth->finish();
     }
+
+    $self->_add_to_cache($method);
     return $method;
 }
+
 
 
 1;

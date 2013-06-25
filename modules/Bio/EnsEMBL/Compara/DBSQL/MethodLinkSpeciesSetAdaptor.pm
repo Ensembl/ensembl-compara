@@ -78,19 +78,46 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
+
+
+#############################################################
+# Implements Bio::EnsEMBL::Compara::RunnableDB::ObjectStore #
+#############################################################
 
 sub object_class {
     return 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet';
 }
 
+
+#################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
+#################################################################
+
+sub _add_to_cache {
+    my ($self, $mlss) = @_;
+    $self->SUPER::_add_to_cache($mlss);
+    $self->{_meth_ss_cache}->{$mlss->method->dbID}->{$mlss->species_set_obj->dbID} = $mlss;
+    foreach my $gdb (@{$mlss->species_set_obj->genome_dbs()}) {
+        push @{$self->{_gdb_cache}->{$gdb->dbID}}, $mlss;
+        push @{$self->{_gdb_meth_cache}->{$gdb->dbID}->{$mlss->method->type}}, $mlss;
+    }
+}
+
+
+##################
+# store* methods #
+##################
 
 =head2 store
 
@@ -112,14 +139,12 @@ sub object_class {
 sub store {
   my ($self, $mlss, $store_components_first) = @_;
 
-  throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
-    unless ($mlss && ref $mlss &&
-        $mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
 
-  my $method            = $mlss->method()           or die "No Method defined, cannot store";
+  my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
-  my $species_set_obj   = $mlss->species_set_obj()  or die "No SpeciesSet defined, cannot store";
+  my $species_set_obj   = $mlss->species_set_obj()  or die "No SpeciesSet defined, cannot store\n";
   $self->db->get_SpeciesSetAdaptor->store( $species_set_obj, $store_components_first );
 
   my $dbID;
@@ -128,32 +153,11 @@ sub store {
   }
 
   if (!$dbID) {
-    ## Lock the table in order to avoid a concurrent process to store the same object with a different dbID
-    # from mysql documentation 13.4.5 :
-    #   "If your queries refer to a table using an alias, then you must lock the table using that same alias.
-    #   "It will not work to lock the table without specifying the alias"
-    #Thus we need to lock method_link_species_set as a, method_link_species_set as b, and method_link_species_set
 
-	my $original_dwi = $self->dbc()->disconnect_when_inactive();
-  	$self->dbc()->disconnect_when_inactive(0);
+      my $columns = '(method_link_species_set_id, method_link_id, species_set_id, name, source, url)';
+      my $mlss_placeholders = '?, ?, ?, ?, ?';
+      my @mlss_data = ($method->dbID, $species_set_obj->dbID, $mlss->name || '', $mlss->source || '', $mlss->url || '');
 
-    $self->dbc->do(qq{ LOCK TABLES
-                        method_link_species_set WRITE,
-                        method_link_species_set as mlss WRITE,
-                        method_link_species_set as mlss1 WRITE,
-                        method_link_species_set as mlss2 WRITE,
-                        method_link WRITE,
-                        method_link as m WRITE,
-                        method_link as ml WRITE
-   });
-
-        # check again if the object has not been stored in the meantime (tables are locked)
-    if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
-        $dbID = $already_stored_method_link_species_set->dbID;
-    }
-
-    # If the object still does not exist in the DB, store it
-    if (!$dbID) {
       $dbID = $mlss->dbID();
       if (!$dbID) {
         ## Use conversion rule for getting a new dbID. At the moment, we use the following ranges:
@@ -166,58 +170,47 @@ sub store {
         ## => the method_link_species_set_id must be between 10000 times the hundreds in the
         ## method_link_id and the next hundred.
 
-        my $method_link_id    = $method->dbID;
-        my $sth2 = $self->prepare("SELECT
-            MAX(mlss1.method_link_species_set_id + 1)
-            FROM method_link_species_set mlss1 LEFT JOIN method_link_species_set mlss2
-              ON (mlss2.method_link_species_set_id = mlss1.method_link_species_set_id + 1)
-            WHERE mlss2.method_link_species_set_id IS NULL
-              AND mlss1.method_link_species_set_id > 10000 * ($method_link_id DIV 100)
-              AND mlss1.method_link_species_set_id < 10000 * (1 + $method_link_id DIV 100)
-            ");
-        $sth2->execute();
-        my $count;
-        ($dbID) = $sth2->fetchrow_array();
-        #If we got no dbID i.e. we have exceeded the bounds of the range then
-        #assign to the next available identifeir
-        if (!defined($dbID)) {
-          $sth2->finish();
-          $sth2 = $self->prepare("SELECT MAX(mlss1.method_link_species_set_id + 1) FROM method_link_species_set mlss1");
-          $sth2->execute();
-          ($dbID) = $sth2->fetchrow_array();
-        }
-        $sth2->finish();
-      }
+        my $mlss_id_factor = int($method->dbID / 100);
+        my $min_mlss_id = 10000 * $mlss_id_factor + 1;
+        my $max_mlss_id = 10000 * ($mlss_id_factor + 1);
 
-      my $method_link_species_set_sql = qq{
-            INSERT IGNORE INTO method_link_species_set (
-              method_link_species_set_id,
-              method_link_id,
-              species_set_id,
-              name,
-              source,
-              url)
-            VALUES (?, ?, ?, ?, ?, ?)
-      };
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new( -DB_CONNECTION => $self->dbc );
+        my $val = $helper->transaction(
+            -RETRY => 2,
+            -CALLBACK => sub {
+                $self->dbc->do('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
+                my $sth2 = $self->prepare("INSERT INTO method_link_species_set $columns SELECT
+                    IF(
+                        MAX(method_link_species_set_id) = $max_mlss_id,
+                        NULL,
+                        IFNULL(
+                            MAX(method_link_species_set_id) + 1,
+                            $min_mlss_id
+                        )
+                    ), $mlss_placeholders
+                    FROM method_link_species_set
+                    WHERE method_link_species_set_id BETWEEN $min_mlss_id AND $max_mlss_id
+                    ");
+                my $r = $sth2->execute(@mlss_data);
+                $dbID = $sth2->{'mysql_insertid'};
+                $sth2->finish();
+                return $r;
+            }
+        );
+      } else {
+
+      my $method_link_species_set_sql = qq{INSERT INTO method_link_species_set $columns VALUES (?, $mlss_placeholders)};
 
       my $sth3 = $self->prepare($method_link_species_set_sql);
-      $sth3->execute(($dbID or undef), $method->dbID, $species_set_obj->dbID,
-          ($mlss->name or undef), ($mlss->source or undef),
-          ($mlss->url or ""));
-      $dbID = $sth3->{'mysql_insertid'};
+      $sth3->execute($dbID, @mlss_data);
       $sth3->finish();
     }
 
-    ## Unlock tables
-    $self->dbc->do("UNLOCK TABLES");
-    $self->dbc()->disconnect_when_inactive($original_dwi);
   }
 
   $self->attach( $mlss, $dbID);
-
+  $self->_add_to_cache($mlss);
   $self->sync_tags_to_database( $mlss );
-
-  $self->cache_all(1);
 
   return $mlss;
 }
@@ -243,37 +236,29 @@ sub delete {
     $sth->execute($method_link_species_set_id);
     $sth->finish();
 
-    $self->cache_all(1);
+    $self->_remove_from_cache($method_link_species_set_id);
 }
 
 
-=head2 cache_all
+########################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
+########################################################
 
-  Arg [1]    : none
-  Example    : none
-  Description: Caches all the MLSS entries hashed by dbID; loads from db when necessary or asked
-  Returntype : Hash of {mlss_id -> mlss}
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
 
-=cut
+    my @mlss_list = ();
 
-sub cache_all {
-    my ($self, $force_reload) = @_;
+    my $method_adaptor = $self->db->get_MethodAdaptor;
+    my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
 
-    if(!$self->{'_cache'} or $force_reload) {
+    my $method_hash = $self->db->get_MethodAdaptor()->_id_cache;
+    my $species_set_hash = $self->db->get_SpeciesSetAdaptor()->_id_cache;
 
-        $self->{'_cache'} = {};
+    my ($dbID, $method_link_id, $species_set_id, $name, $source, $url);
+    $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url);
+    while ($sth->fetch()) {
 
-        my $method_hash       = { map { $_->dbID => $_} @{ $self->db->get_MethodAdaptor()->fetch_all()} };
-        my $species_set_hash  = { map { $_->dbID => $_} @{ $self->db->get_SpeciesSetAdaptor()->fetch_all()} };
-
-        my $sql = 'SELECT method_link_species_set_id, method_link_id, species_set_id, name, source, url FROM method_link_species_set';
-        my $sth = $self->prepare($sql);
-        $sth->execute();
-
-        while( my ($dbID, $method_link_id, $species_set_id, $name, $source, $url) = $sth->fetchrow_array()) {
             my $method          = $method_hash->{$method_link_id} or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
             my $species_set_obj = $species_set_hash->{$species_set_id} or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
 
@@ -289,55 +274,41 @@ sub cache_all {
                     -source             => $source,
                     -url                => $url,
                 );
-
-                $self->{'_cache'}->{$dbID} = $mlss;
+                push @mlss_list, $mlss;
             }
-        }
-        $sth->finish();
     }
-
-    return $self->{'_cache'};
+    $sth->finish();
+    return \@mlss_list;
 }
 
-=head2 fetch_by_dbID
+sub _tables {
 
-  Arg [1]    : int $dbid
-  Example    : my $this_mlss = $mlssa->fetch_by_dbID(12345);
-  Description: Retrieves a MethodLinkSpeciesSet object via its internal identifier
-  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
+    return (['method_link_species_set', 'm'])
+}
 
-=cut
-
-sub fetch_by_dbID {
-    my ($self, $dbid) = @_;
-
-    throw("dbID must be defined and nonzero") unless($dbid);
-
-    return $self->cache_all->{$dbid};
+sub _columns {
+    return qw(
+        m.method_link_species_set_id
+        m.method_link_id
+        m.species_set_id
+        m.name
+        m.source
+        m.url
+    )
 }
 
 
-=head2 fetch_all
-
-  Args       : none
-  Example    : my $method_link_species_sets = $mlssa->fetch_all();
-  Description: Retrieve all possible Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
-  Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub fetch_all {
-    my ($self) = @_;
-
-    return [ values %{ $self->cache_all } ];
+sub _unique_attributes {
+    return qw(
+        method_link_id
+        species_set_id
+    )
 }
 
+
+###################
+# fetch_* methods #
+###################
 
 =head2 fetch_by_method_link_id_species_set_id
 
@@ -357,19 +328,13 @@ sub fetch_all {
 sub fetch_by_method_link_id_species_set_id {
     my ($self, $method_link_id, $species_set_id, $no_warning) = @_;
 
-    if($method_link_id && $species_set_id) {
-        foreach my $mlss (@{ $self->fetch_all() }) {
-            if ($mlss->method->dbID() eq $method_link_id
-            and $mlss->species_set_obj->dbID() == $species_set_id) {
-                return $mlss;
-            }
-        }
-    }
+    $self->_id_cache;
+    my $mlss = $self->{_meth_ss_cache}->{$method_link_id}->{$species_set_id};
 
-    unless($no_warning) {
+    if (not $mlss and not $no_warning) {
         warning("Unable to find method_link_species_set with method_link_id='$method_link_id' and species_set_id='$species_set_id'");
     }
-    return undef;
+    return $mlss;
 }
 
 
@@ -389,19 +354,9 @@ sub fetch_by_method_link_id_species_set_id {
 sub fetch_all_by_method_link_type {
     my ($self, $method_link_type) = @_;
 
-    my @good_mlsss = ();
-
-    if($method_link_type) {
-        foreach my $mlss (@{ $self->fetch_all() }) {
-            if ($mlss->method->type() eq $method_link_type) {
-                push @good_mlsss, $mlss;
-            }
-        }
-    } else {
-        warning "method_link_type was not defined, returning an empty list";
-    }
-
-    return \@good_mlsss;
+    $self->_id_cache;
+    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
+    return [values %{$self->{_meth_ss_cache}->{$method->dbID}}];
 }
 
 
@@ -421,23 +376,13 @@ sub fetch_all_by_method_link_type {
 sub fetch_all_by_GenomeDB {
     my ($self, $genome_db) = @_;
 
-    throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object"
-        unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
 
     my $genome_db_id = $genome_db->dbID
         or throw "[$genome_db] must have a dbID";
 
-    my @good_mlsss = ();
-    foreach my $mlss (@{ $self->fetch_all() }) {
-        foreach my $this_genome_db (@{$mlss->species_set_obj->genome_dbs}) {
-            if ($this_genome_db->dbID == $genome_db_id) {
-                push @good_mlsss, $mlss;
-                last;
-            }
-        }
-    }
-
-    return \@good_mlsss;
+    $self->_id_cache;
+    return $self->{_gdb_cache}->{$genome_db_id} || [];
 }
 
 
@@ -458,22 +403,13 @@ sub fetch_all_by_GenomeDB {
 
 sub fetch_all_by_method_link_type_GenomeDB {
   my ($self, $method_link_type, $genome_db) = @_;
-  my $method_link_species_sets = [];
 
-  throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID"
-      unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+  assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
   my $genome_db_id = $genome_db->dbID;
   throw "[$genome_db] must have a dbID" if (!$genome_db_id);
 
-  my $all_method_link_species_sets = $self->fetch_all();
-  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-    if ($this_method_link_species_set->method->type eq $method_link_type and
-        grep (/^$genome_db_id$/, map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs})) {
-      push(@$method_link_species_sets, $this_method_link_species_set);
-    }
-  }
-
-  return $method_link_species_sets;
+  $self->_id_cache;
+  return $self->{_gdb_meth_cache}->{$genome_db_id}->{$method_link_type} || [];
 }
 
 
@@ -502,12 +438,12 @@ sub fetch_by_method_link_type_GenomeDBs {
     my ($self, $method_link_type, $genome_dbs, $no_warning) = @_;
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
-        or die "Could not fetch Method with type='$method_link_type'";
+        or die "Could not fetch Method with type='$method_link_type'\n";
     my $method_link_id = $method->dbID;
-    my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
+    my $species_set_id = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_dbs )->dbID;
 
-    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
-    if (!$method_link_species_set and !$no_warning) {
+    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id, $no_warning);
+    if (not $method_link_species_set and not $no_warning) {
         my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
             "  <$method_link_type> and ".  join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
         warning($warning);
@@ -542,9 +478,10 @@ sub fetch_by_method_link_type_genome_db_ids {
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
         or die "Could not fetch Method with type='$method_link_type'";
     my $method_link_id = $method->dbID;
-    my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_db_ids );
+    my $species_set = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_db_ids );
 
-    return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
+    return undef unless $species_set;
+    return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
 }
 
 
@@ -579,8 +516,7 @@ sub fetch_by_method_link_type_registry_aliases {
         $gdb = $gdba->fetch_by_name_assembly($binomial);
       } catch {
         my $meta_c = Bio::EnsEMBL::Registry->get_adaptor($alias, 'core', 'MetaContainer');
-        $binomial=$gdba->get_species_name_from_core_MetaContainer($meta_c);
-        $gdb = $gdba->fetch_by_name_assembly($binomial);
+        $gdb = $gdba->fetch_by_name_assembly($meta_c->get_production_name());
       };
       push @genome_dbs, $gdb;
     } else {
@@ -609,21 +545,19 @@ sub fetch_by_method_link_type_registry_aliases {
 
 sub fetch_by_method_link_type_species_set_name {
   my ($self, $method_link_type, $species_set_name) = @_;
-  my $method_link_species_set;
 
   my $all_method_link_species_sets = $self->fetch_all();
   my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
 
   my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value('name', $species_set_name);
-  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-      foreach my $this_species_set (@$all_species_sets) {
-          if ($this_method_link_species_set->method->type eq $method_link_type && $this_method_link_species_set->species_set_obj->dbID == $this_species_set->dbID) {
-              return $this_method_link_species_set;
-          }
-      }
+
+  if (scalar(@$all_species_sets)) {
+    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
+    return $self->fetch_by_method_link_id_species_set_id($method->dbID, $all_species_sets->[0]->dbID);
+  } else {
+    warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
+    return undef
   }
-  warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
-  return undef;
 }
 
 

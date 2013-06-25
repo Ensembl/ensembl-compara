@@ -1,4 +1,4 @@
-# first you have to get a Member object. In case of homology is a gene, in 
+# first you have to get a GeneMember object. In case of homology is a gene, in 
 # case of family it can be a gene or a protein
 
 my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'compara', 'GeneMember');
@@ -15,7 +15,6 @@ my $homologies = $homology_adaptor->fetch_all_by_Member($gene_member);
 
 foreach my $homology (@{$homologies}) {
   # You will find different kind of description
-  # UBRH, MBRH, RHS, YoungParalogues
   # see ensembl-compara/docs/docs/schema_doc.html for more details
 
   print $homology->description," ", $homology->subtype,"\n";

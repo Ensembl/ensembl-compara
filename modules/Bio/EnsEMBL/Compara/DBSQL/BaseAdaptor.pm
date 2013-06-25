@@ -1,7 +1,10 @@
 package Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
@@ -235,6 +238,53 @@ sub generic_fetch_Iterator {
     return Bio::EnsEMBL::Utils::Iterator->new($closure);
 }
 
+
+sub _synchronise {
+    my ($self, $object) = @_;
+
+    assert_ref($object, $self->object_class, 'argument to _synchronise');
+
+    my $dbID            = $object->dbID();
+    my $dbID_field      = ($self->_columns())[0];
+
+    my @unique_data_check = ();
+    my @unique_key_check  = ();
+
+    foreach my $attr ($self->_unique_attributes) {
+        push @unique_data_check, $object->$attr;
+        push @unique_key_check,  "$attr = ?";
+    }
+
+    my ($table) = $self->_tables();
+    my $x = join(' AND ', @unique_key_check);
+    my $y = join(' ', @$table);
+    my $sth = $self->prepare( "SELECT $dbID_field, ($x) AS existing_unique_data FROM $y WHERE $dbID_field = ? OR ($x)");
+    $sth->execute(@unique_data_check, $dbID, @unique_data_check);
+
+    my $vectors = $sth->fetchall_arrayref();
+    $sth->finish();
+
+    if( scalar(@$vectors) >= 2 ) {
+        die "Attempting to store an object with dbID=$dbID experienced partial collisions on both dbID and data in the db\n";
+    } elsif( scalar(@$vectors) == 1 ) {
+        my ($stored_dbID, $unique_key_check) = @{$vectors->[0]};
+
+        if(!$unique_key_check) {
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same dbID but different data\n";
+        } elsif($dbID and ($dbID!=$stored_dbID)) {
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
+        } else {
+            return $self->attach( $object, $stored_dbID);
+        }
+    } else {
+        return undef;   # not found, safe to insert
+    }
+}
+
+
+sub _unique_attributes {
+    return ();
+}
 
 1;
 

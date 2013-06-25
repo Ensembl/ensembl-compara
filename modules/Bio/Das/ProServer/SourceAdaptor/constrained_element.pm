@@ -244,7 +244,7 @@ sub build_features
 	push @$results, {
 			  'id'    => $id,
 			  'label' => $label,
-			  'method'=> $method_link_species_set->method_link_type,
+			  'method'=> $method_link_species_set->method->type,
 			  'start' => $start_pos,
 			  'end'   => $end_pos,
 			  'ori'   => $ori,

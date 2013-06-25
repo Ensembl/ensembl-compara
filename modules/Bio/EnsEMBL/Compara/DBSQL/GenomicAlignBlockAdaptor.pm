@@ -431,7 +431,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
                       $method_link_species_set, $original_slice);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::GenomicAlignBlock objects. The alignments may be
-               reverse-complemented in order to match the strand of the original slice.
+               reverse-complemented in order to match the strand of the original slice. If the original_slice covers 
+               non-primary regions such as PAR or PATCHES, GenomicAlignBlock objects are restricted to the relevant slice. 
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
                adaptor and method_link_species_set are actually stored in the objects. The remaining
                attributes are only retrieved when required.
@@ -459,7 +460,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
   if ($reference_slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
     return $reference_slice->get_all_GenomicAlignBlocks(
-        $method_link_species_set->method_link_type, $method_link_species_set->species_set);
+        $method_link_species_set->method->type, $method_link_species_set->species_set);
   }
 
   ## Get the Bio::EnsEMBL::Compara::GenomeDB object corresponding to the
@@ -472,7 +473,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
   my $gdb_a = $self->db->get_GenomeDBAdaptor();
 	my $meta_container = $reference_slice->adaptor->db->get_MetaContainer();
-	my $primary_species_name = $gdb_a->get_species_name_from_core_MetaContainer($meta_container);
+	my $primary_species_name = $meta_container->get_production_name();
   my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
   my $primary_species_assembly = $highest_cs->version();
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
@@ -481,38 +482,15 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
           $primary_species_assembly
       );
 
-#   my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
-#   my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
-#           $genome_db, $reference_slice->seq_region_name
-#       );
-#   if ($this_dnafrag) {
-#     my $these_genomic_align_blocks = $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
-#             $method_link_species_set,
-#             $this_dnafrag,
-#             $reference_slice->start,
-#             $reference_slice->end,
-#             $limit_number,
-#             $limit_index_start,
-#             $restrict
-#         );
-#     foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
-#       $this_genomic_align_block->reference_slice($reference_slice);
-#       $this_genomic_align_block->reference_slice_start(
-#           $this_genomic_align_block->reference_genomic_align->dnafrag_start - $reference_slice->start + 1);
-#       $this_genomic_align_block->reference_slice_end(
-#           $this_genomic_align_block->reference_genomic_align->dnafrag_end - $reference_slice->start + 1);
-#       $this_genomic_align_block->reference_slice_strand($reference_slice->strand);
-#       $this_genomic_align_block->reverse_complement()
-#           if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
-#       push (@$all_genomic_align_blocks, $this_genomic_align_block);
-#     }
-#     return $all_genomic_align_blocks;
-#   }
-  my $projection_segments = $reference_slice->project('toplevel');
+#  my $projection_segments = $reference_slice->project('toplevel');
+  my $filter_projections = 1;
+  my $projection_segments = $slice_adaptor->fetch_normalized_slice_projection($reference_slice, $filter_projections);
   return [] if(!@$projection_segments);
 
   foreach my $this_projection_segment (@$projection_segments) {
+    my $offset    = $this_projection_segment->from_start();
     my $this_slice = $this_projection_segment->to_Slice;
+
     my $dnafrag_type = $this_slice->coord_system->name;
     my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
     my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
@@ -535,8 +513,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
 
 	#print "GAB restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
-    
-    
+
 	if (defined $this_genomic_align_block->{'restricted_aln_start'}) {
 	    my $tmp_start = $this_genomic_align_block->{'restricted_aln_start'};
 	    #if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand) {
@@ -560,6 +537,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     # if it was different then the one we used for fetching
 
     if($top_slice->name ne $reference_slice->name) {
+        
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
         my $feature = new Bio::EnsEMBL::Feature(
                 -slice => $top_slice,
@@ -567,11 +545,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                 -end => $this_genomic_align_block->reference_genomic_align->dnafrag_end,
                 -strand => $this_genomic_align_block->reference_genomic_align->dnafrag_strand
             );
-        $feature = $feature->transfer($reference_slice);
+
+        $feature = $feature->transfer($this_slice);
+#        $feature = $feature->transfer($reference_slice);
 	next if (!$feature);
+
         $this_genomic_align_block->reference_slice($reference_slice);
-        $this_genomic_align_block->reference_slice_start($feature->start);
-        $this_genomic_align_block->reference_slice_end($feature->end);
+        $this_genomic_align_block->reference_slice_start($feature->start + $offset - 1);
+        $this_genomic_align_block->reference_slice_end($feature->end + $offset - 1);
         $this_genomic_align_block->reference_slice_strand($reference_slice->strand);
         $this_genomic_align_block->reverse_complement()
             if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
@@ -590,8 +571,13 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
       }
     }
-  }
+  }    
+  #foreach my $gab (@$all_genomic_align_blocks) {
+  #    my $ref_ga = $gab->reference_genomic_align;
+  #    print "ref_ga " . $ref_ga->dnafrag->name . " " . $ref_ga->dnafrag_start . " " . $ref_ga->dnafrag_end . "\n";
+  #}
 
+  
   return $all_genomic_align_blocks;
 }
 

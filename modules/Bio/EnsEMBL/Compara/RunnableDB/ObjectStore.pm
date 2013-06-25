@@ -33,6 +33,13 @@ Bio::EnsEMBL::Compara::RunnableDB::ObjectStore
                     -arglist "[ -name => 'foo_mlss', -method => { -type => 'BLASTZ_NET', -class => 'GenomicAlignBlock.pairwise_alignment' }, -species_set_obj => { -genome_dbs => [ {-name => 'homo_sapiens', -taxon_id => 9606, -assembly => 'GRCh37', -genebuild => '2010-07-Ensembl'}, { -name => 'big_fury_animal', -taxon_id => 9598, -assembly => 'asm1.0', -genebuild => '2012-01-EnsemblTest' } ] } ]" \
                     -debug 1
 
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ObjectStore \
+                    -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2914/lg4_compara_families_70" \
+                    -object_type SpeciesSet \
+                    -arglist "[ -genome_dbs => [] ]" \
+                    -flow_into "{ 2 => { 'mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2914/lg4_compara_families_70/meta' => { 'meta_key' => 'reuse_ss_id', 'meta_value' => '#dbID#' } } }" \
+                    -debug 1
+
 =head1 DESCRIPTION
 
 This is a Compara-specific generic runnable that creates a storable object and stores it.
@@ -53,7 +60,7 @@ sub run {
 
     my $compara_dba     = $self->compara_dba()          or die "Definitely need a Compara database to store a Compara object";
     my $object_type     = $self->param('object_type')   or die "Object type has to be specified";
-    my $arglist         = $self->param_substitute( $self->param('arglist') || [] );
+    my $arglist         = $self->param('arglist') || [];
 
     if(my $reference_db = $self->param('reference_db')) {
         my $reference_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $reference_db );

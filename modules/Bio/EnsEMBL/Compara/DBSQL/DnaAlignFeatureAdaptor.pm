@@ -179,9 +179,6 @@ sub fetch_all_by_species_region {
   return $dafs;
 }
 
-
-
-
 =head2 fetch_all_by_Slice
 
  Arg [1]    : Bio::EnsEMBL::Slice
@@ -191,6 +188,10 @@ sub fetch_all_by_species_region {
  Arg [4]    : string $$alignment_type
               The type of alignments to be retrieved
               e.g. WGA or WGA_HCR
+ Arg [5]    : integer $limit_number [optional]
+ Arg [6]    : integer $limit_index_start [optional]
+ Arg [7]    : boolean $restrict_resulting_blocks [optional]
+
  Example    : $gaa->fetch_all_by_Slice($slice, "Mus musculus","WGA");
  Description: find matches of query_species in the region of a slice of a
               subject species
@@ -202,7 +203,7 @@ sub fetch_all_by_species_region {
 
 sub fetch_all_by_Slice {
   my ($self, $orig_slice, $qy_species, $qy_assembly, $alignment_type,
-      $limit) = @_;
+      $limit, $limit_index_start, $restrict) = @_;
 
   unless($orig_slice && ref $orig_slice &&
          $orig_slice->isa('Bio::EnsEMBL::Slice')) {
@@ -214,6 +215,7 @@ sub fetch_all_by_Slice {
   }
 
   $limit = 0 unless (defined $limit);
+  $restrict = 1 unless (defined $restrict); #Set the default to restrict the genomic_align_blocks to the limits of the slice
 
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor();
   my $cs_genome_db = $genome_db_adaptor->fetch_by_Slice($orig_slice);
@@ -249,15 +251,13 @@ sub fetch_all_by_Slice {
 
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor();
   my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-      $method_link_species_set, $orig_slice, $limit);
-
+      $method_link_species_set, $orig_slice, $limit, $limit_index_start, $restrict);
   my $dafs = _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures($genomic_align_blocks);
 
   #update the cache
   $self->{'_cache'}->{$key} = $dafs;
   return $dafs;
 }
-
 
 =head2 interpolate_best_location
 
@@ -407,8 +407,8 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
   my $dna_dna_align_features = [];
 
   my $query_slice_adaptor;
-  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
 
+  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
     ## KNOWN BUG: This will ignore third and following parts of a multiple alignment...
     ## This adaptor cannot deal with multiple alignments. Use the new
     ## Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor instead.
@@ -556,7 +556,6 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
 
   return $dna_dna_align_features;
 }
-
 
 1;
 

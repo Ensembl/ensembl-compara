@@ -163,13 +163,11 @@ sub pipeline_analyses {
             -parameters => {
                 'inputfile'       => '#work_dir#/nodes.dmp',
                 'delimiter'       => "\t\Q|\E\t?",
-                'input_id'        => { 'taxon_id' => '#_0#', 'parent_id' => '#_1#', 'rank' => '#_2#', 'genbank_hidden_flag' => '#_10#'},
-                'fan_branch_code' => 2,
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'zero_parent_id' ],
-                2 => [ ':////ncbi_taxa_node' ],
+                2 => { ':////ncbi_taxa_node' => { 'taxon_id' => '#_0#', 'parent_id' => '#_1#', 'rank' => '#_2#', 'genbank_hidden_flag' => '#_10#'} },
             },
             -rc_name => 'highmem',
         },
@@ -202,13 +200,11 @@ sub pipeline_analyses {
             -parameters => {
                 'inputfile'       => '#work_dir#/names.dmp',
                 'delimiter'       => "\t\Q|\E\t?",
-                'input_id'        => { 'taxon_id' => '#_0#', 'name' => '#_1#', 'name_class' => '#_3#'},
-                'fan_branch_code' => 2,
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'load_merged_names' ],
-                2 => [ ':////ncbi_taxa_name' ],
+                2 => { ':////ncbi_taxa_name' => { 'taxon_id' => '#_0#', 'name' => '#_1#', 'name_class' => '#_3#'} },
             },
             -rc_name => 'highmem',
         },
@@ -218,13 +214,11 @@ sub pipeline_analyses {
             -parameters => {
                 'inputfile'       => '#work_dir#/merged.dmp',
                 'delimiter'       => "\t\Q|\E\t?",
-                'input_id'        => { 'name' => '#_0#', 'taxon_id' => '#_1#', 'name_class' => 'merged_taxon_id'},
-                'fan_branch_code' => 2,
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'web_name_patches' ],
-                2 => [ ':////ncbi_taxa_name' ],
+                2 => { ':////ncbi_taxa_name' => { 'name' => '#_0#', 'taxon_id' => '#_1#', 'name_class' => 'merged_taxon_id'} },
             },
         },
 
@@ -242,15 +236,13 @@ sub pipeline_analyses {
         {   -logic_name => 'add_import_date',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => 'select distinct taxon_id, CURRENT_TIMESTAMP this_moment from ncbi_taxa_node where parent_id=0',
-                'input_id'        => { 'taxon_id' => '#taxon_id#', 'name' => '#this_moment#', 'name_class' => 'import date' },
-                'fan_branch_code' => 2,
+                'inputquery'      => 'SELECT distinct taxon_id, CURRENT_TIMESTAMP this_moment FROM ncbi_taxa_node WHERE parent_id=0',
             },
             -wait_for => [ 'build_left_right_indices' ],
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'cleanup' ],
-                2 => [ ':////ncbi_taxa_name' ],
+                2 => { ':////ncbi_taxa_name' => { 'taxon_id' => '#taxon_id#', 'name' => '#this_moment#', 'name_class' => 'import date' } },
             },
         },
 

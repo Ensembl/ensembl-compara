@@ -74,6 +74,13 @@ $| = 1;
 sub param_defaults {
     return {
 	    'program_version' => 2.1,
+            'do_transactions' => 1, #set default to do transactions
+            #flag as to whether to write out conservation scores to the conservation_score
+            #table. Default is to write them out.
+            'no_conservation_scores' => 0,
+            'tree_string' => undef, #local parameter only
+            'tree_file' => undef, #local parameter only
+            'depth_threshold'=> undef,  #local parameter only
     };
 }
 
@@ -96,17 +103,6 @@ sub fetch_input {
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
-  #set default to do transactions
-  if (!defined $self->param('do_transactions')) {
-      $self->param('do_transactions', 1);
-  }
-
-  #flag as to whether to write out conservation scores to the conservation_score
-  #table. Default is to write them out.
-  unless (defined $self->param('no_conservation_scores')) {
-      $self->param('no_conservation_scores', 0);
-  }
-
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($self->param('genomic_align_block_id'));
 
@@ -122,6 +118,7 @@ sub fetch_input {
       #decide whether to use GenomicAlignTree object or species tree.
       my $mlss = $gab->method_link_species_set;
       my $method_class = $mlss->method->class;
+      $self->param('mlss_id', $mlss->dbID); #Need to set for use with get_species_tree_string
 
       my $tree_string;
       if ($method_class =~ /GenomicAlignTree/) {
@@ -153,6 +150,7 @@ sub fetch_input {
 	      return 1;
 	  }
 	  $tree_string = $gat->newick_format("simple");
+          $tree_string=~s/:0;/;/; # Remove unused node at end
 
 	  $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);
 
@@ -388,13 +386,13 @@ sub run_gerp_v2 {
     my ($self) = @_;
     my $gerpcol_path;
     my $gerpelem_path;
+    my $default_depth_threshold = 0.5;
 
     #change directory to where the temporary mfa and tree file are written
     chdir $self->worker_temp_directory;
     
     $gerpcol_path = $self->param('gerp_exe_dir') . "/gerpcol"; 
     $gerpelem_path = $self->param('gerp_exe_dir') . "/gerpelem"; 
-
 
     throw($gerpcol_path . " is not executable Gerp::run ")
       unless ($gerpcol_path && -x $gerpcol_path);
@@ -415,7 +413,21 @@ sub run_gerp_v2 {
     #run gerpelem
     $command = $gerpelem_path;
 
-    $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;
+    $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;# . " -d 0.35";# hack for birds
+
+    #Calculate the neutral_rate of the species tree for use for those alignments where the default 
+    #depth_threshold is too high to call any constrained elements (eg 3way birds)
+    my $species_tree_string = $self->get_species_tree_string;
+    my $neutral_rate = _calculateNeutralRate($species_tree_string);
+
+    if (!defined $self->param('depth_threshold') && $neutral_rate < $default_depth_threshold) {
+        $self->param('depth_threshold', $neutral_rate);
+        print STDERR "Setting depth_threshold to neutral_rate value of $neutral_rate\n";
+    }
+
+    if (defined $self->param('depth_threshold')) {
+        $command .= " -d " . $self->param('depth_threshold');
+    }
     print STDERR "command $command\n";
     unless (system($command) == 0) {
 	throw("gerpelem execution failed\n");
@@ -761,7 +773,6 @@ sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
 
     my $newick;
-    
     if ($self->param('tree_string')) {
 	$newick = $self->param('tree_string');
     } elsif ($self->param('tree_file'))  {
@@ -826,7 +837,7 @@ sub _build_tree_string {
 
     # Remove quotes around node labels
     $tree_string =~ s/"(_\d+_)"/$1/g;
-
+    $tree_string=~s/:0;/;/; # Remove unused node at end
     $tree->release_tree;
  
     $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);

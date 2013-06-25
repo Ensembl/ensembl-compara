@@ -133,8 +133,6 @@ sub run {
     my $member      = $self->param('member');
     my $query       = $self->param('query');
 
-    my $reuse_db          = $self->param('reuse_db');   # if this parameter is an empty string, there will be no reuse
-
     my $reuse_ss_hash     = $self->param('reuse_ss_hash');
     my $reuse_this_member = $reuse_ss_hash->{$member->genome_db_id};
 
@@ -158,7 +156,7 @@ sub run {
         # Here we can look at a previous build and try to reuse the blast
         # results for this query peptide against this hit genome.
         # Only run if the blasts are not being reused:
-    unless($reuse_db and $reuse_ss_hash->{$genome_db->dbID} and $reuse_this_member) {
+    unless($reuse_ss_hash->{$genome_db->dbID} and $reuse_this_member) {
 
           ## Define the filter from the parameters:
       my $thr_type = $self->param('-threshold_type');

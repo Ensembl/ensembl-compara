@@ -49,6 +49,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
 use strict;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
+use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);

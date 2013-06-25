@@ -57,6 +57,56 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    return {
+        'mode'  => 'display_label',      # one of 'display_label', 'description'
+    };
+}
+
+
+#
+# Hash containing the description of the possible modes
+# A mode entry must contain the following keys:
+#  - perl_attr: perl method to get the value from a Member
+#  - sql_column: column in the member table
+#  - sql_lookups: SQLs to get the values from a core database
+#
+my $modes = {
+    'display_label' => {
+        'perl_attr' => 'display_label',
+        'sql_column' => 'display_label',
+        'sql_lookups' => {
+            'ENSEMBLGENE'  => q{select g.stable_id, x.display_label
+FROM gene g
+join xref x on (g.display_xref_id = x.xref_id)
+join seq_region sr on (g.seq_region_id = sr.seq_region_id)
+join coord_system cs using (coord_system_id)
+where cs.species_id =?},
+            'ENSEMBLPEP'   => q{select tr.stable_id, x.display_label
+FROM translation tr
+join transcript t using (transcript_id)
+join xref x on (t.display_xref_id = x.xref_id)
+join seq_region sr on (t.seq_region_id = sr.seq_region_id)
+join coord_system cs using (coord_system_id)
+where cs.species_id =?},
+        },
+    },
+
+    'description' => {
+        'perl_attr' => 'description',
+        'sql_column' => 'description',
+        'sql_lookups' => {
+            'ENSEMBLGENE'  => q{select g.stable_id, g.description
+FROM gene g
+join seq_region sr on (g.seq_region_id = sr.seq_region_id)
+join coord_system cs using (coord_system_id)
+where cs.species_id =?},
+        },
+    },
+
+};
+
+
 =head2 fetch_input
 
     Title   :   fetch_input
@@ -70,6 +120,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my ($self) = @_;
 
+  die $self->param('mode').' is not a valid mode. Valid modes are: '.join(', ', keys %$modes) unless exists $modes->{$self->param('mode')};
   my $species_list = $self->param('species') || $self->param('genome_db_ids');
 
   unless( $species_list ) {
@@ -136,7 +187,7 @@ sub write_output {
   
   my $genome_dbs = $self->param('genome_dbs');
   foreach my $genome_db (@$genome_dbs) {
-    $self->_update_display_labels($genome_db);
+    $self->_update_field($genome_db);
   }
 }
 
@@ -158,7 +209,7 @@ sub _process_genome_db {
 	}
 
 	my @members_to_update;
-	my @sources = qw(ENSEMBLGENE ENSEMBLPEP);
+      my @sources = keys %{$modes->{$self->param('mode')}->{sql_lookups}};
 	foreach my $source_name (@sources) {
 	  print "Working with ${source_name}\n" if $self->debug();
 	  if(!$self->_need_to_process_genome_db_source($genome_db, $source_name) && !$replace) {
@@ -180,22 +231,20 @@ sub _process {
   my @members_to_update;
   my $replace = $self->param('replace');
   
-  my $members = $self->_get_members_by_source($genome_db, $source_name);
+  my $member_a = ($source_name eq 'ENSEMBLGENE') ? $self->compara_dba()->get_GeneMemberAdaptor() : $self->compara_dba()->get_SeqMemberAdaptor();
+  my $members = $member_a->fetch_all_by_source_genome_db_id($source_name, $genome_db->dbID());
   
-  if(%{$members}) {
-    my $core_labels = $self->_get_display_label_lookup($genome_db, $source_name);
+  if (scalar(@{$members})) {
+    my $core_values = $self->_get_field_lookup($genome_db, $source_name);
+    my $perl_attr = $modes->{$self->param('mode')}->{perl_attr};
 
-    foreach my $stable_id (keys %{$members}) {
-      my $member = $members->{$stable_id};
+    foreach my $member (@{$members}) {
       
-      #Skip if it's already got a label & we are not replacing things
-      next if defined $member->display_label() && !$replace;
+      #Skip if it's already got a value & we are not replacing things
+      next if defined $member->$perl_attr() && !$replace;
       
-      my $display_label = $core_labels->{$stable_id};
-      #Next if there was no core object for the stable ID
-      next if ! defined $display_label;
-      $member->display_label($display_label);
-      push(@members_to_update, $member);
+      my $display_value = $core_values->{$member->stable_id};
+      push(@members_to_update, [$member->dbID, $display_value]);
     }
   } else {
     my $name = $genome_db->name();
@@ -209,61 +258,40 @@ sub _need_to_process_genome_db_source {
 	my ($self, $genome_db, $source_name) = @_;
 	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
 	my $sql = q{select count(*) from member 
-where genome_db_id =? and display_label is null and source_name =?};
+where genome_db_id =? and source_name =?};
+      $sql .= sprintf("AND %s IS NULL", $modes->{$self->param('mode')}->{sql_column});
   my $params = [$genome_db->dbID(), $source_name];
 	return $h->execute_single_result( -SQL => $sql, -PARAMS => $params);
 }
 
-sub _get_members_by_source {
-	my ($self, $genome_db, $source_name) = @_;
-	my $member_a = $self->compara_dba()->get_SeqMemberAdaptor();
-      $member_a = $self->compara_dba()->get_GeneMemberAdaptor() if $source_name eq 'ENSEMBLGENE';
-	my $gdb_id = $genome_db->dbID();
-	my $constraint = qq(m.source_name = '${source_name}' and m.genome_db_id = ${gdb_id});
-	my $members = $member_a->generic_fetch($constraint);
-	my $members_hash = {};
-	foreach my $member (@{$members}) {
-		$members_hash->{$member->stable_id()} = $member;
-	}
-	return $members_hash;
-}
 
-sub _get_display_label_lookup {
+#
+# Get the labels / descriptions as a hash for that species
+#
+sub _get_field_lookup {
   my ($self, $genome_db, $source_name) = @_;
   	
-  my $sql_lookup = {
-	  'ENSEMBLGENE'  => q{select g.stable_id, x.display_label 
-FROM gene g
-join xref x on (g.display_xref_id = x.xref_id) 
-join seq_region sr on (g.seq_region_id = sr.seq_region_id) 
-join coord_system cs using (coord_system_id) 
-where cs.species_id =?},
-	  'ENSEMBLPEP'   => q{select tr.stable_id, x.display_label 
-FROM translation tr
-join transcript t using (transcript_id) 
-join xref x on (t.display_xref_id = x.xref_id) 
-join seq_region sr on (t.seq_region_id = sr.seq_region_id) 
-join coord_system cs using (coord_system_id) 
-where cs.species_id =?}
-	};
+  my $sql = $modes->{$self->param('mode')}->{sql_lookups}->{$source_name};
 	
   my $dba = $genome_db->db_adaptor();
   my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dba->dbc());
   
-  my $sql = $sql_lookup->{$source_name};
   my $params = [$dba->species_id()];
 	
   my $hash = $h->execute_into_hash( -SQL => $sql, -PARAMS => $params );
   return $hash;
 }
 
-sub _update_display_labels {
+#
+# Update the Compara db with the new labels / descriptions
+#
+sub _update_field {
 	my ($self, $genome_db) = @_;
 	
 	my $name = $genome_db->name();
-	my $members = $self->param('results')->{$genome_db->dbID()};
+	my $member_values = $self->param('results')->{$genome_db->dbID()};
 	
-	if(! defined $members || scalar(@{$members}) == 0) {
+	if(! defined $member_values || scalar(@{$member_values}) == 0) {
 	  print "No members to write back for ${name}\n" if $self->debug();
 	  return;
 	}
@@ -274,14 +302,15 @@ sub _update_display_labels {
 	
 	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
 	 
+      my $sql_column = $modes->{$self->param('mode')}->{sql_column};
 	$h->transaction( -CALLBACK => sub {
-	  my $sql = 'update member set display_label =? where member_id =?';
+	  my $sql = "update member set $sql_column = ? where member_id =?";
 	  $h->batch(
 	   -SQL => $sql,
 	   -CALLBACK => sub {
 	     my ($sth) = @_;
-	     foreach my $member (@{$members}) {
-	       my $updated = $sth->execute($member->display_label(), $member->dbID());
+	     foreach my $arr (@{$member_values}) {
+	       my $updated = $sth->execute($arr->[1], $arr->[0]);
 	       $total += $updated;
 	     }
 	     return;

@@ -1,4 +1,5 @@
-=head1 LICENSE                                                                                                                                                                                
+=head1 LICENSE
+
   Copyright (c) 1999-2011 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
@@ -42,12 +43,37 @@ use Bio::EnsEMBL::Compara::CAFEGeneFamily;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
 
+
+=head2 fetch_all
+
+   Arg[1]      : -none-
+   Example     : my $all_trees = $cafeTree_adaptor->fetch_all();
+   Description : Fetches from the database all the gene gain/loss trees
+   ReturnType  : An arrayref of Bio::EnsEMBL::Compara::CAFEGeneFamily objects
+   Exceptions  :
+   Caller      :
+
+=cut
+
 sub fetch_all {
     my ($self) = @_;
 
     my $constraint = "stn.node_id = str.root_id";
     return $self->generic_fetch($constraint);
 }
+
+
+=head2 fetch_by_dbID
+
+   Arg[1]      : An internal dbID for the tree
+   Example     : my $tree = $cafeTree_adaptor->fetch_by_dbID($dbID);
+   Description : Fetches a given gene gain/loss tree from the database
+                 given its internal dbID
+   ReturnType  : Bio::EnsEMBL::Compara::CAFEGeneFamily
+   Exceptions  :
+   Caller      :
+
+=cut
 
 sub fetch_by_dbID {
     my ($self, $cafe_gene_family_id) = @_;
@@ -62,6 +88,19 @@ sub fetch_by_dbID {
     return $tree->[0];
 }
 
+=head2 fetch_all_lca_trees
+
+   Arg[1]      : -none-
+   Example     : my $lca_trees = $cafeTreeAdaptor->fetch_all_lca_trees();
+   Description : Same as "fetch_all" method, but instead of returning
+                 the trees from the root of the Ensembl species tree,
+                 roots them to its lowest common ancestor.
+   ReturnType  : An arrayref of Bio::EnsEMBL::Compara::CAFEGeneFamily objects
+   Exceptions  :
+   Caller      :
+
+=cut
+
 sub fetch_all_lca_trees {
     my ($self) = @_;
     my $constraint = "stn.node_id = cgf.lca_id";
@@ -72,6 +111,19 @@ sub fetch_all_lca_trees {
     }
     return $trees;
 }
+
+
+=head2 fetch_all_with_lca
+
+   Arg[1]      : Taxon id
+   Example     : my $trees = $cafeTreeAdaptor->fetch_all_with_lca($taxon_id);
+   Description : Fetches from the database all the gene gain/loss trees having
+                 the given taxon_id as their lowest common ancestor
+   ReturnType  : An arrayref of Bio::EnsEMBL::Compara::CAFEGeneFamily objects
+   Exceptions  :
+   Caller      :
+
+=cut
 
 sub fetch_all_with_lca {
     my ($self, $lca) = @_;
@@ -86,6 +138,18 @@ sub fetch_all_with_lca {
     $constraint .= " AND cgf.lca_id = $lca_id";
     return $self->generic_fetch($constraint);
 }
+
+=head2 fetch_lca_tree
+
+    Arg[1]      : Bio::EnsEMBL::Compara::CAFEGeneFamily
+    Example     : my $lca_tree = $cafeTreeAdaptor->fetch_lca_tree($cafeTree);
+    Description : Given a gene gain/loss tree, fetches from the database the same tree
+                  rooted at its lowest common ancestor
+    ReturnType  : Bio::EnsEMBL::Compara::CAFEGeneFamily
+    Exception   :
+    Caller      :
+
+=cut
 
 sub fetch_lca_tree {
     my ($self, $cafeTree) = @_;
@@ -106,6 +170,17 @@ sub fetch_lca_tree {
     $tree->disavow_parent();
     return $tree;
 }
+
+=head2
+
+    Arg[1]      : Bio::EnsEMBL::Compara::GeneTree
+    Example     : my $tree = $cafeTreeAdaptor->fetch_by_GeneTree($geneTree);
+    Description : Fetches the gene gain/loss tree associated with the given gene tree
+    ReturnType  : Bio::EnsEMBL::compara::CAFEGeneFamily
+    Exceptions  :
+    Caller      :
+
+=cut
 
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;

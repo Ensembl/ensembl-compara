@@ -42,13 +42,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree;
 
 use strict;
-use Time::HiRes qw(time);                          # Needed *
-use Bio::EnsEMBL::Compara::Graph::NewickParser;    # Needed *
-#use Bio::EnsEMBL::Compara::RunnableDB::RunCommand;
-#use IPC::Open3;
-#use File::Spec;
-#use IO::File;
-#use Symbol qw/gensym/;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
@@ -71,8 +65,19 @@ sub fetch_input {
     $self->input_job->transient_error(1);
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
-    $self->param('nc_tree',$nc_tree);
+    $self->param('gene_tree',$nc_tree);
 
+    my $alignment_id = $self->param('alignment_id');
+    $nc_tree->gene_align_id($alignment_id);
+    print STDERR "ALN INPUT ID: $alignment_id\n" if ($self->debug());
+
+    ## This has changed in the API. We now have an adaptor for gene_align/gene_align_member tables called GeneAlignAdaptor.pm
+    # This should be:
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
+#    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'filtered', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    $nc_tree->attach_alignment($aln);
+    ## TODO!! Remember to remove the ->seq_type($seq_type) call in GeneTree.pm
+#    $nc_tree->attach_alignment($alignment_id, 'filtered');
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
     } else {
@@ -85,7 +90,7 @@ sub run {
     my ($self) = @_;
 
     my $model = $self->param('model') or die "A model is mandatory";
-    my $nc_tree = $self->param('nc_tree');
+    my $nc_tree = $self->param('gene_tree');
     my $aln_file = $self->param('input_aln');
     my $struct_file = $self->param('struct_aln') or die "An struct_aln is mandatory";
     my $bootstrap_num = $self->param('bootstrap_num') or die "A boostrap_num is mandatory";
@@ -100,11 +105,11 @@ sub run {
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
     my $tag = 'ss_it_' . $model;
-    if ($self->param('nc_tree')->has_tag($tag)) {
+    if ($self->param('gene_tree')->has_tag($tag)) {
         my $eval_tree;
         # Checks the tree string can be parsed successfully
         eval {
-            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('nc_tree')->get_value_for_tag($tag));
+            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('gene_tree')->get_value_for_tag($tag));
         };
         if (defined($eval_tree) and !$@) {
             # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
@@ -157,8 +162,6 @@ sub run {
     my $model_runtime = "${model}_runtime_msec";
     $nc_tree->store_tag($model_runtime,$command->runtime_msec);
 
-#    $self->clean_up();
-
     return 1;
 }
 
@@ -175,11 +178,6 @@ sub cleanup {
     }
     return 1;
 }
-
-# sub post_cleanup {
-#     my ($self) = @_;
-#     $self->pre_cleanup;
-# }
 
 sub write_output {
     my $self= shift @_;
@@ -200,11 +198,11 @@ sub _store_newick_into_protein_tree_tag_string {
 
   print STDERR "load from file $newick_file\n" if($self->debug);
   my $newick = $self->_slurp($newick_file);
-  my $newtree = $self->store_alternative_tree($newick, $tag, $self->param('nc_tree'));
+  my $newtree = $self->store_alternative_tree($newick, $tag, $self->param('gene_tree'));
 
   if (defined($self->param('model'))) {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
+    $self->param('gene_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
 }
 
@@ -223,10 +221,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     $file_root    =~ s/\/\//\//g;  # converts any // in path to /
 
     my $aln_file = $file_root . ".aln";
-#   if($self->debug) {
-#     printf("dumpMultipleAlignmentStructToWorkdir : %d members\n", $leafcount);
-#     print("aln_file = '$aln_file'\n");
-#   }
+    print STDERR "ALN FILE IS: $aln_file\n" if ($self->debug());
 
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
@@ -262,12 +257,12 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     }
     close OUTSEQ;
 
-    my $struct_string = $self->param('nc_tree')->get_tagvalue('ss_cons');
+    my $struct_string = $self->param('gene_tree')->get_tagvalue('ss_cons_filtered');
     # Allowed Characters are "( ) < > [ ] { } " and "."
-    $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;
+    $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;  ## We should have a "clean" structure now?
+
     my $struct_file = $file_root . ".struct";
     if ($struct_string =~ /^\.+$/) {
-#        $self->input_job->transient_error(0);
         $self->input_job->incomplete(0);
         die "struct string is $struct_string\n";
     } else {

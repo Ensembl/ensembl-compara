@@ -55,6 +55,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis::Runnable::Mercator;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
+use Bio::EnsEMBL::Analysis;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -104,8 +105,8 @@ sub write_output {
   foreach my $sr_id (@{$synteny_region_ids}) {
 
     #Flow into pecan
-    my $dataflow_output_id = "{ synteny_region_id=>$sr_id }";
-    $self->dataflow_output_id($dataflow_output_id,1);
+    my $dataflow_output_id = { synteny_region_id => $sr_id };
+    $self->dataflow_output_id($dataflow_output_id,2);
   }
 
   return 1;
@@ -139,9 +140,9 @@ sub store_synteny {
     my $gdb = $gdba->fetch_by_dbID($gdb_id);
     push @genome_dbs, $gdb;
   }
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-    (-method_link_type => $self->param('method_link_type'),
-     -species_set => \@genome_dbs);
+  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+     -method => new Bio::EnsEMBL::Compara::Method( -type => $self->param('method_link_type') ),
+     -species_set_obj => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => \@genome_dbs ));
   $mlssa->store($mlss);
 
   my $synteny_region_ids;

@@ -3,9 +3,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicTree;
 use strict;
 use warnings;
 use Data::Dumper;
-use Time::HiRes qw/time/;
 
-use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
@@ -14,11 +12,11 @@ sub fetch_input {
     my ($self) = @_;
     my $nc_tree_id = $self->param('gene_tree_id');
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
-    $self->param('nc_tree', $nc_tree);
+    $self->param('gene_tree', $nc_tree);
     my $alignment_id = $self->param('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'seq_with_flanking', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
     my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($aln);
     if (! defined $aln_file) {
         $self->throw("I can not dump the alignment in $alignment_id");
@@ -38,7 +36,7 @@ sub run {
 
 sub run_ncgenomic_tree {
     my ($self, $method) = @_;
-    my $cluster = $self->param('nc_tree');
+    my $cluster = $self->param('gene_tree');
     my $nc_tree_id = $self->param('gene_tree_id');
     my $input_aln = $self->param('aln_input');
     print STDERR "INPUT ALN: $input_aln\n";

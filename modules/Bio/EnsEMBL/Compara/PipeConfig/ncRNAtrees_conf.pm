@@ -31,8 +31,8 @@ sub default_options {
         %{$self->SUPER::default_options},
 
             # parameters that are likely to change from execution to another:
-            # 'mlss_id'             => 40088,
-            'release'               => '70',
+            'mlss_id'             => 40089,
+            'release'               => '72',
             'rel_suffix'            => '',    # an empty string by default, a letter or string otherwise
             'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
@@ -67,8 +67,8 @@ sub default_options {
             'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
             'cmbuild_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
             'cmsearch_exe'          => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
-            'mafft_exe'             => '/software/ensembl/compara/mafft-6.707/bin/mafft',
-            'mafft_binaries'        => '/software/ensembl/compara/mafft-6.707/binaries',
+            'mafft_exe'             => '/software/ensembl/compara/mafft-7.017/bin/mafft',
+            'mafft_binaries'        => '/software/ensembl/compara/mafft-7.017/binaries',
             'raxml_exe'             => '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3',
             'prank_exe'             => '/software/ensembl/compara/prank/090707/src/prank',
             'raxmlLight_exe'        => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight',
@@ -78,8 +78,6 @@ sub default_options {
             'treebest_exe'          => '/software/ensembl/compara/treebest.doubletracking',
             'sreformat_exe'         => '/usr/local/ensembl/bin/sreformat',
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-#            'b2ct_exe'              => '/software/ensembl/compara/ViennaRNA-2.0.7/Utils/b2ct',
-#            'sir_graph_exe'         => '/software/ensembl/compara/mfold_util-4.6/src/sir_graph',
             'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
 
             # tree break
@@ -108,12 +106,12 @@ sub default_options {
                        -pass   => '',
                       },
 
-            'reg2' => {
-                       -host   => 'ens-staging2',
-                       -port   => 3306,
-                       -user   => 'ensro',
-                       -pass   => '',
-                      },
+             'reg2' => {
+                        -host   => 'ens-staging2',
+                        -port   => 3306,
+                        -user   => 'ensro',
+                        -pass   => '',
+                       },
 
             'master_db' => {
                             -host   => 'compara1',
@@ -124,11 +122,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara3',
+                         -host   => 'ens-livemirror',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'sf5_ensembl_compara_69',
+                         -dbname => 'ensembl_compara_71',
                         },
            };
 }
@@ -148,10 +146,11 @@ sub resource_classes {
     my ($self) = @_;
     return {
             'default'   => { 'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
-            'himem'     => { 'LSF' => '-q basement -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
+#            'himem'     => { 'LSF' => '-q basement -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
             '1Gb_job'   => { 'LSF' => '-C0         -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '8Gb_job'   => { 'LSF' => '-C0         -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
             '4Gb_job'   => { 'LSF' => '-C0         -M4000000  -R"select[mem>4000]  rusage[mem=4000]"' },
+            '4Gb_long_job' => { 'LSF' => '-C0 -q basement -M4000000 -R"select[mem>4000]  rusage[mem=4000]"' },
+            '1Gb_long_job' => { 'LSF' => '-C0 -q long -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
            };
 }
 
@@ -170,15 +169,15 @@ sub pipeline_analyses {
                                 '1->A'  => [ 'copy_table_factory' ],
                                 'A->1'  => [ 'backbone_fire_load' ],
                                },
+                -meadow_type => 'LOCAL',
             },
 
             {   -logic_name => 'backbone_fire_load',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -parameters  => [ {
-                                  'updated_tables'    => 'method_link species_set method_link_species_set ncbi_taxa_name ncbi_taxa_node',   ## Fill
-                                  'filename'          => 'snapshot_before_load',
-                                  'output_file'       => $self->o('dump_dir').'/#filename#',
-                                } ],
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+                -parameters  => {
+                                  'table_list'        => '',
+                                  'output_file'          => 'snapshot_before_load.sql',
+                                },
                 -flow_into  => {
                                '1->A'   => [ 'load_genomedb_factory' ],
                                'A->1'   => [ 'backbone_fire_tree_building' ],
@@ -186,12 +185,11 @@ sub pipeline_analyses {
             },
 
             {   -logic_name => 'backbone_fire_tree_building',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -parameters  => [ {
-                                  'updated_tables'    => 'genome_db members',   ## Fill -- more?, species_set?
-                                  'filename'          => 'snapshot_before_tree_building',
-                                  'output_file'       => $self->o('dump_dir').'/#filename#',
-                                 } ],
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+                -parameters  => {
+                                  'table_list'        => '', 
+                                  'output_file'          => 'snapshot_before_tree_building.sql',
+                                 },
                 -flow_into  => {
                                 '1->A'  => [ 'rfam_classify' ],
                                 'A->1'  => [ 'backbone_pipeline_finished' ],
@@ -200,6 +198,7 @@ sub pipeline_analyses {
 
             {   -logic_name => 'backbone_pipeline_finished',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -meadow_type => 'LOCAL',
             },
 
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
@@ -210,15 +209,12 @@ sub pipeline_analyses {
                 'db_conn'   => $self->o('master_db'),
                 'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
                 'column_names' => [ 'table' ],
-                'input_id'  => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
                 'fan_branch_code' => 2,
             },
 
             -flow_into => {
-                           '2->A' => [ 'copy_table' ],
+                           '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
                            'A->1' => [ 'offset_tables' ],
-#                2 => [ 'copy_table'  ],
-#                1 => [ 'offset_tables' ],  # backbone
             },
         },
 
@@ -325,7 +321,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                 'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-                'multifurcation_deletes_node'           => [ 33316, 129949, 314146 ],
+                'multifurcation_deletes_node'           => [ 129949, 314146 ], # 33316 has been removed from NCBI taxonomy
                 'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
                 'mlss_id'                               => $self->o('mlss_id'),
             },
@@ -339,17 +335,16 @@ sub pipeline_analyses {
 # ---------------------------------------------[create the low-coverage-assembly species set]-----------------------------------------
 
         {   -logic_name => 'create_lca_species_set',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
             -parameters => {
-                'sql' => [  "INSERT INTO species_set (genome_db_id) SELECT genome_db_id FROM genome_db LIMIT 1",   # insert a dummy pair (auto_increment++, <anything>) into the table
-                            "DELETE FROM species_set WHERE species_set_id IN (#_insert_id_0#)",     # delete the previously inserted row, but keep the auto_increment
-                ],
+                            'object_type' => "SpeciesSet",
+                            'arglist'     => [ -genome_dbs => [] ],
             },
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
                 2 => {
-                    'generate_pre_species_set'     => { 'lca_species_set_id' => '#_insert_id_0#' },     # pass it on to the query
-                    'mysql:////species_set_tag' => { 'species_set_id' => '#_insert_id_0#', 'tag' => 'name', 'value' => 'low-coverage-assembly' },   # record the id in ss_tag table
+                    'generate_pre_species_set'     => { 'lca_species_set_id' => '#dbID#' },     # pass it on to the query
+                    'mysql:////species_set_tag' => { 'species_set_id' => '#dbID#', 'tag' => 'name', 'value' => 'low-coverage-assembly' },   # record the id in ss_tag table
                 },
             },
         },
@@ -393,6 +388,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'load_members',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers',
             -hive_capacity => 30,
+            -batch_size    => 100,
             -rc_name => 'default',
         },
 
@@ -548,6 +544,7 @@ sub pipeline_analyses {
 #                                   'sir_graph_exe' => $self->o('sir_graph_exe'),
                                    'r2r_exe'       => $self->o('r2r_exe'),
                                   },
+                -failed_job_tolerance =>  10,
                 -rc_name       => 'default',
             },
 
@@ -560,26 +557,11 @@ sub pipeline_analyses {
                             },
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
-                            -1 => ['fast_trees'],  # -1 is MEMLIMIT
-                            -2 => ['fast_trees'],  # -2 is TIMELIMIT
+#                            -1 => ['fast_trees'],  # -1 is MEMLIMIT  ## Not needed now that we have supertrees
+#                            -2 => ['fast_trees'],  # -2 is TIMELIMIT ## Not needed now that we have supertrees
                            },
              -rc_name => 'default',
             },
-
-#         {
-#          -logic_name => 'pre_sec_struct_tree_himem',
-#          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',
-#          -hive_capacity => 200,
-#          -parameters => {
-#                          'raxml_exe' => $self->o('raxml_exe'),
-#                         },
-#          -flow_into => {
-#                         1 => [ 'treebest_mmerge' ],
-#                         2 => [ 'sec_struct_model_tree_himem' ],
-#                        },
-#          -can_be_empty => 1,
-#          -rc_id => 1,
-#         },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
@@ -599,10 +581,10 @@ sub pipeline_analyses {
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree',
          -hive_capacity => $self->o('raxml_capacity'),
          -parameters => {
-                         'raxml' => $self->o('raxml_exe'),
+                         'raxml_exe' => $self->o('raxml_exe'),
                         },
          -can_be_empty => 1,
-         -rc_name => 'himem',
+         -rc_name => '4Gb_job'
         },
 
         {   -logic_name    => 'genomic_alignment',
@@ -633,7 +615,7 @@ sub pipeline_analyses {
                              'raxmlLight_exe' => $self->o('raxmlLight_exe'),
                             },
              -can_be_empty => 1,
-             -rc_name => 'himem',
+             -rc_name => '4Gb_long_job',
             },
 
         {
@@ -647,7 +629,7 @@ sub pipeline_analyses {
                             'prank_exe' => $self->o('prank_exe'),
                            },
          -can_be_empty => 1,
-         -rc_name => 'himem',
+         -rc_name => '4Gb_long_job',
          -flow_into => {
                         2 => ['genomic_tree_himem'],
                        },
@@ -677,7 +659,7 @@ sub pipeline_analyses {
                              'mlss_id' => $self->o('mlss_id'),
                             },
              -can_be_empty => 1,
-             -rc_name => 'himem',
+             -rc_name => '4Gb_job',
             },
 
         {   -logic_name    => 'treebest_mmerge',
@@ -706,7 +688,7 @@ sub pipeline_analyses {
          -flow_into => {
                         1 => [ 'orthotree', 'ktreedist' ],
                        },
-         -rc_name => 'himem',
+         -rc_name => '4Gb_job',
         },
 
         {   -logic_name    => 'orthotree',
@@ -716,22 +698,7 @@ sub pipeline_analyses {
                             'tag_split_genes'   => 0,
                             'mlss_id' => $self->o('mlss_id'),
             },
-            -flow_into => {
-                           -1 => ['orthotree_himem' ],
-                           -2 => ['orthotree_himem' ],
-                          },
             -rc_name => 'default',
-        },
-
-        {
-         -logic_name => 'orthotree_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
-         -hive_capacity => $self->o('orthotree_capacity'),
-         -parameters => {
-                         'tag_split_genes'   => 0,
-                         'mlss_id' => $self->o('mlss_id'),
-         },
-         -rc_name => 'himem',
         },
 
         {   -logic_name    => 'ktreedist',
@@ -742,22 +709,7 @@ sub pipeline_analyses {
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                             'mlss_id' => $self->o('mlss_id'),
                            },
-            -flow_into => {
-                           -1 => [ 'ktreedist_himem' ],
-                          },
             -rc_name => 'default',
-        },
-
-        {
-         -logic_name => 'ktreedist_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
-         -hive_capacity => -1,
-         -parameters => {
-                         'treebest_exe'  => $self->o('treebest_exe'),
-                         'ktreedist_exe' => $self->o('ktreedist_exe'),
-                         'mlss_id' => $self->o('mlss_id'),
-                        },
-         -rc_name => 'himem',
         },
 
     ];
