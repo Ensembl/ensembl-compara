@@ -90,7 +90,7 @@ sub content_sub_slice {
     display_width   => $hub->param('display_width') || 60,
     site_type       => ucfirst lc $species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $hub->species,
-    display_species => $species_defs->SPECIES_SCIENTIFIC_NAME,
+    display_species => $species_defs->SPECIES_COMMON_NAME,
     comparison      => 1,
     ambiguity       => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',
@@ -161,7 +161,7 @@ sub get_slices {
   }
   
   foreach (@slices) {
-    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
+    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $self->species;
     
     push @formatted_slices, {
       slice             => $_,
@@ -299,7 +299,7 @@ sub markup_region_change {
 # get full name of seq-region from which the alignment comes
 sub get_slice_display_name {
   my ($self, $name) = @_;
-  return $self->hub->species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME') || 'Ancestral sequences';
+  return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
 }
 
 1;
