@@ -39,7 +39,7 @@ sub convert_to_drawing_parameters {
     if (grep $pf->{'_phenotype_id'} == $_, @phen_ids) {
       $p_value_logs{$object_id} = -(log($pf->p_value) / log(10)) unless $pf->p_value == 0;      
       $p_values{$object_id}     = $pf->p_value;
-      
+
       # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
       foreach my $id (grep $_, split /,/, $pf->associated_gene) {
         $id =~ s/\s//g;
@@ -69,7 +69,20 @@ sub convert_to_drawing_parameters {
     my $id_param    = $object_type;
        $id_param    =~ s/[a-z]//g;
        $id_param    = lc $id_param;
-    my %url_params;
+
+    my (@assoc_gene_links, %url_params);  
+       
+    # preparing the URL for all the associated genes and ignoring duplicate one   
+    while (my ($id, $desc) = each (%{$associated_genes{$name} || {}})) {    
+      next if $id =~ /intergenic|pseudogene/i;    
+     
+      push @assoc_gene_links, sprintf(    
+        '<a href="%s" title="%s">%s</a>',   
+        $hub->url({ type => 'Gene', action => 'Summary', g => $id }),    
+        $desc,    
+        $id   
+      );    
+    }
  
     # making the location 10kb if it a one base pair
     if ($end == $start) {
@@ -112,6 +125,7 @@ sub convert_to_drawing_parameters {
       p_value => $p_value_logs{$name},
       extra   => {
         feat_type   => $object_type,
+        genes       => join(', ', @assoc_gene_links) || '-',
         phe_sources => join(', ', sort keys %{$phenotypes_sources{$name}    || {}}),
         phe_studies => $self->_pf_external_reference_link($phenotypes_studies{$name}),
         'p-values'  => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
