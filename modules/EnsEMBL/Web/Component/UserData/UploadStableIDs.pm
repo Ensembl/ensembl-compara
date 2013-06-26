@@ -37,7 +37,6 @@ sub content {
     select => 'select',
   );
 
-  $form->add_element(type => 'Hidden', name => 'species',       value => $species);
   $form->add_element(type => 'Hidden', name => 'id_mapper',     value => 1);
   $form->add_element(type => 'Hidden', name => 'id_limit',      value => $id_limit);
   $form->add_element(type => 'Hidden', name => 'filetype',      value => 'ID History Converter');
