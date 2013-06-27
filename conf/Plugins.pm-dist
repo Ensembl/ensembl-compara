@@ -4,8 +4,12 @@
 ## $SiteDefs::ENSEMBL_SERVERROOT = '/path to root of ensembl tree';
 
 $SiteDefs::ENSEMBL_PLUGINS = [
-  'EnsEMBL::Mirror'    => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mirror',
-  'EnsEMBL::Ensembl'   => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
+  'EnsEMBL::Mirror'     => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mirror',
+  'EnsEMBL::Genoverse'  => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
+# 'EnsEMBL::Lucene'     => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
+# 'EnsEMBL::Users'      => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/users',
+# 'EnsEMBL::ORM'        => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/orm',
+  'EnsEMBL::Ensembl'    => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
 ];
 
 1;
