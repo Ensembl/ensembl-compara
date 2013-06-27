@@ -140,7 +140,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       blur: function () {
         if (!this.value) {
           panel.filter();
-          this.value = 'Enter cell or evidence types';
+          this.value = this.defaultValue;
           this.style.color = '#999';
         }
       }
