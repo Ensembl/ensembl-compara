@@ -243,12 +243,15 @@ sub _store_tagvalue {
         #print STDERR "attr\n";
         warn "Trying to overload the value of an attribute ($tag) ! This is not allowed for $self. The new value will replace the old one.\n" if $allow_overloading;
         # It is an attribute
-        my $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname) VALUES (?)");
-        $sth->execute($object->$perl_keyname);
+        my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=? WHERE $db_keyname=?");
+        my $nrows = $sth->execute($value, $object->$perl_keyname);
         $sth->finish;
-        $sth = $self->prepare("UPDATE $db_attrtable SET $tag=? WHERE $db_keyname=?");
-        $sth->execute($value, $object->$perl_keyname);
-        $sth->finish;
+        if ($nrows == 0) {
+            # We assume that all the columns have a "DEFAULT NULL" in their definition
+            $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname, $tag) VALUES (?, ?)");
+            $sth->execute($object->$perl_keyname, $value);
+            $sth->finish;
+        }
 
     } elsif ($allow_overloading) {
         #print STDERR "tag+\n";
@@ -262,12 +265,22 @@ sub _store_tagvalue {
     } else {
         #print STDERR "tag\n";
         # It is a tag with only one value allowed
-        my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=?");
-        $sth->execute($object->$perl_keyname, $tag);
+        my $sth = $self->prepare("UPDATE $db_tagtable SET value = ? WHERE $db_keyname=? AND tag=?");
+        my $nrows = $sth->execute($value, $object->$perl_keyname, $tag);
         $sth->finish;
-        $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
-        $sth->execute($object->$perl_keyname, $tag, $value);
-        $sth->finish;
+
+        if ($nrows == 0) {
+            # INSERT
+            $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
+            $sth->execute($object->$perl_keyname, $tag, $value);
+            $sth->finish;
+
+        } elsif ($nrows > 1) {
+            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=? LIMIT $nrows-1");
+            $sth->execute($object->$perl_keyname, $tag);
+            $sth->finish;
+        }
+
     }
 }
 
