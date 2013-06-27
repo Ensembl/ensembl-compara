@@ -209,19 +209,17 @@ sub store_node {
 
     assert_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode');
 
-    my $new_node = 0;
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $node->adaptor eq $self)) {
         my $sth = $self->prepare("INSERT INTO gene_tree_node VALUES ()");
         $sth->execute();
         $node->node_id( $sth->{'mysql_insertid'} );
-        $new_node = 1;
     }
 
     my $parent_id = undef;
     $parent_id = $node->parent->node_id if($node->parent);
 
     my $root_id = $node->root->node_id;
-    #print "inserting new_noe=$new_node parent_id=$parent_id, root_id=$root_id\n";
+    #print "inserting parent_id=$parent_id, root_id=$root_id\n";
     my $member_id = undef;
     $member_id = $node->member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
 
