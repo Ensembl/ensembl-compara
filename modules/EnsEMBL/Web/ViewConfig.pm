@@ -478,7 +478,7 @@ sub build_imageconfig_form {
           
           $first = '';
           
-          next unless scalar @child_nodes > 1;
+          next if scalar @child_nodes == 1 && !$node->get('datahub_menu');
           
           my @child_ids = map $_->id, grep { $_->get('node_type') eq 'track' && $_->get('menu') ne 'hidden' } $_->nodes;
           my $total     = scalar @child_ids;
