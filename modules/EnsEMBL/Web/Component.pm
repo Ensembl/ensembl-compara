@@ -1137,8 +1137,12 @@ sub transcript_table {
 
     $table->add_row(
       $page_type eq 'gene' ? 'Transcripts' : 'Gene',
-      $gene_html.sprintf(' <a rel="transcripts_table" class="button toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table"><span class="open">Show transcript table</span><span class="closed">Hide transcript table</span></a>',
-        $show ? 'closed' : 'open')
+      $gene_html . sprintf(
+        ' <a rel="transcripts_table" class="button toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table">
+          <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
+        </a>',
+        $show ? 'open' : 'closed'
+      )
     );
 
     my $table_2 = $self->new_table(\@columns, \@rows, {
