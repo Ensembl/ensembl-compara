@@ -165,7 +165,6 @@ sub form_matrix {
   my $img_url       = $self->img_url;
   my $conf          = $self->{'matrix_config'}{$menu}{$set};
   my @columns       = @{$conf->{'columns'}};
-  my @axis_labels   = map { s/([a-z])([A-Z])([a-z])/$1_$2$3/g; s/_/ /g; s/( [Tt]ype|s$)//g; lc; } $conf->{'axes'}{'x'}, $conf->{'axes'}{'y'};
   my $width         = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
   my %filters       = ( '' => 'All classes' );
   my (@rows, $rows_html, @headers_html, $last_class, %gaps, $track_style_header);
@@ -305,7 +304,7 @@ sub form_matrix {
   
   my $cols           = scalar @{$rows[0]} - 1;
   my $tutorial_col   = $cols > 5 ? 6 : $cols;
-  my ($tutorial_row) = sort { $a <=> $b } 5, scalar grep { $_->[0] ne 'gap' } @rows;
+  my ($tutorial_row) = sort { $a <=> $b } 5, scalar(grep { $_->[0] ne 'gap' } @rows) - 1;
   my $wrapper_class  = scalar @rows - $tutorial_row < 3 ? ' short' : '';
   
   $tutorial_row++ for grep { $_ < $tutorial_row } sort { $a <=> $b } keys %gaps;
@@ -314,16 +313,21 @@ sub form_matrix {
   
   my %help      = $hub->species_defs->multiX('ENSEMBL_HELP');
   my %tutorials = (
-    row       => sprintf('Hover on %s names to select or deselect %s types', @axis_labels),
-    col       => sprintf('Hover on %s names to select or deselect %s types', reverse @axis_labels),
+    row       => 'Hover to select or deselect cells in the row',
+    col       => 'Hover to select or deselect cells in the column',
     style     => sprintf('Click the boxes to choose %s style', lc $track_style_header),
-    fil       => sprintf('%s %s or %s type search terms', scalar keys %filters > 1 ? sprintf 'Choose a%s %s class and/or enter', $axis_labels[1] =~ /^[aeiou]/ ? 'n' : '', $axis_labels[1] : 'Enter', @axis_labels),
+    fil       => sprintf('%s search terms', scalar keys %filters > 1 ? sprintf 'Choose a filter class and/or enter' : 'Enter'),
     drag      => 'Click and drag with your mouse to turn on/off more than one box',
     all_track => 'Click to change all track styles at once',
     video     => sprintf('<a href="%s" class="popup">Click to view a tutorial video</a>', $hub->url({ type => 'Help', action => 'View', id => $help{'Config/Matrix'}, __clear => 1 })),
   );
   
   $tutorials{$_} = qq{<b class="tutorial $_">$tutorials{$_}</b>} for keys %tutorials;
+  
+  if ($tutorial_row < 3) {
+    my $margin = $tutorial_row == 0 ? 70 : 60;
+    $tutorials{'col'} =~ s/col">/col" style="margin-top:${margin}px">/;
+  }
   
   $rows[$tutorial_row][1]{'html'}                  = "$tutorials{'col'}$rows[$tutorial_row][1]{'html'}";
   $rows[$tutorial_row - 1][$tutorial_col]{'html'} .= $tutorials{'drag'};
@@ -360,7 +364,7 @@ sub form_matrix {
     
     $headers_html[0] .= sprintf(
       qq{<th class="$x_class"><p>$x</p>$select_all_col%s</th>},
-      $x, $x_class, $x_class, $x_class, $i == $tutorial_col - 2 ? $tutorials{'row'} : ''
+      $x, $x_class, $x_class, $x_class, $c == $tutorial_col - 2 ? $tutorials{'row'} : ''
     );
     
     # FIXME: don't double up class with id
@@ -388,7 +392,7 @@ sub form_matrix {
     <div class="filter_wrapper">
       <h2>Filter by</h2>
       %s
-      <input type="text" class="filter" value="Enter %s or %s type" />
+      <input type="text" class="filter" value="Enter terms to filter by" />
       $tutorials{'fil'}
     </div>
     <div class="matrix_key">
@@ -428,7 +432,6 @@ sub form_matrix {
     },
     encode_entities($conf->{'header'}),
     scalar keys %filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq{<option value="$_">$filters{$_}</option>}, sort keys %filters) : '',
-    @axis_labels,
     @headers_html
   );
   
