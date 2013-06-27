@@ -23,12 +23,16 @@ following notes should help you begin to find your way around!</p>
 <p>The following directories contain web-related code:</p>
 
 <dl>
+<dt>cbuild</dt>
+<dd>inline C code for handling data files</dd>
 <dt>conf</dt>
 <dd>site-wide configuration files</dd>
 <dt>ctrl-scripts</dt>
 <dd>Apache startup and stop scripts</dd>
 <dt>ensembl-draw</dt>
 <dd>Perl GD-based modules used to dynamically generate images</dd>
+<dt>ensembl-external</dt>
+<dd>modules for parsing external datasources (e.g. DAS, BAM)</dd>
 <dt>htdocs</dt>
 <dd>general HTML content (e.g. code documentation)</dd>
 <dt>modules</dt>
@@ -185,8 +189,12 @@ and static content.</p>
 - without this or a similar plugin, no data will appear on your site.</dd>
 <dt>public-plugins/mirror</dt>
 <dd>Used to configure your local server settings</dd>
+<dt>public-plugins/genoverse</dt>
+<dd>Latest stable version of the Genoverse scrolling browser
+<dt>public-plugins/lucene</dt>
+<dd>Lucene search engine</dd>
 <dt>public-plugins/orm</dt>
-<dd>Under development. This plugin will be used to separate optional features (user accounts, ability to update databases through a web interface) from the core functionality of the Ensembl webcode. It uses Rose::DB::Object and its associated modules for database access, and thus has a lot of additional Perl dependencies</dd>
+<dd>This plugin is used to separate optional features (user accounts, ability to update databases through a web interface) from the core functionality of the Ensembl webcode. It uses Rose::DB::Object and its associated modules for database access, and thus has a lot of additional Perl dependencies</dd>
 <dt>public-plugins/admin</dt>
 <dd>Administrative interface for non-biological content, such as help and news. Depends on public-plugins/orm</dd>
 </dl>
@@ -206,8 +214,12 @@ standard Ensembl mirror, the module will define a plugin array as follows:</p>
 
 <pre class="code">
 $SiteDefs::ENSEMBL_PLUGINS = [
-  'EnsEMBL::Mirror'    =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mirror',
-  'EnsEMBL::Ensembl'   =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
+  'EnsEMBL::Mirror'     =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mirror',
+  'EnsEMBL::Genoverse'  =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
+# 'EnsEMBL::Lucene'     =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
+# 'EnsEMBL::Users'      =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/users',
+# 'EnsEMBL::ORM'        =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/orm',
+  'EnsEMBL::Ensembl'    =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
 ];
 </pre>
 
