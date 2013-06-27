@@ -5,6 +5,7 @@ use strict;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
@@ -148,8 +149,22 @@ sub store_genetree
     printf("PHYML::store_genetree\n") if($self->debug);
 
     $tree->root->build_leftright_indexing(1);
-    $self->compara_dba->get_GeneTreeAdaptor->store($tree);
-    $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+
+    # Make sure the same commands are inside and outside of the transaction
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        $helper->transaction(
+            -RETRY => 3, -PAUSE => 5,
+            -CALLBACK => sub {
+                $self->compara_dba->get_GeneTreeAdaptor->store($tree);
+                $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+            }
+        );
+    } else {
+        $self->compara_dba->get_GeneTreeAdaptor->store($tree);
+        $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+    }
+
 
     if($self->debug >1) {
         print("done storing - now print\n");
@@ -173,7 +188,9 @@ sub store_node_tags
     }
 
     my $node_type = '';
-    if (not $node->is_leaf) {
+    if ($node->is_leaf) {
+        $node->delete_tag('node_type');
+    } else {
         if ($node->has_tag('gene_split')) {
             $node_type = 'gene_split';
         } elsif ($node->get_tagvalue("DD", 0)) {
@@ -187,27 +204,25 @@ sub store_node_tags
         print "node_type: $node_type\n" if ($self->debug);
     }
 
+    $node->delete_tag('lost_taxon_id');
     if ($node->has_tag("E")) {
         my $n_lost = $node->get_tagvalue("E");
         $n_lost =~ s/.{2}//;        # get rid of the initial $-
         my @lost_taxa = split('-', $n_lost);
-        my $topup = 0;   # is used to delete all the pre-existing lost_taxon_id
         foreach my $taxon (@lost_taxa) {
             print "lost_taxon_id : $taxon\n" if ($self->debug);
-            $node->store_tag('lost_taxon_id', $taxon, $topup);
-            $topup = 1;
+            $node->store_tag('lost_taxon_id', $taxon, 1);
         }
     }
 
+    $node->delete_tag('tree_support');
     if ($node->has_tag('T') and $self->param('store_tree_support')) {
         my $binary_support = $node->get_tagvalue('T');
         my $i = 0;
-        my $topup = 0;   # is used to delete all the pre-existing tree_support
         while ($binary_support) {
             if ($binary_support & 1) {
                 print 'tree_support : ', $ref_support->[$i], "\n" if ($self->debug);
-                $node->store_tag('tree_support', $ref_support->[$i], $topup);
-                $topup = 1;
+                $node->store_tag('tree_support', $ref_support->[$i], 1);
             }
             $binary_support >>= 1;
             $i++;
@@ -216,12 +231,14 @@ sub store_node_tags
 
     my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'S' => 'treebest_taxon_id');
     foreach my $tag (keys %mapped_tags) {
-        next unless $node->has_tag($tag);
-        my $value = $node->get_tagvalue($tag);
         my $db_tag = $mapped_tags{$tag};
-
-        $node->store_tag($db_tag, $value);
-        print "$tag as $db_tag: $value\n" if ($self->debug);
+        if ($node->has_tag($tag)) {
+            my $value = $node->get_tagvalue($tag);
+            $node->store_tag($db_tag, $value);
+            print "$tag as $db_tag: $value\n" if ($self->debug);
+        } else {
+            $node->delete_tag($db_tag);
+        }
     }
 
     foreach my $child (@{$node->children}) {
@@ -370,7 +387,21 @@ sub store_tree_into_clusterset {
     $clusterset->root->add_child($clusterset_leaf);
     $clusterset_leaf->add_child($newtree->root);
     $newtree->clusterset_id($clusterset->clusterset_id);
-    $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
+
+    # Make sure the same commands are inside and outside of the transaction
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        $helper->transaction(
+            -RETRY => 3, -PAUSE => 5,
+            -CALLBACK => sub {
+                $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
+            }
+        );
+    } else {
+        $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
+    }
+
+
 
 }
 
