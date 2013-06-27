@@ -1,6 +1,6 @@
 div.config div.config_matrix_wrapper                                { position: relative; border-top: 1px solid transparent; overflow-x: auto; overflow-y: hidden; }
 div.config div.config_matrix_wrapper.wide                           { border: 1px solid #ccc; margin-bottom: 16px; padding: 0 16px; }
-div.config div.config_matrix_wrapper.short                          { padding-bottom: 60px; }
+div.config div.config_matrix_wrapper.short                          { padding-bottom: 300px; }
 div.config div.config_matrix_scroller                               { height: 16px; width: 100%; overflow-x: auto; overflow-y: hidden; }
 div.config div.config_matrix_scroller div                           { height: 16px; }
 
