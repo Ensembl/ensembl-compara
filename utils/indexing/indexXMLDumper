@@ -1089,7 +1089,7 @@ sub dumpGenomicAlignment {
     'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
   );
   my $total_af_c;
-  foreach my $db ( sort { $b cmp $a } keys %dbs) {
+  foreach my $db ( sort { $a cmp $b } keys %dbs) {
     my $counter    = make_counter(0);
     my $dbname     = $dbs{$db};
     my $file       = $conf->{'directory'}."/${dbname}_GenomicAlignment.xml";
