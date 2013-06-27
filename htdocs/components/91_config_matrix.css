@@ -107,18 +107,18 @@ div.config div.config_matrix .tutorial.style:after      { border-width: 0 0 20px
 div.config div.config_matrix .tutorial.all_track        { width: 100px; margin: 13px 0 0 30px; }
 div.config div.config_matrix .tutorial.all_track:before { border-width: 20px 0 0 30px; left: 20px; top: -20px; }
 div.config div.config_matrix .tutorial.all_track:after  { border-width: 20px 0 0 5px;  left: 20px; top: -20px; border-color: transparent #FFF; }
-div.config div.config_matrix .tutorial.col              { width: 140px; margin: 30px 0 0; }
+div.config div.config_matrix .tutorial.col              { width: 110px; margin: 30px 0 0; }
 div.config div.config_matrix .tutorial.col:before       { border-width: 15px 5px 0 0;  left: 20px; top: -15px; }
 div.config div.config_matrix .tutorial.col:after        { border-width: 15px 0 0 30px; left: 25px; top: -15px; }
 div.config div.config_matrix .tutorial.drag             { width: 160px; margin: -25px 0 0 45px; }
 div.config div.config_matrix .tutorial.drag:before      { border-width: 10px 35px 0 0; bottom: 20px; left: -35px; }
 div.config div.config_matrix .tutorial.drag:after       { border-width: 0 35px 10px 0; bottom: 10px; left: -35px; }
-div.config div.config_matrix .tutorial.row              { width: 150px; margin: -65px 0 0 65px; z-index: 10001; }
+div.config div.config_matrix .tutorial.row              { width: 105px; margin: -65px 0 0 65px; z-index: 10001; }
 div.config div.config_matrix .tutorial.row:before       { border-width: 28px 43px 0 0; bottom: 0; left: -43px; }
 div.config div.config_matrix .tutorial.row:after        { border-width: 10px 43px 0 0; bottom: 0; left: -43px; border-color: transparent #FFF; }
-div.config div.config_matrix .tutorial.fil              { width: 180px; top: 3px; left: 310px; padding: 4px; border-radius: 0; }
-div.config div.config_matrix .tutorial.fil:before       { border-width: 40px 40px 0 0; bottom: 50%; left: -40px; }
-div.config div.config_matrix .tutorial.fil:after        { border-width: 0 40px 40px 0; top:    50%; left: -40px; }
+div.config div.config_matrix .tutorial.fil              { width: 180px; top: 3px; left: 300px; padding: 4px; border-radius: 0; }
+div.config div.config_matrix .tutorial.fil:before       { border-width: 30px 30px 0 0; bottom: 50%; left: -30px; }
+div.config div.config_matrix .tutorial.fil:after        { border-width: 0 30px 30px 0; top:    50%; left: -30px; }
 div.config div.config_matrix .tutorial.video            { top: 45px; right: 5px; }
 div.config div.config_matrix .tutorial.video a          { color: #FFF!important; }
 div.config div.config_matrix .tutorial.video:before,    
