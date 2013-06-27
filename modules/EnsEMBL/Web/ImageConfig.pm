@@ -984,9 +984,11 @@ sub load_configured_vcf    { shift->load_file_format('vcf');    }
 
 sub load_file_format {
   my ($self, $format, $sources) = @_;
-
   my $function = "_add_${format}_track";
-     $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
+  
+  return unless $self->can($function);
+  
+  $sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
   
   foreach my $source_name (sort keys %$sources) {
     # get the target menu 
