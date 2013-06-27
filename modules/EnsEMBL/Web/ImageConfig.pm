@@ -923,7 +923,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'header'}     = $args{'source'}{'submenu_name'};
-  $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}");
+  $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}") unless $args{'source'}{'datahub'} == 1;
   $args{'options'}{$_}           = $args{'source'}{$_} for qw(url_code label_x features menu_key description info colour axes datahub option_key column_key);
  
   if ($args{'source'}{'datahub'} eq 'track') {
