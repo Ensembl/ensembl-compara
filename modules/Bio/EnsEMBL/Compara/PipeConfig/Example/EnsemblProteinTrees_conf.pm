@@ -58,8 +58,8 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '71',
-        'rel_suffix'            => 'b',    # an empty string by default, a letter otherwise
+        'release'               => '72',
+        'rel_suffix'            => 'm',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # dependent parameters: updating 'work_dir' should be enough
@@ -167,8 +167,8 @@ sub default_options {
         },
 
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
@@ -181,14 +181,21 @@ sub default_options {
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'sf5_ensembl_compara_70',
+           -dbname => 'kb3_ensembl_compara_72',
         },
 
         # Are we reusing the blastp alignments ?
         'reuse_from_prev_rel_db'    => 1,
 
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-        #'prev_release'            => $self->o('release'),
+        # To run without a master database
+        #'use_master_db'             => 0,
+        #'do_stable_id_mapping'      => 0,
+        #'reuse_from_prev_rel_db'    => 0,
+        #'mlss_id'                   => undef,
+        #'ncbi_db'                   => $self->o('livemirror_loc'),
+
+        #'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+        'prev_release'            => $self->o('release'),
 
 
     };
