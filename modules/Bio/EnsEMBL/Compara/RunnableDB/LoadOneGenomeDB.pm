@@ -136,25 +136,40 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $core_dba            = $self->param('core_dba');
+    my $genome_db = $self->create_genome_db($self->param('core_dba'), $self->param('genome_db_id'), $self->param('assembly_name'), $self->param('taxon_id'), $self->param('locator'));
+
+    $self->param('genome_db', $genome_db);
+}
+
+sub write_output {      # store the genome_db and dataflow
+    my $self = shift;
+
+    $self->store_and_dataflow_genome_db($self->param('genome_db'));
+}
+
+# ------------------------- non-interface subroutines -----------------------------------
+
+sub create_genome_db {
+    my ($self, $core_dba, $asked_genome_db_id, $asked_assembly_name, $asked_taxon_id, $asked_locator) = @_;
+
     my $meta_container      = $core_dba->get_MetaContainer;
 
     my $assembly_name_in_db = $core_dba->extract_assembly_name();
-    my $assembly_name       = $self->param('assembly_name') || $assembly_name_in_db;
+    my $assembly_name       = $asked_assembly_name || $assembly_name_in_db;
     if($assembly_name ne $assembly_name_in_db) {
         die "The required assembly_name ('$assembly_name') is different from the one found in the database ('$assembly_name_in_db'), please investigate";
     }
 
     my $taxon_id_in_db      = $meta_container->get_taxonomy_id();
-    my $taxon_id            = $self->param('taxon_id')  || $taxon_id_in_db;
+    my $taxon_id            = $asked_taxon_id  || $taxon_id_in_db;
     if($taxon_id != $taxon_id_in_db) {
         die "taxon_id parameter ($taxon_id) is different from the one defined in the database ($taxon_id_in_db), please investigate";
     }
 
-    my $genome_db_id    = $self->param('genome_db_id')      || undef;
+    my $genome_db_id    = $asked_genome_db_id      || undef;
     my $genebuild       = $meta_container->get_genebuild()    || '';
     my $genome_name     = $meta_container->get_production_name() or die "Could not fetch production_name, please investigate";
-    my $locator         = $self->param('locator') || $core_dba->locator();
+    my $locator         = $asked_locator || $core_dba->locator();
 
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dbID( $genome_db_id );
@@ -164,13 +179,13 @@ sub run {
     $genome_db->genebuild( $genebuild );
     $genome_db->locator( $locator );
 
-    $self->param('genome_db', $genome_db);
+    return $genome_db;
 }
 
-sub write_output {      # store the genome_db and dataflow
-    my $self = shift;
-
-    my $genome_db               = $self->param('genome_db');
+sub store_and_dataflow_genome_db {
+    my $self = shift @_;
+    my $genome_db = shift @_;
+    my $branch = shift @_ || 1;
 
     $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
     my $genome_db_id            = $genome_db->dbID();
@@ -180,10 +195,8 @@ sub write_output {      # store the genome_db and dataflow
     $self->dataflow_output_id( {
         'genome_db_id' => $genome_db_id,
         ($pseudo_stableID_prefix ? ('pseudo_stableID_prefix' => $pseudo_stableID_prefix) : ())
-    }, 1);
+    }, $branch);
 }
-
-# ------------------------- non-interface subroutines -----------------------------------
 
 sub iterate_through_registered_species {
     my $self = shift;
