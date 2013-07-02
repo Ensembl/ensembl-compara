@@ -231,15 +231,6 @@ sub pipeline_analyses {
             } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_table_factory' ],
-                'A->1'  => [ 'backbone_fire_species_list_prepare' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name => 'backbone_fire_species_list_prepare',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A'  => [ 'create_reuse_ss' ],
                 'A->1'  => [ 'backbone_fire_genome_load' ],
             },
             -meadow_type    => 'LOCAL',
@@ -362,7 +353,8 @@ sub pipeline_analyses {
                 'fan_branch_code' => 2,
             },
             -flow_into => {
-                2 => [ 'copy_table'  ],
+                '2->A' => [ 'copy_table'  ],
+                'A->1' => [ 'create_reuse_ss' ],
             },
             -meadow_type    => 'LOCAL',
         },
