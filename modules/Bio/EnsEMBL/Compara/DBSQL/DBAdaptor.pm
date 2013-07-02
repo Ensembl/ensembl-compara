@@ -136,7 +136,6 @@ sub get_available_adaptors {
   my %pairs =  (
             # inherited from core:
         'MetaContainer'         => 'Bio::EnsEMBL::DBSQL::MetaContainer',
-        'Analysis'              => 'Bio::EnsEMBL::DBSQL::AnalysisAdaptor',
 
             # internal:
         'Method'                => 'Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor',
