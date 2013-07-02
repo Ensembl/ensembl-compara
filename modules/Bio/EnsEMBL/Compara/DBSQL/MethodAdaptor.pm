@@ -188,7 +188,18 @@ sub store {
         $reference_dba->get_MethodAdaptor->store( $method );
     }
 
-    unless($self->_synchronise($method)) {
+    if ($self->_synchronise($method)) {
+
+        my $sql = 'UPDATE method_link SET class = ? WHERE method_link_id = ?';
+        my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
+
+        my $return_code = $sth->execute( $method->class(), $method->dbID() )
+            or die "Could not store ".$method->toString."\n";
+
+        $sth->finish();
+
+    } else {
+
         my $sql = 'INSERT INTO method_link (method_link_id, type, class) VALUES (?, ?, ?)';
         my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
 
