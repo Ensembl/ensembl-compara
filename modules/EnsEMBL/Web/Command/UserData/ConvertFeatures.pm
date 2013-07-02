@@ -114,7 +114,7 @@ sub process {
         push(@$other,keys %{$f->{'gff_attribs'}});
         
         $exporter->{'config'}{'extra_fields'} = $other;
-        $exporter->feature($feature_type, $f, $extra, { source => $source, %{$f->{'gff_attribs'}}  });
+        $exporter->feature($feature_type, $f, $extra, { source => $source });
       }
     }
     
