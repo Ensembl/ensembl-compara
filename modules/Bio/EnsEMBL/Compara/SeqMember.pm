@@ -148,7 +148,7 @@ sub new_from_transcript {
   $self->chr_start($transcript->coding_region_start);
   $self->chr_end($transcript->coding_region_end);
   $self->chr_strand($transcript->seq_region_strand);
-  $self->display_label($transcript->display_xref->display_id);
+  $self->display_label($transcript->display_xref->display_id) if $transcript->display_xref;
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
     if(not defined($transcript->translation)) {
