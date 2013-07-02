@@ -101,7 +101,7 @@ sub new_from_gene {
     $self->chr_end($gene->seq_region_end);
     $self->chr_strand($gene->seq_region_strand);
     $self->source_name("ENSEMBLGENE");
-    $self->display_name($gene->display_xref->display_id);
+    $self->display_label($gene->display_xref->display_id);
   }
   return $self;
 }
