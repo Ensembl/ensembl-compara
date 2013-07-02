@@ -270,7 +270,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'blastdb_name'  => $self->o('blastdb_name'),
-                'cmd'           => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#work_dir#/#filename#',
+                'cmd'           => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 1).' >#work_dir#/#filename#',
                 'filename'      => $self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
             },
             -flow_into => {
@@ -346,7 +346,7 @@ sub pipeline_analyses {
         {   -logic_name => 'snapshot_after_blast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#work_dir#/#filename#',
+                'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 1).' >#work_dir#/#filename#',
                 'filename'  => $self->o('pipeline_name').'_snapshot_after_blast.sql',
             },
             -flow_into => {
