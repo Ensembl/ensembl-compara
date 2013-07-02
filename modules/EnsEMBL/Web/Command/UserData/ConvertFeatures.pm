@@ -3,7 +3,6 @@
 package EnsEMBL::Web::Command::UserData::ConvertFeatures;
 
 use strict;
-use Data::Dumper;
 
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
