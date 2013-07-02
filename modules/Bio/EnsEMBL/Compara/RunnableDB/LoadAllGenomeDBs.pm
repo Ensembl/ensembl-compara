@@ -1,0 +1,73 @@
+
+=pod 
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs
+
+=head1 DESCRIPTION
+
+Loads all the core databases and stores the species as GenomeDB objects.
+
+=cut
+
+package Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs;
+
+use strict;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB');
+
+my $suffix_separator = '__cut_here__';
+
+
+sub fetch_input {
+    my $self = shift @_;
+    $self->param('all_core_dbas', $self->get_all_core_dbas);
+}
+
+sub run {
+    my $self = shift @_;
+
+    my @genome_dbs;
+    foreach my $core_dba (@{$self->param('all_core_dbas')}) {
+        next unless $core_dba->extract_assembly_name;
+        push @genome_dbs, $self->create_genome_db($core_dba);
+    }
+    $self->param('genome_dbs', \@genome_dbs);
+}
+
+sub write_output {
+    my $self = shift;
+
+    foreach my $genome_db (@{$self->param('genome_dbs')}) {
+        $self->store_and_dataflow_genome_db($genome_db, 2);
+    }
+}
+
+
+sub get_all_core_dbas {
+    my $self = shift;
+
+    my $registry_dbs = $self->param('registry_dbs') || [];
+    my $registry_files = $self->param('registry_files') || [];
+    $registry_dbs || $registry_files || die "'registry_dbs' or 'registry_files' become obligatory parameter";
+
+    my @core_dba_list = ();
+
+    for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
+        Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );
+        push @core_dba_list, @{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')};
+    }
+
+    for(my $r_ind=0; $r_ind<scalar(@$registry_files); $r_ind++) {
+
+        my $reg_content = Bio::EnsEMBL::Compara::GenomeMF->all_from_file( $registry_files->[$r_ind] );
+        push @core_dba_list, @$reg_content;
+    }
+
+    return \@core_dba_list;
+}
+
+
+1;
+
