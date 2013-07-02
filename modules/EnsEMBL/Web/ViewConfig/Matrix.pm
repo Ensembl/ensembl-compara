@@ -83,7 +83,6 @@ sub set_columns {
       section      => $tree->get_node($menu)->get('caption'),
       header       => $data->{'header'},
       description  => $data->{'info'},
-      axes         => $data->{'axes'},
     };
     
     push @{$conf->{'columns'}}, { name => $tree->clean_id(join '_', $conf->{'track_prefix'}, $set, $label_x), x => $label_x, display => $node->get('display'), renderers => $renderers };
@@ -326,10 +325,10 @@ sub form_matrix {
   
   if ($tutorial_row < 3) {
     my $margin = $tutorial_row == 0 ? 70 : 60;
-    $tutorials{'col'} =~ s/col">/col" style="margin-top:${margin}px">/;
+    $tutorials{'row'} =~ s/row">/row" style="margin-top:${margin}px">/;
   }
   
-  $rows[$tutorial_row][1]{'html'}                  = "$tutorials{'col'}$rows[$tutorial_row][1]{'html'}";
+  $rows[$tutorial_row][1]{'html'}                  = "$tutorials{'row'}$rows[$tutorial_row][1]{'html'}";
   $rows[$tutorial_row - 1][$tutorial_col]{'html'} .= $tutorials{'drag'};
   
   foreach (@rows) {
@@ -364,7 +363,7 @@ sub form_matrix {
     
     $headers_html[0] .= sprintf(
       qq{<th class="$x_class"><p>$x</p>$select_all_col%s</th>},
-      $x, $x_class, $x_class, $x_class, $c == $tutorial_col - 2 ? $tutorials{'row'} : ''
+      $x, $x_class, $x_class, $x_class, $c == $tutorial_col - 2 ? $tutorials{'col'} : ''
     );
     
     # FIXME: don't double up class with id
