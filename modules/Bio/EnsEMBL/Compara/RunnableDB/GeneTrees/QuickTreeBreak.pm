@@ -106,8 +106,6 @@ sub fetch_input {
     # We reload the cigar lines in case the subtrees are partially written
     $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
 
-    $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
-
     foreach my $exe_name (qw(sreformat_exe quicktree_exe)) {
         my $exe = $self->param($exe_name) or die "'$exe_name' is an obligatory parameter";
         die "Cannot execute '$exe'" unless (-x $exe);
