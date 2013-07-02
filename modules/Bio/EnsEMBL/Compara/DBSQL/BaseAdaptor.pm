@@ -274,7 +274,8 @@ sub _synchronise {
         } elsif($dbID and ($dbID!=$stored_dbID)) {
             die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
         } else {
-            return $self->attach( $object, $stored_dbID);
+            $self->attach( $object, $stored_dbID);
+            return $self->fetch_by_dbID($stored_dbID);
         }
     } else {
         return undef;   # not found, safe to insert
