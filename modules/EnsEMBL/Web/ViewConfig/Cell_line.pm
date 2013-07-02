@@ -69,7 +69,6 @@ sub set_columns {
       caption      => $evidence_info->{$set}{'name'},
       header       => $evidence_info->{$set}{'long_name'},
       description  => $funcgen_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
-      axes         => { x => 'cell', y => 'evidence type' },
     };
     
     push @{$conf->{'columns'}}, { display => $_->get('display'), renderers => $renderers, x => $cell_line, name => $tree->clean_id(join '_', $conf->{'track_prefix'}, $set, $cell_line) };
