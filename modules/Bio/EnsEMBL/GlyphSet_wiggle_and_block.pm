@@ -429,7 +429,7 @@ sub draw_wiggle_points {
     
     # alter colour if the intron supporting feature has a name of non_canonical
     if(ref $f ne 'HASH' and 
-       $f->can('display_id') and
+       $f->can('display_id') and $f->can('analysis') and
        $f->analysis->logic_name =~ /_intron/) {
       my $can_type = [ split(/:/,$f->display_id) ]->[-1];
       if($can_type and length($can_type)>3 and 
