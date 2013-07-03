@@ -114,6 +114,30 @@ sub convert_to_drawing_parameters {
       );
     }
     
+    # make source link out
+    my $sources;
+    
+    if(defined($pf->external_id)) {
+      foreach my $source(keys %{$phenotypes_sources{$name} || {}}) {
+        my $url = $hub->get_ExtURL(
+          $source,
+          { ID => $pf->external_id, TAX => $hub->species_defs->TAXONOMY_ID }
+        );
+        
+        $sources .=
+          ($sources ? ', ' : '').
+          ($url ? sprintf(
+            '<a target="_blank" href="%s">%s</a>',
+            $url,
+            $source
+          ) : $source);
+      }
+    }
+    
+    else {
+      $sources = join(', ', sort keys %{$phenotypes_sources{$name} || {}});
+    }
+    
     push @results, {
       region  => $seq_region,
       start   => $start,
@@ -126,7 +150,7 @@ sub convert_to_drawing_parameters {
       extra   => {
         feat_type   => $object_type,
         genes       => join(', ', @assoc_gene_links) || '-',
-        phe_sources => join(', ', sort keys %{$phenotypes_sources{$name}    || {}}),
+        phe_sources => $sources,
         phe_studies => $self->_pf_external_reference_link($phenotypes_studies{$name}),
         'p-values'  => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
       },
