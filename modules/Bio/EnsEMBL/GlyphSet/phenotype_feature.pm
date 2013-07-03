@@ -116,10 +116,21 @@ sub title {
   
   my $string = "$type: $id; Phenotype: $phen; Source: $source; Location: $loc";
   
+  my $hub = $self->{'config'}->hub;
+  
   # add phenotype attributes, skip internal dbID ones
   my %attribs = %{$f->get_all_attributes};
   foreach my $attrib(sort grep {!/sample|strain/} keys %attribs) {
     my $value = $attribs{$attrib};
+    
+    if($attrib eq 'external_id') {
+      my $url = $hub->get_ExtURL(
+        $f->source,
+        { ID => $value, TAX => $hub->species_defs->TAXONOMY_ID }
+      );
+      
+      $value = '<a href="'.$url.'" target="_blank">'.$value.'</a>' if $url;
+    }
     $string .= "; $attrib: $value";
   }
   
