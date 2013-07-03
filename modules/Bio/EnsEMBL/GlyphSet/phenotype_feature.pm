@@ -108,15 +108,23 @@ sub title {
   my $source = $f->source;
   my $type   = $f->type;
   my $loc    = $f->seq_region_name.":".$f->seq_region_start."-".$f->seq_region_end;
+  my $hub    = $self->{'config'}->hub;
   
   # convert the object type e.g. from StructuralVariation to Structural Variation
   # but don't want to convert QTL to Q T L
   $type =~ s/([A-Z])([a-z])/ $1$2/g;
   $type =~ s/^s+//;
   
-  my $string = "$type: $id; Phenotype: $phen; Source: $source; Location: $loc";
+  # link to phenotype page
+  my $url = $hub->url({
+    type => 'Phenotype',
+    action => 'Locations',
+    ph => $f->phenotype->dbID,
+    __clear => 1,
+  });
+  $phen = sprintf('<a href="%s">%s</a>', $url, $phen);
   
-  my $hub = $self->{'config'}->hub;
+  my $string = "$type: $id; Phenotype: $phen; Source: $source; Location: $loc";
   
   # add phenotype attributes, skip internal dbID ones
   my %attribs = %{$f->get_all_attributes};
