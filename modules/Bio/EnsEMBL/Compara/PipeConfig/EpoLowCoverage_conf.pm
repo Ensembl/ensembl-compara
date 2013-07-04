@@ -16,14 +16,16 @@ sub default_options {
 	'release'       => 67,
 	'prev_release'  => 66,
         'release_suffix'=> '', # set it to '' for the actual release
+        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name' => 'LOW35_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
 	'pairwise_exception_location' => { 576 => 'mysql://ensro@compara1/sf5_hsap_stri_lastz_67'},
 	#'pairwise_exception_location' => { },
 
+        'host' => 'compara1',
         'pipeline_db' => {
-            -host   => 'compara1',
+            -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -102,6 +104,8 @@ sub default_options {
 
 	#Location of executables (or paths to executables)
 	'gerp_exe_dir'    => '/software/ensembl/compara/gerp/GERPv2.1',   #gerp program
+        'semphy_exe'      => '/software/ensembl/compara/semphy_latest', #semphy program
+        'treebest_exe'      => '/software/ensembl/compara/treebest.doubletracking', #treebest program
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 
@@ -112,7 +116,12 @@ sub default_options {
         'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/epo_low_coverage/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
         'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/epo_low_coverage/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
+        #
+        #Resource requirements
+        #
        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+       'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
+       'aligner_capacity' => 2000,
     };
 }
 
@@ -139,7 +148,7 @@ sub resource_classes {
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
          '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
-         '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
+         '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
 	 '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
          '3.6Gb' =>  { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
     };
@@ -307,6 +316,8 @@ sub pipeline_analyses {
 				'reference_species' => $self->o('ref_species'),
 				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
+                                'semphy_exe' => $self->o('semphy_exe'),
+                                'treebest_exe' => $self->o('treebest_exe'),
 			       },
 		-batch_size      => 5,
 		-hive_capacity   => 30,
@@ -326,6 +337,8 @@ sub pipeline_analyses {
 				'reference_species' => $self->o('ref_species'),
 				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
+                                'semphy_exe' => $self->o('semphy_exe'),
+                                'treebest_exe' => $self->o('treebest_exe'),
 			       },
 		-batch_size      => 5,
 		-hive_capacity   => 30,
