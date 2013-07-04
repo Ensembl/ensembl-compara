@@ -129,6 +129,8 @@ sub run
       -multi_fasta_file => $self->param('multi_fasta_file'),
       -tree_string => $self->tree_string,
       -taxon_species_tree => $self->get_taxon_tree,
+      -semphy_exe => $self->param('semphy_exe'),
+      -treebest_exe => $self->param('treebest_exe'),
       );
   $self->param('runnable', $runnable);
 
@@ -1058,7 +1060,6 @@ sub _load_GenomicAligns {
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
-
   foreach my $ga (@{$gab->get_all_GenomicAligns}) {  
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths
