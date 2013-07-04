@@ -87,7 +87,8 @@ my $compara_url;
 my $ucsc_url;
 my $urls;
 my $image_dir = "./"; #location to write image files
-my $R_prog = "/software/R-2.9.0/bin/R ";
+#my $R_prog = "/software/R-2.9.0/bin/R ";
+my $R_prog = "/software/R-3.0.0/bin/R ";
 my $reg = "Bio::EnsEMBL::Registry";
 
 
@@ -300,7 +301,7 @@ $template->param(REF_CODEXON => format_number($ref_results->{coding_exon_length}
 $template->param(REF_MATCHES => format_number($ref_results->{matches}));
 $template->param(REF_MISMATCHES => format_number($ref_results->{mis_matches}));
 $template->param(REF_INSERTIONS => format_number($ref_results->{ref_insertions}));
-$template->param(REF_UNCOVERED => format_number($ref_uncovered));
+$template->param(REF_UNCOVERED => format_number($ref_results->{uncovered}));
 
 
 #$template->param(REF_ALIGN_CODEXON_PERC => sprintf "%.2f",($ref_results->{alignment_exon_coverage} / $ref_results->{coding_exon_length} * 100));
