@@ -74,7 +74,7 @@ sub psychic {
 
   return $hub->redirect("http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")                          if $dest_site eq 'ebi';
   return $hub->redirect("http://www.sanger.ac.uk/search?db=allsanger&t=$query")                                      if $dest_site eq 'sanger';
-  return $hub->redirect("http://www.ensemblgenomes.org/search/eg/$query") if $dest_site eq 'ensembl_genomes';
+  return $hub->redirect("http://www.ensemblgenomes.org/search/eg/$query")                                            if $dest_site eq 'ensembl_genomes';
 
   if ($dest_site =~ /vega/) {
     if ($site_type eq 'vega') {
@@ -170,13 +170,14 @@ sub psychic {
       $flag  = 1;
     }
   }
-  elsif ($query =~ /([\w|_|-|\.]+):([\w|_|-|\.]+):(\d+):(\d+):?(\d?)/) {
+  elsif ($query =~ /([\w|_|-|\.]+):([\w|_|-|\.]+):(\d+):(\d+):?(\d?)$/) {
     ## Coordinate format assembly:region:start:end:strand
 
     my ($assembly, $seq_region_name, $start, $end) = ($1, $2, $3, $4);
 
     my %assemblies = $hub->species_defs->multiX('ASSEMBLIES');
     my $release = $hub->species_defs->ENSEMBL_VERSION;
+    $species_path = '';
     while (my($sp, $hash) = each (%assemblies)) {
       next unless $hash->{$release} =~ /$assembly/i;
       $species_path = $sp;
