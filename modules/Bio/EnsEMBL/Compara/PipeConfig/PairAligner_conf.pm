@@ -64,8 +64,9 @@ sub default_options {
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
+        'host'        => 'compara1',                        #separate parameter to use the resources aswell
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara1',
+            -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'), 
@@ -229,7 +230,12 @@ sub default_options {
 	'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
 	'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
             
-        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+        #
+        #Resource requirements
+        #
+        'memory_suffix' => "",                    #temporary fix to define the memory requirements in resource_classes
+        'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
+        'aligner_capacity' => 2000,
 
     };
 }
@@ -272,12 +278,14 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
 sub resource_classes {
     my ($self) = @_;
+
+    my $host = $self->o('pipeline_db')->{host};
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
             '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
             '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
+            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
+            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3600,'.$self->o('dbresource').'=10:duration=3]"' },
     };
 }
 

@@ -123,12 +123,11 @@ sub default_options {
     'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
     'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
-    'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
-
     # connection parameters to various databases:
 
+        'host'        => 'compara3',            #separate parameter to use the resources aswell
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
+            -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
@@ -204,6 +203,15 @@ sub default_options {
 #           -pass   => '',
 #           -dbname => 'kb3_pecan_19way_61',
 #        },
+
+
+     #
+     #Resource requirements
+     #
+     'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+     'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
+     'aligner_capacity' => 2000,
+
     };
 }
 
@@ -235,11 +243,13 @@ sub resource_classes {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 	 '100Mb' =>  { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' }, 
 	 '1Gb' =>    { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },  
-	 '1.8Gb' =>  { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },  
+	 '1.8Gb' =>  { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },  
          '3.6Gb' =>  { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
          '7.5Gb' =>  { 'LSF' => '-C0 -M7500' . $self->o('memory_suffix') .' -R"select[mem>7500] rusage[mem=7500]"' }, 
          '11.4Gb' => { 'LSF' => '-C0 -M11400' . $self->o('memory_suffix') .' -R"select[mem>11400] rusage[mem=11400]"' }, 
          '14Gb' =>   { 'LSF' => '-C0 -M14000' . $self->o('memory_suffix') .' -R"select[mem>14000] rusage[mem=14000]"' }, 
+         'gerp' =>   { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
+         'higerp' =>   { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
     };
 }
 
@@ -714,7 +724,7 @@ sub pipeline_analyses {
              -flow_into => {
 		 2 => [ 'gerp_himem'], #retry with more memory
              },
-	     -rc_name => '1Gb',
+	     -rc_name => 'gerp',
          },
          {   -logic_name    => 'gerp_himem',
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
@@ -725,7 +735,7 @@ sub pipeline_analyses {
                  'mlss_id'         => $self->o('mlss_id'),  #to retrieve species_tree from mlss_tag table
              },
             -hive_capacity => 500,  
-	     -rc_name => '1.8Gb',
+	     -rc_name => 'higerp',
          },
 
  	 {  -logic_name => 'update_max_alignment_length',
