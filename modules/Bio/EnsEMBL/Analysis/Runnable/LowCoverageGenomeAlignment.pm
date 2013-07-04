@@ -45,7 +45,7 @@ This module creates a new tree for those alignments which contain a segmental du
 
 
 # $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/LowCoverageGenomeAlignment.pm,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 package Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment;
 
 use strict;
@@ -53,7 +53,6 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Analysis::Config::Compara;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
@@ -85,14 +84,16 @@ our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($workdir, $multi_fasta_file, $tree_string, $taxon_species_tree, $parameters, $options) =
+  my ($workdir, $multi_fasta_file, $tree_string, $taxon_species_tree, $semphy_exe, $treebest_exe, $parameters, $options) =
         rearrange(['WORKDIR', 'MULTI_FASTA_FILE', 'TREE_STRING',
-		   'TAXON_SPECIES_TREE', 'PARAMETERS', 'OPTIONS'], @args);
+		   'TAXON_SPECIES_TREE', 'SEMPHY_EXE', 'TREEBEST_EXE', 'PARAMETERS', 'OPTIONS'], @args);
 
   chdir $self->workdir;
   $self->multi_fasta_file($multi_fasta_file) if (defined $multi_fasta_file);
   $self->tree_string($tree_string) if (defined $tree_string);
   $self->taxon_species_tree($taxon_species_tree) if (defined $taxon_species_tree);
+  $self->semphy_exe($semphy_exe) if (defined $semphy_exe);
+  $self->treebest_exe($treebest_exe) if (defined $treebest_exe);
 
   $self->parameters($parameters) if (defined $parameters);
   $self->options($options) if (defined $options);
@@ -110,6 +111,18 @@ sub tree_string {
   my $self = shift;
   $self->{'_tree_string'} = shift if(@_);
   return $self->{'_tree_string'};
+}
+
+sub semphy_exe {
+  my $self = shift;
+  $self->{'_semphy_exe'} = shift if(@_);
+  return $self->{'_semphy_exe'};
+}
+
+sub treebest_exe {
+  my $self = shift;
+  $self->{'_treebest_exe'} = shift if(@_);
+  return $self->{'_treebest_exe'};
 }
 
 sub taxon_species_tree {
@@ -208,7 +221,7 @@ sub run_treebest_2x {
     close(F);
 
     #Run treebeset
-    my $command = "$TREEBEST phyml -Snf $species_tree_file " . $self->multi_fasta_file . " | $TREEBEST sdi -rs $species_tree_file - > $tree_file";
+    my $command = $self->treebest_exe ." phyml -Snf $species_tree_file " . $self->multi_fasta_file . " | " . $self->treebest_exe . " sdi -rs $species_tree_file - > $tree_file";
 
     print "Running treebest $command\n";
 
@@ -255,7 +268,7 @@ sub run_semphy_2x {
     my $tree_file = "output.$$.tree";
 
     #Run semphy directly
-    my $command = "$SEMPHY --treeoutputfile=" . $tree_file . " -a 4 --hky -J -H -S --ACGprob=0.300000,0.200000,0.200000 --sequence=" . $self->multi_fasta_file;
+    my $command = $self->semphy_exe . " --treeoutputfile=" . $tree_file . " -a 4 --hky -J -H -S --ACGprob=0.300000,0.200000,0.200000 --sequence=" . $self->multi_fasta_file;
 
     print "Running semphy $command\n";
 
