@@ -52,10 +52,21 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'include_reference'     => 1,
-        'include_nonreference'  => 0,
-        'store_genes'           => 1, # whether the genes are also stored as members
-        'allow_pyrrolysine'     => 1,
+        'verbose'                       => undef,
+
+            # which input Slices are used to load Members from:
+        'include_reference'             => 1,
+        'include_nonreference'          => 0,
+        'include_patches'               => 0,
+
+        'coding_exons'                  => 0,   # switch between 'ProteinTree' mode and 'Mercator' mode
+
+            # only in 'ProteinTree' mode:
+        'store_genes'                   => 1,   # whether the genes are also stored as members
+        'allow_pyrrolysine'             => 1,
+        'store_related_pep_sequences'   => 0,
+        'pseudo_stableID_prefix'        => undef,
+        'force_unique_canonical'        => undef,
     };
 }
 
@@ -167,7 +178,7 @@ sub loadMembersFromCoreSlices {
       # somatically so is considered as a different biotype in EnsEMBL
       # D and J are very short or have no translation at all
 
-      if (defined $self->param('coding_exons')) {
+      if ($self->param('coding_exons')) {
           $current_end = $gene->end unless (defined $current_end);
           if((lc($gene->biotype) eq 'protein_coding')) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
@@ -185,7 +196,8 @@ sub loadMembersFromCoreSlices {
           if ( lc($gene->biotype) eq 'protein_coding'
                || lc($gene->biotype) =~ /ig_._gene/
                || lc($gene->biotype) =~ /tr_._gene/
-             #  || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
+               || lc($gene->biotype) eq 'polymorphic_pseudogene'     # mm14 says it is ok :)
+               || lc($gene->biotype) eq 'lrg_gene'
              ) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
               
