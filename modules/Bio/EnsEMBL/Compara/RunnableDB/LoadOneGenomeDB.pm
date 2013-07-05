@@ -7,6 +7,9 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB
 
 =head1 SYNOPSIS
 
+        # [preparation] make sure we have copied across NCBI taxonomy information about our species (Human) :
+    mysqldump --defaults-group-suffix=_compara3 --where="taxon_id=9606" mp12_compara_homology_72 ncbi_taxa_node ncbi_taxa_name | mysql lg4_compara_generic
+
         # load a genome_db given a class/keyvalue locator (genome_db_id will be generated)
     standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
         -locator 'Bio::EnsEMBL::DBSQL::DBAdaptor/host=ens-staging;port=3306;user=ensro;pass=;dbname=homo_sapiens_core_64_37;species=homo_sapiens;species_id=1;disconnect_when_inactive=1'
