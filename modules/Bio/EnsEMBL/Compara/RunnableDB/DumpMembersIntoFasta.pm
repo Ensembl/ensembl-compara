@@ -53,8 +53,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $genome_db_id = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
-
+    my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
 
     my $fasta_file = $self->param('fasta_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
@@ -72,7 +71,7 @@ sub fetch_input {
     Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_fasta($fasta_file);
 }
 
-sub write_output {  
+sub write_output {
     my $self = shift @_;
 
     $self->input_job->autoflow(0);

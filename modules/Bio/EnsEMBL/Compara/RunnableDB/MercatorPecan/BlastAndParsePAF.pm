@@ -63,8 +63,8 @@ sub param_defaults {
 sub get_queries {
     my ($self) = @_;
 
-    my $start_member_id = $self->param('start_member_id') || die "'start_member_id' is an obligatory parameter, please set it in the input_id hashref";
-    my $end_member_id   = $self->param('end_member_id')   || die "'end_member_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $start_member_id = $self->param_required('start_member_id');
+    my $end_member_id   = $self->param_required('end_member_id');
 
     my $idprefixed      = $self->param('idprefixed')  || 0;
     my $debug           = $self->debug() || $self->param('debug') || 0;

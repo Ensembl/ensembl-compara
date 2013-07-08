@@ -100,9 +100,7 @@ sub fetch_input {
     $self->param('reuse_ss_hash', $reuse_ss_hash );
 
     unless ($self->param('force_blast_run')) {
-        my $reuse_ss_id = $self->param('reuse_ss_id')
-                    or die "'reuse_ss_id' is an obligatory parameter dynamically set in 'meta' table by the pipeline - please investigate";
-
+        my $reuse_ss_id = $self->param_required('reuse_ss_id');
         my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id);    # this method cannot fail at the moment, but in future it may
 
 
@@ -113,7 +111,7 @@ sub fetch_input {
 
      # We get the list of genome_dbs to execute, then go one by one with this member
 
-    my $mlss_id         = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id         = $self->param_required('mlss_id');
     my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
     my $species_set     = $mlss->species_set_obj->genome_dbs;
 
