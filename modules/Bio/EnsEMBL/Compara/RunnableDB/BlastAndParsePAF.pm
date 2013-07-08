@@ -129,6 +129,11 @@ sub fetch_input {
         $genome_db_list  = $species_set;
     }
 
+    # If we restrict the search to one species at a time
+    if ($self->param('target_genome_db_id')) {
+        $genome_db_list = [grep {$_->dbID eq $self->param('target_genome_db_id')} @$genome_db_list];
+    }
+
     print STDERR "Found ", scalar(@$genome_db_list), " genomes to blast this member against.\n" if ($self->debug);
     $self->param('genome_db_list', $genome_db_list);
 

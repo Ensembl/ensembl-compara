@@ -87,6 +87,7 @@ sub default_options {
 
     # blast parameters:
         'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
+        'per_species_blast_min_length'   => 5,
 
         'protein_members_range'     => 100000000, # highest member_id for a protein member
 
@@ -789,7 +790,7 @@ sub pipeline_analyses {
             -parameters => {
                 'fasta_dir'     => $self->o('fasta_dir'),
                 'blast_bin_dir' => $self->o('blast_exe_dir'),
-                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
+                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_name#.blastdb_log -in #fasta_name#',
             },
         },
 
@@ -802,16 +803,30 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into  => {
-                '2'  => [ 'blast_factory' ],
+                '2'  => [ 'blast_long_member_factory' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-
-        {   -logic_name => 'blast_factory',
+        {   -logic_name => 'blast_long_member_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'            => 'SELECT canonical_member_id AS member_id FROM member WHERE genome_db_id = #genome_db_id# AND canonical_member_id IS NOT NULL',
+                'limit_length'          => $self->o('per_species_blast_min_length'),
+                'inputquery'            => 'SELECT mp.member_id, gdb.genome_db_id AS target_genome_db_id FROM member mg JOIN member mp ON mg.canonical_member_id = mp.member_id JOIN sequence s ON s.sequence_id = mp.sequence_id JOIN genome_db gdb WHERE mg.genome_db_id = #genome_db_id# AND length >= #limit_length#*1000',
+                'fan_branch_code'       => 2,
+            },
+            -hive_capacity => $self->o('blast_factory_capacity'),
+            -flow_into => {
+                2 => [ 'blastp_with_reuse' ],
+                1 => [ 'blast_short_member_factory' ],
+            },
+        },
+
+        {   -logic_name => 'blast_short_member_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'limit_length'          => $self->o('per_species_blast_min_length'),
+                'inputquery'            => 'SELECT mp.member_id FROM member mg JOIN member mp ON mg.canonical_member_id = mp.member_id JOIN sequence s ON s.sequence_id = mp.sequence_id WHERE mg.genome_db_id = #genome_db_id# AND length < #limit_length#*1000',
                 'fan_branch_code'       => 2,
             },
             -hive_capacity => $self->o('blast_factory_capacity'),
