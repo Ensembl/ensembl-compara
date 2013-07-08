@@ -20,16 +20,18 @@
 
 =cut
 
+use strict;
+use warnings;
 
 package Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
 use Bio::EnsEMBL::Utils::Exception;
 
 use vars '@ISA';
 
-@ISA = ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 #############################
 #
@@ -58,28 +60,11 @@ sub fetch_all_by_qmember_id{
   throw("member_id undefined") unless($member_id);
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($member_id);
+  $self->{_curr_gdb_id} = $member->genome_db_id;
 
-  my $gdb_id = $member->genome_db_id;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
-
-  my $columns = join(', ', $self->_columns());
   my $constraint = "paf.qmember_id = $member_id";
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+  return $self->generic_fetch($constraint);
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_by_qmember_id{
-#   my $self = shift;
-#   my $member_id = shift;
-
-#   throw("member_id undefined") unless($member_id);
-#   my $constraint = "paf.qmember_id = $member_id";
-#   return $self->_generic_fetch($constraint);
-# }
 
 
 =head2 fetch_all_by_hmember_id
@@ -101,42 +86,12 @@ sub fetch_all_by_hmember_id{
 
   throw("member_id undefined") unless($member_id);
 
-  my $sql = 'SHOW TABLES LIKE "peptide_align_feature_%"';
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
-  my @tbl_names;
-  while ( my $tbl_name  = $sth->fetchrow ) {
-    push @tbl_names, $tbl_name;
+  my @pafs;
+  foreach my $genome_db_id ($self->_get_all_genome_db_ids) {
+    push @pafs, @{$self->fetch_all_by_hmember_id_qgenome_db_id($member_id, $genome_db_id)};
   }
-  $sth->finish;
-
-  my $paf;
-  foreach my $tbl_name (@tbl_names) {
-    my $columns = join(', ', $self->_columns());
-
-    my $sql = "SELECT $columns FROM $tbl_name paf WHERE paf.hmember_id=$member_id";
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute;
-    $paf = $self->_objs_from_sth($sth);
-    if (defined($paf) && (0 != scalar @$paf)) {
-      foreach my $this_paf (@$paf) {
-        push @pafs, $this_paf;
-      }
-    }
-  }
-  $sth->finish;
   return \@pafs;
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_by_hmember_id{
-#   my $self = shift;
-#   my $member_id = shift;
-
-#   throw("member_id undefined") unless($member_id);
-#   my $constraint = "paf.hmember_id = $member_id";
-#   return $self->_generic_fetch($constraint);
-# }
 
 
 =head2 fetch_all_by_qmember_id_hmember_id
@@ -163,30 +118,11 @@ sub fetch_all_by_qmember_id_hmember_id{
   throw("must specify hit member dbID") unless($hmember_id);
 
   my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
+  $self->{_curr_gdb_id} = $qmember->genome_db_id;
 
-  my $gdb_id = $qmember->genome_db_id;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
-
-  my $columns = join(', ', $self->_columns());
-  my $constraint = "paf.qmember_id = $qmember_id AND paf.hmember_id = $hmember_id";
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+  my $constraint = "paf.qmember_id=$qmember_id AND paf.hmember_id=$hmember_id";
+  return $self->generic_fetch($constraint);
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_by_qmember_id_hmember_id{
-#   my $self = shift;
-#   my $qmember_id = shift;
-#   my $hmember_id = shift;
-
-#   throw("must specify query member dbID") unless($qmember_id);
-#   throw("must specify hit member dbID") unless($hmember_id);
-#   my $constraint = "paf.qmember_id=$qmember_id AND paf.hmember_id=$hmember_id";
-#   return $self->_generic_fetch($constraint);
-# }
 
 
 =head2 fetch_all_by_qmember_id_hgenome_db_id
@@ -214,30 +150,11 @@ sub fetch_all_by_qmember_id_hgenome_db_id{
   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
 
   my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
+  $self->{_curr_gdb_id} = $qmember->genome_db_id;
 
-  my $gdb_id = $qmember->genome_db_id;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
-
-  my $columns = join(', ', $self->_columns());
-  my $constraint = "paf.qmember_id = $qmember_id AND paf.hgenome_db_id = $hgenome_db_id";
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+  my $constraint = "paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hgenome_db_id";
+  return $self->generic_fetch($constraint);
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_by_qmember_id_hgenome_db_id{
-#   my $self = shift;
-#   my $qmember_id = shift;
-#   my $hgenome_db_id = shift;
-
-#   throw("must specify query member dbID") unless($qmember_id);
-#   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
-#   my $constraint = "paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hgenome_db_id";
-#   return $self->_generic_fetch($constraint);
-# }
 
 
 =head2 fetch_all_by_hmember_id_qgenome_db_id
@@ -264,28 +181,10 @@ sub fetch_all_by_hmember_id_qgenome_db_id{
    throw("must specify hit member dbID") unless($hmember_id);
    throw("must specify query genome_db dbID") unless($qgenome_db_id);
 
-   my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
-
-  my $columns = join(', ', $self->_columns());
-  my $constraint = "paf.hmember_id = $hmember_id";
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+   $self->{_curr_gdb_id} = $qgenome_db_id;
+   # we don't need to add "paf.qgenome_db_id=$qgenome_db_id" because it is implicit from the table name
+   my $constraint = "paf.hmember_id=$hmember_id";
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_by_hmember_id_qgenome_db_id{
-#   my $self = shift;
-#   my $hmember_id = shift;
-#   my $qgenome_db_id = shift;
-
-#   throw("must specify hit member dbID") unless($hmember_id);
-#   throw("must specify query genome_db dbID") unless($qgenome_db_id);
-#   my $constraint = "paf.hmember_id=$hmember_id AND paf.qgenome_db_id=$qgenome_db_id";
-#   return $self->_generic_fetch($constraint);
-# }
 
 
 sub fetch_all_by_hgenome_db_id{
@@ -294,42 +193,12 @@ sub fetch_all_by_hgenome_db_id{
 
   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
 
-  my $sql = 'SHOW TABLES LIKE "peptide_align_feature_%"';
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
-  my @tbl_names;
-  while ( my $tbl_name  = $sth->fetchrow ) {
-    push @tbl_names, $tbl_name;
+  my @pafs;
+  foreach my $genome_db_id ($self->_get_all_genome_db_ids) {
+    push @pafs, @{$self->fetch_all_by_qgenome_db_id_hgenome_db_id($genome_db_id, $hgenome_db_id)};
   }
-  $sth->finish;
-
-  my $paf;
-  foreach my $tbl_name (@tbl_names) {
-    my $columns = join(', ', $self->_columns());
-
-    my $sql = "SELECT $columns FROM $tbl_name paf WHERE paf.hgenome_db_id=$hgenome_db_id";
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute;
-    $paf = $self->_objs_from_sth($sth);
-    if (defined($paf) && (0 != scalar @$paf)) {
-      foreach my $this_paf (@$paf) {
-        push @pafs, $this_paf;
-      }
-    }
-  }
-  $sth->finish;
   return \@pafs;
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_by_hgenome_db_id{
-#   my $self = shift;
-#   my $hgenome_db_id = shift;
-
-#   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
-#   my $constraint = "paf.hgenome_db_id=$hgenome_db_id";
-#   return $self->_generic_fetch($constraint);
-# }
 
 
 sub fetch_all_by_qgenome_db_id{
@@ -338,16 +207,10 @@ sub fetch_all_by_qgenome_db_id{
 
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
 
-  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
-
-  my $columns = join(', ', $self->_columns());
-  # my $constraint = "paf.qmember_id = $member_id";
-  my $sql = "SELECT $columns FROM $tbl_name paf";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+  $self->{_curr_gdb_id} = $qgenome_db_id;
+  return $self->generic_fetch();
 }
+
 
 sub fetch_all_by_qgenome_db_id_hgenome_db_id{
   my $self = shift;
@@ -357,15 +220,10 @@ sub fetch_all_by_qgenome_db_id_hgenome_db_id{
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
 
-  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
+  $self->{_curr_gdb_id} = $qgenome_db_id;
 
-  my $columns = join(', ', $self->_columns());
   my $constraint = "paf.hgenome_db_id = $hgenome_db_id";
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+  return $self->generic_fetch($constraint);
 }
 
 
@@ -375,15 +233,10 @@ sub fetch_all_besthit_by_qgenome_db_id{
 
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
 
-  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
+  $self->{_curr_gdb_id} = $qgenome_db_id;
 
-  my $columns = join(', ', $self->_columns());
   my $constraint = "paf.hit_rank=1";
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+  return $self->generic_fetch($constraint);
 }
 
 
@@ -395,15 +248,10 @@ sub fetch_all_besthit_by_qgenome_db_id_hgenome_db_id{
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
 
-  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
+  $self->{_curr_gdb_id} = $qgenome_db_id;
 
-  my $columns = join(', ', $self->_columns());
   my $constraint = "paf.hgenome_db_id = $hgenome_db_id AND paf.hit_rank=1";
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE $constraint";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  return $self->_objs_from_sth($sth);
+  return $self->generic_fetch($constraint);
 }
 
 
@@ -428,17 +276,9 @@ sub fetch_selfhit_by_qmember_id {
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb_id = $member->genome_db_id;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
-
-  my $columns = join(', ', $self->_columns());
-  my $sql = "SELECT $columns FROM $tbl_name paf WHERE qmember_id=$qmember_id AND qmember_id=hmember_id";
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
-  $paf = $self->_objs_from_sth($sth)->[0];
-  $sth->finish;
-
-  return $paf;
+  $self->{_curr_gdb_id} = $member->genome_db_id;
+  my $constraint = "qmember_id=$qmember_id AND qmember_id=hmember_id";
+  return $self->generic_fetch_one($constraint);
 }
 
 
@@ -708,7 +548,7 @@ sub displayHSP_short {
 sub _tables {
   my $self = shift;
 
-  return (['peptide_align_feature', 'paf'] );
+  return (['peptide_align_feature_'.$self->{_curr_gdb_id}, 'paf'] );
 }
 
 sub _columns {
@@ -732,12 +572,6 @@ sub _columns {
              paf.cigar_line
             );
 }
-
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
-
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -787,6 +621,11 @@ sub _objs_from_sth {
 }
 
 
+sub _get_all_genome_db_ids {
+    my $self = shift;
+
+    return keys %{$self->db->get_GenomeDBAdaptor->_id_cache};
+}
 
 ###############################################################################
 #
@@ -819,59 +658,18 @@ sub fetch_by_dbID{
     throw("fetch_by_dbID must have an id");
   }
 
-  my $sql = 'SHOW TABLES LIKE "peptide_align_feature_%"';
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
-  my @tbl_names;
-  while ( my $tbl_name  = $sth->fetchrow ) {
-    push @tbl_names, $tbl_name;
-  }
-  $sth->finish;
+  $self->{_curr_gdb_id} = int($id/100000000);
 
-  my $paf;
-  foreach my $tbl_name (@tbl_names) {
-    my $columns = join(', ', $self->_columns());
-
-    my $sql = "SELECT $columns FROM $tbl_name paf WHERE peptide_align_feature_id=$id";
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute;
-    $paf = $self->_objs_from_sth($sth)->[0];
-    if (defined($paf)) {
-      # Found it in one of the tables, no need to go any further
-      # assuming UpdatePAFIds has done its job properly
-      $sth->finish;
-      return $paf;
-    }
-  }
-  $sth->finish;
-  return undef;
+  my $constraint = "peptide_align_feature_id=$id";
+  return $self->generic_fetch_one($constraint);
 }
 
-# Previous all-in-one-table paf
-# sub old_fetch_by_dbID{
-#   my ($self,$id) = @_;
 
-#   unless(defined $id) {
-#     throw("fetch_by_dbID must have an id");
-#   }
+=head2 fetch_all_by_dbID_list
 
-#   my @tabs = $self->_tables;
-
-#   my ($name, $syn) = @{$tabs[0]};
-
-#   #construct a constraint like 't1.table1_id = 1'
-#   my $constraint = "${syn}.${name}_id = $id";
-
-#   #return first element of _generic_fetch list
-#   my ($obj) = @{$self->_generic_fetch($constraint)};
-#   return $obj;
-# }
-
-=head2 fetch_by_dbIDs
-
-  Arg [1...] : int $id (multiple)
+  Arg [1]    : array ref $id_list_ref
                the unique database identifier for the feature to be obtained
-  Example    : $pafs = $adaptor->fetch_by_dbID(paf1_id, $paf2_id, $paf3_id);
+  Example    : $pafs = $adaptor->fetch_by_dbID( [paf1_id, $paf2_id, $paf3_id] );
   Description: Returns the PeptideAlignFeature created from the database defined by the
                the id $id.
   Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
@@ -880,56 +678,12 @@ sub fetch_by_dbID{
 
 =cut
 
-sub fetch_by_dbIDs{
+sub fetch_all_by_dbID_list {
   my $self = shift;
-  my @ids = @_;
+  my $id_list_ref = shift;
 
-  return undef unless(scalar(@ids));
-
-  my $id_string = join(",", @ids);
-
-  my $sql = 'SHOW TABLES LIKE "peptide_align_feature_%"';
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
-  my @tbl_names;
-  while ( my $tbl_name  = $sth->fetchrow ) {
-    push @tbl_names, $tbl_name;
-  }
-  $sth->finish;
-
-  my @pafs;
-  my $paf;
-  foreach my $tbl_name (@tbl_names) {
-    my $columns = join(', ', $self->_columns());
-
-    my $sql = "SELECT $columns FROM $tbl_name paf WHERE peptide_align_feature_id in ($id_string)";
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute;
-    $paf = $self->_objs_from_sth($sth);
-    if (defined($paf) && (0 != scalar @$paf)) {
-      foreach my $this_paf (@$paf) {
-        push @pafs, $this_paf;
-      }
-    }
-  }
-  $sth->finish;
-  return \@pafs;
+  return [map {$self->fetch_by_dbID($_)} @$id_list_ref];
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_by_dbIDs{
-#   my $self = shift;
-#   my @ids = @_;
-
-#   return undef unless(scalar(@ids));
-
-#   my $id_string = join(",", @ids);
-#   my $constraint = "paf.peptide_align_feature_id in ($id_string)";
-#   #printf("fetch_by_dbIDs has contraint\n$constraint\n");
-
-#   #return first element of _generic_fetch list
-#   return $self->_generic_fetch($constraint);
-# }
 
 
 =head2 fetch_BRH_by_member_genomedb
@@ -958,52 +712,18 @@ sub fetch_BRH_by_member_genomedb
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb_id = $member->genome_db_id;
-  my $tbl_name1 = 'peptide_align_feature_'.$gdb_id;
-  my $tbl_name2 = 'peptide_align_feature_'.$hit_genome_db_id;
+  $self->{_curr_gdb_id} = $member->genome_db_id;
 
-  my $columns = join(', ', $self->_columns());
+   my $extrajoin = [
+                     [ ['peptide_align_feature_'.$hit_genome_db_id, 'paf2'],
+                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+                       ['paf2.peptide_align_feature_id AS pafid2']]
+                   ];
 
-  my $sql = "SELECT $columns, paf2.peptide_align_feature_id AS pafid2".
-            " FROM $tbl_name1 paf, $tbl_name2 paf2".
-            " WHERE paf.hmember_id=paf2.qmember_id".
-            " AND paf.hit_rank=1 AND paf2.hit_rank=1".
-            " AND paf.qmember_id=$qmember_id and paf.hgenome_db_id=$hit_genome_db_id".
-            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id";
+   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1 AND paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hit_genome_db_id";
 
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute;
-  my $obj = $self->_objs_from_sth($sth)->[0];
-  $sth->finish;
-
-  return $obj;
+  return $self->generic_fetch_one($constraint, $extrajoin);
 }
-
-
-# Previous all-in-one-table paf
-# sub old_fetch_BRH_by_member_genomedb
-# {
-#   # using trick of specifying table twice so can join to self
-#   my $self             = shift;
-#   my $qmember_id       = shift;
-#   my $hit_genome_db_id = shift;
-
-#   #print(STDERR "fetch_BRH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
-#   return unless($qmember_id and $hit_genome_db_id);
-#   my $extrajoin = [
-#                     [ ['peptide_align_feature', 'paf2'],
-#                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-#                       ['paf2.peptide_align_feature_id AS pafid2']]
-#                   ];
-
-#   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1".
-#                    " AND paf.qmember_id='".$qmember_id."'".
-#                    " AND paf2.hmember_id='".$qmember_id."'".
-#                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
-#                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
-
-#   return $self->_generic_fetch($constraint, $extrajoin);
-# }
 
 
 =head2 fetch_all_RH_by_member_genomedb
@@ -1032,52 +752,20 @@ sub fetch_all_RH_by_member_genomedb
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb_id = $member->genome_db_id;
-  my $tbl_name1 = 'peptide_align_feature_'.$gdb_id;
-  my $tbl_name2 = 'peptide_align_feature_'.$hit_genome_db_id;
+  $self->{_curr_gdb_id} = $member->genome_db_id;
 
-  my $columns = join(', ', $self->_columns());
+   my $extrajoin = [
+                     [ ['peptide_align_feature_'.$hit_genome_db_id, 'paf2'],
+                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+                       ['paf2.peptide_align_feature_id AS pafid2']]
+                   ];
 
-  my $sql = "SELECT $columns, paf2.peptide_align_feature_id AS pafid2".
-            " FROM $tbl_name1 paf, $tbl_name2 paf2".
-            " WHERE paf.hmember_id=paf2.qmember_id".
-            " AND paf.qmember_id=$qmember_id and paf.hgenome_db_id=$hit_genome_db_id".
-            " AND paf2.hmember_id=$qmember_id and paf2.qgenome_db_id=$hit_genome_db_id";
+   my $constraint = "paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hit_genome_db_id";
+   my $final_clause = "ORDER BY paf.hit_rank";
 
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute;
-  my $objs = $self->_objs_from_sth($sth);
-  $sth->finish;
+  return $self->generic_fetch($constraint, $extrajoin, $final_clause);
 
-  return $objs;
 }
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_RH_by_member_genomedb
-# {
-#   # using trick of specifying table twice so can join to self
-#   my $self             = shift;
-#   my $qmember_id       = shift;
-#   my $hit_genome_db_id = shift;
-
-#   #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
-#   return unless($qmember_id and $hit_genome_db_id);
-#   my $extrajoin = [
-#                     [ ['peptide_align_feature', 'paf2'],
-#                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-#                       ['paf2.peptide_align_feature_id AS pafid2']]
-#                   ];
-
-#   my $constraint = " paf.qmember_id='".$qmember_id."'".
-#                    " AND paf2.hmember_id='".$qmember_id."'".
-#                    " AND paf.hgenome_db_id='".$hit_genome_db_id."'".
-#                    " AND paf2.qgenome_db_id='".$hit_genome_db_id."'";
-
-#   #$self->final_clause("ORDER BY paf.hit_rank");
-#   my $objs = $self->_generic_fetch($constraint, $extrajoin);
-#   #$self->final_clause("");
-#   return $objs;
-# }
 
 
 =head2 fetch_all_RH_by_member
@@ -1098,170 +786,12 @@ sub fetch_all_RH_by_member
   my $self             = shift;
   my $qmember_id       = shift;
 
-  #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
-  return unless($qmember_id);
-
-  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
-
-  my $gdb = $member->genome_db;
-  my $gdb_id = lc($gdb->dbID);
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
-
-  my $columns = join(', ', $self->_columns());
-
-  my $sql = "SELECT $columns, paf2.peptide_align_feature_id AS pafid2".
-            " FROM $tbl_name paf, $tbl_name paf2".
-            " WHERE paf.hmember_id=paf2.qmember_id".
-            " AND paf.qmember_id=$qmember_id".
-            " AND paf2.hmember_id=$qmember_id";
-
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute;
-  my $objs = $self->_objs_from_sth($sth);
-  $sth->finish;
-
-  return $objs;
-}
-
-
-# Previous all-in-one-table paf
-# sub old_fetch_all_RH_by_member
-# {
-#   # using trick of specifying table twice so can join to self
-#   my $self             = shift;
-#   my $qmember_id       = shift;
-
-#   #print(STDERR "fetch_all_RH_by_member qmember_id=$qmember_id\n");
-#   return unless($qmember_id);
-#   my $extrajoin = [
-#                     [ ['peptide_align_feature', 'paf2'],
-#                        'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-#                        ['paf2.peptide_align_feature_id AS pafid2']]
-#                   ];
-
-#   my $constraint = " paf.qmember_id='".$qmember_id."'".
-#                    " AND paf2.hmember_id='".$qmember_id."'";
-
-#   return $self->_generic_fetch($constraint, $extrajoin);
-# }
-
-
-=head2 fetch_BRH_web_for_member_genome_db
-
-  Overview   : This is the new (compara_24) algorithm method for finding UBRH and MBRH
-               homologies.  
-  Arg [1]    : member_id of query peptide member
-  Arg [2]    : genome_db_id of hit species
-  Description: Returns all the 'best' PeptideAlignFeatures starting with qmember_id
-               hitting onto the hit_genome_db_id via recursive search
-  Returntype : array of Bio::EnsEMBL::Compara::PeptideAlignFeature objects by reference
-               or undef if nothing found
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub fetch_BRH_web_for_member_genome_db
-{
-  # recursive search to find web of 'best' hits starting with a given
-  # qmember_id and hit_genome_db_id
-  my $self               = shift;
-  my $qmember_id         = shift;
-  my $hit_genome_db_id   = shift;
-
-  my $tested_member_ids  = {};
-  my $found_paf_ids      = {};
-
-  $self->_recursive_find_brh_pafs_for_member_genome_db(
-             $qmember_id,
-             $hit_genome_db_id,
-             $tested_member_ids,
-             $found_paf_ids);
-
-  my $pafsArray = $self->fetch_by_dbIDs(keys %$found_paf_ids);
-  return undef unless($pafsArray);
-  
-  #match up the reciprocals
-  foreach my $paf1 (@$pafsArray) {
-    foreach my $paf2 (@$pafsArray) {
-      if(($paf1->query_member->dbID == $paf2->hit_member->dbID) and
-         ($paf1->hit_member->dbID   == $paf2->query_member->dbID))
-      {
-        $paf1->rhit_dbID($paf2->dbID);
-        $paf2->rhit_dbID($paf1->dbID);
-      }
-    }
+  my @pafs;
+  foreach my $genome_db_id ($self->_get_all_genome_db_ids) {
+    push @pafs, @{$self->fetch_all_RH_by_member_genomedb($qmember_id, $genome_db_id)};
   }
-  return $pafsArray;
+  return \@pafs;
 }
-
-sub _recursive_find_brh_pafs_for_member_genome_db
-{
-  # recursive search to find web of 'best' hits starting with a given
-  # member_id and genome_db_ids
-  my $self               = shift;
-  my $qmember_id         = shift;
-  my $hit_genome_db_id   = shift;
-  my $tested_member_ids  = shift;  #ref to hash
-  my $found_paf_ids      = shift;  #ref to hash
-
-  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
-
-  my $gdb_id = $member->genome_db_id;
-  my $tbl_name1 = 'peptide_align_feature_'.$gdb_id;
-  my $tbl_name2 = 'peptide_align_feature_'.$hit_genome_db_id;
-
-  return unless($qmember_id and $hit_genome_db_id);
-  return if($tested_member_ids->{$qmember_id}); #already tested this member
-
-  $tested_member_ids->{$qmember_id} = 1;
-  #printf(" recursive_web qm=%d  hg=%d\n", $qmember_id, $hit_genome_db_id);
-  my $sql = "SELECT paf1.peptide_align_feature_id, paf1.hmember_id, paf1.qgenome_db_id ".
-            " FROM $tbl_name1 paf1, $tbl_name2 paf2".
-            " WHERE paf1.hmember_id=paf2.qmember_id".
-            " AND paf1.qmember_id=? and paf1.hgenome_db_id=? and paf1.hit_rank=1".
-            " AND paf2.hmember_id=? and paf2.qgenome_db_id=? and paf2.hit_rank=1";
-  my $sth = $self->prepare($sql);
-  $sth->execute($qmember_id, $hit_genome_db_id, $qmember_id, $hit_genome_db_id);
-
-  while (my ($pafID, $hmember_id, $qgenome_db_id) = $sth->fetchrow_array()) {
-    #printf("  found pafID $pafID in recursive search\n");
-    $found_paf_ids->{$pafID} = 1;
-    $self->_recursive_find_brh_pafs_for_member_genome_db($hmember_id, $qgenome_db_id, $tested_member_ids, $found_paf_ids);
-  }
-  $sth->finish;
-}
-
-# sub _old_recursive_find_brh_pafs_for_member_genome_db
-# {
-#   # recursive search to find web of 'best' hits starting with a given
-#   # member_id and genome_db_ids
-#   my $self               = shift;
-#   my $qmember_id         = shift;
-#   my $hit_genome_db_id   = shift;
-#   my $tested_member_ids  = shift;  #ref to hash
-#   my $found_paf_ids      = shift;  #ref to hash
-
-#   return unless($qmember_id and $hit_genome_db_id);
-#   return if($tested_member_ids->{$qmember_id}); #already tested this member
-
-#   $tested_member_ids->{$qmember_id} = 1;
-#   #printf(" recursive_web qm=%d  hg=%d\n", $qmember_id, $hit_genome_db_id);
-#   my $sql = "SELECT paf1.peptide_align_feature_id, paf1.hmember_id, paf1.qgenome_db_id ".
-#             " FROM peptide_align_feature paf1, peptide_align_feature paf2".
-#             " WHERE paf1.hmember_id=paf2.qmember_id".
-#             " AND paf1.qmember_id=? and paf1.hgenome_db_id=? and paf1.hit_rank=1".
-#             " AND paf2.hmember_id=? and paf2.qgenome_db_id=? and paf2.hit_rank=1";
-#   my $sth = $self->prepare($sql);
-#   $sth->execute($qmember_id, $hit_genome_db_id, $qmember_id, $hit_genome_db_id);
-
-#   while (my ($pafID, $hmember_id, $qgenome_db_id) = $sth->fetchrow_array()) {
-#     #printf("  found pafID $pafID in recursive search\n");
-#     $found_paf_ids->{$pafID} = 1;
-#     $self->_recursive_find_brh_pafs_for_member_genome_db($hmember_id, $qgenome_db_id, $tested_member_ids, $found_paf_ids);
-#   }
-#   $sth->finish;
-# }
 
 
 1;
