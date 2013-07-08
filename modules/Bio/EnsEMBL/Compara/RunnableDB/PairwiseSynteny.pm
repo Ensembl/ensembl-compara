@@ -156,7 +156,7 @@ sub fetch_cross_distances {
   my $gdb_id = $gdb->dbID;
   my $species_name = lc($gdb->name);
   $species_name =~ s/\ /\_/g;
-  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
+  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
 
   my $gdb_id2 = $gdb2->dbID;
   my $sql = "SELECT ".

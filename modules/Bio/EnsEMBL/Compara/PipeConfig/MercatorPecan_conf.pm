@@ -471,7 +471,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'peptide_align_feature_#name#_#genome_db_id#',
+                'table'         => 'peptide_align_feature_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
@@ -496,14 +496,14 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_create_empty_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                  'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#name#_#genome_db_id# LIKE peptide_align_feature',
-                              'ALTER TABLE peptide_align_feature_#name#_#genome_db_id# ADD KEY hmember_hit (hmember_id, hit_rank)',
-                              'ALTER TABLE peptide_align_feature_#name#_#genome_db_id# DISABLE KEYS',
-                              
+                'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#genome_db_id# like peptide_align_feature',
+                            'ALTER TABLE peptide_align_feature_#genome_db_id# ADD KEY hmember_hit (hmember_id, hit_rank)',
+                            'ALTER TABLE peptide_align_feature_#genome_db_id# DISABLE KEYS',
                ],
             },
             -flow_into => {
                  1 => [ 'load_fresh_members' ],
+                ],
             },
 	    -rc_name => '100Mb',
         },

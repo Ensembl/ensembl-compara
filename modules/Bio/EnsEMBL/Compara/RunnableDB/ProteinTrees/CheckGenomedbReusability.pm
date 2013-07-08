@@ -55,10 +55,6 @@ sub fetch_input {
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
 
-    unless($self->param('per_genome_suffix')) {
-        $self->param('per_genome_suffix', "${species_name}_${genome_db_id}");
-    }
-
     return if(defined($self->param('reuse_this')));  # bypass fetch_input() and run() in case 'reuse_this' has already been passed
 
 
@@ -189,13 +185,11 @@ sub write_output {      # store the genome_db and dataflow
 
     my $genome_db_id        = $self->param('genome_db_id');
     my $reuse_this          = $self->param('reuse_this');
-    my $per_genome_suffix   = $self->param('per_genome_suffix');
 
         # same composition of the output, independent of the branch:
     my $output_hash = {
         'genome_db_id'       => $genome_db_id,
         'reuse_this'         => $reuse_this,
-        'per_genome_suffix'  => $per_genome_suffix,
     };
 
         # all jobs dataflow into branch 1:

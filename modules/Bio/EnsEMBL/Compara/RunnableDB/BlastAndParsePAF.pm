@@ -334,7 +334,7 @@ sub _write_output {
     #}
     print "numbers pafs " . scalar(@$cross_pafs) . "\n";
     foreach my $feature (@$cross_pafs) {
-        my $peptide_table = $self->get_table_name_from_dbID($feature->{qgenome_db_id});
+        my $peptide_table = 'peptide_align_feature_'.($feature->{qgenome_db_id});
 
         #AWFUL HACK to insert into the peptide_align_feature table but without going through the API. Only fill in
         #some the of fields
@@ -362,20 +362,6 @@ sub _write_output {
                 $feature->{cigar_line},
                 );
     }
-}
-
-sub get_table_name_from_dbID {
-    my ($self, $gdb_id) = @_;
-    my $table_name = "peptide_align_feature";
-
-    my $gdba = $self->compara_dba->get_GenomeDBAdaptor;
-    my $gdb = $gdba->fetch_by_dbID($gdb_id);
-    return $table_name if (!$gdb);
-
-    $table_name .= "_" . lc($gdb->name) . "_" . $gdb_id;
-    $table_name =~ s/ /_/g;
-
-    return $table_name;
 }
 
 

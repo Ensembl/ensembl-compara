@@ -222,7 +222,7 @@ sub get_table_name_from_dbID {
   my $gdb = $gdba->fetch_by_dbID($gdb_id);
   return $table_name if (!$gdb);
 
-  $table_name .= "_" . lc($gdb->name) . "_" . $gdb_id;
+  $table_name .= "_" . $gdb_id;
   $table_name =~ s/ /_/g;
 
   return $table_name;

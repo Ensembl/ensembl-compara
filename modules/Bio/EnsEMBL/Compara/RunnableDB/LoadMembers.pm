@@ -92,11 +92,6 @@ sub fetch_input {
     $self->param('core_dba', $genome_db->db_adaptor() )
         or die "Can't connect to external core database for gdb=$genome_db_id";
 
-    my $genome_db_name = $genome_db->name;
-
-        # this one will be used later for dataflow:
-    $self->param('per_genome_suffix', $genome_db_name.'_'.$genome_db_id );
-
     unless($self->param('include_reference') or $self->param('include_nonreference')) {
         die "Either 'include_reference' or 'include_nonreference' or both have to be true";
     }
@@ -139,7 +134,6 @@ sub write_output {
     $self->dataflow_output_id( {
         'genome_db_id'      => $self->param('genome_db_id'),
         'reuse_this'        => 0,
-        'per_genome_suffix' => $self->param('per_genome_suffix'),
     } , 1);
 }
 
