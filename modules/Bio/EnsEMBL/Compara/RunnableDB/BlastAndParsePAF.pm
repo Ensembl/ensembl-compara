@@ -248,7 +248,7 @@ sub run {
 
     my $blastdb_dir             = $self->param('fasta_dir');
 
-    my $blast_bin_dir           = $self->param('blast_bin_dir') || die;
+    my $blast_bin_dir           = $self->param_required('blast_bin_dir');
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit            = $self->param('evalue_limit');
     my $tophits                 = $self->param('tophits');
