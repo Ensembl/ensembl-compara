@@ -96,17 +96,20 @@ sub fetch_input {
 
     $self->param('fasta_list', $fasta_list);
 
-    my $reuse_ss_id = $self->param('reuse_ss_id')
+    my $reuse_ss_hash = {};
+    $self->param('reuse_ss_hash', $reuse_ss_hash );
+
+    unless ($self->param('force_blast_run')) {
+        my $reuse_ss_id = $self->param('reuse_ss_id')
                     or die "'reuse_ss_id' is an obligatory parameter dynamically set in 'meta' table by the pipeline - please investigate";
 
-    my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id);    # this method cannot fail at the moment, but in future it may
+        my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id);    # this method cannot fail at the moment, but in future it may
 
-    my $reuse_ss_hash = {};
 
-    if ($reuse_ss) {
-        $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
+        if ($reuse_ss) {
+            $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
+        }
     }
-    $self->param('reuse_ss_hash', $reuse_ss_hash );
 
      # We get the list of genome_dbs to execute, then go one by one with this member
 

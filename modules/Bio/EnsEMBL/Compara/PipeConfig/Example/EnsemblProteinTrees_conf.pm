@@ -186,7 +186,7 @@ sub default_options {
         },
 
         # Are we reusing the blastp alignments ?
-        'reuse_from_prev_rel_db'    => 0,
+        'reuse_from_prev_rel_db'    => 1,
 
         # To run without a master database
         #'use_master_db'             => 0,

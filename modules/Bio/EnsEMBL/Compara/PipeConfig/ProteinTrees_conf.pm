@@ -194,8 +194,9 @@ sub default_options {
         #   -dbname => 'mm14_compara_homology_67',
         #},
 
-        # Are we reusing the blastp alignments ?
+        # Are we reusing the dbIDs and the blastp alignments ?
         'reuse_from_prev_rel_db'    => 0,
+        'force_blast_run'           => 1,
 
         'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
@@ -646,7 +647,8 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_reuse_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#',
+                'force_blast_run'   => $self->o('force_blast_run'),
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id# AND NOT #force_blast_run#',
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
@@ -660,7 +662,8 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_noreuse_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#',
+                'force_blast_run'   => $self->o('force_blast_run'),
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# OR #force_blast_run#',
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
@@ -844,6 +847,7 @@ sub pipeline_analyses {
                 'fasta_dir'                 => $self->o('fasta_dir'),
                 'blast_bin_dir'             => $self->o('blast_exe_dir'),
                 'evalue_limit'              => 1e-10,
+                'force_blast_run'           => $self->o('force_blast_run'),
             },
             -batch_size    => 40,
             -rc_name       => '250Mb_job',
