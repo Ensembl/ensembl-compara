@@ -818,8 +818,9 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                2 => [ 'blastp_with_reuse' ],
-                1 => [ 'blast_short_member_factory' ],
+                '2->A' => [ 'blastp_with_reuse' ],
+                '1->A' => [ 'blast_short_member_factory' ],
+                'A->1' => [ 'hc_factory_pafs' ],
             },
         },
 
@@ -832,8 +833,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                'A->1' => [ 'hc_factory_pafs' ],
-                '2->A' => [ 'blastp_with_reuse' ],
+                2 => [ 'blastp_with_reuse' ],
             },
         },
 
