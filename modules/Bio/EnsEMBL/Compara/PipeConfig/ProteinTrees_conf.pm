@@ -778,6 +778,7 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_canonical_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
+                'only_canonical'            => 1,
                 'fasta_dir'                 => $self->o('fasta_dir'),
             },
             -rc_name       => '250Mb_job',
