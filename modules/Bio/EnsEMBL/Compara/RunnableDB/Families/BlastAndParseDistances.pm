@@ -172,7 +172,7 @@ sub run {
     }
 
     my $blastdb = ($blastdb_dir ? $blastdb_dir.'/' : '').$blastdb_name;
-    my $cmd = "${blast_bin_dir}/blastp -db $blastdb $blast_params -evalue $evalue_limit -num_descriptions $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
+    my $cmd = "${blast_bin_dir}/blastp -db $blastdb $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
 
     if($debug) {
         warn "CMD:\t$cmd\n";

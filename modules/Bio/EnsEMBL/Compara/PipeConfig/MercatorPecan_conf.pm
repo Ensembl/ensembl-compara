@@ -68,7 +68,7 @@ sub default_options {
         'mercator_dir'          => $self->o('work_dir') . '/mercator',  
 
     # blast parameters:
-	'blast_params'          => "-num_alignments 20 -seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
+	'blast_params'          => "-seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
         'blast_capacity'        => 100,
 
     #location of full species tree, will be pruned
@@ -547,9 +547,9 @@ sub pipeline_analyses {
         {   -logic_name => 'make_blastdb',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-		'fasta_dir'     => $self->o('blastdb_dir'),
-		'blast_bin_dir' => $self->o('blast_exe_dir'),
-                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
+                'fasta_dir'     => $self->o('blastdb_dir'),
+                'blast_bin_dir' => $self->o('blast_exe_dir'),
+                'cmd'           => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
             },
 	    -rc_name => '100Mb',
         },
@@ -583,7 +583,8 @@ sub pipeline_analyses {
         {   -logic_name    => 'mercator_blast',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::BlastAndParsePAF',
             -parameters    => {
-                'blast_params' => $self->o('blast_params'),
+                'blast_params'      => $self->o('blast_params'),
+                'blast_bin_dir'     => $self->o('blast_exe_dir'),
                 'do_transactions' => 1,
 		'mlss_id'      => $self->o('mlss_id'),
 		'fasta_dir'    => $self->o('blastdb_dir'),
