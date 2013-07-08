@@ -751,10 +751,11 @@ sub _add_datahub_tracks_matrix {
   my ($self, $dataset, $name, $url_code, $config) = @_;
   $config ||= $dataset->{'config'};
   
-  my ($x, $y)   = map $config->{'dimensions'}{"dimension$_"} || $config->{'dimensions'}{"dim$_"}, qw(X Y);
-  my ($x_label) = map { /subGroup\d/ && $config->{$_}{'name'} eq $x ? $config->{$_} : () } keys %$config;
-  my ($y_label) = map { /subGroup\d/ && $config->{$_}{'name'} eq $y ? $config->{$_} : () } keys %$config;
-  my %options   = (
+  my ($x, $y)     = map $config->{'dimensions'}{"dimension$_"} || $config->{'dimensions'}{"dim$_"}, qw(X Y);
+  my ($x_label)   = map { /subGroup\d/ && $config->{$_}{'name'} eq $x ? $config->{$_} : () } keys %$config;
+  my ($y_label)   = map { /subGroup\d/ && $config->{$_}{'name'} eq $y ? $config->{$_} : () } keys %$config;
+  my @axis_labels = map { s/_/ /g; $_ } $x_label->{'label'}, $y_label->{'label'};
+  my %options     = (
     menu_key     => $name,
     menu_name    => $name,
     url_code     => $url_code,
@@ -762,7 +763,7 @@ sub _add_datahub_tracks_matrix {
     submenu_name => $dataset->{'config'}{'shortLabel'},
     view         => $dataset->{'config'}{'view'},
     desc_url     => $config->{'description_url'},
-    axes         => { x => $x, y => $y },
+    axes         => { x => $axis_labels[0], y => $axis_labels[1] },
   );
   
   my $link = qq( <a href="$options{'desc_url'}" rel="external">Go to track description on datahub</a>);
@@ -842,7 +843,7 @@ sub _add_datahub_tracks_matrix {
 sub _add_datahub_tracks {
   my ($self, $dataset, $name, $url_code) = @_;
   my %sources_by_type;
-
+  
   my $options = {
     menu_key     => $name,
     menu_name    => $name,
@@ -852,7 +853,7 @@ sub _add_datahub_tracks {
     desc_url     => $dataset->{'config'}{'description_url'},
     view         => $dataset->{'config'}{'view'},
   };
-
+  
   foreach my $track (@{$dataset->{'tracks'}}) {
     my $link = qq( <a href="$options->{'desc_url'}" rel="external">Go to track description on datahub</a>);
     # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
@@ -877,7 +878,7 @@ sub _add_datahub_tracks {
        $type =~ s/\s*$//g;
 
     # Graph range - Track Hub default is 0-127
-    if (exists($track->{'viewLimits'})) {
+    if (exists $track->{'viewLimits'}) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
     } elsif (!exists $track->{'autoscale'} || $track->{'autoscale'} eq 'off') {
       $source->{'viewLimits'} = '0:127';
@@ -894,7 +895,7 @@ sub _add_datahub_tracks {
     
     $sources_by_type{$type}{$track->{'track'}} = $source;
   }
-
+  
   $self->load_file_format(lc, \%{$sources_by_type{$_}}) for keys %sources_by_type;
 }
 
