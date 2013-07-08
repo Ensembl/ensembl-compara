@@ -533,8 +533,8 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'dump_subset_fasta',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpSubsetIntoFasta',
+        {   -logic_name => 'fresh_dump_subset_fasta',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
                  'fasta_dir'                 => $self->o('blastdb_dir'),
             },
@@ -585,6 +585,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::BlastAndParsePAF',
             -parameters    => {
                 'blast_params' => $self->o('blast_params'),
+                'do_transactions' => 1,
 		'mlss_id'      => $self->o('mlss_id'),
 		'fasta_dir'    => $self->o('blastdb_dir'),
             },

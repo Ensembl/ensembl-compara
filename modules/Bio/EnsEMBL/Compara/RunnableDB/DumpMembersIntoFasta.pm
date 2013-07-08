@@ -18,7 +18,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpSubetIntoFasta 
+Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta
 
 =head1 SYNOPSIS
 
@@ -32,22 +32,23 @@ Supported keys:
     'genome_db_id' => <number>
         The id of the genome. Obligatory
 
-     'fasta_dir' => <directory_path>
+    'fasta_dir' => <directory_path>
         Location to write fasta file
 
-     'reuse_this' => <0|1>
-        Whether to reuse this genome_db. Needed to flow into blast_factory
+    'only_canonical' => 0/1 [default: 0]
+        Do we dump all the members or only the canonical ones ?
 
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpSubsetIntoFasta;
+package Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta;
 
 use strict;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub fetch_input {
     my $self = shift @_;
@@ -60,24 +61,24 @@ sub fetch_input {
     $fasta_file =~ s/\s+/_/g;    # replace whitespace with '_' characters
     $fasta_file =~ s/\/\//\//g;  # converts any // in path to /
     $self->param('fasta_file', $fasta_file);
-    $self->param('genome_db_id', $genome_db_id);
 
     # write fasta file:
-    my $members   = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
+    my $members;
+    if ($self->param('only_canonical')) {
+        $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
+    } else {
+        $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
+    }
     Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_fasta($fasta_file, 1);
 }
-
 
 sub write_output {  
     my $self = shift @_;
 
-    #Flow into make_blastdb
-    $self->dataflow_output_id( { 'fasta_name' => $self->param('fasta_file'), 'genome_db_id' => $self->param('genome_db_id') } , 2);
-
-    #Flow into blast_factory
-    $self->dataflow_output_id( { 'fasta_name' => $self->param('fasta_file'), 'genome_db_id' => $self->param('genome_db_id'), 'reuse_this' => $self->param('reuse_this') } , 1);
-
+    $self->input_job->autoflow(0);
+    $self->dataflow_output_id( { 'fasta_name' => $self->param('fasta_file'), 'genome_db_id' => $self->param('genome_db_id') } , 1);
 }
+
 
 1;
 

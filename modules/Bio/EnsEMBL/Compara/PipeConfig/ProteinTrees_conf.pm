@@ -769,19 +769,30 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into  => {
-                '2->A'  => [ 'dump_subset_create_blastdb' ],
+                '2->A'  => [ 'dump_canonical_members' ],
                 'A->1'  => [ 'blast_species_factory' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'dump_subset_create_blastdb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::DumpSubsetCreateBlastDB',
+        {   -logic_name => 'dump_canonical_members',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
                 'fasta_dir'                 => $self->o('fasta_dir'),
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => [ 'make_blastdb' ],
+        },
+
+        {   -logic_name => 'make_blastdb',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'fasta_dir'     => $self->o('blastdb_dir'),
+                'blast_bin_dir' => $self->o('blast_exe_dir'),
+                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
+            },
+            -rc_name => '100Mb',
         },
 
         {   -logic_name => 'blast_species_factory',
