@@ -503,7 +503,6 @@ sub pipeline_analyses {
             },
             -flow_into => {
                  1 => [ 'load_fresh_members' ],
-                ],
             },
 	    -rc_name => '100Mb',
         },
@@ -528,7 +527,7 @@ sub pipeline_analyses {
             },
             -rc_name       => '100Mb',
             -flow_into  => {
-                '2->A'  => [ 'dump_subset_fasta' ],
+                '2->A'  => [ 'fresh_dump_subset_fasta' ],
                 'A->1'  => [ 'blast_species_factory' ],
             },
         },
