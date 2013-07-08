@@ -858,7 +858,7 @@ CREATE TABLE other_member_sequence (
 
 CREATE TABLE peptide_align_feature (
 
-  peptide_align_feature_id    int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  peptide_align_feature_id    bigint  unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   qmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
   hmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
   qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
