@@ -37,12 +37,10 @@ eg "-num_alignments 20 -seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.
         Method link species set id for Pecan. Obligatory
     'genome_db_id' => <number>
         Species genome db id.
-    'offset' => <number>
-        Offset into ordered array of member_ids. Obligatory
     'start_member_id' => <number>
-        Member id of member at 'offset' in order array of member ids. Obligatory
-    'batch_size' => <number>
-        Number of members to write to fasta file
+        Member id of the first member to blast. Obligatory
+    'end_member_id' => <number>
+        Member id of the last member to blast. Obligatory
     'reuse_ss_id' => <number>
         Reuse species set id. Normally stored in the meta table. Obligatory.
     'do_transactions' => <0|1>
@@ -63,50 +61,36 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 #
 # Fetch members and sequences from the database. 
-# Return a sorted list based on member_id, starting at $offset and with $batch_size items
+# Return a sorted list based on start_member_id and end_member_id
 #
 sub load_members_from_db{
-    my ($self, $start_member_id, $offset, $batch_size) = @_;
+    my ($self) = @_;
+
+    my $start_member_id = $self->param('start_member_id') || die "'start_member_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $end_member_id = $self->param('end_member_id') || die "'end_member_id' is an obligatory parameter, please set it in the input_id hashref";
 
     my $idprefixed              = $self->param('idprefixed')  || 0;
     my $debug                   = $self->debug() || $self->param('debug') || 0;
     my $genome_db_id            = $self->param('genome_db_id');
 
     #Get list of members and sequences
-    my $sql = "SELECT member_id, sequence_id, stable_id, sequence FROM member JOIN sequence USING (sequence_id) WHERE genome_db_id=?";
+    my $sql = "SELECT member_id, sequence_id, stable_id, sequence FROM member JOIN sequence USING (sequence_id) WHERE genome_db_id=? AND member_id BETWEEN ? AND ? ORDER BY member_id";
     
     my $sth = $self->compara_dba->dbc->prepare( $sql );
-    $sth->execute($genome_db_id);
+    $sth->execute($genome_db_id, $start_member_id, $end_member_id);
 
-    my $member_list;
+    my $fasta_list;
     while( my ($member_id, $seq_id, $stable_id, $seq) = $sth->fetchrow() ) {
         $seq=~ s/(.{72})/$1\n/g;
         chomp $seq;
-	my $fasta_line = ($idprefixed
+        my $fasta_line = ($idprefixed
                                 ? ">seq_id_${seq_id}_${stable_id}\n$seq\n"
                                 : ">$stable_id sequence_id=$seq_id member_id=$member_id\n$seq\n") ;
-	my $member_sequence;
-	%$member_sequence = ( member_id => $member_id,
-			      fasta_line => $fasta_line);
-	push @$member_list, $member_sequence;
+        push @$fasta_list, $fasta_line;
     }
     $sth->finish();
     $self->compara_dba->dbc->disconnect_when_inactive(1);
 
-    #Sort on member_id
-    my $sorted_list;
-    @$sorted_list = sort {$a->{member_id} <=> $b->{member_id}} @$member_list;
-
-    my $fasta_list;
-    #Check start_member_id is the same as the item at offset
-    if ($self->param('start_member_id') ne $sorted_list->[$offset]->{member_id}) {
-	throw("start_member_id " . $self->param('start_member_id') . " is not the same as offset " . $sorted_list->[$offset]->{member_id});
-    }
-    for (my $i = $offset; $i < ($offset+$batch_size); $i++) {
-	my $member_id = $sorted_list->[$i]->{member_id};
-	my $fasta_line = $sorted_list->[$i]->{fasta_line};
-	push @$fasta_list, $fasta_line;
-    }
     return $fasta_list;
 }
 
@@ -159,14 +143,9 @@ sub name2member {
 sub fetch_input {
     my $self = shift @_;
 
-    my $start_member_id = $self->param('start_member_id') || die "'start_member_id' is an obligatory parameter, please set it in the input_id hashref";
-    my $offset          = $self->param('offset');
-    die "'offset' is an obligatory parameter" if (!defined $offset);
-
-    my $batch_size      = $self->param('batch_size') || 1000;
     my $debug           = $self->debug() || $self->param('debug') || 0;
 
-    my $fasta_list      = $self->load_members_from_db($start_member_id, $offset, $batch_size);
+    my $fasta_list      = $self->load_members_from_db();
 
     if (!defined $self->param('genome_db_id')) {
 	die "'genome_db_id' is an obligatory parameter";
@@ -371,7 +350,7 @@ sub run {
 		warn "CMD:\t$cmd\n";
 	    }
 	    my $start_time = time();
-	    open( BLAST, "| $cmd") || die qq{could not execute "${cmd}", returned error code: $!};
+	    open( BLAST, "| $cmd") || die qq{could not execute "$cmd", returned error code: $!};
 	    print BLAST @$fasta_list;
 	    close BLAST;
 	    
