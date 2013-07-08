@@ -82,7 +82,6 @@ sub default_options {
         'wait_for_display_label_update' => 1,
 
     # executable locations:
-        'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
@@ -92,6 +91,7 @@ sub default_options {
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
+        'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.26+/bin',
 
     # HMM specific parameters
         'hmm_clustering'            => 0, ## by default run blastp clustering
@@ -126,8 +126,7 @@ sub default_options {
 
         # Uncomment and update the database locations
 
-        # the production database itself (will be created)
-        'pipeline_db' => {
+        'pipeline_db' => {                      # the production database itself (will be created)
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
@@ -165,6 +164,8 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
         },
+        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+        #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
@@ -185,7 +186,7 @@ sub default_options {
         },
 
         # Are we reusing the blastp alignments ?
-        'reuse_from_prev_rel_db'    => 1,
+        'reuse_from_prev_rel_db'    => 0,
 
         # To run without a master database
         #'use_master_db'             => 0,

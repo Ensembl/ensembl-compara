@@ -472,27 +472,20 @@ sub gene_list {  # DEPRECATED
 
 
 sub print_sequences_to_fasta {
-    my ($self, $pep_file, $subset_header) = @_;
+    my ($self, $pep_file) = @_;
     my $pep_counter = 0;
     open PEP, ">$pep_file";
     foreach my $member (@{$self->get_all_Members}) {
         next if $member->source_name eq 'ENSEMBLGENE';
-        my $member_stable_id = $member->stable_id;
         my $member_id = $member->member_id;
         my $seq = $member->sequence;
 
-        if ($subset_header) {
-            my $source_name = $member->source_name;
-            my $genome_db_id = $member->genome_db_id || 0;
-            my $description = $member->description;
-            print PEP ">$source_name:$member_stable_id IDs:$genome_db_id:$member_id $description\n";
-        } else {
-            print PEP ">$member_id\n";
-        }
+        print PEP ">$member_id\n";
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
         unless (defined($seq)) {
             my $set_id = $self->dbID;
+            my $member_stable_id = $member->stable_id;
             die "member $member_stable_id in MemberSet $set_id doesn't have a sequence";
         }
         print PEP $seq,"\n";

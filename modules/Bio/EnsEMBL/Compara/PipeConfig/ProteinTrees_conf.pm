@@ -86,8 +86,7 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
 
     # blast parameters:
-        'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
-        'blast_tmp_dir'             => '',  # if empty, will use Blast Analysis' default
+        'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
 
         'protein_members_range'     => 100000000, # highest member_id for a protein member
 
@@ -114,7 +113,6 @@ sub default_options {
         'wait_for_display_label_update' => 0,
 
     # executable locations:
-        #'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
@@ -123,6 +121,7 @@ sub default_options {
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         #'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
+        #'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.26+/bin',
 
     # HMM specific parameters
         #'hmm_clustering'            => 0, ## by default run blastp clustering
@@ -788,11 +787,10 @@ sub pipeline_analyses {
         {   -logic_name => 'make_blastdb',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'fasta_dir'     => $self->o('blastdb_dir'),
+                'fasta_dir'     => $self->o('fasta_dir'),
                 'blast_bin_dir' => $self->o('blast_exe_dir'),
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
             },
-            -rc_name => '100Mb',
         },
 
         {   -logic_name => 'blast_species_factory',
@@ -826,10 +824,10 @@ sub pipeline_analyses {
         {   -logic_name         => 'blastp_with_reuse',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                'blast_options'             => $self->o('blast_options'),
-                'blast_tmp_dir'             => $self->o('blast_tmp_dir'),
+                'blast_params'              => $self->o('blast_params'),
                 'fasta_dir'                 => $self->o('fasta_dir'),
-                'wublastp_exe'              => $self->o('wublastp_exe'),
+                'blast_bin_dir'             => $self->o('blast_exe_dir'),
+                'evalue_limit'              => 1e-10,
             },
             -batch_size    => 40,
             -rc_name       => '250Mb_job',
