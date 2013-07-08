@@ -1146,25 +1146,6 @@ sub fetch_all_RH_by_member
 # }
 
 
-=head2 fetch_all
-
-  Arg        : None
-  Example    : @pafs = @{$adaptor->fetch_all};
-  Description: fetch all peptide align features.  Not generally useful since it
-               can return millions of objects.
-  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub fetch_all {
-  my $self = shift;
-
-  return $self->_generic_fetch();
-}
-
-
 =head2 fetch_BRH_web_for_member_genome_db
 
   Overview   : This is the new (compara_24) algorithm method for finding UBRH and MBRH
@@ -1282,60 +1263,5 @@ sub _recursive_find_brh_pafs_for_member_genome_db
 #   $sth->finish;
 # }
 
-
-sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
-
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
-
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
-        }
-      }
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
-    }
-  }
-
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->final_clause;
-
-  #append a where clause if it was defined
-  if($constraint) {
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
-    }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
-
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause" if($final_clause);
-
-  # print STDERR $sql,"\n";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  # print STDERR $sql,"\n";
-  # print STDERR "sql execute finished. about to build objects\n";
-
-  return $self->_objs_from_sth($sth);
-}
 
 1;
