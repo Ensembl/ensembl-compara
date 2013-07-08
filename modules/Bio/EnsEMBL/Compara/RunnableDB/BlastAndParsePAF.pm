@@ -53,7 +53,6 @@ use FileHandle;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter;
-use Bio::EnsEMBL::Analysis::Tools::FeatureFactory;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
