@@ -42,7 +42,8 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     this.elLk.tableWrapper  = this.elLk.wrapper.children('.table_wrapper');
     this.elLk.noResults     = this.elLk.wrapper.children('.no_results');
     this.elLk.table         = this.elLk.tableWrapper.children('table.config_matrix');
-    this.elLk.headers       = this.elLk.table.children('thead').children('tr:first').children('th');
+    this.elLk.headers       = this.elLk.table.children('thead').children('tr:first').children('th:not(.axes)');
+    this.elLk.axisLabels    = this.elLk.table.children('thead').children('tr:first').children('th.axes').find('i');
     this.elLk.configMenus   = this.elLk.table.children('thead').children('tr.config_menu').children('th');
     this.elLk.rows          = this.elLk.table.children('tbody').children('tr');
     this.elLk.columnHeaders = this.elLk.headers.add(this.elLk.configMenus).not('.first');
@@ -64,6 +65,23 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     }).removeAttr('id');
     
     this.elLk.tableWrapper.data('maxWidth', this.elLk.tableWrapper[0].style.width).width('auto');
+    
+    this.elLk.axisLabels.each(function () {
+      var el    = $(this);
+      var clone = el.clone().addClass('clone').insertAfter(this);
+      
+      // labels are truncated
+      if (clone.width() > el.width()) {
+        el.data('fullLabel', $('<em class="floating_popup">' + this.innerHTML + '</em>').css($(this).position()).appendTo(el)).on({
+          mouseenter: function () { $(this).data('fullLabel').show(); },
+          mouseleave: function () { $(this).data('fullLabel').hide(); }
+        });
+      }
+      
+      clone.remove();
+      
+      el = clone = null;
+    });
     
     for (var i = 0; i < this.elLk.table[0].rows.length; i++) {
       j = this.elLk.cols.length;

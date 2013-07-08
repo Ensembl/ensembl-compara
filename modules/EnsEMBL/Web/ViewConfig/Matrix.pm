@@ -83,6 +83,7 @@ sub set_columns {
       section      => $tree->get_node($menu)->get('caption'),
       header       => $data->{'header'},
       description  => $data->{'info'},
+      axes         => $data->{'axes'},
     };
     
     push @{$conf->{'columns'}}, { name => $tree->clean_id(join '_', $conf->{'track_prefix'}, $set, $label_x), x => $label_x, display => $node->get('display'), renderers => $renderers };
@@ -405,11 +406,11 @@ sub form_matrix {
     </div>
     <div class="config_matrix_scroller"><div></div></div>
     <div class="config_matrix_wrapper$wrapper_class">
-      <div class="table_wrapper" style="width:${width}px; margin-top: 50px">
+      <div class="table_wrapper" style="width:${width}px">
         <table class="config_matrix" cellspacing="0" cellpadding="0">
           <thead>
             <tr>
-              <th class="first"></th>
+              <th class="first axes"><div><i class="y">$conf->{'axes'}{'y'}</i><b class="y">&#9658;</b><i class="x">$conf->{'axes'}{'x'}</i><b class="x">&#9660;</b></div></th>
               %s
             </tr>
             <tr class="config_menu">

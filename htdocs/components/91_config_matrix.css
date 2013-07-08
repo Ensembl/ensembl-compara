@@ -7,6 +7,7 @@ div.config div.config_matrix_scroller div                           { height: 16
 div.config div.config_matrix h1                                     { display: block; border: 0; }
 div.config div.config_matrix h2                                     { margin: 0 8px 0 0; border: 0; float: left; font-size: 15px; }
 div.config div.config_matrix div.header_wrapper                     { margin: 3px 0 10px 0; clear: both; }
+div.config div.config_matrix div.table_wrapper                      { margin-top: 25px; }
 div.config div.config_matrix div.filter_wrapper                     { position: relative; padding: 7px 0; border: 1px solid transparent; border-width: 1px 0; clear: both; }
 div.config div.config_matrix div.filter_wrapper h2                  { margin: 0 18px 18px 0; }
 div.config div.config_matrix div.filter_wrapper select              { width: 185px; margin-bottom: 5px; }
@@ -36,7 +37,7 @@ table.config_matrix tr                                              { height: 26
 table.config_matrix tr.hidden                                       { display: none!important; }
 table.config_matrix tr th,                                     
 table.config_matrix tr td                                           { width: 25px; height: 25px; padding: 0; }
-table.config_matrix thead th p                                      { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; white-space: nowrap; margin: 0; }
+table.config_matrix thead th p                                      { position: relative; left: 5px; bottom: -30px; width: 22px; font-size: 14px; white-space: nowrap; margin: 0; }
 table.config_matrix thead th p                                      { -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
 table.config_matrix thead th div.select_all_column                  { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; white-space: nowrap; }
 table.config_matrix thead th div.select_all_column div              { margin-top: 4px; }
@@ -44,6 +45,15 @@ table.config_matrix thead th div.select_all_column input            { margin: 0 
 table.config_matrix th.first                                        { width: 95px; vertical-align: middle; white-space: nowrap; padding-right: 16px; }
 table.config_matrix th.first div.select_all_row                     { width: 70px; margin-top: -22px; padding: 2px 4px; }
 table.config_matrix th.first div.select_all_row input               { position: absolute; top: 5px; right: 2px; }
+table.config_matrix th.axes                                         { position: relative; height: 50px; }
+table.config_matrix th.axes div                                     { position: absolute; margin-top: -25px; font-size: 11px; padding: 0 5px 5px 0; border: 1px dashed; border-width: 0 1px 1px 0; }
+table.config_matrix th.axes div i                                   { display: block; padding-right: 3px; font-weight: normal; overflow: hidden; text-overflow: ellipsis; }
+table.config_matrix th.axes div .floating_popup                     { width: auto; }
+table.config_matrix th.axes .x                                      { float: left; margin-top: 5px; }
+table.config_matrix th.axes .y                                      { float: left; }
+table.config_matrix th.axes i.x                                     { max-width: 90px; clear: left; }
+table.config_matrix th.axes i.y                                     { max-width: 80px; margin-left: 10px; }
+table.config_matrix th.axes i.clone                                 { max-width: none; overflow: visible; }
 table.config_matrix td                                              { border: 1px solid black; }
 table.config_matrix td p,
 div.config div.matrix_key .key p                                    { height: 25px; margin: 0; }
@@ -73,6 +83,8 @@ body.ie   table.config_matrix thead th div.select_all_column        { width: 140
 body.ie   table.config_matrix thead th div.select_all_column div    { margin: 0; }
 body.ie   table.config_matrix th.first div.select_all_row           { left: 0; top: -6px; margin: 0; }
 body.ie   table.config_matrix tr.config_menu th ul.popup_menu       { width: 165px; }
+body.ie8  table.config_matrix th.axes div                           { border: 0; }
+body.ie67 table.config_matrix th.axes div                           { display: none!important; }
 body.ie7  table.config_matrix thead th p                            { bottom: 3px; }
 body.ie7  table.config_matrix thead th div.select_all_column        { margin-top: 25px; }
 body.ie7  table.config_matrix tr.config_menu th.first ul.popup_menu { margin: -6px 0 0; }
@@ -113,9 +125,9 @@ div.config div.config_matrix .tutorial.row:after        { border-width: 15px 0 0
 div.config div.config_matrix .tutorial.drag             { width: 160px; margin: -25px 0 0 45px; }
 div.config div.config_matrix .tutorial.drag:before      { border-width: 10px 35px 0 0; bottom: 20px; left: -35px; }
 div.config div.config_matrix .tutorial.drag:after       { border-width: 0 35px 10px 0; bottom: 10px; left: -35px; }
-div.config div.config_matrix .tutorial.col              { width: 105px; margin: -65px 0 0 65px; z-index: 10001; }
-div.config div.config_matrix .tutorial.col:before       { border-width: 28px 43px 0 0; bottom: 0; left: -43px; }
-div.config div.config_matrix .tutorial.col:after        { border-width: 10px 43px 0 0; bottom: 0; left: -43px; border-color: transparent #FFF; }
+div.config div.config_matrix .tutorial.col              { width: 105px; margin: -15px 0 0 55px; z-index: 10001; }
+div.config div.config_matrix .tutorial.col:before       { border-width: 15px 25px 0 0; bottom: 28px; left: -25px; }
+div.config div.config_matrix .tutorial.col:after        { border-width: 0 25px 8px 0;  bottom: 20px; left: -25px; }
 div.config div.config_matrix .tutorial.fil              { width: 180px; top: 3px; left: 300px; padding: 4px; border-radius: 0; }
 div.config div.config_matrix .tutorial.fil:before       { border-width: 30px 30px 0 0; bottom: 50%; left: -30px; }
 div.config div.config_matrix .tutorial.fil:after        { border-width: 0 30px 30px 0; top:    50%; left: -30px; }
@@ -127,4 +139,4 @@ div.config div.config_matrix .tutorial.video:after      { display: none; }
 body.ie67  div.config div.config_matrix .tutorial,
 body.ie67  div.config div.config_matrix .toggle_tutorial,
 body.ie8   div.config div.config_matrix .tutorial.drag  { display: none!important; }
-body.ie8   div.config div.config_matrix .tutorial.col   { margin: -50px 0 0 65px; }
+body.ie8   div.config div.config_matrix .tutorial.col   { margin: -20px 0 0 50px; }
