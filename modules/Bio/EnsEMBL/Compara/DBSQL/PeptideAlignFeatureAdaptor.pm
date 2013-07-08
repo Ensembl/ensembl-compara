@@ -59,10 +59,7 @@ sub fetch_all_by_qmember_id{
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($member_id);
 
-  my $gdb = $member->genome_db;
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
+  my $gdb_id = $member->genome_db_id;
   my $tbl_name = 'peptide_align_feature_'.$gdb_id;
 
   my $columns = join(', ', $self->_columns());
@@ -167,10 +164,7 @@ sub fetch_all_by_qmember_id_hmember_id{
 
   my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb = $qmember->genome_db;
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
+  my $gdb_id = $qmember->genome_db_id;
   my $tbl_name = 'peptide_align_feature_'.$gdb_id;
 
   my $columns = join(', ', $self->_columns());
@@ -221,10 +215,7 @@ sub fetch_all_by_qmember_id_hgenome_db_id{
 
   my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb = $qmember->genome_db;
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
+  my $gdb_id = $qmember->genome_db_id;
   my $tbl_name = 'peptide_align_feature_'.$gdb_id;
 
   my $columns = join(', ', $self->_columns());
@@ -273,8 +264,6 @@ sub fetch_all_by_hmember_id_qgenome_db_id{
    throw("must specify hit member dbID") unless($hmember_id);
    throw("must specify query genome_db dbID") unless($qgenome_db_id);
 
-   my $species_name = lc($self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id)->name);
-   $species_name =~ s/\ /\_/g;
    my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
 
   my $columns = join(', ', $self->_columns());
@@ -349,11 +338,7 @@ sub fetch_all_by_qgenome_db_id{
 
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
 
-  my $gdb = $$self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
+  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
 
   my $columns = join(', ', $self->_columns());
   # my $constraint = "paf.qmember_id = $member_id";
@@ -372,11 +357,7 @@ sub fetch_all_by_qgenome_db_id_hgenome_db_id{
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
 
-  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
+  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
 
   my $columns = join(', ', $self->_columns());
   my $constraint = "paf.hgenome_db_id = $hgenome_db_id";
@@ -394,11 +375,7 @@ sub fetch_all_besthit_by_qgenome_db_id{
 
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
 
-  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
+  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
 
   my $columns = join(', ', $self->_columns());
   my $constraint = "paf.hit_rank=1";
@@ -418,11 +395,7 @@ sub fetch_all_besthit_by_qgenome_db_id_hgenome_db_id{
   throw("must specify query genome_db dbID") unless($qgenome_db_id);
   throw("must specify hit genome_db dbID") unless($hgenome_db_id);
 
-  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($qgenome_db_id);
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
-  my $tbl_name = 'peptide_align_feature_'.$gdb_id;
+  my $tbl_name = 'peptide_align_feature_'.$qgenome_db_id;
 
   my $columns = join(', ', $self->_columns());
   my $constraint = "paf.hgenome_db_id = $hgenome_db_id AND paf.hit_rank=1";
@@ -455,10 +428,7 @@ sub fetch_selfhit_by_qmember_id {
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb = $member->genome_db;
-  my $species_name = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
+  my $gdb_id = $member->genome_db_id;
   my $tbl_name = 'peptide_align_feature_'.$gdb_id;
 
   my $columns = join(', ', $self->_columns());
@@ -537,8 +507,6 @@ sub _store_PAFS {
   my $first_qgenome_db_id = $out[0]->query_genome_db_id;
 
   my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
-  my $species_name = lc($gdb->name);
-  $species_name =~ s/\ /\_/g;
   my $tbl_name = 'peptide_align_feature_'.$first_qgenome_db_id;
 
   my $query = "INSERT INTO $tbl_name(".
@@ -990,14 +958,8 @@ sub fetch_BRH_by_member_genomedb
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb = $member->genome_db;
-  my $species_name1 = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name1 =~ s/\ /\_/g;
+  my $gdb_id = $member->genome_db_id;
   my $tbl_name1 = 'peptide_align_feature_'.$gdb_id;
-
-  my $species_name2 = lc($self->db->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id)->name);
-  $species_name2 =~ s/\ /\_/g;
   my $tbl_name2 = 'peptide_align_feature_'.$hit_genome_db_id;
 
   my $columns = join(', ', $self->_columns());
@@ -1070,14 +1032,8 @@ sub fetch_all_RH_by_member_genomedb
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb = $member->genome_db;
-  my $species_name1 = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name1 =~ s/\ /\_/g;
+  my $gdb_id = $member->genome_db_id;
   my $tbl_name1 = 'peptide_align_feature_'.$gdb_id;
-
-  my $species_name2 = lc($self->db->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id)->name);
-  $species_name2 =~ s/\ /\_/g;
   my $tbl_name2 = 'peptide_align_feature_'.$hit_genome_db_id;
 
   my $columns = join(', ', $self->_columns());
@@ -1148,9 +1104,7 @@ sub fetch_all_RH_by_member
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   my $gdb = $member->genome_db;
-  my $species_name = lc($gdb->name);
   my $gdb_id = lc($gdb->dbID);
-  $species_name =~ s/\ /\_/g;
   my $tbl_name = 'peptide_align_feature_'.$gdb_id;
 
   my $columns = join(', ', $self->_columns());
@@ -1272,14 +1226,8 @@ sub _recursive_find_brh_pafs_for_member_genome_db
 
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $gdb = $member->genome_db;
-  my $species_name1 = lc($gdb->name);
-  my $gdb_id = lc($gdb->dbID);
-  $species_name1 =~ s/\ /\_/g;
+  my $gdb_id = $member->genome_db_id;
   my $tbl_name1 = 'peptide_align_feature_'.$gdb_id;
-
-  my $species_name2 = lc($self->db->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id)->name);
-  $species_name2 =~ s/\ /\_/g;
   my $tbl_name2 = 'peptide_align_feature_'.$hit_genome_db_id;
 
   return unless($qmember_id and $hit_genome_db_id);
