@@ -31,7 +31,7 @@ BEGIN{
 }
 
 use EnsEMBL::Web::Hub;
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 print "\n\n";
 
@@ -41,7 +41,7 @@ my $SD = $hub->species_defs;
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
 
-my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
 my ($sql, $sth, @args); 
 
 my $release_id = $SD->ENSEMBL_VERSION;
