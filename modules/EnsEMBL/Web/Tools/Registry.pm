@@ -32,13 +32,13 @@ sub configure {
     USERDATA            => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     COMPARA_MULTIPLE    => undef,
     WEBSITE             => undef,
+    ARCHIVE             => undef,
     HEALTHCHECK         => undef,
     BLAST               => undef,
     BLAST_LOG           => undef,
     MART                => undef,
     GO                  => [ 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor', 'ontology' ],
     FASTA               => undef,
-    WEB_COMMON          => undef,
     PRODUCTION          => undef,
   );
 
