@@ -26,11 +26,12 @@ sub content {
   my $table         = $self->new_table([], [], { data_table => 1 });
    
 
-  $table->add_columns(
+  $table->add_columns(   
     { key => 'pmid', title => 'PMID', align => 'left', sort => 'html' },  
     { key => 'title', title => 'Title', align => 'left', sort => 'html' },  
     { key => 'author',  title => 'Author(s)',     align => 'left', sort => 'html' },
     { key => 'text', title => 'Full text', align => 'left', sort => 'html' },  
+    { key => 'year', title => 'Year', align => 'left', sort => 'html' },  
   );
   
   foreach my $row (@{$table_rows}){  $table->add_rows($row);}
@@ -53,6 +54,7 @@ sub table_data {
   foreach my $cit (@$citation_data) { 
 
     my $row = {
+      year    => $cit->year(),
       pmid    => defined $cit->pmid() ? "<a href=\"" . $pm_url . $cit->pmid() . "\">" .$cit->pmid() . "</a>" : undef,
       title   => $cit->title(),
       author  => $cit->authors(),
