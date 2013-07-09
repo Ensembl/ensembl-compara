@@ -40,6 +40,7 @@ sub munge_das {
 sub munge_databases_multi {
   my $self = shift;
   $self->_summarise_website_db;
+  $self->_summarise_archive_db;
   $self->_summarise_compara_db('compara', 'DATABASE_COMPARA');
   $self->_summarise_compara_db('compara_pan_ensembl', 'DATABASE_COMPARA_PAN_ENSEMBL');
   $self->_summarise_ancestral_db('core', 'DATABASE_CORE');
@@ -898,7 +899,15 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
   }
 
-  $t_aref = $dbh->selectall_arrayref(
+  $dbh->disconnect();
+}
+
+sub _summarise_archive_db {
+  my $self    = shift;
+  my $db_name = 'DATABASE_ARCHIVE';
+  my $dbh     = $self->db_connect( $db_name );
+
+  my $t_aref = $dbh->selectall_arrayref(
     'select s.name, r.release_id, rs.assembly_code, rs.initial_release, rs.last_geneset
        from species as s, ens_release as r, release_species as rs
       where s.species_id =rs.species_id and r.release_id =rs.release_id
