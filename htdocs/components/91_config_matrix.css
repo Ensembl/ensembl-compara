@@ -49,10 +49,10 @@ table.config_matrix th.axes                                         { position: 
 table.config_matrix th.axes div                                     { position: absolute; margin-top: -25px; font-size: 11px; padding: 0 5px 5px 0; border: 1px dashed; border-width: 0 1px 1px 0; }
 table.config_matrix th.axes div i                                   { display: block; padding-right: 3px; font-weight: normal; overflow: hidden; text-overflow: ellipsis; }
 table.config_matrix th.axes div .floating_popup                     { width: auto; }
-table.config_matrix th.axes .x                                      { float: left; margin-top: 5px; }
-table.config_matrix th.axes .y                                      { float: left; }
-table.config_matrix th.axes i.x                                     { max-width: 90px; clear: left; }
-table.config_matrix th.axes i.y                                     { max-width: 80px; margin-left: 10px; }
+table.config_matrix th.axes .x                                      { float: left; }
+table.config_matrix th.axes .y                                      { float: left; margin-top: 5px; }
+table.config_matrix th.axes i.x                                     { max-width: 80px; margin-left: 10px; }
+table.config_matrix th.axes i.y                                     { max-width: 90px; clear: left; }
 table.config_matrix th.axes i.clone                                 { max-width: none; overflow: visible; }
 table.config_matrix td                                              { border: 1px solid black; }
 table.config_matrix td p,

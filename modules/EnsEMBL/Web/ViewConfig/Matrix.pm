@@ -410,7 +410,7 @@ sub form_matrix {
         <table class="config_matrix" cellspacing="0" cellpadding="0">
           <thead>
             <tr>
-              <th class="first axes"><div><i class="y">$conf->{'axes'}{'y'}</i><b class="y">&#9658;</b><i class="x">$conf->{'axes'}{'x'}</i><b class="x">&#9660;</b></div></th>
+              <th class="first axes"><div><i class="x">$conf->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$conf->{'axes'}{'y'}</i><b class="y">&#9660;</b></div></th>
               %s
             </tr>
             <tr class="config_menu">
