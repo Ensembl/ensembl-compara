@@ -867,11 +867,12 @@ sub get_SpeciesTree {
 
   if (!$self->{$cache_key}) {
     my $cafeTree_Adaptor = $database->get_CAFEGeneFamilyAdaptor();
-    my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();    
-
+    my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();
+    
     my $member   = $self->get_compara_Member($compara_db)           || return;        
     my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);
+				$cafeTree->multifurcate_tree();    
     $cafeTree    = $cafeTree->lca_reroot() if($collapsability eq 'part'); 
       
     $self->{$cache_key} = $cafeTree;
