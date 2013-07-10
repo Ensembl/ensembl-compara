@@ -37,6 +37,10 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu_holder .floating_popup          { display: block; position: relative !important; z-index: auto; margin: 8px 10px 0 0; }
 .zmenu_holder .info_popup              { border: 0; }
 .zmenu_holder .zmenu                   { width: 180px; }
+.zmenu_holder .zmenu tr.bg1            { background-color:transparent;}
+.zmenu_holder .zmenu tr.bg2            { background-color:[[TINT_BORDER]];}
+.zmenu_holder .zmenu tr.bg1 a,
+.zmenu_holder .zmenu tr.bg2 a          { color:[[TINT_LINK]] }
 .zmenu_holder .zmenu th,
 .zmenu_holder .zmenu td                { white-space: normal; }
 .zmenu_holder .zmenu tr.child th       { padding-left: 12px; }
