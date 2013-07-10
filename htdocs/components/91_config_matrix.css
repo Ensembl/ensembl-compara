@@ -43,7 +43,8 @@ table.config_matrix thead th div.select_all_column                  { width: aut
 table.config_matrix thead th div.select_all_column div              { margin-top: 4px; }
 table.config_matrix thead th div.select_all_column input            { margin: 0 3px; height: 16px; vertical-align: middle; }
 table.config_matrix th.first                                        { width: 95px; vertical-align: middle; white-space: nowrap; padding-right: 16px; }
-table.config_matrix th.first div.select_all_row                     { width: 70px; margin-top: -22px; padding: 2px 4px; }
+table.config_matrix th.first div.select_all_row_wrapper             { position: relative; width: 100%; }
+table.config_matrix th.first div.select_all_row                     { width: 100%; margin-top: -22px; padding: 2px 4px; }
 table.config_matrix th.first div.select_all_row input               { position: absolute; top: 5px; right: 2px; }
 table.config_matrix th.axes                                         { position: relative; height: 50px; }
 table.config_matrix th.axes div                                     { position: absolute; margin-top: -25px; font-size: 11px; padding: 0 5px 5px 0; border: 1px dashed; border-width: 0 1px 1px 0; }
@@ -81,7 +82,6 @@ body.ie   table.config_matrix th                                    { position: 
 body.ie   table.config_matrix thead th p                            { filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); position: absolute; bottom: 52px; width: 65px; font-weight: normal; }
 body.ie   table.config_matrix thead th div.select_all_column        { width: 140px; margin-top: 20px; filter: Alpha(Opacity=85); }
 body.ie   table.config_matrix thead th div.select_all_column div    { margin: 0; }
-body.ie   table.config_matrix th.first div.select_all_row           { left: 0; top: -6px; margin: 0; }
 body.ie   table.config_matrix tr.config_menu th ul.popup_menu       { width: 165px; }
 body.ie8  table.config_matrix th.axes div                           { border: 0; }
 body.ie67 table.config_matrix th.axes div                           { display: none!important; }
@@ -92,8 +92,6 @@ body.ie6  div.config_matrix                                         { zoom: 1 }
 body.ie6  table.config_matrix thead th p                            { bottom: 2px; }
 body.ie6  table.config_matrix tr.config_menu th.first div           { top: -8px; }
 body.ie6  table.config_matrix tr.config_menu th.first ul.popup_menu { margin: -8px 0 0; }
-body.ie6  table.config_matrix th.first div.select_all_row           { width: 80px; }
-body.ie6  table.config_matrix th.first div.select_all_row input     { right: 0; }
 
 /* popups for subtracks */
 

@@ -181,10 +181,12 @@ sub form_matrix {
   };
   
   my $select_all_row = qq{
-    <div class="select_all_row floating_popup">
-      Select all<br />
-      %s
-      <input type="checkbox" />
+    <div class="select_all_row_wrapper">
+      <div class="select_all_row floating_popup">
+        Select all<br />
+        %s
+        <input type="checkbox" />
+      </div>
     </div>
   };
   

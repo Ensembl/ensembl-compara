@@ -216,7 +216,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
           return;
         }
       
-        var popup = $(this).children('.select_all_row').show();
+        var popup = $(this).find('.select_all_row').show();
         
         if (!popup.data('selectAll')) {
           popup.children('input').prop('checked', panel.allOnRow(this));
@@ -226,16 +226,17 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
         popup = null;
       },
       mouseleave: function () {
-        $(this).children('.select_all_row').hide();
+        $(this).find('.select_all_row').hide();
       }
-    }).children('.select_all_row').on('click', function (e) {
+    }).find('.select_all_row').on('click', function (e) {
       var input   = $('input', this);
-      var checked = panel.allOnRow(this.parentNode);
+      var th      = $(this).parents('th');
+      var checked = panel.allOnRow(th[0]);
       
-      panel.resetSelectAll($(this).parent().siblings('.opt')[checked ? 'removeClass' : 'addClass']('on'));
+      panel.resetSelectAll(th.siblings('.opt')[checked ? 'removeClass' : 'addClass']('on'));
       
       input.prop('checked', !checked);
-      input = null;
+      input = th = null;
       
       e.stopPropagation();
     });
