@@ -42,8 +42,8 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     this.elLk.tableWrapper  = this.elLk.wrapper.children('.table_wrapper');
     this.elLk.noResults     = this.elLk.wrapper.children('.no_results');
     this.elLk.table         = this.elLk.tableWrapper.children('table.config_matrix');
-    this.elLk.headers       = this.elLk.table.children('thead').children('tr:first').children('th:not(.axes)');
-    this.elLk.axisLabels    = this.elLk.table.children('thead').children('tr:first').children('th.axes').find('i');
+    this.elLk.headers       = this.elLk.table.children('thead').children('tr:first').children('th');
+    this.elLk.axisLabels    = this.elLk.headers.filter('.axes').find('i');
     this.elLk.configMenus   = this.elLk.table.children('thead').children('tr.config_menu').children('th');
     this.elLk.rows          = this.elLk.table.children('tbody').children('tr');
     this.elLk.columnHeaders = this.elLk.headers.add(this.elLk.configMenus).not('.first');
@@ -180,7 +180,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     .on('click', '.popup_menu li', $.proxy(this.setColumnConfig, this));
     
     // Display a select all popup for columns
-    this.elLk.headers.on({
+    this.elLk.headers.not('.axes').on({
       mouseenter: function () {
         if (panel.mousemove) {
           return;
