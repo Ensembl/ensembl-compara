@@ -26,7 +26,7 @@ sub get_details {
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
-  my $test_tree = $object->get_SpeciesTree($cdb);
+  my $species_tree = $object->get_SpeciesTree($cdb);
   
   my $tree = $object->get_GeneTree($cdb);
   return (undef, '<strong>Gene is not in a compara tree</strong>') unless $tree;
@@ -34,7 +34,7 @@ sub get_details {
   my $node = $tree->get_leaf_by_Member($member);
   return (undef, '<strong>Gene is not in the compara tree</strong>') unless $node;
 
-  return ($member, $tree, $node, $test_tree);
+  return ($member, $tree, $node, $species_tree);
 }
 
 sub content_sub_supertree {
