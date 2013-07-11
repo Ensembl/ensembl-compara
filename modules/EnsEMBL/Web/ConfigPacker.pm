@@ -617,10 +617,10 @@ sub _summarise_variation_db {
     'select distinct(a.value) from attrib a, protein_function_predictions p where a.attrib_id = p.analysis_attrib_id'
   );
   foreach (@$prediction_aref) {
-    if ($_ =~ /sift/i) {
+    if ($_->[0] =~ /sift/i) {
       $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SIFT'} = 1;
     }
-    if ($_ =~ /^polyphen/i) {
+    if ($_->[0] =~ /^polyphen/i) {
       $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'POLYPHEN'} = 1;
     }
   }
