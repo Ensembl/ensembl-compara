@@ -222,11 +222,14 @@ sub get_configurable_components {
     $node ||= $self->get_node($self->get_valid_action($action || $hub->action, $function || $hub->function));
     
     if ($node) {
-      foreach (reverse grep /::Component::/, @{$node->data->{'components'}}) {
-        my @package     = split '::';
+      my @all_components = reverse @{$node->data->{'components'}};
+      
+      for (my $i = 0; $i < $#all_components; $i += 2) {
+        my ($p, $code)  = map $all_components[$_], $i, $i + 1;
+        my @package     = split '::', $p;
         my ($component) = split '/', $package[-1];
         my $module_name = $self->get_module_names('ViewConfig', $package[-2], $component);
-        push @components, [ $component, $package[-2] ] if $module_name;
+        push @components, [ $component, $package[-2], $code ] if $module_name;
       }
     }
   }
