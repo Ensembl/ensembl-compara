@@ -1,7 +1,8 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-use Switch;
+use feature qw(switch);
+
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
@@ -68,17 +69,17 @@ sub parse_cmd_line {
     print("state=$state  token:'$token'\n");
 
     $state = 1 if($token =~ /^-/);
-    switch($state) {
-      case 0 #non parameter
+    given($state) {
+      when (0) #non parameter
         { push @{$self->{'dnafrag_chunk_ids'}}, $token; }
-      case 1 {
-        switch($token) {
-          case '-url' {$state=10;}
-          case '-chunkset' {$state=11;}
-          else  {$state=0;}
+      when (1) {
+        given($token) {
+          when ('-url') {$state=10;}
+          when ('-chunkset') {$state=11;}
+          default {$state=0;}
         };}
-      case 10 { $self->{'url'} = $token; $state=0; }
-      case 11 { $self->{'chunkSetID'} = $token; $state=0; }
+      when (10) { $self->{'url'} = $token; $state=0; }
+      when (11) { $self->{'chunkSetID'} = $token; $state=0; }
     }
     print("  state=$state\n");
     

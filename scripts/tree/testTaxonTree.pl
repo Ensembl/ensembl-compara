@@ -2,6 +2,8 @@
 
 use strict;
 use warnings;
+use feature qw(switch);
+
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -10,7 +12,6 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
-use Switch;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -120,17 +121,17 @@ if($self->{'stats'}) {
 }
 
 
-switch($state) {
-  case 1 { fetch_protein_tree($self, $self->{'tree_id'}); }
-  case 2 { create_taxon_tree($self); }
-  case 3 { fetch_primate_ncbi_taxa($self); }
-  case 4 { fetch_compara_ncbi_taxa($self); }
-  case 5 { fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}); }
-  case 6 { parse_newick($self); }
-  case 7 { reroot($self); }
-  case 8 { dumpTreeMultipleAlignment($self); }
-  case 9 { create_species_tree($self); }
-  case 10 { query_ncbi_name($self); }
+given($state) {
+  when (1) { fetch_protein_tree($self, $self->{'tree_id'}); }
+  when (2) { create_taxon_tree($self); }
+  when (3) { fetch_primate_ncbi_taxa($self); }
+  when (4) { fetch_compara_ncbi_taxa($self); }
+  when (5) { fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}); }
+  when (6) { parse_newick($self); }
+  when (7) { reroot($self); }
+  when (8) { dumpTreeMultipleAlignment($self); }
+  when (9) { create_species_tree($self); }
+  when (10) { query_ncbi_name($self); }
 }
 
 

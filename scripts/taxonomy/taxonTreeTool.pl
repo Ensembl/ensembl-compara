@@ -1,7 +1,8 @@
 #!/usr/bin/env perl
 
 use strict;
-use Switch;
+use feature qw(switch);
+
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::URLFactory;
 
@@ -69,14 +70,14 @@ my $sth_dist_2 = $self->{'comparaDBA'}->dbc->prepare($sql_dist_2);
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-switch($state) {
-  case 1 { fetch_by_ncbi_taxon_id($self); }
-  case 2 { fetch_by_scientific_name($self); }
-  case 3 { fetch_by_ncbi_taxa_list($self); }
-  case 4 { update_leftright_index($self); }
-  case 5 { fetch_compara_ncbi_taxa($self); }
-  case 6 { load_taxonomy_in_core($self); }
-  case 7 { test_memory_leak($self); }
+given($state) {
+  when (1) { fetch_by_ncbi_taxon_id($self); }
+  when (2) { fetch_by_scientific_name($self); }
+  when (3) { fetch_by_ncbi_taxa_list($self); }
+  when (4) { update_leftright_index($self); }
+  when (5) { fetch_compara_ncbi_taxa($self); }
+  when (6) { load_taxonomy_in_core($self); }
+  when (7) { test_memory_leak($self); }
 }
 
 

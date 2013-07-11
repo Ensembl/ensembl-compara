@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use strict;
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Compara::SyntenyRegion;
@@ -11,7 +12,6 @@ use Sys::Hostname;
 use Getopt::Long;
 use Data::Dumper;
 use DBI;
-use Switch;
 
 my $reg_conf;
 my $compara_hive_conf;
