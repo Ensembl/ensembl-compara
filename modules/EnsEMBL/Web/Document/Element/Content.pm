@@ -216,7 +216,7 @@ sub content_panel {
   my $configuration = $controller->configuration;
   
   $self->{'availability'} = $object ? $object->availability : {};
-    
+  
   my %params = (
     object      => $object,
     code        => 'main',
@@ -224,10 +224,16 @@ sub content_panel {
     omit_header => $controller->page_type eq 'Popup' ? 1 : 0,
     help        => { $hub->species_defs->multiX('ENSEMBL_HELP') }->{join '/', map $hub->$_ || (), qw(type action function)},
   );
-
-  my $panel = $self->new_panel('Navigation', $controller, %params);
   
-  $panel->add_components('__messages', 'EnsEMBL::Web::Component::Messages', @{$node->data->{'components'}});
+  my $panel          = $self->new_panel('Navigation', $controller, %params);
+  my @all_components = @{$node->data->{'components'}};
+  my @components     = qw(__messages EnsEMBL::Web::Component::Messages);
+  
+  for (my $i = 0; $i < $#all_components; $i += 2) {
+    push @components, $all_components[$i], $all_components[$i + 1] unless $all_components[$i] eq 'summary';
+  }
+  
+  $panel->add_components(@components);
   $self->add_panel($panel);
 }
 
