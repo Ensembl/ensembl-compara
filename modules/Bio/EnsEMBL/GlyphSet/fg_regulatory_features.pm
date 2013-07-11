@@ -84,14 +84,17 @@ sub tag {
   my $bound_end  = pop @loci;
   my $end        = pop @loci;
   my ($bound_start, $start, @mf_loci) = @loci;
+  my @result;
   
-  # Bound start/ends
-  my @result = ({
-    style  => 'fg_ends',
-    colour => $colour,
-    start  => $f->bound_start,
-    end    => $f->bound_end
-  });
+  if ($bound_start != $start || $bound_end != $end) {
+    # Bound start/ends
+    push @result, {
+      style  => 'fg_ends',
+      colour => $colour,
+      start  => $bound_start,
+      end    => $bound_end
+    };
+  }
   
   # Motif features
   while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) { 
