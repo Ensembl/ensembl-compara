@@ -9,6 +9,15 @@ sub my_label        { return undef; }
 
 sub features        { return $_[0]->{'container'}->get_all_AssemblyExceptionFeatures; }
 
+sub render_normal           { 
+  my $self = shift;
+  $self->{'my_config'}->set('label', 'off'); 
+  $self->{'my_config'}->set('depth', 1);
+  $self->SUPER::render_normal; 
+}
+
+sub render_labels           { $_[0]->SUPER::render_normal; }
+
 sub colour_key {
   my ($self, $f) = @_;
   (my $key = lc $f->type) =~ s/ /_/g;
@@ -20,20 +29,6 @@ sub feature_label {
   
   return undef if $self->my_config('label') eq 'off';
 
-=pod
-  my %type_lookup = (
-    'HAP' => 'Haplotype(s)',
-    'PAR' => 'PAR',
-    'PATCH_NOVEL' => 'Novel patch',
-    'PATCH_FIX'   => 'Fix patch',
-  );
-
-  if ($self->my_config('short_labels')) {
-    (my $key = $f->type) =~ s/ REF//;
-    my $label = $type_lookup{$key};
-    return $label;
-  }
-=cut
   return $f->{'alternate_slice'}->seq_region_name if $self->my_config('short_labels');
 
   return sprintf(
@@ -71,7 +66,7 @@ sub href {
   my $e2    = $slice->end;
   my $o2    = $slice->strand;
   my $class = $self->colour_key($f);
-  
+ 
   return $self->_url({
     species     => $f->species,
     action      => 'View',
@@ -79,6 +74,8 @@ sub href {
     target      => $f->slice->seq_region_name,
     target_type => [ split ' ', $f->type ]->[0],
     class       => $class,
+    depth       => $self->my_config('depth'),
+    dbID        => $f->id,
   });
 }
 
