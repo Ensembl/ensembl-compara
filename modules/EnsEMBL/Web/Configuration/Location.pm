@@ -38,35 +38,42 @@ sub populate_tree {
 
   $self->create_node('Chromosome', 'Chromosome summary',
     [qw(
-      image  EnsEMBL::Web::Component::Location::ChromosomeImage
+      summary EnsEMBL::Web::Component::Location::Summary
+      image   EnsEMBL::Web::Component::Location::ChromosomeImage
     )],
     { 'availability' => 'chromosome', 'disabled' => 'This sequence region is not part of an assembled chromosome' }
   );
 
   $self->create_node('Overview', 'Region overview',
     [qw(
-      nav EnsEMBL::Web::Component::Location::ViewBottomNav/region
-      top EnsEMBL::Web::Component::Location::Region
+      summary EnsEMBL::Web::Component::Location::Summary
+      nav     EnsEMBL::Web::Component::Location::ViewBottomNav/region
+      top     EnsEMBL::Web::Component::Location::Region
     )],
     { 'availability' => 'slice'}
   );
 
   $self->create_node('View', 'Region in detail',
     [qw(
-      top    EnsEMBL::Web::Component::Location::ViewTop
-      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
-      bottom EnsEMBL::Web::Component::Location::ViewBottom
+      summary EnsEMBL::Web::Component::Location::Summary
+      top     EnsEMBL::Web::Component::Location::ViewTop
+      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+      bottom  EnsEMBL::Web::Component::Location::ViewBottom
     )],
     { 'availability' => 'slice' }
   );
 
   my $align_menu = $self->create_node('Compara', 'Comparative Genomics',
-    [qw(button_panel EnsEMBL::Web::Component::Location::Compara_Portal)],
-    {'availability' => 'database:compara'}
+    [qw(
+      summary      EnsEMBL::Web::Component::Location::Summary
+      button_panel EnsEMBL::Web::Component::Location::Compara_Portal
+    )],
+    { 'availability' => 'database:compara' }
   );
   
   $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image) ([[counts::alignments]])', 
     [qw(
+      summary  EnsEMBL::Web::Component::Location::Summary
       top      EnsEMBL::Web::Component::Location::ViewTop
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
       botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
@@ -77,6 +84,7 @@ sub populate_tree {
   
   $align_menu->append($self->create_node('Compara_Alignments', 'Alignments (text) ([[counts::alignments]])',
     [qw(
+      summary    EnsEMBL::Web::Component::Location::Summary
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
       botnav     EnsEMBL::Web::Component::Location::ViewBottomNav
       alignments EnsEMBL::Web::Component::Location::Compara_Alignments
@@ -86,6 +94,7 @@ sub populate_tree {
   
   $align_menu->append($self->create_node('Multi', 'Region Comparison ([[counts::pairwise_alignments]])',
     [qw(
+      summary  EnsEMBL::Web::Component::Location::MultiIdeogram
       selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
       top      EnsEMBL::Web::Component::Location::MultiTop
       botnav   EnsEMBL::Web::Component::Location::MultiBottomNav
@@ -101,6 +110,7 @@ sub populate_tree {
   
   $align_menu->append($self->create_node('Synteny', 'Synteny ([[counts::synteny]])',
     [qw(
+      summary  EnsEMBL::Web::Component::Location::Summary
       image    EnsEMBL::Web::Component::Location::SyntenyImage
       homo_nav EnsEMBL::Web::Component::Location::NavigateHomology
       matches  EnsEMBL::Web::Component::Location::SyntenyMatches
@@ -112,13 +122,15 @@ sub populate_tree {
   
   $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing ([[counts::reseq_strains]])',
     [qw(
-      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
-            align  EnsEMBL::Web::Component::Location::SequenceAlignment
+      summary EnsEMBL::Web::Component::Location::Summary
+      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+      align   EnsEMBL::Web::Component::Location::SequenceAlignment
     )],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
   $variation_menu->append($self->create_node('LD', 'Linkage Data',
     [qw(
+      summary EnsEMBL::Web::Component::Location::Summary
       pop     EnsEMBL::Web::Component::Location::SelectPopulation
       ld      EnsEMBL::Web::Component::Location::LD
       ldnav   EnsEMBL::Web::Component::Location::ViewBottomNav
@@ -129,8 +141,9 @@ sub populate_tree {
 
   $self->create_node('Marker', 'Markers',
     [qw(
-      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
-      marker EnsEMBL::Web::Component::Location::MarkerList
+      summary EnsEMBL::Web::Component::Location::Summary
+      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+      marker  EnsEMBL::Web::Component::Location::MarkerList
     )],
     { 'availability' => 'slice has_markers' }
   );
