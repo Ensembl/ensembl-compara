@@ -164,7 +164,9 @@ Ensembl.DataTable = {
       
       if (this.name === 'hiddenColumns') {
         $.each(val, function () {
-          options.aoColumns[this].bVisible = false;
+          if(options.aoColumns[this]) {
+            options.aoColumns[this].bVisible = false;
+          }
         });
       } else if ( this.name.indexOf("expopts") == 0) {
         // no-op, this isn't an option for the client side
