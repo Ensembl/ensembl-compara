@@ -6,17 +6,16 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub readable_strand { return $_[1] < 0 ? 'rev' : 'fwd'; }
 sub my_label        { return undef; }
+sub depth           { return $_[0]{'display'} eq 'labels' ? undef : 1; }
+sub features        { return $_[0]{'container'}->get_all_AssemblyExceptionFeatures; }
 
-sub features        { return $_[0]->{'container'}->get_all_AssemblyExceptionFeatures; }
-
-sub render_normal           { 
+sub render_normal { 
   my $self = shift;
   $self->{'my_config'}->set('label', 'off'); 
-  $self->{'my_config'}->set('depth', 1);
   $self->SUPER::render_normal; 
 }
 
-sub render_labels           { $_[0]->SUPER::render_normal; }
+sub render_labels { $_[0]->SUPER::render_normal; }
 
 sub colour_key {
   my ($self, $f) = @_;
@@ -74,7 +73,7 @@ sub href {
     target      => $f->slice->seq_region_name,
     target_type => [ split ' ', $f->type ]->[0],
     class       => $class,
-    depth       => $self->my_config('depth'),
+    depth       => $self->depth,
     dbID        => $f->id,
   });
 }
