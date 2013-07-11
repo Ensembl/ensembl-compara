@@ -2281,6 +2281,7 @@ sub add_decorations {
       glyphset     => 'assemblyexception',
       height       => 2,
       display      => 'normal',
+      renderers   =>  ['off', 'Off', 'normal', 'Collapsed', 'labels', 'Stacked with labels'],
       strand       => 'x',
       label_strand => 'r',
       short_labels => 0,
