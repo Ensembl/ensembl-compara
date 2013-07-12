@@ -10,17 +10,17 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
   my $dbID  = $hub->param('dbID');
-  my @click = $self->click_location;
+  my $range = $hub->param('range');
   my $i     = 0;
   my @features;
   
   if (defined $dbID) {
     ## individual feature with zmenu
     @features = ($hub->get_adaptor('get_AssemblyExceptionFeatureAdaptor')->fetch_by_dbID($dbID));
-  } elsif (scalar @click) {
-    ## Only showing one, but need zmenu info for all of the same type
+  } elsif ($range) {
+    ## Only showing one, but need zmenu info for all of the same type in the range
     my $type     = $hub->param('target_type');
-       @features = grep [ split ' ', $_->type ]->[0] eq $type, @{$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', @click)->get_all_AssemblyExceptionFeatures};
+       @features = grep $_->type eq $type, @{$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[:-]/, $range)->get_all_AssemblyExceptionFeatures};
   }
   
   $self->{'feature_count'} = scalar @features;
@@ -35,10 +35,10 @@ sub feature_content {
   
   my $species_defs  = $hub->species_defs;
   my $species       = $hub->species;
-  my $alt_assembly  = $hub->param('assembly'); # code for alternative assembly
-  my $alt_clone     = $hub->param('jump_loc'); # code for alternative clones
-  my $class         = $hub->param('class');    # code for patch regions
-  my $target        = $hub->param('target');   # code for patch regions - compare patch with reference
+  my $alt_assembly  = $hub->param('assembly');    # code for alternative assembly
+  my $alt_clone     = $hub->param('jump_loc');    # code for alternative clones
+  my $type          = $hub->param('target_type'); # code for patch regions
+  my $target        = $hub->param('target');      # code for patch regions - compare patch with reference
   my $threshold     = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $this_assembly = $species_defs->ASSEMBLY_NAME;
   my $bgcolor       = $i % 2 ? 'bg2' : 'bg1';
@@ -76,7 +76,7 @@ sub feature_content {
     $status =~ s/_clone/ version/g;
     
     $self->add_entry({ label => "Status: $status" });
-  } elsif ($class =~ /^patch/) {
+  } elsif ($type =~ /^patch/i) {
     my $slice;
     
     if ($f) {
@@ -110,7 +110,7 @@ sub feature_content {
   if ($target) {
     $self->add_entry({
       class => $bgcolor,
-      label => 'Compare with ' . (grep($chr eq $_, @{$species_defs->ENSEMBL_CHROMOSOMES}) ? $hub->param('target_type') eq 'HAP' ? 'haplotype' : 'patch' : 'reference'),
+      label => 'Compare with ' . (grep($chr eq $_, @{$species_defs->ENSEMBL_CHROMOSOMES}) ? $type =~ /hap/i ? 'haplotype' : 'patch' : 'reference'),
       link  => $hub->url({
         action   => 'Multi',
         function => undef,
