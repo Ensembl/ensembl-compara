@@ -8,7 +8,6 @@ use Bio::EnsEMBL::Mapper::RangeRegistry;
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub readable_strand { return $_[1] < 0 ? 'rev' : 'fwd'; }
-sub class           { return 'group' if $_[0]{'display'} eq 'collapsed' && !$_[0]->get_single_feature($_[1]); }
 sub my_label        { return undef; }
 
 sub colour_key {
@@ -135,10 +134,10 @@ sub href {
   return $self->_url({
     species     => $f->species,
     action      => 'View',
-    feature     => $slice ? sprintf('%s:%s-%s', $slice->seq_region_name, $slice->start, $slice->end) : undef,
+    feature     => $slice   ? sprintf('%s:%s-%s', $slice->seq_region_name, $slice->start, $slice->end) : undef,
+    range       => $feature ? undef : sprintf('%s:%s-%s', $f->seq_region_name, $f->start, $f->end),
     target      => $f->slice->seq_region_name,
-    target_type => [ split ' ', $f->type ]->[0],
-    class       => $self->colour_key($f),
+    target_type => $f->type,
     dbID        => $f->id,
   });
 }
