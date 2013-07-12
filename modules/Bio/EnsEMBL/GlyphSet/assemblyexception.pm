@@ -2,20 +2,14 @@ package Bio::EnsEMBL::GlyphSet::assemblyexception;
 
 use strict;
 
+use Bio::EnsEMBL::AssemblyExceptionFeature;
+use Bio::EnsEMBL::Mapper::RangeRegistry;
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub readable_strand { return $_[1] < 0 ? 'rev' : 'fwd'; }
+sub class           { return 'group' if $_[0]{'display'} eq 'collapsed' && !$_[0]->get_single_feature($_[1]); }
 sub my_label        { return undef; }
-sub depth           { return $_[0]{'display'} eq 'labels' ? undef : 1; }
-sub features        { return $_[0]{'container'}->get_all_AssemblyExceptionFeatures; }
-
-sub render_normal { 
-  my $self = shift;
-  $self->{'my_config'}->set('label', 'off'); 
-  $self->SUPER::render_normal; 
-}
-
-sub render_labels { $_[0]->SUPER::render_normal; }
 
 sub colour_key {
   my ($self, $f) = @_;
@@ -23,57 +17,128 @@ sub colour_key {
   return $key;
 }
 
-sub feature_label {
+sub features {
+  my $self = shift;
+  
+  if (!$self->{'features'}) {
+    my $all_features = $self->{'container'}->get_all_AssemblyExceptionFeatures;
+    
+    return $self->{'features'} = $all_features if $self->{'display'} eq 'normal';
+    
+    my $range = Bio::EnsEMBL::Mapper::RangeRegistry->new;
+    my $i     = 0;
+    my (%features, %order);
+    
+    foreach (@$all_features) {
+      my $type    = $_->type;
+      my ($s, $e) = ($_->start, $_->end);
+      
+      $range->check_and_register($type, $s, $e, $s, $e);
+      
+      push @{$features{$type}}, $_;
+      $order{$type} ||= $i++;
+    }
+    
+    # Make fake features that cover the entire range of overlapping AssemblyExceptionFeatures of the same type
+    foreach my $type (sort { $order{$a} <=> $order{$b} } keys %order) {
+      foreach (@{$range->get_ranges($type)}) {
+        my $f = Bio::EnsEMBL::AssemblyExceptionFeature->new(
+          -start           => $_->[0],
+          -end             => $_->[1],
+          -strand          => $features{$type}[0]->strand,
+          -slice           => $features{$type}[0]->slice,
+          -alternate_slice => $features{$type}[0]->alternate_slice,
+          -adaptor         => $features{$type}[0]->adaptor,
+          -type            => $features{$type}[0]->type,
+        );
+        
+        $f->{'__features'} = $features{$type};
+        
+        push @{$self->{'features'}}, $f;
+      }
+    }
+  }
+  
+  return $self->{'features'};
+}
+
+sub get_single_feature {
   my ($self, $f) = @_;
   
-  return undef if $self->my_config('label') eq 'off';
+  if (!$self->{'single_features'}{$f}) {
+    my $features = $f->{'__features'};
+    my $feature;
+    
+    if ($features) {
+      my ($s, $e) = map $f->$_, qw(start end);
+      ($feature) = grep $_->start == $s && $_->end == $e, @$features;
+    } else {
+      $feature = $f;
+    }
+    
+    $self->{'single_features'}{$f} = $feature;
+  }
+  
+  return $self->{'single_features'}{$f};
+}
 
-  return $f->{'alternate_slice'}->seq_region_name if $self->my_config('short_labels');
-
+sub feature_label {
+  my ($self, $f) = @_;
+  my $feature = $self->get_single_feature($f);
+  
+  return $self->my_colour($self->colour_key($f), 'text') unless $feature;
+  
+  my $alternate_slice = $feature->alternate_slice;
+  
+  return $alternate_slice->seq_region_name if $self->my_config('short_labels');
+  
   return sprintf(
     '%s: %s:%d-%d (%s)',
-    $f->type,
-    $f->{'alternate_slice'}->seq_region_name,
-    $f->{'alternate_slice'}->start,
-    $f->{'alternate_slice'}->end,
-    $self->readable_strand($f->{'alternate_slice'}->strand)
+    $self->my_colour($self->colour_key($feature), 'text'),
+    $alternate_slice->seq_region_name,
+    $alternate_slice->start,
+    $alternate_slice->end,
+    $self->readable_strand($alternate_slice->strand)
   );
 }
 
 sub title {
   my ($self, $f) = @_;
-
-  return sprintf('%s; %s:%d-%d (%s); %s:%d-%d (%s)',
-    $self->my_colour($self->colour_key($f), 'text'),
-    $f->{'slice'}->seq_region_name,
-    $f->{'slice'}->start + $f->{'start'} - 1,
-    $f->{'slice'}->start + $f->{'end'}   - 1,
-    $self->readable_strand($f->{'slice'}->strand),
-    $f->{'alternate_slice'}->seq_region_name,
-    $f->{'alternate_slice'}->start,
-    $f->{'alternate_slice'}->end,
-    $self->readable_strand($f->{'alternate_slice'}->strand)
-  );
+  my $feature = $self->get_single_feature($f);
+  my $title;
+  
+  foreach my $feat ($feature || @{$f->{'__features'}}) {
+    my ($slice, $alternate_slice) = map $feat->$_, qw(slice alternate_slice);
+  
+    $title .= sprintf('%s; %s:%d-%d (%s); %s:%d-%d (%s)',
+      $self->my_colour($self->colour_key($feat), 'text'),
+      $slice->seq_region_name,
+      $slice->start + $feat->start - 1,
+      $slice->start + $feat->end   - 1,
+      $self->readable_strand($slice->strand),
+      $alternate_slice->seq_region_name,
+      $alternate_slice->start,
+      $alternate_slice->end,
+      $self->readable_strand($alternate_slice->strand)
+    );
+  }
+  
+  return $title;
 }
-
 
 sub href {
   my ($self, $f) = @_;
-  my $slice = $f->alternate_slice;
-  my $c2    = $slice->seq_region_name;
-  my $s2    = $slice->start;
-  my $e2    = $slice->end;
-  my $o2    = $slice->strand;
-  my $class = $self->colour_key($f);
- 
+  my $feature = $self->get_single_feature($f);
+     $f       = $feature if $feature;
+  my $slice   = $feature ? $feature->alternate_slice : undef;
+  
   return $self->_url({
     species     => $f->species,
     action      => 'View',
-    r           => "$c2:$s2-$e2",
+    feature     => $slice ? sprintf('%s:%s-%s', $slice->seq_region_name, $slice->start, $slice->end) : undef,
     target      => $f->slice->seq_region_name,
     target_type => [ split ' ', $f->type ]->[0],
-    class       => $class,
-    depth       => $self->depth,
+    class       => $self->colour_key($f),
     dbID        => $f->id,
   });
 }
@@ -83,10 +148,16 @@ sub tag {
   
   return {
     style  => 'join',
-    tag    => $f->{'alternate_slice'}->seq_region_name . ":$f->{'start'}-$f->{'end'}",
+    tag    => sprintf('%s:%s-%s', $f->alternate_slice->seq_region_name, $f->start, $f->end),
     colour => $self->my_colour($self->colour_key($f), 'join'),
     zindex => -20
   };
+}
+
+sub render_text {
+  my $self = shift;
+  $self->{'display'} = 'normal';
+  return $self->SUPER::render_text(@_);
 }
 
 sub export_feature {
@@ -95,7 +166,7 @@ sub export_feature {
   
   return $self->_render_text($feature, $feature_type, { 
     headers => [ 'alternate_slice' ],
-    values  => [ $feature->{'alternate_slice'}->seq_region_name ]
+    values  => [ $feature->alternate_slice->seq_region_name ]
   });
 }
 
