@@ -93,7 +93,7 @@ sub content {
       $self->round_bp($gene->start)
     );
     
-    $row->{'loc'}= sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', g => $stable_id }), $readable_location;
+    $row->{'loc'}= sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', g => $stable_id, __clear => 1}), $readable_location;
     
     my %description_by_type = ( bacterial_contaminant => 'Probable bacterial contaminant' );
     
