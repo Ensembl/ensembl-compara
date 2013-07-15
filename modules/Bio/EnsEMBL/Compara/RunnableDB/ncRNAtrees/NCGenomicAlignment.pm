@@ -208,12 +208,12 @@ sub run_RAxML {
 
     my $bootstrap_num = 10;  ## Should be soft-coded?
     my $cmd = $raxml_exe;
+    $cmd .= " -p 12345";
     $cmd .= " -T 2";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -N $bootstrap_num";
     $cmd .= " -n $raxml_outfile";
-#    $cmd .= " 2> $raxml_err_file";
 
     my $command = $self->run_command("cd $raxml_outdir; $cmd");
     if ($command->exit_code) {
