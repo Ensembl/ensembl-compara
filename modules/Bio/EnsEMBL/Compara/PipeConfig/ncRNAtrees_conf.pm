@@ -1,5 +1,20 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+  http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -11,11 +26,25 @@
 
 =head1 DESCRIPTION  
 
-    This is an experimental PipeConfig file for ncRNAtrees pipeline (work in progress)
+  This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+  An example of use can be found in the Example folder.
 
-=head1 CONTACT
+=head1 AUTHORSHIP
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+  Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+  The rest of the documentation details each of the object methods.
+  Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -23,6 +52,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf ;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -30,55 +62,18 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-            # parameters that are likely to change from execution to another:
-            'mlss_id'             => 40089,
-            'release'               => '72',
-            'rel_suffix'            => '',    # an empty string by default, a letter or string otherwise
-            'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
 
-            # dependent parameters
-            'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
+            # dependent parameters ('work_dir' should be defined)
+            'rel_with_suffix'       => '',
+            'pipeline_basename'     => 'NC',
+            'pipeline_name'         => $self->o('pipeline_basename'),
             'dump_dir'              => $self->o('work_dir') . '/dumps',
             'ss_picts_dir'          => $self->o('work_dir') . '/ss_picts/',
-            'pipeline_name'         => 'NC_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
             # dump parameters:
             'dump_table_list'       => '',  # probably either '#updated_tables#' or '' (to dump everything)
             'dump_exclude_ehive'    => 0,
 
-
-            # capacity values for some analysis:
-            'quick_tree_break_capacity'       => 100,
-            'msa_chooser_capacity'            => 100,
-            'other_paralogs_capacity'         => 100,
-            'merge_supertrees_capacity'       => 100,
-            'aligner_for_tree_break_capacity' => 200,
-            'infernal_capacity'               => 200,
-            'orthotree_capacity'              => 200,
-            'treebest_capacity'               => 400,
-            'genomic_tree_capacity'           => 200,
-            'genomic_alignment_capacity'      => 200,
-            'fast_trees_capacity'             => 200,
-            'raxml_capacity'                  => 200,
-            'recover_capacity'                => 150,
-            'ss_picts_capacity'               => 200,
-
-            # executable locations:
-            'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
-            'cmbuild_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
-            'cmsearch_exe'          => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
-            'mafft_exe'             => '/software/ensembl/compara/mafft-7.017/bin/mafft',
-            'mafft_binaries'        => '/software/ensembl/compara/mafft-7.017/binaries',
-            'raxml_exe'             => '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3',
-            'prank_exe'             => '/software/ensembl/compara/prank/090707/src/prank',
-            'raxmlLight_exe'        => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight',
-            'parsimonator_exe'      => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',
-            'ktreedist_exe'         => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-            'fasttree_exe'          => '/software/ensembl/compara/fasttree/FastTree',
-            'treebest_exe'          => '/software/ensembl/compara/treebest.doubletracking',
-            'sreformat_exe'         => '/usr/local/ensembl/bin/sreformat',
-            'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-            'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
 
             # tree break
             'treebreak_gene_count'     => 500,
@@ -86,48 +81,9 @@ sub default_options {
 
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
-            'skip_epo'                 => 0,   # Never tried this one. It will probably fail
+            'skip_epo'                 => 0,   # Never tried this one. It may fail
 
 
-            # connection parameters
-            'pipeline_db' => {
-                              -driver => 'mysql',
-                              -host   => 'compara2',
-                              -port   => 3306,
-                              -user   => 'ensadmin',
-                              -pass   => $self->o('password'),
-                              -dbname => $ENV{'USER'}.'_compara_nctrees_'.$self->o('rel_with_suffix'),
-                             },
-
-            'reg1' => {
-                       -host   => 'ens-staging',
-                       -port   => 3306,
-                       -user   => 'ensro',
-                       -pass   => '',
-                      },
-
-             'reg2' => {
-                        -host   => 'ens-staging2',
-                        -port   => 3306,
-                        -user   => 'ensro',
-                        -pass   => '',
-                       },
-
-            'master_db' => {
-                            -host   => 'compara1',
-                            -port   => 3306,
-                            -user   => 'ensro',
-                            -pass   => '',
-                            -dbname => 'sf5_ensembl_compara_master', # 'sf5_ensembl_compara_master',
-                           },
-
-            'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'ens-livemirror',
-                         -port   => 3306,
-                         -user   => 'ensro',
-                         -pass   => '',
-                         -dbname => 'ensembl_compara_71',
-                        },
            };
 }
 
@@ -142,15 +98,11 @@ sub pipeline_create_commands {
     ];
 }
 
-sub resource_classes {
+sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
-            'default'   => { 'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
-#            'himem'     => { 'LSF' => '-q basement -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
-            '1Gb_job'   => { 'LSF' => '-C0         -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '4Gb_job'   => { 'LSF' => '-C0         -M4000000  -R"select[mem>4000]  rusage[mem=4000]"' },
-            '4Gb_long_job' => { 'LSF' => '-C0 -q basement -M4000000 -R"select[mem>4000]  rusage[mem=4000]"' },
-            '1Gb_long_job' => { 'LSF' => '-C0 -q long -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
+            %{$self->SUPER::pipeline_wide_parameters},
+            'hc_member_type'  => 'ENSEMBLTRANS',
            };
 }
 
@@ -209,7 +161,7 @@ sub pipeline_analyses {
                 'db_conn'   => $self->o('master_db'),
                 'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
                 'column_names' => [ 'table' ],
-                'fan_branch_code' => 2,
+                # 'fan_branch_code' => 2,
             },
 
             -flow_into => {
@@ -254,7 +206,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
-                'fan_branch_code' => 2,
+                # 'fan_branch_code' => 2,
             },
             -flow_into => {
                 2 => [ 'innodbise_table'  ],
@@ -279,11 +231,9 @@ sub pipeline_analyses {
                                 'mlss_id'               => $self->o('mlss_id'),
                                 'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs' ],
                                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
-
-                                'fan_branch_code'       => 2,
                                },
                 -flow_into => {
-                               '2->A' => [ 'load_genomedb' ],           # fan
+                               '2->A' => [ 'load_genomedb' ], # fan
                                'A->1' => [ 'load_genomedb_funnel' ],
                                1      => [ 'load_rfam_models' ],
                               },
@@ -296,7 +246,8 @@ sub pipeline_analyses {
             },
             -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
             -flow_into => {
-                1 => [ 'load_members_factory' ],   # each will flow into another one
+                '1->A' => [ 'load_members_factory' ],   # each will flow into another one
+                'A->1' => [ 'hc_factory_members_per_genome' ],
             },
         },
 
@@ -310,7 +261,7 @@ sub pipeline_analyses {
                                      ]
                            },
             -flow_into => {
-                           1 => [ 'make_species_tree', 'create_lca_species_set' ],
+                           1 => [ 'make_species_tree', 'create_lca_species_set', 'hc_factory_members_globally' ],
             },
         },
 
@@ -354,11 +305,11 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'         => $self->o('epo_db'),
                 'inputquery'      => "SELECT #lca_species_set_id# as lca_species_set_id, GROUP_CONCAT(DISTINCT g.genome_db_id) as pre_species_set FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
-                'fan_branch_code' => 3,
+                # 'fan_branch_code' => 2,
             },
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
-                           3 => [ 'store_lca_species_set' ],
+                           2 => [ 'store_lca_species_set' ],
             },
         },
 
@@ -366,11 +317,11 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
             -parameters => {
                 'inputquery'      => "SELECT #lca_species_set_id# as species_set_id, genome_db_id FROM genome_db where genome_db_id in (#pre_species_set#)",
-                'fan_branch_code' => 3,
+                # 'fan_branch_code' => 2,
             },
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
-                3 => [ 'mysql:////species_set' ],
+                2 => [ 'mysql:////species_set' ],
             },
         },
 
@@ -389,6 +340,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers',
             -hive_capacity => 30,
             -batch_size    => 100,
+
             -rc_name => 'default',
         },
 
@@ -430,13 +382,14 @@ sub pipeline_analyses {
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
                                 'inputquery'      => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
-                                'fan_branch_code' => 2,
                                },
 
                 -rc_name       => 'default',
                 -flow_into     => {
-                                   2 => [ 'recover_epo' ],
+                                   '2->A' => [ 'recover_epo' ],
+                                   'A->1' => [ 'hc_factory_global_trees' ],
                                   },
+                -meadow_type   => 'LOCAL',
             },
 
 
@@ -487,7 +440,11 @@ sub pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
+                                'sreformat_exe' => $self->o('sreformat_exe'),
                                },
+                -flow_into    => {
+                                  1 => [ 'hc_factory_align' ],
+                                 },
                 -rc_name => 'default',
             },
 
@@ -527,9 +484,10 @@ sub pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
+                                   'sreformat_exe' => $self->o('sreformat_exe'),
                                   },
                 -flow_into     => {
-                                   1 => ['pre_sec_struct_tree' ],
+                                   1 => ['pre_sec_struct_tree', 'hc_factory_align' ],
                                    3 => ['create_ss_picts'],
                                   },
                 -rc_name       => 'default',
@@ -553,38 +511,23 @@ sub pipeline_analyses {
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
              -hive_capacity => $self->o('raxml_capacity'),
              -parameters => {
-                             'raxml_exe' => $self->o('raxml_exe'),
+                             'raxml_exe'       => $self->o('raxml_exe'),
+                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
-#                            -1 => ['fast_trees'],  # -1 is MEMLIMIT  ## Not needed now that we have supertrees
-#                            -2 => ['fast_trees'],  # -2 is TIMELIMIT ## Not needed now that we have supertrees
                            },
-             -rc_name => 'default',
+             -rc_name => '2Gb_basement',
             },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
             -hive_capacity => $self->o('raxml_capacity'),
             -parameters => {
-                            'raxml_exe' => $self->o('raxml_exe'),
+                            'raxml_exe'       => $self->o('raxml_exe'),
+                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                            },
-            -flow_into => {
-                           -1 => [ 'sec_struct_model_tree_himem' ],
-                           -2 => [ 'sec_struct_model_tree_himem' ],
-                          },
-            -rc_name => 'default',
-        },
-
-        {
-         -logic_name => 'sec_struct_model_tree_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree',
-         -hive_capacity => $self->o('raxml_capacity'),
-         -parameters => {
-                         'raxml_exe' => $self->o('raxml_exe'),
-                        },
-         -can_be_empty => 1,
-         -rc_name => '4Gb_job'
+            -rc_name => '2Gb_basement',
         },
 
         {   -logic_name    => 'genomic_alignment',
@@ -599,6 +542,7 @@ sub pipeline_analyses {
             -flow_into => {
                            -2 => ['genomic_alignment_long'],
                            -1 => ['genomic_alignment_long'],
+                           1  => [ 'hc_factory_align' ],
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
@@ -631,7 +575,8 @@ sub pipeline_analyses {
          -can_be_empty => 1,
          -rc_name => '4Gb_long_job',
          -flow_into => {
-                        2 => ['genomic_tree_himem'],
+                        1 => [ 'hc_factory_align' ],
+                        2 => [ 'genomic_tree_himem' ],
                        },
         },
 
@@ -670,25 +615,16 @@ sub pipeline_analyses {
                             'mlss_id' => $self->o('mlss_id'),
                            },
             -flow_into => {
-                           1 => [ 'orthotree', 'ktreedist' ],
-                           -1 => [ 'treebest_mmerge_himem' ],
-                           -2 => [ 'treebest_mmerge_himem' ],
+                           '1->A' =>  {
+                                       'hc_factory_align' => {'gene_tree_id' => '#gene_tree_id#', 'post_treebest' => 1},
+                                       'hc_factory_trees' => undef,
+                                      },
+                           'A->1' => [ 'orthotree' ],
+                           1 => [ 'ktreedist' ],
+                           2 => [ 'hc_factory_trees' ],
+#                           1 => [ 'orthotree', 'ktreedist' ],
             },
             -rc_name => 'default',
-        },
-
-        {
-         -logic_name => 'treebest_mmerge_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge',
-         -hive_capacity => $self->o('treebest_capacity'),
-         -parameters => {
-                         'treebest_exe' => $self->o('treebest_exe'),
-                         'mlss_id' => $self->o('mlss_id'),
-                        },
-         -flow_into => {
-                        1 => [ 'orthotree', 'ktreedist' ],
-                       },
-         -rc_name => '4Gb_job',
         },
 
         {   -logic_name    => 'orthotree',
@@ -698,7 +634,8 @@ sub pipeline_analyses {
                             'tag_split_genes'   => 0,
                             'mlss_id' => $self->o('mlss_id'),
             },
-            -rc_name => 'default',
+            -flow_into  => [ 'hc_factory_tree_attributes', 'hc_factory_homologies' ],
+           -rc_name => 'default',
         },
 
         {   -logic_name    => 'ktreedist',
@@ -711,6 +648,17 @@ sub pipeline_analyses {
                            },
             -rc_name => 'default',
         },
+
+# --------------------------------------------- [health-checks] -----------------------------------------------------------------------
+
+            @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_members_per_genome($self)},
+            @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_members_globally($self)},
+            @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_alignment($self)},
+            @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_tree_structure($self)},
+            @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_tree_attr($self)},
+            @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_homologies($self)},
+            @{Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::analysis_tree_globally($self)},
+
 
     ];
 }
