@@ -79,8 +79,10 @@ sub default_options {
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
+
     # dependent parameters: updating 'work_dir' should be enough
-        'pipeline_name'         => 'PT',   # name the pipeline to differentiate the submitted processes
+        'pipeline_basename' => 'PT',
+        'pipeline_name'         => $self->o('pipeline_basename'),   # name the pipeline to differentiate the submitted processes
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp_with_reuse'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -235,6 +237,15 @@ sub pipeline_create_commands {
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
     ];
+}
+
+
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+            %{$self->SUPER::pipeline_wide_parameters},
+            'hc_member_type'  => 'ENSEMBLPEP',
+           };
 }
 
 
