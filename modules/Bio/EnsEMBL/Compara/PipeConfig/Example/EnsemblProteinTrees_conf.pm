@@ -64,7 +64,7 @@ sub default_options {
 
     # dependent parameters: updating 'work_dir' should be enough
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-        'pipeline_name'         => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'pipeline_name'         => $self->o('pipeline_basename') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
     # blast parameters:
 
@@ -197,7 +197,6 @@ sub default_options {
 
         #'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
         'prev_release'            => $self->o('release'),
-
 
     };
 }
