@@ -69,7 +69,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'unmap_tolerance'       => 0.2,
+        'unmap_tolerance'       => 1,
     };
 }
 

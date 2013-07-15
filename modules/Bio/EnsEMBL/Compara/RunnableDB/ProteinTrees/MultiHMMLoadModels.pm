@@ -135,6 +135,18 @@ sub get_profiles {
     close($fh);
 }
 
+sub load_hmm_profile {
+    my ($self, $acc, $name, $consensus) = @_;
+    my $hmm_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
+    $hmm_profile->model_id($acc);
+    $hmm_profile->name($name);
+    $hmm_profile->type($self->param('type')); ##
+    $hmm_profile->profile($hmm);
+    $hmm_profile->consensus($consensus);
+    $self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
+    return;
+}
+
 sub get_consensus_from_HMMs {
     my ($self) = @_;
 
