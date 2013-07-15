@@ -155,12 +155,13 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_;
     return {
-            'default'      => { 'LSF' => '-M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-            '1Gb_job'      => { 'LSF' => '-C0         -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '4Gb_job'      => { 'LSF' => '-C0         -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-            '4Gb_long_job' => { 'LSF' => '-C0 -q basement -M4000 -R"select[mem>4000]  rusage[mem=4000]"' },
-            '1Gb_long_job' => { 'LSF' => '-C0 -q long -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '2Gb_basement' => { 'LSF' => '-C0 -n2 -q basement -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"'},
+            'default'        => { 'LSF' => '-M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+            'default_2cores' => { 'LSF' => '-C0 -n2 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
+            '1Gb_job'        => { 'LSF' => '-C0         -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+            '4Gb_job'        => { 'LSF' => '-C0         -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+            '4Gb_long_job'   => { 'LSF' => '-C0 -q basement -M4000 -R"select[mem>4000]  rusage[mem=4000]"' },
+            '1Gb_long_job'   => { 'LSF' => '-C0 -q long -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+            '2Gb_basement'   => { 'LSF' => '-C0 -n2 -q basement -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"'},
            };
 }
 
