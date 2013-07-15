@@ -81,7 +81,7 @@ sub fetch_input {
     my $aln_seq_type = $self->param('aln_seq_type');
     $nc_tree->gene_align_id($alignment_id);
     my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-    $nc_tree->attach_alignment($alignment_id, $aln_seq_type);
+    $nc_tree->attach_alignment($aln);
 
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
