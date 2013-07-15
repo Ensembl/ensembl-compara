@@ -524,7 +524,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
             -hive_capacity => $self->o('raxml_capacity'),
             -parameters => {
-                            'raxml_exe'       => $self->o('raxml_exe'),
+                            'raxml_exe'             => $self->o('raxml_exe'),
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                            },
             -rc_name => '2Gb_basement',
@@ -534,10 +534,11 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
             -hive_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
-                            'mafft_exe' => $self->o('mafft_exe'),
-                            'mafft_binaries' => $self->o('mafft_binaries'),
-                            'raxml_exe' => $self->o('raxml_exe'),
-                            'prank_exe' => $self->o('prank_exe'),
+                            'mafft_exe'             => $self->o('mafft_exe'),
+                            'mafft_binaries'        => $self->o('mafft_binaries'),
+                            'raxml_exe'             => $self->o('raxml_exe'),
+                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'prank_exe'             => $self->o('prank_exe'),
                            },
             -flow_into => {
                            -2 => ['genomic_alignment_long'],
@@ -546,7 +547,7 @@ sub pipeline_analyses {
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
-            -rc_name => 'default',
+            -rc_name => 'default_2cores',
         },
 
             {
