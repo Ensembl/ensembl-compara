@@ -349,7 +349,8 @@ sub run_infernal {
 
   # Reformat with sreformat
   my $fasta_output = $self->worker_temp_directory . "output.fasta";
-  my $cmd = "/usr/local/ensembl/bin/sreformat a2m $refined_stk_output > $fasta_output";
+  my $sreformat_exe = $self->param('sreformat_exe');
+  my $cmd = "$sreformat_exe a2m $refined_stk_output > $fasta_output";
   $command = $self->run_command($cmd);
   if($command->exit_code) {
     $self->throw("error running sreformat, $!\n");
@@ -618,7 +619,7 @@ sub store_refined_profile {
     my $type = "infernal-refined";
     my $refined_profile_file = $self->param('refined_profile');
     my $hmmProfile_Adaptor = $self->compara_dba->get_HMMProfileAdaptor();
-    my $name = $hmmProfile_Adaptor->fetch_by_model_id($model_id)->name();
+    my $name = $hmmProfile_Adaptor->fetch_all_by_model_id_type($model_id)->[0]->name();
 
     my $refined_profile = $self->_slurp($refined_profile_file);
 
