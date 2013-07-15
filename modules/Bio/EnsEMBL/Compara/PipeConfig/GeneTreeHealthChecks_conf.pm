@@ -170,7 +170,7 @@ sub pipeline_analyses {
 ### Members
 #############
 
-sub analysis_members_per_genome {
+sub analysis_members_per_genome_ncRNAtrees {
     my ($self) = @_;
 
     return [
@@ -185,17 +185,17 @@ sub analysis_members_per_genome {
         {   -logic_name => 'hc_genome_has_members',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT source_name FROM member WHERE genome_db_id = #genome_db_id# AND source_name IN ("ENSEMBLPEP", "ENSEMBLGENE") GROUP BY source_name HAVING COUNT(*) > 0',
+                'inputquery'    => 'SELECT source_name FROM member WHERE genome_db_id = #genome_db_id# AND source_name IN ("#hc_member_type#", "ENSEMBLGENE") GROUP BY source_name HAVING COUNT(*) > 0',
                 'expected_size' => '= 2',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
-            -flow_into          => ['hc_peptides_have_genes', 'hc_genes_have_canonical_peptides', 'hc_peptides_have_sequences', 'hc_peptides_have_cds_sequences', 'hc_members_have_chrom_coordinates', 'hc_members_have_correct_taxon_id' ],
+            -flow_into          => ['hc_peptides_have_genes', 'hc_genes_have_canonical_peptides', 'hc_peptides_have_sequences', 'hc_members_have_correct_taxon_id' ],
         },
 
         {   -logic_name => 'hc_peptides_have_genes',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN member mg ON mp.gene_member_id = mg.member_id WHERE mp.genome_db_id = #genome_db_id# AND mp.source_name = "ENSEMBLPEP" AND mg.member_id IS NULL',
+                'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN member mg ON mp.gene_member_id = mg.member_id WHERE mp.genome_db_id = #genome_db_id# AND mp.source_name = "#hc_member_type#" AND mg.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
@@ -213,15 +213,76 @@ sub analysis_members_per_genome {
         {   -logic_name => 'hc_peptides_have_sequences',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
+                'inputquery'    => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
 
+        {   -logic_name => 'hc_members_have_correct_taxon_id',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'inputquery'    => 'SELECT member_id FROM member JOIN genome_db USING (genome_db_id) WHERE genome_db_id = #genome_db_id# AND member.taxon_id != genome_db.taxon_id',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+        },
+
+    ];
+
+}
+
+sub analysis_members_per_genome {
+    my ($self) = @_;
+
+    return [
+
+        {   -logic_name         => 'hc_factory_members_per_genome',
+            -module             => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -analysis_capacity  => 1,
+            -meadow_type        => 'LOCAL',
+            -flow_into          => ['hc_genome_has_members'],
+        },
+
+        {   -logic_name => 'hc_genome_has_members',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'inputquery'    => 'SELECT source_name FROM member WHERE genome_db_id = #genome_db_id# AND source_name IN ("#hc_member_type#", "ENSEMBLGENE") GROUP BY source_name HAVING COUNT(*) > 0',
+                'expected_size' => '= 2',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+            -flow_into          => $self->o('pipeline_basename') eq "PT" ? ['hc_peptides_have_genes', 'hc_genes_have_canonical_peptides', 'hc_peptides_have_sequences', 'hc_peptides_have_cds_sequences', 'hc_members_have_chrom_coordinates', 'hc_members_have_correct_taxon_id' ] : ['hc_peptides_have_genes', 'hc_genes_have_canonical_peptides', 'hc_peptides_have_sequences', 'hc_members_have_correct_taxon_id' ],
+        },
+
+        {   -logic_name => 'hc_peptides_have_genes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN member mg ON mp.gene_member_id = mg.member_id WHERE mp.genome_db_id = #genome_db_id# AND mp.source_name = "#hc_member_type#" AND mg.member_id IS NULL',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+        },
+
+
+        {   -logic_name => 'hc_genes_have_canonical_peptides',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'inputquery'    => 'SELECT mg.member_id FROM member mg LEFT JOIN member mp ON mg.canonical_member_id = mp.member_id WHERE mg.genome_db_id = #genome_db_id# AND mg.source_name = "ENSEMBLGENE" AND mp.member_id IS NULL',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+        },
+
+
+        {   -logic_name => 'hc_peptides_have_sequences',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'inputquery'    => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+        },
+
+       $self->o('pipeline_basename') eq 'PT' ? (
         {   -logic_name => 'hc_peptides_have_cds_sequences',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
+                'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
@@ -233,6 +294,7 @@ sub analysis_members_per_genome {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
+        ) : (), ## These analyses are only shown in the ProteinTree pipeline (doesn't apply to ncRNAtrees)
 
         {   -logic_name => 'hc_members_have_correct_taxon_id',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
@@ -306,12 +368,12 @@ sub analysis_alignment {
 
         {   -logic_name         => 'hc_factory_align',
             -module             => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into          => [ 'hc_tree_no_lost_gene', 'hc_tree_no_extra_gene', 'hc_tree_has_alignment' ],
+            -flow_into          => $self->o('pipeline_basename') eq "PT" ? [ 'hc_tree_no_lost_gene', 'hc_tree_no_extra_gene', 'hc_tree_has_alignment' ] : [ 'hc_tree_has_alignment' ],
             -analysis_capacity  => 1,
             -meadow_type        => 'LOCAL',
         },
 
-
+        $self->o('pipeline_basename') eq 'PT' ? (
         {   -logic_name => 'hc_tree_no_lost_gene',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
@@ -327,6 +389,7 @@ sub analysis_alignment {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
+        ) : (), ## These analyses are only shown in the ProteinTree pipeline (doesn't apply to ncRNAtrees)
 
         {   -logic_name => 'hc_tree_has_alignment',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
@@ -335,7 +398,7 @@ sub analysis_alignment {
                 'expected_size' => '1'
             },
             -analysis_capacity  => $self->o('hc_capacity'),
-            -flow_into  => [ 'hc_tree_align_ok', 'hc_align_no_lost_gene', 'hc_align_no_extra_gene' ],
+            -flow_into  => $self->o('pipeline_basename') eq 'PT' ? [ 'hc_tree_align_ok', 'hc_align_no_lost_gene', 'hc_align_no_extra_gene' ] : [ 'hc_tree_align_ok' ],
         },
 
         {   -logic_name => 'hc_tree_align_ok',
@@ -346,6 +409,7 @@ sub analysis_alignment {
             -analysis_capacity  => $self->o('hc_capacity'),
         },
 
+        $self->o('pipeline_basename') eq 'PT' ? (
         {   -logic_name => 'hc_align_no_lost_gene',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
@@ -361,6 +425,7 @@ sub analysis_alignment {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
         },
+       ) : (),  ## These analyses are only shown in the ProteinTree pipeline (doesn't apply to ncRNAtrees)
     ];
 }
 
