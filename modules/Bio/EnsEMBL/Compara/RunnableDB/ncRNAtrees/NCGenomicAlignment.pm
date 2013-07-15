@@ -207,9 +207,10 @@ sub run_RAxML {
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
     my $bootstrap_num = 10;  ## Should be soft-coded?
+    my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
     my $cmd = $raxml_exe;
     $cmd .= " -p 12345";
-    $cmd .= " -T 2";
+    $cmd .= " -T $raxml_number_of_cores";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -N $bootstrap_num";
