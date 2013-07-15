@@ -120,8 +120,9 @@ sub run {
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
     my $worker_temp_directory = $self->worker_temp_directory;
+    my $cores = $self->param('raxml_number_of_cores');
     my $cmd = $raxml_exe;
-    $cmd .= " -T 2";
+    $cmd .= " -T $cores";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -S $struct_file";
