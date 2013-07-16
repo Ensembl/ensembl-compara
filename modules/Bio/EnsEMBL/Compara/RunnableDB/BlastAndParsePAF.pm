@@ -30,7 +30,7 @@ Store PeptideAlignFeature objects in the compara database
 Supported keys:
     'blast_param' => <string>
         ncbi blastp parameters
-eg "-num_alignments 20 -seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback"
+eg "seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback"
     'fasta_dir' => <directory path>
         Path to fasta files
     'mlss_id' => <number>
@@ -52,7 +52,6 @@ use FileHandle;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
@@ -157,15 +156,30 @@ sub parse_blast_table_into_paf {
 
             my $cigar_line;
             unless ($self->param('no_cigars')) {
-                my $cigar_line1 = '';
+                my @chunks1;
+                my @chunks2;
                 while($qseq=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-                    $cigar_line1 .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
+                    push @chunks1, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
                 }
-                my $cigar_line2 = '';
                 while($sseq=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-                    $cigar_line2 .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
+                    push @chunks2, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
                 }
-                $cigar_line = Bio::EnsEMBL::Analysis::RunnableDB::AlignmentFilter->daf_cigar_from_compara_cigars($cigar_line1, $cigar_line2);
+
+                my $len1;
+                my $gap1;
+                my $len2;
+                my $gap2;
+                while (@chunks1 or @chunks2) {
+
+                    ($gap1, $len1) = @{shift @chunks1} unless $len1;
+                    ($gap2, $len2) = @{shift @chunks2} unless $len2;
+                    die "Double gaps are not allowed in '$qseq' / '$sseq'" if $gap1 and $gap2;
+
+                    my $minlen = $len1 <= $len2 ? $len1 : $len2;
+                    $cigar_line .= ($minlen > 1 ? $minlen : '').($gap1 ? 'D' : ($gap2 ? 'I' : 'M'));
+                    $len2 -= $minlen;
+                    $len1 -= $minlen;
+                };
             }
 
             my $feature = {
