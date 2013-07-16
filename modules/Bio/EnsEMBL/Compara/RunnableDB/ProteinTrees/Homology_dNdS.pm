@@ -24,15 +24,6 @@ $repmask->write_output(); #writes to DB
 
 =cut
 
-=head1 DESCRIPTION
-
-This object wraps Bio::EnsEMBL::Analysis::Runnable::Blast to add
-functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. 
-
-=cut
-
 =head1 CONTACT
 
 Describe contact details here
