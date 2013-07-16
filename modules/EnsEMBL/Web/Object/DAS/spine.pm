@@ -226,7 +226,6 @@ if (0) {
 
 	      my $hHash ;
 	      foreach my $homology (@{$hmgs}){
-		  warn $homology->description;
 		  $hHash->{ortholog} += 1 if ($homology->description =~ /ortholog/);
 #		  next if ($homology->description =~ /between_species_paralog/);
 		  next if ($homology->description =~ /possible_ortholog/);
