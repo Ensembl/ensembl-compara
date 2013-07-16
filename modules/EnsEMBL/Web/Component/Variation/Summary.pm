@@ -160,7 +160,10 @@ sub variation_source {
   } elsif ($source =~ /LSDB/) {
     $version = ($version) ? " ($version)" : '';
     $source_link = $hub->get_ExtURL_link("View in $source", $source, $name);
-  } else {
+  }  elsif ($source =~ /PhenCode/) {
+     $sname       = 'PHENCODE';
+     $source_link = $hub->get_ExtURL_link("View in PhenCode", $sname, $name);
+} else {
     $source_link = $url ? qq{<a href="$url" class="constant">View in $source</a>} : "$source $version";
   }
   
@@ -248,7 +251,24 @@ sub synonyms {
       foreach my $id (@ids) {
         push @urls, $hub->get_ExtURL_link($id, 'HGMD', { ID => $_->associated_gene, ACC => $id }) for @pfs;
       }
-    } elsif ($db =~ /LSDB/) {
+    }
+     elsif ($db =~ /PhenCode/) {
+        push @urls, $hub->get_ExtURL_link($_, 'PHENCODE', $_) for @ids;
+     }
+     ## these are LSDBs who submit to dbSNP, so we use the submitter name as a synonym & link to the original site
+     elsif ($db =~ /OIVD|LMDD|KAT6BDB/) {
+        push @urls, $hub->get_ExtURL_link($_, $db, $_) for @ids;
+     }
+     elsif ($db =~ /HbVar/) {
+        push @urls, $hub->get_ExtURL_link($_, 'HBVAR', $_) for @ids;
+     }
+     elsif ($db =~ /PAHdb/) {
+        push @urls, $hub->get_ExtURL_link($_, 'PAHdb', $_) for @ids;
+     }
+     elsif ($db =~ /Infevers/) {
+        push @urls, $hub->get_ExtURL_link($_, 'INFEVERS', $_) for @ids;
+     }
+     elsif ($db =~ /LSDB/) {
       push @urls , $hub->get_ExtURL_link($_, $db, $_) for @ids;
     } else {
       @urls = @ids;
