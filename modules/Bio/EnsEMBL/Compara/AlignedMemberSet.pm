@@ -43,6 +43,7 @@ package Bio::EnsEMBL::Compara::AlignedMemberSet;
 use strict;
 use Scalar::Util qw(weaken);
 
+use Bio::LocatableSeq;
 use Bio::AlignIO;
 
 use Bio::EnsEMBL::Utils::Argument;

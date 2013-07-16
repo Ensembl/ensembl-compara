@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::SimpleAlign;
 use Bio::AlignIO;
 
 ## Load the registry automatically

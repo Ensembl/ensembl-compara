@@ -45,9 +45,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp;
 
 use strict;
 use File::Basename;
-use Bio::SimpleAlign;
-use Bio::AlignIO;
-use Bio::LocatableSeq;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::DnaFragRegion;

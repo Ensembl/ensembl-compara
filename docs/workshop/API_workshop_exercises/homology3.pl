@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+use Bio::AlignIO;
+
 use Bio::EnsEMBL::Registry;
 
 ## Load the registry automatically

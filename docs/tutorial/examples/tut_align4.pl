@@ -1,9 +1,7 @@
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::SimpleAlign;
 use Bio::AlignIO;
-use Bio::LocatableSeq;
 use Getopt::Long;
 
 my $usage = qq{

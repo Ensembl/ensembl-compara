@@ -56,7 +56,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::Member;
 
 use strict;
-use Bio::Seq;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);

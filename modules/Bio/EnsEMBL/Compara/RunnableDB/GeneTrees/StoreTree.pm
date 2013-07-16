@@ -1,8 +1,11 @@
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree;
 
 use strict;
+use warnings;
 
 use Data::Dumper;
+
+use Bio::AlignIO;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::SqlHelper;
