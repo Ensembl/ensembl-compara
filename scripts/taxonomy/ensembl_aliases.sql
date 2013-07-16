@@ -325,6 +325,20 @@ SET @this_value='Ferret';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
+-- <Added for rel.73>
+
+SET @this_taxon_id=8839;
+SET @this_value='Duck';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=59894;
+SET @this_value='Flycatcher';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </Added for rel.73>
+
 -- -- Use these to ADD new species
 
 -- SET @this_taxon_id=;
@@ -559,6 +573,15 @@ SET @this_value='Silverside fish';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
+-- <Added for rel.73>
+
+SET @this_taxon_id=9126;
+SET @this_value='Passeriformes';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </Added for rel.73>
+
 -- -- Use these to ADD new internal node aliases
 
 -- SET @this_taxon_id=;
@@ -718,10 +741,10 @@ SET @this_value='580';
 SET @this_name_class='ensembl timetree mya';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
-SET @this_taxon_id=33316;
-SET @this_value='570';
-SET @this_name_class='ensembl timetree mya';
-insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+-- SET @this_taxon_id=33316;
+-- SET @this_value='570';
+-- SET @this_name_class='ensembl timetree mya';
+-- insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=376913;
 SET @this_value='56.70';
@@ -798,6 +821,14 @@ SET @this_value='282.0';
 SET @this_name_class='ensembl timetree mya';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
+-- <Added for rel.73>
+
+SET @this_taxon_id=9126;
+SET @this_value='39.2';
+SET @this_name_class='ensembl timetree mya';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </Added for rel.73>
 
 -- -- Use these to add new mya estimates
 -- SET @this_taxon_id=;
