@@ -100,9 +100,6 @@ sub default_options {
     'other_paralogs_capacity'   => 50,
     'homology_dNdS_capacity'    => 100,
 
-    #if the hive fails at wublast p and you can't work out what's wrong with the path then uncomment this
-#    'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
-
   };
 }
 

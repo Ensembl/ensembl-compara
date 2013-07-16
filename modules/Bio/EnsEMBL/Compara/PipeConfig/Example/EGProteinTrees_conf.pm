@@ -92,7 +92,6 @@ sub default_options {
   #  blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'/blastTmp',
 
     #Executables
-    wublastp_exe    =>  $self->o('exe_dir').'/wublast/blastp',
     hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
     mcoffee_exe     =>  $self->o('exe_dir').'/t_coffee',
     mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee', 	

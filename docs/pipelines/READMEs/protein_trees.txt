@@ -21,7 +21,6 @@ Refer to the following pages for tips about installation and setting up the envi
 Any compiled binaries mentioned in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblProteinTrees_conf.pm
 ( if running outside of Sanger farm you might need to compile your own versions and point at them ) :
 
-        'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
         'mafft_exe'                 => '/software/ensembl/compara/mafft-7.017/bin/mafft',
