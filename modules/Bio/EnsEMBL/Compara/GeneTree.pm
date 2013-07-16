@@ -40,7 +40,7 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 
 $Author$
 
-=head VERSION
+=head1 VERSION
 
 $Revision$
 
