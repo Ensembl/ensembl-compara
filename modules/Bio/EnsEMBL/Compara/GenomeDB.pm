@@ -411,7 +411,7 @@ sub sync_with_registry {
 
   #print("Registry eval TRUE\n");
 
-    next if $self->locator and not $self->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
+    return if $self->locator and not $self->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
     my $coreDBA;
     my $registry_name;
     if ($self->assembly) {
