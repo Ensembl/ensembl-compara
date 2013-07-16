@@ -94,11 +94,11 @@ my $rn_dba = $rattus_norvegicus->get_DBAdaptor('core');
 my $gg_dba = $gallus_gallus->get_DBAdaptor('core');
 my $compara_dba = $multi->get_DBAdaptor('compara');
 
-my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
+my $human_name     = $hs_dba->get_MetaContainer->get_scientific_name;
 my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
-my $rat_name       = $rn_dba->get_MetaContainer->get_Species->binomial;
+my $rat_name       = $rn_dba->get_MetaContainer->get_scientific_name;
 my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
-my $chicken_name       = $gg_dba->get_MetaContainer->get_Species->binomial;
+my $chicken_name       = $gg_dba->get_MetaContainer->get_scientific_name;
 my $chicken_assembly   = $gg_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 
 my $gdba = $compara_dba->get_GenomeDBAdaptor;

@@ -349,7 +349,7 @@ if ($set_of_species) {
         #    $this_species, 'core', 'MetaContainer');
   #throw("Registry configuration file has no data for connecting to <$this_species>")
         #    if (!$this_meta_container_adaptor);
-        #my $this_binomial_id = $this_meta_container_adaptor->get_Species->binomial;
+        #my $this_binomial_id = $this_meta_container_adaptor->get_scientific_name;
         
         # Fetch Bio::EnsEMBL::Compara::GenomeDB object
         #$genome_db->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly($this_binomial_id);

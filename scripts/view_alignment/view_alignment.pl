@@ -461,7 +461,7 @@ if (defined $species) {
     my $this_meta_container_adaptor = $reg->get_adaptor($species, 'core', 'MetaContainer');
     throw("Registry configuration file has no data for connecting to <$species>")
       if (!$this_meta_container_adaptor);
-    #$species_name = $this_meta_container_adaptor->get_Species->binomial;
+    #$species_name = $this_meta_container_adaptor->get_scientific_name;
     $species_name = $this_meta_container_adaptor->get_production_name;
 }
 

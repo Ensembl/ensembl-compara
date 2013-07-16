@@ -108,7 +108,7 @@ foreach my $this_species (reverse sort @$species) {
   $species_db_adaptor->{$this_species} = $species_db->{$this_species}->get_DBAdaptor('core');
   
   $species_gdb->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly(
-          $species_db_adaptor->{$this_species}->get_MetaContainer->get_Species->binomial,
+          $species_db_adaptor->{$this_species}->get_MetaContainer->get_scientific_name,
           $species_db_adaptor->{$this_species}->get_CoordSystemAdaptor->fetch_all->[0]->version
       );
   $species_gdb->{$this_species}->db_adaptor($species_db_adaptor->{$this_species});

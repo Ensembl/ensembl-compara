@@ -35,7 +35,6 @@ foreach my $genomeDB (@{$genomes}) {
   my $meta = $genomeDB->db_adaptor->get_MetaContainer;
 
   my $taxon_id = $meta->get_taxonomy_id;
-  my $taxon = $meta->get_Species;
   my $genome_name = $meta->get_production_name;
 
   my ($cs) = @{$genomeDB->db_adaptor->get_CoordSystemAdaptor->fetch_all()};

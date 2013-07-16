@@ -21,7 +21,7 @@ my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
 my $hs_dba = $homo_sapiens->get_DBAdaptor('core');
 my $compara_dba = $multi->get_DBAdaptor('compara');
 
-my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
+my $human_name     = $hs_dba->get_MetaContainer->get_scientific_name;
 my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 
 my $gdba = $compara_dba->get_GenomeDBAdaptor;

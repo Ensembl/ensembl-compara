@@ -884,7 +884,7 @@ sub get_binomial_name {
   if (!defined($meta_container_adaptor)) {
     die("Cannot get the MetaContainerAdaptor for species <$species>\n");
   }
-  $binomial_name = $meta_container_adaptor->get_Species->binomial;
+  $binomial_name = $meta_container_adaptor->get_scientific_name;
   if (!$binomial_name) {
     die("Cannot get the binomial name for species <$species>\n");
   }

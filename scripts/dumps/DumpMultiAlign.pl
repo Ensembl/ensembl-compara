@@ -524,7 +524,7 @@ if ($skip_species && !$file_of_genomic_align_block_ids) {
       $skip_species, 'core', 'MetaContainer');
   throw("Registry configuration file has no data for connecting to <$skip_species>")
       if (!$this_meta_container_adaptor);
-  $skip_species = $this_meta_container_adaptor->get_Species->binomial;
+  $skip_species = $this_meta_container_adaptor->get_scientific_name;
 
   $skip_genomic_align_blocks = $genomic_align_set_adaptor->
       fetch_all_by_MethodLinkSpeciesSet($method_link_species_set);

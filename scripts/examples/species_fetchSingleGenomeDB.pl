@@ -31,7 +31,7 @@ my $human_core_DBA = $humanGDB->db_adaptor;
 printf("COMPARA %s : %s : %s\n   %s\n", $humanGDB->name, $humanGDB->assembly, $humanGDB->genebuild, 
     join("_", reverse($humanGDB->taxon->classification)));
 
-my $species_name = $human_core_DBA->get_MetaContainer->get_Species->binomial;
+my $species_name = $human_core_DBA->get_MetaContainer->get_scientific_name;
 my $species_assembly = $human_core_DBA->get_CoordSystemAdaptor->fetch_all->[0]->version;
 my $species_genebuild = $human_core_DBA->get_MetaContainer->get_genebuild;
 printf("CORE    %s : %s : %s\n", $species_name, $species_assembly, $species_genebuild);
