@@ -51,7 +51,7 @@ sub Features {
   $self->{'templates'}{'sequence_URL'}  = sprintf( '%s%s/Gene/Sequence?g=%%s;db=%%s',   $base_url,       $self->species_defs->species_path($self->real_species ));
 
 
-  my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen', 'compara_pan_ensembl');
+  my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen');
 
   my $sversion = $self->species_defs->SITE_RELEASE_VERSION ||  $self->species_defs->ENSEMBL_VERSION;
   my $slabel = $self->species_defs->SITE_NAME ||  $self->species_defs->ENSEMBL_SITE_NAME_SHORT;
@@ -207,11 +207,17 @@ if (0) {
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s2;
 	  }
 
+	  my $cmpdb = $self->database('compara');
+	  my $compara_name = lc($self->species_defs->COMPARA_DB_NAME || 'Ensembl Compara');
 
-	  if (my $cmpdb = $h->{'compara_pan_ensembl'} || $h->{'compara'}) {
+	  if ($slabel =~ /Bacteria/) {
+	      $cmpdb = $self->database('compara_pan_ensembl');
+	      $compara_name = 'pan-taxonomic compara';
+	  }
+
+	  if ($cmpdb) {
 	      my %homologues;
 	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
-
 	      next unless defined $query_member ;
 	      my $homology_adaptor = $cmpdb->get_adaptor('Homology');
 #  It is faster to get all the Homologues and discard undesired entries
@@ -220,6 +226,7 @@ if (0) {
 
 	      my $hHash ;
 	      foreach my $homology (@{$hmgs}){
+		  warn $homology->description;
 		  $hHash->{ortholog} += 1 if ($homology->description =~ /ortholog/);
 #		  next if ($homology->description =~ /between_species_paralog/);
 		  next if ($homology->description =~ /possible_ortholog/);
@@ -229,7 +236,7 @@ if (0) {
 	      my $notes2;
 	      my $onum = $hHash->{ortholog} || 0;
 
-	      push @$notes2, sprintf ("%s has %s orthologue%s.", $gene_name, $onum || 'no', $onum == 1 ? '' : 's' );
+	      push @$notes2, sprintf ("%s has %s orthologue%s in %s.", $gene_name, $onum || 'no', ($onum && ($onum == 1)) ? '' : 's', $compara_name );
 
 	  
 	      my $s3 = {
@@ -247,8 +254,7 @@ if (0) {
 
 	      my $pnum = $hHash->{paralog};
 	      my $notes3;
-	      push @$notes3, sprintf ("%s has %s paralogue%s.", $gene_name, $pnum || 'no', $pnum == 1 ? '' : 's' );
-	  
+	      push @$notes3, sprintf ("%s has %s paralogue%s in %s.", $gene_name, $pnum || 'no', ($pnum && ($pnum == 1)) ? '' : 's', $compara_name );
 	      my $s4 = {
 		  'ID'          => "paralogue_summary:".$gene->stable_id,
 		  'LABEL'       => "Paralogues",
