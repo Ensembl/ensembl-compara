@@ -540,6 +540,25 @@ sub pipeline_analyses {
 
 =head1 STATS and TIMING
 
+=head2 rel.72 stats
+
+    sequences to cluster:       4,810,252           [ SELECT count(*) from sequence; ]
+    distances by Blast:         1,550,752,997       [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    non-reference genes:        2524                [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:         9058                [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         14.5 days           [ call time_analysis('%'); ]
+    uniprot_loading time:       5.3d                [ call time_analysis('load_uniprot%'); ]
+    blasting time:              5.2d                [ call time_analysis('blast%'); ]
+    mcxload running time:       4h                  [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           1.9d                [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     41G                 [ SELECT mem, swap FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         41G                 [ SELECT mem, swap FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcl'; ]
+
 =head2 rel.71 stats
 
     sequences to cluster:       4,652,269           [ SELECT count(*) from sequence; ]
