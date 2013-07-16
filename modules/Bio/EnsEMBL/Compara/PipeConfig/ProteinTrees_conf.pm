@@ -124,7 +124,7 @@ sub default_options {
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         #'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
-        #'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
+        #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
 
     # HMM specific parameters
         #'hmm_clustering'            => 0, ## by default run blastp clustering
@@ -132,7 +132,6 @@ sub default_options {
         #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
         ##'cm_file_or_directory'      => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii', ## Panther DB
         ##'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
-        #'blast_path'                => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin/',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         #'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
@@ -727,7 +726,7 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels',
              -parameters => {
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
-                             'blast_path'          => $self->o('blast_path'),  ## For creating the blastdb (formatdb or mkblastdb)
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
                              'pantherScore_path'    => $self->o('pantherScore_path'),
                             },
             },
@@ -750,7 +749,7 @@ sub pipeline_analyses {
              -logic_name => 'HMMer_classify',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify',
              -parameters => {
-                             'blast_path'          => $self->o('blast_path'),
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
@@ -804,7 +803,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'fasta_dir'     => $self->o('fasta_dir'),
-                'blast_bin_dir' => $self->o('blast_exe_dir'),
+                'blast_bin_dir' => $self->o('blast_bin_dir'),
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_name#.blastdb_log -in #fasta_name#',
             },
         },
@@ -856,7 +855,7 @@ sub pipeline_analyses {
             -parameters         => {
                 'blast_params'              => $self->o('blast_params'),
                 'fasta_dir'                 => $self->o('fasta_dir'),
-                'blast_bin_dir'             => $self->o('blast_exe_dir'),
+                'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => 1e-10,
                 'force_blast_run'           => $self->o('force_blast_run'),
             },

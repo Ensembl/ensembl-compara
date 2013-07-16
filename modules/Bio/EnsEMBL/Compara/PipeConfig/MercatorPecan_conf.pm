@@ -110,7 +110,7 @@ sub default_options {
     'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
     'gerp_exe_dir'              => '/software/ensembl/compara/gerp/GERPv2.1',
     'mercator_exe'              => '/software/ensembl/compara/mercator',
-    'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
+    'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
     'exonerate_exe'             => '/software/ensembl/compara/exonerate/exonerate',
 
     'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
@@ -548,7 +548,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'fasta_dir'     => $self->o('blastdb_dir'),
-                'blast_bin_dir' => $self->o('blast_exe_dir'),
+                'blast_bin_dir' => $self->o('blast_bin_dir'),
                 'cmd'           => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
             },
 	    -rc_name => '100Mb',
@@ -584,7 +584,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::BlastAndParsePAF',
             -parameters    => {
                 'blast_params'      => $self->o('blast_params'),
-                'blast_bin_dir'     => $self->o('blast_exe_dir'),
+                'blast_bin_dir'     => $self->o('blast_bin_dir'),
                 'do_transactions' => 1,
 		'mlss_id'      => $self->o('mlss_id'),
 		'fasta_dir'    => $self->o('blastdb_dir'),

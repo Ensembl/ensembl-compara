@@ -60,7 +60,7 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    die "blast_path has to be set\n" if (!defined $self->param('blast_path'));
+    die "blast_bin_dir has to be set\n" if (!defined $self->param('blast_bin_dir'));
 
     my $pantherScore_path = $self->param('pantherScore_path');
     $self->throw('pantherScore_path is an obligatory parameter') unless (defined $pantherScore_path);
@@ -155,8 +155,8 @@ sub create_blast_db {
     close($consFh);
 
     ## Create the blast db
-    my $blast_path = $self->param('blast_path');
-    my $formatdb_exe = "$blast_path/makeblastdb";
+    my $blast_bin_dir = $self->param('blast_bin_dir');
+    my $formatdb_exe = "$blast_bin_dir/makeblastdb";
     my $cmd = "$formatdb_exe -dbtype prot -in $globalsDir/con.Fasta";
     if (my $err = system($cmd)) {
         die "Problem creating the blastdb: $err\n";

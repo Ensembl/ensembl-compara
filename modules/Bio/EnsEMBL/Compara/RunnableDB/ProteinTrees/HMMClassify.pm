@@ -82,7 +82,7 @@ sub fetch_input {
     $self->param('genome_db', $genome_db);
 
     $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
-    $self->throw('blast_path is an obligatory parameter') unless (defined $self->param('blast_path'));
+    $self->throw('blast_bin_dir is an obligatory parameter') unless (defined $self->param('blast_bin_dir'));
     $self->throw('hmm_library_basedir is an obligatory parameter') unless (defined $self->param('hmm_library_basedir'));
     my $hmmLibrary = FamLibBuilder->new($self->param('hmm_library_basedir'), 'prod');
     $self->throw('No valid HMM library found at ' . $self->param('library_path')) unless ($hmmLibrary->exists());
@@ -144,7 +144,7 @@ sub run_HMM_search {
     my $pantherScore_path = $self->param('pantherScore_path');
     my $pantherScore_exe = "$pantherScore_path/pantherScore.pl";
     my $hmmLibrary = $self->param('hmmLibrary');
-    my $blast_path = $self->param('blast_path');
+    my $blast_bin_dir = $self->param('blast_bin_dir');
     my $hmmer_path = $self->param('hmmer_path');
     my $hmmer_cutoff = $self->param('hmmer_cutoff'); ## Not used for now!!
     my $library_path = $hmmLibrary->libDir();
@@ -156,7 +156,7 @@ sub run_HMM_search {
     open my $hmm_res, ">", "$cluster_dir/${genome_db_id}.hmmres" or die $!;
 
 
-    my $cmd = "PATH=\$PATH:$blast_path:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_path 2>/dev/null";
+    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir 2>/dev/null";
     print STDERR "$cmd\n" if ($self->debug());
 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
