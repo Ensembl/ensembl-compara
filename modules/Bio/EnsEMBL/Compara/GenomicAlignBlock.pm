@@ -969,6 +969,65 @@ sub alignment_strings {
   return $alignment_strings;
 }
 
+=head2 summary_as_hash
+
+  Arg [1]    : (optional) arrayref of species to be displayed. Must be a subset of the species in the GenomicAlignBlock. Display all species if not set.
+  Arg [2]    : (optional) string. Can be "soft" or "hard"
+  Example    : $genomic_align_block->summary_as_hash(undef, "soft")
+  Description: Retrieves a textual sumamry of this GenomicAlignBlock object
+  Returntype : hashref of descriptive strings
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub summary_as_hash {
+  my ( $self, $display_species_set, $mask) = @_;
+
+  my $all_genomic_aligns;
+ 
+  #not currently used here but need to set
+  my $description = "";
+  if ($self->reference_genomic_align) {
+    $all_genomic_aligns = [$self->reference_genomic_align,@{$self->get_all_non_reference_genomic_aligns}];
+  } else {
+    $all_genomic_aligns = $self->get_all_GenomicAligns();
+  }
+
+  my $alignment_summary;
+  foreach my $genomic_align (@$all_genomic_aligns) {
+    my $summary;
+  
+    #check if genomic_align is in $species list
+    if ($display_species_set) {
+      next unless ($genomic_align->genome_db->name ~~ @$display_species_set);
+    }
+
+    my $seq_region =  $genomic_align->dnafrag->name;
+
+    #No repeat masking for ancestral sequences
+    if ($mask =~ /^soft/ && $seq_region !~ /Ancestor/) {
+      $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+    } elsif ($mask =~ /^hard/ && $seq_region !~ /Ancestor/) {
+      $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+    }
+
+    my $alignSeq = $genomic_align->aligned_sequence;
+    next if($alignSeq=~/^[\.\-]+$/);
+
+    %$summary = ('start' => $genomic_align->dnafrag_start,
+		 'end'   => $genomic_align->dnafrag_end,
+		 'strand' => $genomic_align->dnafrag_strand,
+		 'species' => $genomic_align->dnafrag->genome_db->name,
+		 'seq_region' => $genomic_align->dnafrag->name,
+		 'seq' => $alignSeq,
+		 'description' => $description);
+    push @$alignment_summary, $summary;
+
+  }
+  return $alignment_summary;
+}
 
 =head2 get_SimpleAlign
 
@@ -1024,9 +1083,10 @@ sub get_SimpleAlign {
   }
 
   foreach my $genomic_align (@$all_genomic_aligns) {
+
     my $alignSeq = $genomic_align->aligned_sequence;
     next if($alignSeq=~/^[\.\-]+$/);
-    
+
     my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
                                          -START  => $genomic_align->dnafrag_start,
                                          -END    => $genomic_align->dnafrag_end,
