@@ -122,6 +122,9 @@ sub default_options {
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
 
+    # hive priority for non-LOCAL health_check analysis:
+        'hc_priority'               => 10,
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
