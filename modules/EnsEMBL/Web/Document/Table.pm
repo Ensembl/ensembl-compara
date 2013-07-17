@@ -4,7 +4,7 @@ package EnsEMBL::Web::Document::Table;
 
 use strict;
 
-use JSON qw(from_json to_json);
+use JSON qw(from_json);
 use Scalar::Util qw(looks_like_number);
 
 use Sanger::Graphics::ColourMap;
@@ -114,8 +114,9 @@ sub export_options {
     $index++;
     $options[$index] = $_->{'export_options'} if defined $_->{'export_options'};
   }
-  
-  return to_json(\@options);
+ 
+  (my $options = $self->jsonify(\@options)) =~ s/"/'/g;
+  return $options;
 }
 
 sub render {
@@ -264,7 +265,7 @@ sub render_JSON {
     push @json, [ map $self->_strip_outer_HTML($_), @{$row->[0]} ];
   }
   
-  return to_json(\@json);
+  return $self->jsonify(\@json);
 }
 
 sub render_Excel {
