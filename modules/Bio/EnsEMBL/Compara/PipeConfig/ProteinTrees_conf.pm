@@ -858,6 +858,7 @@ sub pipeline_analyses {
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => 1e-10,
                 'force_blast_run'           => $self->o('force_blast_run'),
+                'allow_same_species_hits'   => 1,
             },
             -batch_size    => 40,
             -rc_name       => '250Mb_job',

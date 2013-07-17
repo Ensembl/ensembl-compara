@@ -63,6 +63,7 @@ sub param_defaults {
     return {
             'evalue_limit'  => 1e-5,
             'tophits'       => 20,
+            'allow_same_species_hits'  => 0,
     };
 }
 
@@ -268,8 +269,8 @@ sub run {
             $fastafile =~ s/\/\//\//g;  # converts any // in path to /
             my $cross_genome_dbfile = $blastdb_dir . '/' . $fastafile;   # we are always interested in the 'foreign' genome's fasta file, not the member's
 
-            #Don't blast against self
-            unless ($genome_db->dbID == $self->param('genome_db_id')) {
+            #Don't blast against self if asked
+            if (($genome_db->dbID != $self->param('genome_db_id')) or $self->param('allow_same_species_hits')) {
 
                 #Run blastp
                 my $cig_cmd = $self->param('no_cigars') ? '' : 'qseq sseq';
