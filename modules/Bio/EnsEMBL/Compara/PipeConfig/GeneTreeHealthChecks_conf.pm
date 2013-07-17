@@ -190,6 +190,7 @@ sub analysis_members_per_genome_ncRNAtrees {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -flow_into          => ['hc_peptides_have_genes', 'hc_genes_have_canonical_peptides', 'hc_peptides_have_sequences', 'hc_members_have_correct_taxon_id' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_peptides_have_genes',
@@ -198,6 +199,7 @@ sub analysis_members_per_genome_ncRNAtrees {
                 'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN member mg ON mp.gene_member_id = mg.member_id WHERE mp.genome_db_id = #genome_db_id# AND mp.source_name = "#hc_member_type#" AND mg.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
 
@@ -207,6 +209,7 @@ sub analysis_members_per_genome_ncRNAtrees {
                 'inputquery'    => 'SELECT mg.member_id FROM member mg LEFT JOIN member mp ON mg.canonical_member_id = mp.member_id WHERE mg.genome_db_id = #genome_db_id# AND mg.source_name = "ENSEMBLGENE" AND mp.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
 
@@ -216,6 +219,7 @@ sub analysis_members_per_genome_ncRNAtrees {
                 'inputquery'    => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_members_have_correct_taxon_id',
@@ -224,6 +228,7 @@ sub analysis_members_per_genome_ncRNAtrees {
                 'inputquery'    => 'SELECT member_id FROM member JOIN genome_db USING (genome_db_id) WHERE genome_db_id = #genome_db_id# AND member.taxon_id != genome_db.taxon_id',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
     ];
@@ -250,6 +255,7 @@ sub analysis_members_per_genome {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -flow_into          => $self->o('pipeline_basename') eq "PT" ? ['hc_peptides_have_genes', 'hc_genes_have_canonical_peptides', 'hc_peptides_have_sequences', 'hc_peptides_have_cds_sequences', 'hc_members_have_chrom_coordinates', 'hc_members_have_correct_taxon_id' ] : ['hc_peptides_have_genes', 'hc_genes_have_canonical_peptides', 'hc_peptides_have_sequences', 'hc_members_have_correct_taxon_id' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_peptides_have_genes',
@@ -258,6 +264,7 @@ sub analysis_members_per_genome {
                 'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN member mg ON mp.gene_member_id = mg.member_id WHERE mp.genome_db_id = #genome_db_id# AND mp.source_name = "#hc_member_type#" AND mg.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
 
@@ -267,6 +274,7 @@ sub analysis_members_per_genome {
                 'inputquery'    => 'SELECT mg.member_id FROM member mg LEFT JOIN member mp ON mg.canonical_member_id = mp.member_id WHERE mg.genome_db_id = #genome_db_id# AND mg.source_name = "ENSEMBLGENE" AND mp.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
 
@@ -276,6 +284,7 @@ sub analysis_members_per_genome {
                 'inputquery'    => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
        $self->o('pipeline_basename') eq 'PT' ? (
@@ -285,6 +294,7 @@ sub analysis_members_per_genome {
                 'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_members_have_chrom_coordinates',
@@ -293,6 +303,7 @@ sub analysis_members_per_genome {
                 'inputquery'    => 'SELECT member_id FROM member WHERE genome_db_id = #genome_db_id# AND (chr_name IS NULL OR chr_start IS NULL OR chr_end IS NULL)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
         ) : (), ## These analyses are only shown in the ProteinTree pipeline (doesn't apply to ncRNAtrees)
 
@@ -302,6 +313,7 @@ sub analysis_members_per_genome {
                 'inputquery'    => 'SELECT member_id FROM member JOIN genome_db USING (genome_db_id) WHERE genome_db_id = #genome_db_id# AND member.taxon_id != genome_db.taxon_id',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
     ];
@@ -325,6 +337,7 @@ sub analysis_members_globally {
                 'inputquery'    => 'SELECT member_id FROM member WHERE genome_db_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
     ];
@@ -353,6 +366,7 @@ sub analysis_pafs {
                 'expected_size' => '= #species_count#',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
     ];
 }
@@ -380,6 +394,7 @@ sub analysis_alignment {
                 'inputquery'    => 'SELECT protein_tree_backup.member_id FROM protein_tree_backup LEFT JOIN gene_tree_node USING (root_id, member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_no_extra_gene',
@@ -388,6 +403,7 @@ sub analysis_alignment {
                 'inputquery'    => 'SELECT gene_tree_node.member_id FROM gene_tree_node LEFT JOIN protein_tree_backup USING (root_id, member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.member_id IS NOT NULL AND protein_tree_backup.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
         ) : (), ## These analyses are only shown in the ProteinTree pipeline (doesn't apply to ncRNAtrees)
 
@@ -399,6 +415,7 @@ sub analysis_alignment {
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -flow_into  => $self->o('pipeline_basename') eq 'PT' ? [ 'hc_tree_align_ok', 'hc_align_no_lost_gene', 'hc_align_no_extra_gene' ] : [ 'hc_tree_align_ok' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_align_ok',
@@ -407,6 +424,7 @@ sub analysis_alignment {
                 'inputquery'    => 'SELECT * FROM gene_tree_root JOIN gene_align_member USING (gene_align_id) WHERE root_id = #gene_tree_id# AND (cigar_line IS NULL OR LENGTH(cigar_line) = 0)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         $self->o('pipeline_basename') eq 'PT' ? (
@@ -416,6 +434,7 @@ sub analysis_alignment {
                 'inputquery'    => 'SELECT protein_tree_backup.member_id FROM protein_tree_backup JOIN gene_tree_root USING (root_id) LEFT JOIN gene_align_member USING (gene_align_id, member_id) WHERE root_id = #gene_tree_id# AND gene_align_member.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_align_no_extra_gene',
@@ -424,6 +443,7 @@ sub analysis_alignment {
                 'inputquery'    => 'SELECT gene_align_member.member_id FROM protein_tree_backup JOIN gene_tree_root USING (root_id) RIGHT JOIN gene_align_member USING (gene_align_id, member_id) WHERE root_id = #gene_tree_id# AND protein_tree_backup.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
        ) : (),  ## These analyses are only shown in the ProteinTree pipeline (doesn't apply to ncRNAtrees)
     ];
@@ -449,6 +469,7 @@ sub analysis_tree_structure {
                 'inputquery'    => 'SELECT gtn1.node_id FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY gtn1.node_id HAVING COUNT(*) NOT IN (0,2)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_no_dangling_node',
@@ -457,6 +478,7 @@ sub analysis_tree_structure {
                 'inputquery'    => 'SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_node gtnc ON gtn.node_id = gtnc.parent_id WHERE gtn.root_id = #gene_tree_id# AND gtnc.node_id IS NULL AND gtn.member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_gene_count',
@@ -465,6 +487,7 @@ sub analysis_tree_structure {
                 'inputquery'    => 'SELECT root_id, COUNT(member_id) AS count, value FROM gene_tree_node JOIN gene_tree_root_tag USING (root_id) WHERE root_id = #gene_tree_id# AND tag = "gene_count" GROUP BY root_id HAVING count != value',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
     ];
@@ -489,6 +512,7 @@ sub analysis_tree_attr {
                 'inputquery'    => 'SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND member_id IS NULL AND (node_type IS NULL OR taxon_id IS NULL OR taxon_name IS NULL)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_attr_no_leaves',
@@ -497,6 +521,7 @@ sub analysis_tree_attr {
                 'inputquery'    => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND member_id IS NOT NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_attr_speciation_is_no_confscore',
@@ -505,6 +530,7 @@ sub analysis_tree_attr {
                 'inputquery'    => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND member_id IS NULL AND (node_type = "speciation" XOR duplication_confidence_score IS NULL)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_attr_check_confscore',
@@ -513,6 +539,7 @@ sub analysis_tree_attr {
                 'inputquery'    => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND member_id IS NULL AND ((node_type = "duplication" AND duplication_confidence_score = 0) OR (node_type = "dubious" AND duplication_confidence_score != 0) OR (node_type = "gene_split" AND duplication_confidence_score != 1))',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_support_all_internal',
@@ -521,6 +548,7 @@ sub analysis_tree_attr {
                 'inputquery'    => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_tag gtnt ON gtn.node_id = gtnt.node_id AND tag = "tree_support" WHERE member_id IS NULL AND tag IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
     ];
@@ -546,6 +574,7 @@ sub analysis_homologies {
                 'inputquery'    => 'SELECT hm1.member_id, hm2.member_id FROM homology_member hm1 JOIN homology_member hm2 USING (homology_id) JOIN homology h USING (homology_id) WHERE hm1.member_id<hm2.member_id AND tree_node_id = #gene_tree_id# GROUP BY hm1.member_id, hm2.member_id HAVING COUNT(*) > 1',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_no_null_in_homologies',
@@ -554,7 +583,8 @@ sub analysis_homologies {
                 'inputquery'    => 'SELECT * FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id = #gene_tree_id# AND (description IS NULL OR peptide_member_id IS NULL OR cigar_line IS NULL OR LENGTH(cigar_line) = 0 OR perc_id IS NULL OR perc_pos IS NULL)',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
-            -flow_into => [ 'hc_tree_homologies_link_to_genes', 'hc_tree_true_one2one' ],
+            -flow_into          => [ 'hc_tree_homologies_link_to_genes', 'hc_tree_true_one2one' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_homologies_link_to_genes',
@@ -563,7 +593,8 @@ sub analysis_homologies {
                 'inputquery'    => 'SELECT * FROM homology JOIN homology_member USING (homology_id) JOIN member USING (member_id) WHERE tree_node_id = #gene_tree_id# AND source_name != "ENSEMBLGENE"',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
-            -flow_into => [ 'hc_tree_homologies_link_to_canonical_pep' ],
+            -flow_into          => [ 'hc_tree_homologies_link_to_canonical_pep' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_homologies_link_to_canonical_pep',
@@ -572,6 +603,7 @@ sub analysis_homologies {
                 'inputquery'    => 'SELECT * FROM homology JOIN homology_member USING (homology_id) JOIN member USING (member_id) WHERE tree_node_id = #gene_tree_id# AND canonical_member_id != peptide_member_id',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_true_one2one',
@@ -580,6 +612,7 @@ sub analysis_homologies {
                 'inputquery'    => 'SELECT method_link_species_set_id, hm.member_id FROM homology h JOIN homology_member hm USING (homology_id) WHERE tree_node_id = #gene_tree_id# GROUP BY method_link_species_set_id, hm.member_id HAVING COUNT(*)>1 AND GROUP_CONCAT(h.description) LIKE "%one2one%"',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
     ];
@@ -603,7 +636,8 @@ sub analysis_tree_globally {
                 'inputquery'    => 'SELECT * FROM gene_tree_node WHERE root_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
-            -flow_into => [ 'hc_tree_rootnode_links_to_rootroot' ],
+            -flow_into          => [ 'hc_tree_rootnode_links_to_rootroot' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_rootnode_links_to_rootroot',
@@ -612,7 +646,8 @@ sub analysis_tree_globally {
                 'inputquery'    => 'SELECT gene_tree_node.root_id, COUNT(*) FROM gene_tree_node LEFT JOIN gene_tree_root USING (root_id) WHERE gene_tree_root.root_id IS NULL GROUP BY gene_tree_node.root_id',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
-            -flow_into  => [ 'hc_tree_rootroot_links_to_rootnode' ],
+            -flow_into          => [ 'hc_tree_rootroot_links_to_rootnode' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_tree_rootroot_links_to_rootnode',
@@ -621,7 +656,8 @@ sub analysis_tree_globally {
                 'inputquery'    => 'SELECT * FROM gene_tree_root gtr JOIN gene_tree_node gtn ON gtr.root_id = gtn.node_id WHERE gtr.root_id != gtn.root_id',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
-            -flow_into  => [ 'hc_members_unique_in_clusterset', 'hc_clusterset_is_flat_tree', 'hc_hierarchy_tree_types' ],
+            -flow_into          => [ 'hc_members_unique_in_clusterset', 'hc_clusterset_is_flat_tree', 'hc_hierarchy_tree_types' ],
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_members_unique_in_clusterset',
@@ -630,6 +666,7 @@ sub analysis_tree_globally {
                 'inputquery'    => 'SELECT clusterset_id, member_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE member_id IS NOT NULL GROUP BY clusterset_id, member_id HAVING COUNT(*) > 1',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_clusterset_is_flat_tree',
@@ -638,6 +675,7 @@ sub analysis_tree_globally {
                 'inputquery'    => 'SELECT * FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "clusterset" AND member_id IS NOT NULL AND  NOT( (node_id = root_id AND parent_id IS NULL) OR (node_id != root_id AND parent_id = root_id) )'
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         {   -logic_name => 'hc_hierarchy_tree_types',
@@ -646,6 +684,7 @@ sub analysis_tree_globally {
                 'inputquery'    => 'SELECT gtr1.root_id, gtr2.root_id FROM gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id JOIN gene_tree_root gtr2 ON gtr2.root_id = gtn2.root_id WHERE gtr1.root_id != gtr2.root_id AND (gtr1.clusterset_id != gtr2.clusterset_id OR gtr1.member_type != gtr2.member_type OR gtr1.method_link_species_set_id != gtr2.method_link_species_set_id OR NOT ( (gtr1.tree_type = "clusterset" AND gtr2.tree_type = "supertree") OR (gtr1.tree_type = "supertree" AND gtr2.tree_type = "tree") OR (gtr1.tree_type = "clusterset" AND gtr2.tree_type = "tree") ))'
             },
             -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
         },
 
         # TODO: non-trees should not have attributes ? that's not tree: super-trees have node_type ... Investigate that
