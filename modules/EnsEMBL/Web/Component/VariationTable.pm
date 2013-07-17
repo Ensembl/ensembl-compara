@@ -67,16 +67,18 @@ sub make_table {
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
-    { key => 'ID',       width => '12u', sort => 'html'                                                                                                        },
-    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp'                                                                         },
-    { key => 'Alleles',  width => '16u', sort => 'string',   label => "Alle\fles",  align => 'center'                                                          },
-    { key => 'class',    width => '11u', sort => 'string',   label => 'Class',      align => 'center'                                                          },
-    { key => 'Source',   width => '8u',  sort => 'string',   label => "Sour\fce",                                                                              },
-    { key => 'status',   width => '9u',  sort => 'string',   label => "Evid\fence", align => 'center', help => $self->strip_HTML($glossary->{'Evidence value'})},
-    { key => 'snptype',  width => '12u', sort => 'string',   label => 'Type',                                                                                  }, 
-    { key => 'aachange', width => '6u',  sort => 'string',   label => 'AA',         align => 'center', help => 'Amino Acid'                                    },
-    { key => 'aacoord',  width => '6u',  sort => 'position', label => "AA co\ford", align => 'center', help => "Amino Acid Co-ordinate"                        }
-    ];
+    { key => 'ID',       width => '12u', sort => 'html',                                                      help => 'Variant identifier'                            },
+    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $self->strip_HTML($glossary->{'Chr:bp'})        },
+    { key => 'Alleles',  width => '16u', sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                       },
+    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $self->strip_HTML($glossary->{'Class'})         },
+    { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $self->strip_HTML($glossary->{'Source'})        },
+    { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => 'Evidence codes reflect the data supporting
+                                                                                                                       the variant.  They are: Multiple Observations,
+                                                                                                                       Frequency, HapMap, 1000 Genomes, and Cited.'   },
+    { key => 'snptype',  width => '12u', sort => 'string',          label => 'Type',                          help => 'Consequence type'                              }, 
+    { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                       },
+    { key => 'aacoord',  width => '6u',  sort => 'position',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                        }
+  ];
   
   # submitter data for LRGs
   splice @$columns, 5, 0, { key => 'Submitters', width => '10u', sort => 'string', align => 'center', export_options => { split_newline => 2 } } if $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
@@ -101,7 +103,7 @@ sub make_table {
   }
  
   if ($hub->type ne 'Transcript') {
-    push @$columns, { key => 'Transcript', sort => 'string', width => '11u' };
+    push @$columns, { key => 'Transcript', sort => 'string', width => '11u', help => $self->strip_HTML($glossary->{'Transcript'}) };
   }
 
   return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
@@ -118,20 +120,20 @@ sub render_content {
        $consequence_label =~ s/_/ /g;
        $consequence_label =~ s/children/\(with children\)/;
     
-    $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
   } else {
     my $hub      = $self->hub;
     my $current  = $hub->param('summary_type') || 'table';
     my $switched = $current eq 'tree' ? 'table' : 'tree';
     my $url      = $hub->url({ summary_type => $switched });
     
-    $html = qq{
+    $html = qq(
       <a id="$self->{'id'}_top"></a>
       <span style="float:right;">
         <a href="$url">Switch to $switched view <img src="/i/16/reload.png" height="12px"/></a>
       </span>
       <h2>Summary of variation consequences in $stable_id</h2>
-    } . $table;
+    ) . $table;
   }
   
   return $html;
@@ -432,7 +434,7 @@ sub variation_table {
           my $status = join("",
             map {
               sprintf(
-                '<img src="/i/96/evidence_%s.png" title="%s"/><span class="hidden export">%s,</span>',
+                '<img src="/i/96/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
                 $_, $_, $_
               )
             } @$evidence
