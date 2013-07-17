@@ -243,9 +243,9 @@ sub load_cigars_from_file {
         my $seqseq = $seq->seq();
         $seqseq =~ s/-//g;
         if ($import_seq) {
-            $member_hash{$id}->sequence($nucl_seq);
+            $member_hash{$id}->sequence($seqseq);
         } else {
-            die "'$i' has a different sequence in the file '$file'" if $member_hash{$id}->sequence ne $seqseq;
+            die "'$id' has a different sequence in the file '$file'" if $member_hash{$id}->sequence ne $seqseq;
         }
     }
 }
