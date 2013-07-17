@@ -48,6 +48,8 @@ eg "seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback"
 package Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF;
 
 use strict;
+use warnings;
+
 use FileHandle;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -55,6 +57,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 sub param_defaults {
     return {
@@ -156,30 +159,7 @@ sub parse_blast_table_into_paf {
 
             my $cigar_line;
             unless ($self->param('no_cigars')) {
-                my @chunks1;
-                my @chunks2;
-                while($qseq=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-                    push @chunks1, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
-                }
-                while($sseq=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-                    push @chunks2, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
-                }
-
-                my $len1;
-                my $gap1;
-                my $len2;
-                my $gap2;
-                while (@chunks1 or @chunks2) {
-
-                    ($gap1, $len1) = @{shift @chunks1} unless $len1;
-                    ($gap2, $len2) = @{shift @chunks2} unless $len2;
-                    die "Double gaps are not allowed in '$qseq' / '$sseq'" if $gap1 and $gap2;
-
-                    my $minlen = $len1 <= $len2 ? $len1 : $len2;
-                    $cigar_line .= ($minlen > 1 ? $minlen : '').($gap1 ? 'D' : ($gap2 ? 'I' : 'M'));
-                    $len2 -= $minlen;
-                    $len1 -= $minlen;
-                };
+                $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_two_alignment_strings($qseq, $sseq);
             }
 
             my $feature = {

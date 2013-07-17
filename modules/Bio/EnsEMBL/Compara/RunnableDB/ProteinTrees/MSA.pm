@@ -49,11 +49,14 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA;
 
 use strict;
+use warnings;
 
 use IO::File;
 use File::Basename;
 use File::Path;
 use Time::HiRes qw(time gettimeofday tv_interval);
+
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -371,7 +374,7 @@ sub parse_and_store_alignment_into_proteintree {
       }
     }
     # Call the method to do the actual conversion
-    $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
+    $align_hash{$id} = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string(uc($alignment_string));
     $align_string{$id} = uc($alignment_string);
     #print "The cigar_line of $id is: ", $align_hash{$id}, "\n";
   }
@@ -404,26 +407,6 @@ sub parse_and_store_alignment_into_proteintree {
   return 1;
 }
 
-# Converts the given alignment string to a cigar_line format.
-sub _to_cigar_line {
-    my $self = shift;
-    my $alignment_string = shift;
-
-    $alignment_string =~ s/\-([A-Z])/\- $1/g;
-    $alignment_string =~ s/([A-Z])\-/$1 \-/g;
-    my @cigar_segments = split " ",$alignment_string;
-    my $cigar_line = "";
-    foreach my $segment (@cigar_segments) {
-      my $seglength = length($segment);
-      $seglength = "" if ($seglength == 1);
-      if ($segment =~ /^\-+$/) {
-        $cigar_line .= $seglength . "D";
-      } else {
-        $cigar_line .= $seglength . "M";
-      }
-    }
-    return $cigar_line;
-}
 
 sub _store_aln_tags {
     my $self = shift;

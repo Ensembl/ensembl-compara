@@ -51,6 +51,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::MemberSet');
 
@@ -184,70 +185,86 @@ sub _attr_to_copy_list {
 # Alignment sections #
 ######################
 
-=head2 read_clustalw
+
+=head2 load_cigars_from_file
 
   Arg [1]    : string $file 
-               The name of the file containing the clustalw output  
-  Example    : $family->read_clustalw('/tmp/clustalw.aln');
-  Description: Parses the output from clustalw and sets the alignment strings
-               of each of the memebers of this family
+               The name of the file containing the multiple alignment
+  Arg [-IMPORT_SEQ] : (opt) boolean (default: false)
+               Whether the sequences of the members should be reassigned
+               using the alignment file
+  Arg [-FORMAT]     : (opt) string (default: undef)
+               The format of the alignment. By default, BioPerl will try to
+               guess it from the file extension.  Refer to
+               http://www.bioperl.org/wiki/HOWTO:AlignIO_and_SimpleAlign
+               for a list of the supported formats.
+  Example    : $family->load_cigars_from_file('/tmp/clustalw.aln');
+  Description: Parses the multiple alignment fileand sets the cigar lines
+               of each of the memebers of this AlignedMemberSet
   Returntype : none
   Exceptions : thrown if file cannot be parsed
-               warning if alignment file contains identifiers for sequences
-               which are not members of this family
-  Caller     : general
+               dies if a sequence identifier cannot be found in the set
+               dies if there is a sequence mismatch with the set
 
 =cut
 
-sub read_clustalw {
-    my $self = shift;
-    my $file = shift;
+sub load_cigars_from_file {
+    my ($self, $file, @args) = @_;
 
-    my %align_hash;
-    my $FH = IO::File->new();
-    $FH->open($file) || throw("Could not open alignment file [$file]");
-
-    <$FH>; #skip header
-    while(<$FH>) {
-        next if($_ =~ /^\s+/);  #skip lines that start with space
-
-        my ($id, $align) = split;
-        $align_hash{$id} ||= '';
-        $align_hash{$id} .= $align;
+    my $format;
+    my $import_seq;
+    if (scalar @args) {
+        ($import_seq, $format) =
+            rearrange([qw(IMPORT_SEQ FORMAT)], @args);
     }
 
-    $FH->close;
+    my $alignio = Bio::AlignIO->new(-file => $file, -format => $format);
+
+    my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$file'";
+    $self->aln_length($aln->length);
 
     #place all members in a hash on their member name
     my %member_hash;
     foreach my $member (@{$self->get_all_Members}) {
-        $member_hash{$member->stable_id} = $member;
+        $member->cigar_line(undef);
+        $member->sequence(undef) if $import_seq;
+        $member_hash{$member->member_id} = $member;
     }
 
     #assign cigar_line to each of the member attribute
-    foreach my $id (keys %align_hash) {
+    foreach my $seq ($aln->each_seq) {
+        my $id = $seq->display_id;
+        $id =~ s/_.*$//;
         throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
 
-        my $alignment_string = $align_hash{$id};
-        $alignment_string =~ s/\-([A-Z])/\- $1/g;
-        $alignment_string =~ s/([A-Z])\-/$1 \-/g;
-
-        my @cigar_segments = split " ",$alignment_string;
-
-        my $cigar_line = "";
-        foreach my $segment (@cigar_segments) {
-            my $seglength = length($segment);
-            $seglength = "" if ($seglength == 1);
-            if ($segment =~ /^\-+$/) {
-                $cigar_line .= $seglength . "D";
-            } else {
-                $cigar_line .= $seglength . "M";
-            }
-        }
-
+        my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->seq());
         $member_hash{$id}->cigar_line($cigar_line);
+
+        my $seqseq = $seq->seq();
+        $seqseq =~ s/-//g;
+        if ($import_seq) {
+            $member_hash{$id}->sequence($nucl_seq);
+        } else {
+            die "'$i' has a different sequence in the file '$file'" if $member_hash{$id}->sequence ne $seqseq;
+        }
     }
 }
+
+
+=head2 read_clustalw
+
+    Description : DEPRECATED. read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'clustalw') instead.
+
+=cut
+
+sub read_clustalw {  # DEPRECATED
+    my $self = shift;
+    my $file = shift;
+
+    deprecate('read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'clustalw\') instead');
+    return $self->load_cigars_from_file($file, -format => 'clustalw');
+}
+
 
 sub load_cigars_from_fasta {
     my ($self, $file, $import_seq) = @_;
@@ -429,56 +446,14 @@ sub get_SimpleAlign {
 # constituent leaf nodes.
 sub consensus_cigar_line {
 
-   my $self = shift;
-   my @cigars;
+    my $self = shift;
+    my @cigars;
 
-   # First get an 'expanded' cigar string for each leaf of the subtree
-   my @all_members = @{$self->get_all_Members};
-   my $num_members = scalar(@all_members);
-   foreach my $leaf (@all_members) {
-     next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
-     my $cigar = $leaf->cigar_line;
-     my $newcigar = "";
-#     $cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-      while ($cigar =~ /(\d*)([A-Z])/g) {
-          $newcigar .= $2 x ($1 || 1);
-      }
-     $cigar = $newcigar;
-     push @cigars, $cigar;
-   }
-
-   # Itterate through each character of the expanded cigars.
-   # If there is a 'D' at a given location in any cigar,
-   # set the consensus to 'D', otherwise assume an 'M'.
-   # TODO: Fix assumption that cigar strings are always the same length,
-   # and start at the same point.
-   my $cigar_len = length( $cigars[0] );
-   my $cons_cigar;
-   for( my $i=0; $i<$cigar_len; $i++ ){
-     my $char = 'M';
-     my $num_deletions = 0;
-     foreach my $cigar( @cigars ){
-       if ( substr($cigar,$i,1) eq 'D'){
-         $num_deletions++;
-       }
-     }
-     if ($num_deletions * 3 > 2 * $num_members) {
-       $char = "D";
-     } elsif ($num_deletions * 3 > $num_members) {
-       $char = "m";
-     }
-     $cons_cigar .= $char;
-   }
-
-   # Collapse the consensus cigar, e.g. 'DDDD' = 4D
-#   $cons_cigar =~ s/(\w)(\1*)/($2?length($2)+1:"").$1/ge;
-   my $collapsed_cigar = "";
-   while ($cons_cigar =~ /(D+|M+|I+|m+)/g) {
-     $collapsed_cigar .= (length($1) == 1 ? "" : length($1)) . substr($1,0,1)
- }
-   $cons_cigar = $collapsed_cigar;
-   # Return the consensus
-   return $cons_cigar;
+    my @all_members = @{$self->get_all_Members};
+    foreach my $leaf (@all_members) {
+        push @cigars, $leaf->cigar_line;
+    }
+    return Bio::EnsEMBL::Compara::Utils::Cigars::consensus_cigar_line(@cigars);
 }
 
 
