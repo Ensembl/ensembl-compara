@@ -261,7 +261,7 @@ sub analysis_members_per_genome {
         {   -logic_name => 'hc_peptides_have_genes',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT mp.member_id FROM member mp LEFT JOIN member mg ON mp.gene_member_id = mg.member_id WHERE mp.genome_db_id = #genome_db_id# AND mp.source_name = "#hc_member_type#" AND mg.member_id IS NULL',
+                'inputquery'    => 'SELECT mp.member_id FROM member WHERE mp.genome_db_id = #genome_db_id# AND mp.source_name="#hc_member_type#" AND gene_member_id IS NULL',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -priority           => $self->o('hc_priority'),
