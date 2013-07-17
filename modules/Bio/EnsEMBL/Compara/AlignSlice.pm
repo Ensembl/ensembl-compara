@@ -64,7 +64,7 @@ Bio::EnsEMBL::Slice.
 OVERLAPPING ALIGNMENTS
 
 No overlapping alignments are allowed by default. This means that if an alignment overlaps another one, the
-second alignment is ignored. This is due to lack of information needed to reconciliate both alignment.
+second alignment is ignored. This is due to lack of information needed to reconciliate both alignments.
 Here is a graphical example showing this problem:
 
   ALN 1:   Human (ref) CTGTGAAAA----CCCCATTAGG
@@ -87,15 +87,22 @@ Here is a graphical example showing this problem:
            Human (ref) CTGTGAAAA-------CCCCATTAGG
            Mouse (1)     CTGAAAATTTT---CCCC
            Mouse (1)         AAA----GGGCCCCATTA
-  
+
 There is no easy way to find which of these possible solution is the best without trying to realign the
 three sequences together and this is far beyond the aim of this module. The best solution is to start with
 multiple alignments instead of overlapping pairwise ones.
 
 The third possibility is probably not the best alignment you can get although its implementation is
-systematic (insert as many gaps as needed in order to accommodate the insertions and never ever overlap
+systematic (insert as many gaps as needed in order to accommodate the insertions and never overlap
 them) and computationally cheap as no realignment is needed. You may ask this module to solve overlapping
-alignments in this way using the "solve_overlapping" option.
+alignments in this way set setting the "solve_overlapping" option to TRUE. 
+
+Finally, it is also possible to merge the overlapping alignments by setting solve_overlapping to 'restrict'. 
+The second overlapping alignment is restricted so that it will start at the end+1 of the first alignment.
+eg
+           Human (ref) CTGTGAAAA----CCCCATTAGG
+           Mouse (1)     CTGAAAATTTTCCCC
+           Mouse (1)                    ATTA
 
 RESULT
 
@@ -221,10 +228,11 @@ my $aligngap_coord_system = new Bio::EnsEMBL::CoordSystem(
                the gaps requiered by the alignments in the reference_slice
                (see MODES elsewhere in this document)
     -solve_overlapping:
-               boolean flag. If set to true, the AlignSlice will allow
-               overlapping alginments and solve indeterminations according
-               to the method described in OVERLAPPING ALIGNMENTS elsewhere
-               in this document
+               If set to 0 only one of the overlapping alignments is returned.
+               If set to 1 all overlapping alignments are returned according to 
+               the method described in OVERLAPPING ALIGNMENTS section
+               If set to 'restrict' the overlapping alignments are merged according to
+               the method described in OVERLAPPING ALIGNMENTS section
     -preserve_blocks:
                boolean flag. By default the AlignSlice trim the alignments
                in order to fit the reference_slice. This flags tell the
@@ -528,10 +536,83 @@ sub get_MethodLinkSpeciesSet {
   return $self->{'_method_link_species_set'};
 }
 
+sub summary_as_hash {
+  my ($self, $display_species_set, $mask) = @_;
+  my $simple_align;
+
+  my $genome_db_name_counter;
+
+  my $alignment_summary;
+  foreach my $slice (@{$self->get_all_Slices(@$display_species_set)}) {
+      my $slice_mapper_pairs = $slice->get_all_Slice_Mapper_pairs();
+      my $id;
+      my $start;
+      my $end;
+      my $block_start;
+      my $block_end;
+      my $seq_region;
+      my $length;
+      my $strand;
+      my $composite_length;
+      my $species_name = $slice->genome_db->name;
+      my $description = "";
+      my $alignSeq;
+
+      my @names;
+      $composite_length = 0;
+      my $prev_dnafrag_name;
+      my $summary;
+
+
+      ## This is a composite segment.
+      ## We need to fix the name and the length
+      foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
+	push(@names, $slice_mapper_pair->{slice}->name);
+	
+	$seq_region = $slice_mapper_pair->{slice}{seq_region_name};
+	$length = $slice_mapper_pair->{slice}{seq_region_length};
+	$strand = $slice_mapper_pair->{slice}{strand};
+	$start = $slice_mapper_pair->{slice}{start};
+	$end = $slice_mapper_pair->{slice}{end};
+	    
+	#No repeat masking for ancestral sequences (to prevent warnings)
+	if ($mask =~ /^soft/ && $seq_region !~ /Ancestor/) {
+	  $slice_mapper_pair->{slice}{seq} = $slice_mapper_pair->{slice}->get_repeatmasked_seq(undef,1)->seq;
+	} elsif ($mask =~ /^hard/ && $seq_region!~ /Ancestor/) {
+	  $slice_mapper_pair->{slice}{seq} = $slice_mapper_pair->{slice}->get_repeatmasked_seq()->seq;
+	}
+	
+      }
+
+      #multiple fragments within one species means that there are several values for seq_region, start and end
+      #add a description line to fully describe the fragments
+      if (@$slice_mapper_pairs > 1) {
+	$start = 1;
+	$end = $slice->length;
+	$seq_region = "Composite";
+	$description = "$seq_region is: " . join(" + ", @names);	
+      } 
+
+      %$summary = ('start' => $start,
+		   'end'   => $end,
+		   'strand' => $strand,
+		   'species' => $species_name,
+		   'seq_region' => $seq_region,
+		   'description' => $description,
+		   'seq' => $slice->seq);
+      push @$alignment_summary, $summary;
+
+    }
+  
+  return $alignment_summary;
+}
 
 =head2 get_SimpleAlign
 
-  Arg[1]      : none
+  Arg[1]      : (optional) reference to an array of species to restrict the alignment to
+  Arg[2]      : (optional) What detail to use for the ID field
+                "full" => $species_name.$seq_region/$seq_region_start-$seq_region_end
+                none => $slice->genome_db->name + counter/
   Example     : use Bio::AlignIO;
                 my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
                 print $out $align_slice->get_SimpleAlign();
@@ -556,6 +637,7 @@ sub get_SimpleAlign {
   $simple_align->id("ProjectedMultiAlign");
 
   my $genome_db_name_counter;
+
   foreach my $slice (@{$self->get_all_Slices(@species)}) {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
@@ -1313,9 +1395,14 @@ sub _choose_underlying_Slice {
 =head2 _sort_and_restrict_GenomicAlignBlocks
 
   Arg[1]      : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks $gabs
-  Example     : $sorted_gabs = _sort_GenomicAlignBlocks($gabs);
+  Example     : $sorted_gabs = _sort_and_restrict_GenomicAlignBlocks($gabs);
   Description : This method returns the original list of
-                Bio::EnsEMBL::Compara::GenomicAlignBlock objects in order
+                Bio::EnsEMBL::Compara::GenomicAlignBlock objects in order of dnafrag_start.
+                It will merge overlapping blocks eg the region of B which overlaps with A will be removed
+                to produce a contiguous sequence AB
+                A  |-----------------|
+                B           |*****************|
+                AB <-----------------><*******>
   Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
   Exceptions  : 
   Caller      : methodname()
@@ -1335,7 +1422,7 @@ sub _sort_and_restrict_GenomicAlignBlocks {
         $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions($last_end + 1, undef);
       } else {
 	  warning("Ignoring GenomicAlignBlock because it overlaps".
-                " previous GenomicAlignBlock");
+                " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
         next;
       }
     }
@@ -1368,6 +1455,7 @@ sub _sort_GenomicAlignBlocks {
     if (!defined($last_end) or
         $this_genomic_align_block->reference_genomic_align->dnafrag_start > $last_end) {
       push(@$sorted_genomic_align_blocks, $this_genomic_align_block);
+
       $last_end = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
     } #else {
       #	my $block_id;
@@ -1573,11 +1661,14 @@ sub _compile_GenomicAlignBlocks {
 	}
     }
   }
+
   ##
   ############################################################################################
 
   ## Nothing has to be compiled if there is one single GenomicAlignBlock!
-  $all_genomic_align_blocks->[0]->reverse_complement;
+
+  #18/6/2013 Commented out the line below because this causes a bug when the ref-strand on the overlapping blocks is different (eg 1 on pos strand and 1 on neg strand). Why do we have this blanket reverse_comeplement?
+#  $all_genomic_align_blocks->[0]->reverse_complement;
   return $all_genomic_align_blocks->[0] if (scalar(@$all_genomic_align_blocks) == 1);
 
   ############################################################################################
