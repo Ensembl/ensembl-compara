@@ -824,13 +824,13 @@ CREATE TABLE other_member_sequence (
 
 /**
 @table peptide_align_feature
-@desc: This table stores the raw HSP local alignment results of peptide to peptide alignments returned by a BLAST run it is translated from a FeaturePair object.
+@desc: This table stores the raw local alignment results of peptide to peptide alignments returned by a BLAST run. The hits are actually stored in species-specific tables rather than in a single table. For example, human has the genome_db_id 90, and all the hits that have a human gene as a query are stored in peptide_align_feature_90
 @colour   #1E90FF
 
 @example    Example of peptide_align_feature entry:
-     @sql                              SELECT * FROM peptide_align_feature_homo_sapiens_90 WHERE peptide_align_feature_id = 5003775;
+     @sql                              SELECT * FROM peptide_align_feature_90 WHERE peptide_align_feature_id = 5003775;
 @example    The following query corresponds to a particular hit found between a Homo sapiens protein and a Anolis carolinensis protein:
-     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_homo_sapiens_90 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 5003775;
+     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_90 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 5003775;
 
 
 @column peptide_align_feature_id  Internal unique ID

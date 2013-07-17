@@ -362,7 +362,7 @@ sub analysis_pafs {
         {   -logic_name => 'hc_paf_hit_against_each_species',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'inputquery'    => 'SELECT DISTINCT hgenome_db_id FROM peptide_align_feature_#name#_#genome_db_id#',
+                'inputquery'    => 'SELECT DISTINCT hgenome_db_id FROM peptide_align_feature_#genome_db_id#',
                 'expected_size' => '= #species_count#',
             },
             -analysis_capacity  => $self->o('hc_capacity'),
