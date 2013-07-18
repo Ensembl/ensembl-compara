@@ -694,6 +694,7 @@ sub get_stable_id_history_data {
 #------------------------------- Variation functionality -------------------------------
 sub calculate_consequence_data {
   my ($self, $file, $size_limit) = @_;
+
   my $data = $self->hub->fetch_userdata_by_id($file);
   my %slice_hash;
   my %consequence_results;
@@ -979,9 +980,6 @@ sub consequence_table {
       }
 
       if ($gene_id ne '-') {
-        my $hgnc_id;
-        ($gene_id, $hgnc_id) = split /\;/, $gene_id;
-        
         my $gene_url = $hub->url({
           species => $species,
           type    => 'Gene',
@@ -991,7 +989,6 @@ sub consequence_table {
         });
         
         $gene_string = qq{<a href="$gene_url" rel="external">$gene_id</a>};
-        $gene_string .= ';'.$hgnc_id if defined($hgnc_id);
       }
       
       
