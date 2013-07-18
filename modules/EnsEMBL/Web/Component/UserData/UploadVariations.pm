@@ -170,8 +170,8 @@ sub content {
   
   $form->add_element(
     type  => 'CheckBox',
-    name  => "hgnc",
-    label => "Show HGNC identifier for genes where available",
+    name  => "symbol",
+    label => "Show gene symbols (e.g. HGNC) where available",
     value => 'yes',
     selected => 0
   );
