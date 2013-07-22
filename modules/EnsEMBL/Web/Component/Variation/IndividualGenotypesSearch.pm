@@ -29,23 +29,21 @@ sub content {
     $indiv =~ s/\s+$//;
   }
 
-  # From
-  my $html = qq{
-  <div class="navbar print_hide" style="padding-left:5px">
-    <input type="hidden" class="panel_type" value="Content" />
-    <form class="update_panel" action="#">
-      <label for="ind">Search for an individual:</label>
-      <input type="text" name="ind" id="ind" value="$indiv" size="30"/>
-      <input type="hidden" name="panel_id" value="$id" />
-      <input type="hidden" name="url" value="$url" />
-      <input type="hidden" name="element" value=".results" />
-      <input class="fbutton" type="submit" value="Search" />
-      <small>(e.g. NA18507)</small>
-    </form>
-  </div>
-  };
-
-  return $html . $self->content_results;
+  return sprintf('
+    <div class="navbar print_hide" style="padding-left:5px">
+      <input type="hidden" class="panel_type" value="Content" />
+      <form class="update_panel" action="#">
+        <label for="ind">Search for an individual:</label>
+        <input type="text" name="ind" id="ind" value="%s" size="30"/>
+        <input type="hidden" name="panel_id" value="%s" />
+        <input type="hidden" name="url" value="%s" />
+        <input type="hidden" name="element" value=".results" />
+        <input class="fbutton" type="submit" value="Search" />
+        <small>(e.g. NA18507)</small>
+      </form>
+    </div>
+    <div class="results">%s</div>
+  ', $indiv, $id, $url, $self->content_results);
 }
 
 
@@ -73,14 +71,10 @@ sub content_results {
   my $hub    = $self->hub;
   my $indiv  = $hub->param('ind');
   
-  return qq{<div class="results"></div>} if (!defined($indiv) || $indiv eq '');
-  
-  my $indiv_ori = $indiv;
+  return unless defined $indiv;
   
   $indiv =~ s/^\W+//;
   $indiv =~ s/\s+$//;
-  
-  return sprintf (qq{<div class="results">%s</div>},$self->warning_message($indiv_ori)) if (!defined($indiv) || $indiv eq '');
   
   my %rows;
   my $flag_children = 0;
@@ -156,8 +150,8 @@ sub content_results {
     $html .= $self->warning_message($indiv);
   }
 
-  return qq{<div class="results">$html</div>};
-}    
+  return qq{<div class="js_panel">$html</div>};
+}
 
 
 sub get_all_populations {
