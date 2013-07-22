@@ -79,7 +79,7 @@ Ensembl.LayoutManager.extend({
         }
       }
       
-      url = Ensembl.updateURL(urlParams, url);
+      url = Ensembl.updateURL($.extend({ update_panel: 1 }, urlParams), url);
       
       Ensembl.EventManager.triggerSpecific('updatePanel', panelId, url, el, null, urlParams);
       
