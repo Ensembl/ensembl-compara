@@ -49,6 +49,8 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
       
       return false;
     });
+
+    this.elLk.find('._ht').helptip();
   },
   
   relocateTools: function (tools) {
