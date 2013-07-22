@@ -221,7 +221,13 @@ Ensembl.extend({
       if (params[i] === false) {
         url = url.replace(new RegExp(this.hashParamRegex.replace('__PARAM__', i)), '$1');
       } else if (url.match(i + '=')) {
-        url = url.replace(new RegExp(this.hashParamRegex.replace('__PARAM__', i)), '$1$2' + params[i] + '$3');
+        var regex = new RegExp(this.hashParamRegex.replace('__PARAM__', i));
+        
+        if (url.match(regex)) {
+          url = url.replace(regex, '$1$2' + params[i] + '$3');
+        } else {
+          url = url.replace(i + '=', i + '=' + params[i]);
+        }
       } else {
         url += (url ? ';' : '') + i + '=' + params[i];
       }
