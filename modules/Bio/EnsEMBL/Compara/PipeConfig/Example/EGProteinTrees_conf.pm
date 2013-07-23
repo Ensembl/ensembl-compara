@@ -188,10 +188,11 @@ sub default_options {
       -db_version => $self->o('release')
     },
 
+    # Add the database location of the previous Compara release
     prev_rel_db => {
        -host   => 'mysql-eg-staging-1.ebi.ac.uk',
        -port   => 4160,
-       -user   => 'ensro',
+       -user   => 'ensro',       
        -dbname => 'ensembl_compara_metazoa_19_72'
     },
 
@@ -208,15 +209,6 @@ sub default_options {
       
     # do_not_reuse_list => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
 
-   # Add the database location of the previous Compara release
-    'prev_rel_db' => {
-      -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-      -port   => 4160,
-      -user   => 'ensro',
-      -pass   => '',
-      -dbname => 'ensembl_compara_metazoa_19_72',
-    },
-      
   );
 
   #Combine & return
