@@ -346,10 +346,19 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         } else if (this.multi !== false) {
           multi();
         } else {
-          menu = [
-            '<a class="location_change" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>',
-            '<a class="location_change" href="' + this.zoomURL(1) + '">Centre here</a>'
-          ];
+          if ((end - start + 1) > 1000000) {
+            url = url.replace(/View/, 'Overview');
+            menu = [
+              'This region (' + (end - start + 1) + ' bp) is too large - <a class="location_change" href="' + url + '">Jump to overview</a>',
+              'Or <a class="location_change" href="' + this.zoomURL(1) + '">centre here</a> to stay on this view'
+            ];
+          }
+          else {
+            menu = [
+              '<a class="location_change" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>',
+              '<a class="location_change" href="' + this.zoomURL(1) + '">Centre here</a>'
+            ];
+          }
         }
       }
     } else { // Point select
