@@ -551,13 +551,15 @@ sub fetch_by_method_link_type_species_set_name {
 
   my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value('name', $species_set_name);
 
-  if (scalar(@$all_species_sets)) {
-    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
-    return $self->fetch_by_method_link_id_species_set_id($method->dbID, $all_species_sets->[0]->dbID);
-  } else {
-    warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
-    return undef
+  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
+      foreach my $this_species_set (@$all_species_sets) {
+          if ($this_method_link_species_set->method->type eq $method_link_type && $this_method_link_species_set->species_set_obj->dbID == $this_species_set->dbID) {
+              return $this_method_link_species_set;
+          }
+      }
   }
+  warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
+  return undef
 }
 
 
