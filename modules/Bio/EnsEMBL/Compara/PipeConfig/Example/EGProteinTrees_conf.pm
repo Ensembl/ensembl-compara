@@ -121,22 +121,26 @@ sub default_options {
 #    species_tree_input_file =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
 
     # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   4,
-        'blast_factory_capacity'    =>  50,
-        'blastp_capacity'           => 200,
-        'mcoffee_capacity'          => 200,
-        'split_genes_capacity'      => 200,
-        'njtree_phyml_capacity'     => 200,
-        'ortho_tree_capacity'       => 200,
-        'ortho_tree_annot_capacity' => 300,
-        'quick_tree_break_capacity' => 100,
-        'build_hmm_capacity'        => 200,
-        'merge_supertrees_capacity' => 100,
-        'other_paralogs_capacity'   => 100,
-        'homology_dNdS_capacity'    => 200,
-        'qc_capacity'               =>   4,
-        'hc_capacity'               =>   4,
-        'HMMer_classify_capacity'   => 100,
+    'reuse_capacity'            =>   4,
+    'blast_factory_capacity'    =>  50,
+    'blastp_capacity'           => 200,
+    'mcoffee_capacity'          => 200,
+    'split_genes_capacity'      => 200,
+    'njtree_phyml_capacity'     => 200,
+    'ortho_tree_capacity'       => 200,
+    'ortho_tree_annot_capacity' => 300,
+    'quick_tree_break_capacity' => 100,
+    'build_hmm_capacity'        => 200,
+    'ktreedist_capacity'        => 150,
+    'merge_supertrees_capacity' => 100,
+    'other_paralogs_capacity'   => 100,
+    'homology_dNdS_capacity'    => 200,
+    'qc_capacity'               =>   4,
+    'hc_capacity'               =>   4,
+    'HMMer_classify_capacity'   => 100,
+
+    # hive priority for non-LOCAL health_check analysis:
+    'hc_priority'               => 10,
 
     #DNDS
     codeml_parameters_file  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
@@ -185,21 +189,34 @@ sub default_options {
     },
 
     prev_rel_db => {
-       -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-       -port   => 4275,
+       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+       -port   => 4160,
        -user   => 'ensro',
-       -dbname => 'ensembl_compara_metazoa_18_71'
+       -dbname => 'ensembl_compara_metazoa_19_72'
     },
 
     prev_release              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
-    curr_core_sources_locs => [ $self->o('prod_1') ],
-    prev_core_sources_locs => [ $self->o('staging_2') ],
-    reuse_from_prev_rel_db => 0,  #Set this to 1 to enable the reuse
+    # Are we reusing the dbIDs and the blastp alignments ?
+    'reuse_from_prev_rel_db'    => 0,
+    'force_blast_run'           => 1,
 
+    curr_core_sources_locs => [ $self->o('prod_1') ],
+    reuse_from_prev_rel_db => 0,  #Set this to 1 to enable the reuse
+    # Add the database entries for the core databases of the previous release
+    'prev_core_sources_locs'   => [ $self->o('staging_1') ],
+      
     # do_not_reuse_list => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
 
-
+   # Add the database location of the previous Compara release
+    'prev_rel_db' => {
+      -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+      -port   => 4160,
+      -user   => 'ensro',
+      -pass   => '',
+      -dbname => 'ensembl_compara_metazoa_19_72',
+    },
+      
   );
 
   #Combine & return
