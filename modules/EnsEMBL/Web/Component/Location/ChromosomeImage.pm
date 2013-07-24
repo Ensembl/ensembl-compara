@@ -90,8 +90,8 @@ sub stats_table {
   my @orderlist = (
     'Length (bps)',
     'Protein coding gene count',
-    'Short Non coding gene count',
-    'Long Non coding gene count',
+    'Short non coding gene count',
+    'Long non coding gene count',
     'Pseudogene count',
     'SNP Count',
     'Number of fingerprint contigs',
