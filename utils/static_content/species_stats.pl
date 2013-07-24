@@ -190,8 +190,8 @@ foreach my $spp (@valid_spp) {
 
     my (%gene_stats, %other_stats);
 
-    my @gene_stats_keys   = qw(coding noncoding pseudogene transcript);
-    my @alt_gene_stats_keys = qw(alt_coding alt_noncoding alt_pseudogene alt_transcript);
+    my @gene_stats_keys   = qw(coding shortnoncoding longnoncoding pseudogene transcript);
+    my @alt_gene_stats_keys = qw(alt_coding alt_shortnoncoding alt_longnoncoding alt_pseudogene alt_transcript);
 
     my @other_stats_keys  = qw(genpept genfpept fgenpept snps strucvar);
 
@@ -200,8 +200,10 @@ foreach my $spp (@valid_spp) {
     my %glossary_lookup   = (
       'coding'              => 'Protein coding',
       'alt_coding'          => 'Protein coding',
-      'noncoding'           => 'Non coding',
-      'alt_noncoding'       => 'Non coding',
+      'shortnoncoding'      => 'Short Non coding',
+      'alt_shortnoncoding'  => 'Short Non coding',
+      'longnoncoding'       => 'Long Non coding',
+      'alt_longnoncoding'   => 'Long Non coding',
       'pseudogene'          => 'Pseudogene',
       'alt_pseudogene'      => 'Pseudogene',
       'transcript'          => 'Transcript',
@@ -210,14 +212,16 @@ foreach my $spp (@valid_spp) {
 
     my %gene_title        = (
       'coding'              => 'Coding genes',
-      'noncoding'           => 'Non coding genes',
+      'shortnoncoding'      => 'Short Non coding genes',
+      'longnoncoding'       => 'Long Non coding genes',
       'pseudogene'          => 'Pseudogenes',
       'transcript'          => 'Gene transcripts'
     );
 
     my %alt_gene_title        = (
       'alt_coding'          => 'Coding genes',
-      'alt_noncoding'       => 'Non coding genes',
+      'alt_shortnoncoding'  => 'Short Non coding genes',
+      'alt_longnoncoding'   => 'Long Non coding genes',
       'alt_pseudogene'      => 'Pseudogenes',
       'alt_transcript'      => 'Gene transcripts'
     );
@@ -261,7 +265,7 @@ foreach my $spp (@valid_spp) {
 
 ###
 
-      ($gene_stats{'noncoding'}) = &query( $db,
+      ($gene_stats{'shortnoncoding'}) = &query( $db,
         "select sum(value)
         from seq_region_attrib sa, attrib_type at,
              seq_region s, coord_system cs
@@ -269,11 +273,11 @@ foreach my $spp (@valid_spp) {
         and at.attrib_type_id = sa.attrib_type_id
         and s.seq_region_id = sa.seq_region_id
         and cs.coord_system_id = s.coord_system_id
-        and code = 'noncoding_cnt'
+        and code = 'snoncoding_cnt'
         ");
-      print STDERR "Non coding:$gene_stats{'noncoding'}\n" if $DEBUG;
+      print STDERR "Non coding:$gene_stats{'shortnoncoding'}\n" if $DEBUG;
 
-      ($gene_stats{'alt_noncoding'}) = &query( $db,
+      ($gene_stats{'longnoncoding'}) = &query( $db,
         "select sum(value)
         from seq_region_attrib sa, attrib_type at,
              seq_region s, coord_system cs
@@ -281,9 +285,33 @@ foreach my $spp (@valid_spp) {
         and at.attrib_type_id = sa.attrib_type_id
         and s.seq_region_id = sa.seq_region_id
         and cs.coord_system_id = s.coord_system_id
-        and code = 'noncoding_acnt'
+        and code = 'lnoncoding_cnt'
         ");
-      print STDERR "Alternate non coding:$gene_stats{'alt_noncoding'}\n" if $DEBUG;
+      print STDERR "Non coding:$gene_stats{'longnoncoding'}\n" if $DEBUG;
+
+      ($gene_stats{'alt_shortnoncoding'}) = &query( $db,
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
+        where species_id=$spp_id
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'snoncoding_acnt'
+        ");
+      print STDERR "Alternate non coding:$gene_stats{'alt_shortnoncoding'}\n" if $DEBUG;
+
+      ($gene_stats{'alt_longnoncoding'}) = &query( $db,
+        "select sum(value)
+        from seq_region_attrib sa, attrib_type at,
+             seq_region s, coord_system cs
+        where species_id=$spp_id
+        and at.attrib_type_id = sa.attrib_type_id
+        and s.seq_region_id = sa.seq_region_id
+        and cs.coord_system_id = s.coord_system_id
+        and code = 'lnoncoding_acnt'
+        ");
+      print STDERR "Alternate non coding:$gene_stats{'alt_longnoncoding'}\n" if $DEBUG;
 
 ###
 
