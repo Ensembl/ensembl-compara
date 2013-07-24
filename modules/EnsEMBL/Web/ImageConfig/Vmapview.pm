@@ -19,7 +19,8 @@ sub init {
     spacing      => 10,
     scale_values => [qw(
                         codingdensity
-                        noncodingdensity
+                        shortnoncodingdensity
+                        longnoncodingdensity
                         pseudogenedensity)],
     active_menu  => 'other'
   });
@@ -48,11 +49,23 @@ sub init {
         'density_line',    'Line graph'
       ],
     }],
-    [ 'VNonCodgenes', 'NonCodGenes', 'Vdensity_features', {
+    [ 'VShortNonCodgenes', 'ShortNonCodGenes', 'Vdensity_features', {
       scale_all  => 1,
       display    => 'density_outline',
       colourset  => 'densities',
-      keys       => [ 'noncodingdensity' ],
+      keys       => [ 'shortnoncodingdensity' ],
+      renderers  => [
+        'off',             'Off',
+        'density_outline', 'Bar chart - outline',
+        'density_bar',     'Bar chart - filled',
+        'density_line',    'Line graph',
+      ],
+    }],
+    [ 'VLongNonCodgenes', 'LongNonCodGenes', 'Vdensity_features', {
+      scale_all  => 1,
+      display    => 'density_outline',
+      colourset  => 'densities',
+      keys       => [ 'longnoncodingdensity' ],
       renderers  => [
         'off',             'Off',
         'density_outline', 'Bar chart - outline',
