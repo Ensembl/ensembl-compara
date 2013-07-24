@@ -289,8 +289,22 @@ sub handler {
     my ($object_type, $db_type, $uri);
     my $unstripped_stable_id = $stable_id;
     if ($stable_id =~ /^ENS/) {
-	$stable_id =~ s/\.[0-9]+$//; ## Remove versioning for Ensembl ids
+	    $stable_id =~ s/\.[0-9]+$//; ## Remove versioning for Ensembl ids
     }
+
+    ## Try to register stable_id adaptor so we can use that db (faster lookup)
+    my %db = %{$species_defs->multidb->{'DATABASE_STABLE_IDS'}||{}};
+    if (keys %db) {
+      my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+                               '-species' => 'multi',
+                               '-group'   => 'stable_ids',
+                               '-host'    => $db{'HOST'},
+                               '-port'    => $db{'PORT'},
+                               '-user'    => $db{'USER'},
+                               '-pass'    => $db{'PASS'},
+                               '-dbname'  => $db{'NAME'});
+    }
+
     ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
     if(!$species || !$object_type) {
       ## Maybe that wasn't versioning after all!
