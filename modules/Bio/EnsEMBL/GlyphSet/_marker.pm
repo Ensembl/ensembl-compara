@@ -114,7 +114,8 @@ sub features {
     my $priority   = $self->my_config('priority');
     my $marker_id  = $self->my_config('marker_id');
     my $map_weight = 2;
-       @features   = (@{$slice->get_all_MarkerFeatures(undef, $priority, $map_weight)}, $marker_id ? @{$slice->get_MarkerFeatures_by_Name($marker_id)} : ()); ## Force drawing of specific marker regardless of weight
+    @features   = (@{$slice->get_all_MarkerFeatures(undef, $priority, $map_weight)};
+    push @features, @{$slice->get_MarkerFeatures_by_Name($marker_id)} if ($marker_id and !grep {$_->display_id eq $marker_id} @features); ## Force drawing of specific marker regardless of weight (but only if not already being drawn!)
   }
   
   foreach my $f (@features) {
