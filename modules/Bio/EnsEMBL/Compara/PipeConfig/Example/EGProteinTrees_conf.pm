@@ -102,7 +102,7 @@ sub default_options {
     buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
     codeml_exe      =>  $self->o('exe_dir').'/codeml',
     ktreedist_exe   =>  $self->o('exe_dir').'/ktreedist',
-   'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.2.23+-x86_64-Linux/bin/',
+   'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
 
     # HMM specific parameters
    'hmm_clustering'            => 0, ## by default run blastp clustering
