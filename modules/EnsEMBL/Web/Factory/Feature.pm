@@ -16,6 +16,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use Bio::EnsEMBL::Registry;
+
 use EnsEMBL::Web::Data::Bio::Slice;
 use EnsEMBL::Web::Data::Bio::Gene;
 use EnsEMBL::Web::Data::Bio::Transcript;
@@ -114,6 +116,11 @@ sub _create_ProbeFeature {
   
   if ($subtype && $subtype eq 'pset') {
     $probe = $self->_generic_create('ProbeFeature', 'fetch_all_by_probeset', $db);
+    my @A = @$probe;
+    #warn ">>> PROBE @A";
+    for (@$probe) {
+      warn "... ".$_->probe_id;
+    }
   } else {
     $probe = $self->_create_ProbeFeatures_by_probe_id;
   }
@@ -267,12 +274,14 @@ sub create_UserDataFeature {
 }
 
 sub _create_Gene {
-  ### Fetches all the genes for a given identifier (usually only one, but could be multiple
+  ### Fetches all the genes for a given identifier 
   ### Args: db
   ### Returns: hashref containing a Data::Bio::Gene object
   
   my ($self, $db) = @_;
-  my $genes       = $self->_generic_create('Gene', $self->param('id') =~ /^ENS/ ? 'fetch_by_stable_id' : 'fetch_all_by_external_name', $db);
+
+  ## Default to checking by external name (check for stable IDs in _generic_create)
+  my $genes       = $self->_generic_create('Gene', 'fetch_all_by_external_name', $db);
   
   return { Gene => EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes) };
 }
@@ -415,6 +424,7 @@ sub _generic_create {
     $id = join ' ', @$id;
   }
   
+  
   ## deal with xrefs
   my $xref_db;
   
@@ -446,13 +456,21 @@ sub _generic_create {
     foreach my $fid (split /\s+/, $id) { 
       my $t_features;
       
+      ## Check for gene stable IDs
+      my $gene_stable_id = 0;
+      if ($object_type eq 'Gene') {
+        my ($species, $obj_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($fid); 
+        $gene_stable_id = 1 if ($species && $obj_type && $obj_type eq 'Gene');
+      }
+      
       if ($xref_db) { 
         eval {
          $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
         };
-      } elsif ($accessor eq 'fetch_by_stable_id') { ## Hack to get gene stable IDs to work
+      } elsif ($gene_stable_id) { ## Hack to get gene stable IDs to work
+        $accessor = 'fetch_by_stable_id';
         eval {
-         $t_features = [ $db_adaptor->$adaptor_name->$accessor($fid) ];
+          $t_features = [ $db_adaptor->$adaptor_name->$accessor($fid) ];
         };
       } elsif ($subtype) {
          eval {
