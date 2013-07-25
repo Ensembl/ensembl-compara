@@ -15,55 +15,73 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-
+  my $vf     = $self->hub->param('vf');
+  my $html;
   ## first check we have uniquely determined variation
   return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
-  
-  my $data = $object->get_external_data;
-  
-  return 'We do not have any external data for this variation' unless scalar @$data;
-  
+
+  my $data = $object->get_external_data();
+
+  return 'We do not have any external data for this variation' unless (scalar @$data);
+
   my $is_somatic = $object->Obj->is_somatic;
   my $study      = $is_somatic ? 'Tumour site' : 'Study'; 
-  
-  my $html;
-  
-  my ($table_rows, $supporting_evidence) = $self->table_data($data);
+
+  # Select only the phenotype features which have the same coordinates as the selected variation
+  my $vf_object = ($vf) ? $self->hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
+  if ($vf_object) {
+    my $chr   = $vf_object->seq_region_name;
+    my $start = $vf_object->seq_region_start;
+    my $end   = $vf_object->seq_region_end;
+    my @new_data = grep {$_->seq_region_name eq $chr && $_->seq_region_start == $start && $_->seq_region_end == $end} @$data;
+    $data = \@new_data;
+  }
+
+  my ($table_rows, $column_flags) = $self->table_data($data);
   my $table      = $self->new_table([], [], { data_table => 1 });
-   
+     
   if (scalar keys(%$table_rows) != 0) {
 
     $table->add_columns(
       { key => 'disease', title => 'Disease/Trait', align => 'left', sort => 'html' },  
       { key => 'source',  title => 'Source(s)',     align => 'left', sort => 'html' },
     );
-    if ($supporting_evidence!=0) {
-      $table->add_columns(
-        { key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' }
-      );
+    if ($column_flags->{'s_evidence'}) {
+      $table->add_columns({ key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' });
     }
-  
+    
+    $table->add_columns({ key => 'study', title => $study, align => 'left', sort => 'html' });
+
+    if ($column_flags->{'clin_sign'}) {
+      $table->add_columns({ key => 'clin_sign', title => 'Clinical significance', align => 'left', sort => 'html' });
+    }
+      
     $table->add_columns(
-      { key => 'study',     title => $study,                  align => 'left', sort => 'html' },
-      { key => 'clin_sign', title => 'Clinical significance', align => 'left', sort => 'html' },
       { key => 'genes',     title => 'Reported gene(s)',      align => 'left', sort => 'html' },
       { key => 'variant',   title => 'Associated variant(s)', align => 'left', sort => 'none' },
     );
-  
+    
     if (!$is_somatic) {
       $table->add_columns(
         { key => 'allele',  title => 'Most associated allele', align => 'left', sort => 'string'    },
         { key => 'pvalue',  title => 'P value',                align => 'left', sort => 'numeric' }
       );
     }
-  
+   
+    # Odds ratio
+    if ($column_flags->{'odds_ratio'}) {    
+      $table->add_columns({ key => 'odds_ratio',  title => 'Odds ratio', align => 'left', sort => 'string' });
+    }
+    # Beta coefficient
+    if ($column_flags->{'beta_coef'}) {
+      $table->add_columns({ key => 'beta_coef',  title => 'Beta coefficient', align => 'left', sort => 'string' });
+    }
+
     $table->add_rows(@$_) for values %$table_rows;
-    $html .= qq{<h3>Significant data</h3>};
+    $html .= sprintf qq{<h3>Significant association(s)</h3>};
     $html .= $table->render;
   }
-  
-  #$html .= $clin_var_table;
-  
+   
   return $html;
 };
 
@@ -75,7 +93,7 @@ sub table_data {
   my $object     = $self->object;
   my $is_somatic = $object->Obj->is_somatic;
   my %rows;
-  my $has_evidence = 0;
+  my %column_flags;
    
   my $mart_somatic_url = 'http://www.ensembl.org/biomart/martview?VIRTUALSCHEMANAME=default'.
                          '&ATTRIBUTES=hsapiens_snp_som.default.snp.refsnp_id|hsapiens_snp_som.default.snp.chr_name|'.
@@ -114,6 +132,7 @@ sub table_data {
     if ($clin_sign) {
       my $clin_sign_colour = $object->clinical_significance_colour($clin_sign);
       $clin_sign = qq{<span style="color:$clin_sign_colour">$clin_sign</span>};
+      $column_flags{'clin_sign'} = 1;
     }
     
     # Add the supporting evidence source(s)
@@ -136,7 +155,8 @@ sub table_data {
     my $allele       = $self->allele_link($pf->external_reference, $pf->risk_allele) || $pf->risk_allele;
     my $variant_link = $self->variation_link($pf->object->stable_id);
     my $pval         = $pf->p_value;
-    
+    my $attributes   = $pf->get_all_attributes();
+
     my $disease  = qq{<b>$disorder</b>};
     
     # BioMart link
@@ -167,14 +187,22 @@ sub table_data {
   
     if ($a_study_source ne ''){
       $row->{s_evidence} = $a_study_source;
-      $has_evidence = 1;
+      $column_flags{s_evidence} = 1;
+    }
+
+    # Odds ratio and beta coefficient
+    foreach my $attr ('odds_ratio', 'beta_coef') {
+      if ($attributes->{$attr}) {
+        $row->{$attr} = $attributes->{$attr};
+        $column_flags{$attr} = 1;
+      }
     }
     
     push @data_row, $row;
     $rows{lc $pf->phenotype->description} = \@data_row;
   } 
 
-  return \%rows,$has_evidence;
+  return \%rows,\%column_flags;
 }
 
 
