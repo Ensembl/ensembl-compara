@@ -40,7 +40,7 @@ sub content {
     my $lrg         = $object->Obj;
     my $param       = $hub->param('lrg');
     my $transcript  = $hub->param('lrgt');
-		(my $href       = $external_urls->{'LRG'}) =~ s/###ID###//;
+    (my $href       = $external_urls->{'LRG'}) =~ s/###ID###//;
     my $description = qq{LRG region <a rel="external" href="$href">$param</a>.};
     my @genes       = @{$lrg->get_all_Genes('LRG_import')||[]};
     my $display     = $genes[0]->display_xref();
@@ -78,55 +78,135 @@ sub content {
     my $transcripts = $lrg->get_all_Transcripts(undef, 'LRG_import'); 
 
     my $count    = @$transcripts;
-    my $plural_1 = 'are';
-    my $plural_2 = 'transcripts';
+    my $plural = 'transcripts';
     
-    if ($count == 1) {
-      $plural_1 = 'is'; 
-      $plural_2 =~ s/s$//; 
+    if ($count == 1) { 
+      $plural =~ s/s$//; 
     }
-    
-    my $hide    = $hub->get_cookie_value('toggle_transcripts_table') eq 'closed';
-    my @columns = (
-       { key => 'name',        sort => 'string', title => 'Name'          },
-       { key => 'transcript',  sort => 'html',   title => 'Transcript ID' },
-       { key => 'description', sort => 'none',   title => 'Description'   },
+   
+    my $tr_html = "This LRG has $count $plural";
+
+    my $tr_cookie = $hub->get_cookie_value('toggle_transcripts_table');
+    my $show = (defined($tr_cookie) && $tr_cookie ne '' ) ? $tr_cookie eq 'open' : 'open';
+
+    my $tr_line = $tr_html . sprintf(
+        ' <a rel="transcripts_table" class="button toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table">
+          <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
+        </a>',
+        $show ? 'open' : 'closed'
     );
-		
-    my @rows;
-    
-		my %url_params = (
-      type => 'LRG',
-			lrg  => $param
-    );
- 
-    foreach (map $_->[2], sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map [$_->external_name, $_->stable_id, $_], @$transcripts) {
-      push @rows, {
-        name        => { value => encode_entities($_->display_xref ? $_->display_xref->display_id : '-'), class => 'bold' },
-        transcript  => sprintf('<a href="%s">%s</a>', $hub->url({ %url_params, lrgt => $_->stable_id }), $_->stable_id),
-        description => 'Fixed transcript for reporting purposes',
-        options     => { class => $count == 1 || $_->stable_id eq $transcript ? 'active' : '' }
-      };
-    }
-    
-    my $table = $self->new_table(\@columns, \@rows, {
-      data_table        => 1,
-      data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
-      toggleable        => 1,
-      class             => 'fixed_width no_col_toggle',
-      id                => 'transcripts_table',
-      style             => $hide ? 'display:none' : '',
-      exportable        => 0
-    });
     
     $html = $self->new_twocol(
       ['Description', $description],
       ['Location', $location_html],
-      [sprintf('<a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">Transcripts</a>', $hide ? 'closed' : 'open'), "There $plural_1 $count $plural_2 in this region:"]
-    )->render.$table->render;
+      ['Transcripts', $tr_line]
+    )->render;
+    $html .= $self->transcript_table($tr_cookie);
   }
 
   return qq{<div class="summary_panel">$html</div>};
+}
+
+
+sub transcript_table {
+
+  my $self        = shift;
+  my $tr_cookie   = shift; 
+  my $hub         = $self->hub;
+  my $object      = $self->object;
+  my $lrg         = $object->Obj;
+  my $lrg_id      = $hub->param('lrg');
+  my $transcript  = $hub->param('lrgt');
+  my $table       = $self->new_twocol;
+  my $transcripts = $lrg->get_all_Transcripts(undef, 'LRG_import');
+  my $count       = @$transcripts;
+
+  my $trans_attribs = {};
+  foreach my $trans (@$transcripts) {
+    foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF)) {
+      (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
+      if ($attrib && $attrib->value) {
+        $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value;
+      }
+    }
+  }
+  my %url_params = (
+    type   => 'LRG',    
+    lrg    => $lrg_id
+  );
+    
+  my $show    = (defined($tr_cookie) && $tr_cookie ne '' ) ? $tr_cookie eq 'open' : 'open';
+  my @columns = (
+     { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
+     { key => 'bp_length',  sort => 'numeric', title => 'Length (bp)'   },
+     { key => 'protein',    sort => 'html',    title => 'Protein ID'    },
+     { key => 'aa_length',  sort => 'numeric', title => 'Length (aa)'   },
+  );
+
+  push @columns, { key => 'cds_tag', sort => 'html', title => 'CDS incomplete' } if %$trans_attribs; 
+    
+  my @rows;
+    
+  foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
+    my $transcript_length = $_->length;
+    my $tsi               = $_->stable_id;
+    my $protein           = 'No protein product';
+    my $protein_length    = '-';
+    my $ccds              = '-';
+    my $cds_tag           = '-';
+    my $url               = $hub->url({ %url_params, t => $tsi });
+      
+    if ($_->translation) {
+      $protein = sprintf(
+        '<a href="%s">%s</a>',
+        $hub->url({
+          %url_params,
+          action => 'ProteinSummary',
+          lrgt   => $tsi
+        }),
+        $_->translation->stable_id
+      );
+        
+      $protein_length = $_->translation->length;
+    }
+      
+    if ($trans_attribs->{$tsi}) {
+      if ($trans_attribs->{$tsi}{'CDS_start_NF'}) {
+        if ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
+          $cds_tag = "5' and 3'";
+        }
+        else {
+          $cds_tag = "5'";
+        }
+      }
+      elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
+       $cds_tag = "3'";
+      }
+    }
+      
+    my $row = {
+      transcript => sprintf('<a href="%s">%s</a>', $hub->url({ %url_params, action => 'Sequence_cDNA', lrgt => $tsi }), $tsi),
+      bp_length  => $transcript_length,
+      protein    => $protein,
+      aa_length  => $protein_length,
+      cds_tag    => $cds_tag,
+      options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' }
+    };
+      
+    push @rows, $row;
+  }
+
+  my $tr_table = $self->new_table(\@columns, \@rows, {
+    data_table        => 1,
+    sorting           => [ 'transcript asc' ],
+    data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
+    toggleable        => 1,
+    class             => 'fixed_width' . ($show ? '' : ' hide'),
+    id                => 'transcripts_table',
+    exportable        => 0
+  });
+    
+  return $tr_table->render;
 }
 
 1;
