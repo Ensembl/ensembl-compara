@@ -501,7 +501,7 @@ The Ensembl variation API provides some methods to retrieve phenotype data
 associated with various Ensembl object types (variations, structural variations,
 genes, and QTLs). These data, stored into the Ensembl variation database, are
 imported from different sources (e.g. NHGRI GWAS catalog, OMIM, UniProt, Open
-Access GWAS Database, EGA, COSMIC, HGMD).</p>
+Access GWAS Database, EGA, COSMIC, HGMD, ...).</p>
 <pre class="code">
 use strict;
 use warnings;
@@ -550,6 +550,15 @@ foreach my $pf (@{$pf_adaptor->fetch_all_by_phenotype_description_source_name($p
 	print $pf->type, " ", $pf->object_id, " is associated with the phenotype '", $phenotype,
 	      "' in source ", $source_name," (", $external_reference,")\n";
 }		
+</pre>
+
+<p>By default, the API will only returns the variations with significant phenotype associations (low P value). 
+However the database stores also non significant phenotype associations.
+In order to fetch this data, an extra line in the code needs to be added after the creation of the adaptor:
+</p>  
+<pre>
+my $pf_adaptor = $registry->get_adaptor('homo_sapiens', 'variation', 'phenotypefeature');
+$pf_adaptor->db->include_non_significant_phenotype_associations(1); # Use the value 0 to revert to only significant associations.
 </pre>
 
 
