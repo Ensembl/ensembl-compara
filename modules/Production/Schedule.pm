@@ -14,6 +14,7 @@ Production::Schedule - simple graph scheduler for background jobs
   my $t2 = $sch->make_task("sleep 5; echo '2'");
   my $t3 = $sch->make_task("sleep 5 ; echo '3'");
   $t2->wait_for($t1);
+  # $sch->dry_run();
   $sch->go();
   print $t2->exit_code();
 
@@ -47,6 +48,10 @@ It should not be used for farm-like problems.
 use strict;
 use warnings;
 
+use sigtrap qw(die normal-signals);
+
+my @ipc_run_h;
+
 sub new {
   my ($proto,$support) = @_;
   my $class = ref($proto) || $proto;
@@ -59,12 +64,14 @@ sub new {
     logger => $logger,
     pumping => {},
     die_on_error => 0,
+    dry_run => 0,
   };
   bless $self,$class;
   return $self;
 }
 
 sub die_on_error { $_[0]->{'die_on_error'} = 1; }
+sub dry_run { $_[0]->{'dry_run'} = 1; }
 
 sub make_task {
   my ($self,$cmd) = @_;
@@ -101,7 +108,7 @@ sub _pump {
     my $t = $self->{'tasks'}{$i};
     next if $self->{'finished'}{$i} or $self->{'pumping'}{$i};
     unless(grep { !$self->{'finished'}{$_}  } $t->_deps()) {
-      $t->_run();
+      push @ipc_run_h,$t->_run();
     }
   }
   return !!(keys %{$self->{'pumping'}});
@@ -154,10 +161,16 @@ sub _run {
 
   $self->{'sch'}{'logger'}->("Starting task $self->{'idx'}.");
   my ($out);
-  $self->{'h'} = start(["bash","-c",$self->{'task'}],\undef,
+  my $task = $self->{'task'};
+  if($self->{'sch'}{'dry_run'}) {
+    $task = "sleep 5";
+  }
+
+  $self->{'h'} = start(["bash","-c",$task],\undef,
                        sub { $self->log($_[0],0) },
                        sub { $self->log($_[0],1) });
   $self->{'sch'}->_pump_go($self->{'idx'});
+  return $self->{'h'};
 }
 
 sub _pump {
@@ -174,5 +187,7 @@ sub _pump {
 }
 
 sub exit_code { return IPC::Run::result $_[0]->{'h'}; }
+
+END { $_->kill_kill for @ipc_run_h; }
 
 1;
