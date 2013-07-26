@@ -58,8 +58,8 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '72',
-        'rel_suffix'            => 'm',    # an empty string by default, a letter otherwise
+        'release'               => '73',
+        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # dependent parameters: updating 'work_dir' should be enough
@@ -86,6 +86,7 @@ sub default_options {
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
         'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
+        #'sreformat_exe'             => '/software/ensembl/compara/sreformat',
         'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
@@ -167,12 +168,10 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
         },
-        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
@@ -199,7 +198,7 @@ sub default_options {
         #'ncbi_db'                   => $self->o('livemirror_loc'),
 
         #'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-        'prev_release'            => $self->o('release'),
+        #'prev_release'            => $self->o('release'),
 
     };
 }
