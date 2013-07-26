@@ -272,6 +272,7 @@ sub cigar_from_two_alignment_strings {
         $len2 -= $minlen;
         $len1 -= $minlen;
     };
+    die "lengths do not match: $len1 / $len2" if $len1 or $len2;
     return $cigar_line;
 }
 
