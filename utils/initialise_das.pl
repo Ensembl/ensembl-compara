@@ -32,12 +32,13 @@ BEGIN{
   import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic %COORD_MAPPINGS %TYPE_MAPPINGS %AUTHORITY_MAPPINGS %NON_GENOMIC_COORDS);
 }
 
-my ($force_update,$check_registry,$site,$xml) = (0,0,'',0);
+my ($force_update,$check_registry,$site,$xml,$override_authority) = (0,0,'',0);
 GetOptions(
   "force",  \$force_update,
   "check",  \$check_registry,
   "site=s", \$site,
   "xml", \$xml,
+  "authority=s", \$override_authority, 
 );
 
 my $permalink_base = $site || $SiteDefs::ENSEMBL_BASE_URL;
@@ -477,6 +478,12 @@ sub _coord_system_as_xml {
   $authority = $reverse_auths{$authority} || $authority;
   
   CREATE:
+  
+  if ($override_authority) {
+    $authority = $override_authority;
+    $version = $cs_version;
+  }
+  
   my $xml = $version ? sprintf q(<COORDINATES source="%s" authority="%s" test_range="" uri="" version="%s" taxid="%s">%2$s_%3$s,%1$s,%s</COORDINATES>),
                                $type, $authority, $version, $taxid, $species
                      : sprintf q(<COORDINATES source="%s" authority="%s" taxid="%s">%2$s,%1$s,%s</COORDINATES>),
