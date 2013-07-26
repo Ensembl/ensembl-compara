@@ -556,8 +556,9 @@ foreach my $pf (@{$pf_adaptor->fetch_all_by_phenotype_description_source_name($p
 However the database stores also non significant phenotype associations.
 In order to fetch this data, an extra line in the code needs to be added after the creation of the adaptor:
 </p>  
-<pre>
+<pre class="code">
 my $pf_adaptor = $registry->get_adaptor('homo_sapiens', 'variation', 'phenotypefeature');
+
 $pf_adaptor->db->include_non_significant_phenotype_associations(1); # Use the value 0 to revert to only significant associations.
 </pre>
 
