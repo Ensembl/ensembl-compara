@@ -156,7 +156,7 @@ sub parse_blast_table_into_paf {
     while(my $line = <BLASTTABLE>) {
 
         unless ($line =~ /^#/) {
-            my ($qmember_id, $hmember_id, $evalue, $score, $nident,$pident, $qstart, $qend, $hstart,$hend, $length, $positive, $ppos, $qseq, $sseq ) = split(/\s+/, $line);
+            my ($qmember_id, $hmember_id, $evalue, $score, $nident,$pident, $qstart, $qend, $hstart,$hend, $length, $positive, $ppos, $qseq, $sseq ) = split(/\t/, $line);
 
             my $cigar_line;
             unless ($self->param('no_cigars')) {
