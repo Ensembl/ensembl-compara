@@ -132,7 +132,8 @@ sub rec_add_paralogs {
     $child2->print_node if ($self->debug);
 
     # All the homologies will share this information
-    my $taxon_name = $self->get_ancestor_taxon_level($ancestor)->name;
+    $self->get_ancestor_taxon_level($ancestor);
+    my $taxon_name = $ancestor->get_tagvalue('taxon_name');
     print "taxon_name: $taxon_name\n" if ($self->debug);
 
     # The node_type of the root
