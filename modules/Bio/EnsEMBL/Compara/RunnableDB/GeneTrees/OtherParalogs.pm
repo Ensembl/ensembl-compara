@@ -91,6 +91,12 @@ sub fetch_input {
     $self->param('super_align', \%super_align);
     $self->param('homology_consistency', {});
     $self->param('homology_links', []);
+    $self->delete_old_homologies;
+}
+
+sub write_output {
+    my $self = shift @_;
+
 }
 
 
