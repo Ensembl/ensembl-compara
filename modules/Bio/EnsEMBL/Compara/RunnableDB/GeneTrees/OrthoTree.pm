@@ -534,13 +534,12 @@ sub direct_ortholog_test
   #  - no ancestral duplication events
   #  - these genes are only copies of the ancestor for their species
 
-  return undef if($genepairlink->get_tagvalue('has_dups'));
-
   my ($pep1, $pep2) = $genepairlink->get_nodes;
   return undef if($pep1->genome_db_id == $pep2->genome_db_id);
 
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
+  return undef if $ancestor->get_tagvalue('node_type') eq 'duplication';
 
   #RAP seems to miss some duplication events so check the species 
   #counts for these two species to make sure they are the only
