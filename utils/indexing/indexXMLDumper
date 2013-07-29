@@ -156,18 +156,10 @@ my $total_c;
 my $conf = {};
 
 foreach my $index (@indexes) {
-
   my $start = time;
-  if ($search_engine eq 'lucene' && $index eq 'Help') {
-    foreach my $type (qw(View Glossary FAQ)) {
-      $conf->{"directory_$type"} = "$dir/".lc($sitetype)."_$type";
-      mkdir $conf->{"directory_$type"}, 0777 unless -e $conf->{"directory_$type"};
-    }
-  }
-  else {
-    $conf->{'directory'} = "$dir/".lc($sitetype)."_$index";
-    mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
-  }
+  $conf->{'directory'} = "$dir/".lc($sitetype)."_$index";
+  mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
+
   if ($index eq 'Variation') {
     $conf->{'directory_somatic_mutations'} = "$dir/".lc($sitetype)."_SomaticMutation";
     mkdir $conf->{'directory_somatic_mutations'}, 0777 unless -e $conf->{'directory_somatic_mutations'};
@@ -270,24 +262,23 @@ sub dumpHelp {
   my $start_time = time;
   my $total_c;
   my @types = $sitetype eq 'Vega' ? qw(Glossary) : qw(View Glossary FAQ);
-  my ($file,$fh,$counter);
-  my $dbname    = $conf->{'website'}{'name'};
-  if ($search_engine eq 'solr') {
-    $file = $conf->{'directory'}.'/'.$conf->{'website'}{'name'}.'_Help.xml';
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-    $counter   = make_counter(0);
+  foreach my $type (@types) {
+    my $counter   = make_counter(0);
+    my $file = $conf->{'directory'}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
+    $file .= ".gz" unless $nogzip;
+    my $dbname    = $conf->{'website'}{'name'};
+    my $db_type   = $type;
+    my $fh;
+    unless ($nogzip) {
+      $fh = new IO::Zlib;
+      $fh->open( "$file", "wb9" )
+        or die("Can't open compressed stream to $file: $!");
+    }
+    else {
+      open( $fh, ">$file" ) or die "Can't open $file: $!";
+    }
     print LOG "  Dumping $dbname Help to $file ... ", format_datetime($start_time), "\n";
     header( $dbname, 'Help', 'Help', $nogzip, $fh, $release );
-  }
-  foreach my $type (@types) {
-    my $db_type   = $type;
-    if ($search_engine eq 'lucene') {
-      $file = $conf->{'directory_'.$type}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
-      open( $fh, ">$file" ) or die "Can't open $file: $!";
-      $counter   = make_counter(0);
-      print LOG "  Dumping $dbname $type to $file ... ", format_datetime($start_time), "\n";
-      header( $dbname, 'Help', $db_type, $nogzip, $fh, $release );
-    }
 
     if ($type eq 'View') {
       my $sth = $conf->{'website'}{'dbh'}->prepare(qq(
@@ -334,16 +325,9 @@ sub dumpHelp {
         &p(helpLine($id, $title, $keywords, $description, $extra, $type, $counter), $nogzip, $fh); #### need to parse it
       }
     }
-    if ($search_engine eq 'lucene') {
-      $total_c += footer($counter->(), $nogzip, $fh, $type);
-    }
+    $total_c += footer($counter->(), $nogzip, $fh, $type);
   }
-  if ($search_engine eq 'solr') {
-    footer($counter->(), $nogzip, $fh, 'Help');
-  }
-  else {
-    return $total_c;
-  }
+  return $total_c;
 }
 
 sub helpLine {
@@ -377,9 +361,7 @@ sub helpLine {
       $xml .= qq(
   <field name="keyword">$kw</field>);
     }
-    $xml .= &common_fields('All','Documentation','');
-    $xml .= qq(
-  <field name="feature_subtype">$type</field>);
+    $xml .= &common_fields('All',$type,'');
     $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
