@@ -447,8 +447,10 @@ sub get_ancestor_taxon_level {
       $taxon_level = $taxon;
     }
   }
-  $ancestor->store_tag('taxon_id', $taxon_level->get_tagvalue('taxon_id'));
-  $ancestor->store_tag('taxon_name', $taxon_level->name);
+  unless ($self->param('_readonly')) {
+    $ancestor->store_tag('taxon_id', $taxon_level->get_tagvalue('taxon_id'));
+    $ancestor->store_tag('taxon_name', $taxon_level->name);
+  }
 }
 
 
