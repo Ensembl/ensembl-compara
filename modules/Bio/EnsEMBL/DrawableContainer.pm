@@ -38,11 +38,7 @@ sub new {
   ## Loop through each pair of "container / config"s
   foreach my $CC (@{$self->{'contents'}}) {
     my ($container, $config) = @$CC;
-    $config->set_parameters({
-      panel_width        => $panel_width,
-      __left_hand_margin => $panel_start - $label_start
-    });
-
+    
     ## If either Container or Config not present skip
     if (!defined $container) {
       warn ref($self) . ' No container defined';
@@ -53,7 +49,22 @@ sub new {
       warn ref($self) . ' No config object defined';
       next;
     }
-
+    
+    my $w = $config->container_width;
+       $w = $container->length if !$w && $container->can('length');
+       
+    my $x_scale = $w ? $panel_width /$w : 1; 
+    
+    $config->{'transform'}->{'scalex'}         = $x_scale; ## set scaling factor for base-pairs -> pixels
+    $config->{'transform'}->{'absolutescalex'} = 1;
+    $config->{'transform'}->{'translatex'}     = $panel_start; ## because our label starts are < 0, translate everything back onto canvas
+    
+    $config->set_parameters({
+      panel_width        => $panel_width,
+      image_end          => ($panel_width + $margin + $padding) / $x_scale, # the right edge of the image, used to find labels which would be drawn too far to the right, and bring them back inside
+      __left_hand_margin => $panel_start - $label_start
+    });
+    
     ## Initiailize list of glyphsets for this configuration
     my @glyphsets;
     
@@ -130,15 +141,6 @@ sub new {
       }
     }
     
-    my $w = $config->container_width;
-       $w = $container->length if !$w && $container->can('length');
-       
-    my $x_scale = $w ? $panel_width /$w : 1; 
-    
-    $config->{'transform'}->{'scalex'}         = $x_scale; ## set scaling factor for base-pairs -> pixels
-    $config->{'transform'}->{'absolutescalex'} = 1;
-    $config->{'transform'}->{'translatex'}     = $panel_start; ## because our label starts are < 0, translate everything back onto canvas
-
     ## set the X-locations for each of the bump labels
     foreach my $glyphset (@glyphsets) {
       next unless defined $glyphset->label;
