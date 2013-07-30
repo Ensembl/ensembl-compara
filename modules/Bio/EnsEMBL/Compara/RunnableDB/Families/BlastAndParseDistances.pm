@@ -97,7 +97,7 @@ sub fetch_input {
 }
 
 sub parse_blast_table_into_matrix_hash {
-    my ($self, $filename, $min_self_dist) = @_;
+    my ($self, $filename, $min_self_similarity) = @_;
 
     my $roundto    = $self->param('roundto') || 0.0001;
 
@@ -115,20 +115,22 @@ sub parse_blast_table_into_matrix_hash {
                 $curr_index = $self->name2index($curr_name)
                     || die "Parser could not map '$curr_name' to sequence_id";
 
-                $matrix_hash{$curr_index}{$curr_index} = $min_self_dist;   # stop losing singletons whose evalue to themselves is *above* 'evalue_limit' threshold
-                                                                           # (that is, the ones that are "not even similar to themselves")
+                $matrix_hash{$curr_index}{$curr_index} = $min_self_similarity;  # stop losing singletons whose evalue to themselves is *above* 'evalue_limit' threshold
+                                                                                # (that is, the ones that are "not even similar to themselves")
             }
         } else {
             my ($qname, $hname, $evalue) = split(/\s+/, $line);
 
             my $hit_index = $self->name2index($hname);
                 # we MUST be explicitly numeric here:
-            my $distance  = ($evalue != 0) ? -log($evalue)/log(10) : 200;
+            my $new_similarity  = ($evalue != 0) ? -log($evalue)/log(10) : 200;
 
                 # do the rounding to prevent the unnecessary growth of tables/files
-            $distance = int($distance / $roundto) * $roundto;
+            $new_similarity = int($new_similarity / $roundto) * $roundto;
 
-            $matrix_hash{$curr_index}{$hit_index} = $distance;
+            my $prev_similarity = $matrix_hash{$curr_index}{$hit_index};
+
+            $matrix_hash{$curr_index}{$hit_index} = $new_similarity unless(defined($prev_similarity) && $new_similarity<$prev_similarity);
         }
     }
     close BLASTTABLE;
