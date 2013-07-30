@@ -48,6 +48,7 @@ sub init {
         'density_bar',     'Bar chart - filled',
         'density_line',    'Line graph'
       ],
+      'hide_empty'=> 1,
     }],
     [ 'VShortNonCodgenes', 'ShortNonCodGenes', 'Vdensity_features', {
       scale_all  => 1,
@@ -60,6 +61,7 @@ sub init {
         'density_bar',     'Bar chart - filled',
         'density_line',    'Line graph',
       ],
+      'hide_empty'=> 1,
     }],
     [ 'VLongNonCodgenes', 'LongNonCodGenes', 'Vdensity_features', {
       scale_all  => 1,
@@ -72,6 +74,7 @@ sub init {
         'density_bar',     'Bar chart - filled',
         'density_line',    'Line graph',
       ],
+      'hide_empty'=> 1,
     }],
      [ 'VPseudogenes', 'PseudoGenes', 'Vdensity_features', {
        scale_all  => 1,
@@ -83,6 +86,7 @@ sub init {
          'density_outline', 'Bar chart - outline',
          'density_bar',     'Bar chart - filled',
          'density_line',    'Line graph'],
+      'hide_empty'=> 1,
      }],
      [ 'Vpercents', 'Percent GC/Repeats', 'Vdensity_features', {
        same_scale => 1,
@@ -93,6 +97,7 @@ sub init {
          'off',           'Off', 
          'density_mixed', 'Histogram and line'
        ],
+      'hide_empty'=> 1,
      }],
      $self->hub->species_defs->databases->{'DATABASE_VARIATION'} ? [ 'Vsnps', 'Variations', 'Vdensity_features', {
        same_scale => 1,
