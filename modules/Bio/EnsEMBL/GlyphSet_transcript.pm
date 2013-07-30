@@ -6,7 +6,7 @@ use List::Util qw(min max);
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub features { return [];    }
+sub features { return []; }
 
 ## Let us define all the renderers here...
 ## ... these are just all wrappers - the parameter is 1 to draw labels
@@ -54,11 +54,7 @@ sub render_collapsed {
   my $transcript_drawn = 0;
   my %used_colours;
   
-  my ($fontname, $fontsize) = $self->get_font_details('outertext');
-  
   $self->_init_bump;
-  
-  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
   my ($genes, $highlights, $transcripts, $exons) = $self->features;
   
@@ -155,33 +151,8 @@ sub render_collapsed {
     
     $composite->push($composite2);
     
-    my $bump_height = $h + 2;
-    
-    if ($show_labels ne 'off' && $labels) {
-      if (my $label = $self->feature_label($gene)) {
-        my @lines = split "\n", $label;
-        
-        for (my $i = 0; $i < @lines; $i++){
-          my $line = "$lines[$i] ";
-          my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
-          
-          $composite->push($self->Text({
-            x         => $composite->x,
-            y         => $y + $h + $i * ($th + 1),
-            height    => $th,
-            width     => $w / $pix_per_bp,
-            font      => $fontname,
-            ptsize    => $fontsize,
-            halign    => 'left',
-            colour    => $colour,
-            text      => $line,
-            absolutey => 1
-          }));
-          
-          $bump_height += $th + 1;
-        }
-      }
-    }
+    my $bump_height  = $h + 2;
+       $bump_height += $self->add_label($composite, $colour, $gene) if $labels && $show_labels ne 'off';
     
     # bump
     my $bump_start = int($composite->x * $pix_per_bp);
@@ -244,9 +215,6 @@ sub render_transcripts {
   my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
   my $non_coding_start  = ($h - $non_coding_height) / 2;
   my %used_colours;
-  
-  my ($fontname, $fontsize) = $self->get_font_details('outertext');
-  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
   $self->_init_bump;
   
@@ -440,33 +408,8 @@ sub render_transcripts {
       
       $composite->push($composite2);
       
-      my $bump_height = 1.5 * $h;
-      
-      if ($show_labels ne 'off' && $labels) {
-        if (my $label = $self->feature_label($gene, $transcript)) {
-          my @lines = split "\n", $label;
-          
-          for (my $i = 0; $i < @lines; $i++) {
-            my $line = "$lines[$i] ";
-            my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
-            
-            $composite->push($self->Text({
-              x         => $composite->x,
-              y         => $y + $h + $i*($th+1),
-              height    => $th,
-              width     => $w / $pix_per_bp,
-              font      => $fontname,
-              ptsize    => $fontsize,
-              halign    => 'left', 
-              colour    => $colour,
-              text      => $line,
-              absolutey => 1
-            }));
-            
-            $bump_height += $th + 1;
-          }
-        }
-      }
+      my $bump_height  = 1.5 * $h;
+         $bump_height += $self->add_label($composite, $colour, $gene, $transcript) if $labels && $show_labels ne 'off';
 
       # bump
       my $bump_start = int($composite->x * $pix_per_bp);
@@ -517,9 +460,6 @@ sub render_alignslice_transcript {
   my $mcolour           = 'green'; # Colour to use to display missing exons
   my $transcript_drawn  = 0;
   my %used_colours;
-
-  my ($fontname, $fontsize) = $self->get_font_details('outertext');
-  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
   $self->_init_bump;
   
@@ -674,33 +614,8 @@ sub render_alignslice_transcript {
       
       $composite->push($composite2);
       
-      my $bump_height = 1.5 * $h;
-      
-      if ($show_labels ne 'off' && $labels) {
-        if (my $label = $self->feature_label($gene, $transcript)) {
-          my @lines = split "\n", $label;
-          
-          for (my $i = 0; $i < scalar @lines; $i++) {
-            my $line = $lines[$i];
-            my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
-            
-            $composite->push($self->Text({
-              x         => $composite->x,
-              y         => $y + $h + $i * ($th + 1),
-              height    => $th,
-              width     => $w / $pix_per_bp,
-              font      => $fontname,
-              ptsize    => $fontsize,
-              halign    => 'left',
-              colour    => $colour,
-              text      => $line,
-              absolutey => 1
-            }));
-            
-            $bump_height += $th + 1;
-          }
-        }
-      }
+      my $bump_height  = 1.5 * $h;
+         $bump_height += $self->add_label($composite, $colour, $gene, $transcript) if $labels && $show_labels ne 'off';
       
       # bump
       my $bump_start = int($composite->x * $pix_per_bp);
@@ -797,9 +712,6 @@ sub render_alignslice_collapsed {
   my $transcript_drawn  = 0;
   my %used_colours;
   
-  my ($fontname, $fontsize) = $self->get_font_details('outertext');
-  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
-  
   $self->_init_bump;
   
   my ($genes, $highlights) = $self->features;
@@ -881,33 +793,8 @@ sub render_alignslice_collapsed {
     
     $composite->push($composite2);
     
-    my $bump_height = $h + 2;
-    
-    if ($show_labels ne 'off' && $labels) {
-      if (my $label = $self->feature_label($gene)) {
-        my @lines = split "\n", $label;
-        
-        for (my $i = 0; $i < scalar @lines; $i++){
-          my $line = "$lines[$i] ";
-          my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
-          
-          $composite->push($self->Text({
-            x         => $composite->x,
-            y         => $y + $h + $i*($th + 1),
-            height    => $th,
-            width     => $w / $pix_per_bp,
-            font      => $fontname,
-            ptsize    => $fontsize,
-            halign    => 'left',
-            colour    => $colour,
-            text      => $line,
-            absolutey => 1
-          }));
-          
-          $bump_height += $th + 1;
-        }
-      }
-    }
+    my $bump_height  = $h + 2;
+       $bump_height += $self->add_label($composite, $colour, $gene) if $labels && $show_labels ne 'off';
     
     # bump
     my $bump_start = int($composite->x * $pix_per_bp);
@@ -959,11 +846,10 @@ sub render_genes {
   my $join_types       = $self->get_parameter('join_types');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
-  my $h                = 8;
   my $join_z           = 1000;
   
-  my ($fontname, $fontsize) = $self->get_font_details('outertext');
-  my $h = ($self->get_text_width(0, 'X_y', '', 'font' => $fontname, 'ptsize' => $fontsize))[3];
+  my %font_details = $self->get_font_details('outertext', 1);
+  my $h = ($self->get_text_width(0, 'X_y', '', %font_details))[3];
   
   $self->_init_bump;
   
@@ -1088,53 +974,62 @@ sub render_genes {
   # Now we need to add the label track, followed by the legend
   if ($flag) {
     my $gl_flag = $self->get_parameter('opt_gene_labels');
-    $gl_flag = 1 unless defined $gl_flag;
-    $gl_flag = shift if @_;
-    $gl_flag = 0 if $label_threshold * 1001 < $length;
+       $gl_flag = 1 unless defined $gl_flag;
+       $gl_flag = shift if @_;
+       $gl_flag = 0 if $label_threshold * 1001 < $length;
     
     if ($gl_flag) {
       my $start_row = $self->_max_bump_row + 1;
+      my $image_end = $self->get_parameter('image_end');
       
       $self->_init_bump;
 
       foreach my $gr (@genes_to_label) {
-        my $w      = ($self->get_text_width(0, $gr->{'label'}, '', 'font' => $fontname, 'ptsize' => $fontsize))[2];
-        my $tglyph = $self->Text({
-          x         => ($gr->{'start'} - 1) + 4/$pix_per_bp,
+        my $x         = $gr->{'start'} - 1;
+        my $tag_width = (4 / $pix_per_bp) - 1;
+        my $w         = ($self->get_text_width(0, $gr->{'label'}, '', %font_details))[2] / $pix_per_bp;
+        my $label_x   = $x + $tag_width;
+        my $right_align;
+        
+        if ($label_x + $w > $image_end) {
+          $label_x     = $x - $w - $tag_width;
+          $right_align = 1;
+        }
+        
+        my $label = $self->Text({
+          x         => $label_x,
           y         => 0,
           height    => $h,
-          width     => $w / $pix_per_bp,
-          font      => $fontname,
+          width     => $w,
           halign    => 'left',
-          ptsize    => $fontsize,
           colour    => $gr->{'col'},
           text      => $gr->{'label'},
           title     => $gr->{'title'},
           href      => $gr->{'href'},
-          absolutey => 1
+          absolutey => 1,
+          %font_details
         });
         
-        my $bump_start = int($tglyph->{'x'} * $pix_per_bp) - 4;
-        my $bump_end = $bump_start + int($tglyph->width * $pix_per_bp) + 1;
+        my $bump_start = int($label_x * $pix_per_bp) - 4;
+        my $bump_end   = $bump_start + int($label->width * $pix_per_bp) + 1;
+        my $row        = $self->bump_row($bump_start, $bump_end);
         
-        my $row = $self->bump_row($bump_start, $bump_end);
-        
-        $tglyph->y($tglyph->{'y'} + $row * (2 + $h) + ($start_row - 1) * 6);
+        $label->y($row * (2 + $h) + ($start_row - 1) * 6);
         
         # Draw little taggy bit to indicate start of gene
         $self->push(
-          $tglyph,
+          $label,
           $self->Rect({
-            x         => $gr->{'start'} - 1,
-            y         => $tglyph->y + 2,
+            x         => $x,
+            y         => $label->y + 2,
             width     => 0,
             height    => 4,
             colour    => $gr->{'col'},
             absolutey => 1
           }),
           $self->Rect({
-            x         => $gr->{'start'} - 1,
-            y         => $tglyph->y + 2 + 4,
+            x         => $right_align ? $x - (3 / $pix_per_bp) : $x,
+            y         => $label->y + 6,
             width     => 3 / $pix_per_bp,
             height    => 0,
             colour    => $gr->{'col'},
@@ -1144,10 +1039,10 @@ sub render_genes {
         
         if ($gr->{'highlight'}) {
           $self->unshift($self->Rect({
-            x         => ($gr->{'start'} - 1) - 1/$pix_per_bp,
-            y         => $tglyph->y + 1,
-            width     => ($tglyph->width + 1) + 2/$pix_per_bp,
-            height    => $tglyph->height + 2,
+            x         => $gr->{'start'} - 1 - (1 / $pix_per_bp),
+            y         => $label->y + 1,
+            width     => $label->width + 1 + (2 / $pix_per_bp),
+            height    => $label->height + 2,
             colour    => $gr->{'highlight'},
             absolutey => 1
           }));
@@ -1447,6 +1342,59 @@ sub feature_label {
   $id .= "\n$label" unless $label eq '-';
   
   return $id;
+}
+
+sub text_details {
+  my $self = shift;
+  
+  if (!$self->{'text_details'}) {
+    my %font_details = $self->get_font_details('outertext', 1);
+    $self->{'text_details'} = { %font_details, height => [ $self->get_text_width(0, 'Xg', 'Xg', %font_details) ]->[3] + 1 };
+  }
+  
+  return $self->{'text_details'};
+}
+
+sub add_label {
+  my ($self, $composite, $colour, $gene, $transcript) = @_;
+  my $label = $self->feature_label($gene, $transcript);
+  
+  return unless $label;
+  
+  my @lines        = split "\n", $label;
+  my $text_details = $self->text_details;
+  my $pix_per_bp   = $self->scalex;
+  my $image_end    = $self->get_parameter('image_end');
+  my $x            = $composite->x;
+  my $y            = $composite->y + $composite->height;
+  my @text;
+  
+  for (my $i = 0; $i < @lines; $i++) {
+    my $line = "$lines[$i] ";
+   
+    #my @text = $self->get_text_width(($image_end - $x) * $pix_per_bp, $line, '', %$text_details, ellipsis => 1);
+    #my $w = $text[2] / $pix_per_bp;
+    #$line = $text[0];
+    #warn $line;
+    my $w    = ($self->get_text_width(0, $line, '', %$text_details))[2] / $pix_per_bp;
+       $x    = $image_end - $w if $x + $w > $image_end;
+    
+    push @text, $self->Text({
+      y         => $y + $i * $text_details->{'height'},
+      width     => $w,
+      halign    => 'left',
+      colour    => $colour,
+      text      => $line,
+      absolutey => 1,
+      %$text_details
+    });
+  }
+  
+  $_->x($x) for @text;
+  
+  $composite->push(@text);
+  
+  return $text_details->{'height'} * scalar @text;
 }
 
 sub colour_key {
