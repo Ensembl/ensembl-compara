@@ -88,7 +88,7 @@ sub run {
         # Compute ds
         eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
         $self->warning($@) if $@;
-        push @updated_homologies, $homology;
+        push @updated_homologies, $homology if $homology->ds;
 
         # To save memory
         $homology->clear;
