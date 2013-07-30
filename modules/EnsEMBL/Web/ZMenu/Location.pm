@@ -80,7 +80,7 @@ sub feature_content {
     my $slice;
     
     if ($f) {
-      $slice = $f->slice;
+      $slice = $f->alternate_slice;
     } else {
       my $adaptor = $hub->get_adaptor('get_SliceAdaptor');
          $slice   = $adaptor->fetch_by_region('toplevel', $chr, $start, $end);
@@ -94,7 +94,7 @@ sub feature_content {
       push @synonyms, map @{$_->to_Slice->get_all_synonyms}, @{$slice->project($name, $slice->coord_system->version) || []};
     }
     
-    $self->add_entry({ label => sprintf('Synonyms: %s', join ', ', map $_->name, @synonyms) }) if scalar @synonyms; 
+    $self->add_entry({ label => sprintf('Synonyms: %s', join ', ', map $_->name, @synonyms), class => $bgcolor }) if scalar @synonyms; 
     
     $link_title = $caption;
   }
