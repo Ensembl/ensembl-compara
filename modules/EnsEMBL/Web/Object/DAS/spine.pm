@@ -211,7 +211,7 @@ if (0) {
 	  my ($ortholog_note, $paralog_note, @olinks, @plinks) = ();
 
 
-	  if ($cmpdb) {
+	  if ($cmpdb && ($slabel !~ /Bacteria/) ) { # bacteria is a special case - we do not build bacterial compara because there are too many of them 
 	      my %homologues;
 	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
 	      next unless defined $query_member ;
@@ -234,19 +234,23 @@ if (0) {
 
 	      my $onum = $hHash->{ortholog} || 0;
 	      $ortholog_note = sprintf ("%s has %s orthologue%s in %s", $gene_name, $onum || 'no', ($onum && ($onum == 1)) ? '' : 's', $compara_name );
-
-	      push @olinks,  { 
-		  'text' => "View homology between species inferred from a gene tree in $compara_name.",
-		  'href' => sprintf( $self->{'templates'}{'compara_URL'}, $olink, $gene->stable_id, 'core' ),
-	      };
+	      
+	      if ($onum) {
+		  push @olinks,  { 
+		      'text' => "View homology between species inferred from a gene tree in $compara_name.",
+		      'href' => sprintf( $self->{'templates'}{'compara_URL'}, $olink, $gene->stable_id, 'core' ),
+		  };
+	      }
 
 	      my $pnum = $hHash->{paralog};
 	      $paralog_note = sprintf ("%s has %s paralogue%s in %s", $gene_name, $pnum || 'no', ($pnum && ($pnum == 1)) ? '' : 's', $compara_name );
 
-	      push @plinks, { 
-		  'text' => "View homology arising from a duplication event, inferred from a gene tree in $compara_name.",
-		  'href' => sprintf( $self->{'templates'}{'compara_URL'}, $plink, $gene->stable_id, 'core' ),
-	      };
+	      if ($pnum) {
+		  push @plinks, { 
+		      'text' => "View homology arising from a duplication event, inferred from a gene tree in $compara_name.",
+		      'href' => sprintf( $self->{'templates'}{'compara_URL'}, $plink, $gene->stable_id, 'core' ),
+		  };
+	      }
 	  }
 
 
@@ -280,10 +284,12 @@ if (0) {
 		  $ortholog_note .= sprintf ("%s has %s orthologue%s in %s.", $gene_name, $onum || 'no', ($onum && ($onum == 1)) ? '' : 's', $compara_name );
 	      }
 
-	      push @olinks,  { 
-		  'text' => "View homology between species inferred from a gene tree in $compara_name.",
-		  'href' => sprintf( $self->{'templates'}{'compara_URL'}, $olink, $gene->stable_id, 'core' ),
-	      };
+	      if ($onum) {
+		  push @olinks,  { 
+		      'text' => "View homology between species inferred from a gene tree in $compara_name.",
+		      'href' => sprintf( $self->{'templates'}{'compara_URL'}, $olink, $gene->stable_id, 'core' ),
+		  };
+	      }
 
 # paralogs data will be the same in divisional and pan comparas 
 # thus ignore paralog info from pan compara if we already got it from divisional compara
@@ -291,10 +297,12 @@ if (0) {
 		  my $pnum = $hHash->{paralog};
 		  $paralog_note = sprintf ("%s has %s paralogue%s in %s.", $gene_name, $pnum || 'no', ($pnum && ($pnum == 1)) ? '' : 's', $compara_name );
 
-		  push @plinks, { 
-		      'text' => "View homology arising from a duplication event, inferred from a gene tree in $compara_name.",
-		      'href' => sprintf( $self->{'templates'}{'compara_URL'}, $plink, $gene->stable_id, 'core' ),
-		  };
+		  if ($pnum) {
+		      push @plinks, { 
+			  'text' => "View homology arising from a duplication event, inferred from a gene tree in $compara_name.",
+			  'href' => sprintf( $self->{'templates'}{'compara_URL'}, $plink, $gene->stable_id, 'core' ),
+		      };
+		  }
 	      }
 	  }
 
