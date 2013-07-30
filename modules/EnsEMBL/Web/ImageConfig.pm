@@ -209,10 +209,10 @@ sub menus {
 sub init   {}
 sub modify {} # For plugins
 
-sub storable     :lvalue { $_[0]{'_parameters'}{'storable'}; } # Set to 1 if configuration can be altered
+sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
 sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
-sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};  } # Set to 1 if there are DAS tracks
-sub altered      :lvalue { $_[0]{'altered'};                 } # Set to 1 if the configuration has been updated
+sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};      } # Set to 1 if there are DAS tracks
+sub altered      :lvalue { $_[0]{'altered'};                     } # Set to 1 if the configuration has been updated
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
@@ -718,7 +718,7 @@ sub _add_datahub {
 
   ## Do we have data for this species?
   my $hub_info = $parser->get_hub_info($base_url, $hub_file);
-    
+  
   if ($hub_info->{'error'}) {
     warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
   } else {
@@ -728,155 +728,92 @@ sub _add_datahub {
     return unless scalar @$source_list;
     
     ## Get tracks from hub
-    my $datahub_config = $parser->parse($base_url . $golden_path, $source_list);
+    my $datahub = $parser->parse($base_url . $golden_path, $source_list);
     
-    ## Create Ensembl-style tracks from the datahub configuration
-    foreach my $dataset (@$datahub_config) {
-      if ($dataset->{'error'}) {
-        warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
+    foreach my $node (@{$datahub->child_nodes}) {
+      my $data = $node->data;
+      
+      if ($data->{'error'}) {
+        warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
+      } elsif (!$node->has_child_nodes) {
+        # No inheritance structure - assumes that the top level in the hub contains only tracks
+        $self->_add_datahub_node($node->parent_node, $menu_name, $code);
+        last;
       } else {
-        my $func = scalar keys %{$dataset->{'config'}{'dimensions'} || {}} ? '_add_datahub_tracks_matrix' : '_add_datahub_tracks';
-        
-        if ($dataset->{'config'}{'subsets'}) {
-          $self->$func($_, $menu_name, $code, $dataset->{'config'}) for @{$dataset->{'tracks'}};
-        } else {
-          $self->$func($dataset, $menu_name, $code);
-        }
+        $self->_add_datahub_node($node, $menu_name, $code);
       }
     }
   }
 }
 
-sub _add_datahub_tracks_matrix {
-  my ($self, $dataset, $name, $url_code, $config) = @_;
-  $config ||= $dataset->{'config'};
+sub _add_datahub_node {
+  my ($self, $node, $name, $url_code) = @_;
   
-  my ($x, $y)     = map $config->{'dimensions'}{"dimension$_"} || $config->{'dimensions'}{"dim$_"}, qw(X Y);
-  my ($x_label)   = map { /subGroup\d/ && $config->{$_}{'name'} eq $x ? $config->{$_} : () } keys %$config;
-  my ($y_label)   = map { /subGroup\d/ && $config->{$_}{'name'} eq $y ? $config->{$_} : () } keys %$config;
-  my @axis_labels = map { s/_/ /g; $_ } $x_label->{'label'}, $y_label->{'label'};
-  my %options     = (
+  if ($node->has_child_nodes && $node->first_child->has_child_nodes) {
+    $self->_add_datahub_node($_, $name, $url_code) for @{$node->child_nodes};
+  } else {
+    my $config = {};
+    my $n      = $node;
+    
+    do {
+      my $data = $n->data;
+      $config->{$_} ||= $data->{$_} for keys %$data;
+    } while $n = $n->parent_node;
+    
+    $self->_add_datahub_tracks($node, $config, $name, $url_code);
+  }
+}
+
+sub _add_datahub_tracks {
+  my ($self, $parent, $config, $name, $url_code) = @_;
+  my $data   = $parent->data;
+  my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
+  my $link   = $config->{'description_url'} ? qq{<br /><a href="$config->{'description_url'}" rel="external">Go to track description on datahub</a>} : '';
+  my $info   = $config->{'longLabel'} . $link;
+  my (%matrix_columns, %tracks);
+  
+  my %options = (
     menu_key     => $name,
     menu_name    => $name,
     url_code     => $url_code,
-    submenu_key  => $dataset->{'config'}{'track'},
-    submenu_name => $dataset->{'config'}{'shortLabel'},
-    view         => $dataset->{'config'}{'view'},
-    desc_url     => $config->{'description_url'},
-    axes         => { x => $axis_labels[0], y => $axis_labels[1] },
+    submenu_key  => $data->{'track'},
+    submenu_name => $data->{'shortLabel'},
   );
   
-  my $link = qq( <a href="$options{'desc_url'}" rel="external">Go to track description on datahub</a>);
-  my $info = "$config->{'longLabel'}.$link.";
-  my (%matrix_columns, %tracks);
+  if ($matrix) {
+    foreach my $subgroup (keys %$config) {
+      next unless $subgroup =~ /subGroup\d/;
+      
+      foreach (qw(x y)) {
+        if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
+          $options{'axis_labels'}{$_} = $config->{$subgroup};
+          s/_/ /g for values %{$options{'axis_labels'}{$_}};
+        }
+      }
+      
+      last if scalar keys %{$options{'axis_labels'}} == 2;
+    }
+    
+    $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
+  }
   
-  foreach my $track (@{$dataset->{'tracks'}}) {
-    my $label_x    = $x_label->{$track->{'subGroups'}{$x}};
-    my $label_y    = $y_label->{$track->{'subGroups'}{$y}};
-    my $key        = join '_', $name, $dataset->{'config'}{'track'}, $label_x;
-    my $column_key = $self->tree->clean_id($key);
-    my $type       = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-    my $squish     = $track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish';
-    
-    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-    # means the short label can be very non specific, because the header gives context of what type of
-    # track it is. For Ensembl we need to have all the information in the track name / caption
-    my $source_name = $track->{'longLabel'};
-    
-    s/_/ /g for $label_x, $label_y, $source_name;
-    
-    my $source = {
-      name        => "$dataset->{'config'}{'track'}_$track->{'track'}",
+  foreach (@{$parent->child_nodes}) {
+    my $track        = $_->data;
+    my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+    my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
+    (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
+    my $source       = {
+      name        => $track->{'track'},
       source_name => $source_name,
       description => $track->{'longLabel'} . $link,
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
       squish      => $squish,
-      datahub     => 'track',
-      option_key  => join('_', 'opt_matrix', $self->tree->clean_id($options{'menu_key'}), $options{'submenu_key'}, "$label_x:$label_y"),
-      column_key  => $column_key,
-      %options
-    };
-    
-    if (exists $track->{'viewLimits'}) {
-      $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif (exists $track->{'autoscale'} && $track->{'autoscale'} eq 'off') {
-      $source->{'viewLimits'} = '0:127';
-    }
-    
-    if (exists $track->{'maxHeightPixels'}) {
-      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
-      $source->{'maxHeightPixels'} = '64:32:16';
-    }
-    
-    $matrix_columns{$type}{$key} ||= {
-      name        => $key,
-      source_name => $label_x,
-      label_x     => $label_x,
-      description => "<p>$info</p><p>Contains the following sub tracks:</p>",
-      info        => $info,
-      squish      => $squish,
-      datahub     => 'column',
-      %options
-    };
-    
-    push @{$matrix_columns{$type}{$key}{'subtracks'}}, [ lc $track->{'longLabel'}, "<li>$track->{'longLabel'}</li>" ];
-    push @{$matrix_columns{$type}{$key}{'features'}{$label_y}}, $source;
-    $tracks{$type}{$source->{'name'}} = $source;
-  }
-  
-  foreach my $format (keys %matrix_columns) {
-    foreach (values %{$matrix_columns{$format}}) {
-      $_->{'description'} .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp lc $b->[0] } @{$_->{'subtracks'}};
-      delete $_->{'subtracks'};
-    }
-    
-    $self->load_file_format(lc $format, $matrix_columns{$format});
-  }
-  
-  $self->load_file_format(lc $_, $tracks{$_}) for keys %tracks;
-}
-
-sub _add_datahub_tracks {
-  my ($self, $dataset, $name, $url_code) = @_;
-  my %sources_by_type;
-  
-  my $options = {
-    menu_key     => $name,
-    menu_name    => $name,
-    url_code     => $url_code,
-    submenu_key  => $dataset->{'config'}{'track'},
-    submenu_name => $dataset->{'config'}{'shortLabel'},
-    desc_url     => $dataset->{'config'}{'description_url'},
-    view         => $dataset->{'config'}{'view'},
-  };
-  
-  foreach my $track (@{$dataset->{'tracks'}}) {
-    my $link = qq( <a href="$options->{'desc_url'}" rel="external">Go to track description on datahub</a>);
-    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-    # means the short label can be very non specific, because the header gives context of what type of
-    # track it is. For Ensembl we need to have all the information in the track name / caption
-    (my $source_name = $track->{'longLabel'}) =~ s/_/ /g;
-    my $source = {
-      name        => $track->{'track'},
-      source_name => $source_name,
-      description => $track->{'longLabel'} . $link,
-      source_url  => $track->{'bigDataUrl'},
-      squish      => $track->{'visibility'} eq 'squish' || $dataset->{'config'}{'visibility'} eq 'squish',
       datahub     => 1,
-      %$options
+      %options
     };
     
-    $source->{'colour'} = $track->{'color'} if exists $track->{'color'};
-
-    my $type = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-       $type =~ s/^\s*//g;
-       $type =~ s/\s*$//g;
-
     # Graph range - Track Hub default is 0-127
     if (exists $track->{'viewLimits'}) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
@@ -890,13 +827,48 @@ sub _add_datahub_tracks {
       $source->{'maxHeightPixels'} = '64:32:16';
     }
     
-    # To improve browser speed don't display a zmenu for bigwigs 
-    $source->{'no_titles'} = 1 if $type eq 'BIGWIG';
+    if ($matrix) {
+      my %labels     = map { $_ => $options{'axis_labels'}{$_}{$track->{'subGroups'}{$config->{'dimensions'}{$_}}} } qw(x y);
+      my $key        = join '_', $name, $track->{'parent'}, $labels{'x'};
+      my $column_key = $self->tree->clean_id($key);
+      
+      # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
+      # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
+      # means the short label can be very non specific, because the header gives context of what type of
+      # track it is. For Ensembl we need to have all the information in the track name / caption
+      ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
+      $source->{'option_key'}   = join('_', 'opt_matrix', $self->tree->clean_id($options{'menu_key'}), $options{'submenu_key'}, "$labels{'x'}:$labels{'y'}");
+      $source->{'column_key'}   = $column_key;
+      $source->{'datahub'}      = 'track';
+      
+      $matrix_columns{$type}{$key} ||= {
+        name        => $key,
+        source_name => $labels{'x'},
+        label_x     => $labels{'x'},
+        description => "<p>$info</p><p>Contains the following sub tracks:</p>",
+        info        => $info,
+        squish      => $squish,
+        datahub     => 'column',
+        %options
+      };
+      
+      push @{$matrix_columns{$type}{$key}{'subtracks'}}, [ lc $track->{'longLabel'}, "<li>$track->{'longLabel'}</li>" ];
+      push @{$matrix_columns{$type}{$key}{'features'}{$labels{'y'}}}, $source;
+    }
     
-    $sources_by_type{$type}{$track->{'track'}} = $source;
+    $tracks{$type}{$source->{'name'}} = $source;
   }
   
-  $self->load_file_format(lc, \%{$sources_by_type{$_}}) for keys %sources_by_type;
+  foreach my $format (keys %matrix_columns) {
+    foreach (values %{$matrix_columns{$format}}) {
+      $_->{'description'} .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp lc $b->[0] } @{$_->{'subtracks'}};
+      delete $_->{'subtracks'};
+    }
+    
+    $self->load_file_format(lc $format, $matrix_columns{$format});
+  }
+  
+  $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
 
 sub _add_datahub_extras_options {
