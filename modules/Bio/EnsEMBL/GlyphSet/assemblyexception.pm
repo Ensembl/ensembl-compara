@@ -40,10 +40,10 @@ sub features {
     
     # Make fake features that cover the entire range of overlapping AssemblyExceptionFeatures of the same type
     foreach my $type (sort { $order{$a} <=> $order{$b} } keys %order) {
-      foreach (@{$range->get_ranges($type)}) {
+      foreach my $r (@{$range->get_ranges($type)}) {
         my $f = Bio::EnsEMBL::AssemblyExceptionFeature->new(
-          -start           => $_->[0],
-          -end             => $_->[1],
+          -start           => $r->[0],
+          -end             => $r->[1],
           -strand          => $features{$type}[0]->strand,
           -slice           => $features{$type}[0]->slice,
           -alternate_slice => $features{$type}[0]->alternate_slice,
@@ -52,6 +52,7 @@ sub features {
         );
         
         $f->{'__features'} = $features{$type};
+        $f->{'__overlaps'} = scalar grep { $_->start >= $r->[0] && $_->end <= $r->[1] } @{$features{$type}};
         
         push @{$self->{'features'}}, $f;
       }
@@ -64,13 +65,14 @@ sub features {
 sub get_single_feature {
   my ($self, $f) = @_;
   
-  if (!$self->{'single_features'}{$f}) {
+  if (!defined $self->{'single_features'}{$f}) {
     my $features = $f->{'__features'};
     my $feature;
     
     if ($features) {
       my ($s, $e) = map $f->$_, qw(start end);
-      ($feature) = grep $_->start == $s && $_->end == $e, @$features;
+      $features = [ grep $_->start == $s && $_->end == $e, @$features ];
+      $feature  = scalar @$features == 1 ? $features->[0] : '';
     } else {
       $feature = $f;
     }
@@ -83,9 +85,19 @@ sub get_single_feature {
 
 sub feature_label {
   my ($self, $f) = @_;
+  
+  return if $self->{'display'} eq 'collapsed';
+  
   my $feature = $self->get_single_feature($f);
   
-  return $self->my_colour($self->colour_key($f), 'text') unless $feature;
+  if (!$feature) {
+    my $label  = $self->my_colour($self->colour_key($f), 'text');
+       $label  =~ s/( \(ref\))$//;
+    my $ref    = $1;
+       $label .= $label =~ /(patch|fix)$/ ? 'es' : 's';
+    
+    return "$f->{'__overlaps'} $label$ref";
+  }
   
   my $alternate_slice = $feature->alternate_slice;
   
