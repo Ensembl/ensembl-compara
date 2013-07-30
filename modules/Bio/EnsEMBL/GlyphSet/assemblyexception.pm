@@ -86,7 +86,7 @@ sub get_single_feature {
 sub feature_label {
   my ($self, $f) = @_;
   
-  return if $self->{'display'} eq 'collapsed';
+  return '' if $self->{'display'} eq 'collapsed';
   
   my $feature = $self->get_single_feature($f);
   
