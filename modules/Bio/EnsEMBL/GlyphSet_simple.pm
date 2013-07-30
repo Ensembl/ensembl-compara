@@ -61,7 +61,8 @@ sub _init {
   my $depth             = $self->depth;
      $depth             = 1e5 unless defined $depth;
   my $previous_start    = $slice_length + 1e9;
-  my $previous_end      = -1e9 ;
+  my $previous_end      = -1e9;
+  my $image_end         = $self->get_parameter('image_end');
   my $optimizable       = $self->my_config('optimizable') && $depth < 1 ; # at the moment can only optimize repeats
   my $height            = $self->my_config('height') || [$self->get_text_width(0, 'X', '', font => $font, ptsize => $fontsize)]->[3] + 2;
      $height            = 4 if $depth > 0 && $self->get_parameter('squishable_features') eq 'yes' && $self->my_config('squish');
@@ -91,6 +92,7 @@ sub _init {
     my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $font, ptsize => $fontsize);
     my ($img_start, $img_end) = ($start, $end);
     my ($tag_start, $tag_end) = ($start, $end);
+    my $label_start  = $start;
     my $bp_textwidth = $text_width / $pix_per_bp;
     my @tags         = grep ref $_ eq 'HASH', $self->tag($f);
     my $row          = 0;
@@ -98,6 +100,12 @@ sub _init {
     if ($label && !$label_overlay) {
       $tag_start = 1 if $tag_start < 1;
       $tag_end   = $tag_start + $bp_textwidth + 1;
+      
+      if ($tag_end > $image_end) {
+        $tag_end     = $image_end;
+        $tag_start   = $tag_end - $bp_textwidth - 1;
+        $label_start = $tag_start;
+      }
     }
     
     $img_start = $tag_start if $tag_start < $img_start; 
@@ -226,7 +234,7 @@ sub _init {
           my $t = $self->Composite;
           
           $t->push($composite, $self->Text({
-            x         => $start - 1,
+            x         => $label_start - 1,
             y         => $height + 3,
             width     => $bp_textwidth,
             height    => $text_height,
