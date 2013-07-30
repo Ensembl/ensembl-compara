@@ -90,7 +90,7 @@ sub default_options {
         'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
-        'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
+        'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
 
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
