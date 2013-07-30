@@ -55,7 +55,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     $sth->execute($self->param('gene_tree_id'));
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
-    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ? AND gene_split_id = ?');
+    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY member_id');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
