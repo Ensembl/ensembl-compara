@@ -96,7 +96,6 @@ sub _init {
     my $row          = 0;
     
     if ($label && !$label_overlay) {
-      $tag_start = ($start + $end - 1 - $bp_textwidth) / 2;
       $tag_start = 1 if $tag_start < 1;
       $tag_end   = $tag_start + $bp_textwidth + 1;
     }
@@ -205,7 +204,7 @@ sub _init {
         ## Only add labels above a certain feature size
         if ($tmp_textwidth < $end - $start + 1) {
           $composite->push($self->Text({
-            x         => $start-1,
+            x         => $start - 1,
             y         => ($height - $text_height)/2 - 1,
             width     => $end - $start + 1,
             textwidth => $tmp_textwidth * $pix_per_bp,
