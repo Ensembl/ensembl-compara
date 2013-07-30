@@ -208,17 +208,17 @@ if (0) {
 	  }
 
 	  my $cmpdb = $self->database('compara');
-	  my $compara_name = lc($self->species_defs->COMPARA_DB_NAME || 'Ensembl Compara');
+	  my ($ortholog_note, $paralog_note, @olinks, @plinks) = ();
 
-	  if ($slabel =~ /Bacteria/) {
-	      $cmpdb = $self->database('compara_pan_ensembl');
-	      $compara_name = 'pan-taxonomic compara';
-	  }
 
 	  if ($cmpdb) {
 	      my %homologues;
 	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
 	      next unless defined $query_member ;
+	      my $compara_name = $slabel;
+	      my $olink = 'Ortholog';
+	      my $plink = 'Paralog';
+	    
 	      my $homology_adaptor = $cmpdb->get_adaptor('Homology');
 #  It is faster to get all the Homologues and discard undesired entries
 #  my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
@@ -232,43 +232,92 @@ if (0) {
 		  $hHash->{paralog} += 1 if ($homology->description =~ /paralog|gene_split/);
 	      }
 
-	      my $notes2;
 	      my $onum = $hHash->{ortholog} || 0;
+	      $ortholog_note = sprintf ("%s has %s orthologue%s in %s", $gene_name, $onum || 'no', ($onum && ($onum == 1)) ? '' : 's', $compara_name );
 
-	      push @$notes2, sprintf ("%s has %s orthologue%s in %s.", $gene_name, $onum || 'no', ($onum && ($onum == 1)) ? '' : 's', $compara_name );
+	      push @olinks,  { 
+		  'text' => "View homology between species inferred from a gene tree in $compara_name.",
+		  'href' => sprintf( $self->{'templates'}{'compara_URL'}, $olink, $gene->stable_id, 'core' ),
+	      };
 
-	  
+	      my $pnum = $hHash->{paralog};
+	      $paralog_note = sprintf ("%s has %s paralogue%s in %s", $gene_name, $pnum || 'no', ($pnum && ($pnum == 1)) ? '' : 's', $compara_name );
+
+	      push @plinks, { 
+		  'text' => "View homology arising from a duplication event, inferred from a gene tree in $compara_name.",
+		  'href' => sprintf( $self->{'templates'}{'compara_URL'}, $plink, $gene->stable_id, 'core' ),
+	      };
+	  }
+
+
+	  $cmpdb = $self->database('compara_pan_ensembl');
+
+	  if ($cmpdb) {
+	      my %homologues;
+	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+	      next unless defined $query_member ;
+	      my $homology_adaptor = $cmpdb->get_adaptor('Homology');
+	      my $compara_name = 'Ensembl Genomes';
+	      my $olink = 'Ortholog/pan_compara';
+	      my $plink = 'Paralog/pan_compara';
+
+#  It is faster to get all the Homologues and discard undesired entries
+#  my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
+	      my $hmgs = $homology_adaptor->fetch_all_by_Member($query_member);
+
+	      my $hHash ;
+	      foreach my $homology (@{$hmgs}){
+		  $hHash->{ortholog} += 1 if ($homology->description =~ /ortholog/);
+#		  next if ($homology->description =~ /between_species_paralog/);
+		  next if ($homology->description =~ /possible_ortholog/);
+		  $hHash->{paralog} += 1 if ($homology->description =~ /paralog|gene_split/);
+	      }
+
+	      my $onum = $hHash->{ortholog} || 0;
+	      if ($ortholog_note) {
+		  $ortholog_note .= sprintf (" and %s orthologue%s in %s.", $onum || 'no', ($onum && ($onum == 1)) ? '' : 's', $compara_name );
+	      } else {
+		  $ortholog_note .= sprintf ("%s has %s orthologue%s in %s.", $gene_name, $onum || 'no', ($onum && ($onum == 1)) ? '' : 's', $compara_name );
+	      }
+
+	      push @olinks,  { 
+		  'text' => "View homology between species inferred from a gene tree in $compara_name.",
+		  'href' => sprintf( $self->{'templates'}{'compara_URL'}, $olink, $gene->stable_id, 'core' ),
+	      };
+
+# paralogs data will be the same in divisional and pan comparas 
+# thus ignore paralog info from pan compara if we already got it from divisional compara
+	      unless ($paralog_note) {
+		  my $pnum = $hHash->{paralog};
+		  $paralog_note = sprintf ("%s has %s paralogue%s in %s.", $gene_name, $pnum || 'no', ($pnum && ($pnum == 1)) ? '' : 's', $compara_name );
+
+		  push @plinks, { 
+		      'text' => "View homology arising from a duplication event, inferred from a gene tree in $compara_name.",
+		      'href' => sprintf( $self->{'templates'}{'compara_URL'}, $plink, $gene->stable_id, 'core' ),
+		  };
+	      }
+	  }
+
+	  if ($ortholog_note) {
 	      my $s3 = {
 		  'ID'          => "orthologue_summary:".$gene->stable_id,
 		  'LABEL'       => "Orthologues",
 		  'TYPE'        => 'summary',
-		  'NOTE' => $notes2,
-		  'LINK' =>  $onum ? [
-			     { 'text' => "View homology between species inferred from a gene tree in $slabel.",
-			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Ortholog', $gene->stable_id, 'core' ),
-			   }
-			     ] : [ ],
+		  'NOTE' => [ $ortholog_note ], 
+		  'LINK' =>  @olinks ? \@olinks : [ ],
 	      };
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s3;
 
-	      my $pnum = $hHash->{paralog};
-	      my $notes3;
-	      push @$notes3, sprintf ("%s has %s paralogue%s in %s.", $gene_name, $pnum || 'no', ($pnum && ($pnum == 1)) ? '' : 's', $compara_name );
 	      my $s4 = {
 		  'ID'          => "paralogue_summary:".$gene->stable_id,
 		  'LABEL'       => "Paralogues",
 		  'TYPE'        => 'summary',
-		  'NOTE' => $notes3,
-		  'LINK' => $pnum ? [
-			     { 'text' => "View homology arising from a duplication event, inferred from a gene tree in $slabel.",
-			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Paralog', $gene->stable_id, 'core' ),
-			   }
-			     ] : [ ],
+		  'NOTE' => [ $paralog_note ],
+		  'LINK' => @plinks ? \@plinks : [ ],
 	      };
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s4;
-
-
 	  }
+
 
 	  if (my $fgdb = $h->{'funcgen'}) {
 	      my $fs = $gene->feature_Slice();
