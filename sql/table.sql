@@ -1262,8 +1262,8 @@ CREATE TABLE hmm_profile (
 @column s
 @column lnl
 @column threshold_on_ds
-@column ancestor_node_id
-@column tree_node_id
+@column ancestor_node_id               The node_id of the internal node of the gene-tree node  from which the homology is derived
+@column tree_node_id                   The root_id of the gene-tree from which the homology is derived
 
 @homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 4650 GROUP BY homology_id;
 
@@ -1282,8 +1282,8 @@ CREATE TABLE homology (
   s                           float(10,1),
   lnl                         float(10,3),
   threshold_on_ds             float(10,5),
-  ancestor_node_id            int(10) unsigned NOT NULL,
-  tree_node_id                int(10) unsigned NOT NULL,
+  ancestor_node_id            int(10) unsigned,
+  tree_node_id                int(10) unsigned,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
   FOREIGN KEY (ancestor_node_id) REFERENCES gene_tree_node(node_id),
@@ -1705,4 +1705,6 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_72_73_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_72_73_b.sql|homology_genetree_links');
 
