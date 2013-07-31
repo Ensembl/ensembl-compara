@@ -361,7 +361,9 @@ sub helpLine {
       $xml .= qq(
   <field name="keyword">$kw</field>);
     }
-    $xml .= &common_fields('All',$type,'');
+    $xml .= &common_fields('All','Documentation','');
+    $xml .= qq(
+  <field name="feature_subtype">$type</field>);
     $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
