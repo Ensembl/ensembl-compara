@@ -341,6 +341,14 @@ sub _summarise_core_tables {
   my @assemblies = keys %default;
   push @assemblies, sort keys %not_default;
   $self->db_tree->{'CURRENT_ASSEMBLIES'} = join(',', @assemblies);
+  
+#-------------
+#
+# * Transcript biotypes
+# get all possible transcript biotypes
+  @{$self->db_details($db_name)->{'tables'}{'transcript'}{'biotypes'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+    'SELECT DISTINCT(biotype) FROM transcript;'
+  )};
 
 #----------
   $dbh->disconnect();
@@ -624,6 +632,14 @@ sub _summarise_variation_db {
       $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'POLYPHEN'} = 1;
     }
   }
+  
+  # get possible values from attrib tables
+  @{$self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SIFT_VALUES'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+    'SELECT a.value FROM attrib a, attrib_type t WHERE a.attrib_type_id = t.attrib_type_id AND t.code = "sift_prediction";'
+  )};
+  @{$self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'POLYPHEN_VALUES'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+    'SELECT a.value FROM attrib a, attrib_type t WHERE a.attrib_type_id = t.attrib_type_id AND t.code = "polyphen_prediction";'
+  )};
 
   $dbh->disconnect();
 }
