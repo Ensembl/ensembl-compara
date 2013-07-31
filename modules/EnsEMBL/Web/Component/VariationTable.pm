@@ -430,11 +430,11 @@ sub variation_table {
           
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
-         # my $status = join '', map qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}, @$validation; # validation
+         # my $status = join '', map qq{<img height="20px" width="20px" title="$_" src="/i/val/val_$_.gif"/><span class="hidden export">$_,</span>}, @$validation; # validation
           my $status = join("",
             map {
               sprintf(
-                '<img src="/i/96/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                '<img src="/i/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
                 $_, $_, $_
               )
             } @$evidence
