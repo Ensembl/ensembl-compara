@@ -28,11 +28,11 @@ sub parse_help_html {
 
   foreach my $line (split '\n', $content) {
 
-    if ($line =~ /\[\[movie=(\d+)/i) {
+    if ($line =~ /\[\[MOVIE::(\d+)/i) {
       $line = $self->embed_movie(@{$adaptor->fetch_help_by_ids([$1]) || []});
     }
 
-    while ($line =~ /\[\[image=([^\s]+)\s*([^\]]+)?\s*\]\]/ig) {
+    while ($line =~ /\[\[IMAGE::([^\s]+)\s*([^\]]+)?\s*\]\]/ig) {
       substr $line, $-[0], $+[0] - $-[0], qq(<img src="$img_url$1" alt="" $2 \/>); # replace square bracket tag with actual image
     }
 
