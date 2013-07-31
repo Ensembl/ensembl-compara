@@ -205,7 +205,7 @@ sub fetch_by_Slice {
 =head2 fetch_all_by_ancestral_taxon_id
 
   Arg [1]    : int $ancestral_taxon_id
-  Arg [2]    : (optional) bool $default_assembly_only
+  Arg [2]    : (optional) bool $assembly_default_only
   Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
   Description: Retrieves all the genome dbs derived from that NCBI taxon_id.
   Note       : This method uses the ncbi_taxa_node table
@@ -217,7 +217,7 @@ sub fetch_by_Slice {
 =cut
 
 sub fetch_all_by_ancestral_taxon_id {
-  my ($self, $taxon_id, $default_assembly_only) = @_;
+  my ($self, $taxon_id, $assembly_default_only) = @_;
 
   unless($taxon_id) {
     throw('taxon_id argument is required');
@@ -226,8 +226,8 @@ sub fetch_all_by_ancestral_taxon_id {
   my $sql = "SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb
     WHERE ntn1.taxon_id = ? AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index
     AND ntn2.taxon_id = gdb.taxon_id";
-  if ($default_assembly_only) {
-    $sql .= " AND gdb.default_assembly = 1";
+  if ($assembly_default_only) {
+    $sql .= " AND gdb.assembly_default = 1";
   }
 
   return $self->_fetch_cached_by_sql($sql, $taxon_id);
