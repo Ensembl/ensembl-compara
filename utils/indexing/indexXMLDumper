@@ -596,6 +596,7 @@ sub dumpVariation {
              join $VariationDB.attrib_type AS at2 on pfa2.attrib_type_id = at2.attrib_type_id and at2.code = 'variation_names' )
            on pfa2.phenotype_feature_id = pf.phenotype_feature_id
      WHERE pf.type = 'Variation'
+       AND pf.is_significant = 1
   GROUP BY v.variation_id
   ORDER BY v.variation_id"
    )};
