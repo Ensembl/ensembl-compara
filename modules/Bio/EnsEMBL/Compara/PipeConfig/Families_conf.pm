@@ -46,11 +46,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30041,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'host'            => 'compara4',    # where the pipeline database will be created
-        'release'         => '72',          # current ensembl release number
+#       'mlss_id'         => 30042,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'host'            => 'compara2',    # where the pipeline database will be created
         'rel_suffix'      => '',            # an empty string by default, a letter otherwise
-        'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
+        'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
         'pipeline_name'   => 'compara_families_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
@@ -75,20 +74,20 @@ sub default_options {
 
             # resource requirements:
         'blast_gigs'      => 2,
-        'mcl_gigs'        => 45,
+        'mcl_gigs'        => 50,
         'mcl_procs'       =>  4,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
         'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara4, but will have to be set manually otherwise
         'blast_capacity'  => 1000,                                  # work both as hive_capacity and resource-level throttle
-        'mafft_capacity'  =>  400,
+       'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara3/mp12_compara_homology_72',
+        'homology_db'  => 'mysql://ensro@compara1/mm14_compara_homology_'.$self->o('ensembl_release'),
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/kb3_ensembl_compara_71',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/kb3_ensembl_compara_72',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -124,7 +123,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
         'mafft_root_dir'    => $self->o('mafft_root_dir'),
-
     };
 }
 
@@ -160,12 +158,21 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'       => $self->o('homology_db'),
-                'inputlist'     => [ 'genome_db', 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name', 'sequence', 'member' ],
-                'column_names'  => [ 'table' ],
+                'inputlist'     => [
+                                        [ $self->o('homology_db')   => 'ncbi_taxa_node' ],
+                                        [ $self->o('homology_db')   => 'ncbi_taxa_name' ],
+                                        [ $self->o('homology_db')   => 'genome_db' ],       # we need them in "located" state
+                                        [ $self->o('homology_db')   => 'sequence' ],
+                                        [ $self->o('homology_db')   => 'member' ],
+                                        [ $self->o('master_db')     => 'method_link' ],
+                                        [ $self->o('master_db')     => 'species_set' ],
+                                        [ $self->o('master_db')     => 'method_link_species_set' ],
+                                    ],
+                'column_names'  => [ 'src_db_conn', 'table' ],
             },
             -input_ids => [ { }, ],
             -flow_into => {
-                '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
+                '2->A' => [ 'copy_table' ],
                 'A->1' => [ 'offset_and_innodbise_tables' ],  # backbone
             },
         },
@@ -182,10 +189,11 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE sequence       AUTO_INCREMENT=200000001',
-                    'ALTER TABLE member         AUTO_INCREMENT=200000001',
-                    'ALTER TABLE family         ENGINE=InnoDB',
-                    'ALTER TABLE family_member  ENGINE=InnoDB',
+                    'ALTER TABLE sequence                   AUTO_INCREMENT=200000001',
+                    'ALTER TABLE member                     AUTO_INCREMENT=200000001',
+                    'ALTER TABLE method_link                ENGINE=InnoDB',
+                    'ALTER TABLE species_set                ENGINE=InnoDB',
+                    'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
                 ],
             },
             -flow_into => {
@@ -322,6 +330,7 @@ sub pipeline_analyses {
                 'idprefixed'    => 1,
             },
             -hive_capacity => $self->o('blast_capacity'),
+            -max_retry_count => 6,
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
                 -1 => 'blast_himem',
@@ -433,10 +442,11 @@ sub pipeline_analyses {
             -rc_name => '4GigMem',
         },
 
-        {   -logic_name    => 'mafft_main',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
-            -hive_capacity => $self->o('mafft_capacity'),
-            -batch_size    =>  10,
+        {   -logic_name         => 'mafft_main',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
+            -hive_capacity      => $self->o('mafft_capacity'),
+            -batch_size         => 10,
+            -max_retry_count    => 6,
             -flow_into => {
                 -1 => [ 'mafft_big' ],
             },
@@ -513,7 +523,7 @@ sub pipeline_analyses {
                 'master_db'   => $self->o('master_db'),
                 'prev_rel_db' => $self->o('prev_rel_db'),
                 'type'        => 'f',
-                'release'     => $self->o('release'),
+                'release'     => $self->o('ensembl_release'),
             },
             -flow_into => {
                 1 => [ 'notify_pipeline_completed' ],
@@ -539,6 +549,25 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.73 stats
+
+    sequences to cluster:       5,157,846           [ SELECT count(*) from sequence; ]
+    distances by Blast:         970,366,718         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    non-reference genes:        2965                [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:         9711                [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:          9.5d               [ call time_analysis('%'); ]
+    uniprot_loading time:       10.6h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               7.2d               [ call time_analysis('blast%'); ]
+    mcxload running time:        2.4h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:            7.8h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     25.8G               [ SELECT mem, swap FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         32.9G               [ SELECT mem, swap FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.72 stats
 
