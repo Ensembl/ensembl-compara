@@ -24,13 +24,13 @@ sub content {
   }
   
   $self->{'feature_count'} = scalar @features;
-  $self->feature_content($_, $i++) for @features;
+  $self->feature_content($_, $i++) for $self->{'feature_count'} ? @features : $hub->param('r');
 }
 
 sub feature_content {
   my ($self, $f, $i) = @_;
   my $hub = $self->hub;
-  my $r   = $hub->param('feature') || sprintf '%s:%s-%s', map $f->alternate_slice->$_, qw(seq_region_name start end);
+  my $r   = $hub->param('feature') || ref $f ? sprintf '%s:%s-%s', map $f->alternate_slice->$_, qw(seq_region_name start end) : $f;
   my ($chr, $start, $end) = split /[:-]/, $r;
   
   my $species_defs  = $hub->species_defs;
@@ -99,7 +99,7 @@ sub feature_content {
     $link_title = $caption;
   }
   
-  if ($self->{'feature_count'} > 1) {
+  if ($type && $self->{'feature_count'} > 1) {
     $self->caption('Assembly exceptions');
   } else {
     $self->caption($caption || $r);
