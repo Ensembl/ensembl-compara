@@ -8,6 +8,8 @@ use Apache2::Const qw(:common :methods :http);
 
 use SiteDefs qw(:APACHE);
 
+use EnsEMBL::Web::Document::HTML::Movie;
+
 use base qw(EnsEMBL::Web::Controller);
 
 sub page_type       { return 'Static';   }
@@ -188,6 +190,11 @@ sub template_LINK {
   my $self = shift;
   my $url  = $self->template_PAGE(@_);
   return qq{<a href="$url">$url</a>}; 
+}
+
+sub template_MOVIE {
+  my ($self, $movie_id) = @_;
+  return EnsEMBL::Web::Document::HTML::Movie->new($self->hub)->render($movie_id) || '<p><i>Movie not found</i></p>';
 }
 
 1;
