@@ -109,7 +109,7 @@ sub fetch_by_name_assembly {
     throw("name argument is required") unless($name);
 
     $self->_id_cache;
-    my $found_gdb = $self->{_name_asm_cache}->{lc $name}->{lc $assembly || ''};
+    my $found_gdb = $self->{_name_asm_cache}->{lc $name}->{lc ($assembly || '')};
     
     throw("No matches found for name '$name' and assembly '".($assembly||'--undef--')."'") unless($found_gdb);
 
