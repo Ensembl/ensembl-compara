@@ -103,7 +103,11 @@ sub fetch_ncs {
     if( ($type eq 'f') or ($type eq 't') ) {
         $self->load_compara_ncs($ncs, $dbh);
     } elsif( ($type eq 'c') or ($type eq 'w') ) {
-        $self->load_treefam_ncs($ncs, $dbh);
+        if ($release =~ /^[0-9]+_[0-9]+/) {
+            $self->load_compara_ncs($ncs, $dbh);
+        } else {
+            $self->load_treefam_ncs($ncs, $dbh);
+        }
     }
 
     return $ncs;
