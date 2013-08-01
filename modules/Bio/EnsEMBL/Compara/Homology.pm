@@ -371,7 +371,6 @@ sub node_id {
   my $self = shift;
 
   $self->{'_ancestor_node_id'} = shift if(@_);
-  $self->{'_ancestor_node_id'} = '' unless($self->{'_ancestor_node_id'});
   return $self->{'_ancestor_node_id'};
   
 }
@@ -392,7 +391,6 @@ sub ancestor_node_id {
   my $self = shift;
 
   $self->{'_ancestor_node_id'} = shift if(@_);
-  $self->{'_ancestor_node_id'} = '' unless($self->{'_ancestor_node_id'});
   return $self->{'_ancestor_node_id'};
   
 }
@@ -414,7 +412,6 @@ sub tree_node_id {
   my $self = shift;
 
   $self->{'_tree_node_id'} = shift if(@_);
-  $self->{'_tree_node_id'} = '' unless($self->{'_tree_node_id'});
   return $self->{'_tree_node_id'};
   
 }
