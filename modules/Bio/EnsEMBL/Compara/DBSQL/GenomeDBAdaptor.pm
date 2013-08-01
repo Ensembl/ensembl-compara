@@ -206,7 +206,7 @@ sub fetch_by_Slice {
 
   Arg [1]    : int $ancestral_taxon_id
   Arg [2]    : (optional) bool $assembly_default_only
-  Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
+  Example    : $gdb = $gdba->fetch_all_by_ancestral_taxon_id(1234);
   Description: Retrieves all the genome dbs derived from that NCBI taxon_id.
   Note       : This method uses the ncbi_taxa_node table
   Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
@@ -231,6 +231,40 @@ sub fetch_all_by_ancestral_taxon_id {
   }
 
   return $self->_fetch_cached_by_sql($sql, $taxon_id);
+}
+
+
+=head2 fetch_all_by_low_coverage
+
+  Example    : $gdb = $gdba->fetch_all_by_low_coverage();
+  Description: Retrieves all the genome dbs that have low coverage
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
+  Exceptions : thrown if core_db could not be connected to
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_low_coverage {
+    my ($self) = @_;
+
+    my $all_genome_dbs = $self->fetch_all();
+
+    my @low_coverage_genome_dbs = ();
+    foreach my $curr_gdb (@$all_genome_dbs) {
+        next if (!$curr_gdb->assembly_default);
+        next if ($curr_gdb->name eq "ancestral_sequences");
+        next if ($curr_gdb->name eq "caenorhabditis_elegans");  # why?
+
+        my $core_dba = $curr_gdb->db_adaptor
+            or throw "Cannot connect to ".$curr_gdb->name." core DB";
+        my $meta_container = $core_dba->get_MetaContainer;
+        my $coverage_depth = $meta_container->list_value_by_key("assembly.coverage_depth")->[0];
+        if ($coverage_depth eq "low") {
+            push(@low_coverage_genome_dbs, $curr_gdb);
+        }
+    }
+
+    return \@low_coverage_genome_dbs;
 }
 
 
