@@ -258,14 +258,13 @@ sub load_compara_ncs {
     } else {
         if ($schema_version <= 70) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), IFNULL(mg.stable_id, mp.stable_id)
+                SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), IF(m.description LIKE "Transcript:%", SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     JOIN gene_tree_root_tag gtrt ON gtr.root_id=gtrt.root_id AND gtrt.tag = "model_name"
                     LEFT JOIN gene_tree_member gtm USING (node_id)
                     LEFT JOIN member mp USING (member_id)
-                    LEFT JOIN member mg ON mp.gene_member_id = mg.member_id
-                    WHERE (gtn.node_id = gtn.root_id OR mp.member_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
+                    WHERE (gtn.node_id = gtn.root_id OR m.member_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY gtr.root_id, left_index
             };
         }
