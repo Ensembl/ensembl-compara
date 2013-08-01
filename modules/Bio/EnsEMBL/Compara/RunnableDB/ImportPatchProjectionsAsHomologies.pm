@@ -139,6 +139,8 @@ my $count_orig_gene = 0;
 my $count_proj_gene = 0;
 my $transcript_count = 0;
 
+$self->param('missing_genes', []);
+
 #get adaptors
 my $core_ga = $self->param('species_dba')->get_GeneAdaptor;
 my $core_ta = $self->param('species_dba')->get_TranscriptAdaptor;
@@ -182,6 +184,13 @@ TRANSCRIPT:
 
                 my $orig_gene = $core_ga->fetch_by_transcript_stable_id($orig_transcript_id);
                 my $orig_transcript = $core_ta->fetch_by_stable_id($orig_transcript_id);
+
+                if (not defined $orig_gene or not defined $orig_transcript) {
+                    warn "\$core_ga->fetch_by_transcript_stable_id($orig_transcript_id) returned undef" unless $orig_gene;
+                    warn "\$core_ta->fetch_by_stable_id($orig_transcript_id) returned undef" unless $orig_transcript;
+                    push @{$self->param('missing_genes')}, $orig_transcript_id;
+                    next TRANSCRIPT;
+                }
 
                 # Create the original gene member if necessary
                 my $orig_gene_member = $self->fetch_or_store_gene($orig_gene, \$count_orig_gene);
@@ -227,6 +236,11 @@ sub store_homology {
 
 sub write_output {
     my $self = shift @_;
+
+    my $missing_genes = join("\n", @{$self->param('missing_genes')});
+    if ($missing_genes) {
+        die "!! Some genes are referenced to, but are not present in the core gene set !!\n$missing_genes";
+    }
 
     my %stored_homologies = %{$self->param('stored_homologies')};
 
