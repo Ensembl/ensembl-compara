@@ -41,9 +41,11 @@ sub new {
 sub treefam_dbh {
     my ($self, $release) = @_;
 
-    my $dbh = DBI->connect("DBI:mysql:mysql_use_result=1;host=db.treefam.org;port=3308;database=treefam_${release}", 'anonymous', '');
-    
-    return $dbh;
+    if ($release =~ /^[0-9]+_[0-9]+$/) {
+        return DBI->connect("DBI:mysql:mysql_use_result=1;host=mysql-treefam-public.ebi.ac.uk;port=4418;database=treefam_production_${release}", 'treefam_ro', '');
+    } else {
+        return DBI->connect("DBI:mysql:mysql_use_result=1;host=db.treefam.org;port=3308;database=treefam_${release}", 'anonymous', '');
+    }
 }
 
 sub dbh_from_dgsuffix_dbname {
