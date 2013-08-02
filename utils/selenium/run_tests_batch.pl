@@ -21,11 +21,11 @@ GetOptions(
 
 $timeout   = qq{-timeout $timeout} if($timeout);
 $url       = qq{-url $url} if($url);
-$browser   = qq{-browser $browser} if($browser);
+$browser   = qq{-browser "$browser"} if($browser);
 my @module = split(/,/, $module) if($module);
 my $host = `host mib20062i`; #get the IP address of the selenium server which is on the macbook pro.
 $host =~ s/mib20062i.internal.sanger.ac.uk has address //;
-#$host = '172.20.10.187';
+$host =  '172.20.11.220';#'172.20.10.206';
 my $port   = "4444";
 
 # check to see if the selenium server is online(URL returns OK if server is online).
