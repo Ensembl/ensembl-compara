@@ -184,7 +184,6 @@ foreach my $index (@indexes) {
       $conf->{'website'}{'name'} = $website->{'NAME'};
       $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}", $website->{'USER'}, $website->{'PASS'}, { PrintError => 1, RaiseError => 0} );
     }
-
     else {
 #      next unless ($species =~ /^[N-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
@@ -205,12 +204,12 @@ foreach my $index (@indexes) {
         $no_success = 0;
         next;
       }
-      if ($index =~ /Variation|Phenotype/) {
-      }
-
-      if ($index eq 'Family') {
+      if ($index =~ /Family|GeneTree/) {
         my $compara = $SD->multidb->{DATABASE_COMPARA};
         $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}", $compara->{'USER'}, $compara->{'PASS'} );
+        if ($index eq 'GeneTree') {
+          $single_species = 1;
+        }
       }
       my $function = "dump$index";
       no strict "refs";
@@ -243,7 +242,7 @@ foreach my $index (@indexes) {
       }
     }
     eval { $conf->{'dbh'}->disconnect; };
-    if ($@) { print LOG "WARNING: Problems disconnecting database habdle, don't understand this!"; }
+    if ($@) { print LOG "WARNING: Problems disconnecting database handle, don't understand this!"; }
     last if $single_species;
   }
   print LOG "  Time for $index is " . &elapsed_time($start) . "\n\n";
@@ -469,8 +468,7 @@ sub markerLine {
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$key</field>
-  <field name="description">$desc</field>);
+  <field name="id">$key</field>);
     foreach my $syn (@synonyms) {
       $xml .= qq(
   <field name="synonym">$syn</field>);
@@ -1405,7 +1403,7 @@ sub DomainLine {
     $xml = qq(
 <doc>
   <field name="id">$acc</field>
-  <field name="description">$desc</field>);
+  <field name="description">$description</field>);
     foreach my $id (@$IDS) {
       $xml .= qq(
   <field name="synonym">$id</field>);
@@ -1433,6 +1431,50 @@ sub DomainLine {
   return $xml;
 }
 
+
+########################################################################## Families
+
+sub dumpGeneTree {
+  my $conf   = shift;
+  my $dbname = $conf->{'dbs'}->{'DATABASE_COMPARA'};
+  my ($gt_present) = $conf->{'dbh_compara'}->selectrow_array(qq(SELECT count(*) FROM gene_tree_root WHERE stable_id IS NOT null));
+  return unless $gt_present;
+
+  my $counter   = make_counter(0);
+  my $file = $conf->{'directory'}."/${dbname}_GeneTree.xml";
+  my $start_time = time;
+  my $fh;
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
+  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  header('','','',$nogzip,$fh,'' );
+
+  my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT null ));
+  $sth->execute();
+  while( my( $sid) = $sth->fetchrow_array()) {
+    &p( GeneTreeLine($sid,$counter ), $nogzip, $fh);
+  }
+  return footer( $counter->(),$nogzip,$fh);
+}
+
+sub GeneTreeLine {
+  my($sid, $counter) = @_;
+  my $url = sprintf(qq(Multi/GeneTree?gt=%s),
+                    $sid);
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$sid</field>);
+    $xml .= &common_fields('','GeneTree','compara');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+  }
+  $counter->();
+  return $xml;
+}
 
 ########################################################################## Families
 
@@ -2522,13 +2564,12 @@ sub GeneTransLine {
   my $doc = $boost ? qq(doc boost="$boost") : 'doc';
 
   if ($search_engine eq 'solr') {
-    $description = $desc;
     $xml = qq(
 <$doc>
   <field name="id">$sid</field>
   <field name="id_ver">$sid.$sid_ver</field>
   <field name="name">$disp_xref</field>
-  <field name="description">$description</field>);
+  <field name="description">$desc</field>);
     if (my $db_boost_value = $db_boost{$db}) {
       $xml .= qq(
   <field name="db_boost">$db_boost_value</field>);
