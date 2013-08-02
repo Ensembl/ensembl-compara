@@ -72,6 +72,12 @@ label.ff-label {
 div.ff-right {
   padding-left: 50%;
 }
+div.ff-multi div.ff-right {
+  padding-bottom: 8px;
+}
+div.ff-multi div.ff-right:last-child {
+  padding-bottom: 0;
+}
 div.ff-right span.snote {
   vertical-align: top;
   position: relative;
@@ -131,11 +137,11 @@ input.fbutton.disabled, input.fbutton.disabled:active {
   width: 210px;
   margin-bottom: 3px;
 }
-.inline .ftext, .inline .ftextarea, .inline .fselect, .inline .fbutton, .inline .ffile {
+.ff-inline .ftext, .ff-inline .ftextarea, .ff-inline .fselect, .ff-inline .fbutton, .ff-inline .ffile {
   width: auto;
   margin-right: 6px;
 }
-.inline input.fbutton {
+.ff-inline input.fbutton {
   vertical-align: bottom;
   height: 20px;
   position: relative;
@@ -148,26 +154,26 @@ input.fbutton.disabled, input.fbutton.disabled:active {
   box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
   margin-top: 2px;
 }
-body.ienew .inline input.fbutton {
+body.ienew .ff-inline input.fbutton {
   height: 19px;
 }
-body.mac .inline input.fbutton {
+body.mac .ff-inline input.fbutton {
   height: 17px;
 }
-body.ie8 .inline input.fbutton {
+body.ie8 .ff-inline input.fbutton {
   border-width: 3px;
   border-style: double;
   height: 24px;
   top: 1px;
 }
-body.ie67 .inline input.fbutton {
+body.ie67 .ff-inline input.fbutton {
   outline: none;
   height: 22px;
   top: -1px;
   border: none;
   padding: 0 6px;
 }
-body.ie6 .inline input.fbutton {
+body.ie6 .ff-inline input.fbutton {
   height: 20px;
 }
 .ff-checklist {
