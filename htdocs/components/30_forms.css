@@ -180,13 +180,11 @@ body.ie6 .ff-inline input.fbutton {
   margin-right: 10px;
 }
 .ff-checklist input {
-  float: left;
+  margin-right: 12px;
 }
 .ff-checklist label.ff-checklist-label {
-  margin: 0 10px;
+  margin-right: 12px;
   font-weight: normal;
-  display: block;
-  padding-left: 20px;
 }
 .panel p.ff-checklist {
   line-height: 20px;
