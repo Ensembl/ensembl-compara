@@ -177,19 +177,19 @@ sub write_output {
         my $method = ref($self);
         $method =~ /::([^:]*)$/;
         $self->param('protein_tree')->aln_method($1);
-    }
-    my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
 
-    unless ($aln_ok) {
-        # Probably an ongoing MEMLIMIT
-        # We have 10 seconds to dataflow and exit;
-        my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
-        if (scalar(@$new_job)) {
-            $self->input_job->incomplete(0);
-            $self->input_job->lethal_for_worker(1);
-            die 'Probably not enough memory. Switching to the _himem analysis.';
-        } else {
-            die 'Error in the alignment but cannot switch to an analysis with more memory.';
+        my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
+        unless ($aln_ok) {
+            # Probably an ongoing MEMLIMIT
+            # We have 10 seconds to dataflow and exit;
+            my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+            if (scalar(@$new_job)) {
+                $self->input_job->incomplete(0);
+                $self->input_job->lethal_for_worker(1);
+                die 'Probably not enough memory. Switching to the _himem analysis.';
+            } else {
+                die 'Error in the alignment but cannot switch to an analysis with more memory.';
+            }
         }
     }
 
