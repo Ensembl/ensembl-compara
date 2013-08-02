@@ -61,7 +61,7 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
                 : $sitetype eq 'Pre'  ? 'http://pre.ensembl.org/'
                 : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
 
-$search_engine ||= 'lucene';
+$search_engine ||= 'solr';
 
 my %db_boost = (
   core => '40',
@@ -173,6 +173,11 @@ foreach my $index (@indexes) {
     my $core = $dbs{'DATABASE_CORE'};
     $conf->{'core_details'}            = $core;
 
+    if (my $variation = $dbs{'DATABASE_VARIATION'}) {
+      $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}", $variation->{'USER'}, $variation->{'PASS'}, { PrintError => 1, RaiseError => 0} );
+      $conf->{'variation_details'} = $variation;
+    }
+
     if ($index eq 'Help') {
       $single_species = 1;
       my $website = $SD->multidb->{DATABASE_WEBSITE};
@@ -200,6 +205,9 @@ foreach my $index (@indexes) {
         $no_success = 0;
         next;
       }
+      if ($index =~ /Variation|Phenotype/) {
+      }
+
       if ($index eq 'Family') {
         my $compara = $SD->multidb->{DATABASE_COMPARA};
         $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}", $compara->{'USER'}, $compara->{'PASS'} );
@@ -361,7 +369,7 @@ sub helpLine {
       $xml .= qq(
   <field name="keyword">$kw</field>);
     }
-    $xml .= &common_fields('All','Documentation','');
+    $xml .= &common_fields('','Documentation','');
     $xml .= qq(
   <field name="feature_subtype">$type</field>);
     $xml .= qq(
@@ -525,7 +533,7 @@ sub dumpVariation {
   header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
   my ($counter2,$file2,$fh2);
-  my $somatic = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, somatic_status from $VariationDB.source" )} };
+  my $somatic = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, somatic_status from source" )} };
   my $somatic_present = ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
   if ($somatic_present) {
     $counter2 = make_counter(0);
@@ -543,14 +551,14 @@ sub dumpVariation {
     header( $VariationDB, $dbspecies, 'somatic mutation', $nogzip, $fh2, $release );
   }
 
-  my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VariationDB.source" )} };
+  my $sources = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, name from source" )} };
 
   my $sth;
   print LOG "    Preparing to get HGVS data ", &date_and_mem, "\n";
-  my $all_hgvs_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref(
+  my $all_hgvs_names = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref(
     "SELECT variation_id,
             group_concat(hgvs_name SEPARATOR ';') AS names
-       FROM $VariationDB.variation_hgvs
+       FROM variation_hgvs
       GROUP by variation_id" )} };
 
   my $locations = {};
@@ -558,9 +566,9 @@ sub dumpVariation {
 #  print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
 #  my $query = qq(
 #    SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start, '-',  vf.seq_region_end, ':', vf.seq_region_strand ) as location
-#      FROM $VariationDB.variation_feature vf, $VariationDB.seq_region sr
+#      FROM variation_feature vf, seq_region sr
 #     WHERE vf.seq_region_id = sr.seq_region_id);
-#  $sth = $conf->{'dbh'}->prepare($query);
+#  $sth = $conf->{'variation_dbh'}->prepare($query);
 #  $sth->execute;
 #  while ( my $rows = $sth->fetchrow_arrayref() ) {
 #    push @{$locations->{$rows->[0]}},$rows->[1];
@@ -569,7 +577,7 @@ sub dumpVariation {
 
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ", &date_and_mem, "\n";
   my %snp_extra = map { ($_->[0] => $_) }
-    @{$conf->{'dbh'}->selectall_arrayref(
+    @{$conf->{'variation_dbh'}->selectall_arrayref(
      "SELECT v.variation_id,
            group_concat( distinct sta.name SEPARATOR '; ') AS lsi,
            group_concat( distinct st.external_reference SEPARATOR ';') AS st,
@@ -583,17 +591,17 @@ sub dumpVariation {
              )
              SEPARATOR ';'
            ) AS phen
-      FROM $VariationDB.phenotype_feature AS pf left join
-           $VariationDB.variation AS v ON v.name = pf.object_id left join
-           $VariationDB.phenotype AS p ON p.phenotype_id = pf.phenotype_id left join
-           $VariationDB.study AS st ON st.study_id=pf.study_id left join
-           $VariationDB.associate_study AS sa ON sa.study1_id=st.study_id left join
-           $VariationDB.study AS sta ON sta.study_id=sa.study2_id left join
-           ( $VariationDB.phenotype_feature_attrib AS pfa1
-             join $VariationDB.attrib_type AS at1 on pfa1.attrib_type_id = at1.attrib_type_id and at1.code = 'associated_gene' )
+      FROM phenotype_feature AS pf left join
+           variation AS v ON v.name = pf.object_id left join
+           phenotype AS p ON p.phenotype_id = pf.phenotype_id left join
+           study AS st ON st.study_id=pf.study_id left join
+           associate_study AS sa ON sa.study1_id=st.study_id left join
+           study AS sta ON sta.study_id=sa.study2_id left join
+           ( phenotype_feature_attrib AS pfa1
+             join attrib_type AS at1 on pfa1.attrib_type_id = at1.attrib_type_id and at1.code = 'associated_gene' )
            on pfa1.phenotype_feature_id = pf.phenotype_feature_id left join 
-           ( $VariationDB.phenotype_feature_attrib AS pfa2
-             join $VariationDB.attrib_type AS at2 on pfa2.attrib_type_id = at2.attrib_type_id and at2.code = 'variation_names' )
+           ( phenotype_feature_attrib AS pfa2
+             join attrib_type AS at2 on pfa2.attrib_type_id = at2.attrib_type_id and at2.code = 'variation_names' )
            on pfa2.phenotype_feature_id = pf.phenotype_feature_id
      WHERE pf.type = 'Variation'
        AND pf.is_significant = 1
@@ -607,9 +615,9 @@ sub dumpVariation {
   print LOG "     Retrieved extra SNP info ", &date_and_mem, "\n";
 
   #disconnect and then connect to free up memory
-  my $core = $conf->{'core_details'};
-  $conf->{'dbh'}->disconnect;
-  $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+  my $variation = $conf->{'variation_details'};
+  $conf->{'variation_dbh'}->disconnect;
+  $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}", $variation->{'USER'}, $variation->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
   my ($ssid_sth, $stmt,$ssid_hash);
   # the mouse and human databases are so big that that dumping in one go runs out of memory even with 48Gb!
@@ -617,7 +625,7 @@ sub dumpVariation {
     print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
-                 FROM $VariationDB.subsnp_map
+                 FROM subsnp_map
              GROUP BY variation_id};
 
     #if variation forget to build subsnp_map then can use this, but slower
@@ -626,7 +634,7 @@ sub dumpVariation {
 # 	  	 FROM $VariationDB.allele a
 #                WHERE a.subsnp_id IS NOT NULL
 #             GROUP BY a.variation_id};
-    $ssid_sth = $conf->{'dbh'}->prepare($stmt);
+    $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
     $ssid_sth->execute();
     print LOG "     ...executed SQL, now retrieving data ", &date_and_mem, "\n";
     # Get a hashref of the results with the variation_id as key
@@ -634,21 +642,21 @@ sub dumpVariation {
     print LOG "     Retrieved extra ssID info ", &date_and_mem, "\n";
 
     #disconnect and then connect to free up memory
-    $conf->{'dbh'}->disconnect;
-    $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+    $conf->{'variation_dbh'}->disconnect;
+    $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}", $variation->{'USER'}, $variation->{'PASS'}, { PrintError => 0, RaiseError => 0} );
   }
   else {
     #for human we need to get the extra allele info as we go along
     print LOG "    Will get extra ssID info as we go along ", &date_and_mem, "\n";
     $stmt = qq{SELECT GROUP_CONCAT('ss',subsnp_id) as ssid
-                 FROM $VariationDB.subsnp_map
+                 FROM subsnp_map
                 WHERE variation_id = ?};
-    $ssid_sth = $conf->{'dbh'}->prepare($stmt);
+    $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
   }
 
   # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
   print LOG "    Preparing to get all SNPs ", &date_and_mem, "\n";
-  $sth = $conf->{'dbh'}->prepare(qq{
+  $sth = $conf->{'variation_dbh'}->prepare(qq{
     SELECT
         v.variation_id,
         v.name,
@@ -661,10 +669,10 @@ sub dumpVariation {
         fd.description,
         v.somatic
     FROM
-        $VariationDB.variation v LEFT JOIN
-        $VariationDB.variation_synonym vs USING (variation_id) LEFT JOIN (
-            $VariationDB.failed_variation fv JOIN
-            $VariationDB.failed_description fd USING (failed_description_id)
+        variation v LEFT JOIN
+        variation_synonym vs USING (variation_id) LEFT JOIN (
+            failed_variation fv JOIN
+            failed_description fd USING (failed_description_id)
         ) USING (variation_id)
     GROUP BY
         v.variation_id
@@ -692,7 +700,7 @@ sub dumpVariation {
         #comment out these three lines if time constraints mean you need to generate indices without extra allele info
         my $timed_out = 1;
         until ($ssid_sth->execute($variation_id) || $timed_out > 5) {
-          print LOG "Can't execute query to get extra allele info:\n".$conf->{'dbh'}->errstr."\n. Retrying\n";
+          print LOG "Can't execute query to get extra allele info:\n".$conf->{'variation_dbh'}->errstr."\n. Retrying\n";
           sleep 3;
           $timed_out++;
         }
@@ -702,8 +710,8 @@ sub dumpVariation {
         }
 
         (my $res) = $ssid_sth->fetchrow_arrayref();
-        if ($conf->{'dbh'}->err) {
-          print LOG "Data retrieval for $variation_name terminated early:\n".$conf->{'dbh'}->errstr."\n";
+        if ($conf->{'variation_dbh'}->err) {
+          print LOG "Data retrieval for $variation_name terminated early:\n".$conf->{'variation_dbh'}->errstr."\n";
           print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
           return 0;
         }
@@ -896,7 +904,7 @@ sub dumpPhenotype {
 #  }
 
   #phenotype info
-  my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $VariationDB.phenotype",'description');
+  my $phenotype_info = $conf->{'variation_dbh'}->selectall_hashref("select description, phenotype_id from phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
     my $syns = $synonyms{$phenotype_info->{$phen}{'phenotype_id'}} || [];
     &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, $counter ), $nogzip, $fh);
@@ -971,7 +979,7 @@ sub dumpStructuralVariations {
 
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
-  my $T = $conf->{'dbh'}->selectall_arrayref(qq(
+  my $T = $conf->{'variation_dbh'}->selectall_arrayref(qq(
     SELECT v.structural_variation_id,
            v.variation_name,
            s.name as source,
@@ -981,12 +989,12 @@ sub dumpStructuralVariations {
            vf.seq_region_start,
            vf.seq_region_end,
            group_concat(ssv.variation_name) as ssv
-      FROM $VariationDB.structural_variation as v LEFT JOIN $VariationDB.study as st ON st.study_id=v.study_id 
-        LEFT JOIN $VariationDB.structural_variation_association as sva ON v.structural_variation_id = sva.structural_variation_id
-        LEFT JOIN $VariationDB.structural_variation as ssv ON ssv.structural_variation_id = sva.supporting_structural_variation_id,
-           $VariationDB.source as s,
-           $VariationDB.seq_region as r,
-           $VariationDB.structural_variation_feature as vf
+      FROM structural_variation as v LEFT JOIN study as st ON st.study_id=v.study_id
+        LEFT JOIN structural_variation_association as sva ON v.structural_variation_id = sva.structural_variation_id
+        LEFT JOIN structural_variation as ssv ON ssv.structural_variation_id = sva.supporting_structural_variation_id,
+           source as s,
+           seq_region as r,
+           structural_variation_feature as vf
      WHERE s.source_id = v.source_id
        AND v.structural_variation_id = vf.structural_variation_id
        AND vf.seq_region_id = r.seq_region_id
@@ -1525,6 +1533,7 @@ sub FamilyLine {
   $counter->();
   return $xml;
 }
+
 
 ########################################################################## Sequences
 
@@ -3137,11 +3146,7 @@ sub common_fields {
     $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
-    if ($species eq 'All') {
-      $xml .= qq(
-  <field name="species">All</field>);
-    }
-    else {
+    if ($species) {
       $xml .= qq(
   <field name="species">$species_name</field>
   <field name="species_name">$species</field>);
