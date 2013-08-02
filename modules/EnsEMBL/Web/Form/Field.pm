@@ -14,16 +14,17 @@ use base qw(EnsEMBL::Web::DOM::Node::Element::Div);
 ########################################################
 
 use constant {
-  CSS_CLASS                 => 'form-field',
-  CSS_CLASS_NOTES           => 'ff-notes',
-  CSS_CLASS_LABEL           => 'ff-label',
-  CSS_CLASS_ELEMENT_DIV     => 'ff-right',
-  CSS_CLASS_INLINE_WRAPPER  => 'inline',
+  CSS_CLASS                   => 'form-field',
+  CSS_CLASS_MULTIPE_ELEMENTS  => 'ff-multi',
+  CSS_CLASS_NOTES             => 'ff-notes',
+  CSS_CLASS_LABEL             => 'ff-label',
+  CSS_CLASS_ELEMENT_DIV       => 'ff-right',
+  CSS_CLASS_INLINE_WRAPPER    => 'ff-inline',
   
-  _FLAG_FOOT_NOTES          => '_is_foot_note',
-  _FLAG_HEAD_NOTES          => '_is_head_note',
-  _FLAG_INLINE              => '_can_be_inline',
-  _FLAG_ELEMENT             => '_is_field_element',
+  _FLAG_FOOT_NOTES            => '_is_foot_note',
+  _FLAG_HEAD_NOTES            => '_is_head_note',
+  _FLAG_INLINE                => '_can_be_inline',
+  _FLAG_ELEMENT               => '_is_field_element',
 };
 
 sub render {
@@ -119,9 +120,9 @@ sub add_element {
     return undef;
   }
   $element->configure($params);
-  
+
   if ($inline && $element->node_name =~ /^(input|textarea|select)$/) { #if possible to fulfil the request for inline
-    for (reverse @{$children}) {
+    for (reverse @$children) {
       next if $_->get_flag($self->_FLAG_FOOT_NOTES);
       last unless $_->get_flag($self->_FLAG_INLINE);
       $div = $_;
@@ -129,6 +130,10 @@ sub add_element {
       last;
     }
   }
+
+  # add a class to the field to adjust padding among multiple elements/notes
+  $self->set_attribute('class', $self->CSS_CLASS_MULTIPE_ELEMENTS) if grep {$_->node_name eq 'div'} @$children;
+
   unless ($div) {
     $div = $self->dom->create_element('div');
     $div->set_flag($self->_FLAG_INLINE);
