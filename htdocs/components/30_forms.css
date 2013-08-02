@@ -221,3 +221,15 @@ div.ele-das {
 .ele-das-right p {
   font-weight: bold;
 }
+form.bgcolour div.form-field {
+  background-color: [[FORMFIELD_BG1]];
+}
+form.bgcolour div.form-field div.ff-right, form.bgcolour div.form-field.ff-multi div.ff-right {
+  background-color: [[FORMFIELD_BG2]];
+  margin-left: 300px;
+  padding: 6px;
+}
+form.bgcolour div.form-field label.ff-label {
+  width: 292px;
+  padding: 8px 0 0 8px;
+}
