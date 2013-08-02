@@ -225,7 +225,8 @@ form.bgcolour div.form-field {
 form.bgcolour div.form-field div.ff-right, form.bgcolour div.form-field.ff-multi div.ff-right {
   background-color: [[FORMFIELD_BG2]];
   margin-left: 300px;
-  padding: 6px;
+  padding: 6px 6px 100px;
+  margin-bottom: -94px; /* 6 - 100 = -94  */
 }
 form.bgcolour div.form-field label.ff-label {
   width: 292px;
