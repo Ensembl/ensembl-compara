@@ -1561,42 +1561,61 @@ sub dumpFamily {
  ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
   my $gene_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
-        SELECT m.stable_id as member_id, x.display_label
+        SELECT m.member_id, m.stable_id, x.display_label
           FROM member m, genome_db gdb, $dbname.gene g, $dbname.xref x
          WHERE m.genome_db_id = gdb.genome_db_id
            AND m.stable_id = g.stable_id
            AND g.display_xref_id = x.xref_id
            AND m.source_name = 'ENSEMBLGENE'
            AND gdb.name = '$dbspecies'),'member_id');
-#  my $protein_members = $conf->{'dbh_compara'}->selectall_hashref(qq(SELECT m.stable_id FROM member m, genome_db gdb WHERE m.genome_db_id = gdb.genome_db_id AND m.source_name = 'ENSEMBLPEP' gdb.name = '$dbspecies'));
 
-#  warn Data::Dumper::Dumper($gene_members); exit;
+  my $protein_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
+        SELECT m.member_id, m.stable_id
+          FROM member m, genome_db gdb
+         WHERE m.genome_db_id = gdb.genome_db_id
+           AND m.source_name = 'ENSEMBLPEP'
+           AND gdb.name = '$dbspecies'),'member_id');
 
   my $sth = $conf->{'dbh_compara'}->prepare(qq(
     select f.stable_id,
            f.description,
-           sum( (source_name = 'ENSEMBLGENE') and (m.genome_db_id = gd.genome_db_id) ) as ensembl_genes_species,
-           sum( (source_name = 'ENSEMBLPEP' ) and (m.genome_db_id = gd.genome_db_id) ) as ensembl_peptides_species
-      from family as f, family_member as fm, member as m, genome_db as gd
-     where f.family_id=fm.family_id and fm.member_id=m.member_id and
-           gd.name = '$dbspecies'
-     group by f.family_id 
-    having ensembl_genes_species > 0));
+           group_concat(fm.member_id)
+      from family as f, family_member as fm
+     where f.family_id = fm.family_id
+     group by f.stable_id ));
   $sth->execute();
   my $X = $conf->{'authority'} || 'Ensembl';
-  while( my( $fid, $desc, $ensembl_genes_species, $ensembl_peptides_species ) = $sth->fetchrow_array()) {
+  while( my( $fid, $desc, $member_ids ) = $sth->fetchrow_array()) {
     $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
-    my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
-    my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
-    my $full_desc = qq(Ensembl protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
-#    my $full_desc = qq(Ensembl protein family $fid: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species.\nDescription: $desc);
-    &p( FamilyLine($dbspecies,$fid,$full_desc,$counter ), $nogzip, $fh); 
+    my (@genes,@proteins);
+    foreach my $id (split ',', $member_ids) {
+      if ($gene_members->{$id}) {
+        push @genes, {
+          stable_id     => $gene_members->{$id}{'stable_id'},
+          display_label => $gene_members->{$id}{'display_label'}
+        };
+      }
+      if ($protein_members->{$id}) {
+        push @proteins, {
+          stable_id     => $protein_members->{$id}{'stable_id'},
+        };
+      }
+    }
+    if (@genes) {
+      my $ensembl_genes_species    = scalar @genes;
+      my $ensembl_peptides_species = scalar @proteins;
+      my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
+      my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
+      my $full_desc = qq($X protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
+#      my $full_desc = qq(Ensembl protein family $fid: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species.\nDescription: $desc);
+      &p( FamilyLine($dbspecies,$fid,$full_desc,\@genes,\@proteins,$counter ), $nogzip, $fh);
+    }
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub FamilyLine {
-  my($species, $fid, $desc, $counter) = @_;
+  my($species, $fid, $desc, $genes, $proteins, $counter) = @_;
   my $url = sprintf(qq(%s/Gene/Family/Genes?family=%s),
                     $species,
                     $fid);
@@ -1608,6 +1627,18 @@ sub FamilyLine {
 <doc>
   <field name="id">$fid</field>
   <field name="description">$desc</field>);
+    foreach my $g (@$genes){
+      my $id   = $g->{'stable_id'};
+      my $name = $g->{'display_label'};
+      $xml .= qq(
+  <field name="assoc_gene">$id</field>
+  <field name="assoc_gene_name">$name</field>);
+    }
+    foreach my $p (@$proteins){
+      my $id   = $p->{'stable_id'};
+      $xml .= qq(
+  <field name="assoc_protein">$id</field>);
+    }
     $xml .= &common_fields($species,'Family','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
