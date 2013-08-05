@@ -145,7 +145,7 @@ sub href {
   
   return $self->_url({
     species     => $f->species,
-    action      => 'View',
+    action      => 'AssemblyException',
     feature     => $slice   ? sprintf('%s:%s-%s', $slice->seq_region_name, $slice->start, $slice->end) : undef,
     range       => $feature ? undef : sprintf('%s:%s-%s', $f->seq_region_name, $f->start, $f->end),
     target      => $f->slice->seq_region_name,
