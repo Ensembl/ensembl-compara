@@ -193,8 +193,8 @@ sub template_LINK {
 }
 
 sub template_MOVIE {
-  my ($self, $movie_id) = @_;
-  return EnsEMBL::Web::Document::HTML::Movie->new($self->hub)->render($movie_id) || '<p><i>Movie not found</i></p>';
+  my ($self, $movie_params) = @_;
+  return EnsEMBL::Web::Document::HTML::Movie->new($self->hub)->render($movie_params) || '<p><i>Movie not found</i></p>';
 }
 
 1;
