@@ -207,9 +207,6 @@ foreach my $index (@indexes) {
       if ($index =~ /Family|GeneTree/) {
         my $compara = $SD->multidb->{DATABASE_COMPARA};
         $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}", $compara->{'USER'}, $compara->{'PASS'} );
-        if ($index eq 'GeneTree') {
-          $single_species = 1;
-        }
       }
       my $function = "dump$index";
       no strict "refs";
@@ -1432,42 +1429,94 @@ sub DomainLine {
 }
 
 
-########################################################################## Families
+########################################################################## GeneTrees
 
 sub dumpGeneTree {
   my $conf   = shift;
-  my $dbname = $conf->{'dbs'}->{'DATABASE_COMPARA'};
   my ($gt_present) = $conf->{'dbh_compara'}->selectrow_array(qq(SELECT count(*) FROM gene_tree_root WHERE stable_id IS NOT null));
-  return unless $gt_present;
-
-  my $counter   = make_counter(0);
+  if (! $gt_present) {
+    print LOG "  Error - can't find any gene trees to dump", format_datetime($start_time), "\n";
+  }
+  my $multi_species;
+  my $dbspecies = $conf->{'species'};
+  my ($counter,$start_time,$fh);
+  my $compara_dbname = $conf->{'dbs'}->{'DATABASE_COMPARA'};
+  my $compara_file = $conf->{'directory'}."/${compara_dbname}_GeneTree.xml";
+  unless (-e $compara_file) {
+    $multi_species = 1;
+    $counter   = make_counter(0);
+    $start_time = time;
+    $fh;
+    open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
+    print LOG "  Dumping $compara_dbname to $compara_file ... ", format_datetime($start_time), "\n";
+    header('','','',$nogzip,$fh,'' );
+    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT null ));
+    $sth->execute();
+    while( my( $gt_id) = $sth->fetchrow_array()) {
+      &p( GeneTreeLine($gt_id,$counter,'',$multi_species), $nogzip, $fh);
+    }
+    my $c = footer( $counter->(),$nogzip,$fh);
+  }
+  $multi_species = 0;
+  $counter   = make_counter(0);
+  $start_time = time;
+  my $dbname = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $file = $conf->{'directory'}."/${dbname}_GeneTree.xml";
-  my $start_time = time;
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname gene trees to $file ... ", format_datetime($start_time), "\n";
   header('','','',$nogzip,$fh,'' );
-
-  my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT null ));
-  $sth->execute();
-  while( my( $sid) = $sth->fetchrow_array()) {
-    &p( GeneTreeLine($sid,$counter ), $nogzip, $fh);
+  my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select g.stable_id, x.display_label from gene g, xref x where g.display_xref_id = x.xref_id" )} };
+  my $sql = qq(
+        SELECT gtr.stable_id, mg.stable_id
+          FROM gene_tree_root gtr
+          JOIN gene_tree_node USING (root_id)
+          JOIN member mp USING (member_id)
+          JOIN member mg ON mg.member_id = mp.gene_member_id
+          JOIN genome_db gdb ON mg.genome_db_id = gdb.genome_db_id
+         WHERE clusterset_id = "default"
+           AND tree_type = "tree" AND gdb.name = '$dbspecies');
+  my $sth =  $conf->{'dbh_compara'}->prepare($sql);
+  $sth->execute;
+  while (my ($gt_id, $gid) = $sth->fetchrow_array() ) {
+    next unless $gt_id;
+    my $name = $gene_names->{$gid};
+    &p( GeneTreeLine($gt_id,$counter,$dbspecies,$multi_species,$gid,$name), $nogzip, $fh);
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub GeneTreeLine {
-  my($sid, $counter) = @_;
-  my $url = sprintf(qq(Multi/GeneTree?gt=%s),
-                    $sid);
+  my($gt_id,$counter,$dbspecies,$ms,$gid,$name) = @_;
+  my ($url,$xml);
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$sid</field>);
-    $xml .= &common_fields('','GeneTree','compara');
+  <field name="id">$gt_id</field>);
+    if ($ms) {
+      $xml .= &common_fields('','GeneTree','compara');
+      $url = sprintf(qq(Multi/GeneTree?gt=%s),$gt_id);
+      $xml .= qq(
+  <field name="domain_url">$url</field>);
+    }
+    else {
+      $xml .= qq(
+  <field name="name">$gid</field>);
+      my $desc = "Gene $gid is a member of GeneTree $gt_id";
+      if ($name) {
+        $xml .= qq(
+  <field name="assoc_gene">$name</field>);
+        $desc = "Gene $gid ($name) is a member of GeneTree $gt_id";
+      }
+      $xml .= qq(
+  <field name="description">$desc</field>);
+      $xml .= &common_fields($dbspecies,'GeneTree','core');
+      $url = sprintf(qq($dbspecies/Gene/Compara_Tree?g=%s),$gid);
+      $xml .= qq(
+  <field name="domain_url">$url</field>);
+    }
     $xml .= qq(
-  <field name="domain_url">$url</field>
 </doc>);
   }
   else {
@@ -1511,18 +1560,23 @@ sub dumpFamily {
 
  ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
+  my $gene_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
+        SELECT m.stable_id as member_id, x.display_label
+          FROM member m, genome_db gdb, $dbname.gene g, $dbname.xref x
+         WHERE m.genome_db_id = gdb.genome_db_id
+           AND m.stable_id = g.stable_id
+           AND g.display_xref_id = x.xref_id
+           AND m.source_name = 'ENSEMBLGENE'
+           AND gdb.name = '$dbspecies'),'member_id');
+#  my $protein_members = $conf->{'dbh_compara'}->selectall_hashref(qq(SELECT m.stable_id FROM member m, genome_db gdb WHERE m.genome_db_id = gdb.genome_db_id AND m.source_name = 'ENSEMBLPEP' gdb.name = '$dbspecies'));
+
+#  warn Data::Dumper::Dumper($gene_members); exit;
+
   my $sth = $conf->{'dbh_compara'}->prepare(qq(
     select f.stable_id,
            f.description,
-           count(*) as N,
            sum( (source_name = 'ENSEMBLGENE') and (m.genome_db_id = gd.genome_db_id) ) as ensembl_genes_species,
-           sum( (source_name = 'ENSEMBLPEP' ) and (m.genome_db_id = gd.genome_db_id) ) as ensembl_peptides_species,
-           sum(  source_name = 'ENSEMBLGENE'                                         ) as ensembl_genes,
-           sum(  source_name = 'ENSEMBLPEP'                                          ) as ensembl_peptides,
-           sum( (source_name = 'Uniprot/SPTREMBL' ) and (m.taxon_id = gd.taxon_id)   ) as uniprot_sptrembl_species,
-           sum( (source_name = 'Uniprot/SWISSPROT') and (m.taxon_id = gd.taxon_id)   ) as uniprot_swissprot_species,
-           sum(  source_name = 'Uniprot/SPTREMBL'                                    ) as uniprot_sptrembl,
-           sum(  source_name = 'Uniprot/SWISSPROT'                                   ) as uniprot_swissprot
+           sum( (source_name = 'ENSEMBLPEP' ) and (m.genome_db_id = gd.genome_db_id) ) as ensembl_peptides_species
       from family as f, family_member as fm, member as m, genome_db as gd
      where f.family_id=fm.family_id and fm.member_id=m.member_id and
            gd.name = '$dbspecies'
@@ -1530,15 +1584,13 @@ sub dumpFamily {
     having ensembl_genes_species > 0));
   $sth->execute();
   my $X = $conf->{'authority'} || 'Ensembl';
-  while( my(
-    $fid, $desc, $total,
-    $ensembl_genes_species, $ensembl_peptides_species, $ensembl_genes, $ensembl_peptides,
-    $uniprot_sptrembl_species, $uniprot_swissprot_species,
-    $uniprot_sptrembl, $uniprot_swissprot
-  ) = $sth->fetchrow_array()) {
+  while( my( $fid, $desc, $ensembl_genes_species, $ensembl_peptides_species ) = $sth->fetchrow_array()) {
     $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
-    my $full_desc = qq(Ensembl protein family $fid [$desc] has $total members: $ensembl_genes $X genes ($ensembl_genes_species in $species); $ensembl_peptides $X proteins ($ensembl_peptides_species in $species); $uniprot_swissprot UniProtKB / Swiss-Prot proteins ($uniprot_swissprot_species in $species); $uniprot_sptrembl UniProtUK/TrEMBL proteins ($uniprot_sptrembl_species in $species).);
-    &p( FamilyLine($dbspecies,$fid,$full_desc,$counter ), $nogzip, $fh);
+    my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
+    my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
+    my $full_desc = qq(Ensembl protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
+#    my $full_desc = qq(Ensembl protein family $fid: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species.\nDescription: $desc);
+    &p( FamilyLine($dbspecies,$fid,$full_desc,$counter ), $nogzip, $fh); 
   }
   return footer( $counter->(),$nogzip,$fh);
 }
@@ -1610,11 +1662,11 @@ sub dumpSequence {
 
   #get all types of misc features - used for 'type' label
   my $feat_types = $conf->{'dbh'}->selectall_hashref(qq(
-                  SELECT ms.code, ms.misc_set_id, ma.value as type 
+                  SELECT ms.code, ms.misc_set_id, ma.value as type
                     FROM $dbname.attrib_type at, $dbname.misc_attrib ma, $dbname.misc_feature_misc_set mfms, $dbname.misc_set ms
                    WHERE at.attrib_type_id = ma.attrib_type_id
-                     AND ma.misc_feature_id = mfms.misc_feature_id 
-                     AND mfms.misc_set_id = ms.misc_set_id 
+                     AND ma.misc_feature_id = mfms.misc_feature_id
+                     AND mfms.misc_set_id = ms.misc_set_id
                      AND at.code = 'type'
                    GROUP by ms.code, ma.value), 'misc_set_id');
   if (%$feat_types) {
