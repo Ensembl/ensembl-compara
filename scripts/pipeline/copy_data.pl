@@ -50,15 +50,15 @@ regions are copied from the old database.
 perl copy_data.pl --help
 
 perl copy_data.pl
-    [--reg-conf registry_configuration_file]
-    --from_reg production_database_name
-    --to_reg release_database_name
-    --mlss method_link_species_set_id
+    [--reg_conf registry_configuration_file]
+    --from_reg_name production_database_name
+    --to_reg_name release_database_name
+    --mlss_id method_link_species_set_id1 --mlss_id method_link_species_set_id2 --mlss_id method_link_species_set_id3
 
 perl copy_data.pl
     --from_url production_database_url
     --to_url release_database_url
-    --mlss method_link_species_set_id
+    --method_link_type LASTZ_NET --method_link_type BLASTZ_NET
 
 example:
 
@@ -151,9 +151,9 @@ $| = 1;
 my $help;
 
 my $reg_conf;
-my $from_name = undef;
-my $to_name = undef;
+my $from_reg_name = undef;
 my $from_url = undef;
+my $to_reg_name = undef;
 my $to_url = undef;
 
 my @method_link_types = ();
@@ -181,9 +181,9 @@ my $dry_run = 0;    # if set, will stop just before any data has been copied
 
 GetOptions(
            'help'                           => \$help,
-           'reg-conf|reg_conf|registry=s'   => \$reg_conf,
-           'from_reg=s'                     => \$from_name,
-           'to_reg=s'                       => \$to_name,
+           'reg_conf|reg-conf|registry=s'   => \$reg_conf,
+           'from_reg_name=s'                => \$from_reg_name,
+           'to_reg_name=s'                  => \$to_reg_name,
            'from_url=s'                     => \$from_url,
            'to_url=s'                       => \$to_url,
 
@@ -199,13 +199,14 @@ GetOptions(
 );
 
 # Print Help and exit if help is requested
-if ($help or (!$from_name and !$from_url) or (!$to_name and !$to_url) or (!scalar(@mlss_id) and !scalar(@method_link_types) ) ) {
+if ($help or (!$from_reg_name and !$from_url) or (!$to_reg_name and !$to_url) or (!scalar(@mlss_id) and !scalar(@method_link_types) ) ) {
   exec("/usr/bin/env perldoc $0");
 }
 
-Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_name or $to_name);
-my $from_dba = get_DBAdaptor($from_url, $from_name);
-my $to_dba = get_DBAdaptor($to_url, $to_name);
+Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_reg_name or $to_reg_name);
+
+my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
+my $to_dba = get_DBAdaptor($to_url, $to_reg_name);
 
 print "\n\n";
 
