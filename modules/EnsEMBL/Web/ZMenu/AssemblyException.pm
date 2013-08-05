@@ -40,9 +40,7 @@ sub feature_content {
   my $threshold     = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $this_assembly = $species_defs->ASSEMBLY_NAME;
   my $bgcolor       = $i % 2 ? 'bg2' : 'bg1';
-  my $action        = $hub->action || 'View';
-     $action        = 'Overview' if $end - $start + 1 > $threshold && $action eq 'View'; # go to Overview if region too large for View
-  my $url           = $hub->url({ type => 'Location', action => $action, r => $r });
+  my $url           = $hub->url({ type => 'Location', action => $end - $start + 1 > $threshold ? 'Overview' : 'View', r => $r });
   
   if ($type =~ /^patch/i) {
     my $slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', $chr, $start, $end);
