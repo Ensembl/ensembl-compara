@@ -51,8 +51,8 @@ perl copy_data.pl --help
 
 perl copy_data.pl
     [--reg-conf registry_configuration_file]
-    --from production_database_name
-    --to release_database_name
+    --from_reg production_database_name
+    --to_reg release_database_name
     --mlss method_link_species_set_id
 
 perl copy_data.pl
@@ -155,9 +155,14 @@ my $from_name = undef;
 my $to_name = undef;
 my $from_url = undef;
 my $to_url = undef;
+
+my @method_link_types = ();
 my @mlss_id = ();
+
+    # Re-enable or not indices on tables after copying the data.
+    # Re-enabling takes a lot of time and can be skipped if followed
+    # by another execution of copy_data scipt that will disable them first anyway.
 my $re_enable = 1;
-my $method_link = undef;
 
 #If true, then trust the TO database tables and update the FROM tables if 
 #necessary. Currently only applies to differences in the dnafrag table and 
@@ -172,24 +177,29 @@ my $merge = 0;
 
 my $patch_merge = 0; #special case for merging patches where the dbIDs are not consecutive
 
+my $dry_run = 0;    # if set, will stop just before any data has been copied
+
 GetOptions(
-           "help"      => \$help,
-           "reg-conf|reg_conf|registry=s" => \$reg_conf,
-           "from=s"    => \$from_name,
-           "to=s"      => \$to_name,
-           "from_url=s" => \$from_url,
-           "to_url=s"  => \$to_url,
-           "mlss_id=i@" => \@mlss_id,
-           "trust_to!" => \$trust_to,
-           "merge!"    => \$merge,
-           'trust_ce!' => \$trust_ce,
-           're_enable=i' => \$re_enable,
-           'method_link=s' => \$method_link,
-           'patch_merge!' => \$patch_merge,
-  );
+           'help'                           => \$help,
+           'reg-conf|reg_conf|registry=s'   => \$reg_conf,
+           'from_reg=s'                     => \$from_name,
+           'to_reg=s'                       => \$to_name,
+           'from_url=s'                     => \$from_url,
+           'to_url=s'                       => \$to_url,
+
+           'method_link_type=s@'            => \@method_link_types,
+           'mlss_id=i@'                     => \@mlss_id,
+           're_enable=i'                    => \$re_enable,
+           'dry_run!'                       => \$dry_run,
+
+           'trust_to!'                      => \$trust_to,
+           'trust_ce!'                      => \$trust_ce,
+           'merge!'                         => \$merge,
+           'patch_merge!'                   => \$patch_merge,
+);
 
 # Print Help and exit if help is requested
-if ($help or (!$from_name and !$from_url) or (!$to_name and !$to_url) or (!scalar(@mlss_id) and !$method_link)) {
+if ($help or (!$from_name and !$from_url) or (!$to_name and !$to_url) or (!scalar(@mlss_id) and !scalar(@method_link_types) ) ) {
   exec("/usr/bin/env perldoc $0");
 }
 
@@ -197,24 +207,42 @@ Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_name or $to_name);
 my $from_dba = get_DBAdaptor($from_url, $from_name);
 my $to_dba = get_DBAdaptor($to_url, $to_name);
 
-my @all_method_link_species_sets;
+print "\n\n";
 
-foreach my $one_mlss_id (@mlss_id) {
-  my $mlss = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($one_mlss_id);
-  if (!$mlss) {
-    print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID ($one_mlss_id)\n";
-    exit(1);
-  }
-  push @all_method_link_species_sets, $mlss;
+my %all_mlss_objects = ();
+
+    # First adding MLSS objects via method_link_type values (the most portable way)
+foreach my $one_method_link_type (@method_link_types) {
+    my $group_mlss_objects = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($one_method_link_type);
+    if( scalar(@$group_mlss_objects) ) {
+        foreach my $one_mlss_object (@$group_mlss_objects) {
+            my $one_mlss_id = $one_mlss_object->dbID;
+            $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
+            print "Will be adding MLSS with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
+        }
+    } else {
+        print "** Warning ** Cannot find any MLSS objects using method_link_type '$one_method_link_type' in this database\n";
+    }
 }
 
-if ($method_link) {
-  my $all_mlss = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method_link);
-  if (!scalar(@$all_mlss)) {
-    print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this method_link_type ($method_link)\n";
-    exit(1);
-  }
-  push @all_method_link_species_sets, @$all_mlss;
+    # Adding the rest MLSS objects using specific mlss_ids provided
+foreach my $one_mlss_id (@mlss_id) {
+    if( my $one_mlss_object = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($one_mlss_id) ) {
+        my $one_mlss_id = $one_mlss_object->dbID;
+        $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
+        print "Will be adding MLSS with dbID '$one_mlss_id' requested\n";
+    } else {
+        die " ** ERROR ** Cannot find any MLSS object with dbID '$one_mlss_id'";
+    }
+}
+
+my @all_method_link_species_sets = values %all_mlss_objects;
+
+print "Will be adding a total of ".scalar(@all_method_link_species_sets)." MLSS objects\n";
+
+if($dry_run) {
+    print "\n\t*** Exiting in dry_run mode now, please remove the --dry_run flag if you want the script to copy anything\n";
+    exit (0);
 }
 
 my $ini_re_enable = $re_enable;
