@@ -267,7 +267,7 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
 
-  #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
+      #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
   copy_data($from_dba, $to_dba,
 	  "method_link_species_set_tag",
 	  undef, undef, undef,
@@ -1064,7 +1064,7 @@ sub copy_data_in_text_mode {
     ## EXIT CONDITION
     if ($patch_merge) {
 	#case in my patches db where the genomic_align_block_ids are not consecutive
-        return if ($end > $max_id && !@$all_rows);
+        return if ($end > ($max_id||0) && !@$all_rows);
 
         next if (!@$all_rows);
     } else {
