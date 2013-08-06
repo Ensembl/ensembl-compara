@@ -113,6 +113,18 @@ sub fetch_input {
     my $dbconnections = {map {$_ => Bio::EnsEMBL::DBSQL::DBConnection->new(%{$connection_params->{$_}})} keys %{$connection_params}};
     $self->param('dbconnections', $dbconnections);
 
+    # Expand the exclusive tables that have a "%" in their name
+    foreach my $table ( keys %$exclusive_tables ) {
+        if ($table =~ /%/) {
+            my $sql = "SHOW TABLES LIKE '$table'";
+            my $db = delete $exclusive_tables->{$table};
+            my $list = $dbconnections->{$db}->db_handle->selectall_arrayref($sql);
+            foreach my $expanded_arrayref (@$list) {
+                $exclusive_tables->{$expanded_arrayref->[0]} = $db;
+            }
+        }
+    }
+
     # Gets the list of non-empty tables for each db
     my $table_size = {};
     foreach my $db (@$db_aliases) {
@@ -222,7 +234,9 @@ sub run {
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
     foreach my $table (keys %$all_tables) {
 
-        die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n" unless exists $table_size->{$curr_rel_name}->{$table};
+        unless (exists $table_size->{$curr_rel_name}->{$table} or exists $exclusive_tables->{$table}) {
+            die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
+        }
 
         if (not $table_size->{$curr_rel_name}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 

@@ -71,6 +71,7 @@ sub default_options {
             'mapping_session'   => 'master_db',
             'member'            => 'projection_db',
             'sequence'          => 'projection_db',
+            'peptide_align_feature_%' => 'protein_db',
         },
 
         'ignored_tables'    => {
