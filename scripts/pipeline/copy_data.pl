@@ -941,6 +941,8 @@ sub copy_constrained_elements {
     print " ** WARNING **\n";
     copy_data($from_dba, $to_dba,
         "constrained_element",
+		"constrained_element_id",
+		$min_ce, $max_ce,
         "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand,
 	method_link_species_set_id, p_value, score".
         " FROM constrained_element".
@@ -1049,9 +1051,9 @@ sub copy_data_in_text_mode {
     my $sth;
     #print "start $start end $end\n";
     if (!$use_limit) {
-	$sth = $from_dba->dbc->prepare($query." AND $index_name BETWEEN $start AND $end");
+        $sth = $from_dba->dbc->prepare($query." AND $index_name BETWEEN $start AND $end");
     } else {
-	$sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
+        $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
     }
     $start += $step;
     $sth->execute();
