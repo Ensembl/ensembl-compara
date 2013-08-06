@@ -1488,29 +1488,33 @@ sub dumpGeneTree {
 
 sub GeneTreeLine {
   my($gt_id,$counter,$dbspecies,$ms,$gid,$name) = @_;
-  my ($url,$xml);
-  my $xml;
+  my ($url,$xml,$desc);
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
   <field name="id">$gt_id</field>);
     if ($ms) {
+      $xml .= qq(
+  <field name="name">$gt_id</field>);
       $xml .= &common_fields('','GeneTree','compara');
       $url = sprintf(qq(Multi/GeneTree?gt=%s),$gt_id);
       $xml .= qq(
   <field name="domain_url">$url</field>);
     }
     else {
-      $xml .= qq(
-  <field name="name">$gid</field>);
-      my $desc = "Gene $gid is a member of GeneTree $gt_id";
-      if ($name) {
+      if ($name && ($name ne $gid)) {
+        $desc = "Gene $name ($gid) is a member of GeneTree $gt_id";
         $xml .= qq(
-  <field name="assoc_gene">$name</field>);
-        $desc = "Gene $gid ($name) is a member of GeneTree $gt_id";
-      }
-      $xml .= qq(
+  <field name="name">$name</field>
+  <field name="assoc_gene">$gid</field>
   <field name="description">$desc</field>);
+      }
+      else {
+        $desc = "Gene $gid is a member of GeneTree $gt_id";
+        $xml .= qq(
+  <field name="name">$gid</field>
+  <field name="description">$desc</field>);
+      }
       $xml .= &common_fields($dbspecies,'GeneTree','core');
       $url = sprintf(qq($dbspecies/Gene/Compara_Tree?g=%s),$gid);
       $xml .= qq(
@@ -1560,6 +1564,7 @@ sub dumpFamily {
 
  ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
+  # get details of genes and proteins that make up the families for this species
   my $gene_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
         SELECT m.member_id, m.stable_id, x.display_label
           FROM member m, genome_db gdb, $dbname.gene g, $dbname.xref x
@@ -1568,7 +1573,6 @@ sub dumpFamily {
            AND g.display_xref_id = x.xref_id
            AND m.source_name = 'ENSEMBLGENE'
            AND gdb.name = '$dbspecies'),'member_id');
-
   my $protein_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
         SELECT m.member_id, m.stable_id
           FROM member m, genome_db gdb
@@ -1576,18 +1580,34 @@ sub dumpFamily {
            AND m.source_name = 'ENSEMBLPEP'
            AND gdb.name = '$dbspecies'),'member_id');
 
+  # uniprot records linked to families do not have a species to filter on
+  my $uniprot_members;
+  my $sth = $conf->{'dbh_compara'}->prepare(qq(
+        SELECT f.stable_id as family_id, m.stable_id as uniprot_id
+          FROM family f, family_member fm, member m
+         WHERE f.family_id = fm.family_id
+           AND fm.member_id = m.member_id
+           AND m.source_name like 'Uniprot%'));
+  $sth->execute;
+  while( my( $fid, $uniprot_id ) = $sth->fetchrow_array()) {
+    push @{$uniprot_members->{$fid}}, $uniprot_id;
+  }
+
+  #get all families
   my $sth = $conf->{'dbh_compara'}->prepare(qq(
     select f.stable_id,
            f.description,
            group_concat(fm.member_id)
-      from family as f, family_member as fm
+      from family as f, family_member as fm, member m
      where f.family_id = fm.family_id
+       and fm.member_id = m.member_id
+       and m.source_name not like 'Uniprot%'
      group by f.stable_id ));
   $sth->execute();
   my $X = $conf->{'authority'} || 'Ensembl';
   while( my( $fid, $desc, $member_ids ) = $sth->fetchrow_array()) {
     $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
-    my (@genes,@proteins);
+    my (@genes,@proteins,@uniprots);
     foreach my $id (split ',', $member_ids) {
       if ($gene_members->{$id}) {
         push @genes, {
@@ -1595,27 +1615,30 @@ sub dumpFamily {
           display_label => $gene_members->{$id}{'display_label'}
         };
       }
-      if ($protein_members->{$id}) {
+      elsif ($protein_members->{$id}) {
         push @proteins, {
           stable_id     => $protein_members->{$id}{'stable_id'},
         };
       }
     }
     if (@genes) {
+      foreach my $uniprot_id (@{$uniprot_members->{$fid}}) {
+        push @uniprots,$uniprot_id;
+      }
       my $ensembl_genes_species    = scalar @genes;
       my $ensembl_peptides_species = scalar @proteins;
       my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
       my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
       my $full_desc = qq($X protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
 #      my $full_desc = qq(Ensembl protein family $fid: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species.\nDescription: $desc);
-      &p( FamilyLine($dbspecies,$fid,$full_desc,\@genes,\@proteins,$counter ), $nogzip, $fh);
+      &p( FamilyLine($dbspecies,$fid,$full_desc,\@genes,\@proteins,\@uniprots,$counter ), $nogzip, $fh);
     }
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub FamilyLine {
-  my($species, $fid, $desc, $genes, $proteins, $counter) = @_;
+  my($species,$fid,$desc,$genes,$proteins,$uniprots,$counter) = @_;
   my $url = sprintf(qq(%s/Gene/Family/Genes?family=%s),
                     $species,
                     $fid);
@@ -1638,6 +1661,10 @@ sub FamilyLine {
       my $id   = $p->{'stable_id'};
       $xml .= qq(
   <field name="assoc_protein">$id</field>);
+    }
+    foreach my $up (@$uniprots){
+      $xml .= qq(
+  <field name="assoc_protein">$up</field>);
     }
     $xml .= &common_fields($species,'Family','core');
     $xml .= qq(
