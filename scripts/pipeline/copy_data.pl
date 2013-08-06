@@ -205,10 +205,11 @@ if ($help or (!$from_reg_name and !$from_url) or (!$to_reg_name and !$to_url) or
 
 Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_reg_name or $to_reg_name);
 
-my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
 my $to_dba = get_DBAdaptor($to_url, $to_reg_name);
+my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
+my $from_ga_adaptor = $from_dba->get_GenomicAlignAdaptor();
 
-print "\n\n";
+print "\n\n";   # to clear from possible warnings
 
 my %all_mlss_objects = ();
 
@@ -218,8 +219,13 @@ foreach my $one_method_link_type (@method_link_types) {
     if( scalar(@$group_mlss_objects) ) {
         foreach my $one_mlss_object (@$group_mlss_objects) {
             my $one_mlss_id = $one_mlss_object->dbID;
-            $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
-            print "Will be adding MLSS with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
+            my $one_mlss_name = $one_mlss_object->name;
+            if(my $ga_count = $from_ga_adaptor->count_by_mlss_id($one_mlss_id)) {
+                $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
+                print "Will be adding MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type' ($ga_count GenomicAligns)\n";
+            } else {
+                print "\tSkipping empty MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
+            }
         }
     } else {
         print "** Warning ** Cannot find any MLSS objects using method_link_type '$one_method_link_type' in this database\n";
@@ -230,8 +236,9 @@ foreach my $one_method_link_type (@method_link_types) {
 foreach my $one_mlss_id (@mlss_id) {
     if( my $one_mlss_object = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($one_mlss_id) ) {
         my $one_mlss_id = $one_mlss_object->dbID;
+        my $one_mlss_name = $one_mlss_object->name;
         $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
-        print "Will be adding MLSS with dbID '$one_mlss_id' requested\n";
+        print "Will be adding MLSS '$one_mlss_name' with dbID '$one_mlss_id' requested\n";
     } else {
         die " ** ERROR ** Cannot find any MLSS object with dbID '$one_mlss_id'";
     }
@@ -239,11 +246,13 @@ foreach my $one_mlss_id (@mlss_id) {
 
 my @all_method_link_species_sets = values %all_mlss_objects;
 
-print "Will be adding a total of ".scalar(@all_method_link_species_sets)." MLSS objects\n";
+print "\n-------------------------------\nWill be adding a total of ".scalar(@all_method_link_species_sets)." MLSS objects\n";
 
 if($dry_run) {
     print "\n\t*** Exiting in dry_run mode now, please remove the --dry_run flag if you want the script to copy anything\n";
     exit (0);
+} else {
+    print "\n\t*** Starting the actual copying...\n\n";
 }
 
 my $ini_re_enable = $re_enable;
@@ -436,19 +445,21 @@ sub copy_genomic_align_blocks {
       }
   }
 
-  ## Check min and max of the relevant internal IDs in the FROM database
-  my $sth = $from_dba->dbc->prepare("SELECT
+  my $minmax_sql = qq{ SELECT
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
         MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-	MIN(gat.node_id), MAX(gat.node_id),
+        MIN(gat.node_id), MAX(gat.node_id),
         MIN(gat.root_id), MAX(gat.root_id),
-	MIN(gat.left_index)
-      FROM genomic_align_block gab
-        LEFT JOIN genomic_align ga using (genomic_align_block_id)
+        MIN(gat.left_index)
+    FROM genomic_align_block gab
+    LEFT JOIN genomic_align ga using (genomic_align_block_id)
 	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.node_id
       WHERE
-        gab.method_link_species_set_id = ?");
+        gab.method_link_species_set_id = ? };
+
+  ## Check min and max of the relevant internal IDs in the FROM database
+  my $sth = $from_dba->dbc->prepare( $minmax_sql );
 
   $sth->execute($mlss_id);
   my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, 
@@ -468,18 +479,14 @@ sub copy_genomic_align_blocks {
   my ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start);
 
   if ($merge) {
-      my $sth = $to_dba->dbc->prepare("SELECT
-        MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
-        MIN(gab.group_id), MAX(gab.group_id),
-        MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-	MIN(gat.node_id), MAX(gat.node_id),
-        MIN(gat.root_id), MAX(gat.root_id),
-	MIN(gat.left_index)
-      FROM genomic_align_block gab
-        LEFT JOIN genomic_align ga using (genomic_align_block_id)
-	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.node_id
-      WHERE
-        gab.method_link_species_set_id = ?");
+        # make sure keys are on if we are merging
+      foreach my $table_name ('genomic_align', 'genomic_align_block', 'genomic_align_tree') {
+          print "Enabling keys on '$table_name' in merge mode...\n";
+          $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
+          print "done enabling keys on '$table_name'.\n";
+      }
+
+      my $sth = $to_dba->dbc->prepare( $minmax_sql );
 
       $sth->execute($mlss_id);
       ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start) =  $sth->fetchrow_array();
@@ -665,9 +672,6 @@ sub copy_genomic_align_blocks {
 		" FROM genomic_align".
 		" WHERE method_link_species_set_id = $mlss_id");
   }
-
-
-
 
 }
 
@@ -1058,11 +1062,11 @@ sub copy_data_in_text_mode {
     ## EXIT CONDITION
     if ($patch_merge) {
 	#case in my patches db where the genomic_align_block_ids are not consecutive
-	return if ($end > $max_id && !@$all_rows);
+        return if ($end > $max_id && !@$all_rows);
 
-	next if (!@$all_rows);
+        next if (!@$all_rows);
     } else {
-	return if (!@$all_rows);
+        return if (!@$all_rows);
     } 
 
     my $time=time(); 
