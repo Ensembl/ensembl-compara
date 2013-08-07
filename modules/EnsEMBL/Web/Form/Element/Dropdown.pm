@@ -54,7 +54,7 @@ sub add_option {
   my ($self, $params) = @_;
 
   $params->{'value'}   = '' unless exists $params->{'value'} && defined $params->{'value'};
-  $params->{'caption'} = '' unless exists $params->{'caption'} && defined $params->{'caption'};
+  $params->{'caption'} = $params->{'value'} unless exists $params->{'caption'} && defined $params->{'caption'};
   $params->{'class'} ||= $self->{'__option_class'} if exists $params->{'__option_class'};
 
   my $option = $self->dom->create_element('option', {(ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : ('inner_HTML' => $params->{'caption'})),
