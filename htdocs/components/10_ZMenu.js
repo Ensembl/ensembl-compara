@@ -275,7 +275,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var locationView = !!window.location.pathname.match('/Location/') && !window.location.pathname.match(/\/(Chromosome|Synteny)/);
     var scale        = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
     var url          = this.baseURL;
-    var menu, caption, start, end, tmp;
+    var menu, caption, start, end, tmp, cls;
     
     // Gene, transcript views
     function notLocation() {
@@ -346,19 +346,19 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         } else if (this.multi !== false) {
           multi();
         } else {
-          if ((end - start + 1) > 1000000) {
-            url = url.replace(/View/, 'Overview');
-            menu = [
-              'This region (' + (end - start + 1) + ' bp) is too large - <a class="location_change" href="' + url + '">Jump to overview</a>',
-              'Or <a class="location_change" href="' + this.zoomURL(1) + '">centre here</a> to stay on this view'
-            ];
+          cls = 'location_change';
+          
+          if (end - start + 1 > Ensembl.maxRegionLength) {
+            if (url.match('/View')) {
+              url = url.replace('/View', '/Overview');
+              cls = '';
+            }
           }
-          else {
-            menu = [
-              '<a class="location_change" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>',
-              '<a class="location_change" href="' + this.zoomURL(1) + '">Centre here</a>'
-            ];
-          }
+          
+          menu = [
+            '<a class="' + cls + '" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>',
+            '<a class="location_change" href="' + this.zoomURL(1) + '">Centre here</a>'
+          ];
         }
       }
     } else { // Point select
