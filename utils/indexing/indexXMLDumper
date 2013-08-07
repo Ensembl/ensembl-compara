@@ -122,6 +122,32 @@ else {
   }
 }
 
+#where are xml files put on the filesystem ?
+my %shards = (
+  Domain              => 'ensembl_core',	
+  Family              => 'ensembl_core',
+  Gene                => 'ensembl_core',
+  GeneTree            => 'ensembl_core',
+  Marker              => 'ensembl_core',
+  OligoProbe          => 'ensembl_core',
+  Phenotype           => 'ensembl_core',
+  RegulatoryFeature   => 'ensembl_core',
+  Sequence            => 'ensembl_core',
+  SomaticMutation     => 'ensembl_core',
+  StructuralVariation => 'ensembl_core',
+  Transcript          => 'ensembl_core',
+  GenomicAlignment    => 'ensembl_ga',
+  Help                => 'ensembl_docs',
+  Variation           => 'ensembl_variation',
+);
+foreach (@indexes) {
+  unless ($shards{$_}) {
+    print LOG "WARNING - the location of files for the $_ index is not defined, please add:\n";
+    exit;
+  }
+}
+
+
 ## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
 my $input_c = @species;
@@ -144,10 +170,9 @@ else {
 }
 
 # path to files
-my $index_root = '/nfs/web_data/search/';
+my $index_root = ($search_engine eq 'solr') ? '/exalead-data/search_indices/' : '/nfs/web_data/search/';
 my $file_root = ($search_engine eq 'solr') ? "solr/".lc($sitetype)."_$release" : "lucene/".lc($sitetype)."_$release";
 my $dir = $dir ? $dir : $dump_real ? $index_root.$file_root : 'input';
-
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
 
@@ -156,13 +181,14 @@ my $total_c;
 my $conf = {};
 
 foreach my $index (@indexes) {
+  my $loc = "$dir/".$shards{$index}."_$release/";
   my $start = time;
-  $conf->{'directory'} = "$dir/".lc($sitetype)."_$index";
-  mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
+  $conf->{'directory'} = $loc . lc($sitetype)."_$index";
+  system( "mkdir -p $conf->{'directory'}") unless -e $conf->{'directory'};
 
   if ($index eq 'Variation') {
-    $conf->{'directory_somatic_mutations'} = "$dir/".lc($sitetype)."_SomaticMutation";
-    mkdir $conf->{'directory_somatic_mutations'}, 0777 unless -e $conf->{'directory_somatic_mutations'};
+    $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."_$release/".lc($sitetype).'_SomaticMutation';
+  system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
 
   foreach my $species ( @species ) {
@@ -950,7 +976,7 @@ sub PhenLine {
 
 ########################################################################## StructuralVariations
 
-sub dumpStructuralVariations {
+sub dumpStructuralVariation {
   my $conf = shift;
   my $VariationDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $VariationDB;
@@ -1639,9 +1665,12 @@ sub dumpFamily {
 
 sub FamilyLine {
   my($species,$fid,$desc,$genes,$proteins,$uniprots,$counter) = @_;
-  my $url = sprintf(qq(%s/Gene/Family/Genes?family=%s),
+  my $sample_g = $genes->[0]{'stable_id'};
+  my $url = sprintf(qq(%s/Gene/Family?family=%s;g=%s),
                     $species,
-                    $fid);
+                    $fid,
+                    $sample_g,
+                  );
   $species =~ s/_/ /;
   $desc = &clean($desc,'desc');
   my $xml;
