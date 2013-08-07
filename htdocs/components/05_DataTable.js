@@ -198,12 +198,12 @@ Ensembl.DataTable = {
           var input  = $('input', this);
           var tables, visibility, index, textCheck;
           
-          if (!input.attr('disabled')) {
+          if (!input.prop('disabled')) {
             tables     = $.grep(panel.dataTables, function (table) { return !table.is('.no_col_toggle'); });
             visibility = !columns[col].bVisible;
             
             if (panel.elLk.colToggle.length === 1) {
-              input.attr('checked', visibility);
+              input.prop('checked', visibility);
             } else {
               index     = $(this).index();
               textCheck = $(this).parent().text();
