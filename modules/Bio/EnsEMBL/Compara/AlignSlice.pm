@@ -563,6 +563,8 @@ sub summary_as_hash {
       my $prev_dnafrag_name;
       my $summary;
 
+      #necessary to allow masking to take affect
+      undef($slice->{seq});
 
       ## This is a composite segment.
       ## We need to fix the name and the length
@@ -580,8 +582,7 @@ sub summary_as_hash {
 	  $slice_mapper_pair->{slice}{seq} = $slice_mapper_pair->{slice}->get_repeatmasked_seq(undef,1)->seq;
 	} elsif ($mask =~ /^hard/ && $seq_region!~ /Ancestor/) {
 	  $slice_mapper_pair->{slice}{seq} = $slice_mapper_pair->{slice}->get_repeatmasked_seq()->seq;
-	}
-	
+	}	
       }
 
       #multiple fragments within one species means that there are several values for seq_region, start and end
@@ -946,7 +947,6 @@ sub get_all_ConstrainedElements {
 sub _create_underlying_Slices {
   my ($self, $genomic_align_blocks, $expanded, $solve_overlapping, $preserve_blocks, $species_order) = @_;
   my $strand = $self->reference_Slice->strand;
-  
   my $align_slice_length = 0;
   my $last_ref_pos;
   if ($strand == 1) {
@@ -1182,7 +1182,6 @@ sub _create_underlying_Slices {
 
 sub _add_GenomicAlign_to_a_Slice {
   my ($self, $this_genomic_align, $this_genomic_align_block, $species_order, $align_slice_length) = @_;
-
   my $expanded = $self->{expanded};
   my $species = $this_genomic_align->dnafrag->genome_db->name;
 
