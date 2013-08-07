@@ -57,6 +57,8 @@ sub features {
         push @{$self->{'features'}}, $f;
       }
     }
+    
+    $self->{'features'} ||= [];
   }
   
   return $self->{'features'};
