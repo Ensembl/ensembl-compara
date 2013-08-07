@@ -135,17 +135,17 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.elLk.viewConfigs.on('change', ':input', function () {
-      var value, attr;
+      var value, prop;
       
       if (this.type === 'checkbox') {
         value = this.checked;
-        attr  = 'checked';
+        prop  = 'checked';
       } else {
         value = this.value;
-        attr  = 'value';
+        prop  = 'value';
       }
       
-      Ensembl.EventManager.trigger('syncViewConfig', panel.id, $(this).parents('.config')[0].className.replace(/ /g, '.'), this.name, attr, value);
+      Ensembl.EventManager.trigger('syncViewConfig', panel.id, $(this).parents('.config')[0].className.replace(/ /g, '.'), this.name, prop, value);
     });
     
     this.elLk.search.on({
@@ -1144,18 +1144,18 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   // Called when a view config option is changed, to make sure the identical option is updated in other Configurator panels
-  syncViewConfig: function (panelId, filterClass, name, attr, value) {
+  syncViewConfig: function (panelId, filterClass, name, prop, value) {
     var panel = this;
     
     if (this.id !== panelId) {
-      var el = this.elLk.viewConfigs.filter('.' + filterClass).find(':input[name=' + name + ']').attr(attr, value);
+      var el = this.elLk.viewConfigs.filter('.' + filterClass).find(':input[name=' + name + ']').prop(prop, value);
       
       if (this.viewConfig[name]) {
-        this.viewConfig[name] = attr === 'checked' ? value ? el[0].value : 'off' : value;
+        this.viewConfig[name] = prop === 'checked' ? value ? el[0].value : 'off' : value;
       }
       
       if (el.attr('name') === 'select_all') {
-        el.parents('fieldset').find('input[type=checkbox]').attr('checked', value).each(function () {
+        el.parents('fieldset').find('input[type=checkbox]').prop('checked', value).each(function () {
           panel.viewConfig[this.name] = value ? this.value : 'off';
         });
       }
