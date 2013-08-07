@@ -48,6 +48,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
+         '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
         'patch_import'  => { 'LSF' => '-C0 -M250000 -R"select[mem>250] rusage[mem=250]"' },
     };
 }
@@ -117,7 +118,7 @@ sub pipeline_analyses {
                     'ALTER TABLE homology       AUTO_INCREMENT=300000001',
                 ],
             },
-            -flow_into => [ 'species_factory' ],
+            -flow_into => [ 'species_factory', 'member_display_labels_factory' ],
         },
 
         {   -logic_name => 'species_factory',
@@ -134,6 +135,40 @@ sub pipeline_analyses {
         {   -logic_name => 'import_projections_as_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportPatchProjectionsAsHomologies',
             -rc_name    => 'patch_import',
+        },
+
+        {
+            -logic_name => 'member_display_labels_factory',
+            -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'    => 'SELECT genome_db_id FROM genome_db',
+            },
+            -flow_into => {
+                2 => { 'update_member_display_labels' => { genome_db_ids => ['#genome_db_id#'] } },
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {
+            -logic_name => 'update_member_display_labels',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -parameters => {
+                'die_if_no_core_adaptor'  => 1,
+                'replace'                 => 1,
+            },
+            -flow_into => [ 'update_member_descriptions' ],
+            -rc_name => '500Mb_job',
+        },
+
+        {
+            -logic_name => 'update_member_descriptions',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -parameters => {
+                'die_if_no_core_adaptor'  => 1,
+                'replace'                 => 1,
+                'mode'                    => 'description',
+            },
+            -rc_name => '500Mb_job',
         },
 
     ];

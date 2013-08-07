@@ -112,8 +112,6 @@ sub default_options {
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 0,
-        'do_display_label_update'   => 1,
-        'wait_for_display_label_update' => 0,
 
     # executable locations:
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
@@ -1212,7 +1210,6 @@ sub pipeline_analyses {
             -flow_into  => [
                 $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
                 $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
-                $self->o('do_display_label_update') ? 'member_display_labels_factory' : (),
             ],
         },
 
@@ -1237,41 +1234,6 @@ sub pipeline_analyses {
                 'tag_prefix'  => '',
             },
             -rc_name => '1Gb_job',
-        },
-
-        {
-            -logic_name => 'member_display_labels_factory',
-            -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'    => 'SELECT genome_db_id FROM genome_db',
-            },
-            -flow_into => {
-                2 => { 'update_member_display_labels' => { genome_db_ids => ['#genome_db_id#'] } },
-            },
-            -wait_for       => [ $self->o('wait_for_display_label_update') ? 'member_display_labels_factory' : () ],
-            -meadow_type    => 'LOCAL',
-        },
-
-        {
-            -logic_name => 'update_member_display_labels',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-            },
-            -flow_into => [ 'update_member_descriptions' ],
-            -rc_name => '500Mb_job',
-        },
-
-        {
-            -logic_name => 'update_member_descriptions',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-                'mode'                    => 'description',
-            },
-            -rc_name => '500Mb_job',
         },
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------

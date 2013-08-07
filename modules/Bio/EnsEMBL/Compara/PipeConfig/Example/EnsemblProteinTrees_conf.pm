@@ -79,7 +79,6 @@ sub default_options {
 
     # mapping parameters:
         'do_treefam_xref'           => 1,
-        'wait_for_display_label_update' => 1,
 
     # executable locations:
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
