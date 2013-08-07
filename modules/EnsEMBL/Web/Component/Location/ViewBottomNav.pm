@@ -21,7 +21,7 @@ sub set_cache_key {
 }
 
 sub content_region {
-  return shift->content([ [4,1e4], [6,5e4], [8,1e5], [10,5e5], [12,1e6], [14,2e6], [16,5e6], [18,1e7] ], 'region')
+  return $_[0]->content([ [4,1e4], [6,5e4], [8,1e5], [10,5e5], [12,1e6], [14,2e6], [16,5e6], [18,1e7] ], 'region')
 }
 
 sub content {
@@ -75,9 +75,9 @@ sub navbar {
   my $hub          = $self->hub;
   my $img_url      = $self->img_url;
   my $image_width  = $self->image_width . 'px';
-  my $url          = $hub->url({ %{$hub->multi_params(0)}, r => undef, g => undef }, 1);
+  my $url          = $hub->url({ %{$hub->multi_params(0)}, function => undef, r => undef, g => undef }, 1);
   my $psychic      = $hub->url({ type => 'psychic', action => 'Location', __clear => 1 });
-  my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]->{$_}) } keys %{$url->[1] || {}};
+  my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) } keys %{$url->[1] || {}};
   my $g            = $hub->param('g');
   my $g_input      = $g ? qq{<input name="g" value="$g" type="hidden" />} : '';
   
@@ -181,7 +181,8 @@ sub nav_url {
   
   return $hub->url({ 
     %{$hub->multi_params(0)},
-    r => $object->seq_region_name . ":$s-$e"
+    r        => $object->seq_region_name . ":$s-$e",
+    function => undef
   });
 }
 
