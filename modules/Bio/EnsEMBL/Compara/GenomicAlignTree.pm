@@ -1125,7 +1125,7 @@ sub release_tree {
   Arg [3]    : (optional) boolean. Used when using fragmented (low coverage) genomes. If true, create a single sequence of concatenated fragments for each leaf. If false, create an array of sequences for each leaf.
   Example    : $genomic_align_tree->summary_as_hash(undef, "soft")
   Description: Retrieves a textual sumamry of this GenomicAlignTree object
-  Returntype : hashref of descriptive strings
+  Returntype : Array of hashref of descriptive strings
   Exceptions : none
   Caller     : general
   Status     : At risk

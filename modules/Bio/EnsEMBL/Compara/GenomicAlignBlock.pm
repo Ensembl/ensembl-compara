@@ -975,7 +975,7 @@ sub alignment_strings {
   Arg [2]    : (optional) string. Can be "soft" or "hard"
   Example    : $genomic_align_block->summary_as_hash(undef, "soft")
   Description: Retrieves a textual sumamry of this GenomicAlignBlock object
-  Returntype : hashref of descriptive strings
+  Returntype : Array of hashref of descriptive strings
   Exceptions : none
   Caller     : general
   Status     : At risk
