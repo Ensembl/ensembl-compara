@@ -76,7 +76,7 @@ sub label {
   my $self = shift;
   my $label = $self->first_child && $self->first_child->node_name eq 'label'
     ? $self->first_child
-    : $self->prepend_child($self->dom->create_element('label'));
+    : $self->prepend_child('label');
   $label->set_attribute('class', $self->CSS_CLASS_LABEL);
   if (@_) {
     my $inner_HTML = shift;
