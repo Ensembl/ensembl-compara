@@ -87,7 +87,25 @@ sub variation_content {
   my %types = map @{$ct{$_}}, @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
   
   push @entries, (
-    { type  => 'Alleles', label => $allele },
+    { type  => 'Alleles', label => $allele }
+  );
+  
+  if(($hub->referer->{'ENSEMBL_ACTION'} eq 'Sequence_Protein') && (my $tr = $hub->param('t'))) {
+    my ($tv) = grep {$_->transcript->stable_id eq $tr} @{$feature->get_all_TranscriptVariations};
+    if(defined($tv)) {
+      my ($tva) = @{$tv->get_all_alternate_TranscriptVariationAlleles()};
+      
+      push @entries, (
+        { type => 'Amino acids', label => $tva->pep_allele_string}
+      ) if defined($tva) && defined($tva->pep_allele_string) && $tva->pep_allele_string =~ /\//;
+      
+      push @entries, (
+        { type => 'Codons', label => $tva->codon_allele_string}
+      ) if defined($tva) && defined($tva->codon_allele_string) && $tva->codon_allele_string =~ /\//;
+    }
+  }
+  
+  push @entries, (
     { type  => 'Types',   label_html => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
     { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
   );
