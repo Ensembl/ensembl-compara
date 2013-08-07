@@ -13,7 +13,10 @@ sub configure {
   
   $params->{'caption'} = $params->{'value'} unless exists $params->{'caption'};
   
-  $self->append_child($self->dom->create_element($params->{'is_html'} ? 'div' : 'span', {($params->{'is_html'} ? 'inner_HTML' : 'inner_text') => $params->{'caption'}}));
+  $self->append_child(
+    $params->{'is_html'} ? 'div' : 'span',
+    {($params->{'is_html'} ? 'inner_HTML' : 'inner_text') => $params->{'caption'}, $params->{'caption_class'} ? ('class' => $params->{'caption_class'}) : ()}
+  );
 
   $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
@@ -22,7 +25,7 @@ sub configure {
 
   $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
 
-  my $input = $self->append_child($self->dom->create_element('inputhidden'));
+  my $input = $self->append_child('inputhidden');
   exists $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id name class value);
 }
 

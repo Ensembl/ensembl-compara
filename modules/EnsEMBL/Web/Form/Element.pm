@@ -54,6 +54,7 @@ sub configure {
   ##  - class           Class attribute (space seperated string or arrayref for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - element_class   Class attribute for the element div
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
+  ##  - caption_class   Class attribute for the div/span containing caption in case of a NoEdit element
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
