@@ -50,15 +50,16 @@ sub default_options {
         'backup_tables'     => 1,
 
         'urls'              => {
-            'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_73',
-            'ncrna_db'      => 'mysql://ensro@compara3/mp12_compara_nctrees_73',
-            'family_db'     => 'mysql://ensro@compara2/lg4_compara_families_73',
-            'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_73',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_72',
-
-            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara2/'.$self->o('ENV','USER').'_ensembl_compara_'.$self->o('ensembl_release'),
-            # 'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_full_merge2',
             'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_72',   # <----- make sure this refers to the previous release!
+
+                                        # make sure that for the rest of the databases you have servers' and owners' names right:
+            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara2/'.$self->o('ENV','USER').'_ensembl_compara_'.$self->o('ensembl_release'),
+
+            'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_'.$self->o('ensembl_release'),
+            'ncrna_db'      => 'mysql://ensro@compara3/mp12_compara_nctrees_'.$self->o('ensembl_release'),
+            'family_db'     => 'mysql://ensro@compara2/lg4_compara_families_'.$self->o('ensembl_release'),
+            'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_'.$self->o('ensembl_release'),
         },
 
         'only_tables'       => {
