@@ -15,16 +15,16 @@
             if (typeof option.data('_stt_disabled') === 'undefined') {
               option.data('_stt_disabled', !!this.disabled); // remember original disabled attribute
             }
-          }).attr('disabled', true);
+          }).prop('disabled', true);
         }
       }
 
-      wrapper.find(toggleMap[this.value]).show().filter('option').attr('disabled', function() {
+      wrapper.find(toggleMap[this.value]).show().filter('option').prop('disabled', function() {
         return $(this).data('_stt_disabled');
       }).filter('select option').parent().each(function() { //show the requried html block
         var dropdown = $(this);
-        if (!dropdown.find('option:selected:enabled').length) { //in case any selected option got hidden in this, select one of the visible ones
-          dropdown.find('option:enabled').first().attr('selected', true);
+        if (!dropdown.find('option:selected:enabled').length) { //in case any selected option gets hidden in this, select the first visible option
+          dropdown.find('option:enabled').first().prop('selected', true);
         }
       });
     };
