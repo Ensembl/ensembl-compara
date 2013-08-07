@@ -112,7 +112,6 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 sub fetch_by_Slice_MethodLinkSpeciesSet {
   my ($self, $reference_slice, $method_link_species_set, $expanded, $solve_overlapping, $target_slice) = @_;
-
   throw("[$reference_slice] is not a Bio::EnsEMBL::Slice")
       unless ($reference_slice and ref($reference_slice) and
           $reference_slice->isa("Bio::EnsEMBL::Slice"));
@@ -120,9 +119,19 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
       unless ($method_link_species_set and ref($method_link_species_set) and
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
+
   # Use cache whenever possible
+  my $solve_overlapping_detail;
+  if ($solve_overlapping eq "restrict") {
+    $solve_overlapping_detail = "merge-overlaps";
+  } elsif ($solve_overlapping) {
+    $solve_overlapping_detail = "all-overlaps";
+  } else {
+    $solve_overlapping_detail = "no-overlaps";
+  }
   my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond").
-      ":".($solve_overlapping?"fake-overlap":"non-overlap");
+      ":".$solve_overlapping_detail;
+
   if (defined($target_slice)) {
     throw("[$target_slice] is not a Bio::EnsEMBL::Slice")
         unless ($target_slice and ref($target_slice) and
