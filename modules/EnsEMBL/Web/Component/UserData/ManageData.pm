@@ -238,7 +238,7 @@ sub table_row_das {
   
   return {
     type    => 'DAS',
-    name    => { value => $file->label, class => 'wrap' },
+    name    => {{ value => {$file->data->{'coords'} || []}->[0] || {}}->{'label'} || '', class => 'wrap' }, # FIXME
     date    => '<span class="hidden">-</span>-',
     actions => "$none$save$none$delete_html",
   };
