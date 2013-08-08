@@ -99,7 +99,6 @@ sub store {
     }
 
     my $dbID = $species_set->dbID;
-  
         # Could we have a species_set in the DB with the given contents already?
     if ( my $stored_ss = scalar(@$genome_dbs) && $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
         my $stored_dbID = $stored_ss->dbID;
@@ -139,6 +138,7 @@ sub store {
     }
 
     $self->attach( $species_set, $dbID );
+    $self->_id_cache(); #make sure the id_cache has been fully populated
     $self->_add_to_cache($species_set);
     $self->sync_tags_to_database( $species_set );
 

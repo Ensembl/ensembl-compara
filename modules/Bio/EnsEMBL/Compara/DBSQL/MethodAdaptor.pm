@@ -187,7 +187,6 @@ sub store {
     if(my $reference_dba = $self->db->reference_dba()) {
         $reference_dba->get_MethodAdaptor->store( $method );
     }
-
     if ($self->_synchronise($method)) {
 
         my $sql = 'UPDATE method_link SET class = ? WHERE method_link_id = ?';
@@ -209,7 +208,9 @@ sub store {
         $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
         $sth->finish();
     }
-
+    
+    #make sure the id_cache has been fully populated
+    $self->_id_cache();
     $self->_add_to_cache($method);
     return $method;
 }
