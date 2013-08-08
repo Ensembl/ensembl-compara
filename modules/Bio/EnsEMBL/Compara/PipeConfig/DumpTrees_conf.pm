@@ -44,9 +44,8 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 72,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
-        'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
+        'rel_with_suffix'   => $self->o('ensembl_release').$self->o('rel_suffix'),          # for convenience
         'rel_coord'         => $self->o('ENV', 'USER'),                         # by default, the release coordinator is doing the dumps
         # Commented out to make sure people define it on the command line
         'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
@@ -54,8 +53,8 @@ sub default_options {
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'rel_db'      => {
-            -host         => 'compara3',
-            -dbname       => sprintf('%s_ensembl_compara_%s', $self->o('rel_coord'), $self->o('rel')),
+            -host         => 'compara2',
+            -dbname       => sprintf('%s_ensembl_compara_%s', $self->o('rel_coord'), $self->o('ensembl_release')),
             -port         => 3306,
             -user         => 'ensro',
             -pass         => '',
@@ -97,8 +96,8 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
     };
 }
 
@@ -133,7 +132,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
-                'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('rel')),
+                'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('ensembl_release')),
                 'target_dir'    => $self->o('target_dir'),
                 'query'         => sprintf q|
                     SELECT 
