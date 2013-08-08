@@ -110,6 +110,7 @@ sub content {
             ),
             sprintf('%d aa', $peptide->seq_length),
             sprintf('%d %%', $peptide->perc_id),
+            sprintf('%d %%', $peptide->perc_cov),
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Location', action => 'View', g => $gene->stable_id, r => $location, t => undef }),
               $location
@@ -126,12 +127,13 @@ sub content {
       $html .= "<h2>$match_type type: $homology_desc_mapped</h2>";
       
       my $ss = $self->new_table([
-          { title => 'Species',          width => '18%' },
-          { title => 'Gene ID',          width => '18%' },
-          { title => 'Peptide ID',       width => '18%' },
-          { title => 'Peptide length',   width => '13%' },
-          { title => '% identity',       width => '13%' },
-          { title => 'Genomic location', width => '20%' }
+          { title => 'Species',          width => '15%' },
+          { title => 'Gene ID',          width => '15%' },
+          { title => 'Peptide ID',       width => '15%' },
+          { title => 'Peptide length',   width => '10%' },
+          { title => '% identity',       width => '10%' },
+          { title => '% coverage',       width => '10%' },
+          { title => 'Genomic location', width => '25%' }
         ],
         $data
       );
