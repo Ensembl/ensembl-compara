@@ -59,22 +59,22 @@ sub init_contigs {
   my @label_colours        = qw(white black);
   
   # Draw the Contig Tiling Path
-  foreach (sort { $a->{'from_start'} <=> $b->{'from_start'} } @$contig_tiling_path) {
+  foreach (sort { $a->{'start'} <=> $b->{'start'} } @$contig_tiling_path) {
     my $strand = $_->strand;
-    my $rend   = $_->{'from_end'};
-    my $rstart = $_->{'from_start'};
+    my $end    = $_->{'end'};
+    my $start  = $_->{'start'};
     my $region = $_->{'name'};
     my $i      = $_->get_all_Attributes('hap_contig')->[0]{'value'} ? 1 : 0; # if this is a haplotype contig then need a different pair of colours for the contigs
     
     # AlignSlice segments can be on different strands - hence need to check if start & end need a swap
-    ($rstart, $rend) = ($rend, $rstart) if $rstart > $rend;
-    $rstart = 1 if $rstart < 1;
-    $rend   = $length if $rend > $length;
+    ($start, $end) = ($end, $start) if $start > $end;
+    $start = 1 if $start < 1;
+    $end   = $length if $end > $length;
     
     $self->push($self->Rect({
-      x         => $rstart - 1,
+      x         => $start - 1,
       y         => 0,
-      width     => $rend - $rstart + 1,
+      width     => $end - $start + 1,
       height    => $box_h,
       colour    => $colours[$i]->[0],
       absolutey => 1,
@@ -85,11 +85,11 @@ sub init_contigs {
     push @{$colours[$i]}, shift @{@colours[$i]};
 
     if ($h) {
-      my @res = $self->get_text_width(($rend - $rstart) * $pix_per_bp, $self->feature_label($_), $strand > 0 ? '>' : '<', font => $fontname, ptsize => $fontsize);
+      my @res = $self->get_text_width(($end - $start) * $pix_per_bp, $self->feature_label($_), $strand > 0 ? '>' : '<', font => $fontname, ptsize => $fontsize);
       
       if ($res[0]) {
         $self->push($self->Text({
-          x         => ($rend + $rstart - $res[2] / $pix_per_bp) / 2,
+          x         => ($end + $start - $res[2] / $pix_per_bp) / 2,
           height    => $res[3],
           width     => $res[2] / $pix_per_bp,
           textwidth => $res[2],
@@ -131,67 +131,28 @@ sub features {
   my @features;
   
   foreach (@{$container->project('seqlevel') || []}) {
-    my $ctg_slice     = $_->to_Slice;
-    my $name          = $ctg_slice->coord_system->name eq 'ancestralsegment' ? $ctg_slice->{'_tree'} : $ctg_slice->seq_region_name; # This is a Slice of Ancestral sequences: display the tree instead of the ID
-    my $feature_slice = $adaptor ? $adaptor->fetch_by_region('seqlevel', $name)->project('toplevel')->[0]->to_Slice : $ctg_slice;
+    my $slice = $_->to_Slice;
     
-    $feature_slice->{'from_start'} = $_->from_start;
-    $feature_slice->{'from_end'}   = $_->from_end;
-    $feature_slice->{'name'}       = $name;
+    $slice->{'name'}  = $slice->coord_system->name eq 'ancestralsegment' ? $slice->{'_tree'} : $slice->seq_region_name; # This is a Slice of Ancestral sequences: display the tree instead of the ID;
+    $slice->{'start'} = $_->from_start;
+    $slice->{'end'}   = $_->from_end;
     
-    $self->set_absolute_coords_from_overlap($feature_slice, $ctg_slice) unless $container->seq_region_Slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
-    
-    push @features, $feature_slice;
+    push @features, $slice;
   }
   
   return \@features;
 }
 
-# Sets start and end on the feature slice to be relative to the chromosome
-sub set_absolute_coords_from_overlap {
-  my ($self, $feature_slice, $ctg_slice) = @_;
-  my $container   = $self->{'container'};
-  my $slice_start = $container->start;
-  my $slice_end   = $container->end;
-  my $check       = $feature_slice->{'from_start'} == 1 ? 'start' : $feature_slice->{'from_end'} == $container->length ? 'end' : ''; # Check if the feature extends beyond the boundaries of the container
-  
-  if ($check) {
-    my $segments = $ctg_slice->seq_region_Slice->project_to_slice($container->seq_region_Slice);
-    
-    # if there is only one mapping then it must be right, so don't change start/end
-    if (scalar @$segments > 1) {
-      foreach (@$segments) {
-        my $projected_slice = $_->to_Slice;
-        my ($start, $end)   = ($projected_slice->start, $projected_slice->end);
-        my $done            = 0;
-        
-        # When we meet the first projected slice which contains the original container's start position we have
-        # found our correct start (there is only one which can overlap)
-        $done = 1 if ($check eq 'start' && $start <= $slice_start && $end >= $slice_start) || ($check eq 'end' && $start <= $slice_end && $end >= $slice_end);
-        
-        if ($done) {
-          $feature_slice->{'start'} = $start;
-          $feature_slice->{'end'}   = $end;
-          last;
-        }
-      }
-    }
-  } else {
-    $feature_slice->{'start'} = $feature_slice->{'from_start'} + $slice_start - 1;
-    $feature_slice->{'end'}   = $feature_slice->{'from_end'}   + $slice_start - 1;
-  }
-}
-
-
 sub href {
   my ($self, $f) = @_;
+  my $offset = $self->{'container'}->start - 1;
   
   return $self->_url({
     species => $self->species,
     type    => 'Location',
     action  => 'Contig',
     region  => $f->{'name'},
-    r       => sprintf('%s:%s-%s', $f->seq_region_name, $f->start, $f->end)
+    r       => sprintf('%s:%s-%s', $self->{'container'}->seq_region_name, $f->start + $offset, $f->end + $offset)
   });
 }
 
