@@ -395,6 +395,9 @@ sub alignment_string_bounded {
 sub cdna_alignment_string {
   my $self = shift;
 
+  # For ncRNAs, the default alignment string is already at the DNA level
+  return $self->alignment_string() if $self->source_name eq 'ENSEMBLTRANS';
+
   unless (defined $self->{'cdna_alignment_string'}) {
 
     my $cdna;
