@@ -207,7 +207,6 @@ sub store {
     }
 
   }
-
   $self->attach( $mlss, $dbID);
   $self->_add_to_cache($mlss);
   $self->sync_tags_to_database( $mlss );
@@ -352,10 +351,17 @@ sub fetch_by_method_link_id_species_set_id {
 =cut
 
 sub fetch_all_by_method_link_type {
-    my ($self, $method_link_type) = @_;
+    my ($self, $method_link_type, $no_warning) = @_;
 
     $self->_id_cache;
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
+
+    unless ($method) {
+        warning("Unable to find any method_link_species_sets with method_link_type='$method_link_type, returning an empty list'") unless ($no_warning);
+        my $empty_mlsss = [];
+        return $empty_mlsss;
+    }
+
     return [values %{$self->{_meth_ss_cache}->{$method->dbID}}];
 }
 
