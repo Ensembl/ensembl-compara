@@ -957,7 +957,7 @@ sub pipeline_analyses {
             },
             -hive_capacity  => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
-            -rc_name    => '1Gb_job',
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'per_genome_qc',
@@ -1076,7 +1076,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'split_genes',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '250Mb_job',
+            -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => [ 'njtree_phyml', 'build_HMM_aa', 'build_HMM_cds' ],
         },
@@ -1092,7 +1092,7 @@ sub pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
-            -rc_name => '2Gb_job',
+            -rc_name => '4Gb_job',
             -flow_into => {
                 '1->A' => {
                     'hc_factory_align' => {'gene_tree_id' => '#gene_tree_id#', 'post_treebest' => 1},
@@ -1147,7 +1147,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 10,
             -priority             => -10,
-            -rc_name => '250Mb_job',
+            -rc_name => '500Mb_job',
         },
 
         {   -logic_name => 'build_HMM_cds',
@@ -1160,7 +1160,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 10,
             -priority             => -10,
-            -rc_name => '500Mb_job',
+            -rc_name => '1Gb_job',
         },
 
 # ---------------------------------------------[Quick tree break steps]-----------------------------------------------------------------------
