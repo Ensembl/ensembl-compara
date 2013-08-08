@@ -82,28 +82,22 @@ sub variation_content {
   }
   
   push @entries, { type => 'LRG position', label => $lrg_position } if $lrg_position;
+  push @entries, { type => 'Alleles',      label => $allele };
+  
+  if ($self->{'transcript'}) {
+    my $tv = $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0];
+    
+    if ($tv) {
+      my $pep_alleles = $tv->pep_allele_string;
+      my $codons      = $tv->codons;
+      
+      push @entries, { type => 'Amino acids', label => $pep_alleles} if $pep_alleles && $pep_alleles =~ /\//;
+      push @entries, { type => 'Codons',      label => $codons}      if $codons      && $codons      =~ /\//;
+    }
+  }
   
   my %ct    = map { $_->SO_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my %types = map @{$ct{$_}}, @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
-  
-  push @entries, (
-    { type  => 'Alleles', label => $allele }
-  );
-  
-  if(($hub->referer->{'ENSEMBL_ACTION'} eq 'Sequence_Protein') && (my $tr = $hub->param('t'))) {
-    my ($tv) = grep {$_->transcript->stable_id eq $tr} @{$feature->get_all_TranscriptVariations};
-    if(defined($tv)) {
-      my ($tva) = @{$tv->get_all_alternate_TranscriptVariationAlleles()};
-      
-      push @entries, (
-        { type => 'Amino acids', label => $tva->pep_allele_string}
-      ) if defined($tva) && defined($tva->pep_allele_string) && $tva->pep_allele_string =~ /\//;
-      
-      push @entries, (
-        { type => 'Codons', label => $tva->codon_allele_string}
-      ) if defined($tva) && defined($tva->codon_allele_string) && $tva->codon_allele_string =~ /\//;
-    }
-  }
   
   push @entries, (
     { type  => 'Types',   label_html => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
