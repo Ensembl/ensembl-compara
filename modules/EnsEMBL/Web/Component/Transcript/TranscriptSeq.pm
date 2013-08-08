@@ -134,8 +134,7 @@ sub get_sequence_data {
       my $start             = $tv->cdna_start;
       my $end               = $tv->cdna_end;
       my $pep_allele_string = $tv->pep_allele_string;
-      my $consequence_type  = join ' ', @{$tv->consequence_type};
-      my $aa_change         = $consequence_type =~ /\b(NON_SYNONYMOUS_CODING|FRAMESHIFT_CODING|STOP_LOST|STOP_GAINED)\b/;
+      my $aa_change         = $pep_allele_string =~ /\// && $tv->affects_peptide;
       
       # Variation is an insert if start > end
       ($start, $end) = ($end, $start) if $start > $end;
@@ -152,13 +151,10 @@ sub get_sequence_data {
         $mk->{'variations'}{$_}{'type'} = $type;
         
         if ($config->{'translation'} && $aa_change) {
-          $protein_seq->{'seq'}[$amino_acid_pos]{'letter'}     = 
-          $protein_seq->{'seq'}[$amino_acid_pos + 2]{'letter'} = '=';
-          
           foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
             $protein_seq->{'seq'}[$aa]{'class'}  = 'aa';
-            $protein_seq->{'seq'}[$aa]{'title'} .= ', ' if $protein_seq->{'seq'}[$aa]{'title'};
-            $protein_seq->{'seq'}[$aa]{'title'} .= $pep_allele_string;
+            $protein_seq->{'seq'}[$aa]{'title'} .= "\n" if $protein_seq->{'seq'}[$aa]{'title'};
+            $protein_seq->{'seq'}[$aa]{'title'} .= "$variation_name: $pep_allele_string";
           }
         }
         
