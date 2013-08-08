@@ -871,7 +871,7 @@ sub get_SpeciesTree {
     
     my $member   = $self->get_compara_Member($compara_db)           || return;        
     my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
-    my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);
+    my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree) || return;
 				$cafeTree->multifurcate_tree();    
     $cafeTree    = $cafeTree->lca_reroot() if($collapsability eq 'part'); 
       
