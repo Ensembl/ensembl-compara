@@ -174,7 +174,10 @@ sub content {
       $html .= $self->_info('Highlighted genes',
         sprintf(
           '<p>In addition to all <I>%s</I> genes, the %s gene (<I>%s</I>) and its paralogues have been highlighted. <a href="%s">Click here to switch off highlighting</a>.</p>', 
-          $member->genome_db->name, $highlight_gene_display_label, $highlight_species, $unhighlight
+          $hub->species_defs->get_config($member->genome_db->name, 'SPECIES_COMMON_NAME'),
+          $highlight_gene_display_label,
+          $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME'),
+          $unhighlight
         )
       );
     } else {
