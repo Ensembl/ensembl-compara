@@ -107,7 +107,6 @@ sub fetch_by_name_assembly {
     my ($self, $name, $assembly) = @_;
 
     throw("name argument is required") unless($name);
-
     $self->_id_cache;
     my $found_gdb = $self->{_name_asm_cache}->{lc $name}->{lc ($assembly || '')};
     
@@ -341,6 +340,8 @@ sub store {
         $sth->finish();
     }
 
+    #make sure the id_cache has been fully populated
+    $self->_id_cache();
     $self->_add_to_cache($gdb);
 
     return $gdb;
