@@ -95,6 +95,7 @@ sub content {
             $peptide->stable_id,
             sprintf('%d aa', $peptide->seq_length),
             sprintf('%d %%', $peptide->perc_id),
+            sprintf('%d %%', $peptide->perc_cov),
             $location,
           ]; 
         } else {
