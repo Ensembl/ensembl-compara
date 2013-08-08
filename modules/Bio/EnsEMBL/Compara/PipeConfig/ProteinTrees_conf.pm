@@ -317,7 +317,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_hcluster',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'peptide_align_feature_%',
+                'table_list'    => '',
                 'filename'      => 'snapshot_3_before_hcluster.sql',
             },
             -flow_into  => {
