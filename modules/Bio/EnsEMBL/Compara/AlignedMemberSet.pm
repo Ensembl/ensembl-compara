@@ -397,7 +397,7 @@ sub get_SimpleAlign {
             $alphabet = 'protein';
         } else {
             $seqstr = $member->alignment_string($exon_cased);
-            $alphabet = 'protein';
+            $alphabet = $member->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
         }
         next if(!$seqstr);
 
