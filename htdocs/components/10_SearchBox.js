@@ -11,8 +11,10 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     this.elLk.siteInput = $('input', this.elLk.sites);
     this.elLk.menu      = $('.site_menu', this.el);
     this.elLk.input     = $('.query', this.el);
+    this.elLk.select    = $('select[name=species]', this.el);
     
-    this.label = this.elLk.input[0].defaultValue;
+    this.label   = this.elLk.input[0].defaultValue;
+    this.species = this.elLk.select.val();
     
     this.updateSearch(Ensembl.cookie.get('ENSEMBL_SEARCH'));
     
@@ -47,7 +49,7 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     });
     
     $('form', this.el).on('submit', function () {
-      if (panel.elLk.input.val() === panel.label || panel.elLk.input.val() === '') {
+      if ((panel.elLk.input.val() === panel.label && panel.elLk.select.val() === panel.species) || panel.elLk.input.val() === '') {
         return false;
       }
     });
