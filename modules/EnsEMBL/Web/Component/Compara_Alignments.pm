@@ -144,7 +144,9 @@ sub content_sub_slice {
       $config->{'padding'}->{'number'}     = $pad[2];
     }
   }
-  $self->id(''); 
+  
+  $self->id('');
+  
   return $self->build_sequence($sequence, $config) . $warnings;
 }
 
@@ -161,7 +163,7 @@ sub get_slices {
   }
   
   foreach (@slices) {
-    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $self->species;
+    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
     
     push @formatted_slices, {
       slice             => $_,
