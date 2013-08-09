@@ -240,9 +240,6 @@ sub content {
         $tagvalues->{'treefam_id'}          || 
         $tagvalues->{'part_treefam_id'}     || 
         $tagvalues->{'cont_treefam_id'}     || 
-        $tagvalues->{'dev_treefam_id'}      || 
-        $tagvalues->{'dev_part_treefam_id'} || 
-        $tagvalues->{'dev_cont_treefam_id'} || 
         undef;
       
       if (defined $treefam_tree) {
