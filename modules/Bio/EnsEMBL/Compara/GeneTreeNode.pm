@@ -63,6 +63,95 @@ use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
+# Attributes / tags
+
+=head2 taxon_id
+
+  Description: Getter for the taxon ID (cf the NCBI database) of that node in the gene tree
+
+=cut
+
+sub taxon_id {
+    my $self = shift;
+    return $self->get_value_for_tag('taxon_id');
+}
+
+
+=head2 taxon
+
+  Description: Getterfor the NCBITaxon object refering to the species containing that member
+
+=cut
+
+sub taxon {
+  my $self = shift;
+
+    unless (defined $self->{'_taxon'}) {
+      unless (defined $self->taxon_id) {
+        throw("can't fetch Taxon without a taxon_id");
+      }
+      my $NCBITaxonAdaptor = $self->adaptor->db->get_NCBITaxonAdaptor;
+      $self->{'_taxon'} = $NCBITaxonAdaptor->fetch_node_by_taxon_id($self->taxon_id);
+    }
+
+  return $self->{'_taxon'};
+}
+
+
+=head2 node_type
+
+  Description: Getter for the node_type attribute. It shows the event that took place
+               at that node. Currently, one of "duplication", "speciation", "dubious",
+               and "gene_split"
+
+=cut
+
+sub node_type {
+    my $self = shift;
+    return $self->get_value_for_tag('node_type');
+}
+
+
+=head2 lost_taxa
+
+  Description: Returns the list of the taxon ID (cf the NCBI database) of the taxa
+               that have lost that gene on the branch leading to the current node
+
+=cut
+
+sub lost_taxa {
+    my $self = shift;
+    return $self->get_all_values_for_tag('lost_taxon_id');
+}
+
+
+=head2 duplication_confidence_score
+
+  Description: Returns the confidence score of the duplication node (between 0 and 1)
+               "dubious" nodes always return 0, "speciation" nodes always return undef
+
+=cut
+
+sub duplication_confidence_score {
+    my $self = shift;
+    return $self->get_value_for_tag('duplication_confidence_score');
+}
+
+
+=head2 bootstrap
+
+  Description: Returns the bootstrap value of that node (between 0 and 100)
+
+=cut
+
+sub bootstrap {
+    my $self = shift;
+    return $self->get_value_for_tag('bootstrap');
+}
+
+
+
+
 
 sub tree {
     my $self = shift;
