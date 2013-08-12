@@ -271,7 +271,10 @@ sub set_targets {
     print "$sp\n Regulation: ".HRSize($regulation_filesize,2)." + RNASeq: ".HRSize($rna_filesize,2)." == ".HRSize($filesize,2)." \n" if($filesize && $dryrun); #will display the disk space in dryrun mode
   }
 
-  print "\nTotal Size == ".HRSize($totalsize,2)." (This is the total disk space you will need on the mirrors, create the volumes accordingly and make sure fdt is running!) \n" if($dryrun);
+  if($dryrun) {
+    print "\nTotal Size == ".HRSize($totalsize,2)." (This is the total disk space you will need on the mirrors, create the volumes accordingly and make sure fdt is running!) \n";
+    exit;
+  }
 #  $hash{"total_size"} = HRSize($totalsize,0); #dont need it for me, be careful if we are adding back again as it will affect the count in SpeciesSizeSorter function.
 
   %species = %target_species;

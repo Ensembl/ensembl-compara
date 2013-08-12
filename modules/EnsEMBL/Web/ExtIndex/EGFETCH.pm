@@ -73,7 +73,7 @@ sub new {
 	$self->{ua} = LWP::UserAgent->new;
 	$self->{ua}->agent( $self->{params}{agent} );
 	if ( defined $self->{proxy} ) {
-		my $url    = URI::URL->new $self->{service_base};
+		my $url    = URI::URL->new( $self->{service_base} );
 		my $scheme = $url->scheme;
 		$self->{ua}->proxy( $scheme, $self->{proxy} );
 	}

@@ -823,7 +823,7 @@ sub read_coverage {
 
   my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor; 
   my $coverage_level = $rc_adaptor->get_coverage_levels; 
-  my $coverage_obj = $rc_adaptor->fetch_all_by_Slice_Sample_depth($sample_slice, $sample_obj); 
+  my $coverage_obj = $rc_adaptor->fetch_all_by_Slice_Individual_depth($sample_slice, $sample_obj); 
   return ($coverage_level, $coverage_obj);
 }
 

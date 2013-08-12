@@ -52,6 +52,8 @@ my $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT || 'www';
 my $ouput_dir = 'sitemaps'; 
 my @sitemaps;
 
+my $this_release = $sd->ENSEMBL_VERSION;
+
 my $sitemap_path; # default setting is htdocs root
 my $skip_list;
 GetOptions("sitemap_path=s", \$sitemap_path, "skip=s", \$skip_list);
@@ -104,9 +106,9 @@ foreach (@sitemaps) {
 $index->write("${ouput_dir}/sitemap-index.xml");
 
 if($domain eq "http://www.ensembl.org") {
-  print ("Moving sitemaps to /ensemblweb/www/server/htdocs/ \n");
-  system("rm -r /ensemblweb/www/server/htdocs/sitemaps") if(-d "/ensemblweb/www/server/htdocs/sitemaps");
-  system("mv sitemaps /ensemblweb/www/server/htdocs/");
+  print ("Moving sitemaps to /ensemblweb/www/www_$this_release/htdocs/ \n");
+  system("rm -r /ensemblweb/www/www_$this_release/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$this_release/htdocs/sitemaps");
+  system("mv sitemaps /ensemblweb/www/www_$this_release/htdocs/");
 }
 exit;
 
