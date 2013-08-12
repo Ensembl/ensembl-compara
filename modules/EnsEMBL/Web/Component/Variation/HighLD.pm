@@ -47,8 +47,8 @@ sub summary_table {
   my $table              = $self->new_table([
     { key => 'name',   title => 'Population',              sort => 'html',   align => 'left'   },
     { key => 'desc',   title => 'Description',             sort => 'string', align => 'left'   },
-    { key => 'tags',   title => 'Tags',                    sort => 'string', align => 'center' },
-    { key => 'tagged', title => 'Tagged by',               sort => 'string', align => 'center' },
+    { key => 'tags',   title => 'Tags',                    sort => 'string', align => 'right'  },
+    { key => 'tagged', title => 'Tagged by',               sort => 'string', align => 'right'  },
     { key => 'table',  title => 'Linked variations table', sort => 'none',   align => 'center' },
     { key => 'plot',   title => 'LD plot (image)',         sort => 'none',   align => 'center' },
     { key => 'export', title => 'LD plot (table)',         sort => 'none',   align => 'center' },
@@ -77,7 +77,7 @@ sub summary_table {
       my $full_desc = $self->strip_HTML($description);
       
       while ($description =~ m/^.{30}.*?(\s|\,|\.)/g) {
-        $description = sprintf '<span title="%s">%s...(more)</span>', $full_desc, substr($description, 0, (pos $description) - 1);
+        $description = sprintf '<span class="_ht" title="%s">%s...<span class="small">(more)</span>', $full_desc, substr($description, 0, (pos $description) - 1);
         last;
       }
     }
@@ -210,15 +210,16 @@ sub linked_var_table {
   my $pop_name            = $pop->name;
   my $tables_with_no_rows = 0;
   my $table               = $self->new_table([
-    { key => 'variation',   title => 'Variation',               align => 'center', sort => 'html'                 },
-    { key => 'location',    title => 'Location',                align => 'center', sort => 'position_html'        },
-    { key => 'distance',    title => 'Distance (bp)',           align => 'center', sort => 'numeric'              },
-    { key => 'r2',          title => 'r<sup>2</sup>',           align => 'center', sort => 'numeric'              },
-    { key => 'd_prime',     title => q{D'},                     align => 'center', sort => 'numeric'              },
-    { key => 'tags',        title => 'Tags',                    align => 'center', sort => 'string'               },
-    { key => 'tagged',      title => 'Tagged by',               align => 'center', sort => 'string'               },
-    { key => 'genes',       title => 'Located in gene(s)',      align => 'center', sort => 'html'                 },
-    { key => 'pfs',         title => 'Associated phenotype(s)', align => 'center', sort => 'html', width => '30%' },
+    { key => 'variation',   title => 'Variation',               align => 'left', sort => 'html'                 },
+    { key => 'location',    title => 'Location',                align => 'left', sort => 'position_html'        },
+    { key => 'distance',    title => 'Distance (bp)',           align => 'left', sort => 'numeric'              },
+    { key => 'r2',          title => 'r<sup>2</sup>',           align => 'left', sort => 'numeric'              },
+    { key => 'd_prime',     title => q{D'},                     align => 'left', sort => 'numeric'              },
+    { key => 'tags',        title => 'Tags',                    align => 'right',  sort => 'string'               },
+    { key => 'tagged',      title => 'Tagged by',               align => 'right',  sort => 'string'               },
+    { key => 'pfs',         title => 'Associated phenotype(s)', align => 'left', sort => 'html', width => '20%' },
+    { key => 'genes',       title => 'Located in gene(s)',      align => 'left', sort => 'html'                 },
+    { key => 'pgene',       title => 'Gene phenotype(s)',       align => 'left', sort => 'html', width => '20%' },
   ], [], { data_table => 1 });
   
   # do some filtering
@@ -307,6 +308,8 @@ sub linked_var_table {
       my ($tagged, $tagged_by) = @{$self->tag_data($ld_vf, $pop)};
       
       # get genes
+      my $gene_objs = $ld_vf->feature_Slice->get_all_Genes;
+      
       my $genes = join ', ', map sprintf(
         '<a href="%s">%s</a>',
         $hub->url({
@@ -319,7 +322,24 @@ sub linked_var_table {
           source => $source
         }),
         $_->external_name
-      ), @{$ld_vf->feature_Slice->get_all_Genes};
+      ), @{$gene_objs};
+      
+      # gene phenotypes
+      my $pgene = join(', ',
+        map {
+          sprintf(
+            '<a href="%s">%s</a>',
+            $hub->url({
+              type   => 'Phenotype',
+              action => 'Locations',
+              ph     => $_->phenotype->dbID
+            }),
+            $_->phenotype->description
+          )
+        } map {
+          @{$pfa->fetch_all_by_Gene($_)}
+        } @$gene_objs
+      );
       
       # build URLs
       my $var_url = $hub->url({
@@ -342,12 +362,13 @@ sub linked_var_table {
         variation   => qq{<a href="$var_url">$variation_name</a>},
         location    => sprintf('<a href="%s">%s:%s</a>', $loc_url, $ld_vf->seq_region_name, $start == $end ? $start : "$start-$end"),
         distance    => abs($start - ($vf_start > $vf_end ? $vf_end : $vf_start)),
-        r2          => $ld->{'r2'},
-        d_prime     => $ld->{'d_prime'},
+        r2          => sprintf("%.3f", $ld->{'r2'}),
+        d_prime     => sprintf("%.3f", $ld->{'d_prime'}),
         tags        => $tagged,
         tagged      => $tagged_by,
         genes       => $genes     || '-',
         pfs         => $pf_string || '-',
+        pgene       => $pgene     || '-',
       });
     }
   }
@@ -411,7 +432,20 @@ sub tag_data {
     );
   }
   
-  my $tagged = (join ", ", @tagged_list) || '-';
+  my $tagged;
+  if(scalar @tagged_list > 1) {
+    $tagged = sprintf(
+      '<a href="#" rel="list_%s_%s" class="toggle closed">%i variants</a>'.
+      '<div class="list_%s_%s"><div class="toggleable" style="display:none">%s</div></div>',
+      $vf->dbID, $pop->dbID,
+      scalar @tagged_list,
+      $vf->dbID, $pop->dbID,
+      join("<br>", @tagged_list)
+    );
+  }
+  else {
+    $tagged = (join ", ", @tagged_list) || '-';
+  }
   
   # get VFs this VF is tagged by
   my @tagged_by_list;
@@ -439,7 +473,20 @@ sub tag_data {
     );
   }
   
-  my $tagged_by = (join ", ", @tagged_by_list) || '-';
+  my $tagged_by;
+  if(scalar @tagged_by_list > 1) {
+    $tagged_by = sprintf(
+      '<a href="#" rel="list_%s_%s" class="toggle closed">%i variants</a>'.
+      '<div class="list_%s_%s"><div class="toggleable" style="display:none">%s</div></div>',
+      $vf->dbID, $pop->dbID,
+      scalar @tagged_list,
+      $vf->dbID, $pop->dbID,
+      join("<br>", @tagged_by_list)
+    );
+  }
+  else {
+    $tagged_by = (join ", ", @tagged_by_list) || '-';
+  }
   
   return [$tagged, $tagged_by];
 }
