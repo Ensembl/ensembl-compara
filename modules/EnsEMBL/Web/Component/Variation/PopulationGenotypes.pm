@@ -238,10 +238,10 @@ sub pop_url {
   
   my $pop_url;
   if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $self->hub->get_ExtURL_link($pop_name, '1KG_POP'); 
+    $pop_url = $pop_name.'&nbsp;'.$self->hub->get_ExtURL_link('[info]', '1KG_POP', $pop_name); 
   }
   else {
-    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+    $pop_url = $pop_dbSNP ? $pop_name.'&nbsp;'.$self->hub->get_ExtURL_link('[info]', 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
   }
   
   return $pop_url;
