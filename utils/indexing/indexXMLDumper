@@ -137,7 +137,7 @@ my %shards = (
   StructuralVariation => 'ensembl_core',
   Transcript          => 'ensembl_core',
   GenomicAlignment    => 'ensembl_ga',
-  Help                => 'ensembl_docs',
+  Help                => 'ensembl_core',
   Variation           => 'ensembl_variation',
 );
 foreach (@indexes) {
@@ -190,7 +190,6 @@ foreach my $index (@indexes) {
     $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."_$release/".lc($sitetype).'_SomaticMutation';
   system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
-
   foreach my $species ( @species ) {
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
@@ -1590,13 +1589,17 @@ sub dumpFamily {
 
  ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
+
+
   # get details of genes and proteins that make up the families for this species
+  my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref(qq(
+        SELECT g.stable_id, x.display_label
+          FROM gene g, xref x
+         WHERE g.display_xref_id = x.xref_id))} };
   my $gene_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
-        SELECT m.member_id, m.stable_id, x.display_label
-          FROM member m, genome_db gdb, $dbname.gene g, $dbname.xref x
+        SELECT m.member_id, m.stable_id
+          FROM member m, genome_db gdb
          WHERE m.genome_db_id = gdb.genome_db_id
-           AND m.stable_id = g.stable_id
-           AND g.display_xref_id = x.xref_id
            AND m.source_name = 'ENSEMBLGENE'
            AND gdb.name = '$dbspecies'),'member_id');
   my $protein_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
@@ -1636,10 +1639,11 @@ sub dumpFamily {
     my (@genes,@proteins,@uniprots);
     foreach my $id (split ',', $member_ids) {
       if ($gene_members->{$id}) {
-        push @genes, {
-          stable_id     => $gene_members->{$id}{'stable_id'},
-          display_label => $gene_members->{$id}{'display_label'}
-        };
+	my $stable_id = $gene_members->{$id}{'stable_id'};
+	my $display_label = $gene_names->{$stable_id} || '';
+	my $dets = { stable_id     => $stable_id };
+	$dets->{'display_label'}   = $display_label if $display_label;
+        push @genes, $dets;
       }
       elsif ($protein_members->{$id}) {
         push @proteins, {
