@@ -64,15 +64,15 @@ sub content {
     $genotype =~ s/T/<span style="color:red">T<\/span>/g;
     
     my $row = {
-      Individual  => sprintf("<small>$data->{'Name'} (%s)</small>", substr($data->{'Gender'}, 0, 1)),
+      Individual  => sprintf("<small id=\"$data->{'Name'}\">$data->{'Name'} (%s)</small>", substr($data->{'Gender'}, 0, 1)),
       Genotype    => "<small>$genotype</small>",
-      Description => "<small>$description</small>",
-      Father      => "<small>$father</small>",
-      Mother      => "<small>$mother</small>",
+      Population  => "<small>".join(", ", sort keys %{{map {$_->{Name} => undef} @{$data->{Population}}}})."</small>",
+      Father      => "<small>".($father eq '-' ? $father : "<a href=\"#$father\">$father</a>")."</small>",
+      Mother      => "<small>".($mother eq '-' ? $mother : "<a href=\"#$mother\">$mother</a>")."</small>",
       Children    => '-'
     };
     
-    my @children = map { sprintf "<small>$_ (%s)</small>", substr($data->{'Children'}{$_}[0], 0, 1) } keys %{$data->{'Children'}};
+    my @children = map { sprintf "<small><a href=\"#$_\">$_</a> (%s)</small>", substr($data->{'Children'}{$_}[0], 0, 1) } keys %{$data->{'Children'}};
     
     if (@children) {
       $row->{'Children'} = join ', ', @children;
@@ -218,10 +218,10 @@ sub pop_url {
   
   my $pop_url;
   if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $self->hub->get_ExtURL_link($pop_name, '1KG_POP'); 
+    $pop_url = $pop_name.'&nbsp;'.$self->hub->get_ExtURL_link('[info]', '1KG_POP', $pop_name);
   }
   else {
-    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+    $pop_url = $pop_dbSNP ? $pop_name.'&nbsp;'.$self->hub->get_ExtURL_link('[info]', 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
   }
   
   return $pop_url;
@@ -231,7 +231,7 @@ sub get_table_headings {
   return [
     { key => 'Individual',  title => 'Individual<br /><small>(Male/Female/Unknown)</small>', sort => 'html', width => '20%', help => 'Individual name and gender'     },
     { key => 'Genotype',    title => 'Genotype<br /><small>(forward strand)</small>',        sort => 'html', width => '15%', help => 'Genotype on the forward strand' },
-    { key => 'Description', title => 'Description',                                          sort => 'html'                                                           },
+    { key => 'Population',  title => 'Population(s)',                                        sort => 'html', help => 'Populations to which this individual belongs'   },
     { key => 'Father',      title => 'Father',                                               sort => 'none'                                                           },
     { key => 'Mother',      title => 'Mother',                                               sort => 'none'                                                           }
   ];
