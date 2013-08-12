@@ -302,13 +302,15 @@ sub data_table_config {
   
   return unless $code && scalar @{$self->{'rows'}} && $col_count;
   
-  my $i            = 0;
-  my %columns      = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
-  my $session_data = $self->session ? $self->session->get_data(type => 'data_table', code => $code) : {};
-  my $sorting      = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}->{'sorting'} || [];
-  my $hidden       = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : $self->{'options'}->{'hidden_columns'} || [];
-  my $config       = qq{<input type="hidden" name="code" value="$code" />};
-  my $sort         = [];
+  my $i              = 0;
+  my %columns        = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
+  my $session_data   = $self->session ? $self->session->get_data(type => 'data_table', code => $code) : {};
+  my $sorting        = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}{'sorting'}        || [];
+  my $hidden         = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : $self->{'options'}{'hidden_columns'} || [];
+  my $default_hidden = $self->{'options'}{'hidden_columns'} ? $self->jsonify({ map { $_ => 1 } @{$self->{'options'}{'hidden_columns'}} }) : '';
+     $default_hidden =~ s/"/'/g;
+  my $config         = qq{<input type="hidden" name="code" value="$code" />};
+  my $sort           = [];
   
   foreach (@$sorting) {
     my ($col, $dir) = split / /;
@@ -322,6 +324,7 @@ sub data_table_config {
   }
   
   $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', $self->jsonify($hidden) if scalar @$hidden;
+  $config .= qq{<input type="hidden" name="defaultHiddenColumns" value="$default_hidden" />} if $default_hidden;
   
   foreach (keys %{$self->{'options'}{'data_table_config'}}) {
     my $option = $self->{'options'}{'data_table_config'}{$_};

@@ -103,8 +103,9 @@ Ensembl.DataTable = {
         this.fnSettings().oInit.fnInitComplete.call(this);
         this.data('export', false);
         
-        var sorting = $.map(data.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
-        var hidden  = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j; }).join(',');
+        var defaultHidden = this.data('defaultHiddenColumns') || [];
+        var hidden        = $.map(data.aoColumns, function (c, j) { return c.bVisible ^ defaultHidden[j] ? null : j * (defaultHidden[j] ? -1 : 1); }).join(',');
+        var sorting       = $.map(data.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
         
         $.ajax({
           url: '/Ajax/data_table_config',
@@ -164,11 +165,11 @@ Ensembl.DataTable = {
       
       if (this.name === 'hiddenColumns') {
         $.each(val, function () {
-          if(options.aoColumns[this]) {
+          if (options.aoColumns[this]) {
             options.aoColumns[this].bVisible = false;
           }
         });
-      } else if ( this.name.indexOf("expopts") == 0) {
+      } else if (this.name.indexOf('expopts') === 0) {
         // no-op, this isn't an option for the client side
       } else if (typeof options[this.name] === 'object') {
         $.extend(true, options[this.name], val);
@@ -176,6 +177,11 @@ Ensembl.DataTable = {
         options[this.name] = val;
       }
     });
+    
+    if (options.defaultHiddenColumns) {
+      table.data('defaultHiddenColumns', options.defaultHiddenColumns);
+      delete options.defaultHiddenColumns;
+    }
     
     table = null;
     
