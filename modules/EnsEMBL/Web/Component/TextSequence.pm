@@ -916,22 +916,22 @@ sub class_to_style {
     my $i            = 1;
     
     my %class_to_style = (
-      con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}->{'default'}" } ],
-      dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}->{'default'}" } ],
-      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}->{'default'}" } ],
-      e0   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON0'}->{'default'}" } ],
-      e1   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON1'}->{'default'}" } ],
-      e2   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON2'}->{'default'}" } ],
-      eu   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONUTR'}->{'default'}" } ],
-      ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}->{'default'}" } ],
-      eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}->{'default'}" } ],
-      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}->{'default'}", 'font-weight' => "bold" } ],
-      c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}->{'default'}" } ],
-      c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}->{'default'}" } ],
-      cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}->{'default'}" } ],
-      co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}->{'default'}" } ],
-      aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
-      end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'label'}" } ],
+      con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}{'default'}" } ],
+      dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}{'default'}" } ],
+      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}{'default'}" } ],
+      e0   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}" } ],
+      e1   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON1'}{'default'}" } ],
+      e2   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON2'}{'default'}" } ],
+      eu   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONUTR'}{'default'}" } ],
+      ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}{'default'}" } ],
+      eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}{'default'}" } ],
+      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}{'default'}", 'font-weight' => 'bold' } ],
+      c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}{'default'}" } ],
+      c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}{'default'}" } ],
+      cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}{'default'}" } ],
+      co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
+      aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
+      end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
       bold => [ $i++, { 'font-weight' => 'bold' } ]
     );
     
@@ -943,7 +943,7 @@ sub class_to_style {
       $class_to_style{$_} = [ $i++, $style ];
     }
     
-    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}", 'background-color' => 'transparent', 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
+    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}{'default'}", 'background-color' => '#FFFFFF', 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
     
     $self->{'class_to_style'} = \%class_to_style;
   }
@@ -1063,7 +1063,8 @@ sub export_sequence {
     
     $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1            if $class_to_style->{$class}[1]{'color'};
     $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}[1]{'background-color'}, 1 if $class_to_style->{$class}[1]{'background-color'};
-    $rtf_style->{'\b'}              = 1                                                          if $class_to_style->{$class}[1]{'font-weight'} eq 'bold';
+    $rtf_style->{'\b'}              = 1                                                          if $class_to_style->{$class}[1]{'font-weight'}     eq 'bold';
+    $rtf_style->{'\ul'}             = 1                                                          if $class_to_style->{$class}[1]{'text-decoration'} eq 'underline';
     
     $class_to_style->{$class}[1] = $rtf_style;
     
