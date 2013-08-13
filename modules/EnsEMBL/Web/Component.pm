@@ -550,8 +550,6 @@ sub new_table {
   $table->filename   = join '-', $self->id, $filename;
   $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
   
-  $self->renderer->{'filename'} = $filename;
-  
   return $table;
 }
 
