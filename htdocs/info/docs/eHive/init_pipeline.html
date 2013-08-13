@@ -1,0 +1,62 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<meta name="navigation" content="eHive production system" />
+<title>eHive production system - init_pipeline</title>
+</head>
+
+<body>
+<h1>eHive production system</h1>
+<h2>init_pipeline manual</h2>
+
+<h3>NAME</h3>
+<pre>
+    init_pipeline.pl
+</pre>
+<h3>SYNOPSIS</h3>
+<pre>
+    init_pipeline.pl <config_module_or_filename> [-help | [ [-analysis_topup | -job_topup] <options_for_this_particular_pipeline>]
+</pre>
+<h3>DESCRIPTION</h3>
+<pre>
+    init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.
+</pre>
+<h3>USAGE EXAMPLES</h3>
+<p>get this help message:</p>
+<pre>
+    init_pipeline.pl
+</pre>
+
+<p>initialize a generic eHive pipeline:</p>
+<pre>
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <yourpassword>
+</pre>
+
+<p>see what command line options are available when initializing long multiplication example pipeline
+   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive) :</p>
+<pre>
+    init_pipeline.pl PipeConfig/LongMult_conf.pm -help
+</pre>
+
+<p>initialize the long multiplicaton pipeline by supplying not only mandatory but also optional data:
+   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig) :</P?
+<pre>
+    init_pipeline.pl LongMult_conf -password <yourpassword> -first_mult 375857335 -second_mult 1111333355556666 
+</pre>
+<h3>OPTIONS</h3>
+<pre>
+    -help           :   get automatically generated list of options that can be set/changed when initializing a particular pipeline
+
+    -analysis_topup :   a special initialization mode when (1) pipeline_create_commands are switched off and (2) only newly defined analyses are added to the database
+                        This mode is only useful in the process of putting together a new pipeline.
+
+    -job_topup      :   another special initialization mode when only jobs are created - no other structural changes to the pipeline are acted upon.
+</pre>
+<h3>CONTACT</h3>
+<p>
+    Please contact <u>ehive-users@ebi.ac.uk</u> mailing list with questions/suggestions.
+</p>
+
+<p><A HREF="index.html">Back</a></p>
+</body>
+</html>

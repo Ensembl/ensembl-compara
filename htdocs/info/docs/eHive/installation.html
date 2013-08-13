@@ -1,0 +1,144 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<meta name="navigation" content="eHive production system" />
+<title>eHive production system - Installation</title>
+</head>
+
+<body>
+<h1>eHive production system - Installation</h1>
+
+<h2>Download and install the necessary external software</h2>
+
+<p>Note: You may have these packages already installed in your system.</p>
+
+<ol>
+<li>
+<A HREF="http://www.perl.com/download.csp">Perl 5.6 or higher</a>, since eHive code is written in Perl.
+</li>
+<li>
+<A HREF="http://dev.mysql.com/downloads/">MySQL 5.1 or higher</a>
+<br />eHive keeps its state in a MySQL database, so you will need
+<ul>
+<li>a MySQL server installed on the machine where you want to maintain the state and</li>
+<li>MySQL clients installed on the machines where the jobs are to be executed.</li>
+</ul>
+MySQL version 5.1 or higher is recommended to maintain compatibility with Compara pipelines.
+</li>
+<li>
+<A HREF="http://dbi.perl.org/">Perl DBI API</a>
+<br />Perl database interface that includes API to MySQL
+</li>
+</ol>
+
+<h2>Download and install essential and optional packages from BioPerl and EnsEMBL CVS</h2>
+<ol>
+<li>
+Create a directory for the source code.
+<br />It is advised to have a dedicated directory where EnsEMBL-related packages will be deployed. Unlike DBI modules that can be installed system-wide by the system administrator, you will benefit from full (read+write) access to the EnsEMBL files/directories, so it is best to install them under your home directory. For example,
+
+<pre>$ mkdir $HOME/ensembl_main</pre>
+
+It will be convenient to set a variable pointing at this directory for future use:
+<ul>
+<li>
+using bash syntax (for best results, append this line to your ~/.bashrc configuration file):
+<pre>$ export ENSEMBL_CVS_ROOT_DIR="$HOME/ensembl_main"</pre>
+</li>
+<li>
+using [t]csh syntax (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file):
+<pre>$ setenv ENSEMBL_CVS_ROOT_DIR "$HOME/ensembl_main"</pre>
+</li>
+</ul>
+</li>
+
+<li>
+Change into your ensembl codebase directory:
+<pre>$ cd $ENSEMBL_CVS_ROOT_DIR</pre>
+</li>
+<li>
+Log into the BioPerl CVS server (using "cvs" for password):
+<pre>$ cvs -d :pserver:cvs@code.open-bio.org:/home/repository/bioperl login</pre>
+</li>
+<li>
+Export the bioperl-live package:
+<pre>$ cvs -d :pserver:cvs@code.open-bio.org:/home/repository/bioperl export bioperl-live</pre>
+</li>
+<li>
+Log into the EnsEMBL CVS server at Sanger (using "CVSUSER" for password):
+<pre>$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
+Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/ensembl
+CVS password: CVSUSER</pre>
+</li>
+<li>
+Export ensembl and ensembl-hive CVS modules:
+<pre>$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-hive</pre>
+</li>
+<li>
+In the likely case you are going to use eHive in the context of Compara pipelines, you will also need to install ensembl-compara:
+<pre>$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-compara</pre>
+</li>
+<li>
+Add new packages to the PERL5LIB variable:
+<ul>
+<li>using bash syntax (for best results, append these lines to your ~/.bashrc configuration file):
+<pre>$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live
+$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
+$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules # optional but recommended, see previous point.
+</pre>
+</li>
+<li>
+using [t]csh syntax (for best results, append these lines to your ~/.cshrc or ~/.tcshrc configuration file):
+<pre>$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live
+$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
+$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules # optional but recommended, see previous point.
+</pre>
+</li>
+</ul>
+</li>
+</ol>
+
+<h2>Useful files and directories of the eHive repository</h2>
+<ol>
+
+<li>In ensembl-hive/scripts we keep perl scripts used for controlling the pipelines.
+    Adding this directory to your $PATH may make your life easier.
+    <ul>
+    <li><b>init_pipeline.pl</b> is used to create hive databases, populate hive-specific and pipeline-specific tables and load data</li>
+    <li><b>beekeeper.pl</b>     is used to run the pipeline; send 'Workers' to the 'Meadow' to run the jobs of the pipeline</li>
+    </ul>
+</li>
+
+<li>In ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig we keep example pipeline configuration modules that can be used by <b>init_pipeline.pl</b> .
+    A PipeConfig is a parametric module that defines the structure of the pipeline.
+    That is, which analyses with what parameters will have to be run and in which order.
+    The code for each analysis is contained in a RunnableDB module.
+    For some tasks bespoke RunnableDB have to be written, whereas some other problems can be solved by only using 'universal buliding blocks'.
+    A typical pipeline is a mixture of both.
+</li>
+
+<li>In ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB we keep 'universal building block' RunnableDBs:
+    <ul>
+    <li><b>SystemCmd.pm</b>  is a parameter substitution wrapper for any command line executed by the current shell
+    </li>
+
+    <li><b>SqlCmd.pm</b>     is a parameter substitution wrapper for running any MySQL query or a session of linked queries
+                    against a particular database (eHive pipeline database by default, but not necessarily)
+    </li>
+
+    <li><b>JobFactory.pm</b> is a universal module for dynamically creating batches of same analysis jobs (with different parameters)
+                    to be run within the current pipeline
+    </li>
+    </ul>
+</li>
+
+<li>In ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult we keep bespoke RunnableDBs for long multiplication example pipeline.
+</li>
+</ol>
+
+<p><A HREF="index.html">Back</a></p>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<html>
+<head>
+<meta name="order" content="2" />
+  <meta name="navigation" content="eHive production system">
+  <title>eHive production system - beekeeper</title>
+
+
+</head>
+
+<body>
+
+<h1>eHive production system</h1>
+
+<h2>beekeeper manual</h2>
+
+<h3>NAME</h3>
+<p>beekeeper.pl</p>
+
+<h3>DESCRIPTION</h3>
+<p>The Beekeeper is in charge of interfacing between the Queen and a compute resource or 'compute farm'.  Its job is to initialize/sync the eHive database (via the Queen), query the Queen if it needs any workers and to send the requested number of workers to open machines via the runWorker.pl script.</p>
+<p>It is also responsible for interfacing with the Queen to identify workers which died unexpectantly so that she can free the dead workers and reclaim unfinished jobs.</p>
+
+<h3>USAGE EXAMPLES</h3>
+<ul>
+<li>Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
+<pre>beekeeper.pl --host=hostname --port=3306 --user=username --password=secret --database=ehive_dbname -sync</pre>
+</li>
+<li>An alternative way of doing the same thing
+<pre>beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync</pre>
+</li>
+<li>Do not run any additional Workers, just check for the current status of the pipeline:
+<pre>beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname</pre>
+</li>
+<li>Run the pipeline in automatic mode (-loop), run all the workers locally (-local) and allow for 3 parallel workers (-local_cpus 3)
+<pre>beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -local -local_cpus 3 -loop</pre>
+</li>
+<li>Run in automatic mode, but only restrict to running the 'fast_blast' analysis
+<pre>beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop</pre>
+</li>
+<li>Restrict the normal execution to one iteration only - can be used for testing a newly set-up pipeline
+<pre>beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run</pre>
+</li>
+<li>Reset all 'buggy_analysis' jobs to 'READY' state, so that they can be run again
+<pre>beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -reset_all_jobs_for_analysis buggy_analysis</pre>
+</li>
+<li>Do a cleanup: find and bury dead workers, reclaim their jobs
+<pre>beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead</pre>
+</li>
+</ul>
+
+<h3>OPTIONS</h3>
+<ul>
+<li>Connection parameters
+<pre>  -conf &lt;path&gt;            : config file describing db connection
+  -regfile &lt;path&gt;         : path to a Registry configuration file
+  -regname &lt;string&gt;       : species/alias name for the Hive DBAdaptor
+  -url &lt;url string&gt;       : url defining where hive database is located
+  -host &lt;machine&gt;         : mysql database host &lt;machine&gt;
+  -port &lt;port#&gt;           : mysql port number
+  -user &lt;name&gt;            : mysql connection user &lt;name&gt;
+  -password &lt;pass&gt;        : mysql connection password &lt;pass&gt;
+  -database &lt;name&gt;        : mysql database &lt;name&gt;
+</pre></li>
+<li>Looping control
+<pre>  -loop                   : run autonomously, loops and sleeps
+  -max_loops &lt;num&gt;        : perform max this # of loops in autonomous mode
+  -run                    : run 1 iteration of automation loop
+  -run_job_id &lt;job_id&gt;    : run 1 iteration for this job_id
+  -sleep &lt;num&gt;            : when looping, sleep &lt;num&gt; minutes (default 2min)
+</pre></li>
+<li>Meadow control
+<pre>  -local                  : run jobs on local CPU (fork)
+  -local_cpus &lt;num&gt;       : max # workers to be running locally
+  -wlimit &lt;num&gt;           : max # workers to create per loop
+  -no_pend                : don't adjust needed workers by pending workers
+  -lsf_options &lt;string&gt;   : passes &lt;string&gt; to LSF bsub command as &lt;options&gt;
+</pre></li>
+<li>Worker control
+<pre>  -jlimit &lt;num&gt;           : #jobs to run before worker can die naturally
+  -batch_size &lt;num&gt;       : #jobs a worker can claim at once
+  -lifespan &lt;num&gt;         : lifespan limit for each worker
+  -logic_name &lt;string&gt;    : restrict the pipeline stat/runs to this analysis logic_name
+  -maximise_concurrency 1 : try to run more different analyses at the same time
+</pre></li>
+<li>Other commands/options
+<pre>  -help                   : print this help
+  -dead                   : clean dead jobs for resubmission
+  -alldead                : all outstanding workers
+  -no_analysis_stats      : don't show status of each analysis
+  -worker_stats           : show status of each running worker
+  -failed_jobs            : show all failed jobs
+  -reset_job_id &lt;num&gt;     : reset a job back to READY so it can be rerun
+  -reset_all_jobs_for_analysis &lt;logic_name&gt;
+                          : reset jobs back to READY so it can be rerun
+</pre></li>
+</ul>
+<h3>CONTACT</h3>
+         Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+
+<p><a href="index.html">Back</a></p>
+</body>
+</html>

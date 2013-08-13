@@ -1,0 +1,132 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<meta name="navigation" content="eHive production system" />
+<title>eHive production system - Long multiplication example pipeline</title>
+</head>
+
+<body>
+<h1>eHive production system - Long multiplication example pipeline</h1>
+
+<h2>Long multiplication pipeline as our toy example</h2>
+<ol>
+<li>Long multiplication pipeline solves a problem of multiplying two very long integer numbers by pretending the computations have to be done in parallel on the farm.
+    While performing the task it demonstates the use of the following features:
+    <ol>
+    <li>A pipeline can have multiple analyses (this one has three: 'start', 'part_multiply' and 'add_together').
+    </li>
+    <li>A job of one analysis can create jobs of other analyses by 'flowing the data' down numbered channels or branches.
+       These branches are then assigned specific analysis names in the pipeline configuration file
+       (one 'start' job flows partial multiplication subtasks down branch #2 and a task of adding them together down branch #1).
+    </li>
+    <li>Execution of one analysis can be blocked until all jobs of another analysis have been successfully completed
+        ('add_together' is blocked both by 'part_multiply').
+    </li>
+    <li>As filesystems are frequently a bottleneck for big pipelines, it is advised that eHive processes store intermediate
+        and final results in a database (in this pipeline, 'intermediate_result' and 'final_result' tables are used).
+    </li>
+    </ol>
+</li>
+<li>The pipeline is defined in 4 files:
+    <ul>
+    <li>ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/<b>Start.pm</b>            splits a multiplication job into sub-tasks and creates corresponding jobs
+    </li>
+    <li>ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/<b>PartMultiply.pm</b>     performs a partial multiplication and stores the intermediate result in a table
+    </li>
+    <li>ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/<b>AddTogether.pm</b>      waits for partial multiplication results to compute and adds them together into final result
+    </li>
+    <li>ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig/<b>LongMult_conf.pm</b>             the pipeline configuration module that links the previous Runnables into one pipeline
+    </li>
+    </ul>
+</li>
+<li>The main part of any PipeConfig file, pipeline_analyses() method, defines the pipeline graph whose nodes are analyses and whose arcs are control and dataflow rules.
+    <ul>
+    <li>Each analysis hash must have:
+        <ul>
+        <li><b>-logic_name</b>     string name by which this analysis is referred to,
+        </li>
+        <li><b>-module</b>         a name of the Runnable module that contains the code to be run (several analyses can use the same Runnable)
+        </li>
+        </ul>
+    </li>
+    <li>Optionally, it can also have:
+        <ul>
+        <li><b>-input_ids</b>      an array of hashes, each hash defining job-specific parameters (if empty it means jobs are created dynamically using dataflow mechanism)
+        </li>
+        <li><b>-parameters</b>     usually a hash of analysis-wide parameters (each such parameter can be overriden by the same name parameter contained in an input_id hash)
+        </li>
+        <li><b>-wait_for</b>       an array of other analyses, *controlling* this one (jobs of this analysis cannot start before all jobs of controlling analyses have completed)
+        </li>
+        <li><b>-flow_into</b>      usually a hash that defines dataflow rules (rules of dynamic job creation during pipeline execution) from this particular analysis.
+        </li>
+        </ul>
+    </li>
+The meaning of these parameters should become clearer after some experimentation with the pipeline.
+</ol>
+
+
+<h2>Initialization and running the long multiplication pipeline</h2>
+<ol> 
+<li>Before running the pipeline you will have to initialize it using <b>init_pipeline.pl</b> script supplying PipeConfig module and the necessary parameters.
+    Have another look at <b>LongMult_conf.pm</b> file. The default_options() method returns a hash that pretty much defines what parameters you can/should supply to <b>init_pipeline.pl</b> .
+    You will probably need to specify the following:
+<pre>
+
+        $ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf \
+            -pipeline_db -host=&lt;your_mysql_host&gt; \
+            -pipeline_db -user=&lt;your_mysql_username&gt; \
+            -pipeline_db -pass=&lt;your_mysql_password&gt; \
+</pre>
+    This should create a fresh eHive database and initalize it with long multiplication pipeline data (the two numbers to be multiplied are taken from defaults).
+
+    Upon successful completion <b>init_pipeline.pl</b> will print several beekeeper commands and
+    a mysql command for connecting to the newly created database.
+    Copy and run the mysql command in a separate shell session to follow the progress of the pipeline.
+</li>
+
+<li>Run the first beekeeper command that contains '-sync' option. This will initialize database's internal stats and determine which jobs can be run.
+</li>
+
+<li> Now you have two options: either to run the <b>beekeeper.pl</b> in automatic mode using '-loop' option and wait until it completes,
+    or run it in step-by-step mode, initiating every step by separate executions of 'beekeeper.pl ... -run' command.
+    We will use the step-by-step mode in order to see what is going on.
+</li>
+
+<li>Go to mysql window and check the contents of analysis_job table:
+<pre>
+        MySQL> SELECT * FROM analysis_job;
+</pre>
+    It will only contain jobs that set up the multiplication tasks in 'READY' mode - meaning 'ready to be taken by workers and executed'.
+
+    Go to the beekeeper window and run the 'beekeeper.pl ... -run' once.
+    It will submit a worker to the farm that will at some point get the 'start' job(s).
+</li>
+
+<li>Go to mysql window again and check the contents of analysis_job table. Keep checking as the worker may spend some time in 'pending' state.
+
+    After the first worker is done you will see that 'start' jobs are now done and new 'part_multiply' and 'add_together' jobs have been created.
+    Also check the contents of 'intermediate_result' table, it should be empty at that moment:
+<pre>
+        MySQL> SELECT * from intermediate_result;
+</pre>
+
+    Go back to the beekeeper window and run the 'beekeeper.pl ... -run' for the second time.
+    It will submit another worker to the farm that will at some point get the 'part_multiply' jobs.
+</li>
+
+<li>Now check both 'analysis_job' and 'intermediate_result' tables again.
+    At some moment 'part_multiply' jobs will have been completed and the results will go into 'intermediate_result' table;
+    'add_together' jobs are still to be done.
+    
+    Check the contents of 'final_result' table (should be empty) and run the third and the last round of 'beekeeper.pl ... -run'
+</li>
+
+<li>Eventually you will see that all jobs have completed and the 'final_result' table contains final result(s) of multiplication.
+</li>
+
+</ol>
+
+<p><A HREF="index.html">Back</a></p>
+</body>
+</html>
+
