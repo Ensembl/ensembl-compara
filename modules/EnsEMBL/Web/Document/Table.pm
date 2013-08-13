@@ -70,8 +70,8 @@ sub preprocess_widths {
   my $total         = -0.5; # correct for rounding bias
   
   foreach (@unitcols) {
-    $_->{'total'} = $_->{'units'}*$perc_per_unit + $total;
-    $total       += $_->{'units'}*$perc_per_unit;
+    $_->{'total'} = $_->{'units'} * $perc_per_unit + $total;
+    $total       += $_->{'units'} * $perc_per_unit;
   }
   
   my $col = 0;
@@ -216,8 +216,13 @@ sub render {
       </form>
     };
   }
-    
-  $table .= sprintf '<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>', $self->export_url if $self->export_url;
+   
+  if ($self->export_url) {
+    $table .= sprintf(
+      '<div class="other_tool"><p><a class="export" href="%s;filename=%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>',
+      $self->export_url, $self->filename
+    );
+  }
   
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
   if ($data_table) {
