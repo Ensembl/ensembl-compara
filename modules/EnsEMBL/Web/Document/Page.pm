@@ -336,14 +336,17 @@ sub render_XML {
   print $content;
 }
 
-sub render_Excel {
+sub render_RTF   { return shift->render_file('rtf',          'rtf', @_); }
+sub render_Excel { return shift->render_file('octet-string', 'csv', @_); }
+
+sub render_file {
   my $self     = shift;
   my $hub      = $self->hub;
   my $renderer = $self->renderer;
   my $r        = $renderer->r;
   
-  $r->content_type('application/octet-string');
-  $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $renderer->{'filename'});
+  $r->content_type(sprintf 'application/%s', shift);
+  $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.%s', $hub->param('filename'), shift);
   
   print $self->clean_HTML(shift->{'content'});
 }
@@ -357,13 +360,11 @@ sub render_Text {
 }
 
 sub _json_html_strip {
-  my ($self,$in) = @_;
+  my ($self, $in) = @_;
   
-  if($in =~ /^(.*?)([\[{].*[\]}])(.*?)/s) {
-    my ($pre,$data,$post) = ($1,$2,$3);
-    return $self->strip_HTML($pre).
-           $data.
-           $self->strip_HTML($post);
+  if ($in =~ /^(.*?)([\[{].*[\]}])(.*?)/s) {
+    my ($pre, $data, $post) = ($1, $2, $3);
+    return $self->strip_HTML($pre) . $data . $self->strip_HTML($post);
   } else {
     return $in;
   }
