@@ -1049,7 +1049,7 @@ sub get_key {
 }
 
 sub export_sequence {
-  my ($self, $sequence, $config, $filename, $block_mode) = @_;
+  my ($self, $sequence, $config, $block_mode) = @_;
   my @colours        = (undef);
   my $class_to_style = $self->class_to_style;
   my $spacer         = $config->{'v_space'} ? ' ' x $config->{'display_width'} : '';
@@ -1151,24 +1151,23 @@ sub export_sequence {
   
   $file->save;
   
-  $self->hub->input->header( -type => 'application/rtf', -attachment => "$filename.rtf" );
-  
   return $file->content;
 }
 
 sub tool_buttons {
-  my ($self, $blast_seq, $species, $peptide) = @_;
+  my ($self, $blast_seq, $peptide) = @_;
   
   return unless $self->html_format;
   
+  my $hub  = $self->hub;
   my $html = sprintf('
     <div class="other_tool">
       <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
     </div>', 
-    $self->ajax_url('rtf')
+    $self->ajax_url('rtf', { filename => join('_', $hub->type, $hub->action, $hub->species, $self->object->Obj->stable_id), _format => 'RTF' })
   );
   
-  if ($self->hub->species_defs->ENSEMBL_BLAST_ENABLED && $blast_seq) {
+  if ($blast_seq && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
     $html .= sprintf('
       <div class="other_tool">
         <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
@@ -1180,7 +1179,7 @@ sub tool_buttons {
           </fieldset>
         </form>
       </div>',
-      $blast_seq, $species, $peptide ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
+      $blast_seq, $hub->species, $peptide ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
     );
   }
   
