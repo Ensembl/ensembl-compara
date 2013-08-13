@@ -1,0 +1,2105 @@
+
+<html>
+<head>
+<meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8" />
+<title>Variation Schema Documentation</title>
+
+<script language="Javascript" type="text/javascript">
+  var img_plus   = '<img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>';
+  var img_minus  = '<img src="/i/16/minus-button.png" style="width:12px;height:12px;vertical-align:middle;margin-right:6px" alt="hide"/>';
+  var link_text  = 'columns';
+  var span_open  = ' <span style="vertical-align:middle">';
+  var span_close = '</span>';
+
+  // Function to show/hide the columns table
+  function show_hide (param, type) {
+    // Example tables
+    if (type === 'example') {
+      div    = document.getElementById('ex_'+param);
+      alink  = document.getElementById('e_'+param);
+      a_text = 'query results'; 
+    } 
+    // Schema tables
+    else { 
+      div    = document.getElementById('div_'+param);
+      alink  = document.getElementById('a_'+param);
+      a_text = link_text;
+    }  
+    
+    if (div.style.display=='inline') {
+      div.style.display='none';
+      alink.innerHTML=img_plus+span_open+'Show '+a_text+span_close;
+    }
+    else {
+      if (div.style.display=='none') {
+        div.style.display='inline';
+        alink.innerHTML=img_minus+span_open+'Hide '+a_text+span_close;
+      }
+    }
+  }
+  
+  // Function to show/hide all the tables
+  function show_hide_all () {
+    expand_flag = document.getElementById('expand');
+    divs = document.getElementsByTagName('div');
+    for(var i=0; i < divs.length; i++){
+      param = divs[i].id.substring(4);
+      div   = document.getElementById('div_'+param);
+      alink = document.getElementById('a_'+param);
+      
+      if (div && alink) {
+        if (expand_flag.value=='0') {
+          div.style.display='inline';
+          alink.innerHTML=img_minus+span_open+'Hide '+link_text+span_close;
+        }
+        else {
+          div.style.display='none';
+          alink.innerHTML=img_plus+span_open+'Show '+link_text+span_close;
+        }
+      }
+    }
+    if (expand_flag.value=='0') {
+      expand_flag.value='1';
+    }
+    else {
+      expand_flag.value='0';
+    }
+  }
+</script>
+
+</head>
+<body>
+
+<!-- Horizontal menu -->
+<span style="font-weight:bold">
+  <a href="index.html">About Ensembl Variation</a> |
+  <a href="data_description.html">Data Description</a> | 
+  <a href="predicted_data.html">Predicted Data</a> |
+  <a href="database.html">Database Description</a> | 
+  <a href="/info/docs/api/variation/index.html">Perl API</a> |
+  <a href="vep/index.html">Variant Effect Predictor</a>
+</span>
+
+<h1 style="margin-top:15px">Ensembl Variation - Schema documentation</h1>
+
+<p>
+This document gives a high-level description of the tables that
+make up the Ensembl variation schema. Tables are listed by alphabetical order, and the purpose of each table is explained. It is intended to
+allow people to familiarise themselves with the schema when
+encountering it for the first time, or when they need to use some
+tables that they've not used before.
+</p>
+
+<div>
+  <div style="float:left">
+    <p>
+      This document refers to version <span style="font-weight:bold;font-size:11pt;color:#000">73</span> of the Ensembl
+      variation schema. 
+    </p>
+    <p>
+    The variation database schema diagram (PDF format) is available here:
+    </p>
+  </div>
+  <div style="float:left;margin-left:5px">
+    <a href="variation-database-schema.pdf">
+      <img src="/img/variation_schema_thumb.png" style="border:1px solid navy" alt="Variation Schema Diagram" title="Variation Schema Diagram (PDF)"/>
+    </a>
+  </div>
+  <div style="clear:both">
+</div>
+<br /><br />
+
+
+<h3 id="top">List of the tables:</h3>
+<div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#FF0000;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Attributes tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#attrib"><b>attrib</b></a></li>
+        <li><a href="#attrib_set"><b>attrib_set</b></a></li>
+        <li><a href="#attrib_type"><b>attrib_type</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#3CB371;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Failed tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#failed_allele"><b>failed_allele</b></a></li>
+        <li><a href="#failed_description"><b>failed_description</b></a></li>
+        <li><a href="#failed_structural_variation"><b>failed_structural_variation</b></a></li>
+        <li><a href="#failed_variation"><b>failed_variation</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#FF8500;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Genotype tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#compressed_genotype_region"><b>compressed_genotype_region</b></a></li>
+        <li><a href="#compressed_genotype_var"><b>compressed_genotype_var</b></a></li>
+        <li><a href="#individual_genotype_multiple_bp"><b>individual_genotype_multiple_bp</b></a></li>
+        <li><a href="#population_genotype"><b>population_genotype</b></a></li>
+        <li><a href="#read_coverage"><b>read_coverage</b></a></li>
+        <li><a href="#tmp_individual_genotype_single_bp"><b>tmp_individual_genotype_single_bp</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#BC5CEC;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Metadata tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#meta"><b>meta</b></a></li>
+        <li><a href="#meta_coord"><b>meta_coord</b></a></li>
+
+      </ul>
+    </div>
+  <div style="clear:both" />
+</div>
+
+<div>
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#000;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Other tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#allele_code"><b>allele_code</b></a></li>
+        <li><a href="#coord_system"><b>coord_system</b></a></li>
+        <li><a href="#genotype_code"><b>genotype_code</b></a></li>
+        <li><a href="#phenotype"><b>phenotype</b></a></li>
+        <li><a href="#seq_region"><b>seq_region</b></a></li>
+        <li><a href="#submitter_handle"><b>submitter_handle</b></a></li>
+        <li><a href="#subsnp_handle"><b>subsnp_handle</b></a></li>
+        <li><a href="#tagged_variation_feature"><b>tagged_variation_feature</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#22949b;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Phenotype tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#phenotype_feature"><b>phenotype_feature</b></a></li>
+        <li><a href="#phenotype_feature_attrib"><b>phenotype_feature_attrib</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#1E90FF;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Protein tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#protein_function_predictions"><b>protein_function_predictions</b></a></li>
+        <li><a href="#translation_md5"><b>translation_md5</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#FF8500;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Sample tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#individual"><b>individual</b></a></li>
+        <li><a href="#individual_population"><b>individual_population</b></a></li>
+        <li><a href="#individual_synonym"><b>individual_synonym</b></a></li>
+        <li><a href="#individual_type"><b>individual_type</b></a></li>
+        <li><a href="#population"><b>population</b></a></li>
+        <li><a href="#population_structure"><b>population_structure</b></a></li>
+        <li><a href="#population_synonym"><b>population_synonym</b></a></li>
+
+      </ul>
+    </div>
+  <div style="clear:both" />
+</div>
+
+<div>
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#7CFC00;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Source/study tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#associate_study"><b>associate_study</b></a></li>
+        <li><a href="#publication"><b>publication</b></a></li>
+        <li><a href="#source"><b>source</b></a></li>
+        <li><a href="#study"><b>study</b></a></li>
+        <li><a href="#study_variation"><b>study_variation</b></a></li>
+        <li><a href="#variation_citation"><b>variation_citation</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#01D4F7;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Structural variation tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#structural_variation"><b>structural_variation</b></a></li>
+        <li><a href="#structural_variation_association"><b>structural_variation_association</b></a></li>
+        <li><a href="#structural_variation_feature"><b>structural_variation_feature</b></a></li>
+        <li><a href="#structural_variation_sample"><b>structural_variation_sample</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#FF4DC8;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Variation effect tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#motif_feature_variation"><b>motif_feature_variation</b></a></li>
+        <li><a href="#regulatory_feature_variation"><b>regulatory_feature_variation</b></a></li>
+        <li><a href="#transcript_variation"><b>transcript_variation</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#FFD700;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Variation set tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#variation_set"><b>variation_set</b></a></li>
+        <li><a href="#variation_set_structural_variation"><b>variation_set_structural_variation</b></a></li>
+        <li><a href="#variation_set_structure"><b>variation_set_structure</b></a></li>
+        <li><a href="#variation_set_variation"><b>variation_set_variation</b></a></li>
+
+      </ul>
+    </div>
+  <div style="clear:both" />
+</div>
+
+<div>
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
+    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+      <div style="background-color:#000;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+      <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Variation tables</h2>
+    </div>
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#allele"><b>allele</b></a></li>
+        <li><a href="#variation"><b>variation</b></a></li>
+        <li><a href="#variation_feature"><b>variation_feature</b></a></li>
+        <li><a href="#variation_synonym"><b>variation_synonym</b></a></li>
+
+      </ul>
+    </div>
+
+  <div style="clear:both" />
+</div>
+  <input type="button" onclick="show_hide_all()" class="fbutton" value="Show/hide all"/>
+  <input type="hidden" id="expand" value="0" />
+  
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #FF0000">
+  <h2 style="display:inline;color:#000">Attributes tables</h2>
+</div>
+<p style="width:800px">These tables define the variation attributes data.</p>
+  <div id="attrib" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF0000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">attrib</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_attrib" style="cursor:pointer;text-decoration:none" onclick="show_hide('attrib')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Defines various attributes used elsewhere in the database</p>
+
+  <div id="div_attrib" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>attrib_id</b></td><td>INT(11)</td><td>0</td><td>Primary key</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>0</td><td>Key into the <a href="#attrib_type">attrib_type</a> table, identifies the type of this attribute</td><td>unique key: type_val_idx</td></tr>
+      <tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>The value of this attribute</td><td>unique key: type_val_idx</td></tr>
+    </table>
+  </div>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">See below the query to display a subset of the attrib entries: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM attrib WHERE attrib_type_id IN (1,2,3) ORDER BY attrib_id LIMIT 21;</pre> <a id="e_attrib" style="cursor:pointer;text-decoration:none" onclick="show_hide('attrib','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+
+  <div id="ex_attrib" style="display:none;">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
+      <tr><th>attrib_id</th><th>attrib_type_id</th><th>value</th></tr>      <tr><td>1</td><td>1</td><td>SO:0001483</td></tr>      <tr class="bg2"><td>2</td><td>2</td><td>SNV</td></tr>      <tr><td>3</td><td>3</td><td>SNP</td></tr>      <tr class="bg2"><td>4</td><td>1</td><td>SO:1000002</td></tr>      <tr><td>5</td><td>2</td><td>substitution</td></tr>      <tr class="bg2"><td>6</td><td>1</td><td>SO:0001019</td></tr>      <tr><td>7</td><td>2</td><td>copy_number_variation</td></tr>      <tr class="bg2"><td>8</td><td>3</td><td>CNV</td></tr>      <tr><td>9</td><td>1</td><td>SO:0000667</td></tr>      <tr class="bg2"><td>10</td><td>2</td><td>insertion</td></tr>      <tr><td>11</td><td>1</td><td>SO:0000159</td></tr>      <tr class="bg2"><td>12</td><td>2</td><td>deletion</td></tr>      <tr><td>13</td><td>1</td><td>SO:1000032</td></tr>      <tr class="bg2"><td>14</td><td>2</td><td>indel</td></tr>      <tr><td>15</td><td>1</td><td>SO:0000705</td></tr>      <tr class="bg2"><td>16</td><td>2</td><td>tandem_repeat</td></tr>      <tr><td>17</td><td>1</td><td>SO:0001059</td></tr>      <tr class="bg2"><td>18</td><td>2</td><td>sequence_alteration</td></tr>      <tr><td>19</td><td>1</td><td>SO:0001628</td></tr>      <tr class="bg2"><td>20</td><td>2</td><td>intergenic_variant</td></tr>      <tr><td>21</td><td>3</td><td>INTERGENIC</td></tr>    </table>
+  </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#attrib_type">attrib_type</a></li>
+    <li><a href="#attrib_set">attrib_set</a></li>
+  </ul>
+
+
+  <div id="attrib_set" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF0000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">attrib_set</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_attrib_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('attrib_set')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Groups related attributes together</p>
+
+  <div id="div_attrib_set" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>attrib_set_id</b></td><td>INT(11)</td><td>0</td><td>Primary key</td><td>unique key: set_idx</td></tr>
+      <tr class="bg2"><td><b>attrib_id</b></td><td>INT(11)</td><td>0</td><td>Key of an attribute in this set</td><td>unique key: set_idx<br />key: attrib_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#attrib">attrib</a></li>
+    <li><a href="#attrib_type">attrib_type</a></li>
+  </ul>
+
+
+  <div id="attrib_type" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF0000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">attrib_type</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_attrib_type" style="cursor:pointer;text-decoration:none" onclick="show_hide('attrib_type')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Defines the set of possible attribute types used in the attrib table</p>
+
+  <div id="div_attrib_type" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>0</td><td>Primary key</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>code</b></td><td>VARCHAR(20)</td><td>''</td><td>A short codename for this type (indexed, so should be used for lookups)</td><td>unique key: code_idx</td></tr>
+      <tr class="bg1"><td><b>name</b></td><td>VARCHAR(255)</td><td>''</td><td>The name of this type</td><td></td></tr>
+      <tr class="bg2"><td><b>description</b></td><td>TEXT</td><td></td><td>Longer description of this type</td><td></td></tr>
+    </table>
+  </div>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">See below the command to display a subset of the attrib_type entries: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM attrib_type LIMIT 10;</pre> <a id="e_attrib_type" style="cursor:pointer;text-decoration:none" onclick="show_hide('attrib_type','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+
+  <div id="ex_attrib_type" style="display:none;">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
+      <tr><th>attrib_type_id</th><th>code</th><th>name</th><th>description</th></tr>      <tr><td>1</td><td>SO_accession</td><td></td><td>Sequence Ontology accession</td></tr>      <tr class="bg2"><td>2</td><td>SO_term</td><td></td><td>Sequence Ontology term</td></tr>      <tr><td>3</td><td>display_term</td><td></td><td>Ensembl display term</td></tr>      <tr class="bg2"><td>4</td><td>NCBI_term</td><td></td><td>NCBI term</td></tr>      <tr><td>5</td><td>feature_SO_term</td><td></td><td>Sequence Ontology term for the associated feature</td></tr>      <tr class="bg2"><td>6</td><td>rank</td><td></td><td>Relative severity of this variation consequence</td></tr>      <tr><td>7</td><td>polyphen_prediction</td><td></td><td>PolyPhen-2 prediction</td></tr>      <tr class="bg2"><td>8</td><td>sift_prediction</td><td></td><td>SIFT prediction</td></tr>      <tr><td>9</td><td>short_name</td><td>Short name</td><td>A shorter name for an instance, e.g. a VariationSet</td></tr>      <tr class="bg2"><td>10</td><td>dbsnp_clin_sig</td><td>dbSNP clinical significance</td><td>The clinical significance of a variant as reported by dbSNP</td></tr>    </table>
+  </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#attrib">attrib</a></li>
+    <li><a href="#attrib_set">attrib_set</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #3CB371">
+  <h2 style="display:inline;color:#000">Failed tables</h2>
+</div>
+<p style="width:800px">These tables define the list of variants/alleles flagged as "failed" in the Variation pipeline.<br /> The list of reasons for a variation being flagged as failed is available in the <a href="data_description.html#quality_control">Quality Control documentation</a>.</p>
+  <div id="failed_allele" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">failed_allele</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_failed_allele" style="cursor:pointer;text-decoration:none" onclick="show_hide('failed_allele')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains alleles that did not pass the Ensembl filters</p>
+
+  <div id="div_failed_allele" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>failed_allele_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>allele_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#allele">allele</a> table.</td><td>unique key: allele_idx</td></tr>
+      <tr class="bg1"><td><b>failed_description_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#failed_description">failed_description</a> table.</td><td>unique key: allele_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#failed_description">failed_description</a></li>
+    <li><a href="#allele">allele</a></li>
+  </ul>
+
+
+  <div id="failed_description" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">failed_description</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_failed_description" style="cursor:pointer;text-decoration:none" onclick="show_hide('failed_description')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains descriptions of reasons for a variation being flagged as failed.</p>
+
+  <div id="div_failed_description" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>failed_description_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>description</b></td><td>text</td><td></td><td>Text containing the reason why the Variation has been flagged as failed. e.g. "Variation does not map to the genome".</td><td></td></tr>
+    </table>
+  </div>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">See below the list of the descriptions available in the ensembl variation databases: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM failed_description;</pre> <a id="e_failed_description" style="cursor:pointer;text-decoration:none" onclick="show_hide('failed_description','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+
+  <div id="ex_failed_description" style="display:none;">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
+      <tr><th>failed_description_id</th><th>description</th></tr>      <tr><td>1</td><td>Variation maps to more than 3 different locations</td></tr>      <tr class="bg2"><td>2</td><td>None of the variant alleles match the reference allele</td></tr>      <tr><td>3</td><td>Variation has more than 3 different alleles</td></tr>      <tr class="bg2"><td>4</td><td>Loci with no observed variant alleles in dbSNP</td></tr>      <tr><td>5</td><td>Variation does not map to the genome</td></tr>      <tr class="bg2"><td>6</td><td>Variation has no genotypes</td></tr>      <tr><td>7</td><td>Genotype frequencies do not add up to 1</td></tr>      <tr class="bg2"><td>8</td><td>Variation has no associated sequence</td></tr>      <tr><td>9</td><td>Variation submission has been withdrawn by the 1000 genomes project due to high false positive rate</td></tr>      <tr class="bg2"><td>11</td><td>Additional submitted allele data from dbSNP does not agree with the dbSNP refSNP alleles</td></tr>      <tr><td>12</td><td>Variation has more than 3 different submitted alleles</td></tr>      <tr class="bg2"><td>13</td><td>Alleles contain non-nucleotide characters</td></tr>      <tr><td>14</td><td>Alleles contain ambiguity codes</td></tr>      <tr class="bg2"><td>15</td><td>Mapped position is not compatible with reported alleles</td></tr>      <tr><td>16</td><td>Flagged as suspect by dbSNP</td></tr>      <tr class="bg2"><td>17</td><td>Variation can not be re-mapped to the current assembly</td></tr>      <tr><td>18</td><td>Supporting evidence can not be re-mapped to the current assembly</td></tr>      <tr class="bg2"><td>19</td><td>Variation maps to more than one genomic location</td></tr>    </table>
+  </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#failed_variation">failed_variation</a></li>
+    <li><a href="#failed_allele">failed_allele</a></li>
+    <li><a href="#failed_structural_variation">failed_structural_variation</a></li>
+  </ul>
+
+
+  <div id="failed_structural_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">failed_structural_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_failed_structural_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('failed_structural_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">For various reasons it may be necessary to store information about a structural variation that has failed quality checks (mappings) in the Structural Variation pipeline. This table acts as a flag for such failures.</p>
+
+  <div id="div_failed_structural_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>failed_structural_variation_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>structural_variation_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#structural_variation">structural_variation</a> table.</td><td>unique key: structural_variation_idx</td></tr>
+      <tr class="bg1"><td><b>failed_description_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#failed_description">failed_description</a> table.</td><td>unique key: structural_variation_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#failed_description">failed_description</a></li>
+    <li><a href="#structural_variation">structural_variation</a></li>
+  </ul>
+
+
+  <div id="failed_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">failed_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_failed_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('failed_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">For various reasons it may be necessary to store information about a variation that has failed quality checks in the Variation pipeline. This table acts as a flag for such failures.</p>
+
+  <div id="div_failed_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>failed_variation_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#variation">variation</a> table.</td><td>unique key: variation_idx</td></tr>
+      <tr class="bg1"><td><b>failed_description_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#failed_description">failed_description</a> table.</td><td>unique key: variation_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#failed_description">failed_description</a></li>
+    <li><a href="#variation">variation</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #FF8500">
+  <h2 style="display:inline;color:#000">Genotype tables</h2>
+</div>
+<p style="width:800px">These tables define the genotype data at the individual and population levels.</p>
+  <div id="compressed_genotype_region" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">compressed_genotype_region</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_compressed_genotype_region" style="cursor:pointer;text-decoration:none" onclick="show_hide('compressed_genotype_region')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds genotypes compressed using the pack() method in Perl. These genotypes are mapped to particular genomic locations rather than variation objects. The data have been compressed to reduce table size and increase the speed of the web code when retrieving strain slices and LD data. Only data from resequenced and individuals used for LD calculations are included in this table</p>
+
+  <div id="div_compressed_genotype_region" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>individual_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#individual">individual</a> table.</td><td>key: individual_idx</td></tr>
+      <tr class="bg2"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Foreign key references <a href="#seq_region">seq_region</a> in core db. ers to the seq_region which this variant is on, which may be a chromosome, a clone, etc...</td><td>key: pos_idx</td></tr>
+      <tr class="bg1"><td><b>seq_region_start</b></td><td>int(11)</td><td></td><td>The start position of the variation on the <a href="#seq_region">seq_region</a>.</td><td>key: pos_idx</td></tr>
+      <tr class="bg2"><td><b>seq_region_end</b></td><td>int(11)</td><td></td><td>The end position of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint(4)</td><td></td><td>The orientation of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>genotypes</b></td><td>blob</td><td></td><td>Encoded representation of the genotype data:<br />Each row in the compressed table stores genotypes from one individual in one fixed-size region of the genome (arbitrarily defined as 100 Kb). The compressed string (using Perl's pack method) consisting of a repeating triplet of elements: a distance in base pairs from the previous genotype; a variation dbID; a genotype_code_id identifier.<br />For example, a given row may have a start position of 1000, indicating the chromosomal position of the first genotype in this row. The unpacked genotypes field then may contain the following elements:<br />0, 1, 1, 20, 2, 5, 35, 3, 3, ...<br />The first genotype has a position of 1000 + 0 = 1000, and corresponds to the variation with the identifier 1 and genotype_code corresponding to A and G.<br />The second genotype has a position of 1000 + 20 = 1020, variation_id 2 and genotype_code representing C and C.<br />The third genotype similarly has a position of 1055, and so on.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+    <li><a href="#seq_region">seq_region</a></li>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#genotype_code">genotype_code</a></li>
+  </ul>
+
+
+  <div id="compressed_genotype_var" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">compressed_genotype_var</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_compressed_genotype_var" style="cursor:pointer;text-decoration:none" onclick="show_hide('compressed_genotype_var')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds genotypes compressed using the pack() method in Perl. These genotypes are mapped directly to variation objects. The data have been compressed to reduce table size. All genotypes in the database are included in this table (included duplicates of those genotypes contained in the compressed_genotype_region table). This table is optimised for retrieval from </p>
+
+  <div id="div_compressed_genotype_var" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_id</b></td><td>int(11)</td><td></td><td>Foreign key references to the <a href="#variation">variation</a> table.</td><td>key: variation_idx</td></tr>
+      <tr class="bg2"><td><b>subsnp_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the <a href="#subsnp_handle">subsnp_handle</a> table.</td><td>key: subsnp_idx</td></tr>
+      <tr class="bg1"><td><b>genotypes</b></td><td>blob</td><td></td><td>Encoded representation of the genotype data:<br />Each row in the compressed table stores genotypes from one subsnp of a variation (or one variation if no subsnp is defined). The compressed string (using Perl's pack method) consisting of a repeating pair of elements: an internal individual_id corresponding to an individual; a genotype_code_id identifier.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#genotype_code">genotype_code</a></li>
+    <li><a href="#subsnp_handle">subsnp_handle</a></li>
+  </ul>
+
+
+  <div id="individual_genotype_multiple_bp" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">individual_genotype_multiple_bp</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_individual_genotype_multiple_bp" style="cursor:pointer;text-decoration:none" onclick="show_hide('individual_genotype_multiple_bp')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds uncompressed genotypes for given variations.</p>
+
+  <div id="div_individual_genotype_multiple_bp" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#variation">variation</a> table.</td><td>key: variation_idx</td></tr>
+      <tr class="bg2"><td><b>subsnp_id</b></td><td>int(15)</td><td></td><td>Foreign key references to the <a href="#subsnp_handle">subsnp_handle</a> table.</td><td>key: subsnp_idx</td></tr>
+      <tr class="bg1"><td><b>allele_1</b></td><td>varchar(25000)</td><td></td><td>One of the alleles of the genotype, e.g. "TAG".</td><td></td></tr>
+      <tr class="bg2"><td><b>allele_2</b></td><td>varchar(25000)</td><td></td><td>The other allele of the genotype.</td><td></td></tr>
+      <tr class="bg1"><td><b>individual_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#individual">individual</a> table.</td><td>key: individual_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#subsnp_handle">subsnp_handle</a></li>
+  </ul>
+
+
+  <div id="population_genotype" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">population_genotype</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_population_genotype" style="cursor:pointer;text-decoration:none" onclick="show_hide('population_genotype')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores genotypes and frequencies for variations in given populations.</p>
+
+  <div id="div_population_genotype" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>population_genotype_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_id</b></td><td>int(11)</td><td></td><td>Foreign key references to the <a href="#variation">variation</a> table.</td><td>key: variation_idx</td></tr>
+      <tr class="bg1"><td><b>subsnp_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the subsnp_handle table.</td><td>key: subsnp_idx</td></tr>
+      <tr class="bg2"><td><b>genotype_code_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key reference to the <a href="#genotype_code">genotype_code</a> table.</td><td></td></tr>
+      <tr class="bg1"><td><b>frequency</b></td><td>float</td><td>NULL</td><td>Frequency of the genotype in the population.</td><td></td></tr>
+      <tr class="bg2"><td><b>population_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key references to the <a href="#population">population</a> table.</td><td>key: population_idx</td></tr>
+      <tr class="bg1"><td><b>count</b></td><td>int(10)</td><td>NULL</td><td>Number of individuals who have this genotype, in this population.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#population">population</a></li>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#subsnp_handle">subsnp_handle</a></li>
+    <li><a href="#genotype_code">genotype_code</a></li>
+  </ul>
+
+
+  <div id="read_coverage" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">read_coverage</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_read_coverage" style="cursor:pointer;text-decoration:none" onclick="show_hide('read_coverage')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores the read coverage in the resequencing of individuals. Each row contains an individual ID, chromosomal coordinates and a read coverage level.</p>
+
+  <div id="div_read_coverage" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Foreign key references <a href="#seq_region">seq_region</a> in core db. ers to the seq_region which this variant is on, which may be a chromosome, a clone, etc...</td><td>key: seq_region_idx</td></tr>
+      <tr class="bg2"><td><b>seq_region_start</b></td><td>int</td><td></td><td>The start position of the variation on the <a href="#seq_region">seq_region</a>.</td><td>key: seq_region_idx</td></tr>
+      <tr class="bg1"><td><b>seq_region_end</b></td><td>int</td><td></td><td>The end position of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>level</b></td><td>tinyint</td><td></td><td>Minimum number of reads.</td><td></td></tr>
+      <tr class="bg1"><td><b>individual_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#individual">individual</a> table.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+    <li><a href="#seq_region">seq_region</a></li>
+  </ul>
+
+
+  <div id="tmp_individual_genotype_single_bp" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">tmp_individual_genotype_single_bp</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_tmp_individual_genotype_single_bp" style="cursor:pointer;text-decoration:none" onclick="show_hide('tmp_individual_genotype_single_bp')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">his table is only needed to create master schema when run healthcheck system. Needed for other species, but human, so keep it.</p>
+
+  <div id="div_tmp_individual_genotype_single_bp" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#variation">variation</a> table.</td><td>key: variation_idx</td></tr>
+      <tr class="bg2"><td><b>subsnp_id</b></td><td>int(15)</td><td></td><td>Foreign key references to the <a href="#subsnp_handle">subsnp_handle</a> table.</td><td>key: subsnp_idx</td></tr>
+      <tr class="bg1"><td><b>allele_1</b></td><td>char(1)</td><td></td><td>One of the alleles of the genotype, e.g. "TAG".</td><td></td></tr>
+      <tr class="bg2"><td><b>allele_2</b></td><td>char(1)</td><td></td><td>The other allele of the genotype.</td><td></td></tr>
+      <tr class="bg1"><td><b>individual_id</b></td><td>int</td><td></td><td>Foreign key references to the <a href="#individual">individual</a> table.</td><td>key: individual_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#subsnp_handle">subsnp_handle</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #BC5CEC">
+  <h2 style="display:inline;color:#000">Metadata tables</h2>
+</div>
+<p style="width:800px">These tables define some metadata information.</p>
+  <div id="meta" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#BC5CEC;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">meta</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores various metadata relating to the database, generally used by the Ensembl web code.</p>
+
+  <div id="div_meta" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>meta_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>species_id</b></td><td>INT</td><td>1</td><td>...</td><td>unique key: species_key_value_idx<br />key: species_value_idx</td></tr>
+      <tr class="bg1"><td><b>meta_key</b></td><td>varchar( 40 )</td><td></td><td>Name of the meta entry, e.g. "schema_version".</td><td>unique key: species_key_value_idx</td></tr>
+      <tr class="bg2"><td><b>meta_value</b></td><td>varchar( 255 )</td><td></td><td>Corresponding value of the key, e.g. "61".</td><td>unique key: species_key_value_idx<br />key: species_value_idx</td></tr>
+    </table>
+  </div>
+
+  <div id="meta_coord" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#BC5CEC;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">meta_coord</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_meta_coord" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta_coord')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table gives the coordinate system used by various tables in the database.</p>
+
+  <div id="div_meta_coord" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>table_name</b></td><td>VARCHAR(40)</td><td></td><td>Name of the feature table, e.g. "variation_feature".</td><td>unique: table_name, coord_system_id</td></tr>
+      <tr class="bg2"><td><b>coord_system_id</b></td><td>INT(10)</td><td></td><td>Foreign key to core database coord_system table refers to coordinate system that features from this table can be found in.</td><td>unique: table_name, coord_system_id</td></tr>
+      <tr class="bg1"><td><b>max_length</b></td><td>INT</td><td></td><td>Maximun length of the feature. </td><td></td></tr>
+    </table>
+  </div>
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #000">
+  <h2 style="display:inline;color:#000">Other tables</h2>
+</div>
+<p style="width:800px">These tables define the other data associated with a variation.</p>
+  <div id="allele_code" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">allele_code</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_allele_code" style="cursor:pointer;text-decoration:none" onclick="show_hide('allele_code')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores the relationship between the internal allele identifiers and the alleles themselves.</p>
+
+  <div id="div_allele_code" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>allele_code_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>allele</b></td><td>varchar(60000)</td><td>NULL</td><td>String representing the allele. Has a unique constraint on the first 1000 characters (max allowed by MySQL).</td><td>unique key: allele_idx</td></tr>
+    </table>
+  </div>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">See below the first entries in the allele_code table: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM allele_code LIMIT 6;</pre> <a id="e_allele_code" style="cursor:pointer;text-decoration:none" onclick="show_hide('allele_code','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+
+  <div id="ex_allele_code" style="display:none;">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
+      <tr><th>allele_code_id</th><th>allele</th></tr>      <tr><td>1</td><td>T</td></tr>      <tr class="bg2"><td>2</td><td>A</td></tr>      <tr><td>3</td><td>G</td></tr>      <tr class="bg2"><td>4</td><td>C</td></tr>      <tr><td>5</td><td>-</td></tr>      <tr class="bg2"><td>6</td><td>N</td></tr>    </table>
+  </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#allele">allele</a></li>
+    <li><a href="#genotype_code">genotype_code</a></li>
+  </ul>
+
+
+  <div id="coord_system" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">coord_system</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_coord_system" style="cursor:pointer;text-decoration:none" onclick="show_hide('coord_system')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Stores information about the available co-ordinate systems for the species identified through the species_id field. Note that for each species, there must be one co-ordinate system that has the attribute "top_level" and one that has the attribute "sequence_level".</p>
+
+  <div id="div_coord_system" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>coord_system_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary   key</td></tr>
+      <tr class="bg2"><td><b>species_id</b></td><td>INT(10)</td><td>1</td><td>Indentifies the species for multi-species databases.</td><td>unique    key: rank_idx<br />unique    key: name_idx<br />key: species_idx</td></tr>
+      <tr class="bg1"><td><b>name</b></td><td>VARCHAR(40)</td><td></td><td>Co-oridinate system name, e.g. 'chromosome', 'contig', 'scaffold' etc.</td><td>unique    key: name_idx</td></tr>
+      <tr class="bg2"><td><b>version</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Assembly.</td><td>unique    key: name_idx</td></tr>
+      <tr class="bg1"><td><b>rank</b></td><td>INT</td><td></td><td>Co-oridinate system rank.</td><td>unique    key: rank_idx</td></tr>
+      <tr class="bg2"><td><b>attrib</b></td><td>SET('default_version', 'sequence_level')</td><td></td><td>Co-oridinate system attrib (e.g. "top_level", "sequence_level").</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#seq_region">seq_region</a></li>
+    <li><a href="#meta_coord">meta_coord</a></li>
+    <li><a href="#meta">meta</a></li>
+  </ul>
+
+
+  <div id="genotype_code" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">genotype_code</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_genotype_code" style="cursor:pointer;text-decoration:none" onclick="show_hide('genotype_code')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores genotype codes as multiple rows of allele_code identifiers, linked by genotype_code_id and ordered by haplotype_id.</p>
+
+  <div id="div_genotype_code" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>genotype_code_id</b></td><td>int(11)</td><td></td><td>Internal identifier.</td><td>key: genotype_code_id</td></tr>
+      <tr class="bg2"><td><b>allele_code_id</b></td><td>int(11)</td><td></td><td>Foreign key reference to <a href="#allele_code">allele_code</a> table.</td><td>key: allele_code_id</td></tr>
+      <tr class="bg1"><td><b>haplotype_id</b></td><td>tinyint(2)</td><td></td><td>Sorting order of the genotype's alleles.</td><td></td></tr>
+      <tr class="bg2"><td><b>phased</b></td><td>tinyint(2)</td><td>NULL</td><td>Indicates if this genotype is phased</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#allele_code">allele_code</a></li>
+    <li><a href="#population_genotype">population_genotype</a></li>
+  </ul>
+
+
+  <div id="phenotype" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">phenotype</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_phenotype" style="cursor:pointer;text-decoration:none" onclick="show_hide('phenotype')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores details of the phenotypes associated with phenotype_features.</p>
+
+  <div id="div_phenotype" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>phenotype_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>stable_id</b></td><td>varchar(255)</td><td>NULL</td><td>Ensembl stable identifier for the phenotype</td><td>key: stable_idx</td></tr>
+      <tr class="bg1"><td><b>name</b></td><td>varchar(50)</td><td>NULL</td><td>Phenotype short name. e.g. "CAD".</td><td>unique key: name_idx</td></tr>
+      <tr class="bg2"><td><b>description</b></td><td>varchar(255)</td><td>NULL</td><td>varchar		Phenotype long name. e.g. "Coronary Artery Disease".</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#phenotype_feature">phenotype_feature</a></li>
+  </ul>
+
+
+  <div id="seq_region" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">seq_region</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_seq_region" style="cursor:pointer;text-decoration:none" onclick="show_hide('seq_region')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores the relationship between Ensembl's internal coordinate system identifiers and traditional chromosome names.</p>
+
+  <div id="div_seq_region" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Primary key. Foreign key references seq_region in core db. Refers to the seq_region which this variant is on, which may be a chromosome, a clone, etc...</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>VARCHAR(40)</td><td></td><td>The name of this sequence region.</td><td>unique key: name_cs_idx</td></tr>
+      <tr class="bg1"><td><b>coord_system_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#coord_system">coord_system</a> table.</td><td>unique key: name_cs_idx<br />key: cs_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_feature">variation_feature</a></li>
+    <li><a href="#compressed_genotype_region">compressed_genotype_region</a></li>
+    <li><a href="#read_coverage">read_coverage</a></li>
+    <li><a href="#coord_system">coord_system</a></li>
+  </ul>
+
+
+  <div id="submitter_handle" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">submitter_handle</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_submitter_handle" style="cursor:pointer;text-decoration:none" onclick="show_hide('submitter_handle')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds a short string to distinguish data submitters</p>
+
+  <div id="div_submitter_handle" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>handle_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>handle</b></td><td>varchar(25)</td><td></td><td>Short string assigned to the data submitter. </td><td>unique:  handle </td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#allele">allele</a></li>
+  </ul>
+
+
+  <div id="subsnp_handle" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">subsnp_handle</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_subsnp_handle" style="cursor:pointer;text-decoration:none" onclick="show_hide('subsnp_handle')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the SubSNP(ss) ID and the name of the submitter handle of dbSNP.</p>
+
+  <div id="div_subsnp_handle" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>subsnp_id</b></td><td>int(11)</td><td></td><td>Primary key. It corresponds to the subsnp identifier (ssID) from dbSNP.<br />This ssID is stored in this table without the "ss" prefix. e.g. "120258606" instead of "ss120258606".</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>handle</b></td><td>varchar(20)</td><td></td><td>The name of the dbSNP handler who submitted the ssID.<br />Name of the synonym (a different <b>sample_id</b>).</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#allele">allele</a></li>
+    <li><a href="#failed_variation">failed_variation</a></li>
+    <li><a href="#population_genotype">population_genotype</a></li>
+    <li><a href="#sample">sample</a></li>
+    <li><a href="#variation_synonym">variation_synonym</a></li>
+  </ul>
+
+
+  <div id="tagged_variation_feature" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">tagged_variation_feature</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_tagged_variation_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('tagged_variation_feature')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table lists variation feature IDs that are tagged by another variation feature ID. Tag pairs are defined as having an r<sup>2</sup> &gt; 0.99.</p>
+
+  <div id="div_tagged_variation_feature" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_feature_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#variation_feature">variation_feature</a> table.</td><td>key: tag_idx</td></tr>
+      <tr class="bg2"><td><b>tagged_variation_feature_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key references to the <a href="#variation_feature">variation_feature</a> table.</td><td>key: tagged_idx</td></tr>
+      <tr class="bg1"><td><b>population_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#population">population</a> table.</td><td>key: population_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_feature">variation_feature</a></li>
+    <li><a href="#population">population</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #22949b">
+  <h2 style="display:inline;color:#000">Phenotype tables</h2>
+</div>
+<p style="width:800px">These tables store information linking entities (variants, genes, QTLs) with phenotypes and other annotations.</p>
+  <div id="phenotype_feature" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#22949b;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">phenotype_feature</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_phenotype_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('phenotype_feature')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores information linking entities (variants, genes, QTLs) and phenotypes.</p>
+
+  <div id="div_phenotype_feature" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>phenotype_feature_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>phenotype_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the <a href="#phenotype">phenotype</a> table.</td><td>key: phenotype_idx</td></tr>
+      <tr class="bg1"><td><b>source_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the <a href="#source">source</a> table.</td><td></td></tr>
+      <tr class="bg2"><td><b>study_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the <a href="#study">study</a> table.</td><td></td></tr>
+      <tr class="bg1"><td><b>type</b></td><td>enum('Gene','Variation','StructuralVariation','SupportingStructuralVariation','QTL','RegulatoryFeature')</td><td>NULL</td><td>Type of object associated.</td><td>key: object_idx<br />key: type_idx</td></tr>
+      <tr class="bg2"><td><b>object_id</b></td><td>varchar(255)</td><td>NULL</td><td>Stable identifier for associated object.</td><td>key: object_idx</td></tr>
+      <tr class="bg1"><td><b>is_significant</b></td><td>tinyint(1)</td><td>'1'</td><td>Flag indicating if the association is statistically significant in the given study.</td><td></td></tr>
+      <tr class="bg2"><td><b>seq_region_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references <a href="#seq_region">seq_region</a> in core db. Refers to the seq_region which this feature is on, which may be a chromosome, a clone, etc...</td><td>key: pos_idx</td></tr>
+      <tr class="bg1"><td><b>seq_region_start</b></td><td>int(11)</td><td>NULL</td><td>The start position of the feature on the <a href="#seq_region">seq_region</a>.</td><td>key: pos_idx</td></tr>
+      <tr class="bg2"><td><b>seq_region_end</b></td><td>int(11)</td><td>NULL</td><td>The end position of the feature on the <a href="#seq_region">seq_region</a>.</td><td>key: pos_idx</td></tr>
+      <tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint(4)</td><td>NULL</td><td>The orientation of the feature on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#phenotype">phenotype</a></li>
+    <li><a href="#source">source</a></li>
+    <li><a href="#study">study</a></li>
+    <li><a href="#seq_region">seq_region</a></li>
+  </ul>
+
+
+  <div id="phenotype_feature_attrib" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#22949b;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">phenotype_feature_attrib</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_phenotype_feature_attrib" style="cursor:pointer;text-decoration:none" onclick="show_hide('phenotype_feature_attrib')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores additional information on a given phenotype/object association. It is styled as an attrib table to allow for a variety of fields to be populated across different object types.</p>
+
+  <div id="div_phenotype_feature_attrib" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>phenotype_feature_id</b></td><td>int(11)</td><td></td><td>Foreign key, references to the <a href="#phenotype_feature">phenotype_feature</a> table.</td><td>key: phenotype_feature_idx</td></tr>
+      <tr class="bg2"><td><b>attrib_type_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the <a href="#attrib_type">attrib_type</a> table.</td><td>key: type_value_idx</td></tr>
+      <tr class="bg1"><td><b>value</b></td><td>varchar(255)</td><td>NULL</td><td>The value of the attribute.</td><td>key: type_value_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#phenotype_feature">phenotype_feature</a></li>
+    <li><a href="#attrib_type">attrib_type</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #1E90FF">
+  <h2 style="display:inline;color:#000">Protein tables</h2>
+</div>
+<p style="width:800px">These tables define the protein prediction data.</p>
+  <div id="protein_function_predictions" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">protein_function_predictions</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_protein_function_predictions" style="cursor:pointer;text-decoration:none" onclick="show_hide('protein_function_predictions')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains encoded protein function predictions for every protein-coding transcript in this species.</p>
+
+  <div id="div_protein_function_predictions" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>translation_md5_id</b></td><td>int(11)</td><td></td><td>Identifies the MD5 hash corresponding to the protein sequence to which  these predictions apply</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>analysis_attrib_id</b></td><td>int(11)</td><td></td><td>Identifies the analysis (sift, polyphen etc.) that produced these predictions </td><td>primary key</td></tr>
+      <tr class="bg1"><td><b>prediction_matrix</b></td><td>mediumblob</td><td></td><td>A compressed binary string containing the predictions for all possible  amino acid substitutions in this protein. See the explanation <a href="predicted_data.html#nsSNP">here</a></td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#translation_md5">translation_md5</a></li>
+    <li><a href="#attrib">attrib</a></li>
+  </ul>
+
+
+  <div id="translation_md5" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1E90FF;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">translation_md5</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_translation_md5" style="cursor:pointer;text-decoration:none" onclick="show_hide('translation_md5')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Maps a hex MD5 hash of a translation sequence to an ID used for the protein function predictions</p>
+
+  <div id="div_translation_md5" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>translation_md5_id</b></td><td>int(11)</td><td></td><td>Primary key</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>translation_md5</b></td><td>char(32)</td><td></td><td>Hex MD5 hash of a translation sequence</td><td>unique key: md5_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#protein_function_predictions">protein_function_predictions</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #FF8500">
+  <h2 style="display:inline;color:#000">Sample tables</h2>
+</div>
+<p style="width:800px">These tables define the individual and population information.</p>
+  <div id="individual" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">individual</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_individual" style="cursor:pointer;text-decoration:none" onclick="show_hide('individual')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Stores information about an identifiable individual, including gender and the identifiers of the individual's parents (if known).</p>
+
+  <div id="div_individual" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>individual_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Name of the individual.</td><td></td></tr>
+      <tr class="bg1"><td><b>description</b></td><td>text</td><td></td><td>Description of the individual.</td><td></td></tr>
+      <tr class="bg2"><td><b>gender</b></td><td>enum('Male', 'Female', 'Unknown')</td><td>'Unknown'</td><td>The sex of this individual.</td><td></td></tr>
+      <tr class="bg1"><td><b>father_individual_id</b></td><td>int(10)</td><td></td><td>Self referential ID, the father of this individual if known.</td><td></td></tr>
+      <tr class="bg2"><td><b>mother_individual_id</b></td><td>int(10)</td><td></td><td>Self referential ID, the mother of this individual if known.</td><td></td></tr>
+      <tr class="bg1"><td><b>individual_type_id</b></td><td>int(10)</td><td>0</td><td>Foreign key references to the <a href="#individual_type">individual_type</a> table.</td><td></td></tr>
+      <tr class="bg2"><td><b>display</b></td><td>enum('REFERENCE', 'DEFAULT', 'DISPLAYABLE', 'UNDISPLAYABLE', 'LD', 'MARTDISPLAYABLE')</td><td>'UNDISPLAYABLE'</td><td>Information used by the website: individuals with little information are filtered from some web displays.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual_synonym">individual_synonym</a></li>
+    <li><a href="#individual_type">individual_type</a></li>
+    <li><a href="#individual_population">individual_population</a></li>
+    <li><a href="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></li>
+  </ul>
+
+
+  <div id="individual_population" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">individual_population</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_individual_population" style="cursor:pointer;text-decoration:none" onclick="show_hide('individual_population')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table resolves the many-to-many relationship between the individual and population tables; i.e. individuals may belong to more than one population. Hence it is composed of rows of individual and population identifiers.</p>
+
+  <div id="div_individual_population" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>individual_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#individual">individual</a> table.</td><td>key: individual_idx</td></tr>
+      <tr class="bg2"><td><b>population_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#population">population</a> table.</td><td>key: population_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+    <li><a href="#population">population</a></li>
+  </ul>
+
+
+  <div id="individual_synonym" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">individual_synonym</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_individual_synonym" style="cursor:pointer;text-decoration:none" onclick="show_hide('individual_synonym')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Used to store alternative names for individuals when data comes from multiple sources.</p>
+
+  <div id="div_individual_synonym" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>synonym_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>individual_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#individual">individual</a> table.</td><td>key: individual_idx</td></tr>
+      <tr class="bg1"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#source">source</a> table.</td><td>key: name, source_id</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Name of the synonym.</td><td>key: name, source_id</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+    <li><a href="#source">source</a></li>
+  </ul>
+
+
+  <div id="individual_type" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">individual_type</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_individual_type" style="cursor:pointer;text-decoration:none" onclick="show_hide('individual_type')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table gives a deatailed description for each of the possible individual types: fully_inbred, partly_inbred, outbred, mutant  </p>
+
+  <div id="div_individual_type" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>individual_type_id</b></td><td>int(0)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Short name of the individual type. e.g. "fully_inbred","mutant".</td><td></td></tr>
+      <tr class="bg1"><td><b>description</b></td><td>text</td><td></td><td>Long name of the individual type.</td><td></td></tr>
+    </table>
+  </div>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">See below the list of individual types: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM individual_type;</pre> <a id="e_individual_type" style="cursor:pointer;text-decoration:none" onclick="show_hide('individual_type','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+
+  <div id="ex_individual_type" style="display:none;">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
+      <tr><th>individual_type_id</th><th>name</th><th>description</th></tr>      <tr><td>1</td><td>fully_inbred</td><td>multiple organisms have the same genome sequence</td></tr>      <tr class="bg2"><td>2</td><td>partly_inbred</td><td>single organisms have reduced genome variability due to human intervention</td></tr>      <tr><td>3</td><td>outbred</td><td>a single organism which breeds freely</td></tr>      <tr class="bg2"><td>4</td><td>mutant</td><td>a single or multiple organisms with the same genome sequence that have a natural or experimentally induced mutation</td></tr>    </table>
+  </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#individual">individual</a></li>
+  </ul>
+
+
+  <div id="population" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">population</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_population" style="cursor:pointer;text-decoration:none" onclick="show_hide('population')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Stores information about a population. A population may be an ethnic group (e.g. caucasian, hispanic), assay group (e.g. 24 europeans), phenotypic group (e.g. blue eyed, diabetes) etc. Populations may be composed of other populations by defining relationships in the population_structure table.</p>
+
+  <div id="div_population" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>population_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Name of the population.</td><td></td></tr>
+      <tr class="bg1"><td><b>size</b></td><td>int(10)</td><td></td><td>Size of the population.</td><td></td></tr>
+      <tr class="bg2"><td><b>description</b></td><td>text</td><td></td><td>Description of the population.</td><td></td></tr>
+      <tr class="bg1"><td><b>collection</b></td><td>tinyint(1)</td><td>0</td><td>Flag indicating if the population is defined based on geography (0) or a collection of individuals with respect to some other criteria (1).</td><td></td></tr>
+      <tr class="bg2"><td><b>freqs_from_gts</b></td><td>tinyint(1)</td><td></td><td>Flag indicating if the population frequencies can be retrieved from the allele table (0) or from the individual genotypes (1).</td><td></td></tr>
+      <tr class="bg1"><td><b>display</b></td><td>enum('LD', 'MARTDISPLAYABLE', 'UNDISPLAYABLE')</td><td>'UNDISPLAYABLE'</td><td>Information used by Biomart.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#population_synonym">population_synonym</a></li>
+    <li><a href="#individual_population">individual_population</a></li>
+    <li><a href="#population_structure">population_structure</a></li>
+    <li><a href="#population_genotype">population_genotype</a></li>
+    <li><a href="#allele">allele</a></li>
+    <li><a href="#tagged_variation_feature">tagged_variation_feature</a></li>
+  </ul>
+
+
+  <div id="population_structure" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">population_structure</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_population_structure" style="cursor:pointer;text-decoration:none" onclick="show_hide('population_structure')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores hierarchical relationships between populations by relating them as populations and sub-populations.</p>
+
+  <div id="div_population_structure" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>super_population_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the population table.</td><td>unique: super_population_idx</td></tr>
+      <tr class="bg2"><td><b>sub_population_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the population table.</td><td>unique: super_population_idx<br />key: sub_population_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#population">population</a></li>
+  </ul>
+
+
+  <div id="population_synonym" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF8500;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">population_synonym</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_population_synonym" style="cursor:pointer;text-decoration:none" onclick="show_hide('population_synonym')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Used to store alternative names for populations when data comes from multiple sources.</p>
+
+  <div id="div_population_synonym" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>synonym_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>population_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#population">population</a> table.</td><td>key: population_idx</td></tr>
+      <tr class="bg1"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#source">source</a> table.</td><td>key: name, source_id</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Name of the synonym.</td><td>key: name, source_id</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#population">population</a></li>
+    <li><a href="#source">source</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #7CFC00">
+  <h2 style="display:inline;color:#000">Source/study tables</h2>
+</div>
+<p style="width:800px">These tables define the variation source and study information.</p>
+  <div id="associate_study" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#7CFC00;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">associate_study</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_associate_study" style="cursor:pointer;text-decoration:none" onclick="show_hide('associate_study')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains identifiers of associated studies (e.g. NHGRI and EGA studies with the same pubmed identifier).</p>
+
+  <div id="div_associate_study" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>study1_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#study">study</a> table.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>study2_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#study">study</a> table.</td><td>primary key</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#study">study</a></li>
+  </ul>
+
+
+  <div id="publication" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#7CFC00;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">publication</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_publication" style="cursor:pointer;text-decoration:none" onclick="show_hide('publication')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains details of publications citing variations This information comes from PubMed and Europe PMC</p>
+
+  <div id="div_publication" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>publication_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>title</b></td><td>varchar(255)</td><td></td><td>Title of the publication</td><td></td></tr>
+      <tr class="bg1"><td><b>authors</b></td><td>varchar(255)</td><td></td><td>Authors of the publication</td><td></td></tr>
+      <tr class="bg2"><td><b>pmid</b></td><td>int(10)</td><td></td><td>The PubMed id for the publication if available</td><td>key: pmid_idx</td></tr>
+      <tr class="bg1"><td><b>pmcid</b></td><td>varchar(255)</td><td></td><td>The PubMed Central id for the publication if available</td><td></td></tr>
+      <tr class="bg2"><td><b>year</b></td><td>int(10)</td><td></td><td>The year the publication was published</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_citation">variation_citation</a></li>
+  </ul>
+
+
+  <div id="source" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#7CFC00;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">source</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_source" style="cursor:pointer;text-decoration:none" onclick="show_hide('source')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains details of the source from which a variation is derived. Most commonly this is NCBI's dbSNP; other sources include SNPs called by Ensembl.<br /> You can see the complete list, by species, <a href="sources_documentation.html">here</a>.</p>
+
+  <div id="div_source" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(24)</td><td></td><td>Name of the source. e.g. "dbSNP"</td><td></td></tr>
+      <tr class="bg1"><td><b>version</b></td><td>int</td><td></td><td>Version number of the source (if available). e.g. "132"</td><td></td></tr>
+      <tr class="bg2"><td><b>description</b></td><td>varchar(255)</td><td></td><td>Description of the source.</td><td></td></tr>
+      <tr class="bg1"><td><b>url</b></td><td>varchar(255)</td><td></td><td>URL of the source.</td><td></td></tr>
+      <tr class="bg2"><td><b>type</b></td><td>ENUM('chip','lsdb')</td><td>NULL</td><td>Define the type of the source, e.g. 'chip'</td><td></td></tr>
+      <tr class="bg1"><td><b>somatic_status</b></td><td>ENUM ('germline','somatic','mixed')</td><td>'germline'</td><td>Indicates if this source includes somatic or germline mutations, or a mixture</td><td></td></tr>
+    </table>
+  </div>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">See below the command listing all the data sources in the human variation database: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM source ORDER BY source_id;</pre> <a id="e_source" style="cursor:pointer;text-decoration:none" onclick="show_hide('source','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+
+  <div id="ex_source" style="display:none;">
+    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
+      <tr><th>source_id</th><th>name</th><th>version</th><th>description</th><th>url</th><th>type</th><th>somatic_status</th></tr>      <tr><td>1</td><td>dbSNP</td><td>137</td><td>Variants (including SNPs and indels) imported from dbSNP</td><td>http://www.ncbi.nlm.nih.gov/projects/SNP/</td><td></td><td>mixed</td></tr>      <tr class="bg2"><td>2</td><td>Archive dbSNP</td><td>137</td><td>Former variants names imported from dbSNP</td><td>http://www.ncbi.nlm.nih.gov/projects/SNP/</td><td></td><td>mixed</td></tr>      <tr><td>3</td><td>LSDB</td><td>137</td><td>Variants dbSNP annotates as being from LSDBs</td><td>http://www.ncbi.nlm.nih.gov/projects/SNP/</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>7</td><td>ESP</td><td>6500</td><td>NHLBI Exome Sequencing Project</td><td>http://evs.gs.washington.edu/EVS/</td><td></td><td>germline</td></tr>      <tr><td>8</td><td>HGMD-PUBLIC</td><td>20132</td><td>Variants from HGMD-PUBLIC dataset June 2013</td><td>http://www.hgmd.cf.ac.uk/ac/index.php</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>11</td><td>DGVa</td><td>201307</td><td>Database of Genomic Variants Archive</td><td>http://www.ebi.ac.uk/dgva/</td><td></td><td>mixed</td></tr>      <tr><td>13</td><td>NHGRI_GWAS_catalog</td><td>20130709</td><td>Variants associated with phenotype data from the NHGRI GWAS catalog</td><td>http://www.genome.gov/gwastudies/</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>15</td><td>EGA</td><td>201307</td><td>Variants imported from the European Genome-phenome Archive with phenotype association</td><td>http://www.ebi.ac.uk/ega/</td><td></td><td>germline</td></tr>      <tr><td>16</td><td>Uniprot</td><td>20130724</td><td>Variants with protein annotation imported from Uniprot</td><td>http://www.uniprot.org/</td><td></td><td>mixed</td></tr>      <tr class="bg2"><td>18</td><td>OMIM</td><td>20130710</td><td>Variations linked to entries in the Online Mendelian Inheritance in Man (OMIM) database</td><td>http://www.omim.org/</td><td></td><td>germline</td></tr>      <tr><td>19</td><td>Open Access GWAS DB</td><td></td><td>Johnson & O'Donnell 'An Open Access Database of Genome-wide Association Results' PMID:19161620</td><td>http://www.biomedcentral.com/1471-2350/10/6</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>20</td><td>Illumina_CytoSNP12v1</td><td></td><td>Variants from the Illumina Cyto SNP-12 v1 whole genome SNP genotyping chip designed for cytogenetic analysis</td><td>http://www.illumina.com/</td><td>chip</td><td>germline</td></tr>      <tr><td>21</td><td>Illumina_Human660W-quad</td><td></td><td>Variants from the Illumina Human 660W-Quad whole genome SNP genotyping chip designed for association studies</td><td> http://www.illumina.com/</td><td>chip</td><td></td></tr>      <tr class="bg2"><td>22</td><td>Illumina_Human1M-duoV3</td><td></td><td>Variants from the Illumina Human 1M-DuoV3 whole genome SNP genotyping chip designed for association studies</td><td>http://www.illumina.com/</td><td>chip</td><td>germline</td></tr>      <tr><td>23</td><td>Affy GenomeWideSNP_6 CNV</td><td></td><td>Copy Number Variation (CNV) probes from the Affymetrix Genome-Wide Human SNP Array 6.0</td><td>http://www.affymetrix.com/</td><td>chip</td><td>germline</td></tr>      <tr class="bg2"><td>26</td><td>COSMIC</td><td>65</td><td>Somatic mutations found in human cancers from the COSMIC project</td><td>http://cancer.sanger.ac.uk/cancergenome/projects/cosmic/</td><td></td><td>somatic</td></tr>      <tr><td>27</td><td>LSDB_PPIB</td><td>110217</td><td>PPIB homepage - Osteogenesis Imperfecta Variant Database - Leiden Open Variation Database</td><td>https://oi.gene.le.ac.uk/home.php?select_db=PPIB</td><td>lsdb</td><td>mixed</td></tr>      <tr class="bg2"><td>28</td><td>LSDB_CRTAP</td><td>110408</td><td>CRTAP homepage - Osteogenesis Imperfecta Variant Database - Leiden Open Variation Database</td><td>https://oi.gene.le.ac.uk/home.php?select_db=CRTAP</td><td>lsdb</td><td>mixed</td></tr>      <tr><td>29</td><td>LSDB_LEPRE1</td><td>110408</td><td>LEPRE1 homepage - Osteogenesis Imperfecta Variant Database - Leiden Open Variation Database</td><td>https://oi.gene.le.ac.uk/home.php?select_db=LEPRE1</td><td>lsdb</td><td>mixed</td></tr>      <tr class="bg2"><td>30</td><td>LSDB_FKBP10</td><td>110516</td><td>FKBP10 homepage - Osteogenesis Imperfecta Variant Database - Leiden Open Variation Database</td><td>https://oi.gene.le.ac.uk/home.php?select_db=FKBP10</td><td>lsdb</td><td>mixed</td></tr>      <tr><td>31</td><td>PubMed</td><td></td><td>Variants with pubmed citations</td><td>http://www.ncbi.nlm.nih.gov/pubmed/</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>32</td><td>dbSNP_ClinVar</td><td></td><td>Variants of clinical significance imported from dbSNP/ClinVar</td><td>http://www.ncbi.nlm.nih.gov/projects/SNP/</td><td></td><td>germline</td></tr>      <tr><td>33</td><td>DDG2P</td><td>20121101</td><td>Developmental Disorders Genotype-to-Phenotype Database</td><td>http://decipher.sanger.ac.uk/</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>34</td><td>GIANT</td><td>2010</td><td>The Genetic Investigation of ANthropometric Traits (GIANT) consortium is an international collaboration that seeks to identify genetic loci that modulate human body size and shape, including height and measures of obesity</td><td>http://www.broadinstitute.org/collaboration/giant/index.php/Main_Page</td><td></td><td>germline</td></tr>      <tr><td>35</td><td>OMIMGENE</td><td></td><td>Online Mendelian Inheritance in Man (OMIM) database</td><td>http://www.omim.org/</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>36</td><td>Orphanet</td><td></td><td>The portal for rare diseases and drugs</td><td>http://www.orpha.net/</td><td></td><td>germline</td></tr>      <tr><td>37</td><td>MAGIC</td><td>2010</td><td>MAGIC (the Meta-Analyses of Glucose and Insulin-related traits Consortium) represents a collaborative effort to combine data from multiple GWAS to identify additional loci that impact on glycemic and metabolic traits</td><td>http://www.magicinvestigators.org/</td><td></td><td>germline</td></tr>      <tr class="bg2"><td>38</td><td>PhenCode</td><td>20121114</td><td>PhenCode is a collaborative project to better understand the relationship between genotype and phenotype in humans</td><td>http://phencode.bx.psu.edu/</td><td></td><td></td></tr>      <tr><td>39</td><td>HbVar</td><td>0</td><td>A Database of Human Hemoglobin Variants and Thalassemias</td><td>http://globin.bx.psu.edu/hbvar/menu.html</td><td>lsdb</td><td>germline</td></tr>      <tr class="bg2"><td>40</td><td>LMDD</td><td>0</td><td>Leiden Muscular Dystrophy Database</td><td>http://www.dmd.nl/</td><td>lsdb</td><td>germline</td></tr>      <tr><td>41</td><td>OIVD</td><td>0</td><td>Osteogenesis Imperfecta Variant Database</td><td>https://oi.gene.le.ac.uk/home.php</td><td>lsdb</td><td>germline</td></tr>      <tr class="bg2"><td>42</td><td>PAHdb</td><td>0</td><td>Phenylalanine hydroxylas database</td><td>http://www.pahdb.mcgill.ca/</td><td>lsdb</td><td>germline</td></tr>      <tr><td>43</td><td>Infevers</td><td>0</td><td>The registry of Hereditary Auto-inflammatory Disorders Mutations</td><td>http://fmf.igh.cnrs.fr/ISSAID/infevers/index.php</td><td>lsdb</td><td>germline</td></tr>      <tr class="bg2"><td>44</td><td>dbPEX</td><td>0</td><td>dbPEX, PEX Gene Database</td><td>http://www.dbpex.org/home.php?select_db=PEX1</td><td>lsdb</td><td>germline</td></tr>      <tr><td>45</td><td>KAT6BDB</td><td>0</td><td>K(lysine) acetyltransferase 6B database, BCM</td><td>https://grenada.lumc.nl/LOVD2/BCM/home.php?select_db=KAT6B</td><td>lsdb</td><td>germline</td></tr>      <tr class="bg2"><td>46</td><td>dbGaP</td><td></td><td>The database of Genotypes and Phenotypes.</td><td>http://www.ncbi.nlm.nih.gov/gap</td><td></td><td>germline</td></tr>    </table>
+  </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#variation_synonym">variation_synonym</a></li>
+    <li><a href="#variation_feature">variation_feature</a></li>
+    <li><a href="#individual_synonym">individual_synonym</a></li>
+    <li><a href="#population_synonym">population_synonym</a></li>
+    <li><a href="#structural_variation">structural_variation</a></li>
+    <li><a href="#study">study</a></li>
+  </ul>
+
+
+  <div id="study" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#7CFC00;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">study</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_study" style="cursor:pointer;text-decoration:none" onclick="show_hide('study')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains details of the studies. The studies information can come from internal studies (DGVa, EGA) or from external studies (Uniprot, NHGRI, ...).</p>
+
+  <div id="div_study" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>study_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#source">source</a> table.</td><td>key: source_idx</td></tr>
+      <tr class="bg1"><td><b>name</b></td><td>varchar(255)</td><td>null</td><td>Name of the study. e.g. "EGAS00000000001"</td><td></td></tr>
+      <tr class="bg2"><td><b>description</b></td><td>text</td><td>NULL</td><td>Description of the study.</td><td></td></tr>
+      <tr class="bg1"><td><b>url</b></td><td>varchar(255)</td><td>NULL</td><td>URL to find the study data (http or ftp).</td><td></td></tr>
+      <tr class="bg2"><td><b>external_reference</b></td><td>varchar(255)</td><td>NULL</td><td>The pubmed/id or project name associated with this study.</td><td></td></tr>
+      <tr class="bg1"><td><b>study_type</b></td><td>varchar(255)</td><td>NULL</td><td>Displays the type of the study (e.g. genome-wide association study, control-set, case-set, curated, ...).</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#source">source</a></li>
+    <li><a href="#structural_variation">structural_variation</a></li>
+  </ul>
+
+
+  <div id="study_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#7CFC00;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">study_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_study_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('study_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Links a variation to a study</p>
+
+  <div id="div_study_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Primary key, foreign key references <a href="#variation">variation</a></td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>study_id</b></td><td>int(10)</td><td></td><td>Primary key, foreign key references <a href="#study">study</a></td><td>primary key</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#study">study</a></li>
+  </ul>
+
+
+  <div id="variation_citation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#7CFC00;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation_citation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation_citation" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation_citation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table links a variation to a publication</p>
+
+  <div id="div_variation_citation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>publication_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Primary key, foreign key references <a href="#variation">variation</a></td><td>primary key</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#publication">publication</a></li>
+    <li><a href="#variation">variation</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #01D4F7">
+  <h2 style="display:inline;color:#000">Structural variation tables</h2>
+</div>
+<p style="width:800px">These tables define the structural variation data.</p>
+  <div id="structural_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#01D4F7;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">structural_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_structural_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('structural_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores information about structural variation.</p>
+
+  <div id="div_structural_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>structural_variation_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_name</b></td><td>varchar(255)</td><td>NULL</td><td>The external identifier or name of the variation. e.g. "esv9549".</td><td>key: name_idx</td></tr>
+      <tr class="bg1"><td><b>alias</b></td><td>varchar(255)</td><td>NULL</td><td>Other structural variation name.</td><td></td></tr>
+      <tr class="bg2"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#source">source</a> table.</td><td>key: source_idx</td></tr>
+      <tr class="bg1"><td><b>study_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key references to the <a href="#study">study</a> table.	</td><td>key: study_idx</td></tr>
+      <tr class="bg2"><td><b>class_attrib_id</b></td><td>int(10)</td><td>0</td><td>Foreign key references to the <a href="#attrib">attrib</a> table. Defines the type of structural variant.<br />  The list of structural variation classes is available <a href="data_description.html#classes">here</a>.</td><td>key: attrib_idx</td></tr>
+      <tr class="bg1"><td><b>clinical_significance_attrib_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key references to the <a href="#attrib">attrib</a>, identifying the clinical significance of this variant, as reported by DGVa.<br />  The list of clinical significances is available <a href="data_description.html#clin_significance">here</a>.</td><td>key: clinical_attrib_idx</td></tr>
+      <tr class="bg2"><td><b>validation_status</b></td><td>ENUM('validated','not validated','high quality')</td><td></td><td>Validation status of the variant.</td><td></td></tr>
+      <tr class="bg1"><td><b>is_evidence</b></td><td>TINYINT(4)</td><td>0</td><td>Flag indicating if the structural variation is a supporting evidence (1) or not (0).</td><td></td></tr>
+      <tr class="bg2"><td><b>somatic</b></td><td>TINYINT(1)</td><td>0</td><td>Flags whether this structural variation is known to be somatic or not</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#source">source</a></li>
+    <li><a href="#study">study</a></li>
+    <li><a href="#attrib">attrib</a></li>
+  </ul>
+
+
+  <div id="structural_variation_association" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#01D4F7;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">structural_variation_association</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_structural_variation_association" style="cursor:pointer;text-decoration:none" onclick="show_hide('structural_variation_association')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores the associations between structural variations and their supporting evidences.</p>
+
+  <div id="div_structural_variation_association" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>structural_variation_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#structural_variation">structural_variation</a> table.</td><td>primary key<br />key: structural_variation_idx</td></tr>
+      <tr class="bg2"><td><b>supporting_structural_variation_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#structural_variation">structural_variation</a> table.</td><td>primary key<br />key: supporting_structural_variation_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#structural_variation">structural_variation</a></li>
+  </ul>
+
+
+  <div id="structural_variation_feature" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#01D4F7;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">structural_variation_feature</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_structural_variation_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('structural_variation_feature')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores information about structural variation features (i.e. mappings of structural variations to genomic locations).</p>
+
+  <div id="div_structural_variation_feature" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>structural_variation_feature_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Foreign key references <a href="#seq_region">seq_region</a> in core db. Refers to the seq_region which this variant is on, which may be a chromosome, a clone, etc...</td><td>key: pos_idx</td></tr>
+      <tr class="bg1"><td><b>outer_start</b></td><td>int</td><td></td><td>The 5' outer bound position of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>seq_region_start</b></td><td>int</td><td></td><td>The start position of the variation on the <a href="#seq_region">seq_region</a>.</td><td>key: pos_idx</td></tr>
+      <tr class="bg1"><td><b>inner_start</b></td><td>int</td><td></td><td>The 5' inner bound position of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>inner_end</b></td><td>int</td><td></td><td>The 3' inner bound position of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg1"><td><b>seq_region_end</b></td><td>int</td><td></td><td>The end position of the variation on the <a href="#seq_region">seq_region</a>.</td><td>key: pos_idx</td></tr>
+      <tr class="bg2"><td><b>outer_end</b></td><td>int</td><td></td><td>The 3' outer bound position of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint</td><td></td><td>The orientation of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>structural_variation_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#structural_variation">structural_variation</a> table.</td><td>key: structural_variation_idx</td></tr>
+      <tr class="bg1"><td><b>variation_name</b></td><td>varchar(255)</td><td></td><td>A denormalisation taken from the structural_variation table. This is the name or identifier that is used for displaying the feature (e.g. "esv9549").</td><td></td></tr>
+      <tr class="bg2"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#source">source</a> table.</td><td>key: source_idx</td></tr>
+      <tr class="bg1"><td><b>study_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key references to the <a href="#study">study</a> table</td><td>key: study_idx</td></tr>
+      <tr class="bg2"><td><b>class_attrib_id</b></td><td>int(10)</td><td>0</td><td>Foreign key references to the <a href="#attrib">attrib</a> table. Defines the type of structural variant.<br />  The list of structural variation classes is available <a href="data_description.html#classes">here</a>.</td><td>key: attrib_idx</td></tr>
+      <tr class="bg1"><td><b>allele_string</b></td><td>longtext</td><td>NULL</td><td>The variant allele, where known.</td><td></td></tr>
+      <tr class="bg2"><td><b>is_evidence</b></td><td>tinyint(1)</td><td>0</td><td>Flag indicating if the structural variation is a supporting evidence (1) or not (0).</td><td></td></tr>
+      <tr class="bg1"><td><b>variation_set_id</b></td><td>SET (<br />'1','2','3','4','5','6','7','8',<br />'9','10','11','12','13','14','15','16',<br />'17','18','19','20','21','22','23','24',<br />'25','26','27','28','29','30','31','32',<br />'33','34','35','36','37','38','39','40',<br />'41','42','43','44','45','46','47','48',<br />'49','50','51','52','53','54','55','56',<br />'57','58','59','60','61','62','63','64'<br /> )</td><td>''</td><td>The structural variation feature can belong to a <a href="#variation_set">variation_set</a>.</td><td>key: variation_set_idx</td></tr>
+      <tr class="bg2"><td><b>somatic</b></td><td>TINYINT(1)</td><td>0</td><td>Flags whether this structural variation is known to be somatic or not</td><td></td></tr>
+      <tr class="bg1"><td><b>breakpoint_order</b></td><td>TINYINT(4)</td><td>NULL</td><td>Defines the order of the breakpoints when several events/mutation occured for a structural variation (e.g. somatic mutations)</td><td></td></tr>
+      <tr class="bg2"><td><b>length</b></td><td>int(10)</td><td>NULL</td><td>Length of the structural variant. Used for the variants with a class "insertion", when the size of the insertion is known.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#structural_variation">structural_variation</a></li>
+    <li><a href="#source">source</a></li>
+    <li><a href="#study">study</a></li>
+    <li><a href="#seq_region">seq_region</a></li>
+    <li><a href="#attrib">attrib</a></li>
+    <li><a href="#variation_set">variation_set</a></li>
+  </ul>
+
+
+  <div id="structural_variation_sample" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#01D4F7;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">structural_variation_sample</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_structural_variation_sample" style="cursor:pointer;text-decoration:none" onclick="show_hide('structural_variation_sample')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores individual and strain information for structural variants and their supporting evidences.</p>
+
+  <div id="div_structural_variation_sample" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>structural_variation_sample_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>structural_variation_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#structural_variation">structural_variation</a> table.</td><td>key: structural_variation_idx</td></tr>
+      <tr class="bg1"><td><b>individual_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key references to the <a href="#individual">individual</a> table. Defines the individual or sample name.</td><td>key: individual_idx</td></tr>
+      <tr class="bg2"><td><b>strain_id</b></td><td>int(10)</td><td>NULL</td><td>Foreign key references to the <a href="#individual">individual</a> table. Defines the strain name.</td><td>key: strain_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#structural_variation">structural_variation</a></li>
+    <li><a href="#individual">individual</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #FF4DC8">
+  <h2 style="display:inline;color:#000">Variation effect tables</h2>
+</div>
+<p style="width:800px">These tables define the variation effect prediction data in different Ensembl features.</p>
+  <div id="motif_feature_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF4DC8;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">motif_feature_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_motif_feature_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('motif_feature_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table relates a single allele of a variation_feature to a motif feature (see Regulation documentation). It contains the consequence of the allele.</p>
+
+  <div id="div_motif_feature_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>motif_feature_variation_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_feature_id</b></td><td>int(11)</td><td></td><td>Foreign key references to the <a href="#variation_feature">variation_feature</a> table.</td><td>key: variation_feature_idx</td></tr>
+      <tr class="bg1"><td><b>feature_stable_id</b></td><td>varchar(128)</td><td>NULL</td><td>Foreign key to regulation databases. Unique stable id of related regulatory_feature.</td><td>key: somatic_feature_idx</td></tr>
+      <tr class="bg2"><td><b>motif_feature_id</b></td><td>int(11)</td><td></td><td>Foreign key to regulation databases. Internal id of related motif_feature.</td><td></td></tr>
+      <tr class="bg1"><td><b>allele_string</b></td><td>text</td><td></td><td>Shows the reference sequence and variant sequence of this allele.</td><td></td></tr>
+      <tr class="bg2"><td><b>somatic</b></td><td>tinyint(1)</td><td>0</td><td>Flags if the associated variation is known to be somatic.</td><td>key: somatic_feature_idx</td></tr>
+      <tr class="bg1"><td><b>consequence_types</b></td><td>set (<br />'splice_acceptor_variant',<br />'splice_donor_variant',<br />'stop_lost',<br />'coding_sequence_variant',<br />'missense_variant',<br />'stop_gained',<br />'synonymous_variant',<br />'frameshift_variant',<br />'nc_transcript_variant',<br />'non_coding_exon_variant',<br />'mature_miRNA_variant',<br />'NMD_transcript_variant',<br />'5_prime_UTR_variant',<br />'3_prime_UTR_variant',<br />'incomplete_terminal_codon_variant',<br />'intron_variant',<br />'splice_region_variant',<br />'downstream_gene_variant',<br />'upstream_gene_variant',<br />'initiator_codon_variant',<br />'stop_retained_variant',<br />'inframe_insertion',<br />'inframe_deletion',<br />'transcript_ablation',<br />'transcript_fusion',<br />'transcript_amplification',<br />'transcript_translocation',<br />'TF_binding_site_variant',<br />'TFBS_ablation',<br />'TFBS_fusion',<br />'TFBS_amplification',<br />'TFBS_translocation',<br />'regulatory_region_variant',<br />'regulatory_region_ablation',<br />'regulatory_region_fusion',<br />'regulatory_region_amplification',<br />'regulatory_region_translocation',<br />'feature_elongation',<br />'feature_truncation'<br /> )</td><td></td><td>The consequence(s) of the variant allele on this motif_feature.<br /> The list of consequence descriptions is available <a href="predicted_data.html#consequences">here</a>.</td><td>key: consequence_type_idx</td></tr>
+      <tr class="bg2"><td><b>motif_name</b></td><td>text</td><td></td><td>The display label of the motif.</td><td></td></tr>
+      <tr class="bg1"><td><b>motif_start</b></td><td>int(11)</td><td></td><td>The start position of the variation in the motif.</td><td></td></tr>
+      <tr class="bg2"><td><b>motif_end</b></td><td>int(11)</td><td></td><td>The end position of the variation in the motif.</td><td></td></tr>
+      <tr class="bg1"><td><b>motif_score_delta</b></td><td>float</td><td>NULL</td><td>The deviation from the score (that is derived from alignment software (e.g. MOODS)) caused by the variation.</td><td></td></tr>
+      <tr class="bg2"><td><b>in_informative_position</b></td><td>tinyint(1)</td><td>0</td><td>Flags if the variation is in an informative position.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_feature">variation_feature</a></li>
+  </ul>
+
+
+  <div id="regulatory_feature_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF4DC8;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">regulatory_feature_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_regulatory_feature_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('regulatory_feature_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table relates a single allele of a variation_feature to a regulatory feature (see Regulation documentation). It contains the consequence of the allele.</p>
+
+  <div id="div_regulatory_feature_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>regulatory_feature_variation_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_feature_id</b></td><td>int(11)</td><td></td><td>Foreign key references to the <a href="#variation_feature">variation_feature</a> table.</td><td>key: variation_feature_idx</td></tr>
+      <tr class="bg1"><td><b>feature_stable_id</b></td><td>varchar(128)</td><td>NULL</td><td>Foreign key to regulation databases. Unique stable id of related regulatory_feature.</td><td>key: somatic_feature_idx</td></tr>
+      <tr class="bg2"><td><b>feature_type</b></td><td>text</td><td></td><td>The name of the feature type.</td><td></td></tr>
+      <tr class="bg1"><td><b>allele_string</b></td><td>text</td><td></td><td>Shows the reference sequence and variant sequence of this allele.</td><td></td></tr>
+      <tr class="bg2"><td><b>somatic</b></td><td>tinyint(1)</td><td>0</td><td>Flags if the associated variation is known to be somatic.</td><td>key: somatic_feature_idx</td></tr>
+      <tr class="bg1"><td><b>consequence_types</b></td><td>set (<br />'splice_acceptor_variant',<br />'splice_donor_variant',<br />'stop_lost',<br />'coding_sequence_variant',<br />'missense_variant',<br />'stop_gained',<br />'synonymous_variant',<br />'frameshift_variant',<br />'nc_transcript_variant',<br />'non_coding_exon_variant',<br />'mature_miRNA_variant',<br />'NMD_transcript_variant',<br />'5_prime_UTR_variant',<br />'3_prime_UTR_variant',<br />'incomplete_terminal_codon_variant',<br />'intron_variant',<br />'splice_region_variant',<br />'downstream_gene_variant',<br />'upstream_gene_variant',<br />'initiator_codon_variant',<br />'stop_retained_variant',<br />'inframe_insertion',<br />'inframe_deletion',<br />'transcript_ablation',<br />'transcript_fusion',<br />'transcript_amplification',<br />'transcript_translocation',<br />'TF_binding_site_variant',<br />'TFBS_ablation',<br />'TFBS_fusion',<br />'TFBS_amplification',<br />'TFBS_translocation',<br />'regulatory_region_variant',<br />'regulatory_region_ablation',<br />'regulatory_region_fusion',<br />'regulatory_region_amplification',<br />'regulatory_region_translocation',<br />'feature_elongation',<br />'feature_truncation'<br /> )</td><td></td><td>The consequence(s) of the variant allele on this regulatory feature.<br /> The list of consequence descriptions is available <a href="predicted_data.html#consequences">here</a>.</td><td>key: consequence_type_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_feature">variation_feature</a></li>
+  </ul>
+
+
+  <div id="transcript_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF4DC8;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">transcript_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_transcript_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('transcript_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table relates a single allele of a variation_feature to a transcript (see Core documentation). It contains the consequence of the allele e.g. intron_variant, non_synonymous_codon, stop_lost etc, along with the change in amino acid in the resulting protein if applicable.</p>
+
+  <div id="div_transcript_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>transcript_variation_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>feature_stable_id</b></td><td>varchar(128)</td><td>NULL</td><td>Foreign key to core databases. Unique stable id of related transcript.</td><td>key: somatic_feature_idx</td></tr>
+      <tr class="bg1"><td><b>variation_feature_id</b></td><td>int(11)</td><td></td><td>Foreign key references to the <a href="#variation_feature">variation_feature</a> table.</td><td>key: variation_feature_idx</td></tr>
+      <tr class="bg2"><td><b>allele_string</b></td><td>text</td><td></td><td>Shows the reference sequence and variant sequence of this allele</td><td></td></tr>
+      <tr class="bg1"><td><b>somatic</b></td><td>tinyint(1)</td><td>0</td><td>Flags if the associated variation is known to be somatic</td><td>key: somatic_feature_idx</td></tr>
+      <tr class="bg2"><td><b>consequence_types</b></td><td>set (<br />'splice_acceptor_variant',<br />'splice_donor_variant',<br />'stop_lost',<br />'coding_sequence_variant',<br />'missense_variant',<br />'stop_gained',<br />'synonymous_variant',<br />'frameshift_variant',<br />'nc_transcript_variant',<br />'non_coding_exon_variant',<br />'mature_miRNA_variant',<br />'NMD_transcript_variant',<br />'5_prime_UTR_variant',<br />'3_prime_UTR_variant',<br />'incomplete_terminal_codon_variant',<br />'intron_variant',<br />'splice_region_variant',<br />'downstream_gene_variant',<br />'upstream_gene_variant',<br />'initiator_codon_variant',<br />'stop_retained_variant',<br />'inframe_insertion',<br />'inframe_deletion',<br />'transcript_ablation',<br />'transcript_fusion',<br />'transcript_amplification',<br />'transcript_translocation',<br />'TFBS_ablation',<br />'TFBS_fusion',<br />'TFBS_amplification',<br />'TFBS_translocation',<br />'regulatory_region_ablation',<br />'regulatory_region_fusion',<br />'regulatory_region_amplification',<br />'regulatory_region_translocation',<br />'feature_elongation',<br />'feature_truncation'<br /> )</td><td></td><td>The consequence(s) of the variant allele on this transcript.<br /> The list of consequence descriptions is available <a href="predicted_data.html#consequences">here</a>. </td><td>key: consequence_type_idx</td></tr>
+      <tr class="bg1"><td><b>cds_start</b></td><td>int(11)</td><td></td><td>The start position of variation in cds coordinates.</td><td></td></tr>
+      <tr class="bg2"><td><b>cds_end</b></td><td>int(11)</td><td></td><td>The end position of variation in cds coordinates.</td><td></td></tr>
+      <tr class="bg1"><td><b>cdna_start</b></td><td>int(11)</td><td></td><td>The start position of variation in cdna coordinates.</td><td></td></tr>
+      <tr class="bg2"><td><b>cdna_end</b></td><td>int(11)</td><td></td><td>The end position of variation in cdna coordinates.</td><td></td></tr>
+      <tr class="bg1"><td><b>translation_start</b></td><td>int(11)</td><td></td><td>The start position of variation on peptide.</td><td></td></tr>
+      <tr class="bg2"><td><b>translation_end</b></td><td>int(11)</td><td></td><td>The end position of variation on peptide.</td><td></td></tr>
+      <tr class="bg1"><td><b>distance_to_transcript</b></td><td>int(11)</td><td></td><td>Only for upstream or downstream variants, it gives the distance from the start or the end of the transcript</td><td></td></tr>
+      <tr class="bg2"><td><b>codon_allele_string</b></td><td>text</td><td></td><td>The reference and variant codons</td><td></td></tr>
+      <tr class="bg1"><td><b>pep_allele_string</b></td><td>text</td><td></td><td>The reference and variant peptides</td><td></td></tr>
+      <tr class="bg2"><td><b>hgvs_genomic</b></td><td>text</td><td></td><td>HGVS representation of this allele with respect to the genomic sequence</td><td></td></tr>
+      <tr class="bg1"><td><b>hgvs_transcript</b></td><td>text</td><td></td><td>HGVS representation of this allele with respect to the [coding or non-coding] transcript</td><td></td></tr>
+      <tr class="bg2"><td><b>hgvs_protein</b></td><td>text</td><td></td><td>HGVS representation of this allele with respect to the protein</td><td></td></tr>
+      <tr class="bg1"><td><b>polyphen_prediction</b></td><td>enum('unknown', 'benign', 'possibly damaging', 'probably damaging')</td><td>NULL</td><td>The PolyPhen prediction for the effect of this allele on the protein</td><td></td></tr>
+      <tr class="bg2"><td><b>polyphen_score</b></td><td>float</td><td>NULL</td><td>The PolyPhen score corresponding to the prediction </td><td></td></tr>
+      <tr class="bg1"><td><b>sift_prediction</b></td><td>enum('tolerated', 'deleterious')</td><td>NULL</td><td>The SIFT prediction for the effect of this allele on the protein </td><td></td></tr>
+      <tr class="bg2"><td><b>sift_score</b></td><td>float</td><td>NULL</td><td>The SIFT score corresponsing to this prediction</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_feature">variation_feature</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #FFD700">
+  <h2 style="display:inline;color:#000">Variation set tables</h2>
+</div>
+<p style="width:800px">These tables define the variation and structural variation set data. The complete list of variation sets with their descriptions is available <a href="data_description.html#variation_sets">here</a>.</p>
+  <div id="variation_set" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FFD700;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation_set</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation_set" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation_set')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table containts the name of sets and subsets of variations stored in the database. It usually represents the name of the project or subproject where a group of variations has been identified.</p>
+
+  <div id="div_variation_set" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_set_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>VARCHAR(255)</td><td></td><td>Name of the set e.g. "Phenotype-associated variations".</td><td>key: name_idx</td></tr>
+      <tr class="bg1"><td><b>description</b></td><td>TEXT</td><td></td><td>Description of the set.</td><td></td></tr>
+      <tr class="bg2"><td><b>short_name_attrib_id</b></td><td>INT(10)</td><td>NULL</td><td>Foreign key references to the <a href="#attrib">attrib</a> table. Short name used for web purpose.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_set_variation">variation_set_variation</a></li>
+    <li><a href="#variation_set_structure">variation_set_structure</a></li>
+    <li><a href="#attrib">attrib</a></li>
+  </ul>
+
+
+  <div id="variation_set_structural_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FFD700;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation_set_structural_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation_set_structural_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation_set_structural_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">A table for mapping structural variations to variation_sets.</p>
+
+  <div id="div_variation_set_structural_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>structural_variation_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#structural_variation">structural_variation</a> table.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_set_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#variation_set">variation_set</a> table.</td><td>primary key</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#structural_variation">structural_variation</a></li>
+    <li><a href="#variation_set">variation_set</a></li>
+  </ul>
+
+
+  <div id="variation_set_structure" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FFD700;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation_set_structure</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation_set_structure" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation_set_structure')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores hierarchical relationships between variation sets by relating them as variation sets and variation subsets.</p>
+
+  <div id="div_variation_set_structure" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_set_super</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#variation_set">variation_set</a> table.</td><td>primary key<br />key: sub_idx</td></tr>
+      <tr class="bg2"><td><b>variation_set_sub</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#variation_set">variation_set</a> table.</td><td>primary key<br />key: sub_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_set">variation_set</a></li>
+  </ul>
+
+
+  <div id="variation_set_variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FFD700;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation_set_variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation_set_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation_set_variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">A table for mapping variations to variation_sets.</p>
+
+  <div id="div_variation_set_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#variation">variation</a> table.</td><td>primary key<br />key: variation_set_idx</td></tr>
+      <tr class="bg2"><td><b>variation_set_id</b></td><td>int(10)</td><td></td><td>Primary key. Foreign key references to the <a href="#variation_set">variation_set</a> table.</td><td>primary key<br />key: variation_set_idx</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#variation_set">variation_set</a></li>
+  </ul>
+
+
+<br /><br />
+<div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #000">
+  <h2 style="display:inline;color:#000">Variation tables</h2>
+</div>
+<p style="width:800px">These tables define the central variation data.</p>
+  <div id="allele" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">allele</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_allele" style="cursor:pointer;text-decoration:none" onclick="show_hide('allele')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores information about each of a variation's alleles, along with population frequencies.</p>
+
+  <div id="div_allele" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>allele_id</b></td><td>int(11)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_id</b></td><td>int(11)</td><td></td><td>Foreign key references to the <a href="#variation">variation</a> table.</td><td>key: variation_idx</td></tr>
+      <tr class="bg1"><td><b>subsnp_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the <a href="#subsnp_handle">subsnp_handle</a> table.</td><td>key: subsnp_idx</td></tr>
+      <tr class="bg2"><td><b>allele_code_id</b></td><td>int(11)</td><td></td><td>Foreign key reference to <a href="#allele_code">allele_code</a> table.</td><td></td></tr>
+      <tr class="bg1"><td><b>frequency</b></td><td>float</td><td>NULL</td><td>Frequency of this allele in the sample.</td><td></td></tr>
+      <tr class="bg2"><td><b>population_id</b></td><td>int(11)</td><td>NULL</td><td>Foreign key references to the <a href="#population">population</a> table.</td><td>key: population_idx</td></tr>
+      <tr class="bg1"><td><b>count</b></td><td>int(11)</td><td>NULL</td><td>Number of individuals in the sample where this allele is found.</td><td></td></tr>
+      <tr class="bg2"><td><b>frequency_submitter_handle</b></td><td>int(10)</td><td>NULL</td><td>dbSNP handle for submitter of frequency data [may be different to submitter of observed variant]</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#population">population</a></li>
+    <li><a href="#subsnp_handle">subsnp_handle</a></li>
+    <li><a href="#allele_code">allele_code</a></li>
+  </ul>
+
+
+  <div id="variation" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This is the schema's generic representation of a variation, defined as a genetic feature that varies between individuals of the same species.  The most common type is the single nucleotide variation (SNP) though the schema also accommodates copy number variations (CNVs) and structural variations (SVs).<br /> In Ensembl, a variation is defined by its flanking sequence rather than its mapped location on a chromosome; a variation may in fact have multiple mappings across a genome,  although this fails our <a href="data_description.html#quality_control">Quality Control</a>.<br />  This table stores a variation's name (commonly an ID of the form e.g. rs123456, assigned by dbSNP), along with a validation status and ancestral (or reference) allele.</p>
+
+  <div id="div_variation" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#source">source</a> table.</td><td>key: source_idx</td></tr>
+      <tr class="bg1"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Name of the variation. e.g. "rs1333049".</td><td>unique:  name </td></tr>
+      <tr class="bg2"><td><b>validation_status</b></td><td>SET('cluster','freq',<br />'submitter','doublehit',<br />'hapmap','1000Genome',<br />'failed','precious')</td><td></td><td>Variant discovery method and validation from dbSNP. See the status descriptions <a href="data_description.html#validation_status">here</a>.</td><td></td></tr>
+      <tr class="bg1"><td><b>ancestral_allele</b></td><td>varchar(255)</td><td>NULL</td><td>Taken from dbSNP to show ancestral allele for the variation.</td><td></td></tr>
+      <tr class="bg2"><td><b>flipped</b></td><td>tinyint(1)</td><td>NULL</td><td>This is set to 1 if the variant is flipped from the negative to the positive strand during import.</td><td></td></tr>
+      <tr class="bg1"><td><b>class_attrib_id</b></td><td>int(10)</td><td>0</td><td>Class of the variation, key into the <a href="#attrib">attrib</a> table.<br /> The list of variation classes is available <a href="data_description.html#classes">here</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>somatic</b></td><td>tinyint(1)</td><td>0</td><td>flags whether this variation is known to be somatic or not</td><td></td></tr>
+      <tr class="bg1"><td><b>minor_allele</b></td><td>varchar(50)</td><td>NULL</td><td>The minor allele of this variant, as reported by dbSNP</td><td></td></tr>
+      <tr class="bg2"><td><b>minor_allele_freq</b></td><td>float</td><td>NULL</td><td>The 'global' frequency of the minor allele of this variant, as reported by dbSNP</td><td></td></tr>
+      <tr class="bg1"><td><b>minor_allele_count</b></td><td>int(10)</td><td>NULL</td><td>The number of samples the minor allele of this variant is found in, as reported by dbSNP</td><td></td></tr>
+      <tr class="bg2"><td><b>clinical_significance</b></td><td>SET('drug-response','histocompatibility','non-pathogenic','other','pathogenic','probable-non-pathogenic','probable-pathogenic''unknown','untested')</td><td></td><td>A set of clinical significance classes assigned to the variant.<br />  The list of clinical significances is available <a href="data_description.html#clin_significance">here</a>.</td><td></td></tr>
+      <tr class="bg1"><td><b>evidence</b></td><td>SET('Multiple_observations', 'Frequency','HapMap','1000Genomes', 'Cited')</td><td></td><td>A summary of the evidence supporting a variant as a guide to its potential reliability.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation_synonym">variation_synonym</a></li>
+    <li><a href="#failed_variation">failed_variation</a></li>
+    <li><a href="#variation_feature">variation_feature</a></li>
+    <li><a href="#allele">allele</a></li>
+    <li><a href="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></li>
+    <li><a href="#compressed_genotype_var">compressed_genotype_var</a></li>
+    <li><a href="#attrib">attrib</a></li>
+    <li><a href="#source">source</a></li>
+  </ul>
+
+
+  <div id="variation_feature" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation_feature</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation_feature')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table represents mappings of variations to genomic locations. It stores an allele string representing the different possible alleles that are found at that locus e.g. "A/T" for a SNP, as well as a "worst case" consequence of the mutation. It also acts as part of the relationship between variations and transcripts.</p>
+
+  <div id="div_variation_feature" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_feature_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Foreign key references <a href="#seq_region">seq_region</a> in core db. Refers to the seq_region which this variant is on, which may be a chromosome, a clone, etc...</td><td>key: pos_idx</td></tr>
+      <tr class="bg1"><td><b>seq_region_start</b></td><td>int</td><td></td><td>The start position of the variation on the <a href="#seq_region">seq_region</a>.</td><td>key: pos_idx</td></tr>
+      <tr class="bg2"><td><b>seq_region_end</b></td><td>int</td><td></td><td>The end position of the variation on the <a href="#seq_region">seq_region</a>.</td><td>key: pos_idx</td></tr>
+      <tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint</td><td></td><td>The orientation of the variation on the <a href="#seq_region">seq_region</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#variation">variation</a> table.</td><td>key: variation_idx</td></tr>
+      <tr class="bg1"><td><b>allele_string</b></td><td>varchar(50000)</td><td></td><td>This is a denormalised string taken from the alleles in the allele table associated with this variation. The reference allele (i.e. one on the reference genome comes first).</td><td></td></tr>
+      <tr class="bg2"><td><b>variation_name</b></td><td>varchar(255)</td><td></td><td>A denormalisation taken from the variation table. This is the name or identifier that is used for displaying the feature.</td><td></td></tr>
+      <tr class="bg1"><td><b>map_weight</b></td><td>int</td><td></td><td>The number of times that this variation has mapped to the genome. This is a denormalisation as this particular feature is one example of a mapped location. This can be used to limit the the features that come back from a query.</td><td></td></tr>
+      <tr class="bg2"><td><b>flags</b></td><td>SET('genotyped')</td><td></td><td>Flag to filter the selection of variations.</td><td></td></tr>
+      <tr class="bg1"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the source table.</td><td></td></tr>
+      <tr class="bg2"><td><b>validation_status</b></td><td>SET(<br />'cluster',<br />'freq',<br />'submitter',<br />'doublehit',<br />'hapmap',<br />'1000Genome',<br />'precious'<br /> )</td><td></td><td>Variant discovery method and validation from dbSNP. See the status descriptions <a href="data_description.html#validation_status">here</a>.</td><td></td></tr>
+      <tr class="bg1"><td><b>consequence_types</b></td><td>SET (<br />'intergenic_variant',<br />'splice_acceptor_variant',<br />'splice_donor_variant',<br />'stop_lost',<br />'coding_sequence_variant',<br />'missense_variant',<br />'stop_gained',<br />'synonymous_variant',<br />'frameshift_variant',<br />'nc_transcript_variant',<br />'non_coding_exon_variant',<br />'mature_miRNA_variant',<br />'NMD_transcript_variant',<br />'5_prime_UTR_variant',<br />'3_prime_UTR_variant',<br />'incomplete_terminal_codon_variant',<br />'intron_variant',<br />'splice_region_variant',<br />'downstream_gene_variant',<br />'upstream_gene_variant',<br />'initiator_codon_variant',<br />'stop_retained_variant',<br />'inframe_insertion',<br />'inframe_deletion',<br />'transcript_ablation',<br />'transcript_fusion',<br />'transcript_amplification',<br />'transcript_translocation',<br />'TFBS_ablation',<br />'TFBS_fusion',<br />'TFBS_amplification',<br />'TFBS_translocation',<br />'regulatory_region_ablation',<br />'regulatory_region_fusion',<br />'regulatory_region_amplification',<br />'regulatory_region_translocation',<br />'feature_elongation',<br />'feature_truncation',<br />'regulatory_region_variant',<br />'TF_binding_site_variant'<br /> )</td><td>'intergenic_variant'</td><td>The SO term(s) of all unique observed consequence types of this variation feature.<br /> The list of consequence descriptions is available <a href="predicted_data.html#consequences">here</a>.</td><td>key: consequence_type_idx</td></tr>
+      <tr class="bg2"><td><b>variation_set_id</b></td><td>SET (<br />'1','2','3','4','5','6','7','8',<br />'9','10','11','12','13','14','15','16',<br />'17','18','19','20','21','22','23','24',<br />'25','26','27','28','29','30','31','32',<br />'33','34','35','36','37','38','39','40',<br />'41','42','43','44','45','46','47','48',<br />'49','50','51','52','53','54','55','56',<br />'57','58','59','60','61','62','63','64'<br /> )</td><td>''</td><td>The variation feature can belong to a <a href="#variation_set">variation_set</a>.</td><td>key: variation_set_idx</td></tr>
+      <tr class="bg1"><td><b>class_attrib_id</b></td><td>int(10)</td><td>0</td><td>Class of the variation, key in the <a href="#attrib">attrib</a> table.<br /> The list of variation classes is available <a href="data_description.html#classes">here</a>.</td><td></td></tr>
+      <tr class="bg2"><td><b>somatic</b></td><td>tinyint(1)</td><td>0</td><td>Flags whether this variation_feature is somatic or germline</td><td></td></tr>
+      <tr class="bg1"><td><b>minor_allele</b></td><td>varchar(50)</td><td>NULL</td><td>The minor allele of this variant, as reported by dbSNP</td><td></td></tr>
+      <tr class="bg2"><td><b>minor_allele_freq</b></td><td>float</td><td>NULL</td><td>The 'global' frequency of the minor allele of this variant, as reported by dbSNP</td><td></td></tr>
+      <tr class="bg1"><td><b>minor_allele_count</b></td><td>int(10)</td><td>NULL</td><td>The number of samples the minor allele of this variant is found in, as reported by dbSNP</td><td></td></tr>
+      <tr class="bg2"><td><b>alignment_quality</b></td><td>double</td><td>NULL</td><td>Quality of alignment for variants mapped by flanks rather than position justified.</td><td></td></tr>
+      <tr class="bg1"><td><b>evidence</b></td><td>SET('Multiple_observations', 'Frequency','HapMap','1000Genomes', 'Cited')</td><td></td><td>A summary of the evidence supporting a variant as a guide to its potential reliability.</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#tagged_variation_feature">tagged_variation_feature</a></li>
+    <li><a href="#transcript_variation">transcript_variation</a></li>
+    <li><a href="#seq_region">seq_region</a></li>
+    <li><a href="#attrib">attrib</a></li>
+    <li><a href="#variation_set">variation_set</a></li>
+  </ul>
+
+
+  <div id="variation_synonym" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">variation_synonym</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_variation_synonym" style="cursor:pointer;text-decoration:none" onclick="show_hide('variation_synonym')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table allows for a variation to have multiple IDs, generally given by multiple sources.</p>
+
+  <div id="div_variation_synonym" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>variation_synonym_id</b></td><td>int(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>variation_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the variation table.</td><td>key: variation_idx</td></tr>
+      <tr class="bg1"><td><b>subsnp_id</b></td><td>int(15)</td><td></td><td>Foreign key references to the subsnp_handle table.</td><td>key: subsnp_idx</td></tr>
+      <tr class="bg2"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the source table.</td><td>unique: name, source_id<br />key: source_idx</td></tr>
+      <tr class="bg1"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Name of the synonym variation. e.g. 'rs1333049'. The corresponding variation ID of this variation is different from the one stored in the column variation_id.</td><td>unique: name, source_id</td></tr>
+      <tr class="bg2"><td><b>moltype</b></td><td>varchar(50)</td><td></td><td>...</td><td></td></tr>
+    </table>
+  </div>
+  <p style="margin-top:10px"><b>See also:</b></p>
+  <ul>
+    <li><a href="#source">source</a></li>
+    <li><a href="#variation">variation</a></li>
+    <li><a href="#subsnp_handle">subsnp_handle</a></li>
+  </ul>
+
+
+
+</body>
+</html>

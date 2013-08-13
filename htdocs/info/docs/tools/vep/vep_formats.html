@@ -1,0 +1,307 @@
+<html>
+<head>
+<title>VEP data formats</title>
+</head>
+
+<body>
+
+<div style="float:right"><img src="/img/vep_logo.png"/></div>
+
+<h1 id="top">Variant Effect Predictor data formats</h1>
+
+<h2 id="input">Input</h2>
+
+<p>Both the web and script version of the VEP can use the same input formats.
+Formats can be auto-detected by the VEP script, but must be manually selected
+when using the web interface.</p>
+
+<h3 id="default">Default</h3>
+
+<p>The default format is a simple<strong>whitespace-separated</strong>format
+(columns may be separated by space or tab characters),
+containing five required columns plus an optional identifier column:
+</p>
+
+<ol>
+	<li><strong>chromosome</strong>- just the name or number, with no 'chr'
+	prefix</li>
+	<li><strong>start</strong></li>
+	<li><strong>end</strong></li>
+	<li><strong>allele</strong>- pair of alleles separated by a '/', with the
+	reference allele first</li>
+	<li><strong>strand</strong>- defined as + (forward) or - (reverse).</li>
+	<li><strong>identifier</strong>- this identifier will be used in the VEP's
+	output. If not provided, the VEP will construct an identifier from the given
+	coordinates and alleles.</li>
+</ol>
+
+<pre class="code">
+1   881907    881906    -/C   +
+5   140532    140532    T/C   +
+12  1017956   1017956   T/A   +
+2   946507    946507    G/C   +
+14  19584687  19584687  C/T   -
+19  66520     66520     G/A   +    var1
+8   150029    150029    A/T   +    var2
+</pre>
+
+<p>An insertion (of any size) is indicated by start coordinate = end coordinate
++ 1. For example, an insertion of 'C' between nucleotides 12600 and 12601 on the
+forward strand of chromosome 8 is indicated as follows:</p>
+
+<pre class="code">
+8   12601     12600     -/C   +
+</pre>
+<p>A deletion is indicated by the exact nucleotide coordinates. For example, a
+three base pair deletion of nucleotides 12600, 12601, and 12602 of the reverse
+strand of chromosome 8 will be:</p>
+
+<pre class="code">
+8   12600     12602     CGT/- -
+</pre>
+
+
+<h3 id="vcf">VCF</h2>
+
+<p>The VEP also supports using<a
+href="http://www.1000genomes.org/wiki/Analysis/vcf4.0">VCF (Variant Call Format)
+version 4.0</a>. This is a common format used by the 1000 genomes project, and
+can be produced as an output format by many variant calling tools.</p>
+
+<p>Users using VCF should note a peculiarity in the difference between how
+Ensembl and VCF describe unbalanced variations. For any unbalanced variant (i.e.
+insertion, deletion or unbalanced substitution), the VCF specification requires
+that the base immediately before the variant should be included in both the
+reference and variant alleles. This also affects the reported position i.e. the
+reported position will be one base before the actual site of the variant.</p>
+
+<p>In order to parse this correctly, the VEP needs to convert such variants
+into Ensembl-type coordinates, and it does this by removing the additional base
+and adjusting the coordinates accordingly. This means that if an identifier is
+not supplied for a variant (in the 3rd column of the VCF), then the identifier
+constructed and the position reported in the VEP's output file will differ from
+the input. This problem can be overcome by ensuring each variant has a unique
+identifier specified in the 3rd column of the VCF.</p>
+
+<p>The following examples illustrate how VCF describes a variant and how it is
+handled internally by the VEP. Consider the following aligned sequences (for the
+purposes of discussion on chromosome 20):</p>
+
+<pre class="code">Ref: a t C g a // C is the reference base
+ 1 : a t G g a // C base is a G in individual 1
+ 2 : a t - g a // C base is deleted w.r.t. the reference in individual 2
+ 3 : a t CAg a // A base is inserted w.r.t. the reference sequence in individual 3</pre>
+
+<h4>Individual 1</h3>
+
+<p>The first individual shows a simple balanced substitution of G for C at base
+3. This is described in a compatible manner in VCF and Ensembl styles. Firstly,
+in VCF:</p>
+
+<pre class="code">20   3   .   C   G   .   PASS   .</pre>
+
+<p>And in Ensembl format:</p>
+
+<pre class="code">20   3   3   C/G   +</pre>
+
+<h4>Individual 2</h3>
+
+<p>The second individual has the 3rd base deleted relative to the reference. In
+VCF, both the reference and variant allele columns must include the preceding
+base (T) and the reported position is that of the preceding base:</p>
+
+<pre class="code">20   2   .   TC   T   .   PASS   .</pre>
+
+<p>In Ensembl format, the preceding base is not included, and the start/end
+coordinates represent the region of the sequence deleted. A "-" character is
+used to indicate that the base is deleted in the variant sequence:</p>
+
+<pre class="code">20   3   3   C/-   +</pre>
+
+<p>The upshot of this is that while in the VCF input file the position of the
+variant is reported as 2, in the output file from the VEP the position will be
+reported as 3. If no identifier is provided in the third column of the VCF, then
+the constructed identifier will be:</p>
+
+<pre class="code">20_3_C/-</pre>
+
+<h4>Individual 3</h3>
+
+<p>The third individual has an "A" inserted between the 3rd and 4th bases of
+the sequence relative to the reference. In VCF, as for the deletion, the base
+before the insertion is included in both the reference and variant allele
+columns, and the reported position is that of the preceding base:</p>
+
+<pre class="code">20   3   .   C   CA   .   PASS   .</pre>
+
+<p>In Ensembl format, again the preceding base is not included, and the
+start/end positions are "swapped" to indicate that this is an insertion.
+Similarly to a deletion, a "-" is used to indicate no sequence in the reference:
+</p>
+
+<pre class="code">20   4   3   -/A   +</pre>
+
+<p>Again, the output will appear different, and the constructed identifier may
+not be what is expected:</p>
+
+<pre class="code">20_3_-/A</pre>
+
+<p>The solution is to always add a unique identifer for each of your variants
+to the VCF file!!!</p>
+
+<h3 id="sv">Structural variants</h4>
+
+<p>The VEP can also call consequences on structural variants encoded in
+tab-delimited or VCF format. To recognise a variant as a structural variant, the
+allele string (or "SVTYPE" INFO field in VCF) must be set to one of the
+currently recognised values:</p>
+
+<ul>
+	<li><b>INS</b>- insertion</li>
+	<li><b>DEL</b>- deletion</li>
+	<li><b>DUP</b>- duplication</li>
+	<li><b>TDUP</b>- tandem duplication</li>
+</ul>
+
+<p>Examples of structural variants encoded in tab-delimited format:</p>
+
+<pre class="code">
+1    160283    471362    DUP
+1    1385015   1387562   DEL
+</pre>
+
+<p>Examples of structural variants encoded in VCF format:</p>
+
+<pre class="code">
+#CHROM  POS     ID   REF  ALT    QUAL  FILTER  INFO                    FORMAT
+1       160283  sv1  .    &lt;DUP&gt;  .     .       SVTYPE=DUP;END=471362   .
+1       1385015 sv2  .    &lt;DEL&gt;  .     .       SVTYPE=DEL;END=1387562  .
+</pre>
+
+<p>See the<a
+href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/VCF%20%28Variant%20Call%20Format%29%20version%204.0/encoding-structural-variants">VCF
+definition document</a>for more detail on how to describe
+structural variants in VCF format.</p>
+
+<h3 id="pileup">Pileup</h2>
+
+<p>The pileup format can also be used as input for the VEP. This is the output
+of the ssaha pileup package.</p>
+
+<h3 id="hgvs">HGVS identifiers</h3>
+
+<p>See<a
+href="http://www.hgvs.org/mutnomen/">http://www.hgvs.org/mutnomen/</a>for
+details. These must be relative to genomic or Ensembl transcript coordinates. It
+also is possible to use RefSeq transcripts in both the web
+interface and the VEP script (see<a
+href="/info/docs/variation/vep/vep_script.html#hgvs">script documentation</a>).
+ This works for RefSeq transcripts that align to the genome correctly.</p>
+
+<p>Examples:</p>
+
+<pre class="code">ENST00000207771.3:c.344+626A>T
+ENST00000471631.1:c.28_33delTCGCGG
+ENST00000285667.3:c.1047_1048insC
+5:g.140532T>C</pre>
+
+<p>Examples using RefSeq identifiers (using --refseq in the VEP script, or
+select the otherfeatures transcript database on the web interface and input type of HGVS):</p>
+
+<pre class="code">NM_153681.2:c.7C>T
+NM_005239.4:c.190G>A
+NM_001025204.1:c.336G>A</pre>
+
+<h3 id="id">Variant identifiers</h3>
+
+<p>These should be e.g. dbSNP rsIDs, or any synonym for a variant present in
+the Ensembl Variation database. See<a
+href="/info/docs/variation/sources_documentation.html">here</a>for a list of
+identifier sources in Ensembl.</p>
+
+<p><a href="#top">[Back to top]</a></p>
+
+<hr/>
+<h2 id="output">Output</h2>
+
+<p>The output format from the web and script VEP is the same. The output
+columns are:</p>
+
+<ol>
+	<li><strong>Uploaded variation</strong>- as chromosome_start_alleles</li>
+	<li><strong>Location</strong>- in standard coordinate format (chr:start or chr:start-end)</li>
+	<li><strong>Allele</strong>- the variant allele used to calculate the consequence</li>
+	<li><strong>Gene</strong>- Ensembl stable ID of affected gene</li>
+	<li><strong>Feature</strong>- Ensembl stable ID of feature</li>
+	<li><strong>Feature type</strong>- type of feature. Currently one of Transcript, RegulatoryFeature, MotifFeature.</li>
+	<li><strong>Consequence</strong>-<a href="/info/docs/variation/predicted_data.html#consequences">consequence type</a>of this variation</li>
+	<li><strong>Position in cDNA</strong>- relative position of base pair in cDNA sequence</li>
+	<li><strong>Position in CDS</strong>- relative position of base pair in coding sequence</li>
+	<li><strong>Position in protein</strong>- relative position of amino acid in protein</li>
+	<li><strong>Amino acid change</strong>- only given if the variation affects the protein-coding sequence</li>
+	<li><strong>Codon change</strong>- the alternative codons with the variant base in upper case</li>
+	<li><strong>Co-located variation</strong>- known identifier of existing variation</li>
+	<li><strong>Extra</strong>- this column contains extra information as key=value pairs separated by ";". The keys are as follows:
+		<ul>
+			<li><i>HGNC</i>- the HGNC gene identifier</li>
+			<li><i>ENSP</i>- the Ensembl protein identifier of the affected transcript</li>
+			<li><i>HGVSc</i>- the HGVS coding sequence name</li>
+			<li><i>HGVSp</i>- the HGVS protein sequence name</li>
+			<li><i>SIFT</i>- the SIFT prediction and/or score, with both given as prediction(score)</li>
+			<li><i>PolyPhen</i>- the PolyPhen prediction and/or score</li>
+			<li><i>MOTIF_NAME</i>- the source and identifier of a transcription factor binding profile aligned at this position</li>
+			<li><i>MOTIF_POS</i>- The relative position of the variation in the aligned TFBP</li>
+			<li><i>HIGH_INF_POS</i>- a flag indicating if the variant falls in a high information position of a transcription factor binding profile (TFBP)</li>
+			<li><i>MOTIF_SCORE_CHANGE</i>- The difference in motif score of the reference and variant sequences for the TFBP</li>
+			<li><i>CELL_TYPE</i>- List of cell types and classifications for regulatory feature</li>
+			<li><i>CANONICAL</i>- a flag indicating if the transcript is denoted as the canonical transcript for this gene</li>
+			<li><i>CCDS</i>- the CCDS identifer for this transcript, where applicable</li>
+			<li><i>INTRON</i>- the intron number (out of total number)</li>
+			<li><i>EXON</i>- the exon number (out of total number)</li>
+			<li><i>DOMAINS</i>- the source and identifer of any overlapping protein domains</li>
+			<li><i>DISTANCE</i>- Shortest distance from variant to transcript</li>
+			<li><i>IND</i>- individual name</li>
+           <li><i>ZYG</i>- zygosity of individual genotype at this locus</li>
+           <li><i>SV</i>- IDs of overlapping structural variants</li>
+			<li><i>FREQS</i>- Frequencies of overlapping variants used in filtering</li>
+			<li><i>GMAF</i>- Minor allele and frequency of existing variation in 1000 Genomes Phase 1</li>
+           <li><i>AFR_MAF</i>- Minor allele and frequency of existing variation in 1000 Genomes Phase 1 combined African population</li>
+           <li><i>AMR_MAF</i>- Minor allele and frequency of existing variation in 1000 Genomes Phase 1 combined American population</li>
+           <li><i>ASN_MAF</i>- Minor allele and frequency of existing variation in 1000 Genomes Phase 1 combined Asian population</li>
+           <li><i>EUR_MAF</i>- Minor allele and frequency of existing variation in 1000 Genomes Phase 1 combined European population</li>
+           <li><i>CLIN_SIG</i>- Clinical significance of variant from dbSNP</li>
+           <li><i>BIOTYPE</i>- Biotype of transcript</li>
+		</ul>
+	</li>
+</ol>
+
+<p>Empty values are denoted by '-'. Further fields in the Extra column can be
+added by<a href="vep_script.html#plugins">plugins</a>or using<a
+href="vep_script.html#custom">custom annotations</a>in the VEP script. Output
+fields can be configured using the --fields flag when running the VEP script.
+</p>
+
+<pre class="code">
+11_224088_C/A    11:224088   A  ENSG00000142082  ENST00000525319  Transcript         missense_variant           742  716  239  T/N  aCc/aAc  -  SIFT=deleterious(0);PolyPhen=unknown(0)
+11_224088_C/A    11:224088   A  ENSG00000142082  ENST00000534381  Transcript         5_prime_UTR_variant        -    -    -    -    -        -  -
+11_224088_C/A    11:224088   A  ENSG00000142082  ENST00000529055  Transcript         downstream_variant         -    -    -    -    -        -  -
+11_224585_G/A    11:224585   A  ENSG00000142082  ENST00000529937  Transcript         intron_variant             -    -    -    -    -        -  HGVSc=ENST00000529937.1:c.136-346G>A
+22_16084370_G/A  22:16084370 A  -                ENSR00000615113  RegulatoryFeature  regulatory_region_variant  -    -    -    -    -        -  -
+</pre>
+
+<p>The VEP script will also add a header to the output file. This contains
+information about the databases connected to, and also a key describing the
+key/value pairs used in the extra column.</p>
+
+<pre class="code">
+## ENSEMBL VARIANT EFFECT PREDICTOR v72
+## Output produced at 2013-06-16 16:09:38
+## Connected to homo_sapiens_core_72_37 on ensembldb.ensembl.org
+## Using API version 72, DB version 72
+## Extra column keys:
+## DISTANCE : Shortest distance from variant to transcript
+</pre>
+
+<p><a href="#top">[Back to top]</a></p>
+</body>
+</html>

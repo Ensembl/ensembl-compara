@@ -1,0 +1,115 @@
+<html>
+<head>
+	<meta name="order" content="2" />
+  <meta name="navigation" content="Database description">
+
+	<title>Database Description</title>
+</head>
+
+<body>
+
+<div>
+  <!-- Right hand side menu -->
+	<div style="float:right;margin-left:8px;margin-top:2px;background-color:#F2F2F2;color:#333;border-radius:5px">
+    <div style="padding:5px;font-weight:bold;color:#FFF;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+		  <img src="/i/16/rev/info.png" style="vertical-align:top"/>
+		  Page content
+		</div> 
+    <ul style="padding-left:25px;padding-right:5px">
+      <li><a href="#db_schema">Database schema diagram</a> [PDF]</li> 
+      <li><a href="#table_desc">Schema documentation</a></li> 
+      <li><a href="#spec">Specifications</a></li> 
+      <li><a href="#db_load">Database load</a></li>
+      <li><a href="#import_vcf">Load from a VCF file</a></li>
+      <li><a href="#support">Software support</a></li>
+	  </ul>
+  </div>
+
+  <!-- Horizontal menu -->
+  <span style="font-weight:bold">
+    <a href="index.html">About Ensembl Variation</a> |
+    <a href="data_description.html">Data Description</a> | 
+    <a href="predicted_data.html">Predicted Data</a> |
+    Database Description |  
+    <a href="/info/docs/api/variation/index.html">Perl API</a> |
+    <a href="vep/index.html">Variant Effect Predictor</a>
+  </span>
+
+  <h1 style="margin-top:15px">Ensembl Variation - Database description</h1>
+</div>
+
+
+<br />
+<h2 id="db_schema">Database schema diagram</h2>
+<p>
+  <span style="vertical-align:top;padding-right:5px">The variation database schema diagram is available in a PDF file:</span>
+  <a href="variation-database-schema.pdf">
+    <img src="/img/variation_schema_thumb.png" style="border:1px solid navy" alt="Variation Schema Diagram" title="Variation Schema Diagram (PDF)"/>
+  </a>
+</p>
+
+<br />
+<h2 id="table_desc">Schema documentation</h2>
+<p>
+The tables of the database are described in the <a href="/info/docs/variation/variation_schema.html">Variation Schema Documentation</a> page.
+</p>
+
+<br />
+<h2 id="spec">Specifications</h2>
+<ul>
+	<li>Database management system: <b>MySQL</b></li>
+	<li>Storage engine: <b>MyISAM</b></li>
+</ul>
+
+<br />
+<h2 id="db_load">Database load</h2>
+<p>
+The variations databases can be loaded using dumped files from the <a href="/info/data/ftp/index.html">Ensembl
+FTP</a>.<br />
+For Ensembl 61, it takes a couple of minutes to load the largest tables for Human on our servers, e.g:
+</p>
+<table id="loading_times" class="ss" style="width:350px;">
+<tr><th>Table</th><th>Loading time</th></tr>
+<tr class="bg1"><td>variation</td><td style="text-align:right">24 minutes</td></tr>
+<tr class="bg2"><td>variation_feature</td><td style="text-align:right">13 minutes</td></tr>
+<tr class="bg1"><td>flanking_sequence</td><td style="text-align:right">3 minutes</td></tr>
+<tr class="bg2"><td>compressed_genotype_single_bp</td><td style="text-align:right">13 minutes</td></tr>
+<tr class="bg1"><td>population_genotype</td><td style="text-align:right">30 minutes</td></tr>
+</table>
+<p>
+The load of the largest table in the Human variation database (<b>allele</b> table) takes almost 3 hours.
+</p>
+<p>
+See below some settings of our server:
+</p>
+<table id="mysql_settings" class="ss" style="width:350px;">
+<tr><th>Variable</th><th>Value</th></tr>
+<tr class="bg1"><td>myisam_data_pointer_size</td><td>6</td></tr>
+<tr class="bg2"><td>myisam_max_sort_file_size</td><td>9223372036853727232</td></tr>
+<tr class="bg1"><td>myisam_mmap_size</td><td>18446744073709551615</td></tr>
+<tr class="bg2"><td>myisam_recover_options</td><td>OFF</td></tr>
+<tr class="bg1"><td>myisam_repair_threads</td><td>1</td></tr>
+<tr class="bg2"><td>myisam_sort_buffer_size</td><td>67108864</td></tr>
+<tr class="bg1"><td>myisam_stats_method</td><td>nulls_unequal</td></tr>
+<tr class="bg2"><td>myisam_use_mmap</td><td>OFF</td></tr>
+</table>
+
+<br />
+<h2 id="import_vcf">Loading from a VCF file</h2>
+
+<p> Ensembl provides a script to populate a variation database schema with data
+from a VCF file. See <a href="import_vcf.html">documentation</a> for details.
+</p>
+
+
+<br />
+<h2 id="support">Ensembl Software Support</h2>
+
+<p>
+Ensembl is an open project and we would like to encourage correspondence and discussions on any subject on any aspect of Ensembl.<br />
+Please see the
+<a href="http://www.ensembl.org/info/about/contact/">Ensembl Contacts</a> page for suitable options getting in touch with us.
+</p>
+
+</body>
+</html>
