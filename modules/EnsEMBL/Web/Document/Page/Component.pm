@@ -30,6 +30,7 @@ sub initialize_XML {
 }
 
 sub initialize_Excel  { shift->initialize_Text; }
+sub initialize_RTF    { shift->initialize_HTML; }
 sub initialize_JSON   { shift->initialize_Text; }
 sub initialize_TextGz { shift->initialize_Text; }
 sub initialize_DAS    { shift->initialize_XML('DASGFF'); }
