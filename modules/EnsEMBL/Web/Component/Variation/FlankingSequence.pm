@@ -6,30 +6,24 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Variation);
 
-sub content {
-  my $self   = shift;
-  my $object = $self->object;
-  
-  ## first check we have uniquely determined variation
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
-  
+sub initialize {
+  my $self              = shift;
   my $hub               = $self->hub;
-  my $variation         = $object->Obj;
+  my $object            = $self->object;
   my $vf                = $hub->param('vf');
   my $flanking          = $hub->param('select_sequence') || 'both';
   my $flank_size        = $hub->param('flank_size') || 400;
   my @flank             = $flanking eq 'both' ? ($flank_size, $flank_size) : $flanking eq 'up' ? ($flank_size) : (undef, $flank_size);
   my %mappings          = %{$object->variation_feature_mapping}; 
   my $v                 = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$vf};
-  my $variation_feature = $variation->get_VariationFeature_by_dbID($vf);
+  my $variation_feature = $object->Obj->get_VariationFeature_by_dbID($vf);
   my $variation_string  = $variation_feature->ambig_code || '[' . $variation_feature->allele_string . ']';
-  my $align_quality     = $variation_feature->flank_match;
   my $chr_end           = $variation_feature->slice->end;
   my $slice_start       = $v->{'start'} - $flank[0] > 1        ? $v->{'start'} - $flank[0] : 1;
   my $slice_end         = $v->{'end'}   + $flank[1] > $chr_end ? $chr_end                  : $v->{'end'} + $flank[1];
   my $slice_adaptor     = $hub->get_adaptor('get_SliceAdaptor');
   my @order             = $v->{'strand'} == 1 ? qw(up var down) : qw(down var up);
-  my (@sequence, $html);
+  my @sequence;
   
   my %slices = (
     var  => $slice_adaptor->fetch_by_region(undef, $v->{'Chr'}, $v->{'start'}, $v->{'end'}, $v->{'strand'}),
@@ -67,9 +61,26 @@ sub content {
     push @sequence, @$seq;
   }
   
+  return ([ \@sequence ], $config, join '', map $slices{$_} ? $slices{$_}->seq : (), @order);
+}
+
+sub content {
+  my $self   = shift;
+  my $object = $self->object;
+  
+  ## first check we have uniquely determined variation
+  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
+  
+  my ($sequence, $config, $raw_seq) = $self->initialize;
+  
+  my $hub           = $self->hub;
+  my $variation     = $object->Obj;
+  my $align_quality = $variation->get_VariationFeature_by_dbID($hub->param('vf'))->flank_match;
+  my $html;
+  
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
-    my $source_link = $hub->get_ExtURL_link('here', uc($variation->source), "$config->{'v'}#submission");
+    my $source_link = $hub->get_ExtURL_link('here', uc $variation->source, "$config->{'v'}#submission");
        $source_link =~ s/%23/#/;
        
     $html .= $self->_warning('Alignment quality', "
@@ -78,9 +89,9 @@ sub content {
     ", 'auto');
   }
   
-  $html .= $self->tool_buttons(join '', map $slices{$_} ? $slices{$_}->seq : (), @order, $config->{'species'});
+  $html .= $self->tool_buttons($raw_seq);
   $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
-  $html .= $self->build_sequence([ \@sequence ], $config);
+  $html .= $self->build_sequence($sequence, $config);
   
   return $self->_info('Flanking sequence', qq{ 
     The sequence below is from the <b>reference genome</b> flanking the variant location.
@@ -107,6 +118,12 @@ sub markup_variation {
     
     $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
   }
+}
+
+sub content_rtf {
+  my $self = shift;
+  my ($sequence, $config) = $self->initialize;
+  return $self->export_sequence($sequence, $config);
 }
 
 1;
