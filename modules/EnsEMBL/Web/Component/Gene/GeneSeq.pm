@@ -48,7 +48,7 @@ sub content {
   my $species   = $hub->species;
   my $type      = $hub->type;
   my $site_type = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
-  my $html      = $self->tool_buttons(uc $slice->seq(1), $species);
+  my $html      = $self->tool_buttons(uc $slice->seq(1));
   
   if ($length >= $self->{'subslice_length'}) {
     $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
@@ -99,8 +99,7 @@ sub content_sub_slice {
 
 sub content_rtf {
   my $self = shift;
-  my ($sequence, $config) = $self->initialize($self->object->slice);
-  return $self->export_sequence($sequence, $config, "Gene-Sequence-$config->{'species'}-$config->{'gene_name'}");
+  return $self->export_sequence($self->initialize($self->object->slice));
 }
 
 sub get_key {

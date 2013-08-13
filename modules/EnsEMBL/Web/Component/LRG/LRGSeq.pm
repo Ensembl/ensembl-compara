@@ -16,8 +16,7 @@ sub _init {
 
 sub content_rtf {
   my $self = shift;
-  my ($sequence, $config) = $self->initialize($self->object->Obj);
-  return $self->export_sequence($sequence, $config, "LRG-Sequence-$config->{'species'}-$config->{'gene_name'}");
+  return $self->export_sequence($self->initialize($self->object->Obj));
 }
 
 1;

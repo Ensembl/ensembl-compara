@@ -89,20 +89,16 @@ sub content {
   
   my ($sequence, $config) = $self->initialize($translation);
   
-  my $html = $self->tool_buttons($translation->Obj->seq, $config->{'species'}, 'peptide');
-  $html   .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
-  $html   .= $self->build_sequence($sequence, $config);
+  my $html  = $self->tool_buttons($translation->Obj->seq, 'peptide');
+     $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
+     $html .= $self->build_sequence($sequence, $config);
 
   return $html;
 }
 
 sub content_rtf {
-  my $self        = shift;
-  my $translation = $self->object->translation_object;
-  
-  my ($sequence, $config) = $self->initialize($translation);
-  
-  return $self->export_sequence($sequence, $config, sprintf 'Protein-Sequence-%s-%s', $config->{'species'}, $translation->stable_id);
+  my $self = shift;
+  return $self->export_sequence($self->initialize($self->object->translation_object));
 }
 
 1;

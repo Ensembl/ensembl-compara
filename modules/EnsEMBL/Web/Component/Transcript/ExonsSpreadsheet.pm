@@ -137,7 +137,7 @@ sub content_rtf {
   my $self = shift;
   my ($data, $config) = $self->initialize(1);
   $config->{'v_space'} = "\n";
-  return $self->export_sequence($data, $config, sprintf('Exons-%s-%s', $self->hub->species, $self->object->stable_id), 1);
+  return $self->export_sequence($data, $config, 1);
 }
 
 sub get_exon_sequence_data {
