@@ -18,6 +18,7 @@ sub render {
 
   my $rows = [];
 
+  my @A = $species_defs->valid_species;
   foreach my $species ($species_defs->valid_species) {
     my $prefix = $species_defs->get_config($species, 'SPECIES_PREFIX');
     next unless $prefix;
