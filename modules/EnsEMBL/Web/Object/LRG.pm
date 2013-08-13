@@ -533,13 +533,13 @@ sub feature_length    { return $_[0]->Obj->feature_Slice->length;             }
 
 sub gene {
   my $self = shift;
-  $self->__data->{'gene'} = @{$self->Obj->get_all_Genes||[]}->[0] unless $self->__data->{'gene'};
+  $self->__data->{'gene'} = @{$self->Obj->get_all_Genes || []}[0] unless $self->__data->{'gene'};
   return $self->__data->{'gene'};
 }
 
 sub transcript {
   my $self = shift;
-  $self->__data->{'transcript'} = @{$self->Obj->get_all_Transcripts(undef, 'LRG_import')||[]}->[0] unless $self->__data->{'transcript'};
+  $self->__data->{'transcript'} = @{$self->Obj->get_all_Transcripts(undef, 'LRG_import') || []}[0] unless $self->__data->{'transcript'};
   return $self->__data->{'transcript'};
 }
 
