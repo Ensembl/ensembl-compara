@@ -22,19 +22,20 @@ sub render {
   } @toplevel_sections;
   
   foreach my $dir (grep { !/^_/ && keys %{$tree->{$_}} } @section_order) {
+    next if $dir eq 'sitemap.html';
     my $column      = 'left';  
     my $section     = $tree->{$dir};
-    if ($dir eq 'about') {
+    if ($dir eq 'genome') {
       $column = 'middle';
     }
-    elsif ($dir eq 'docs') {
+    elsif ($dir eq 'docs' || $dir eq 'data') {
       $column = 'right';
     }
     
     my $title        = $section->{'_title'} || ucfirst $dir;
     my @second_level = @{$self->create_links($section, ' class="bold"')};
-    
-    $html{$column} .= qq{<div class="plain-box"><h2 class="box-header">$title</h2>\n};
+ 
+    $html{$column} .= qq{<div class="plain-box"><h2 class="box-header"><a href="/info/$dir/">$title</a></h2>\n};
 
     if (scalar @second_level) {
       $html{$column} .= '<ul>';
@@ -46,7 +47,7 @@ sub render {
         my $subsection  = $entry->{'key'};
         my @third_level = @{$self->create_links($subsection)};
         
-        if (scalar @third_level && $link !~ /eHive/ && $link !~ /webcode/) {
+        if (scalar @third_level) {
           $link .= '<ul>';
           $link .= "<li>$_->{'link'}</li>\n" for @third_level;
           $link .= '</ul>';
