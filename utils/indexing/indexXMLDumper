@@ -170,7 +170,7 @@ else {
 }
 
 # path to files
-my $index_root = ($search_engine eq 'solr') ? '/exalead-data/search_indices/' : '/nfs/web_data/search/';
+my $index_root =  '/exalead-data/search_indices/';
 my $file_root = ($search_engine eq 'solr') ? "solr/".lc($sitetype)."_$release" : "lucene/".lc($sitetype)."_$release";
 my $dir = $dir ? $dir : $dump_real ? $index_root.$file_root : 'input';
 print LOG "Dumping xml files to $dir\n";
@@ -181,14 +181,14 @@ my $total_c;
 my $conf = {};
 
 foreach my $index (@indexes) {
-  my $loc = "$dir/".$shards{$index}."_$release/";
+  my $loc = ($search_engine eq 'solr') ? "$dir/".$shards{$index}."_$release/" : "$dir/";
   my $start = time;
   $conf->{'directory'} = $loc . lc($sitetype)."_$index";
   system( "mkdir -p $conf->{'directory'}") unless -e $conf->{'directory'};
 
   if ($index eq 'Variation') {
-    $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."_$release/".lc($sitetype).'_SomaticMutation';
-  system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
+    $conf->{'directory_somatic_mutations'} = ($search_engine eq 'solr') ? "$dir/".$shards{'SomaticMutation'}."_$release/".lc($sitetype).'_SomaticMutation' : $loc . lc($sitetype)."_SomaticMutation";
+    system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
     my $single_species = 0;
