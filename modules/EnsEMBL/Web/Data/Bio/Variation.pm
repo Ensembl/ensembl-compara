@@ -135,7 +135,19 @@ sub convert_to_drawing_parameters {
     }
     
     else {
-      $sources = join(', ', sort keys %{$phenotypes_sources{$name} || {}});
+      foreach my $source(keys %{$phenotypes_sources{$name} || {}}) {
+
+        my $source_uc = uc $source;
+        my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
+
+        $sources .=
+          ($sources ? ', ' : '').
+          ($url ? sprintf(
+            '<a target="_blank" href="%s">%s</a>',
+            $url,
+            $source
+          ) : $source);
+      }
     }
     
     push @results, {
