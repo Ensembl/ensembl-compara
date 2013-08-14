@@ -1,0 +1,332 @@
+<html>
+  <head>
+    <title>Installing non-Ensembl code - Perl/Apache/MysQL/SQLite/Dotter/CVS</title>
+  </head>
+<body> 
+
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+<h1>Non-Ensembl Applications Build/Install</h1>
+
+<p>Ensembl is built on the following applications:</p>
+<ul>
+  <li><a href="#cvs">CVS</a> - versioning system to allow you to download the Ensembl code</li>
+  <li><a href="#perl">Perl</a> - Open source scripting language</li>
+  <li><a href="#apache">Apache and mod_perl</a> - Open source web server</li>
+  <li><a href="#mysql">MySQL</a> - Open source database server</li>
+  <li><a href="#sqlite">SQLite</a> - alternative open source database server for session information (if not installing MySQL)</li>
+  <!--
+  <li><a href="#dotter">Dotter</a> - Graphical alignment package</li>
+  -->
+</ul> 
+<p>These applications are not version-specific for Ensembl; that is, if you upgrade your Ensembl installation
+to a newer version when one becomes available, you probably won't need to install new versions of
+these applications.</p>
+
+<p>All of this software, like all of Ensembl, is Open Source software and can be downloaded and used free
+of charge. You should, however, check the documentation for each application to see what license it
+has been released under, particularly if you are installing Ensembl in a commercial environment.</p>
+
+<p>The following instructions assume you have root access to the installation machine. If you do not, get
+your systems administrator to install this software for you.</p>
+
+<p>You may have some or all of this software installed already. If you have any problems getting the site
+running with pre-installed software (in particular Apache with mod_perl installed from RPMs), we
+recommend simply installing the latest version using the following instructions.</p>
+
+<h2 id="cvs">CVS</h2>
+<p>CVS is a software version control system that we use for storing the source code to Ensembl. You will
+need CVS installed if you want to download the Ensembl source code. It will also help you keep up to
+date with any bug fixes.  We also have a  
+<a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/?root=ensembl">Web-based CVS</a> repository.
+</p>
+
+<h3>To install CVS:</h3>
+<ol>
+<li>Download the latest source from <a href="http://ftp.gnu.org/non-gnu/cvs/source/stable/1.11.23/" rel="external">http://ftp.gnu.org/non-gnu/cvs/source/stable/1.11.23/</a> (you may be
+able to download binaries from here instead if you prefer). At the time of writing this is version
+1.11.23 and the file to download is cvs-1.11.23.tar.gz
+</li>
+<li>Unpack the source in a working directory with:
+  <pre class="code">
+  gunzip &lt; cvs-1.11.23.tar.gz | tar xvf -
+  cd cvs-1.11.23
+  ./configure
+  make
+  make install</pre>
+</li>
+</ol>
+
+<h2 id="perl">Perl</h2>
+<p>If you are on a Unix-based OS such as Mac OS X or Linux, you will already have Perl installed. You need Perl5, version 5.8.0 or higher, to run the website - we recommend avoiding 5.10.0 as it contains major bugs.</p>
+<p>To see if you have Perl installed, and/or to check its version number,
+type:</p>
+<pre class="code">perl -v</pre>
+<p>
+  If you don't have Perl installed, or need to upgrade, go to <a rel="external" href="http://www.cpan.org/">www.cpan.org/</a> and
+  choose the 'source code' install. Follow the installation instructions on the web site.
+</p>
+
+<h2 id="sqlite">SQLite</h2>
+<ul>
+  <li>Install SQLite - can be downloaded from <a rel="external" href="http://www.sqlite.org/download.html">http://www.sqlite.org/download.html</a>.</li>
+  <li>Install the DBD::SQLite (can be found at <a rel="external" href="http://search.cpan.org/dist/DBD-SQLite/">http://search.cpan.org/dist/DBD-SQLite/</a>.</li>
+</ul>
+
+<h2 id="mysql">MySQL</h2>
+<p>MySQL is a very popular Open Source relational database system. The easiest way to install MySQL is
+to use the pre-compiled binaries from <a href="http://dev.mysql.com" rel="external">http://dev.mysql.com</a>. You can also get source from
+<a href="http://dev.mysql.com" rel="external">http://dev.mysql.com</a> if you wish to compile MySQL yourself.</p>
+<h3>To install MySQL:</h3>
+<ol>
+<li>Download the appropriate standard binaries from <a href="http://dev.mysql.com/downloads/mysql" rel="external">http://dev.mysql.com/downloads/mysql</a>. Get the
+current stable version - at the time of writing, this is 5.0.51.</li>
+<li>Create a directory for MySQL to be installed into. A subdirectory of this will hold the databases, so
+choose somewhere that has sufficient space free - at least 600 GB for the complete set. We will use
+/data/ as an example. Again, when following these instructions, replace /data/ with whatever path
+you choose.</li>
+<li>Move the binary tarball to /data/</li>
+<li>Unpack the tarball with:
+<pre class="code">$ gunzip &lt; mysql-WHATEVER.tar.gz | tar xvf -</pre>
+Follow the straightforward setup instructions in the INSTALL-BINARY file that comes with MySQL. It
+should be located in the "mysql-WHATEVER" directory you just unpacked.
+</li>
+</ol>
+
+<h2 id="apache">Apache &amp; mod_perl</h2>
+<p>Apache is the web server that the Ensembl site runs on. mod_perl is a module for Apache that enables
+it to compile perl scripts once rather than each time they are requested, and so makes everything run a
+lot faster.</p>
+
+<p><strong>Please follow these instructions precisely as often the default version of Apache or mod-perl does not work correctly for Ensembl.</strong></p>
+
+<h3>To Install Apache with mod_perl:</h3>
+<ol>
+<li>
+  Download the Apache2 source tarball from <a href="http://httpd.apache.org/download.cgi" rel="external">http://httpd.apache.org/dist/httpd/</a>. Get the current stable
+version - at the time of writing, this is 2.2.8, and the file to download is httpd-2.2.8.tar.gz.
+</li>
+<li>
+  Download the mod_perl source from <a href="http://www.cpan.org/modules/by-module/Apache2/" rel="external">http://www.cpan.org/modules/by-module/Apache2/</a> . Again, get
+the latest version, currently this is 2.0.3 and the file to download is mod_perl-2.0.3.tar.gz.
+</li>
+<li>
+  Unpack all the sources in a working directory with:
+  <pre class="code">
+tar zxf httpd-2.2.4.tar.gz
+tar zxf mod_perl-2.0.3.tar.gz | tar xvf -
+cd httpd-2.2.4
+./configure --enable-deflate --prefix=<var>Apache directory</var>
+cd ../mod_perl-2.0.3</pre>
+The httpd.conf files etc assume you install this in an apache2 subdirectory of your website's server root.
+</li>
+<li>
+  Build the perl makefile:
+  <pre class="code">perl Makefile.PL PREFIX=<var>Apache directory</var> MP_APXS=<var>Apache directory</var>/bin/apxs</pre>
+</li>
+<li>
+  Run the 'make' utility:
+  <pre class="code">make</pre>
+</li>
+<li>
+  ...and install
+  <pre class="code">make install</pre>
+</li>
+</ol>
+
+<h2>Perl modules</h2>
+<p>The Ensembl website needs quite a few Perl modules to be installed in order for it to run. These
+modules can all be downloaded from www.cpan.org, and are all installed in much the same way:
+Download the module tarball, unpack in a working directory, and install the module:</p>
+<pre class="code">
+gunzip &lt; module.tar.gz | tar xvf -
+cd module
+perl Makefile.PL
+make
+make test
+make install
+</pre>
+<p>The modules that are required are listed below, along with their URLs. The listed version is either 
+one we have tested on our own servers (Debian Lenny with Perl 5.10), or the closest available on CPAN.
+If you have tested a more up-to-date version successfully, please let us know!</p>
+
+<h3>Ensembl website</h3>
+
+<p>These modules are mandatory for any website based on EnsEMBL::Web code.</p>
+
+<dl>
+    <dt>Class::DBI::Sweet</dt>
+    <dd>Database abstraction layer, used to access non-genomic databases such as ensembl_website</dd>
+  
+    <dt>Class::Std</dt>
+    <dd>Used by both web code and BioMart</dd>
+  
+    <dt>Compress::Bzip2</dt>
+    <dd>Used to handle uploaded bz2 files</dd>
+ 
+    <dt>Compress::Zlib</dt>
+    <dd>Used by the registry (core module in Perl 5.10)</dd>
+ 
+    <dt>Data::UUID</dt>
+    <dd>Creates a unique ID</dd>
+  
+    <dt>DBI</dt>
+    <dd>A common database interface for Perl</dd>
+  
+    <dt>DBD::mysql</dt>
+    <dd>The MySQL drivers for the DBI interface</dd>
+  
+    <dt>GD</dt>
+    <dd>A Graphics library
+      <br />Note: may require additional modules. Please read install docs.</dd>
+  
+    <dt>Hash::Merge</dt>
+    <dd>Used to merge data from multiple configuration files</dd>
+
+    <dt>Image::Size</dt>
+    <dd>Used for getting size of images</dd>
+  
+    <dt>IO::String</dt>
+    <dd>Used for sequence handling</dd>
+  
+    <dt>IO::Uncompress::Bunzip2</dt>
+    <dd>Used to handle uploaded bz2 files (bundled with recent versions of IO::Compress)</dd>
+ 
+    <dt>IPC::Run</dt>
+    <dd>Used by the variation API to pipe output directly into another file handle</dd>
+  
+    <dt>LWP</dt>
+    <dd>used by DAS to communicate with DAS sources
+      <br />Note: may require additional modules. Please read install docs.</dd>
+  
+    <dt>Mail::Mailer</dt>
+    <dd>Used by web forms to send email</dd>
+  
+    <dt>Math::Bezier</dt>
+    <dd>Used by drawing code</dd>
+  
+    <dt>MIME::Types</dt>
+    <dd>Used to automatically identify the correct mime type of static files</dd>
+ 
+    <dt>OLE::Storage_Lite</dt>
+    <dd>Used for exporting Excel spreadsheets</dd>
+  
+    <dt>PDF::API2</dt>
+    <dd>used by Image exporter for exporting as PDF</dd>
+  
+    <dt>SOAP::Lite</dt>
+    <dd>used by DAS to communicate with DAS sources
+      <br />Note: may require additional modules. Please read install docs.</dd>
+  
+    <dt>Spreadsheet::WriteExcel</dt>
+    <dd>used for exporting Excel spreadsheets</dd>
+  
+    <dt>Sys::Hostname::Long</dt>
+    <dd>Used by website startup process</dd>
+ 
+    <dt>Time::HiRes</dt>
+    <dd>Used for code profiling (core module in Perl 5.10)</dd>
+  
+    <dt>version</dt>
+    <dd>Required by Class::Std (core module in Perl 5.10)</dd>
+  
+    <dt>XML::Parser</dt>
+    <dd>used by DAS to parse DAS sources
+    <br />Note: module is a wrapper around the expat library, which should be installed
+first:
+<br />Download the expat source from http://sourceforge.net/projects/expat/. Get the
+latest version (currently expat-1.95.8.tar.gz). Run the following commands:
+  <pre class="code">
+gunzip &lt; expat-1.95.8.tar.gz | tar xvf -
+cd expat-1.95.8
+./configure
+make
+make install
+</pre></dd>
+  
+    <dt>XML::Atom</dt>
+    <dd>Atom feed parser, used to embed Ensembl blog entries on home page</dd>
+
+    <dt>XML::Writer</dt>
+    <dd>Used when writing exported data files from Ensembl pages</dd>
+
+</dl>
+ 
+<!-- 
+<h3>Ensembl utilities</h3>
+
+<p>Utility scripts in /utils may need extra modules not used by the website itself.</p>
+-->
+
+<h3>BlastView</h3>
+
+<p>The following are only needed for a local install of blastview within Ensembl:</p>
+
+<dl>
+    <dt>HTML::Template</dt>
+    <dd>Used by BlastView</dd>
+</dl>  
+
+<!--
+<h2 id="dotter">Dotter</h2>
+<p>The Ensembl website contains a page called DotterView which displays a graphical dotplot comparison
+of two sequences, using the application Dotter. If you wish to use this page on a local installation you
+will need a local Dotter binary:</p>
+<p>Dotter is part of the AceDB package available at:</p>
+<blockquote><a href="http://www.acedb.org/Software/Downloads/supported.shtml" rel="external">http://www.acedb.org/Software/Downloads/supported.shtml</a></blockquote>
+<p>Pre-built binaries are available for alpha/Tru64 unix and intel/linux. All other flavours will have to be built
+from sources.</p>
+<p>The acedb code makes use of the GTK graphics and GNU readline packages. If you don't have these
+on your system you can either install them yourself or use the copies distributed with the acedb source.</p>
+<p>To install them go to</p>
+  <a rel="external" href="http://www.gtk.org">www.gtk.org</a>
+<p>for the GTK package and</p>
+  <a href="ftp://ftp.cwru.edu/pub/bash/readline-4.3.tar.gz">ftp://ftp.cwru.edu/pub/bash/readline-4.3.tar.gz</a>
+<p>for readline.</p>
+<p>Follow the GTK and GNU instructions for installing these packages.</p>
+
+<p>If you want to use the versions distributed with the acedb source then follow the instructions for making
+them in the next section.</p>
+<p>Next ungzip/untar the acedb package into an temporary directory:</p>
+<pre class="code">mkdir acedb
+mv ACEDB-source.4_9l.tar.gz ./acedb/
+cd ./acedb
+gzip -d &lt; ACEDB-source.4_9l.tar.gz | tar xvf -
+</pre>
+<p>Set an environment variable to tell the build process what platform you are building on - one of:</p>
+<kbd>ALPHA_4 ALPHA_4_GCC ALPHA_4_GCC_OPT ALPHA_4_LINUX ALPHA_4_OLDSTYLE ALPHA_4_OPT ALPHA_5 ALPHA_CHRONO_4<br />
+DARWIN_4<br />
+FreeBSD<br />
+FUJITSU_4<br />
+HP_4 HP_4_GCC HP_4_OPT<br />
+IBM_4_3 IBM_4<br />
+IRIX4_4<br />
+LINUX_4 LINUX_MAC_4<br />
+MACOSX_4_DEF<br />
+NEC_4 NEC_4_R10 NEC_4_R11<br />
+NEXT_4<br />
+POSIX_4 POSIX_4_GCC<br />
+SGI_4 SGI_4_GCC SGI_4_IRIX5 SGI_4_PURE SGI_5_GCC SGI_65_GCC_DEF
+SOLARIS_4 SOLARIS_4_OPT SOLARIS_4_RELEASE SUN_4_DEF
+WIN32_4</kbd>
+<p>For example (in csh):</p>
+<pre class="code">setenv ACEDB_MACHINE SOLARIS_4</pre>
+<p>Consult the AceDB documentation if you need more help.</p>
+
+<p>If you wish to use the GTK/readline packages distributed with acedb you should build them before
+building any acedb code:</p>
+<pre class="code">make gnulibs</pre>
+<p>To build the dotter binary issue the command:</p>
+<pre class="code">make dotter</pre>
+<p>(If you just run "make" you will build the whole of AceDB - which is unnecessary).</p>
+<p>The build will place the executable at:</p>
+<pre class="code">./bin.${ACEDB_MACHINE}/dotter</pre>
+<p>Check that the binary runs properly and then copy it to your Ensembl shared binaries directory.
+DotterView should now work.</p>
+-->
+
+
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+</body>
+</html>
