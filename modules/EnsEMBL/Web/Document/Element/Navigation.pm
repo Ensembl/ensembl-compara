@@ -77,6 +77,7 @@ sub init {
   my $object        = $controller->object;
   my $hub           = $controller->hub;
   my $configuration = $controller->configuration;
+  return unless $configuration;
   my $action        = $configuration->get_valid_action($hub->action, $hub->function);
  
   $self->tree($configuration->{'_data'}{'tree'});
