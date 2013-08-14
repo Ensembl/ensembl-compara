@@ -64,9 +64,9 @@ sub content {
     my $submenu;
     if (scalar @children) {
       $class .= ' parent';
-      my $last  = $children[-1];
+      my $last  = $child_order[-1];
       $submenu  = '<ul>';
-      
+  
       foreach my $child (@child_order) {
         my $info = $this_tree->{$page}{$child};
         next unless ref($info) eq 'HASH';
