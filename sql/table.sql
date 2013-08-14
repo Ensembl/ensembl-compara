@@ -828,9 +828,9 @@ CREATE TABLE other_member_sequence (
 @colour   #1E90FF
 
 @example    Example of peptide_align_feature entry:
-     @sql                              SELECT * FROM peptide_align_feature_90 WHERE peptide_align_feature_id = 5003775;
+     @sql                              SELECT * FROM peptide_align_feature_90 WHERE peptide_align_feature_id = 9000000001;
 @example    The following query corresponds to a particular hit found between a Homo sapiens protein and a Anolis carolinensis protein:
-     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_90 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 5003775;
+     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_90 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 9000000001;
 
 
 @column peptide_align_feature_id  Internal unique ID
@@ -1091,9 +1091,6 @@ CREATE TABLE gene_tree_node (
 @example   To get the number of trees of each type
      @sql                                  SELECT member_type, tree_type, COUNT(*) FROM gene_tree_root GROUP BY member_type, tree_type;
 
-@example KK
-     @sql                                  SELECT * FROM subset_member;
-
 @column root_id     	              Internal unique ID
 @column member_type                   The type of members used in the tree
 @column tree_type                     The type of the tree
@@ -1250,7 +1247,7 @@ CREATE TABLE hmm_profile (
 @colour   #1E90FF
 
 @example    The following query defines a pair of paralogous xenopous genes. See @link homology_member for more details
-     @sql                                  SELECT * FROM homology WHERE homology_id = 4650;
+     @sql                                  SELECT * FROM homology WHERE homology_id = 39273663;
 
 @column homology_id                    Unique internal ID
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -1265,7 +1262,8 @@ CREATE TABLE hmm_profile (
 @column ancestor_node_id               The node_id of the internal node of the gene-tree node  from which the homology is derived
 @column tree_node_id                   The root_id of the gene-tree from which the homology is derived
 
-@homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 4650 GROUP BY homology_id;
+@example    See species_names that participate in this parcitular homology entry
+    @sql SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 100000001 GROUP BY homology_id;
 
 @see homology_member
 @see method_link_species_set
@@ -1427,8 +1425,8 @@ The alignment will be:<br />
 </table>
 @colour   #1E90FF
 
-@example    The following query refers to the two homologue sequences defined by the homology.homology_id 4650. Gene and peptide sequence of the second homologue can retrieved in the same way.
-   @sql                       SELECT * FROM homology_member WHERE homology_id = 4650;
+@example    The following query refers to the two homologue sequences defined by the homology.homology_id 100000001. Gene and peptide sequence of the second homologue can retrieved in the same way.
+   @sql                       SELECT * FROM homology_member WHERE homology_id = 100000001;
 
 @column homology_id        External reference to homology_id in the @link homology table
 @column member_id          External reference to member_id in the @link member table. Refers to the corresponding "ENSMBLGENE" entry
