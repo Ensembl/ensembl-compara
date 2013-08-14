@@ -9,6 +9,11 @@ use base qw(EnsEMBL::Web::Document::Page);
 sub initialize_HTML {
   my $self = shift;
 
+  my $here = $ENV{'REQUEST_URI'};
+  if ($here =~ /^\/info/) {
+    $self->include_navigation(1);
+  }
+
   # General layout for static pages
   $self->add_head_elements(qw(
     title      EnsEMBL::Web::Document::Element::Title
@@ -23,6 +28,16 @@ sub initialize_HTML {
     account         EnsEMBL::Web::Document::Element::AccountLinks
     search_box      EnsEMBL::Web::Document::Element::SearchBox
     tools           EnsEMBL::Web::Document::Element::ToolLinks
+  ));
+
+  if ($here =~ /^\/info/) {
+    $self->add_body_elements(qw(
+      tabs            EnsEMBL::Web::Document::Element::StaticTabs
+      navigation      EnsEMBL::Web::Document::Element::StaticNav
+    ));
+  }
+
+  $self->add_body_elements(qw(
     breadcrumbs     EnsEMBL::Web::Document::Element::BreadCrumbs
     content         EnsEMBL::Web::Document::Element::Content
     modal           EnsEMBL::Web::Document::Element::Modal
