@@ -54,6 +54,11 @@ sub content {
     my $state   = $config->{$page};
     my $toggle  = $state ? 'closed' : 'open';
     my @children  = grep { !/^_/ } keys %{$this_tree->{$page}};
+    my @child_order = sort {
+      $this_tree->{$page}{$a}{'_order'} <=> $this_tree->{$page}{$b}{'_order'} ||
+      $this_tree->{$page}{$a}{'_title'} cmp $this_tree->{$page}{$b}{'_title'} ||
+      $this_tree->{$page}{$a}           cmp $this_tree->{$page}{$b}
+    } @children;
 
     my $image = "${img_url}leaf.gif";
     my $submenu;
@@ -61,13 +66,15 @@ sub content {
       $class .= ' parent';
       my $last  = $children[-1];
       $submenu  = '<ul>';
-      while (my($k,$v) = each(%{$this_tree->{$page}})) { 
-        next unless ref($v) eq 'HASH';
-        next unless $v->{'_title'};
-        my $class = $k eq $last ? ' class="last"' : '';
+      
+      foreach my $child (@child_order) {
+        my $info = $this_tree->{$page}{$child};
+        next unless ref($info) eq 'HASH';
+        next unless $info->{'_title'};
+        my $class = $child eq $last ? ' class="last"' : '';
 
         $submenu .= sprintf('<li%s><img src="%s"><a href="%s%s">%s</a></li>', 
-                              $class, $image, $url, $k, $v->{'_title'});
+                              $class, $image, $url, $child, $info->{'_title'});
       }
       $submenu .= '</ul>';
       $image    = "$img_url$toggle.gif";
