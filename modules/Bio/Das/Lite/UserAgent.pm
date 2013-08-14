@@ -10,7 +10,12 @@
 package Bio::Das::Lite::UserAgent;
 use strict;
 use warnings;
+
+# Suppress unavoidable warnings from ancient LWP::Parallel::UserAgent on
+# startup. As these go to the terminal, people find them disturbing.
+BEGIN { $SIG{'__WARN__'} = sub {}; }
 use base qw(LWP::Parallel::UserAgent);
+BEGIN { delete $SIG{'__WARN__'}; }
 
 our $VERSION  = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
 
