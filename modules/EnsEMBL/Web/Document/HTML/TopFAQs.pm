@@ -26,9 +26,11 @@ sub render {
       <ul>';
 
     foreach my $faq (@faqs) {
+      ## Strip paragraph tags inserted by TinyMCE
+      (my $question = $faq->{'question'}) =~ s/<\/?p>//g;
       $html .= sprintf('
         <li><strong>%s</strong><br /><a href="/Help/Faq?id=%s" class="popup">See answer &rarr;</a></li>', 
-        $faq->{'question'}, $faq->{'id'}
+        $question, $faq->{'id'}
       );
     }
 
