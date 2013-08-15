@@ -922,6 +922,7 @@ sub _summarise_archive_db {
   my $self    = shift;
   my $db_name = 'DATABASE_ARCHIVE';
   my $dbh     = $self->db_connect( $db_name );
+  return unless $dbh;
 
   my $t_aref = $dbh->selectall_arrayref(
     'select s.name, r.release_id, rs.assembly_code, rs.initial_release, rs.last_geneset
