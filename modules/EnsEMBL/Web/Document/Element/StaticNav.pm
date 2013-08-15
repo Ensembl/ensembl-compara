@@ -80,7 +80,7 @@ sub content {
       $image    = "$img_url$toggle.gif";
     }
 
-    $html .= sprintf('<li class="%s"><img src="%s" class="toggle %s" alt=""><a href="%s">%s</a>%s</li>', 
+    $html .= sprintf('<li class="%s"><img src="%s" class="toggle %s" alt=""><a href="%s"><b>%s</b></a>%s</li>', 
                         $class, $image, $id, $url, $this_tree->{$page}{'_title'}, $submenu); 
   }
 
