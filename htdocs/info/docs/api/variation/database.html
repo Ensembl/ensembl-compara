@@ -1,6 +1,6 @@
 <html>
 <head>
-	<meta name="order" content="2" />
+	<meta name="order" content="1" />
   <meta name="navigation" content="Database description">
 
 	<title>Database Description</title>
@@ -8,38 +8,8 @@
 
 <body>
 
-<div>
-  <!-- Right hand side menu -->
-	<div style="float:right;margin-left:8px;margin-top:2px;background-color:#F2F2F2;color:#333;border-radius:5px">
-    <div style="padding:5px;font-weight:bold;color:#FFF;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
-		  <img src="/i/16/rev/info.png" style="vertical-align:top"/>
-		  Page content
-		</div> 
-    <ul style="padding-left:25px;padding-right:5px">
-      <li><a href="#db_schema">Database schema diagram</a> [PDF]</li> 
-      <li><a href="#table_desc">Schema documentation</a></li> 
-      <li><a href="#spec">Specifications</a></li> 
-      <li><a href="#db_load">Database load</a></li>
-      <li><a href="#import_vcf">Load from a VCF file</a></li>
-      <li><a href="#support">Software support</a></li>
-	  </ul>
-  </div>
+<h1>Variation database description</h1>
 
-  <!-- Horizontal menu -->
-  <span style="font-weight:bold">
-    <a href="index.html">About Ensembl Variation</a> |
-    <a href="data_description.html">Data Description</a> | 
-    <a href="predicted_data.html">Predicted Data</a> |
-    Database Description |  
-    <a href="/info/docs/api/variation/index.html">Perl API</a> |
-    <a href="vep/index.html">Variant Effect Predictor</a>
-  </span>
-
-  <h1 style="margin-top:15px">Ensembl Variation - Database description</h1>
-</div>
-
-
-<br />
 <h2 id="db_schema">Database schema diagram</h2>
 <p>
   <span style="vertical-align:top;padding-right:5px">The variation database schema diagram is available in a PDF file:</span>
@@ -48,25 +18,22 @@
   </a>
 </p>
 
-<br />
 <h2 id="table_desc">Schema documentation</h2>
 <p>
 The tables of the database are described in the <a href="/info/docs/variation/variation_schema.html">Variation Schema Documentation</a> page.
 </p>
 
-<br />
 <h2 id="spec">Specifications</h2>
 <ul>
 	<li>Database management system: <b>MySQL</b></li>
 	<li>Storage engine: <b>MyISAM</b></li>
 </ul>
 
-<br />
 <h2 id="db_load">Database load</h2>
 <p>
 The variations databases can be loaded using dumped files from the <a href="/info/data/ftp/index.html">Ensembl
-FTP</a>.<br />
-For Ensembl 61, it takes a couple of minutes to load the largest tables for Human on our servers, e.g:
+FTP</a>.</p>
+<p>For Ensembl 61, it takes a couple of minutes to load the largest tables for Human on our servers, e.g:
 </p>
 <table id="loading_times" class="ss" style="width:350px;">
 <tr><th>Table</th><th>Loading time</th></tr>
