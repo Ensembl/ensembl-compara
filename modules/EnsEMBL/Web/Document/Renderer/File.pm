@@ -18,7 +18,7 @@ sub new {
 
 sub fh {
   my $self = shift;
-  return $self->'file';
+  return $self->{'file'};
 }
 
 sub valid  { return $_[0]->{'file'}; }
