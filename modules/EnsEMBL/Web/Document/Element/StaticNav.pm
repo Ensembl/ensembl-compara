@@ -6,10 +6,10 @@ package EnsEMBL::Web::Document::Element::StaticNav;
 
 use strict;
 
+use EnsEMBL::Web::Controller::SSI;
+use HTML::TreeBuilder;
 use HTML::Entities qw(encode_entities);
 use URI::Escape    qw(uri_escape);
-#use WWW::Mechanize;
-#use WWW::Mechanize::TreeBuilder;
 
 use base qw(EnsEMBL::Web::Document::Element::Navigation);
 
@@ -85,18 +85,13 @@ sub content {
   }
 
   ## ----- IN-PAGE NAVIGATION ------------
-=pod
-  ### UNTESTED - AWAITING INSTALLATION OF MODULES ###
 
   ## Read the current file and parse out h2 headings with ids
-  my $mech = WWW::Mechanize->new();
-  WWW::Mechanize::TreeBuilder->meta->apply($mech);
+  my $content = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $here);
+  my $doc = HTML::TreeBuilder->new_from_content(split('/\n/', $content));
+  my @headers = $doc->find('h2');
 
-  $mech->get($here);
-
-  my @headers = $mech->find('h2');
-
-  if (scalar(@headers) {
+  if (scalar(@headers)) {
     ## Check the headers have id attribs we can link to
     my @id_headers;
     foreach (@headers) {
@@ -104,22 +99,23 @@ sub content {
     }
 
     ## Create submenu from these headers
-    if (scalar(@id_headers) {
+    if (scalar(@id_headers)) {
       $html .= '<div class="subheader">On this page</div>';
-      $html .= '<ul class="local_context">';
+      $html .= '<ul class="local_context" style="border-width:0">';
+      my $image = "${img_url}leaf.gif";
 
       my $i = 0;
       foreach (@id_headers) {
-        my $class = ($i == $#id_headers) ? 'class="last"' : '';
-        $html .= sprintf('<li%s><a href="#%s">%s</a></li>', 
-                          $class, $_->attr('id'), $_->as_text);
+        my $class = ($i == $#id_headers) ? 'last' : 'top_level';
+        $html .= sprintf('<li class="%s"><img src="%s"><a href="#%s">%s</a></li>', 
+                          $class, $image, $_->attr('id'), $_->as_text);
         $i++;
       }
 
       $html .= '</ul>';
     }
   }
-=cut
+
   ## SEARCH -------------------------------------------
 
   my $img_url         = $self->img_url;
