@@ -50,6 +50,8 @@ sub configure {
       $self->add_option($_);
     }
   }
+
+  $self->force_wrapper if $params->{'force_wrapper'};
 }
 
 sub add_option {

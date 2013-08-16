@@ -19,7 +19,8 @@ use strict;
 use constant {
   CSS_CLASS_REQUIRED  => 'required',
   CSS_CLASS_OPTIONAL  => 'optional',
-  CSS_CLASS_SHORTNOTE => 'snote'
+  CSS_CLASS_SHORTNOTE => 'snote',
+  ELEMENT_HAS_WRAPPER => 'has_div_wrapper'
 };
 
 sub configure {
@@ -34,6 +35,7 @@ sub configure {
   ##  - value           Value attribute for text type field or a checkbox; selected/checked value for checklist/radiolist/dropdown -  can be an ArrayRef for multiple values
   ##  - is_encoded      Flag kept on if the value does not need htmlencoding before being set as value attribute in case of String drived element or NoEdit
   ##  - shortnote       A short text to go just right the text/password/file or select, or checkbox element.
+  ##  - force_wrapper   A flag for div based elements (like checklist, noedit etc) so that their wrapping div does not replace the parent div while trying avoid nesting of divs (check E::W::Form::Field::add_element)
   ##  - inline          Flag stating whether checkbox/radio buttons are to be disaplayed in a horizontal line in case of checklist/radiolist
   ##  - size            Size attribute for text input, password input or select.
   ##  - style           Style attribute works for string based input, textarea and select dropdpwn
@@ -113,6 +115,12 @@ sub shortnote {
   ## @return Node object (span element if shornote found, an empty text node otherwise)
   my $self = shift;
   return exists $self->{'__shortnote'} ? $self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}}) : $self->dom->create_text_node;
+}
+
+sub force_wrapper {
+  ## Adds a flag in the wrapper div is to be kept independent from the element div
+  my $self = shift;
+  $self->set_flag($self->ELEMENT_HAS_WRAPPER) if $self->node_name eq 'div';
 }
 
 sub new {

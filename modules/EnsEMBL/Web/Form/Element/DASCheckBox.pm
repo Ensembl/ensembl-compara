@@ -45,7 +45,9 @@ sub configure {
       $params->{'label'} eq $logic_name ? $params->{'label'} : "$params->{'label'} ($logic_name)",
       $das->{'description'},
       $das->{'homepage'} ? qq( [<a href="$das->{'homepage'}">Homepage</a>]) : ''),
-  });  
+  });
+
+  $self->force_wrapper if $params->{'force_wrapper'};
 }
 
 1;

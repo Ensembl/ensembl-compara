@@ -27,6 +27,8 @@ sub configure {
 
   my $input = $self->append_child('inputhidden');
   exists $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id name class value);
+
+  $self->force_wrapper if $params->{'force_wrapper'};
 }
 
 sub caption {

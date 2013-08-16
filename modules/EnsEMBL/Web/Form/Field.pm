@@ -105,8 +105,8 @@ sub elements {
 
 sub add_element {
   ## Adds a new element under existing label
-  ## @params HashRef of standard parameters required for Form::Element->configure
-  ## @params Inline flag - if on, tries to add the element inline with the previous element if possible
+  ## @param HashRef of standard parameters required for Form::Element->configure
+  ## @param Inline flag - if on, tries to add the element inline with the previous element if possible
   my ($self, $params, $inline) = @_;
   
   my $children = $self->child_nodes;
@@ -140,7 +140,7 @@ sub add_element {
     scalar @$children && $children->[-1]->get_flag($self->_FLAG_FOOT_NOTES) ? $self->insert_before($div, $children->[-1]) : $self->append_child($div);
   }
 
-  if ($div->is_empty && $element->node_name eq 'div') { #to avoid nesting of divs
+  if ($div->is_empty && $element->node_name eq 'div' && !$element->get_flag($element->ELEMENT_HAS_WRAPPER)) { #to avoid nesting of divs
     $self->replace_child($element, $div);
     $div = $element;
   }
