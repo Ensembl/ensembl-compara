@@ -464,7 +464,7 @@ sub html_template {
 
   my $main_class;         
   my $here = $ENV{'REQUEST_URI'};
-  if ($self->isa('EnsEMBL::Web::Document::Page::Fluid') 
+  if ( ($self->isa('EnsEMBL::Web::Document::Page::Fluid') && $here !~ /\/Search\//) 
         || ($self->isa('EnsEMBL::Web::Document::Page::Dynamic') && $here =~ /\/Info\//)
         || ($self->isa('EnsEMBL::Web::Document::Page::Static') && $here !~ /^\/info/)
     ) {
