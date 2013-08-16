@@ -2,7 +2,8 @@
 
 /* Basic page divisions */
 
-#main, #widemain { margin-left: 224px; border: 0; position: relative; padding: 16px 0 0; }
+#main { margin-left: 224px; border: 0; position: relative; padding: 16px 0 0; }
+#widemain { margin-left: 0; border: 0; position: relative; padding: 16px 0 0; }
 body.static #main { margin-left: 224px; border: 0; position: relative; padding: 16px 0 0; }
 body.static #widemain { margin-left: 0; }
 
