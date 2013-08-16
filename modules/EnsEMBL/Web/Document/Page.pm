@@ -464,9 +464,7 @@ sub html_template {
 
   my $main_class;         
   my $here = $ENV{'REQUEST_URI'};
-  if ($self->isa('EnsEMBL::Web::Document::Page::Fluid')
-      || ($self->isa('EnsEMBL::Web::Document::Page::Static') && $here !~ /^\/info/)
-    ) {
+  if ($self->isa('EnsEMBL::Web::Document::Page::Fluid') || ($here !~ /^\/info/)) {
     $main_class = 'widemain';
   }
   else {
