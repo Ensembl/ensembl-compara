@@ -163,8 +163,16 @@ sub set_attribute {
 
   if ($attrib =~ /^(class|style)$/) {
     $self->{'_attributes'}{$attrib} ||= {};
-    ref $value eq 'HASH'  and $attrib eq 'style' and map {$_ and $self->{'_attributes'}{$attrib}{$_} = $value->{$_}} keys %$value  and return;
-    ref $value eq 'ARRAY' and $attrib eq 'class' and map {$_ and $self->{'_attributes'}{$attrib}{$_} = 1           } @$value       and return;
+
+    # if style attribute value is a hash, just extend/modify the existing value
+    if ($attrib eq 'style' && ref $value eq 'HASH') {
+      $self->{'_attributes'}{$attrib}{$_} = $value->{$_} for keys %$value;
+      return;
+    }
+
+    # if class attribute value is an array, join it with a space first since that array can containt space seperated strings
+    $value = join ' ', @$value if $attrib eq 'class' && ref $value eq 'ARRAY';
+
     my $delimiter = {'class' => qr/\s+/, 'style' => qr/\s*;\s*/};
     for (split $delimiter->{$attrib}, $value) {
       my ($key, $val) = $attrib eq 'style' ? split /\s*:\s*/, $_ : ($_, 1);
