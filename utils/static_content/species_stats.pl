@@ -718,7 +718,6 @@ sub stripe_row {
   return $row;
 }
 
-
 sub do_pan_compara_species {   
 
     my $fq_path_dir = sprintf( STATS_PATH, $PLUGIN_ROOT);
@@ -742,45 +741,61 @@ sub do_pan_compara_species {
     my $sth = $db->dbc->prepare($SQL);
     $sth->execute();
 
-    my ($spec_name, $spec_sci_name);
+    my ($spec_name, %spec_sci_name);
     while (my ($name, $taxon_id, $sci_name) = $sth->fetchrow_array) {
-      push @{$spec_name}, $name;
-      push @{$spec_sci_name}, $sci_name;
+      $spec_sci_name{$name} = $sci_name;
     }
 
     my $link_style = 'font-size:1.1em;font-weight:bold;text-decoration:none;';
-    my $html .= qq{<table>\n<tr>\n<td colspan="3" style="width:50%;padding:2px;padding-bottom:1em">&nbsp;</td>\n};
 
-    my $total = scalar(@{$spec_name});
-    my $break = int($total / 3);
-    $break++ if $total % 3;
+    my %division;
 
-    ## Reset total to number of cells required for a complete table
-    $total = $break * 3;
+    foreach my $current_species ( keys %spec_sci_name) {
+      my $site_hash       = $SD->ENSEMBL_SPECIES_SITE($current_species)  || $SD->ENSEMBL_SPECIES_SITE;
 
-    for (my $i=0; $i < $total; $i++) {
-	my $col = int($i % 3);
-	if ($col == 0 && $i < ($total - 1)) {
-	    $html .= qq(</tr>\n<tr>\n);
-	}
-	my $row = int($i/3);
-	my $j = $row + $break * $col;
+      if (exists $site_hash->{$current_species} && defined $site_hash->{$current_species}) {
+        push @{ $division{ $site_hash->{$current_species} } }, $current_species;
+      }
+    }
 
-        my $species         = $spec_sci_name->[$j];
-        my $current_species = $spec_name->[$j];
-        my $site_hash       = $SD->ENSEMBL_SPECIES_SITE($current_species)  || $SD->ENSEMBL_SPECIES_SITE;
+    my $html;
+    $html .= qq(<a href="/info/docs/compara/pan.nh" class="constant">Species Newick Tree</a><br><br>);
+    $html .= qq{<table>};
+    foreach my $key ( sort { $a cmp $b} keys %division){
+
+      my $division_heading = ucfirst $key;
+      $html .= qq{<tr><td colspan="3" border=1 style="width:50%;padding:0px;padding-top:2em;padding-bottom:0em;"><h3>$division_heading</h3></td>};
+      my $total =  @{$division{$key}};
+      my $break = int($total / 3);
+      $break++ if $total % 3;
+
+      ## Reset total to number of cells required for a complete table
+      $total = $break * 3;
+
+      for (my $i=0; $i < $total; $i++) {
+        my $col = int($i % 3);
+	      if ($col == 0 && $i < ($total - 1)) {
+	        $html .= qq(</tr><tr>);
+	      }
+	      my $row = int($i/3);
+	      my $j = $row + $break * $col;
+
+        my $current_species =  defined $division{$key}->[$j] ? $division{$key}->[$j] : '' ;
+        my $species = $spec_sci_name{$current_species} || $current_species;
         my $url_hash        = $SD->ENSEMBL_EXTERNAL_URLS($current_species) || $SD->ENSEMBL_EXTERNAL_URLS;
 
-	my $spsite          = uc $site_hash->{$current_species}; # Get the location of the species
-	my $url             = $url_hash->{$spsite} || '';        # Get the URL for the location
-	$url =~ s/\#\#\#SPECIES\#\#\#/$current_species/;         # Replace ###SPECIES### with the species name
-	$html .= qq(<td style="width:8%;text-align:left;padding-bottom:1em">);
+	      my $spsite          = uc $key;
+	      my $url             = $url_hash->{$spsite} || '';        # Get the URL for the location
+	      $url =~ s/\#\#\#SPECIES\#\#\#/$current_species/;         # Replace ###SPECIES### with the species name
+	      $html .= qq(<td style="width:8%;text-align:left;padding-bottom:1em">);
         $html .= qq(<a href="$url/Info/Index/" rel="external" style="$link_style">$species</a>);
-        $html .= qq(</td>\n);
+        $html .= qq(</td>);
+      }
 
+      $html .= qq(</tr>);
     }
-    $html .= qq(</tr>\n</table>);
 
+    $html .=  qq(</table><br><br>);
     print STAT_P_C $html;
     close STAT_P_C;
 }
