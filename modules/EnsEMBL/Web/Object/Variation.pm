@@ -89,8 +89,18 @@ sub counts {
 sub count_ega {
   my $self = shift;
   my @ega_links = @{$self->get_external_data};
-  my $counts = scalar @ega_links || 0; 
-  return $counts;  
+
+  my $vf = $self->param('vf');
+  my $vf_object = ($vf) ? $self->hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
+  if ($vf_object) {
+    my $chr   = $vf_object->seq_region_name;
+    my $start = $vf_object->seq_region_start;
+    my $end   = $vf_object->seq_region_end;
+    @ega_links = grep {$_->seq_region_name eq $chr && $_->seq_region_start == $start && $_->seq_region_end == $end} @ega_links;
+  }
+
+  my $counts = scalar @ega_links || 0;
+  return $counts;
 }
 sub count_transcripts {
   my $self = shift;
@@ -724,10 +734,11 @@ sub calculate_allele_freqs_from_genotype {
   return \%data;
 }
 
+
 sub get_external_data {
   my $self = shift;
-  $self->{'external_data'} ||= $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($self->vari); 
-  return $self->{'external_data'}
+  $self->{'external_data'} ||= $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($self->vari);
+  return $self->{'external_data'};
 }
 
 sub is_somatic_with_different_ref_base {
