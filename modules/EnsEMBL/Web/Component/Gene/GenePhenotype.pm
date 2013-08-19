@@ -389,6 +389,7 @@ sub gene_phenotypes {
   my $object           = $self->object;
   my $obj              = $object->Obj;
   my $hub              = $self->hub;
+  my $species          = $hub->species_defs->SPECIES_COMMON_NAME;
   my $g_name           = $obj->stable_id;
   my @keys             = ('MISC');
   my @similarity_links = @{$object->get_similarity_hash($obj)};
@@ -415,23 +416,37 @@ sub gene_phenotypes {
     
     # OMIA needs tax ID
     my $tax = $hub->species_defs->TAXONOMY_ID;
-    
-    foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
-      my $phen;
-      my $desc   = $pf->phenotype->description;
-      my $ext_id = $pf->external_id;
-      my $source = $pf->source;
+    if ($species eq 'Mouse') {
+      my $unique_desc_source_pairs;
+      foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
+        my $desc = $pf->phenotype->description;
+        my $source = $pf->source;
+        my $marker_accession_id = $pf->marker_accession_id;
+        $unique_desc_source_pairs->{join("\t", ($desc, $source, $marker_accession_id))} = 1;
+      } 
+      foreach my $desc_source (sort keys %$unique_desc_source_pairs) {
+        my ($desc, $source, $marker_accession_id) =split("\t", $desc_source);
+        my $source_link = $self->source_link($source, $marker_accession_id);
+        push @rows, {dbtype => $source_link, phenotype => $desc};
+	  }
+    } else {    
+      foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
+        my $phen;
+        my $desc   = $pf->phenotype->description;
+        my $ext_id = $pf->external_id;
+        my $source = $pf->source;
       
-      if($ext_id && $source) {
-        $phen = $hub->get_ExtURL_link($desc, $source, { ID => $ext_id, TAX => $tax});
-      }
-      else {
-        $phen = $desc;
-      }
+        if($ext_id && $source) {
+          $phen = $hub->get_ExtURL_link($desc, $source, { ID => $ext_id, TAX => $tax});
+        }
+        else {
+          $phen = $desc;
+        }  
       
-      push @rows, { dbtype => $pf->source, phenotype => $phen };
+        push @rows, { dbtype => $pf->source, phenotype => $phen };
+      }
     }
-  }  
+  }
   
   if ($output_as_table) {
     return $html . $self->new_table([ 
