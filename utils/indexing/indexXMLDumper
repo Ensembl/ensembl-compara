@@ -1430,7 +1430,7 @@ sub DomainLine {
       $xml .= qq(
   <field name="synonym">$id</field>);
   }
-    $xml .= &common_fields($species,'Domain','core');
+    $xml .= &common_fields($species,'Protein Domain','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
@@ -1587,9 +1587,7 @@ sub dumpFamily {
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
- ( my $species = $conf->{'species'} ) =~ s/_/ /g;
-
-
+  ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
   # get details of genes and proteins that make up the families for this species
   my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref(qq(
@@ -1699,7 +1697,7 @@ sub FamilyLine {
       $xml .= qq(
   <field name="assoc_protein">$up</field>);
     }
-    $xml .= &common_fields($species,'Family','core');
+    $xml .= &common_fields($species,'Protein Family','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
@@ -2082,13 +2080,9 @@ sub dumpGene {
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
-  my $VEGADB    = $conf->{'dbs'}->{'DATABASE_VEGA'};
   my $RNASEQDB = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
-  if ($search_engine eq 'solr') {
-    $dbs{'vega'} = $VEGADB if $VEGADB;
-  }
 
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
 
@@ -2418,13 +2412,9 @@ sub dumpTranscript {
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
-  my $VEGADB    = $conf->{'dbs'}->{'DATABASE_VEGA'};
   my $RNASEQDB  = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
-  if ($search_engine eq 'solr') {
-    $dbs{'vega'} = $VEGADB if $VEGADB;
-  }
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull!
   my $total_c;
 
