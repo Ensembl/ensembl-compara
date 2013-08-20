@@ -11,11 +11,14 @@ use constant {
   CSS_CLASS_SUBHEADING    => 'optgroup',
   CSS_CLASS_INNER_WRAPPER => 'ff-checklist',
   CSS_CLASS_INNER_LABEL   => 'ff-checklist-label',
-  SELECT_DESELECT_CAPTION => '<u><b>Select/deselect all</b></u>',
-  
-  _IS_MULTIPLE           => 1,               ## Overridden in Radiolist
-  _ELEMENT_TYPE          => 'inputcheckbox'  ## Overridden in Radiolist
+  SELECT_DESELECT_CAPTION => '<u><b>Select/deselect all</b></u>'
 };
+
+sub _is_multiple {
+  ## @protected
+  ## Overridden in Radiolist and Filterable
+  return 1;
+}
 
 sub configure {
   ## @overrides
@@ -34,7 +37,7 @@ sub configure {
   my $checked_values = {};
   if (exists $params->{'value'}) {
     $params->{'value'}  = [ $params->{'value'} ] unless ref($params->{'value'}) eq 'ARRAY';
-    $params->{'value'}  = [ shift @{$params->{'value'}} ] unless $self->_IS_MULTIPLE;
+    $params->{'value'}  = [ shift @{$params->{'value'}} ] unless $self->_is_multiple;
     $checked_values     = { map { $_ => 1 } @{$params->{'value'}} };
   }
   if (exists $params->{'selectall'}) {
@@ -77,7 +80,7 @@ sub add_option {
   $params->{'id'}          ||= $self->unique_id                if exists $params->{'caption'}; #'for' attrib for label if caption provided
 
   my $wrapper = $dom->create_element($self->{'__inline'} ? 'span' : 'p', {'class' => $self->CSS_CLASS_INNER_WRAPPER});
-  my $input   = $dom->create_element($self->_ELEMENT_TYPE, {'value' => $params->{'value'}, 'name' => $params->{'name'} || $self->{'__option_name'}});
+  my $input   = $dom->create_element($self->_is_multiple ? 'inputcheckbox' : 'inputradio', {'value' => $params->{'value'}, 'name' => $params->{'name'} || $self->{'__option_name'}});
 
   $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id class);
   $input->disabled(exists $params->{'disabled'} ? ($params->{'disabled'} ? 1 : 0) : $self->{'__option_disabled'});
