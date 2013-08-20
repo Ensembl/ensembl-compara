@@ -1,0 +1,176 @@
+<html>
+<head>
+<title>Custom annotations</title>
+<meta name="order" content="6" />
+</head>
+<body>
+<div>
+	
+	<div style="float:right"><img src="/img/vep_logo.png"/></div>
+	
+	<h1 id="top"><span style="color:#006">Variant Effect Predictor</span> <img src="/i/16/page-user.png"> <span style="color:#666">Custom annotations</span></h1>
+	<hr/>
+		
+        
+	<p> The VEP script can integrate custom annotation from standard format
+	files into your results by using the <a href="vep_options.html#opt_custom">--custom</a> flag. </p>
+    
+    <p> These files may be hosted locally or remotely, with no limit to the
+    number or size of the files. The files must be indexed using the <a
+    href="http://samtools.sourceforge.net/tabix.shtml" target="_blank">tabix</a>
+    utility (BED, GFF, GTF, VCF); bigWig files contain their own indices. Users
+    should note that the VEP will only look for overlaps (both exact and
+    inexact) with these annotations; for example, any sequence in a GTF file
+    will not be taken into account. </p>
+	
+	<p> Annotations appear as key=value pairs in the Extra column of the VEP
+	output; they will also appear in the INFO column if using VCF format output.
+	The value for a particular annotation is defined as the identifier for each
+	feature; if not available, an identifier derived from the coordinates of the
+	annotation is used. Annotations will appear in each line of output for the
+	variant where
+	multiple lines exist. </p>
+	
+	<h2 id="custom_formats">Data formats</h2>
+	
+	<p> The VEP supports the following formats: </p>
+	
+	<ul>
+		<li><a href="/info/website/upload/bed.html" target="_blank">BED</a> : a
+		simple tab-delimited format containing 3-12 columns of data. The first 3
+		columns contain the coordinates of the feature. If available, the VEP
+		will use the 4th column of the file as the identifier of the feature.
+		</li>
+		<li><a href="http://www.sanger.ac.uk/resources/software/gff/"
+		target="_blank">GFF</a> : a format for describing genes and other
+		features. If available, the VEP will use the "ID" field as the
+		identifier of this
+		feature. </li>
+		<li><a href="/info/website/upload/gff.html" target="_blank">GTF</a> :
+		treated in an identical manner to GFF. </li>
+		<li><a
+		href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41"
+		target="_blank">VCF</a> : a format used to describe genomic variants.
+		The VEP will use the 3rd column of the file as the identifier. </li>
+		<li><a href="http://genome.ucsc.edu/goldenPath/help/bigWig.html"
+		target="_blank">bigWig</a> : a format for storage of dense continuous
+		data. The VEP uses the value for the given position as the "identifier".
+		Note that bigWig files contain their own indices, and do not need to be
+		indexed by tabix. </li>
+	</ul>
+	
+	<p> Any other files can be easily converted to be compatible with the VEP;
+	the easiest format to produce is a BED-like file containing coordinates and
+	an (optional) identifier: </p>
+	
+	<pre class="code">chr1    10000    11000    Feature1
+chr3    25000    26000    Feature2
+chrX    99000    99001    Feature3</pre>
+	
+	<p> Chromosomes can be denoted by either e.g. "chr7" or "7", "chrX" or "X". </p>
+	
+    <hr/>
+	<h2 id="custom_prep">Preparing files</h2>
+	
+	<p> Custom annotation files must be prepared in a particular way in order to
+	work with tabix and therefore with the VEP. Files must be sorted in
+	chromosome and position order, compressed using <a
+	href="http://samtools.sourceforge.net/tabix.shtml" target="_blank">bgzip</a>
+	and finally indexed using <a
+	href="http://samtools.sourceforge.net/tabix.shtml"
+	target="_blank">tabix</a>. Here is an example of that process for a BED
+	file: </p>
+	
+	<pre class="code">sort -k1,1 -k2,2n -k3,3n myData.bed | bgzip > myData.bed.gz
+tabix -p bed myData.bed.gz</pre>
+	
+	<p> The tabix utility has several preset filetypes that it can process, and
+	it can also process any arbitrary filetype containing at least a chromosome
+	and position column. See the <a
+	href="http://samtools.sourceforge.net/tabix.shtml"
+	target="_blank">documentation</a> for details. </p>
+	
+	<p> If you are going to use the file remotely (i.e. over HTTP or FTP
+	protocol), you should ensure the file is world-readable on your server. </p>
+	
+    <hr/>
+	<h2 id="custom_options">Options</h2>
+	
+	<p> Each custom file that you configure the VEP to use can be configured.
+	Beyond the filepath, there are further options, each of which is specified
+	in a comma-separated list, for example: </p>
+	
+	<pre class="code">perl variant_effect_predictor.pl -custom myFeatures.gff.gz,myFeatures,gff,overlap,0
+perl variant_effect_predictor.pl -custom frequencies.bw,Frequency,bigwig,exact,0
+perl variant_effect_predictor.pl -custom http://www.myserver.com/data/myPhenotypes.bed.gz,Phenotype,bed,exact,1</pre>
+	
+	<p> The options are as follows: </p>
+	
+	<ul>
+		<li><b>Filename</b> : The path to the file. For tabix indexed files, the
+		VEP will check that both the file and the corresponding .tbi file exist.
+		For remote files, the VEP will check that the tabix index is accessible
+		on
+		startup. </li>
+		<li><b>Short name</b> : A name for the annotation that will appear as
+		the key in the key=value pairs in the results. If not defined, this will
+		default
+		to e.g. "Custom1" for the first set of annotation added. </li>
+		<li><b>File type</b> : One of "bed", "gff", "gtf", "vcf", "bigwig". If
+		not
+		specified, the VEP assumes the file is BED format. </li>
+		<li><b>Annotation type</b> : One of "exact", "overlap". When using
+		"exact" only annotations whose coordinates match exactly those of the
+		variant will be reported. This would be suitable for position specific
+		information such as conservation scores, allele frequencies or phenotype
+		information. Using "overlap", any annotation that overlaps the variant
+		by even 1bp will be
+		reported. </li>
+		<li><b>Force report coordinates</b> : One of "0" or "1" (if left blank
+		assumed to be "0") - if set to "1", this forces the VEP to output the
+		coordinates of an overlapping custom feature instead of any found
+		identifier (or value in the case of bigWig) field. If set to "0" (the
+        default), the VEP will output the identifier field if one is found; if
+        none is found, then the coordinates are used instead. </li>
+        <li><b>VCF fields</b> : if any field names are specified that are found
+        in the info field of the VCF, these will also be added as custom
+        annotations. Only applies when using VCF format custom files. </li>
+	</ul>
+	
+	<p> All options (apart from the filename) are optional and their absence
+	will invoke the default behaviour. </p>
+	
+    <hr/>
+	<h2 id="custom_remote">Using remote files</h2>
+	
+	<p> The tabix utility makes it possible to read annotation files from remote
+	locations, for example over HTTP or FTP protocols. In order to do this, the
+	.tbi index file is downloaded locally (to the current working directory)
+	when the VEP is run. From this point on, only the portions of data requested
+	by the script (i.e. those overlapping the variants in your input file) are
+	downloaded. Users should be aware, however, that it is still possible to
+	cause problems with network traffic in this manner by requesting data for a
+	large number of variants. Users with large amounts of data should download
+	the annotation file
+	locally rather than risk causing any issues! </p>
+	
+	<p> bigWig files can also be used remotely in the same way as tabix-indexed
+	files, although less stringent checks are carried out on VEP startup.
+	Furthermore, when using bigWig files, the VEP generates temporary files that
+	by default are written to the /tmp/ directory - to override this, use the
+	<a href="vep_options.html#opt_tmpdir">--tmpdir /my/tmp/dir</a> flag. </p>
+	
+    <hr/>
+	<h2 id="custom_existing">Annotating existing results</h2>
+	
+    <p> It is possible to add custom annotation to existing VEP results files.
+    To do this, you need to specify the <a
+    href="vep_options.html#opt_no_consequence">--no_consequence</a> option, and
+    provide your VEP output file as the input file for the script. The script
+    should auto-detect the format of the file; if it does not, you can force it
+    to read the file as VEP output using <a
+    href="vep_options.html#opt_format">--format vep</a>. </p>
+</div>
+
+</body>
+</html>
