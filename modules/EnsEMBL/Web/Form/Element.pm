@@ -53,10 +53,16 @@ sub configure {
   ##  - is_binary       Flag kept on if values for a 'yesno' dropdown, the values to the option are 1 and 0 for Yes and No respectively instead of default 'yes' and 'no'
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
+  ##  - filter_text     Text to be displayed in the input used for filtering the dropdown (for Filterable element only)
+  ##  - tags            ArrayRef of tags if adding multiple tags in editabletag field (each element of this array is a hash with keys: tag_type, tag_class, tag_attribs and caption)
+  ##  - tag_type        Type of the tag (eg. removable or readonly) (optional only) (for editabletag elements only)
+  ##  - tag_attribs     Any additional (other than class) attributes for the tag div of editabletag element (Hashref key-value pairs as expected by DOM::Node::Element::set_attribute method)
   ##  - class           Class attribute (space seperated string or arrayref for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - element_class   Class attribute for the element div
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
   ##  - caption_class   Class attribute for the div/span containing caption in case of a NoEdit element
+  ##  - tag_class       Class attribute for the tag div (for editabletag element only)
+  ##  - link_class      Class attribute for the <a> tag in case of addlink element
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
@@ -90,9 +96,11 @@ sub map_element_class {
     'form-element-dascheckbox'  => 'EnsEMBL::Web::Form::Element::DASCheckBox',
     'form-element-dropdown'     => 'EnsEMBL::Web::Form::Element::Dropdown',
     'form-element-email'        => 'EnsEMBL::Web::Form::Element::Email',
+    'form-element-editabletag'  => 'EnsEMBL::Web::Form::Element::EditableTag',
     'form-element-file'         => 'EnsEMBL::Web::Form::Element::File',
     'form-element-float'        => 'EnsEMBL::Web::Form::Element::Float',
     'form-element-html'         => 'EnsEMBL::Web::Form::Element::Html',
+    'form-element-iconlink'     => 'EnsEMBL::Web::Form::Element::IconLink',
     'form-element-int'          => 'EnsEMBL::Web::Form::Element::Int',
     'form-element-noedit'       => 'EnsEMBL::Web::Form::Element::NoEdit',
     'form-element-nonnegfloat'  => 'EnsEMBL::Web::Form::Element::NonNegFloat',
@@ -102,6 +110,7 @@ sub map_element_class {
     'form-element-posint'       => 'EnsEMBL::Web::Form::Element::PosInt',
     'form-element-radiolist'    => 'EnsEMBL::Web::Form::Element::Radiolist',
     'form-element-reset'        => 'EnsEMBL::Web::Form::Element::Reset',
+    'form-element-filterable'   => 'EnsEMBL::Web::Form::Element::Filterable',
     'form-element-string'       => 'EnsEMBL::Web::Form::Element::String',
     'form-element-submit'       => 'EnsEMBL::Web::Form::Element::Submit',
     'form-element-text'         => 'EnsEMBL::Web::Form::Element::Text',
