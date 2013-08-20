@@ -142,15 +142,17 @@ span.sprite                   { float: left; width: 16px; margin: 2px 4px 0 4px;
 
 
 /* Note that these names include the word 'icon' to distinguish them from classes associated with actions */
-.fave_icon     { background-image: url(/i/16/swp/star.png);     }
-.info_icon     { background-image: url(/i/16/swp/info.png);     }
-.save_icon     { background-image: url(/i/16/swp/save.png);     }
-.delete_icon   { background-image: url(/i/16/swp/trash.png);    }
-.share_icon    { background-image: url(/i/16/swp/share.png);    }
-.download_icon { background-image: url(/i/16/swp/download.png); }
-.add_icon      { background-image: url(/i/16/swp/add.png);      }
-.edit_icon     { background-image: url(/i/16/swp/pencil.png);   }
-.use_icon      { background-image: url(/i/16/swp/check.png);    }
-.stop_icon     { background-image: url(/i/16/swp/stop.png);     }
-.bookmark_icon { background-image: url(/i/16/swp/bookmark.png); }
+.fave_icon     { background-image: url(/i/16/swp/star.png);         }
+.info_icon     { background-image: url(/i/16/swp/info.png);         }
+.save_icon     { background-image: url(/i/16/swp/save.png);         }
+.delete_icon   { background-image: url(/i/16/swp/trash.png);        }
+.share_icon    { background-image: url(/i/16/swp/share.png);        }
+.download_icon { background-image: url(/i/16/swp/download.png);     }
+.add_icon      { background-image: url(/i/16/swp/add.png);          }
+.edit_icon     { background-image: url(/i/16/swp/pencil.png);       }
+.use_icon      { background-image: url(/i/16/swp/round_check.png);  }
+.stop_icon     { background-image: url(/i/16/swp/stop.png);         }
+.bookmark_icon { background-image: url(/i/16/swp/bookmark.png);     }
+.cross_icon    { background-image: url(/i/16/swp/cross.png);        }
+.check_icon    { background-image: url(/i/16/swp/check.png);         }
 
