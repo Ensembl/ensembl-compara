@@ -12,11 +12,15 @@ sub configure {
   my ($self, $params) = @_;
   
   $params->{'caption'} = $params->{'value'} unless exists $params->{'caption'};
-  
-  $self->append_child(
-    $params->{'is_html'} ? 'div' : 'span',
-    {($params->{'is_html'} ? 'inner_HTML' : 'inner_text') => $params->{'caption'}, $params->{'caption_class'} ? ('class' => $params->{'caption_class'}) : ()}
-  );
+
+  if ($params->{'_children'}) { # private argument - if this argument is set, it ignores is_html, caption and caption_class arguments
+    $self->append_children(@{$params->{'_children'}});
+  } else {
+    $self->append_child(
+      $params->{'is_html'} ? 'div' : 'span',
+      {($params->{'is_html'} ? 'inner_HTML' : 'inner_text') => $params->{'caption'}, $params->{'caption_class'} ? ('class' => $params->{'caption_class'}) : ()}
+    );
+  }
 
   $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
