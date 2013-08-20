@@ -222,7 +222,7 @@ div.ele-das {
 form.bgcolour div.form-field {
   background-color: [[FORMFIELD_BG1]];
 }
-form.bgcolour div.form-field div.ff-right, form.bgcolour div.form-field.ff-multi div.ff-right {
+form.bgcolour div.form-field div.ff-right, form.bgcolour div.form-field.ff-multi div.ff-right, form.bgcolour div.form-field div.ff-notes {
   background-color: [[FORMFIELD_BG2]];
   margin-left: 300px;
   padding: 6px 6px 100px;
@@ -231,4 +231,130 @@ form.bgcolour div.form-field div.ff-right, form.bgcolour div.form-field.ff-multi
 form.bgcolour div.form-field label.ff-label {
   width: 292px;
   padding: 8px 0 0 8px;
+}
+div.editable-tag {
+  background-color: [[TINT_BG]];
+  border: 1px solid [[TINT_BORDER]];
+  margin: 0 0 4px;
+  width: 206px;
+  padding: 1px 0 0 6px;
+  line-height: 19px;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  color: [[BUTTON_BG]];
+}
+div.editable-tag.removable, div.editable-tag.readonly {
+  color: [[PAGE_TEXT]];
+  cursor: default;
+}
+
+form.bgcolour div.editable-tag {
+  background-color: [[PANEL_BG]];
+  border: 1px solid [[PANEL_BORDER]];
+}
+
+div.editable-tag span.et-icon {
+  background: transparent url(/i/16/swp/pencil.png) no-repeat 0 -18px;
+  background-color: inherit;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  right: 0;
+  top: 2px;
+  width: 18px;
+  height: 16px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+div.editable-tag.removable span.et-icon {
+  background-image: url(/i/16/swp/cross.png);
+}
+
+div.editable-tag.readonly span.et-icon {
+  display: none;
+}
+
+div.ff-icon-link {
+  overflow: hidden;
+}
+
+div.ff-icon-link a {
+  text-decoration: none;
+  font-weight: bold;
+  color: [[PAGE_TEXT]];
+}
+
+div.ff-icon-link a:hover {
+  color: [[BUTTON_BG]];
+}
+
+div.ff-icon-link span.sprite {
+  display: block;
+  line-height: 18px;
+  margin: 3px;
+  padding-left: 21px;
+  width: auto;
+}
+
+div.filterable-dropdown div {
+  background-color: [[PANEL_BORDER]];
+  border: 1px solid [[PANEL_BORDER]];
+  max-height: 200px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 400px;
+}
+
+div.filterable-dropdown p.ff-checklist {
+  margin: 1px 0;
+}
+
+div.filterable-dropdown p.ff-checklist:first-child {
+  margin-top: 0;
+}
+
+div.filterable-dropdown p.ff-checklist:last-child {
+  margin-bottom: 0;
+}
+
+div.filterable-dropdown p.ff-checklist label.ff-checklist-label {
+  background-color: [[PANEL_BG]];
+  white-space: nowrap;
+  padding: 3px 0 1px;
+  display: block;
+  margin: 0;
+  cursor: pointer;
+}
+
+div.filterable-dropdown p.ff-checklist label.highlight {
+  color: [[PANEL_BG]];
+  background-color: [[BUTTON_BG]];
+}
+
+div.filterable-dropdown p.ff-checklist input {
+  float: left;
+  position: relative;
+  top: 2px;
+}
+
+div.filterable-dropdown p.filterable-dropdown-filter {
+  margin: 0;
+}
+
+div.filterable-dropdown p.filterable-dropdown-filter input {
+  height: 20px;
+  margin: 0;
+  width: 400px;
+}
+
+div.filterable-dropdown p.filterable-dropdown-filter input.inactive {
+  color: [[PAGE_TEXT]];
+  font-style: italic;
+}
+
+div.filterable-dropdown p label span.highlight {
+  color: red;
 }
