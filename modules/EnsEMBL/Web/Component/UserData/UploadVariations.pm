@@ -37,17 +37,17 @@ sub content {
       alleles, and predicts the effects of each of these on overlapping
       transcripts and regulatory regions annotated in Ensembl. The tool accepts
       substitutions, insertions and deletions as input, see <a
-      href="/info/docs/variation/vep/vep_formats.html" target="_blank">data
+      href="/info/docs/tools/vep/vep_formats.html" target="_blank">data
       formats</a>.</p>
       
       <p>Upload is limited to $variation_limit variants; lines after the limit
       will be ignored. Users with more than $variation_limit variations can
       split files into smaller chunks, use the standalone <a
-      href="/info/docs/variation/vep/vep_script.html"
+      href="/info/docs/tools/vep/script/index.html"
       target="_blank">perl script</a> or the <a
       href="/info/docs/api/variation/variation_tutorial.html#Consequence"
       target="_blank">variation API</a>. See also <a
-      href="/info/docs/variation/vep/index.html" target="_blank">full
+      href="/info/docs/tools/vep/index.html" target="_blank">full
       documentation</a></p>
       
       <p><b>NB:</b> Ensembl now by default uses Sequence Ontology terms to
