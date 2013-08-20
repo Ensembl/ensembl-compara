@@ -1,21 +1,31 @@
 <html>
 <head>
-<title>VEP web interface</title>
+<title>Web interface</title>
+<meta name="order" content="1" />
 </head>
 
 <body>
 
-<div style="float:right"><img src="/img/vep_logo.png"/></div>
-
-<h1>VEP web interface</h1>
+<div>
+	
+	
+	<div style="float:right"><img src="/img/vep_logo.png"/></div>
+	
+	<h1 id="top"><span style="color:#006">Variant Effect Predictor</span> <img src="/i/16/globe.png"> <span style="color:#666">Web interface</span></h1>
+	<hr/>
 
 <p>
 The web version of the VEP can be accessed via the <a
-href="/info/docs/tools/">Tools</a> link at the top of each Ensembl web page, or via
-the "Manage your data" link on any species-specific page.
+href="/tools.html">Tools</a> link at the top of each Ensembl web page, via the
+"Manage your data" link on any species-specific page, or by clicking the link
+below.
 </p>
 
-<h3>Upload form</h3>
+<div class="tinted-box" style="font-size: 16px; padding: 10px; margin: 10px;width: 300px; text-align:center;">
+    <a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadVariations" class="modal_link">Launch web interface</a>
+</div>
+
+<h2 id="upload">Upload form</h2>
 
 <p> When you reach the VEP web interface, you will be presented with a form to
 enter <a href="vep_formats.html#input">your data</a>. Data can be uploaded in
@@ -25,11 +35,12 @@ one of three ways:</p>
 	<li><b>File upload</b> - click the "Choose file" button and locate the file on your system</li>
 	<li><b>Paste file</b> - simply copy and paste the contents of your file into the large text box</li>
 	<li><b>File URL</b> - point the VEP to a file hosted on a publically
-	accessible address. This can be either a 'http://' or 'ftp://' address.</li>
+	accessible address. This can be either a <b>http://</b> or <b>ftp://</b> address.</li>
 </ul>
 
-<p><b>Data format:</b> You can upload <a href="vep_formats.html#input">your data</a> in several different formats
-including: tab-delimited, VCF, HGVS, Pileup etc.</p>
+<p><b>Data format:</b> You can upload your data in several different <a
+href="vep_formats.html#input">formats</a> including: tab-delimited, VCF, HGVS,
+Pileup etc.</p>
 
 <p>
 <b>Options:</b> The VEP will run fine with the default options; click the blue "Next" button at the bottom of the panel to
@@ -43,10 +54,6 @@ continue when you are happy with the options. It is also possible to configure t
 	<li><b>Get regulatory region consequences</b> - the VEP can check for
 	overlaps with known regulatory features, and also check if a variation falls
 	in a high information part of a transcription factor binding site.</li>
-	<li><b>Type of consequences to display</b> - the VEP can output consequences
-	as described by the <a href="http://www.sequenceontology.org/">Sequence Ontology (SO)</a>
-        or <a
-	href="/info/docs/variation/predicted_data.html#consequences">Ensembl</a>.</li>
 	<li><b>Check for existing co-located variants</b> - in species with an
 	Ensembl Variation database, the VEP can check for existing variants
 	co-located with your input - the identifiers of these variants appear in the
@@ -91,7 +98,8 @@ The following options are currently available for human only.
 	</li>
 </ul>
 
-<h3> Select output format </h3>
+<hr/>
+<h2 id="results">Results</h2>
 
 <p>
 After clicking "Next", you are then asked to select either HTML or Text output.
@@ -109,7 +117,7 @@ Both formats contain the same information:
 	severity and blue unknown.</li>
 </ul>
 
-<h3> Viewing your results in the browser </h3>
+<h2> Viewing your results in the browser </h2>
 
 <p>
 Any data uploaded via the VEP web tool can be viewed on the Ensembl location
@@ -118,7 +126,8 @@ output, or switch on the track on location view (click "Configure this page",
 then "User attached data" on Region in detail view to see uploaded tracks).
 </p>
 
-<h3> Issues with larger datasets </h3>
+<hr/>
+<h2> Issues with larger datasets </h2>
 
 <p> The web interface to the VEP has a hard limit of 750 variants in your
 uploaded file. However, it is possible that the tool will not work with fewer

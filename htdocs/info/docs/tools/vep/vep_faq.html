@@ -1,19 +1,21 @@
 <html>
 <head>
-<title>VEP FAQ</title>
+<title>FAQ</title>
+<meta name="order" content="4" />
 </head>
-
 <body>
-
-<div style="float:right"><img src="/img/vep_logo.png"/></div>
-
-<h1 id="top">Frequently asked questions</h1>
-
-<ul>
-    <li><a href="#general">General questions</a></li>
-    <li><a href="#web">Web VEP questions</a></li>
-    <li><a href="#script">VEP script questions</a></li>
-</ul>
+<div>
+	
+	<div style="float:right;"><img src="/img/vep_logo.png"/></div>
+	
+	<h1 id="top"><span style="color:#006">Variant Effect Predictor</span> <img src="/i/16/help.png"> <span style="color:#666">FAQ</span></h1>
+	<hr/>
+    
+    <p> For any questions not covered here, please send an email to the Ensembl
+    developer's mailing list, <a
+    href="mailto:dev@ensembl.org">dev@ensembl.org</a> (public) or contact the
+    Ensembl Helpdesk at <a
+    href="mailto:helpdesk@ensembl.org">helpdesk@ensembl.org</a> (private) </p>
 
 <h2 id="general">General questions</h2>
 
@@ -29,7 +31,10 @@ using species X? </p>
 <p style="font-weight:bold;"> Q: Why has my insertion/deletion variant encoded in VCF
 disappeared from the VEP output? </p>
 
-<p> A: Ensembl treats unbalanced variants differently to VCF. You can solve this by giving your variants a unique identifier in the third column of the VCF file. See <a href="vep_formats.html#vcf">here</a> for a full discussion.</p>
+<p> A: Ensembl treats unbalanced variants differently to VCF - your variant
+hasn't disappeared, it may have just changed slightly! You can solve this by
+giving your variants a unique identifier in the third column of the VCF file.
+See <a href="vep_formats.html#vcf">here</a> for a full discussion.</p>
 
 <p>&nbsp;</p>
 
@@ -55,10 +60,6 @@ sequence. </p>
 we provide is the most conservative estimate that covers all reasonable
 scenarios. It is up to you, the user, to interpret this information!</p>
 
-<p>&nbsp;</p>
-
-
-<a href="#top">[Back to top]</a>
 <hr/>
 
 <h2 id="web">Web VEP questions</h2>
@@ -102,10 +103,6 @@ different when I use the web VEP and the VEP script? </p>
 are using in the web version. If you are sure this is still a problem, please
 report it on the Ensembl developers mailing list, <a
 href="mailto:dev@ensembl.org">dev@ensembl.org</a>.</p>
-
-<p>&nbsp;</p>
-
-<a href="#top">[Back to top]</a>
 <hr/>
 
 <h2 id="script">VEP script questions</h2>
@@ -125,15 +122,15 @@ Unknown MySQL server host 'ensembldb.ensembl.org' (2)
 server at ensembldb.ensembl.org. Occasionally the server may break connection
 with your script, which causes this error. This can happen when the server is
 busy, or due to various network issues. Consider using a <a
-href="vep_script.html#local">local copy of the database</a>, or the new <a
-href="vep_script.html#cache">caching system</a>. </p>
+href="vep_cache.html#local">local copy of the database</a>, or the new <a
+href="vep_cache.html#cache">caching system</a>. </p>
 
 <p>&nbsp;</p>
 
 <p style="font-weight:bold;"> Q: Can I use the VEP script on Windows? </p>
 
-<p> Yes - see the <a href="vep_script.html#windows">documentation</a> for a few
-different ways to get the VEP running on Windows. </p>
+<p> Yes - see the <a href="vep_download.html#windows">documentation</a> for a
+few different ways to get the VEP running on Windows. </p>
 
 <p>&nbsp;</p>
 
@@ -162,7 +159,7 @@ class that should help you (probably translation_start and translation_end).</p>
 
 <p>&nbsp;</p>
 
-<a href="#top">[Back to top]</a>
+</div>
 
 </body>
 </html>
