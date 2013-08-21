@@ -1,6 +1,6 @@
 package EnsEMBL::Web::Document::HTML::Compara;
 
-## Provides content for compara documeentation - see /info/docs/compara/analyses.html
+## Provides content for compara documeentation - see /info/genome/compara/analyses.html
 ## Base class - does not itself output content
 
 use strict;
@@ -211,7 +211,7 @@ sub draw_stepped_table {
           $content = '<b>YES</b>';
         }
         else {
-          my $url = '/info/docs/compara/mlss.html?method='.$method.';mlss='.$mlss_id;
+          my $url = '/info/genome/compara/mlss.html?method='.$method.';mlss='.$mlss_id;
           $content = sprintf('<a href="%s">YES</a>', $url);
         }
       }
