@@ -162,6 +162,7 @@ sub study_url          { my $self = shift; return (defined($self->study)) ? $sel
 sub external_reference { my $self = shift; return (defined($self->study)) ? $self->study->external_reference : undef; }
 sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
 sub is_somatic         { my $self = shift; return $self->Obj->is_somatic;                                             }
+sub default_action     { return 'Explore'; }
 
 sub validation_status  { 
   my $self = shift; 
