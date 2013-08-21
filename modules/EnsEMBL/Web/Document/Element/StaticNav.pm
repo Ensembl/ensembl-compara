@@ -47,8 +47,8 @@ sub content {
   foreach my $page (grep { !/^_/ && keys %{$this_tree->{$_}} } @page_order) {
     next unless $this_tree->{$page}{'_title'};
 
-    my $url     = $page;
-    $url       .= '/' unless $page =~ /html$/;
+    my $url     = $this_tree->{$page}{'_path'};
+    $url       .= $page if $page =~ /html$/;
     (my $id     = $url) =~ s/\//_/g;
     my $class   = $page eq $last_page ? 'last' : 'top_level';
     my $state   = $config->{$page};
