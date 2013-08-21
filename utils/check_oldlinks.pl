@@ -74,13 +74,23 @@ foreach my $type (@object_types) {
       next if $node->data->{'no_menu_entry'};
       next if $node->data->{'external'};
       next if $action eq 'Output';
+      next if $old_links{$type}{$action};
       
-      if ($old_links{$type}{$action}) {
-        #warn "... PAGE $type/$action has a mapping";
-      } else {
-        warn "!!! NO MAPPING FOR PAGE $type/$action\n";
+      my @a    = split '_', $action;
+      my $i    = scalar @a;
+      my $j    = $#a;
+      my $next = 0;
+       
+      while (--$i) {
+        if ($old_links{$type}{join('_', map $a[$_], 0..$i-1) . join ('/', '', map $a[$_], $i..$j)}) {
+          $next = 1;
+          last;
+        }
       }
+      
+      warn "!!! NO MAPPING FOR PAGE $type/$action\n" unless $next;
     }
+    
     warn "\n";
   }
 }
