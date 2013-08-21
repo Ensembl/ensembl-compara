@@ -194,7 +194,7 @@
     details. These must be relative to genomic or Ensembl transcript coordinates. It
     also is possible to use RefSeq transcripts in both the web
     interface and the VEP script (see <a
-    href="/info/docs/variation/vep/vep_other.html#hgvs">script documentation</a>).
+    href="script/vep_other.html#hgvs">script documentation</a>).
      This works for RefSeq transcripts that align to the genome correctly. </p>
     
     <p> Examples: </p>
@@ -205,7 +205,7 @@ ENST00000285667.3:c.1047_1048insC
 5:g.140532T>C</pre>
     
     <p> Examples using RefSeq identifiers (using <a
-    href="vep_options.html#opt_refseq">--refseq</a> in the VEP script, or select
+    href="script/vep_options.html#opt_refseq">--refseq</a> in the VEP script, or select
     the otherfeatures transcript database on the web interface and input type of
     HGVS): </p>
     
@@ -279,9 +279,9 @@ NM_001025204.1:c.336G>A</pre>
     </ol>
     
     <p>Empty values are denoted by '-'. Further fields in the Extra column can be
-    added by <a href="vep_plugins.html">plugins</a> or using <a
-    href="vep_custom.html">custom annotations</a> in the VEP script. Output fields
-    can be configured using the <a href="vep_options.html#opt_fields">--fields</a> flag when running the VEP script.
+    added by <a href="script/vep_plugins.html">plugins</a> or using <a
+    href="script/vep_custom.html">custom annotations</a> in the VEP script. Output fields
+    can be configured using the <a href="script/vep_options.html#opt_fields">--fields</a> flag when running the VEP script.
     </p>
     
     <pre class="code">
@@ -306,15 +306,15 @@ NM_001025204.1:c.336G>A</pre>
     <hr/>
     <h2 id="vcfout">VCF output</h2>
     
-    <p> The VEP script can also generate VCF output using the <a href="vep_options.html#opt_vcf">--vcf</a> flag.
+    <p> The VEP script can also generate VCF output using the <a href="script/vep_options.html#opt_vcf">--vcf</a> flag.
     Consequences are added in the INFO field of the VCF file, using the key
     "CSQ". Data fields are encoded separated by "&#124;"; the order of fields is
     written in the VCF header. Output fields can be configured by using
-    <a href="vep_options.html#opt_fields">--fields</a>. Unpopulated fields are
+    <a href="script/vep_options.html#opt_fields">--fields</a>. Unpopulated fields are
     represented by an empty string. </p>
     
     <p> VCFs produced by the VEP can be filtered by <a
-    href="vep_filter.html">filter_vep.pl</a> in the same way as standard format
+    href="script/vep_filter.html">filter_vep.pl</a> in the same way as standard format
     output files. </p>
     
     <p> If the input format was VCF, the file will remain unchanged save for the
@@ -323,7 +323,7 @@ NM_001025204.1:c.336G>A</pre>
     VEP.</p>
     
     <p> Custom data added with <a
-    href="vep_options.html#opt_custom">--custom</a> are added as separate
+    href="script/vep_options.html#opt_custom">--custom</a> are added as separate
     fields, using the key specified for each data file.</p>
     
     <p> Commas in fields are replaced with ampersands (&amp;) to preserve VCF
@@ -343,11 +343,11 @@ NM_001025204.1:c.336G>A</pre>
     the file in your web browser. </p>
     
     <p> To prevent the VEP writing a stats file, use the flag <a
-    href="vep_options.html#opt_no_stats">--no_stats</a>. To have the VEP write a
+    href="script/vep_options.html#opt_no_stats">--no_stats</a>. To have the VEP write a
     machine-readable text file in place of the HTML, use <a
-    href="vep_options.html#opt_stats_text">--stats_text</a>. To change the name
+    href="script/vep_options.html#opt_stats_text">--stats_text</a>. To change the name
     of the stats file from the default, use <a
-    href="vep_options.html#opt_stats_file">--stats_file [file]</a>. </p>
+    href="script/vep_options.html#opt_stats_file">--stats_file [file]</a>. </p>
     
     <p> The page contains several sections: </p>
     
