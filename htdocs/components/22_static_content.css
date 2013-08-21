@@ -130,11 +130,13 @@ form.homepage-search-form .fselect { width: 182px; }
 
 form.homepage-search-form span.inp-group { white-space: nowrap; }
 
-form.search-form input.ftext { padding: 2px 0; }
-form.search-form div.ff-right label { margin-right: 6px; margin-left: 0; line-height: 20px; }
+form.search-form input.ftext          { padding: 2px 0; }
+form.search-form input.inactive       { color: [[PAGE_TEXT]]; font-style: italic; }
+form.search-form input.inactive:focus { color: [[PANEL_BORDER]]; }
+form.search-form div.ff-right label   { margin-right: 6px; margin-left: 0; line-height: 20px; }
 form.search-form div.ff-right .submit { margin-top: 9px; }
-form.search-form div.ff-notes a { font-weight: bold; text-decoration: none; }
-form.homepage-search-form { text-align: center; margin: 0 !important; }
+form.search-form div.ff-notes a       { font-weight: bold; text-decoration: none; }
+form.homepage-search-form             { text-align: center; margin: 0 !important; }
 
 /* did you know column on home page */
 div.new-to-ensembl p      { background: url("/i/e-quest.gif") no-repeat scroll left -2px transparent; padding-left: 32px; }
