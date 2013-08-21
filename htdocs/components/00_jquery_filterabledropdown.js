@@ -38,8 +38,8 @@
           $(this).addClass('inactive').val(this.defaultValue);
         }
       },
-      'keyup': function(e) {
-        if (e.which == 38 || e.which == 40 || e.which == 13) {
+      'keyup mouseup': function(e) {
+        if (this.value == this.defaultValue || e.which == 38 || e.which == 40 || e.which == 13) {
           return false;
         }
         var value = this.value;
@@ -61,7 +61,7 @@
           labels.removeClass('highlight').filter(':visible').first().addClass('highlight');
         }
       },
-      'keydown': function(e) {
+      'keydown paste': function(e) {
         var labelsReverse, found = false;
         switch (e.which) {
           case 13:
