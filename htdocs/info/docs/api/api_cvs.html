@@ -51,30 +51,30 @@ $ cd src
 </li>
 
 <li>
-<p>
-Log into the BioPerl CVS server (using a password of <kbd>cvs</kbd>):
-</p>
-
+	<p>
+		Take a clone of BioPerl from GitHub using Git
+	</p>
 <pre>
-$ cvs -d :pserver:cvs@code.open-bio.org:/home/repository/bioperl login
-Logging in to :pserver:cvs@code.open-bio.org:2401/home/repository/bioperl
-CVS password: cvs
+$ git clone https://github.com/bioperl/bioperl-live.git
+Cloning into 'bioperl-live'...
+remote: Counting objects: 99558, done.
+remote: Compressing objects: 100% (23306/23306), done.
+remote: Total 99558 (delta 76021), reused 99097 (delta 75628)
+Receiving objects: 100% (99558/99558), 140.34 MiB | 5.66 MiB/s, done.
+Resolving deltas: 100% (76021/76021), done.
 </pre>
 </li>
 
 <li>
 <p>
-Install <a href="http://www.bioperl.org/wiki/Main_Page" rel="external">BioPerl</a>
-(version 1.2.3)
+Switch to <a href="http://www.bioperl.org/wiki/Main_Page" rel="external">BioPerl</a> version 1.2.3. Do not worry about warnings from Git about being in a <em>detatched HEAD</em> state.
 </p>
 
 <pre>
-$ cvs -d :pserver:cvs@code.open-bio.org:/home/repository/bioperl checkout -r bioperl-release-1-2-3 bioperl-live
+$ git checkout bioperl-release-1-2-3
 </pre>
 
-<p class="notice">Important note: you must install <strong>version 1.2.3</strong>, not a more recent version. Starting with  1.2.4, major changes were made to the BioPerl API which have made it incompatible with Ensembl</p>
-
-
+<p class="notice">Important note: you must install <strong>version 1.2.3</strong>, not a more recent version. Starting with  1.2.4, major changes were made to the BioPerl API which have made it incompatible with Ensembl.</p>
 
 </li>
 
