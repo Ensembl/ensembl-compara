@@ -227,7 +227,7 @@ sub compara_text {
     </div>
     <h2>Comparative genomics</h2>
     <p><strong>What can I find?</strong>  Homologues, gene trees, and whole genome alignments across multiple species.</p>
-    <p><a href="/info/docs/compara/" class="nodeco">%sMore about comparative analysis</a></p>
+    <p><a href="/info/genome/compara/" class="nodeco">%sMore about comparative analysis</a></p>
     %s',
     
     sprintf(
@@ -249,7 +249,7 @@ sub variation_text {
   my $self = shift;
   my $hub  = $self->hub;
   my $html;
-  
+
   if ($hub->database('variation')) {
     my $species_defs = $hub->species_defs;
     my $sample_data  = $species_defs->SAMPLE_DATA;
@@ -262,7 +262,7 @@ sub variation_text {
       </div>
       <h2>Variation</h2>
       <p><strong>What can I find?</strong> Short sequence variants%s%s</p>
-      <p><a href="/info/docs/variation/" class="nodeco">%sMore about variation in %s</a></p>
+      <p><a href="/info/genome/variation/" class="nodeco">%sMore about variation in %s</a></p>
       %s',
       
       $sample_data->{'VARIATION_PARAM'} ? sprintf(
@@ -326,7 +326,7 @@ sub funcgen_text {
       </div>
       <h2>Regulation</h2>
       <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>
-      <p><a href="/info/docs/funcgen/" class="nodeco">%sMore about the %s regulatory build</a> and <a href="/info/docs/microarray_probe_set_mapping.html" class="nodeco">microarray annotation</a></p>
+      <p><a href="/info/genome/funcgen/" class="nodeco">%sMore about the %s regulatory build</a> and <a href="/info/genome/microarray_probe_set_mapping.html" class="nodeco">microarray annotation</a></p>
       %s',
       
       sprintf(
@@ -336,7 +336,7 @@ sub funcgen_text {
       ),
       
       $species eq 'Homo_sapiens' ? '
-        <a class="nodeco _ht _ht_track" href="/info/encode.html" title="Find out about ENCODE data"><img src="/img/ENCODE_logo.jpg" class="bordered" /><span>ENCODE data in Ensembl</span></a>
+        <a class="nodeco _ht _ht_track" href="/info/genome/funcgen/encode.html" title="Find out about ENCODE data"><img src="/img/ENCODE_logo.jpg" class="bordered" /><span>ENCODE data in Ensembl</span></a>
       ' : '',
 
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE,
@@ -350,7 +350,7 @@ sub funcgen_text {
     return sprintf('
       <h2>Regulation</h2>
       <p><strong>What can I find?</strong> Microarray annotations.</p>
-      <p><a href="/info/docs/microarray_probe_set_mapping.html" class="nodeco">%sMore about the %s microarray annotation strategy</a></p>',
+      <p><a href="/info/genome/microarray_probe_set_mapping.html" class="nodeco">%sMore about the %s microarray annotation strategy</a></p>',
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE
     );
   }
