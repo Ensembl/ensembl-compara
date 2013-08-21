@@ -1,6 +1,6 @@
 (function ($) {
   $.fn.selectRange = function(start, end) {
-    return this.each(function() {
+    return this.filter(':visible').each(function() {
       if (this.setSelectionRange) {
         this.focus();
         this.setSelectionRange(start, end);
@@ -11,6 +11,6 @@
         range.moveStart('character', start);
         range.select();
       }
-    });
+    }).end();
   };
 })(jQuery);
