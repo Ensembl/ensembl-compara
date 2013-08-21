@@ -25,6 +25,11 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     this.elLk.input.on({
       focus: function() {
         if (panel.label === this.value) {
+          $(this).selectRange(0, 0);
+        }
+      },
+      'keydown paste': function() {
+        if (this.className.match('inactive')) {
           $(this).removeClass('inactive').val('');
         }
       },

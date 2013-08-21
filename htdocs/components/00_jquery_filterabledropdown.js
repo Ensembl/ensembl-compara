@@ -29,8 +29,8 @@
     });
     el.find('._fd_filter input').on({
       'focus': function() {
-        if (!this.value || this.value == this.defaultValue) {
-          $(this).removeClass('inactive').val('');
+        if (this.value == this.defaultValue) {
+          $(this).selectRange(0, 0);
         }
       },
       'blur': function() {
@@ -82,7 +82,12 @@
                 found = false;
               }
             }).filter('.highlight').length) {
-              (labelsReverse || labels).last().addClass('highlight');
+              (labelsReverse || labels).filter(':visible').last().addClass('highlight');
+            }
+          break;
+          default:
+            if (this.value == this.defaultValue) {
+              $(this).removeClass('inactive').val('');
             }
           break;
         }
