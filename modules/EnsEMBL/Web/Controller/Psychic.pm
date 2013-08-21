@@ -209,6 +209,14 @@ sub psychic {
       $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);    # everything else!
   }
 
+  # Hack to get facets through to search. Psychic will be rewritten soon
+  # so we shouldn't need this hack, longterm.
+  if($url =~ m!/Search/!) {
+    my @params = $hub->param();
+    $url .= ($url =~ /\?/ ? ';' : '?');
+    $url .= join(";",map {; "$_=".$hub->param($_) } @params);
+  }
+
   $hub->redirect($site . $url);
 }
 
