@@ -96,7 +96,7 @@ sub command{
   if( ! -f $self->fastafile ){ $self->throw("Need a query sequence!") }
 
 #  my $exe = $self->executable;
-  my $exe = '/ensemblweb/shared/bin/gfClient';
+  my $exe = '/localsw/bin/gfClient';
   -e $exe || $self->throw( "$exe does not exist" );
   -X $exe || $self->throw( "$exe is not executable bu UID/GID" );
 
@@ -104,13 +104,30 @@ sub command{
 
   my $command = join( ' ',
 		      $exe,
-		      "-out=wublast -stepSize=5 -minScore=0 -minIdentity=0",
+		      "-out=wublast",
 		      $host,
 		      $port,
 		      $nib_dir,
 		      $self->fastafile,
 		      $self->reportfile, 
 		    );
+
+  my @Q        = gmtime();
+  my $log_file = sprintf '/ensemblweb/www/server/seq-logs/%04d-%02d-%02d.log', $Q[5]+1900, $Q[4]+1, $Q[3];
+open O, ">>$log_file";
+printf O qq(
+=== %-64.64s ===
+Method:   BLAT
+Host:     %s
+Port:     %s
+Nib dir:  %s
+Datetime: %s
+IP:       %s
+Command:  %s
+Fasta:    %s
+========================================================================
+), "COMMAND BLAT ".$self->fastafile, $host, $port, $nib_dir, "".gmtime, $ENV{'REMOTE_ADDR'}.', '.$ENV{'HTTP_X_FORWARDED_FOR'}, $command,  $self->fastafile;
+close O;
 
   warn "$command 2> ".$self->errorfile;
   return $command." 2>".$self->errorfile;
