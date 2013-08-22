@@ -52,7 +52,7 @@ sub content {
       
       <p><b>NB:</b> Ensembl now by default uses Sequence Ontology terms to
       describe variation consequences. See <a
-      href="/info/docs/variation/predicted_data.html#consequences">this page</a>
+      href="/info/genome/variation/predicted_data.html#consequences">this page</a>
       for details</p>
   )});
   my $subheader = 'Input file';
