@@ -382,7 +382,7 @@ sub fetch_input {
           ## slurp in the matrix file
           my @path  = split '/', $v;
           my $file  = $path[-1];
-          my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/docs/compara/$file";
+          my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/genome/compara/$file";
           
           $v  = '<pre>';
           while (<IN>) {
@@ -399,7 +399,7 @@ sub fetch_input {
       }
       ## Set default matrix
       unless ($blastz_parameters->{'Q'}) {
-        my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/docs/compara/default.matrix";
+        my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/genome/compara/default.matrix";
         my $v  = '<pre>Default:
 ';
         while (<IN>) {
