@@ -79,8 +79,8 @@ sub content {
           </ul>
           <h2>Reference materials</h2>
           <ul>
-            <li><a href="/info/docs/variation/index.html">Ensembl variation documentation portal</a></li>
-            <li><a href="/info/docs/variation/data_description.html">Ensembl variation data description</a></li>
+            <li><a href="/info/genome/variation/index.html">Ensembl variation documentation portal</a></li>
+            <li><a href="/info/genome/variation/data_description.html">Ensembl variation data description</a></li>
           </ul>
         </div>
       </div>
