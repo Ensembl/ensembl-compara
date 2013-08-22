@@ -108,7 +108,7 @@ sub stats_table {
   my ($stats, %chr_stats);
   my $chr = $object->Obj->{'slice'};
   foreach my $attrib (@{$chr->get_all_Attributes}) {
-    if ($attrib->value =~ /\d+/) {
+    if ($attrib->value =~ /^\d+$/) {
       $chr_stats{$attrib->name} += $attrib->value;
     }
   }
