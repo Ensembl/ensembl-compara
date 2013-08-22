@@ -117,21 +117,30 @@ sub content {
   }
 
   ## SEARCH -------------------------------------------
+  unless ($ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/) {
+    my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . "Multi/psychic";
+    my $default_search_code = $self->species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
+    my $q                   = $self->hub->param('q');
 
-  my $img_url         = $self->img_url;
-  my $search_url      = sprintf '%s%s/psychic', $self->home_url, 'Multi';
+    my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => [ 'search-form', 'clear' ]});
+    $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
+    $form->add_hidden({'name' => 'facet_feature_type', 'value' => 'Documentation'});
 
-  $html .= qq(
-    <div id="doc_search">
-      <form action="$search_url">
-        <div class="print_hide">
-          <div class="header">Search documentation:</div>
-          <input type="text" name="se_q" />
-          <input type="image" class="button" src="${img_url}16/search.png" alt="Search&nbsp;&raquo;" />
-        </div>
-      </form>
-    </div>
-  );
+    my $f_params = {'notes' => ''};
+    my $field = $form->add_field($f_params);
+
+    # search input box & submit button
+    my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => '20', 'name' => 'q', 'class' => 'query input'};
+    $q_params->{'value'} = "Search documentation...";
+    $field->add_element($q_params, 1);
+    $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
+
+    my $elements_wrapper = $field->elements->[0];
+    $elements_wrapper->append_child('span', {'class' => 'inp-group', 'children' => [ splice @{$elements_wrapper->child_nodes}, 0, 2 ]})->after({'node_name' => 'wbr'}) for (0..1);
+
+    $html .= sprintf '<div id="SpeciesSearch" class="js_panel" style="margin:16px 0 0 8px"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
+
+  }
 
   return $html;
 }
