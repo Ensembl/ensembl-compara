@@ -98,7 +98,8 @@ sub content {
   return '' unless $count;
   
   my ($content, $short_tabs, $long_tabs);
-  my @style   = $count > 4 ? () : (' style="display:none"', ' style="display:block"');
+  my $static  = $self->isa('EnsEMBL::Web::Document::Element::StaticTabs');
+  my @style   = $count > 4 && !$static ? () : (' style="display:none"', ' style="display:block"');
   my $history = 0;
   
   foreach my $entry (@{$self->entries}) {
