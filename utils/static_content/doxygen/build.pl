@@ -4,6 +4,7 @@ use strict;
 
 use Cwd;
 use Getopt::Long;
+use File::Basename;
 
 Getopt::Long::Configure('bundling');
 
@@ -14,6 +15,8 @@ my $flag = GetOptions(
   'dir=s',  \$root,
   'apis=s', \@apis,
 );
+
+my $filter_dir = "$root/ensembl/misc-scripts/doxygen_filter/";
 
 my $dir   = "$root/utils/static_content/doxygen";
 my $html  = "$root/htdocs/info/docs/Doxygen";
@@ -68,6 +71,7 @@ if ($apis[0] ne 'edocs') {
     EXCLUDE           => '',
     TAGFILES          => 'ensembl.tag=../core-api/',
     GENERATE_TAGFILE  => '%s.tag',
+    INPUT_FILTER      => "$filter_dir/ensembldoxygenfilter.pl",
   );
 
   my $template = `cat $dir/docbuild_template`;
@@ -94,7 +98,7 @@ if ($apis[0] ne 'edocs') {
     # Run doxygen
     system("
       cd $dir
-      export PERL5LIB=\${PERL5LIB}:\${PWD}/lib/site_perl/5.8.8/
+      export PERL5LIB=\${PERL5LIB}:$filter_dir
       export PATH=\${PWD}/bin:\${PATH}
       doxygen ${api}_docbuild 2> ${api}_error.log
     ");

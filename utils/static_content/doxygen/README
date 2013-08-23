@@ -18,13 +18,7 @@ Doxygen (1.7.4 works well)
 	- if Doxygen is significantly updated, generate fresh layout.xml, header.html, footer.html, customdoxygen.css, and docbuild files, then add present configuration to them.
 	- doxygen binary is in /software/ensembl/doxygen/bin
 
-DoxygenFilter (1.10)
-	- available from http://www.bigsister.ch/doxygenfilter/
-	- binary goes with doxygen binary, perl libraries go into lib/site-perl/5.8.8/DoxyGen
-	- add the Perl lib folder to the PERL5LIB environment variable.
-
 Custom filter (from ensembl CVS: ensembl-personal/ktaylor/doxygenfilter/)
-	- copy directly over ModifiedPerlFilter.pm file into the lib folder above. Rename ModifiedPerlFilter.pm to PerlFilter.pm
 	- consider using the layout.xml, html templates and so forth from the CVS checkout
 
 --------------------------------------------------------
@@ -38,7 +32,7 @@ OUTPUT_DIRECTORY (location for html to go in html/ subfolder
 STRIP_FROM_PATH (to remove the leading parts of the path from the filenames in the documentation)
 INPUT (path to root of source code to be processed)
 EXCLUDE (so that test suites are not processed)
-INPUT_FILTER (should say doxygenfilter)
+INPUT_FILTER (should refer to ensembldoxygenfilter.pl located in ensembl/misc-scripts/doxygen_filter)
 GENERATE_HTML
 
 If cross-references between e.g. funcgen and core are not showing, check GENERATE_TAGFILE and TAGFILES
