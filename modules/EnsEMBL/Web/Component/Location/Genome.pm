@@ -61,8 +61,15 @@ sub _render_features {
   }
 
   if ($id && $total_features < 1) {
-    my $ids = join(', ', $id);
-    return $self->_warning('Not found', sprintf('<p>No mapping of %s found</p>', $ids || 'unknown feature'));
+    my $ids = ref($id) eq 'ARRAY' ? join(', ', @$id) : $id;
+    my $message;
+    if ($self->hub->type eq 'Phenotype') {
+      $message = 'No mapped variants are available for this phenotype';
+    }
+    else {
+      $message = sprintf('<p>No mapping of %s found</p>', $ids || 'unknown feature');
+    }
+    return $self->_warning('Not found', $message);
   }
 
   ## Add in userdata tracks
