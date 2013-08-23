@@ -40,6 +40,7 @@ sub configure {
     GO                  => [ 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor', 'ontology' ],
     FASTA               => undef,
     PRODUCTION          => undef,
+    STABLE_IDS          => undef,
   );
 
   for my $species (keys %{$self->{'conf'}->{'_storage'}}, 'MULTI') {
