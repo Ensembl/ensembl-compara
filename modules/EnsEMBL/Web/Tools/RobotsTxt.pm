@@ -22,7 +22,7 @@ sub create {
   ### Returns: none
   my $species = shift;
   my $sd      = shift;
-  my $root    = $sd->ENSEMBL_HTDOCS_DIRS->[-1];
+  my $root    = $sd->ENSEMBL_SERVERROOT . '/htdocs';
   my @allowed = @{$sd->ENSEMBL_EXTERNAL_SEARCHABLE||[]};
   
   #check if directory for creating .cvsignore and robots.txt exist
