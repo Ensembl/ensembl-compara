@@ -1,6 +1,0 @@
-/software/ensembl/doxygen/bin/doxygenfilter
-/software/ensembl/doxygen/lib/site_perl/5.8.8/DoxyGen/Filter.pm
-/software/ensembl/doxygen/lib/site_perl/5.8.8/DoxyGen/PerlFilter.pm
-/software/ensembl/doxygen/lib/site_perl/5.8.8/DoxyGen/SQLFilter.pm
-/software/ensembl/doxygen/lib/site_perl/5.8.8/DoxyGen/VBFilter.pm
-/software/ensembl/doxygen/man/man3/DoxyGen::Filter.3
