@@ -138,7 +138,7 @@ sub content {
     my $elements_wrapper = $field->elements->[0];
     $elements_wrapper->append_child('span', {'class' => 'inp-group', 'children' => [ splice @{$elements_wrapper->child_nodes}, 0, 2 ]})->after({'node_name' => 'wbr'}) for (0..1);
 
-    $html .= sprintf '<div id="SpeciesSearch" class="js_panel" style="margin:16px 0 0 8px"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
+    $html .= sprintf '<div class="js_panel" style="margin:16px 0 0 8px"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
 
   }
 
