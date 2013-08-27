@@ -60,8 +60,8 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'mlss_id'          => 40089,
-            'release'          => '72',
+            'mlss_id'          => 40092,
+            'release'          => '73',
             'rel_suffix'       => '',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
@@ -72,6 +72,7 @@ sub default_options {
             'pipeline_name'    => $self->o('pipeline_basename') . '_' . $self->o('rel_with_suffix'),
 
             # capacity values for some analysis:
+            'load_members_capacity'           => 100,
             'quick_tree_break_capacity'       => 100,
             'msa_chooser_capacity'            => 100,
             'other_paralogs_capacity'         => 100,
@@ -87,6 +88,9 @@ sub default_options {
             'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
             'hc_capacity'                     => 4,
+
+            # priority for non-LOCAL healthchecks;
+            'hc_priority'                     => 10,
 
             # executable locations:
             'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
@@ -111,7 +115,7 @@ sub default_options {
             # connection parameters
             'pipeline_db' => {
                               -driver => 'mysql',
-                              -host   => 'compara2',
+                              -host   => 'compara3',
                               -port   => 3306,
                               -user   => 'ensadmin',
                               -pass   => $self->o('password'),
@@ -119,14 +123,14 @@ sub default_options {
                              },
 
             'reg1' => {
-                       -host   => 'ens-livemirror',
+                       -host   => 'ens-staging',
                        -port   => 3306,
                        -user   => 'ensro',
                        -pass   => '',
                       },
 
              'reg2' => {
-                        -host   => 'ens-livemirror',
+                        -host   => 'ens-staging2',
                         -port   => 3306,
                         -user   => 'ensro',
                         -pass   => '',
@@ -141,11 +145,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'ens-livemirror',
+                         -host   => 'compara3',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'ensembl_compara_72',
+                         -dbname => 'kb3_ensembl_compara_72',
                         },
 
 
