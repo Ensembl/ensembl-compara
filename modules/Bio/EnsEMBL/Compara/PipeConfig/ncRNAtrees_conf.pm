@@ -338,7 +338,7 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'load_members',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers',
-            -hive_capacity => 30,
+            -hive_capacity => $self->o('load_members_capacity'),
             -batch_size    => 100,
 
             -rc_name => 'default',
@@ -458,7 +458,7 @@ sub pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -hive_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '4Gb_job',
+                -rc_name        => '4Gb_long_job',
                 -priority       => 50,
                 -flow_into      => [ 'other_paralogs' ],
             },
@@ -469,9 +469,9 @@ sub pipeline_analyses {
                                     'dataflow_subclusters' => 1,
                                     'mlss_id'              => $self->o('mlss_id'),
                                    },
-                -hive_capacity  => $self->o('other_paralogs_capacity'),
-                -rc_name        => '1Gb_job',
-                -priority       => 40,
+                -analysis_capacity  => $self->o('other_paralogs_capacity'),
+                -rc_name            => '1Gb_job',
+                -priority           => 40,
                 -flow_into => {
                                '2->A' => [ 'genomic_alignment', 'infernal' ],
                                'A->2' => [ 'treebest_mmerge' ],
@@ -498,11 +498,9 @@ sub pipeline_analyses {
                 -hive_capacity => $self->o('ss_picts_capacity'),
                 -parameters    => {
                                    'ss_picts_dir'  => $self->o('ss_picts_dir'),
-#                                   'b2ct_exe'      => $self->o('b2ct_exe'),
-#                                   'sir_graph_exe' => $self->o('sir_graph_exe'),
                                    'r2r_exe'       => $self->o('r2r_exe'),
                                   },
-                -failed_job_tolerance =>  10,
+                -failed_job_tolerance =>  30,
                 -rc_name       => 'default',
             },
 
@@ -568,6 +566,7 @@ sub pipeline_analyses {
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
          -hive_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
+                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'mafft_exe' => $self->o('mafft_exe'),
                             'mafft_binaries' => $self->o('mafft_binaries'),
                             'raxml_exe' => $self->o('raxml_exe'),
