@@ -120,23 +120,27 @@ sub content {
   unless ($ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/) {
     my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . "Multi/psychic";
     my $default_search_code = $self->species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
-    my $q                   = $self->hub->param('q');
 
     my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => [ 'search-form', 'clear' ]});
     $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
     $form->add_hidden({'name' => 'facet_feature_type', 'value' => 'Documentation'});
 
-    my $f_params = {'notes' => ''};
-    my $field = $form->add_field($f_params);
-
     # search input box & submit button
-    my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => '20', 'name' => 'q', 'class' => 'query input'};
-    $q_params->{'value'} = "Search documentation...";
-    $field->add_element($q_params, 1);
-    $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
-
-    my $elements_wrapper = $field->elements->[0];
-    $elements_wrapper->append_child('span', {'class' => 'inp-group', 'children' => [ splice @{$elements_wrapper->child_nodes}, 0, 2 ]})->after({'node_name' => 'wbr'}) for (0..1);
+    my $field = $form->add_field({
+      'inline'    => 1,
+      'elements'  => [{
+        'type'        => 'string',
+        'value'       => 'Search documentation&#8230;',
+        'is_encoded'  => 1,
+        'id'          => 'q',
+        'size'        => '20',
+        'name'        => 'q',
+        'class'       => ['query', 'input', 'inactive']
+      }, {
+        'type'        => 'submit',
+        'value'       => 'Go'
+      }]
+    });
 
     $html .= sprintf '<div class="js_panel" style="margin:16px 0 0 8px"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
 
