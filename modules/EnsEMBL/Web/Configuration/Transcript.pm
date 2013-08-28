@@ -22,8 +22,8 @@ sub populate_tree {
 
   $self->create_node('Summary', 'Transcript summary',
     [qw(
-      image   EnsEMBL::Web::Component::Transcript::TranscriptImage
-      summary EnsEMBL::Web::Component::Transcript::TranscriptSummary
+      image         EnsEMBL::Web::Component::Transcript::TranscriptImage
+      trans_summary EnsEMBL::Web::Component::Transcript::TranscriptSummary
     )],
     { 'availability' => 'either', 'concise' => 'Transcript summary' }
   );
