@@ -33,7 +33,7 @@ sub populate_tree {
   );
   
   my $context_menu = $self->create_node('Context', 'Genomic context',
-    [qw( summary EnsEMBL::Web::Component::Variation::Context )],
+    [qw( context EnsEMBL::Web::Component::Variation::Context )],
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
   
