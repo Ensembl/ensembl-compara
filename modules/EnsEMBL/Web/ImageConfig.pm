@@ -786,7 +786,7 @@ sub _add_datahub_tracks {
       
       foreach (qw(x y)) {
         if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
-          $options{'axis_labels'}{$_} = $config->{$subgroup};
+          $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
           s/_/ /g for values %{$options{'axis_labels'}{$_}};
         }
       }
