@@ -1138,7 +1138,7 @@ sub get_gene_joins {
   my $compara_db = $config->hub->database('compara');
   return unless $compara_db;
   
-  my $ma = $compara_db->get_MemberAdaptor;
+  my $ma = $compara_db->get_GeneMemberAdaptor;
   return unless $ma;
   
   my $qy_member = $ma->fetch_by_source_stable_id($source, $gene->stable_id);
