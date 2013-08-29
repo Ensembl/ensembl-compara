@@ -63,7 +63,7 @@ sub populate_tree {
 
   $self->create_node('Summary', 'LRG summary',
     [qw(
-      summary     EnsEMBL::Web::Component::LRG::LRGSummary
+      lrg_summary EnsEMBL::Web::Component::LRG::LRGSummary
       transcripts EnsEMBL::Web::Component::LRG::TranscriptsImage  
     )],
     { 'availability' => 'lrg' }
