@@ -17,7 +17,7 @@
     
     <p> These files may be hosted locally or remotely, with no limit to the
     number or size of the files. The files must be indexed using the <a
-    href="http://samtools.sourceforge.net/tabix.shtml" target="_blank">tabix</a>
+    rel="external" href="http://samtools.sourceforge.net/tabix.shtml" target="_blank">tabix</a>
     utility (BED, GFF, GTF, VCF); bigWig files contain their own indices. Users
     should note that the VEP will only look for overlaps (both exact and
     inexact) with these annotations; for example, any sequence in a GTF file
@@ -41,7 +41,7 @@
 		columns contain the coordinates of the feature. If available, the VEP
 		will use the 4th column of the file as the identifier of the feature.
 		</li>
-		<li><a href="http://www.sanger.ac.uk/resources/software/gff/"
+		<li><a rel="external" href="http://www.sanger.ac.uk/resources/software/gff/"
 		target="_blank">GFF</a> : a format for describing genes and other
 		features. If available, the VEP will use the "ID" field as the
 		identifier of this
@@ -49,10 +49,10 @@
 		<li><a href="/info/website/upload/gff.html" target="_blank">GTF</a> :
 		treated in an identical manner to GFF. </li>
 		<li><a
-		href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41"
+		rel="external" href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41"
 		target="_blank">VCF</a> : a format used to describe genomic variants.
 		The VEP will use the 3rd column of the file as the identifier. </li>
-		<li><a href="http://genome.ucsc.edu/goldenPath/help/bigWig.html"
+		<li><a rel="external" href="http://genome.ucsc.edu/goldenPath/help/bigWig.html"
 		target="_blank">bigWig</a> : a format for storage of dense continuous
 		data. The VEP uses the value for the given position as the "identifier".
 		Note that bigWig files contain their own indices, and do not need to be
@@ -75,9 +75,9 @@ chrX    99000    99001    Feature3</pre>
 	<p> Custom annotation files must be prepared in a particular way in order to
 	work with tabix and therefore with the VEP. Files must be sorted in
 	chromosome and position order, compressed using <a
-	href="http://samtools.sourceforge.net/tabix.shtml" target="_blank">bgzip</a>
+	rel="external" href="http://samtools.sourceforge.net/tabix.shtml" target="_blank">bgzip</a>
 	and finally indexed using <a
-	href="http://samtools.sourceforge.net/tabix.shtml"
+	rel="external" href="http://samtools.sourceforge.net/tabix.shtml"
 	target="_blank">tabix</a>. Here is an example of that process for a BED
 	file: </p>
 	
@@ -87,7 +87,7 @@ tabix -p bed myData.bed.gz</pre>
 	<p> The tabix utility has several preset filetypes that it can process, and
 	it can also process any arbitrary filetype containing at least a chromosome
 	and position column. See the <a
-	href="http://samtools.sourceforge.net/tabix.shtml"
+	rel="external" href="http://samtools.sourceforge.net/tabix.shtml"
 	target="_blank">documentation</a> for details. </p>
 	
 	<p> If you are going to use the file remotely (i.e. over HTTP or FTP

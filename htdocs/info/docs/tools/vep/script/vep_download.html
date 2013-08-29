@@ -37,7 +37,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 	the Ensembl CVS server: </p>
 	
 	<div class="tinted-box" style="font-size: 16px; padding: 10px; margin: 10px;width: 300px; text-align:center;">
-		<a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]"><img src="/i/16/download.png"> Download latest version ([[SPECIESDEFS::ENSEMBL_VERSION]])</a>
+		<a rel="external" href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]"><img src="/i/16/download.png"> Download latest version ([[SPECIESDEFS::ENSEMBL_VERSION]])</a>
 	</div>
 	
 	<p>It is also included as part of the ensembl-tools module of the Ensembl
@@ -72,7 +72,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 		<li><a href="vep_cache.html#convert">Convert your cache to use tabix</a> - much faster when retrieving co-located existing variants!</li>
         <li>The <a href="vep_download.html#installer">installer</a> can now update the VEP to the latest version and install <a href="vep_cache.html#fasta">FASTA files</a></li>
 		<li><b>--hgnc</b> replaced by <a href="vep_options.html#opt_symbol">--symbol</a> for non-human compatibility</li>
-        <li>HGVS strings are now part <a href="http://en.wikipedia.org/wiki/Percent-encoding" rel="exeternal">URI-escaped</a> to avoid "=" sign clashes</li>
+        <li>HGVS strings are now part <a rel="external" href="http://en.wikipedia.org/wiki/Percent-encoding" rel="exeternal">URI-escaped</a> to avoid "=" sign clashes</li>
 		<li>use <a href="vep_options.html#opt_allele_number">--allele_number</a> to identify input alleles by their order in the VCF ALT field</li>
 		<li>use <a href="vep_options.html#opt_total_length">--total_length</a> to give the total length of cDNA, CDS and protein sequences</li>
         <li>add data from VCF INFO fields when using <a href="vep_custom.html">custom annotations</a></li>
@@ -236,7 +236,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 	href="#installer">installer script</a>. </p>
 	
 	<p> To perform a full install of the API, see the <a
-	href="http://www.ensembl.org/info/docs/api/index.html"
+	rel="external" href="http://www.ensembl.org/info/docs/api/index.html"
 	target="_blank">instructions</a> for details. To analyse regulatory
 	features, the Ensembl Regulation API should also be installed. </p>
 	
@@ -353,7 +353,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 		<li> Download the Ensembl virtual machine image <a
 		href="/info/data/virtual_machine.html">[instructions]</a> </li>
 		<li> Use a virtual machine in the Amazon Elastic Cloud Service (ECS) <a
-		href="http://aws.amazon.com/">[Amazon]</a> </li>
+		rel="external" href="http://aws.amazon.com/">[Amazon]</a> </li>
 	</ol>
 	
 	<h4 id="cygwin"> Cygwin </h4>
@@ -364,7 +364,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 	VEP. Instructions: </p>
 	
 	<ol>
-		<li> Download the <a href="http://cygwin.com/setup.exe">Cygwin setup program</a> </li>
+		<li> Download the <a rel="external" href="http://cygwin.com/setup.exe">Cygwin setup program</a> </li>
 		<li> Run the setup program, and click through with the default options
 		until you come to select packages to install </li>
 		<li>
@@ -378,7 +378,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 		<li> Click through the rest of the install process </li>
 		<li> You will then need to install BioPerl and the Ensembl API as per
 		the <a
-		href="http://www.ensembl.org/info/docs/api/api_installation.html">instructions
+		href="/info/docs/api/api_installation.html">instructions
 		here</a>. You can copy downloaded files from your Windows area to your
 		Cygwin area - by default the Cygwin home directory is
 		"C:/cygwin/home/[username]/". The default shell under Cygwin is bash, so
@@ -398,7 +398,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 	
 	<ol>
 		<li> Download and install <a
-		href="http://www.activestate.com/activeperl/downloads">ActiveState
+		rel="external" href="http://www.activestate.com/activeperl/downloads">ActiveState
 		Perl</a>. 5.14.2 is the recommended version to use. </li>
 		<li> In your Windows Start menu, locate the entry created (it will look
 		something like "ActivePerl 5.14.2 Build 1402"), and click on "Perl
@@ -414,7 +414,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 		<li> Click the green arrow in the top right of the window to install the
 		packages </li>
 		<li> To install the VEP package you will need a program that can unpack
-		tar.gz archives - <a href="http://7-zip.org/">7-zip</a> is a freeware
+		tar.gz archives - <a rel="external" href="http://7-zip.org/">7-zip</a> is a freeware
 		program to do this. </li>
         <li> Download and unpack the VEP package from the <a
         href="#download">download link</a> </li>
@@ -424,7 +424,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 <pre class="code">cd C:\Perl\variant_effect_predictor\</pre></li>
         <li> Run the <a href="#installer">installer</a> </li>
 		<li> To use cache files, you will need to download the <a
-		href="http://www.gzip.org/">gzip utility</a> and put "gzip.exe" either
+		rel="external" href="http://www.gzip.org/">gzip utility</a> and put "gzip.exe" either
 		in your executable path or in the same directory as the
 		variant_effect_predictor.pl script. Add the command line flag
 		'--compress "gzip -dc"' when running the VEP </li>
