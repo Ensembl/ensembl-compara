@@ -23,7 +23,7 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     }
     
     this.elLk.input.on({
-      focus: function() {
+      'click focus': function() {
         if (panel.label === this.value) {
           $(this).selectRange(0, 0);
         }
