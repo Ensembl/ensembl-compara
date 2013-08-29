@@ -202,6 +202,9 @@ sub consensus_cigar_line {
    my $num_cigars = scalar(@expanded_cigars);
 
    my @chars = qw(M m D);
+   my $n_chars = scalar(@chars);
+   push @chars, $chars[$n_chars-1];
+
    # Itterate through each character of the expanded cigars.
    # If there is a 'D' at a given location in any cigar,
    # set the consensus to 'D', otherwise assume an 'M'.
@@ -217,7 +220,7 @@ sub consensus_cigar_line {
                $num_deletions++;
            }
        }
-       $cons_cigar .= $chars[int($num_deletions * scalar(@chars) / $num_cigars)];
+       $cons_cigar .= $chars[int($num_deletions * $n_chars / $num_cigars)];
    }
 
    return collapse_cigar($cons_cigar);
