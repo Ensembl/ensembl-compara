@@ -199,12 +199,12 @@ sub content {
     select => 'select',
   );
   
-  $form->add_element('type' => 'SubHeader', 'value' => 'Missense SNP predictions (human only)');
+  $form->add_element('type' => 'SubHeader', 'value' => 'Missense SNP predictions (species limitied)');
   
   $form->add_element(
     type   => 'DropDown',
     select =>, 'select',
-    label  => 'SIFT predictions',
+    label  => 'SIFT predictions (Chicken, Cow, Dog, Human, Mouse, Pig, Rat and Zebrafish)',
     name   => 'sift',
     values => [
       { value => 'no',    name => 'No'                   },
@@ -219,7 +219,7 @@ sub content {
   $form->add_element(
     type   => 'DropDown',
     select =>, 'select',
-    label  => 'PolyPhen predictions',
+    label  => 'PolyPhen predictions (Human)',
     name   => 'polyphen',
     values => [
       { value => 'no',    name => 'No'                   },
