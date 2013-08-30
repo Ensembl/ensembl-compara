@@ -75,8 +75,8 @@ sub param_defaults {
 sub pre_cleanup {
     my $self = shift;
     $self->compara_dba->dbc->do('UPDATE gene_tree_node SET root_id = NULL, parent_id = NULL');
-    foreach my $table (qw(gene_tree_node gene_tree_root_tag gene_tree_root)) {
-        $self->compara_dba->dbc->do("TRUNCATE $table");
+    foreach my $table (qw(gene_tree_root_tag gene_tree_root gene_tree_node)) {
+        $self->compara_dba->dbc->do("DELETE FROM $table");
     }
 }
 
