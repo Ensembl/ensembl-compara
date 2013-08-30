@@ -276,7 +276,7 @@
   </tr>
   <tr class="bg2">
    <td>Compara</td>
-   <td class="right">240.5</td>
+   <td class="right">240.6</td>
   </tr>
   <tr class="bg1">
    <td>Mart</td>
@@ -300,7 +300,7 @@
   </tr>
   <tr>
    <th>Total</th>
-   <th class="right">2118.6</th>
+   <th class="right">2118.7</th>
   </tr>
  </tbody>
 </table>

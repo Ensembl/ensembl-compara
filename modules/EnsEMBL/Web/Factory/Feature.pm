@@ -115,11 +115,11 @@ sub _create_ProbeFeature {
   my $probe;
   
   if ($subtype && $subtype eq 'pset') {
-    $probe = $self->_generic_create('ProbeFeature', 'fetch_all_by_probeset', $db);
-    my @A = @$probe;
-    #warn ">>> PROBE @A";
-    for (@$probe) {
-      warn "... ".$_->probe_id;
+    my $probeset = $self->_generic_create('ProbeFeature', 'fetch_all_by_probeset_name', $db);
+    my %seen;
+    for (@$probeset) {
+      push @$probe, $_ unless $seen{$_->probe_id};
+      $seen{$_->probe_id} = 1;
     }
   } else {
     $probe = $self->_create_ProbeFeatures_by_probe_id;

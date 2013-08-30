@@ -10,9 +10,8 @@ sub initialize_HTML {
   my $self = shift;
 
   my $here = $ENV{'REQUEST_URI'};
-  if ($here =~ /^\/info/) {
-    $self->include_navigation(1);
-  }
+  my $has_nav = $here =~ /Doxygen\/index.html/ || ($here =~ /^\/info/ && $here !~ /Doxygen\/(\w|-)+/) ? 1 : 0;
+  $self->include_navigation($has_nav);
 
   # General layout for static pages
   $self->add_head_elements(qw(
@@ -30,7 +29,7 @@ sub initialize_HTML {
     tools           EnsEMBL::Web::Document::Element::ToolLinks
   ));
 
-  if ($here =~ /^\/info/) {
+  if ($has_nav) {
     $self->add_body_elements(qw(
       tabs            EnsEMBL::Web::Document::Element::StaticTabs
       navigation      EnsEMBL::Web::Document::Element::StaticNav

@@ -192,6 +192,7 @@ sub add_external_browsers {
  
   if ($browsers{'UCSC_DB'}) {
     if ($chr) {
+      $chr = 'M' if $chr eq 'MT'; 
       $url = $hub->get_ExtURL('EGB_UCSC', { UCSC_DB => $browsers{'UCSC_DB'}, CHR => $chr, START => $start, END => $end });
     } else {
       $url = $hub->get_ExtURL('EGB_UCSC', { UCSC_DB => $browsers{'UCSC_DB'}, CHR => 1, START => 1, END => 1000000 });

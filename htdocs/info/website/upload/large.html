@@ -10,9 +10,31 @@
 
 <p>Ensembl supports a number of large (multi-gigabyte) file formats for datasets that are too large to upload directly to the Ensembl servers. The file remains on the remote server and is accessed via its URL, with only small chunks of data being requested by the Ensembl webcode at any one time.</p>
 
-<p>All of these formats can be viewed in Ensembl by creating a custom data track using the 'Attach Remote File' function, in the lefthand menu when you click "Manage Your Data".</p>
+<p>All of these formats can be viewed in Ensembl by creating a custom data track using the 'Add your data' function, in the lefthand menu when you click "Manage Your Data".</p>
 
-<p><img src="/img/help/url.gif" alt="" /></p>
+<p><img src="/img/help/large_files.png" alt="" /></p>
+
+<p>When you select one of these formats, the form button will change to read 'Attach'.</p>
+
+[[MOVIE::457]]
+
+<h2 id="hubs">Track Hubs</h2>
+
+<p>In addition to individual files, we also support track hubs (also known as data hubs) 
+- collections of remote data files that uses a simple text-based configuration.<p>
+
+<p>For how to set up a hub, see the documentation provided by UCSC, the originators
+of this data service:</p>
+<ul>
+<li><a href="http://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html" rel="external">Using UCSC Genome Browser Track Hubs</a></li>
+<li><a href="http://hgwdev-tdreszer.cse.ucsc.edu/goldenPath/help/trackDb/trackDbHub.html" rel="external">Hub Track Database Definition</a></li>
+</ul>
+
+<p>Please note that we do not currently support all the options documented by UCSC,
+though we intend to implement as many as are appropriate to our displays.</p>
+
+<p>Note also that if you change the configuration of your hub, you will need to
+shift-reload the Ensembl page to load the new file.</p>
 
 <h2 id="bam-format">BAM format</h2>
 <p>BAM is a compressed version of the SAM (Sequence Alignment/Map) binary format. BAM uses an index file to give fast access to small sections of the file..</p>

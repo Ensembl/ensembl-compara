@@ -7,33 +7,6 @@
 
 <h1>Ensembl Core API Tutorial</h1>
 
-<ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#documentation">API Documentation</a></li>
-<li><a href="#install">Obtaining and Installing the Code</a></li>
-<li><a href="#conventions">Code Conventions</a></li>
-<li><a href="#connecting">Connecting to the Database - The Registry</a></li>
-<li><a href="#adaptors">Object Adaptors</a></li>
-<li><a href="#slices">Slices</a></li>
-<li><a href="#features">Features</a></li>
-<li><a href="#genes">Genes, Transcripts and Exons</a></li>
-<li><a href="#translations">Translations and Protein Features</a></li>
-<li><a href="#prediction_transcripts">Prediction Transcripts</a></li>
-<li><a href="#alignment_features">Alignment Features</a></li>
-<li><a href="#repeats">Repeats</a></li>
-<li><a href="#markers">Markers</a></li>
-<li><a href="#miscfeatures">MiscFeatures</a></li>
-<li><a href="#xrefs">External References</a></li>
-<li><a href="#coordinates">Coordinates</a></li>
-<li><a href="#coordinate_systems">Coordinate Systems</a></li>
-<li><a href="#transform">Transform</a></li>
-<li><a href="#transfer">Transfer</a></li>
-<li><a href="#project">Project</a></li>
-<li><a href="#feature_methods">Feature Convenience Methods</a></li>
-<li><a href="#other_scripts">Other Scripts</a></li>
-</ul>
-
-
 <h2 id="introduction">Introduction</h2>
 
 <p>
@@ -233,7 +206,7 @@ being iterated over is needed at some later point after the end of the
 loop.
 </p>
 
-<h2 id="connecting">Connecting to the Database &mdash; The Registry</h2>
+<h2 id="connecting">Connecting to the Database: The Registry</h2>
 
 <p>
 All data used and created by Ensembl is stored in MySQL relational
@@ -296,8 +269,8 @@ use Bio::EnsEMBL::Registry;
 my $registry = 'Bio::EnsEMBL::Registry';
 
 $registry-&gt;load_registry_from_db(
-    -host => 'ensembldb.ensembl.org', # alternatively 'useastdb.ensembl.org'
-    -user => 'anonymous'
+    -host =&gt; 'ensembldb.ensembl.org', # alternatively 'useastdb.ensembl.org'
+    -user =&gt; 'anonymous'
 );
 
 my @db_adaptors = @{ $registry-&gt;get_all_DBAdaptors() };

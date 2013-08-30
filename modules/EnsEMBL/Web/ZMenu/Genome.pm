@@ -20,7 +20,7 @@ sub content {
   my $feat_adap    = $db_adaptor->$adaptor_name;
   
   my $features = $feat_adap->can('fetch_all_by_hit_name') ? $feat_adap->fetch_all_by_hit_name($id) : 
-          $feat_adap->can('fetch_all_by_probeset') ? $feat_adap->fetch_all_by_probeset($id) : [];
+          $feat_adap->can('fetch_all_by_probeset_name') ? $feat_adap->fetch_all_by_probeset_name($id) : [];
   
   my $external_db_id = $features->[0] && $features->[0]->can('external_db_id') ? $features->[0]->external_db_id : '';
   my $extdbs         = $external_db_id ? $hub->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};

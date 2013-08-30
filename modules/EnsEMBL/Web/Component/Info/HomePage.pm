@@ -336,7 +336,7 @@ sub funcgen_text {
       ),
       
       $species eq 'Homo_sapiens' ? '
-        <a class="nodeco _ht _ht_track" href="/info/genome/funcgen/encode.html" title="Find out about ENCODE data"><img src="/img/ENCODE_logo.jpg" class="bordered" /><span>ENCODE data in Ensembl</span></a>
+        <a class="nodeco _ht _ht_track" href="/info/website/tutorials/encode.html" title="Find out about ENCODE data"><img src="/img/ENCODE_logo.jpg" class="bordered" /><span>ENCODE data in Ensembl</span></a>
       ' : '',
 
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE,

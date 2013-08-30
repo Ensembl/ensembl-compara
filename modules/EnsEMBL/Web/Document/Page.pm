@@ -466,7 +466,8 @@ sub html_template {
   my $here = $ENV{'REQUEST_URI'};
   if ( ($self->isa('EnsEMBL::Web::Document::Page::Fluid') && $here !~ /\/Search\//) 
         || ($self->isa('EnsEMBL::Web::Document::Page::Dynamic') && $here =~ /\/Info\//)
-        || ($self->isa('EnsEMBL::Web::Document::Page::Static') && $here !~ /^\/info/)
+        || ($self->isa('EnsEMBL::Web::Document::Page::Static') 
+              && (($here =~ /Doxygen\/(\w|-)+/ && $here !~ /Doxygen\/index.html/) || $here !~ /^\/info/))
     ) {
     $main_class = 'widemain';
   }

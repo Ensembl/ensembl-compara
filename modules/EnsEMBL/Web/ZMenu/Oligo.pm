@@ -25,7 +25,7 @@ sub content {
   
   if ($hub->param('ptype') ne 'probe') {
     $features = $feat_adap->can('fetch_all_by_hit_name') ? $feat_adap->fetch_all_by_hit_name($id) : 
-          $feat_adap->can('fetch_all_by_probeset') ? $feat_adap->fetch_all_by_probeset($id) : [];
+          $feat_adap->can('fetch_all_by_probeset_name') ? $feat_adap->fetch_all_by_probeset_name($id) : [];
   }
   
   if (scalar @$features == 0 && $feat_adap->can('fetch_all_by_Probe')) {

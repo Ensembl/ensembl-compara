@@ -293,7 +293,7 @@ sub _create_ProbeFeature {
   # get Oligo hits plus corresponding genes
   my $probe;
   if ( $_[2] eq 'pset'){  
-    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] );
+    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset_name', $_[1] );
   } else {
     $probe = $_[0]->_create_ProbeFeatures_by_probe_id;
   }
