@@ -10,22 +10,20 @@ use LWP::UserAgent;
 my $start_time = time;
 my $output_dir = '.';
 my $cmd;
-my ($module, $url, $timeout, $browser);
+my ($module, $url, $timeout, $browser, $host);
 
 GetOptions(
   'module=s'  => \$module,
   'url=s'     => \$url,
   'browser=s' => \$browser,  
   'timeout=s' => \$timeout,
+  'host=s'    => \$host,
 );
 
 $timeout   = qq{-timeout $timeout} if($timeout);
 $url       = qq{-url $url} if($url);
 $browser   = qq{-browser "$browser"} if($browser);
 my @module = split(/,/, $module) if($module);
-my $host = `host mib20062i`; #get the IP address of the selenium server which is on the macbook pro.
-$host =~ s/mib20062i.internal.sanger.ac.uk has address //;
-$host =  '172.20.11.220';#'172.20.10.206';
 my $port   = "4444";
 
 # check to see if the selenium server is online(URL returns OK if server is online).
@@ -76,9 +74,9 @@ foreach (@species_modules) {
   my $species = qq{--species "all"}; #by default all species
   $species    = qq{--species "mus_musculus"} if ($_ eq 'Regulation'); #Regulation test module needs to be run for mouse only  
   
-  $cmd = qq{perl run_tests.pl --module "$_" $species $timeout $url --host $host --port $port > "test_reports/$report" 2>&1 };
+  $cmd = qq{perl run_tests.pl --module "$_" $species $timeout $url $browser --host $host --port $port > "test_reports/$report" 2>&1 };
   $cmd =~ s/\n//g;
-  #print "  $cmd\n";
+ # print "  $cmd\n";
   system $cmd;  
 }
 printf "\nRuntime was %s secs\n", time - $start_time;

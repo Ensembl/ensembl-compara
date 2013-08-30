@@ -19,11 +19,9 @@ BEGIN {
 
 my $module;
 my $url = 'http://test.ensembl.org';
-my $host = `host mib102692i`; #get the IP address of the selenium server which is on the macbook pro.
-$host =~ s/mib102692i.internal.sanger.ac.uk has address //;#'172.20.11.220';
-$host = '172.20.11.220';#'172.20.10.206';
+my $host;
 my $port = '4444';
-my $browser =  '*firefox'; #'*googlechrome' # C:\Program Files\Google\Chrome\Application\chrome.exe;
+my $browser = '*firefox'; #'*googlechrome' # C:\Program Files\Google\Chrome\Application\chrome.exe;
 my $test;
 my $skip;
 my $verbose;
