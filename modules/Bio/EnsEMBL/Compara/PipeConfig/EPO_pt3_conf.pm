@@ -53,7 +53,7 @@ $Author: compara
 
 =head VERSION
 
-$Revision: 1.165 
+$Revision: 
 
 =head1 APPENDIX
 
