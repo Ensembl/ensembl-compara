@@ -12,13 +12,14 @@ sub default_options {
   %{$self->SUPER::default_options},
 
   'pipeline_name' => 'test_EPO',
-  'core_db_version' => 70,
+  'core_db_version' => 72,
   'rel_with_suffix' => 80,
   'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
   'epo_mlss_id' => 641, # method_link_species_set_id of the ortheus alignments which will be generated
   'gerp_ce_mlss_id' => 642,
   'gerp_cs_mlss_id' => 50046,
-  'bl2seq' => '/software/bin/bl2seq', # location of ncbi bl2seq executable
+#  'bl2seq' => '/software/bin/bl2seq', # location of ncbi bl2seq executable on farm2
+  'bl2seq' => '/software/ensembl/compara/bl2seq', # location of ncbi bl2seq executable on farm3
   'bl2seq_dump_dir' => $self->o('dump_dir')."BL2SEQ".$self->o('db_suffix').$self->o('rel_with_suffix'), # location for dumping sequences to determine strand (for bl2seq)
   'bl2seq_file_stem' => $self->o('bl2seq_dump_dir')."/bl2seq",
   'enredo_bin_dir' => '/software/ensembl/compara/', # location of enredo executable
@@ -44,14 +45,14 @@ sub default_options {
 
   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara3',
+		-host   => 'compara4',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
 		-dbname => $self->o('ENV', 'USER').$self->o('db_suffix').$self->o('rel_with_suffix'),
    	},
 	'ancestral_db' => { # core ancestral db
-		-host   => 'compara3',
+		-host   => 'compara4',
 		-port   => 3306,
 		-species => "ancestral_sequences",
 		-user   => 'ensadmin',
@@ -80,7 +81,7 @@ sub default_options {
 	],
 	# any additional core dbs
 	'additional_core_db_urls' => { 
-#		'gallus_gallus' => 'mysql://ensro@ens-livemirror:3306/gallus_gallus_core_71_4',
+		'gallus_gallus' => 'mysql://ensro@ens-staging1:3306/gallus_gallus_core_73_4',
 	},
 	# anchor mappings
 	'compara_mapped_anchor_db' => {
@@ -107,10 +108,14 @@ sub resource_classes {
     my ($self) = @_; 
     return {
 	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' }, # reset the default 
-	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
-	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
-	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]"' },
+#	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' }, # reset the default   farm2 lsf syntax
+#	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' }, # farm2 lsf syntax
+#	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' }, # farm2 lsf syntax
+#	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]"' }, # farm2 lsf syntax
+	'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # reset the default   farm3 lsf syntax
+	'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' }, # farm3 lsf syntax
+	'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' }, # farm3 lsf syntax
+	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' }, # farm3 lsf syntax
     };  
 }
 
