@@ -528,8 +528,8 @@ sub add_cluster_by_parent_accession{
     $self->{_idurl_per_cluster}->{$new_cluster}=$idurl;
   }
   if(!$self->{_clusters}->{$new_cluster}){
-    $self->{_clusters}->{$new_cluster}= GraphViz->new(nodesep=>0.5, ranksep=>2,layout => 'dot', ratio => 'compress', fontname=>"courier", bgcolor=>$self->image_background_colour, style=>'filled', landscape=>'true',
-      nojustify=>'false',node => {nodesep=>'0.03',height=>'0.02', width=>'0.02',nojustify=>'false', margin=>'0.03,0', ratio => 'compress',shape => 'box', fontsize => '10pt', fontname=>"courier",  fontnames=>'ps'});
+    $self->{_clusters}->{$new_cluster}= GraphViz->new(nodesep=>0.5, ranksep=>2,layout => 'dot', ratio => 'compress', bgcolor=>$self->image_background_colour, style=>'filled', landscape=>'true',
+      nojustify=>'false',node => {nodesep=>'0.03',height=>'0.02', width=>'0.02',nojustify=>'false', margin=>'0.03,0', ratio => 'compress',shape => 'box', fontsize => '10pt', fontnames=>'ps'});
   }
 }
 
