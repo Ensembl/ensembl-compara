@@ -270,7 +270,7 @@ return
 #    },
 #},
 
-# ------------------------------------- load the synteny blocks from the enredo output
+# ------------------------------------- load the synteny blocks from the enredo output into the dnafrag_region and synteny_region tables
 {
 	-logic_name => 'load_dnafrag_region',
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::LoadDnaFragRegion',
@@ -298,6 +298,7 @@ return
 		-1 => 'find_dnafrag_region_strand_more_mem',
 	},
 },
+
 {
 	-logic_name => 'find_dnafrag_region_strand_more_mem',
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
@@ -311,7 +312,7 @@ return
 		2 => 'ortheus',
 	},
 },
-# ------------------------------------- run ortheus
+# ------------------------------------- run ortheus - this will populate the genomic_align* tables and the seq_region and dna tables in the ancestral db
 {
 	-logic_name => 'ortheus',
 	-parameters => {
@@ -364,7 +365,7 @@ return
 		1 => [ 'gerp' ],
         },  
 },
-# ------------------------------------- run gerp
+# ------------------------------------- run gerp - this will populate the constrained_element and conservation_scores tables
 {
 	-logic_name => 'gerp',
         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
