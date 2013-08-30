@@ -84,8 +84,7 @@ sub draw_glyphs {
 
   BLOCK:
     foreach my $block (@{$hit_details->{'data'}}) {
-      next BLOCK unless (defined(%$block));
-      #            warn Dumper($block) if ($hit_name eq 'Q8TC21.1');
+      next BLOCK unless defined $block;
 
       my $c = $self->my_colour('evi_long');
       #draw lhs extensions from the next block (first block is always just lhs)
