@@ -112,7 +112,10 @@ sub multifurcate_tree {
         next unless (defined $node->parent);
         my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($node->taxon_id);
         my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya') || 0;
-        $node->distance_to_parent($mya);
+        for my $child (@{$node->children()}) {
+            $child->distance_to_parent(int($mya));
+        }
+#        $node->distance_to_parent($mya);
         if ($node->taxon_id eq $node->parent->taxon_id) {
             $node->parent->merge_children($node);
             $node->parent->remove_nodes([$node]);
