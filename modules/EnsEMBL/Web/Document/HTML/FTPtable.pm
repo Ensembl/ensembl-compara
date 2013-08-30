@@ -16,7 +16,8 @@ sub render {
   my $self            = shift;
   my $hub             = $self->hub;
   my $species_defs    = $hub->species_defs;
-  my $rel             = 'release-' . $species_defs->ENSEMBL_VERSION; # Always set to use the release number rather than current to get around the delay in FTP site links updating
+  my $version         = $species_defs->ENSEMBL_VERSION;
+  my $rel             = "release-$version"; # Always set to use the release number rather than current to get around the delay in FTP site links updating
   my $required_lookup = $self->required_types_for_species;
   my ($columns, $rows);
   
@@ -135,6 +136,13 @@ sub render {
   }, {
     database  => 'BioMart',
     mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
+    emf       => '-',
+    bed       => '-',
+    xml       => '-',
+    ancestral => '-',
+  }, {
+    database  => 'Stable ids',
+    mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/ensembl_stable_ids_$version/">MySQL</a>),
     emf       => '-',
     bed       => '-',
     xml       => '-',
