@@ -19,7 +19,8 @@ sub _das_type  { return 'simple'; }
 sub title {
   my ($self, $f)    = @_;
   my ($start, $end) = $self->slice2sr($f->start, $f->end);
-  return sprintf '%s: %s; score: %s; bp: %s', $f->analysis->logic_name, $f->display_label, $f->score, "$start-$end";
+  my $score = length($f->score) ? sprintf('score: %s;', $f->score) : '';
+  return sprintf '%s: %s; %s bp: %s', $f->analysis->logic_name, $f->display_label, $score, "$start-$end";
 }
 
 sub href {
