@@ -53,6 +53,7 @@ sub fetch_input {
 				warning($@);
 				last;
 			}
+
 			next if $rgab_len < $self->param('min_anchor_size');
 				push( @multi_gab_overlaps, [
 					$restricted_gab->reference_genomic_align->dnafrag_start,
@@ -73,8 +74,8 @@ sub run {
 	([],[],[],[]);
 	my $max_size_diff = $self->param('max_frag_diff');
 	my $overlapping_gabs = $self->param('overlapping_gabs');
-	my $min_number_of_seqs_per_anchor = $self->param('min_number_of_org_hits_per_base');
-	my $max_number_of_seqs_per_anchor = $self->param('max_number_of_org_hits_per_base');
+	my $min_number_of_seqs_per_anchor = $self->param('min_number_of_seqs_per_anchor');
+	my $max_number_of_seqs_per_anchor = $self->param('max_number_of_seqs_per_anchor');
 	for(my$i=0;$i<@{ $overlapping_gabs }-1;$i++) { # find the overlapping gabs for a ref-dnafrag chunk 
 		my $temp_end = $overlapping_gabs->[$i]->[1];
 		for(my$j=$i+1;$j<@{ $overlapping_gabs };$j++) {	
@@ -105,8 +106,9 @@ sub run {
 			}
 		}	
 		if(@bases){
-			if( $bases[-1] - $bases[0] >= $self->param('min_anchor_size') ){
-				push( @$reference_positions, [ $bases[0], $bases[-1] ] );
+			if( $bases[-1] - $bases[0] + 1 >= $self->param('min_anchor_size') ){
+				# $reference_positions holds the regions of the ref genome which have >= $min_number_of_seqs_per_anchor and whose span is >= min_anchor_size
+				push( @$reference_positions, [ $bases[0], $bases[-1] ] ); 
 			}
 		}
 	}
@@ -185,7 +187,6 @@ sub run {
 			push @$synteny_region_jobs, { 'synteny_region_id' => $synteny_region_id };
 		}
 	}
-	return if(scalar(@$genomic_aligns_on_ref_slice) <= $min_number_of_seqs_per_anchor or scalar(@$genomic_aligns_on_ref_slice) > $max_number_of_seqs_per_anchor);
 	$self->param('synteny_region_jobs', $synteny_region_jobs);
 	$self->param('genomic_aligns_on_ref_slice', $genomic_aligns_on_ref_slice);
 }	
