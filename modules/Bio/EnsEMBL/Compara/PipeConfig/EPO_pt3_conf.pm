@@ -1,3 +1,66 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
+
+=head1 DESCRIPTION
+
+    The PipeConfig file for the last part (3rd part) of the EPO pipeline. 
+    This will genereate the multiple sequence alignments (MSA) from a database containing a
+    set of anchor sequences mapped to a set of target genomes. The pipeline runs Enredo 
+    (which generates a graph of the syntenic regions of the target genomes) 
+    and then runs Ortheus (which runs Pecan for generating the MSA) and infers 
+    ancestral genome sequences. Finally Gerp may be run to generate constrained elements and 
+    conservation scores from the MSA
+
+=head1 SYNOPSIS
+
+    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+
+    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+    #3. make sure that all default_options are set correctly
+
+    #4. Run init_pipeline.pl script:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
+
+    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author: compara
+
+=head VERSION
+
+$Revision: 1.165 
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
+
+=cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf;
 
