@@ -9,36 +9,42 @@ use URI::Escape qw(uri_unescape);
 use base qw(EnsEMBL::Web::Text::Feature);
 
 sub new {
-  my( $class, $args ) = @_;
-
+  my ($class, $args) = @_;
   my $extra = {};
-  if( $args->[16] =~ /=/ ) {
+  
+  if ($args->[16] =~ /=/) {
     my @T = split /;\s*/, $args->[8];
+    
     foreach (@T) {
-      if( /=/ ) {
-        my($k,$v)= split /=/, $_, 2;
+      if (/=/) {
+        my($k, $v)= split /=/, $_, 2;
+        
         $k =~ s/^\s+//;
         $k =~ s/\s+$//;
         $v =~ s/^\s+//;
         $v =~ s/\s+$//;
         $v =~ s/^"([^"]+)"$/$1/;
+        
         push @{$extra->{$k}},$v;
-        $extra->{'_type'} = ['transcript']            if $k eq 'transcript_id';
-        $extra->{'_type'} = ['prediction_transcript'] if $k eq 'genscan';
-        $extra->{'_type'} = ['alignment']             if $k eq 'hid';
+        
+        $extra->{'_type'} = [ 'transcript' ]            if $k eq 'transcript_id';
+        $extra->{'_type'} = [ 'prediction_transcript' ] if $k eq 'genscan';
+        $extra->{'_type'} = [ 'alignment' ]             if $k eq 'hid';
       } else {
-        push @{$extra->{'notes'}},$_;
+        push @{$extra->{'notes'}}, $_;
       }
     }
   }
+  
   $extra->{'source'}       = [ $args->[1] ];
   $extra->{'feature_type'} = [ $args->[2] ];
   $extra->{'score'}        = [ $args->[5] ];
-  $extra->{'frame'}        = [ $args->[7]];
-  my $attribs = { map uri_unescape($_), split(/;\s?|=/,$args->[8]) };
-  return bless { '__raw__' => $args, 
-                 '__extra__' => $extra, 
-                 '__attribs__' => $attribs }, $class;
+  $extra->{'frame'}        = [ $args->[7] ];
+  
+  my @attrs   = split /;\s?/, $args->[8];
+  my %attribs = map uri_unescape($_), map split(/[\s=]/, $_, 2), @attrs;
+  
+  return bless { __raw__ => $args, __extra__ => $extra, __attribs__ => \%attribs }, $class;
 }
 
 sub coords {
