@@ -2713,7 +2713,7 @@ sub add_sequence_variations {
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   };
   
-  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
+  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}} && grep {$_->{key} =~ /dbsnp/i} @{$hashref->{menu}}) {
     $self->add_sequence_variations_meta($key, $hashref, $options);
   } else {
     $self->add_sequence_variations_default($key, $hashref, $options);
