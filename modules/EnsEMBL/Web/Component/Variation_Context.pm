@@ -176,7 +176,7 @@ sub content {
   
   $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['get_all_StructuralVariationFeatures','get_all_somatic_StructuralVariationFeatures'], 1);
   $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['get_all_CopyNumberVariantProbeFeatures']);
-  $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config);
+  $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config) if $hub->species_defs->databases->{'DATABASE_FUNCGEN'};
   $html .= $self->constrained_element_table($var_slice, $vname);
   
   return $html;
