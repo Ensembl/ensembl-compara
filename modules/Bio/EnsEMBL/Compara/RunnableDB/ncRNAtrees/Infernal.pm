@@ -61,6 +61,7 @@ use Data::Dumper;
 use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::HMMProfile;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -484,23 +485,7 @@ sub get_cigar_lines {
         # columns are consensus and which are inserts (otherwise, cmbuild makes
         # an automated guess, based on the frequency of gaps in each column)
         $alignment_string =~ s/\./\-/g;            # Infernal returns dots even though they are gaps
-        $alignment_string = uc($alignment_string); # Infernal can lower-case regions
-        $alignment_string =~ s/\-([A-Z])/\- $1/g;
-        $alignment_string =~ s/([A-Z])\-/$1 \-/g;
-
-        my @cigar_segments = split " ",$alignment_string;
-
-        my $cigar_line = "";
-        foreach my $segment (@cigar_segments) {
-            my $seglength = length($segment);
-            $seglength = "" if ($seglength == 1);
-            if ($segment =~ /^\-+$/) {
-                $cigar_line .= $seglength . "D";
-            } else {
-                $cigar_line .= $seglength . "M";
-            }
-        }
-        $cigar_hash->{$id} = $cigar_line;
+        $cigar_hash->{$id} = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string(uc($alignment_string));
     }
     return ($cigar_hash, $alignment_length);
 }
