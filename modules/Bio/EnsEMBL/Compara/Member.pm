@@ -408,7 +408,7 @@ sub print_member {
     my $self = shift;
 
     printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
-            $self->dbID || -1,$self->chr_name,$self->dnafrag_start,$self->dnafrag_end);
+            $self->dbID || -1,$self->dnafrag->name,$self->dnafrag_start,$self->dnafrag_end);
 }
 
 

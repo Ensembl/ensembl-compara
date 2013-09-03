@@ -40,7 +40,7 @@ foreach my $this_gene (@{$these_genes}) {
 
   ## Print some info for this member
   print "The member ", $gene_member->stable_id(), " is from the ", $gene_member->source_name(), " source.\n";
-  print "  Its coordinates on chromosome ", $gene_member->chr_name(), " are: ", $gene_member->dnafrag_start(), "-", $gene_member->dnafrag_end(), "\n";
+  print "  Its coordinates on chromosome ", $gene_member->dnafrag->name(), " are: ", $gene_member->dnafrag_start(), "-", $gene_member->dnafrag_end(), "\n";
 
   ## The same can be achieved with:
   #$gene_member->print_member();

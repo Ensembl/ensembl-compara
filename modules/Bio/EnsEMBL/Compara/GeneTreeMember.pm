@@ -113,7 +113,7 @@ sub string_node {
     }
   if($self->gene_member) {
     $str .= sprintf(" %s %s %s:%d-%d",
-      $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->chr_name || '',
+      $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->dnafrag() ? $self->gene_member->dnafrag()->name : '',
       $self->gene_member->dnafrag_start || 0, $self->gene_member->dnafrag_end || 0);
   } elsif($self->stable_id) {
     $str .= sprintf(" (%d) %s", $self->seq_member_id, $self->stable_id);

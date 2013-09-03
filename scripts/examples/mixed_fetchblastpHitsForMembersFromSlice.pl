@@ -40,11 +40,11 @@ my $pafDBA = $comparaDBA-> get_PeptideAlignFeatureAdaptor;
 my $humanGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human");
 my $ratGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("rat");
 
-my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_source_taxon(
-  'ENSEMBLPEP', $ratGDB->taxon_id);
+my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_source_taxon( 'ENSEMBLPEP', $ratGDB->taxon_id);
+my $rat_dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($ratGDB, '15');
 
 foreach my $pep (@{$members}) {
-  next unless($pep->chr_name eq '15');
+  next unless($pep->dnafrag_id == $rat_dnafrag->dbID);
   next unless($pep->dnafrag_start < 4801065 );
   next unless($pep->dnafrag_end > 4791387 );
 
