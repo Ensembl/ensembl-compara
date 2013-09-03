@@ -175,7 +175,7 @@ sub collapse_cigar {
     my $cigar = shift;
     my $collapsed_cigar = '';
     #$cigar =~ s/(\w)(\1*)/($2?length($2)+1:"").$1/ge;
-    while ($cigar =~ /(D+|M+|I+|m+)/g) {
+    while ($cigar =~ /(\w)(\1*)/g) {
         $collapsed_cigar .= (length($1) == 1 ? '' : length($1)) . substr($1,0,1)
     }
     return $collapsed_cigar;
