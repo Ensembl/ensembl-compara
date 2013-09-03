@@ -509,8 +509,8 @@ sub sequence_cds {
   Args       : string $seq_type
   Example    : my $filtered_seq = $member->get_other_sequence('filtered');
   Description: Get the alternative sequence of type $seq_type for this member.
-                Currently, proteins have 'cds', 'exon_bounded' and 'filtered'
-                sequences, while RNAs have 'seq_with_flanking' sequences.
+                Currently, proteins only have 'cds' sequences, and ncRNAs
+                only have 'seq_with_flanking' sequences.
   Returntype : string
   Exceptions : none
   Caller     : general
