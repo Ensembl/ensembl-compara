@@ -53,6 +53,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML;
 use strict;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
@@ -166,6 +167,7 @@ sub run_njtree_phyml {
     } else {
 
         my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($protein_tree);
+        $self->param('input_aln', $input_aln);
         
         warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$protein_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
 
@@ -197,33 +199,29 @@ sub store_filtered_align {
     my ($self, $filename) = @_;
     print STDERR "Found filtered alignment: $filename\n";
 
-    #place all members in a hash on their member name
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'filtered', -aln_method => 'clustal');
+    # Loads the filtered alignment strings
+    my %hash_filtered_strings = ();
+    {
+        my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
+        my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$filename'";
 
-    if ($self->param('protein_tree')->has_tag('filtered_alignment')) {
-        my $gene_align_id = $self->param('protein_tree')->get_tagvalue('filtered_alignment');
-        $aln->dbID($gene_align_id);
-        $aln->adaptor($self->compara_dba->get_GeneAlignAdaptor);
-    } else {
-        foreach my $member (@{$self->param('protein_tree')->get_all_Members}) {
-            $aln->add_Member($member->copy());
+        foreach my $seq ($aln->each_seq) {
+            $hash_filtered_strings{$seq->display_id()} = $seq->seq();
         }
     }
 
-    # Same name as in the alignment
-    foreach my $member (@{$aln->get_all_Members}) {
-        $member->stable_id($self->_name_for_prot($member));
+    my %hash_initial_strings = ();
+    {
+        my $alignio = Bio::AlignIO->new(-file => $self->param('input_aln'), -format => 'fasta');
+        my $aln = $alignio->next_aln or die "The input alignment was lost in the process";
+
+        foreach my $seq ($aln->each_seq) {
+            $hash_initial_strings{$seq->display_id()} = $seq->seq();
+        }
     }
 
-    $aln->load_cigars_from_fasta($filename, 1);
-
-    my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
-    foreach my $member (@{$aln->get_all_Members}) {
-        $sequence_adaptor->store_other_sequence($member, $member->sequence, 'filtered') if $member->sequence;
-    }
-
-    $self->compara_dba->get_GeneAlignAdaptor->store($aln);
-    $self->param('protein_tree')->store_tag('filtered_alignment', $aln->dbID);
+    my $removed_columns = Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
+    $self->param('protein_tree')->store_tag('removed_columns', $removed_columns);
 }
 
 

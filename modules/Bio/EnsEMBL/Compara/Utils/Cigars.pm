@@ -312,4 +312,68 @@ sub minimize_cigars {
 }
 
 
+=head2 identify_removed_columns
+
+  Arg [1]    : Arrayref of the initial alignment strings
+  Arg [2]    : Arrayref of the filtered alignment strings (in the same order)
+  Example    : my $removed_columns = identify_removed_columns([$aln1, $aln2], [$fil1, $fil2]);
+  Description: Compares each alignment string to its filtered version
+               and compiles a list of kept / discarded columns.
+               The return string is like "[0,0],[6,8]". Here, two regions
+               are removed: from column 0 to 0, and from column 6 to 8.
+               That string can be "eval"ed and given to Bio::SimpleAlign::remove_columns()
+  Returntype : string
+
+=cut
+
+sub identify_removed_columns {
+
+    my $initial_strings  = shift;
+    my $filtered_strings = shift;
+
+    #print STDERR Dumper($initial_strings, $filtered_strings);
+
+    my $start_segment = undef;
+    my @filt_segments = ();
+    my $j = 0;
+    my $next_filt_column = undef;
+
+    my @seq_keys = keys %$initial_strings;
+    my $ini_length = length($initial_strings->{$seq_keys[0]});
+    my $filt_length = length($filtered_strings->{$seq_keys[0]});
+    #print Dumper($ini_length, $filt_length, scalar(@seq_keys));
+
+    foreach my $i (0..($ini_length-1)) {
+        unless ($next_filt_column) {
+            $next_filt_column = join('', map {substr($filtered_strings->{$_}, $j, 1)} @seq_keys);
+        }
+        my $next_ini_column = join('', map {substr($initial_strings->{$_}, $i, 1)} @seq_keys);
+        #print STDERR "Comparing ini=$i:$next_ini_column to fil=$j:$next_filt_column\n";
+
+        # Treebest also replaces segments with Ns
+        my $filt_without_N = $next_filt_column;
+        $filt_without_N =~ s/N/substr($next_ini_column, pos($filt_without_N), 1) ne '-' ? substr($next_ini_column, pos($filt_without_N), 1) : 'N'/eg;
+
+        if (($next_ini_column eq $next_filt_column) or ($next_ini_column eq $filt_without_N)) {
+            $j++;
+            $next_filt_column = undef;
+            if (defined $start_segment) {
+                push @filt_segments, sprintf('[%d,%d]', $start_segment, $i-1);
+                $start_segment = undef;
+            }
+        } else {
+            if (not defined $start_segment) {
+                $start_segment = $i;
+            }
+        }
+    }
+    die "Could not match alignments" if $j+1 < $filt_length;
+
+    if (defined $start_segment) {
+        push @filt_segments, sprintf('[%d,%d]', $start_segment, $ini_length-1);
+    }
+
+    return join(',', @filt_segments);
+}
+
 1;
