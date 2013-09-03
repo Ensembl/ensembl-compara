@@ -44,7 +44,10 @@ At the moment used primarily in NestedSet Tree data-structure, but there are pla
 package Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::SeqMember');
 
@@ -450,37 +453,7 @@ sub _compose_sequence_with_cigar {
         $sequence = substr($sequence, $offset, $length);
     }
 
-    my $cigar_line = $self->cigar_line;
-    $cigar_line =~ s/([MD])/$1 /g;
-    my @cigar_segments = split " ", $cigar_line;
-    my $alignment_string = "";
-    my $seq_start = 0;
-    foreach my $segment (@cigar_segments) {
-        if ($segment =~ /^(\d*)D$/) {
-            
-            # Gap
-            my $length = $1 || 1;
-            $alignment_string .= "-" x ($length * $expansion_factor);
-
-        } elsif ($segment =~ /^(\d*)M$/) {
-
-            # Match
-            my $length = $1 || 1;
-            $length *= $expansion_factor;
-            my $substring = substr($sequence,$seq_start,$length);
-            if ($substring =~ /\ /) {
-                my $num_boundaries = $substring =~ s/(\ )/$1/g;
-                $length += $num_boundaries;
-                $substring = substr($sequence,$seq_start,$length);
-            }
-            if (length($substring) < $length) {
-                $substring .= ('N' x ($length - length($substring)));
-            }
-            $alignment_string .= $substring;
-            $seq_start += $length;
-        }
-    }
-    return $alignment_string;
+    return Bio::EnsEMBL::Compara::Utils::Cigars::compose_sequence_with_cigar($sequence, $self->cigar_line, $expansion_factor);
 }
 
 
