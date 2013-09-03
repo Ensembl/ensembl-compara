@@ -266,44 +266,18 @@ sub read_clustalw {  # DEPRECATED
 }
 
 
-sub load_cigars_from_fasta {
+=head2 load_cigars_from_fasta
+
+    Description: DEPRECATED: load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'fasta') instead (possibly with a -import_seq argument.
+
+=cut
+
+sub load_cigars_from_fasta { # DEPRECATED
     my ($self, $file, $import_seq) = @_;
 
-    my $alignio = Bio::AlignIO->new(-file => "$file", -format => "fasta");
-
-    my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$file'";
-    $self->aln_length($aln->length);
-
-    #place all members in a hash on their member name
-    my %member_hash;
-    foreach my $member (@{$self->get_all_Members}) {
-        $member->cigar_line(undef);
-        $member->sequence(undef) if $import_seq;
-        $member_hash{$member->member_id} = $member;
-    }
-
-    #assign cigar_line to each of the member attribute
-    foreach my $seq ($aln->each_seq) {
-        my $id = $seq->display_id;
-        $id =~ s/_.*$//;
-        throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
-
-        my $cigar_line = '';
-        my $seq_string = $seq->seq();
-        while($seq_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-            $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
-        }
-
-        $member_hash{$id}->cigar_line($cigar_line);
-
-        if ($import_seq) {
-            my $nucl_seq = $seq->seq();
-            $nucl_seq =~ s/-//g;
-            $member_hash{$id}->sequence($nucl_seq);
-        }
-    }
+    deprecate('load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'fasta\') instead (possibly with a -import_seq argument');
+    return $self->load_cigars_from_file($file, -format => 'fasta', -import_seq => $import_seq);
 }
-
 
 
 =head2 get_SimpleAlign
