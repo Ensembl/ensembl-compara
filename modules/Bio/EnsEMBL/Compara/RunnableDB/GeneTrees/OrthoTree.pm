@@ -750,8 +750,8 @@ sub store_gene_link_as_homology {
   $homology->tree_node_id($tree_node_id);
   $homology->method_link_species_set($mlss);
   
-  $homology->add_Member($gene1);
-  $homology->add_Member($gene2);
+  $homology->add_Member($gene1->copy);
+  $homology->add_Member($gene2->copy);
   $homology->update_alignment_stats;
 
   my $key = $mlss->dbID . "_" . $gene1->dbID;

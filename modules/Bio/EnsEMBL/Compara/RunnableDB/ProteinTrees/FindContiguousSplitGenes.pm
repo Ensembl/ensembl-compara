@@ -169,10 +169,6 @@ sub check_for_split_genes {
             $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
         }
  
-        my $pair = new Bio::EnsEMBL::Compara::AlignedMemberSet;
-        $pair->add_Member($protein1);
-        $pair->add_Member($protein2);
-        $pair->update_alignment_stats;
         print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
 
         my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
@@ -183,8 +179,7 @@ sub check_for_split_genes {
         my $name1 = $gene_member1->chr_name; my $name2 = $gene_member2->chr_name;
 
         # Checking for gene_split cases
-        #if ($aln == 0)
-        if (0 == $protein1->perc_id && 0 == $protein2->perc_id && 0 == $protein1->perc_pos && 0 == $protein2->perc_pos) {
+        if ($aln == 0) {
 
             # Condition A1: If same seq region and less than 1MB distance
             if ($name1 eq $name2 && ($self->param('max_dist_no_overlap') > abs($start1 - $start2)) && $strand1 eq $strand2 ) {
@@ -220,10 +215,8 @@ sub check_for_split_genes {
         # "skid marks" in the alignment view.
 
         # Condition B1: all 4 percents below 10
-        #} elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
-        #        && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
-        } elsif ($protein1->perc_id < $self->param('small_overlap_percentage') && $protein2->perc_id < $self->param('small_overlap_percentage')
-              && $protein1->perc_pos < $self->param('small_overlap_percentage') && $protein2->perc_pos < $self->param('small_overlap_percentage')) {
+        } elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
+                && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
 
             # Condition B2: If non-overlapping and smaller than 500kb start and 500kb end distance
             if ($name1 eq $name2 

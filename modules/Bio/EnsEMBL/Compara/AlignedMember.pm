@@ -118,6 +118,14 @@ sub copy {
 
 sub cigar_line {
   my $self = shift;
+  if (@_) {
+    my $c = shift;
+    if ($self->{'_cigar_line'} and $self->{'_cigar_line'} ne $c) {
+      foreach my $k (keys %$self) {
+        delete $self->{$k} if $k =~ /alignment_string/;
+      }
+    }
+  }
   $self->{'_cigar_line'} = shift if(@_);
   return $self->{'_cigar_line'};
 }
