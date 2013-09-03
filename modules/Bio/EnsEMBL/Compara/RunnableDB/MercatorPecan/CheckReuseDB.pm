@@ -79,8 +79,7 @@ sub run {
 	 if ($self->debug) {
 	     foreach my $dnafrag (keys %$old_names) {
 		 print "UPDATE dnafrag SET name = '" . $new_names->{$dnafrag} . "' WHERE name='" . $old_names->{$dnafrag} . "';\n";
-		 print "UPDATE gene_member SET chr_name = '" . $new_names->{$dnafrag} . "' WHERE chr_name='" . $old_names->{$dnafrag} . "';\n";
-		 print "UPDATE seq_member SET chr_name = '" . $new_names->{$dnafrag} . "' WHERE chr_name='" . $old_names->{$dnafrag} . "';\n";
+             # There used to be some code to update chr_name in gene_member and seq_member, but it seems that we don't need it anymore with dnafrag_id
 	     }
              foreach my $dnafrag (keys %$new_names) {
                  print "Added " . $dnafrag . " " . $new_names->{$dnafrag} . "\n";

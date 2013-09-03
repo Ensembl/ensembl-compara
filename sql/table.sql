@@ -783,10 +783,10 @@ CREATE TABLE sequence (
 @column genome_db_id          External reference to genome_db_id in the @link genome_db table
 @column canonical_member_id   External reference to seq_member_id in the @link seq_member table to allow linkage from a gene to its canonical peptide
 @column description           The description of the gene/protein as described in the core database or from the Uniprot entry
-@column chr_name              Chromosome where this sequence is located
-@column chr_start             First nucleotide of this chromosome which corresponds to this member
-@column chr_end               Last nucleotide of this chromosome which corresponds to this member
-@column chr_strand            Strand of the chromosome in which the member is
+@column dnafrag_id            External reference to dnafrag_id in the @link dnafrag table. It shows the dnafrag the member is on.
+@column dnafrag_start         Starting position within the dnafrag defined by dnafrag_id
+@column dnafrag_end           Ending position within the dnafrag defined by dnafrag_id
+@column dnafrag_strand        Strand in the dnafrag defined by dnafrag_id
 @column display_label         Display name (imported from the core database)
 
 @see sequence
@@ -801,21 +801,22 @@ CREATE TABLE gene_member (
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
   canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
-  chr_name                    char(40),
-  chr_start                   int(10),
-  chr_end                     int(10),
-  chr_strand                  tinyint(1) NOT NULL,
+  dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned,
+  dnafrag_end                 int(10) unsigned,
+  dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
   UNIQUE source_stable_id (stable_id, source_name),
   KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
-  KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
+  KEY gdb_name_start_end (genome_db_id,dnafrag_id,dnafrag_start,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
@@ -836,10 +837,10 @@ CREATE TABLE gene_member (
 @column sequence_id           External reference to sequence_id in the @link sequence table. May be 0 when the sequence is not available in the @link sequence table, e.g. for a gene instance
 @column gene_member_id        External reference to gene_member_id in the @link gene_member table to allow linkage from peptides and transcripts to genes
 @column description           The description of the gene/protein as described in the core database or from the Uniprot entry
-@column chr_name              Chromosome where this sequence is located
-@column chr_start             First nucleotide of this chromosome which corresponds to this member
-@column chr_end               Last nucleotide of this chromosome which corresponds to this member
-@column chr_strand            Strand of the chromosome in which the member is
+@column dnafrag_id            External reference to dnafrag_id in the @link dnafrag table. It shows the dnafrag the member is on.
+@column dnafrag_start         Starting position within the dnafrag defined by dnafrag_id
+@column dnafrag_end           Ending position within the dnafrag defined by dnafrag_id
+@column dnafrag_strand        Strand in the dnafrag defined by dnafrag_id
 @column display_label         Display name (imported from the core database)
 
 @see sequence
@@ -855,16 +856,17 @@ CREATE TABLE seq_member (
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
   gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
   description                 text DEFAULT NULL,
-  chr_name                    char(40),
-  chr_start                   int(10),
-  chr_end                     int(10),
-  chr_strand                  tinyint(1) NOT NULL,
+  dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned,
+  dnafrag_end                 int(10) unsigned,
+  dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
   UNIQUE source_stable_id (stable_id, source_name),
@@ -872,7 +874,7 @@ CREATE TABLE seq_member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
-  KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
+  KEY gdb_name_start_end (genome_db_id,dnafrag_id,dnafrag_start,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 

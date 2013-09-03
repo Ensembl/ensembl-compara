@@ -162,14 +162,20 @@ sub new_from_transcript {
   my $self = $class->new(@args);
   my $seq_string;
 
-  my ($transcript, $genome_db, $translate) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE)], @args);
+  my ($transcript, $genome_db, $translate, $dnafrag) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DNAFRAG)], @args);
 
   assert_ref($transcript, 'Bio::EnsEMBL::Transcript');
   assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
 
   $self->taxon_id($genome_db->taxon_id);
   $self->genome_db_id($genome_db->dbID);
-  $self->chr_name($transcript->seq_region_name);
+  if ($dnafrag) {
+    $self->dnafrag($dnafrag);
+  } else {
+    $self->dnafrag($genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $transcript->seq_region_name));
+  };
+  $self->dnafrag_start($transcript->coding_region_start);
+  $self->dnafrag_end($transcript->coding_region_end);
   $self->dnafrag_strand($transcript->seq_region_strand);
   $self->display_label($transcript->display_xref->display_id) if $transcript->display_xref;
 
@@ -232,7 +238,7 @@ sub new_from_transcript {
   #print("  source_name = '" . $self->source_name . "'\n");
   #print("  stable_id = '" . $self->stable_id . "'\n");
   #print("  taxon_id = '" . $self->taxon_id . "'\n");
-  #print("  chr_name = '" . $self->chr_name . "'\n");
+  #print("  chr_name = '" . $self->dnafrag->name . "'\n");
   return $self;
 }
 

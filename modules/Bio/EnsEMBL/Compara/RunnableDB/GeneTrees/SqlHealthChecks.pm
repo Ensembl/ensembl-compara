@@ -118,7 +118,7 @@ my $config = {
             },
             {
                 description => 'GeneMembers should have chromosome coordinates',
-                query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id = #genome_db_id# AND (chr_name IS NULL OR chr_start IS NULL OR chr_end IS NULL)',
+                query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
             },
             {
                 description => 'GeneMembers should have the same taxonomy ID as their genomeDB',
@@ -126,7 +126,7 @@ my $config = {
             },
             {
                 description => 'SeqMembers should have chromosome coordinates',
-                query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = #genome_db_id# AND (chr_name IS NULL OR chr_start IS NULL OR chr_end IS NULL)',
+                query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
             },
             {
                 description => 'SeqMembers should have the same taxonomy ID as their genomeDB',

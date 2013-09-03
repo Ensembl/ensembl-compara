@@ -191,10 +191,10 @@ sub _columns {
           'm.taxon_id',
           'm.genome_db_id',
           'm.description',
-          'm.chr_name',
-          'm.chr_start',
-          'm.chr_end',
-          'm.chr_strand',
+          'm.dnafrag_id',
+          'm.dnafrag_start',
+          'm.dnafrag_end',
+          'm.dnafrag_strand',
           'm.sequence_id',
           'm.gene_member_id',
           'm.display_label'
@@ -212,10 +212,10 @@ sub create_instance_from_rowhash {
 		_taxon_id       => $rowhash->{taxon_id},
 		_genome_db_id   => $rowhash->{genome_db_id},
 		_description    => $rowhash->{description},
-		_chr_name       => $rowhash->{chr_name},
-		dnafrag_start   => $rowhash->{chr_start} || 0,
-		dnafrag_end     => $rowhash->{chr_end} || 0,
-		dnafrag_strand  => $rowhash->{chr_strand} || 0,
+		dnafrag_id      => $rowhash->{dnafrag_id},
+		dnafrag_start   => $rowhash->{dnafrag_start},
+		dnafrag_end     => $rowhash->{dnafrag_end},
+		dnafrag_strand  => $rowhash->{dnafrag_strand},
 		_sequence_id    => $rowhash->{sequence_id} || 0,
 		_source_name    => $rowhash->{source_name},
 		_display_label  => $rowhash->{display_label},
@@ -234,10 +234,10 @@ sub init_instance_from_rowhash {
   $member->taxon_id($rowhash->{'taxon_id'});
   $member->genome_db_id($rowhash->{'genome_db_id'});
   $member->description($rowhash->{'description'});
-  $member->chr_name( $rowhash->{'chr_name'} );
-  $member->dnafrag_start($rowhash->{'chr_start'} || 0 );
-  $member->dnafrag_end( $rowhash->{'chr_end'} || 0 );
-  $member->dnafrag_strand($rowhash->{'chr_strand'} || 0 );
+  $member->dnafrag_id($rowhash->{'dnafrag_id'});
+  $member->dnafrag_start($rowhash->{'dnafrag_start'});
+  $member->dnafrag_end($rowhash->{'dnafrag_end'});
+  $member->dnafrag_strand($rowhash->{'dnafrag_strand'});
   $member->sequence_id($rowhash->{'sequence_id'});
   $member->gene_member_id($rowhash->{'gene_member_id'});
   $member->source_name($rowhash->{'source_name'});
@@ -265,7 +265,7 @@ sub store {
   my $sth = $self->prepare("INSERT ignore INTO seq_member (stable_id,version, source_name,
                               gene_member_id,
                               taxon_id, genome_db_id, description,
-                              chr_name, chr_start, chr_end, chr_strand,display_label)
+                              dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, display_label)
                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 
   my $insertCount = $sth->execute($member->stable_id,
@@ -275,10 +275,10 @@ sub store {
                   $member->taxon_id,
                   $member->genome_db_id,
                   $member->description,
-                  $member->chr_name,
-                  $member->chr_start,
-                  $member->chr_end,
-                  $member->chr_strand,
+                  $member->dnafrag_id,
+                  $member->dnafrag_start,
+                  $member->dnafrag_end,
+                  $member->dnafrag_strand,
                   $member->display_label);
   if($insertCount>0) {
     #sucessful insert

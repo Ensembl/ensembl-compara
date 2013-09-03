@@ -289,16 +289,16 @@ sub fetch_all_by_source_genome_db_id {
 }
 
 
-sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
-  my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
+sub _fetch_all_by_source_genomedb_dnafrag_id_start_end_strand_limit {
+  my ($self,$source_name,$genome_db_id,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand,$limit) = @_;
 
   $self->throw("all args are required") 
-      unless($source_name && $taxon_id && $chr_start && $chr_end && $chr_strand && defined ($chr_name));
+      unless($source_name && $genome_db_id && $dnafrag_start && $dnafrag_end && $dnafrag_strand && defined ($dnafrag_id));
 
-  my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
-                    and m.chr_name = '$chr_name' 
-                    and m.chr_start >= $chr_start and m.chr_start <= $chr_end and m.chr_end <= $chr_end 
-                    and m.chr_strand = $chr_strand";
+  my $constraint = "m.source_name = '$source_name' and m.genome_db_id = $genome_db_id
+                    and m.dnafrag_id = '$dnafrag_id'
+                    and m.dnafrag_start >= $dnafrag_start and m.dnafrag_start <= $dnafrag_end and m.dnafrag_end <= $dnafrag_end
+                    and m.dnafrag_strand = $dnafrag_strand";
 
   return $self->generic_fetch($constraint, undef, defined $limit ? "LIMIT $limit" : "");
 }
@@ -375,7 +375,6 @@ sub _objs_from_sth {
   $sth->finish;
   return \@members
 }
-
 
 
 

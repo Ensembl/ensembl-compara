@@ -182,6 +182,7 @@ sub loadMembersFromCoreSlices {
   SLICE: foreach my $slice (@$slices) {
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
+    my $dnafrag = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
 
     @genes = ();
     my $current_end;
@@ -200,7 +201,7 @@ sub loadMembersFromCoreSlices {
                   push @genes, $gene;
                   $current_end = $gene->end if ($gene->end > $current_end);
               } else {
-                  $self->store_all_coding_exons(\@genes);
+                  $self->store_all_coding_exons(\@genes, $dnafrag);
                   @genes = ();
                   $current_end = $gene->end;
                   push @genes, $gene;
@@ -215,7 +216,7 @@ sub loadMembersFromCoreSlices {
              ) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
               
-              $self->store_gene_and_all_transcripts($gene);
+              $self->store_gene_and_all_transcripts($gene, $dnafrag);
               
               print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
           }
@@ -223,7 +224,7 @@ sub loadMembersFromCoreSlices {
     } # foreach
 
     if ($self->param('coding_exons')) {
-        $self->store_all_coding_exons(\@genes);
+        $self->store_all_coding_exons(\@genes, $dnafrag);
     }
   }
 
@@ -237,6 +238,7 @@ sub loadMembersFromCoreSlices {
 sub store_gene_and_all_transcripts {
   my $self = shift;
   my $gene = shift;
+  my $dnafrag = shift;
 
   my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
   my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
@@ -299,6 +301,7 @@ sub store_gene_and_all_transcripts {
     my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
          -transcript=>$transcript,
          -genome_db=>$self->param('genome_db'),
+         -dnafrag=>$dnafrag,
          -translate=>'yes',
          -description=>$description);
 
@@ -317,6 +320,7 @@ sub store_gene_and_all_transcripts {
       print("     gene       " . $gene->stable_id ) if($self->param('verbose'));
       $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
                                                                   -gene=>$gene,
+                                                                  -dnafrag=>$dnafrag,
                                                                   -genome_db=>$self->param('genome_db'));
       print(" => gene_member " . $gene_member->stable_id) if($self->param('verbose'));
 
@@ -366,7 +370,7 @@ sub store_gene_and_all_transcripts {
 
 
 sub store_all_coding_exons {
-  my ($self, $genes) = @_;
+  my ($self, $genes, $dnafrag) = @_;
 
   return 1 if (scalar @$genes == 0);
 
@@ -403,7 +407,7 @@ sub store_all_coding_exons {
         } else {
           $exon_member->description("NULL");
         }
-        $exon_member->chr_name($exon->seq_region_name);
+        $exon_member->dnafrag($dnafrag);
         $exon_member->dnafrag_start($exon->seq_region_start);
         $exon_member->dnafrag_end($exon->seq_region_end);
         $exon_member->dnafrag_strand($exon->seq_region_strand);

@@ -64,7 +64,8 @@ sub fetch_input {
 	my $self = shift @_;
 
 	# Loads the genome
-      $self->param('genome_content', $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'))->db_adaptor);
+      $self->param('genome_db', $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id')));
+      $self->param('genome_content', $self->param('genome_db')->db_adaptor);
 
 }
 
@@ -84,6 +85,11 @@ sub write_output {
       my $gene_coordinates = $self->param('genome_content')->get_gene_coordinates;
       my $cds_coordinates = $self->param('genome_content')->get_cds_coordinates;
       my $taxon_id = $self->param('genome_content')->get_taxonomy_id;
+
+      my %cached_dnafrags;
+      foreach my $dnafrag (@{$compara_dba->get_DnaFragAdaptor()->fetch_all_by_GenomeDB_region($self->param('genome_db'))}) {
+        $cached_dnafrags{$dnafrag->name} = $dnafrag;
+      }
 
 	my $count = 0;
       foreach my $gene_name (keys %$prot_seq) {
@@ -106,7 +112,7 @@ sub write_output {
 		$gene_member->display_label($sequence->id);
             if (exists $gene_coordinates->{$sequence->id}) {
                 my $coord = $gene_coordinates->{$sequence->id};
-                $gene_member->chr_name($coord->[0]);
+                $gene_member->dnafrag($cached_dnafrags{$coord->[0]});
                 $gene_member->dnafrag_start($coord->[1]);
                 $gene_member->dnafrag_end($coord->[2]);
                 $gene_member->dnafrag_strand($coord->[3]);
@@ -128,7 +134,7 @@ sub write_output {
             $pep_member->gene_member_id($gene_member->dbID);
             if (exists $cds_coordinates->{$sequence->id}) {
                 my $coord = $cds_coordinates->{$sequence->id};
-                $pep_member->chr_name($coord->[0]);
+                $pep_member->dnafrag($cached_dnafrags{$coord->[0]});
                 $pep_member->dnafrag_start($coord->[1]);
                 $pep_member->dnafrag_end($coord->[2]);
                 $pep_member->dnafrag_strand($coord->[3]);

@@ -21,6 +21,54 @@
 #   Split member into seq_member and gene_member
 
 
+DROP TABLE IF EXISTS gene_member;
+CREATE TABLE gene_member (
+  gene_member_id              int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  version                     int(10) DEFAULT 0,
+  source_name                 ENUM('ENSEMBLGENE') NOT NULL,
+  taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
+  genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
+  canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
+  description                 text DEFAULT NULL,
+  dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned,
+  dnafrag_end                 int(10) unsigned,
+  dnafrag_strand              tinyint(4),
+  display_label               varchar(128) default NULL,
+
+/*  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id), */
+
+  PRIMARY KEY (gene_member_id),
+  UNIQUE source_stable_id (stable_id, source_name),
+  KEY (stable_id),
+  KEY (source_name),
+  KEY (canonical_member_id),
+  KEY gdb_name_start_end (genome_db_id,dnafrag_id,dnafrag_start,dnafrag_end)
+) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM
+
+AS SELECT
+	member_id AS gene_member_id,
+	stable_id,
+	version,
+	source_name,
+	taxon_id,
+	member.genome_db_id,
+	canonical_member_id,
+	description,
+	dnafrag_id,
+	chr_start AS dnafrag_start,
+	chr_end AS dnafrag_end,
+	chr_strand AS dnafrag_strand,
+	display_label
+FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
+WHERE source_name = "ENSEMBLGENE";
+
+
+
+DROP TABLE IF EXISTS seq_member;
 CREATE TABLE seq_member (
   seq_member_id               int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
@@ -31,11 +79,17 @@ CREATE TABLE seq_member (
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
   gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
   description                 text DEFAULT NULL,
-  chr_name                    char(40),
-  chr_start                   int(10),
-  chr_end                     int(10),
-  chr_strand                  tinyint(1) NOT NULL,
+  dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned,
+  dnafrag_end                 int(10) unsigned,
+  dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
+
+/*  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id), */
 
   PRIMARY KEY (seq_member_id),
   UNIQUE source_stable_id (stable_id, source_name),
@@ -43,7 +97,7 @@ CREATE TABLE seq_member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
-  KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
+  KEY gdb_name_start_end (genome_db_id,dnafrag_id,dnafrag_start,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM
 
 AS SELECT
@@ -52,59 +106,17 @@ AS SELECT
 	version,
 	source_name,
 	taxon_id,
-	genome_db_id,
+	member.genome_db_id,
 	sequence_id,
 	gene_member_id,
 	description,
-	chr_name,
-	chr_start,
-	chr_end,
-	chr_strand,
+	dnafrag_id,
+	chr_start AS dnafrag_start,
+	chr_end AS dnafrag_end,
+	chr_strand AS dnafrag_strand,
 	display_label
-FROM member
+FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
 WHERE source_name != "ENSEMBLGENE";
-
-
-
-CREATE TABLE gene_member (
-  gene_member_id              int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
-  version                     int(10) DEFAULT 0,
-  source_name                 ENUM('ENSEMBLGENE') NOT NULL,
-  taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
-  genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
-  canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
-  description                 text DEFAULT NULL,
-  chr_name                    char(40),
-  chr_start                   int(10),
-  chr_end                     int(10),
-  chr_strand                  tinyint(1) NOT NULL,
-  display_label               varchar(128) default NULL,
-
-  PRIMARY KEY (gene_member_id),
-  UNIQUE source_stable_id (stable_id, source_name),
-  KEY (stable_id),
-  KEY (source_name),
-  KEY (canonical_member_id),
-  KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
-) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM
-
-AS SELECT
-	member_id AS gene_member_id,
-	stable_id,
-	version,
-	source_name,
-	taxon_id,
-	genome_db_id,
-	canonical_member_id,
-	description,
-	chr_name,
-	chr_start,
-	chr_end,
-	chr_strand,
-	display_label
-FROM member
-WHERE source_name = "ENSEMBLGENE";
 
 
 DROP TABLE member;

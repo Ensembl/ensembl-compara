@@ -158,7 +158,7 @@ sub copy {
   $mycopy->description($self->description);
   $mycopy->source_name($self->source_name);
   #$mycopy->adaptor($self->adaptor);
-  $mycopy->chr_name($self->chr_name);
+  $mycopy->dnafrag_id($self->dnafrag_id);
   $mycopy->dnafrag_start($self->dnafrag_start);
   $mycopy->dnafrag_end($self->dnafrag_end);
   $mycopy->dnafrag_strand($self->dnafrag_strand);
@@ -252,87 +252,19 @@ sub source_name {
 }
 
 
-=head2 dnafrag_id
-
-  Arg [1]    : integer $dnafrag_id
-  Example    : $dnafrag_id = $genomic_align->dnafrag_id;
-  Example    : $genomic_align->dnafrag_id(134);
-  Description: Getter/Setter for the attribute dnafrag_id. If no
-               argument is given and the dnafrag_id is not defined, it tries to
-               get the ID from other sources like the corresponding
-               Bio::EnsEMBL::Compara::DnaFrag object or the database using the dnafrag_id
-               of the Bio::EnsEMBL::Compara::Locus object.
-               Use 0 as argument to clear this attribute.
-  Returntype : integer
-  Exceptions : thrown if $dnafrag_id does not match a previously defined
-               dnafrag
-  Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-
-sub dnafrag_id {
-    my $self = shift;
-    if (@_) {
-        $self->SUPER::dnafrag_id(@_);
-        $self->{'dnafrag'} = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->{'dnafrag_id'});
-        $self->{'_chr_name'} = $self->{'dnafrag'}->name();
-    } elsif (not $self->{'dnafrag_id'}) {
-        $self->{'dnafrag_id'} = $self->dnafrag->dbID;
-    }
-    return $self->{'dnafrag_id'};
-}
-
-
-=head2 dnafrag
-
-  Arg 1       : (optional) Bio::EnsEMBL::Compara::DnaFrag object
-  Example     : $dnafrag = $locus->dnafrag;
-  Description : Getter/setter for the Bio::EnsEMBL::Compara::DnaFrag object
-                corresponding to this Bio::EnsEMBL::Compara::Locus object.
-                If no argument is given, the dnafrag is not defined but
-                both the dnafrag_id and the adaptor are, it tries
-                to fetch the data using the dnafrag_id
-  Returntype  : Bio::EnsEMBL::Compara::Dnafrag object
-  Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
-                object or if $dnafrag does not match a previously defined
-                dnafrag_id
-  Warning     : warns if getting data from other sources fails.
-  Caller      : object->methodname
-
-=cut
-
-
-sub dnafrag {
-    my $self = shift;
-    if (@_) {
-        $self->SUPER::dnafrag(@_);
-        $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID();
-        $self->{'_chr_name'} = $self->{'dnafrag'}->name();
-    } elsif (not $self->{'dnafrag'}) {
-        $self->{'dnafrag'} = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($self->{'_genome_db_id'}, $self->{'_chr_name'});
-    }
-    return $self->{'dnafrag'};
-}
-
 
 =head2 chr_name
 
-  Arg [1]    : (opt) string
-  Description: Getter/Setter for the chromosome (or scaffold, contig, etc) name
+               DEPRECATED (will be removed in e75). Get the chromosome name with dnafrag()->name() instead.
+               Define the chromosome with dnafrag() or dnafrag_id().
 
 =cut
 
-sub chr_name {
-    my $self = shift;
-    if (@_) {
-        $self->{'_chr_name'} = shift;
-        delete $self->{'dnafrag'};
-        delete $self->{'dnafrag_id'};
-    }
-    return $self->{'_chr_name'};
+sub chr_name {  # DEPRECATED
+  my $self = shift;
+  deprecate('chr_name() is deprecated and will be removed in e75. Use dnafrag()->name() instead.');
+  return undef unless $self->dnafrag();
+  return $self->dnafrag()->name();
 }
 
 
