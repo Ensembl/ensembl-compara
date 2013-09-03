@@ -46,6 +46,8 @@ use strict;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Utils::Exception;
 
+use Bio::EnsEMBL::Compara::Utils::Cigars;
+
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
 sub new {
@@ -76,76 +78,25 @@ sub create_homology
   $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
   $homology->stable_id($stable_id);
 
-  #
-  # QUERY member
-  #
-  my $qlen = ($self->qend - $self->qstart + 1);
-  $self->query_member->perc_cov(int($qlen*100/$self->query_member->seq_length));
-  $self->query_member->perc_id(int($self->identical_matches*100.0/$qlen));
-  $self->query_member->perc_pos(int($self->positive_matches*100/$qlen));
-
   my $cigar_line = $self->cigar_line;
-  #print("original cigar_line '$cigar_line'\n");
   $cigar_line =~ s/I/M/g;
-  $cigar_line = compact_cigar_line($cigar_line);
+  $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::collapse_cigar(Bio::EnsEMBL::Compara::Utils::Cigars::expand_cigar($cigar_line));
   $self->query_member->cigar_line($cigar_line);
-  #print("   '$cigar_line'\n");
-
-  $homology->add_Member($self->query_member);
-
-  # HIT member
-  #
-  # $self->hstart and $self->hend could be stored
-  my $hlen = ($self->hend - $self->hstart + 1);
-  $self->hit_member->perc_cov(int($hlen*100/$self->hit_member->seq_length));
-  $self->hit_member->perc_id(int($self->identical_matches*100.0/$hlen));
-  $self->hit_member->perc_pos(int($self->positive_matches*100/$hlen));
 
   $cigar_line = $self->cigar_line;
-  #print("original cigar_line\n    '$cigar_line'\n");
   $cigar_line =~ s/D/M/g;
   $cigar_line =~ s/I/D/g;
-  $cigar_line = compact_cigar_line($cigar_line);
+  $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::collapse_cigar(Bio::EnsEMBL::Compara::Utils::Cigars::expand_cigar($cigar_line));
   $self->hit_member->cigar_line($cigar_line);
-  #print("   '$cigar_line'\n");
 
+  $homology->add_Member($self->query_member);
   $homology->add_Member($self->hit_member);
+  $homology->update_alignment_stats;
 
   return $homology;
 }
 
 
-sub compact_cigar_line
-{
-  my $cigar_line = shift;
-
-  #print("cigar_line '$cigar_line' => ");
-  my @pieces = ( $cigar_line =~ /(\d*[MDI])/g );
-  my @new_pieces = ();
-  foreach my $piece (@pieces) {
-    $piece =~ s/I/M/;
-    if (! scalar @new_pieces || $piece =~ /D/) {
-      push @new_pieces, $piece;
-      next;
-    }
-    if ($piece =~ /\d*M/ && $new_pieces[-1] =~ /\d*M/) {
-      my ($matches1) = ($piece =~ /(\d*)M/);
-      my ($matches2) = ($new_pieces[-1] =~ /(\d*)M/);
-      if (! defined $matches1 || $matches1 eq "") {
-        $matches1 = 1;
-      }
-      if (! defined $matches2 || $matches2 eq "") {
-        $matches2 = 1;
-      }
-      $new_pieces[-1] = $matches1 + $matches2 . "M";
-    } else {
-      push @new_pieces, $piece;
-    }
-  }
-  my $new_cigar_line = join("", @new_pieces);
-  #print(" '$new_cigar_line'\n");
-  return $new_cigar_line;
-}
 
 
 ##########################
