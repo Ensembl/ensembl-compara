@@ -276,7 +276,8 @@ sub _store_tagvalue {
             $sth->finish;
 
         } elsif ($nrows > 1) {
-            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=? LIMIT $nrows-1");
+            $nrows = $nrows-1;
+            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=? LIMIT $nrows");
             $sth->execute($object->$perl_keyname, $tag);
             $sth->finish;
         }
