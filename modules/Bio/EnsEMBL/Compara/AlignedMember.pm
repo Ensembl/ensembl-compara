@@ -119,14 +119,14 @@ sub copy {
 sub cigar_line {
   my $self = shift;
   if (@_) {
-    my $c = shift;
-    if ($self->{'_cigar_line'} and $self->{'_cigar_line'} ne $c) {
+    my $cigar = shift;
+    if ($self->{'_cigar_line'} and $self->{'_cigar_line'} ne $cigar) {
       foreach my $k (keys %$self) {
         delete $self->{$k} if $k =~ /alignment_string/;
       }
     }
+    $self->{'_cigar_line'} = $cigar;
   }
-  $self->{'_cigar_line'} = shift if(@_);
   return $self->{'_cigar_line'};
 }
 
@@ -448,7 +448,7 @@ sub _compose_sequence_with_cigar {
     my $expansion_factor = shift || 1;
 
     unless (defined $self->cigar_line && $self->cigar_line ne "") {
-        throw("To get an alignment_string, the cigar_line needs to be define\n");
+        throw("To get an alignment_string, the cigar_line needs to be define. Please check '".$self->stable_id."'\n");
     }
 
     # cigar_start and cigar_end
