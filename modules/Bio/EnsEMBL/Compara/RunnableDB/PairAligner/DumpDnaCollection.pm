@@ -132,23 +132,24 @@ sub dumpNibFiles {
       my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
       #don't dump nibfile if it already exists
-      next if (-e $nibfile);
+      unless (-e $nibfile) {
 
-      my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
-
-      #$dna_object->dump_to_fasta_file($fastafile);
-      #use this version to solve problem of very large chromosomes eg opossum
-      $dna_object->dump_chunks_to_fasta_file($fastafile);
-
-      if (-e $self->param('faToNib_exe')) {
-	  system($self->param('faToNib_exe'), "$fastafile", "$nibfile") and die("Could not convert fasta file $fastafile to nib: $!\n");
-      } else {
-	  die("Unable to find faToNib. Must either define faToNib_exe or it must be in your path");
+          my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
+          
+          #$dna_object->dump_to_fasta_file($fastafile);
+          #use this version to solve problem of very large chromosomes eg opossum
+          $dna_object->dump_chunks_to_fasta_file($fastafile);
+          
+          if (-e $self->param('faToNib_exe')) {
+              system($self->param('faToNib_exe'), "$fastafile", "$nibfile") and die("Could not convert fasta file $fastafile to nib: $!\n");
+          } else {
+              die("Unable to find faToNib. Must either define faToNib_exe or it must be in your path");
+          }
+          
+          unlink $fastafile;
+          $dna_object = undef;
       }
-
-      unlink $fastafile;
-      $dna_object = undef;
-    }
+  }
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
 
