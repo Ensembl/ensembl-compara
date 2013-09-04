@@ -166,7 +166,7 @@
 #    'hc_output_dir' => '/location/of/directory/to/output/results/kb3_hsap_mmus_lastz_29',
 #  },            
 
-##PAIR_ALIGNER_CONFIG runs some simple statistics (percentage coverage) and adds these and the configuration details to a database defined using 'config_url'. The statistics are calculated by comparing bed files of the genome and coding exons with the alignments. The genome and coding exons bed files for each species are kept in the 'bed_dir'. The 'config_file' is the location of equivalent of this file and the 'reg_conf' is the location of the registry configuration file.  It also creates a html page and piechart png files of these values which should be added to public-plugins/ensembl/htdocs/info/docs/compara/mlss/ 
+##PAIR_ALIGNER_CONFIG runs some simple statistics (percentage coverage) and adds these and the configuration details to a database defined using 'config_url'. The statistics are calculated by comparing bed files of the genome and coding exons with the alignments. The genome and coding exons bed files for each species are kept in the 'bed_dir'. The 'config_file' is the location of equivalent of this file and the 'reg_conf' is the location of the registry configuration file.  It also creates a html page and piechart png files of these values which should be added to public-plugins/ensembl/htdocs/info/genome/compara/mlss/ 
 ##
 #  { TYPE => PAIR_ALIGNER_CONFIG,
 #      'ref_species' => 'homo_sapiens',

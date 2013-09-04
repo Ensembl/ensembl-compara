@@ -1,8 +1,8 @@
 #! /bin/bash
 
 # Usage :
-#   cat ensembl-compara/sql/protein_tree-stats.sql | mysql.l compara2 mm14_compara_homology_65 -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | bash ensembl-compara/scripts/pipeline/get_stats_trees.sh pt > public-plugins/ensembl/htdocs/info/docs/compara/protein_trees.inc 
-#   cat ensembl-compara/sql/protein_tree-stats.sql | sed 's/protein/nc/g' | sed 's/ENSEMBLPEP/ENSEMBLTRANS/' | sed 's/pep/trans/g' | mysql.l compara2 mp12_compara_nctrees_65 -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | bash ensembl-compara/scripts/pipeline/get_stats_trees.sh nc > public-plugins/ensembl/htdocs/info/docs/compara/nc_trees.inc
+#   cat ensembl-compara/sql/protein_tree-stats.sql | mysql.l compara2 mm14_compara_homology_65 -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | bash ensembl-compara/scripts/pipeline/get_stats_trees.sh pt > public-plugins/ensembl/htdocs/info/genome/compara/protein_trees.inc 
+#   cat ensembl-compara/sql/protein_tree-stats.sql | sed 's/protein/nc/g' | sed 's/ENSEMBLPEP/ENSEMBLTRANS/' | sed 's/pep/trans/g' | mysql.l compara2 mp12_compara_nctrees_65 -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | bash ensembl-compara/scripts/pipeline/get_stats_trees.sh nc > public-plugins/ensembl/htdocs/info/genome/compara/nc_trees.inc
 
 
 nentries=3
