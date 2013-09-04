@@ -60,7 +60,7 @@ sub default_options {
 
     'rel_suffix'            => 'vega',
     'work_dir'              => '/lustre/scratch109/sanger/'.$ENV{'USER'}.'/compara_generation/'.$version,
-    'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
+    'outgroups'             => { },   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
 

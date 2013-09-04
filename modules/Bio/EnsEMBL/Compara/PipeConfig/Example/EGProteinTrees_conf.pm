@@ -113,7 +113,7 @@ sub default_options {
 
 
     #Clustering
-    outgroups => [],
+    outgroups => {},
 
     #Trees
     use_genomedb_id         =>  0,

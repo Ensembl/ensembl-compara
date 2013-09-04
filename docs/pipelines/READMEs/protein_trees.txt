@@ -198,8 +198,9 @@ Please make sure that 'prev_release' contains the version number of the reuse da
     - cluster: files used by hcluster_sg
     - dumps: SQL dumps (checkpoints) of the database
 
- - outgroups: the list of genome_db_ids of the outgroup species.
-   This is used by hcluster_sg to produce more relevant clusters. In the Ensembl run, we define S.cerevisae as the outgroup of all the animals (Metazoa)
+ - outgroups: the list of outgroup species (genome_db names)
+   This is used by hcluster_sg to produce more relevant clusters. It allows two levels of outgroups (named as "2" and "4", "4" being the most out)
+   In the Ensembl run, we only define S.cerevisae as outgroup (level 2)
 
  - taxlevels: on which clades should the pipeline try to compute dN/dS values.
    Those values are only available for close enough species and it is genereally not a good idea to use very large clades (like Metazoa).

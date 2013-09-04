@@ -69,7 +69,7 @@ sub default_options {
     # blast parameters:
 
     # clustering parameters:
-        'outgroups'                     => [127],   # affects 'hcluster_dump_input_per_genome'
+        'outgroups'             => { 'saccharomyces_cerevisiae' => 2},   # affects 'hcluster_dump_input_per_genome'
 
     # tree building parameters:
 

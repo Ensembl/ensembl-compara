@@ -94,7 +94,7 @@ sub default_options {
         'protein_members_range'     => 100000000, # highest member_id for a protein member
 
     # clustering parameters:
-        'outgroups'                     => [],      # affects 'hcluster_dump_input_per_genome'
+        'outgroups'                     => {},      # affects 'hcluster_dump_input_per_genome'
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:

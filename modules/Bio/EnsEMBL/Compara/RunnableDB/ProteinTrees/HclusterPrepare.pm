@@ -66,9 +66,8 @@ sub fetch_input {
     $self->param('table_name', $table_name);
 
     unless(defined($self->param('outgroup_category'))) {    # it can either be passed in or computed
-        my $outgroups = $self->param('outgroups') || [];
-        my $gdb_in_outgroups  = { map { ($_ => 1) } @$outgroups }->{ $genome_db_id } || 0;
-        my $outgroup_category = $gdb_in_outgroups ? 2 : 1;
+        my $outgroups = $self->param('outgroups') || {};
+        my $outgroup_category =  $outgroups->{$genome_db->name} || 1;
         $self->param('outgroup_category', $outgroup_category);
     }
 }
