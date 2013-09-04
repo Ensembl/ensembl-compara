@@ -742,7 +742,7 @@ sub pipeline_analyses {
  	 {  -logic_name => 'update_max_alignment_length',
 	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	    -parameters => { 
-			    'quick'                      => $self->o('quick'),
+#			    'quick'                      => $self->o('quick'),
 			    'method_link_species_set_id' => $self->o('mlss_id'),
 
 			   },
