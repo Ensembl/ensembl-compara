@@ -50,11 +50,9 @@ my $suffix_separator = '__cut_here__';
 
 sub fetch_input {
     my ($self) = @_;
-
     if (!$self->param('master_db') && !$self->param('core_dbs') && !$self->param('conf_file')) {
 	throw("No master database is provided so you must set the define the location of core databases using a configuration file ('conf_file') or the 'curr_core_dbs_locs' parameter in the init_pipeline configuration file");
     }
-
 
     #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
     #populate_new_database
@@ -73,11 +71,6 @@ sub fetch_input {
 	load_registry_dbs($self->param('registry_dbs'));
     } elsif ($self->param('reg_conf')) { 	    
       Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'));
-    }
-
-    #Set default reference speices. Should be set by init_pipeline module
-    unless (defined $self->param('ref_species')) {
-	$self->param('ref_species', 'homo_sapiens');
     }
 }
 
@@ -102,6 +95,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
+
     #No configuration file or no master_db, so no species list. Flow an empty speciesList
     if ($self->param('get_species_list') && (!$self->param('conf_file') || !$self->param('master_db'))) {
 	my $output_id = "{'speciesList'=>'\"\"'}";
@@ -134,7 +128,6 @@ sub write_output {
         $pair_aligner_collection_names->{$pair_aligner->{'reference_collection_name'}} = 1;
         $pair_aligner_collection_names->{$pair_aligner->{'non_reference_collection_name'}} = 1;
     }
-
 
     #Write method_link and method_link_species_set database entries for pair_aligners
     foreach my $pair_aligner (@{$self->param('pair_aligners')}) {
@@ -169,7 +162,7 @@ sub write_output {
         if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
             print "include_non_reference " . $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} . "\n" if ($self->debug);
 	}
-	
+
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$pair_aligner->{'mlss_id'} = $mlss->dbID;
 
@@ -213,7 +206,6 @@ sub write_output {
 	my ($method_link_id, $method_link_type) = @{$chain_config->{'output_method_link'}};
 	my $ref_genome_db = $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'};
-	
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$chain_config->{'mlss_id'} = $mlss->dbID;
     }
@@ -580,38 +572,67 @@ sub parse_defaults {
 	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
 	$genome_dbs = $mlss->species_set_obj->genome_dbs;
     } 
+    #load genome_dbs from a collection
+    if ($self->param('collection')) {
+        my $collection = $self->param('collection');
+        my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor();
+        my $ss = $ss_adaptor->fetch_all_by_tag_value("name", "collection-$collection");
+        die "Cannot find the collection '$collection'" unless scalar(@$ss);
+        die "There are several collections '$collection'" if scalar(@$ss) > 1;
+        $genome_dbs = $ss->[0]->genome_dbs;
+    }
 
     #Create a collection of pairs from the list of genome_dbs
     my $collection;
     if (@$genome_dbs > 2) {
 
-        #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
-        #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
-        foreach my $key (keys %{$self->param('default_chunks')->{'reference'}}) {
-            if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
-                throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
+        if ($self->param('ref_species')) {
+            #ref vs all
+
+            #find reference genome_db
+            my $ref_genome_db;
+            foreach my $genome_db (@$genome_dbs) {
+                if ($genome_db->name eq $self->param('ref_species')) {
+                    $ref_genome_db = $genome_db;
+                    last;
+                }
+            }
+            die "Cannot find reference species " . $self->param('ref_species') . " in collection " . $self->param('collection') unless ($ref_genome_db);
+            foreach my $genome_db (@$genome_dbs) {
+                #skip over ref species
+                next if ($genome_db->name eq $self->param('ref_species'));
+                my $pair;
+                %$pair = ('ref_genome_db'     => $ref_genome_db,
+                          'non_ref_genome_db' => $genome_db);
+                push @$collection, $pair;
+            }
+        } else {
+            #all vs all
+
+            #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
+            #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
+
+            my @chunk_keys_checks = ( "masking_options_file", "masking_options" );
+            foreach my $key (@chunk_keys_checks) {
+                if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
+                    throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
+                }
+            }
+
+            #Have a collection. Make triangular matrix, ordered by genome_db_id?
+            
+            #Check the dna_collection is the same for reference and non-reference
+            my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
+            while (@ordered_genome_dbs) {
+                my $ref_genome_db = shift @ordered_genome_dbs;
+                foreach my $genome_db (@ordered_genome_dbs) {
+                    my $pair;
+                    %$pair = ('ref_genome_db'     => $ref_genome_db,
+                              'non_ref_genome_db' => $genome_db);
+                    push @$collection, $pair;
+                }
             }
         }
-
-
-	#Have a collection. Make triangular matrix, ordered by genome_db_id?
-
-        #Check the dna_collection is the same for reference and non-reference
-	my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
-	while (@ordered_genome_dbs) {
-	    my $ref_genome_db = shift @ordered_genome_dbs;
-	    foreach my $genome_db (@ordered_genome_dbs) {
-		print "ref " . $ref_genome_db->dbID . " " . $genome_db->dbID . "\n";
-		my $pair;
-		%$pair = ('ref_genome_db'     => $ref_genome_db,
-			  'non_ref_genome_db' => $genome_db);
-		push @$collection, $pair;
-
-		#Load pairwise mlss from master
-		$self->load_mlss_from_master($ref_genome_db, $genome_db, $self->param('default_net_output')->[1]);
-
-	    }
-	}
     } elsif (@$genome_dbs == 2) {
 	#Normal case of a pair of species
 	my $pair;
@@ -667,14 +688,14 @@ sub parse_defaults {
 	    
 	}
 	
-	
 	#create pair_aligners
 	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " raw";
 	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
 	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
 
+        #What to do about all vs all which will not have a net_ref_species
         #Check net_ref_species is a member of the pair
-        if ($self->param('net_ref_species') eq $pair->{ref_genome_db}->name) {
+        if ((!$self->param('net_ref_species')) || ($self->param('net_ref_species') eq $pair->{ref_genome_db}->name)) {
             $net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
             $net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
         } elsif ($self->param('net_ref_species') eq $pair->{non_ref_genome_db}->name) {
@@ -748,6 +769,22 @@ sub parse_defaults {
 sub write_mlss_entry {
     my ($compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db) = @_;
 
+    my $ref_name;
+    my $name;
+
+    foreach my $species_name ($ref_genome_db->name, $non_ref_genome_db->name) {
+        $species_name =~ s/\b(\w)/\U$1/g;
+        $species_name =~ s/(\S)\S+\_/$1\./;
+        $species_name = substr($species_name, 0, 5);
+        $ref_name = $species_name unless ($ref_name);
+        $name .= $species_name."-";
+    }
+    $name =~ s/\-$//;
+    my $type = lc($method_link_type);
+    $type =~ s/_/\-/g;
+    $name .= " $type (on $ref_name)";
+    my $source = "ensembl";
+
     my $method = Bio::EnsEMBL::Compara::Method->new(
         -type               => $method_link_type,
         -dbID               => $method_link_id,
@@ -763,6 +800,8 @@ sub write_mlss_entry {
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
         -species_set_obj    => $species_set_obj,
+        -name               => $name,
+        -source             => $source,
     );
 
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
@@ -780,13 +819,21 @@ sub write_parameters_to_mlss_tag {
     my $dna_collections = $self->param('dna_collections');
     #Write pair aligner options to mlss_tag table for use with PairAligner jobs (eg lastz)
     my $this_param = $mlss->get_value_for_tag("param");
+
+    my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
+
     if ($this_param) {
-        if ($this_param ne $pair_aligner->{'analysis_template'}->{'parameters'}{'options'}) {
+        my $analysis_params = $pair_aligner->{'analysis_template'}->{'parameters'}{'options'};
+        #Need to convert "Q=" if present
+        if ($ensembl_cvs_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_cvs_root_dir(.*)/) {
+            $analysis_params = $1.'$ENSEMBL_CVS_ROOT_DIR'.$2;
+        } 
+
+        if ($this_param ne $analysis_params) {
             throw "Trying to store a different set of options (" . $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} . ") for the same method_link_species_set ($this_param). This is currently not supported";
         }
     } else {
         #Convert expanded $ensembl_cvs_root_dir to the string '$ENSEMBL_CVS_ROOT_DIR' if it is present, else store the param as it is
-        my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
         if ($ensembl_cvs_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_cvs_root_dir(.*)/) {
             $mlss->store_tag("param",  $1.'$ENSEMBL_CVS_ROOT_DIR'.$2);
         } else {
