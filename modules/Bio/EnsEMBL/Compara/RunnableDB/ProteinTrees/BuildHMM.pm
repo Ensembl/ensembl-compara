@@ -188,7 +188,7 @@ sub post_cleanup {
 sub run_buildhmm {
     my $self = shift;
 
-    my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_align'), 1);
+    my $stk_file = $self->dumpAlignedMemberSetAsStockholm($self->param('protein_align'));
     my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
 
     ## as in treefam

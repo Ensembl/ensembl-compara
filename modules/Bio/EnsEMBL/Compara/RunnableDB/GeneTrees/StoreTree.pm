@@ -23,9 +23,7 @@ sub _name_for_prot {
 sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
   my $gene_tree = shift;
-  my $convert_to_stockholm = shift;
   
-  my $leafcount = scalar(@{$gene_tree->get_all_Members});
 
   my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
   $file_root =~ s/\/\//\//g;  # converts any // in path to /
@@ -33,6 +31,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   my $aln_file = $file_root . '.aln';
   return $aln_file if(-e $aln_file);
   if($self->debug) {
+    my $leafcount = scalar(@{$gene_tree->get_all_Members});
     printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
     print("aln_file = '$aln_file'\n");
   }
@@ -121,27 +120,39 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     die "There are no alignments in '$aln_file', cannot continue";
   }
 
-  return $aln_file unless $convert_to_stockholm;
-
-  print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
-  my $stk_file = $file_root . '.stk';
-
-  my $sreformat_exe = $self->param('sreformat_exe')
-        or die "'sreformat_exe' is an obligatory parameter";
-
-  die "Cannot execute '$sreformat_exe'" unless(-x $sreformat_exe);
-
-  my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
-
-  if(system($cmd)) {
-    die "Error running command [$cmd] : $!";
-  }
-  unless(-e $stk_file and -s $stk_file) {
-    die "'$cmd' did not produce any data in '$stk_file'";
-  }
-
-  return $stk_file;
+  return $aln_file
 }
+
+
+sub dumpAlignedMemberSetAsStockholm {
+
+    my $self = shift;
+    my $gene_tree = shift;
+
+    my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
+    $file_root =~ s/\/\//\//g;  # converts any // in path to /
+
+    print STDERR "fetching alignment\n" if ($self->debug);
+
+    # Getting the multiple alignment
+    my $sa = $gene_tree->get_SimpleAlign(
+            -id_type => 'MEMBER',
+            -cdna => $self->param('cdna'),
+            -stop2x => 1,
+            );
+
+    $sa->set_displayname_flat(1);
+
+    # Now outputing the alignment
+    my $stk_file = $file_root . '.stk';
+    open(OUTSEQ, ">$stk_file") or die "Could not open '$stk_file' for writing : $!";
+    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "stockholm");
+    print $alignIO $sa;
+    close OUTSEQ;
+    return $stk_file;
+}
+
+
 
 sub store_genetree
 {

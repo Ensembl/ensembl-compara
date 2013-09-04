@@ -29,7 +29,6 @@ alignment as input into the QuickTree program which then generates a
 simple phylogenetic tree to be broken down into 2 pieces.
 
 Google QuickTree to get the latest tar.gz from the Sanger.
-Google sreformat to get the sequence reformatter that switches from fasta to stockholm.
 
 input_id/parameters format eg: "{'gene_tree_id'=>1234,'clusterset_id'=>1}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
@@ -105,10 +104,8 @@ sub fetch_input {
     # We reload the cigar lines in case the subtrees are partially written
     $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
 
-    foreach my $exe_name (qw(sreformat_exe quicktree_exe)) {
-        my $exe = $self->param($exe_name) or die "'$exe_name' is an obligatory parameter";
-        die "Cannot execute '$exe'" unless (-x $exe);
-    }
+    my $exe = $self->param_required('quicktree_exe');
+    die "Cannot execute '$exe'" unless (-x $exe);
 
     ## 'tags_to_copy' can also be set
 }
@@ -235,7 +232,7 @@ sub post_cleanup {
 sub do_quicktree_loop {
     my $self = shift;
     my $supertree_root = shift;
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]);
+    my $input_aln = $self->dumpAlignedMemberSetAsStockholm($supertree_root->children->[0]);
     my $quicktree_newick_string = $self->run_quicktreebreak($input_aln);
     my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
     my @todo = ();
@@ -254,39 +251,6 @@ sub do_quicktree_loop {
     $self->rec_update_indexing($supertree_root);
 }
 
-
-
-sub dumpTreeMultipleAlignmentToWorkdir {
-    my $self = shift;
-    my $member_set = shift;
-
-    my $aln_file = $self->worker_temp_directory.'supertree.aln';
-
-    # Getting the multiple alignment
-    my $sa = $member_set->get_SimpleAlign(-id_type => 'MEMBER', -stop2x => 1);
-
-    $sa->set_displayname_flat(1);
-    # Now outputing the alignment
-    open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
-    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
-    print $alignIO $sa;
-    close OUTSEQ;
-
-    print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
-    my $stk_file = $self->worker_temp_directory.'supertree.stk';
-
-    my $sreformat_exe = $self->param('sreformat_exe');
-    my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
-
-    if(system($cmd)) {
-        die "Error running command [$cmd] : $!";
-    }
-    unless(-e $stk_file and -s $stk_file) {
-        die "'$cmd' did not produce any data in '$stk_file'";
-    }
-
-    return $stk_file;
-}
 
 sub run_quicktreebreak {
     my $self = shift;

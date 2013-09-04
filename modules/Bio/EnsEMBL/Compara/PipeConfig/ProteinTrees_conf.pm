@@ -117,7 +117,6 @@ sub default_options {
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
-        #'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
         #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
@@ -1142,7 +1141,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters => {
                 'buildhmm_exe'      => $self->o('buildhmm_exe'),
-                'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 10,
@@ -1155,7 +1153,6 @@ sub pipeline_analyses {
             -parameters => {
                 'cdna'              => 1,
                 'buildhmm_exe'      => $self->o('buildhmm_exe'),
-                'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 10,
@@ -1169,7 +1166,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
             -parameters => {
                 'quicktree_exe'     => $self->o('quicktree_exe'),
-                'sreformat_exe'     => $self->o('sreformat_exe'),
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),

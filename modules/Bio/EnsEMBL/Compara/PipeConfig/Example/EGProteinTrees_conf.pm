@@ -96,7 +96,6 @@ sub default_options {
     mcoffee_exe     =>  $self->o('exe_dir').'/t_coffee',
     mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee', 	
     mafft_home      =>  '/nfs/panda/ensemblgenomes/external/mafft',
-    sreformat_exe   =>  $self->o('exe_dir').'/sreformat',
     treebest_exe    =>  $self->o('exe_dir').'/treebest',
     quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
     buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',

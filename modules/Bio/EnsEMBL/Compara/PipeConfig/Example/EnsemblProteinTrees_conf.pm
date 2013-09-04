@@ -84,8 +84,6 @@ sub default_options {
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
-        'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
-        #'sreformat_exe'             => '/software/ensembl/compara/sreformat',
         'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',

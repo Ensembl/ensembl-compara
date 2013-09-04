@@ -36,7 +36,6 @@ Here is the list of the versions that we used for the e73 production:
 	* NCBI-blast 2.2.27+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 	* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
 	* MAFFT 7.017          - http://mafft.cbrc.jp/alignment/software/
-	* sreformat
       * hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
 	* treebest             - Please ask on the dev mailing list (dev@ensembl.org)
 	* quicktree 1.1        - http://www.sanger.ac.uk/resources/software/quicktree/

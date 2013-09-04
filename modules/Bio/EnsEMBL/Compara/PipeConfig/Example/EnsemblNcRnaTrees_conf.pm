@@ -105,7 +105,6 @@ sub default_options {
             'ktreedist_exe'         => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
             'fasttree_exe'          => '/software/ensembl/compara/fasttree/FastTree',
             'treebest_exe'          => '/software/ensembl/compara/treebest.doubletracking',
-            'sreformat_exe'         => '/software/ensembl/compara/sreformat',
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
             'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
 

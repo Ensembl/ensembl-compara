@@ -348,17 +348,6 @@ sub run_infernal {
   $self->param('stk_output', $refined_stk_output);
   $self->param('refined_profile', $refined_profile);
 
-  # Reformat with sreformat
-  my $fasta_output = $self->worker_temp_directory . "output.fasta";
-  my $sreformat_exe = $self->param('sreformat_exe');
-  my $cmd = "$sreformat_exe a2m $refined_stk_output > $fasta_output";
-  $command = $self->run_command($cmd);
-  if($command->exit_code) {
-    $self->throw("error running sreformat, $!\n");
-  }
-
-  $self->param('infernal_output', $fasta_output);
-
   return 0;
 }
 
@@ -381,10 +370,10 @@ sub dump_model {
 
 sub parse_and_store_alignment_into_tree {
   my $self = shift;
-  my $infernal_output =  $self->param('infernal_output');
+  my $stk_output =  $self->param('stk_output');
   my $tree = $self->param('gene_tree');
 
-  return unless($infernal_output);
+  return unless($stk_output);
 
   #
   # parse SS_cons lines and store into nc_tree_tag
@@ -408,8 +397,8 @@ sub parse_and_store_alignment_into_tree {
 
   # fasta format
   my $aln_io = Bio::AlignIO->new
-    (-file => "$infernal_output",
-     -format => 'fasta');
+    (-file => "$stk_output",
+     -format => 'stockholm');
   my $aln = $aln_io->next_aln;
   foreach my $seq ($aln->each_seq) {
     $align_hash{$seq->display_id} = $seq->seq;
@@ -448,7 +437,7 @@ sub parse_and_store_alignment_into_tree {
     }
 
   }
-  $self->compara_dba->get_AlignedMemberAdaptor->store($tree);
+  $self->compara_dba->get_GeneAlignAdaptor->store($tree);
   return undef;
 }
 
@@ -530,7 +519,7 @@ sub store_fasta_alignment {
         $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+    $self->compara_dba->get_GeneAlignAdaptor->store($aln);
     $self->param('alignment_id', $aln->dbID);
 #    $aln->root->release_tree();
 #    $aln->clear();

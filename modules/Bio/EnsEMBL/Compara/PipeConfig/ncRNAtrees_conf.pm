@@ -440,7 +440,6 @@ sub pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
-                                'sreformat_exe' => $self->o('sreformat_exe'),
                                },
                 -flow_into    => {
                                   1 => [ 'hc_factory_align' ],
@@ -453,7 +452,6 @@ sub pipeline_analyses {
                 -parameters => {
                                 'mlss_id'           => $self->o('mlss_id'),
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
-                                'sreformat_exe'     => $self->o('sreformat_exe'),
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
@@ -484,7 +482,6 @@ sub pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
-                                   'sreformat_exe' => $self->o('sreformat_exe'),
                                   },
                 -flow_into     => {
                                    1 => ['pre_sec_struct_tree', 'hc_factory_align' ],
