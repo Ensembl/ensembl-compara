@@ -56,7 +56,7 @@ sub default_options {
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '72',
+	'release'               => '73',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
@@ -113,6 +113,9 @@ sub default_options {
 	#Set for single pairwise mode
 	'mlss_id' => '',
 
+        #Collection name 
+        'collection' => '',
+
 	#Set to use pairwise configuration file
 	'conf_file' => '',
 
@@ -120,7 +123,7 @@ sub default_options {
 	'reg_conf' => '',
 
 	#Reference species (if not using pairwise configuration file)
-	'ref_species' => 'homo_sapiens',
+        'ref_species' => undef,
 
 	#directory to dump nib files
 	'dump_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
@@ -313,14 +316,15 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
 	    {  -logic_name => 'populate_new_database',
-	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
-				  'mlss_id'        => $self->o('mlss_id'),
 				  'reg_conf'        => $self->o('reg_conf'),
-#				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --MT_only " . $self->o('MT_only') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
-				  #If no master set, then use notation below
-				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --MT_only " . $self->o('MT_only') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
+				  'mlss_id'        => $self->o('mlss_id'),
+                                  'collection'     => $self->o('collection'),
+                                  'master_db'      => $self->o('master_db'),
+                                  'pipeline_db'    => $self->dbconn_2_url('pipeline_db'),
+                                  'MT_only'        => $self->o('MT_only'),
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
@@ -346,6 +350,7 @@ sub pipeline_analyses {
   				  'default_net_input' => $self->o('net_input_method_link'),
 				  'net_ref_species' => $self->o('net_ref_species'),
 				  'mlss_id' => $self->o('mlss_id'),
+                                  'collection' => $self->o('collection'),
 				  'registry_dbs' => $self->o('curr_core_sources_locs'),
 				  'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'master_db' => $self->o('master_db'),
@@ -657,9 +662,9 @@ sub pipeline_analyses {
 	    },
  	    {  -logic_name => 'update_max_alignment_length_after_net',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
- 	       -parameters => { 
-			       'quick' => $self->o('quick'),
-			      },
+# 	       -parameters => { 
+#			       'quick' => $self->o('quick'),
+#			      },
 	       -rc_name => '100Mb',
  	    },
 	    { -logic_name => 'healthcheck',
