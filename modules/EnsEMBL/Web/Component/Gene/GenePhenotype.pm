@@ -22,7 +22,7 @@ sub content {
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
   
   # Gene phenotypes  
-  my $html = $phenotype ? '' : $self->gene_phenotypes('RenderAsTables', [ 'MIM disease', 'Orphanet' ]);
+  my $html = $phenotype ? '' : $self->gene_phenotypes();
   
   # Check if a variation database exists for the species.
   if ($hub->database('variation')) {
@@ -384,31 +384,13 @@ sub external_reference_link {
 
 sub gene_phenotypes {
   my $self             = shift;
-  my $output_as_table  = shift;
-  my $types_list       = shift;
   my $object           = $self->object;
   my $obj              = $object->Obj;
   my $hub              = $self->hub;
   my $species          = $hub->species_defs->SPECIES_COMMON_NAME;
   my $g_name           = $obj->stable_id;
-  my @keys             = ('MISC');
-  my @similarity_links = @{$object->get_similarity_hash($obj)};
   my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
   my (@rows, %list, $list_html);
-  
-  $self->_sort_similarity_links($output_as_table, undef, undef, @similarity_links);
-  
-  # to preserve the order, we use @links for access to keys
-  foreach my $link (map @{$object->__data->{'links'}{$_} || []}, @keys) {
-    my $key = $link->[0];
-    next unless grep $key eq $_, @$types_list;
-    
-    $list{$key} .= "$link->[1]<br />";
-  }  
-  
-  while (my($dbtype,$phen) = each(%list)) {
-    push @rows, { dbtype => $dbtype, phenotype => $phen };
-  }
   
   # add rows from Variation DB, PhenotypeFeature
   if ($hub->database('variation')) {
@@ -431,35 +413,33 @@ sub gene_phenotypes {
 	  }
     } else {    
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
-        my $phen;
-        my $desc   = $pf->phenotype->description;
+        my $phen   = $pf->phenotype->description;
         my $ext_id = $pf->external_id;
         my $source = $pf->source;
       
         if($ext_id && $source) {
-          $phen = $hub->get_ExtURL_link($desc, $source, { ID => $ext_id, TAX => $tax});
+          $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
         }
-        else {
-          $phen = $desc;
-        }  
+        
+        my $locs = sprintf(
+          '<a href="%s">View on Karyotype</a>',
+          $hub->url({
+            type    => 'Phenotype',
+            action  => 'Locations',
+            ph      => $pf->phenotype->dbID
+          })
+        );
       
-        push @rows, { dbtype => $pf->source, phenotype => $phen };
+        push @rows, { source => $source, phenotype => $phen, locations =>  $locs};
       }
     }
   }
   
-  if ($output_as_table) {
-    return $html . $self->new_table([ 
-        { key => 'dbtype',    align => 'left', title => 'Database type' },
-        { key => 'phenotype', align => 'left', title => 'Phenotype'     }
-      ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
-  } else {
-    while (my($dbtype,$phen) = each(%list)) {
-      $list_html .= qq{<tr><td style="white-space:nowrap;padding-right:1em"><strong>$dbtype</strong></td>
-                       <td>$phen</td></tr>}
-    }
-    return "<table>$list_html</table>";
-  }
+  return $html . $self->new_table([ 
+      { key => 'source',    align => 'left', title => 'Source'        },
+      { key => 'phenotype', align => 'left', title => 'Phenotype'     },
+      { key => 'locations', align => 'left', title => 'Locations'     },
+    ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
 }
 
 1;
