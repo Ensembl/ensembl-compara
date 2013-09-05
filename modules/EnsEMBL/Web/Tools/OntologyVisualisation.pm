@@ -556,9 +556,10 @@ sub render{
 
   my @all_terms =  @{$self->normal_term_accessions} ;
   push(@all_terms,@{$self->highlighted_term_accessions});
+  my $added = {};
   for my $key ( @all_terms ) {#add all parents of the nodes we retreived
     my $term = $ontology_term_adaptor->fetch_by_accession($key);
-    $self->_add_parents($term,$ontology_term_adaptor);
+    $self->_add_parents($term,$ontology_term_adaptor,$added);
   }
 
   my $return_html='';
@@ -625,35 +626,41 @@ sub _add_parents{
   my $self=shift;
   my $term = shift;
   my $ontology_term_adaptor = shift;
+  my $added = shift || {};
   my $edge_colour_function = $self->{_get_relation_type_colour};
-  
-  my $ancestors = $ontology_term_adaptor->_fetch_ancestor_chart($term);
+
+  return if exists $added->{$term->accession};
+  $added->{$term->accession} = undef;
+
   my $cluster_name= $self->_get_cluster_name($term, $ontology_term_adaptor);
   my $cluster = $self->_get_cluster($cluster_name);
 
-  foreach my $relation(keys %{$ancestors->{$term->accession}})  {
-    if(ref $ancestors->{$term->accession}->{$relation} eq "ARRAY" ){#all parents are in 'name' =>[term,term] form
-      foreach my $trm (@{$ancestors->{$term->accession}->{$relation} || []}){
-        next unless $trm;
-        if(! $self->existing_terms->{$trm->accession}){
-          $self->existing_terms->{$trm->accession}=1;
-          my $node_name = $self->_format_node_name($trm);
-          $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->node_border_colour('',$trm),
-        fillcolor=>$self->non_highlight_fill_colour('',$trm), fontcolor=>$self->non_highlight_font_colour('',$trm));
-        }
-        if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
-          $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
-          my $edge_colour;
-          if(ref $edge_colour_function eq 'CODE'){
-            $edge_colour = _format_colour_code(&$edge_colour_function($relation),'000000');
-          }else{
-            $edge_colour = _format_colour_code($edge_colour_function,'000000');
-          }
-          $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
-          $edge_colour, dir=>'back', fontsize => '8pt'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
-        }
-        $self->_add_parents($trm,$ontology_term_adaptor, $edge_colour_function);
+  my %parents = (
+    'is_a' => $term->parents('is_a'),
+    'part_of' => $term->parents('part_of')
+  );
+
+  foreach my $relation (keys %parents) {
+    foreach my $trm (@{$parents{$relation} || []}){
+      next unless $trm;
+      if(! $self->existing_terms->{$trm->accession}){
+        $self->existing_terms->{$trm->accession}=1;
+        my $node_name = $self->_format_node_name($trm);
+        $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->node_border_colour('',$trm),
+      fillcolor=>$self->non_highlight_fill_colour('',$trm), fontcolor=>$self->non_highlight_font_colour('',$trm));
       }
+      if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
+        $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
+        my $edge_colour;
+        if(ref $edge_colour_function eq 'CODE'){
+          $edge_colour = _format_colour_code(&$edge_colour_function($relation),'000000');
+        }else{
+          $edge_colour = _format_colour_code($edge_colour_function,'000000');
+        }
+        $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
+        $edge_colour, dir=>'back', fontsize => '8pt'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
+      }
+      $self->_add_parents($trm,$ontology_term_adaptor, $added);
     }
   }
 }
