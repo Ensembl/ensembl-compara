@@ -199,7 +199,7 @@ sub content {
     select => 'select',
   );
   
-  $form->add_element('type' => 'SubHeader', 'value' => 'Missense SNP predictions (species limitied)');
+  $form->add_element('type' => 'SubHeader', 'value' => 'Missense SNP predictions (species limited)');
   
   $form->add_element(
     type   => 'DropDown',
