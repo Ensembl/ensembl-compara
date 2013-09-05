@@ -332,7 +332,7 @@ sub search_SEQUENCE {
     my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
     $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
     # The new link format is usually 'r=chr_name:start-end'
-    my $slice = $sa->fetch_by_seq_region_id($_->[2], $_->[3], $_->[4] ); 
+    my $slice = $sa->fetch_by_seq_region_id($_->[4], $_->[2], $_->[3] ); 
 
     $_ = {
 #      'URL'       => (lc($_->[1]) eq 'chromosome' && length($_->[0])<10) ? "$species_path/mapview?chr=$_->[0]" :
