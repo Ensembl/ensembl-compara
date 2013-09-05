@@ -12,6 +12,7 @@ sub read_tree {
 ###  {
 ###    _path  => '/...',              # web path
 ###    _nav   => 'navigation info',   # from meta tags
+###    _rel   => 'related content',   # from meta tags
 ###    _title => 'title',             # from title tag
 ###    _index => '0',                 # order index, from meta tag
 ###    _show  => '',                  # does it have a real index.html or a placeholder?
@@ -54,13 +55,14 @@ sub read_tree {
     return;
   }
 
-  my ($title, $nav, $index);
+  my ($title, $nav, $rel, $index);
   ## Check if we want to do this directory at all
   my $include = 1; 
   $branch->{'_show'} = 'y' unless $branch->{'_show'} eq 'n';
   foreach my $filename (@$html_files) {
+    $branch->{'_related'} = $rel; 
     if( $filename eq 'index.html' || $filename eq 'index.none' ) {
-      my ($title, $nav, $order, $index) = get_info( $doc_root . $path . $filename );
+      my ($title, $nav, $rel, $order, $index) = get_info( $doc_root . $path . $filename );
       $branch->{'_show'} = 'n' if $filename eq 'index.none';
       $branch->{'_show'} = 'y' if $filename eq 'index.html';
       if ($index =~ /NO FOLLOW/) {
@@ -83,12 +85,13 @@ sub read_tree {
   ## Read files and populate the branch
   foreach my $filename (@$html_files) {
     my $full_path = "$doc_root$path$filename";
-    my ($title, $nav, $order, $index) = get_info( $full_path );
+    my ($title, $nav, $rel, $order, $index) = get_info( $full_path );
 
     if ($filename eq 'index.html' || $filename eq 'index.none' ) {
       ## add the directory path and index title to array
       $branch->{_title} = $title;
       $branch->{_nav}   = $nav;
+      $branch->{_rel}   = $rel;
       $branch->{_order} = $order;
       $branch->{_index} = $index;
       $branch->{_nolink} = 1 if $filename eq 'index.none';
@@ -181,13 +184,14 @@ sub get_info {
   close IN;
   my $title   = get_title(\@contents);
   my $nav     = get_meta_navigation(\@contents);
+  my $rel     = get_meta_related(\@contents);
   my $order   = get_meta_order(\@contents);
   my $index   = get_meta_index(\@contents);
   $title = get_first_header(\@contents) unless $title;
   $nav   = $title                       unless $nav;
   $order = 100                          unless $order; ## Unordered pages go at the end!
 
-  return ($title, $nav, $order, $index);
+  return ($title, $nav, $rel, $order, $index);
 }
 
 sub get_title {
@@ -222,6 +226,22 @@ sub get_meta_navigation {
   }
 
   return $nav;
+}
+
+sub get_meta_related {
+### Parses an HTML file and returns the contents of the 'related' meta tag
+  my( $contents ) = @_;
+  my $rel;
+
+  foreach(@$contents) {
+    if (/<meta\s+name\s*=\s*"related"\s+content\s*=\s*"([^"]+)"\s*\/?>/ism) {
+      $rel = $1;
+    } elsif (/<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"related"\s*\/?>/ism) {
+      $rel = $1;
+    }
+  }
+
+  return $rel;
 }
 
 sub get_meta_order {
