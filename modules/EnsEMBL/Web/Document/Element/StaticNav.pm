@@ -116,6 +116,31 @@ sub content {
     }
   }
 
+  ## OPTIONAL 'RELATED CONTENT' SECTION ---------------
+
+  my $related = $this_tree->{'_rel'};
+
+  if ($related) {
+    my $content = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $related);
+    if ($content) {
+      $html .= '<div class="subheader">Related content</div>';
+      $html .= '<ul class="local_context" style="border-width:0">';
+      my $image = "${img_url}leaf.gif";
+
+      my $i = 0;
+      my @links = split('\n', $content);
+      foreach my $link (@links) {
+        next unless $link =~ /^<a href/;
+        my $class = ($i == $#links) ? 'last' : 'top_level';
+        $html .= sprintf('<li class="%s"><img src="%s">%s</li>', 
+                          $class, $image, $link);
+        $i++;
+      }
+
+      $html .= '</ul>';
+    }
+  }
+
   ## SEARCH -------------------------------------------
   unless ($ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/) {
     my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . "Multi/psychic";
