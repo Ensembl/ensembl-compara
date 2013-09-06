@@ -15,8 +15,9 @@ sub new {
   my $class = shift;
   my $self  = $class->SUPER::new(@_);
   
-  $self->{'key_types'}  = [qw(codons conservation population resequencing align_change)];
-  $self->{'key_params'} = [qw(gene_name gene_exon_type alignment_numbering match_display)];
+  $self->{'key_types'}         = [qw(codons conservation population resequencing align_change)];
+  $self->{'key_params'}        = [qw(gene_name gene_exon_type alignment_numbering match_display)];
+  $self->{'snp_length_filter'} = 10; # Max length of VariationFeatures to be displayed
   
   return $self;
 }
@@ -131,6 +132,8 @@ sub set_variation_filter {
     $config->{'min_frequency'}     = $hub->param('min_frequency');
     $config->{'population_filter'} = $pop_filter;
   }
+  
+  $config->{'hide_long_snps'} = $hub->param('hide_long_snps') eq 'yes';
 }
 
 sub set_variations {
@@ -175,6 +178,8 @@ sub set_variations {
         map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
       };
     }
+    
+    $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
   }
   
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
