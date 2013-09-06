@@ -33,6 +33,7 @@ sub form {
   my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
   my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;
   
+  $self->add_form_element($general_markup_options{'hide_long_snps'});
   $self->add_form_element($general_markup_options{'line_numbering'});
   $self->add_form_element($other_markup_options{'title_display'});
   $self->alignment_options;

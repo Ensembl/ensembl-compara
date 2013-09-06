@@ -34,7 +34,8 @@ sub initialize {
   my $config = {
     display_width  => $hub->param('display_width') || 60,
     species        => $hub->species,
-    snp_display    => $hub->param('snp_display') eq 'no' ? 0 : 1,
+    snp_display    => $hub->param('snp_display')    eq 'yes',
+    hide_long_snps => $hub->param('hide_long_snps') eq 'yes',
     v              => $hub->param('v'),
     focus_variant  => $vf,
     failed_variant => 1,

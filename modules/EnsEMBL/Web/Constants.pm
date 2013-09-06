@@ -198,7 +198,17 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'     => 'consequence_filter',
       'label'    => 'Filter variations by consequence type',
       'values'   => [{ 'value' => 'off', 'name' => 'No filter' }]
-    }
+    },
+    'hide_long_snps' => {
+      'type'   => 'DropDown', 
+      'select' => 'select',
+      'name'   => 'hide_long_snps',
+      'label'  => 'Hide variations longer than 10bp',
+      'values' => [
+        { 'value' => 'yes', 'name' => 'Yes' },
+        { 'value' => 'off', 'name' => 'No'  },
+      ]
+    },
   );
 }
 

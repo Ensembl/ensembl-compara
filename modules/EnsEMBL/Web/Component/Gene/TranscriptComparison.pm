@@ -23,7 +23,7 @@ sub initialize {
     sub_slice_end   => $end
   };
 
-  for (qw(exons_only snp_display title_display line_numbering)) {
+  for (qw(exons_only snp_display title_display line_numbering hide_long_snps)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
@@ -209,6 +209,7 @@ sub set_variations {
   my ($self, $config, $slice, $markup, $transcript, $sequence) = @_;
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
+     @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my $transcript_id         = $transcript->stable_id;
   my $strand                = $transcript->strand;

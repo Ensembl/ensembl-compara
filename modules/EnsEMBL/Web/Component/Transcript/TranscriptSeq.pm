@@ -123,6 +123,8 @@ sub get_sequence_data {
   
   if ($config->{'snp_display'}) {
     foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'}, $trans_strand)}) {
+      next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
+      
       my $dbID              = $snp->{'vdbid'};
       my $tv                = $snp->{'tv'};
       my $var               = $snp->{'vf'}->transfer($slice);
@@ -306,7 +308,7 @@ sub initialize {
     transcript      => 1,
   };
   
-  $config->{$_}            = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr);
+  $config->{$_}            = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
   $config->{'snp_display'} = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   

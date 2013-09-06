@@ -35,6 +35,8 @@ sub get_sequence_data {
   
   if ($config->{'snp_display'}) {
     foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
+      next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
+      
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
       
@@ -66,7 +68,7 @@ sub initialize {
     transcript      => 1,
   };
   
-  for (qw(exons snp_display number)) {
+  for (qw(exons snp_display number hide_long_snps)) {
     $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0;
   }
   

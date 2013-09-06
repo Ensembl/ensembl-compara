@@ -4,6 +4,8 @@ package EnsEMBL::Web::ViewConfig::Variation::FlankingSequence;
 
 use strict;
 
+use EnsEMBL::Web::Constants;
+
 use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
@@ -13,13 +15,15 @@ sub init {
     flank_size      => 400,
     snp_display     => 'yes',
     select_sequence => 'both',
+    hide_long_snps  => 'yes',
   });
 
   $self->title = 'Flanking sequence';
 }
 
 sub form {
-  my $self = shift;
+  my $self    = shift;
+  my %options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
   
   $self->add_form_element({
     type   => 'DropDown',
@@ -55,6 +59,8 @@ sub form {
     select => 'select', 
     label  => 'Show variations in flanking sequence'
   });
+  
+  $self->add_form_element($options{'hide_long_snps'});
 }
 
 1;

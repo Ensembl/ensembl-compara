@@ -18,6 +18,7 @@ sub init {
     min_frequency      => 0.1,
     consequence_filter => 'off',
     title_display      => 'off',
+    hide_long_snps     => 'yes',
   });
 }
 
@@ -32,6 +33,7 @@ sub variation_options {
   push @{$markup{'snp_display'}{'values'}}, @{$options->{'snp_display'}} if $options->{'snp_display'};
   
   $self->add_form_element($markup{'snp_display'});
+  $self->add_form_element($markup{'hide_long_snps'});
   
   if ($options->{'consequence'} ne 'no') {
     my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;

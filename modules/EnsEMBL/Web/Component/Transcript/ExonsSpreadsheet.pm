@@ -8,16 +8,15 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 
 sub initialize {
   my ($self, $export) = @_;
-  my $hub         = $self->hub;
-  my $only_exon   = $hub->param('oexon') eq 'yes'; # display only exons
-  my $entry_exon  = $hub->param('exon');
-  my @consequence = $hub->param('consequence_filter');
-  my $object      = $self->object;
-  my $transcript  = $object->Obj;
-  my @exons       = @{$transcript->get_all_Exons};
-  my $strand      = $exons[0]->strand;
-  my $chr_name    = $exons[0]->slice->seq_region_name;
-  my $i           = 0;
+  my $hub        = $self->hub;
+  my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
+  my $entry_exon = $hub->param('exon');
+  my $object     = $self->object;
+  my $transcript = $object->Obj;
+  my @exons      = @{$transcript->get_all_Exons};
+  my $strand     = $exons[0]->strand;
+  my $chr_name   = $exons[0]->slice->seq_region_name;
+  my $i          = 0;
   my @data;
   
   my $config = {
@@ -33,18 +32,21 @@ sub initialize {
     export        => $export
   };
   
-  $config->{'end_number'}         = $config->{'number'};
-  $config->{'last_number'}        = $strand == 1 ? $exons[0]->seq_region_start - $config->{'flanking'} - 1 : $exons[0]->seq_region_end + $config->{'flanking'} + 1 if $config->{'number'} eq 'slice';
-  $config->{'snp_display'}        = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
-  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+  $config->{'end_number'}  = $config->{'number'};
+  $config->{'last_number'} = $strand == 1 ? $exons[0]->seq_region_start - $config->{'flanking'} - 1 : $exons[0]->seq_region_end + $config->{'flanking'} + 1 if $config->{'number'} eq 'slice';
+  $config->{'snp_display'} = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   
   if ($config->{'snp_display'} ne 'off') {
-    my $filter = $hub->param('population_filter');
+    my @consequence = $hub->param('consequence_filter');
+    my $filter      = $hub->param('population_filter');
     
     if ($filter && $filter ne 'off') {
       $config->{'population'}    = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
       $config->{'min_frequency'} = $hub->param('min_frequency');
     }
+    
+    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+    $config->{'hide_long_snps'}     = $hub->param('hide_long_snps') eq 'yes';
   }
   
   # Get flanking sequence
@@ -267,6 +269,7 @@ sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $self->object->Obj ])};
+     @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my (%href, %class);
   
