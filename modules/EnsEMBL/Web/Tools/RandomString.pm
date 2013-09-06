@@ -5,7 +5,7 @@ use Time::HiRes qw(gettimeofday);
 use Exporter qw(import);
 
 our @EXPORT               = qw(random_string random_ticket);
-our @random_chars         = ('a'..'z','A'..'Z','0'..'9','_');
+our @random_chars         = ('a'..'z','A'..'Z','0'..'9');
 our @random_ticket_chars  = ('A'..'Z','a'..'f');
 
 ### Return a random string of given length
