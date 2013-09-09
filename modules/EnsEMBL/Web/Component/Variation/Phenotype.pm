@@ -83,7 +83,7 @@ sub content {
   }
   
   my $info_text = qq{
-    This variation might have phenotypes with non-significant associations, which are not shown on the website. 
+    This variant might have phenotypes with non-significant associations, which are not shown on the website. 
     However these phenotype associations are available through the <a href="/info/data/mysql.html" rel="external">Ensembl Variation databases</a>, 
     the <a href="/info/docs/api/variation/index.html" rel="external">Ensembl Variation Perl API</a> or the <a href="/biomart/martview" rel="external">Ensembl BioMart</a>.
   };
