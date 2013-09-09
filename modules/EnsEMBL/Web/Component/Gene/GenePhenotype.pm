@@ -409,7 +409,7 @@ sub gene_phenotypes {
       foreach my $desc_source (sort keys %$unique_desc_source_pairs) {
         my ($desc, $source, $marker_accession_id) =split("\t", $desc_source);
         my $source_link = $self->source_link($source, $marker_accession_id);
-        push @rows, {dbtype => $source_link, phenotype => $desc};
+        push @rows, {source => $source_link, phenotype => $desc};
 	  }
     } else {    
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
