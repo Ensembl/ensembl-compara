@@ -5,6 +5,9 @@ package EnsEMBL::Web::Document::HTML::Compara;
 
 use strict;
 
+use Math::Round;
+use EnsEMBL::Web::Document::Table;
+
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub sci_name {
@@ -39,7 +42,7 @@ sub format_list {
 
   if ($list && scalar(@{$list||[]})) {
     foreach (@$list) {
-     my ($species_order, $info) = $self->mlss_species_info($method, $_->{'name'});
+      my ($species_order, $info) = $self->mlss_species_info($method, $_->{'name'});
 
       if ($species_order && scalar(@{$species_order||[]})) {
         my $count = scalar(@$species_order);
@@ -47,11 +50,21 @@ sub format_list {
               <p><b>(method_link_type="%s" : species_set_name="%s")</b></p>',
               $count, $_->{'label'}, $method, $method, $_->{'name'};
 
-        $html .= '<ul>';
+        my $table = EnsEMBL::Web::Document::Table->new([
+          { key => 'species', title => 'Species',         width => '50%', align => 'left' },
+          { key => 'gc',      title => 'Genome coverage', width => '25%', align => 'center' },
+          { key => 'ec',      title => 'Coding exon coverage', width => '25%', align => 'center' },
+        ]);
         foreach my $sp (@$species_order) {
-          $html .= sprintf '<li>%s (%s)</li>', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'};
+          my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
+          my $ec = sprintf('%.2f', $info->{$sp}{'coding_exon_coverage'} / $info->{$sp}{'coding_exon_length'} * 100);
+          $table->add_row({
+            'species' => sprintf('%s (%s)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+            'gc'      => $gc.'%',
+            'ec'      => $ec.'%',
+          });
         }
-        $html .= '</ul>';
+        $html .= $table->render;
       }
     }
   }
@@ -70,10 +83,22 @@ sub mlss_species_info {
   my $mlss          = $mlss_adaptor->fetch_by_method_link_type_species_set_name($method, $set_name);
 
   my $species = [];
+  my $coverage = {};
   foreach my $db (@{$mlss->species_set_obj->genome_dbs||[]}) {
-    push @$species, ucfirst($db->name);
+    my $name = ucfirst($db->name);
+    ## Add coverage stats
+    my @stats = qw(genome_coverage genome_length coding_exon_coverage coding_exon_length);
+    foreach (@stats) {
+      $coverage->{$name}{$_} = $mlss->get_value_for_tag($_.'_'.$db->dbID);
+    }
+    push @$species, $name;
   }
-  return $self->get_species_info($species, 1);
+  my ($order, $info) = $self->get_species_info($species, 1);
+  ## Add coverage to other information about the species
+  while (my($species,$hash) = each (%$info)) {
+    @$hash{keys %{$coverage->{$species}}} = values %{$coverage->{$species}};
+  }
+  return ($order, $info); 
 }
 
 sub mlss_data {
@@ -92,6 +117,7 @@ sub mlss_data {
   foreach my $method (@{$methods||[]}) {
     my $mls_sets  = $mlss_adaptor->fetch_all_by_method_link_type($method);
 
+
     foreach my $mlss (@$mls_sets) {
       ## Work out the name of the reference species using the MLSS title
       my $short_ref_name;
@@ -105,13 +131,14 @@ sub mlss_data {
         my $ref_genome_db = $self->get_genome_db($genome_adaptor, $short_ref_name);
       
         ## Add to full list of species
-        $species->{ucfirst($ref_genome_db->name)}++;
+        my $ref_name = ucfirst($ref_genome_db->name);
+        $species->{$ref_name}++;
 
         ## Build data matrix
         foreach my $nonref_db (@{$mlss->species_set_obj->genome_dbs}) {
           $species->{ucfirst($nonref_db->name)}++;
           if ($mlss->source eq "ucsc" || ($nonref_db->dbID != $ref_genome_db->dbID)) {
-            $data->{ucfirst($ref_genome_db->name)}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID];
+            $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID];
           }
         }
       }
