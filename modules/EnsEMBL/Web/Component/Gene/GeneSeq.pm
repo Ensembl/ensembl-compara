@@ -16,7 +16,7 @@ sub initialize {
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     site_type       => ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
-    gene_name       => $object->Obj->can('external_name') ? $object->Obj->external_name : $object->stable_id,
+    gene_name       => $object->Obj->can('external_name') && $object->Obj->external_name ? $object->Obj->external_name : $object->stable_id,
     species         => $hub->species,
     sub_slice_start => $start,
     sub_slice_end   => $end,
