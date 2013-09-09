@@ -26,8 +26,8 @@ sub handler_species {
   my $seg    = shift @path_segments;
   my $script = $OBJECT_TO_SCRIPT->{$seg};
   
-  if ($seg eq 'Component' || $seg eq 'ZMenu' || $seg eq 'Config') {
-    $type   = shift @path_segments if $OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'ZMenu';
+  if ($seg eq 'Component' || $seg eq 'ZMenu' || $seg eq 'Config' || $seg eq 'Json') {
+    $type   = shift @path_segments if $OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'ZMenu' || $seg eq 'Json';
     $plugin = shift @path_segments if $seg eq 'Component';
   } else {
     $type = $seg;
