@@ -40,7 +40,7 @@ sub handler_species {
     
   if ($flag && $script) {
     $ENV{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram.*|Top|Bottom)?$/;
-    $ENV{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action if $script eq 'Component';
+    $ENV{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action =~ s/__/::/gr if $script eq 'Component';
     
     $redirect_if_different = 0;
   } else {
