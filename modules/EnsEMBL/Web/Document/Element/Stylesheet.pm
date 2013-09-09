@@ -15,32 +15,9 @@ sub new {
   });
 }
 
-sub add_sheet {
-  my ($self, $media, $css, $condition) = @_;
-  
-  push @{$self->{'media_order'}}, $media unless $self->{'media'}{$media};
-  push @{$self->{'media'}{$media}}, $css;
-  $self->{'conditional'}->{$css} = $condition if $condition;
-}
-
-sub content {
-  my $self          = shift;
-  my $static_server = $self->static_server;
-  my $content;
-  
-  foreach my $media (@{$self->{'media_order'}}) {
-    foreach (@{$self->{'media'}{$media}}) {
-      my $href = "$static_server$_";
-      
-      if ($self->{'conditional'}->{$_}) {
-        $content .= qq{  <!--[if $self->{'conditional'}->{$_}]><link rel="stylesheet" type="text/css" media="$media" href="$href" /><![endif]-->\n};
-      } else {
-        $content .= qq{  <link rel="stylesheet" type="text/css" media="$media" href="$href" />\n};
-      }
-    }
-  }
-  
-  return $content;
+sub add_plugin_sheets {
+  my $self = shift;
+  $self->$_ for grep /^add_sheets_\w+$/, sort keys %EnsEMBL::Web::Document::Element::Stylesheet::;
 }
 
 sub init {
@@ -73,6 +50,36 @@ sub init {
       $self->add_sheet($attrs{'media'} || 'all', $attrs{'href'}) if $attrs{'href'};
     }
   }
+  
+  $self->add_plugin_sheets;
+}
+
+sub add_sheet {
+  my ($self, $media, $css, $condition) = @_;
+  
+  push @{$self->{'media_order'}}, $media unless $self->{'media'}{$media};
+  push @{$self->{'media'}{$media}}, $css;
+  $self->{'conditional'}{$css} = $condition if $condition;
+}
+
+sub content {
+  my $self          = shift;
+  my $static_server = $self->static_server;
+  my $content;
+  
+  foreach my $media (@{$self->{'media_order'}}) {
+    foreach (@{$self->{'media'}{$media}}) {
+      my $href = "$static_server$_";
+      
+      if ($self->{'conditional'}->{$_}) {
+        $content .= qq{  <!--[if $self->{'conditional'}->{$_}]><link rel="stylesheet" type="text/css" media="$media" href="$href" /><![endif]-->\n};
+      } else {
+        $content .= qq{  <link rel="stylesheet" type="text/css" media="$media" href="$href" />\n};
+      }
+    }
+  }
+  
+  return $content;
 }
 
 1;

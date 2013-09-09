@@ -23,20 +23,23 @@ sub merge_all {
   $species_defs->{'_storage'}{'ENSEMBL_CSS_NAME'}   = merge($species_defs, 'css');
   $species_defs->{'_storage'}{'ENSEMBL_JS_NAME'}    = merge($species_defs, 'js');
   
+  no strict 'refs';
+  &$_($species_defs) for grep /^merge_plugin_\w+$/, sort keys %EnsEMBL::Web::Tools::DHTMLmerge::;
+  
   $species_defs->store;
 }
 
 sub merge {
-  my ($species_defs, $type, @subdirs) = @_;
+  my ($species_defs, $type, $dir, $subdir) = @_;
   my ($contents, $jquery);
   
-  unshift @subdirs, 'components'; # Always add the contents of the components directory to be minified, else global variables (jQuery, $, Ensembl) won't be correct
-  
-  foreach my $root (reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []}) {
-    next if $root =~ /biomart/; # Not part of Ensembl template system
-    
-    foreach (@subdirs) {
-      my @content   = get_contents($type, $root, $_);
+  if ($dir && $subdir) {
+    ($contents) = get_contents($type, $dir, $subdir);
+  } else {
+    foreach (reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []}) {
+      next if /biomart/; # Not part of Ensembl template system
+      
+      my @content   = get_contents($type, $_, 'components');
          $contents .= $content[0];
          $jquery   .= $content[1] if $content[1];
     }
@@ -50,6 +53,47 @@ sub merge {
        $contents        =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg; 
   }
   
+  return compress($species_defs, $type, $contents, $jquery);
+}
+
+sub get_contents {
+  my ($type, $root, $subdir) = @_;
+  my $dir        = "$root/$subdir";
+  my $components = $dir =~ /components/;
+  my ($contents, $jquery);
+  
+  if (-e $dir && -d $dir) {
+    opendir DH, $dir;
+    my @files = readdir DH;
+    closedir DH;
+    
+    foreach (sort { -d "$dir/$a" <=> -d "$dir/$b" || lc $a cmp lc $b } grep /\w/, @files) {
+      if (-d "$dir/$_") {
+        my @content   = get_contents($type, $root, "$subdir/$_");
+           $contents .= $content[0];
+           $jquery   .= $content[1] if $content[1];
+      } elsif (-f "$dir/$_" && /\.$type$/) {
+        next if $components && !/^\d/;
+        
+        open I, "$dir/$_";
+        local $/ = undef;
+        my $file_contents = <I>;
+        close I;
+        
+        if (/jquery(_ui)?\.js/) {
+          $jquery .= $file_contents;
+        } else {
+          $contents .= $file_contents;
+        }
+      }
+    }
+  }
+  
+  return ($contents, $jquery);
+}
+
+sub compress {
+  my ($species_defs, $type, $contents, $jquery) = @_;
   my $root_dir        = $species_defs->ENSEMBL_SERVERROOT;
   my $compression_dir = "$root_dir/utils/compression/";
   my $filename        = md5_hex("$jquery$contents");
@@ -92,42 +136,6 @@ sub merge {
   }
   
   return $filename;
-}
-
-sub get_contents {
-  my ($type, $root, $subdir) = @_;
-  my $dir        = "$root/$subdir";
-  my $components = $dir =~ /components/;
-  my ($contents, $jquery);
-  
-  if (-e $dir && -d $dir) {
-    opendir DH, $dir;
-    my @files = readdir DH;
-    closedir DH;
-    
-    foreach (sort { -d "$dir/$a" <=> -d "$dir/$b" || lc $a cmp lc $b } grep /\w/, @files) {
-      if (-d "$dir/$_") {
-        my @content   = get_contents($type, $root, "$subdir/$_");
-           $contents .= $content[0];
-           $jquery   .= $content[1] if $content[1];
-      } elsif (-f "$dir/$_" && /\.$type$/) {
-        next if $components && !/^\d/;
-        
-        open I, "$dir/$_";
-        local $/ = undef;
-        my $file_contents = <I>;
-        close I;
-        
-        if (/jquery(_ui)?\.js/) {
-          $jquery .= $file_contents;
-        } else {
-          $contents .= $file_contents;
-        }
-      }
-    }
-  }
-  
-  return ($contents, $jquery);
 }
 
 1;
