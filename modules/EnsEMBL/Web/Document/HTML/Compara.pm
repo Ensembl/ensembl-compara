@@ -85,20 +85,9 @@ sub mlss_species_info {
   my $species = [];
   my $coverage = {};
   foreach my $db (@{$mlss->species_set_obj->genome_dbs||[]}) {
-    my $name = ucfirst($db->name);
-    ## Add coverage stats
-    my @stats = qw(genome_coverage genome_length coding_exon_coverage coding_exon_length);
-    foreach (@stats) {
-      $coverage->{$name}{$_} = $mlss->get_value_for_tag($_.'_'.$db->dbID);
-    }
-    push @$species, $name;
+    push @$species, ucfirst($db->name);
   }
-  my ($order, $info) = $self->get_species_info($species, 1);
-  ## Add coverage to other information about the species
-  while (my($species,$hash) = each (%$info)) {
-    @$hash{keys %{$coverage->{$species}}} = values %{$coverage->{$species}};
-  }
-  return ($order, $info); 
+  return $self->get_species_info($species, 1, $mlss);
 }
 
 sub mlss_data {
@@ -150,7 +139,7 @@ sub mlss_data {
 
 sub get_species_info {
 ## Returns an array of species information, optionally sorted according to a taxonomic tree
-  my ($self, $species_order, $by_tree) = @_;
+  my ($self, $species_order, $by_tree, $mlss) = @_;
   my $hub = $self->hub;
   my $info = {};
 
@@ -189,6 +178,14 @@ sub get_species_info {
     }
   }
 
+  ## Lookup table from species name to genome_db_id
+  my $genome_db_name_hash = {};
+  if ($mlss) {
+    foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
+      my $species_tree_name = $genome_db->name;
+      $genome_db_name_hash->{$species_tree_name} = $genome_db->dbID;
+    }
+  }
   ## Now munge information for selected species
   foreach my $sp (@$species_order) {
     (my $display_name = $sp) =~ s/_/ /g;
@@ -199,6 +196,15 @@ sub get_species_info {
     $info->{$sp}{'short_name'}     = $short_name;
     $info->{$sp}{'formatted_name'} = $formatted_name; 
     $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
+
+    if ($mlss) {
+      ## Add coverage stats
+      my $id = $genome_db_name_hash->{lc($sp)};
+      my @stats = qw(genome_coverage genome_length coding_exon_coverage coding_exon_length);
+      foreach (@stats) {
+        $info->{$sp}{$_} = $mlss->get_value_for_tag($_.'_'.$id);
+      }
+    }
   }
 
   return $species_order, $info;
