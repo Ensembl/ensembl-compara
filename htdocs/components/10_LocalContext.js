@@ -57,8 +57,8 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     var toolButtons = $('.tool_buttons', this.el);
     
     tools.each(function () {
-      var a        = $(this).find('a');
-      var existing = $('.additional .' + a[0].className.replace(' ', '.'), toolButtons);
+      var a        = $(this).find('a')[0];
+      var existing = a ? $('.additional .' + a.className.replace(' ', '.'), toolButtons) : [];
       
       if (existing.length) {
         existing.replaceWith(a);
