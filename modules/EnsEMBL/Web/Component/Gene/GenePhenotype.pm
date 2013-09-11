@@ -413,7 +413,7 @@ sub gene_phenotypes {
         $pfs->{$desc} = $pf;
       } 
       foreach my $desc_source (sort keys %$unique_desc_source_pairs) {
-        my ($desc, $source, $marker_accession_id) =split("\t", $desc_source);
+		my ($desc, $source, $marker_accession_id, $strain_name, $strain_gender, $allele_symbol) =split("\t", $desc_source);
         my $source_link = $self->source_link($source, $marker_accession_id);
 		my $pf = $pfs->{$desc};
         my $locs = sprintf(
