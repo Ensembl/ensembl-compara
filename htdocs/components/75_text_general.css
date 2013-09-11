@@ -105,6 +105,7 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 .shadow-box               { box-shadow: 2px 2px 4px [[PANEL_BORDER]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
+.bordered     { border:1px solid [[PANEL_BORDER]]; }
 .unbordered   { border:none; padding:8px 12px 0 12px; }
 .unbordered p { margin-bottom:8px; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
