@@ -230,7 +230,8 @@ form.bgcolour div.form-field div.ff-right, form.bgcolour div.form-field.ff-multi
 }
 form.bgcolour div.form-field label.ff-label {
   width: 292px;
-  padding: 8px 0 0 8px;
+  padding: 8px 0 6px 8px;
+  line-height: 20px;
 }
 div.editable-tag {
   background-color: [[TINT_BG]];
