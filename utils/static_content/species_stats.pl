@@ -162,6 +162,7 @@ foreach my $spp (@valid_spp) {
     #print $fq_path_dir, "\n";
     &check_dir($fq_path_dir);
     my $fq_path_html = $fq_path_dir."stats_$spp.html";
+    print STDERR "Writing $fq_path_html\n";
     open (STATS, ">$fq_path_html") or die "Cannot write $fq_path_html: $!";
 
     ### GET ASSEMBLY AND GENEBUILD INFO
@@ -470,7 +471,7 @@ foreach my $spp (@valid_spp) {
       my @coord_systems;
       my $sa = $db_adaptor->get_adaptor('slice');
       my $csa = $db_adaptor->get_adaptor('coordsystem');
-      foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all() || []}){
+      foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all_by_attrib('default_version') || []}){
         next if (grep {$_ eq $cs->name} @hidden);
         push(@coord_systems,$cs);
       }
@@ -478,11 +479,15 @@ foreach my $spp (@valid_spp) {
       my $row_count=0;
       my $rows_html = "";
       foreach my $cs (@coord_systems){
-        my @regions = @{$sa->fetch_all($cs->name)};
-        my $count_regions = scalar @regions;
-      	print join ' : ', $cs->name, $cs->version , $count_regions, "\n" if ($DEBUG) ;
+        
+      # my @regions = @{$sa->fetch_all($cs->name)};
+      # my $count_regions = scalar @regions;
+        my $csid = $cs->dbID;
+        my ($count_regions) = &query( $db, "SELECT count(1) from seq_region where coord_system_id=$csid" ); 
+      	print join(' : ', ($csid, $cs->name, $cs->version , $count_regions, "\n")) if ($DEBUG) ;
         my $regions_html;
         if($count_regions < 1000){
+          my @regions = @{$sa->fetch_all($cs->name)};
           $regions_html = regions_table($spp,$cs->name,\@regions);
         }
         else{
@@ -497,6 +502,7 @@ foreach my $spp (@valid_spp) {
           stripe_row($row_count),
           $cs->name,
           $regions_html);
+      	printf("%s done\n", $cs->name) if ($DEBUG);
       }
       #EG - only print when there is a table to print
       if($rows_html){
@@ -572,59 +578,64 @@ foreach my $spp (@valid_spp) {
 ######################
  
       my $primary = $gene_stats{'alt_coding'} ? ' (Primary assembly)' : '';
+      my $any_genes = 0;
+      for (@gene_stats_keys){
+         if($gene_stats{$_}){$any_genes += $gene_stats{$_}};
+      }
+      if($any_genes){
+        print STATS qq(
+          <h3>Gene counts$primary</h3>
+          <table class="ss tint species-stats">
+        );
+        $rowcount = 0;
 
-      print STATS qq(
-        <h3>Gene counts$primary</h3>
-        <table class="ss tint species-stats">
-      );
-      $rowcount = 0;
-
-      for (@gene_stats_keys) {
-        if ($gene_stats{$_}) {
-          $gene_stats{$_} = thousandify($gene_stats{$_});
-          $rowcount++;
-          $row = stripe_row($rowcount);
-          my $term = $glossary_lookup{$_};
-          my $header = $term ? qq(<span class="glossary_mouseover">$gene_title{$_}<span class="floating_popup">$glossary{$term}</span></span>) : $gene_title{$_};
-          print STATS qq($row
-            <td class="data">$header:</td>
-            <td class="value">$gene_stats{$_}</td>
-            </tr>
-          );
+        for (@gene_stats_keys) {
+          if ($gene_stats{$_}) {
+            $gene_stats{$_} = thousandify($gene_stats{$_});
+            $rowcount++;
+            $row = stripe_row($rowcount);
+            my $term = $glossary_lookup{$_};
+            my $header = $term ? qq(<span class="glossary_mouseover">$gene_title{$_}<span class="floating_popup">$glossary{$term}</span></span>) : $gene_title{$_};
+            print STATS qq($row
+              <td class="data">$header:</td>
+              <td class="value">$gene_stats{$_}</td>
+              </tr>
+            );
+          }
         }
-      }
 
-      print STATS qq(
-        </table>
-      );
+        print STATS qq(
+          </table>
+        );
 
-      if ($gene_stats{'alt_coding'}) {
-      print STATS qq(
-        <h3>Gene counts (Alternate sequences)</h3>
-        <table class="ss tint species-stats">
-      );
-      $rowcount = 0;
-      }
-
-      for (@alt_gene_stats_keys) {
-        if ($gene_stats{$_}) {
-          $gene_stats{$_} = thousandify($gene_stats{$_});
-          $rowcount++;
-          $row = stripe_row($rowcount);
-          my $term = $glossary_lookup{$_};
-          my $header = $term ? qq(<span class="glossary_mouseover">$alt_gene_title{$_}<span class="floating_popup">$glossary{$term}</span></span>) : $alt_gene_title{$_};
-          print STATS qq($row
-            <td class="data">$header:</td>
-            <td class="value">$gene_stats{$_}</td>
-            </tr>
-          );
+        if ($gene_stats{'alt_coding'}) {
+        print STATS qq(
+          <h3>Gene counts (Alternate sequences)</h3>
+          <table class="ss tint species-stats">
+        );
+        $rowcount = 0;
         }
+
+        for (@alt_gene_stats_keys) {
+          if ($gene_stats{$_}) {
+            $gene_stats{$_} = thousandify($gene_stats{$_});
+            $rowcount++;
+            $row = stripe_row($rowcount);
+            my $term = $glossary_lookup{$_};
+            my $header = $term ? qq(<span class="glossary_mouseover">$alt_gene_title{$_}<span class="floating_popup">$glossary{$term}</span></span>) : $alt_gene_title{$_};
+            print STATS qq($row
+              <td class="data">$header:</td>
+              <td class="value">$gene_stats{$_}</td>
+              </tr>
+            );
+          }
+        }
+
+        print STATS qq(
+          </table>
+        );
+
       }
-
-      print STATS qq(
-        </table>
-      );
-
     }
 
     if($coordsys){
@@ -633,28 +644,29 @@ foreach my $spp (@valid_spp) {
 
     $db->dbc->db_handle->disconnect; # prevent too many connections
 
-    next unless grep $other_stats{$_}, @other_stats_keys;
+    if(grep $other_stats{$_}, @other_stats_keys){
 
-    print STATS qq(
-      <h3>Other</h3>
-      <table class="ss tint species-stats">
-    );
-    $rowcount = 0;
+      print STATS qq(
+        <h3>Other</h3>
+        <table class="ss tint species-stats">
+      );
+      $rowcount = 0;
 
-    for (@other_stats_keys) {
-      if ($other_stats{$_}) {
-        $other_stats{$_} = thousandify($other_stats{$_});
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        print STATS qq($row
-          <td class="data">$other_title{$_}:</td>
-          <td class="value">$other_stats{$_}</td>
-          </tr>
-        );
+      for (@other_stats_keys) {
+        if ($other_stats{$_}) {
+          $other_stats{$_} = thousandify($other_stats{$_});
+          $rowcount++;
+          $row = stripe_row($rowcount);
+          print STATS qq($row
+            <td class="data">$other_title{$_}:</td>
+            <td class="value">$other_stats{$_}</td>
+            </tr>
+          );
+        }
       }
-    }
 
-    print STATS '</table>';
+      print STATS '</table>';
+    }
 
     close(STATS);
   }
