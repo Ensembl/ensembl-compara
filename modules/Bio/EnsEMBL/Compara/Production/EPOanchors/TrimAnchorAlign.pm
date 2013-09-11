@@ -65,7 +65,7 @@ sub fetch_input {
   if (!$self->anchor_id) {
     return 0;
   }
-#   $self->{'fasta_files'} = [];
+   $self->{'fasta_files'} = [];
   my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
   ## This method returns a hash at the moment, not the objects
 #   print "Fetching AnchorAligns for Anchor ", $self->{'anchor_id'}, " and MLSS ", $self->{'input_method_link_species_set_id'}, "\n";
@@ -75,7 +75,7 @@ sub fetch_input {
     " and method_link_species_set_id = ". $self->{'input_method_link_species_set_id'}
       if (!$anchor_align_hash);
   foreach my $anchor_align_id (keys %$anchor_align_hash) {
-#     print "Fetching AnchorAlign $anchor_align_id\n";
+     print "Fetching AnchorAlign $anchor_align_id\n";
     my $anchor_align = $anchor_align_adaptor->fetch_by_dbID($anchor_align_id);
     push(@{$self->{'anchor_aligns'}}, $anchor_align);
   }
@@ -340,14 +340,23 @@ sub get_trimmed_anchor_aligns {
 # #         substr($this_aligned_sequence, $best_position-1, 2) , " ** ",
 # #         substr($this_aligned_sequence, ($best_position + 1)),
 # #         " ++ $this_anchor_align_id\n";
+
     my $seq_before = substr($this_aligned_sequence, 0, $best_position);
     my $seq_after = substr($this_aligned_sequence, $best_position);
     my $start = $this_anchor_align->dnafrag_start;
     my $end = $this_anchor_align->dnafrag_end;
+
+
     my ($count_before) = $seq_before =~ tr/ACTGactgNn/ACTGactgNn/;
     my ($count_after) = $seq_after =~ tr/ACTGactgNn/ACTGactgNn/;
+
+# print "SEQ_BEF: $seq_before $count_before\n";
+# print "SEQ_AFT: $seq_after $count_after\n";
+
+
+
     if ($count_before + $count_after != $end - $start + 1) {
-      die "Wrong length $count_before $count_after $start $end";
+      die "Wrong length $count_before * $count_after * $start * $end * $seq_before * $count_before * $seq_after * $count_after +";
     }
     if ($this_anchor_align->dnafrag_strand == 1) {
       $start += $count_before - 1;
