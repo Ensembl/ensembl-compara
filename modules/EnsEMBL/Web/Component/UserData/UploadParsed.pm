@@ -71,6 +71,7 @@ sub content_ajax {
           $data->{'nearest'}   = $nearest;
     
           $session->set_data(%$data);
+          $session->configure_user_data($type, $data);
     
           $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $parser->feature_count;
     
