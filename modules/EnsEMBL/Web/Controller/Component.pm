@@ -10,6 +10,7 @@ use base qw(EnsEMBL::Web::Controller);
 
 sub page_type { return 'Component'; }
 sub cacheable { return 1;           }
+sub request   { return $_[0]{'request'} ||= $_[0]->species_defs->OBJECT_TO_SCRIPT->{$_[0]->hub->type} eq 'Modal' ? 'modal' : undef; }
 
 sub init {
   my $self = shift;
