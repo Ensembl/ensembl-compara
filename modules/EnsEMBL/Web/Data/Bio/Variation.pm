@@ -23,7 +23,7 @@ sub convert_to_drawing_parameters {
   my $hub      = $self->hub;
   my @phen_ids = $hub->param('ph');
   my $ga       = $hub->database('core')->get_adaptor('Gene');
-  my (@results, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources, %phenotypes_studies);
+  my (@results, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources, %phenotypes_studies,%gene_ids);
   
   # getting associated phenotypes and associated genes
   foreach my $pf (@{$data || []}) {
@@ -31,8 +31,10 @@ sub convert_to_drawing_parameters {
     my $source_name = $pf->source;
        $source_name =~ s/_/ /g;
     my $study_xref  = ($pf->study) ? $pf->study->external_reference : undef;
-    
-    $phenotypes_sources{$object_id}{$source_name} = 1;
+    my $external_id = ($pf->external_id) ? $pf->external_id : undef;
+
+    $phenotypes_sources{$object_id}{$source_name}{'study_xref'} = $study_xref;
+    $phenotypes_sources{$object_id}{$source_name}{'external_id'} = $external_id;
     $phenotypes_studies{$object_id}{$study_xref} = 1 if ($study_xref);
     
     # only get the p value log 10 for the pointer matching phenotype id and variation id
@@ -43,7 +45,15 @@ sub convert_to_drawing_parameters {
       # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
       foreach my $id (grep $_, split /,/, $pf->associated_gene) {
         $id =~ s/\s//g;
-        $associated_genes{$object_id}{$id} = $_->description for @{$ga->fetch_all_by_external_name($id) || []};
+        if ($gene_ids{$id}) {
+          $associated_genes{$object_id}{$id} = $gene_ids{$id};
+        }
+        else {
+          foreach my $gene (@{$ga->fetch_all_by_external_name($id) || []}) {
+            $associated_genes{$object_id}{$id} = $gene->description;
+            $gene_ids{$id} = $gene->description;
+          }
+        }
       }
     }
   }
@@ -116,38 +126,8 @@ sub convert_to_drawing_parameters {
     
     # make source link out
     my $sources;
-    
-    if(defined($pf->external_id)) {
-      foreach my $source(keys %{$phenotypes_sources{$name} || {}}) {
-        my $url = $hub->get_ExtURL(
-          $source,
-          { ID => $pf->external_id, TAX => $hub->species_defs->TAXONOMY_ID }
-        );
-        
-        $sources .=
-          ($sources ? ', ' : '').
-          ($url ? sprintf(
-            '<a target="_blank" href="%s">%s</a>',
-            $url,
-            $source
-          ) : $source);
-      }
-    }
-    
-    else {
-      foreach my $source(keys %{$phenotypes_sources{$name} || {}}) {
-
-        my $source_uc = uc $source;
-        my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
-
-        $sources .=
-          ($sources ? ', ' : '').
-          ($url ? sprintf(
-            '<a target="_blank" href="%s">%s</a>',
-            $url,
-            $source
-          ) : $source);
-      }
+    foreach my $source(keys %{$phenotypes_sources{$name} || {}}) {
+      $sources .= ($sources ? ', ' : '').$self->_pf_source_link($name,$source,$phenotypes_sources{$name}{$source}{'external_id'},$phenotypes_sources{$name}{$source}{'study_xref'});
     }
     
     push @results, {
@@ -206,6 +186,43 @@ sub _pf_external_reference_link {
   $html =~ s/;\s$//;
   
   return $html;
+}
+
+
+sub _pf_source_link {
+  my ($self, $obj_name, $source, $ext_id, $ext_ref_id) = @_;
+  
+  my $source_uc = uc $source;
+     $source_uc = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
+     $source_uc =~ s/\s/_/g;
+  my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
+  my $label     = $source;
+  my $name;
+  if ($url =~ /gwastudies/) {
+    $ext_ref_id =~ s/pubmed\///; 
+    $name = $ext_ref_id;
+  } 
+  elsif ($url =~ /clinvar/) {
+    $ext_id =~ /^(.+)\.\d+$/;
+    $name = ($1) ? $1 : $ext_id;
+  } 
+  elsif ($url =~ /omim/) {
+  #  if ($code) {
+     $name = "search?search=".$obj_name;
+  #  }
+  #  else {
+  #    $ext_ref_id =~ s/MIM\://; 
+  #    $name = $ext_ref_id;
+  #  }     
+  } else {
+    $name = $obj_name;
+  }
+  
+  $url =~ s/###ID###/$name/;
+  
+  return $source if $url eq "";
+  
+  return qq{<a rel="external" href="$url">$label</a>};
 }
 
 1;
