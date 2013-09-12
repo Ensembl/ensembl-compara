@@ -93,6 +93,8 @@ sub default_options {
   'db_suffix' => '_epo_multi_way_',
   'ancestral_sequences_name' => 'ancestral_sequences',
   'dump_dir' => $self->o('ENV', 'EPO_DUMP_PATH')."epo_rel".$self->o('rel_with_suffix')."/",
+  'bed_dir' => $self->o('dump_dir').'bed_dir',
+  'feature_dumps' => $self->o('dump_dir').'feature_dumps',
   'enredo_mapping_file_name' => 'enredo_friendly.mlssid_'.$self->o('epo_mlss_id')."_".$self->o('rel_with_suffix'), 
   'enredo_mapping_file' => $self->o('dump_dir').$self->o('enredo_mapping_file_name'),
   'cvs_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'), 
@@ -105,6 +107,12 @@ sub default_options {
   'gerp_version' => '2.1', #gerp program version
   'gerp_window_sizes'    => '[1,10,100,500]', #gerp window sizes
   'gerp_exe_dir'    => '/software/ensembl/compara/gerp/GERPv2.1', #gerp program
+  # Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
+  # accurate (and slow) method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
+  'quick' => 1,
+  'skip_multiplealigner_stats' => 0, #skip this module if set to 1
+  'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+  'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 
   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
@@ -164,6 +172,8 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands}, 
 	'mkdir -p '.$self->o('dump_dir'),
 	'mkdir -p '.$self->o('bl2seq_dump_dir'),
+        'mkdir -p '.$self->o('bed_dir'),
+        'mkdir -p '.$self->o('feature_dumps'),
            ];  
 }
 
@@ -459,37 +469,84 @@ return
 	-rc_name => 'mem7500',
 	-failed_job_tolerance => 1,
 },
-# ------------------------------------- some last house keeping steps
-{  
-	-logic_name => 'update_max_alignment_length',
-	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
-	-parameters => {
-		'method_link_species_set_id' => $self->o('epo_mlss_id'),
-	},
-	-flow_into => {
-		1 => [ 'create_neighbour_nodes_jobs_alignment' ],
-	},
-}, 
-{   
-	-logic_name => 'create_neighbour_nodes_jobs_alignment',
-	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-	-parameters => {
-		'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id = 0',
-		'fan_branch_code' => 2,
-	},  
-	-flow_into => {
-	2 => [ 'set_neighbour_nodes' ],
-	},  
-},  
-{   
-	-logic_name => 'set_neighbour_nodes',
-	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
-	-parameters => {
-		'method_link_species_set_id' => $self->o('epo_mlss_id')
-	},  
-	-batch_size    => 10, 
-	-hive_capacity => 20, 
-}, 
+# ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
+            {  -logic_name => 'update_max_alignment_length',
+               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
+                -parameters => {
+                               'quick' => $self->o('quick'),
+                               'method_link_species_set_id' => $self->o('epo_mlss_id'),
+                              },  
+               -flow_into => {
+                              1 => [ 'create_neighbour_nodes_jobs_alignment' ],
+                             },  
+            },  
+
+# --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
+            {   -logic_name => 'create_neighbour_nodes_jobs_alignment',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -parameters => {
+                                'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id = 0',
+                                'fan_branch_code' => 2,
+                               },  
+                -flow_into => {
+                               '2->A' => [ 'set_neighbour_nodes' ],
+                               'A->1' => [ 'healthcheck_factory' ],
+                              },  
+            },  
+            {   -logic_name => 'set_neighbour_nodes',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+                -parameters => {
+                                'method_link_species_set_id' => $self->o('epo_mlss_id')
+                               },  
+                -batch_size    => 10, 
+                -hive_capacity => 20, 
+            },  
+# -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
+            {   -logic_name => 'healthcheck_factory',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -meadow_type=> 'LOCAL',
+                -flow_into => {
+                               '2->A' => {
+                                     'conservation_score_healthcheck'  => [
+                                                                           {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
+                                                                           {'test' => 'conservation_scores','method_link_species_set_id'=>$self->o('cs_mlss_id')},
+                                                                ],  
+                                    },  
+                               'A->1' => ['stats_factory'],
+                              },  
+            },  
+
+            {   -logic_name => 'conservation_score_healthcheck',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
+            },
+
+            {   -logic_name => 'stats_factory',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+                -parameters => {
+                                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
+                                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                                'fan_branch_code'       => 2,
+                               },
+                -flow_into  => {
+                                2 => [ 'multiplealigner_stats' ],
+                               },
+            },
+
+            { -logic_name => 'multiplealigner_stats',
+              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats',
+              -parameters => {
+                              'skip' => $self->o('skip_multiplealigner_stats'),
+                              'dump_features' => $self->o('dump_features_exe'),
+                              'compare_beds' => $self->o('compare_beds_exe'),
+                              'bed_dir' => $self->o('bed_dir'),
+                              'ensembl_release' => $self->o('release'),
+                              'output_dir' => $self->o('feature_dumps'),
+                              'mlss_id'   => $self->o('epo_mlss_id'),
+                             },
+              -rc_name => 'mem3500',
+              -hive_capacity => 100,
+            },
 
 
 ];
