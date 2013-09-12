@@ -49,7 +49,7 @@ sub fmt_number {
   $step =~ /0+$/;
   my $strip = length $&;
   my @lhs = split(//,"".$num);
-  if($strip>3) {
+  if($strip>=3) {
     my $mul = int((@lhs-1)/3);
     my @rhs = splice(@lhs,@lhs-$mul*3);
     pop @rhs for(1..$strip);
