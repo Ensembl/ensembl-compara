@@ -136,7 +136,7 @@ sub render {
       }));
       
       my $label = $minor_unit < 1000 ? $self->commify($box_start * $contig_strand): $self->bp_to_nearest_unit($box_start * $contig_strand, 2);
-      $label = $self->fmt_number($box_start*$contig_strand,$major_unit);
+      $label = $self->fmt_number($box_start*$contig_strand,$labmaj);
       my @res   = $self->get_text_width(($box_start - $last_text_x) * $pix_per_bp * 1.5, $label, '', font => $fontname, ptsize => $fontsize);
 
       if ($res[0] && !(($box_start*$contig_strand) % $labmaj)) {
