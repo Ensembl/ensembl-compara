@@ -26,38 +26,43 @@ sub createObjects {
   my $db       = $self->param('db') || 'core';
   my $features = {};
  
-  my @ids         = $self->hub->param('ph'); 
+  my @ids      = $self->hub->param('ph'); 
 
   return $self->problem('fatal', 'No ID', $self->_help) if (!scalar(@ids) && $self->hub->action ne 'All');
+  
   if (@ids) {
     my $pfs = [];
     my $genes = [];
 
-    foreach my $id (@ids) {
-      my $dbc        = $self->hub->database('variation');
-      return unless $dbc;
-      $dbc->include_failed_variations(1);
-      $dbc->include_non_significant_phenotype_associations(0);
+    my $dbc = $self->hub->database('variation');
+    return unless $dbc;
+    $dbc->include_failed_variations(1);
+    $dbc->include_non_significant_phenotype_associations(0);    
+    my $adaptor = $dbc->get_adaptor('PhenotypeFeature');
 
-      my $adaptor    = $dbc->get_adaptor('PhenotypeFeature');
+    my %associated_gene;
+
+    foreach my $id (@ids) {
 
       push @$pfs, @{$adaptor->fetch_all_by_phenotype_id_source_name($id) || []};
 
+## TODO - Get genes with no associated variation 
+=pod
+
       if ($pfs and scalar @$pfs > 0) {
 
-        my %associated_gene;
+#        my %associated_gene;
   
         foreach my $pf (@{$pfs}) {
           if ($pf->{'_phenotype_id'} eq $id) {
-            # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
-            
+            # if there is more than one associated gene (comma separated), split them to generate the URL for each of them            
             if($pf->associated_gene) {
               foreach my $gene_id (grep $_, split /,/, $pf->associated_gene) {
                 $gene_id =~ s/\s//g;
                 next if $gene_id =~ /intergenic/i;
                 next unless $gene_id;
-                my $gene_objects = $self->_create_Gene('core', $gene_id);
                 unless ($associated_gene{$gene_id}) {
+                  my $gene_objects = $self->_create_Gene('core', $gene_id);
                   $associated_gene{$gene_id} = $gene_objects;
                 }
               }
@@ -77,7 +82,6 @@ sub createObjects {
       }
 
 ## TODO - Get genes with no associated variation 
-=pod
   ## Add all genes
   if (scalar(@$genes)) {
     $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
