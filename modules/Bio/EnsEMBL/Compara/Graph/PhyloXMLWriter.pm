@@ -450,7 +450,7 @@ sub _genetreemember_body {
   if(!$self->no_sequences()) {
     my $mol_seq;
     if($self->aligned()) {
-      $mol_seq = ($self->cdna()) ? $protein->cdna_alignment_string() : $protein->alignment_string();
+      $mol_seq = ($self->cdna()) ? $protein->alignment_string('cds') : $protein->alignment_string();
     }
     else {
       $mol_seq = ($self->cdna()) ? $protein->other_sequence('cds') : $protein->sequence();

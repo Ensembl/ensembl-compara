@@ -340,8 +340,9 @@ sub alignment_string {
     if (not defined $self->{$key}) {
         my $sequence = $self->other_sequence($seq_type);
         $sequence =~ s/b|o|j/\ /g if $seq_type eq 'exon_bounded';
-        #my %expansion_factors = ('cds' => 3, 'cdna' => 1);
-        $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
+        my $expansion_factor = 1;
+        $expansion_factor = 3 if $seq_type eq 'cds';
+        $self->{$key} = $self->_compose_sequence_with_cigar($sequence, $expansion_factor);
     }
 
     return $self->{$key};
@@ -351,43 +352,27 @@ sub alignment_string {
 
 =head2 alignment_string_bounded
 
-  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e76
+  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e75
 
 =cut
 
 sub alignment_string_bounded {  ## DEPRECATED
     my $self = shift;
+    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e75. Please use SeqMember::alignment_string("exon_bounded") instead');
     return $self->alignment_string('exon_bounded');
 }
 
 
 =head2 cdna_alignment_string
 
-  Arg [1]    : none
-  Example    : my $cdna_alignment = $aligned_member->cdna_alignment_string();
-  Description: Converts the peptide alignment string to a cdna alignment
-               string.  This only works for EnsEMBL peptides whose cdna can
-               be retrieved from the attached core databse.
-               If the cdna cannot be retrieved undef is returned and a
-               warning is thrown.
-  Returntype : string
-  Exceptions : see _compose_sequence_with_cigar
-  Caller     : general
+  Description : DEPRECATED: Use alignment_string('cds') instead. cdna_alignment_string() will be removed in e75
 
 =cut
 
-sub cdna_alignment_string {
-  my $self = shift;
-
-  # For ncRNAs, the default alignment string is already at the DNA level
-  return $self->alignment_string() if $self->source_name eq 'ENSEMBLTRANS';
-
-  unless (defined $self->{'cdna_alignment_string'}) {
-
-    $self->{'cdna_alignment_string'} = $self->_compose_sequence_with_cigar($self->other_sequence('cds'), 3);
-  }
-  
-  return $self->{'cdna_alignment_string'};
+sub cdna_alignment_string { ## DEPRECATED
+    my $self = shift;
+    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e75. Please use SeqMember::alignment_string("cds") instead');
+    return $self->alignment_string('cds');
 }
 
 

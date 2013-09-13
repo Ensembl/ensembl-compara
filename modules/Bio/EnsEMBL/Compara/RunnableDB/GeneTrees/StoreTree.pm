@@ -62,7 +62,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
       my $name1 = $self->_name_for_prot($protein1);
-      my $cdna = $protein1->cdna_alignment_string;
+      my $cdna = $protein1->alignment_string('cds');
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
         # add the position in the other cdna for every gap position, and iterate
@@ -82,14 +82,14 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         $split_genes{$name2} = $name1;
         #print STDERR Dumper(%split_genes);
         print STDERR "Joining in ", $protein1->stable_id, " / $name1 and ", $protein2->stable_id, " / $name2 in input cdna alignment\n" if ($self->debug);
-        my $other_cdna = $protein2->cdna_alignment_string;
+        my $other_cdna = $protein2->alignment_string('cds');
         print STDERR "cnda2 $other_cdna\n" if $self->debug;
         $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
         print STDERR "cnda $cdna\n" if $self->debug;
       }
-        # We then directly override the cached cdna_alignment_string
-        # hash, which will be used next time is called for
-      $protein1->{'cdna_alignment_string'} = $cdna;
+        # We then directly override the cached alignment_string_cds
+        # entry in the hash, which will be used next time it is called
+      $protein1->{'alignment_string_cds'} = $cdna;
     }
 
     # Removing duplicate sequences of split genes

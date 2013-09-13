@@ -363,7 +363,7 @@ sub get_SimpleAlign {
         my $seqstr;
         my $alphabet;
         if ($cdna) {
-            $seqstr = $member->cdna_alignment_string();
+            $seqstr = $member->alignment_string('cds');
             $seqstr =~ s/\s+//g;
             $alphabet = 'dna';
         } elsif ($self->seq_type) {
@@ -545,7 +545,7 @@ sub get_4D_SimpleAlign {
     my %member_seqstr;
     foreach my $member (@{$self->get_all_Members}) {
         next if $member->source_name ne 'ENSEMBLPEP';
-        my $seqstr = $member->cdna_alignment_string();
+        my $seqstr = $member->alignment_string('cds');
         next if(!$seqstr);
         #print STDERR $seqstr,"\n";
         my @tmp_tab = split /\s+/, $seqstr;

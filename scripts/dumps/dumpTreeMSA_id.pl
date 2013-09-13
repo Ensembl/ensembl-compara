@@ -161,7 +161,7 @@ sub dumpTreeMultipleAlignment {
     if ($aa) {
       $alignment_string = $leaf->alignment_string;
     } else {
-      $alignment_string = $leaf->cdna_alignment_string;
+      $alignment_string = $leaf->alignment_string('cds');
     }
     for (my $i = 0; $i<length($alignment_string); $i++) {
       $aligned_seqs[$i] .= substr($alignment_string, $i, 1);

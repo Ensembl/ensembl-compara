@@ -54,6 +54,8 @@ package Bio::EnsEMBL::Compara::SeqMember;
 
 use strict;
 
+use feature qw(switch);
+
 use Bio::Seq;
 
 use Bio::EnsEMBL::Utils::Argument;
@@ -415,6 +417,7 @@ sub other_sequence {
 
     my $key = "_sequence_$seq_type";
 
+    # Called as a setter
     if (defined $sequence) {
         # Build the sequence and store it, if $sequence is ''
         $sequence = $self->other_sequence($seq_type) unless $sequence;
@@ -422,17 +425,15 @@ sub other_sequence {
         $self->{$key} = $sequence;
     }
 
+    # First option, we look in the compara db
     if (not defined $self->{$key}) {
         $self->{$key} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, $seq_type);
     }
 
+    # Second option, we build the sequence from the core db
     if (not defined $self->{$key}) {
         if ($seq_type eq 'cds') {
-            if ($self->source_name =~ m/^Uniprot/) {
-                warn "Uniprot entries don't have CDS sequences\n";
-                return '';
-            }
-            $self->{$key} = $self->get_Transcript->translateable_seq;
+            $self->_prepare_cds_sequence;
         } elsif ($seq_type =~ /^exon_/) {
             $self->_prepare_exon_sequences;
         }
@@ -441,7 +442,29 @@ sub other_sequence {
     return $self->{$key};
 }
 
+# This method gets the CDS of a peptide
+sub _prepare_cds_sequence {
+    my $self = shift;
 
+    given ($self->source_name) {
+        when ('ENSEMBLPEP') {
+            $self->{_sequence_cds} = $self->get_Transcript->translateable_seq;
+        }
+        when ('ENSEMBLTRANS') {
+            die "ncRNA transcripts don't have CDS sequences. Their nucleotide sequence is directly accessible with SeqMember::sequence().\n";
+        }
+        when (/^Uniprot/) {
+            die "Uniprot entries don't have CDS sequences. They are only defined at the protein level.\n";
+        }
+        default {
+            warn "SeqMember doesn't know how to get a CDS sequence for ", $self->source_name;
+            $self->{_sequence_cds} = '';
+        }
+    }
+}
+
+# This method gets the exons of the peptide, and builds the exon_cased and exon_bounded sequences
+# Given that it is quite slow, all the exon-based sequences should be computed here
 sub _prepare_exon_sequences {
     my $self = shift;
 
