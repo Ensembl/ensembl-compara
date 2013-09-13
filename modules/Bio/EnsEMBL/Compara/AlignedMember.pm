@@ -331,15 +331,16 @@ sub alignment_string {
         $key .= "_$seq_type";
 
     } else {
-        if ((not defined $self->{$key}) and (defined $self->{'alignment_string_exon_cased'})) {
+        if ((not defined $self->{$key}) and (defined $self->{$key.'_exon_cased'})) {
             # non exon-cased sequence can be easily obtained from the exon-cased one.
-            $self->{'alignment_string'} = uc($self->{'alignment_string_exon_cased'});
+            $self->{$key} = uc($self->{$key.'_exon_cased'});
         }
     }
 
     if (not defined $self->{$key}) {
         my $sequence = $self->other_sequence($seq_type);
         $sequence =~ s/b|o|j/\ /g if $seq_type eq 'exon_bounded';
+        #my %expansion_factors = ('cds' => 3, 'cdna' => 1);
         $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
     }
 
@@ -383,16 +384,7 @@ sub cdna_alignment_string {
 
   unless (defined $self->{'cdna_alignment_string'}) {
 
-    my $cdna;
-    eval { $cdna = $self->other_sequence('cds');};
-    if ($@) {
-      throw("can't connect to CORE to get transcript and cdna for "
-            . "genome_db_id:" . $self->genome_db_id )
-        unless($self->get_Transcript);
-      $cdna = $self->get_Transcript->translateable_seq;
-    }
-
-    $self->{'cdna_alignment_string'} = $self->_compose_sequence_with_cigar($cdna, 3);
+    $self->{'cdna_alignment_string'} = $self->_compose_sequence_with_cigar($self->other_sequence('cds'), 3);
   }
   
   return $self->{'cdna_alignment_string'};
