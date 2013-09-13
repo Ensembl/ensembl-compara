@@ -347,9 +347,9 @@ sub sequence_exon_cased {
 
 =head2 sequence_exon_bounded
 
-  Args       : (opt) string
+  Args       : none
   Example    : my $sequence_exon_bounded = $member->sequence_exon_bounded;
-  Description: Get/Set the sequence string of this member with exon boundaries
+  Description: Get the sequence string of this member with exon boundaries
                 denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
   Returntype : string
   Exceptions : none
@@ -360,20 +360,15 @@ sub sequence_exon_cased {
 sub sequence_exon_bounded {
   my $self = shift;
 
-  if(@_) {
-    $self->{'_sequence_exon_bounded'} = shift;
-    return $self->{'_sequence_exon_bounded'};
+  if(!defined($self->{'_sequence_other_exon_bounded'})) {
+    $self->{'_sequence_other_exon_bounded'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded');
   }
 
-  if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded');
-  }
-
-  if(!defined($self->{'_sequence_exon_bounded'})) {
+  if(!defined($self->{'_sequence_other_exon_bounded'})) {
     $self->_prepare_exon_sequences;
   }
 
-  return $self->{'_sequence_exon_bounded'};
+  return $self->{'_sequence_other_exon_bounded'};
 }
 
 
@@ -385,7 +380,7 @@ sub _prepare_exon_sequences {
   my @exons = @{$trans->get_all_translateable_Exons};
   if ((scalar @exons) == 1) {
     $self->{_sequence_exon_cased} = $sequence;
-    $self->{_sequence_exon_bounded} = $sequence;
+    $self->{_sequence_other_exon_bounded} = $sequence;
     return;
   }
 
@@ -427,7 +422,7 @@ sub _prepare_exon_sequences {
   }
   unshift(@exon_sequences, $sequence); # First exon AS IS (last piece of sequence left)
   $seqsplice = $sequence . $seqsplice; # First exon AS IS
-  $self->{_sequence_exon_bounded} = $seqsplice;
+  $self->{_sequence_other_exon_bounded} = $seqsplice;
   }
 
   my $splice = 1;
