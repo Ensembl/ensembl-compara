@@ -46,6 +46,8 @@ package Bio::EnsEMBL::Compara::AlignedMember;
 use strict;
 use warnings;
 
+use feature qw(switch);
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
@@ -294,13 +296,16 @@ sub set {
 
 =head2 alignment_string
 
-  Arg [1]     : (optional) bool $exon_cased
+  Arg [1]     : (optional) string $seq_type
+                  Identifier of the sequence that should be used instead of
+                  the default protein / ncRNA sequence
   Example     : my $alignment_string = $object->alignment_string();
-  Example     : my $alignment_string = $object->alignment_string(1);
+  Example     : my $alignment_string_cased = $object->alignment_string('exon_cased');
   Description : Returns the aligned sequence for this object. For sequences
-                split in exons, the $exon_cased flag permits to request
+                split in exons, the 'exon_cased' seq_type permits to request
                 that each exon is represented in alternative upper and lower
-                case.
+                case, whilst the 'exon_bounded' seq_type adds whitespaces
+                between the exons.
                 For local alignments, when the alignment does not cover the
                 whole protein, only the part of the sequence in the alignemnt
                 is returned. Currently only global alignments are provided.
@@ -314,77 +319,58 @@ sub set {
 =cut
 
 sub alignment_string {
-  my $self = shift;
-  my $exon_cased = shift;
+    my $self = shift;
+    my $seq_type = shift;
 
-  # Use different keys for exon-cased and non exon-cased sequences
-  my $key = 'alignment_string';
-  if ($exon_cased) {
-    $key = 'alignment_string_cased';
-  } elsif (defined $self->{'alignment_string_cased'} and !defined($self->{'alignment_string'})) {
-    # non exon-cased sequence can be easily obtained from the exon-cased one.
-    $self->{'alignment_string'} = uc($self->{'alignment_string_cased'})
-  }
-
-  unless (defined $self->{$key}) {
-    my $sequence;
-    if ($exon_cased) {
-      $sequence = $self->sequence_exon_cased;
-    } else {
-      $sequence = $self->sequence;
-    }
-    $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
-  }
-
-  return $self->{$key};
-}
-
-sub alignment_string_generic {
-  my $self = shift;
-  my $seq_type = shift;
-
-  my $key = 'alignment_string';
-  if ($seq_type) {
-    $key .= "_$seq_type";
-  }
-
-  unless (defined $self->{$key}) {
-    my $sequence;
+    my $key = 'alignment_string';
     if ($seq_type) {
-      $sequence = $self->get_other_sequence($seq_type);
-    } else {
-      $sequence = $self->sequence;
-    }
-    $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
-  }
+        if ("$seq_type" eq '1') {
+            $seq_type = 'exon_cased';
+            deprecate('AlignedMember::alignment_string(1) is deprecated. Please use AlignedMember::alignment_string("exon_cased") instead');
+        }
+        $key .= "_$seq_type";
 
-  return $self->{$key};
+    } else {
+        if ((not defined $self->{$key}) and (defined $self->{'alignment_string_exon_cased'})) {
+            # non exon-cased sequence can be easily obtained from the exon-cased one.
+            $self->{'alignment_string'} = uc($self->{'alignment_string_exon_cased'});
+        }
+    }
+
+    if (not defined $self->{$key}) {
+        my $sequence;
+        given ($seq_type) {
+            when (undef) {
+                $sequence = $self->sequence;
+            }
+            when ('exon_cased') {
+                $sequence = $self->sequence_exon_cased;
+            }
+            when ('exon_bounded') {
+                $sequence = $self->sequence_exon_bounded;
+                $sequence =~ s/b|o|j/\ /g;
+            }
+            default {
+                $sequence = $self->get_other_sequence($seq_type);
+            }
+        }
+        $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
+    }
+
+    return $self->{$key};
 }
+
 
 
 =head2 alignment_string_bounded
 
-  Arg [1]     : none
-  Example     : my $alignment_string_bounded = $object->alignment_string_bounded();
-  Description : Returns the aligned sequence for this object with padding characters
-                representing the introns.
-  Returntype  : string
-  Exceptions  : see _compose_sequence_with_cigar
-  Caller      : general
-  Status      : Stable
+  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e76
 
 =cut
 
-sub alignment_string_bounded {
-  my $self = shift;
-
-  unless (defined $self->{'alignment_string_bounded'}) {
-    my $sequence_exon_bounded = $self->sequence_exon_bounded;
-    $sequence_exon_bounded =~ s/b|o|j/\ /g;
-    $self->{'alignment_string_bounded'} = $self->_compose_sequence_with_cigar($sequence_exon_bounded);
-  }
-
-  return $self->{'alignment_string_bounded'};
+sub alignment_string_bounded {  ## DEPRECATED
+    my $self = shift;
+    return $self->alignment_string('exon_bounded');
 }
 
 

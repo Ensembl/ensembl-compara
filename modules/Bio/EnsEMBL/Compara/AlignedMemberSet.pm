@@ -367,10 +367,10 @@ sub get_SimpleAlign {
             $seqstr =~ s/\s+//g;
             $alphabet = 'dna';
         } elsif ($self->seq_type) {
-            $seqstr = $member->alignment_string_generic($self->seq_type);
+            $seqstr = $member->alignment_string($self->seq_type);
             $alphabet = 'protein';
         } else {
-            $seqstr = $member->alignment_string($exon_cased);
+            $seqstr = $member->alignment_string($exon_cased ? 'exon_cased' : undef);
             $alphabet = $member->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
         }
         next if(!$seqstr);
