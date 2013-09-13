@@ -338,22 +338,8 @@ sub alignment_string {
     }
 
     if (not defined $self->{$key}) {
-        my $sequence;
-        given ($seq_type) {
-            when (undef) {
-                $sequence = $self->sequence;
-            }
-            when ('exon_cased') {
-                $sequence = $self->sequence_exon_cased;
-            }
-            when ('exon_bounded') {
-                $sequence = $self->sequence_exon_bounded;
-                $sequence =~ s/b|o|j/\ /g;
-            }
-            default {
-                $sequence = $self->get_other_sequence($seq_type);
-            }
-        }
+        my $sequence = $self->other_sequence($seq_type);
+        $sequence =~ s/b|o|j/\ /g if $seq_type eq 'exon_bounded';
         $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
     }
 
@@ -398,7 +384,7 @@ sub cdna_alignment_string {
   unless (defined $self->{'cdna_alignment_string'}) {
 
     my $cdna;
-    eval { $cdna = $self->sequence_cds;};
+    eval { $cdna = $self->other_sequence('cds');};
     if ($@) {
       throw("can't connect to CORE to get transcript and cdna for "
             . "genome_db_id:" . $self->genome_db_id )
@@ -417,7 +403,7 @@ sub cdna_alignment_string {
 
   Arg [1]    : String $sequence
   Arg [2]    : Integer $expansion_factor (default: 1)
-  Example    : my $alignment_string = $aligned_member->_compose_sequence_with_cigar($aligned_member->sequence_cds, 3)
+  Example    : my $alignment_string = $aligned_member->_compose_sequence_with_cigar($aligned_member->other_sequence('cds'), 3)
   Description: Converts the given sequence into an alignment string
                by composing it with the cigar_line. $expansion_factor
                can be set to accomodate CDS sequences

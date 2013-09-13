@@ -122,7 +122,6 @@ sub write_output {
             $seq_member_adaptor->_set_member_as_canonical($pep_member);
 
             if (exists $cds_seq->{$sequence->id}) {
-                $pep_member->sequence_cds( $cds_seq->{$sequence->id}->seq );
                 $sequence_adaptor->store_other_sequence($pep_member, $cds_seq->{$sequence->id}->seq, 'cds');
             } elsif ($self->param('need_cds_seq')) {
                 die $sequence->id, " does not have cds sequence\n";

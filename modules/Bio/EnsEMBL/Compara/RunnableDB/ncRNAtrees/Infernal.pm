@@ -497,7 +497,7 @@ sub store_fasta_alignment {
         ## Check that the cigar length (Ms) matches the sequence length
 #         my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
 #         my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
-#         my $member_sequence = $member->get_other_sequence('filtered');
+#         my $member_sequence = $member->other_sequence('filtered');
 #         $member_sequence =~ s/\*//g;
 #         print STDERR "MEMBER_SEQUENCE: $member_sequence\n";
 #         print STDERR "+++ $seq_cigar_length +++ \n";#, length($member_sequence) , "\n";

@@ -71,7 +71,7 @@ use Data::Dumper;
   Arg [1]    : String $sequence
   Arg [2]    : String $cigar_line
   Arg [3]    : Integer $expansion_factor (default: 1)
-  Example    : my $alignment_string = compose_sequence_with_cigar($aligned_member->sequence_cds, $aligned_member->cigar_line, 3)
+  Example    : my $alignment_string = compose_sequence_with_cigar($aligned_member->other_sequence('cds'), $aligned_member->cigar_line, 3)
   Description: Converts the given sequence into an alignment string
                by composing it with the cigar_line. $expansion_factor
                can be set to accomodate CDS sequences

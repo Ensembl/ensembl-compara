@@ -313,8 +313,9 @@ sub store_gene_and_all_transcripts {
     }
     $seq_member_adaptor->store($pep_member);
     if ($self->param('store_related_pep_sequences')) {
-        $sequence_adaptor->store_other_sequence($pep_member, $pep_member->sequence_cds, 'cds');
-        $sequence_adaptor->store_other_sequence($pep_member, $pep_member->sequence_exon_bounded, 'exon_bounded');
+        # '' means: get / compute the sequence of that type, and store it
+        $pep_member->other_sequence('cds', '');
+        $pep_member->other_sequence('exon_bounded', '');
     }
 
     print(" : stored\n") if($self->param('verbose'));
