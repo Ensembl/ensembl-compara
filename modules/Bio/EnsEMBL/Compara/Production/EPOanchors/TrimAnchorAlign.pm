@@ -44,43 +44,39 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign;
 
 use strict;
 use Data::Dumper;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Analysis::Runnable::Pecan;
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
   my ($self) = @_;
 
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  $self->get_params($self->analysis->parameters);
-  $self->get_params($self->input_id);
+  $self->compara_dba()->dbc->disconnect_when_inactive(0);
 
-  if (!$self->anchor_id) {
+  if (!$self->param('anchor_id')) {
     return 0;
   }
-   $self->{'fasta_files'} = [];
-  my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
+   $self->param('fasta_files',[]);
+   $self->param('anchor_aligns',[]);
+  my $anchor_align_adaptor = $self->compara_dba()->get_AnchorAlignAdaptor();
   ## This method returns a hash at the moment, not the objects
-#   print "Fetching AnchorAligns for Anchor ", $self->{'anchor_id'}, " and MLSS ", $self->{'input_method_link_species_set_id'}, "\n";
+#   print "Fetching AnchorAligns for Anchor ", $self->param('anchor_id'), " and MLSS ", $self->{'input_method_link_species_set_id'}, "\n";
   my $anchor_align_hash = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id(
-      $self->{'anchor_id'}, $self->{'input_method_link_species_set_id'});
-  die "Cannot find any anchor_align with anchor_id = ". $self->{'anchor_id'}.
-    " and method_link_species_set_id = ". $self->{'input_method_link_species_set_id'}
+      $self->param('anchor_id'), $self->param('input_method_link_species_set_id') );
+  die "Cannot find any anchor_align with anchor_id = ". $self->param('anchor_id').
+    " and method_link_species_set_id = ". $self->param('input_method_link_species_set_id')
       if (!$anchor_align_hash);
   foreach my $anchor_align_id (keys %$anchor_align_hash) {
      print "Fetching AnchorAlign $anchor_align_id\n";
     my $anchor_align = $anchor_align_adaptor->fetch_by_dbID($anchor_align_id);
-    push(@{$self->{'anchor_aligns'}}, $anchor_align);
+    push(@{$self->param('anchor_aligns')}, $anchor_align);
   }
   $self->_dump_fasta();
-  exit(1) if (!$self->{'fasta_files'} or !@{$self->{'fasta_files'}});
+  exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
 
 
   return 1;
@@ -88,19 +84,21 @@ sub fetch_input {
 
 sub run {
   my $self = shift;
-  exit(1) if (!$self->{'fasta_files'} or !@{$self->{'fasta_files'}});
-  exit(1) if (!$self->{'tree_string'});
+  exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
+  exit(1) if (!$self->param('tree_string'));
 
   my $run_str = "/software/ensembl/compara/OrtheusC/bin/OrtheusC";
-  $run_str .= " -a " . join(" ", @{$self->{'fasta_files'}});
-  $run_str .= " -b '" . $self->{'tree_string'} . "'";
+  $run_str .= " -a " . join(" ", @{$self->param('fasta_files')});
+  $run_str .= " -b '" . $self->param('tree_string') . "'";
   $run_str .= " -h"; # output leaves only
 
-  $self->{'msa_string'} = qx"$run_str";
+print $run_str, "\n";
 
-  my $trim_position = $self->get_best_trimming_position($self->{'msa_string'});
-  $self->{'trimmed_anchor_aligns'} = $self->get_trimmed_anchor_aligns($trim_position);
+  my $msa_string = qx"$run_str";
+  $self->param('msa_string', $msa_string);
 
+  my $trim_position = $self->get_best_trimming_position($self->param('msa_string'));
+  $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
   return 1;
 }
 
@@ -108,63 +106,14 @@ sub run {
 sub write_output {
   my ($self) = @_;
 
-  my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
-  foreach my $this_trimmed_anchor_align (@{$self->{'trimmed_anchor_aligns'}}) {
+  my $anchor_align_adaptor = $self->compara_dba()->get_AnchorAlignAdaptor();
+  foreach my $this_trimmed_anchor_align (@{$self->param('trimmed_anchor_aligns')}) {
     $anchor_align_adaptor->store($this_trimmed_anchor_align);
   }
 
   return 1;
 }
 
-sub anchor_id {
-  my $self = shift;
-  if (@_) {
-    $self->{anchor_id} = shift;
-  }
-  return $self->{anchor_id};
-}
-
-sub input_method_link_species_set_id {
-  my $self = shift;
-  if (@_) {
-    $self->{input_method_link_species_set_id} = shift;
-  }
-  return $self->{input_method_link_species_set_id};
-}
-
-sub output_method_link_species_set_id {
-  my $self = shift;
-  if (@_) {
-    $self->{output_method_link_species_set_id} = shift;
-  }
-  return $self->{output_method_link_species_set_id};
-}
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print STDERR "parsing parameter string : ",$param_string,"\n";
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if(defined($params->{'anchor_id'})) {
-    $self->anchor_id($params->{'anchor_id'});
-  }
-  if(defined($params->{'input_method_link_species_set_id'})) {
-    $self->input_method_link_species_set_id($params->{'input_method_link_species_set_id'});
-  }
-  if(defined($params->{'output_method_link_species_set_id'})) {
-    $self->output_method_link_species_set_id($params->{'output_method_link_species_set_id'});
-  }
-  if(defined($params->{'method_link_species_set_id'})) {
-    $self->method_link_species_set_id($params->{'method_link_species_set_id'});
-  }
-
-  return 1;
-}
 
 =head2 _dump_fasta
 
@@ -181,13 +130,12 @@ sub get_params {
 
 sub _dump_fasta {
   my $self = shift;
-
-  my $all_anchor_aligns = $self->{'anchor_aligns'};
-  $self->{tree_string} = "(";
+  my $all_anchor_aligns = $self->param('anchor_aligns');
+  my $tree_str = "(";
 
   foreach my $anchor_align (@$all_anchor_aligns) {
     my $anchor_align_id = $anchor_align->dbID;
-    $self->{tree_string} .= "aa$anchor_align_id:0.1,";
+    $tree_str .= "aa$anchor_align_id:0.1,";
     my $file = $self->worker_temp_directory . "/seq" . $anchor_align_id . ".fa";
 
     open F, ">$file" || throw("Couldn't open $file");
@@ -206,9 +154,10 @@ sub _dump_fasta {
 
     close F;
 
-    push @{$self->{'fasta_files'}}, $file;
+    push @{$self->param('fasta_files')}, $file;
   }
-  substr($self->{tree_string}, -1, 1, ");");
+  substr($tree_str, -1, 1, ");");
+  $self->param('tree_string', $tree_str);
 
   return 1;
 }
@@ -236,7 +185,7 @@ sub get_best_trimming_position {
     }
   }
   $seqs->{$anchor_align_id} = $this_seq;
-  $self->{'aligned_sequences'} = $seqs;
+  $self->param('aligned_sequences', $seqs);
 
   my $ideal_score = 4 * $num_of_leaves;
 
@@ -327,12 +276,12 @@ sub get_trimmed_anchor_aligns {
   my ($self, $best_position) = @_;
   my $trimmed_anchor_aligns;
 
-  my $aligned_sequences = $self->{'aligned_sequences'};
+  my $aligned_sequences = $self->param('aligned_sequences');
 # #   while (my ($align_anchor_id, $aligned_sequence) = each %$aligned_sequences) {
 # #     print substr($aligned_sequence, 0, $best_position), " ** ", substr($aligned_sequence, $best_position),
 # #         " :: $align_anchor_id\n";
 # #   }
-  my $all_anchor_aligns = $self->{'anchor_aligns'};
+  my $all_anchor_aligns = $self->param('anchor_aligns');
   foreach my $this_anchor_align (@$all_anchor_aligns) {
     my $this_anchor_align_id = $this_anchor_align->dbID;
     my $this_aligned_sequence = $aligned_sequences->{$this_anchor_align_id};
@@ -378,7 +327,7 @@ sub get_trimmed_anchor_aligns {
     delete($new_anchor_align->{'_dbID'});
     $new_anchor_align->dnafrag_start($start);
     $new_anchor_align->dnafrag_end($end);
-    $new_anchor_align->method_link_species_set_id($self->output_method_link_species_set_id);
+    $new_anchor_align->method_link_species_set_id($self->param('output_method_link_species_set_id'));
     push(@$trimmed_anchor_aligns, $new_anchor_align);
   }
 
