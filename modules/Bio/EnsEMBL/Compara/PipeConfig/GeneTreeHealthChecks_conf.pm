@@ -693,5 +693,22 @@ sub analysis_tree_globally {
     ];
 }
 
+sub analysis_homology_dnds {
+    my ($self) = @_;
+
+    return [
+
+        {   -logic_name         => 'hc_dnds_are_all_there',
+            -module             => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters         => {
+                'inputquery'        => 'SELECT * FROM homology WHERE method_link_species_set_id = #mlss_id# AND n IS NOT NULL AND s IS NOT NULL',
+                'expected_size'     => '> 0',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
+        },
+    ];
+}
+
 1;
 
