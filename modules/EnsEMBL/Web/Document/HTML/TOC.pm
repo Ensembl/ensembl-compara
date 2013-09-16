@@ -8,6 +8,13 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
+# So it can be overridden in plugins
+sub heading_html {
+  my ($self,$dir,$title) = @_;
+
+  return qq{<div class="plain-box"><h2 class="box-header"><a href="/info/$dir/">$title</a></h2>\n};
+}
+
 sub render {
   my $self              = shift;
   my $tree              = $self->hub->species_defs->STATIC_INFO;
@@ -34,9 +41,9 @@ sub render {
     
     my $title        = $section->{'_title'} || ucfirst $dir;
     my @second_level = @{$self->create_links($section, ' class="bold"')};
- 
-    $html{$column} .= qq{<div class="plain-box"><h2 class="box-header"><a href="/info/$dir/">$title</a></h2>\n};
 
+    $html{$column} .= $self->heading_html($dir,$title);
+ 
     if (scalar @second_level) {
       $html{$column} .= '<ul>';
   
