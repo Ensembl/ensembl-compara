@@ -86,7 +86,7 @@ following examples for brevity.
 <p>
 Regulatory Features are groups of overlapping features representing regions of open chromatin 
 (eg. regions that are accessible to Dnase1) and regions bound by Transcription Factors (TF). 
-The Ensembl <a href="http://www.ensembl.org/info/docs/funcgen/index.html">'RegulatoryBuild'</a> 
+The Ensembl <a href="http://www.ensembl.org/info/genome/funcgen/index.html">'RegulatoryBuild'</a> 
 combines annotations across all available cell lines data to generate global 'MultiCell' 
 Regulatory Features. 
 </p>
@@ -243,7 +243,7 @@ foreach my $annotated_feature (@annotated_features) {
 Motif Features represent short genomic regions where the Transcription Factor (TF) protein is 
 thought to be directly interacting with DNA (TF binding sites). These are defined by combining 
 binding matrices and annotated features. More information on how they are defined can be found
-on the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a> page.
+on the <a href="/info/genome/funcgen/index.html">RegulatoryBuild</a> page.
 </p>
 
 <p>
@@ -420,7 +420,7 @@ my $ftype_adaptor = $registry->get_adaptor('Human', 'funcgen', 'featuretype');
 All 'MultiCell' regulatory features are of the generic "Regulatory Feature" Feature Type. Each individual 
 cell-specific regulatory feature can be associated to a Feature Type that describes the cell-specific 
 annotation for a Regulatory Feature (promoter-associated, within a gene, far away from genes (enhancer 
-or insulator)). The annotation process is described in the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a> document.  
+or insulator)). The annotation process is described in the <a href="/info/genome/funcgen/index.html">RegulatoryBuild</a> document.  
 </p>
 
 <h3 id="extft">External Feature Types</h3>
@@ -544,7 +544,7 @@ foreach my $probeset (@probesets){
 </pre>
 
 <p>
-Documentation on the current array mapping strategy can be found <a href="/info/docs/microarray_probe_set_mapping.html">here</a>.  
+Documentation on the current array mapping strategy can be found <a href="/info/genome/microarray_probe_set_mapping.html">here</a>.  
 More examples for accessing microarray data can be found in the funcgen API package:
 ensembl-functgenomics/scripts/examples/microarray_annotation_example.pl
 </p>
