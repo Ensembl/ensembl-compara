@@ -436,6 +436,23 @@ sub render_HTML {
   return $content;
 }
 
+sub main_class {
+  my ($self) = @_;
+
+  my $here = $ENV{'REQUEST_URI'};
+  if ( ($self->isa('EnsEMBL::Web::Document::Page::Fluid') && $here !~ /\/Search\//) 
+        || ($self->isa('EnsEMBL::Web::Document::Page::Dynamic') && $here =~ /\/Info\//)
+        || ($self->isa('EnsEMBL::Web::Document::Page::Static') 
+              && (($here =~ /Doxygen\/(\w|-)+/ && $here !~ /Doxygen\/index.html/) || $here !~ /^\/info/))
+    ) {
+    return 'widemain';
+  }
+  else {
+    return 'main';
+  }
+
+}
+
 sub html_template {
   ### Main page printing function
   
@@ -462,18 +479,7 @@ sub html_template {
   my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
   my $main_holder         = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
 
-  my $main_class;         
-  my $here = $ENV{'REQUEST_URI'};
-  if ( ($self->isa('EnsEMBL::Web::Document::Page::Fluid') && $here !~ /\/Search\//) 
-        || ($self->isa('EnsEMBL::Web::Document::Page::Dynamic') && $here =~ /\/Info\//)
-        || ($self->isa('EnsEMBL::Web::Document::Page::Static') 
-              && (($here =~ /Doxygen\/(\w|-)+/ && $here !~ /Doxygen\/index.html/) || $here !~ /^\/info/))
-    ) {
-    $main_class = 'widemain';
-  }
-  else {
-    $main_class = 'main';
-  }
+  my $main_class = $self->main_class();        
 
   my $nav_class           = $self->isa('EnsEMBL::Web::Document::Page::Configurator') ? 'cp_nav' : 'nav';
   my $nav;
