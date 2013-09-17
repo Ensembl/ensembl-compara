@@ -17,11 +17,13 @@ sub scale {
   my $scale = 1;
   my $skip = 1;
 
+  # Split into array of digits
   my @from_d = split(//,"".$from);
   my @to_d = split(//,"".$to);
   push @from_d,"0" for(@from_d..@to_d-1);
   push @to_d,"0" for(@to_d..@from_d-1);
 
+  # How many divisions would there be ($d) if we only kept $i digits?
   my $d; 
   my $unit = -1; 
   foreach my $i (0..@from_d-1) {
@@ -35,7 +37,9 @@ sub scale {
       }   
     }   
   }
-  return [("1".("0" x @from_d)),1,1] if $unit == -1; 
+  return [("1".("0" x @from_d)),1,1] if $unit == -1;
+  # Improve things by trying simple multiples of 1<n zeroes>.
+  # (eg if 100 will fit will 200, 400, 500).
   if($d*5 <= $max) { $unit /=5; $div = 2; }
   elsif($d*4 <= $max) { $unit /=4; $skip = 2; $div = 1; }
   elsif($d*2 <= $max) { $unit /=2; $skip = 2; }
@@ -43,19 +47,22 @@ sub scale {
   return [$unit,$div,$unit*$skip];
 }
 
-sub fmt_number {
+sub format_a_number {
   my ($self,$num,$step) = @_;
 
-  $step =~ /0+$/;
-  my $strip = length $&;
+  # Format numbers like it's 1990, to avoid weird floaty rounding issues.
+  $step =~ /(0+)$/;
+  my $strip = length $1;
   my @lhs = split(//,"".$num);
   if($strip>=3) {
+    # format "w.xyz [kM]b"
     my $mul = int((@lhs-1)/3);
     my @rhs = splice(@lhs,@lhs-$mul*3);
     pop @rhs for(1..$strip);
     unshift @rhs,"." if @rhs;
     return join("",@lhs,@rhs,['','k','M','G']->[$mul],"b");
   } else {
+    # format: "a,bcd,efg"
     return $self->commify($num);
   }
 }
@@ -136,7 +143,7 @@ sub render {
       }));
       
       my $label = $minor_unit < 1000 ? $self->commify($box_start * $contig_strand): $self->bp_to_nearest_unit($box_start * $contig_strand, 2);
-      $label = $self->fmt_number($box_start*$contig_strand,$labmaj);
+      $label = $self->format_a_number($box_start*$contig_strand,$labmaj);
       my @res   = $self->get_text_width(($box_start - $last_text_x) * $pix_per_bp * 1.5, $label, '', font => $fontname, ptsize => $fontsize);
 
       if ($res[0] && !(($box_start*$contig_strand) % $labmaj)) {
