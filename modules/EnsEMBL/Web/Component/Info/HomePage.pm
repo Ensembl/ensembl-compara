@@ -74,7 +74,7 @@ sub whats_new_text {
     $html .= '<ul>';
     $html .= qq{<li><a href="$news_url#change_$_->{'id'}" class="nodeco">$_->{'title'}</a></li>} for @$changes;
     $html .= '</ul>';
-    $html .= qq{<div style="text-align:right;margin-top:-2em;padding-bottom:8px"><a href="$news_url" class="nodeco">More news</a>...</div>};
+    $html .= qq{<div style="text-align:right;margin-top:-1em;padding-bottom:8px"><a href="$news_url" class="nodeco">More news</a>...</div>};
   }
 
   return $html;
