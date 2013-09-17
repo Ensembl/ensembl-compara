@@ -306,10 +306,10 @@ sub new_from_transcript {
 
 sub sequence {
   my $self = shift;
-
-  if(@_) {
+  my $sequence = shift;
+  if(defined $sequence) {
     $self->{'_seq_length'} = undef;
-    $self->{'_sequence'} = shift;
+    $self->{'_sequence'} = $sequence;
     $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
     return $self->{'_sequence'};
   }
