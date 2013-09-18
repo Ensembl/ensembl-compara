@@ -57,8 +57,8 @@ sub type {
 
 sub profile {
     my $self = shift;
-    $self->{'_hc_profile'} = shift if (@_);
-    return $self->{'_hc_profile'};
+    $self->{'_profile'} = shift if (@_);
+    return $self->{'_profile'};
 }
 
 sub consensus {

@@ -223,18 +223,15 @@ sub store_hmmprofile {
 #  my $model_id = sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type'));
   my $model_id = $self->param('gene_tree_id');
   my $type = "tree_hmm_" . $self->param('hmm_type');
-  my $hc_profile = $hmm_text;
 
   my $hmmProfile = Bio::EnsEMBL::Compara::HMMProfile->new();
   $hmmProfile->model_id($model_id);
   $hmmProfile->name($model_id);
   $hmmProfile->type($type);
-  $hmmProfile->profile($hc_profile);
+  $hmmProfile->profile($hmm_text);
 
   $self->compara_dba->get_HMMProfileAdaptor()->store($hmmProfile);
 
-#  my $sth = $self->compara_dba->dbc->prepare('REPLACE INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
-#  $sth->execute(sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type')), 'hmmer', $hmm_text);
 }
 
 1;
