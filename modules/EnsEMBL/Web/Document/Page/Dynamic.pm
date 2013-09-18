@@ -25,7 +25,8 @@ sub initialize_HTML {
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
     tabs             EnsEMBL::Web::Document::Element::Tabs
-    navigation       EnsEMBL::Web::Document::Element::PageNav
+    navigation       EnsEMBL::Web::Document::Element::Navigation
+    tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
     summary          EnsEMBL::Web::Document::Element::Summary
     content          EnsEMBL::Web::Document::Element::Content
     modal            EnsEMBL::Web::Document::Element::Modal
@@ -74,7 +75,8 @@ sub initialize_error {
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
     tabs             EnsEMBL::Web::Document::Element::Tabs
-    navigation       EnsEMBL::Web::Document::Element::PageNav
+    navigation       EnsEMBL::Web::Document::Element::Navigation
+    tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
     content          EnsEMBL::Web::Document::Element::Content
     modal            EnsEMBL::Web::Document::Element::Modal
     acknowledgements EnsEMBL::Web::Document::Element::Acknowledgements
