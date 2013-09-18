@@ -110,7 +110,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       success: function (html) {
         if (html) {
           Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class="[^<]*panel_type[^<]*"[^<]*>/) || [])[0]).val() || 'Content', html, el, params);
-          Ensembl.EventManager.trigger('ajaxLoaded');
           
           if (newContent === true) {
             // Jump to the newly added content. Set the hash to a dummy value first so the browser is forced to jump again
@@ -120,6 +119,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         } else {
           el.html('');
         }
+        
+        Ensembl.EventManager.trigger('ajaxLoaded');
       },
       error: function (e) {
         if (e.status !== 0) { // e.status === 0 when navigating to a new page while request is still loading
