@@ -6,193 +6,173 @@ package EnsEMBL::Web::Document::Element::StaticNav;
 
 use strict;
 
-use EnsEMBL::Web::Controller::SSI;
 use HTML::TreeBuilder;
-use HTML::Entities qw(encode_entities);
-use URI::Escape    qw(uri_escape);
+
+use EnsEMBL::Web::Controller::SSI;
+use EnsEMBL::Web::Form;
 
 use base qw(EnsEMBL::Web::Document::Element::Navigation);
 
 sub content {
   my $self = shift;
-  my $html;
-
+  
   ## LH MENU ------------------------------------------
-  $html .= '<input type="hidden" class="panel_type" value="LocalContext" />
-<div class="header">In this section</div>';
-
-  $html .= '<ul class="local_context">';
-
+  
   my $tree        = $self->species_defs->STATIC_INFO;
   my $here        = $ENV{'SCRIPT_NAME'};
   (my $pathstring = $here) =~ s/^\///; ## Remove leading slash
   my @path        = split '/', $pathstring;
   my $img_url     = $self->img_url;
   my $config      = $self->hub->session->get_data(type => 'nav', code => 'static') || {};
-
-  ## Strip filename from current location - we just want directory
-  (my $dir = $here) =~ s/^\/(.+\/)*(.+)\.(.+)$/$1/;
-  
-  ## Recurse into tree until you find current location
-  my $this_tree = ($dir eq 'info/') ? $tree : $self->_walk_tree($tree, $dir, \@path, 1);
-
-  my @pages = map { ref $this_tree->{$_} eq 'HASH' ? $_ : () } keys %$this_tree;
-  my @page_order = sort {
+  (my $dir        = $here) =~ s/^\/(.+\/)*(.+)\.(.+)$/$1/;                                 ## Strip filename from current location - we just want directory
+  my $this_tree   = $dir eq 'info/' ? $tree : $self->walk_tree($tree, $dir, \@path, 1);    ## Recurse into tree until you find current location
+  my @pages       = map { ref $this_tree->{$_} eq 'HASH' ? $_ : () } keys %$this_tree;
+  my @page_order  = sort {
     $this_tree->{$a}{'_order'} <=> $this_tree->{$b}{'_order'} ||
     $this_tree->{$a}{'_title'} cmp $this_tree->{$b}{'_title'} ||
     $this_tree->{$a}           cmp $this_tree->{$b}
   } @pages;
-
-  my $last_page = $page_order[-1];
-  foreach my $page (grep { !/^_/ && keys %{$this_tree->{$_}} } @page_order) {
-    next unless $this_tree->{$page}{'_title'};
-
-    my $url     = $this_tree->{$page}{'_path'};
-    $url       .= $page if $page =~ /html$/;
-    (my $id     = $url) =~ s/\//_/g;
-    my $class   = $page eq $last_page ? 'last' : 'top_level';
-    my $state   = $config->{$page};
-    my $toggle  = $state ? 'closed' : 'open';
-    my @children  = grep { !/^_/ } keys %{$this_tree->{$page}};
-    my @child_order = sort {
-      $this_tree->{$page}{$a}{'_order'} <=> $this_tree->{$page}{$b}{'_order'} ||
-      $this_tree->{$page}{$a}{'_title'} cmp $this_tree->{$page}{$b}{'_title'} ||
-      $this_tree->{$page}{$a}           cmp $this_tree->{$page}{$b}
-    } @children;
-
-    my $image = "${img_url}leaf.gif";
-    my $submenu;
-    if (scalar @children) {
-      $class .= ' parent';
-      my $last  = $child_order[-1];
-      $submenu  = '<ul>';
   
+  my $last_page = $page_order[-1];
+  my ($menu, $in_page, $related, $search);
+  
+  foreach my $page (grep { !/^_/ && keys %{$this_tree->{$_}} } @page_order) {
+    my $page_tree = $this_tree->{$page};
+    
+    next unless $page_tree->{'_title'};
+    
+    my $url         = $page_tree->{'_path'};
+       $url        .= $page if $page =~ /html$/;
+    (my $id         = $url) =~ s/\//_/g;
+    my $class       = $page eq $last_page ? 'last' : 'top_level';
+    my $state       = $config->{$page};
+    my $toggle      = $state ? 'closed' : 'open';
+    my $image       = "${img_url}leaf.gif";
+    my @children    = grep !/^_/, keys %$page_tree;
+    my @child_order = sort {
+      $page_tree->{$a}{'_order'} <=> $page_tree->{$b}{'_order'} ||
+      $page_tree->{$a}{'_title'} cmp $page_tree->{$b}{'_title'} ||
+      $page_tree->{$a}           cmp $page_tree->{$b}
+    } @children;
+    
+    my $submenu;
+    
+    if (scalar @children) {
+      my $last   = $child_order[-1];
+        $class  .= ' parent';
+        $submenu = '<ul>';
+      
       foreach my $child (@child_order) {
-        my $info = $this_tree->{$page}{$child};
-        next unless ref($info) eq 'HASH';
-        next unless $info->{'_title'};
-        my $class = $child eq $last ? ' class="last"' : '';
-
-        $submenu .= sprintf('<li%s><img src="%s"><a href="%s%s">%s</a></li>', 
-                              $class, $image, $url, $child, $info->{'_title'});
+        next unless ref $page_tree->{$child} eq 'HASH' && $page_tree->{$child}{'_title'};
+        $submenu .= sprintf '<li%s><img src="%s"><a href="%s%s">%s</a></li>', $child eq $last ? ' class="last"' : '', $image, $url, $child, $page_tree->{$child}{'_title'};
       }
+      
       $submenu .= '</ul>';
       $image    = "$img_url$toggle.gif";
     }
-
-    $html .= sprintf('<li class="%s"><img src="%s" class="toggle %s" alt=""><a href="%s"><b>%s</b></a>%s</li>', 
-                        $class, $image, $id, $url, $this_tree->{$page}{'_title'}, $submenu); 
+    
+    $menu .= qq{<li class="$class"><img src="$image" class="toggle $id" alt=""><a href="$url"><b>$page_tree->{'_title'}</b></a>$submenu</li>}; 
   }
-
+  
   ## ----- IN-PAGE NAVIGATION ------------
 
   ## Read the current file and parse out h2 headings with ids
-  my $content = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $here);
-  my $doc = HTML::TreeBuilder->new_from_content(split('/\n/', $content));
-  my @headers = $doc->find('h2');
-
-  if (scalar(@headers)) {
-    ## Check the headers have id attribs we can link to
-    my @id_headers;
-    foreach (@headers) {
-      push @id_headers, $_ if $_->attr('id');
-    }
-
-    ## Create submenu from these headers
-    if (scalar(@id_headers)) {
-      $html .= '<div class="subheader">On this page</div>';
-      $html .= '<ul class="local_context" style="border-width:0">';
-      my $image = "${img_url}leaf.gif";
-
-      my $i = 0;
-      foreach (@id_headers) {
-        my $class = ($i == $#id_headers) ? 'last' : 'top_level';
-        $html .= sprintf('<li class="%s"><img src="%s"><a href="#%s">%s</a></li>', 
-                          $class, $image, $_->attr('id'), $_->as_text);
-        $i++;
-      }
-
-      $html .= '</ul>';
-    }
+  my $content    = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $here);
+  my $doc        = HTML::TreeBuilder->new_from_content($content);
+  my @headers    = $doc->find('h2');
+  my @id_headers = grep $_->attr('id'), @headers; ## Check the headers have id attribs we can link to
+  
+  ## Create submenu from these headers
+  if (scalar @id_headers) {
+    my $last = $id_headers[-1];
+    
+    $in_page .= sprintf('
+      <div class="subheader">On this page</div>
+      <ul class="local_context" style="border-width:0">
+        %s
+      </ul>',
+      join('', map sprintf('<li class="%s"><img src="%sleaf.gif"><a href="#%s">%s</a></li>', $_ eq $last ? 'last' : 'top_level', $img_url, $_->attr('id'), $_->as_text), @id_headers)
+    );
   }
-
+  
   ## OPTIONAL 'RELATED CONTENT' SECTION ---------------
-
-  my $related = $this_tree->{'_rel'};
-
-  if ($related) {
-    my $content = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $related);
+  
+  if ($this_tree->{'_rel'}) {
+    my $content = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $this_tree->{'_rel'});
+    
     if ($content) {
-      $html .= '<div class="subheader">Related content</div>';
-      $html .= '<ul class="local_context" style="border-width:0">';
-      my $image = "${img_url}leaf.gif";
-
-      my $i = 0;
-      my @links = split('\n', $content);
-      foreach my $link (@links) {
-        next unless $link =~ /^<a href/;
-        my $class = ($i == $#links) ? 'last' : 'top_level';
-        $html .= sprintf('<li class="%s"><img src="%s">%s</li>', 
-                          $class, $image, $link);
-        $i++;
-      }
-
-      $html .= '</ul>';
+      my @links = split '\n', $content;
+      my $last  = $links[-1];
+      
+      $related .= sprintf('
+        <div class="subheader">Related content</div>
+        <ul class="local_context" style="border-width:0">
+          %s
+        </ul>',
+        join('', map sprintf('<li class="%s"><img src="%sleaf.gif">%s</li>', $_ eq $last ? 'last' : 'top_level', $img_url, $_), @links)
+      );
     }
   }
-
+  
   ## SEARCH -------------------------------------------
-  unless ($ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/) {
-    my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . "Multi/psychic";
+  
+  if ($ENV{'HTTP_USER_AGENT'} !~ /Sanger Search Bot/) {
+    my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . 'Multi/psychic';
     my $default_search_code = $self->species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
+    my $form                = EnsEMBL::Web::Form->new({ action => $search_url, method => 'get', skip_validation => 1, class => [ 'search-form', 'clear' ] });
+    
+    $form->add_hidden({ name => 'site',               value => $default_search_code });
+    $form->add_hidden({ name => 'facet_feature_type', value => 'Documentation'      });
 
-    my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => [ 'search-form', 'clear' ]});
-    $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
-    $form->add_hidden({'name' => 'facet_feature_type', 'value' => 'Documentation'});
-
-    # search input box & submit button
+    # search input box and submit button
     my $field = $form->add_field({
-      'inline'    => 1,
-      'elements'  => [{
-        'type'        => 'string',
-        'value'       => 'Search documentation&#8230;',
-        'is_encoded'  => 1,
-        'id'          => 'q',
-        'size'        => '20',
-        'name'        => 'q',
-        'class'       => ['query', 'input', 'inactive']
+      inline   => 1,
+      elements => [{
+        type       => 'string',
+        value      => 'Search documentation&#8230;',
+        is_encoded => 1,
+        id         => 'q',
+        size       => '20',
+        name       => 'q',
+        class      => [ 'query', 'input', 'inactive' ]
       }, {
-        'type'        => 'submit',
-        'value'       => 'Go'
+        type  => 'submit',
+        value => 'Go'
       }]
     });
-
-    $html .= sprintf '<div class="js_panel" style="margin:16px 0 0 8px"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
-
+    
+    $search = sprintf('
+      <div class="js_panel" style="margin:16px 0 0 8px">
+        <input type="hidden" class="panel_type" value="SearchBox" />
+        %s
+      </div>
+    ', $form->render);
   }
 
-  return $html;
+  return qq{
+    <input type="hidden" class="panel_type" value="LocalContext" />
+    <div class="header">In this section</div>
+    <ul class="local_context">
+      $menu
+    </ul>
+    $in_page
+    $related
+    $search
+  };
 }
 
-sub _walk_tree {
+sub walk_tree {
   my ($self, $tree, $here, $path, $level) = @_;
-
-  my $current_path = join('/', @$path[0..$level]).'/';
-  my $sub_tree = $tree->{$path->[$level]};
+  my $current_path = join('/', @$path[0..$level]) . '/';
+  my $sub_tree     = $tree->{$path->[$level]};
 
   if ($sub_tree) {
-    if ($current_path eq $here) {
-      return $sub_tree;
-    }
-    else {
-      ## Recurse
-      $self->_walk_tree($sub_tree, $here, $path, $level+1);
-    }
-  }
-  else {
+    return $sub_tree if $current_path eq $here;
+    
+    $self->walk_tree($sub_tree, $here, $path, $level + 1); ## Recurse
+  } else {
     return $tree;
   }
-
 }
 
 1;
