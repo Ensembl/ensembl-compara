@@ -1225,7 +1225,7 @@ CREATE TABLE gene_tree_node_attr (
 @column model_id              Model ID of the profile. Can be the external ID in case of imported models
 @column name                  Name of the model
 @column type                  Short description of the profile
-@column hc_profile            The HMM profile
+@column compressed_profile    The HMM profile, compressed with zlib. It can be decompressed with the MySQL function UNCOMPRESS()
 @column consensus             The consensus sequence derived from the profile
 
 */
@@ -1234,7 +1234,7 @@ CREATE TABLE hmm_profile (
   model_id                    varchar(40) NOT NULL,
   name                        varchar(40),
   type                        varchar(40) NOT NULL,
-  hc_profile                  mediumtext,
+  compressed_profile          mediumblob,
   consensus                   mediumtext,
 
   PRIMARY KEY (model_id,type)

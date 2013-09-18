@@ -122,16 +122,13 @@ sub dump_models {
 
     my $sql = "SELECT model_id FROM hmm_profile"; ## mysql runs out of memory if we include here all the profiles
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    my $sql2 = "SELECT hc_profile FROM hmm_profile WHERE model_id = ?";
-    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
     $sth->execute();
     while (my ($model_id) = $sth->fetchrow) {
         print STDERR "Dumping model_id $model_id into $bookDir/$model_id\n";
         mkdir "$bookDir/$model_id" or die $!;
         open my $fh, ">", "$bookDir/$model_id/hmmer.hmm" or die $!;
-        $sth2->execute($model_id);
-        my ($profile) = $sth2->fetchrow;
-        print $fh $profile;
+        my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id);
+        print $fh $hmm_object->profile;
         close($fh);
     }
 }
