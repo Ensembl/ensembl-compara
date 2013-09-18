@@ -149,6 +149,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     this.base.apply(this, arguments);
+    
+    this.xhr.done(function (html) {
+      if (!html) {
+        delete Ensembl.images[this.imageNumber];
+        Ensembl.EventManager.trigger('highlightAllImages');
+      }
+    });
   },
   
   makeImageMap: function () {
