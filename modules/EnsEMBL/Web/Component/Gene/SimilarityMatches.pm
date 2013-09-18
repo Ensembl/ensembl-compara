@@ -39,8 +39,8 @@ sub matches_to_html {
     link_text  => ''
   });
 
-  my %options = map {$_ => 1} $hub->get_viewconfig('SimilarityMatches')->options;
-
+  my %options = map { $_ => 1 } $self->view_config->options;
+  
   foreach (@{$self->object->Obj->get_all_Transcripts}) {
     my $url = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Transcript', action => 'Summary', function => undef, t => $_->stable_id }), $_->stable_id;
     my $row = { transcriptid => $url };
