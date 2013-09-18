@@ -37,7 +37,6 @@ sub content {
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
-  my $s               = $hub->get_viewconfig('MultiTop')->get('show_top_panel') eq 'yes' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), LASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat'), LASTZ_PATCH => $hub->param('opt_pairwise_lpatch'), LASTZ_RAW => $hub->param('opt_pairwise_raw') };
   my $join_alignments = grep $_ ne 'off', values %$methods;
@@ -55,7 +54,7 @@ sub content {
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
       image_width     => $image_width,
-      slice_number    => "$i|$s",
+      slice_number    => "$i|3",
       multi           => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
       base_url        => $base_url,
@@ -93,7 +92,7 @@ sub content {
           $primary_image_config->set_parameters({
             container_width => $primary_slice->length,
             image_width     => $image_width,
-            slice_number    => "1|$s",
+            slice_number    => '1|3',
             multi           => 1,
             compara         => 'primary',
             base_url        => $base_url,
