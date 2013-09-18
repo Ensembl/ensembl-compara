@@ -67,6 +67,9 @@ sub init {
   my $hub        = $controller->hub;
   my $object     = $controller->object;
   my @components = @{$hub->components};
+  my $session    = $hub->session;
+  my $user       = $hub->user;
+  my $has_data   = grep($session->get_data(type => $_), qw (upload url das)) || ($user && (grep $user->get_records($_), qw(uploads urls dases)));
   my $view_config;
      $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
   
@@ -91,36 +94,20 @@ sub init {
       title   => 'There are no options for this page'
     });
   }
-
-  if ($hub->session->get_data(type => 'upload') || $hub->session->get_data(type => 'url')
-      || ($hub->user && ($hub->user->get_records('uploads') || $hub->user->get_records('urls')))) {
-    $self->add_entry({
-      caption => 'Manage your data',
-      class   => 'modal_link',
-      rel     => 'modal_user_data',
-      url     => $hub->url({
-        time    => time,
-        type    => 'UserData',
-        action  => 'ManageData',
-        __clear => 1 
-      })
-    });
-  }
-  else {
-    $self->add_entry({
-      caption => 'Add your data',
-      class   => 'modal_link',
-      rel     => 'modal_user_data',
-      url     => $hub->url({
-        time    => time,
-        type    => 'UserData',
-        action  => 'SelectFile',
-        __clear => 1 
-      })
-    });
-  }
   
-  if ($object && $object->can_export) {       
+  $self->add_entry({
+    caption => $has_data ? 'Manage your data' : 'Add your data',
+    class   => 'modal_link',
+    rel     => 'modal_user_data',
+    url     => $hub->url({
+      time    => time,
+      type    => 'UserData',
+      action  => $has_data ? 'ManageData' : 'SelectFile',
+      __clear => 1
+    })
+  });
+  
+  if ($object && $object->can_export) {
     $self->add_entry({
       caption => 'Export data',
       class   => 'modal_link',
