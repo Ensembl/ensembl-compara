@@ -57,7 +57,7 @@ sub fetch_all_by_type {
 
   Arg [1]       : The database model_id for the hmm_profile/s
   Arg [2]       : (optional) The type of the hmm_profile to retrieve
-  Example       : $profiles = $hmmProfileAdaptor->fetch_all_by_model_id($model_id);
+  Example       : $profiles = $hmmProfileAdaptor->fetch_all_by_model_id_type($model_id);
   Description   : Returns the HMMProfile/s object/s for the given model_id
   ReturnType    : Arrayref of Bio::EnsEMBL::Compara::HMMProfile's
   Exceptions    : If $model_id is not defined
