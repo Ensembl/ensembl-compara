@@ -6,6 +6,8 @@ package EnsEMBL::Web::Document::Element::Navigation;
 
 use strict;
 
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Document::Element);
 
 sub new {
@@ -55,17 +57,6 @@ sub availability {
   return $self->{'availability'};
 }
 
-sub buttons {
-  my $self = shift;
-  return $self->{'_buttons'} || [];
-}
-
-sub add_button {
-  my $self = shift;
-  push @{$self->{'_buttons'}}, @_;
-}
-
-
 sub get_json {
   my $self = shift;
   return { nav => $self->content };
@@ -87,16 +78,113 @@ sub init {
   $self->availability(ref $object ? $object->availability : {});     
   
   $self->{'hub'} = $hub;
-
-  $self->modify_init($controller);
 }
 
-## Implement in subclasses
+sub content {
+  my $self = shift;
+  my $tree = $self->tree;
+  
+  return unless $tree;
+  
+  my $active = $self->active;
+  my @nodes  = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$tree->child_nodes};
+  my $menu;
+  
+  if ($tree->get_node($active) || $nodes[0]) {
+    my $hub        = $self->{'hub'};
+    my $modal      = $self->renderer->{'_modal_dialog_'};
+    my $config     = $hub->session->get_data(type => 'nav', code => $hub->type) || {};
+    my $img_url    = $hub->species_defs->img_url;
+    my $counts     = $self->counts;
+    my $all_params = !!$hub->object_types->{$hub->type};
+    
+    foreach (@nodes) {
+      $_->data->{'top_level'} = 1;
+      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $nodes[-1]);
+    }
+    
+    $menu .= $_->render for @nodes;
+  }
+  
+  return sprintf('
+    %s
+    <div class="header">%s</div>
+    <ul class="local_context">%s</ul>',
+    $self->configuration ? '' : '<input type="hidden" class="panel_type" value="LocalContext" />',
+    encode_entities($self->strip_HTML($self->caption)),
+    $menu
+  );
+}
 
-sub content {}
-
-sub build_menu {}
-
-sub modify_init {}
+sub build_menu {
+  my ($self, $node, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $last_child) = @_;
+  
+  my $data = $node->data;
+  
+  return if $data->{'no_menu_entry'} || !$data->{'caption'};
+  
+  my @children     = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$node->child_nodes};
+  my $caption      = $data->{'caption'};
+  my $title        = $data->{'full_caption'} || $caption;
+  my $count        = $data->{'count'};
+  my $availability = $data->{'availability'};
+  my $class        = $data->{'class'};
+    ($class        = $caption) =~ s/ /_/g unless $class;
+  my $state        = $config->{$class} ^ $data->{'closed'};
+  my $toggle       = $state ? 'closed' : 'open';
+  my @classes      = $data->{'li_class'} || ();
+  my @append;
+  
+  if ($modal) {
+    if ($data->{'top_level'}) {
+      @append = ([ 'img', { src => "$img_url${toggle}2.gif", class => "toggle $class", alt => '' }]) if scalar @children;
+    } else {
+      @append = ([ 'img', { src => "${img_url}leaf.gif", alt => '' }]);
+    }
+  } else {
+    @append = ([ 'img', scalar @children ? { src => "$img_url$toggle.gif", class => "toggle $class", alt => '' } : { src => "${img_url}leaf.gif", alt => '' }]);
+  }
+  
+  if ($availability && $self->is_available($availability)) {
+    # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
+    # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
+    # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
+    my $url = $data->{'url'} || $hub->url({ action => $data->{'code'}, function => undef }, undef, $all_params);
+    my $rel = $data->{'external'} ? 'external' : $data->{'rel'};
+    
+    for ($title, $caption) {
+      s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
+      $_ = encode_entities($_);
+    }
+    
+    push @append, [ 'a',    { class => $class,  inner_HTML => $caption, href => $url, title => $title, rel => $rel }];
+    push @append, [ 'span', { class => 'count', inner_HTML => $count }] if $count;
+  } else {
+    $caption =~ s/\(\[\[counts::(\w+)\]\]\)//eg;
+    push @append, [ 'span', { class => 'disabled', title => $data->{'disabled'}, inner_HTML => $caption }];
+  }
+  
+  if (scalar @children) {
+    my $ul = $node->dom->create_element('ul');
+    
+    foreach (@children) {
+      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $children[-1]);
+      $ul->append_child($_);
+    }
+    
+    push @append, $ul;
+    push @classes, 'parent';
+  }
+  
+  push @classes, 'active'         if $node->id eq $active;
+  push @classes, 'top_level'      if $data->{'top_level'};
+  push @classes, 'last'           if $node eq $last_child;
+  push @classes, 'closed'         if $toggle eq 'closed';
+  push @classes, 'default_closed' if $data->{'closed'};
+  
+  $node->node_name = 'li';
+  $node->set_attributes({ id => $data->{'id'}, class => join(' ', @classes) });
+  $node->append_children(@append);
+}
 
 1;
