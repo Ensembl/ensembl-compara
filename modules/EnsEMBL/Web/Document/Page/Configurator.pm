@@ -24,7 +24,7 @@ sub initialize_HTML {
   $self->add_body_elements(qw(
     logo            EnsEMBL::Web::Document::Element::Logo
     tabs            EnsEMBL::Web::Document::Element::ModalTabs
-    navigation      EnsEMBL::Web::Document::Element::ModalNav
+    navigation      EnsEMBL::Web::Document::Element::Navigation
     tool_buttons    EnsEMBL::Web::Document::Element::ModalButtons
     content         EnsEMBL::Web::Document::Element::Configurator
     body_javascript EnsEMBL::Web::Document::Element::BodyJavascript
@@ -36,7 +36,7 @@ sub initialize_JSON {
   
   $self->add_body_elements(qw(
     tabs         EnsEMBL::Web::Document::Element::ModalTabs
-    navigation   EnsEMBL::Web::Document::Element::ModalNav
+    navigation   EnsEMBL::Web::Document::Element::Navigation
     tool_buttons EnsEMBL::Web::Document::Element::ModalButtons
     content      EnsEMBL::Web::Document::Element::Configurator
   ));
