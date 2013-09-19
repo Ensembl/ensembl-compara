@@ -120,7 +120,7 @@ sub default_options {
         #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
-        #'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
+        #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
 
     # HMM specific parameters
@@ -150,6 +150,9 @@ sub default_options {
         #'qc_capacity'               =>   4,
         #'hc_capacity'               =>   4,
         #'HMMer_classify_capacity'   => 100,
+
+    # hive priority for non-LOCAL health_check analysis:
+        'hc_priority'               => 10,
 
     # connection parameters to various databases:
 
