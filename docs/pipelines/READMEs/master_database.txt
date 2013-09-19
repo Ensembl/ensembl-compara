@@ -31,10 +31,12 @@ species_set_tag          species specific tags
 1.1 Code checkout
 
       cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-73 ensembl
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-73 ensembl-compara
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-73 ensembl-hive
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-73 ensembl-analysis
+
+Replace "73" with the API version you are interested in.
 
 in tcsh
     setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/base/dir
