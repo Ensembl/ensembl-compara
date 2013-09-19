@@ -63,7 +63,6 @@ sub _pipeline_db_options {
   return {
     prefix => 'ensembl_compara',
     suffix => 'hom_'.$self->o('eg_release').'_'.$self->o('release'),
-    rel_suffix => '', #done to override the idea of suffix which we do not have
     db_name => $self->o('prefix').q{_}.$self->o('division').q{_}.$self->o('suffix'),
   };
 }

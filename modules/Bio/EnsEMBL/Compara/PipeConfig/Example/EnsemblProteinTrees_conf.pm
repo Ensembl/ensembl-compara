@@ -58,12 +58,11 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '73',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # dependent parameters: updating 'work_dir' should be enough
-        'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
+        'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
         'pipeline_name'         => $self->o('pipeline_basename') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
     # blast parameters:
