@@ -40,11 +40,11 @@ package Bio::EnsEMBL::Compara::DBSQL::GeneTreeObjectStoreAdaptor;
 use strict;
 use warnings;
 
-use Compress::Zlib;
 use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Compara::Utils::Compress;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
@@ -98,7 +98,7 @@ sub _objs_from_sth {
 
     my $data_list = [];
     while ($sth->fetch()) {
-        my $uncompressed_data = Compress::Zlib::uncompress( substr($compressed_data,4) );
+        my $uncompressed_data = Bio::EnsEMBL::Compara::Utils::Compress::uncompress_from_mysql($compressed_data);
         push @$data_list, $uncompressed_data;
     }
     return $data_list;
@@ -127,9 +127,7 @@ sub store {
     throw('A label must be given') unless $label;       # Must be defined and non-empty
     throw('Data must be given') unless defined $data;   # Must be defined but can be empty
 
-    # MySQL-style compression -COMPRESS()-
-    # The first 4 bytes are the length of the text in little-endian
-    my $compressed_data = pack('V', length($data)).Compress::Zlib::compress($data, Z_BEST_COMPRESSION);
+    my $compressed_data = Bio::EnsEMBL::Compara::Utils::Compress::compress_to_mysql($data);
 
     my $sql = 'REPLACE INTO gene_tree_object_store VALUES (?,?,?)';
     my $sth = $self->prepare($sql);

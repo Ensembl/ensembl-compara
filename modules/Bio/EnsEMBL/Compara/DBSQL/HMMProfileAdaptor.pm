@@ -34,12 +34,9 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::HMMProfile;
+use Bio::EnsEMBL::Compara::Utils::Compress;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning); ## All needed?
-
-use Bio::EnsEMBL::Utils::IO qw/:slurp/;
-
-use Compress::Zlib;
 
 use DBI qw(:sql_types);
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
@@ -205,7 +202,7 @@ sub init_instance_from_rowhash {
     $obj->type($rowhash->{type});
     # MySQL-style compression -UNCOMPRESS()-
     # The first 4 bytes are the length of the text in little-endian
-    $obj->profile( Compress::Zlib::uncompress( substr($rowhash->{compressed_profile},4) ) );
+    $obj->profile( Bio::EnsEMBL::Compara::Utils::Compress::uncompress_from_mysql($rowhash->{compressed_profile}) );
     $obj->consensus($rowhash->{consensus});
 
     return $obj;
@@ -220,9 +217,7 @@ sub store {
 
 
 
-    # MySQL-style compression -COMPRESS()-
-    # The first 4 bytes are the length of the text in little-endian
-    my $compressed_profile = pack('V', length($obj->profile())).Compress::Zlib::compress($obj->profile(), Z_BEST_COMPRESSION);
+    my $compressed_profile = Bio::EnsEMBL::Compara::Utils::Compress::compress_to_mysql($obj->profile());
 
     my $sql = "REPLACE INTO hmm_profile(model_id, name, type, compressed_profile, consensus) VALUES (?,?,?,?,?)";
     my $sth = $self->prepare($sql);
