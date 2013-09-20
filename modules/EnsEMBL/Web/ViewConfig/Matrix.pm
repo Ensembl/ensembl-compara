@@ -31,7 +31,7 @@ sub init {
 }
 
 sub form {
-  my $self          = shift;warn $self;
+  my $self          = shift;
   my $hub           = $self->hub;
   my $set           = $self->set;
   my $menu          = join '_', $self->menu, $set eq $self->menu ? () : $set;
