@@ -144,12 +144,14 @@ sub href {
   my $feature = $self->get_single_feature($f);
      $f       = $feature if $feature;
   my $slice   = $feature ? $feature->alternate_slice : undef;
-  
+ 
+  my $start = $f->start+$self->{'container'}->start-1; 
+  my $end = $f->end+$self->{'container'}->start-1; 
   return $self->_url({
     species     => $f->species,
     action      => 'AssemblyException',
     feature     => $slice   ? sprintf('%s:%s-%s', $slice->seq_region_name, $slice->start, $slice->end) : undef,
-    range       => $feature ? undef : sprintf('%s:%s-%s', $f->seq_region_name, $f->start, $f->end),
+    range       => $feature ? undef : sprintf('%s:%s-%s', $f->seq_region_name, $start, $end),
     target      => $f->slice->seq_region_name,
     target_type => $f->type,
     dbID        => $f->id,
