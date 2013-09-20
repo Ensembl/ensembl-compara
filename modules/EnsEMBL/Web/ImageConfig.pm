@@ -782,7 +782,7 @@ sub _add_datahub_tracks {
   );
   
   if ($matrix) {
-    $options{'matrix_url'} = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => $options{'submenu_key'} });
+    $options{'matrix_url'} = $hub->url('Config', { action => 'Matrix', function => 'DataHub', config => $hub->action, partial => 1, menu => $options{'submenu_key'} });
     
     foreach my $subgroup (keys %$config) {
       next unless $subgroup =~ /subGroup\d/;
@@ -2576,7 +2576,7 @@ sub add_regulation_builds {
   my $evidence_info     = $adaptor->get_regulatory_evidence_info;
   my @cell_lines        = sort keys %{$db_tables->{'cell_type'}{'ids'}};
   my %evidence_features = map { reverse split ':' } keys %{$db_tables->{'feature_type'}{'ids'}};
-  my $matrix_url        = $hub->url('Config', { action => 'Cell_line', function => $hub->action, partial => 1, menu => 'regulatory_features' });
+  my $matrix_url        = $hub->url('Config', { action => 'Matrix', function => 'CellLine', config => $hub->action, partial => 1, menu => 'regulatory_features' });
   my (@renderers, $multi_flag, $core_menu, $non_core_menu, $prev_track, %feature_types_by_class);
   
   # FIXME: put this in db
