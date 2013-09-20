@@ -33,7 +33,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     this.startCell   = [];
     this.dragCell    = [];
     this.imageConfig = {};
-    this.viewConfig  = {};
     
     this.elLk.links         = this.params.links.find('> .count > .on');
     this.elLk.wrapper       = this.el.children('.config_matrix_wrapper');
@@ -94,9 +93,9 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     this.elLk.options = this.elLk.rows.children('.opt').each(function () {
       var el = $(this);
       
-      this.configCode  = 'opt_matrix_' + panel.id + '_' + this.title; // configCode is used to set the correct values for the ViewConfig
+      this.configCode  = panel.id + '_' + this.title.replace(':', '_');
       this.searchTerms = $.trim(this.parentNode.className + ' ' + panel.elLk.headers.eq(el.index()).children('p').html() + ' ' + this.title).toLowerCase();
-      panel.viewConfig[this.configCode] = el.hasClass('on') ? 'on' : 'off';
+      panel.imageConfig[this.configCode] = { renderer: el.hasClass('on') ? 'on' : 'off' };
       
       el = null;
     });
@@ -340,13 +339,19 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     var popup     = target.parents('.subtracks');
     var cell      = popup.data('cell');
     var colTrack  = popup.data('colTrack');
-    var isDefault = target.hasClass('default');
+    var isDefault = e.currentTarget.className === 'default';
+    var className = e.target.className;
+    
+    if (isDefault) {
+      e.target = e.currentTarget; // target is the div inside the li, rather than the li itself - base function needs the target to be the li
+    }
     
     this.base(e, false);
     
     if (isDefault) {
       // change all tracks in the popup for select all = default
-      target.parents('.track').add(target.parents('.select_all').siblings('ul.config_menu').children('.track'))[colTrack.renderer === 'off' ? 'removeClass' : 'addClass']('on');
+      target.parents('.track').add(target.parents('.select_all').siblings('ul.config_menu').children('.track'))[colTrack.renderer === 'off' ? 'removeClass' : 'addClass']('on')
+        .children('div').removeClass().addClass(colTrack.renderer);
     }
     
     this.params.defaultRenderers[cell[0].title] = $('> ul.config_menu > li.default', popup).length;
@@ -561,15 +566,15 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     }
     
     var panel  = this;
-    var config = { viewConfig: {}, imageConfig: {} };
+    var config = {};
     var diff   = false;
     var on;
     
     this.elLk.options.each(function () {
       on = $(this).hasClass('on') ? 'on' : 'off';
       
-      if (panel.viewConfig[this.configCode] !== on) {
-        config.viewConfig[this.configCode] = on;
+      if (panel.imageConfig[this.configCode].renderer !== on) {
+        config[this.configCode] = { renderer: on };
         diff = true;
       }
     });
@@ -578,15 +583,14 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       var track = $(this).data('track');
       
       if (panel.imageConfig[track.id].renderer !== track.renderer) {
-        config.imageConfig[track.id] = { renderer: track.renderer };
+        config[track.id] = { renderer: track.renderer };
         diff = true;
       }
     });
     
     if (diff) {
-      $.extend(true, this.viewConfig,  config.viewConfig);
-      $.extend(true, this.imageConfig, config.imageConfig);
-      return config;
+      $.extend(true, this.imageConfig, config);
+      return { imageConfig: config };
     }
   },
     
