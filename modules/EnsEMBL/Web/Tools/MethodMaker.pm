@@ -94,7 +94,7 @@ sub _sub_exists {
   my ($class,$method) = @_;
 
   no strict;
-  return (exists ${$class."::"}{$method});
+  return (defined *{${$class."::"}{$method}}{CODE});
 }
 
 sub _find_sub_in_self_or_super {
@@ -118,6 +118,7 @@ sub copy_method {
   while (@_) {
     my ($old_method, $new_method) = splice @_, 0, 2;
 
+    next unless $class->can($old_method) xor $class->can($new_method); # ignore if both methods exist, or none of them exists
     # Maybe the old method was defiend in a supertype?
     my $old_class = _find_sub_in_self_or_super($class,$old_method);
     next unless defined $old_class;   
