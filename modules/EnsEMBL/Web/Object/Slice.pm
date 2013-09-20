@@ -316,7 +316,6 @@ sub get_individuals {
   return ();
 }
 
-
 # Cell line Data retrieval  ---------------------------------------------------
 sub get_cell_line_data {
   my ($self, $image_config) = @_;
@@ -326,59 +325,28 @@ sub get_cell_line_data {
   my @sets       = qw(core non_core);  
   my $data;
 
-  foreach my $cell_line (keys %cell_lines) { 
+  foreach my $cell_line (keys %cell_lines) {
     $cell_line =~ s/:\w*//;
     
     foreach my $set (@sets) {
-      my $node = $image_config->get_node('functional')->get_node("reg_feats_${set}_$cell_line");
+      my $node = $image_config->get_node("reg_feats_${set}_$cell_line");
       
       next unless $node;
       
       my $display = $node->get('display');
-      $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
-    }
-  }
-
-  $data = $self->get_configured_tracks($data); 
-  $data = $self->get_data($data);
-
-  return $data;
-}
-
-sub get_configured_tracks {
-  my ($self, $data) = @_;
-  my $hub               = $self->hub;
-  my $tables            = $hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
-  my %cell_lines        = %{$tables->{'cell_type'}{'ids'}};
-  my %evidence_features = %{$tables->{'feature_type'}{'ids'}};
-  my %focus_set_ids     = %{$tables->{'regbuild_string'}{'focus_feature_set_ids'}};
-  my %feature_type_ids  = %{$tables->{'regbuild_string'}{'feature_type_ids'}};
-  
-  foreach my $cell_line (keys %cell_lines) { 
-    $cell_line =~ s/:\w*//;
-    
-    next unless exists $data->{$cell_line};    
-
-    foreach my $evidence_feature (keys %evidence_features) { 
-      my ($feature_name, $feature_id) = split /:/, $evidence_feature; 
       
-      if (exists $feature_type_ids{$cell_line}{$feature_id}) {
-        my $set = $cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id} ? 'core' : 'non_core';
+      $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
+      
+      foreach ($node->nodes) {
+        my $feature_name = $_->data->{'caption'};
         
-        next unless exists $data->{$cell_line}{$set};
-        
-        if (!exists $data->{$cell_line}{$set}{'available'}) {
-           $data->{$cell_line}{$set}{'available'}   = [];
-           $data->{$cell_line}{$set}{'configured'}  = [];
-        }
-        
-        push @{$data->{$cell_line}{$set}{'available'}},  $feature_name; 
-        push @{$data->{$cell_line}{$set}{'configured'}}, $feature_name if $hub->param("opt_matrix_regulatory_features_${set}_$cell_line:$feature_name") eq 'on'; # add to configured features if turned on
+        $data->{$cell_line}{$set}{'available'}{$feature_name} = 1; 
+        $data->{$cell_line}{$set}{'on'}{$feature_name}        = 1 if $_->get('display') eq 'on'; # add to configured features if turned on
       }
     }
   }
   
-  return $data;
+  return $self->get_data($data);
 }
 
 sub get_data {
@@ -391,7 +359,7 @@ sub get_data {
   my @result_sets;
   my %feature_sets_on;
 
-  return $data if (!scalar(keys %$data));
+  return $data unless scalar keys %$data;
   
   foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_type('regulatory')}) { 
     my $regf_data_set = $dataset_adaptor->fetch_by_product_FeatureSet($regf_fset);
@@ -403,11 +371,10 @@ sub get_data {
       my $feature_type_name     = $reg_attr_fset->feature_type->name;
       my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name;
       my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
-      my $name                  = $cell_line eq 'MultiCell' ? "opt_matrix_regulatory_features_core_$cell_line:$feature_type_name" : "opt_matrix_regulatory_features_${focus_flag}_$unique_feature_set_id";
       
       $count++;
       
-      next unless $hub->param($name) eq 'on';
+      next unless $data->{$cell_line}{$focus_flag}{'on'}{$feature_type_name};
       
       my $display_style = $data->{$cell_line}{$focus_flag}{'renderer'};
       
@@ -447,7 +414,7 @@ sub get_data {
     
     foreach my $rset_id (keys %$wiggle_data) { 
       my $results_set           = $hub->get_adaptor('get_ResultSetAdaptor', 'funcgen')->fetch_by_dbID($rset_id);
-      my $unique_feature_set_id = $results_set->cell_type->name . ':' . $results_set->feature_type->name .":". $results_set->dbID;
+      my $unique_feature_set_id = join ':', $results_set->cell_type->name, $results_set->feature_type->name, $results_set->dbID;
       my $features              = $wiggle_data->{$rset_id};
       
       $data->{'wiggle_data'}{$unique_feature_set_id} = $features;
