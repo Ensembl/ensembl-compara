@@ -50,6 +50,62 @@ sub import {
   }
 }
 
+# From Class::ISA by Sean Burke
+# (C) 1999-2009 Sean Burke, distributed under terms of Perl itself
+# Avoid introducing dependency mid release for a bug-fix, but better would
+# be installing Class::ISA.
+
+sub self_and_super_path {
+  # Assumption: searching is depth-first.
+  # Assumption: '' (empty string) can't be a class package name.
+  # Note: 'UNIVERSAL' is not given any special treatment.
+  return () unless @_;
+
+  my @out = ();
+
+  my @in_stack = ($_[0]);
+  my %seen = ($_[0] => 1);
+
+  my $current;
+  while(@in_stack) {
+    next unless defined($current = shift @in_stack) && length($current);
+    #print "At $current\n" if $Debug;
+    push @out, $current;
+    no strict 'refs';
+    unshift @in_stack,
+      map
+        { my $c = $_; # copy, to avoid being destructive
+          substr($c,0,2) = "main::" if substr($c,0,2) eq '::';
+           # Canonize the :: -> main::, ::foo -> main::foo thing.
+           # Should I ever canonize the Foo'Bar = Foo::Bar thing? 
+          $seen{$c}++ ? () : $c;
+        }
+        @{"$current\::ISA"}
+    ;
+    # I.e., if this class has any parents (at least, ones I've never seen
+    # before), push them, in order, onto the stack of classes I need to
+    # explore.
+  }
+
+  return @out;
+}
+
+sub _sub_exists {
+  my ($class,$method) = @_;
+
+  no strict;
+  return (exists ${$class."::"}{$method});
+}
+
+sub _find_sub_in_self_or_super {
+  my ($class,$method) = @_;
+
+  foreach my $k (self_and_super_path($class)) {
+    return $k if _sub_exists($k,$method);
+  }
+  return undef;
+}
+
 sub copy_method {
   ## Copies one method to another in a given class
   ## @param Class name/Object that contains the method
@@ -62,10 +118,15 @@ sub copy_method {
   while (@_) {
     my ($old_method, $new_method) = splice @_, 0, 2;
 
-    next unless $class->can($old_method) xor $class->can($new_method); # ignore if both methods exist, or none of them exists
+    # Maybe the old method was defiend in a supertype?
+    my $old_class = _find_sub_in_self_or_super($class,$old_method);
+    next unless defined $old_class;   
+ 
+    # ignore if both methods exist, or none of them exists
+    next unless _sub_exists($old_class,$old_method) xor _sub_exists($class,$new_method);
 
     no strict qw(refs);
-    *{"${class}::${new_method}"} = \&{"${class}::${old_method}"};
+    *{"${class}::${new_method}"} = \&{"${old_class}::${old_method}"};
   }
 }
 
