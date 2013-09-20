@@ -454,6 +454,7 @@ sub build_imageconfig_form {
     my $caption = $node->get('caption');
     my $class   = $node->get('datahub_menu') || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
     my $div     = $form->append_child('div', { class => "config $section $class" });
+    my $no_count;
     
     $div->append_child('h2', { class => 'config_header', inner_HTML => $caption });
     
@@ -480,19 +481,28 @@ sub build_imageconfig_form {
           
           next if scalar @child_nodes == 1 && !$node->get('datahub_menu');
           
-          my @child_ids = map $_->id, grep { $_->get('node_type') eq 'track' && $_->get('menu') ne 'hidden' } $_->nodes;
-          my $total     = scalar @child_ids;
-          my $on        = 0;
-             $on       += $self->{'enabled_tracks'}{$_} for @child_ids;
+          my $url = $_->get('url');
+          my ($total, $on);
+          
+          if ($_->get('no_count')) {
+            $no_count = 1;
+          } else {
+            my @child_ids = map $_->id, grep { $_->get('node_type') eq 'track' && $_->get('menu') ne 'hidden' } $_->nodes;
+               $total     = scalar @child_ids;
+               $on        = 0;
+               $on       += $self->{'enabled_tracks'}{$_} for @child_ids;
+          }
           
           # Add submenu entries to the navigation tree
           $parent_menu->append($tree->get_node($id) || $tree->create_node($id, {
             caption      => $_->get('caption'),
-            class        => $parent_menu->id . "-$id",
-            url          => '#',
+            class        => $url ? $id : $parent_menu->id . "-$id",
+            url          => $url || '#',
             count        => $total ? qq{(<span class="on">$on</span>/$total)} : '',
-            availability => $total > 0,
+            availability => $url ? 1 : $total > 0,
           }));
+          
+          $self->add_fieldset($id, 'empty', 1) if $url;
         }
       } else {
         my $parent = $div->append_child('div', { class => 'subset' . (scalar @child_nodes > 1 ? ' first' : '') })->append_child('ul', { class => "config_menu $section" }); # Add a subset div to keep the HTML consistent
@@ -505,7 +515,7 @@ sub build_imageconfig_form {
     my $on    = $self->{'enabled_tracks'}{$section} || 0;
     my $total = $self->{'total_tracks'}{$section}   || 0;
     
-    $parent_menu->set('count', qq{(<span class="on">$on</span>/$total)}) if $total;
+    $parent_menu->set('count', qq{(<span class="on">$on</span>/$total)}) if $total && !$no_count;
     $parent_menu->set('availability', $total > 0);
   }
   
@@ -529,7 +539,7 @@ sub build_imageconfig_menus {
   
   my $menu_type = $node->get('menu');
   
-  return if $menu_type eq 'no' || $menu_type eq 'datahub_subtrack';
+  return if $menu_type =~ /^(no|datahub_subtrack)$/;
   
   my $id       = $node->id;
   my $external = $node->get('external');
