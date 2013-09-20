@@ -283,7 +283,7 @@ sub bound_location_string {
 }
 
 sub get_evidence_data {
-  my ($self, $slice, $param_all_on) = @_;
+  my ($self, $slice) = @_;
   my $hub    = $self->hub;
   my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
   my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
@@ -305,9 +305,8 @@ sub get_evidence_data {
       my $set                   = $multicell || $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
       my $key                   = $multicell || $cell_type;
       my $unique_feature_set_id = join ':', $key, $feature_type, $multicell ? $cell_type : ();
-      my $name                  = "opt_matrix_regulatory_features_${set}_$key:$feature_type";
       
-      $data{$key}{$set}{'block_features'}{$unique_feature_set_id} = $block_features if scalar @$block_features && ($param_all_on || $hub->param($name) eq 'on');
+      $data{$key}{$set}{'block_features'}{$unique_feature_set_id} = $block_features if scalar @$block_features;
     }
   }
   
