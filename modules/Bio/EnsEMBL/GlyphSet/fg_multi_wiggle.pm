@@ -21,7 +21,7 @@ sub draw_features {
   # First draw block features
   if ($peaks) {
     if ($data->{$set}{'block_features'}) {   
-      $self->draw_blocks($data->{$set}{'block_features'}, $label, undef, $colours, $data->{$set}{'configured'} ? sprintf '%s/%s features turned on', map scalar @{$data->{$set}{$_}}, qw(configured available) : '');
+      $self->draw_blocks($data->{$set}{'block_features'}, $label, undef, $colours, $data->{$set}{'on'} ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) : '');
     } else {
       $self->display_error_message($cell_line, $set, 'peaks');
     }
@@ -222,7 +222,7 @@ sub display_error_message {
   return unless $config->get_option('opt_empty_tracks') == 1; 
   
   $self->draw_track_name(join(' ', $config->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info($set)->{'label'}, $cell_line), 'black', -118,  2, 1);
-  $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar @{$config->{'data_by_cell_line'}{$cell_line}{$set}{$_}||[]}, qw(configured available));
+  $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar keys %{$config->{'data_by_cell_line'}{$cell_line}{$set}{$_} || {}}, qw(on available));
   
   return 1;
 }
