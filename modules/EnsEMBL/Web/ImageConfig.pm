@@ -532,7 +532,7 @@ sub load_user_tracks {
   my (%url_sources, %upload_sources);
   
   $self->_load_url_feature($menu);
-
+  
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
     my $node = $self->get_node('das_' . $source->logic_name);
 
@@ -628,7 +628,7 @@ sub load_user_tracks {
       }
     }
   }
-
+  
   foreach my $code (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
     my $add_method = lc "_add_$url_sources{$code}{'format'}_track";
     
@@ -766,6 +766,7 @@ sub _add_datahub_node {
 
 sub _add_datahub_tracks {
   my ($self, $parent, $config, $name, $url_code) = @_;
+  my $hub    = $self->hub;
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
   my $link   = $config->{'description_url'} ? qq{<br /><a href="$config->{'description_url'}" rel="external">Go to track description on datahub</a>} : '';
@@ -776,11 +777,13 @@ sub _add_datahub_tracks {
     menu_key     => $name,
     menu_name    => $name,
     url_code     => $url_code,
-    submenu_key  => $data->{'track'},
+    submenu_key  => $self->tree->clean_id("${name}_$data->{'track'}"),
     submenu_name => $data->{'shortLabel'},
   );
   
   if ($matrix) {
+    $options{'matrix_url'} = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => $options{'submenu_key'} });
+    
     foreach my $subgroup (keys %$config) {
       next unless $subgroup =~ /subGroup\d/;
       
@@ -837,7 +840,7 @@ sub _add_datahub_tracks {
       # means the short label can be very non specific, because the header gives context of what type of
       # track it is. For Ensembl we need to have all the information in the track name / caption
       ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
-      $source->{'option_key'}   = join('_', 'opt_matrix', $self->tree->clean_id($options{'menu_key'}), $options{'submenu_key'}, "$labels{'x'}:$labels{'y'}");
+      $source->{'option_key'}   = $self->tree->clean_id(join '_', $options{'submenu_key'}, $labels{'x'}, $labels{'y'});
       $source->{'column_key'}   = $column_key;
       $source->{'datahub'}      = 'track';
       
@@ -859,13 +862,36 @@ sub _add_datahub_tracks {
     $tracks{$type}{$source->{'name'}} = $source;
   }
   
-  foreach my $format (keys %matrix_columns) {
-    foreach (values %{$matrix_columns{$format}}) {
+  foreach my $type (keys %matrix_columns) {
+    foreach (values %{$matrix_columns{$type}}) {
       $_->{'description'} .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp lc $b->[0] } @{$_->{'subtracks'}};
       delete $_->{'subtracks'};
     }
     
-    $self->load_file_format(lc $format, $matrix_columns{$format});
+    $self->load_file_format(lc $type, $matrix_columns{$type});
+    
+    my %rows;
+    
+    foreach (values %{$matrix_columns{$type}}) {
+      my $name = $_->{'name'};
+      my $node = $self->get_node($name);
+      
+      foreach (keys %{$_->{'features'}}) {
+        $node->append($self->create_track($self->tree->clean_id("${name}_$_"), $_, {
+          node_type => 'option',
+          menu      => 'no',
+          display   => 'off',
+          renderers => [qw(on on off off)],
+        }));
+        
+        $rows{$_} = 1;
+      }
+    }
+    
+    my $data = $self->get_node($options{'submenu_key'})->data;
+    
+    $data->{'matrix_rows'} = [ map { id => $_ }, sort keys %rows ];
+    $data->{'no_count'}    = 1;
   }
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
@@ -896,12 +922,13 @@ sub _add_datahub_extras_options {
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'header'}     = $args{'source'}{'submenu_name'};
-  $args{'options'}{'subset'}     = $self->tree->clean_id("$args{'source'}{'menu_key'}_$args{'source'}{'submenu_key'}") unless $args{'source'}{'datahub'} == 1;
+  $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}) unless $args{'source'}{'datahub'} == 1;
   $args{'options'}{$_}           = $args{'source'}{$_} for qw(url_code label_x features menu_key description info colour axes datahub option_key column_key);
  
   if ($args{'source'}{'datahub'} eq 'track') {
-    $args{'options'}{'menu'}    = 'datahub_subtrack';
-    $args{'options'}{'display'} = 'default';
+    $args{'options'}{'menu'}        = 'datahub_subtrack';
+    $args{'options'}{'display'}     = 'default';
+    $args{'options'}{'source_name'} = $args{'source'}{'source_name'};
     unshift @{$args{'renderers'}}, 'default', 'Default';
   } elsif ($args{'source'}{'datahub'} eq 'column') {
     $args{'options'}{'option_key'} = $args{'key'};
@@ -984,7 +1011,7 @@ sub load_file_format {
       
       if (!$menu) {
         my $added = 0;
-           $menu  = $self->create_submenu($submenu_key, $submenu_name, { external => 1 });
+           $menu  = $self->create_submenu($submenu_key, $submenu_name, { external => 1, ($source->{'matrix_url'} ? (menu => 'matrix', url => $source->{'matrix_url'}) : ()) });
         
         # Order submenus alphabetically by caption
         foreach (@{$main_menu->child_nodes}) {
@@ -1357,7 +1384,7 @@ sub update_from_url {
 sub update_track_renderer {
   my ($self, $key, $renderer, $on_off) = @_;
   my $node = $self->get_node($key);
-
+  
   return unless $node;
 
   my $renderers = $node->data->{'renderers'};
@@ -2530,22 +2557,40 @@ sub add_regulation_builds {
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
-  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}->{'tables'};
   my $key_2             = 'Regulatory_Build';
   my $type              = $fg_data{$key_2}{'type'};
   
   return unless $type;
-  my $db = $self->hub->database('funcgen',$self->species);
-  return unless defined $db;
+  
+  my $hub = $self->hub;
+  my $db  = $hub->database('funcgen', $self->species);
+  
+  return unless $db;
 
   $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
   
-  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
-  my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
-  my $evidence_info = $db->get_FeatureTypeAdaptor->get_regulatory_evidence_info;
-  my @cell_lines    = sort keys %{$db_tables->{'cell_type'}{'ids'}};
-  my (@renderers, $multi_flag, $core_menu, $non_core_menu, $prev_track);
-
+  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my $reg_feats         = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
+  my $reg_segs          = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
+  my $adaptor           = $db->get_FeatureTypeAdaptor;
+  my $evidence_info     = $adaptor->get_regulatory_evidence_info;
+  my @cell_lines        = sort keys %{$db_tables->{'cell_type'}{'ids'}};
+  my %evidence_features = map { reverse split ':' } keys %{$db_tables->{'feature_type'}{'ids'}};
+  my $matrix_url        = $hub->url('Config', { action => 'Cell_line', function => $hub->action, partial => 1, menu => 'regulatory_features' });
+  my (@renderers, $multi_flag, $core_menu, $non_core_menu, $prev_track, %feature_types_by_class);
+  
+  # FIXME: put this in db
+  my %default_evidence_types = (
+    CTCF     => 'on',
+    DNase1   => 'on',
+    H3K4me3  => 'on',
+    H3K36me3 => 'on',
+    H3K27me3 => 'on',
+    H3K9me3  => 'on',
+    PolII    => 'on',
+    PolIII   => 'on',
+  );
+  
   if ($fg_data{$key_2}{'renderers'}) {
     push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
   } else {
@@ -2562,7 +2607,7 @@ sub add_regulation_builds {
 
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
-    my $label;
+    my ($label, %evidence_tracks);
     
     if ($cell_line =~ /MultiCell/) {  
       $display    = $fg_data{$key_2}{'display'} || 'off';
@@ -2615,6 +2660,7 @@ sub add_regulation_builds {
       colourset   => 'feature_set',
       display     => 'off',
       cell_line   => $cell_line,
+      label_x     => $cell_line,
       menu_key    => 'regulatory_features',
       renderers   => [
         'off',            'Off', 
@@ -2626,12 +2672,12 @@ sub add_regulation_builds {
     
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
       if (!$core_menu) {
-        $core_menu = $self->create_submenu('regulatory_features_core', $evidence_info->{'core'}{'name'});
+        $core_menu = $self->create_submenu('regulatory_features_core', $evidence_info->{'core'}{'name'}, { menu => 'matrix', url => "$matrix_url;set=core" });
         $core_menu = $non_core_menu ? $non_core_menu->before($core_menu) : $menu->after($core_menu);
       }
       
       # Add core evidence tracks
-      $prev_track = $core_menu->append($self->create_track("reg_feats_core_$cell_line", "$evidence_info->{'core'}{'name'}$label", {
+      $evidence_tracks{'core'} = $prev_track = $core_menu->append($self->create_track("reg_feats_core_$cell_line", "$evidence_info->{'core'}{'name'}$label", {
         %options,
         set         => 'core',
         subset      => 'regulatory_features_core',
@@ -2641,11 +2687,11 @@ sub add_regulation_builds {
       }));
     } 
 
-    if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
-      $non_core_menu ||= ($core_menu || $menu)->after($self->create_submenu('regulatory_features_non_core', $evidence_info->{'non_core'}{'name'}));
+    if (scalar @ftypes != scalar @focus_sets && $cell_line ne 'MultiCell') {
+      $non_core_menu ||= ($core_menu || $menu)->after($self->create_submenu('regulatory_features_non_core', $evidence_info->{'non_core'}{'name'}, { menu => 'matrix', url => "$matrix_url;set=non_core" }));
       
       # Add non core evidence tracks
-      $prev_track = $non_core_menu->append($self->create_track("reg_feats_non_core_$cell_line", "$evidence_info->{'non_core'}{'name'}$label", {
+      $evidence_tracks{'non_core'} = $prev_track = $non_core_menu->append($self->create_track("reg_feats_non_core_$cell_line", "$evidence_info->{'non_core'}{'name'}$label", {
         %options,
         set         => 'non_core',
         subset      => 'regulatory_features_non_core',
@@ -2653,6 +2699,35 @@ sub add_regulation_builds {
         label       => "$evidence_info->{'non_core'}{'label'} $label",
         track_after => $prev_track,
       }));
+    }
+    
+    foreach my $set (keys %evidence_tracks) {
+      if (!$feature_types_by_class{$set}) {
+        my @matrix_rows;
+        
+        foreach my $class (@{$evidence_info->{$set}{'classes'}}) {
+          my $feature_types = $adaptor->fetch_all_by_class($class);
+          my @rows;
+          
+          foreach (@$feature_types) {
+            $feature_types_by_class{$set}{$_->dbID} = 1;
+            push @rows, { id => $_->name, class => $_->class };
+          }
+          
+          push @matrix_rows, sort { lc $a->{'id'} cmp lc $b->{'id'} } @rows;
+        }
+        
+        ($set eq 'core' ? $core_menu : $non_core_menu)->data->{'matrix_rows'} = \@matrix_rows;
+      }
+      
+      foreach (sort grep $feature_types_by_class{$set}{$_}, @ftypes) {
+        $evidence_tracks{$set}->append($self->create_track("regulatory_features_${set}_${cell_line}_$evidence_features{$_}", $evidence_features{$_}, {
+          node_type => 'option',
+          menu      => 'no',
+          display   => $default_evidence_types{$evidence_features{$_}} || 'off',
+          renderers => [qw(on on off off)],
+        }));
+      }
     }
   }
   
