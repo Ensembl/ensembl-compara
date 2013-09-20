@@ -6,168 +6,70 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-
 use base qw(EnsEMBL::Web::ViewConfig);
 
 # TODO: Support other datahub dimensions as filters?
 
-sub matrix_image_config :lvalue { $_[0]->{'matrix_image_config'}; }
+sub matrix_image_config :lvalue { $_[0]{'matrix_image_config'}; }
+sub menu                :lvalue { $_[0]{'menu'};                }
+sub set                 :lvalue { $_[0]{'set'};                 }
+sub matrix_config               { return {};                    } # Implement in children
 
 sub init {
-  my $self = shift;
-  my $defaults;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $code        = join '::', $hub->type, $hub->param('config');
+  my $module_name = "EnsEMBL::Web::ViewConfig::$code";
+  my $view_config = $module_name->new($self->type, $self->component, $hub) if $self->dynamic_use($module_name);
   
-  while (my ($menu, $conf_set) = each %{$self->{'matrix_config'}}) {
-    while (my ($set, $conf) = each %$conf_set) {
-      foreach my $x (keys %{$conf->{'features'}}) {
-        $defaults->{"opt_matrix_${menu}_${set}_$x:$_"} = [ "$x - $_", $conf->{'defaults'}{$x}{$_} eq 'on' ? 'on' : 'off' ] for keys %{$conf->{'features'}{$x}};
-      }
-    }
-  }
-  
-  $self->set_defaults($defaults);
+  $self->{$_}                = $view_config->{$_} for keys %$view_config;
+  $self->code                = $code;
+  $self->menu                = $hub->param('menu');
+  $self->set                 = $hub->param('set') || $self->menu;
+  $self->matrix_image_config = $hub->get_imageconfig($self->image_config);
+  $self->image_config        = $self->has_images = undef unless $hub->param('submit') || $hub->param('reset');
 }
 
 sub form {
-  my $self = shift;
-  
-  if ($self->hub->function eq 'Matrix') {
-    $self->form_matrix;
-  } else {
-    my $func = $self->{'form_func'};
-    
-    $self->$func if $func && $self->can($func);
-    
-    foreach my $menu (sort keys %{$self->{'matrix_config'}}) {
-      $self->add_fieldset("${menu}_$_", 'empty', 1) for sort keys %{$self->{'matrix_config'}{$menu}};
-    }
-  }
-}
-
-sub add_image_config {
-  my $self = shift;
-  $self->set_columns(@_);
-  $self->SUPER::add_image_config(@_) if $self->hub->function ne 'Matrix';
-}
-
-sub reset {
-  my $self = shift;
-  
-  foreach (map values %$_, values %{$self->{'matrix_config'}}) {
-    $_->{'columns'}  = [];
-    $_->{'features'} = {};
-  }
-  
-  $self->SUPER::reset(@_);
-  $self->set_columns(@_);
-}
-
-sub set_columns {
-  my ($self, $image_config) = @_;
-  
-  $self->matrix_image_config = ref $image_config ? $image_config : $self->hub->get_imageconfig($image_config);
-  
-  my $tree = $self->matrix_image_config->tree;
-  
-  foreach my $node (grep $_->data->{'label_x'}, $tree->nodes) {
-    my $data      = $node->data;
-    my $set       = $data->{'set'};
-    my $label_x   = $data->{'label_x'};
-    my $menu      = $tree->clean_id($data->{'menu_key'});
-    my $renderers = $node->get('renderers');
-    my %renderers = @$renderers;
-    my $conf      = $self->{'matrix_config'}{$menu}{$set} ||= {
-      menu         => $set,
-      track_prefix => $menu,
-      section      => $tree->get_node($menu)->get('caption'),
-      header       => $data->{'header'},
-      description  => $data->{'info'},
-      axes         => $data->{'axes'},
-    };
-    
-    push @{$conf->{'columns'}}, { name => $tree->clean_id(join '_', $conf->{'track_prefix'}, $set, $label_x), x => $label_x, display => $node->get('display'), renderers => $renderers };
-    push @{$conf->{'features'}{$label_x}{$_}}, @{$data->{'features'}{$_}} for keys %{$data->{'features'}};
-    $conf->{'renderers'}{$_}++ for keys %renderers;
-  }
-}
-
-sub matrix_data {
-  my ($self, $menu, $set) = @_;
-  my %data = map { lc $_ => $_ } map keys %$_, values %{$self->{'matrix_config'}{$menu}{$set}{'features'}};
-  return map { id => $data{$_} }, sort keys %data;
-}
-
-sub build_imageconfig_form {
-  my $self         = shift;
-  my $image_config = shift;
-  my $hub          = $self->hub;
-  my $tree         = $self->tree;
-  my %counts;
-  
-  $self->SUPER::build_imageconfig_form($image_config);
-  
-  while (my ($menu, $conf_set) = each %{$self->{'matrix_config'}}) {
-    while (my ($set, $conf) = each %$conf_set) {
-      my $node = $tree->get_node($conf->{'menu'});
-      
-      next unless $node;
-      
-      my ($total, $on);
-      
-      foreach (grep ref, map values %$_, values %{$conf->{'features'}}) {
-        foreach (@$_) {
-          $total++;
-          
-          if ($self->get($_->{'option_key'}) eq 'on') {
-            my $d = $image_config->get_node($_->{'name'})->get('display');
-            $on++ if $d ne 'off' || ($d eq 'default' && $image_config->get_node($_->{'column_key'})->get('display') ne 'off');
-          }
-        }
-      }
-      
-      $counts{$set} = {
-        node  => $node,
-        #total => $total || scalar @{$conf->{'columns'}}, # FIXME: get counts working properly in JS
-        total => $total ? 0 : scalar @{$conf->{'columns'}},
-        on    => $total ? $on : scalar grep $_->{'display'} ne 'off', @{$conf->{'columns'}}
-      };
-      
-      if ($total) {
-        my $parent = $node->parent_key;
-        $counts{$parent}{'node'} ||= $node->parent_node;
-        $counts{$parent}{'total'} = 0; # FIXME: get counts working properly in JS
-        #$counts{$parent}{'total'} += $total;
-        #$counts{$parent}{'on'}    += $on;
-      }
-      
-      my $menu_data = {
-        url          => $hub->url('Config', { function => 'Matrix', partial => 1, set => $set, menu => $menu }),
-        class        => "${menu}_$set",
-        availability => 1,
-      };
-      
-      $node->set($_, $menu_data->{$_}) for keys %$menu_data;
-    }
-  }
-  
-  #$_->{'node'}->set('count', sprintf '(<span class="on">%s</span>/%s)', $_->{'on'} || 0, $_->{'total'}) for values %counts; # FIXME: get counts working properly in JS
-  $_->{'node'}->set('count', $_->{'total'} ? sprintf '(<span class="on">%s</span>/%s)', $_->{'on'} || 0, $_->{'total'} : '') for values %counts;
-}
-
-sub form_matrix {
-  my $self          = shift;
+  my $self          = shift;warn $self;
   my $hub           = $self->hub;
-  my $set           = $hub->param('set');
-  my $menu          = $hub->param('menu');
+  my $set           = $self->set;
+  my $menu          = join '_', $self->menu, $set eq $self->menu ? () : $set;
+  my $img_url       = $self->img_url;
+  my $conf          = $self->matrix_config;
   my $image_config  = $self->matrix_image_config;
   my $user_settings = $image_config->get_user_settings;
-  my $img_url       = $self->img_url;
-  my $conf          = $self->{'matrix_config'}{$menu}{$set};
-  my @columns       = @{$conf->{'columns'}};
-  my $width         = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
+  my $tree          = $image_config->tree;
+  my $menu_node     = $tree->get_node($menu);
+  my $matrix_rows   = $menu_node->data->{'matrix_rows'};
   my %filters       = ( '' => 'All classes' );
-  my (@rows, $rows_html, @headers_html, $last_class, %gaps, $track_style_header);
+  my (@columns, %renderer_counts, %cells, %features);
+  
+  foreach (@{$menu_node->child_nodes}) {
+    my $x = $_->data->{'label_x'};
+    
+    if ($x) {
+      my $renderers     = $_->data->{'renderers'};
+      my %renderer_hash = @$renderers;
+      
+      push @columns, {
+        name      => $_->id,
+        display   => $_->get('display'),
+        x         => $x,
+        renderers => $renderers,
+      };
+      
+      $cells{$x} = { map { $_->data->{'caption'} => $_ } $_->nodes }; # FIXME: datahubs can have arrays in cells{x}{name}
+      $renderer_counts{$_}++ for keys %renderer_hash;
+    } else {
+      push @{$features{$_->data->{'option_key'}}}, $_;
+    }
+  }
+  
+  %renderer_counts = reverse %renderer_counts;
+  
+  my $width = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
+  my (@rows, $rows_html, @headers_html, $last_class, %gaps, $track_style_header, $k, $v, $renderer_html);
   
   $self->{'panel_type'} = 'ConfigMatrix';
   
@@ -196,19 +98,16 @@ sub form_matrix {
     '</ul>'
   );
   
-  my %counts = reverse %{$conf->{'renderers'}};
-  my ($k, $v, $renderer_html);
-  
-  if (scalar keys %counts != 1) {
+  if (scalar keys %renderer_counts != 1) {
     $renderer_html .= sprintf $renderer_template[1], @$_ for [ 'off', 'Off' ], [ 'all_on', 'On' ];
   } else {
-    my $renderers = $self->deepcopy($conf->{'columns'}[0]{'renderers'});
-    $renderer_html .= sprintf $renderer_template[1], $k, $v, while ($k, $v) = splice @$renderers, 0, 2;
+    my $renderers      = $self->deepcopy($columns[0]{'renderers'});
+       $renderer_html .= sprintf $renderer_template[1], $k, $v, while ($k, $v) = splice @$renderers, 0, 2;
   }
   
   $headers_html[1] = "$renderer_template[0]$renderer_html$renderer_template[2]";
   
-  foreach ($self->matrix_data($menu, $set)) {
+  foreach (@$matrix_rows) {
     my $id       = $_->{'id'};
     my $y        = $_->{'y'} || $id;
     my $class    = $_->{'class'};
@@ -230,45 +129,49 @@ sub form_matrix {
       my $cell         = { tag => 'td' };
       my $col_renderer = $_->{'display'};
       
-      if (exists $conf->{'features'}{$x}{$id}) {
-        my $on = $self->get("opt_matrix_${menu}_${set}_$x:$id") eq 'on';
+      if (exists $cells{$x}{$id}) {
+        my $node          = $cells{$x}{$id};
+        my $node_id       = $node->id;
+        my $cell_features = exists $features{$node_id} && ref $features{$node_id} eq 'ARRAY' ? $features{$node_id} : undef;
         
         $cell->{'title'}  = "$x:$y";
         $cell->{'class'}  = "opt $x_class $y_class";
-        $cell->{'class'} .= ' on'      if $on;
-        $cell->{'class'} .= ' default' if $self->{'options'}{"opt_matrix_${menu}_${set}_$x:$id"}{'default'} eq 'on';
+        $cell->{'class'} .= ' on'      if $node->get('display')    eq 'on';
+        $cell->{'class'} .= ' default' if $node->data->{'display'} eq 'on';
         
-        if (ref $conf->{'features'}{$x}{$id} eq 'ARRAY') {
+        if ($cell_features) {
           # TODO: renderers. Currently assuming that subtrack renderers match parent renderers.
           my @renderers = @{$self->deepcopy($_->{'renderers'})};
-          my $total     = scalar @{$conf->{'features'}{$x}{$id}};
+          my $total     = scalar @$cell_features;
           my $on        = 0;
           my ($subtracks, $select_all);
           
           unshift @renderers, 'default', 'Default';
           
-          foreach my $feature (@{$conf->{'features'}{$x}{$id}}) {
-            my $display  = $user_settings->{$feature->{'name'}}{'display'} || 'default';
-            my $renderer = $user_settings->{$feature->{'name'}}{'display'} || $col_renderer;
-            my $li_class = $renderer eq 'off' ? '' : ' on';
+          foreach my $feature (@$cell_features) {
+            my $feature_id = $feature->id;
+            my $display    = $user_settings->{$feature_id}{'display'} || 'default';
+            my $renderer   = $user_settings->{$feature_id}{'display'} || $col_renderer;
+            my $li_class   = $renderer eq 'off' ? '' : ' on';
             my $popup_menu;
             
             for (my $i = 0; $i < scalar @renderers; $i += 2) {
-              $popup_menu .= sprintf $renderer_template[1], $renderers[$i], ($renderers[$i] eq 'default' ? qq{<div class="$col_renderer"></div>} : '') . $renderers[$i+1];
+              $popup_menu .= sprintf $renderer_template[1], $renderers[$i], ($renderers[$i] eq 'default' ? qq{<div class="$col_renderer"></div>} : '') . $renderers[$i + 1];
             }
             
             $subtracks .= sprintf(
-              qq{<li id="$feature->{'name'}" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]$feature->{'source_name'}</li>},
-              $display eq 'default' ? qq{<div class="$col_renderer"></div>} : ''
+              qq{<li id="$feature_id" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]%s</li>},
+              $display eq 'default' ? qq{<div class="$col_renderer"></div>} : '',
+              $feature->data->{'source_name'}
             );
             
             $on++ if $renderer ne 'off';
             $select_all ||= "$renderer_template[0]$popup_menu$renderer_template[2]";
             
             $self->{'json'}{'defaultRenderers'}{"$x:$id"}++ if $display eq 'default';
-            push @{$self->{'json'}{'trackIds'}}, $feature->{'name'};
+            push @{$self->{'json'}{'trackIds'}}, $feature_id;
             push @{$self->{'json'}{'tracks'}}, {
-              id       => $feature->{'name'},
+              id       => $feature_id,
               renderer => $display,
             };
           }
@@ -437,7 +340,7 @@ sub form_matrix {
     @headers_html
   );
   
-  $self->get_form->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix', id => "${menu}_$set" });
+  $self->get_form->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix', id => $menu });
 }
 
 1;
