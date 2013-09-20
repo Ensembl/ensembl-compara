@@ -18,7 +18,7 @@ sub content {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context); 
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $evidence_data = $object->get_evidence_data($object_slice, 1);
+  my $evidence_data = $object->get_evidence_data($object_slice);
   
   return '<p>There is no evidence for this regulatory feature </p>' unless scalar keys %$evidence_data;
 
