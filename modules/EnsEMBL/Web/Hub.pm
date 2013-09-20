@@ -613,7 +613,8 @@ sub get_viewconfig {
   my $view_config = $session->view_configs->{$cache_code};
   
   if (!$view_config) {
-    my $module_name = $self->get_module_names('ViewConfig', $type, $component);
+    my $module_name = $self->get_module_names('ViewConfig', $component eq 'Matrix' ? $self->function : $type, $component);
+    
     return unless $module_name;
     
     $view_config = $module_name->new($type, $component, $self);
