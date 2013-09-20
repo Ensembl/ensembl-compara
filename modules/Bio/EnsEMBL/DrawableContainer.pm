@@ -106,7 +106,7 @@ sub new {
         
         my $option_key = $row_config->get('option_key');
         
-        next if $option_key && $config->hub->param($option_key) ne 'on';
+        next if $option_key && $config->get_node($option_key)->get('display') ne 'on';
         
         my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
         
