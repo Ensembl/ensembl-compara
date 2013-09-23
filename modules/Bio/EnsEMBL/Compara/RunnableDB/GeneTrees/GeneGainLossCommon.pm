@@ -63,9 +63,9 @@ sub get_tree_string_from_mlss_tag {
 
 sub get_cafe_tree_from_string {
     my ($self) = @_;
-    my $cafe_tree_string = $self->param('cafe_tree_string');
+    my $cafe_tree_string = $self->param('species_tree_string');
     print STDERR "$cafe_tree_string\n" if ($self->debug());
-    my $cafe_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($cafe_tree_string);
+    my $cafe_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($cafe_tree_string, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
     $self->param('cafe_tree', $cafe_tree);
     return;
 }
