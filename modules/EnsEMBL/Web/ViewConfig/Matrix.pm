@@ -160,8 +160,7 @@ sub form {
             }
             
             $subtracks .= sprintf(
-              qq{<li id="$feature_id" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]%s</li>},
-              $display eq 'default' ? qq{<div class="$col_renderer"></div>} : '',
+              qq{<li id="$feature_id" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]<div class="$col_renderer"></div></li>},
               $feature->data->{'source_name'}
             );
             
