@@ -30,7 +30,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree;
 
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
+use Bio::EnsEMBL::Compara::SpeciesTree;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -46,13 +47,16 @@ sub fetch_input {
 
     return if($self->param('species_tree_string'));     # skip the functionality if the tree has been provided
 
+    my $species_tree_root;
     my $species_tree_string;
 
     if(my $species_tree_input_file = $self->param('species_tree_input_file')) {     # load the tree given from a file
         die "The file '$species_tree_input_file' cannot be open for reading" unless(-r $species_tree_input_file);
 
         $species_tree_string = `cat $species_tree_input_file`;
-        chomp $species_tree_string;
+#        chomp $species_tree_string;
+
+        $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $species_tree_string );
 
     } else {    # generate the tree from the database+params
 
@@ -66,34 +70,43 @@ sub fetch_input {
             }
         }
 
-        my $species_tree;
         if(my $blength_tree_file = $self->param('blength_tree_file')) {     # defines the mode
 
-            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file` );
-            $species_tree  = $self->compara_dba()->get_SpeciesTreeAdaptor()->prune_tree( $blength_tree );
+#            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
+            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`);
+            $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->prune_tree( $blength_tree, $self->compara_dba );
 
         } else {
-
-            $species_tree = $self->compara_dba()->get_SpeciesTreeAdaptor()->create_species_tree( @tree_creation_args );
+            $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree ( -compara_dba => $self->compara_dba, @tree_creation_args );
         }
-        
+
         my $newick_format   = $self->param('newick_format');
-        $species_tree_string = $species_tree->newick_format( $newick_format );
+        $species_tree_string = $species_tree_root->newick_format( $newick_format );
+
     }
 
-    $self->param('species_tree_string', $species_tree_string);
+#    my $speciesTreeNode_adaptor = $self->compara_dba->get_SpeciesTreeNodeAdaptor();
+#    $species_tree_root->adaptor($speciesTreeNode_adaptor);
+
+    my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
+    $species_tree->species_tree($species_tree_string);
+    $species_tree->method_link_species_set_id($self->param('mlss_id'));
+    $species_tree->root($species_tree_root);
+
+    my $label = $self->param('label') || 'default';
+    $species_tree->label($label);
+
+    my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
+    $speciesTree_adaptor->store($species_tree);
+
+#    $self->param('species_tree_string', $species_tree_string);
 }
 
 
 sub write_output {
     my $self = shift @_;
-
-    my $species_tree_string = $self->param('species_tree_string');
-    $species_tree_string=~s/:0;/;/;
-    my $output_branch = $self->param('blength_tree_file') ? 4 : 3;
-
-    $self->dataflow_output_id( { 'species_tree_string'   => $species_tree_string }, $output_branch);
 }
+
 
 1;
 
