@@ -891,7 +891,6 @@ sub _add_datahub_tracks {
     my $data = $self->get_node($options{'submenu_key'})->data;
     
     $data->{'matrix_rows'} = [ map { id => $_ }, sort keys %rows ];
-    $data->{'no_count'}    = 1;
   }
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
@@ -1006,7 +1005,7 @@ sub load_file_format {
       my $submenu_key  = $source->{'submenu_key'};
       my $submenu_name = $source->{'submenu_name'};
       my $options      = { external => 1, datahub_menu => !!$source->{'datahub'}, url_code => $source->{'url_code'} };
-      my $main_menu    = $self->get_node($menu_key) || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name, $options));
+      my $main_menu    = $self->get_node($menu_key) || $self->tree->append_child($self->create_submenu($menu_key, $menu_name, $options));
          $menu         = $self->get_node($submenu_key);
       
       if (!$menu) {
