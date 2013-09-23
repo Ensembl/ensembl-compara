@@ -19,9 +19,10 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     this.base(id, params);
     
     Ensembl.EventManager.remove(id); // Get rid of all the Configurator events which we don't care about
-    Ensembl.EventManager.register('mouseUp',             this, this.dragStop);
-    Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
-    Ensembl.EventManager.register('modalPanelResize',    this, this.setScrollerSize);
+    Ensembl.EventManager.register('mouseUp',              this, this.dragStop);
+    Ensembl.EventManager.register('updateConfiguration',  this, this.updateConfiguration);
+    Ensembl.EventManager.register('changeColumnRenderer', this, this.changeColumnRenderer);
+    Ensembl.EventManager.register('modalPanelResize',     this, this.setScrollerSize);
   },
   
   init: function () {
@@ -50,18 +51,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     this.elLk.popup         = $();
     this.elLk.subtracks     = $();
     this.elLk.hiddenCells   = $();
-    this.elLk.tracks        = this.elLk.configMenus.not('.select_all').each(function () {
-      var track = panel.tracks[this.id];
-      
-      panel.imageConfig[this.id] = { renderer: track.renderer };
-      $.extend(track, { el: $(this), linkedEls: panel.params.parentTracks[this.id].el });
-      $(this).data('track', track);
-      
-      if (track.renderer !== panel.params.parentTracks[this.id].renderer) {
-        $(this).removeClass(track.renderer).addClass(panel.params.parentTracks[this.id].renderer);
-        track.renderer = panel.params.parentTracks[this.id].renderer;
-      }
-    }).removeAttr('id');
     
     this.elLk.tableWrapper.data('maxWidth', this.elLk.tableWrapper[0].style.width).width('auto');
     
@@ -99,6 +88,18 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       
       el = null;
     });
+    
+    this.elLk.tracks = this.elLk.configMenus.not('.select_all').each(function () {
+      var track = panel.tracks[this.id];
+      
+      panel.imageConfig[this.id] = { renderer: track.renderer };
+      $.extend(track, { el: $(this), linkedEls: panel.params.parentTracks[this.id].el });
+      $(this).data('track', track);
+      
+      if (track.renderer !== panel.params.parentTracks[this.id].renderer) {
+        panel.changeColumnRenderer($(this), panel.params.parentTracks[this.id].renderer);
+      }
+    }).removeAttr('id');
     
     this.setEventHandlers();
     this.tutorial();
@@ -241,7 +242,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     });
     
     this.elLk.configMenus.filter('.select_all').children('.popup_menu').children('li:not(.header)').on('click', function () {
-      panel.changeTrackRenderer($(this).parent().hide().parent().siblings().filter(function () { return this.style.display !== 'none'; }), this.className, true);
+      panel.changeColumnRenderer($(this).parent().hide().parent().siblings().filter(function () { return this.style.display !== 'none'; }), this.className);
       return false;
     });
     
@@ -320,7 +321,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     var target = $(e.target);
     
     if (!target.is('.header') && !target.filter('.close').parents('.popup_menu').hide().length) {
-      this.changeTrackRenderer(target.parent().hide().parent(), target[0].className, true);
+      this.changeColumnRenderer(target.parent().hide().parent(), target[0].className);
     }
     
     target = null;
@@ -341,6 +342,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     var colTrack  = popup.data('colTrack');
     var isDefault = e.currentTarget.className === 'default';
     var className = e.target.className;
+    var track, id, subTracks;
     
     if (isDefault) {
       e.target = e.currentTarget; // target is the div inside the li, rather than the li itself - base function needs the target to be the li
@@ -363,6 +365,22 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     target = popup = cell = null;
     
     return false;
+  },
+  
+  changeColumnRenderer: function (tracks, renderer, fromMainPanel) {
+    var panel = this;
+    
+    if (fromMainPanel) {
+      tracks = $($.map(tracks, function (id) { return panel.tracks[id] ? panel.tracks[id].el[0] : undefined; }));
+    }
+    
+    if (tracks.length) {
+      this.changeTrackRenderer(tracks, renderer, true);
+    }
+    
+    tracks = null;
+    
+    return true;
   },
   
   changeTrackRenderer: function (tracks, renderer, isColumn) {
@@ -398,7 +416,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
   },
   
   // FIXME: often called multiple times for one operation
-  // FIXME: set counts correctly when changing renderer in main panel
   updateLinkCount: function () {
     var on   = 0;
     var link = this.elLk.links.last();
@@ -411,6 +428,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     }
     
     link.html(on);
+    
     this.elLk.links.first().html(function (i, html) { return parseInt(html, 10) + (on - old); });
     
     link = null;
