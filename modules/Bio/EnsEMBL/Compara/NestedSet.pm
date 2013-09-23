@@ -44,6 +44,39 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 # Factory methods
 #################################################
 
+=head2 cast
+
+  Arg1          : class (string)
+  Description   : Creates a copy of tree casting the nodes to a given class
+  Example       : my $sp_tree = $tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
+  ReturnType    : An object of the specified class
+  Exceptions    : none
+  Caller        : general
+
+=cut
+
+## If this subroutine works we should merge it with copy
+sub cast {
+    my ($self, $class) = @_;
+
+    eval "require $class";
+
+    my $copy = $self->SUPER::copy;
+    bless $copy, $class;
+
+    $copy->node_id($self->node_id) if ($copy->can('node_id'));
+    $copy->distance_to_parent($self->distance_to_parent);
+    $copy->left_index($self->left_index);
+    $copy->right_index($self->right_index);
+    $copy->{_children_loaded} = $self->{_children_loaded};
+
+    for my $child (@{$self->children}) {
+        $copy->add_child($child->cast($class));
+    }
+
+    return $copy;
+}
+
 =head2 copy
 
   Overview   : creates copy of tree starting at this node going down
@@ -56,7 +89,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
 sub copy {
   my $self = shift;
-  
+
   my $mycopy = $self->SUPER::copy; 
   bless $mycopy, ref $self;
 
@@ -64,7 +97,7 @@ sub copy {
   $mycopy->left_index($self->left_index);
   $mycopy->right_index($self->right_index);
 
-  foreach my $child (@{$self->children}) {  
+  foreach my $child (@{$self->children}) {
     $mycopy->add_child($child->copy);
   }
   return $mycopy;
@@ -143,7 +176,7 @@ sub add_child {
   #create_link_to_node is a safe method which checks if connection exists
   my $link = $self->create_link_to_node($child);
   $child->_set_parent_link($link);
-  $self->{'_children_loaded'} = 1; 
+  $self->{'_children_loaded'} = 1;
   $link->distance_between($dist);
   return $link;
 }
@@ -299,6 +332,7 @@ sub children {
   foreach my $link (@{$self->links}) {
     next unless(defined($link));
     my $neighbor = $link->get_neighbor($self);
+    throw("Not neighbor found\n") unless (defined $neighbor);
     my $parent_link = $neighbor->parent_link;
     next unless($parent_link);
     next unless($parent_link eq $link);
