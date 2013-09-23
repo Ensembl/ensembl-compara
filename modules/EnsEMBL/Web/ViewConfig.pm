@@ -422,7 +422,7 @@ sub build_imageconfig_form {
   
   if ($extra_menus->{'track_order'}) {
     $tree->append($tree->create_node('track_order', { caption => 'Track order', class => 'track_order', %node_options, rel => undef }));
-    $self->{'json'}{'order'} = { map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => $_->get('order') } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
+    $self->{'json'}{'order'} = { map { join('.', grep $_, $_->id, $_->data->{'drawing_strand'}) => $_->data->{'order'} } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
   }
   
   $tree->append($tree->create_node('search_results', { caption => 'Search results', class => 'search_results disabled', %node_options })) if $extra_menus->{'search_results'};
@@ -435,10 +435,10 @@ sub build_imageconfig_form {
   # move all the tracks in that 3rd level menu up to the 2nd level, and delete the 3rd level.
   # This avoids a bug where the 2nd level menu has an h3 header, and no enable/disable all, and the enable/disable all for the 3rd level is printed in the wrong place.
   # An example of this would be in a species with one type of variation set subset
-  foreach my $node (grep $_->get('node_type') eq 'menu', $image_config->tree->nodes) {
-    my @child_menus = grep $_->get('node_type') eq 'menu', @{$node->child_nodes};
+  foreach my $node (grep $_->data->{'node_type'} eq 'menu', $image_config->tree->nodes) {
+    my @child_menus = grep $_->data->{'node_type'} eq 'menu', @{$node->child_nodes};
     
-    if (scalar @child_menus == 1 && scalar @{$node->child_nodes} == 1 && scalar(grep !$_->get('external'), @child_menus) == 1) {
+    if (scalar @child_menus == 1 && scalar @{$node->child_nodes} == 1 && scalar(grep !$_->data->{'external'}, @child_menus) == 1) {
       $child_menus[0]->before($_) for @{$child_menus[0]->child_nodes};
       $child_menus[0]->remove;
     }
@@ -451,10 +451,10 @@ sub build_imageconfig_form {
     
     next if $section eq 'track_order';
     
-    my $caption = $node->get('caption');
-    my $class   = $node->get('datahub_menu') || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
+    my $data    = $node->data;
+    my $caption = $data->{'caption'};
+    my $class   = $data->{'datahub_menu'} || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
     my $div     = $form->append_child('div', { class => "config $section $class" });
-    my $no_count;
     
     $div->append_child('h2', { class => 'config_header', inner_HTML => $caption });
     
@@ -469,7 +469,7 @@ sub build_imageconfig_form {
       my @child_nodes = @{$node->child_nodes};
       
       # If all children are menus
-      if (scalar @child_nodes && !grep $_->get('node_type') ne 'menu', @child_nodes) {
+      if (scalar @child_nodes && !grep $_->data->{'node_type'} ne 'menu', @child_nodes) {
         my $first = 'first ';
         
         foreach (@child_nodes) {
@@ -479,23 +479,19 @@ sub build_imageconfig_form {
           
           $first = '';
           
-          next if scalar @child_nodes == 1 && !$node->get('datahub_menu');
+          next if scalar @child_nodes == 1 && !$data->{'datahub_menu'};
           
-          my $url = $_->get('url');
+          my $url = $_->data->{'url'};
           my ($total, $on);
           
-          if ($_->get('no_count')) {
-            $no_count = 1;
-          } else {
-            my @child_ids = map $_->id, grep { $_->get('node_type') eq 'track' && $_->get('menu') ne 'hidden' } $_->nodes;
-               $total     = scalar @child_ids;
-               $on        = 0;
-               $on       += $self->{'enabled_tracks'}{$_} for @child_ids;
-          }
+          my @child_ids = map $_->id, grep { $_->data->{'node_type'} eq 'track' && $_->data->{'menu'} ne 'hidden' && $_->data->{'datahub'} ne 'column' } $_->nodes;
+             $total     = scalar @child_ids;
+             $on        = 0;
+             $on       += $self->{'enabled_tracks'}{$_} for @child_ids;
           
           # Add submenu entries to the navigation tree
           $parent_menu->append($tree->get_node($id) || $tree->create_node($id, {
-            caption      => $_->get('caption'),
+            caption      => $_->data->{'caption'},
             class        => $url ? $id : $parent_menu->id . "-$id",
             url          => $url || '#',
             count        => $total ? qq{(<span class="on">$on</span>/$total)} : '',
@@ -515,7 +511,7 @@ sub build_imageconfig_form {
     my $on    = $self->{'enabled_tracks'}{$section} || 0;
     my $total = $self->{'total_tracks'}{$section}   || 0;
     
-    $parent_menu->set('count', qq{(<span class="on">$on</span>/$total)}) if $total && !$no_count;
+    $parent_menu->set('count', qq{(<span class="on">$on</span>/$total)}) if $total;
     $parent_menu->set('availability', $total > 0);
   }
   
@@ -536,16 +532,37 @@ sub build_imageconfig_form {
 
 sub build_imageconfig_menus {
   my ($self, $node, $parent, $menu_class, $submenu_class) = @_;
+  my $data      = $node->data;
+  my $menu_type = $data->{'menu'};
+  my $id        = $node->id;
   
-  my $menu_type = $node->get('menu');
+  if ($menu_type eq 'datahub_subtrack') {
+    my $display = $node->get('display');
+    
+    if (
+      $node->get_node($data->{'option_key'})->get('display') eq 'on' &&                           # The cell option is turned on AND
+      $display ne 'off' &&                                                                        # The track is not turned off AND
+      !($display eq 'default' && $node->get_node($data->{'column_key'})->get('display') eq 'off') # The track renderer is not default while the column renderer is off
+    ) {
+      $self->{'enabled_tracks'}{$menu_class}++;
+      $self->{'enabled_tracks'}{$id} = 1;
+      
+      push @{$self->{'json'}{'subTracks'}{$data->{'column_key'}}}, $id if $display eq 'default'; # use an array of tracks rather than a hash so that gzip can compress the json mmore effectively.
+    } else {
+      $self->{'json'}{'subTracks'}{$data->{'column_key'}} ||= []; # Force subTracks entries to exist
+    }
+    
+    $self->{'total_tracks'}{$menu_class}++;
+    
+    return;
+  }
   
-  return if $menu_type =~ /^(no|datahub_subtrack)$/;
+  return if $menu_type eq 'no';
   
-  my $id       = $node->id;
-  my $external = $node->get('external');
+  my $external = $data->{'external'};
   
-  if ($node->get('node_type') eq 'menu') {
-    my $caption = $node->get('caption');
+  if ($data->{'node_type'} eq 'menu') {
+    my $caption = $data->{'caption'};
     my $element;
     
     if ($parent->node_name eq 'ul') {
@@ -557,7 +574,7 @@ sub build_imageconfig_menus {
     }
     
     # If the children are all non external menus, add another wrapping div so there can be distinct groups in a submenu, with unlinked enable/disable all controls
-    if (!scalar(grep $_->get('node_type') ne 'menu', @{$node->child_nodes}) && scalar(grep !$_->get('external'), @{$node->child_nodes})) {
+    if (!scalar(grep $_->data->{'node_type'} ne 'menu', @{$node->child_nodes}) && scalar(grep !$_->data->{'external'}, @{$node->child_nodes})) {
       $element = $parent->append_child('div', { class => $menu_type eq 'hidden' ? ' hidden' : '' });
     } else {
       $element = $parent->append_child('ul', { class => "config_menu $menu_class" . ($menu_type eq 'hidden' ? ' hidden' : '') });
@@ -567,14 +584,14 @@ sub build_imageconfig_menus {
     $self->add_select_all($node, $element, $id) if $element->node_name eq 'ul';
   } else {
     my $img_url     = $self->img_url;
-    my @states      = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'On' ]};
+    my @states      = @{$data->{'renderers'} || [ 'off', 'Off', 'normal', 'On' ]};
     my %valid       = @states;
     my $display     = $node->get('display') || 'off';
        $display     = $valid{'normal'} ? 'normal' : $states[2] unless $valid{$display};
-    my $desc        = $node->get('description');
-    my $controls    = $node->get('controls');
-    my $subset      = $node->get('subset');
-    my $name        = encode_entities($node->get('name'));
+    my $desc        = $data->{'description'};
+    my $controls    = $data->{'controls'};
+    my $subset      = $data->{'subset'};
+    my $name        = encode_entities($data->{'name'});
     my @classes     = ('track', $external ? 'external' : '', lc $external);
     my $menu_header = scalar @states > 4 ? qq{<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>} : '';
     my ($selected, $menu, $help);
@@ -595,13 +612,14 @@ sub build_imageconfig_menus {
     
     $menu .= sprintf '<li class="setting subset subset_%s"><a href="#">Configure track options</a></li>', $subset, $img_url if $subset;
     
-    if ($display ne 'off') {
-      $self->{'enabled_tracks'}{$menu_class}++;
-      $self->{'enabled_tracks'}{$id} = 1;
-      push @classes, 'on';
+    if ($data->{'datahub'} ne 'column') {
+      if ($display ne 'off') {
+        $self->{'enabled_tracks'}{$menu_class}++;
+        $self->{'enabled_tracks'}{$id} = 1;
+      }
+      
+      $self->{'total_tracks'}{$menu_class}++;
     }
-    
-    $self->{'total_tracks'}{$menu_class}++;
     
     if ($desc) {
       $desc = qq{<div class="desc">$desc</div>};
@@ -610,6 +628,7 @@ sub build_imageconfig_menus {
       $help = qq{<div class="empty"></div>};
     }
     
+    push @classes, 'on'             if $display ne 'off';
     push @classes, 'fav'            if $self->{'favourite_tracks'}{$id};
     push @classes, 'hidden'         if $menu_type eq 'hidden';
     push @classes, "subset_$subset" if $subset;
@@ -655,15 +674,16 @@ sub build_imageconfig_menus {
 
 sub add_select_all {
   my ($self, $node, $menu, $id) = @_;
+  my $data = $node->data;
   
-  return if $node->get('menu') eq 'hidden';
+  return if $data->{'menu'} eq 'hidden';
   
   my $parent            = $node->parent_node;
-  my $single_menu       = !$parent->get('node_type') || scalar @{$parent->child_nodes} == 1; # If there are 0 or 1 submenus
+  my $single_menu       = !$parent->data->{'node_type'} || scalar @{$parent->child_nodes} == 1; # If there are 0 or 1 submenus
   my @child_nodes       = @{$node->child_nodes};
-  my $external_children = scalar grep $_->get('external'), @child_nodes;
-  my $external          = $node->get('external');
-  my $caption           = $node->get('caption');
+  my $external_children = scalar grep $_->data->{'external'}, @child_nodes;
+  my $external          = $data->{'external'};
+  my $caption           = $data->{'caption'};
   
   # Don't add a select all if there is only one child
   if (scalar @child_nodes == 1) {
@@ -673,7 +693,7 @@ sub add_select_all {
     return;
   }
   
-  my $child_tracks = scalar grep $_->get('node_type') ne 'menu', @child_nodes;
+  my $child_tracks = scalar grep $_->data->{'node_type'} ne 'menu', @child_nodes;
   
   # Add a select all if there is more than one non menu child (node_type can be track or option), or if there is one child track and some non external menus
   if ($child_tracks > 1 || $child_tracks == 1 && scalar(@child_nodes) - $external_children > 1) {
@@ -681,7 +701,7 @@ sub add_select_all {
     my %counts  = reverse %{$self->{'track_renderers'}{$id}};
     my $popup;
     
-    $caption = $external ? $parent->get('caption') : 'tracks' if $single_menu;
+    $caption = $external ? $parent->data->{'caption'} : 'tracks' if $single_menu;
     
     if (scalar keys %counts != 1) {
       $popup .= qq{<li class="$_->[0]">$_->[1]</li>} for [ 'off', 'Off' ], [ 'all_on', 'On' ];
