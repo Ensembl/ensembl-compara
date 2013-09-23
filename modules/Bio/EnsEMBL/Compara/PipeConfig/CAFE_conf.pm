@@ -72,13 +72,14 @@ sub default_options {
             # You need to specify -pipeline_name, -host, -work_dir and -password on command line (if they are not already set as an environmental variable)
 
             # Data needed for CAFE
-            'species_tree_meta_key' => 'full_species_tree_string',
-            'cafe_lambdas'          => '',  # For now, we don't supply lambdas
-            'cafe_struct_tree_str'  => '',  # Not set by default
-            'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
-#            'badiRate_exe'          => '/software/ensembl/compara/badirate-1.35/BadiRate.pl',
+            'cafe_lambdas'             => '',  # For now, we don't supply lambdas
+            'cafe_struct_tree_str'     => '',  # Not set by default
+            'cafe_shell'               => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+            'full_species_tree_label'  => 'full_species_tree',
+#            'badiRate_exe'            => '/software/ensembl/compara/badirate-1.35/BadiRate.pl',
 
             'pipeline_db'   => {
+                                -driver => 'mysql',
                                 -host   => $self->o('host'),
                                 -port   => 3306,
                                 -user   => 'ensadmin',
@@ -116,13 +117,13 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
              -input_ids => [{}],
              -parameters => {
-#                             'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-#                             'species_tree_string' => '',
+                             'mlss_id'  => $self->o('mlss_id'),
+                             'label'    => $self->o('full_species_tree_label'),
                             },
              -hive_capacity => -1,   # to allow for parallelization
              -wait_for => [$self->o('wait_for')],
              -flow_into  => {
-                             3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
+                             # 3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
                              1 => ['CAFE_species_tree'],
                             },
             },
@@ -132,8 +133,8 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
              -parameters => {
                              'cafe_species' => $self->o('cafe_species'),
-                             'species_tree_meta_key' => $self->o('species_tree_meta_key'),
-                             'mlss_id' => $self->o('mlss_id'),
+                             'mlss_id'      => $self->o('mlss_id'),
+                             'label'        => $self->o('full_species_tree_label')
                             },
              -hive_capacity => -1, # to allow for parallelization
              -flow_into => {
