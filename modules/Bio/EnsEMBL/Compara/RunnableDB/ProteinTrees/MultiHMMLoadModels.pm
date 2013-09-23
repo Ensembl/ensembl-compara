@@ -136,7 +136,7 @@ sub get_profiles {
 }
 
 sub load_hmm_profile {
-    my ($self, $acc, $name, $consensus) = @_;
+    my ($self, $hmm, $acc, $name, $consensus) = @_;
     my $hmm_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
     $hmm_profile->model_id($acc);
     $hmm_profile->name($name);
