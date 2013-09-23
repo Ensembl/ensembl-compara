@@ -1557,6 +1557,9 @@ CREATE TABLE sitewise_aln (
 @column left_index              Internal index
 @column right_index             Internal index
 @column distance_to_parent      Phylogenetic distance between this node and its parent
+@column taxon_id                Link to NCBI taxon node
+@column genome_db_id            Link to the genome_db
+@column node_name               A name that can be set to the taxon name or any other arbitrary name
 
 @see species_tree_node_tag
 @see species_tree_root
@@ -1571,7 +1574,12 @@ CREATE TABLE `species_tree_node` (
   `left_index` int(10) NOT NULL DEFAULT 0,
   `right_index` int(10) NOT NULL DEFAULT 0,
   `distance_to_parent` double DEFAULT '1',
+  `taxon_id` int(10) UNSIGNED,
+  `genome_db_id` int(10) UNSIGNED,
+  `node_name` VARCHAR(255),
 
+  FOREIGN KEY (`taxon_id`) REFERENCES ncbi_taxa_node(taxon_id),
+  FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id), 
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`,`left_index`)
@@ -1579,13 +1587,16 @@ CREATE TABLE `species_tree_node` (
 
 /**
 @table species_tree_root
-@desc  This table stores the species tree used in the gene gain/loss analysis (for ncRNA and Protein Trees)
+@desc  This table stores species trees used in compara. Each tree is made of species_tree_node's
 @colour   #1E90FF
 
 @column root_id                       Internal unique ID
 @column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
+@column label                         Label to differentiate different trees with the same mlss_id
 @column species_tree                  Newick formatted version of the whole species_tree
-@column pvalue_lim                    P-value limit to consider an expansion/contraction significant
+
+@example   Retrieve all the species trees stored in the database
+    @sql SELECT * FROM species_tree_root
 
 @see species_tree_node
 */
@@ -1593,11 +1604,12 @@ CREATE TABLE `species_tree_node` (
 CREATE TABLE `species_tree_root` (
   `root_id` int(10) unsigned NOT NULL,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
+  `label` VARCHAR(20) NOT NULL DEFAULT 'default',
   `species_tree` mediumtext,
-  `pvalue_lim` double(5,4) DEFAULT NULL,
 
   FOREIGN KEY (root_id) REFERENCES species_tree_node(node_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  UNIQUE KEY (method_link_species_set_id, label),
 
   PRIMARY KEY (root_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -1672,7 +1684,6 @@ CREATE TABLE `CAFE_gene_family` (
 
 @column cafe_gene_family_id      External reference to cafe_gene_family_id in the @link CAFE_gene_family table.
 @column node_id                  External reference to node_id in the @link species_tree_node table
-@column taxon_id                 External reference to taxon_id in the @link ncbi_taxa_node table
 @column n_members                The number of members for the node as reported by CAFE
 @column pvalue                   The pvalue of the node as reported by CAFE
 */
@@ -1680,7 +1691,6 @@ CREATE TABLE `CAFE_gene_family` (
 CREATE TABLE `CAFE_species_gene` (
   `cafe_gene_family_id` int(10) unsigned NOT NULL,
   `node_id` int(10) unsigned NOT NULL,
-  `taxon_id` int(10) unsigned DEFAULT NULL,
   `n_members` int(4) unsigned NOT NULL,
   `pvalue` double(5,4) DEFAULT NULL,
 
