@@ -62,7 +62,7 @@ foreach my $homology (@{$homology_list}) {
     unless($dnafrag) { print("oops no dnafrag\n"); next; }
 
 # get the alignments on a piece of the DnaFrag
-    my $genomic_align_blocks = $comparaDBA->get_GenomicAlignBlockAdaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag( $blastz_mlss, $dnafrag, $mouse_gene->chr_start, $mouse_gene->chr_end);
+    my $genomic_align_blocks = $comparaDBA->get_GenomicAlignBlockAdaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag( $blastz_mlss, $dnafrag, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end);
 
     foreach my $gab (@{$genomic_align_blocks}) {
         my $all_genomic_aligns = $gab->get_all_GenomicAligns();

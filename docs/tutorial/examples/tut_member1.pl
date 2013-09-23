@@ -7,5 +7,5 @@ my $member = $genemember_adaptor->fetch_by_source_stable_id(
     'ENSEMBLGENE','ENSG00000004059');
 
 # print out some information about the Member
-print $member->chr_name, " ( ", $member->chr_start, " - ", $member->chr_end,
+print $member->chr_name, " ( ", $member->dnafrag_start, " - ", $member->dnafrag_end,
     " ): ", $member->description, "\n";

@@ -87,9 +87,9 @@ sub write_output {
             if (exists $gene_coordinates->{$sequence->id}) {
                 my $coord = $gene_coordinates->{$sequence->id};
                 $gene_member->chr_name($coord->[0]);
-                $gene_member->chr_start($coord->[1]);
-                $gene_member->chr_end($coord->[2]);
-                $gene_member->chr_strand($coord->[3]);
+                $gene_member->dnafrag_start($coord->[1]);
+                $gene_member->dnafrag_end($coord->[2]);
+                $gene_member->dnafrag_strand($coord->[3]);
             } else {
                 warn $sequence->id, " does not have gene coordinates\n";
             }
@@ -109,9 +109,9 @@ sub write_output {
             if (exists $cds_coordinates->{$sequence->id}) {
                 my $coord = $cds_coordinates->{$sequence->id};
                 $pep_member->chr_name($coord->[0]);
-                $pep_member->chr_start($coord->[1]);
-                $pep_member->chr_end($coord->[2]);
-                $pep_member->chr_strand($coord->[3]);
+                $pep_member->dnafrag_start($coord->[1]);
+                $pep_member->dnafrag_end($coord->[2]);
+                $pep_member->dnafrag_strand($coord->[3]);
             } else {
                 warn $sequence->id, " does not have cds coordinates\n";
             }

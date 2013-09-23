@@ -77,9 +77,7 @@ print "QUERY PEP: ";
 $peptide_member->print_member();
 
 my $peptide_align_feature_adaptor = $compara_dba->get_PeptideAlignFeatureAdaptor;
-$peptide_align_feature_adaptor->final_clause("ORDER BY score desc");
 my $peptide_align_features = $peptide_align_feature_adaptor->fetch_all_RH_by_member($peptide_member->dbID);
-$peptide_align_feature_adaptor->final_clause("");
 
 # loop through and print
 foreach my $this_peptide_align_feature (@{$peptide_align_features}) {

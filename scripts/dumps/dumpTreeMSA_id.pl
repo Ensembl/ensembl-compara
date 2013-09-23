@@ -155,7 +155,7 @@ sub dumpTreeMultipleAlignment {
     #SEQ organism peptide_stable_id chr sequence_start sequence_stop strand gene_stable_id display_label
     my $species = $leaf->genome_db->name;
     $species =~ s/ /_/;
-    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->chr_start." ".$leaf->chr_end." ".$leaf->chr_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
+    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->dnafrag_start." ".$leaf->dnafrag_end." ".$leaf->dnafrag_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
 
     my $alignment_string;
     if ($aa) {
@@ -186,7 +186,7 @@ sub dumpNewickTree {
     #SEQ organism peptide_stable_id chr sequence_start sequence_stop strand gene_stable_id display_label
     my $species = $leaf->genome_db->name;
     $species =~ s/ /_/;
-    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->chr_start." ".$leaf->chr_end." ".$leaf->chr_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
+    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->dnafrag_start." ".$leaf->dnafrag_end." ".$leaf->dnafrag_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
   }
 # will need to update the script when we will produce omega score for each column
 # of the alignment.

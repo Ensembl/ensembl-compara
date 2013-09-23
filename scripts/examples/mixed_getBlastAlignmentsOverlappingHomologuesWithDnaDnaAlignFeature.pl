@@ -58,14 +58,14 @@ foreach my $homology (@{$homology_list}) {
     printf("fetch_all_by_species_region(%s,%s,%s,%s,%d,%d,%s)\n", 
             $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
             $human_gene->genome_db->name, $human_gene->genome_db->assembly,
-            $mouse_gene->chr_name, $mouse_gene->chr_start, $mouse_gene->chr_end,
+            $mouse_gene->chr_name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
             'BLASTZ_NET');
 
 
     my $dnafeatures = $comparaDBA->get_DnaAlignFeatureAdaptor->fetch_all_by_species_region(
             $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
             $human_gene->genome_db->name, $human_gene->genome_db->assembly,
-            $mouse_gene->chr_name, $mouse_gene->chr_start, $mouse_gene->chr_end,
+            $mouse_gene->chr_name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
             'BLASTZ_NET');
 
     foreach my $ddaf (@{$dnafeatures}) {

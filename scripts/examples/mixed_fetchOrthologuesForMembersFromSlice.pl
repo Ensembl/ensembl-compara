@@ -32,7 +32,7 @@ my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_source_taxon(
 
 foreach my $pep (@{$members}) {
   next unless($pep->chr_name eq '2');
-  next unless($pep->chr_start < 10000000);
+  next unless($pep->dnafrag_start < 10000000);
   if($pep->get_Transcript->five_prime_utr) {
     $pep->gene_member->print_member;
     my $orths = $homologyDBA->fetch_all_by_Member_paired_species($pep->gene_member, 'homo_sapiens');

@@ -374,9 +374,9 @@ sub store_all_coding_exons {
           $exon_member->description("NULL");
         }
         $exon_member->chr_name($exon->seq_region_name);
-        $exon_member->chr_start($exon->seq_region_start);
-        $exon_member->chr_end($exon->seq_region_end);
-        $exon_member->chr_strand($exon->seq_region_strand);
+        $exon_member->dnafrag_start($exon->seq_region_start);
+        $exon_member->dnafrag_end($exon->seq_region_end);
+        $exon_member->dnafrag_strand($exon->seq_region_strand);
         $exon_member->version($exon->version);
 
 	#Not sure what this should be but need to set it to something or else the members do not get added
@@ -410,8 +410,8 @@ sub store_all_coding_exons {
   while (my $exon_member = shift @exon_members) {
     my $not_to_store = 0;
     foreach my $stored_exons (@exon_members_stored) {
-      if ($exon_member->chr_start <=$stored_exons->chr_end &&
-          $exon_member->chr_end >= $stored_exons->chr_start) {
+      if ($exon_member->dnafrag_start <=$stored_exons->dnafrag_end &&
+          $exon_member->dnafrag_end >= $stored_exons->dnafrag_start) {
         $not_to_store = 1;
         last;
       }

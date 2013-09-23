@@ -147,10 +147,9 @@ sub new_from_transcript {
   $self->taxon_id($genome_db->taxon_id);
   $self->genome_db_id($genome_db->dbID);
   $self->chr_name($transcript->seq_region_name);
-  $self->chr_start($transcript->coding_region_start);
-  $self->chr_end($transcript->coding_region_end);
-  $self->chr_strand($transcript->seq_region_strand);
-  $self->display_label($transcript->display_xref->display_id) if $transcript->display_xref;
+  $self->dnafrag_start($transcript->coding_region_start);
+  $self->dnafrag_end($transcript->coding_region_end);
+  $self->dnafrag_strand($transcript->seq_region_strand);
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
     if(not defined($transcript->translation)) {

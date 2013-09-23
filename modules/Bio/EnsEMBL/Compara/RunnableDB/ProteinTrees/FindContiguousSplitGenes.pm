@@ -127,7 +127,7 @@ sub check_for_split_genes {
     my $tmp_time = time();
 
     my @all_protein_leaves = @{$protein_tree->get_all_Members};
-    my @good_leaves = grep {defined $_->chr_start and defined $_->chr_end and defined $_->chr_name and defined $_->chr_strand and defined $_->taxon_id} @all_protein_leaves;
+    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->chr_name and defined $_->dnafrag_strand and defined $_->taxon_id} @all_protein_leaves;
 
     if($self->debug) {
         printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@all_protein_leaves), scalar(@good_leaves));
@@ -151,7 +151,7 @@ sub check_for_split_genes {
     my @sorted_genepairlinks = sort { 
         $a->[0]->chr_name <=> $b->[0]->chr_name 
             || $a->[1]->chr_name <=> $b->[1]->chr_name 
-            || abs($a->[0]->chr_start - $a->[1]->chr_start) <=> abs($b->[0]->chr_start - $b->[1]->chr_start) } @genepairlinks;
+            || abs($a->[0]->dnafrag_start - $a->[1]->dnafrag_start) <=> abs($b->[0]->dnafrag_start - $b->[1]->dnafrag_start) } @genepairlinks;
 
     foreach my $genepairlink (@sorted_genepairlinks) {
         my ($protein1, $protein2) = @$genepairlink;
@@ -172,9 +172,9 @@ sub check_for_split_genes {
         print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
 
         my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
-        my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
-        my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
-        my $strand1 = $gene_member1->chr_strand; my $strand2 = $gene_member2->chr_strand;
+        my $start1 = $gene_member1->dnafrag_start; my $start2 = $gene_member2->dnafrag_start; my $starttemp;
+        my $end1 = $gene_member1->dnafrag_end; my $end2 = $gene_member2->dnafrag_end; my $endtemp;
+        my $strand1 = $gene_member1->dnafrag_strand; my $strand2 = $gene_member2->dnafrag_strand;
         my $taxon_id1 = $gene_member1->taxon_id; my $taxon_id2 = $gene_member2->taxon_id;
         my $name1 = $gene_member1->chr_name; my $name2 = $gene_member2->chr_name;
 
@@ -196,7 +196,7 @@ sub check_for_split_genes {
 
                 if ((2+$self->param('max_nb_genes_no_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
-                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->chr_start,",", $gene->chr_end,"\n" if $self->debug;
+                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
                     }
                     next;
                 }
@@ -232,7 +232,7 @@ sub check_for_split_genes {
                 my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
                 if ((2+$self->param('max_nb_genes_small_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
-                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->chr_start,",", $gene->chr_end,"\n" if $self->debug;
+                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
                     }
                     next;
                 }

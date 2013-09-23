@@ -136,11 +136,11 @@ sub dumpMercatorFiles {
   open F, ">$file";
   foreach my $member (@{$ma->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $gdb_id)}) {
       my $strand = "+";
-      $strand = "-" if ($member->chr_strand == -1);
+      $strand = "-" if ($member->dnafrag_strand == -1);
       my $chr_name = $member->chr_name;
       if (defined($dnafrags->{$member->chr_name})) {
 	  foreach my $this_start (sort {$a <=> $b} keys %{$dnafrags->{$member->chr_name}}) {
-	      if ($this_start > $member->chr_start - 1) {
+	      if ($this_start > $member->dnafrag_start - 1) {
 		  last;
 	      } else {
 		  $chr_name = ($dnafrags->{$member->chr_name}->{$this_start} or $member->chr_name);
@@ -150,8 +150,8 @@ sub dumpMercatorFiles {
       print F $member->dbID . "\t" .
         $chr_name ."\t" .
           $strand . "\t" .
-            ($member->chr_start - 1) ."\t" .
-              $member->chr_end ."\t1\n";
+            ($member->dnafrag_start - 1) ."\t" .
+              $member->dnafrag_end ."\t1\n";
   }
   close F;
 
