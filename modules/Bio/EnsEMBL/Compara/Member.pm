@@ -66,6 +66,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::SeqMember;
 use Bio::EnsEMBL::Compara::GeneMember;
 
+use base qw(Bio::EnsEMBL::Compara::Locus);
 
 =head2 new (CONSTRUCTOR)
 
@@ -149,9 +150,9 @@ sub copy {
   $mycopy->source_name($self->source_name);
   #$mycopy->adaptor($self->adaptor);
   $mycopy->chr_name($self->chr_name);
-  $mycopy->chr_start($self->chr_start);
-  $mycopy->chr_end($self->chr_end);
-  $mycopy->chr_strand($self->chr_strand);
+  $mycopy->dnafrag_start($self->dnafrag_start);
+  $mycopy->dnafrag_end($self->dnafrag_end);
+  $mycopy->dnafrag_strand($self->dnafrag_strand);
   $mycopy->taxon_id($self->taxon_id);
   $mycopy->genome_db_id($self->genome_db_id);
   $mycopy->display_label($self->display_label);
@@ -336,15 +337,75 @@ sub adaptor {
 }
 
 
+=head2 dnafrag_id
+
+  Arg [1]    : integer $dnafrag_id
+  Example    : $dnafrag_id = $genomic_align->dnafrag_id;
+  Example    : $genomic_align->dnafrag_id(134);
+  Description: Getter/Setter for the attribute dnafrag_id. If no
+               argument is given and the dnafrag_id is not defined, it tries to
+               get the ID from other sources like the corresponding
+               Bio::EnsEMBL::Compara::DnaFrag object or the database using the dnafrag_id
+               of the Bio::EnsEMBL::Compara::Locus object.
+               Use 0 as argument to clear this attribute.
+                WARNING: The "setter" role is unimplemented in e74
+  Returntype : integer
+  Exceptions : thrown if $dnafrag_id does not match a previously defined
+               dnafrag
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+  Status     : Stable
+
+=cut
+
+
+sub dnafrag_id {
+    my $self = shift;
+    $self->{'dnafrag_id'} = $self->dnafrag->dbID unless $self->{'dnafrag_id'};
+    return $self->{'dnafrag_id'};
+}
+
+
+=head2 dnafrag
+
+  Arg 1       : (optional) Bio::EnsEMBL::Compara::DnaFrag object
+  Example     : $dnafrag = $locus->dnafrag;
+  Description : Getter/setter for the Bio::EnsEMBL::Compara::DnaFrag object
+                corresponding to this Bio::EnsEMBL::Compara::Locus object.
+                If no argument is given, the dnafrag is not defined but
+                both the dnafrag_id and the adaptor are, it tries
+                to fetch the data using the dnafrag_id
+                WARNING: The "setter" role is unimplemented in e74
+
+  Returntype  : Bio::EnsEMBL::Compara::Dnafrag object
+  Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
+                object or if $dnafrag does not match a previously defined
+                dnafrag_id
+  Warning     : warns if getting data from other sources fails.
+  Caller      : object->methodname
+
+=cut
+
+
+sub dnafrag {
+    my $self = shift;
+    $self->{'dnafrag'} = $self->adaptor->fetch_by_GenomeDB_and_name($self->{'_genome_db_id'}, $self->{'_chr_name'}) unless $self->{'dnafrag'};
+    return $self->{'dnafrag'};
+}
+
+
 =head2 chr_name
 
   Arg [1]    : (opt) string
   Description: Getter/Setter for the chromosome (or scaffold, contig, etc) name
+               DEPRECATED. Use dnafrag()->name() instead for the "getter" role.
+               chr_name() will be removed in e75
 
 =cut
 
-sub chr_name {
+sub chr_name {  # DEPRECATED
   my $self = shift;
+  deprecate('chr_name() is deprecated and will be replaced with dnafrag()->name() in e75. Note that in e74, only the "getter" role of chr_name() is available in dnafrag()->name()');
   $self->{'_chr_name'} = shift if (@_);
   return $self->{'_chr_name'};
 }
@@ -352,46 +413,40 @@ sub chr_name {
 
 =head2 chr_start
 
-  Arg [1]    : (opt) integer
-  Description: Getter/Setter for the chromosome start coordinate
+  Description: DEPRECATED. Use dnafrag_start() instead
 
 =cut
 
-sub chr_start {
+sub chr_start {  # DEPRECATED
   my $self = shift;
-  $self->{'_chr_start'} = shift if (@_);
-  return $self->{'_chr_start'};
+  deprecate('chr_start() is deprecated and will be removed in e75. Use dnafrag_start() instead.');
+  return $self->dnafrag_start(@_);
 }
 
 
 =head2 chr_end
 
-  Arg [1]    : (opt) integer
-  Description: Getter/Setter for the chromosome end coordinate
+  Description: DEPRECATED. Use dnafrag_end() instead
 
 =cut
 
-sub chr_end {
+sub chr_end {  # DEPRECATED
   my $self = shift;
-  $self->{'_chr_end'} = shift if (@_);
-  return $self->{'_chr_end'};
+  deprecate('chr_end() is deprecated and will be removed in e75. Use dnafrag_end() instead.');
+  return $self->dnafrag_end(@_);
 }
 
 
 =head2 chr_strand
 
-  Arg [1]    : (opt) integer
-  Description: Getter/Setter for the strand of the member.  Defined strands are 1 or -1.
-               0 is undefined strand.
-  Returntype : 1,0,-1
+  Description: DEPRECATED. Use dnafrag_strand() instead
 
 =cut
 
-sub chr_strand {
+sub chr_strand {  # DEPRECATED
   my $self = shift;
-  $self->{'_chr_strand'} = shift if (@_);
-  $self->{'_chr_strand'}='0' unless(defined($self->{'_chr_strand'}));
-  return $self->{'_chr_strand'};
+  deprecate('chr_strand() is deprecated and will be removed in e75. Use dnafrag_strand() instead.');
+  return $self->dnafrag_strand(@_);
 }
 
 
@@ -660,7 +715,7 @@ sub print_member {
     my $self = shift;
 
     printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
-            $self->dbID,$self->chr_name,$self->chr_start, $self->chr_end);
+            $self->dbID,$self->dnafrag->name,$self->dnafrag_start,$self->dnafrag_end);
 }
 
 
