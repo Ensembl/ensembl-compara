@@ -163,6 +163,26 @@ sub adaptor {
   return $obj->{'adaptor'};
 }
 
+=head2 slice
+
+  Arg 1       : -none-
+  Example     : $slice = $dnafragregion->slice;
+  Description : Returns the Bio::EnsEMBL::Slice object corresponding to this
+                Bio::EnsEMBL::Compara::DnaFrag object.
+  Returntype  : Bio::EnsEMBL::Slice object
+  Exceptions  : warns when the corresponding Bio::EnsEMBL::Compara::GenomeDB,
+                coord_system_name, name or Bio::EnsEMBL::DBSQL::DBAdaptor
+                cannot be retrieved and returns undef.
+  Caller      : $object->methodname
+
+=cut
+
+sub slice {
+    my ($self) = @_;
+    return $self->get_Slice();
+}
+
+
 =head2 length
 
   Arg 1       : -none-

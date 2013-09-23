@@ -67,8 +67,20 @@ use Bio::EnsEMBL::Utils::Exception;
 
 =head2 new
 
-  Arg         : possible keys:
-                DNAFRAG_ID, DNAFRAG_START, DNAFRAG_END, DNAFRAG_STRAND
+  Arg [-DNAFRAG]
+              : (opt.) Bio::EnsEMBL::Compara::DnaFrag $dnafrag (the genomic
+                sequence object to which this object refers to)
+  Arg [-DNAFRAG_ID]
+              : (opt.) int $dnafrag_id (the database internal ID for the $dnafrag)
+  Arg [-DNAFRAG_START]
+              : (opt.) int $dnafrag_start (the starting position of this
+                Bio::EnsEMBL::Compara::Locus within its corresponding $dnafrag)
+  Arg [-DNAFRAG_END]
+              : (opt.) int $dnafrag_end (the ending position of this
+                Bio::EnsEMBL::Compara::Locus within its corresponding $dnafrag)
+  Arg [-DNAFRAG_STRAND]
+              : (opt.) int $dnafrag_strand (1 or -1; defines in which strand of its
+                corresponding $dnafrag this Bio::EnsEMBL::Compara::Locus is)
   Example     : none
   Description : Object constructor.
   Returntype  : Bio::EnsEMBL::Compara::Locus object
@@ -83,8 +95,9 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = rearrange([qw(DNAFRAG_ID DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND)], @args);
+    my ($dnafrag, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = rearrange([qw(DNAFRAG DNAFRAG_ID DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND)], @args);
 
+    $self->dnafrag($dnafrag) if (defined($dnafrag));
     $dnafrag_id && $self->dnafrag_id($dnafrag_id);
     $dnafrag_start && $self->dnafrag_start($dnafrag_start);
     $dnafrag_end && $self->dnafrag_end($dnafrag_end);
@@ -114,191 +127,269 @@ sub new_fast {
 }
 
 
-=head2 dnafrag_id
-
-  Arg 1       : (optional) integer $dnafrag_id
-  Example     : my $dnafrag_id = $dnafrag->dnafrag_id;
-  Description : Getter/setter for the dnafrag_id attribute
-  Returntype  : integer
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub dnafrag_id {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'dnafrag_id'} = $value;
-  }
-
-  return $obj->{'dnafrag_id'};
-}
-
-
-=head2 dnafrag_start
-
-  Arg 1       : (optional) integer $dnafrag_start
-  Example     : my $dnafrag_start = $dnafrag->dnafrag_start;
-  Description : Getter/setter for the dnafrag_start attribute
-  Returntype  : integer
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub dnafrag_start {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'dnafrag_start'} = $value;
-  }
-
-  return $obj->{'dnafrag_start'};
-}
-
-
-=head2 dnafrag_end
-
-  Arg 1       : (optional) integer $dnafrag_end
-  Example     : my $dnafrag_end = $dnafrag->dnafrag_end;
-  Description : Getter/setter for the dnafrag_end attribute
-  Returntype  : integer
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub dnafrag_end {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'dnafrag_end'} = $value;
-  }
-
-  return $obj->{'dnafrag_end'};
-}
-
-
-=head2 dnafrag_strand
-
-  Arg 1       : (optional) integer $dnafrag_strand
-  Example     : my $dnafrag_strand = $dnafrag->dnafrag_strand;
-  Description : Getter/setter for the dnafrag_strand attribute
-  Returntype  : integer (1 or -1)
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub dnafrag_strand {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'dnafrag_strand'} = $value;
-  }
-
-  return $obj->{'dnafrag_strand'};
-}
-
-
 =head2 dnafrag
 
   Arg 1       : (optional) Bio::EnsEMBL::Compara::DnaFrag object
   Example     : $dnafrag = $locus->dnafrag;
   Description : Getter/setter for the Bio::EnsEMBL::Compara::DnaFrag object
                 corresponding to this Bio::EnsEMBL::Compara::Locus object.
+                If no argument is given, the dnafrag is not defined but
+                both the dnafrag_id and the adaptor are, it tries
+                to fetch the data using the dnafrag_id
+
   Returntype  : Bio::EnsEMBL::Compara::Dnafrag object
-  Exceptions  : warns when the corresponding Bio::EnsEMBL::Compara::GenomeDB,
-                coord_system_name, name or Bio::EnsEMBL::DBSQL::DBAdaptor
-                cannot be retrieved and returns undef.
-  Caller      : $object->methodname
+  Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
+                object or if $dnafrag does not match a previously defined
+                dnafrag_id
+  Warning     : warns if getting data from other sources fails.
+  Caller      : object->methodname
 
 =cut
 
 sub dnafrag {
-  my ($self) = shift @_;
+  my ($self, $dnafrag) = @_;
 
-  if (@_) {
-    $self->{'_dnafrag'} = shift @_;
-  } elsif (!defined $self->{'_dnafrag'}) {
-    if (!defined($self->dnafrag_id)) {
-      warn "Cannot get the Bio::EnsEMBL::Compara::DnaFrag object without dbID";
-      return undef;
+  if (defined($dnafrag)) {
+    throw("$dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag object")
+        if (!$dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
+    $self->{'dnafrag'} = $dnafrag;
+    if ($self->{'dnafrag_id'}) {
+      if (!$self->{'dnafrag'}->dbID) {
+        $self->{'dnafrag'}->dbID($self->{'dnafrag_id'});
+      }
+#       warning("Defining both dnafrag_id and dnafrag");
+      throw("dnafrag object does not match previously defined dnafrag_id")
+          if ($self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
+    } else {
+      $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
     }
-    my $dfa = $self->adaptor->db->get_DnaFragAdaptor;
-    if (!defined($dfa)) {
-      warn "Cannot get the Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor";
-      return undef;
+
+  } elsif (!defined($self->{'dnafrag'})) {
+
+    # Try to get data from other sources...
+    if (defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
+      # ...from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
+      # clause because the attribute can be retrieved from other sources if it has not been already defined.
+      my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
+      $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
+    } else {
+      warning("Fail to get data from other sources in ".ref($self)."->dnafrag".
+          " You either have to specify more information (see perldoc for ".
+          ref($self).") or to set it up directly");
     }
-    $self->{'_dnafrag'} = $dfa->fetch_by_dbID($self->dnafrag_id);
   }
-  return $self->{'_dnafrag'};
+  return $self->{'dnafrag'};
 }
 
 
-=head2 slice
+=head2 dnafrag_id
 
-  Arg 1       : -none-
-  Example     : $slice = $locus->slice;
-  Description : Returns the Bio::EnsEMBL::Slice object corresponding to this
-                Bio::EnsEMBL::Compara::DnaFrag object.
-  Returntype  : Bio::EnsEMBL::Slice object
-  Exceptions  : warns when the corresponding Bio::EnsEMBL::Compara::GenomeDB,
-                coord_system_name, name or Bio::EnsEMBL::DBSQL::DBAdaptor
-                cannot be retrieved and returns undef.
-  Caller      : $object->methodname
+  Arg [1]    : integer $dnafrag_id
+  Example    : $dnafrag_id = $genomic_align->dnafrag_id;
+  Example    : $genomic_align->dnafrag_id(134);
+  Description: Getter/Setter for the attribute dnafrag_id. If no
+               argument is given and the dnafrag_id is not defined, it tries to
+               get the ID from other sources like the corresponding
+               Bio::EnsEMBL::Compara::DnaFrag object or the database using the dnafrag_id
+               of the Bio::EnsEMBL::Compara::Locus object.
+               Use 0 as argument to clear this attribute.
+  Returntype : integer
+  Exceptions : thrown if $dnafrag_id does not match a previously defined
+               dnafrag
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
-sub slice {
-  my ($self) = @_;
+sub dnafrag_id {
+  my ($self, $dnafrag_id) = @_;
 
-  unless (defined $self->{'_slice'}) {
-    if (!defined($self->dnafrag->genome_db)) {
-      warn "Cannot get the Bio::EnsEMBL::Compara::GenomeDB object corresponding to [".$self."]";
-      return undef;
+  if (defined($dnafrag_id)) {
+    $self->{'dnafrag_id'} = $dnafrag_id;
+    if (defined($self->{'dnafrag'}) and $self->{'dnafrag_id'}) {
+#       warning("Defining both dnafrag_id and dnafrag");
+      throw("dnafrag_id does not match previously defined dnafrag object")
+          if ($self->{'dnafrag'} and $self->{'dnafrag'}->dbID != $self->{'dnafrag_id'});
     }
-    if (!defined($self->dnafrag->coord_system_name)) {
-      warn "Cannot get the coord_system_name corresponding to [".$self."]";
-      return undef;
+
+  } elsif (!($self->{'dnafrag_id'})) {
+    # Try to get the ID from other sources...
+    if (defined($self->{'dnafrag'}) and defined($self->{'dnafrag'}->dbID)) {
+      # ...from the corresponding Bio::EnsEMBL::Compara::DnaFrag object
+      $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID;
+    } else {
+      $self->_lazy_getter_setter('dnafrag_id');
     }
-    if (!defined($self->dnafrag->name)) {
-      warn "Cannot get the name corresponding to [".$self."]";
-      return undef;
-    }
-    my $dba = $self->dnafrag->genome_db->db_adaptor;
-    if (!defined($dba)) {
-      warn "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->dnafrag->genome_db."]";
-      return undef;
-    }
-    $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->dnafrag->coord_system_name, $self->dnafrag->name,$self->dnafrag_start, $self->dnafrag_end, $self->dnafrag_strand);
   }
 
-  return $self->{'_slice'};
+  return $self->{'dnafrag_id'};
+}
+
+
+=head2
+
+  Arg [1]    : string $field
+  Arg [2]    : scalar $val
+  Description: Generic getter/Setter for the attribute $field. In $val is not given, the
+               attribute $field is not defined, but both the dbID and the adaptor are, it tries
+               to fetch and set all the direct attributes from the database using the dbID
+  Returntype : integer
+  Exceptions : none
+  Warning    : warns if getting data from other sources fails.
+  Caller     : internal
+
+=cut
+
+sub _lazy_getter_setter {
+  my ($self, $field, $val) = @_;
+
+  if (defined($val)) {
+     $self->{$field} = $val;
+
+   } elsif (not defined($self->{$field})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'}) and $self->{'adaptor'}->can('retrieve_all_direct_attributes')) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::Locus object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+      warning("Fail to get data from other sources in ".ref($self)."->$field".
+          " You either have to specify more information (see perldoc for ".
+          ref($self).") or to set it up directly");
+    }
+  }
+
+  return $self->{$field};
+}
+
+
+=head2 dnafrag_start
+
+  Arg [1]    : integer $dnafrag_start
+  Example    : $dnafrag_start = $genomic_align->dnafrag_start;
+  Example    : $genomic_align->dnafrag_start(1233354);
+  Description: Getter/Setter for the attribute dnafrag_start. If no argument is given, the
+               dnafrag_start is not defined but both the dbID and the adaptor are, it tries
+               to fetch and set all the direct attributes from the database using the dbID
+  Returntype : integer
+  Exceptions : none
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+  Status     : Stable
+
+=cut
+
+sub dnafrag_start {
+  my $obj = shift;
+
+  return $obj->_lazy_getter_setter('dnafrag_start', @_);
+}
+
+
+=head2 dnafrag_end
+
+  Arg [1]    : integer $dnafrag_end
+  Example    : $dnafrag_end = $genomic_align->dnafrag_end;
+  Example    : $genomic_align->dnafrag_end(1235320);
+  Description: Getter/Setter for the attribute dnafrag_end. If no argument is given, the
+               dnafrag_end is not defined but both the dbID and the adaptor are, it tries
+               to fetch and set all the direct attributes from the database using the dbID
+  Returntype : integer
+  Exceptions : none
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+  Status     : Stable
+
+=cut
+
+sub dnafrag_end {
+  my $obj = shift;
+
+  return $obj->_lazy_getter_setter('dnafrag_end', @_);
+}
+
+
+=head2 dnafrag_strand
+
+  Arg [1]    : integer $dnafrag_strand (1 or -1)
+  Example    : $dnafrag_strand = $genomic_align->dnafrag_strand;
+  Example    : $genomic_align->dnafrag_strand(1);
+  Description: Getter/Setter for the attribute dnafrag_strand. If no argument is given, the
+               dnafrag_strand is not defined but both the dbID and the adaptor are, it tries
+               to fetch and set all the direct attributes from the database using the dbID
+  Returntype : integer
+  Exceptions : none
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+  Status     : Stable
+
+=cut
+
+sub dnafrag_strand {
+  my $obj = shift;
+
+  return $obj->_lazy_getter_setter('dnafrag_strand', @_);
+}
+
+
+=head2 get_Slice
+
+  Arg[1]     : -none-
+  Example    : $slice = $genomic_align->get_Slice();
+  Description: creates and returns a Bio::EnsEMBL::Slice which corresponds to
+               this Bio::EnsEMBL::Compara::GenomicAlign
+  Returntype : Bio::EnsEMBL::Slice object
+  Exceptions : return -undef- if slice cannot be created (this is likely to
+               happen if the Registry is misconfigured)
+  Status     : Stable
+
+=cut
+
+sub get_Slice {
+  my ($self) = @_;
+
+  my $slice = $self->dnafrag->slice;
+  return undef if (!defined($slice));
+
+  $slice = $slice->sub_Slice(
+              $self->dnafrag_start,
+              $self->dnafrag_end,
+              $self->dnafrag_strand
+          );
+
+  return $slice;
 }
 
 
 =head2 genome_db
 
-  Arg 1       : -none-
-  Example     : $genome_db = $locus->genome_db;
-  Description : Returns the Bio::EnsEMBL::Compara::GenomeDB object corresponding to this
-                Bio::EnsEMBL::Compara::Locus object. This method is a shortcut
-                for $locis->dnafrag->genome_db
-  Returntype  : Bio::EnsEMBL::Compara::GenomeDB object
-  Exceptions  : return undef if no dnafrag can be found for this Locus object.
-                See dnafrag method elsewhere in this document.
-  Caller      : $object->methodname
+  Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : $genome_db = $genomic_align->genome_db;
+  Example    : $genomic_align->genome_db($genome_db);
+  Description: Getter/Setter for the attribute genome_db of
+               the dnafrag. This method is a short cut for
+               $genomic_align->dnafrag->genome_db()
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB object
+  Exceptions : thrown if $genomic_align->dnafrag is not
+               defined and cannot be fetched from other
+               sources.
+  Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
 sub genome_db {
-  my ($self) = @_;
+  my ($self, $genome_db) = @_;
+
+  if (defined($genome_db)) {
+    throw("$genome_db is not a Bio::EnsEMBL::Compara::GenomeDB object")
+        if (!UNIVERSAL::isa($genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    my $dnafrag = $self->dnafrag();
+    if (!$dnafrag) {
+      throw("Cannot set genome_db if dnafrag does not exist");
+    } else {
+      $self->dnafrag->genome_db($genome_db);
+    }
+  }
 
   if ($self->dnafrag) {
     return $self->dnafrag->genome_db;
