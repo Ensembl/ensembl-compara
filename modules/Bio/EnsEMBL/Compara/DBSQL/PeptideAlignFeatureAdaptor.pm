@@ -282,25 +282,6 @@ sub fetch_selfhit_by_qmember_id {
 }
 
 
-=head2 final_clause
-
-  Arg [1]    : <string> SQL clause
-  Example    : $adaptor->final_clause("ORDER BY paf.qmember_id LIMIT 10");
-               $pafs = $adaptor->fetch_all;
-               $adaptor->final_clause("");
-  Description: getter/setter method for specifying an extension to the SQL prior to
-               a fetch operation.  Useful final clauses are either 'ORDER BY' or 'LIMIT'
-  Returntype : <string>
-  Caller     : general
-
-=cut
-
-sub final_clause {
-  my $self = shift;
-  $self->{'_final_clause'} = shift if(@_);
-  return $self->{'_final_clause'};
-}
-
 
 #############################
 #
