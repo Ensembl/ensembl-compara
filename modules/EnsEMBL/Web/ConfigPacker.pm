@@ -196,7 +196,7 @@ sub _summarise_core_tables {
 ##
   foreach my $table ( qw(
         dna_align_feature protein_align_feature simple_feature
-        protein_feature marker_feature qtl_feature
+        protein_feature marker_feature 
         repeat_feature ditag_feature
         transcript gene prediction_transcript unmapped_object
   )) { 
