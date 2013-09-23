@@ -63,51 +63,31 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
+
+@ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
-=head2 fetch_by_dbID
+#
+# Virtual / overriden methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+######################################################################
 
-  Arg [1]    : integer $db_id
-  Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_dbID(905406);
-  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag object corresponding to the database internal identifier
-  Returntype : Bio::EnsEMBL::Compara::DnaFrag
-  Exceptions : throw if $dbid is not supplied. 
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub fetch_by_dbID {
-  my ($self,$dbid) = @_;
-
-  if( !defined $dbid) {
-    $self->throw("Must fetch by dbid");
-  }
-
-  $self->{'_dna_frag_id_cache'} ||= {};
-
-  if($self->{'_dna_frag_id_cache'}->{$dbid}) {
-    return $self->{'_dna_frag_id_cache'}->{$dbid};
-  }
-
-  my $columns = join(", ", $self->_columns);
-  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
-  my $sql = "SELECT $columns FROM $tablenames WHERE df.dnafrag_id = ?";
-
-  my $sth = $self->prepare($sql);
-
-  $sth->execute($dbid);
-
-  my $dna_frags = $self->_objs_from_sth($sth);
-
-  $self->throw("No dnafrag with this dbID $dbid") unless(@$dna_frags);
-
-  $self->{'_dna_frag_id_cache'}->{$dbid} = $dna_frags->[0];
-
-  return $dna_frags->[0];
+sub ignore_cache_override {
+    return 1;
 }
 
+sub _build_id_cache {
+    my $self = shift;
+    my $cache = Bio::EnsEMBL::DBSQL::Support::LruIdCache->new($self, 3000);
+    $cache->build_cache();
+    return $cache;
+}
+
+
+
+#
+# FETCH methods
+#####################
 
 
 =head2 fetch_by_GenomeDB_and_name
@@ -147,14 +127,11 @@ sub fetch_by_GenomeDB_and_name {
     throw("[$genome_db] must be Bio::EnsEMBL::Compara::GenomeDB\n");
   }
 
-  my $columns = join(", ", $self->_columns);
-  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
-  my $sql = "SELECT $columns FROM $tablenames WHERE df.genome_db_id = ? AND df.name = ?";
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($genome_db_id, $name);
+  $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($name, SQL_VARCHAR);
+  $dnafrag = $self->generic_fetch_one('df.genome_db_id = ? AND df.name = ?');
 
-  $dnafrag = $self->_objs_from_sth($sth)->[0];
   if (!$dnafrag) {
     warning("No Bio::EnsEMBL::Compara::DnaFrag found for ".$genome_db->name."(".$genome_db->assembly."),".
         " chromosome $name");
@@ -200,31 +177,25 @@ sub fetch_all_by_GenomeDB_region {
 #    $self->throw('dnafrag_type argument must be defined');
 #  }
 
-  my $columns = join(", ", $self->_columns);
-  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
-  my $sql = "SELECT $columns FROM $tablenames WHERE df.genome_db_id = ?";
-
-  my @bind_values = ($gdb_id);
+  my $sql = "df.genome_db_id = ?";
+  $self->bind_param_generic_fetch($gdb_id, SQL_INTEGER);
 
   if(defined $coord_system_name) {
     $sql .= ' AND df.coord_system_name = ?';
-    push @bind_values, "$coord_system_name";
+    $self->bind_param_generic_fetch($coord_system_name, SQL_VARCHAR);
   }
 
   if(defined $name) {
     $sql .= ' AND df.name = ?';
-    push @bind_values, "$name";
+    $self->bind_param_generic_fetch($name, SQL_VARCHAR);
   }
 
   if(defined $is_reference) {
     $sql .= ' AND df.is_reference = ?';
-    push @bind_values, "$is_reference";
+    $self->bind_param_generic_fetch($is_reference, SQL_INTEGER);
   }
 
-  my $sth = $self->prepare($sql);
-  $sth->execute(@bind_values);
-
-  return $self->_objs_from_sth($sth);
+  return $self->generic_fetch($sql);
 }
 
 
@@ -350,7 +321,9 @@ sub _objs_from_sth {
 
   while ($sth->fetch()) {
 
-    my $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_fast(
+    my $this_dnafrag = $self->_id_cache->cache->{$dbID};
+    if (not defined $this_dnafrag) {
+        $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_fast(
             {'dbID' => $dbID,
             'adaptor' => $self,
             'length' => $length,
@@ -359,7 +332,8 @@ sub _objs_from_sth {
             'coord_system_name' => $coord_system_name,
             'is_reference' => $is_reference}
         );
-
+        $self->_id_cache->put($dbID, $this_dnafrag);
+    }
 
     push(@$these_dnafrags, $this_dnafrag);
   }
