@@ -81,10 +81,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.searchCache        = [];
     
     // Move user data to below the multi entries (active tracks, favourites, search)
-    if (this.elLk.configDivs.first().not('.move_to_top').length) {
-      this.elLk.links.filter('.move_to_top').insertAfter(this.elLk.links.has('[rel=multi]').last()).removeClass('move_to_top');
-      this.elLk.configDivs.filter('.move_to_top').insertBefore(this.elLk.configDivs.first()).removeClass('move_to_top');
-    }
+    this.elLk.links.filter('.move_to_top').insertAfter(this.elLk.links.has('[rel=multi]').last()).removeClass('move_to_top');
+    this.elLk.configDivs.filter('.move_to_top').insertBefore(this.elLk.configDivs.first()).removeClass('move_to_top');
     
     for (type in this.params.tracksByType) {
       group = this.params.tracksByType[type];
@@ -335,7 +333,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   changeTrackRenderer: function (tracks, renderer, updateCount) {
-    var change = 0;
+    var subTracks = this.params.subTracks || {};
+    var change    = 0;
+    var subTrack, c;
     
     if (renderer === 'all_on') {
       tracks.each(function () {
@@ -351,7 +351,18 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       els.removeClass(track.renderer + ' on');
       
       if (track.renderer === 'off' ^ renderer === 'off') {
-        change += (renderer === 'off' ? -1 : 1);
+        c = renderer === 'off' ? -1 : 1;
+        
+        if (subTracks[track.id]) {
+          change  += c * subTracks[track.id].length;
+          subTrack = true;
+        } else {
+          change += c;
+          
+          if (updateCount !== false) {
+            updateCount = true;
+          }
+        }
       }
       
       els.each(function () {
@@ -362,6 +373,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       els = null;
     });
+    
+    if (subTrack && updateCount !== false) {
+      if (Ensembl.EventManager.trigger('changeColumnRenderer', $.map(tracks, function (i) { return $(i).data('track').id; }), renderer, true)) {
+        updateCount = false;
+      }
+    }
     
     if (updateCount !== false) {
       this.elLk.links.children(tracks.data('track').links).siblings('.count').children('.on').html(function (i, html) {
@@ -647,11 +664,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             }));
             
             panel.subPanels.push(panelDiv[0].id);
-            
-            $('.track', panelDiv).each(function () {
-              var track = $(this).data('track');
-              panel.tracks[track.id].linkedEls = (panel.tracks[track.id].linkedEls || $()).add(this);
-            });
           } else {
             panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
             panel.setSelectAll();
