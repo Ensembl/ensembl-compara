@@ -65,18 +65,16 @@ sub copy {
 }
 
 
+## ncbi_taxid is an alias for dbID
 sub ncbi_taxid {
-  my $self = shift;
-  my $value = shift;
-  $self->node_id($value) if($value); 
-  return $self->node_id;
+    my $next = $_[0]->can('dbID');
+    goto($next);
 }
 
+## taxon_id is an alias for dbID
 sub taxon_id {
-  my $self = shift;
-  my $value = shift;
-  $self->node_id($value) if($value); 
-  return $self->node_id;
+    my $next = $_[0]->can('dbID');
+    goto($next);
 }
 
 sub dbID {
