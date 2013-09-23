@@ -270,10 +270,10 @@ return [
    'mlss_id' => $self->o('pecan_mlssid'),
    'newick_format' => 'simple',
    'blength_tree_file' => $self->o('species_tree_file'),    
- },  
- -flow_into => {
-   4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
- },  
+ },
+ # -flow_into => {
+ #   4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
+ # },
 },
 
 # ------------------------------------- now for the modules which create the anchors
