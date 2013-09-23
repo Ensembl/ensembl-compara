@@ -25,12 +25,12 @@
 =cut
 
 
-package Bio::EnsEMBL::Compara::Utils::SpeciesTreeAdaptor;
+package Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::NestedSet;
-
+use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 
 =head2 create_species_tree
 
@@ -49,7 +49,7 @@ sub create_species_tree {
 
         # loading the initial set of taxa from genome_db:
     if(!$no_previous or $species_set_id) {
-        
+
         my $gdb_list = $species_set_id
             ? $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs()
             : $compara_dba->get_GenomeDBAdaptor->fetch_all;
@@ -125,7 +125,8 @@ sub create_species_tree {
         }
     }
 
-    return $root;
+#    return $root->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    return Bio::EnsEMBL::Compara::SpeciesTreeNode->new_from_NCBITaxon($root);
 }
 
 
@@ -136,7 +137,7 @@ sub create_species_tree {
 =cut
 
 sub prune_tree {
-    my ($self, $input_tree, $species_set_id, $compara_dba) = @_;
+    my ($self, $input_tree, $compara_dba, $species_set_id) = @_;
 
     my $gdb_list = $species_set_id
         ? $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs()
