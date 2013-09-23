@@ -348,7 +348,6 @@ sub adaptor {
                Bio::EnsEMBL::Compara::DnaFrag object or the database using the dnafrag_id
                of the Bio::EnsEMBL::Compara::Locus object.
                Use 0 as argument to clear this attribute.
-                WARNING: The "setter" role is unimplemented in e74
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
@@ -361,7 +360,13 @@ sub adaptor {
 
 sub dnafrag_id {
     my $self = shift;
-    $self->{'dnafrag_id'} = $self->dnafrag->dbID unless $self->{'dnafrag_id'};
+    if (@_) {
+        $self->SUPER::dnafrag_id(@_);
+        $self->{'dnafrag'} = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->{'dnafrag_id'});
+        $self->{'_chr_name'} = $self->{'dnafrag'}->name();
+    } elsif (not $self->{'dnafrag_id'}) {
+        $self->{'dnafrag_id'} = $self->dnafrag->dbID;
+    }
     return $self->{'dnafrag_id'};
 }
 
@@ -375,8 +380,6 @@ sub dnafrag_id {
                 If no argument is given, the dnafrag is not defined but
                 both the dnafrag_id and the adaptor are, it tries
                 to fetch the data using the dnafrag_id
-                WARNING: The "setter" role is unimplemented in e74
-
   Returntype  : Bio::EnsEMBL::Compara::Dnafrag object
   Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
                 object or if $dnafrag does not match a previously defined
@@ -389,7 +392,13 @@ sub dnafrag_id {
 
 sub dnafrag {
     my $self = shift;
-    $self->{'dnafrag'} = $self->adaptor->fetch_by_GenomeDB_and_name($self->{'_genome_db_id'}, $self->{'_chr_name'}) unless $self->{'dnafrag'};
+    if (@_) {
+        $self->SUPER::dnafrag(@_);
+        $self->{'dnafrag_id'} = $self->{'dnafrag'}->dbID();
+        $self->{'_chr_name'} = $self->{'dnafrag'}->name();
+    } elsif (not $self->{'dnafrag'}) {
+        $self->{'dnafrag'} = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($self->{'_genome_db_id'}, $self->{'_chr_name'});
+    }
     return $self->{'dnafrag'};
 }
 
@@ -398,16 +407,20 @@ sub dnafrag {
 
   Arg [1]    : (opt) string
   Description: Getter/Setter for the chromosome (or scaffold, contig, etc) name
-               DEPRECATED. Use dnafrag()->name() instead for the "getter" role.
-               chr_name() will be removed in e75
+               DEPRECATED (will be removed in e75). Get the chromosome name with dnafrag()->name() instead.
+               Define the chromosome with dnafrag() or dnafrag_id().
 
 =cut
 
 sub chr_name {  # DEPRECATED
-  my $self = shift;
-  deprecate('chr_name() is deprecated and will be replaced with dnafrag()->name() in e75. Note that in e74, only the "getter" role of chr_name() is available in dnafrag()->name()');
-  $self->{'_chr_name'} = shift if (@_);
-  return $self->{'_chr_name'};
+    my $self = shift;
+    deprecate('chr_name() is deprecated and will be removed in e75. Replace it with dnafrag()->name() in "getter" role. Use dnagrag() or dnafrag_id() to set the chromosome');
+    if (@_) {
+        $self->{'_chr_name'} = shift;
+        delete $self->{'dnafrag'};
+        delete $self->{'dnafrag_id'};
+    }
+    return $self->{'_chr_name'};
 }
 
 
@@ -715,7 +728,7 @@ sub print_member {
     my $self = shift;
 
     printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
-            $self->dbID,$self->dnafrag->name,$self->dnafrag_start,$self->dnafrag_end);
+            $self->dbID,$self->{_chr_name},$self->dnafrag_start,$self->dnafrag_end);
 }
 
 
