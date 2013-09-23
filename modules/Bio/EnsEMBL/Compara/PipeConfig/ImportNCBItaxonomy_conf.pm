@@ -118,7 +118,7 @@ sub resource_classes {
     my ($self) = @_;
     return {
          'default' => {'LSF' => '-q yesterday' },
-         'highmem' => {'LSF' => '-q yesterday -R"select[mem>3000] rusage[mem=3000]" -M3000000' },
+         'highmem' => {'LSF' => '-q yesterday -R"select[mem>3000] rusage[mem=3000]" -M3000' },
     };
 }
 
