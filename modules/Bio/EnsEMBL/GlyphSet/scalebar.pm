@@ -20,8 +20,8 @@ sub scale {
   # Split into array of digits
   my @from_d = split(//,"".$from);
   my @to_d = split(//,"".$to);
-  push @from_d,"0" for(@from_d..@to_d-1);
-  push @to_d,"0" for(@to_d..@from_d-1);
+  unshift @from_d,"0" for(@from_d..@to_d-1);
+  unshift @to_d,"0" for(@to_d..@from_d-1);
 
   # How many divisions would there be ($d) if we only kept $i digits?
   my $d; 
