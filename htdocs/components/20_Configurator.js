@@ -353,8 +353,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       if (track.renderer === 'off' ^ renderer === 'off') {
         c = renderer === 'off' ? -1 : 1;
         
-        if (subTracks[track.id]) {
-          change  += c * subTracks[track.id].length;
+        if (typeof subTracks[track.id] === 'number') {
+          change  += c * subTracks[track.id];
           subTrack = true;
         } else {
           change += c;
