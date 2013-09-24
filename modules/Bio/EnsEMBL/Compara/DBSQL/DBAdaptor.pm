@@ -180,8 +180,8 @@ sub get_available_adaptors {
         'CAFEGeneFamily'        => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor',
         'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
         'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
-        'CAFEGeneFamily2'       => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamily2Adaptor',
-        'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
+#        'CAFEGeneFamily2'       => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamily2Adaptor',
+#        'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
 
             # obsolete:
         'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
