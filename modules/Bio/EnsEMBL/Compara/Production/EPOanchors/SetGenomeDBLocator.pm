@@ -50,7 +50,7 @@ sub fetch_input {
 	my ($self) = @_;
 	my $sth;
 	if($self->param('dont_change_if_locator')) {
-		$sth = $self->dbc->prepare("SELECT * FROM genome_db where locator IS NULL");
+		$sth = $self->dbc->prepare("SELECT * FROM genome_db where locator IS NULL OR locator=\"\"");
 	} else {
 		$sth = $self->dbc->prepare("SELECT * FROM genome_db");
 	}
