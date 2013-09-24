@@ -341,8 +341,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     var cell      = popup.data('cell');
     var colTrack  = popup.data('colTrack');
     var isDefault = e.currentTarget.className === 'default';
-    var className = e.target.className;
-    var track, id, subTracks;
     
     if (isDefault) {
       e.target = e.currentTarget; // target is the div inside the li, rather than the li itself - base function needs the target to be the li
