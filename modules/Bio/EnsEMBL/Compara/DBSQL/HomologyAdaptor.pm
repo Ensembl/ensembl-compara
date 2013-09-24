@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
@@ -518,7 +519,7 @@ sub fetch_orthocluster_with_Member {
   my $member = shift;
   
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-  my $member = $member->get_canonical_SeqMember if $member->isa('Bio::EnsEMBL::Compara::GeneMember');
+  $member = $member->get_canonical_SeqMember if $member->isa('Bio::EnsEMBL::Compara::GeneMember');
 
   my $ortho_set = {};
   my $member_set = {};
