@@ -76,7 +76,7 @@ sub get_url_filesize {
 
   my $ua = LWP::UserAgent->new;
      $ua->timeout(10);
-     $ua->proxy('http', $proxy) if $proxy;
+     $ua->proxy([qw(http https)], $proxy) if $proxy;
 
   my $request = HTTP::Request->new( 'GET', $url );
      $request->header('Cache-control' => 'no-cache');
