@@ -547,9 +547,9 @@ sub build_imageconfig_menus {
       $self->{'enabled_tracks'}{$menu_class}++;
       $self->{'enabled_tracks'}{$id} = 1;
       
-      push @{$self->{'json'}{'subTracks'}{$data->{'column_key'}}}, $id if $display eq 'default'; # use an array of tracks rather than a hash so that gzip can compress the json mmore effectively.
+      $self->{'json'}{'subTracks'}{$data->{'column_key'}}++ if $display eq 'default'; # use an array of tracks rather than a hash so that gzip can compress the json mmore effectively.
     } else {
-      $self->{'json'}{'subTracks'}{$data->{'column_key'}} ||= []; # Force subTracks entries to exist
+      $self->{'json'}{'subTracks'}{$data->{'column_key'}} ||= 0; # Force subTracks entries to exist
     }
     
     $self->{'total_tracks'}{$menu_class}++;
