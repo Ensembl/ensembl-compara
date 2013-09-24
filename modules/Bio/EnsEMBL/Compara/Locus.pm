@@ -242,10 +242,10 @@ sub dnafrag_id {
 =cut
 
 sub _lazy_getter_setter {
-  my ($self, $field) = @_;
+  my ($self, $field, @args) = @_;
 
-  if (@_) {
-     $self->{$field} = shift;
+  if (@args) {
+     $self->{$field} = $args[0];
 
    } elsif (not defined($self->{$field})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'}) and $self->{'adaptor'}->can('retrieve_all_direct_attributes')) {
