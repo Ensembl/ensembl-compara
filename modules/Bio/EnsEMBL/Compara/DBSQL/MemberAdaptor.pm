@@ -520,9 +520,9 @@ sub create_instance_from_rowhash {
 		_genome_db_id   => $rowhash->{genome_db_id},
 		_description    => $rowhash->{description},
 		_chr_name       => $rowhash->{chr_name},
-		dnafrag_start   => $rowhash->{chr_start},
-		dnafrag_end     => $rowhash->{chr_end},
-		dnafrag_strand  => $rowhash->{chr_strand},
+		dnafrag_start   => $rowhash->{chr_start} || 0,
+		dnafrag_end     => $rowhash->{chr_end} || 0,
+		dnafrag_strand  => $rowhash->{chr_strand} || 0,
 		_sequence_id    => $rowhash->{sequence_id} || 0,
 		_source_name    => $rowhash->{source_name},
 		_display_label  => $rowhash->{display_label},
@@ -543,9 +543,9 @@ sub init_instance_from_rowhash {
   $member->genome_db_id($rowhash->{'genome_db_id'});
   $member->description($rowhash->{'description'});
   $member->{_chr_name} = $rowhash->{'chr_name'};
-  $member->dnafrag_start($rowhash->{'chr_start'});
-  $member->dnafrag_end($rowhash->{'chr_end'});
-  $member->dnafrag_strand($rowhash->{'chr_strand'});
+  $member->{dnafrag_start} = $rowhash->{'chr_start'} || 0;
+  $member->{dnafrag_end} = $rowhash->{'chr_end'} || 0;
+  $member->{dnafrag_strand} = $rowhash->{'chr_strand'} || 0;
   $member->sequence_id($rowhash->{'sequence_id'});
   $member->gene_member_id($rowhash->{'gene_member_id'});
   $member->source_name($rowhash->{'source_name'});
