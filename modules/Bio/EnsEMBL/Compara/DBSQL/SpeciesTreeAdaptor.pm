@@ -1,0 +1,141 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor
+
+=head1 SYNOPSIS
+
+
+=head1 DESCRIPTION
+
+  SpeciesTreeAdaptor - Adaptor for different species trees used in ensembl-compara
+
+
+=head1 APPENDIX
+
+  The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
+
+package Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor;
+
+use strict;
+use warnings;
+use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::SpeciesTree;
+
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
+
+sub fetch_all {
+    my ($self) = @_;
+
+    my $constraint = "stn.node_id = str.root_id";
+    return $self->generic_fetch($constraint);
+}
+
+sub fetch_by_method_link_species_set_id_label {
+    my ($self, $mlss_id, $label) = @_;
+
+    $label = 'default' unless (defined $label);
+
+    my $constraint = "method_link_species_set_id = $mlss_id AND label = '$label'";
+    my $sp_trees = $self->generic_fetch($constraint);
+    return $sp_trees->[0];
+}
+
+sub fetch_by_root_id {
+    my ($self, $root_id) = @_;
+
+    my $constraint = "root_id = $root_id";
+    my $sp_trees = $self->generic_fetch($constraint);
+    return $sp_trees->[0];
+}
+
+sub store {
+    my ($self, $tree) = @_;
+
+    my $species_tree_node_adaptor = $self->db->get_SpeciesTreeNodeAdaptor();
+
+    # Store the nodes
+    my $mlss_id = $tree->method_link_species_set_id;
+    my $root_id = $species_tree_node_adaptor->store($tree->root, $mlss_id);
+    $tree->{'_root_id'} = $root_id;
+
+    # Store the rest of the nodes
+    # for my $child (@{$tree->root->get_all_nodes}) {
+    #     print "ROOT_ID FOR NODE IS: ", $child->root->node_id, "\n";
+    #     $species_tree_node_adaptor->store($child);
+    # }
+
+    # Store the tree in the header table
+    # method_link_species_set_id must be set to its real value to honour the foreign key
+    my $sth = $self->prepare('INSERT INTO species_tree_root (root_id, method_link_species_set_id, label, species_tree) VALUES (?,?,?,?)');
+    $sth->execute($root_id, $tree->method_link_species_set_id, $tree->label || 'default', $tree->species_tree);
+
+    $tree->adaptor($self);
+    return $root_id;
+}
+
+
+sub _columns {
+    return qw ( str.root_id
+                str.method_link_species_set_id
+                str.species_tree
+                str.label
+             );
+}
+
+sub _tables {
+    return (['species_tree_root','str']);
+}
+
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+    my $tree_list = [];
+
+    while (my $rowhash = $sth->fetchrow_hashref) {
+        my $tree = $self->create_instance_from_rowhash($rowhash);
+        push @$tree_list, $tree;
+    }
+    return $tree_list;
+}
+
+sub create_instance_from_rowhash {
+    my ($self, $rowhash) = @_;
+
+    my $tree = new Bio::EnsEMBL::Compara::SpeciesTree;
+    $self->init_instance_from_rowhash($tree, $rowhash);
+    return $tree;
+}
+
+sub init_instance_from_rowhash {
+    my ($self, $tree, $rowhash) = @_;
+
+    $tree->method_link_species_set_id($rowhash->{method_link_species_set_id});
+    $tree->species_tree($rowhash->{species_tree});
+    $tree->label($rowhash->{label});
+    $tree->root_id($rowhash->{root_id});
+
+    $tree->adaptor($self);
+    return $tree;
+}
+
+1;
