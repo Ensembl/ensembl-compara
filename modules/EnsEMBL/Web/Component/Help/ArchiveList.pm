@@ -48,7 +48,7 @@ sub content {
     ($part1, $part2, $part3) = ($check[0], $check[1], $check[2]);
   }
   
-  if ($part1 =~ /^[A-Z][a-z]+_[a-z]+$/) {
+  if ($species_defs->valid_species($part1)) {
     $species = $part1;
     $type    = $part2;
     $action  = $part4 ? "$part3/$part4" : $part3;
@@ -59,7 +59,7 @@ sub content {
   
   ## NB: we create an array of links in ascending date order so we can build the
   ## 'New genebuild' bit correctly, then we reverse the links for display
-
+  
   if ($species) {
     $archives     = $species_defs->get_config($species, 'ENSEMBL_ARCHIVES') || {};
     $assemblies   = $species_defs->get_config($species, 'ASSEMBLIES')       || {};
