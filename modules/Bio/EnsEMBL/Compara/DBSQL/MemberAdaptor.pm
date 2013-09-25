@@ -542,10 +542,10 @@ sub init_instance_from_rowhash {
   $member->taxon_id($rowhash->{'taxon_id'});
   $member->genome_db_id($rowhash->{'genome_db_id'});
   $member->description($rowhash->{'description'});
-  $member->{_chr_name} = $rowhash->{'chr_name'};
-  $member->{dnafrag_start} = $rowhash->{'chr_start'} || 0;
-  $member->{dnafrag_end} = $rowhash->{'chr_end'} || 0;
-  $member->{dnafrag_strand} = $rowhash->{'chr_strand'} || 0;
+  $member->chr_name( $rowhash->{'chr_name'} );
+  $member->dnafrag_start( = $rowhash->{'chr_start'} || 0 );
+  $member->dnafrag_end( $rowhash->{'chr_end'} || 0 );
+  $member->dnafrag_strand(= $rowhash->{'chr_strand'} || 0 );
   $member->sequence_id($rowhash->{'sequence_id'});
   $member->gene_member_id($rowhash->{'gene_member_id'});
   $member->source_name($rowhash->{'source_name'});

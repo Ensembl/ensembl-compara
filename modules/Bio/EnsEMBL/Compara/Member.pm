@@ -407,14 +407,11 @@ sub dnafrag {
 
   Arg [1]    : (opt) string
   Description: Getter/Setter for the chromosome (or scaffold, contig, etc) name
-               DEPRECATED (will be removed in e75). Get the chromosome name with dnafrag()->name() instead.
-               Define the chromosome with dnafrag() or dnafrag_id().
 
 =cut
 
 sub chr_name {  # DEPRECATED
     my $self = shift;
-    deprecate('chr_name() is deprecated and will be removed in e75. Replace it with dnafrag()->name() in "getter" role. Use dnagrag() or dnafrag_id() to set the chromosome');
     if (@_) {
         $self->{'_chr_name'} = shift;
         delete $self->{'dnafrag'};
@@ -728,7 +725,7 @@ sub print_member {
     my $self = shift;
 
     printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
-            $self->dbID,$self->{_chr_name},$self->dnafrag_start,$self->dnafrag_end);
+            $self->dbID,$self->chr_name,$self->dnafrag_start,$self->dnafrag_end);
 }
 
 
