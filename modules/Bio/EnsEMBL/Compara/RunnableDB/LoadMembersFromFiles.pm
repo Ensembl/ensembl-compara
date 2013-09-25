@@ -77,7 +77,7 @@ sub write_output {
 		print "sequence $count: length ", $sequence->length, "\n" if ($self->debug > 1);
 
 		my $gene_member = Bio::EnsEMBL::Compara::Member->new();
-    		$gene_member->stable_id($gene_name);
+    		$gene_member->stable_id(sprintf('GENE%05d.%s', $self->param('genome_db_id'), $gene_name));
 		$gene_member->display_label($sequence->id);
 		$gene_member->source_name("ENSEMBLGENE");
 		$gene_member->taxon_id($taxon_id);
@@ -97,7 +97,7 @@ sub write_output {
 		$member_adaptor->store($gene_member);
 
 		my $pep_member = Bio::EnsEMBL::Compara::Member->new();
-		$pep_member->stable_id($gene_name);
+		$pep_member->stable_id(sprintf('PEP%05d.%s', $self->param('genome_db_id'), $gene_name));
 		$pep_member->display_label($sequence->id);
 		$pep_member->source_name("ENSEMBLPEP");
 		$pep_member->taxon_id($taxon_id);
