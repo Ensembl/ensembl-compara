@@ -71,9 +71,8 @@ sub fetch_input {
         }
 
         if(my $blength_tree_file = $self->param('blength_tree_file')) {     # defines the mode
-
-#            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
-            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`);
+            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
+#            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`);
             $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->prune_tree( $blength_tree, $self->compara_dba );
 
         } else {
@@ -85,8 +84,8 @@ sub fetch_input {
 
     }
 
-#    my $speciesTreeNode_adaptor = $self->compara_dba->get_SpeciesTreeNodeAdaptor();
-#    $species_tree_root->adaptor($speciesTreeNode_adaptor);
+    # my $speciesTreeNode_adaptor = $self->compara_dba->get_SpeciesTreeNodeAdaptor();
+    # $species_tree_root->adaptor($speciesTreeNode_adaptor);
 
     my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
     $species_tree->species_tree($species_tree_string);
