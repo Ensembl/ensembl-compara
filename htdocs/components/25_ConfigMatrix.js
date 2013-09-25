@@ -54,6 +54,21 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     
     this.elLk.tableWrapper.data('maxWidth', this.elLk.tableWrapper[0].style.width).width('auto');
     
+    var headerLabels = this.elLk.columnHeaders.children('p');
+    var height       = Math.max.apply(Math, headerLabels.map(function () { return $(this).width(); }).toArray());
+    var width        = headerLabels.addClass('rotate').first().width();
+    
+    if (Ensembl.browser.ie) {
+      headerLabels.css({ width: height, bottom: height - width });
+      this.elLk.tableWrapper.css('marginTop', height - this.elLk.headers.filter('.axes').height());
+    } else {
+      var top = (height - width) / 2;
+      headerLabels.css({ lineHeight: height + 'px', top: top });
+      this.elLk.tableWrapper.css('marginTop', -top / 2);
+    }
+    
+    headerLabels = null;
+    
     this.elLk.axisLabels.each(function () {
       var el    = $(this);
       var clone = el.clone().addClass('clone').insertAfter(this);
