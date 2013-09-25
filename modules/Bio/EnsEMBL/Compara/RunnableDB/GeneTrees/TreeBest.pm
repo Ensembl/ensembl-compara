@@ -79,14 +79,14 @@ sub run_treebest_best {
     while (1) {
 
         # Main arguments
-        my $args = sprintf('best -f %s', $species_tree_file);
+        my $cmd = $self->_get_alignment_filtering_cmd('best', $input_aln);
         
         # Optional arguments
-        $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
-        $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
-        $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
+        $cmd .= sprintf(' -f %s', $species_tree_file);
+        $cmd .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
+        $cmd .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
+        $cmd .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
 
-        my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);
         return $run_cmd->out unless ($run_cmd->exit_code);
 
