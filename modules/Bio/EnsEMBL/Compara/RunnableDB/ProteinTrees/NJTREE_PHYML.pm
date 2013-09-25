@@ -97,7 +97,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
+    my @ref_support = qw(phyml_wag phyml_jtt phyml_dayhoff nj_mm nj_kimura nj_jtt);
     $self->store_genetree($self->param('protein_tree'), \@ref_support);
 
     if ($self->param('store_intermediate_trees')) {

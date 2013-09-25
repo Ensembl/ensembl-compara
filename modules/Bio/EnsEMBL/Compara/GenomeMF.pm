@@ -40,7 +40,7 @@ sub all_from_file {
     my $perl_array   = $json_parser->decode($json_text);
 
     # List of fields that must / can be present
-    my @obligatory_fields = qw(production_name taxonomy_id assembly genebuild prot_fasta cds_fasta);
+    my @obligatory_fields = qw(production_name taxonomy_id assembly genebuild prot_fasta);
     my $possible_fields = {map {$_ => 1} (@obligatory_fields, qw(gene_coord_gff))};
 
     # Checks the integrity of the file
