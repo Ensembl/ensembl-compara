@@ -21,7 +21,7 @@ perl DumpMultiAlign.pl
 
   For the alignments:
     [--alignment_type method_link_name]
-        The type of alignment. Default is "BLASTZ_NET"
+        The type of alignment. Default is "LASTZ_NET"
     [--set_of_species species1:species2:species3:...]
         The list of species used to get those alignments. Default is
         "human:mouse". The names should correspond to the name of the
@@ -41,7 +41,7 @@ my $coord_system = "chromosome";
 my $seq_region = "14";
 my $seq_region_start = 75000000;
 my $seq_region_end = 75010000;
-my $alignment_type = "BLASTZ_NET";
+my $alignment_type = "LASTZ_NET";
 my $set_of_species = "human:mouse";
 my $output_file = undef;
 my $output_format = "clustalw";
