@@ -23,7 +23,7 @@ perl DumpMultiAlign<span class="comp_tut opt">.</span>pl
 
   For the alignments<span class="comp_tut opt">:</span>
     <span class="comp_tut opt">[--</span>alignment_type method_link_name<span class="comp_tut opt">]</span>
-        The type of alignment<span class="comp_tut opt">.</span> Default is <span class="comp_tut str">&quot;BLASTZ_NET&quot;</span>
+        The type of alignment<span class="comp_tut opt">.</span> Default is <span class="comp_tut str">&quot;LASTZ_NET&quot;</span>
     <span class="comp_tut opt">[--</span>set_of_species species1<span class="comp_tut opt">:</span>species2<span class="comp_tut opt">:</span>species3<span class="comp_tut opt">:...]</span>
         The list of species used to get those alignments<span class="comp_tut opt">.</span> Default is
         <span class="comp_tut str">&quot;human:mouse&quot;</span><span class="comp_tut opt">.</span> The names should correspond to the name of the
@@ -43,7 +43,7 @@ perl DumpMultiAlign<span class="comp_tut opt">.</span>pl
 <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$seq_region</span> <span class="comp_tut opt">=</span> <span class="comp_tut str">&quot;14&quot;</span><span class="comp_tut opt">;</span>
 <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$seq_region_start</span> <span class="comp_tut opt">=</span> <span class="comp_tut num">75000000</span><span class="comp_tut opt">;</span>
 <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$seq_region_end</span> <span class="comp_tut opt">=</span> <span class="comp_tut num">75010000</span><span class="comp_tut opt">;</span>
-<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$alignment_type</span> <span class="comp_tut opt">=</span> <span class="comp_tut str">&quot;BLASTZ_NET&quot;</span><span class="comp_tut opt">;</span>
+<span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$alignment_type</span> <span class="comp_tut opt">=</span> <span class="comp_tut str">&quot;LASTZ_NET&quot;</span><span class="comp_tut opt">;</span>
 <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$set_of_species</span> <span class="comp_tut opt">=</span> <span class="comp_tut str">&quot;human:mouse&quot;</span><span class="comp_tut opt">;</span>
 <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$output_file</span> <span class="comp_tut opt">=</span> <span class="comp_tut kwc">undef</span><span class="comp_tut opt">;</span>
 <span class="comp_tut kwc">my</span> <span class="comp_tut kwb">$output_format</span> <span class="comp_tut opt">=</span> <span class="comp_tut str">&quot;clustalw&quot;</span><span class="comp_tut opt">;</span>
