@@ -18,11 +18,15 @@ sub _init {
 }
 
 sub content {
-  my $self  = shift;
-  my $hub   = $self->hub;
-  my $url   = $hub->referer->{'uri'};
-  my $r     = $hub->param('r');
-  my $match = $url =~ m/^\//;
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $current      = $species_defs->ENSEMBL_VERSION;
+  my $url          = $hub->referer->{'uri'};
+  my $r            = $hub->param('r');
+  my $match        = $url =~ m/^\//;
+  my $count        = 0;
+  my ($html, $archives, $assemblies, $initial_sets, $latest_sets, @links);
   
   if ($r) {
     $url  =~ s/([\?;&]r=)[^;]+(;?)/$1$r$2/;
@@ -30,7 +34,6 @@ sub content {
   }
   
   my ($path, $params) = split '\?', $url;
-  my $html;
   
   $url =~ s/^\///;
   
@@ -53,51 +56,43 @@ sub content {
     $type    = $part1;
     $action  = $part2;
   }
-
-  my (%archive, %assemblies, $initial_sets, $latest_sets, @links);
-  my $count = 0;
   
   ## NB: we create an array of links in ascending date order so we can build the
   ## 'New genebuild' bit correctly, then we reverse the links for display
 
   if ($species) {
-    %archive = %{$hub->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
-    %assemblies = %{$hub->species_defs->get_config($species, 'ASSEMBLIES')||{}};
-    $initial_sets = $hub->species_defs->get_config($species, 'INITIAL_GENESETS')||{};
-    $latest_sets = $hub->species_defs->get_config($species, 'LATEST_GENESETS')||{};
+    $archives     = $species_defs->get_config($species, 'ENSEMBL_ARCHIVES') || {};
+    $assemblies   = $species_defs->get_config($species, 'ASSEMBLIES')       || {};
+    $initial_sets = $species_defs->get_config($species, 'INITIAL_GENESETS') || {};
+    $latest_sets  = $species_defs->get_config($species, 'LATEST_GENESETS')  || {};
     
-    my @A = keys %archive;
-
-    if (keys %archive) {
-      my $missing = 0;
-      
+    if (scalar grep $_ != $current, keys %$archives) {
       if ($type =~ /\.html/ || $action =~ /\.html/) {
-        foreach my $release (sort keys %archive) {
-          next if $release == $hub->species_defs->ENSEMBL_VERSION;
-          push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
-          $count++;
+        foreach (sort keys %$archives) {
+          next if $_ == $current;
+          push @links, $self->output_link($archives, $_, $url, $assemblies->{$_}, $initial_sets, $latest_sets);
         }
       }
       
       # species home pages
       if ($type eq 'Info') {
-        foreach my $release (reverse sort keys %archive) {
-          next if $release == $hub->species_defs->ENSEMBL_VERSION;
-          push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
-          $count++;
+        foreach (reverse sort keys %$archives) {
+          next if $_ == $current;
+          push @links, $self->output_link($archives, $_, $url, $assemblies->{$_}, $initial_sets, $latest_sets);
         }
       } else {
         my $releases = get_archive_redirect($type, $action, $hub) || [];
+        my $missing  = 0;
         
-        foreach my $poss_release (reverse sort keys %archive) {
-          my $release_happened = !scalar @$releases;
+        foreach my $poss_release (reverse sort keys %$archives) {
+          next if $poss_release == $current;
           
-          next if $poss_release == $hub->species_defs->ENSEMBL_VERSION;
+          my $release_happened = 0;
           
           foreach my $r (@$releases) {
             my ($old_view, $initial_release, $final_release, $missing_releases) = @$r;
             
-            if ($poss_release < $initial_release || $poss_release > $final_release || grep $poss_release == $_, @$missing_releases) {
+            if ($poss_release < $initial_release || ($final_release && $poss_release > $final_release) || grep $poss_release == $_, @$missing_releases) {
               $missing = 1;
               next;
             }
@@ -105,75 +100,49 @@ sub content {
             $release_happened = 1;
           }
           
-          push @links, $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}, $initial_sets, $latest_sets) if $release_happened;
-          $count++ unless $missing;
+          push @links, $self->output_link($archives, $poss_release, $url, $assemblies->{$poss_release}, $initial_sets, $latest_sets) if $release_happened;
         }
+        
+        $html .= '<p>Some earlier archives are available, but this view was not present in those releases.</p>' if $missing;
       }
-      
-      $html .= "<p>Some earlier archives are available, but this view was not present in those releases</p>\n" if $missing;
     } else {
-      $html .= "<p>This is a new species, so there are no archives containing equivalent data.</p>\n";
+      $html .= '<p>This is a new species, so there are no archives containing equivalent data.</p>';
     }
-  } else {
-    # TODO - map static content moves
-    %archive = %{$hub->species_defs->ENSEMBL_ARCHIVES};
-    
-    $html .= "<ul>\n";
-    
-    foreach my $poss_release (reverse sort keys %archive) {
-      next if $poss_release == $hub->species_defs->ENSEMBL_VERSION;
-      
-      $html .= $self->_output_link(\%archive, $poss_release, $url);
-    }
-    
-    $html .= "</ul>\n";
+  } else { # TODO - map static content moves
+    my $archives = $species_defs->ENSEMBL_ARCHIVES;
+       @links    = map { $_ == $current ? () : $self->output_link($archives, $_, $url) } reverse sort keys %$archives;
   }
  
-  if ($count) {
-    $html .= qq(
-      <p>The following archives are available for this page:</p>
-        <ul>
-      );
-    $html .= join(' ', @links);
-    $html .= qq(
-        </ul>
-      );
-  }
- 
+  $html .= sprintf '<p>The following archives are available for this page:</p><ul>%s</ul>', join '', @links if scalar @links;
   $html .= '<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>';
 
   return $html;
 }
 
-sub _output_link {
-  my ($self, $archive, $release, $url, $assembly, $initial_sets, $latest_sets) = @_;
-  
-  my $sitename = $self->hub->species_defs->ENSEMBL_SITETYPE;
-  my $date  = $archive->{$release};
-  my $month = substr $date, 0, 3;
-  my $year  = substr $date, 3, 4;
-
-  my $release_date = $month.' '.$year;
-  my $initial_geneset = $initial_sets->{$release} || ''; 
-  my $current_geneset = $latest_sets->{$release} || '';
-  my $previous_geneset = $latest_sets->{$release-1} || '';
+sub output_link {
+  my ($self, $archives, $release, $url, $assembly, $initial_sets, $latest_sets) = @_;
+  my $sitename         = $self->hub->species_defs->ENSEMBL_SITETYPE;
+  my $date             = $archives->{$release};
+  my $month            = substr $date, 0, 3;
+  my $year             = substr $date, 3, 4;
+  my $release_date     = "$month $year";
+  my $initial_geneset  = $initial_sets->{$release}    || ''; 
+  my $current_geneset  = $latest_sets->{$release}     || '';
+  my $previous_geneset = $latest_sets->{$release - 1} || '';
  
-  my $string = qq(<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>);
-  if ($assembly) {
-    $string .= sprintf ' (%s)', $assembly;
-  }
+  my $string  = qq{<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>};
+     $string .= sprintf ' (%s)', $assembly if $assembly;
 
   if ($current_geneset) {
     if ($current_geneset eq $initial_geneset) {
       $string .= sprintf ' - gene set updated %s', $current_geneset;
-    }
-    else {
-      if ($current_geneset ne $previous_geneset) {
-        $string .= sprintf ' - patched/updated gene set %s', $current_geneset;
-      }
+    } elsif ($current_geneset ne $previous_geneset) {
+      $string .= sprintf ' - patched/updated gene set %s', $current_geneset;
     }
   }
+  
   $string .= '</li>';
+  
   return $string;
 }
 
