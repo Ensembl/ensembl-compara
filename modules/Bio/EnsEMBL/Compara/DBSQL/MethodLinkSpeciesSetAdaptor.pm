@@ -123,9 +123,6 @@ sub store {
   $self->db->get_SpeciesSetAdaptor->store( $species_set_obj, $store_components_first );
 
   my $dbID;
-  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
-    $dbID = $already_stored_method_link_species_set->dbID;
-  }
 
   if (!$dbID) {
     ## Lock the table in order to avoid a concurrent process to store the same object with a different dbID
@@ -137,79 +134,29 @@ sub store {
 	my $original_dwi = $self->dbc()->disconnect_when_inactive();
   	$self->dbc()->disconnect_when_inactive(0);
 
-    $self->dbc->do(qq{ LOCK TABLES
-                        method_link_species_set WRITE,
-                        method_link_species_set as mlss WRITE,
-                        method_link_species_set as mlss1 WRITE,
-                        method_link_species_set as mlss2 WRITE,
-                        method_link WRITE,
-                        method_link as m WRITE,
-                        method_link as ml WRITE
-   });
 
         # check again if the object has not been stored in the meantime (tables are locked)
-    if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
-        $dbID = $already_stored_method_link_species_set->dbID;
-    }
 
     # If the object still does not exist in the DB, store it
-    if (!$dbID) {
-      $dbID = $mlss->dbID();
-      if (!$dbID) {
-        ## Use conversion rule for getting a new dbID. At the moment, we use the following ranges:
-        ##
-        ## dna-dna alignments: method_link_id E [1-100], method_link_species_set_id E [1-10000]
-        ## synteny:            method_link_id E [101-100], method_link_species_set_id E [10001-20000]
-        ## homology:           method_link_id E [201-300], method_link_species_set_id E [20001-30000]
-        ## families:           method_link_id E [301-400], method_link_species_set_id E [30001-40000]
-        ##
-        ## => the method_link_species_set_id must be between 10000 times the hundreds in the
-        ## method_link_id and the next hundred.
-
-        my $method_link_id    = $method->dbID;
-        my $sth2 = $self->prepare("SELECT
-            MAX(mlss1.method_link_species_set_id + 1)
-            FROM method_link_species_set mlss1 LEFT JOIN method_link_species_set mlss2
-              ON (mlss2.method_link_species_set_id = mlss1.method_link_species_set_id + 1)
-            WHERE mlss2.method_link_species_set_id IS NULL
-              AND mlss1.method_link_species_set_id > 10000 * ($method_link_id DIV 100)
-              AND mlss1.method_link_species_set_id < 10000 * (1 + $method_link_id DIV 100)
-            ");
-        $sth2->execute();
-        my $count;
-        ($dbID) = $sth2->fetchrow_array();
-        #If we got no dbID i.e. we have exceeded the bounds of the range then
-        #assign to the next available identifeir
-        if (!defined($dbID)) {
-          $sth2->finish();
-          $sth2 = $self->prepare("SELECT MAX(mlss1.method_link_species_set_id + 1) FROM method_link_species_set mlss1");
-          $sth2->execute();
-          ($dbID) = $sth2->fetchrow_array();
-        }
-        $sth2->finish();
-      }
 
       my $method_link_species_set_sql = qq{
             INSERT IGNORE INTO method_link_species_set (
-              method_link_species_set_id,
               method_link_id,
               species_set_id,
               name,
               source,
               url)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
       };
 
       my $sth3 = $self->prepare($method_link_species_set_sql);
-      $sth3->execute(($dbID or undef), $method->dbID, $species_set_obj->dbID,
+      $sth3->execute($method->dbID, $species_set_obj->dbID,
           ($mlss->name or undef), ($mlss->source or undef),
           ($mlss->url or ""));
       $dbID = $sth3->{'mysql_insertid'};
       $sth3->finish();
-    }
 
     ## Unlock tables
-    $self->dbc->do("UNLOCK TABLES");
     $self->dbc()->disconnect_when_inactive($original_dwi);
   }
 
@@ -217,7 +164,6 @@ sub store {
 
   $self->sync_tags_to_database( $mlss );
 
-  $self->cache_all(1);
 
   return $mlss;
 }
