@@ -4,6 +4,8 @@ package EnsEMBL::Web::Document::HTML::SpeciesPage;
 
 use strict;
 
+use EnsEMBL::Web::Document::Table;
+
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
@@ -24,11 +26,14 @@ sub render {
   my %species;
   foreach my $sp (@valid_species) {
     my $info    = {
-        'dir'       => $sp,
-        'common'    => $species_defs->get_config($sp, "SPECIES_COMMON_NAME"),
-        'status'    => 'live',
-        'sci_name'  => $species_defs->get_config($sp, "SPECIES_SCIENTIFIC_NAME"),
-        'assembly'  => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
+        'dir'         => $sp,
+        'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
+        'status'      => 'live',
+        'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
+        'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
+        'taxon_id'    => $species_defs->get_config($sp, 'TAXONOMY_ID'),
+        'variation'   => $species_defs->get_config($sp,'databases')->{'DATABASE_VARIATION'},
+        'regulation'  => $species_defs->get_config($sp,'databases')->{'DATABASE_FUNCGEN'},
     };
     $species{$sp} = $info;
   }
@@ -37,7 +42,7 @@ sub render {
   my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
   if ($pre_species) {
     while (my ($bioname, $array) = each (%$pre_species)) {
-      my ($common, $assembly) = @$array;
+      my ($common, $assembly, $taxon_id) = @$array;
       $common =~ s/_/ /;
       my $status = $species{$bioname} ? 'both' : 'pre';
       my $info;
@@ -45,11 +50,13 @@ sub render {
         ## This is a bit of a fudge, but we have only basic config atm
         (my $sci_name = $bioname) =~ s/_/ /g;
         $info = {
-          'dir'       => $bioname,
-          'common'    => $common,
-          'sci_name'  => $sci_name,
-          'status'    => $status,
-          'assembly'  => $assembly,
+          'dir'           => $bioname,
+          'common'        => $common,
+          'sci_name'      => $sci_name,
+          'status'        => $status,
+          'assembly'      => '-',
+          'pre_assembly'  => $assembly,
+          'taxon_id'      => $taxon_id,
         };
       }
       else {
@@ -62,13 +69,20 @@ sub render {
     }
   }
 
-  ## Display all the species in three column layout
-  my @htmlspecies;
-  my %htmllinks = (
-    'pre'   => '<span class="bigtext">%2$s</span> (<a href="http://pre.ensembl.org/%1$s/" rel="external">preview - assembly only</a>)',
-    'both'  => '<a class="bigtext" href="/%1$s/Info/Index/">%2$s</a> (<a href="http://pre.ensembl.org/%1$s/" rel="external">preview new assembly %4$s</a>)',
-    'live'  => '<a class="bigtext" href="/%1$s/Info/Index/">%2$s</a>'
-  );
+  ## Display all the species in data table
+  my $html = '<h3>Current Ensembl Species</h3>
+<div class="js_panel" id="species-table">
+      <input type="hidden" class="panel_type" value="Content">';
+
+  my $table = EnsEMBL::Web::Document::Table->new([
+      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'string' },
+      { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
+      { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'integer' },
+      { key => 'assembly',    title => 'Assembly',        width => '10%', align => 'left' },
+      { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
+      { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
+      { key => 'pre',         title => 'Pre assembly',    width => '5%', align => 'left' },
+  ], [], { data_table => 1, exportable => 1});
 
   foreach my $info (sort {$a->{'common'} cmp $b->{'common'}} values %species) {
     next unless $info;
@@ -76,32 +90,39 @@ sub render {
     next unless $dir;
     my $common    = $info->{'common'};
     my $name      = $info->{'sci_name'};
-    my $link_text = $common =~ /\./ ? $name : $common;
+    if ($common eq $name) {
+      $common =~ s/([A-Z])([a-z]+)\s+([a-z]+)/$1. $3/;
+    }
 
-    push @htmlspecies, sprintf(
-      '<div class="species-box"><span class="sp-img"><img src="%3$s/i/species/48/%1$s.png" alt="%5$s" /></span>'.$htmllinks{$info->{'status'}}.($_ =~ /\./ ? '' : '<br /><i>%5$s</i>').'<br />%6$s</div>',
-      $dir,
-      $link_text,
-      $static_server,
-      $info->{'pre_assembly'},
-      $name,
-      $info->{'assembly'}
-    );
+    my ($sp_link, $pre_link, $image_fade);
+    if ($info->{'status'} eq 'pre') {
+      $image_fade = 'opacity:0.7';
+      $sp_link    = sprintf('<span class="bigtext">%s</span><br />(Pre only)', $common);
+      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s">%s</a>', $dir, $info->{'pre_assembly'});
+    }
+    elsif ($info->{'status'} eq 'both') {
+      $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
+      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s">%s</a>', $dir, $info->{'pre_assembly'});
+    }
+    else {
+      $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
+      $pre_link   = '-';
+    }
+    $table->add_row({
+      'common' => sprintf('<a href="/%s/"><img src="/i/species/48/%s.png" alt="%s" style="float:left;padding-right:4px;%s" /></a>%s',
+                        $dir, $dir, $common, $image_fade, $sp_link),
+      'species'     => '<i>'.$name.'</i>',
+      'taxon_id'    => $info->{'taxon_id'},
+      'assembly'    => $info->{'assembly'},
+      'variation'   => $info->{'variation'} ? 'Y' : '-',
+      'regulation'  => $info->{'regulation'} ? 'Y' : '-',
+      'pre'         => $pre_link,
+    });
+
   }
-
-  my $row_count = int @htmlspecies / 3 + 1;
-
-  return sprintf('<h2>%s Species</h2>
-    <div class="column-wrapper">
-      <div class="column-three"><div class="column-padding no-left-margin">%s</div></div>
-      <div class="column-three"><div class="column-padding">%s</div></div>
-      <div class="column-three"><div class="column-padding no-right-margin">%s</div></div>
-    </div>',
-    $sitename,
-    join('', splice @htmlspecies, 0, $row_count),
-    join('', splice @htmlspecies, 0, $row_count),
-    join('', @htmlspecies)
-  );
+  $html .= $table->render;
+  $html .= '</div>';
+  return $html;  
 }
 
 1;
