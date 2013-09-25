@@ -229,7 +229,7 @@ use base qw(Bio::EnsEMBL::Compara::Locus);
 sub new {
     my($class, @args) = @_;
 
-    my $self = {};
+    my $self = $class->SUPER::new(@args);
     bless $self,$class;
 
     my ($cigar_line, $adaptor,
