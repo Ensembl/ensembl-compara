@@ -149,11 +149,15 @@ sub run {
 
     my %cross_pafs = ();
 
+    my $qasm = $member->genome_db->assembly;
+
   foreach my $genome_db (@{$self->param('genome_db_list')}) {
-    my $fastafile = $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
+    next unless $genome_db->assembly eq $qasm;
+
+    my $fastafile = $genome_db->name() . '.fasta';
     $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
     $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-    my $cross_genome_dbfile = $fasta_dir . '/' . $fastafile;   # we are always interested in the 'foreign' genome's fasta file, not the member's
+    my $cross_genome_dbfile = $fasta_dir . '/' . $genome_db->assembly() . '/' . $fastafile;   # we are always interested in the 'foreign' genome's fasta file, not the member's
 
         # Here we can look at a previous build and try to reuse the blast
         # results for this query peptide against this hit genome.

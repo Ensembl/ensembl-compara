@@ -33,7 +33,9 @@ sub fetch_input {
 
     my $members   = $self->compara_dba->get_MemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
 
-    my $fasta_file = $self->param('fasta_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
+    my $dir = $self->param('fasta_dir') . '/' . $genome_db->assembly();
+    system("mkdir -p $dir");
+    my $fasta_file = $dir . '/' . $genome_db->name() . '.fasta';
     $fasta_file =~ s/\s+/_/g;    # replace whitespace with '_' characters
     $fasta_file =~ s/\/\//\//g;  # converts any // in path to /
     $self->param('fasta_file', $fasta_file);
