@@ -57,14 +57,21 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     var headerLabels = this.elLk.columnHeaders.children('p');
     var height       = Math.max.apply(Math, headerLabels.map(function () { return $(this).width(); }).toArray());
     var width        = headerLabels.addClass('rotate').first().width();
+    var axesHeight   = this.elLk.headers.filter('.axes').height();
     
     if (Ensembl.browser.ie) {
       headerLabels.css({ width: height, bottom: height - width });
-      this.elLk.tableWrapper.css('marginTop', height - this.elLk.headers.filter('.axes').height());
+      
+      if (height > axesHeight) {
+        this.elLk.tableWrapper.css('marginTop', height - axesHeight);
+      }
     } else {
       var top = (height - width) / 2;
       headerLabels.css({ lineHeight: height + 'px', top: top });
-      this.elLk.tableWrapper.css('marginTop', -top / 2);
+      
+      if (height > axesHeight) {
+        this.elLk.tableWrapper.css('marginTop', -top / 2);
+      }
     }
     
     headerLabels = null;
