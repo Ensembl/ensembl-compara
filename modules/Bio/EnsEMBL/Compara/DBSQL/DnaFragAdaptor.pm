@@ -56,8 +56,6 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 
-use vars qw(@ISA);
-
 use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
@@ -65,7 +63,7 @@ use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
 use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
 
-@ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
+use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 #
