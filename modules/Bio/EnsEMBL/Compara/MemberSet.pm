@@ -482,10 +482,10 @@ sub print_sequences_to_fasta {
 sub print_sequences_to_file {
     my ($self, @args) = @_;
 
-    my ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps);
+    my ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps, $removeXed);
     if (scalar @args) {
-        ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps) =
-            rearrange([qw(FILE FH FORMAT UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS)], @args);
+        ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps, $removeXed) =
+            rearrange([qw(FILE FH FORMAT UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS REMOVEXED)], @args);
     }
 
     my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
@@ -498,6 +498,9 @@ sub print_sequences_to_file {
         next if $member->source_name eq 'ENSEMBLGENE';
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
         next if $unique_seqs and $seq_id_hash{$member->sequence_id};
+
+        # filter sequences that contain that many X-es consecutively
+        next if $removeXed and ($member->sequence =~ /X{$removeXed,}?/);
 
         $seq_id_hash{$member->sequence_id} = 1;
         $seqio->write_seq($member->bioseq);
