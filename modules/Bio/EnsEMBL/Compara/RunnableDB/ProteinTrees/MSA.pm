@@ -273,38 +273,13 @@ sub dumpProteinTreeToWorkdir {
   return $fastafile if (-e $fastafile);
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
+  my $num_pep = $tree->print_sequences_to_file(-file => $fastafile, -uniq_seq => 1);
 
-  my $seq_id_hash = {};
-  my $residues = 0;
-  my $member_list = $tree->get_all_Members;
-
-#  $self->param('tag_gene_count', scalar(@{$member_list}) );
-  foreach my $member (@{$member_list}) {
-
-      return undef unless ($member->isa("Bio::EnsEMBL::Compara::GeneTreeMember"));
-      next if($seq_id_hash->{$member->sequence_id});
-      $seq_id_hash->{$member->sequence_id} = 1;
-
-      my $seq = '';
-      $seq = $member->sequence;
-      $residues += $member->seq_length;
-      $seq =~ s/\*/X/g;
-      $member->sequence($seq);
-      $seq =~ s/(.{72})/$1\n/g;
-      chomp $seq;
-
-      print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
-  }
-  close OUTSEQ;
-
-  if(scalar keys (%$seq_id_hash) <= 1) {
+  if ($num_pep <= 1) {
     $self->update_single_peptide_tree($tree);
     $self->param('single_peptide_tree', 1);
   }
 
-  $self->param('tag_residue_count', $residues);
   return $fastafile;
 }
 
