@@ -499,10 +499,13 @@ sub print_sequences_to_fasta {
 }
 
 sub print_sequences_to_file {
-    my ($self, $pep_file, $format) = @_;
+    my ($self, $pep_file) = @_;
     my $pep_counter = 0;
 
-    my $seqio = Bio::SeqIO->new(-file => ">$pep_file", -format => $format);
+    my $seqio = Bio::SeqIO->new(
+        scalar(@_) >= 3 ? (-format => $_[2]) : (),
+        ref($pep_file) ? (-fh => $pep_file) : (-file => ">$pep_file"),
+    );
 
     # Only for FASTA files, but I couldn't find a way of getting the format from $seqio
     $seqio->preferred_id_type('primary') if $seqio->can('preferred_id_type');
