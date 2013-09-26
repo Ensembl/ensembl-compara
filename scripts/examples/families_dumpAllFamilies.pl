@@ -48,28 +48,11 @@ while (my $f = shift @$families) {
         next;
     }
 
-    my $members = $ens_only
-        ? [ grep { $_->source_name eq 'ENSEMBLPEP' } @{$f->get_all_Members()} ]
-        : [ grep { $_->sequence() } @{$f->get_all_Members()} ];
-
-    next if(scalar(@$members) < $min_fam_size);
-
-    open(FAM, ">$file_name") || die "Could not create file $file_name'";
-    
-    warn "$file_name (".scalar(@$members)." members)\n";
-
-    foreach my $m (@$members) {
-        print FAM '>'.$m->stable_id().($m->version ? '.'.$m->version : '').' ['.($m->genome_db_id ? $m->genome_db->name : 'taxon_id='.$m->taxon_id).'] '.$m->description()."\n";
-
-        my $seq = $m->sequence();
-        $seq=~ s/(.{$fasta_len})/$1\n/g;
-        chomp $seq;
-        print FAM $seq."\n";
-
-        $m->sequence(undef);    # do not cache sequences
+    if ($f->Member_count_by_source('ENSEMBLPEP') >= $min_fam_size) {
+        $family->print_sequences_to_file(-file => $file_name, id_type => 'VERSION', source_name => 'ENSEMBLPEP');
     }
 
-    close FAM;
+    warn "$file_name (".scalar(@$members)." members)\n";
 }
 
 warn "DONE DUMPING\n\n";
