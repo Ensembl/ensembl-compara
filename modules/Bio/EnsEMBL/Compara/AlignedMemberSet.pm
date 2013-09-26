@@ -286,7 +286,7 @@ sub load_cigars_from_fasta { # DEPRECATED
         : whether redundant sequences should be discarded
     Arg [-CDNA] : (opt) boolean (default: false)
         : whether the CDS sequence should be used instead of the default sequence
-        : DEPRECATED: use -SEQ_TYPE => 'cdna' instead
+        : This option is deprec-ated in favour of -SEQ_TYPE => 'cds'
     Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
         : which identifier should be used as sequence names: the stable_id, the sequence_id, or the member_id
     Arg [-STOP2X] (opt) boolean (default: false)
@@ -299,10 +299,10 @@ sub load_cigars_from_fasta { # DEPRECATED
         : whether the genome_db_id should be added to the sequence names
     Arg [-EXON_CASED] (opt) boolean (default: false)
         : whether the case of the sequence should change at each exon
-        : DEPRECATED: use -SEQ_TYPE => 'exon_cased' instead
+        : This option is deprec-ated in favour of -SEQ_TYPE => 'exon_cased'
     Arg [-KEEP_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be kept in the alignment
-    Arg [-SEQ_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
+    Arg [-SEQ_TYPE] (opt) string
         : which sequence should be used instead of the default one.
         : Can be 'exon_cased' for proteins and ncRNAs, and 'cds' for proteins only
 
@@ -333,21 +333,28 @@ sub get_SimpleAlign {
             rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS SEQ_TYPE)], @args);
     }
 
+    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
+    die "-CDNA and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $cdna and $seq_type;
+    $seq_type = 'cds' if $cdna;
+
+    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
+    die "-EXON_CASED and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $exon_cased and $seq_type;
+    $seq_type = 'exon_cased' if $exon_cased;
+
+    die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
+    $seq_type = $self->seq_type unless $seq_type;
+
     my $sa = Bio::SimpleAlign->new();
 
     #Hack to try to work with both bioperl 0.7 and 1.2:
     #Check to see if the method is called 'addSeq' or 'add_seq'
     my $bio07 = ($sa->can('add_seq') ? 0 : 1);
 
-    my $seq_id_hash = {};
+    my $seq_hash = {};
     foreach my $member (@{$self->get_all_Members}) {
 
         next if $member->source_name eq 'ENSEMBLGENE';
-        next if $member->source_name =~ m/^Uniprot/i and $cdna;
-
-        # Print unique sequences only ?
-        next if($unique_seqs and $seq_id_hash->{$member->sequence_id});
-        $seq_id_hash->{$member->sequence_id} = 1;
+        next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         # The correct codon table
         if ($member->chr_name =~ /mt/i) {
@@ -366,20 +373,15 @@ sub get_SimpleAlign {
             }
         }
 
-        my $seqstr;
-        my $alphabet;
-        if ($cdna) {
-            $seqstr = $member->alignment_string('cds');
-            $seqstr =~ s/\s+//g;
-            $alphabet = 'dna';
-        } elsif ($self->seq_type) {
-            $seqstr = $member->alignment_string($self->seq_type);
-            $alphabet = 'protein';
-        } else {
-            $seqstr = $member->alignment_string($exon_cased ? 'exon_cased' : undef);
-            $alphabet = $member->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
-        }
-        next if(!$seqstr);
+        my $seqstr = $member->alignment_string($seq_type);
+        next unless $seqstr;
+
+        # Print unique sequences only ?
+        next if $unique_seqs and $seq_hash->{$seqstr};
+        $seq_hash->{$seqstr} = 1;
+
+        my $alphabet = $member->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
+        $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
         # Sequence name
         my $seqID = $member->stable_id;
