@@ -49,10 +49,9 @@ while (my $f = shift @$families) {
     }
 
     if ($f->Member_count_by_source('ENSEMBLPEP') >= $min_fam_size) {
-        $family->print_sequences_to_file(-file => $file_name, id_type => 'VERSION', source_name => 'ENSEMBLPEP');
+        my $n = $f->print_sequences_to_file(-file => $file_name, id_type => 'VERSION', source_name => 'ENSEMBLPEP');
+        warn "$file_name ($n members)\n";
     }
-
-    warn "$file_name (".scalar(@$members)." members)\n";
 }
 
 warn "DONE DUMPING\n\n";
