@@ -24,7 +24,6 @@ sub param_defaults {
         'fasta_name'  => 'metazoa.pep', # you should definitely change it
         'split_width' => 72,            # split sequence lines into readable format (set to 0 to disable)
         'idprefixed'  => 1,             # introduce sequence_id as a part of the name (for faster mapping)
-        'removeXed'   => undef,         # do not filter sequences that contain that many X-es consecutively
         'source_names'=> [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL', 'EXTERNALPEP' ],
     };
 }
@@ -35,7 +34,6 @@ sub run {
     my $fasta_name  = $self->param('fasta_name');
     my $split_width = $self->param('split_width');
     my $idprefixed  = $self->param('idprefixed');
-    my $removeXed   = $self->param('removeXed');
 
     my $source_names = join(', ', map { "'$_'" } @{ $self->param('source_names') } );
 
@@ -62,12 +60,10 @@ sub run {
             print STDERR "$stable_id is all X not dumped\n";
             next;
         }
-        unless($removeXed and ($sequence =~ /X{$removeXed,}?/)) {
-            $sequence =~ s/(.{$split_width})/$1\n/g if($split_width);
-            chomp $sequence;
-            my $nameprefix = $idprefixed ? ('seq_id_'.$sequence_id.'_') : '';
-            print FASTAFILE ">${nameprefix}${stable_id} $description\n$sequence\n";
-        }
+        $sequence =~ s/(.{$split_width})/$1\n/g if($split_width);
+        chomp $sequence;
+        my $nameprefix = $idprefixed ? ('seq_id_'.$sequence_id.'_') : '';
+        print FASTAFILE ">${nameprefix}${stable_id} $description\n$sequence\n";
     }
     $sth->finish();
 
