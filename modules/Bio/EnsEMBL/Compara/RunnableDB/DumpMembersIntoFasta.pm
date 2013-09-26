@@ -68,7 +68,7 @@ sub fetch_input {
     } else {
         $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
     }
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_fasta($fasta_file);
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_file($fasta_file);
 }
 
 sub write_output {

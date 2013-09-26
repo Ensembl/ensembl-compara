@@ -132,7 +132,7 @@ sub dump_sequences_to_workdir {
     print STDERR "fastafile: $fastafile\n" if ($self->debug);
 
     my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_fasta($fastafile);
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_file($fastafile);
     $self->param('fastafile', $fastafile);
 
 }

@@ -27,10 +27,10 @@ sub fetch_input {
 
     my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $pep_file    = $worker_temp_directory . "family_${family_id}.pep";
+    my $pep_file    = $worker_temp_directory . "family_${family_id}.fa";
     my $mafft_file  = $worker_temp_directory . "family_${family_id}.mafft";
 
-    my $pep_counter = $family->print_sequences_to_fasta($pep_file);
+    my $pep_counter = $family->print_sequences_to_file($pep_file);
 
     if ($pep_counter == 0) {
         unlink $pep_file;
