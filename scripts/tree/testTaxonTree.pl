@@ -19,7 +19,6 @@ use Bio::EnsEMBL::Compara::NestedSet;
 my $self = bless {};
 
 $self->{'speciesList'} = ();
-$self->{'removeXedSeqs'} = undef;
 $self->{'outputFasta'} = undef;
 $self->{'noSplitSeqLines'} = undef;
 $self->{'cdna'} = 0;
