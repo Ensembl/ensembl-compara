@@ -37,10 +37,10 @@ die "No gene gain/loss tree for this gene\n" unless (defined $cafe_tree);
 
 my $tree_fmt = '%{-s}%{x-}_%{N}:%{d}';
 #my $tree_fmt = '%{s|x}_%{N}:%{d}';
-print $cafe_tree->newick_format('ryo', $tree_fmt), "\t";
+print $cafe_tree->root->newick_format('ryo', $tree_fmt), "\t";
 print $cafe_tree->pvalue_avg, "\n";
 
-for my $node (@{$cafe_tree->get_all_nodes}) {
+for my $node (@{$cafe_tree->root->get_all_nodes}) {
   my $node_name = $node->is_leaf ? $node->genome_db->short_name : $node->taxon_id;
   my $node_n_members = $node->n_members;
   my $node_pvalue = $node->pvalue || "birth";
