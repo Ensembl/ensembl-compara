@@ -68,36 +68,15 @@ sub param_defaults {
 }
 
 
-#
-# Fetch members and sequences from the database. 
-#
-sub load_members_from_db{
-    my ($self) = @_;
-
-    my $fasta_list;
-    foreach my $member (@{$self->get_queries}) {
-        my $member_id = $member->dbID;
-        my $seq = $member->sequence;
-        $seq=~ s/(.{72})/$1\n/g;
-        chomp $seq;
-        my $fasta_line = ">$member_id\n$seq\n";
-        push @$fasta_list, $fasta_line;
-    }
-
-    return $fasta_list;
-}
-
 
 sub fetch_input {
     my $self = shift @_;
 
-    my $fasta_list      = $self->load_members_from_db();
+    $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $self->get_queries));
 
     if($self->debug) {
-        print "Loaded ".scalar(@$fasta_list)." sequences\n";
+        print "Loaded ".scalar(@{$self->param('query_set')->get_all_Members})." query members\n";
     }
-
-    $self->param('fasta_list', $fasta_list);
 
     my $reuse_ss_hash = {};
     $self->param('reuse_ss_hash', $reuse_ss_hash );
@@ -254,9 +233,7 @@ sub run {
     my $blast_outfile = $worker_temp_directory . 'blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
     if($debug) {
-        open(FASTA, ">$blast_infile") || die "Could not open '$blast_infile' for writing";
-        print FASTA @$fasta_list;
-        close FASTA;
+        $self->param('query_set')->print_sequences_to_file($blast_infile, 'fasta');
     }
 
     $self->compara_dba->dbc->disconnect_when_inactive(1); 
@@ -280,7 +257,7 @@ sub run {
                 }
                 my $start_time = time();
                 open( BLAST, "| $cmd") || die qq{could not execute "$cmd", returned error code: $!};
-                print BLAST @$fasta_list;
+                $self->param('query_set')->print_sequences_to_file(\*BLAST, 'fasta');
                 close BLAST;
 
                 print "Time for blast " . (time() - $start_time) . "\n";
