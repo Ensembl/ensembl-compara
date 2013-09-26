@@ -50,8 +50,8 @@ use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
 	return {
-		'nhmmer'   => '/software/ensembl/compara/hmmer3.1_nhmmer_beta2/src/nhmmer',
-		'hmmbuild' => '/software/ensembl/compara/hmmer3.1_nhmmer_beta2/src/hmmbuild',
+		'nhmmer'   => '/software/ensembl/compara/hmmer-3.1b1/binaries/nhmmer',
+		'hmmbuild' => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
 	};
 }
 

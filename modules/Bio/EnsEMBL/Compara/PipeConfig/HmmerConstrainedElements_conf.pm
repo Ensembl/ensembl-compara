@@ -35,8 +35,8 @@ sub default_options {
         },
 	# hmmer software location
 	'find_overlaps' => '~jh7/bin/find_overlapping_features.pl',
-	'nhmmer' => '/software/ensembl/compara/hmmer3.1_alpha_0.20/src/nhmmer',
-	'hmmbuild' => '/software/ensembl/compara/hmmer3.1_alpha_0.20/src/hmmbuild',
+      'nhmmer' => '/software/ensembl/compara/hmmer-3.1b1/binaries/nhmmer',
+      'hmmbuild' => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
 	'target_genome' => {'name' => 'homo_sapiens', 'genome_seq' => '/data/blastdb/Ensembl/compara12way63/homo_sapiens/genome_seq'},
 	  # minimum constrained element size to use
 	'min_constrained_element_length' => 20,
