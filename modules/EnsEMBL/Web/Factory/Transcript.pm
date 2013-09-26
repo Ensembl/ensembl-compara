@@ -98,8 +98,7 @@ sub createObjects {
       # Generate the transcript's gene unless it is a PredictionTranscript
       if ($new_factory_type eq 'Gene') {
         my $gene = $db_adaptor->get_GeneAdaptor->fetch_by_transcript_stable_id($transcript->stable_id);
-        
-        $self->param('g', $gene->stable_id) if $self->generate_object('Gene', $gene) && $self->param('g') ne $gene->stable_id;
+        $self->param('g', $gene->stable_id) if $gene && $self->generate_object('Gene', $gene) && $self->param('g') ne $gene->stable_id;
       }
     }
     
