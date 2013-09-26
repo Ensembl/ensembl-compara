@@ -51,6 +51,7 @@ sub param_defaults {
             'tree_fmt'         => '%{n}%{":"d}',
             'norm_factor'      => 0.1,
             'norm_factor_step' => 0.1,
+            'label'            => 'cafe',
     };
 }
 
@@ -67,7 +68,9 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    $self->param('cafe_tree_string', $self->get_tree_string_from_mlss_tag());
+#    $self->param('cafe_tree_string', $self->get_tree_string_from_mlss_tag());
+    $self->get_species_tree_string;
+    print STDERR "SPECIES TREE STRING IS: ", $self->param('species_tree_string'), "\n";
     $self->get_cafe_tree_from_string();
 
     unless ( $self->param('mlss_id') ) {
@@ -113,7 +116,7 @@ sub run {
     print STDERR "FINAL LAMBDA IS ", $self->param('lambda'), "\n";
     if (!defined $self->param('perFamTable') || $self->param('perFamTable') == 0) {
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
-        $sth->execute(1, $self->param('cafe_tree_string'), $table);
+        $sth->execute(1, $self->param('species_tree_string'), $table);
         $sth->finish();
         $self->param('all_fams', [1]);
     } else {
@@ -408,7 +411,7 @@ sub get_script {
     my $tmp_dir = $self->worker_temp_directory;
     my $cafe_shell = $self->param('cafe_shell');
     my $mlss_id = $self->param('mlss_id');
-    my $cafe_tree_string = $self->param('cafe_tree_string');
+    my $cafe_tree_string = $self->param('species_tree_string');
     chop($cafe_tree_string); #remove final semicolon
     $cafe_tree_string =~ s/:\d+$//; # remove last branch length
     my $script_file = "${tmp_dir}/cafe_${mlss_id}_lambda.sh";

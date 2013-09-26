@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2013 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -37,310 +37,62 @@ Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor
 package Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor;
 
 use strict;
-use Data::Dumper;
-use Bio::EnsEMBL::Utils::Exception qw/throw warning/;
+use warnings;
+
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
 use Bio::EnsEMBL::Compara::CAFEGeneFamily;
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor');
 
-
-=head2 fetch_all
-
-   Arg[1]      : -none-
-   Example     : my $all_trees = $cafeTree_adaptor->fetch_all();
-   Description : Fetches from the database all the gene gain/loss trees
-   ReturnType  : An arrayref of Bio::EnsEMBL::Compara::CAFEGeneFamily objects
-   Exceptions  :
-   Caller      :
-
-=cut
-
-sub fetch_all {
-    my ($self) = @_;
-
-    my $constraint = "stn.node_id = str.root_id";
-    return $self->generic_fetch($constraint);
-}
-
-
-=head2 fetch_by_dbID
-
-   Arg[1]      : An internal dbID for the tree
-   Example     : my $tree = $cafeTree_adaptor->fetch_by_dbID($dbID);
-   Description : Fetches a given gene gain/loss tree from the database
-                 given its internal dbID
-   ReturnType  : Bio::EnsEMBL::Compara::CAFEGeneFamily
-   Exceptions  :
-   Caller      :
-
-=cut
-
-sub fetch_by_dbID {
-    my ($self, $cafe_gene_family_id) = @_;
-    unless (defined $cafe_gene_family_id) {
-        throw("cafe_gene_family_id must be defined");
-    }
-    my $constraint = "stn.node_id = str.root_id AND cgf.cafe_gene_family_id = $cafe_gene_family_id";
-    my $tree = $self->generic_fetch($constraint);
-    if (scalar @$tree > 1) {
-        throw("too many trees returned by fetch_by_dbID: Only 1 expected by ", scalar @$tree, " obtained\n");
-    }
-    return $tree->[0];
-}
-
-=head2 fetch_all_lca_trees
-
-   Arg[1]      : -none-
-   Example     : my $lca_trees = $cafeTreeAdaptor->fetch_all_lca_trees();
-   Description : Same as "fetch_all" method, but instead of returning
-                 the trees from the root of the Ensembl species tree,
-                 roots them to its lowest common ancestor.
-   ReturnType  : An arrayref of Bio::EnsEMBL::Compara::CAFEGeneFamily objects
-   Exceptions  :
-   Caller      :
-
-=cut
-
-sub fetch_all_lca_trees {
-    my ($self) = @_;
-    my $constraint = "stn.node_id = cgf.lca_id";
-    my $trees = $self->generic_fetch($constraint);
-    # We need to fix the roots:
-    for my $tree (@{$trees}) {
-        $tree->disavow_parent()
-    }
-    return $trees;
-}
-
-
-=head2 fetch_all_with_lca
-
-   Arg[1]      : Taxon id
-   Example     : my $trees = $cafeTreeAdaptor->fetch_all_with_lca($taxon_id);
-   Description : Fetches from the database all the gene gain/loss trees having
-                 the given taxon_id as their lowest common ancestor
-   ReturnType  : An arrayref of Bio::EnsEMBL::Compara::CAFEGeneFamily objects
-   Exceptions  :
-   Caller      :
-
-=cut
-
-sub fetch_all_with_lca {
-    my ($self, $lca) = @_;
-    unless (defined $lca) {
-        throw("lca must be defined");
-    }
-    my $constraint = "stn.node_id = str.root_id";
-    my $sth = $self->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag ='taxon_id' AND value = ?");
-    $sth->execute($lca);
-    my ($lca_id) = $sth->fetchrow_array();
-    $sth->finish;
-    $constraint .= " AND cgf.lca_id = $lca_id";
-    return $self->generic_fetch($constraint);
-}
-
-=head2 fetch_lca_tree
-
-    Arg[1]      : Bio::EnsEMBL::Compara::CAFEGeneFamily
-    Example     : my $lca_tree = $cafeTreeAdaptor->fetch_lca_tree($cafeTree);
-    Description : Given a gene gain/loss tree, fetches from the database the same tree
-                  rooted at its lowest common ancestor
-    ReturnType  : Bio::EnsEMBL::Compara::CAFEGeneFamily
-    Exception   :
-    Caller      :
-
-=cut
-
-sub fetch_lca_tree {
-    my ($self, $cafeTree) = @_;
-
-    unless ($cafeTree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::CAFEGeneFamily] not a $cafeTree");
-    }
-    my $lca = $cafeTree->lca_id();
-#    my $gene_tree_root_id = $cafeTree->gene_tree_root_id;
-    my $cafe_gene_family_id = $cafeTree->cafe_gene_family_id;
-    my $constraint = "stn.node_id = cgf.lca_id AND cgf.cafe_gene_family_id = $cafe_gene_family_id";
-
-    my $trees = $self->generic_fetch($constraint);
-    if (scalar @{$trees} > 1) {
-        throw("too many trees fetched by fetch_lca_tree: Only 1 expected but ", scalar @{$trees}, " obtained\n");
-    }
-    my $tree = $trees->[0];
-    $tree->disavow_parent();
-    return $tree;
-}
-
-=head2
-
-    Arg[1]      : Bio::EnsEMBL::Compara::GeneTree
-    Example     : my $tree = $cafeTreeAdaptor->fetch_by_GeneTree($geneTree);
-    Description : Fetches the gene gain/loss tree associated with the given gene tree
-    ReturnType  : Bio::EnsEMBL::compara::CAFEGeneFamily
-    Exceptions  :
-    Caller      :
-
-=cut
 
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
-    return undef unless (defined $geneTree);
-    unless ($geneTree->isa('Bio::EnsEMBL::Compara::GeneTree')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTree] not a $geneTree");
-    }
-    my $node_id = $geneTree->root_id();
 
+    return undef unless (defined $geneTree);
+    assert_ref($geneTree, 'Bio::EnsEMBL::Compara::GeneTree');
+
+    my $node_id = $geneTree->root_id();
     return $self->fetch_by_gene_tree_root_id($node_id);
 }
 
 sub fetch_by_gene_tree_root_id {
     my ($self, $gene_tree_root_id) = @_;
+
     unless (defined $gene_tree_root_id) {
         throw("gene_tree_root_id must be defined");
     }
-    my $constraint = "cgf.gene_tree_root_id = $gene_tree_root_id AND str.root_id = stn.root_id AND csg.node_id = stn.root_id";
-    my $trees = $self->generic_fetch($constraint);
+    my $constraint = "cgf.gene_tree_root_id=$gene_tree_root_id";
 
-    if (scalar @$trees > 1) {
-        throw ("Too many trees returned by fetch_by_gene_tree_root_id (only 1 expected)\n");
-    }
-    return $trees->[0];
+    return $self->generic_fetch($constraint)->[0];
+
 }
 
-sub fetch_all_children_for_node {
-    my ($self, $node) = @_;
+sub fetch_all_by_method_link_species_set_id {
+    my ($self, $mlss_id) = @_;
 
-    my $gene_tree_root_id = $node->gene_tree_root_id();
+    my $species_tree_adaptor = $self->db->get_SpeciesTreeAdaptor;
+    my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id($mlss_id);
+    my $root_id = $species_tree->root->node_id();
 
-    my $constraint = "parent_id = " . $node->node_id;
-    $constraint .= " AND cgf.gene_tree_root_id = $gene_tree_root_id " if (defined $gene_tree_root_id);
-    my $kids = $self->generic_fetch($constraint);
-    foreach my $child (@{$kids}) { $node->add_child($child); }
-
-    return $node;
+    my $constraint = "root_id=$root_id";
+    return $self->generic_fetch($constraint);
 }
 
-sub member_id_has_gene_gain_loss_tree {
-    my ($self, $member_id) = @_;
+sub store {
+    my ($self, $tree) = @_;
 
-    my $sql = "SELECT count(*) FROM CAFE_gene_family cgf JOIN gene_tree_root gtr ON(cgf.gene_tree_root_id = gtr.root_id) JOIN gene_tree_node gtn ON(gtr.root_id = gtn.root_id) JOIN member mp USING (member_id) JOIN member mg ON (mp.member_id = mg.canonical_member_id) WHERE mg.source_name = 'ENSEMBLGENE' AND mg.stable_id = ?;";
-
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute($member_id);
-    my ($count) = $sth->fetchrow_array();
-    $sth->finish();
-    return $count;
-}
-
-## Stores a family gene
-## Assumes a CAFE species tree already exists
-sub store_gene_family {
-    my ($self, $root_id, $lca_id, $gene_tree_root_id, $pvalue_avg, $lambdas) = @_;
-
-    my $sth = $self->prepare("INSERT INTO CAFE_gene_family (root_id, lca_id, gene_tree_root_id, pvalue_avg, lambdas) VALUES (?,?,?,?,?)");
-    $sth->execute($root_id, $lca_id, $gene_tree_root_id, $pvalue_avg, $lambdas);
+    my $sth = $self->prepare("INSERT INTO CAFE_gene_family (root_id, lca_id, gene_tree_root_id, pvalue_avg, lambdas, pvalue_lim) VALUES (?,?,?,?,?,?)");
+    $sth->execute($tree->root->node_id, $tree->lca_id, $tree->gene_tree_root_id, $tree->pvalue_avg, $tree->lambdas, $tree->pvalue_lim);
     my $cafe_gene_family_id = $sth->{'mysql_insertid'};
-    $sth->finish();
+    $sth->finish;
 
-    my $sth2 = $self->prepare("SELECT node_id FROM species_tree_node WHERE root_id = ?");
-    $sth2->execute($root_id);
-
-    my $sth3 = $self->prepare("SELECT value FROM species_tree_node_tag WHERE node_id = ? and tag = 'taxon_id'");
-    my $sth4 = $self->prepare("INSERT INTO CAFE_species_gene (cafe_gene_family_id, node_id, taxon_id, n_members, pvalue) VALUES (?,?,?,?,?)");
-
-    while (my ($node_id) = $sth2->fetchrow_array) {
-        ## Substitute for get_tagvalue
-        $sth3->execute($node_id);
-        my ($taxon_id) = $sth3->fetchrow_array();
-        $sth4->execute($cafe_gene_family_id, $node_id, $taxon_id, 0, 1);
-    }
-
-    $sth2->finish();
-    $sth3->finish();
-    $sth4->finish();
+    my $cafe_gene_family_node_adaptor = $self->db->get_CAFEGeneFamilyNodeAdaptor();
+    $cafe_gene_family_node_adaptor->store($tree->root, $cafe_gene_family_id);
 
     return $cafe_gene_family_id;
 }
-
-sub store_species_gene {
-    my ($self, $cafe_gene_family_id, $node_id, $taxon_id, $n_members, $pvalue) = @_;
-    my $sth = $self->prepare("UPDATE CAFE_species_gene SET n_members = ?, pvalue = ? WHERE cafe_gene_family_id = ? AND node_id = ?");
-#    my $sth = $self->prepare("INSERT INTO CAFE_species_gene (cafe_gene_family_id, node_id, taxon_id, n_members, pvalue) VALUES (?,?,?,?,?)");
-    $sth->execute($n_members, $pvalue, $cafe_gene_family_id, $node_id);
-    $sth->finish();
-    return;
-}
-
-## Stores the CAFE species tree
-sub store_tree {
-    my ($self, $tree) = @_;
-
-    # Store the root node
-    my $root_id = $self->store_node($tree->root);
-    $tree->{'_root_id'} = $root_id;
-
-    # Store the rest of the nodes
-    for my $child (@{$tree->get_all_nodes}) {
-        $self->store_node($child);
-    }
-
-    # Store the tree itself
-    # method_link_species_set_id must be set to its real value to honour the foreign key
-    my $sth = $self->prepare('INSERT INTO species_tree_root (root_id, method_link_species_set_id, species_tree, pvalue_lim) VALUES (?,?,?,?)');
-    $sth->execute($root_id, $tree->method_link_species_set_id, $tree->species_tree, $tree->pvalue_lim);
-
-    $tree->adaptor($self);
-    return $root_id;
-}
-
-# Stores CAFE species tree's nodes
-sub store_node {
-    my ($self, $node) = @_;
-
-    unless ($node->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::CAFETreeNode] not a $node");
-    }
-
-    if (defined $node->adaptor &&
-        $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor') &&
-        $node->adaptor eq $self) {
-        # update node
-        $self->update($node);
-        $node->adaptor($self);
-        return;
-    }
-
-    my $root_id = $node->root->node_id();
-
-    my $parent_id = 0;
-    if ($node->parent()) {
-        $parent_id = $node->parent->node_id;
-    }
-
-    my $sth = $self->prepare("INSERT INTO species_tree_node(parent_id, root_id, left_index, right_index, distance_to_parent) VALUES (?,?,?,?,?)");
-    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
-    $node->node_id($sth->{'mysql_insertid'});
-
-    ### TODO: use TagAdaptor interface to include these tags
-    my $sth2 = $self->prepare("INSERT INTO species_tree_node_tag(node_id, tag, value) VALUES (?,?,?)");
-
-    $node->adaptor($self);
-    if ($node->is_leaf) {
-        my $name = $node->name;
-         $name =~ s/\./_/g;
-         my $genomeDB_Adaptor = $self->db->get_GenomeDBAdaptor;
-         my $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($name);
-         my $taxon_id = $genomeDB->taxon_id();
-        $sth2->execute($node->node_id, 'taxon_id', $taxon_id);
-    } else {
-        $sth2->execute($node->node_id, 'taxon_id', $node->name);
-    }
-    $sth->finish();
-    $sth2->finish();
-
-    return $node->node_id
-}
-
 
 
 #################################################
@@ -357,63 +109,55 @@ sub _columns {
                cgf.lambdas
                cgf.gene_tree_root_id
 
-               csg.taxon_id
-               csg.n_members
-               csg.pvalue
-
-               str.root_id
                str.method_link_species_set_id
                str.species_tree
-               str.pvalue_lim
-
-               stn.node_id
-               stn.parent_id
-               stn.left_index
-               stn.right_index
-               stn.distance_to_parent
              );
 }
 
 sub _tables {
-    return (['species_tree_node', 'stn'], ['CAFE_gene_family', 'cgf'], ['CAFE_species_gene', 'csg'], ['species_tree_root', 'str']);
-}
-
-sub _default_where_clause {
-    return "stn.node_id = csg.node_id";
+    return (['CAFE_gene_family', 'cgf'], ['species_tree_root', 'str']);
 }
 
 sub _left_join {
-    return (['CAFE_gene_family', 'cgf.root_id = str.root_id'], ['CAFE_species_gene', 'csg.cafe_gene_family_id=cgf.cafe_gene_family_id']);
+    return (['species_tree_root', 'str.root_id=cgf.root_id']);
+}
+
+
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+
+    my $tree_list = [];
+
+    while (my $rowhash = $sth->fetchrow_hashref) {
+        my $tree = $self->create_instance_from_rowhash($rowhash);
+        push @$tree_list, $tree;
+    }
+    return $tree_list;
 }
 
 sub create_instance_from_rowhash {
     my ($self, $rowhash) = @_;
-    my $node = new Bio::EnsEMBL::Compara::CAFEGeneFamily;
 
-    $self->init_instance_from_rowhash($node,$rowhash);
-    return $node;
+    my $tree = new Bio::EnsEMBL::Compara::CAFEGeneFamily;
+    $self->SUPER::init_instance_from_rowhash($tree, $rowhash);
+    $self->init_instance_from_rowhash($tree, $rowhash);
+    return $tree;
 }
+
 
 sub init_instance_from_rowhash {
     my ($self, $node, $rowhash) = @_;
 
-    # SUPER is NestedSetAdaptor
-    $self->SUPER::init_instance_from_rowhash($node, $rowhash);
-
     $node->cafe_gene_family_id($rowhash->{cafe_gene_family_id});
-    $node->method_link_species_set_id($rowhash->{method_link_species_set_id});
-    $node->species_tree($rowhash->{species_tree});
-    $node->pvalue_lim($rowhash->{pvalue_lim});
     $node->gene_tree_root_id($rowhash->{gene_tree_root_id});
     $node->lambdas($rowhash->{lambdas});
-    $node->pvalue_avg($rowhash->{pvalue_avg});
-    $node->pvalue($rowhash->{pvalue});
-    $node->taxon_id($rowhash->{taxon_id});
-    $node->n_members($rowhash->{n_members});
     $node->lca_id($rowhash->{lca_id});
+    $node->pvalue_avg($rowhash->{pvalue_avg});
 
     $node->adaptor($self);
+
     return $node;
 }
+
 
 1;
