@@ -603,17 +603,25 @@ sub gene_member_id {
 
 sub bioseq {
     my $self = shift;
+    my ($seq_type, $id_type) =
+        rearrange([qw(SEQ_TYPE ID_TYPE)], @_);
 
     throw("Member stable_id undefined") unless defined($self->stable_id());
-    throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
 
-    my $seqname = $self->source_name . ":" . $self->stable_id;
-    $seqname .= ":" . $self->genome_db_id if $self->genome_db_id;
+    my $sequence = $self->other_sequence($seq_type);
+    throw("No sequence for member " . $self->stable_id()) unless defined($sequence);
+
+    my $seqname;
+    given ($id_type || '') {
+        when (/^SEQ/i) {$seqname = $self->sequence_id}
+        when (/^MEM/i) {$seqname = $self->member_id}
+        when (/^STA/i) {$seqname = $self->stable_id}
+        when (/^SOU/i) {$seqname = $self->source_name . ':' . $self->stable_id}
+        default {$seqname = $self->member_id}
+    };
 
     return Bio::Seq->new(
-        -seq                => $self->sequence(),
-        -accession_number   => $self->sequence_id(),
-        -primary_id         => $self->member_id(),
+        -seq                => $sequence,
         -display_id         => $seqname,
         -desc               => $self->description(),
         -alphabet           => $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein',
