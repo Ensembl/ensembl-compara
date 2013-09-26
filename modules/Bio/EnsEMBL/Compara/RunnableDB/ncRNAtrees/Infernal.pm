@@ -92,15 +92,26 @@ sub fetch_input {
     $self->input_job->transient_error(1);
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
-
-#     my $n_nodes = $nc_tree->get_tagvalue('gene_count');
-#     if ($n_nodes == 1) {
-#         die "Only one member in tree $nc_tree_id";
-#     }
-
+    $nc_tree->preload();
     $self->param('gene_tree', $nc_tree);
 
-    $self->param('model_id_hash', {});
+    my %model_id_hash = ();
+    my @no_acc_members = ();
+    foreach my $member (${$nc_tree->get_all_Members}) {
+        my $description = $member->description;
+        unless (defined($description) && $description =~ /Acc\:(\w+)/) {
+            warn "No accession for [$description]";
+            push @no_acc_members, $member->dbID;
+        } else {
+            $model_id_hash{$1} = 1;
+        }
+    }
+    unless (keys %model_id_hash) {
+        die "No Accs found for gene_tree_id $nc_tree_id : ", join ",",@no_acc_members;
+    }
+    if (scalar keys %model_id_hash > 1) {
+        print STDERR "WARNING: More than one model: ", join(",",keys %model_id_hash), "\n";
+    }
 
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
@@ -170,71 +181,28 @@ sub dump_sequences_to_workdir {
   my $self = shift;
   my $cluster = shift;
 
-  my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->root_id . ".fasta";
+  my $root_id = $cluster->root_id;
+  my $fastafile = $self->worker_temp_directory . "cluster_" . $root_id . ".fasta";
   print STDERR "fastafile: $fastafile\n" if($self->debug);
 
-  my $seq_id_hash;
-  my $residues = 0;
-  print STDERR "fetching sequences...\n" if ($self->debug);
-
-  my $root_id = $cluster->root_id;
-  my $member_list = $cluster->get_all_leaves;
-  if (2 > scalar @$member_list) {
+  my $tag_gene_count = scalar(@{$cluster->get_all_leaves});
+  if ($tag_gene_count < 2) {
 #      $self->input_job->transient_error(0);
       $self->input_job->incomplete(0);
       die ("Only one member for cluster [$root_id]");
 #      return undef
   }
   print STDERR "Counting number of members\n" if ($self->debug);
-  my $tag_gene_count = scalar(@{$member_list});
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
-  my $count = 0;
+  my $count = $cluster->print_sequences_to_file( -file => $fastafile, -uniq_seq => 1 );
 
-  my @no_acc_members = ();
-  foreach my $member (@{$member_list}) {
-    my $sequence_id;
-    eval {$sequence_id = $member->sequence_id;};
-    if ($@) {
-      $DB::single=1;1;
-    }
-    next if($seq_id_hash->{$sequence_id});
-    my $description;
-    eval { $description = $member->description; };
-    unless (defined($description) && $description =~ /Acc\:(\w+)/) {
-      warn ("No accession for [$description]");
-      push @no_acc_members, $member->dbID;
-    }
-    $seq_id_hash->{$sequence_id} = 1;
-    $count++;
-    my $member_model_id = $1;
-
-    $self->param('model_id_hash')->{$member_model_id} = 1;
-
-    my $seq = $member->sequence;
-    $residues += $member->seq_length;
-    $seq =~ s/(.{72})/$1\n/g;
-    chomp $seq;
-    print STDERR $member->sequence_id. "\n" if ($self->debug);
-    print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
-    print STDERR "sequences $count\n" if ($count % 50 == 0);
-  }
-  close(OUTSEQ);
-  unless (keys %{$self->param('model_id_hash')}) {
-      die "No Accs found for gene_tree_id $root_id : ", join ",",@no_acc_members;
-  }
-
-
-  if(scalar keys (%{$seq_id_hash}) <= 1) {
+  if ($count == 1) {
     $self->update_single_peptide_tree($cluster);
     $self->param('single_peptide_tree', 1);
   }
 
-  my $this_hash_count = scalar keys %$seq_id_hash;
-  my $perc_unique = ($this_hash_count / $tag_gene_count) * 100;
-  print "tag_gene_count $tag_gene_count\n";
-  print "Percent unique sequences: $perc_unique ($this_hash_count / $tag_gene_count)\n" if ($self->debug);
+  my $perc_unique = ($count / $tag_gene_count) * 100;
+  print "Percent unique sequences: $perc_unique ($count / $tag_gene_count)\n" if ($self->debug);
 
   return $fastafile;
 }
@@ -267,20 +235,6 @@ sub run_infernal {
 
   my $model_id;
 
-#   if (1 < scalar keys %{$self->param('model_id_hash')}) {
-#     # We revert to the clustering_id tag, which maps to the RFAM
-#     # 'name' field in hmm_profile (e.g. 'mir-135' instead of 'RF00246')
-#     print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
-#     $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
-#     # $self->throw("This cluster has more than one associated model");
-#   } else {
-#     my @models = keys %{$self->param('model_id_hash')};
-#     $model_id = $models[0] or die ("model_id_hash is empty?");
-#   }
-
-  if (scalar keys %{$self->param('model_id_hash')} > 1) {
-      print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
-  }
   $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 
   $self->param('model_id', $model_id );
