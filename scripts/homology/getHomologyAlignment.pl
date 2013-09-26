@@ -15,7 +15,6 @@ $self->{'compara_conf'} = {};
 $self->{'compara_conf'}->{'-user'} = 'ensro';
 $self->{'compara_conf'}->{'-port'} = 3306;
 
-$self->{'removeXedSeqs'} = undef;
 $self->{'outputFasta'} = undef;
 $self->{'noSplitSeqLines'} = undef;
 
@@ -145,39 +144,3 @@ sub usage {
 }
 
 
-sub dump_fasta {
-  my $self = shift;
-
-  my $sql = "SELECT member.stable_id, member.description, sequence.sequence " .
-            " FROM member, sequence, source " .
-            " WHERE member.source_id=source.source_id ".
-            " AND source.source_name='ENSEMBLPEP' ".
-            " AND member.sequence_id=sequence.sequence_id " .
-            " GROUP BY member.member_id ORDER BY member.stable_id;";
-
-  my $fastafile = $self->{'outputFasta'};
-  open FASTAFILE, ">$fastafile"
-    or die "Could open $fastafile for output\n";
-  print("writing fasta to loc '$fastafile'\n");
-
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
-  $sth->execute();
-
-  my ($stable_id, $description, $sequence);
-  $sth->bind_columns( undef, \$stable_id, \$description, \$sequence );
-
-  while( $sth->fetch() ) {
-    $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
-
-    #if removedXedSeqs defined then it contains the minimum num of
-    # Xs in a row that is not acceptable, the regex X{#,}? says
-    # if X occurs # or more times (not exhaustive search)
-    unless($self->{'removeXedSeqs'} and
-          ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
-      print FASTAFILE ">$stable_id $description\n$sequence\n";
-    }
-  }
-  close(FASTAFILE);
-
-  $sth->finish();
-}
