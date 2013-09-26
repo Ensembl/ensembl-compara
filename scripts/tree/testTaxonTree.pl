@@ -561,7 +561,7 @@ sub dumpTreeMultipleAlignment
   open(OUTSEQ, ">$clw_file")
     or $self->throw("Error opening $clw_file for write");
 
-  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'});
+  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', $self->{'cdna'} ? (-seq_type => 'cds') : ());
   
   my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTSEQ,
                                     -interleaved => 1,

@@ -42,7 +42,7 @@ my $homology_list = $comparaDBA->get_HomologyAdaptor->fetch_all_by_MethodLinkSpe
 printf("fetched %d homologies\n", scalar(@{$homology_list}));
 
 foreach my $homology (@{$homology_list}) {
-  my $sa = $homology->get_SimpleAlign(-cdna => 1);
+  my $sa = $homology->get_SimpleAlign(-seq_type => 'cds');
   my $alignIO = Bio::AlignIO->newFh(-interleaved => 0, -fh => \*STDOUT, -format => "phylip", -idlength => 20);
 
   print $alignIO $sa;

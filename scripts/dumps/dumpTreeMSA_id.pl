@@ -209,7 +209,7 @@ sub dumpTreeFasta {
     warn("missing tree\n") unless($tree);
     my $sa;
 
-    $sa = $tree->get_SimpleAlign(-id_type => 'STABLE', -CDNA=>$cdna);
+    $sa = $tree->get_SimpleAlign(-id_type => 'STABLE', $cdna ? (-seq_type => 'cds') : () );
     $sa->set_displayname_flat(1);
     my $alignIO = Bio::AlignIO->newFh(-fh => $fh,
                                       -format => 'fasta'

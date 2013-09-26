@@ -67,7 +67,7 @@ foreach my $gene_id (split(':',$input)) {
         $ds = $this_homology->ds;
     } else {
         # This bit calculates dnds values using the counting method in bioperl-run
-        my $aln = $this_homology->get_SimpleAlign( -cdna => 1);
+        my $aln = $this_homology->get_SimpleAlign( -seq_type => 'cds');
         if ($bioperl_dnastats) {
             my $stats;
             eval { $stats = new Bio::Align::DNAStatistics;};

@@ -39,6 +39,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
   my %sa_params = $self->param('use_genomedb_id') ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
+  $sa_params{'-seq_type'} = 'cds' if $self->param('cdna');
 
   print STDERR "fetching alignment\n" if ($self->debug);
 
@@ -100,7 +101,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   # Getting the multiple alignment
   my $sa = $gene_tree->get_SimpleAlign(
      -id_type => 'MEMBER',
-     -cdna => $self->param('cdna'),
      -stop2x => 1,
      %sa_params,
   );
@@ -137,7 +137,7 @@ sub dumpAlignedMemberSetAsStockholm {
     # Getting the multiple alignment
     my $sa = $gene_tree->get_SimpleAlign(
             -id_type => 'MEMBER',
-            -cdna => $self->param('cdna'),
+            $self->param('cdna') ? (-seq_type => 'cds') : (),
             -stop2x => 1,
             );
 

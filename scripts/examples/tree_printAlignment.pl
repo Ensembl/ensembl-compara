@@ -38,7 +38,7 @@ foreach my $gene (@$genes) {
 
   # Get the protein multialignment and the back-translated CDS alignment
   my $protein_align = $genetree->get_SimpleAlign;
-  my $cds_align = $genetree->get_SimpleAlign(-cdna=>1);
+  my $cds_align = $genetree->get_SimpleAlign(-seq_type => 'cds');
 
   eval {require Bio::AlignIO;};
   last if ($@);
