@@ -48,6 +48,9 @@ package Bio::EnsEMBL::Compara::MemberSet;
 
 use strict;
 use Scalar::Util qw(weaken);
+
+use Bio::SeqIO;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Exception;
@@ -494,6 +497,26 @@ sub print_sequences_to_fasta {
     close PEP;
     return $pep_counter;
 }
+
+sub print_sequences_to_file {
+    my ($self, $pep_file, $format) = @_;
+    my $pep_counter = 0;
+
+    my $seqio = Bio::SeqIO->new(-file => ">$pep_file", -format => $format);
+
+    # Only for FASTA files, but I couldn't find a way of getting the format from $seqio
+    $seqio->preferred_id_type('primary') if $seqio->can('preferred_id_type');
+
+    foreach my $member (@{$self->get_all_Members}) {
+        next if $member->source_name eq 'ENSEMBLGENE';
+        next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+
+        $seqio->write_seq($member->bioseq);
+        $pep_counter++;
+    }
+    return $pep_counter;
+}
+
 
 
 #################################
