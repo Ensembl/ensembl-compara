@@ -78,10 +78,11 @@ sub multifurcate_tree {
         for my $child (@{$node->children()}) {
             $child->distance_to_parent(int($mya));
         }
-#        $node->distance_to_parent($mya);
+
         if ($node->taxon_id eq $node->parent->taxon_id) {
             for my $child(@{$node->children}) {
                 $node->parent->add_child($child);
+                $child->distance_to_parent(int($mya));
             }
             $node->parent->merge_children($node);
             $node->parent->remove_nodes([$node]);
