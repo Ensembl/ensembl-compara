@@ -476,40 +476,24 @@ sub gene_list {  # DEPRECATED
 
 sub print_sequences_to_fasta {
     my ($self, $pep_file) = @_;
-    my $pep_counter = 0;
-    open PEP, ">$pep_file";
-    foreach my $member (@{$self->get_all_Members}) {
-        next if $member->source_name eq 'ENSEMBLGENE';
-        my $member_id = $member->member_id;
-        my $seq = $member->sequence;
-
-        print PEP ">$member_id\n";
-        $seq =~ s/(.{72})/$1\n/g;
-        chomp $seq;
-        unless (defined($seq)) {
-            my $set_id = $self->dbID;
-            my $member_stable_id = $member->stable_id;
-            die "member $member_stable_id in MemberSet $set_id doesn't have a sequence";
-        }
-        print PEP $seq,"\n";
-        $pep_counter++;
-    }
-    close PEP;
-    return $pep_counter;
+    return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta');
 }
 
 sub print_sequences_to_file {
-    my ($self, $pep_file) = @_;
-    my $pep_counter = 0;
+    my ($self, @args) = @_;
 
-    my $seqio = Bio::SeqIO->new(
-        scalar(@_) >= 3 ? (-format => $_[2]) : (),
-        ref($pep_file) ? (-fh => $pep_file) : (-file => ">$pep_file"),
-    );
+    my ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps);
+    if (scalar @args) {
+        ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps) =
+            rearrange([qw(FILE FH FORMAT UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS)], @args);
+    }
+
+    my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
 
     # Only for FASTA files, but I couldn't find a way of getting the format from $seqio
     $seqio->preferred_id_type('primary') if $seqio->can('preferred_id_type');
 
+    my $pep_counter = 0;
     foreach my $member (@{$self->get_all_Members}) {
         next if $member->source_name eq 'ENSEMBLGENE';
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
