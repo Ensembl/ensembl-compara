@@ -466,23 +466,24 @@ sub _prepare_cds_sequence {
 sub _prepare_exon_sequences {
     my $self = shift;
 
-    my $sequence = $self->sequence;
-    my $trans = $self->get_Transcript;
-    my @exons = @{$trans->get_all_translateable_Exons};
-    if ((scalar @exons) == 1) {
-        $self->{_sequence_exon_cased} = $sequence;
-        $self->{_sequence_exon_bounded} = $sequence;
-        return;
-    }
-
     # If there is the exon_bounded sequence, it is only a matter of splitting it and alternating the case
     my $exon_bounded_seq = $self->{_sequence_exon_bounded};
     my $exon_bounded_seq = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded') unless $exon_bounded_seq;
     my @exon_sequences = ();
     if ($exon_bounded_seq) {
+        $self->{_sequence_exon_bounded} = $exon_bounded_seq;
         @exon_sequences = split( /[boj]/, $exon_bounded_seq);
 
     } else {
+
+        my $sequence = $self->sequence;
+        my $trans = $self->get_Transcript;
+        my @exons = @{$trans->get_all_translateable_Exons};
+        if ((scalar @exons) == 1) {
+            $self->{_sequence_exon_cased} = $sequence;
+            $self->{_sequence_exon_bounded} = $sequence;
+            return;
+        }
 
         # Otherwise, we have to parse the exons
         my %splice_site;
