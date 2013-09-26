@@ -62,7 +62,7 @@ use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             # we should not really point at personal directories... but let's temporarily keep it as is:
-        'search_hmm_executable' => '/nfs/acari/avilella/src/hmmer3/latest/hmmer-3.0b3/src/hmmsearch',
+        'search_hmm_executable' => '/software/ensembl/compara/hmmer-3.0/binaries/hmmsearch',
     };
 }
 
