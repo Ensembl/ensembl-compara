@@ -286,6 +286,7 @@ sub load_cigars_from_fasta { # DEPRECATED
         : whether redundant sequences should be discarded
     Arg [-CDNA] : (opt) boolean (default: false)
         : whether the CDS sequence should be used instead of the default sequence
+        : DEPRECATED: use -SEQ_TYPE => 'cdna' instead
     Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
         : which identifier should be used as sequence names: the stable_id, the sequence_id, or the member_id
     Arg [-STOP2X] (opt) boolean (default: false)
@@ -298,10 +299,14 @@ sub load_cigars_from_fasta { # DEPRECATED
         : whether the genome_db_id should be added to the sequence names
     Arg [-EXON_CASED] (opt) boolean (default: false)
         : whether the case of the sequence should change at each exon
+        : DEPRECATED: use -SEQ_TYPE => 'exon_cased' instead
     Arg [-KEEP_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be kept in the alignment
+    Arg [-SEQ_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
+        : which sequence should be used instead of the default one.
+        : Can be 'exon_cased' for proteins and ncRNAs, and 'cds' for proteins only
 
-  Example    : $tree->get_SimpleAlign(-CDNA => 1);
+  Example    : $tree->get_SimpleAlign(-SEQ_TYPE => 'cds');
   Description: Returns the alignment as a BioPerl object
   Returntype : Bio::SimpleAlign
   Exceptions : none
@@ -322,9 +327,10 @@ sub get_SimpleAlign {
     my $append_genomedb_id = 0;
     my $exon_cased = 0;
     my $keep_gaps = 0;
+    my $seq_type = undef;
     if (scalar @args) {
-        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps) =
-            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS)], @args);
+        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps, $seq_type) =
+            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS SEQ_TYPE)], @args);
     }
 
     my $sa = Bio::SimpleAlign->new();
