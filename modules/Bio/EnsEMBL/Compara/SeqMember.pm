@@ -616,6 +616,7 @@ sub bioseq {
         when (/^SEQ/i) {$seqname = $self->sequence_id}
         when (/^MEM/i) {$seqname = $self->member_id}
         when (/^STA/i) {$seqname = $self->stable_id}
+        when (/^VER/i) {$seqname = $self->stable_id.($self->version ? '.'.$self->version : '')}
         when (/^SOU/i) {$seqname = $self->source_name . ':' . $self->stable_id}
         default {$seqname = $self->member_id}
     };
