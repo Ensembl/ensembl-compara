@@ -617,6 +617,7 @@ sub bioseq {
         -primary_id         => $self->member_id(),
         -display_id         => $seqname,
         -desc               => $self->description(),
+        -alphabet           => $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein',
     );
 }
 
