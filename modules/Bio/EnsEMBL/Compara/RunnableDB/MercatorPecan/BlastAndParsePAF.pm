@@ -66,7 +66,6 @@ sub get_queries {
     my $start_member_id = $self->param_required('start_member_id');
     my $end_member_id   = $self->param_required('end_member_id');
 
-    my $idprefixed      = $self->param('idprefixed')  || 0;
     my $debug           = $self->debug() || $self->param('debug') || 0;
     my $genome_db_id    = $self->param('genome_db_id');
 
