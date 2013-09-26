@@ -611,6 +611,9 @@ sub bioseq {
     my $sequence = $self->other_sequence($seq_type);
     throw("No sequence for member " . $self->stable_id()) unless defined($sequence);
 
+    my $alphabet = $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
+    $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
+
     my $seqname;
     given ($id_type || '') {
         when (/^SEQ/i) {$seqname = $self->sequence_id}
@@ -625,7 +628,7 @@ sub bioseq {
         -seq                => $sequence,
         -display_id         => $seqname,
         -desc               => $self->description(),
-        -alphabet           => $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein',
+        -alphabet           => $alphabet,
     );
 }
 
