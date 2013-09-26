@@ -70,6 +70,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
     my ($self) = @_;
 
+    ## FastTree2 uses all the cores available by default. We want to limit this because we may have already asked for a limited amount of cores in our resource description
+    ## To limit this the OMP_NUM_THREADS env variable must be set
+    ## We assume that 'raxml_number_of_cores' param is set to the number of cores specified in the resource description
+    $ENV{'OMP_NUM_THREADS'} = $self->param('raxml_number_of_cores');
+
     $self->input_job->transient_error(0);
     my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory parameter\n";
     $self->input_job->transient_error(1);
@@ -209,12 +214,14 @@ sub _run_raxml_light {
 
     my $raxmlLight_exe = $self->param('raxmlLight_exe')
         or die "'raxmlLight_exe' is an obligatory parameter";
+    my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
 
     die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);
 
     my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';
     my $cmd = $raxmlLight_exe;
+    $cmd .= " -T $raxml_number_of_cores";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -t $parsimony_tree";
