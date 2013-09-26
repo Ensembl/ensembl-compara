@@ -43,24 +43,33 @@ package Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use strict;
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
-=head2 new_from_NCBITaxon
 
-    Arg[1]      : NCBITaxon object
-    Example     : my $st_node = Bio::EnsEMBL::Compara::SpeciesTreeNode->new_from_NCBITaxon($ncbi_taxon);
-    Description : Constructor for species tree nodes. Given a NCBITaxon (possibly a tree), creates a new SpeciesTreeNode (possibly a tree).
+sub _complete_cast_node {
+    my ($self, $copy) = @_;
+    $copy->taxon_id($self->taxon_id);
+    $copy->genome_db_id($self->genome_db_id);
+    $copy->node_name($self->node_name);
+}
+
+=head2 new_from_NestedSet
+
+    Arg[1]      : An object that inherits from NestedSet
+    Arg[2](opt) : A method in the object to obtain the TaxonID in the non-leaf nodes (defaults to "name");
+    Example     : my $st_node = Bio::EnsEMBL::Compara::SpeciesTreeNode->new_from_NestedSet($tree);
+    Description : Constructor for species tree nodes. Given an object that inherits from NestedSet (possibly a tree), creates a new SpeciesTreeNode (possibly a tree).
     ReturnType  : EnsEMBL::Compara::SpeciesTreeNode
     Exceptions  : none
     Caller      : General
 
 =cut
 
-sub new_from_NCBITaxon {
-    my ($self, $taxon_tree) = @_;
+sub new_from_NestedSet {
+    my ($self, $nestedSet_tree, $name_method) = @_;
 
-    my $tree = $taxon_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
-
-    my $genomeDB_Adaptor = $taxon_tree->adaptor->db->get_GenomeDBAdaptor;
-    my $NCBITaxon_Adaptor = $taxon_tree->adaptor->db->get_NCBITaxonAdaptor;
+    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    my $method = $name_method || "name";
+    my $genomeDB_Adaptor = $nestedSet_tree->adaptor->db->get_GenomeDBAdaptor;
+    my $NCBITaxon_Adaptor = $nestedSet_tree->adaptor->db->get_NCBITaxonAdaptor;
     for my $node (@{$tree->get_all_nodes}) {
         if ($node->is_leaf) {
             my $name = $self->_normalize_species_name($node->name);
@@ -68,7 +77,7 @@ sub new_from_NCBITaxon {
             $node->genome_db_id($genomeDB->dbID);
             $node->taxon_id($genomeDB->taxon_id); ## taxon_id shouldn't be in the taxon node already?
         } else {
-            my $name = $node->name;
+            my $name = $node->$method;
             $node->taxon_id($NCBITaxon_Adaptor->fetch_node_by_name($name)->taxon_id);
         }
     }
@@ -83,19 +92,15 @@ sub _normalize_species_name {
     return $name;
 }
 
-sub find_node_by_field_value {
+sub find_nodes_by_field_value {
     my ($self, $field, $expected) = @_;
 
-    return undef unless ($self->can($field));
-    my $value = $self->$field();
-    print STDERR "VALUE FOR $field IS $value\n";
-    return $self if ($value eq $expected);
-
-    for my $child (@{$self->children}) {
-        my $found = $child->find_node_by_field_value($field, $expected);
-        return $found if (defined ($found))
+    return unless $self->can($field);
+    my @nodes;
+    for my $node (@{$self->get_all_nodes}) {
+        push @nodes, $node if ($node->$field eq $expected);
     }
-    return undef;
+    return [@nodes];
 }
 
 
