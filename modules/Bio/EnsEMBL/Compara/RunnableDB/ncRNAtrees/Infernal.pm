@@ -194,7 +194,7 @@ sub dump_sequences_to_workdir {
   }
   print STDERR "Counting number of members\n" if ($self->debug);
 
-  my $count = $cluster->print_sequences_to_file( -file => $fastafile, -uniq_seq => 1 );
+  my $count = $cluster->print_sequences_to_file( -file => $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
   if ($count == 1) {
     $self->update_single_peptide_tree($cluster);

@@ -273,7 +273,7 @@ sub dumpProteinTreeToWorkdir {
   return $fastafile if (-e $fastafile);
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
-  my $num_pep = $tree->print_sequences_to_file(-file => $fastafile, -uniq_seq => 1);
+  my $num_pep = $tree->print_sequences_to_file(-file => $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
   if ($num_pep <= 1) {
     $self->update_single_peptide_tree($tree);
