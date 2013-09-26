@@ -61,7 +61,7 @@ GetOptions(
            "help"            => \$help,
           );
 
-if ($help) {
+if (! defined $member_id || $help) {
       print <<'EOH';
 GenerateSSPict.pl -- Generate secondary structure of Ensembl ncRNA trees
 ./GenerateSSPict.pl -compara_url <compara_url> -id <gene_member_stable_id>
@@ -102,8 +102,8 @@ my $geneMemberAdaptor = $compara_dba->get_GeneMemberAdaptor();
 my $seqMemberAdaptor  = $compara_dba->get_SeqMemberAdaptor();
 my $geneTreeAdaptor   = $compara_dba->get_GeneTreeAdaptor();
 
-my $member = $geneMemberAdaptor->fetch_by_source_stable_id(undef, $member_id);
-my $peptide = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($member->member_id);
+my $member = $geneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $member_id);
+my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($member->member_id);
 
 my $geneTree = $geneTreeAdaptor->fetch_default_for_Member($member);
 my $model_name = $geneTree->get_tagvalue('model_name');
@@ -114,7 +114,7 @@ my $aln_filename = dumpMultipleAlignment($input_aln, $model_name, $ss_cons);
 if ($thumbnail) {
     getThumbnail($aln_filename, $geneTree);
 } else {
-    getPlot($aln_filename, $geneTree, $peptide->stable_id);
+    getPlot($aln_filename, $geneTree, $transc->stable_id);
 }
 
 sub dumpMultipleAlignment {
