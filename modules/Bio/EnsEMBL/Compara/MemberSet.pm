@@ -493,15 +493,16 @@ sub print_sequences_to_file {
     # Only for FASTA files, but I couldn't find a way of getting the format from $seqio
     $seqio->preferred_id_type('primary') if $seqio->can('preferred_id_type');
 
-    my $pep_counter = 0;
+    my %seq_id_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
         next if $member->source_name eq 'ENSEMBLGENE';
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+        next if $unique_seqs and $seq_id_hash{$member->sequence_id};
 
+        $seq_id_hash{$member->sequence_id} = 1;
         $seqio->write_seq($member->bioseq);
-        $pep_counter++;
     }
-    return $pep_counter;
+    return scalar(keys %seq_id_hash);
 }
 
 
