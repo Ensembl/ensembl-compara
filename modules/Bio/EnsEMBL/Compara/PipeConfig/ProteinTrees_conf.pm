@@ -932,7 +932,10 @@ sub pipeline_analyses {
                 'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
             },
             -rc_name => '250Mb_job',
-            -flow_into => [ 'run_qc_tests' ],
+            -flow_into => {
+                '1->A' => [ 'hc_only_canonical_pep_in_clusters' ],
+                'A->1' => [ 'run_qc_tests' ],
+            }
         },
 
 # ---------------------------------------------[Pluggable QC step]----------------------------------------------------------

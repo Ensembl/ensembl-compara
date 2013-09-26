@@ -710,5 +710,23 @@ sub analysis_homology_dnds {
     ];
 }
 
+
+sub analysis_clusters_globally {
+    my ($self) = @_;
+
+    return [
+
+        {   -logic_name         => 'hc_only_canonical_pep_in_clusters',
+            -module             => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters         => {
+                'inputquery'        => 'SELECT * FROM gene_tree_node gtn LEFT JOIN member mg ON gtn.member_id = gtn.canonical_member_id WHERE mg.member_id IS NULL',
+            },
+            -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
+        },
+    ];
+}
+
+
 1;
 
