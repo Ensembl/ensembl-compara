@@ -476,36 +476,29 @@ sub gene_list {  # DEPRECATED
 
 sub print_sequences_to_fasta {
     my ($self, $pep_file) = @_;
-    return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta');
+    return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta', -id_type => 'MEMBER');
 }
 
 sub print_sequences_to_file {
-    my ($self, @args) = @_;
+    my $self = shift;
 
-    my ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps, $removeXed);
-    if (scalar @args) {
-        ($file, $fh, $format, $unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps, $removeXed) =
-            rearrange([qw(FILE FH FORMAT UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS REMOVEXED)], @args);
-    }
+    my ($file, $fh, $format, $unique_seqs, $seq_type, $id_type) =
+        rearrange([qw(FILE FH FORMAT UNIQ_SEQ SEQ_TYPE ID_TYPE)], @_);
 
     my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
 
-    # Only for FASTA files, but I couldn't find a way of getting the format from $seqio
-    $seqio->preferred_id_type($unique_seqs ? 'accession' : 'primary') if $seqio->can('preferred_id_type');
-
-    my %seq_id_hash = ();
+    my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
         next if $member->source_name eq 'ENSEMBLGENE';
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-        next if $unique_seqs and $seq_id_hash{$member->sequence_id};
 
-        # filter sequences that contain that many X-es consecutively
-        next if $removeXed and ($member->sequence =~ /X{$removeXed,}?/);
+        my $bioseq = $member->bioseq(-SEQ_TYPE => $seq_type, -ID_TYPE => $id_type);
+        next if $unique_seqs and $seq_hash{$bioseq->seq};
+        $seq_hash{$bioseq->seq} = 1;
 
-        $seq_id_hash{$member->sequence_id} = 1;
-        $seqio->write_seq($member->bioseq);
+        $seqio->write_seq($bioseq);
     }
-    return scalar(keys %seq_id_hash);
+    return scalar(keys %seq_hash);
 }
 
 
