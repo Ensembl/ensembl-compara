@@ -491,7 +491,7 @@ sub print_sequences_to_file {
     my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
 
     # Only for FASTA files, but I couldn't find a way of getting the format from $seqio
-    $seqio->preferred_id_type('primary') if $seqio->can('preferred_id_type');
+    $seqio->preferred_id_type($unique_seqs ? 'accession' : 'primary') if $seqio->can('preferred_id_type');
 
     my %seq_id_hash = ();
     foreach my $member (@{$self->get_all_Members}) {

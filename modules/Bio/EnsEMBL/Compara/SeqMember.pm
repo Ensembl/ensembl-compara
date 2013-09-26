@@ -603,20 +603,21 @@ sub gene_member_id {
 =cut
 
 sub bioseq {
-  my $self = shift;
+    my $self = shift;
 
-  throw("Member stable_id undefined") unless defined($self->stable_id());
-  throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
+    throw("Member stable_id undefined") unless defined($self->stable_id());
+    throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
 
-  my $seqname = $self->source_name . ":" . $self->stable_id;
-  $seqname .= ":" . $self->genome_db_id if $self->genome_db_id;
+    my $seqname = $self->source_name . ":" . $self->stable_id;
+    $seqname .= ":" . $self->genome_db_id if $self->genome_db_id;
 
-  my $seq = Bio::Seq->new(-seq        => $self->sequence(),
-                          -primary_id => $self->member_id,
-                          -display_id => $seqname,
-                          -desc       => $self->description(),
-                         );
-  return $seq;
+    return Bio::Seq->new(
+        -seq                => $self->sequence(),
+        -accession_number   => $self->sequence_id(),
+        -primary_id         => $self->member_id(),
+        -display_id         => $seqname,
+        -desc               => $self->description(),
+    );
 }
 
 
