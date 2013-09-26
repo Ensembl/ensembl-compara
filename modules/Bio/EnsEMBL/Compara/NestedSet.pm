@@ -57,18 +57,22 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
 ## If this subroutine works we should merge it with copy
 sub cast {
-    my ($self, $class) = @_;
+    my ($self, $class, $adaptor) = @_;
 
     eval "require $class";
 
     my $copy = $self->SUPER::copy;
     bless $copy, $class;
+    $copy->adaptor($adaptor) if (defined $adaptor);
 
     $copy->node_id($self->node_id) if ($copy->can('node_id'));
     $copy->distance_to_parent($self->distance_to_parent);
     $copy->left_index($self->left_index);
     $copy->right_index($self->right_index);
+
     $copy->{_children_loaded} = $self->{_children_loaded};
+
+    $self->_complete_cast_node($copy) if ($self->can('_complete_cast_node'));
 
     for my $child (@{$self->children}) {
         $copy->add_child($child->cast($class));
