@@ -13,12 +13,11 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub matrix_image_config :lvalue { $_[0]{'matrix_image_config'}; }
 sub menu                :lvalue { $_[0]{'menu'};                }
 sub set                 :lvalue { $_[0]{'set'};                 }
-sub matrix_config               { return {};                    } # Implement in children
 
 sub init {
   my $self        = shift;
   my $hub         = $self->hub;
-  my $code        = join '::', $hub->type, $hub->param('config');
+  my $code        = join '::', $hub->type, $hub->function;
   my $module_name = "EnsEMBL::Web::ViewConfig::$code";
   my $view_config = $module_name->new($self->type, $self->component, $hub) if $self->dynamic_use($module_name);
   
@@ -36,12 +35,12 @@ sub form {
   my $set           = $self->set;
   my $menu          = join '_', $self->menu, $set eq $self->menu ? () : $set;
   my $img_url       = $self->img_url;
-  my $conf          = $self->matrix_config;
   my $image_config  = $self->matrix_image_config;
   my $user_settings = $image_config->get_user_settings;
   my $tree          = $image_config->tree;
   my $menu_node     = $tree->get_node($menu);
-  my $matrix_rows   = $menu_node->data->{'matrix_rows'};
+  my $matrix_data   = $menu_node->data->{'matrix'};
+  my @matrix_rows   = sort { $a->{'group_order'} <=> $b->{'group_order'} || lc $a->{'group'} cmp lc $b->{'group'} || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
   my @filters       = ([ '', 'All classes' ]);
   my (@columns, %renderer_counts, %cells, %features);
   
@@ -107,7 +106,7 @@ sub form {
   
   $headers_html[1] = "$renderer_template[0]$renderer_html$renderer_template[2]";
   
-  foreach (@$matrix_rows) {
+  foreach (@matrix_rows) {
     my $id       = $_->{'id'};
     my $y        = $_->{'y'} || $id;
     my $group    = $_->{'group'};
@@ -197,7 +196,7 @@ sub form {
     
     if ($group ne $last_group) {
       # No versions of IE are capable of correctly drawing borders when there is an interaction between colspan on a cell and border-collapse, so we must draw empty cells instead of using colspan
-      push @rows, [ 'gap', { tag => 'th', html => $group }, map { tag => 'th' }, @columns ];
+      push @rows, [ 'gap', { tag => 'th', html => $group, class => 'first' }, map { tag => 'th' }, @columns ];
       $gaps{$#rows} = 1;
       $last_group   = $group;
       
@@ -286,13 +285,12 @@ sub form {
   }
   
   my $html = sprintf(qq{
-    <h1>$conf->{'section'}</h1>
+    <h1>$matrix_data->{'section'}</h1>
     <div class="toggle_tutorial"></div>
     $tutorials{'video'}
     <div class="header_wrapper">
       <h2>%s</h2> 
-      <div class="sprite info_icon help" title="Click for more information">&nbsp;</div>
-      <div class="desc">$conf->{'description'}</div>
+      %s
     </div>
     <div class="filter_wrapper">
       <h2>Filter by</h2>
@@ -315,7 +313,7 @@ sub form {
         <table class="config_matrix" cellspacing="0" cellpadding="0">
           <thead>
             <tr>
-              <th class="first axes"><div><i class="x">$conf->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$conf->{'axes'}{'y'}</i><b class="y">&#9660;</b></div></th>
+              <th class="first axes">%s</th>
               %s
             </tr>
             <tr class="config_menu">
@@ -335,8 +333,10 @@ sub form {
       <div class="no_results">No results found</div>
     </div>
     },
-    encode_entities($conf->{'header'}),
+    encode_entities($matrix_data->{'header'}),
+    $matrix_data->{'description'} ? qq{<div class="sprite info_icon help" title="Click for more information">&nbsp;</div><div class="desc">$matrix_data->{'description'}</div>} : '',
     scalar @filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq{<option value="$_->[0]">$_->[1]</option>}, @filters) : '',
+    $matrix_data->{'axes'} ? qq{<div><i class="x">$matrix_data->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$matrix_data->{'axes'}{'y'}</i><b class="y">&#9660;</b></div>} : '',
     @headers_html
   );
   
