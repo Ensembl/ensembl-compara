@@ -196,6 +196,7 @@ sub draw_structure {
     my $peptide = $sma->fetch_canonical_for_gene_member_id($member->member_id);
 
     my $gene_tree   = $gta->fetch_default_for_Member($member);
+    return unless $gene_tree;
     my $model_name  = $gene_tree->get_tagvalue('model_name');
     my $ss_cons     = $gene_tree->get_tagvalue('ss_cons');
     my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
