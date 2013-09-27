@@ -864,7 +864,7 @@ sub _add_datahub_tracks {
   
   foreach my $type (keys %matrix_columns) {
     foreach (values %{$matrix_columns{$type}}) {
-      $_->{'description'} .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp lc $b->[0] } @{$_->{'subtracks'}};
+      $_->{'description'} .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp $b->[0] } @{$_->{'subtracks'}};
       delete $_->{'subtracks'};
     }
     
@@ -1928,8 +1928,9 @@ sub add_genes {
       }
 
       my $menu = $self->get_node($t);
-
+      
       next unless $menu;
+      
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
@@ -2710,7 +2711,7 @@ sub add_regulation_builds {
           
           foreach (@$feature_types) {
             $feature_types_by_class{$set}{$_->dbID} = 1;
-            push @rows, { id => $_->name, class => $_->class };
+            push @rows, { id => $_->name, group => $_->class };
           }
           
           push @matrix_rows, sort { lc $a->{'id'} cmp lc $b->{'id'} } @rows;
