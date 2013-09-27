@@ -42,7 +42,7 @@ sub form {
   my $tree          = $image_config->tree;
   my $menu_node     = $tree->get_node($menu);
   my $matrix_rows   = $menu_node->data->{'matrix_rows'};
-  my %filters       = ( '' => 'All classes' );
+  my @filters       = ([ '', 'All classes' ]);
   my (@columns, %renderer_counts, %cells, %features);
   
   foreach (@{$menu_node->child_nodes}) {
@@ -69,7 +69,7 @@ sub form {
   %renderer_counts = reverse %renderer_counts;
   
   my $width = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
-  my (@rows, $rows_html, @headers_html, $last_class, %gaps, $track_style_header, $k, $v, $renderer_html);
+  my (@rows, $rows_html, @headers_html, $last_group, %gaps, $track_style_header, $k, $v, $renderer_html);
   
   $self->{'panel_type'} = 'ConfigMatrix';
   
@@ -110,19 +110,11 @@ sub form {
   foreach (@$matrix_rows) {
     my $id       = $_->{'id'};
     my $y        = $_->{'y'} || $id;
-    my $class    = $_->{'class'};
+    my $group    = $_->{'group'};
     (my $y_class = lc $y)     =~ s/[^\w-]/_/g;
-    (my $cls     = lc $class) =~ s/[^\w-]/_/g;
-    my @row      = ("$y_class $cls", { tag => 'th', class => 'first', html => sprintf("$y$select_all_row", $y) });
+    (my $class   = lc $group) =~ s/[^\w-]/_/g;
+    my @row      = ("$y_class $class", { tag => 'th', class => 'first', html => sprintf("$y$select_all_row", $y) });
     my $exists;
-    
-    if ($class ne $last_class) {
-      # No versions of IE are capable of correctly drawing borders when there is an interaction between colspan on a cell and border-collapse, so we must draw empty cells instead of using colspan
-      push @rows, [ 'gap', { tag => 'th', html => $class }, map { tag => 'th' }, @columns ];
-      $gaps{$#rows} = 1;
-    }
-    
-    $last_class = $class;
     
     foreach (@columns) {
       my $x            = $_->{'x'};
@@ -201,13 +193,19 @@ sub form {
       push @row, $cell;
     }
     
-    if ($exists) {
-      push @rows, \@row;
-      $filters{$cls} = $class if $class;
+    next unless $exists;
+    
+    if ($group ne $last_group) {
+      # No versions of IE are capable of correctly drawing borders when there is an interaction between colspan on a cell and border-collapse, so we must draw empty cells instead of using colspan
+      push @rows, [ 'gap', { tag => 'th', html => $group }, map { tag => 'th' }, @columns ];
+      $gaps{$#rows} = 1;
+      $last_group   = $group;
+      
+      push @filters, [ $class, $group ];
     }
+    
+    push @rows, \@row;
   }
-  
-  pop @rows if $rows[-1][0] eq 'gap';
   
   my $cols           = scalar @{$rows[0]} - 1;
   my $tutorial_col   = $cols > 5 ? 6 : $cols;
@@ -223,7 +221,7 @@ sub form {
     row       => 'Hover to select or deselect cells in the row',
     col       => 'Hover to select or deselect cells in the column',
     style     => sprintf('Click the boxes to choose %s style', lc $track_style_header),
-    fil       => sprintf('%s search terms', scalar keys %filters > 1 ? sprintf 'Choose a filter class and/or enter' : 'Enter'),
+    fil       => sprintf('%s search terms', scalar @filters > 1 ? sprintf 'Choose a filter class and/or enter' : 'Enter'),
     drag      => 'Click and drag with your mouse to turn on/off more than one box',
     all_track => 'Click to change all track styles at once',
     video     => sprintf('<a href="%s" class="popup">Click to view a tutorial video</a>', $hub->url({ type => 'Help', action => 'View', id => $help{'Config/Matrix'}, __clear => 1 })),
@@ -338,7 +336,7 @@ sub form {
     </div>
     },
     encode_entities($conf->{'header'}),
-    scalar keys %filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq{<option value="$_">$filters{$_}</option>}, sort keys %filters) : '',
+    scalar @filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq{<option value="$_->[0]">$_->[1]</option>}, @filters) : '',
     @headers_html
   );
   
