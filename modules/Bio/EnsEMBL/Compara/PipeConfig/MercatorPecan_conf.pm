@@ -132,6 +132,7 @@ sub default_options {
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
             -dbname => $ENV{'USER'}.'_pecan_20way_'.$self->o('rel_with_suffix'),
+	    -driver => 'mysql',
         },
 
         'master_db' => {                        # the master database for synchronization of various ids

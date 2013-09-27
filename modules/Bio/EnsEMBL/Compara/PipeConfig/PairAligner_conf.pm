@@ -70,7 +70,8 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'), 
-            -dbname => $ENV{USER}.'_'.$self->o('dbname'),    
+            -dbname => $ENV{USER}.'_'.$self->o('dbname'),
+            -driver => 'mysql',
         },
 
 	'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
