@@ -58,6 +58,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::MemberSet;
 
 sub param_defaults {
     return {
@@ -205,16 +206,9 @@ sub pafs_equal {
 
 sub run {
     my $self = shift @_;
-
-    my $fasta_list              = $self->param('fasta_list'); # set by fetch_input()
+    
     my $debug                   = $self->debug() || $self->param('debug') || 0;
-
-    unless(scalar(@$fasta_list)) { # if we have no more work to do just exit gracefully
-        if($debug) {
-            warn "No work to do, exiting\n";
-        }
-        return;
-    }
+    
     my $reuse_db          = $self->param('reuse_db');   # if this parameter is an empty string, there will be no reuse
 
     my $reuse_ss_hash     = $self->param('reuse_ss_hash');
