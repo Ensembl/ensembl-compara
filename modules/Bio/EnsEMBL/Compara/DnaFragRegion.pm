@@ -103,7 +103,7 @@ use base qw(Bio::EnsEMBL::Compara::Locus);
 sub new {
   my ($class, @args) = @_;
   my $self = $class->SUPER::new(@args);
-  my $self = bless {}, $class;
+  bless $self, $class;
 
   if (scalar @args) {
     #do this explicitly.
