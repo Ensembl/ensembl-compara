@@ -848,14 +848,14 @@ sub _add_datahub_tracks {
         name        => $key,
         source_name => $labels{'x'},
         label_x     => $labels{'x'},
-        description => "<p>$info</p><p>Contains the following sub tracks:</p>",
+        description => $info,
         info        => $info,
         squish      => $squish,
         matrix      => 'column',
         %options
       };
       
-      push @{$matrix_columns{$type}{$key}{'subtracks'}}, [ lc $track->{'longLabel'}, "<li>$track->{'longLabel'}</li>" ];
+      push @{$matrix_columns{$type}{$key}{'subtrack_list'}}, [ $track->{'longLabel'} ];
       push @{$matrix_columns{$type}{$key}{'features'}{$labels{'y'}}}, $source;
     }
     
@@ -863,14 +863,9 @@ sub _add_datahub_tracks {
   }
   
   foreach my $type (keys %matrix_columns) {
-    foreach (values %{$matrix_columns{$type}}) {
-      $_->{'description'} .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp $b->[0] } @{$_->{'subtracks'}};
-      delete $_->{'subtracks'};
-    }
+    my %rows;
     
     $self->load_file_format(lc $type, $matrix_columns{$type});
-    
-    my %rows;
     
     foreach (values %{$matrix_columns{$type}}) {
       my $key  = $_->{'name'};
@@ -934,7 +929,8 @@ sub _add_datahub_extras_options {
     $args{'options'}{'source_name'} = $args{'source'}{'source_name'};
     unshift @{$args{'renderers'}}, 'default', 'Default';
   } elsif ($args{'source'}{'matrix'} eq 'column') {
-    $args{'options'}{'option_key'} = $args{'key'};
+    $args{'options'}{'option_key'}    = $args{'key'};
+    $args{'options'}{'subtrack_list'} = $args{'source'}{'subtrack_list'};
   }
   
   return %args;
