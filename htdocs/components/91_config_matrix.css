@@ -6,7 +6,7 @@ div.config div.config_matrix_scroller div                           { height: 16
 
 div.config div.config_matrix h1                                     { display: block; border: 0; }
 div.config div.config_matrix h2                                     { margin: 0 8px 0 0; border: 0; float: left; font-size: 15px; }
-div.config div.config_matrix div.header_wrapper                     { margin: 3px 0 10px 0; clear: both; }
+div.config div.config_matrix div.header_wrapper                     { height: 18px; margin: 3px 0 10px 0; clear: both; }
 div.config div.config_matrix div.filter_wrapper                     { position: relative; padding: 7px 0; border: 1px solid transparent; border-width: 1px 0; clear: both; }
 div.config div.config_matrix div.filter_wrapper h2                  { margin: 0 18px 18px 0; }
 div.config div.config_matrix div.filter_wrapper select              { width: 185px; margin-bottom: 5px; }
@@ -42,7 +42,7 @@ table.config_matrix thead th div.select_all_column                  { width: aut
 table.config_matrix thead th div.select_all_column div              { margin-top: 4px; }
 table.config_matrix thead th div.select_all_column input            { margin: 0 3px; height: 16px; vertical-align: middle; }
 table.config_matrix tbody                                           { border: 1px solid #000; }
-table.config_matrix tbody th                                        { padding-left: 6px; }
+table.config_matrix tbody th.first                                  { padding-left: 8px; }
 table.config_matrix th.first                                        { width: 95px; vertical-align: middle; white-space: nowrap; padding-right: 16px; }
 table.config_matrix th.first div.select_all_row_wrapper             { position: relative; width: 100%; }
 table.config_matrix th.first div.select_all_row                     { width: 100%; margin-top: -22px; padding: 2px 4px; }
