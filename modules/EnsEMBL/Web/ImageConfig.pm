@@ -888,7 +888,6 @@ sub _add_datahub_tracks {
       header      => $options{'submenu_name'},
       description => $info,
       axes        => $options{'axes'},
-      #rows        => [ map { id => $_ }, sort keys %rows ]
       rows        => { map { $_ => { id => $_ } } sort keys %rows }
     };
   }
