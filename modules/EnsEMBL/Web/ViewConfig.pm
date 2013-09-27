@@ -484,7 +484,7 @@ sub build_imageconfig_form {
           my $url = $_->data->{'url'};
           my ($total, $on);
           
-          my @child_ids = map $_->id, grep { $_->data->{'node_type'} eq 'track' && $_->data->{'menu'} ne 'hidden' && $_->data->{'datahub'} ne 'column' } $_->nodes;
+          my @child_ids = map $_->id, grep { $_->data->{'node_type'} eq 'track' && $_->data->{'menu'} ne 'hidden' && $_->data->{'matrix'} ne 'column' } $_->nodes;
              $total     = scalar @child_ids;
              $on        = 0;
              $on       += $self->{'enabled_tracks'}{$_} for @child_ids;
@@ -536,7 +536,7 @@ sub build_imageconfig_menus {
   my $menu_type = $data->{'menu'};
   my $id        = $node->id;
   
-  if ($menu_type eq 'datahub_subtrack') {
+  if ($menu_type eq 'matrix_subtrack') {
     my $display = $node->get('display');
     
     if (
@@ -612,13 +612,18 @@ sub build_imageconfig_menus {
     
     $menu .= qq{<li class="setting subset subset_$subset"><a href="#">Configure track options</a></li>} if $subset;
     
-    if ($data->{'datahub'} ne 'column') {
+    if ($data->{'matrix'} ne 'column') {
       if ($display ne 'off') {
         $self->{'enabled_tracks'}{$menu_class}++;
         $self->{'enabled_tracks'}{$id} = 1;
       }
       
       $self->{'total_tracks'}{$menu_class}++;
+    }
+    
+    if ($data->{'subtrack_list'}) {
+      $desc .= '<p>Contains the following sub tracks:</p>'; 
+      $desc .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp $b->[0] } map [ lc $_->[0], "<li><strong>$_->[0]</strong><p>$_->[1]</p></li>" ], @{$data->{'subtrack_list'}};
     }
     
     if ($desc) {
