@@ -116,8 +116,9 @@ sub form {
     my @row      = ("$y_class $cls", { tag => 'th', class => 'first', html => sprintf("$y$select_all_row", $y) });
     my $exists;
     
-    if ($last_class && $class ne $last_class) {
-      push @rows, [ 'gap', { tag => 'td' }];
+    if ($class ne $last_class) {
+      # No versions of IE are capable of correctly drawing borders when there is an interaction between colspan on a cell and border-collapse, so we must draw empty cells instead of using colspan
+      push @rows, [ 'gap', { tag => 'th', html => $class }, map { tag => 'th' }, @columns ];
       $gaps{$#rows} = 1;
     }
     
@@ -205,6 +206,8 @@ sub form {
       $filters{$cls} = $class if $class;
     }
   }
+  
+  pop @rows if $rows[-1][0] eq 'gap';
   
   my $cols           = scalar @{$rows[0]} - 1;
   my $tutorial_col   = $cols > 5 ? 6 : $cols;

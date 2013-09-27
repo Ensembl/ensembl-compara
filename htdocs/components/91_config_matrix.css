@@ -30,7 +30,7 @@ body.ie6  div.config div.matrix_key                                 { width: 595
 body.ie7  div.config div.matrix_key                                 { width: 555px; }
 body.ie67 div.config div.matrix_key .key h2                         { margin-right: 0; }
 
-table.config_matrix                                                 { border-collapse: collapse; cursor: pointer; clear: both; margin-bottom: 16px; width: auto!important; }
+table.config_matrix                                                 { border-collapse: collapse; cursor: pointer; clear: both; margin: 0 0 16px 1px; width: auto!important; }
 table.config_matrix.short                                           { margin-bottom: 100px; }
 table.config_matrix tr                                              { height: 26px; }
 table.config_matrix tr.hidden                                       { display: none!important; }
@@ -41,6 +41,8 @@ table.config_matrix thead th p.rotate                               { width: 22p
 table.config_matrix thead th div.select_all_column                  { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; white-space: nowrap; }
 table.config_matrix thead th div.select_all_column div              { margin-top: 4px; }
 table.config_matrix thead th div.select_all_column input            { margin: 0 3px; height: 16px; vertical-align: middle; }
+table.config_matrix tbody                                           { border: 1px solid #000; }
+table.config_matrix tbody th                                        { padding-left: 6px; }
 table.config_matrix th.first                                        { width: 95px; vertical-align: middle; white-space: nowrap; padding-right: 16px; }
 table.config_matrix th.first div.select_all_row_wrapper             { position: relative; width: 100%; }
 table.config_matrix th.first div.select_all_row                     { width: 100%; margin-top: -22px; padding: 2px 4px; }
@@ -74,8 +76,8 @@ table.config_matrix tr.config_menu th.first div                     { position: 
 table.config_matrix tr.config_menu th.first ul.popup_menu           { margin: -6px 0 0; }
 table.config_matrix tr.config_menu th.first h2                      { margin: 0; padding: 0; float: none; }
 table.config_matrix tr.config_menu th.first em                      { font-size: 10px; font-weight: normal; font-style: normal; color: #369; text-decoration: underline; display: block; }
-table.config_matrix tr.gap                                          { height: 5px; }
-table.config_matrix tr.gap td                                       { height: 5px; border: 0; background: none; }
+table.config_matrix tr.gap                                          { vertical-align: middle; white-space: nowrap; background: [[MH_TAB]]; border: 1px solid #000; height: 32px; }
+table.config_matrix tr.gap th                                       { color: #FFF; }
 
 body.ie   table.config_matrix th                                    { position: relative; }
 body.ie   table.config_matrix thead th p.rotate                     { position: absolute; font-weight: normal; filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); }
