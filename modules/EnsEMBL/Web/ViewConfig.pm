@@ -610,7 +610,7 @@ sub build_imageconfig_menus {
       }
     }
     
-    $menu .= sprintf '<li class="setting subset subset_%s"><a href="#">Configure track options</a></li>', $subset, $img_url if $subset;
+    $menu .= qq{<li class="setting subset subset_$subset"><a href="#">Configure track options</a></li>} if $subset;
     
     if ($data->{'datahub'} ne 'column') {
       if ($display ne 'off') {
@@ -684,6 +684,7 @@ sub add_select_all {
   my $external_children = scalar grep $_->data->{'external'}, @child_nodes;
   my $external          = $data->{'external'};
   my $caption           = $data->{'caption'};
+  my $matrix            = $data->{'menu'} eq 'matrix';
   
   # Don't add a select all if there is only one child
   if (scalar @child_nodes == 1) {
@@ -702,9 +703,11 @@ sub add_select_all {
     my $popup;
     
     $caption = $external ? $parent->data->{'caption'} : 'tracks' if $single_menu;
+    $caption = $matrix ? "Configure matrix columns for $caption" : "Enable/disable all $caption";
     
     if (scalar keys %counts != 1) {
       $popup .= qq{<li class="$_->[0]">$_->[1]</li>} for [ 'off', 'Off' ], [ 'all_on', 'On' ];
+      $popup .= qq{<li class="setting subset subset_$id"><a href="#">Configure track options</a></li>} if $matrix;
     } else {
       $popup = $self->{'select_all_menu'}{$id};
     }
@@ -716,7 +719,7 @@ sub add_select_all {
           <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
           $popup
         </ul>
-        <strong>Enable/disable all $caption</strong>
+        <strong>$caption</strong>
       }
     });
   } elsif ($caption && !$external) {
