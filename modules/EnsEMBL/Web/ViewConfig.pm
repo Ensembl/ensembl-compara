@@ -622,8 +622,8 @@ sub build_imageconfig_menus {
     }
     
     if ($data->{'subtrack_list'}) {
-      $desc .= '<p>Contains the following sub tracks:</p>'; 
-      $desc .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp $b->[0] } map [ lc $_->[0], "<li><strong>$_->[0]</strong><p>$_->[1]</p></li>" ], @{$data->{'subtrack_list'}};
+      $desc  = ($desc ? "<p>$desc</p>" : '') . '<p>Contains the following sub tracks:</p>'; 
+      $desc .= sprintf '<ul>%s</ul>', join '', map $_->[1], sort { $a->[0] cmp $b->[0] } map [ lc $_->[0], $_->[1] ? "<li><strong>$_->[0]</strong><p>$_->[1]</p></li>" : "<li>$_->[0]</li>" ], @{$data->{'subtrack_list'}};
     }
     
     if ($desc) {
