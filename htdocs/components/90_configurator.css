@@ -35,6 +35,7 @@ div.config_wrapper div.config ul.config_menu li.track               { padding: 3
 div.config_wrapper div.config ul.config_menu li div.desc            { margin: 5px 0; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[PANEL_BORDER]]; }
 div.config_wrapper div.config ul.config_menu li div.desc ul         { padding-left: 26px; }
 div.config_wrapper div.config ul.config_menu li div.desc ul li      { padding: 0 0 2px; background-color: inherit; list-style-image: url(/i/bullet_1.gif); }
+div.config_wrapper div.config ul.config_menu li div.desc ul li p    { margin: 4px 0 16px 8px; }
 div.config_wrapper div.config ul.config_menu li .controls           { margin: -1px -5px 0 0; float: right; height: 17px; }
 div.config_wrapper div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
 div.config_wrapper div.config ul.config_menu li .controls .empty    { cursor: default; }
