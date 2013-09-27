@@ -41,6 +41,8 @@ sub new {
       $container->{'chr'} = $chr;
       
       foreach my $row_config (@configs) {
+        next if $row_config->get('matrix') eq 'column';
+        
         my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
         
         if ($display eq 'default') {

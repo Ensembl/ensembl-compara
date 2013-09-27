@@ -91,6 +91,8 @@ sub new {
       
       ## This is much simplified as we just get a row of configurations
       foreach my $row_config (@{$config->glyphset_configs}) {
+        next if $row_config->get('matrix') eq 'column';
+        
         my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
         
         if ($display eq 'default') {
