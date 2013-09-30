@@ -101,6 +101,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DnaFrag;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument;
 

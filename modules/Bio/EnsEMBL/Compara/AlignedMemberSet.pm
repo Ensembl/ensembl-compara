@@ -41,6 +41,8 @@ base of Family, Homology and GeneTree.
 package Bio::EnsEMBL::Compara::AlignedMemberSet;
 
 use strict;
+use warnings;
+
 use Scalar::Util qw(weaken);
 
 use Bio::LocatableSeq;

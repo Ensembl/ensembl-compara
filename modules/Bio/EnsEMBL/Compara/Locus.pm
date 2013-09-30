@@ -61,6 +61,8 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Locus;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 

@@ -42,6 +42,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Taggable;
 
 use strict;
+use warnings;
 
 
 =head2 add_tag

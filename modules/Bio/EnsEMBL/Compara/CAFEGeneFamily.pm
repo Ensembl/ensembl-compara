@@ -40,6 +40,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::CAFEGeneFamily;
 
 use strict;
+use warnings;
+
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::SpeciesTree');

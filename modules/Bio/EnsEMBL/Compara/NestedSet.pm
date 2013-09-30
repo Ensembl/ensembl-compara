@@ -30,6 +30,7 @@ package Bio::EnsEMBL::Compara::NestedSet;
 
 use strict;
 use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 

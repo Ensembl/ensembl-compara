@@ -41,6 +41,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::SpeciesTreeNode;
 
 use strict;
+use warnings;
+
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
 

@@ -30,7 +30,9 @@ The rest of the documentation details each of the object methods. Internal metho
 # Let the code begin...
 
 package Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
+
 use strict;
+use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);

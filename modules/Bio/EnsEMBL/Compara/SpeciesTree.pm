@@ -41,6 +41,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::SpeciesTree;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Storable');
 use Bio::EnsEMBL::Utils::Exception;

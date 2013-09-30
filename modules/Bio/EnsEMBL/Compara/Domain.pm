@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::Compara::Domain;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::MemberSet');
 

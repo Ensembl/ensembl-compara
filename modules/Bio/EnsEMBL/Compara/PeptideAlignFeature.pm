@@ -43,6 +43,8 @@ my $_paf_build_homology_idx = time(); #global index counter
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Utils::Exception;
 

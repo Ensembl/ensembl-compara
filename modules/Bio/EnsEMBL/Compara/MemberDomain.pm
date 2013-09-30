@@ -43,6 +43,8 @@ within the sequence
 package Bio::EnsEMBL::Compara::MemberDomain;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Member;
 

@@ -47,6 +47,8 @@ sequence, which is represented as an Member object.
 package Bio::EnsEMBL::Compara::MemberSet;
 
 use strict;
+use warnings;
+
 use Scalar::Util qw(weaken);
 
 use Bio::SeqIO;

@@ -1,6 +1,8 @@
 package Bio::EnsEMBL::Compara::Family;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 

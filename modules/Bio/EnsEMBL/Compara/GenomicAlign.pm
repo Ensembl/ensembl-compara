@@ -153,7 +153,9 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::GenomicAlign;
+
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);

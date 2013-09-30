@@ -73,7 +73,9 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::GenomicAlignGroup;
+
 use strict;
+use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);

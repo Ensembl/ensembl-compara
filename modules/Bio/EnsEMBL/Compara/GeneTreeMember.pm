@@ -56,6 +56,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::AlignedMember', 'Bio::EnsEMBL::Compara::GeneTreeNode');  # careful with the order; new() is currently inherited from Member-AlignedMember branch
 
@@ -103,11 +104,7 @@ sub string_node {
   my $self  = shift;
   my $str = sprintf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
     if($self->genome_db_id and $self->adaptor) {
-      my $genome_db = $self->genome_db;
-      if (!defined($genome_db)) {
-        $DB::single=1;1;
-      }
-      $str .= sprintf(" %s", $genome_db->name) 
+      $str .= sprintf(" %s", $self->genome_db->name) 
     }
   if($self->gene_member) {
     $str .= sprintf(" %s %s %s:%d-%d",

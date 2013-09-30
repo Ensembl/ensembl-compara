@@ -53,6 +53,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::GeneMember;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;

@@ -118,7 +118,9 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::ConstrainedElement;
+
 use strict;
+use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
