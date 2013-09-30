@@ -1756,38 +1756,39 @@ sub generic_add {
     %$options
   };
   
-  $self->add_matrix_data($data, $menu) if $data->{'matrix'};
-  $menu->append($self->create_track($name, $data->{'name'}, $data));
+  $self->add_matrix($data, $menu) if $data->{'matrix'};
+  
+  return $menu->append($self->create_track($name, $data->{'name'}, $data));
 }
 
-sub add_matrix_data {
+sub add_matrix {
   my ($self, $data, $menu) = @_;
-  my $menu_data   = $menu->data;
-  my $matrix      = $data->{'matrix'};
-  my $caption     = $data->{'caption'};
-  my $row         = $matrix->{'row'};
-  my $column      = $matrix->{'column'};
-  my $subset      = $matrix->{'menu'};
-  my $column_key  = $self->tree->clean_id("${subset}_$column");
-  my $option_key  = $self->tree->clean_id("${subset}_${column}_$row");
-  my $column_track = $self->get_node($column_key) || $menu->append($self->create_track($column_key, $column, {
-    renderers => $data->{'renderers'},
-    label_x   => $column,
-    display   => 'off',
-    matrix    => 'column',
-    subset    => $subset,
-  }));
+  my $menu_data    = $menu->data;
+  my $matrix       = $data->{'matrix'};
+  my $caption      = $data->{'caption'};
+  my $column       = $matrix->{'column'};
+  my $subset       = $matrix->{'menu'};
+  my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
+  my $column_key   = $self->tree->clean_id("${subset}_$column");
+  my $column_track = $self->get_node($column_key);
   
-  $column_track->append($self->create_track($option_key, $row, {
-    node_type => 'option',
-    menu      => 'no',
-    display   => 'off',
-    renderers => [qw(on on off off)],
-  }));
+  if (!($column_track && $column_track->parent_node)) {
+    $column_track = $menu->append($self->create_track($column_key, $data->{'track_name'} || $column, {
+      renderers => $data->{'renderers'},
+      label_x   => $column,
+      display   => 'off',
+      subset    => $subset,
+      $matrix->{'row'} ? (matrix => 'column') : (),
+      %{$data->{'column_data'} || {}}
+    }));
+  }
   
-  push @{$column_track->data->{'subtrack_list'}}, [ $caption, $data->{'description'} ];
+  if ($matrix->{'row'}) {
+    push @{$column_track->data->{'subtrack_list'}}, [ $caption, $data->{'description'} ];
+    
+    $data->{'option_key'} = $self->tree->clean_id("${subset}_${column}_$matrix->{'row'}");
+  }
   
-  $data->{'option_key'}  = $option_key;
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
@@ -1804,7 +1805,18 @@ sub add_matrix_data {
     }
   }
   
-  $menu_data->{'matrix'}{'rows'}{$row} ||= { id => $row, group => $matrix->{'group'}, group_order => $matrix->{'group_order'} };
+  foreach (@rows) {
+    my $option_key = $self->tree->clean_id("${subset}_${column}_$_->{'row'}");
+    
+    $column_track->append($self->create_track($option_key, $_->{'row'}, {
+      node_type => 'option',
+      menu      => 'no',
+      display   => $_->{'on'} ? 'on' : 'off',
+      renderers => [qw(on on off off)],
+    }));
+    
+    $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'} };
+  }
 }
 
 sub add_das_tracks {
@@ -2623,21 +2635,21 @@ sub add_regulation_builds {
   my $reg_segs          = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
   my $adaptor           = $db->get_FeatureTypeAdaptor;
   my $evidence_info     = $adaptor->get_regulatory_evidence_info;
-  my @cell_lines        = sort keys %{$db_tables->{'cell_type'}{'ids'}};
+  my @cell_lines        = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } map [split ':']->[0], keys %{$db_tables->{'cell_type'}{'ids'}}; # Put MultiCell first
   my %evidence_features = map { reverse split ':' } keys %{$db_tables->{'feature_type'}{'ids'}};
-  my $matrix_url        = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => 'regulatory_features' });
-  my (@renderers, $multi_flag, $core_menu, $non_core_menu, $prev_track, %feature_types_by_class);
+  my $matrix_url        = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => 'reg_feats' });
+  my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
   
   # FIXME: put this in db
   my %default_evidence_types = (
-    CTCF     => 'on',
-    DNase1   => 'on',
-    H3K4me3  => 'on',
-    H3K36me3 => 'on',
-    H3K27me3 => 'on',
-    H3K9me3  => 'on',
-    PolII    => 'on',
-    PolIII   => 'on',
+    CTCF     => 1,
+    DNase1   => 1,
+    H3K4me3  => 1,
+    H3K36me3 => 1,
+    H3K27me3 => 1,
+    H3K9me3  => 1,
+    PolII    => 1,
+    PolIII   => 1,
   );
   
   if ($fg_data{$key_2}{'renderers'}) {
@@ -2646,21 +2658,40 @@ sub add_regulation_builds {
     @renderers = qw(off Off normal On);
   }
   
-  # Add MultiCell first
-  unshift @cell_lines, 'AAAMultiCell';
-  
-  foreach my $cell_line (sort @cell_lines) {
-    $cell_line =~ s/AAA|\:\w*//g;
+  foreach my $cell_line (@cell_lines) { 
+    ### Add tracks for cell_line peaks and wiggles only if we have data to display
+    my $ftypes     = $db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {};
+    my $focus_sets = $db_tables->{'regbuild_string'}{'focus_feature_set_ids'}{$cell_line} || {};
+    my @sets;
     
-    next if $cell_line eq 'MultiCell' && $multi_flag;
-
+    push @sets, 'core'     if scalar keys %$focus_sets && scalar keys %$focus_sets <= scalar keys %$ftypes;
+    push @sets, 'non_core' if scalar keys %$ftypes != scalar keys %$focus_sets && $cell_line ne 'MultiCell';
+    
+    foreach my $set (@sets) {
+      $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, { menu => 'matrix', url => "$matrix_url;set=$set", matrix => {
+        section     => $menu->data->{'caption'},
+        header      => $evidence_info->{$set}{'long_name'},
+        description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
+        axes        => { x => 'Cell type', y => 'Evidence type' },
+      }}];
+      
+      foreach (@{$evidence_info->{$set}{'classes'}}) {
+        foreach (@{$adaptor->fetch_all_by_class($_)}) {
+          $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
+        }
+      }
+    }
+  }
+  
+  $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
+  
+  foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
     my ($label, %evidence_tracks);
     
-    if ($cell_line =~ /MultiCell/) {  
-      $display    = $fg_data{$key_2}{'display'} || 'off';
-      $multi_flag = 1;
+    if ($cell_line eq 'MultiCell') {  
+      $display = $fg_data{$key_2}{'display'} || 'off';
     } else {
       $label = ": $cell_line";
     }
@@ -2681,7 +2712,7 @@ sub add_regulation_builds {
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
       $prev_track = $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
         db          => $key,
-        glyphset    => "fg_segmentation_features",
+        glyphset    => 'fg_segmentation_features',
         sources     => 'undef',
         strand      => 'r',
         labels      => 'on',
@@ -2696,22 +2727,15 @@ sub add_regulation_builds {
       }));
     }
     
-    ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my @ftypes     = keys %{$db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {}};  
-    my @focus_sets = keys %{$db_tables->{'regbuild_string'}{'focus_feature_set_ids'}{$cell_line} || {}};  
-    
-    my %options = (
-      db          => $key,
-      glyphset    => 'fg_multi_wiggle',
-      strand      => 'r',
-      depth       => $fg_data{$key_2}{'depth'} || 0.5,
-      description => $fg_data{$key_2}{'description'},
-      colourset   => 'feature_set',
-      display     => 'off',
-      cell_line   => $cell_line,
-      label_x     => $cell_line,
-      menu_key    => 'regulatory_features',
-      renderers   => [
+    my %column_data = (
+      db        => $key,
+      glyphset  => 'fg_multi_wiggle',
+      strand    => 'r',
+      depth     => $fg_data{$key_2}{'depth'} || 0.5,
+      colourset => 'feature_set',
+      cell_line => $cell_line,
+      menu_key  => 'regulatory_features',
+      renderers => [
         'off',            'Off', 
         'compact',        'Peaks', 
         'tiling',         'Signal', 
@@ -2719,67 +2743,21 @@ sub add_regulation_builds {
       ],
     );
     
-    if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
-      if (!$core_menu) {
-        $core_menu = $self->create_submenu('regulatory_features_core', $evidence_info->{'core'}{'name'}, { menu => 'matrix', url => "$matrix_url;set=core" });
-        $core_menu = $non_core_menu ? $non_core_menu->before($core_menu) : $menu->after($core_menu);
-      }
-      
-      # Add core evidence tracks
-      $evidence_tracks{'core'} = $prev_track = $core_menu->append($self->create_track("reg_feats_core_$cell_line", "$evidence_info->{'core'}{'name'}$label", {
-        %options,
-        set         => 'core',
-        subset      => 'regulatory_features_core',
-        description => $options{'description'}{'core'},
-        label       => "$evidence_info->{'core'}{'label'} $label",
-        track_after => $prev_track,
-      }));
-    } 
-
-    if (scalar @ftypes != scalar @focus_sets && $cell_line ne 'MultiCell') {
-      $non_core_menu ||= ($core_menu || $menu)->after($self->create_submenu('regulatory_features_non_core', $evidence_info->{'non_core'}{'name'}, { menu => 'matrix', url => "$matrix_url;set=non_core" }));
-      
-      # Add non core evidence tracks
-      $evidence_tracks{'non_core'} = $prev_track = $non_core_menu->append($self->create_track("reg_feats_non_core_$cell_line", "$evidence_info->{'non_core'}{'name'}$label", {
-        %options,
-        set         => 'non_core',
-        subset      => 'regulatory_features_non_core',
-        description => $options{'description'}{'other'},
-        label       => "$evidence_info->{'non_core'}{'label'} $label",
-        track_after => $prev_track,
-      }));
-    }
-    
-    foreach my $set (keys %evidence_tracks) {
-      if (!$feature_types_by_class{$set}) {
-        my %matrix_rows;
-        
-        foreach my $class (@{$evidence_info->{$set}{'classes'}}) {
-          my $feature_types = $adaptor->fetch_all_by_class($class);
-          
-          foreach (@$feature_types) {
-            $feature_types_by_class{$set}{$_->dbID} = 1;
-            $matrix_rows{$_->name} ||= { id => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2 };
-          }
-        }
-        
-        ($set eq 'core' ? $core_menu : $non_core_menu)->data->{'matrix'} = {
-          section     => 'Regulation',
-          header      => $evidence_info->{$set}{'long_name'},
-          description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
-          axes        => { x => 'Cell type', y => 'Evidence type' },
-          rows        => \%matrix_rows
-        };
-      }
-      
-      foreach (sort grep $feature_types_by_class{$set}{$_}, @ftypes) {
-        $evidence_tracks{$set}->append($self->create_track("regulatory_features_${set}_${cell_line}_$evidence_features{$_}", $evidence_features{$_}, {
-          node_type => 'option',
-          menu      => 'no',
-          display   => $default_evidence_types{$evidence_features{$_}} || 'off',
-          renderers => [qw(on on off off)],
-        }));
-      }
+    foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
+      $self->add_matrix({
+        track_name => "$evidence_info->{$_}{'name'}$label",
+        matrix     => {
+          menu   => $matrix_menus{$_}->id,
+          column => $cell_line,
+          rows   => [ values %{$matrix_rows{$cell_line}{$_}} ],
+        },
+        column_data => {
+          set         => $_,
+          label       => "$evidence_info->{$_}{'label'} $label",
+          description => $fg_data{$key_2}{'description'}{$_},
+          %column_data
+        }, 
+      }, $matrix_menus{$_});
     }
   }
   
