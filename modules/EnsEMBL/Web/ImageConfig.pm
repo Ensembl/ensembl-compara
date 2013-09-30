@@ -2630,14 +2630,12 @@ sub add_regulation_builds {
 
   $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
   
-  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $reg_feats         = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
-  my $reg_segs          = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
-  my $adaptor           = $db->get_FeatureTypeAdaptor;
-  my $evidence_info     = $adaptor->get_regulatory_evidence_info;
-  my @cell_lines        = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } map [split ':']->[0], keys %{$db_tables->{'cell_type'}{'ids'}}; # Put MultiCell first
-  my %evidence_features = map { reverse split ':' } keys %{$db_tables->{'feature_type'}{'ids'}};
-  my $matrix_url        = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => 'reg_feats' });
+  my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
+  my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
+  my $adaptor       = $db->get_FeatureTypeAdaptor;
+  my $evidence_info = $adaptor->get_regulatory_evidence_info;
+  my @cell_lines    = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } map [split ':']->[0], keys %{$db_tables->{'cell_type'}{'ids'}}; # Put MultiCell first
   my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
   
   # FIXME: put this in db
@@ -2668,12 +2666,16 @@ sub add_regulation_builds {
     push @sets, 'non_core' if scalar keys %$ftypes != scalar keys %$focus_sets && $cell_line ne 'MultiCell';
     
     foreach my $set (@sets) {
-      $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, { menu => 'matrix', url => "$matrix_url;set=$set", matrix => {
-        section     => $menu->data->{'caption'},
-        header      => $evidence_info->{$set}{'long_name'},
-        description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
-        axes        => { x => 'Cell type', y => 'Evidence type' },
-      }}];
+      $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
+        menu   => 'matrix',
+        url    => $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => "reg_feats_$set" }),
+        matrix => {
+          section     => $menu->data->{'caption'},
+          header      => $evidence_info->{$set}{'long_name'},
+          description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
+          axes        => { x => 'Cell type', y => 'Evidence type' },
+        }
+      }];
       
       foreach (@{$evidence_info->{$set}{'classes'}}) {
         foreach (@{$adaptor->fetch_all_by_class($_)}) {
