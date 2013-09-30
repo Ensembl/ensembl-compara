@@ -48,6 +48,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use strict;
+use warnings;
 use feature qw(switch);
 
 use Bio::EnsEMBL::Compara::NestedSet;

@@ -73,6 +73,8 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
 
 use strict; 
+use warnings;
+
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Time::HiRes qw(time gettimeofday tv_interval);
 

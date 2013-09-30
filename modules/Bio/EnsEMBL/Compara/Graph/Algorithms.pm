@@ -24,6 +24,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::Graph::Algorithms;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
