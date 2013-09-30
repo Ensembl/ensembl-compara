@@ -11,8 +11,6 @@ use base qw(EnsEMBL::Web::ViewConfig);
 # TODO: Support other datahub dimensions as filters?
 
 sub matrix_image_config :lvalue { $_[0]{'matrix_image_config'}; }
-sub menu                :lvalue { $_[0]{'menu'};                }
-sub set                 :lvalue { $_[0]{'set'};                 }
 
 sub init {
   my $self        = shift;
@@ -23,8 +21,6 @@ sub init {
   
   $self->{$_}                = $view_config->{$_} for keys %$view_config;
   $self->code                = $code;
-  $self->menu                = $hub->param('menu');
-  $self->set                 = $hub->param('set') || $self->menu;
   $self->matrix_image_config = $hub->get_imageconfig($self->image_config);
   $self->image_config        = $self->has_images = undef unless $hub->param('submit') || $hub->param('reset');
 }
@@ -32,12 +28,11 @@ sub init {
 sub form {
   my $self          = shift;
   my $hub           = $self->hub;
-  my $set           = $self->set;
-  my $menu          = join '_', $self->menu, $set eq $self->menu ? () : $set;
   my $img_url       = $self->img_url;
   my $image_config  = $self->matrix_image_config;
   my $user_settings = $image_config->get_user_settings;
   my $tree          = $image_config->tree;
+  my $menu          = $hub->param('menu');
   my $menu_node     = $tree->get_node($menu);
   my $matrix_data   = $menu_node->data->{'matrix'};
   my @matrix_rows   = sort { $a->{'group_order'} <=> $b->{'group_order'} || lc $a->{'group'} cmp lc $b->{'group'} || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
