@@ -25,7 +25,9 @@ Post questions to the EnsEMBL developer list: <dev@ensembl.org>
 
 
 package Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor;
+
 use strict;
+use warnings;
 use vars qw(@ISA);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;

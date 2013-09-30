@@ -1,6 +1,8 @@
 package Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);

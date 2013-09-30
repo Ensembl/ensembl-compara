@@ -1,6 +1,8 @@
 package Bio::EnsEMBL::Compara::DBSQL::AnchorSeqAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
@@ -11,7 +13,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub store {
   my ($self, @args) = @_;
   my ($anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $test_mlssid, $sequence) = 
-	rearrange([qw(ANCHOR_ID, DNAFRAG_ID, START, END, STRAND, MLSSID, SEQUENCE, LENGTH)], @args);
+	rearrange([qw(ANCHOR_ID DNAFRAG_ID START END STRAND MLSSID SEQUENCE LENGTH)], @args);
 
 
   my $dcs = $self->dbc->disconnect_when_inactive();

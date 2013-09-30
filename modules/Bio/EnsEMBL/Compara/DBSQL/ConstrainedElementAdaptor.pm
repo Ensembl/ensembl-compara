@@ -2,6 +2,7 @@ package Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor;
 
 use vars qw(@ISA);
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConstrainedElement;

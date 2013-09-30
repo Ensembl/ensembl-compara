@@ -2,6 +2,8 @@
 package Bio::EnsEMBL::Compara::DBSQL::GeneAlignAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 

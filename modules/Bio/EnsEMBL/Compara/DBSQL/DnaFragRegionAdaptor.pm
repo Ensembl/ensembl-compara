@@ -64,6 +64,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 

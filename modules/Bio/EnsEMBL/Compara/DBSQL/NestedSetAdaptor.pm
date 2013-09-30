@@ -48,6 +48,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);

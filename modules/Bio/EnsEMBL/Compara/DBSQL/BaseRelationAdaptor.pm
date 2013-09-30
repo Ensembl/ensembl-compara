@@ -53,6 +53,8 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
 use DBI qw(:sql_types);
 

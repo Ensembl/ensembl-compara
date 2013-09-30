@@ -66,8 +66,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor;
+
 use vars qw(@ISA);
 use strict;
+use warnings;
 
 use POSIX qw(floor);
 

@@ -56,11 +56,10 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
 use strict; 
+use warnings;
 
 use Bio::EnsEMBL::Compara::Member;
 
-use Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);

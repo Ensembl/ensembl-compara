@@ -17,6 +17,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor;
 
 use strict;
+use warnings;
+
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::HMMProfile;

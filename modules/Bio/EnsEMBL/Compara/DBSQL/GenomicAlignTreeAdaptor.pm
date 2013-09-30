@@ -35,6 +35,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlign;
