@@ -83,7 +83,6 @@ my $suffix_separator = '__cut_here__';
 sub fetch_input {
     my $self = shift @_;
 
-    my $assembly_name = $self->param('assembly_name');
     my $core_dba;
 
     if(my $locator = $self->param('locator') ) {   # use the locator and skip the registry
@@ -103,18 +102,17 @@ sub fetch_input {
 
     } elsif( $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
 
-        my $genebuild = $self->param('genebuild');
-
         foreach my $this_core_dba (@{$self->iterate_through_registered_species}) {
 
             my $this_assembly = $this_core_dba->extract_assembly_name();
             my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
 
-            $genebuild ||= $this_start_date;
-            $assembly_name ||= $this_assembly;
+            my $genebuild = $self->param('genebuild') || $this_start_date;
+            my $assembly_name = $self->param('assembly_name') || $this_assembly;
 
             if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
                 $core_dba = $this_core_dba;
+                $self->param('assembly_name', $assembly_name);
 
                 if($self->param('first_found')) {
                     last;
@@ -128,9 +126,6 @@ sub fetch_input {
 
     if( $core_dba ) {
         $self->param('core_dba', $core_dba);
-        if($assembly_name) {
-            $self->param('assembly_name', $assembly_name);
-        }
     } else {
         die "Could not find species_name='".$self->param('species_name')."', assembly_name='".$self->param('assembly_name')."' on the servers provided, please investigate";
     }
