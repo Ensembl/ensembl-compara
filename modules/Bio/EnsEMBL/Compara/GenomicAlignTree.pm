@@ -1179,9 +1179,14 @@ sub summary_as_hash {
   foreach my $genomic_align (@$all_genomic_aligns) {
     my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand);
 
-    #check if genomic_align is in $species list
+    #check if genomic_align is in $display_species_set list
     if ($display_species_set) {
-      next unless ($genomic_align->genome_db->name ~~ @$display_species_set);
+#      next unless ($genomic_align->genome_db->name ~~ @$display_species_set);
+        my $found = 0;
+        foreach my $display_species (@$display_species_set) {
+            $found = 1 if ($display_species eq $genomic_align->genome_db->name);
+        }
+        next unless $found;
     }
 
     my $alignSeq = $genomic_align->aligned_sequence;
