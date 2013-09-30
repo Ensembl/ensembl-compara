@@ -28,6 +28,8 @@
 package Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
