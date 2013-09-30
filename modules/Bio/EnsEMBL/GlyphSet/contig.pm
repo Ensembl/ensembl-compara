@@ -131,8 +131,7 @@ sub features {
   my @features;
   
   foreach (@{$container->project('seqlevel') || []}) {
-    my $slice = $_->to_Slice;
-    
+    my $slice = Bio::EnsEMBL::Slice->new_fast({%{$_->to_Slice}}); 
     $slice->{'name'}  = $slice->coord_system->name eq 'ancestralsegment' ? $slice->{'_tree'} : $slice->seq_region_name; # This is a Slice of Ancestral sequences: display the tree instead of the ID;
     $slice->{'start'} = $_->from_start;
     $slice->{'end'}   = $_->from_end;
