@@ -6,7 +6,7 @@ div.config div.config_matrix_scroller div                           { height: 16
 
 div.config div.config_matrix h1                                     { display: block; border: 0; }
 div.config div.config_matrix h2                                     { margin: 0 8px 0 0; border: 0; float: left; font-size: 15px; }
-div.config div.config_matrix div.header_wrapper                     { height: 18px; margin: 3px 0 10px 0; clear: both; }
+div.config div.config_matrix div.header_wrapper                     { min-height: 18px; margin: 3px 0 10px 0; clear: both; }
 div.config div.config_matrix div.filter_wrapper                     { position: relative; padding: 7px 0; border: 1px solid transparent; border-width: 1px 0; clear: both; }
 div.config div.config_matrix div.filter_wrapper h2                  { margin: 0 18px 18px 0; }
 div.config div.config_matrix div.filter_wrapper select              { width: 185px; margin-bottom: 5px; }
@@ -115,15 +115,15 @@ div.config div.config_matrix .tutorial.style            { width: 130px; margin: 
 div.config div.config_matrix .tutorial.style:before     { border-width: 0 20px 20px 0; bottom: -20px; right: 30px; }
 div.config div.config_matrix .tutorial.style:after      { border-width: 0 0 20px 10px; bottom: -20px; right: 20px; }
 div.config div.config_matrix .tutorial.all_track        { width: 100px; margin: 13px 0 0 30px; }
-div.config div.config_matrix .tutorial.all_track:before { border-width: 20px 0 0 30px; left: 20px; top: -20px; }
-div.config div.config_matrix .tutorial.all_track:after  { border-width: 20px 0 0 5px;  left: 20px; top: -20px; border-color: transparent #FFF; }
+div.config div.config_matrix .tutorial.all_track:before { border-width: 20px 5px 0 0;  left: 20px; top: -20px; }
+div.config div.config_matrix .tutorial.all_track:after  { border-width: 20px 0 0 30px; left: 25px; top: -20px; }
 div.config div.config_matrix .tutorial.row              { width: 110px; margin: 30px 0 0; }
 div.config div.config_matrix .tutorial.row:before       { border-width: 15px 5px 0 0;  left: 20px; top: -15px; }
 div.config div.config_matrix .tutorial.row:after        { border-width: 15px 0 0 30px; left: 25px; top: -15px; }
 div.config div.config_matrix .tutorial.drag             { width: 160px; margin: -25px 0 0 45px; }
 div.config div.config_matrix .tutorial.drag:before      { border-width: 10px 35px 0 0; bottom: 20px; left: -35px; }
 div.config div.config_matrix .tutorial.drag:after       { border-width: 0 35px 10px 0; bottom: 10px; left: -35px; }
-div.config div.config_matrix .tutorial.col              { width: 105px; margin: -15px 0 0 55px; z-index: 10001; }
+div.config div.config_matrix .tutorial.col              { width: 105px; margin: -47px 0 0 55px; z-index: 10001; }
 div.config div.config_matrix .tutorial.col:before       { border-width: 15px 25px 0 0; bottom: 28px; left: -25px; }
 div.config div.config_matrix .tutorial.col:after        { border-width: 0 25px 8px 0;  bottom: 20px; left: -25px; }
 div.config div.config_matrix .tutorial.fil              { width: 180px; top: 3px; left: 300px; padding: 4px; border-radius: 0; }
