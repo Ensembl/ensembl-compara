@@ -605,7 +605,7 @@ sub _objs_from_sth {
 sub _get_all_genome_db_ids {
     my $self = shift;
 
-    return keys %{$self->db->get_GenomeDBAdaptor->_id_cache};
+    return $self->db->get_GenomeDBAdaptor->_id_cache->cache_keys;
 }
 
 ###############################################################################

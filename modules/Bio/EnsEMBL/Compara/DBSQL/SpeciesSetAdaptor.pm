@@ -49,21 +49,6 @@ sub _ids_string {
 }
 
 
-
-#################################################################
-# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
-#################################################################
-
-sub _add_to_cache {
-    my ($self, $ss) = @_;
-    $self->SUPER::_add_to_cache($ss);
-    $self->{_genomedbs_cache}->{_ids_string($ss->genome_dbs)} = $ss;
-    foreach my $tag ($ss->get_all_tags()) {
-        push @{$self->{_tag_cache}->{lc $tag}}, $ss;
-    }
-}
-
-
 ##################
 # store* methods #
 ##################
@@ -138,8 +123,7 @@ sub store {
     }
 
     $self->attach( $species_set, $dbID );
-    $self->_id_cache(); #make sure the id_cache has been fully populated
-    $self->_add_to_cache($species_set);
+    $self->_id_cache->put($dbID, $species_set);
     $self->sync_tags_to_database( $species_set );
 
     return $species_set;
@@ -174,7 +158,7 @@ sub _objs_from_sth {
     while ( my ($species_set_id, $genome_db_id) = $sth->fetchrow() ) {
 
             # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
-        if( my $gdb = $gdb_cache->{$genome_db_id} ) {
+        if( my $gdb = $gdb_cache->get($genome_db_id) ) {
             push @{$ss_content_hash{$species_set_id}}, $gdb;
         } else {
             warning("Species set with dbID=$species_set_id is missing genome_db entry with dbID=$genome_db_id, so it will not be fetched");
@@ -217,8 +201,7 @@ sub _objs_from_sth {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
-    $self->_id_cache;
-    return $self->{_tag_cache}->{lc $tag} || [];
+    return $self->_id_cache->get_all_by_additional_lookup(sprintf('has_tag_%s', lc $tag), 1);
 }
 
 
@@ -242,12 +225,7 @@ sub fetch_all_by_tag_value {
 
     # Only scalar values are accepted
     return [] if ref $value;
-
-    my @good_ss;
-    foreach my $ss (@{$self->fetch_all_by_tag($tag)}) {
-        push @good_ss, $ss if grep {$_ eq $value} @{$ss->get_all_values_for_tag($tag)};
-    }
-    return \@good_ss;
+    return $self->_id_cache->get_all_by_additional_lookup(sprintf('tag_%s', lc $tag), lc $value);
 }
 
 
@@ -266,9 +244,7 @@ sub fetch_all_by_tag_value {
 sub fetch_by_GenomeDBs {
     my ($self, $genome_dbs) = @_;
 
-    $self->_id_cache;
-    my $str_ids = _ids_string($genome_dbs);
-    return $self->{_genomedbs_cache}->{$str_ids};
+    return $self->_id_cache->get_by_additional_lookup('genome_db_ids', _ids_string($genome_dbs));
 }
 
 
@@ -280,6 +256,39 @@ sub fetch_by_GenomeDBs {
 sub _tag_capabilities {
     return ("species_set_tag", undef, "species_set_id", "dbID");
 }
+
+############################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullAdaptor #
+############################################################
+
+
+sub _build_id_cache {
+    my $self = shift;
+    return SpeciesSetCache->new($self);
+}
+
+
+package SpeciesSetCache;
+
+
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use strict;
+use warnings;
+
+sub support_additional_lookups {
+    return 1;
+}
+
+sub compute_keys {
+    my ($self, $ss) = @_;
+    return {
+        genome_db_ids => Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::_ids_string($ss->genome_dbs),
+        (map {sprintf('has_tag_%s', lc $_) => 1} $ss->get_all_tags()),
+        (map {sprintf('tag_%s', lc $_) => lc $ss->get_value_for_tag($_)} $ss->get_all_tags()),
+    }
+}
+
+
 
 
 1;

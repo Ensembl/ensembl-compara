@@ -70,21 +70,6 @@ sub object_class {
 }
 
 
-#################################################################
-# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
-#################################################################
-
-sub _add_to_cache {
-    my ($self, $genome_db) = @_;
-    $self->SUPER::_add_to_cache($genome_db);
-    $self->{_name_asm_cache}->{lc $genome_db->name}->{lc $genome_db->assembly} = $genome_db;
-    if ($genome_db->assembly_default) {
-        $self->{_name_asm_cache}->{lc $genome_db->name}->{''} = $genome_db;
-        $self->{_taxon_cache}->{$genome_db->taxon_id} = $genome_db if $genome_db->taxon_id;
-    }
-}
-
-
 ###################
 # fetch_* methods #
 ###################
@@ -107,8 +92,9 @@ sub fetch_by_name_assembly {
     my ($self, $name, $assembly) = @_;
 
     throw("name argument is required") unless($name);
-    $self->_id_cache;
-    my $found_gdb = $self->{_name_asm_cache}->{lc $name}->{lc ($assembly || '')};
+    my $found_gdb = $assembly ?
+        $self->_id_cache->get_by_additional_lookup('name_assembly', sprintf('%s_____%s', lc $name, lc $assembly))
+        : $self->_id_cache->get_by_additional_lookup('name_default_assembly', lc $name);
     
     throw("No matches found for name '$name' and assembly '".($assembly||'--undef--')."'") unless($found_gdb);
 
@@ -136,8 +122,7 @@ sub fetch_by_taxon_id {
 
     throw("taxon_id argument is required") unless($taxon_id);
 
-    $self->_id_cache;
-    my $found_gdb = $self->{_taxon_cache}->{$taxon_id};
+    my $found_gdb = $self->_id_cache->get_by_additional_lookup('taxon_id', $taxon_id);
     
     throw("No matches found for taxon_id '$taxon_id'") unless($found_gdb);
 
@@ -229,7 +214,7 @@ sub fetch_all_by_ancestral_taxon_id {
     $sql .= " AND gdb.assembly_default = 1";
   }
 
-  return $self->_fetch_cached_by_sql($sql, $taxon_id);
+  return $self->_id_cache->get_by_sql($sql, [$taxon_id]);
 }
 
 
@@ -341,8 +326,7 @@ sub store {
     }
 
     #make sure the id_cache has been fully populated
-    $self->_id_cache();
-    $self->_add_to_cache($gdb);
+    $self->_id_cache->put($gdb->dbID, $gdb);
 
     return $gdb;
 }
@@ -374,7 +358,7 @@ sub update {
     $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
 
     $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
-    $self->_add_to_cache($gdb);
+    $self->_id_cache->put($gdb->dbID, $gdb);
 
     return $gdb;
 }
@@ -435,6 +419,38 @@ sub _objs_from_sth {
     }
     return \@genome_db_list;
 }
+
+############################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullAdaptor #
+############################################################
+
+
+sub _build_id_cache {
+    my $self = shift;
+    return GenomeDBCache->new($self);
+}
+
+
+package GenomeDBCache;
+
+
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use strict;
+use warnings;
+
+sub support_additional_lookups {
+    return 1;
+}
+
+sub compute_keys {
+    my ($self, $genome_db) = @_;
+    return {
+        name_assembly => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly),
+        $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
+        $genome_db->assembly_default ? (name_default_assembly => lc $genome_db->name) : (),
+    }
+}
+
 
 1;
 

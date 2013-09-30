@@ -1308,7 +1308,6 @@ sub update_genome_db {
     my ($species_dba, $compara_dba, $force, $genome_db_id) = @_;
     my $species_name;         #if not in core
     my $taxon_id;             #if not in core
-    my $offset;               #offset to add to Genome DBs.
 
     my $compara = $compara_dba->dbc->dbname;
 
@@ -1358,11 +1357,6 @@ sub update_genome_db {
     
     print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
     
-    #Have to define these since they were removed from the above meta queries
-    #and the rest of the code expects them to be defined
-    my $sql;
-    my $sth;
-    
     $genome_db = eval {
 	$genome_db_adaptor->fetch_by_name_assembly($primary_species_binomial_name,
 						   $assembly)
@@ -1370,15 +1364,10 @@ sub update_genome_db {
     
     ## New genebuild!
     if ($genome_db) {
-	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =? WHERE genome_db_id =?');
-	$sth->execute($assembly, $genebuild, $genome_db->dbID());
-	$sth->finish();
-	
-	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-								$primary_species_binomial_name,
-								$assembly
-							     );
-	
+
+        $genome_db->genebuild( $genebuild );
+        $genome_db_adaptor->update($genome_db);
+
     }
     ## New genome or new assembly!!
     else {
@@ -1396,7 +1385,7 @@ sub update_genome_db {
 	#Check if foreign key exists
 	my $sql = "SHOW CREATE TABLE genome_db";
 
-	$sth = $compara_dba->dbc()->prepare($sql);
+	my $sth = $compara_dba->dbc()->prepare($sql);
 	$sth->execute();
 
 	my $foreign_key = 0;
@@ -1415,36 +1404,19 @@ sub update_genome_db {
 	$sth->execute($primary_species_binomial_name);
 	$sth->finish();
 	
+      $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
+      $genome_db->taxon_id( $taxon_id );
+      $genome_db->name( $primary_species_binomial_name );
+      $genome_db->assembly( $assembly );
+      $genome_db->genebuild( $genebuild );
+
 	#New ID search if $offset is true
-	my @args = ($taxon_id, $primary_species_binomial_name, $assembly, $genebuild);
-	if($offset) {
-	    $sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
-	    $sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
-	    $sth->execute($offset);
-	    my ($max_id) = $sth->fetchrow_array();
-	    $sth->finish();
-	    if(!$max_id) {
-		$max_id = $offset;
-	    }
-	    unshift(@args, $max_id+1);
-	} elsif (defined $genome_db_id) {
-	    $sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
-	    unshift(@args, $genome_db_id);
+	if (defined $genome_db_id) {
+          $genome_db->dbID($genome_db_id);
 	}
-	else {
-	    $sql = 'INSERT INTO genome_db (taxon_id, name, assembly, genebuild) values (?,?,?,?)';
-	}
-	$sth = $compara_dba->dbc->prepare($sql);
-	$sth->execute(@args);
-	$sth->finish();
 
-        # force reload of the cache:
-	$genome_db_adaptor->_build_id_cache();
+      $genome_db_adaptor->store($genome_db);
 
-	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-								$primary_species_binomial_name,
-								$assembly
-							       );
     }
     return $genome_db;
 }

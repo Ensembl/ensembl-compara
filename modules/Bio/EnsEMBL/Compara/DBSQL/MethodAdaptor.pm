@@ -68,17 +68,6 @@ sub object_class {
 
 
 
-#################################################################
-# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
-#################################################################
-
-sub _add_to_cache {
-    my ($self, $method) = @_;
-    $self->SUPER::_add_to_cache($method);
-    $self->{_type_cache}->{lc $method->type()} = $method;
-}
-
-
 
 ########################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
@@ -140,8 +129,7 @@ sub _objs_from_sth {
 sub fetch_by_type {
     my ($self, $type) = @_;
 
-    $self->_id_cache;
-    return $self->{_type_cache}->{lc $type};
+    return $self->_id_cache->get_by_additional_lookup('type', uc $type);
 }
 
 
@@ -209,12 +197,39 @@ sub store {
         $sth->finish();
     }
     
-    #make sure the id_cache has been fully populated
-    $self->_id_cache();
-    $self->_add_to_cache($method);
+    $self->_id_cache->put($method->dbID, $method);
     return $method;
 }
 
+
+############################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullAdaptor #
+############################################################
+
+
+sub _build_id_cache {
+    my $self = shift;
+    return MethodCache->new($self);
+}
+
+
+package MethodCache;
+
+
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use strict;
+use warnings;
+
+sub support_additional_lookups {
+    return 1;
+}
+
+sub compute_keys {
+    my ($self, $method) = @_;
+    return {
+        type => uc $method->type(),
+    }
+}
 
 
 1;
