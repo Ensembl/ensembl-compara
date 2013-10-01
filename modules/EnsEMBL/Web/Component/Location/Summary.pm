@@ -13,17 +13,17 @@ my %SHORT = qw(
 sub _init {
   my $self = shift;
   $self->cacheable(1);
-  $self->ajaxable(1);
+  $self->ajaxable($self->hub->action ne 'Genome');
   $self->has_image(1);
 }
 
 sub content {
-  my $self   = shift;
+  my $self = shift;
+  
+  return if $self->hub->action eq 'Genome';
+  
   my $object = $self->object;
-  
-  return '' unless $object && $object->seq_region_name && $self->hub->action ne 'Genome';
-  
-  my $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region(
+  my $slice  = $object->database('core')->get_SliceAdaptor->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
   );
   
