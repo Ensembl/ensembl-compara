@@ -17,7 +17,7 @@ body.static #widemain { margin-left: 0; }
 
 /* Masthead */
 #masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 80px; position: relative; }
-#masthead div                             { background-color: [[MH_BG]]; }
+#masthead div                             { background-color: [[MH_BG]] important; }
 #masthead a,
 #masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; outline: none; }
 #masthead a:hover,
