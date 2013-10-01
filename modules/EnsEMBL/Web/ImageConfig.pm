@@ -518,6 +518,26 @@ sub get_option {
   return $node ? $node->get($key || 'values')->{$node->get('display')} : 0;
 }
 
+# Order submenus alphabetically by caption
+sub alphabetise_tracks {
+  my ($self, $track, $menu, $key) = @_;
+  $key ||= 'caption';
+  
+  my $name = $track->data->{$key};
+  my ($after, $node_name);
+  
+  foreach (@{$menu->child_nodes}) {
+    $node_name = $_->data->{$key};
+    $after     = $_ if $node_name && $node_name lt $name;
+  }
+  
+  if ($after) {
+    $after->after($track);
+  } else {
+    $menu->prepend_child($track);
+  }
+}
+
 sub load_user_tracks {
   my $self = shift;
   my $menu = $self->get_node('user_data');
@@ -640,7 +660,7 @@ sub load_user_tracks {
         external => 'user'
       );
     } elsif (lc $url_sources{$code}{'format'} eq 'datahub') {
-      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'}, $code) if $datahubs;
+      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'}) if $datahubs;
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
@@ -701,16 +721,12 @@ sub load_user_tracks {
 }
 
 sub _add_datahub {
-  my ($self, $menu_name, $url, $code) = @_;
-  
-  my $parser = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({
-    timeout => 10,
-    proxy   => $self->hub->species_defs->ENSEMBL_WWW_PROXY,
-  });
-
+  my ($self, $menu_name, $url) = @_;
+  my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10,  proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
+  my $menu     = $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
   my $base_url = $url;
   my $hub_file = 'hub.txt';
-
+  
   if ($url =~ /.txt$/) {
     $base_url =~ s/(.*\/).*/$1/;
     ($hub_file = $url) =~ s/.*\/(.*)/$1/;
@@ -737,20 +753,20 @@ sub _add_datahub {
         warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
       } elsif (!$node->has_child_nodes) {
         # No inheritance structure - assumes that the top level in the hub contains only tracks
-        $self->_add_datahub_node($node->parent_node, $menu_name, $code);
+        $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
         last;
       } else {
-        $self->_add_datahub_node($node, $menu_name, $code);
+        $self->_add_datahub_node($node, $menu, $menu_name);
       }
     }
   }
 }
 
 sub _add_datahub_node {
-  my ($self, $node, $name, $url_code) = @_;
+  my ($self, $node, $menu, $name) = @_;
   
   if ($node->has_child_nodes && $node->first_child->has_child_nodes) {
-    $self->_add_datahub_node($_, $name, $url_code) for @{$node->child_nodes};
+    $self->_add_datahub_node($_, $menu, $name) for @{$node->child_nodes};
   } else {
     my $config = {};
     my $n      = $node;
@@ -760,23 +776,22 @@ sub _add_datahub_node {
       $config->{$_} ||= $data->{$_} for keys %$data;
     } while $n = $n->parent_node;
     
-    $self->_add_datahub_tracks($node, $config, $name, $url_code);
+    $self->_add_datahub_tracks($node, $config, $menu, $name);
   }
 }
 
 sub _add_datahub_tracks {
-  my ($self, $parent, $config, $name, $url_code) = @_;
+  my ($self, $parent, $config, $menu, $name) = @_;
   my $hub    = $self->hub;
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
   my $link   = $config->{'description_url'} ? qq{<br /><a href="$config->{'description_url'}" rel="external">Go to track description on datahub</a>} : '';
   my $info   = $config->{'longLabel'} . $link;
-  my (%matrix_columns, %tracks);
+  my %tracks;
   
   my %options = (
     menu_key     => $name,
     menu_name    => $name,
-    url_code     => $url_code,
     submenu_key  => $self->tree->clean_id("${name}_$data->{'track'}"),
     submenu_name => $data->{'shortLabel'},
     datahub      => 1,
@@ -800,6 +815,22 @@ sub _add_datahub_tracks {
     
     $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
   }
+  
+  my $submenu = $self->create_submenu($options{'submenu_key'}, $options{'submenu_name'}, {
+    external => 1,
+    ($matrix ? (
+      menu   => 'matrix',
+      url    => $options{'matrix_url'},
+      matrix => {
+        section     => $menu->data->{'caption'},
+        header      => $options{'submenu_name'},
+        description => $info,
+        axes        => $options{'axes'},
+      }
+    ) : ())
+  });
+  
+  $self->alphabetise_tracks($submenu, $menu);
   
   foreach (@{$parent->child_nodes}) {
     my $track        = $_->data;
@@ -831,65 +862,22 @@ sub _add_datahub_tracks {
     }
     
     if ($matrix) {
-      my %labels     = map { $_ => $options{'axis_labels'}{$_}{$track->{'subGroups'}{$config->{'dimensions'}{$_}}} } qw(x y);
-      my $key        = join '_', $name, $track->{'parent'}, $labels{'x'};
-      my $column_key = $self->tree->clean_id($key);
-      
       # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
       # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
       # means the short label can be very non specific, because the header gives context of what type of
       # track it is. For Ensembl we need to have all the information in the track name / caption
       ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
-      $source->{'option_key'}   = $self->tree->clean_id(join '_', $options{'submenu_key'}, $labels{'x'}, $labels{'y'});
-      $source->{'column_key'}   = $column_key;
-      $source->{'matrix'}       = 'track';
-      
-      $matrix_columns{$type}{$key} ||= {
-        name        => $key,
-        source_name => $labels{'x'},
-        label_x     => $labels{'x'},
-        description => $info,
-        info        => $info,
-        squish      => $squish,
-        matrix      => 'column',
-        %options
+     
+      $source->{'matrix'} = {
+        menu   => $options{'submenu_key'},
+        column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
+        row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
       };
       
-      push @{$matrix_columns{$type}{$key}{'subtrack_list'}}, [ $track->{'longLabel'} ];
-      push @{$matrix_columns{$type}{$key}{'features'}{$labels{'y'}}}, $source;
+      $source->{'column_data'} = { description => $info, no_subtrack_description => 1 };
     }
     
     $tracks{$type}{$source->{'name'}} = $source;
-  }
-  
-  foreach my $type (keys %matrix_columns) {
-    my %rows;
-    
-    $self->load_file_format(lc $type, $matrix_columns{$type});
-    
-    foreach (values %{$matrix_columns{$type}}) {
-      my $key  = $_->{'name'};
-      my $node = $self->get_node($key);
-      
-      foreach (keys %{$_->{'features'}}) {
-        $node->append($self->create_track($self->tree->clean_id("${key}_$_"), $_, {
-          node_type => 'option',
-          menu      => 'no',
-          display   => 'off',
-          renderers => [qw(on on off off)],
-        }));
-        
-        $rows{$_} = 1;
-      }
-    }
-    
-    $self->get_node($options{'submenu_key'})->data->{'matrix'} = {
-      section     => $self->get_node($name)->data->{'caption'},
-      header      => $options{'submenu_name'},
-      description => $info,
-      axes        => $options{'axes'},
-      rows        => { map { $_ => { id => $_ } } sort keys %rows }
-    };
   }
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
@@ -920,17 +908,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}) unless $args{'source'}{'matrix'};
-  $args{'options'}{$_}           = $args{'source'}{$_} for qw(url_code label_x features menu_key description info colour axes datahub matrix option_key column_key);
- 
-  if ($args{'source'}{'matrix'} eq 'track') {
-    $args{'options'}{'menu'}        = 'matrix_subtrack';
-    $args{'options'}{'display'}     = 'default';
-    $args{'options'}{'source_name'} = $args{'source'}{'source_name'};
-    unshift @{$args{'renderers'}}, 'default', 'Default';
-  } elsif ($args{'source'}{'matrix'} eq 'column') {
-    $args{'options'}{'option_key'}    = $args{'key'};
-    $args{'options'}{'subtrack_list'} = $args{'source'}{'subtrack_list'};
-  }
+  $args{'options'}{$_}           = $args{'source'}{$_} for qw(datahub matrix column_data colour description);
   
   return %args;
 }
@@ -1003,23 +981,12 @@ sub load_file_format {
       my $menu_name    = $source->{'menu_name'};
       my $submenu_key  = $source->{'submenu_key'};
       my $submenu_name = $source->{'submenu_name'};
-      my $options      = { external => 1, datahub_menu => !!$source->{'datahub'}, url_code => $source->{'url_code'} };
-      my $main_menu    = $self->get_node($menu_key) || $self->tree->append_child($self->create_submenu($menu_key, $menu_name, $options));
+      my $main_menu    = $self->get_node($menu_key) || $self->tree->append_child($self->create_submenu($menu_key, $menu_name, { external => 1, datahub_menu => !!$source->{'datahub'} }));
          $menu         = $self->get_node($submenu_key);
       
       if (!$menu) {
-        my $added = 0;
-           $menu  = $self->create_submenu($submenu_key, $submenu_name, { external => 1, ($source->{'matrix_url'} ? (menu => 'matrix', url => $source->{'matrix_url'}) : ()) });
-        
-        # Order submenus alphabetically by caption
-        foreach (@{$main_menu->child_nodes}) {
-          if ($_->get('caption') lt $submenu_name) {
-            $_->after($menu);
-            $added = 1;
-          }
-        }
-        
-        $main_menu->append_child($menu) unless $added;
+        $menu = $self->create_submenu($submenu_key, $submenu_name, { external => 1, ($source->{'matrix_url'} ? (menu => 'matrix', url => $source->{'matrix_url'}) : ()) });
+        $self->alphabetise_tracks($menu, $main_menu);
       }
     }
     
@@ -1175,20 +1142,19 @@ sub _add_file_format_track {
     );
   }
   
-  my $track = $self->create_track($args{'key'}, $args{'source'}{'source_name'}, {
+  $self->generic_add($menu, undef, $args{'key'}, {}, {
     display     => 'off',
     strand      => 'f',
     format      => $args{'format'},
     glyphset    => $type,
     colourset   => $type,
     renderers   => $args{'renderers'},
+    name        => $args{'source'}{'source_name'},
     caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
     url         => $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}
   });
-  
-  $menu->append($track) if $track;
 }
 
 sub _user_track_settings {
@@ -1773,19 +1739,20 @@ sub add_matrix {
   my $column_track = $self->get_node($column_key);
   
   if (!($column_track && $column_track->parent_node)) {
-    $column_track = $menu->append($self->create_track($column_key, $data->{'track_name'} || $column, {
+    $column_track = $self->create_track($column_key, $data->{'track_name'} || $column, {
       renderers => $data->{'renderers'},
       label_x   => $column,
       display   => 'off',
       subset    => $subset,
       $matrix->{'row'} ? (matrix => 'column') : (),
       %{$data->{'column_data'} || {}}
-    }));
+    });
+    
+    $self->alphabetise_tracks($column_track, $menu, 'label_x');
   }
   
   if ($matrix->{'row'}) {
-    push @{$column_track->data->{'subtrack_list'}}, [ $caption, $data->{'description'} ];
-    
+    push @{$column_track->data->{'subtrack_list'}}, [ $caption, $column_track->data->{'no_subtrack_description'} ? () : $data->{'description'} ];
     $data->{'option_key'} = $self->tree->clean_id("${subset}_${column}_$matrix->{'row'}");
   }
   
