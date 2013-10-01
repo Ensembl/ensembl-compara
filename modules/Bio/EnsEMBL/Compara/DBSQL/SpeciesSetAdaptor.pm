@@ -177,6 +177,7 @@ sub _objs_from_sth {
         }
     }
 
+    $self->_load_tagvalues_multiple(\@ss_list, 1);
     return \@ss_list;
 }
 

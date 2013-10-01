@@ -41,33 +41,10 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
-=head2 generic_fetch
-
-  Arguments  : Same arguments as Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor::generic_fetch()
-  Example    : $arrayref = $a->generic_fetch($constraint, $join, $final_clause);
-  Description: Performs a database fetch and returns the newly created objects.
-               All the tags are automatically loaded.
-  Returntype : arrayref of objects
-  Exceptions : none
-
-=cut
- 
-sub generic_fetch {
-    my $self = shift;
-    my $objects = $self->SUPER::generic_fetch(@_);
-
-    # If there are tags, load them all
-    if ($self->isa('Bio::EnsEMBL::Compara::DBSQL::TagAdaptor')) {
-        $self->_load_tagvalues_multiple($objects, 1);
-    }
-
-    return $objects;
-}
-
-
 =head2 fetch_all
 
   Description: Returns all the objects from this adaptor
+  Returntype : arrayref of objects
   Caller     : general
 
 =cut

@@ -264,6 +264,7 @@ sub _objs_from_sth {
             }
     }
     $sth->finish();
+    $self->_load_tagvalues_multiple(\@mlss_list, 1);
     return \@mlss_list;
 }
 
