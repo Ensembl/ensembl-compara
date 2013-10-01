@@ -21,7 +21,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     var tabsHolder = $('.tabs_holder', this.el);
     var tabs       = $('.tabs', tabsHolder);
     var tools      = $('.tools_holder', this.el);
-    var logo       = $('.logo_holder', this.el);
+    var logo       = $('.logo_holder', this.el);   
     
     this.elLk.allTabs    = $('li', tabs);
     this.elLk.shortTabs  = $('li.short_tab', tabs);
@@ -39,6 +39,23 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       panel.recentLocations[$(this).text()] = 1;
     });
     
+			/* toggle menu_icon  for mobile website */
+		$('#menu_icon', tools).on('click', function(){	
+   		$('.tools', tools).slideToggle();
+	 		$(this).toggleClass("active");
+		});  
+				
+		/* extending search bar for mobile */
+		$('#se_q').focus(function() {
+			$(this).animate({ width: '130px' }, 'slow');
+			$('.search_holder').animate({ width: '175px' }, 'slow');							
+   	});
+  
+    $('#se_q').blur(function() {	    		
+  		$(this).animate({ width: '46px' }, 'slow');
+  		$('.search_holder').animate({ width: '93px' }, 'slow');
+    });
+      
     // Send an ajax request to clear the user's history for a tab/dropdown
     $('a.clear_history', this.elLk.dropdowns).on('click', function () {
       var li = $(this).parent();
@@ -183,7 +200,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     var longTabs    = this.widths.longTabs < threshold;
     var shortTools  = this.widths.tools > threshold - this.widths.search - this.widths.logo;
     var holderWidth, i, left, tabs;
-    
+
     if (longTabs !== this.longTabs) {
       if (longTabs) {
         this.elLk.shortTabs.hide();
