@@ -12,6 +12,11 @@ package EnsEMBL::Web::Exceptions;
 ### 'return' inside the try or catch blocks behaves as a 'break' to the code block but does not return from the wrapping function/method
 ### 'throw' inside catch always throws the exception being caught in the catch block irrespective of any argument to throw
 
+### TODO
+### Add commonly used exceptions in EXCEPTION_LIST and make them useable as in the following syntax
+### "throw IllegalArgumentException" which means same as "throw exception('IllegalArgumentException', '.. some message')"
+
+
 use strict;
 use warnings;
 
