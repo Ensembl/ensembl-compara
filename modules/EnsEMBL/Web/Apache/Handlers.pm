@@ -203,8 +203,10 @@ sub postReadRequestHandler {
   
   ## Ajax cookie
   my $cookies = EnsEMBL::Web::Cookie->fetch($r);
-  my $width   = $cookies->{'ENSEMBL_WIDTH'} && $cookies->{'ENSEMBL_WIDTH'}->value ? $cookies->{'ENSEMBL_WIDTH'}->value : 0;
-  
+  my $width   = $cookies->{'ENSEMBL_WIDTH'} && $cookies->{'ENSEMBL_WIDTH'}->value ? $cookies->{'ENSEMBL_WIDTH'}->value : 0;  
+  my $window_width = $cookies->{'WINDOW_WIDTH'} && $cookies->{'WINDOW_WIDTH'}->value ? $cookies->{'WINDOW_WIDTH'}->value : 0;
+ 
+  $r->subprocess_env->{'WINDOW_WIDTH'}          = $window_width; # use for mobile website to determine device windows size
   $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $width || $ENSEMBL_IMAGE_WIDTH || 800;
   $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies->{'DYNAMIC_WIDTH'} && $cookies->{'DYNAMIC_WIDTH'}->value ? 1 : $width ? 0 : 1;
 
