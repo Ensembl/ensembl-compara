@@ -52,7 +52,7 @@ sub get_sequence_data {
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
     $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
     $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
-    $self->set_codons($sl, $mk)                         if $config->{'codons_display'};
+    $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
     
     push @markup, $mk;
   }
@@ -367,7 +367,7 @@ sub set_exons {
 }
 
 sub set_codons {
-  my ($self, $slice_data, $markup) = @_;
+  my ($self, $config, $slice_data, $markup) = @_;
   my $slice       = $slice_data->{'slice'};
   my @transcripts = map @{$_->get_all_Transcripts}, @{$slice->get_all_Genes};
   my ($slice_start, $slice_length) = map $slice->$_, qw(start length);
