@@ -9,7 +9,7 @@ Ensembl.extend({
     var hints       = this.cookie.get('ENSEMBL_HINTS');
     var imagePanels = $('.image_panel');
     var bodyClass   = $('body')[0].className.split(' ');
-    var modalOpen   = window.location.hash.match(/(modal_.+)/);
+    var modalOpen   = window.location.hash.match(/(modal_.+)/);    
     
     if (!window.name) {
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
@@ -30,7 +30,13 @@ Ensembl.extend({
     this.speciesCommon   = $('#species_common_name').val() || '';
     this.species         = this.speciesPath.split('/').pop();
     this.images          = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
+
+    this.cookie.set('WINDOW_WIDTH', $(window).width());
     
+    $(window).resize(function() {
+	    Ensembl.cookie.set('WINDOW_WIDTH', $(window).width());	    
+    });
+
     for (var i in bodyClass) {
       if (bodyClass[i]) {
         this.browser[bodyClass[i]] = true;
@@ -51,7 +57,7 @@ Ensembl.extend({
         Ensembl.hideHints[this] = 1;
       });
     }
-    
+        
     imagePanels = null;
     
     this.setCoreParams();
