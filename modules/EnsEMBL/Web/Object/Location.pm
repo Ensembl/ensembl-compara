@@ -122,19 +122,9 @@ sub short_caption {
     'Location-based displays';
 }
 
-
 sub caption {
   my $self = shift;
-  my $caption;
-  if ($self->seq_region_name && $self->hub->action ne 'Genome') {
-    $caption .= $self->neat_sr_name($self->seq_region_type, $self->seq_region_name).': '
-                  .$self->thousandify($self->seq_region_start).'-'
-                  .$self->thousandify($self->seq_region_end);
-  }
-  else {
-    $caption .= 'Location';
-  }
-  return $caption;
+  return $self->hub->action eq 'Genome' ? '' : $self->neat_sr_name($self->seq_region_type, $self->seq_region_name) . ': ' . $self->thousandify($self->seq_region_start) . '-' . $self->thousandify($self->seq_region_end);
 }
 
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
