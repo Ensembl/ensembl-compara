@@ -36,9 +36,9 @@ table.config_matrix tr                                              { height: 26
 table.config_matrix tr.hidden                                       { display: none!important; }
 table.config_matrix tr th,                                     
 table.config_matrix tr td                                           { width: 25px; height: 25px; padding: 0; }
-table.config_matrix thead th p                                      { position: relative; left: 5px; font-size: 14px; white-space: nowrap; margin: 0; }
+table.config_matrix thead th p                                      { position: relative; left: 5px; font-size: 14px; white-space: nowrap; margin: 0; pointer-events: none; }
 table.config_matrix thead th p.rotate                               { width: 22px; -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
-table.config_matrix thead th div.select_all_column                  { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; white-space: nowrap; }
+table.config_matrix thead th div.select_all_column                  { width: auto; padding: 2px 4px; z-index: 3001; opacity: 0.85; white-space: nowrap; }
 table.config_matrix thead th div.select_all_column div              { margin-top: 4px; }
 table.config_matrix thead th div.select_all_column input            { margin: 0 3px; height: 16px; vertical-align: middle; }
 table.config_matrix tbody                                           { border: 1px solid #000; }
