@@ -155,10 +155,10 @@ sub db_adaptor {
             : undef;
     }
 
-    unless($self->{'_db_adaptor'}) {
+    if (not $self->{'_db_adaptor'} and $self->locator and $self->locator ne '') {
 
         eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
-        warn "The locator could not be loaded because: $@\n" if $@;
+        warn "The locator of ".($self->name)." could not be loaded because: $@\n" if $@;
 
     }
 
@@ -441,6 +441,7 @@ sub sync_with_registry {
         }
       }
     }
+    warn "Cannot find the core database of '".$self->name."' in the Registry. Be aware that getting Core objects from Compara is not possible for this species" unless $coreDBA;
 }
 
 
