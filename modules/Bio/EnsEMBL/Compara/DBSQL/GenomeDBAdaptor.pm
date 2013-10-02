@@ -102,16 +102,43 @@ sub fetch_by_name_assembly {
 }
 
 
+=head2 fetch_all_by_taxon_id_assembly
+
+  Arg[1]      : number (taxon_id)
+  Arg[2]      : (Optional) string (assembly)
+  Example     : $gdbs = $gdba->fetch_all_by_taxon_id_assembly(9606);
+  Description : Retrieves GenomeDBs from the database based on taxon_id and (optionally) the assembly name
+                If the assembly name is missing returns the GenomeDBs with the default assemblies.
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB's
+  Exceptions  : none
+  Caller      : general
+  Status      : Experimental
+
+=cut
+
+sub fetch_all_by_taxon_id_assembly {
+    my ($self, $taxon_id, $assembly) = @_;
+
+    throw("taxon_id argument is required") unless ($taxon_id);
+
+    my $found_gdbs = $assembly ?
+        $self->_id_cache->get_all_by_additional_lookup('taxon_id_assembly', sprintf('%s____%s_', $taxon_id, lc $assembly))
+            : $self->_id_cache->get_all_by_additional_lookup('taxon_id_default_assembly', $taxon_id);
+
+    throw("No matches found for taxon_id '$taxon_id' and assembly '".($assembly||'--undef--')."'") unless($found_gdbs);
+
+    return $found_gdbs;
+}
+
 =head2 fetch_by_taxon_id
 
-  Arg [1]    : string $name
-  Arg [2]    : string $assembly
+  Arg [1]    : number (taxon_id)
   Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
   Description: Retrieves a genome db using the NCBI taxon_id of the species.
+               If more than one GenomeDB is found in the database with the same
+               taxon_id, gives the first one found.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found. Will
-               warn if the taxon returns more than one GenomeDB (possible in
-               some branches of the Taxonomy)
+  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found.
   Caller     : general
   Status     : Stable
 
@@ -122,11 +149,11 @@ sub fetch_by_taxon_id {
 
     throw("taxon_id argument is required") unless($taxon_id);
 
-    my $found_gdb = $self->_id_cache->get_by_additional_lookup('taxon_id', $taxon_id);
-    
-    throw("No matches found for taxon_id '$taxon_id'") unless($found_gdb);
+    my $found_gdbs = $self->_id_cache->get_all_by_additional_lookup('taxon_id', $taxon_id);
 
-    return $found_gdb;
+    throw("No matches found for taxon_id '$taxon_id'") unless($found_gdbs);
+
+    return $found_gdbs->[0];
 }
 
 
@@ -479,10 +506,12 @@ sub support_additional_lookups {
 sub compute_keys {
     my ($self, $genome_db) = @_;
     return {
-        name_assembly => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly),
-        $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
-        $genome_db->assembly_default ? (name_default_assembly => lc $genome_db->name) : (),
-    }
+            name_assembly => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly),
+            $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
+            $genome_db->taxon_id ? (taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly)) : (),
+            ($genome_db->taxon_id and $genome_db->assembly_default) ? (taxon_id_default_assembly => $genome_db->taxon_id) : (),
+            $genome_db->assembly_default ? (name_default_assembly => lc $genome_db->name) : (),
+           }
 }
 
 
