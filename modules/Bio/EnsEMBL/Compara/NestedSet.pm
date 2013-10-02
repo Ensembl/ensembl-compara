@@ -73,7 +73,7 @@ sub cast {
 
     $copy->{_children_loaded} = $self->{_children_loaded};
 
-    $self->_complete_cast_node($copy) if ($self->can('_complete_cast_node'));
+    $copy->_complete_cast_node($self) if ($copy->can('_complete_cast_node'));
 
     for my $child (@{$self->children}) {
         $copy->add_child($child->cast($class));
