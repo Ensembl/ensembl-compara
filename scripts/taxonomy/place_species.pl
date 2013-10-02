@@ -52,4 +52,5 @@ for my $taxon_id (@taxon_ids) {
     $sp_tree_string =~ s/$taxon_name/======>$taxon_name<======/;
 }
 
+$species_tree->print_tree(0.2);
 print $sp_tree_string, "\n";
