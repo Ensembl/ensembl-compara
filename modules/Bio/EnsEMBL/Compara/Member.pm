@@ -64,6 +64,9 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Gene;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+use Bio::EnsEMBL::Compara::GeneMember;
+
 use base qw(Bio::EnsEMBL::Compara::Locus);
 
 =head2 new (CONSTRUCTOR)
