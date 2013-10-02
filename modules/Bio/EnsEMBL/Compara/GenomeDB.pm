@@ -298,8 +298,7 @@ sub assembly_default {
 
 sub genebuild {
   my $self = shift;
-  my $genebuild = shift;
-  $self->{'genebuild'} = $genebuild if $genebuild;
+  $self->{'genebuild'} = shift if (@_);
   return $self->{'genebuild'} || '';
 }
 
@@ -365,8 +364,7 @@ sub taxon {
 
 sub locator {
   my $self = shift;
-  my $locator = shift;
-  $self->{'locator'} = $locator if $locator;
+  $self->{'locator'} = shift if (@_);
   return $self->{'locator'} || '';
 }
 
