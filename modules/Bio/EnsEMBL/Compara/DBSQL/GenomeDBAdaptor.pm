@@ -364,6 +364,40 @@ sub update {
 }
 
 
+sub _find_missing_DBAdaptors {
+    my $self = shift;
+
+    # To avoid connecting to a database that is already linked to a GenomeDB
+    my %already_known_dbas = ();
+    foreach my $genome_db (@{$self->fetch_all}) {
+        $already_known_dbas{$genome_db->{_db_adaptor}} = 1 if $genome_db->{_db_adaptor};
+    }
+
+    foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
+
+        next if $already_known_dbas{$db_adaptor};
+
+        # Get the production name and assembly to compare to our GenomeDBs
+        my $mc = $db_adaptor->get_MetaContainer();
+        my $that_species = $mc->get_production_name();
+        my ($highest_cs) = @{$db_adaptor->get_CoordSystemAdaptor->fetch_all()};
+        my $that_assembly = $highest_cs->version();
+        $db_adaptor->dbc->disconnect_if_idle();
+
+        my $that_gdb = $self->fetch_by_name_assembly($that_species, $that_assembly);
+        $that_gdb->db_adaptor($db_adaptor) if $that_gdb and not $that_gdb->{_db_adaptor};
+    }
+
+    my @missing = ();
+    foreach my $genome_db (@{$self->fetch_all}) {
+        next if $genome_db->{_db_adaptor};
+        $genome_db->{_db_adaptor} = undef;
+        push @missing, $genome_db;
+    }
+    warn("Cannot find all the core databases in the Registry. Be aware that getting Core objects from Compara is not possible for the following species/assembly: ".
+        join(", ", map {sprintf('%s/%s', $_->name, $_->assembly)} @missing)."\n");
+}
+
 ########################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
 ########################################################

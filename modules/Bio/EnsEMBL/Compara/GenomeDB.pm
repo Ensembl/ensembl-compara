@@ -155,11 +155,13 @@ sub db_adaptor {
             : undef;
     }
 
-    unless($self->{'_db_adaptor'}) {
-
-        eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
-        warn "The locator could not be loaded because: $@\n" if $@;
-
+    unless (exists $self->{'_db_adaptor'}) {
+        if ($self->locator and $self->locator ne '') {
+            eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
+            warn sprintf("The locator '%s' of %s could not be loaded because: %s\n", $self->locator, $self->name, $@) if $@;
+        } else {
+            $self->adaptor->_find_missing_DBAdaptors;
+        }
     }
 
     return $self->{'_db_adaptor'};
@@ -412,6 +414,7 @@ sub sync_with_registry {
   #print("Registry eval TRUE\n");
 
     return if $self->locator and not $self->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
+
     my $coreDBA;
     my $registry_name;
     if ($self->assembly) {
