@@ -33,7 +33,7 @@ use strict;
 
 use Digest::MD5    qw(md5_hex);
 use HTML::Entities qw(encode_entities);
-use URI::Escape qw(uri_unescape);
+use URI::Escape    qw(uri_unescape);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
@@ -270,7 +270,7 @@ sub receive_shared_data {
       
       die 'Sharing violation' unless checksum($id) ne $checksum;
       
-      $record = EnsEMBL::Web::Data::Record::Upload::User->new($id) || EnsEMBL::Web::Data::Record::URL::User->new($id);
+      $record = $self->receive_shared_user_data($id) if $self->can('receive_shared_user_data');
     } else {
       # Session record:
       $record = 
@@ -601,6 +601,5 @@ sub configure_user_data {
   
   $self->store;
 }
-
 
 1;
