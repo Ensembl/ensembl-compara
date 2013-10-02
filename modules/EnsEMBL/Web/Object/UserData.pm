@@ -227,12 +227,14 @@ sub store_data {
 }
   
 sub delete_upload {
-  my $self = shift;
-  my $hub  = $self->hub;
-  my $code = $hub->param('code');
-  my $id   = $hub->param('id');
-  my $user = $hub->user;
-  my @track_names;
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $code       = $hub->param('code');
+  my $id         = $hub->param('id');
+  my $user       = $hub->user;
+  my $session    = $hub->session;
+  my $session_id = $session->session_id;
+  my ($owner, @track_names);
   
   if ($user && $id) {
     my $upload = $user->uploads($id)->[0];
@@ -240,16 +242,16 @@ sub delete_upload {
     if ($upload) {
       my @analyses = split ', ', $upload->analyses;
       push @track_names, @analyses;
-      $code = $upload->code;
+      
+      $code  = $upload->code;
+      $owner = $code =~ /_$session_id$/;
       
       $self->_delete_datasource($upload->species, $_) for @analyses;
       $upload->delete;
     }
   } else {
-    my $session    = $hub->session;
-    my $session_id = $session->session_id;
-    my $upload     = $session->get_data(type => 'upload', code => $code);
-    my $owner      = $code =~ /_$session_id$/;
+    my $upload = $session->get_data(type => 'upload', code => $code);
+       $owner  = $code =~ /_$session_id$/;
     
     if ($upload->{'filename'}) {
       push @track_names, "upload_$code";
@@ -264,26 +266,26 @@ sub delete_upload {
     }
     
     $session->purge_data(type => 'upload', code => $code);
-    $code = undef unless $owner;
   }
   
   # Remove all shared data with this code and source
-  EnsEMBL::Web::Data::Session->search(code => $code, type => 'upload')->delete_all if $code;
+  EnsEMBL::Web::Data::Session->search(code => $code, type => 'upload')->delete_all if $owner;
   
   $self->update_configs(\@track_names) if scalar @track_names;
 }
 
 sub delete_remote {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $source  = $hub->param('source');
-  my $code    = $hub->param('code');
-  my $id      = $hub->param('id');
-  my $user    = $hub->user;
-  my $session = $hub->session;
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $source     = $hub->param('source');
+  my $code       = $hub->param('code');
+  my $id         = $hub->param('id');
+  my $user       = $hub->user;
+  my $session    = $hub->session;
+  my $session_id = $session->session_id;
   my $track_name;
   
- if ($user && $id) {
+  if ($user && $id) {
     if ($source eq 'das') {
       my ($das) = $user->dases($id);
       
@@ -310,17 +312,12 @@ sub delete_remote {
       $session->save_das;
     }
   } else {
-    my $session_id = $session->session_id;
-    my $url        = $session->get_data(type => 'url', code => $code);
-       $track_name = "url_$url->{'code'}";
-    
+    $track_name = "url_$code";
     $session->purge_data(type => 'url', code => $code);
-    
-    $code = undef unless $code =~ /_$session_id$/;
   }
   
   # Remove all shared data with this code and source
-  EnsEMBL::Web::Data::Session->search(code => $code, type => 'url')->delete_all if $code;
+  EnsEMBL::Web::Data::Session->search(code => $code, type => 'url')->delete_all if $code =~ /_$session_id$/;
   
   $self->update_configs([ $track_name ]) if $track_name;
 }
