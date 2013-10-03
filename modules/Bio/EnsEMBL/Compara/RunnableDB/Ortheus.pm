@@ -991,13 +991,21 @@ sub synteny_region_id {
 sub get_species_tree {
   my $self = shift;
 
-  my $newick_species_tree;
+  my $newick_species_tree ;
   my $mlss_a = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor();
   my $mlss = $mlss_a->fetch_by_dbID($self->param('ortheus_mlssid'));
   my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
 
   if ( defined( $mlss ) ){
-	$newick_species_tree = $mlss->get_tagvalue("species_tree");
+     my $species_tree_adaptor = $self->compara_dba()->get_SpeciesTreeAdaptor();
+     my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss->dbID);
+     if($species_tree){
+	$newick_species_tree = $species_tree->species_tree;
+        $newick_species_tree=~s/:0;/;/;
+     } else {
+          $newick_species_tree = $mlss->get_tagvalue("species_tree");
+       
+     }
   } elsif ($self->param($species_tree_meta_key)) {
     $newick_species_tree = $self->param($species_tree_meta_key);
   } elsif ($self->param('species_tree_file')) {
