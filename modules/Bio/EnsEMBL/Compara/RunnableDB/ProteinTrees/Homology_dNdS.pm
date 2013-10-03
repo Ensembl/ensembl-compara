@@ -92,9 +92,6 @@ sub run {
 
         # To save memory
         $homology->clear;
-        for my $attr (qw(_members_by_source_genome_db _subtype _tree_node_id _members_by_genome_db _adaptor _method_link_species_set_id _description _this_one_first _ancestor_node_id _member_array _members_by_source _members_by_source_taxon)) {
-            delete $homology->{$attr};
-        }
     }
     $self->param('updated_homologies', \@updated_homologies);
     $self->param('homologies', []);
