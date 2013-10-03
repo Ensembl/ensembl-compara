@@ -15,7 +15,7 @@ sub content {
       <div class="sets">
         <div class="info">
           <h3>Help</h3>
-          <div class="message-pad"><p>You change names and descriptions by clicking on them in the table</p></div>
+          <div class="message-pad"><p>You can change names and descriptions by clicking on them in the table</p></div>
         </div>
         <h2>Your configurations for this page</h2>
         %s
@@ -23,6 +23,12 @@ sub content {
       <div class="edit_set">
         <h4>Select sets for the configuration:</h4>
         %s
+      </div>
+      <div class="share_config">
+        <h4>Share this configuration</h4>
+        <p class="spinner"></p>
+        <p>Copy this link:</p>
+        <input type="text" value="" />
       </div>
     </div>',
     $self->records_table,
@@ -44,7 +50,7 @@ sub records_table {
     my $img_url  = $self->img_url;
     my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div>%s<a rel="%s" href="%s" class="save"></a></div>};
     my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div></div>};
-    my $active   = qq{<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht use_icon" title="Use this configuration">&nbsp;</div></a><div class="config_used">Configuration applied</div>};
+    my $active   = qq{<a class="edit icon_link sprite _ht use_icon" href="%s" rel="%s" title="Use this configuration">&nbsp;</a><div class="config_used">Configuration applied</div>};
     my (%configs, %rows);
     
     my @columns = (
@@ -56,6 +62,7 @@ sub records_table {
     );
     
     push @columns, { key => 'edit',   title => '', width => '20px', align => 'center', sort => 'none' } if scalar keys %$sets;
+    push @columns, { key => 'share',  title => '', width => '20px', align => 'center', sort => 'none' };
     push @columns, { key => 'delete', title => '', width => '20px', align => 'center', sort => 'none' };
     
     foreach (@components) {
@@ -121,8 +128,9 @@ sub records_table {
         config => { value => scalar @config ? sprintf($list, join '', map qq{<li>$_->[0]: <span class="cfg">$_->[1]</span></li>}, sort { $a->[0] cmp $b->[0] } @config) : '', class => 'wrap' },
         sets   => { value => scalar @sets   ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets)                                                  : '', class => 'wrap' },
         active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
-        edit   => sprintf('<a class="edit_record icon_link" href="#" rel="%s"><div class="sprite _ht edit_icon" title="Edit sets">&nbsp;</div></a>', $record_id),
-        delete => sprintf('<a class="edit icon_link" href="%s" rel="%s"><div class="sprite _ht delete_icon" title="Delete">&nbsp;</div></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id),
+        edit   => sprintf('<a class="icon_link sprite _ht edit_icon edit_record" href="#" rel="%s" title="Edit sets">&nbsp;</a>', $record_id),
+        share  => sprintf('<a class="icon_link sprite _ht share_icon share_record" href="%s" title="Share">&nbsp;</a>',    $hub->url({ function => 'share',  %params })),
+        delete => sprintf('<a class="icon_link sprite _ht delete_icon edit" href="%s" rel="%s" title="Delete">&nbsp;</a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id),
       };
     }
 

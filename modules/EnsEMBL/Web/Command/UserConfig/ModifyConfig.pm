@@ -4,7 +4,8 @@ package EnsEMBL::Web::Command::UserConfig::ModifyConfig;
 
 use strict;
 
-use Encode qw(decode_utf8);
+use Digest::MD5 qw(md5_hex);
+use Encode      qw(decode_utf8);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -44,6 +45,30 @@ sub activate {
   my $hub  = $self->hub;
   
   print 'activateRecord' if $hub->config_adaptor->update_active($hub->param('record_id'));
+}
+
+sub share {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $referer = $hub->referer;
+  
+  return if $referer->{'external'}; 
+  
+  my $is_set  = $hub->param('is_set');
+  my $adaptor = $hub->config_adaptor;
+  my $id      = $hub->param('record_id');
+  my $func    = $is_set ? 'all_sets' : 'all_configs';
+  my $record  = $self->deepcopy($adaptor->$func->{$id});
+  
+  return unless $record;
+  
+  if ($is_set) {
+    delete $record->{'records'};
+  } else {
+    $record->{'data'} = delete $record->{'raw_data'};
+  }
+  
+  printf '%s%sshare_ref=conf%s-%s-%s', $referer->{'absolute_url'}, $referer->{'absolute_url'} =~ /\?/ ? ';' : '?', $is_set ? 'set' : '', $id, md5_hex($adaptor->serialize_data($record));
 }
 
 sub edit_sets {
