@@ -39,8 +39,6 @@ sub content {
     ";
   }
 
-  $info_text .= 'Please note that these URLs expire after 72 hours, but if you save the upload to your account, you can create a new shareable URL at any time.';
-
   $form->add_notes({ heading => 'How it works', text => $info_text });
 
   if (scalar @groups) {

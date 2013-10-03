@@ -25,7 +25,6 @@ sub content {
   return qq{
     <p class="space-below">To share this data, use the URL:</p>
     <p class="space-below">$url</p>
-    <p class="space-below">Please note that this link will expire after 72 hours.</p>
     $reload
   };
 }
