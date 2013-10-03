@@ -117,6 +117,7 @@ Ensembl.LayoutManager.extend({
             Ensembl.setWidth(undefined, true);
           }
           
+          Ensembl.cookie.set('WINDOW_WIDTH', $(window).width());	
           Ensembl.EventManager.trigger('windowResize');
           
           if (Ensembl.dynamicWidth && Ensembl.width !== width) {

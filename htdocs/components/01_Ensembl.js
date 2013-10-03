@@ -30,13 +30,7 @@ Ensembl.extend({
     this.speciesCommon   = $('#species_common_name').val() || '';
     this.species         = this.speciesPath.split('/').pop();
     this.images          = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
-
-    this.cookie.set('WINDOW_WIDTH', $(window).width());
     
-    $(window).resize(function() {
-	    Ensembl.cookie.set('WINDOW_WIDTH', $(window).width());	    
-    });
-
     for (var i in bodyClass) {
       if (bodyClass[i]) {
         this.browser[bodyClass[i]] = true;
@@ -51,6 +45,8 @@ Ensembl.extend({
         this.cookie.set('ENSEMBL_WIDTH', width);
       }
     }
+    
+    this.cookie.set('WINDOW_WIDTH', $(window).width());
     
     if (hints) {
       $.each(hints.split(/:/), function () {
