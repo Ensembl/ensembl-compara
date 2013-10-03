@@ -34,9 +34,16 @@ sub process {
       $url_params->{'filter_code'}   = 'shared';
     }
   } else { ## Share via URL
-    my @shares = grep /^\d+$/, @share_ids; # user data being shared
+    my @shares;
     
-    foreach (grep !/^\d+$/, @share_ids) { # session data being shared
+    foreach (@share_ids) {
+      # user data being shared
+      if (/^(\d+)-(\w+)$/) {
+        push @shares, $_;
+        next;
+      }
+      
+      # session data being shared
       my $data = $session->get_data(type => 'upload', code => $_);
       
       if ($data) {

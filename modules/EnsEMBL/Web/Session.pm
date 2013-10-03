@@ -39,7 +39,6 @@ use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
-use EnsEMBL::Web::Tools::Encryption qw(checksum);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -264,15 +263,10 @@ sub receive_shared_data {
     my $record;
     
     if ($share_ref =~ /^(\d+)-(\w+)$/) {
-      # User record:
-      my $id       = $1;
-      my $checksum = $2;
-      
-      die 'Sharing violation' unless checksum($id) ne $checksum;
-      
-      $record = $self->receive_shared_user_data($id) if $self->can('receive_shared_user_data');
+      # User record
+      $record = $self->receive_shared_user_data($1, $2) if $self->can('receive_shared_user_data');
     } else {
-      # Session record:
+      # Session record
       $record = 
         EnsEMBL::Web::Data::Session->retrieve(session_id => [ split '_', $share_ref ]->[1], type => 'upload', code => $share_ref) ||
         EnsEMBL::Web::Data::Session->retrieve(session_id => [ split '_', $share_ref ]->[1], type => 'url',    code => $share_ref);
@@ -293,13 +287,10 @@ sub receive_shared_data {
   }
   
   if (@failure) {
-    my $n   = scalar @failure;
-    my $msg = "The data has been removed from $n of the shared sets that you are looking for.";
-    
     $self->add_data(
       type     => 'message', 
       code     => 'no_data:' . (join ',', sort @failure), 
-      message  => $msg, 
+      message  => sprintf('%s of the datasets shared with you %s invalid', scalar @failure, scalar @failure == 1 ? 'is' : 'are'), 
       function => '_warning'
     );
   }

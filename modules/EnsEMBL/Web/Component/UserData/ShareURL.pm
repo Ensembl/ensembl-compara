@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::UserData::ShareURL;
 
 use strict;
 
-use EnsEMBL::Web::Tools::Encryption qw(checksum);
-
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
@@ -18,7 +16,7 @@ sub content {
   my $self      = shift;
   my $hub       = $self->hub;
   my @shares    = grep $_, $hub->param('share_id');
-  my $share_ref = join ';', map { $_ =~ /^\d+$/ ? "share_ref=000000$_-" . checksum($_) : "share_ref=$_" } @shares;
+  my $share_ref = join ';', map "share_ref=$_", @shares;
   my $reload    = $hub->param('reload') ? '<div class="modal_reload"></div>' : '';
   my $url       = $hub->referer->{'absolute_url'};
      $url      .= $url =~ /\?/ ? ';' : '?' unless $url =~ /;$/;

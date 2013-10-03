@@ -13,7 +13,6 @@ use URI::Escape    qw(uri_escape uri_unescape);
 
 use EnsEMBL::Web::Command::UserData::CheckShare;
 use EnsEMBL::Web::Hub;
-use EnsEMBL::Web::Tools::Encryption qw(checksum);
 
 use base qw(EnsEMBL::Web::Controller);
 
@@ -178,7 +177,9 @@ sub get_custom_tracks {
   
   foreach (grep $species_check->{$_->{'species'}}, map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url)) {
     my @track_ids = split ', ', $_->{'analyses'} || "$_->{'type'}_$_->{'code'}";
-    push @custom_tracks, [ $_->{'name'}, $_->{'user_record_id'} || $_->{'code'} ] unless scalar @track_ids == scalar grep $off_tracks{$_}, @track_ids; # don't prompt to share custom tracks which are turned off;
+    
+    # don't prompt to share custom tracks which are turned off
+    push @custom_tracks, [ $_->{'name'}, $_->{'record_id'} ? join '-', $_->{'record_id'}, md5_hex($_->{'code'}) : $_->{'code'} ] unless scalar @track_ids == scalar grep $off_tracks{$_}, @track_ids; 
   }
   
   if ($allow_das) {
@@ -226,7 +227,7 @@ sub get_shared_data {
   
   return (
     $image_config->share(map { $_ => 1 } @allowed),
-    scalar @shared_data ? (shared_data => [ map { $_ =~ /^\d+$/ ? "000000$_-" . checksum($_) : $_ } @shared_data ]) : (),
+    scalar @shared_data ? (shared_data => \@shared_data) : (),
     scalar @shared_das  ? (shared_das  => \@shared_das)  : (),
   );
 }

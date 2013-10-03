@@ -6,6 +6,8 @@ package EnsEMBL::Web::Command::ShareRecord;
 
 use strict;
 
+use Digest::MD5 qw(md5_hex);
+
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -17,14 +19,18 @@ sub process {
 
   if ($group && $user->is_admin_of($group)) {
     foreach (grep $_, $hub->param('id')) {
-      my $user_record = $user->get_record($_);
+      my ($id, $checksum) = split '-', $_;
+      my $record = $user->get_record($id);
 
-      next unless $user_record;
+      next unless $record;
+      next unless $checksum eq md5_hex($record->data->{'code'});
       
-      my $clone = $user_record->clone;
+      my $clone = $record->clone_and_reset;
       
-      $clone->owner($group);
-      $clone->save('user' => $user);
+      $clone->record_type($group->RECORD_TYPE);
+      $clone->record_type_id($group->group_id);
+      $clone->data->{'cloned_from'} = $record->record_id;
+      $clone->save(user => $user->rose_object);
     }
     
     %url_params = (

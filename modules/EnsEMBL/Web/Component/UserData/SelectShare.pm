@@ -4,6 +4,8 @@ package EnsEMBL::Web::Component::UserData::SelectShare;
 
 use strict;
 
+use Digest::MD5 qw(md5_hex);
+
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
@@ -53,8 +55,8 @@ sub content {
   $form->add_element(type => 'SubHeader', value => 'Data to share');
   
   if ($user) {
-    push @values, { name => "Saved upload: $_->{'name'}", value => $_->id } for $user->get_records('uploads');
-    push @values, { name => "Saved URL: $_->{'name'}",    value => $_->id } for $user->get_records('urls');
+    push @values, { name => "Saved upload: $_->{'name'}", value => join('-', $_->id, md5_hex($_->code)) } for $user->get_records('uploads');
+    push @values, { name => "Saved URL: $_->{'name'}",    value => join('-', $_->id, md5_hex($_->code)) } for $user->get_records('urls');
   }
   
   push @values, { name => "Temporary upload: $_->{'name'}", value => $_->{'code'} } for $session->get_data(type => 'upload');
