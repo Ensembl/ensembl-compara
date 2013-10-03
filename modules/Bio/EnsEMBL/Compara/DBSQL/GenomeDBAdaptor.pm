@@ -488,11 +488,11 @@ sub _objs_from_sth {
 
 sub _build_id_cache {
     my $self = shift;
-    return GenomeDBCache->new($self);
+    return Bio::EnsEMBL::Compara::DBSQL::Cache::GenomeDB->new($self);
 }
 
 
-package GenomeDBCache;
+package Bio::EnsEMBL::Compara::DBSQL::Cache::GenomeDB;
 
 
 use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;

@@ -209,11 +209,11 @@ sub store {
 
 sub _build_id_cache {
     my $self = shift;
-    return MethodCache->new($self);
+    return Bio::EnsEMBL::Compara::DBSQL::Cache::Method->new($self);
 }
 
 
-package MethodCache;
+package Bio::EnsEMBL::Compara::DBSQL::Cache::Method;
 
 
 use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;

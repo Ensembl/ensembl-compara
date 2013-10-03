@@ -265,11 +265,11 @@ sub _tag_capabilities {
 
 sub _build_id_cache {
     my $self = shift;
-    return SpeciesSetCache->new($self);
+    return Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesSet->new($self);
 }
 
 
-package SpeciesSetCache;
+package Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesSet;
 
 
 use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;

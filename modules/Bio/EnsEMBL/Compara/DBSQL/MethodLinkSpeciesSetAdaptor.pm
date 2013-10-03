@@ -570,11 +570,11 @@ sub _tag_capabilities {
 
 sub _build_id_cache {
     my $self = shift;
-    return MethodLinkSpeciesSetCache->new($self);
+    return Bio::EnsEMBL::DBSQL::Cache::MethodLinkSpeciesSet->new($self);
 }
 
 
-package MethodLinkSpeciesSetCache;
+package Bio::EnsEMBL::DBSQL::Cache::MethodLinkSpeciesSet;
 
 
 use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
