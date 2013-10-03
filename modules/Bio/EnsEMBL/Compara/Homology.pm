@@ -133,6 +133,9 @@ sub taxonomy_alias {
 }
 
 
+## dN/dS methods
+#################
+
 =head2 n
 
   Arg [1]    : float $n (optional)
@@ -296,11 +299,7 @@ sub dnds_ratio {
   my $ds = $self->ds(undef, $apply_threshold_on_ds);
   my $dn = $self->dn(undef, $apply_threshold_on_ds);
 
-  unless (defined $dn &&
-          defined $ds &&
-          $ds !=0) {
-    return undef;
-  }
+  return undef if (not defined $dn) or (not defined $ds) or ($ds == 0);
 
   unless (defined $self->{'_dnds_ratio'}) {
     $self->{'_dnds_ratio'} = sprintf("%.5f",$dn/$ds);
@@ -310,6 +309,8 @@ sub dnds_ratio {
 }
 
 
+## General I/O
+###############
 
 =head2 print_homology
 
