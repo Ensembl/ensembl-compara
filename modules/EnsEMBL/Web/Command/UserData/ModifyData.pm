@@ -4,6 +4,8 @@ package EnsEMBL::Web::Command::UserData::ModifyData;
 
 use strict;
 
+use Digest::MD5 qw(md5_hex);
+
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -112,10 +114,13 @@ sub rename_user_record {
   my $name  = $hub->param('value');
 
   if ($name) {
-    my $method  = $hub->param('source') . 's';
-    my $record  = $user->$method($hub->param('id'))->[0];
-    $record->name($name);
-    $record->save(user => $user);
+    my ($id, $checksum) = split '-', $hub->param('id');
+    my $record = $user->get_record($id);
+    
+    if ($checksum eq md5_hex($record->code)) {
+      $record->name($name);
+      $record->save(user => $user->rose_object);
+    }
   }
 
   return 'reload';

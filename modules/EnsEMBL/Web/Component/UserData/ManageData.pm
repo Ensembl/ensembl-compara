@@ -4,6 +4,7 @@ package EnsEMBL::Web::Component::UserData::ManageData;
 
 use strict;
 
+use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Data::Session;
@@ -143,7 +144,7 @@ sub table_row {
   }
   
   if ($user_record) {
-    $url_params{'id'} = $file->id;
+    $url_params{'id'} = join '-', $file->id, md5_hex($file->code);
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
   } else {
     
@@ -225,7 +226,7 @@ sub table_row_das {
   my (%url_params, $save);
   
   if ($user_record) {
-    %url_params = ( id => $file->id );
+    %url_params = ( id => join('-', $file->id, md5_hex($file->logic_name)) );
     $save       = $self->_icon({ link_class => 'modal_link', class => 'sprite_disabled save_icon',  title => 'Already saved' });
   } elsif ($hub->users_available) {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
