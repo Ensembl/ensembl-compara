@@ -237,17 +237,24 @@ sub delete_upload {
   my ($owner, @track_names);
   
   if ($user && $id) {
-    my $upload = $user->uploads($id)->[0];
+    my $checksum;
+    ($id, $checksum) = split '-', $id;
     
-    if ($upload) {
-      my @analyses = split ', ', $upload->analyses;
-      push @track_names, @analyses;
+    my $record = $user->get_record($id);
+    
+    if ($record) {
+      my $data = $record->data;
+         $code = $data->{'code'};
       
-      $code  = $upload->code;
-      $owner = $code =~ /_$session_id$/;
-      
-      $self->_delete_datasource($upload->species, $_) for @analyses;
-      $upload->delete;
+      if ($checksum eq md5_hex($code)) {
+        my @analyses = split ', ', $data->{'analyses'};
+        push @track_names, @analyses;
+        
+        $self->_delete_datasource($data->{'species'}, $_) for @analyses;
+        $record->delete;
+        
+        $owner = $code =~ /_$session_id$/;
+      }
     }
   } else {
     my $upload = $session->get_data(type => 'upload', code => $code);
@@ -286,20 +293,18 @@ sub delete_remote {
   my $track_name;
   
   if ($user && $id) {
-    if ($source eq 'das') {
-      my ($das) = $user->dases($id);
+    my $checksum;
+    ($id, $checksum) = split '-', $id;
+    
+    my $record = $user->get_record($id);
+    
+    if ($record) {
+      my $check = $record->data->{$source eq 'das' ? 'logic_name' : 'code'};
       
-      if ($das) {
-        $track_name = 'das_' . $das->logic_name;
-        $das->delete;
-      }
-    } else {
-      my ($url) = $user->urls($id);
-      
-      if ($url) {
-        $code       = $url->code;
-        $track_name = "url_$code";
-        $url->delete;
+      if ($checksum eq md5_hex($check)) {
+        $track_name = "${source}_$check";
+        $code       = $check unless $source eq 'das';
+        $record->delete;
       }
     }
   } elsif ($source eq 'das') {
@@ -315,7 +320,7 @@ sub delete_remote {
     $track_name = "url_$code";
     $session->purge_data(type => 'url', code => $code);
   }
-  
+  warn $code;
   # Remove all shared data with this code and source
   EnsEMBL::Web::Data::Session->search(code => $code, type => 'url')->delete_all if $code =~ /_$session_id$/;
   
