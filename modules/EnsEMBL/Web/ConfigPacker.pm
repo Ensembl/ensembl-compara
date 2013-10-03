@@ -27,6 +27,7 @@ sub munge_databases {
   $self->_summarise_core_tables($_, 'DATABASE_' . uc $_) for @tables;
   $self->_summarise_xref_types('DATABASE_' . uc $_) for @tables;
   $self->_summarise_variation_db('variation', 'DATABASE_VARIATION');
+  $self->_summarise_variation_db('variation_private', 'DATABASE_VARIATION_PRIVATE');
   $self->_summarise_funcgen_db('funcgen', 'DATABASE_FUNCGEN');
   $self->_compare_update_db('vega_update','DATABASE_VEGA_UPDATE');
 }
@@ -122,8 +123,6 @@ sub _summarise_core_tables {
 
   return unless $dbh; 
 
-# warn "connected to $db_name";
-  
   push @{ $self->db_tree->{'core_like_databases'} }, $db_name;
 
   $self->_summarise_generic( $db_name, $dbh );
