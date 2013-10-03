@@ -12,7 +12,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     this.editing = false;
     
-    Ensembl.EventManager.register('modalPanelResize', panel,function() {
+    Ensembl.EventManager.register('modalPanelResize', panel, function () {
       this.el.togglewrap('update');
     });
     
@@ -80,11 +80,34 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       els = group = null;
       
       return false;
+    }).on('click', 'a.share_record', function () {
+      var url      = this.href;
+      var el       = $('.share_config', panel.el).toggle();
+      var children = el.children(':not(h4)');
+      
+      function showShare(shareURL) {
+        children.toggle().filter('input').val(shareURL).select();
+        panel.shareURLs[url] = shareURL;
+      }
+      
+      if (el.is(':visible')) {
+        children.hide().siblings('.spinner').show();
+        
+        if (panel.shareURLs[url]) {
+          showShare(panel.shareURLs[url]);
+        } else {
+          $.ajax({ url: url, success: showShare });
+        }
+      }
+      
+      return false;
     });    
   },
   
   initialize: function () {
     this.base();
+    
+    this.shareURLs = {};
     
     if (this.dataTables) {
       $.each(this.dataTables, function () {
