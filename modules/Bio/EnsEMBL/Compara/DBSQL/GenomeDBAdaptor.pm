@@ -329,12 +329,7 @@ sub store {
     }
 
     if($self->_synchronise($gdb)) {
-        # fields that are not covered by _synchronise: secondary fields, not involved in unique keys
-        my $sql = 'UPDATE genome_db SET taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
-        my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-        $sth->execute( $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
-        $sth->finish();
-        $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
+        return $self->update($gdb);
     } else {
         my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)';
         my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
