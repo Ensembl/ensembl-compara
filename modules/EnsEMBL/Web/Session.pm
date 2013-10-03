@@ -257,10 +257,37 @@ sub save_data {
 
 sub receive_shared_data {
   my ($self, @share_refs) = @_; 
-  my (@success, @failure, @track_data);
+  my (%success, %failure, @track_data);
   
   foreach my $share_ref (@share_refs) {
     my $record;
+    
+    if ($share_ref =~ s/^conf(set)?-//) {
+      # Configuration
+      my $hub        = $self->hub;
+      my $adaptor    = $hub->config_adaptor;
+      my $is_set     = $1;
+      my $func       = $is_set ? 'share_set' : 'share_record';
+      my $record_ids = $adaptor->$func(split '-', $share_ref) || [];
+         $record_ids = [ $record_ids ] unless ref $record_ids eq 'ARRAY';
+      
+      
+      if (scalar @$record_ids) {
+        my $configs = $adaptor->all_configs;
+        
+        if ($is_set) {
+          my $set = $adaptor->all_sets->{$record_ids->[0]};
+          push @{$success{'sets'}}, $set->{'name'};
+          $record_ids = [ keys %{$set->{'records'}} ]; # Get record ids from the set if it's a set
+        }
+        
+        push @{$success{'configs'}}, $configs->{$_}{'name'} for @$record_ids;
+      } else {
+        push @{$failure{$is_set ? 'configuration sets' : 'configurations'}}, $share_ref;
+      }
+      
+      next;
+    }
     
     if ($share_ref =~ /^(\d+)-(\w+)$/) {
       # User record
@@ -277,32 +304,37 @@ sub receive_shared_data {
       
       if (!($record->{'session_id'} == $self->session_id) && !($record->{'user_id'} && $user && $record->{'user_id'} == $user->id)) {
         $self->add_data(type => $record->{'type'}, code => $share_ref, %{$record->data});
-        push @success, $record->data->{'name'};
+        push @{$success{'tracks'}}, $record->data->{'name'};
       }
       
       push @track_data, $record->{'type'}, { code => $share_ref, %{$record->data} };
     } else {
-      push @failure, $share_ref;
+      push @{$failure{'datasets'}}, $share_ref;
     }
   }
   
-  if (@failure) {
+  if (scalar keys %failure) {
     $self->add_data(
       type     => 'message', 
-      code     => 'no_data:' . (join ',', sort @failure), 
-      message  => sprintf('%s of the datasets shared with you %s invalid', scalar @failure, scalar @failure == 1 ? 'is' : 'are'), 
+      code     => 'no_data:' . (join ',', sort map @$_, values %failure), 
+      message  => join('', map sprintf('<p>%s of the %s shared with you %s invalid</p>', scalar @{$failure{$_}}, $_, scalar @{$failure{$_}} == 1 ? 'is' : 'are'), sort keys %failure), 
       function => '_warning'
     );
   }
   
-  if (@success) {
-    my $tracks = join '</li><li>', @success;
-    $tracks    = "<ul><li>$tracks</li></ul>";
+  if (scalar keys %success) {
+    my $message;
+    my $sets     = join '</li><li>', @{$success{'sets'}    || []};
+    my $configs  = join '</li><li>', @{$success{'configs'} || []};
+    my $tracks   = join '</li><li>', @{$success{'tracks'}  || []};
+       $message .= sprintf "<p>The following configuration set%s been shared with you:<ul><li>$sets</li></ul></p>",                   scalar @{$success{'sets'}}    == 1 ? ' has' : 's have' if $sets;
+       $message .= sprintf "<p>The following configuration%s been shared with you and are now in use:<ul><li>$configs</li></ul></p>", scalar @{$success{'configs'}} == 1 ? ' has' : 's have' if $configs;
+       $message .= sprintf "<p>The following track%s shared data:<ul><li>$tracks</li></ul></p>",                                      scalar @{$success{'tracks'}}  == 1 ? ' is'  : 's are'  if $tracks;
     
     $self->add_data(
       type     => 'message', 
-      code     => 'shared_data:' . (join ',', map $_[0], @share_refs),
-      message  => "The following added tracks are shared data:$tracks", 
+      code     => 'shared_data:' . (join ',', sort map @$_, values %success),
+      message  => $message, 
       function => '_info'
     );
     
