@@ -435,7 +435,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('release'),
+                'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
             -analysis_capacity => 1,
@@ -457,7 +457,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs',
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('release'),
+                'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
             -analysis_capacity => 1,
@@ -499,7 +499,7 @@ sub pipeline_analyses {
             -parameters => {
                 $self->o('reuse_from_prev_rel_db' ) ? ('reuse_db' => $self->o('prev_rel_db')) : (),
                 'registry_dbs'      => $self->o('prev_core_sources_locs'),
-                'release'           => $self->o('release'),
+                'release'           => $self->o('ensembl_release'),
                 'prev_release'      => $self->o('prev_release'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
@@ -1222,7 +1222,7 @@ sub pipeline_analyses {
             -parameters => {
                 'master_db'     => $self->o('master_db'),
                 'prev_rel_db'   => $self->o('prev_rel_db'),
-                'release'       => $self->o('release'),
+                'release'       => $self->o('ensembl_release'),
                 'prev_release'  => $self->o('prev_release'),
                 'type'          => 't',
             },
@@ -1232,7 +1232,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'treefam_xref_idmap',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper',
             -parameters    => {
-                'release'     => $self->o('release'),
+                'release'     => $self->o('ensembl_release'),
                 'tf_release'  => 9,
                 'tag_prefix'  => '',
             },
