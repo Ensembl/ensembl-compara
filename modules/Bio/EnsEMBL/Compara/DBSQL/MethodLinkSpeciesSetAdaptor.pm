@@ -192,10 +192,9 @@ sub store {
       $sth3->execute($dbID, @mlss_data);
       $sth3->finish();
     }
-
+    $self->_id_cache->put($dbID, $mlss);
   }
   $self->attach( $mlss, $dbID);
-  $self->_id_cache->put($dbID, $mlss);
   $self->sync_tags_to_database( $mlss );
 
   return $mlss;

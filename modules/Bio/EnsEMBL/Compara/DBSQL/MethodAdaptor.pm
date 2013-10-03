@@ -185,6 +185,8 @@ sub store {
 
         $sth->finish();
 
+        $self->_id_cache->remove($method->dbID);
+
     } else {
 
         my $sql = 'INSERT INTO method_link (method_link_id, type, class) VALUES (?, ?, ?)';

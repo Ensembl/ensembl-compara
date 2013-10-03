@@ -120,10 +120,11 @@ sub store {
             $sth->execute($dbID, $genome_db->dbID);
         }
         $sth->finish();
+
+        $self->_id_cache->put($dbID, $species_set);
     }
 
     $self->attach( $species_set, $dbID );
-    $self->_id_cache->put($dbID, $species_set);
     $self->sync_tags_to_database( $species_set );
 
     return $species_set;
