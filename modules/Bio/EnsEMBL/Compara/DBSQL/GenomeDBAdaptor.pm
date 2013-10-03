@@ -345,6 +345,10 @@ sub store {
         my $sth = $self->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name = ? AND genome_db_id != ?');
         my $nrows = $sth->execute($gdb->name, $gdb->dbID);
         $sth->finish();
+        # in the cache as well
+        foreach my $other_gdb (@{$self->fetch_all}) {
+            $other_gdb->assembly_default($other_gdb->dbID == $gdb->dbID ? 1 : 0) if $other_gdb->name eq $gdb->name;
+        }
     }
 
     #make sure the id_cache has been fully populated
