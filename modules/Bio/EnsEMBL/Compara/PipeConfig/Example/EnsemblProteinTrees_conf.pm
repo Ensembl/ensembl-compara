@@ -132,6 +132,7 @@ sub default_options {
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
             -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
+            -driver => 'mysql',
         },
 
         # the master database for synchronization of various ids
