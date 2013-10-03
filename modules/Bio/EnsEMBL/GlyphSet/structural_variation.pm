@@ -45,12 +45,13 @@ sub features {
     my $slice      = $self->{'container'};
     my $set_name   = $self->my_config('set_name');
     my $study_name = $self->my_config('study_name');
+    my $var_db     = $self->my_config('db') || 'variation';
     my ($features, %colours);
     
     if ($set_name) {
-      $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name));
+      $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', $var_db)->fetch_by_name($set_name), $var_db);
     } elsif ($study_name) {
-      $features = $slice->get_all_StructuralVariationFeatures_by_Study($self->{'config'}->hub->get_adaptor('get_StudyAdaptor', 'variation')->fetch_by_name($study_name));
+      $features = $slice->get_all_StructuralVariationFeatures_by_Study($self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db)->fetch_by_name($study_name), $var_db);
     } else {
       my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
       my $source   = $self->my_config('source');
@@ -59,8 +60,9 @@ sub features {
       my $start    = $slice->start;
       my $end      = $slice->end;
       my @display_features;
+      $source = undef unless ($source =~ /^\w/);
       
-      $features = $slice->$func($source =~ /^\w/ ? $source : undef);
+      $features = $slice->$func($source, $var_db);
       
       if ($min_size || $max_size) {
         for (my $i = 0; $i < scalar @$features; $i++) {
