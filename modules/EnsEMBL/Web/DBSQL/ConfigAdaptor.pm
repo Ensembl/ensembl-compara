@@ -119,12 +119,7 @@ sub get_config {
 
 sub serialize_data {
   my ($self, $data) = @_;
-  
-  local $Data::Dumper::Indent   = 0;
-  local $Data::Dumper::SortKeys = 1;
-  (my $data_string = Dumper $data) =~ s/^\$VAR1 = //;
-  
-  return $data_string;
+  return Data::Dumper->new([ $data ])->Indent(0)->Sortkeys(1)->Terse(1)->Dump;
 }
 
 sub set_config {
@@ -160,7 +155,9 @@ sub new_config {
   my ($self, %args) = @_;
   my $dbh = $self->dbh || return;
   
-  $dbh->do(
+  return unless $args{'type'} && $args{'code'};
+  
+  return unless $dbh->do(
     'INSERT INTO configuration_details VALUES ("", ?, ?, "n", ?, ?, ?, ?, ?)', {},
     map(encode_entities($args{$_}) || '', qw(record_type record_type_id name description)), $self->servername, $self->site_type, $self->version
   );
@@ -169,7 +166,7 @@ sub new_config {
   my $data      = ref $args{'data'} ? $self->serialize_data($args{'data'}) : $args{'data'};
   my $set_ids   = delete $args{'set_ids'};
   
-  $dbh->do('INSERT INTO configuration_record VALUES (?, ?, ?, ?, NULL, ?, ?, now(), now())', {}, $record_id, $args{'type'}, $args{'code'}, $args{'active'} || '', $args{'link_code'}, $data || '');
+  return unless $dbh->do('INSERT INTO configuration_record VALUES (?, ?, ?, ?, NULL, ?, ?, now(), now())', {}, $record_id, $args{'type'}, $args{'code'}, $args{'active'} || '', $args{'link_code'}, $data || '');
   
   $self->update_set_record($record_id, $set_ids) if $set_ids && scalar @$set_ids;
   
@@ -499,6 +496,72 @@ sub edit_record_sets {
      $updated += $self->update_set_record($record_id, \@new)         if scalar @new;
   
   return $updated;
+}
+
+# Share a configuration or set with another user
+sub share {
+  my ($self, $record_ids, $checksum, $link_id) = @_;
+  my $session_id = $self->session_id;
+  my $user_id    = $self->user_id;
+  my $dbh        = $self->dbh;
+  my @new_record_ids;
+  
+  foreach (@$record_ids) {
+    my $record = $dbh->selectall_hashref('SELECT * FROM configuration_details cd, configuration_record cr WHERE cd.record_id = cr.record_id AND cr.record_id = ?', 'record_id', {}, $_)->{$_};
+    
+    next unless $record;
+    next if ($record->{'record_type'} eq 'session' && $record->{'record_type_id'} eq $session_id) || ($record->{'record_type'} eq 'user' && $record->{'record_type_id'} eq $self->user_id); # Don't share with yourself
+    next if $checksum && md5_hex($self->serialize_data($record)) ne $checksum;
+    
+    my ($exists)      = grep { $_->{'type'} eq $record->{'type'} && $_->{'code'} eq $record->{'code'} && !$_->{'active'} && $_->{'raw_data'} eq $record->{'data'} } values %{$self->all_configs};
+    my $new_record_id = $exists ? $exists->{'record_id'} : $self->new_config(%$record, record_type => 'session', record_type_id => $session_id, active => ''); # Don't duplicate records with the same data
+    
+    if ($record->{'link_id'}) {
+      if ($link_id) {
+        $self->link_configs_by_id($new_record_id, $link_id);
+      } else {
+        $self->share([ $record->{'link_id'} ], undef, $new_record_id);
+      }
+    }
+    
+    $self->update_active($new_record_id);
+    
+    push @new_record_ids, $new_record_id;
+  }
+  
+  return \@new_record_ids;
+}
+
+sub share_record {
+  my ($self, $record_id, $checksum) = @_;
+  return $checksum ? $self->share([ $record_id ], $checksum) : undef;
+}
+
+sub share_set {
+  my ($self, $set_id, $checksum) = @_;
+  my $dbh        = $self->dbh;
+  my $session_id = $self->session_id;
+  
+  my $set = $dbh->selectall_hashref('SELECT * FROM configuration_details WHERE is_set = "y" AND record_id = ?', 'record_id', {}, $set_id)->{$set_id};
+  
+  return unless $set;
+  return if ($set->{'record_type'} eq 'session' && $set->{'record_type_id'} eq $session_id) || ($set->{'record_type'} eq 'user' && $set->{'record_type_id'} eq $self->user_id); # Don't share with yourself
+  return unless md5_hex($self->serialize_data($set)) eq $checksum;
+  
+  my $record_ids = $self->share([ map $_->[0], @{$dbh->selectall_arrayref('SELECT record_id FROM configuration_set WHERE set_id = ?', {}, $set_id)} ]);
+  my $serialized = $self->serialize_data([ sort @$record_ids ]);
+  
+  # Don't make a new set if one exists with the same records as the share
+  foreach (values %{$self->all_sets}) {
+    return $_->{'record_id'} if $self->serialize_data([ sort keys %{$_->{'records'}} ]) eq $serialized;
+  }
+  
+  return $self->create_set(
+    %$set,
+    record_type    => 'session',
+    record_type_id => $session_id,
+    record_ids     => $record_ids
+  );
 }
 
 sub set_cache_tags {
