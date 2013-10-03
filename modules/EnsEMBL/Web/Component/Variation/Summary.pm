@@ -512,7 +512,7 @@ sub evidence_status {
   my $html = join("",
     map {
       sprintf(
-        '<img style="margin-right: 5px; vertical-align:top;" src="/i/val/evidence_%s.png" title="%s"/>',
+        '<img class="_ht" style="margin-right: 5px; vertical-align:top;" src="/i/val/evidence_%s.png" title="%s"/>',
         #$_ =~ /1000|hap/i ? '#336' : 'white',
         $_, $_
       )
