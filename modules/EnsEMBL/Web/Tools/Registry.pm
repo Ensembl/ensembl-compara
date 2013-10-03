@@ -19,6 +19,7 @@ sub configure {
 
   my %adaptors = (
     VARIATION           => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor',
+    VARIATION_PRIVATE   => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor',
     FUNCGEN             => 'Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor',
     OTHERFEATURES       => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     RNASEQ              => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
