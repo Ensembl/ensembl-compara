@@ -46,6 +46,7 @@ sub configure {
   ##    - selected      Flag if on, will keep this option selected
   ##    - name          name attribute incase of checkboxes. This will override the default name attribute (the one for the whole list)
   ##    - caption       Text string (or hashref set of attributes including inner_HTML or inner_text) for <option> OR <label> for checkboxes and radio buttons
+  ##    - label         Same as caption for 'checklist' (label takes precedence if both provided)
   ##    - class         Class attribute for the option/checkbox/radio button
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
   ##    - label_first   Flag if on, keeps the label to the left of the checkbox/radiobutton (off by default)
