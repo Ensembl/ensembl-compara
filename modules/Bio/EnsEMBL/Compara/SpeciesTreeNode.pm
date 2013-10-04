@@ -70,9 +70,10 @@ sub new_from_NestedSet {
     my $method = $name_method || "name";
     my $genomeDB_Adaptor = $nestedSet_tree->adaptor->db->get_GenomeDBAdaptor;
     my $NCBITaxon_Adaptor = $nestedSet_tree->adaptor->db->get_NCBITaxonAdaptor;
-    my $speciesTreeNode_Adaptor = $nestedSet_tree->adaptor->db->get_SpeciesTreeNodeAdaptor;
+#    my $speciesTreeNode_Adaptor = $nestedSet_tree->adaptor->db->get_SpeciesTreeNodeAdaptor;
 
-    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $speciesTreeNode_Adaptor);
+#    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $speciesTreeNode_Adaptor);
+    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
     for my $node (@{$tree->get_all_nodes}) {
         if ($node->is_leaf) {
 #            my $name = $self->_normalize_species_name($node->name);
