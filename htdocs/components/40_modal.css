@@ -172,17 +172,25 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .modal_content .config_manager table td ul li                 { padding: 0; list-style-image: none; clear: both; }
 .modal_content .config_manager table td ul li span            { display: block; }
 .modal_content .config_manager table td ul li span.cfg        { float: right; margin-right: 5px; }
-.modal_content .config_manager .edit_set,
-.modal_content .config_manager .share_config                  { display: none; }
-.modal_content .config_manager .edit_set h4,
-.modal_content .config_manager .share_config h4               { color: [[PAGE_TEXT]]; margin: 10px 0; }
-.modal_content .config_manager .share_config input            { width: 400px; border: 1px solid [[PANEL_BORDER]]; padding: 6px; }
-.modal_content .config_manager .share_config .spinner         { width: 66px; height: 66px; }
+.modal_content .config_manager .edit_set                      { display: none; }
+.modal_content .config_manager .edit_set h4                   { color: [[PAGE_TEXT]]; margin: 10px 0; }
 .modal_content .config_manager .new_set .form-field,
 .modal_content .config_manager .new_set .fnotes               { display: none; }
 .modal_content .config_manager .sets a.toggle                 { background-image: none; text-decoration: underline; }
 .modal_content .config_manager .sets a.create_set             { font-weight: bold; }
 .modal_content .config_manager .sets a.create_set span.cancel { display: none; float: right; text-decoration: underline; cursor: pointer; }
+.modal_content .config_manager .share_config                  { display: none; }
+.modal_content .config_manager .share_config form             { border: 1px solid [[PANEL_BORDER]]; width: 632px; padding: 8px; }
+.modal_content .config_manager .share_config form.narrow      { width: 300px; padding: 8px; }
+.modal_content .config_manager .share_config form h2          { font-size: 13px; }
+.modal_content .config_manager .share_config fieldset         { position: relative; width: 300px; float: left; }
+.modal_content .config_manager .share_config fieldset.group   { margin-left: 32px; }
+.modal_content .config_manager .share_config input.group      { position: absolute; right: 0; }
+.modal_content .config_manager .share_config label            { padding-right: 32px; width: auto; font-weight: normal; word-break: break-all; }
+.modal_content .config_manager .share_config .share_header    { margin-bottom: 8px; font-size: 14px; }
+.modal_content .config_manager .share_config .form-field      { margin-bottom: 16px; }
+.modal_content .config_manager .share_config .make_url        { margin-right: 8px; }
+.modal_content .config_manager .share_config .share_url       { margin-top: 1px; padding: 3px; width: 247px; }
 
 body.ie67 .modal_content .config_manager td div.config_used      { margin-top: -1px; }
 body.ie67 .modal_content .config_manager table td ul li span.cfg { float: none; margin-right: 0; display: inline; }
