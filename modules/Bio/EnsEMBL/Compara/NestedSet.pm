@@ -76,7 +76,7 @@ sub cast {
     $copy->_complete_cast_node($self) if ($copy->can('_complete_cast_node'));
 
     for my $child (@{$self->children}) {
-        $copy->add_child($child->cast($class));
+        $copy->add_child($child->cast($class, $adaptor));
     }
 
     return $copy;
