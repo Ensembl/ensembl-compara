@@ -212,7 +212,7 @@ sub psychic {
   # Hack to get facets through to search. Psychic will be rewritten soon
   # so we shouldn't need this hack, longterm.
   if($url =~ m!/Search/!) {
-    my @params = $hub->param();
+    my @params = grep {$_ ne 'q'} $hub->param();
     $url .= ($url =~ /\?/ ? ';' : '?');
     $url .= join(";",map {; "$_=".$hub->param($_) } @params);
   }
