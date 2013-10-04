@@ -17,7 +17,6 @@ sub content {
           <h3>Help</h3>
           <div class="message-pad"><p>You can change names and descriptions by clicking on them in the table</p></div>
         </div>
-        <h2>Your configurations for this page</h2>
         %s
       </div>
       <div class="edit_set">
@@ -25,25 +24,25 @@ sub content {
         %s
       </div>
       <div class="share_config">
-        <h4>Share this configuration</h4>
-        <p class="spinner"></p>
-        <p>Copy this link:</p>
-        <input type="text" value="" />
+        <h4 class="share_header"></h4>
+        %s
       </div>
     </div>',
     $self->records_table,
-    $self->sets_table
+    $self->sets_table,
+    $self->share
   );
 }
 
 sub records_table {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $referer     = $hub->referer;
-  my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
-  my @components  = $self->dynamic_use($module_name) ? @{$module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'})} : ();
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my %admin_groups = $hub->user ? map { $_->group_id => 1 } $hub->user->find_admin_groups : ();
+  my $referer      = $hub->referer;
+  my $module_name  = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
+  my @components   = $self->dynamic_use($module_name) ? @{$module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'})} : ();
   my $html;
-
+  
   if (scalar @components) {
     my $adaptor  = $hub->config_adaptor;
     my $sets     = $adaptor->all_sets;
@@ -80,6 +79,7 @@ sub records_table {
     
     foreach (sort { $a->{'name'} cmp $b->{'name'} } grep { !$_->{'active'} && !($_->{'type'} eq 'image_config' && $_->{'link_id'}) } @config_records) {
       my $record_id   = $_->{'record_id'};
+      my $group       = $_->{'record_type'} eq 'group';
       my $code        = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
       (my $desc       = $_->{'description'}) =~ s/\n/<br \/>/g;
       my ($vc, $ic)   = $_->{'type'} eq 'view_config' ? ($_, $linked_configs{$_->{'link_id'}}) : ($linked_configs{$_->{'link_id'}}, $_); 
@@ -122,27 +122,39 @@ sub records_table {
         }
       }
       
-      push @{$rows{$code}}, {
-        name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
-        desc   => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
+      my %row = (
         config => { value => scalar @config ? sprintf($list, join '', map qq{<li>$_->[0]: <span class="cfg">$_->[1]</span></li>}, sort { $a->[0] cmp $b->[0] } @config) : '', class => 'wrap' },
         sets   => { value => scalar @sets   ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets)                                                  : '', class => 'wrap' },
-        active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
-        edit   => sprintf('<a class="icon_link sprite _ht edit_icon edit_record" href="#" rel="%s" title="Edit sets">&nbsp;</a>', $record_id),
-        share  => sprintf('<a class="icon_link sprite _ht share_icon share_record" href="%s" title="Share">&nbsp;</a>',    $hub->url({ function => 'share',  %params })),
-        delete => sprintf('<a class="icon_link sprite _ht delete_icon edit" href="%s" rel="%s" title="Delete">&nbsp;</a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id),
-      };
-    }
-
-    foreach (sort keys %rows) {
-      $html .= sprintf('
-        <div class="config_group">
-          %s
-          %s
-        </div>',
-        $configs{$_}{'title'} ? qq{<h4>Configurations for $configs{$_}{'title'}</h4>} : '',
-        $self->new_table(\@columns, $rows{$_}, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable heightwrap_inside' })->render,
       );
+      
+      if ($group && !$admin_groups{$_->{'record_type_id'}}) {
+        $row{'name'} = { value => $_->{'name'}, class => 'wrap' };
+        $row{'desc'} = { value => $desc,        class => 'wrap' };
+      } else {
+        $row{'name'}   = { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' };
+        $row{'desc'}   = { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' };
+        $row{'active'} = sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'});
+        $row{'edit'}   = sprintf('<a class="icon_link sprite _ht edit_icon edit_record" href="#" rel="%s" title="Edit sets">&nbsp;</a>', $record_id);
+        $row{'share'}  = sprintf('<a class="icon_link sprite _ht share_icon share_record" href="%s" rel="%s" title="Share">&nbsp;</a>',  $hub->url({ function => 'share',  %params }), $_->{'name'}) unless $group;
+        $row{'delete'} = sprintf('<a class="icon_link sprite _ht delete_icon edit" href="%s" rel="%s" title="Delete">&nbsp;</a>',        $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id);
+      }
+      
+      push @{$rows{$group ? 'group' : 'user'}{$code}}, \%row;
+    }
+    
+    foreach my $user (qw(user group)) {
+      $html .= sprintf '<h2>%s for this page</h2>', $user eq 'user' ? 'Your configurations' : 'Configurations from your groups' if $rows{$user};
+      
+      foreach (sort keys %{$rows{$user}}) {
+        $html .= sprintf('
+          <div class="config_group">
+            %s
+            %s
+          </div>',
+          $configs{$_}{'title'} ? qq{<h4>Configurations for $configs{$_}{'title'}</h4>} : '',
+          $self->new_table(\@columns, $rows{$user}{$_}, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable heightwrap_inside' })->render,
+        );
+      }
     }
   }
 
@@ -192,6 +204,31 @@ sub sets_table {
   return
     $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle no_sort', exportable => 0, class => 'fixed' })->render .
     $self->modal_form('', $hub->url({ action => 'ModifyConfig', function => 'edit_sets' }), { label => 'Save', class => 'edit_sets' })->render;
+}
+
+sub share {
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $user   = $hub->user;
+  my $form   = $self->new_form({ url => $hub->url({ function => 'share', __clear => 1 }) });
+  my @groups = $user ? $user->find_admin_groups : ();
+  
+  my $fieldset = $form->add_fieldset({ legend => 'Generate a URL to share with another user' });
+  
+  $fieldset->append_child('input', { type => 'button', class => 'make_url', value => 'Go' });
+  $fieldset->append_child('input', { type => 'text',   class => 'share_url' });
+  
+  if (scalar @groups) {
+    $form->add_fieldset({ legend => 'Share with groups you administer', class => 'group' });
+    $form->add_field({ type => 'Checkbox', value => $_->group_id, label => $_->name, class => 'group' }) for @groups;
+    $form->add_element({ type => 'Button', value => 'Share', class => 'share_groups' });
+  } else {
+    $form->set_attribute('class', 'narrow');
+  }
+  
+  $form->append_child('p', { class => 'invisible' });
+  
+  return $form->render;
 }
 
 1;

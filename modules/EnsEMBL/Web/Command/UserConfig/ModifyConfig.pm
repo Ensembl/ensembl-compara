@@ -55,12 +55,14 @@ sub share {
   return if $referer->{'external'}; 
   
   my $is_set  = $hub->param('is_set');
-  my $adaptor = $hub->config_adaptor;
   my $id      = $hub->param('record_id');
   my $func    = $is_set ? 'all_sets' : 'all_configs';
+  my $adaptor = $hub->config_adaptor;
   my $record  = $self->deepcopy($adaptor->$func->{$id});
   
   return unless $record;
+  
+  my @groups = $hub->param('group');
   
   if ($is_set) {
     delete $record->{'records'};
@@ -68,7 +70,26 @@ sub share {
     $record->{'data'} = delete $record->{'raw_data'};
   }
   
-  printf '%s%sshare_ref=conf%s-%s-%s', $referer->{'absolute_url'}, $referer->{'absolute_url'} =~ /\?/ ? ';' : '?', $is_set ? 'set' : '', $id, md5_hex($adaptor->serialize_data($record));
+  my $checksum = md5_hex($adaptor->serialize_data($record));
+  
+  if (scalar @groups) {
+    my $user = $hub->user;
+    
+    return unless $user;
+    
+    my %admin_groups = map { $_->group_id => 1 } $user->find_admin_groups;
+       $func         = $is_set ? 'share_set' : 'share_record';
+    
+    foreach (@groups) {
+      next unless $admin_groups{$_};
+      
+      $adaptor->$func($id, $checksum, $_);
+      
+      # TODO: some feedback
+    }
+  } else {
+    printf '%s%sshare_ref=conf%s-%s-%s', $referer->{'absolute_url'}, $referer->{'absolute_url'} =~ /\?/ ? ';' : '?', $is_set ? 'set' : '', $id, $checksum;
+  }
 }
 
 sub edit_sets {

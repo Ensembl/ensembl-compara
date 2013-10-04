@@ -81,33 +81,86 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       
       return false;
     }).on('click', 'a.share_record', function () {
-      var url      = this.href;
-      var el       = $('.share_config', panel.el).toggle();
-      var children = el.children(':not(h4)');
+      var el      = $(this);
+      var share   = el.data('share');
+      var shareEl = $('.share_config', panel.el);
+      var url, groups;
       
-      function showShare(shareURL) {
-        children.toggle().filter('input').val(shareURL).select();
-        panel.shareURLs[url] = shareURL;
-      }
+      panel.updateShareName(false, this.rel);
       
-      if (el.is(':visible')) {
-        children.hide().siblings('.spinner').show();
+      if (panel.elLk.shareLink[0] === el[0]) {
+        shareEl.toggle();
+      } else {
+        shareEl.show();
         
-        if (panel.shareURLs[url]) {
-          showShare(panel.shareURLs[url]);
-        } else {
-          $.ajax({ url: url, success: showShare });
+        if (share) {
+          if (share.groups) {
+            shareEl.find('.group').prop('checked', function () { return !!share.groups[this.value]; });
+            groups = true;
+          }
+          
+          if (share.url) {
+            shareEl.find('.share_url').val(share.url).show().select();
+            url = true;
+          }
         }
+        
+        if (!groups) {
+          shareEl.find('.group').prop('checked', false);
+        }
+        
+        if (!url) {
+          shareEl.find('.share_url').hide();
+        }
+        
+        panel.elLk.shareLink = el;
       }
+      
+      el = shareEl = null;
       
       return false;
-    });    
+    }).on('click', '.share_config .make_url', function () {
+      var share = panel.elLk.shareLink.data('share');
+      
+      function showShare(shareURL) {
+        $('.share_config .share_url', panel.el).val(shareURL).show().select();
+        share     = share || {};
+        share.url = shareURL;
+        panel.elLk.shareLink.data('share', share);
+      }
+      
+      if (share && share.url) {
+        showShare(share.url);
+      } else {
+        $.ajax({ url: panel.elLk.shareLink[0].href, success: showShare });
+      }
+    }).on('click', '.share_config input.group', function () {
+      var share = panel.elLk.shareLink.data('share') || {};
+      
+      share.groups = share.groups || {};
+      share.groups[this.value] = this.checked;
+      
+      panel.elLk.shareLink.data('share', share);
+    }).on('click', '.share_config .share_groups', function () {
+      var groups = $.map((panel.elLk.shareLink.data('share') || {}).groups || [], function (v, k) { return v ? k : undefined; });
+      
+      if (!groups.length) {
+        return;
+      }
+      
+      $.ajax({
+        url: panel.elLk.shareLink[0].href,
+        data: { group: groups },
+        traditional: true,
+        success: $.noop
+      });
+    });
   },
   
   initialize: function () {
     this.base();
     
-    this.shareURLs = {};
+    this.shares = {};
     
     if (this.dataTables) {
       $.each(this.dataTables, function () {
@@ -125,6 +178,8 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     input.parent().togglewrap('update');
     
+    this.updateShareName(input.parents('tr'), value);
+    
     $.ajax({
       url: save.attr('href'),
       data: { param: param, value: value },
@@ -139,6 +194,12 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     });
     
     input = save = null;
+  },
+  
+  updateShareName: function (tr, name) {
+    if (!tr || tr.find('.share_record').attr('rel', name)[0] === this.elLk.shareLink[0]) {
+      $('.share_header', this.el).html('Sharing ' + name);
+    }
   },
   
   activateRecord: function (tr, components) {

@@ -8,7 +8,6 @@ use base qw(EnsEMBL::Web::Component);
 
 sub content {
   my $self = shift;
-  my $sets = $self->sets_table;
   
   return sprintf('
     <input type="hidden" class="panel_type" value="ConfigManager" />
@@ -18,7 +17,6 @@ sub content {
           <h3>Help</h3>
           <div class="message-pad"><p>You can change names and descriptions by clicking on them in the table</p></div>
         </div>
-        <h2>Your configuration sets</h2>
         %s
         <p><a href="#" class="create_set"><span class="create">Create a new configuration set</span><span class="cancel">[Cancel]</span></a></p>
       </div>
@@ -30,15 +28,13 @@ sub content {
         %s
       </div>
       <div class="share_config">
-        <h4>Share this configuration set</h4>
-        <p class="spinner"></p>
-        <p>Copy this link:</p>
-        <input type="text" value="" />
+        %s
       </div>
     </div>',
-    $sets || '<p>You have no configuration sets.</p>',
+    $self->sets_table || '<p>You have no configuration sets.</p>',
     $self->records_table,
-    $self->new_set_form
+    $self->new_set_form,
+    $self->share
   );
 }
 
@@ -49,14 +45,15 @@ sub sets_table {
   my @sets    = values %{$adaptor->all_sets};
 
   return unless scalar @sets;
-
-  my $configs  = $adaptor->all_configs;
-  my $img_url  = $self->img_url;
-  my $icon_url = $img_url . '16/';
-  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div>%s<a href="%s" class="save"></a></div>};
-  my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div></div>};
-  my $active   = qq{<a class="edit icon_link sprite _ht use_icon" href="%s" rel="%s" title="Use this configuration set">&nbsp;</a><div class="config_used">Configuration applied</div>};
-  my @rows;
+  
+  my %admin_groups = $hub->user ? map { $_->group_id => 1 } $hub->user->find_admin_groups : ();
+  my $configs      = $adaptor->all_configs;
+  my $img_url      = $self->img_url;
+  my $icon_url     = $img_url . '16/';
+  my $editable     = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div>%s<a href="%s" class="save"></a></div>};
+  my $list         = qq{<div><div class="heightWrap"><ul>%s</ul></div></div>};
+  my $active       = qq{<a class="edit icon_link sprite _ht use_icon" href="%s" rel="%s" title="Use this configuration set">&nbsp;</a><div class="config_used">Configuration applied</div>};
+  my (%rows, $html);
   
   my @columns = (
     { key => 'name',    title => 'Name',           width => '20%',  align => 'left'                   },
@@ -70,6 +67,7 @@ sub sets_table {
 
   foreach (sort { $a->{'name'} cmp $b->{'name'} } @sets) {
     my $record_id = $_->{'record_id'};
+    my $group     = $_->{'record_type'} eq 'group';
     (my $desc     = $_->{'description'}) =~ s/\n/<br \/>/g;
     my %params    = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, is_set => 1 );
     my (@confs, @rel);
@@ -82,20 +80,32 @@ sub sets_table {
       push @rel, [split '::', $view_config->code]->[-1];
     }
     
-    push @rows, {
-      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
-      desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
+    my %row = (
       configs => { value => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set', class => 'wrap' },
-      active  => sprintf($active, $hub->url({ function => 'activate_set', %params }), join ' ', @rel),
-      edit    => sprintf('<a class="icon_link sprite _ht edit_icon edit_record" href="#" rel="%s" title="Edit configurations">&nbsp;</a>', $record_id),
-      share   => sprintf('<a class="icon_link sprite _ht share_icon share_record" href="%s" title="Share">&nbsp;</a>',    $hub->url({ function => 'share',      %params })),
-      delete  => sprintf('<a class="icon_link sprite _ht delete_icon edit" href="%s" rel="%s" title="Delete">&nbsp;</a>', $hub->url({ function => 'delete_set', %params }), $record_id),
-    };
+    );
+    
+    if ($group && !$admin_groups{$_->{'record_type_id'}}) {
+      $row{'name'} = { value => $_->{'name'}, class => 'wrap' };
+      $row{'desc'} = { value => $desc,        class => 'wrap' };
+    } else {
+      $row{'name'}   = { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' };
+      $row{'desc'}   = { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' };
+      $row{'active'} = sprintf($active, $hub->url({ function => 'activate_set', %params }), join ' ', @rel);
+      $row{'edit'}   = sprintf('<a class="icon_link sprite _ht edit_icon edit_record" href="#" rel="%s" title="Edit configurations">&nbsp;</a>', $record_id);
+      $row{'share'}  = sprintf('<a class="icon_link sprite _ht share_icon share_record" href="%s" rel="%s" title="Share">&nbsp;</a>', $hub->url({ function => 'share',      %params }), $_->{'name'}) unless $group;
+      $row{'delete'} = sprintf('<a class="icon_link sprite _ht delete_icon edit" href="%s" rel="%s" title="Delete">&nbsp;</a>',       $hub->url({ function => 'delete_set', %params }), $record_id);
+    }
+    
+    push @{$rows{$group ? 'group' : 'user'}}, \%row;
   }
-
-  return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable heightwrap_inside' })->render;
+  
+  foreach (grep $rows{$_}, qw(user group)) {
+    $html .= sprintf '<h2>%s</h2>', $_ eq 'user' ? 'Your configuration sets' : 'Configuration sets from your groups';
+    $html .= $self->new_table(\@columns, $rows{$_}, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable heightwrap_inside' })->render;
+  }
+  
+  return $html;
 }
-
 
 sub records_table {
   my $self    = shift;
@@ -169,6 +179,31 @@ sub new_set_form {
   $form->add_field({ type => 'String', name => 'name',        label => 'Configuration set name', required => 1, maxlength => 255 });
   $form->add_field({ type => 'Text',   name => 'description', label => 'Configuration set description'                           });
   $form->add_button({ type => 'submit', value => 'Save', field_class => 'save_button' });
+  
+  return $form->render;
+}
+
+sub share {
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $user   = $hub->user;
+  my $form   = $self->new_form({ url => $hub->url({ function => 'share', is_set => 1, __clear => 1 }) });
+  my @groups = $user ? $user->find_admin_groups : ();
+  
+  my $fieldset = $form->add_fieldset({ legend => 'Generate a URL to share with another user' });
+  
+  $fieldset->append_child('input', { type => 'button', class => 'make_url', value => 'Go' });
+  $fieldset->append_child('input', { type => 'text',   class => 'share_url' });
+  
+  if (scalar @groups) {
+    $form->add_fieldset({ legend => 'Share with groups you administer', class => 'group' });
+    $form->add_field({ type => 'Checkbox', value => $_->group_id, label => $_->name, class => 'group' }) for @groups;
+    $form->add_element({ type => 'Button', value => 'Share', class => 'share_groups' });
+  } else {
+    $form->set_attribute('class', 'narrow');
+  }
+  
+  $form->append_child('p', { class => 'invisible' });
   
   return $form->render;
 }
