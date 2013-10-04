@@ -16,10 +16,12 @@ my $DBH; # package database handle for persistence
 sub new {
   my ($class, $hub) = @_;
   my $species_defs  = $hub->species_defs;
+  my $user          = $hub->user;
   my $self          = {
     hub        => $hub,
     session_id => $hub->session->session_id,
-    user_id    => $hub->user ? $hub->user->id : undef,
+    user_id    => $user ? $user->id : undef,
+    group_ids  => $user ? [ map { $_->group_id => 1 } $user->get_groups ] : [],
     servername => $species_defs->ENSEMBL_SERVERNAME,
     site_type  => $species_defs->ENSEMBL_SITETYPE,
     version    => $species_defs->ENSEMBL_VERSION,
@@ -33,13 +35,15 @@ sub new {
   return $self;
 }
 
-sub hub        { return $_[0]{'hub'};        }
-sub user_id    { return $_[0]{'user_id'};    }
-sub servername { return $_[0]{'servername'}; }
-sub site_type  { return $_[0]{'site_type'};  }
-sub version    { return $_[0]{'version'};    }
-sub cache_tags { return $_[0]{'cache_tags'}; }
-sub session_id { return $_[0]{'session_id'} ||= $_[0]->hub->session->session_id; }
+sub hub          { return $_[0]{'hub'};          }
+sub user_id      { return $_[0]{'user_id'};      }
+sub servername   { return $_[0]{'servername'};   }
+sub site_type    { return $_[0]{'site_type'};    }
+sub version      { return $_[0]{'version'};      }
+sub cache_tags   { return $_[0]{'cache_tags'};   }
+sub group_ids    { return @{$_[0]{'group_ids'}}; }
+sub admin_groups { return $_[0]{'admin_groups'} ||= { map { $_->group_id => $_ } $_[0]->hub->user->find_admin_groups }; }
+sub session_id   { return $_[0]{'session_id'}   ||= $_[0]->hub->session->session_id; }
 
 sub dbh {
   return $DBH if $DBH and $DBH->ping;
@@ -52,18 +56,22 @@ sub dbh {
     $DBH = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),        $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS) ||
            DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT_BACKUP), $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS);
   };
+  
   EnsEMBL::Web::Controller->disconnect_on_request_finish($DBH);
+  
   return $DBH || undef;
 }
 
 sub record_type_query {
   my $self   = shift;
-  my @args   = grep $_, $self->session_id, $self->user_id;
-  my $where  = 'cd.record_type = "session" AND cd.record_type_id = ?';
-     $where  = qq{(($where) OR (cd.record_type = "user" AND cd.record_type_id = ?))} if scalar @args == 2;
-     $where .= ' AND cd.site_type = ?';
+  my @ids    = grep $_, $self->session_id, $self->user_id;
+  my @groups = $self->group_ids;
+  my $where  = '(cd.record_type = "session" AND cd.record_type_id = ?)';
+     $where .= qq{ OR (cd.record_type = "user" AND cd.record_type_id = ?)} if scalar @ids == 2;
+     $where .= sprintf qq{ OR (cd.record_type = "group" AND cd.record_type_id IN (%s))}, join ',', map '?', @groups if scalar @groups;
+     $where  = "($where) AND cd.site_type = ?";
   
-  return ($where, @args, $self->site_type);
+  return ($where, @ids, @groups, $self->site_type);
 }
 
 sub all_configs {
@@ -500,31 +508,41 @@ sub edit_record_sets {
 
 # Share a configuration or set with another user
 sub share {
-  my ($self, $record_ids, $checksum, $link_id) = @_;
-  my $session_id = $self->session_id;
-  my $user_id    = $self->user_id;
-  my $dbh        = $self->dbh;
+  my ($self, $record_ids, $checksum, $group_id, $link_id) = @_;
+  my $dbh          = $self->dbh;
+  my $group        = $group_id ? $self->admin_groups->{$group_id} : undef;
+  my %record_types = ( session => $self->session_id, user => $self->user_id, group => $group_id );
+  my $record_type  = $group ? 'group' : 'session';
   my @new_record_ids;
   
   foreach (@$record_ids) {
     my $record = $dbh->selectall_hashref('SELECT * FROM configuration_details cd, configuration_record cr WHERE cd.record_id = cr.record_id AND cr.record_id = ?', 'record_id', {}, $_)->{$_};
     
     next unless $record;
-    next if ($record->{'record_type'} eq 'session' && $record->{'record_type_id'} eq $session_id) || ($record->{'record_type'} eq 'user' && $record->{'record_type_id'} eq $self->user_id); # Don't share with yourself
+    next if $group_id && !$group;
+    next if !$group && $record_types{$record->{'record_type'}} eq $record->{'record_type_id'}; # Don't share with yourself
     next if $checksum && md5_hex($self->serialize_data($record)) ne $checksum;
     
-    my ($exists)      = grep { $_->{'type'} eq $record->{'type'} && $_->{'code'} eq $record->{'code'} && !$_->{'active'} && $_->{'raw_data'} eq $record->{'data'} } values %{$self->all_configs};
-    my $new_record_id = $exists ? $exists->{'record_id'} : $self->new_config(%$record, record_type => 'session', record_type_id => $session_id, active => ''); # Don't duplicate records with the same data
+    my ($exists) = grep {
+      !$_->{'active'}                       &&
+      $_->{'type'}     eq $record->{'type'} &&
+      $_->{'code'}     eq $record->{'code'} &&
+      $_->{'raw_data'} eq $record->{'data'} &&
+      ($group ? $_->{'record_type_id'} eq $group_id : 1)
+    } values %{$self->all_configs};
+    
+    # Don't duplicate records with the same data
+    my $new_record_id = $exists ? $exists->{'record_id'} : $self->new_config(%$record, record_type => $record_type, record_type_id => $record_types{$record_type}, active => ''); 
     
     if ($record->{'link_id'}) {
       if ($link_id) {
         $self->link_configs_by_id($new_record_id, $link_id);
       } else {
-        $self->share([ $record->{'link_id'} ], undef, $new_record_id);
+        $self->share([ $record->{'link_id'} ], undef, $group_id, $new_record_id);
       }
     }
     
-    $self->update_active($new_record_id);
+    $self->update_active($new_record_id) unless $group;
     
     push @new_record_ids, $new_record_id;
   }
@@ -533,22 +551,27 @@ sub share {
 }
 
 sub share_record {
-  my ($self, $record_id, $checksum) = @_;
-  return $checksum ? $self->share([ $record_id ], $checksum) : undef;
+  my ($self, $record_id, $checksum, $group_id) = @_;
+  return $checksum ? $self->share([ $record_id ], $checksum, $group_id) : undef;
 }
 
 sub share_set {
-  my ($self, $set_id, $checksum) = @_;
-  my $dbh        = $self->dbh;
+  my ($self, $set_id, $checksum, $group_id) = @_;
+  my $dbh          = $self->dbh;
+  my $group        = $group_id ? $self->admin_groups->{$group_id} : undef;
+  my %record_types = ( session => $self->session_id, user => $self->user_id, group => $group_id );
+  my $record_type  = $group ? 'group' : 'session';
+  
   my $session_id = $self->session_id;
   
   my $set = $dbh->selectall_hashref('SELECT * FROM configuration_details WHERE is_set = "y" AND record_id = ?', 'record_id', {}, $set_id)->{$set_id};
   
   return unless $set;
-  return if ($set->{'record_type'} eq 'session' && $set->{'record_type_id'} eq $session_id) || ($set->{'record_type'} eq 'user' && $set->{'record_type_id'} eq $self->user_id); # Don't share with yourself
+  return if $group_id && !$group;
+  return if !$group && $record_types{$set->{'record_type'}} eq $set->{'record_type_id'}; # Don't share with yourself
   return unless md5_hex($self->serialize_data($set)) eq $checksum;
   
-  my $record_ids = $self->share([ map $_->[0], @{$dbh->selectall_arrayref('SELECT record_id FROM configuration_set WHERE set_id = ?', {}, $set_id)} ]);
+  my $record_ids = $self->share([ map $_->[0], @{$dbh->selectall_arrayref('SELECT record_id FROM configuration_set WHERE set_id = ?', {}, $set_id)} ], undef, $group ? $group_id : undef);
   my $serialized = $self->serialize_data([ sort @$record_ids ]);
   
   # Don't make a new set if one exists with the same records as the share
@@ -558,8 +581,8 @@ sub share_set {
   
   return $self->create_set(
     %$set,
-    record_type    => 'session',
-    record_type_id => $session_id,
+    record_type    => $record_type,
+    record_type_id => $record_types{$record_type},
     record_ids     => $record_ids
   );
 }
