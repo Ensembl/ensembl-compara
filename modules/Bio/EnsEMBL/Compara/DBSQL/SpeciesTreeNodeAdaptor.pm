@@ -55,7 +55,7 @@ sub store {
 
     $self->store_node($node, $mlss_id);
     for my $node(@{$node->children()}) {
-        $self->store($node); ## We don't need to include here mlss_id since this is never the root node
+        $self->store($node, $mlss_id); ## We don't need to include here mlss_id since this is never the root node
     }
     return $node->node_id;
 }
@@ -89,7 +89,7 @@ sub store_node {
     }
 
     my $parent_id = $node->parent->node_id if($node->parent);
-    my $root_id = $node->root->node_id();
+    my $root_id = $node->root->node_id;
 
     my $node_name = $node->name;
     my ($taxon_id, $genome_db_id);
