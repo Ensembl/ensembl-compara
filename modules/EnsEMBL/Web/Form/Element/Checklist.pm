@@ -62,7 +62,8 @@ sub add_option {
   ## @params HashRef with following keys:
   ##  - id          Id attribute of <input>
   ##  - value       goes in value attribute of the option
-  ##  - caption     Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
+  ##  - label       Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
+  ##  - caption     Same as label (label takes precedence if both provided)
   ##  - checked     flag to tell whether option is selected or not
   ##  - group       Subheading caption - option will be added under this subheading, but if this subheading does not exist, a new one's created before adding the option
   ##  - class       Only needed to override the default class attribute for all options
@@ -75,9 +76,10 @@ sub add_option {
   my $dom = $self->dom;
 
   $params->{'value'}         = '' unless exists $params->{'value'} && defined $params->{'value'};
-  $params->{'class'}       ||= $self->{'__option_class'}       if $self->{'__option_class'};
-  $params->{'label_first'} ||= $self->{'__option_label_first'} if $self->{'__option_label_first'};
-  $params->{'id'}          ||= $self->unique_id                if exists $params->{'caption'}; #'for' attrib for label if caption provided
+  $params->{'class'}       ||= $self->{'__option_class'}        if $self->{'__option_class'};
+  $params->{'label_first'} ||= $self->{'__option_label_first'}  if $self->{'__option_label_first'};
+  $params->{'caption'}       = $params->{'label'}               if exists $params->{'label'};
+  $params->{'id'}          ||= $self->unique_id                 if exists $params->{'caption'}; #'for' attrib for label if caption provided
 
   my $wrapper = $dom->create_element($self->{'__inline'} ? 'span' : 'p', {'class' => $self->CSS_CLASS_INNER_WRAPPER});
   my $input   = $dom->create_element($self->_is_multiple ? 'inputcheckbox' : 'inputradio', {'value' => $params->{'value'}, 'name' => $params->{'name'} || $self->{'__option_name'}});
