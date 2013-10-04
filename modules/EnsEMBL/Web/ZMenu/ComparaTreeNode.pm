@@ -236,10 +236,11 @@ sub content {
        });
 
       # Link to TreeFam Tree
+      my $tree_tagvalues  = $tree->get_tagvalue_hash;
       my $treefam_tree = 
-        $tagvalues->{'treefam_id'}          || 
-        $tagvalues->{'part_treefam_id'}     || 
-        $tagvalues->{'cont_treefam_id'}     || 
+        $tree_tagvalues->{'treefam_id'}          || 
+        $tree_tagvalues->{'part_treefam_id'}     || 
+        $tree_tagvalues->{'cont_treefam_id'}     || 
         undef;
       
       if (defined $treefam_tree) {
