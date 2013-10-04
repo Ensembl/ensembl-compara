@@ -17,14 +17,18 @@ sub content {
     @features = @{Bio::EnsEMBL::GlyphSet::structural_variation->new($click_data)->features};
     @features = () if $svf && !(grep $_->dbID eq $svf, @features);
   }
+  ## Check which variation db this track is using
+  my $image_config = $hub->get_imageconfig($hub->param('config'));
+  my $node         = $image_config ? $image_config->get_node($hub->param('track')) : undef;
+  my $db           = $node->{'data'}{'db'} || 'variation';
   
-  @features = $hub->database('variation')->get_StructuralVariationFeatureAdaptor->fetch_by_dbID($svf) if $svf && !scalar @features;
+  @features = $hub->database($db)->get_StructuralVariationFeatureAdaptor->fetch_by_dbID($svf) if $svf && !scalar @features;
   
-  $self->feature_content($_) for @features;
+  $self->feature_content($_, $db) for @features;
 }
 
 sub feature_content {
-  my ($self, $feature) = @_;
+  my ($self, $feature, $db) = @_;
   my $hub         = $self->hub;
   my $variation   = $feature->structural_variation;
   my $sv_id       = $feature->variation_name;
@@ -100,7 +104,7 @@ sub feature_content {
   if ($is_breakpoint) {
     $self->add_entry({
       type       => 'Location',
-      label_html => $self->get_locations($sv_id),
+      label_html => $self->get_locations($sv_id, $db),
     });
 	} else {
     $self->add_entry({
