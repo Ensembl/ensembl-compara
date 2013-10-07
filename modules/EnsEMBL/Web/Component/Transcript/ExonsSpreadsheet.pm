@@ -178,7 +178,7 @@ sub get_exon_sequence_data {
     }
   }
   
-  $config->{'last_number'} = $strand == 1 ? $exon_start - 1 : $exon_end + 1; # Ensures that line numbering is correct if there are no introns
+  $config->{'last_number'} = $strand == 1 ? $exon_start - 1 : $exon_end + 1 if $config->{'number'} eq 'slice'; # Ensures that line numbering is correct if there are no introns
   
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
   $self->add_line_numbers($config, $seq_length)                    if $config->{'number'}      ne 'off';
