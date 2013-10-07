@@ -72,7 +72,7 @@ sub param_defaults {
 
     Title   :   fetch_input
     Usage   :   $self->fetch_input
-    Function:   Fetches input data for mcoffee from the database
+    Function:   Fetches input data from the database
     Returns :   none
     Args    :   none
 
@@ -97,12 +97,10 @@ sub fetch_input {
   # No input specified.
   if (!defined($self->param('protein_tree'))) {
     $self->post_cleanup;
-    $self->throw("MCoffee job no input protein_tree");
+    $self->throw("no input protein_tree");
   }
 
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
-
-  print "MCoffee alignment method: ".$self->param('method')."\n";
 
   #
   # A little logic, depending on the input params.
@@ -132,7 +130,7 @@ sub fetch_input {
   # Error writing input Fasta file.
   if (!$self->param('input_fasta')) {
     $self->post_cleanup;
-    $self->throw("MCoffee: error writing input Fasta");
+    $self->throw("error writing input Fasta");
   }
 
   return 1;
@@ -143,7 +141,7 @@ sub fetch_input {
 
     Title   :   run
     Usage   :   $self->run
-    Function:   runs MCOFFEE
+    Function:   runs the alignment
     Returns :   none
     Args    :   none
 
@@ -162,7 +160,7 @@ sub run {
 `
     Title   :   write_output
     Usage   :   $self->write_output
-    Function:   parse mcoffee output and update protein_tree_member tables
+    Function:   parse the alignment and update protein_tree_member tables
     Returns :   none
     Args    :   none
 
