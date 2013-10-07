@@ -10,7 +10,7 @@ sub content {
   my $self = shift;
   
   return sprintf('
-    <input type="hidden" class="panel_type" value="ConfigManager" />
+    <input type="hidden" class="subpanel_type" value="ConfigManager" />
     <div class="config_manager">
       <div class="sets">
         <div class="info">
