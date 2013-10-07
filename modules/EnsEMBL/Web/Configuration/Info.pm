@@ -50,41 +50,37 @@ sub populate_tree {
 
   my $index = $self->create_node('Index', '',
     [qw(homepage EnsEMBL::Web::Component::Info::HomePage)],
-    { availability => 1, title => 'Description' }
+    { title => 'Description' }
   );
 
   $self->create_node('Annotation', '',
-    [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)],
-    { availability => 1 }
+    [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)]
   );
 
   $index->append($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
-    { availability  => 1, no_menu_entry => 1, }
+    { no_menu_entry => 1, }
   ));
   
   foreach (keys %error_messages) {
     $index->append($self->create_subnode("Error/$_", "Error $_",
       [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
-      { availability  => 1, no_menu_entry => 1 }
+      { no_menu_entry => 1 }
     ));
   }
 
   my $stats_menu = $self->create_submenu('Stats', 'Genome Statistics');
   
   $stats_menu->append($self->create_node('StatsTable', 'Assembly and Genebuild',
-    [qw(stats EnsEMBL::Web::Component::Info::SpeciesStats)],
-    { availability => 1 }
+    [qw(stats EnsEMBL::Web::Component::Info::SpeciesStats)]
   ));
   
   $stats_menu->append($self->create_node('IPtop500', 'Top 500 InterPro hits',
-    [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)],
-    { availability => 1 }
+    [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)]
   ));
   my $version = $species_defs->ENSEMBL_VERSION;
   $self->create_node('WhatsNew', "What's New in Release $version",
-    [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)],
-    { availability => 1 }
+    [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)]
   );
 
   ## SAMPLE DATA
@@ -107,15 +103,15 @@ sub populate_tree {
     ));
 
     $data_menu->append($self->create_node('Location', "Location ($location_text)", [],
-      { availability => 1, url => $location_url, raw => 1 }
+      { url => $location_url, raw => 1 }
     ));
     
     $data_menu->append($self->create_node('Gene', "Gene ($gene_text)", [],
-      { availability => 1, url => $gene_url, raw => 1 }
+      { url => $gene_url, raw => 1 }
     ));
     
     $data_menu->append( $self->create_node('Transcript', "Transcript ($transcript_text)", [],
-      { availability => 1, url => $transcript_url, raw => 1 }
+      { url => $transcript_url, raw => 1 }
     ));
     
     if ($sample_data->{'VARIATION_PARAM'}) {
@@ -123,7 +119,7 @@ sub populate_tree {
       my $variation_text = $sample_data->{'VARIATION_TEXT'} || 'not available';
       
       $data_menu->append($self->create_node('Variation', "Variation ($variation_text)", [],
-        { availability => 1, url => $variation_url, raw => 1 }
+        { url => $variation_url, raw => 1 }
       ));
     }
 
@@ -132,7 +128,7 @@ sub populate_tree {
       my $phenotype_text = $sample_data->{'PHENOTYPE_TEXT'} || 'not available';
       
       $data_menu->append($self->create_node('Phenotype', "Phenotype ($phenotype_text)", [],
-        { availability => 1, url => $phenotype_url, raw => 1 }
+        { url => $phenotype_url, raw => 1 }
       ));
     }
 
@@ -141,15 +137,14 @@ sub populate_tree {
       my $regulation_text = $sample_data->{'REGULATION_TEXT'} || 'not_available';
 
       $data_menu->append($self->create_node('Regulation', "Regulation ($regulation_text)", [],
-        { availability => 1, url => $regulation_url, raw => 1 }
+        { url => $regulation_url, raw => 1 }
       ));
     }  
   }
 
   ## Generic node for including arbitrary HTML files about a species
   $self->create_node('Content', '',
-    [qw(content EnsEMBL::Web::Component::Info::Content)],
-    { no_menu_entry => 1 }
+    [qw(content EnsEMBL::Web::Component::Info::Content)]
   );
 }
 

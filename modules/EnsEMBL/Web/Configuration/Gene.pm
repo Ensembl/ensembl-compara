@@ -18,13 +18,13 @@ sub populate_tree {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   
-  $self->create_node('Summary', 'Gene summary',
+  $self->create_node('Summary', 'Summary',
     [qw(
       gene_summary  EnsEMBL::Web::Component::Gene::GeneSummary
       navbar        EnsEMBL::Web::Component::ViewNav
       transcripts   EnsEMBL::Web::Component::Gene::TranscriptsImage
     )],
-    { 'availability' => 'gene', 'concise' => 'Gene summary' }
+    { 'availability' => 'gene' }
   );
 
   $self->create_node('Splice', 'Splice variants ([[counts::transcripts]])',

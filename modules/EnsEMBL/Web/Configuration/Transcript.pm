@@ -20,12 +20,12 @@ sub user_tree { return 1; }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node('Summary', 'Transcript summary',
+  $self->create_node('Summary', 'Summary',
     [qw(
       image         EnsEMBL::Web::Component::Transcript::TranscriptImage
       trans_summary EnsEMBL::Web::Component::Transcript::TranscriptSummary
     )],
-    { 'availability' => 'either', 'concise' => 'Transcript summary' }
+    { 'availability' => 'either' }
   );
 
   my $T = $self->create_node('SupportingEvidence', 'Supporting evidence ([[counts::evidence]])',

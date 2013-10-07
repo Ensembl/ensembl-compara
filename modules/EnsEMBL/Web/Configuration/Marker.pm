@@ -24,11 +24,7 @@ sub availability {
 
 sub populate_tree {
   my $self  = shift;
-
-  $self->create_node('Details', 'Details',
-    [qw(details EnsEMBL::Web::Component::Marker::Details)],
-    { 'availability' => 1 }
-  );
+  $self->create_node('Details', 'Details', [qw(details EnsEMBL::Web::Component::Marker::Details)]);
 }
 
 1;

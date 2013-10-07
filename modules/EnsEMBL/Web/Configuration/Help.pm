@@ -28,100 +28,35 @@ sub modify_page_elements {
 }
 
 sub populate_tree {
-  my $self = shift;
+  my $self       = shift;
+  my $search     = $self->create_node('Search', 'Search', [qw(search EnsEMBL::Web::Component::Search::New)]);
+  my $topic_menu = $self->create_submenu('Topics', 'Help topics');
+  
+  $topic_menu->append($self->create_node('Faq',      'Frequently Asked Questions', [qw(faq      EnsEMBL::Web::Component::Help::Faq)]));
+  $topic_menu->append($self->create_node('Movie',    'Video Tutorials',            [qw(movie    EnsEMBL::Web::Component::Help::Movie)]));
+  $topic_menu->append($self->create_node('Glossary', 'Glossary',                   [qw(glossary EnsEMBL::Web::Component::Help::Glossary)]));
 
-  my $T = $self->create_node( 'Search', "Search",
-    [qw(
-      search    EnsEMBL::Web::Component::Search::New
-    )],
-    { 'availability' => 1}
-  );
-  my $topic_menu = $self->create_submenu( 'Topics', 'Help topics' );
-  $topic_menu->append($self->create_node( 'Faq', "Frequently Asked Questions",
-    [qw(
-      faq    EnsEMBL::Web::Component::Help::Faq
-    )],
-    { 'availability' => 1}
-  ));
-  $topic_menu->append($self->create_node( 'Movie', "Video Tutorials",
-    [qw(
-      movie    EnsEMBL::Web::Component::Help::Movie
-    )],
-    { 'availability' => 1}
-  ));
-  $topic_menu->append($self->create_node( 'Glossary', "Glossary",
-    [qw(
-      glossary    EnsEMBL::Web::Component::Help::Glossary
-    )],
-    { 'availability' => 1}
-  ));
-
-  $self->create_node( 'Contact', "Contact HelpDesk",
-    [qw(contact    EnsEMBL::Web::Component::Help::Contact)],
-    { 'availability' => 1}
-  );
+  $self->create_node('Contact', 'Contact HelpDesk', [qw(contact EnsEMBL::Web::Component::Help::Contact)]);
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
-  $self->create_node( 'Preview', '',
-    [qw(contact    EnsEMBL::Web::Component::Help::Preview)],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'MovieFeedback', '',
-    [qw(contact    EnsEMBL::Web::Component::Help::MovieFeedback)],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'FeedbackPreview', '',
-    [qw(contact    EnsEMBL::Web::Component::Help::FeedbackPreview)],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $T->append($self->create_subnode( 'EmailSent', '',
-    [qw(sent EnsEMBL::Web::Component::Help::EmailSent)],
-      { 'no_menu_entry' => 1 }
-  ));
-  $T->append($self->create_subnode( 'Results', '',
-    [qw(sent EnsEMBL::Web::Component::Help::Results
-        )],
-      { 'no_menu_entry' => 1 }
-  ));
-  $T->append($self->create_subnode( 'ArchiveList', '',
-    [qw(archive EnsEMBL::Web::Component::Help::ArchiveList
-        )],
-      { 'no_menu_entry' => 1 }
-  ));
-  $T->append($self->create_subnode( 'Permalink', '',
-    [qw(archive EnsEMBL::Web::Component::Help::Permalink
-        )],
-      { 'no_menu_entry' => 1 }
-  ));
-  $T->append($self->create_subnode( 'View', 'Page Help',
-    [qw(archive EnsEMBL::Web::Component::Help::View
-        )],
-      { 'no_menu_entry' => 1 }
-  ));
+  $self->create_node('Preview',         '', [qw(preview EnsEMBL::Web::Component::Help::Preview)]);
+  $self->create_node('MovieFeedback',   '', [qw(preview EnsEMBL::Web::Component::Help::MovieFeedback)]);
+  $self->create_node('FeedbackPreview', '', [qw(preview EnsEMBL::Web::Component::Help::FeedbackPreview)]);
+  
+  $self->create_node('EmailSent',   '', [qw(sent      EnsEMBL::Web::Component::Help::EmailSent)]);
+  $self->create_node('Results',     '', [qw(results   EnsEMBL::Web::Component::Help::Results)]);
+  $self->create_node('ArchiveList', '', [qw(archive   EnsEMBL::Web::Component::Help::ArchiveList)]);
+  $self->create_node('Permalink',   '', [qw(permalink EnsEMBL::Web::Component::Help::Permalink)]);
+  $self->create_node('View',        '', [qw(view      EnsEMBL::Web::Component::Help::View)],);
 
-   ## And command nodes
-  $self->create_node( 'DoSearch', '',
-    [],
-    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::DoSearch'}
-  );
-  $self->create_node( 'Feedback', '',
-    [],
-    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::Feedback'}
-  );
-  $self->create_node( 'SendEmail', '',
-    [],
-    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::SendEmail'}
-  );
-  $self->create_node( 'MovieEmail', '',
-    [],
-    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::MovieEmail'}
-  );
+  ## And command nodes
+  $self->create_node('DoSearch',   '', [], { command => 'EnsEMBL::Web::Command::Help::DoSearch'   });
+  $self->create_node('Feedback',   '', [], { command => 'EnsEMBL::Web::Command::Help::Feedback'   });
+  $self->create_node('SendEmail',  '', [], { command => 'EnsEMBL::Web::Command::Help::SendEmail'  });
+  $self->create_node('MovieEmail', '', [], { command => 'EnsEMBL::Web::Command::Help::MovieEmail' });
 
-  #to enable the ListVegaMappings page, a menu itme is needed. We do not want ListVegaMappings in the help menu so so a hidden menu item is added.
-  $self->create_node('ListVegaMappings', 'Vega',
-   [qw( ListVegaMappings EnsEMBL::Web::Component::Help::ListVegaMappings )],
-    { 'class'=>'modal_link', 'availability' => 1, 'concise' => 'ListVegaMappings', 'no_menu_entry' => 1 }
-  );  
+  # to enable the ListVegaMappings page, a menu itme is needed. We do not want ListVegaMappings in the help menu so so a hidden menu item is added.
+  $self->create_node('ListVegaMappings', 'Vega', [qw(ListVegaMappings EnsEMBL::Web::Component::Help::ListVegaMappings)], { class => 'modal_link', concise => 'ListVegaMappings', no_menu_entry => 1 });  
 }
 
 1;

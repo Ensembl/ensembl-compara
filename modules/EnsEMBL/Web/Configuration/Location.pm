@@ -30,8 +30,7 @@ sub populate_tree {
   my $hub  = $self->hub;
   
   $self->create_node('Genome', 'Whole genome',
-    [qw( genome EnsEMBL::Web::Component::Location::Genome )],
-    { 'availability' => 1 },
+    [qw( genome EnsEMBL::Web::Component::Location::Genome )]
   );
 
   $self->create_node('Chromosome', 'Chromosome summary',
@@ -102,8 +101,7 @@ sub populate_tree {
   ));
   
   $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
-    [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )],
-    { 'no_menu_entry' => 1 }
+    [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )]
   ));
   
   $align_menu->append($self->create_node('Synteny', 'Synteny ([[counts::synteny]])',
@@ -183,7 +181,7 @@ sub add_external_browsers {
     }
     $url = 'http://'.$browsers{'EG'}.'.ensembl.org'.$url;
     
-    $self->get_other_browsers_menu->append($self->create_node('EnsemblGenomes', 'Ensembl '.ucfirst($browsers{'EG'}), [], { availability => 1, url => $url, raw => 1, external => 1 }));
+    $self->get_other_browsers_menu->append($self->create_node('EnsemblGenomes', 'Ensembl '.ucfirst($browsers{'EG'}), [], { url => $url, raw => 1, external => 1 }));
     
     delete $browsers{'EG'};
   }
@@ -196,7 +194,7 @@ sub add_external_browsers {
       $url = $hub->get_ExtURL('EGB_UCSC', { UCSC_DB => $browsers{'UCSC_DB'}, CHR => 1, START => 1, END => 1000000 });
     }
     
-    $self->get_other_browsers_menu->append($self->create_node('UCSC_DB', 'UCSC', [], { availability => 1, url => $url, raw => 1, external => 1 }));
+    $self->get_other_browsers_menu->append($self->create_node('UCSC_DB', 'UCSC', [], { url => $url, raw => 1, external => 1 }));
     
     delete $browsers{'UCSC_DB'};
   }
@@ -209,7 +207,7 @@ sub add_external_browsers {
       $url = "http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid=$taxid";
     }
     
-    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { availability => 1, url => $url, raw => 1, external => 1 }));
+    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
     
     delete $browsers{'NCBI_DB'};
   }
@@ -220,7 +218,7 @@ sub add_external_browsers {
     next unless $browsers{$_};
     
     $url = $hub->get_ExtURL($_, { CHR => $chr, START => $start, END => $end });
-    $self->get_other_browsers_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { availability => 1, url => $url, raw => 1, external => 1 }));
+    $self->get_other_browsers_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { url => $url, raw => 1, external => 1 }));
   }
 }
 

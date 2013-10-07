@@ -15,16 +15,9 @@ sub set_default_action {
 
 sub populate_tree {
   my $self = shift;
-
-  $self->create_node('New', 'New Search',
-    [qw(new EnsEMBL::Web::Component::Search::New)],
-    { availability => 1 }
-  );
-
-  $self->create_node('Results', 'Results Summary',
-    [qw(results EnsEMBL::Web::Component::Search::Results)],
-    { no_menu_entry => 1 }
-  );
+  
+  $self->create_node('New',     'New Search',      [qw(new EnsEMBL::Web::Component::Search::New)] );
+  $self->create_node('Results', 'Results Summary', [qw(results EnsEMBL::Web::Component::Search::Results)]);
 }
 
 1;

@@ -25,10 +25,7 @@ sub populate_tree {
   my $self = shift;
   my $hub  = $self->hub;
   
-  $self->create_node('All', 'List of Phenotypes',
-    [qw(all_phenotypes EnsEMBL::Web::Component::Phenotype::All )],
-    { 'availability' => 1 },
-  );
+  $self->create_node('All', 'List of Phenotypes', [qw(all_phenotypes EnsEMBL::Web::Component::Phenotype::All )] );
 
   my $avail = ($self->object && $self->object->phenotype_id) ? 1 : 0;
   my $title = $self->object ? $self->object->long_caption : '';

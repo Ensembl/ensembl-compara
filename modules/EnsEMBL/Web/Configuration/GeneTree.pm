@@ -23,12 +23,8 @@ sub availability {
 }
 
 sub populate_tree {
-  my $self  = shift;
-
-  $self->create_node('Image', 'Gene Tree Image',
-    [qw(image EnsEMBL::Web::Component::GeneTree::ComparaTree)],
-    { 'availability' => 1 }
-  );
+  my $self = shift;
+  $self->create_node('Image', 'Gene Tree Image', [qw(image EnsEMBL::Web::Component::GeneTree::ComparaTree)]);
 }
 
 sub modify_page_elements { $_[0]->page->remove_body_element('summary'); }

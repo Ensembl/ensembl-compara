@@ -15,7 +15,7 @@ sub populate_tree {
   my $self = shift;
   my $hub  = $self->hub;
 
-  $self->create_node('Sources', 'Sources', [qw(feature EnsEMBL::Web::Component::Experiment::Features)], { 'availability' => 1 });
+  $self->create_node('Sources', 'Sources', [qw(feature EnsEMBL::Web::Component::Experiment::Features)]);
 }
 
 1;
