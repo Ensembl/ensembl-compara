@@ -65,10 +65,13 @@ sub init {
   my (%done, @extra);
   
   foreach (@$components) {
-    my $component   = $_->[0];
+    my $component = $_->[0];
+    
+    next if $done{$component};
+    
     my $view_config = $hub->get_viewconfig(@$_);
 
-    if ($view_config && !$done{$component}) {
+    if ($view_config) {
       $self->add_entry({
         id      => "config_$component",
         caption => 'Configure ' . (scalar @$components > 1 ? $view_config->title : '' || 'Page'),
@@ -92,20 +95,6 @@ sub init {
 
       $done{$component} = 1;
     }
-  }
-  
-  if ($hub->type eq 'UserConfig' || scalar keys %done) {
-    push @extra, {
-      id      => 'manage_cfg',
-      class   => 'fixed_width',
-      caption => 'Manage Configurations',
-      url     => $hub->url({
-        type    => 'UserConfig',
-        action  => 'ManageConfigs',
-        time    => time,
-        __clear => 1
-      })
-    };
   }
   
   $self->add_entry(@extra);
