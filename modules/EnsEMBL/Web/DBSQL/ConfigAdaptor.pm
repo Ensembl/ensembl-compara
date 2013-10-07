@@ -7,7 +7,7 @@ use strict;
 use Data::Dumper;
 use DBI;
 use Digest::MD5 qw(md5_hex);
-use HTML::Entities qw(encode_entities);
+use HTML::Entities qw(encode_entities decode_entities);
 
 use EnsEMBL::Web::Controller;
 
@@ -532,7 +532,13 @@ sub share {
     } values %{$self->all_configs};
     
     # Don't duplicate records with the same data
-    my $new_record_id = $exists ? $exists->{'record_id'} : $self->new_config(%$record, record_type => $record_type, record_type_id => $record_types{$record_type}, active => ''); 
+    my $new_record_id = $exists ? $exists->{'record_id'} : $self->new_config(
+      %$record,
+      record_type    => $record_type,
+      record_type_id => $record_types{$record_type}, 
+      active         => '',
+      map({ $_ => decode_entities($record->{$_}) || '' } qw(name description))
+    ); 
     
     if ($record->{'link_id'}) {
       if ($link_id) {
