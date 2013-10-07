@@ -15,57 +15,23 @@ sub set_default_action {
 }
 
 sub populate_tree {
-  my $self = shift;
-
-  my $data_menu = $self->create_submenu('CustomData', 'Custom Data');
+  my $self        = shift;
+  my $data_menu   = $self->create_submenu('CustomData',     'Custom Data');
+  my $config_menu = $self->create_submenu('Configurations', 'Configurations');
+  my $tools_menu  = $self->create_submenu('Conversion',     'Online Tools');
 
   ## Upload "wizard"
-  $data_menu->append($self->create_node( 'SelectFile', 'Add your data',
-    [qw(select_file EnsEMBL::Web::Component::UserData::SelectFile)], 
-    { 'availability' => 1 }
-  ));
-  $self->create_node( 'UploadFile', '',
-    [], { 'availability' => 1, 'no_menu_entry' => 1,
-    'command' => 'EnsEMBL::Web::Command::UserData::UploadFile'}
-  );
-  $self->create_node( 'MoreInput', '',
-    [qw(more_input EnsEMBL::Web::Component::UserData::MoreInput)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'UploadFeedback', '',
-    [qw(
-      upload_feedback EnsEMBL::Web::Component::UserData::UploadFeedback
-      upload_parsed   EnsEMBL::Web::Component::UserData::UploadParsed
-    )], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  ## URL attachment
-  $self->create_node( 'AttachRemote', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachRemote', 
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'RemoteFeedback', '',
-   [qw(
-      remote_feedback  EnsEMBL::Web::Component::UserData::RemoteFeedback
-      remote_parsed    EnsEMBL::Web::Component::UserData::UploadParsed
-    )],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-
-  ## Share data "wizard"
-  $self->create_node( 'SelectShare', "Share Data",
-    [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], 
-    { 'availability' => 1, 'no_menu_entry' => 1, 'filters' => [qw(Shareable)] }
-  );
-  $self->create_node( 'CheckShare', '',
-    [], { 'availability' => 1, 'no_menu_entry' => 1,
-    'command' => 'EnsEMBL::Web::Command::UserData::CheckShare'}
-  );
-  $self->create_node( 'ShareURL', '',
-    [qw(share_url EnsEMBL::Web::Component::UserData::ShareURL)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-
+  $data_menu->append($self->create_node('SelectFile',     'Add your data', [qw(select_file  EnsEMBL::Web::Component::UserData::SelectFile)]));
+  $data_menu->append($self->create_node('MoreInput',      '',              [qw(more_input   EnsEMBL::Web::Component::UserData::MoreInput)]));
+  $data_menu->append($self->create_node('UploadFeedback', '',              [qw(feedback     EnsEMBL::Web::Component::UserData::UploadFeedback   parsed EnsEMBL::Web::Component::UserData::UploadParsed)]));
+  $data_menu->append($self->create_node('RemoteFeedback', '',              [qw(feedback     EnsEMBL::Web::Component::UserData::RemoteFeedback   parsed EnsEMBL::Web::Component::UserData::UploadParsed)]));
+  $data_menu->append($self->create_node('SelectShare',    '',              [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], { filters => [ 'Shareable' ] }));
+  $data_menu->append($self->create_node('ShareURL',       '',              [qw(share_url    EnsEMBL::Web::Component::UserData::ShareURL)]));
+  
+  $data_menu->append($self->create_node('UploadFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::UploadFile'   }));
+  $data_menu->append($self->create_node('AttachRemote', '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachRemote' }));
+  $data_menu->append($self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   }));
+  
   ## Attach DAS "wizard"
   # Component:     SelectServer
   #                    |
@@ -89,192 +55,62 @@ sub populate_tree {
   #               V
   # Component:  DasFeedback                
 
-  $data_menu->append($self->create_node( 'SelectServer', "Attach DAS",
-   [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)], 
-    { 'availability' => 1 }
-  ));
-  $self->create_node( 'CheckServer', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::CheckServer',
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'DasSources', '',
-   [qw(das_sources EnsEMBL::Web::Component::UserData::DasSources)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'ValidateDAS', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::ValidateDAS',
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'DasSpecies', '',
-   [qw(das_species EnsEMBL::Web::Component::UserData::DasSpecies)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'DasCoords', '',
-   [qw(das_coords EnsEMBL::Web::Component::UserData::DasCoords)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'AttachDAS', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachDAS', 
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'DasFeedback', '',
-   [qw(das_feedback EnsEMBL::Web::Component::UserData::DasFeedback)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-
-
+  $data_menu->append($self->create_node('SelectServer', 'Attach DAS', [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)]));
+  $data_menu->append($self->create_node('DasSources',   '',           [qw(das_sources   EnsEMBL::Web::Component::UserData::DasSources)]));
+  $data_menu->append($self->create_node('DasSpecies',   '',           [qw(das_species   EnsEMBL::Web::Component::UserData::DasSpecies)]));
+  $data_menu->append($self->create_node('DasCoords',    '',           [qw(das_coords    EnsEMBL::Web::Component::UserData::DasCoords)]));
+  $data_menu->append($self->create_node('DasFeedback',  '',           [qw(das_feedback  EnsEMBL::Web::Component::UserData::DasFeedback)]));
+  
+  $data_menu->append($self->create_node('CheckServer', '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckServer' }));
+  $data_menu->append($self->create_node('ValidateDAS', '', [], { command => 'EnsEMBL::Web::Command::UserData::ValidateDAS' }));
+  $data_menu->append($self->create_node('AttachDAS',   '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachDAS'   }));
+  
   ## Saving remote data
-  $self->create_node( 'ShowRemote', '',
-   [qw(show_remote EnsEMBL::Web::Component::UserData::ShowRemote)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'ConfigureBigWig', '',
-   [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'SaveExtraConfig', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig', 
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
+  $data_menu->append($self->create_node('ShowRemote',      '', [qw(show_remote     EnsEMBL::Web::Component::UserData::ShowRemote)]));
+  $data_menu->append($self->create_node('ConfigureBigWig', '', [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)]));
+  
+  $data_menu->append($self->create_node('SaveExtraConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig' }));
 
   ## Data management
-  $data_menu->append($self->create_node( 'ManageData', "Manage Data",
-    [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)
-    ], { 'availability' => 1, 'concise' => 'Manage Data' }
-  ));
+  $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)]));
+  $data_menu->append($self->create_node('IDConversion',          '',            [qw(idmapper      EnsEMBL::Web::Component::UserData::IDmapper)]));
+  $data_menu->append($self->create_node('ConsequenceCalculator', '',            [qw(consequence   EnsEMBL::Web::Component::UserData::ConsequenceTool)])); 
   
-  $self->create_node( 'ModifyData', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::ModifyData',
-     'no_menu_entry' => 1 }
-  );
+  $data_menu->append($self->create_node('ModifyData',  '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyData' }));
+  $data_menu->append($self->create_node('ShareRecord', '', [], { command => 'EnsEMBL::Web::Command::ShareRecord'          }));
+  $data_menu->append($self->create_node('Unshare',     '', [], { command => 'EnsEMBL::Web::Command::UnshareRecord'        }));
   
-  $self->create_node( 'ShareRecord', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::ShareRecord',
-     'no_menu_entry' => 1 }
-  );
-
-  $self->create_node( 'Unshare', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UnshareRecord',
-     'no_menu_entry' => 1 }
-  );
-
-  $self->create_node( 'IDConversion', "Stable ID Conversion", 
-    [ qw(idmapper  EnsEMBL::Web::Component::UserData::IDmapper) ],
-    { 'no_menu_entry' => 1 }
-  );
-  $self->create_node ('ConsequenceCalculator', '',
-    [ qw(consequence EnsEMBL::Web::Component::UserData::ConsequenceTool)],
-    {'no_menu_entry' => 1}
-  ); 
- 
   ## FeatureView 
-  $data_menu->append($self->create_node('FeatureView', 'Features on Karyotype',
-    [qw(featureview   EnsEMBL::Web::Component::UserData::FeatureView)],
-    {'availability' => @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES}},
-  ));
-  $self->create_node ('FviewRedirect', '',
-    [], {'command' => 'EnsEMBL::Web::Command::UserData::FviewRedirect', 
-      'no_menu_entry' => 1}
-  ); 
-
-
+  $data_menu->append($self->create_node('FeatureView', 'Features on Karyotype', [qw(featureview EnsEMBL::Web::Component::UserData::FeatureView)], { availability => @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES} }));
+  
+  $data_menu->append($self->create_node('FviewRedirect', '', [], { command => 'EnsEMBL::Web::Command::UserData::FviewRedirect'})); 
+  
+  ## Configuration management
+  $config_menu->append($self->create_node('ManageConfigs', 'Manage configurations', [qw(manage_config EnsEMBL::Web::Component::UserConfig::ManageConfigs)]));
+  $config_menu->append($self->create_node('ManageSets',    'Manage sets',           [qw(manage_sets   EnsEMBL::Web::Component::UserConfig::ManageSets)]));
+  
+  $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserConfig::ModifyConfig' }));
+  
   ## Data conversion
-  my $tools_menu = $self->create_submenu( 'Conversion', 'Online Tools' );
-  $tools_menu->append(
-    $self->create_node( 'UploadVariations', 'Variant Effect Predictor',
-      [qw(upload_snps EnsEMBL::Web::Component::UserData::UploadVariations)],
-      {'availability' => 1,},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'SNPConsequence', '', [],
-      {'command' => 'EnsEMBL::Web::Command::UserData::SNPConsequence',
-      'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-
-  $tools_menu->append(
-    $self->create_node( 'SelectFeatures', 'Assembly Converter', 
-      [qw(select_features EnsEMBL::Web::Component::UserData::SelectFeatures)],
-      {'availability' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'CheckConvert', '', [],
-      {'command' => 'EnsEMBL::Web::Command::UserData::CheckConvert',
-      'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'ConvertFeatures', '', [],
-      {'command' => 'EnsEMBL::Web::Command::UserData::ConvertFeatures',
-      'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'PreviewConvert', 'Files Converted', 
-      [qw(conversion_done EnsEMBL::Web::Component::UserData::PreviewConvert)],
-      {'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'MapIDs', '', [],
-      {'command' => 'EnsEMBL::Web::Command::UserData::MapIDs',
-      'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-
-  $tools_menu->append(
-     $self->create_node( 'SelectOutput', '', 
-      [qw(command  EnsEMBL::Web::Component::UserData::SelectOutput)],
-      {'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'UploadStableIDs', 'ID History Converter', 
-      [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)],
-      {'availability' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'PreviewConvertIDs', 'Files Converted',
-      [qw(conversion_done EnsEMBL::Web::Component::UserData::PreviewConvertIDs)],
-      {'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-
-    $self->create_node( 'DropUpload', '',
-    [], { 'availability' => 1, 'no_menu_entry' => 1,
-    'command' => 'EnsEMBL::Web::Command::UserData::DropUpload'}
-  );
- 
-  ## REGION REPORT
-  $tools_menu->append(
-    $self->create_node( 'SelectReportOptions', 'Region Report',
-      [qw(report_options EnsEMBL::Web::Component::UserData::SelectReportOptions)],
-      {'availability' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'CheckRegions', '', [],
-      {'command' => 'EnsEMBL::Web::Command::UserData::CheckRegions',
-      'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-
-  $tools_menu->append(
-    $self->create_node( 'RunRegionTool', '', [],
-      {'command' => 'EnsEMBL::Web::Command::UserData::RunRegionTool',
-      'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
-  $tools_menu->append(
-    $self->create_node( 'RegionReportOutput', 'Region Report',
-      [qw(region_report EnsEMBL::Web::Component::UserData::RegionReportOutput)],
-      {'availability' => 1, 'no_menu_entry' => 1},
-    )
-  );
- 
+  $tools_menu->append($self->create_node('UploadVariations',  'Variant Effect Predictor', [qw(upload_snps       EnsEMBL::Web::Component::UserData::UploadVariations)]));
+  $tools_menu->append($self->create_node('SelectFeatures',    'Assembly Converter',       [qw(select_features   EnsEMBL::Web::Component::UserData::SelectFeatures)]));
+  $tools_menu->append($self->create_node('UploadStableIDs',   'ID History Converter',     [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)]));
+  $tools_menu->append($self->create_node('PreviewConvert',    '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvert)]));
+  $tools_menu->append($self->create_node('PreviewConvertIDs', '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvertIDs)]));
+  $tools_menu->append($self->create_node('SelectOutput',      '',                         [qw(select_output     EnsEMBL::Web::Component::UserData::SelectOutput)]));
+  
+  $tools_menu->append($self->create_node('SNPConsequence',  '', [], { command => 'EnsEMBL::Web::Command::UserData::SNPConsequence'  }));
+  $tools_menu->append($self->create_node('CheckConvert',    '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckConvert'    }));
+  $tools_menu->append($self->create_node('ConvertFeatures', '', [], { command => 'EnsEMBL::Web::Command::UserData::ConvertFeatures' }));
+  $tools_menu->append($self->create_node('MapIDs',          '', [], { command => 'EnsEMBL::Web::Command::UserData::MapIDs'          }));
+  $tools_menu->append($self->create_node('DropUpload',      '', [], { command => 'EnsEMBL::Web::Command::UserData::DropUpload'      }));
+  
+  ## Region Report
+  $tools_menu->append($self->create_node('SelectReportOptions', 'Region Report', [qw(report_options EnsEMBL::Web::Component::UserData::SelectReportOptions)]));
+  $tools_menu->append($self->create_node('RegionReportOutput',  '',              [qw(region_report  EnsEMBL::Web::Component::UserData::RegionReportOutput)]));
+  
+  $tools_menu->append($self->create_node('CheckRegions',  '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckRegions'  }));
+  $tools_menu->append($self->create_node('RunRegionTool', '', [], { command => 'EnsEMBL::Web::Command::UserData::RunRegionTool' }));
 }
 
 1;
