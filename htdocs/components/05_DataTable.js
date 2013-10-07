@@ -79,6 +79,7 @@ Ensembl.DataTable = {
       fnInitComplete: function () {
         var hidden = this.is(':hidden');
         var parent = this.parent();
+        var hide   = this.css('display') === 'none';
         
         if (this[0].style.width !== '100%') {
           if (hidden) {
@@ -88,7 +89,7 @@ Ensembl.DataTable = {
           parent.width(this.outerWidth());
         }
         
-        if (hidden) {
+        if (hidden && hide) {
           parent.hide(); // Hide the wrapper of already hidden table
           this.removeClass('hide');
         }
