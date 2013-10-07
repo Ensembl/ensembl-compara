@@ -222,7 +222,7 @@ sub store_gene_and_all_transcripts {
   my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
   my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor();
   
-  my @canonicalPeptideMember;
+  my $canonicalPeptideMember;
   my $gene_member;
   my $gene_member_not_stored = 1;
 
@@ -322,15 +322,14 @@ sub store_gene_and_all_transcripts {
     print(" : stored\n") if($self->param('verbose'));
 
     if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->param('force_unique_canonical'))) {
-      @canonicalPeptideMember = ($transcript, $pep_member);
+      $canonicalPeptideMember = $pep_member;
     }
 
   }
 
-  if(@canonicalPeptideMember) {
-    my ($transcript, $member) = @canonicalPeptideMember;
-    $seq_member_adaptor->_set_member_as_canonical($member);
-    # print("     LONGEST " . $transcript->stable_id . "\n");
+  if($canonicalPeptideMember) {
+    $seq_member_adaptor->_set_member_as_canonical($canonicalPeptideMember);
+    # print("     LONGEST " . $canonicalPeptideMember->stable_id . "\n");
   }
   return 1;
 }
