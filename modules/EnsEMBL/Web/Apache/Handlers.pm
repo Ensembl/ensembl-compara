@@ -285,10 +285,19 @@ sub handler {
   ## Identify the species element, if any
   my ($species, @path_segments);
  
-  ## Check for stable id URL (/id/ENSG000000nnnnnn)
-  if ($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) {
-    my $stable_id = $raw_path[1];
-    my ($object_type, $db_type, $uri);
+  ## Check for stable id URL (/id/ENSG000000nnnnnn) 
+  ## and malformed Gene/Summary URLs from external users
+  if (($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) 
+    || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ ))
+  {
+    my ($stable_id, $object_type, $db_type, $uri);
+    if ($raw_path[0] =~ /^id$/i) {
+      $stable_id = $raw_path[1];
+    }
+    else {
+      $querystring =~ /g=(\w+)/;
+      $stable_id = $1;
+    }
     my $unstripped_stable_id = $stable_id;
     if ($stable_id =~ /^ENS/) {
 	    $stable_id =~ s/\.[0-9]+$//; ## Remove versioning for Ensembl ids
@@ -313,27 +322,29 @@ sub handler {
       ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id);
       $stable_id = $unstripped_stable_id if($species && $object_type);
     }
-    if ($species && $object_type) {
-      $uri = "/$species/";
-      
+    my $dir = $species ? "/$species/" : '/Multi/';
+    my $uri = $dir."psychic?q=$stable_id";  
+
+    if ($object_type) {
+      $uri = $dir;
       if ($object_type eq 'Gene') {
         $uri .= "Gene/Summary?g=$stable_id";
       } elsif ($object_type eq 'Transcript') {
         $uri .= "Transcript/Summary?t=$stable_id";
       } elsif ($object_type eq 'Translation') {
         $uri .= "Transcript/ProteinSummary?t=$stable_id";
-      } else {
-        $uri .= "psychic?q=$stable_id";
-      }
-      
-      $r->uri($uri);
-      $r->headers_out->add('Location' => $r->uri);
-      $r->child_terminate;
-      
-      $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-      return HTTP_MOVED_PERMANENTLY;
+      } elsif ($object_type eq 'GeneTree') {
+        $uri = "/Multi/GeneTree?gt=$stable_id";
+      } 
     }
+      
+    $r->uri($uri);
+    $r->headers_out->add('Location' => $r->uri);
+    $r->child_terminate;
+      
+    $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
+    
+    return HTTP_MOVED_PERMANENTLY;
   }
 
   my %lookup = map { $_ => 1 } $species_defs->valid_species;
