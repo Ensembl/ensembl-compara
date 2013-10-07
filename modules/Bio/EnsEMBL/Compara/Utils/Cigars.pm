@@ -130,6 +130,7 @@ sub compose_sequence_with_cigar {
 
 sub cigar_from_alignment_string {
     my $alignment_string = shift;
+    $alignment_string =~ s/\*/X/g;
 
     my $cigar_line = '';
     while($alignment_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
