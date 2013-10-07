@@ -240,16 +240,17 @@ sub store_gene_and_all_transcripts {
     return 1;
   }
 
-  foreach my $transcript (@{$gene->get_all_Transcripts}) {
-    my $translation = $transcript->translation;
-    next unless (defined $translation);
-
     if (!defined($self->param('force_unique_canonical'))) {
       if ($canonical_transcript->biotype ne $gene->biotype) {
         # This can happen when the only transcripts are, e.g., NMDs
         print STDERR "INFO: ", $canonical_transcript->stable_id, " biotype ", $canonical_transcript->biotype, " is canonical\n" if ($self->debug);
       }
     }
+
+  foreach my $transcript (@{$gene->get_all_Transcripts}) {
+    my $translation = $transcript->translation;
+    next unless (defined $translation);
+
 #    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
 #    my $next = 0;
 #    try {
