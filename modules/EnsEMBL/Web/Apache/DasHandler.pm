@@ -20,8 +20,15 @@ sub handler_das {
   # These are static content files due to the time to generate.
   # These files are created by utils/initialised_das.pl
   # Fall through - this is a static page
-  return undef if $DSN =~ /^(sources|dsn)$/ || ($path_segments->[1] eq 'entry_points' && -e "$ENSEMBL_SERVERROOT/htdocs/das/$DSN/entry_points");
-  
+  if( $DSN eq 'sources' || $DSN eq 'dsn' || $path_segments->[1] eq 'entry_points' 
+        && -e "$ENSEMBL_SERVERROOT/htdocs/das/$DSN/entry_points" ) { 
+    $r->headers_out->add('Access-Control-Allow-Origin', '*'); 
+    $r->headers_out->add('Access-Control-Expose-Headers', 'X-DAS-Version X-DAS-Status X-DAS-Capabilities'); 
+    $r->headers_out->add('X-DAS-Status', '200'); 
+    $r->headers_out->add('X-DAS-Server', 'Ensembl'); 
+    return undef; 
+  }
+
   # We have a DAS URL of the form
   # /das/{species}.{assembly}.{feature_type}/command
   # 
