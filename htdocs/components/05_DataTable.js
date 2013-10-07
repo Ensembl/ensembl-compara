@@ -4,10 +4,12 @@ Ensembl.DataTable = {
   dataTableInit: function () {
     var panel = this;
     
-    this.elLk.dataTable.each(function (i) {
+    this.elLk.dataTable.each(function () {
       // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
-      if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable === this) {
-        return;
+      for (var i in $.fn.dataTableSettings) {
+        if ($.fn.dataTableSettings[i].nTable === this) {
+          return;
+        }
       }
       
       var table      = $(this);
@@ -239,8 +241,6 @@ Ensembl.DataTable = {
   },
   
   makeExportable: function (wrapper) {
-    var panel = this;
-    
     function exportHover() {
       $(this).children().toggle();
       
