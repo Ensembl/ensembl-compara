@@ -130,7 +130,7 @@ sub content {
   );
   
   my $html = $self->tool_buttons . $table->render;
-     $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'snp_display'} ne 'off';
+     $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html;
   
   return $html;
 }
@@ -170,15 +170,18 @@ sub get_exon_sequence_data {
     
     if ($utr_end) {
       $coding_length = 0 if $coding_length < 0;
-      $sequence[$_]->{'class'} = 'eu' for $coding_length..$seq_length - 1;
+      $sequence[$_]{'class'} = 'eu' for $coding_length..$seq_length - 1;
+      $config->{'key'}{'exons/Introns'}{'utr'} = 1;
     }
     
     if ($utr_start) {
-      $sequence[$_]->{'class'} = 'eu' for 0..($utr_length < $seq_length ? $utr_length : $seq_length) - 1;
+      $sequence[$_]{'class'} = 'eu' for 0..($utr_length < $seq_length ? $utr_length : $seq_length) - 1;
+      $config->{'key'}{'exons/Introns'}{'utr'} = 1;
     }
   }
   
   $config->{'last_number'} = $strand == 1 ? $exon_start - 1 : $exon_end + 1 if $config->{'number'} eq 'slice'; # Ensures that line numbering is correct if there are no introns
+  $config->{'key'}{'exons/Introns'}{$coding_start && $coding_end  ? 'exon' : 'utr'} = 1;
   
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
   $self->add_line_numbers($config, $seq_length)                    if $config->{'number'}      ne 'off';
@@ -218,6 +221,8 @@ sub get_intron_sequence_data {
       $self->add_line_numbers($config, $intron_length)   if $config->{'number'} =~ /^(gene|slice)$/;
     }
   };
+  
+  $config->{'key'}{'exons/Introns'}{'intron'} = 1;
   
   return \@sequence;
 }
@@ -261,6 +266,8 @@ sub get_flanking_sequence_data {
   
   my @upstream_sequence   = (@dots, @{$upstream->{'sequence'}});
   my @downstream_sequence = (@{$downstream->{'sequence'}}, @dots);
+  
+  $config->{'key'}{'exons/Introns'}{'flanking'} = 1;
   
   return (\@upstream_sequence, \@downstream_sequence, scalar @dots);
 }
@@ -341,6 +348,17 @@ sub build_sequence {
   my ($self, $sequence, $config) = @_;
   $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
   return $self->SUPER::build_sequence([ $sequence ], $config);
+}
+
+sub get_key {
+  return shift->SUPER::get_key(@_, {
+    'exons/Introns' => {
+      exon     => { class => 'e0', text => 'Translated sequence' },
+      intron   => { class => 'e1', text => 'Intron sequence'     },
+      utr      => { class => 'eu', text => 'UTR'                 },
+      flanking => { class => 'ef', text => 'Flanking sequence'   },
+    }
+  });
 }
 
 1;
