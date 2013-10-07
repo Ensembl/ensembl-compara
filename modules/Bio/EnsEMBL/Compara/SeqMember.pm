@@ -53,7 +53,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::SeqMember;
 
 use strict;
-use warnings;
+#use warnings;
 
 use feature qw(switch);
 
@@ -395,8 +395,7 @@ sub get_other_sequence {  ## DEPRECATED
                 Currently, proteins have 'cds', 'exon_bounded' and 'exon_cased'
                 sequences, while RNAs have 'seq_with_flanking' sequences.
                 The undef $seq_type maps to the default sequence ($member->sequence())
-                If $sequence is set: store it in the database. If it is empty (''),
-                it is computed automatically. De facto, empty sequences are *forbidden*
+                If $sequence is set: store it in the database.
                 'exon_cased' maps to the sequence string of this member with alternating upper
                 and lower case corresponding to the translateable exons.
                 'exon_bounded' maps to the sequence string of this member with exon boundaries
@@ -419,8 +418,6 @@ sub other_sequence {
 
     # Called as a setter
     if (defined $sequence) {
-        # Build the sequence and store it, if $sequence is ''
-        $sequence = $self->other_sequence($seq_type) unless $sequence;
         $self->adaptor->db->get_SequenceAdaptor->store_other_sequence($self, $sequence, $seq_type);
         $self->{$key} = $sequence;
     }
