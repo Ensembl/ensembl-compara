@@ -4,8 +4,6 @@ package EnsEMBL::Web::ViewConfig::Transcript::ExonsSpreadsheet;
 
 use strict;
 
-use EnsEMBL::Web::Constants;
-
 use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
@@ -65,9 +63,19 @@ sub form {
     value => 'yes'
   });
   
-  my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
+  $self->add_form_element({
+    type   => 'DropDown', 
+    select => 'select',
+    name   => 'line_numbering',
+    label  => 'Line numbering',
+    values => [
+      { value => 'gene',  name => 'Relative to the gene'           },
+      { value => 'cdna',  name => 'Relative to the cDNA'           },
+      { value => 'slice', name => 'Relative to coordinate systems' },
+      { value => 'off',   name => 'None'                           },
+    ]
+  });
   
-  $self->add_form_element($general_markup_options{'line_numbering'});
   $self->variation_options({ populations => [ 'fetch_all_LD_Populations' ], snp_display => [{ value => 'exon', name => 'In exons only' }], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
   
   $_->set_flag($self->SELECT_ALL_FLAG) for @{$self->get_form->fieldsets};

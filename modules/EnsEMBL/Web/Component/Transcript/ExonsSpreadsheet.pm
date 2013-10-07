@@ -53,7 +53,7 @@ sub initialize {
   my ($upstream, $downstream, $offset) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
   
   if ($upstream) {
-    $self->add_line_numbers($config, $config->{'flanking'}, undef, $offset) if $config->{'number'} ne 'off';
+    $self->add_line_numbers($config, $config->{'flanking'}, undef, $offset) if $config->{'number'} =~ /^(gene|slice)$/;
     
     push @data, $export ? $upstream : {
       exint    => "5' upstream sequence", 
@@ -101,7 +101,7 @@ sub initialize {
   }
   
   if ($downstream) {
-    $self->add_line_numbers($config, $config->{'flanking'}) if $config->{'number'} ne 'off';
+    $self->add_line_numbers($config, $config->{'flanking'}) if $config->{'number'} =~ /^(gene|slice)$/;
     
     push @data, $export ? $downstream : { 
       exint    => "3' downstream sequence", 
@@ -206,7 +206,7 @@ sub get_intron_sequence_data {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
-      $self->add_line_numbers($config, $intron_length, 1) if $config->{'number'} ne 'off';
+      $self->add_line_numbers($config, $intron_length, 1) if $config->{'number'} =~ /^(gene|slice)$/;
       
       @sequence = $strand == 1 ? (@{$start->{'sequence'}}, @dots, @{$end->{'sequence'}}) : (@{$end->{'sequence'}}, @dots, @{$start->{'sequence'}});
     } else {
@@ -215,7 +215,7 @@ sub get_intron_sequence_data {
       @sequence = map {{ letter => $_, class => 'e1' }} split '', lc $slice->seq;
       
       $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'yes';
-      $self->add_line_numbers($config, $intron_length)   if $config->{'number'} ne 'off';
+      $self->add_line_numbers($config, $intron_length)   if $config->{'number'} =~ /^(gene|slice)$/;
     }
   };
   
@@ -314,7 +314,7 @@ sub add_line_numbers {
   my ($self, $config, $seq_length, $truncated, $offset) = @_;
   my $i      = $config->{'export'} ? $config->{'lines'}++ : 0;
   my $start  = $config->{'last_number'};
-  my $strand = $config->{'number'} eq 'sequence' ? 1 : $config->{'strand'};
+  my $strand = $config->{'number'} eq 'slice' ? $config->{'strand'} : 1;
   my $length = $start + ($seq_length * $strand);
   my $end;
   
