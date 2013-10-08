@@ -79,42 +79,34 @@ sub fetch_input {
         print "Loaded ".scalar(@{$self->param('query_set')->get_all_Members})." query members\n";
     }
 
-    my $reuse_ss_hash = {};
-    $self->param('reuse_ss_hash', $reuse_ss_hash );
-
-    unless ($self->param('force_blast_run')) {
-        my $reuse_ss_id = $self->param_required('reuse_ss_id');
-        my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id);    # this method cannot fail at the moment, but in future it may
-
-
-        if ($reuse_ss) {
-            $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
-        }
-    }
-
-     # We get the list of genome_dbs to execute, then go one by one with this member
-
     my $mlss_id         = $self->param_required('mlss_id');
     my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
     my $species_set     = $mlss->species_set_obj->genome_dbs;
 
     my $genome_db_list;
 
-    #If reusing this genome_db, only need to blast against the 'fresh' genome_dbs
-    if ($reuse_ss_hash->{$self->param('genome_db_id')}) {
-        foreach my $gdb (@$species_set) {
-            if (!$reuse_ss_hash->{$gdb->dbID}) {
-                push @$genome_db_list, $gdb;
-            }
-        }
-    } else {
-        #Using 'fresh' genome_db therefore must blast against everything
-        $genome_db_list  = $species_set;
-    }
-
     # If we restrict the search to one species at a time
     if ($self->param('target_genome_db_id')) {
-        $genome_db_list = [grep {$_->dbID eq $self->param('target_genome_db_id')} @$genome_db_list];
+        $genome_db_list = [$self->compara_dba()->get_GenomeDBAdaptor->fetch_by_dbID($self->param('target_genome_db_id'))];
+
+    } else {
+
+        # Otherwise, we get the set of species from mlss_id
+        my $mlss_id         = $self->param_required('mlss_id');
+        my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
+        my $species_set     = $mlss->species_set_obj->genome_dbs;
+
+        $genome_db_list = $species_set;
+
+        # If reusing this genome_db, only need to blast against the 'fresh' genome_dbs
+        if ($self->param('reuse_ss_id')) {
+            my $reused_genome_dbs = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'))->genome_dbs;
+            my %reuse_ss_hash = ( map { $_->dbID() => 1 } @$reused_genome_dbs );
+
+            if ($reuse_ss_hash{$self->param('genome_db_id')}) {
+                $genome_db_list = grep {not $reuse_ss_hash{$_->dbID}} @$species_set;
+            }
+        }
     }
 
     print STDERR "Found ", scalar(@$genome_db_list), " genomes to blast this member against.\n" if ($self->debug);
@@ -208,14 +200,7 @@ sub run {
     my $self = shift @_;
     
     my $debug                   = $self->debug() || $self->param('debug') || 0;
-    
-    my $reuse_db          = $self->param('reuse_db');   # if this parameter is an empty string, there will be no reuse
-
-    my $reuse_ss_hash     = $self->param('reuse_ss_hash');
-    my $reuse_this_member = $reuse_ss_hash->{$self->param('genome_db_id')};
-
     my $blastdb_dir             = $self->param('fasta_dir');
-
     my $blast_bin_dir           = $self->param_required('blast_bin_dir');
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit            = $self->param('evalue_limit');
