@@ -638,6 +638,7 @@ sub pipeline_analyses {
             -parameters => {
                 'store_related_pep_sequences' => 1,
                 'allow_pyrrolysine'             => 0,
+                'find_canonical_translations_for_polymorphic_pseudogene' => 1,
             },
             -rc_name => '2Gb_job',
             -flow_into => [ 'hc_factory_members_per_genome' ],
