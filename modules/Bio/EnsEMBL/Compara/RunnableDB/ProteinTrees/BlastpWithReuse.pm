@@ -43,12 +43,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 sub get_queries {
     my $self = shift @_;
 
-    my $member_id = $self->param('member_id') or die "'member_id' is an obligatory parameter";
-    my $member    = $self->compara_dba->get_SeqMemberAdaptor->fetch_by_dbID($member_id) or die "Could not fetch member with member_id='$member_id'";
+    my $start_member_id = $self->param_required('start_member_id');
+    my $end_member_id   = $self->param_required('end_member_id');
+    my $genome_db_id    = $self->param_required('genome_db_id');
 
-    $self->param('genome_db_id', $member->genome_db_id);
-    return [$member];
-
+    #Get list of members and sequences
+    return $self->compara_dba->get_MemberAdaptor->generic_fetch("mg.genome_db_id=$genome_db_id AND m.member_id BETWEEN $start_member_id AND $end_member_id", [[['member', 'mg'], 'mg.canonical_member_id = m.member_id']]);
 }
 
 

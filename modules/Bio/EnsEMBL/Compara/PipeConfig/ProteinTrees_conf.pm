@@ -311,7 +311,7 @@ sub pipeline_analyses {
                 'filename'      => 'snapshot_2_before_allvsallblast.sql',
             },
             -flow_into  => {
-                '1->A'  => [ 'paf_reuse_factory' ],
+                '1->A'  => [ 'blastdb_factory' ],
                 'A->1'  => [ 'backbone_fire_hcluster' ],
             },
         },
@@ -656,7 +656,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
-        {   -logic_name => 'paf_reuse_factory',
+        {   -logic_name => 'reusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'force_blast_run'   => $self->o('force_blast_run'),
@@ -664,14 +664,13 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
-                '2->A' => [ 'paf_table_reuse' ],
-                '1->A' => [ 'paf_noreuse_factory' ],
-                'A->1' => [ 'blastdb_factory' ],
+                2 => [ 'paf_table_reuse' ],
+                1 => [ 'nonreusedspecies_factory' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'paf_noreuse_factory',
+        {   -logic_name => 'nonreusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'force_blast_run'   => $self->o('force_blast_run'),
@@ -692,6 +691,7 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
+            -flow_into  => [ 'members_against_nonreusedspecies_factory' ],
             -hive_capacity => $self->o('reuse_capacity'),
         },
 
@@ -702,6 +702,7 @@ sub pipeline_analyses {
                             'ALTER TABLE peptide_align_feature_#genome_db_id# DISABLE KEYS, AUTO_INCREMENT=#genome_db_id#00000000',
                 ],
             },
+            -flow_into  => [ 'members_against_allspecies_factory' ],
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
         },
@@ -785,7 +786,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '2->A'  => [ 'dump_canonical_members' ],
-                'A->1'  => [ 'blast_species_factory' ],
+                'A->1'  => [ 'reusedspecies_factory' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -810,45 +811,24 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'blast_species_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'name' => 'name' },
-
-                'fan_branch_code'       => 2,
-            },
-            -flow_into  => {
-                '2'  => [ 'blast_long_member_factory' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name => 'blast_long_member_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'limit_length'          => $self->o('per_species_blast_min_length'),
-                'inputquery'            => 'SELECT mp.member_id, gdb.genome_db_id AS target_genome_db_id FROM member mg JOIN member mp ON mg.canonical_member_id = mp.member_id JOIN sequence s ON s.sequence_id = mp.sequence_id JOIN genome_db gdb WHERE mg.genome_db_id = #genome_db_id# AND length >= #limit_length#*1000',
-                'fan_branch_code'       => 2,
-            },
+        {   -logic_name => 'members_against_allspecies_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_with_reuse' ],
-                '1->A' => [ 'blast_short_member_factory' ],
                 'A->1' => [ 'hc_factory_pafs' ],
             },
         },
 
-        {   -logic_name => 'blast_short_member_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        {   -logic_name => 'members_against_nonreusedspecies_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
-                'limit_length'          => $self->o('per_species_blast_min_length'),
-                'inputquery'            => 'SELECT mp.member_id FROM member mg JOIN member mp ON mg.canonical_member_id = mp.member_id JOIN sequence s ON s.sequence_id = mp.sequence_id WHERE mg.genome_db_id = #genome_db_id# AND length < #limit_length#*1000',
-                'fan_branch_code'       => 2,
+                'species_set_id'    => '#nonreuse_ss_id#',
             },
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                2 => [ 'blastp_with_reuse' ],
+                'A->2' => [ 'blastp_with_reuse' ],
+                'A->1' => [ 'hc_factory_pafs' ],
             },
         },
 
@@ -862,7 +842,7 @@ sub pipeline_analyses {
                 'force_blast_run'           => $self->o('force_blast_run'),
                 'allow_same_species_hits'   => 1,
             },
-            -batch_size    => 40,
+            -batch_size    => 10,
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blastp_capacity'),
         },
