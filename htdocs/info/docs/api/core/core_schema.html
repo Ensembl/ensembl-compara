@@ -1,8 +1,8 @@
 
 <html>
 <head>
-<meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8" />
 <title>Core Schema Documentation</title>
+<meta name="order" content="2" />
 
 <script language="Javascript" type="text/javascript">
   var img_plus   = '<img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>';
@@ -85,7 +85,7 @@ tables that they've not used before.
 </p>
 
 <p>
-This document refers to version <span style="font-weight:bold;font-size:11pt;color:#000">73</span> of the EnsEMBL
+This document refers to version <span style="font-weight:bold;font-size:11pt;color:#000">74</span> of the EnsEMBL
 core schema.
 </p>
 
@@ -121,7 +121,6 @@ The core database schema is available in several diagrams (PDF format) here:
         <li><a href="#coord_system"><b>coord_system</b></a></li>
         <li><a href="#data_file"><b>data_file</b></a></li>
         <li><a href="#dna"><b>dna</b></a></li>
-        <li><a href="#dnac"><b>dnac</b></a></li>
         <li><a href="#karyotype"><b>karyotype</b></a></li>
         <li><a href="#meta"><b>meta</b></a></li>
         <li><a href="#meta_coord"><b>meta_coord</b></a></li>
@@ -249,7 +248,7 @@ The core database schema is available in several diagrams (PDF format) here:
       </ul>
     </div>
 
-  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
+  <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <div style="background-color:#000;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Misc</h2>
@@ -258,10 +257,6 @@ The core database schema is available in several diagrams (PDF format) here:
         <li><a href="#operon"><b>operon</b></a></li>
         <li><a href="#operon_transcript"><b>operon_transcript</b></a></li>
         <li><a href="#operon_transcript_gene"><b>operon_transcript_gene</b></a></li>
-        <li><a href="#qtl"><b>qtl</b></a></li>
-        <li><a href="#qtl_feature"><b>qtl_feature</b></a></li>
-        <li><a href="#qtl_synonym"><b>qtl_synonym</b></a></li>
-        <li><a href="#unconventional_transcript_association"><b>unconventional_transcript_association</b></a></li>
 
       </ul>
     </div>
@@ -419,33 +414,6 @@ The core database schema is available in several diagrams (PDF format) here:
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier. Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>primary key</td></tr>
       <tr class="bg2"><td><b>sequence</b></td><td>LONGTEXT</td><td></td><td>DNA sequence.</td><td></td></tr>
-    </table>
-  </div>
-  <p style="margin-top:10px"><b>See also:</b></p>
-  <ul>
-    <li><a href="#seq_region">seq_region</a></li>
-  </ul>
-
-
-  <div id="dnac" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">dnac</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_dnac" style="cursor:pointer;text-decoration:none" onclick="show_hide('dnac')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains equivalent data to dna table, but 4 letters of DNA code are represented by a single binary character, based on 2 bit encoding.</p>
-
-  <div id="div_dnac" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier. Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>sequence</b></td><td>MEDIUMBLOB</td><td></td><td>Compressed DNA sequence.</td><td></td></tr>
-      <tr class="bg1"><td><b>n_line</b></td><td>TEXT</td><td></td><td>Contains start-end pairs of coordinates in the string that are Ns.</td><td></td></tr>
     </table>
   </div>
   <p style="margin-top:10px"><b>See also:</b></p>
@@ -1608,7 +1576,7 @@ The core database schema is available in several diagrams (PDF format) here:
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>intron_supporting_evidence_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#intron_supporting_evidence">intron_supporting_evidence</a> table</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>primary key<br />key: transcript_idx</td></tr>
       <tr class="bg1"><td><b>previous_exon_id</b></td><td>INT(10)</td><td></td><td>Foreign key to <a href="#exon">exon</a> indicating the left hand flanking exon of the intron (assume forward strand)</td><td></td></tr>
       <tr class="bg2"><td><b>next_exon_id</b></td><td>INT(10)</td><td></td><td>Foreign key to <a href="#exon">exon</a> indicating the right hand flanking exon of the intron (assume forward strand)</td><td></td></tr>
     </table>
@@ -1822,7 +1790,6 @@ The core database schema is available in several diagrams (PDF format) here:
       <tr class="bg1"><td><b>external_db_id</b></td><td>INTEGER</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: external_db_idx</td></tr>
       <tr class="bg2"><td><b>hcoverage</b></td><td>DOUBLE</td><td></td><td>Hit coverage.</td><td></td></tr>
       <tr class="bg1"><td><b>external_data</b></td><td>TEXT</td><td></td><td>External data.</td><td></td></tr>
-      <tr class="bg2"><td><b>pair_dna_align_feature_id</b></td><td>INT(10)</td><td></td><td>The id of the dna feature aligned.</td><td>key: pair_idx</td></tr>
     </table>
   </div>
   <p style="margin-top:10px"><b>See also:</b></p>
@@ -1929,11 +1896,10 @@ The core database schema is available in several diagrams (PDF format) here:
       <tr class="bg1"><td><b>description</b></td><td>TEXT</td><td></td><td>Gene description</td><td></td></tr>
       <tr class="bg2"><td><b>is_current</b></td><td>BOOLEAN</td><td>1</td><td>1 - gene is current. Always set to 1 in ensembl dbs, but needed for otterlace dbs</td><td></td></tr>
       <tr class="bg1"><td><b>canonical_transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>key: canonical_transcript_id_idx</td></tr>
-      <tr class="bg2"><td><b>canonical_annotation</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Canonical annotation.</td><td></td></tr>
-      <tr class="bg1"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td>NULL</td><td>Release-independent stable identifier.</td><td>key: stable_id_idx</td></tr>
-      <tr class="bg2"><td><b>version</b></td><td>SMALLINT</td><td>1</td><td>Stable identifier version number.</td><td>key: stable_id_idx</td></tr>
-      <tr class="bg1"><td><b>created_date</b></td><td>DATETIME</td><td>'0000-00-00</td><td>Date created.</td><td></td></tr>
-      <tr class="bg2"><td><b>modified_date</b></td><td>DATETIME</td><td>'0000-00-00</td><td>Date modified.</td><td></td></tr>
+      <tr class="bg2"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td>NULL</td><td>Release-independent stable identifier.</td><td>key: stable_id_idx</td></tr>
+      <tr class="bg1"><td><b>version</b></td><td>SMALLINT</td><td>1</td><td>Stable identifier version number.</td><td>key: stable_id_idx</td></tr>
+      <tr class="bg2"><td><b>created_date</b></td><td>DATETIME</td><td>'0000-00-00</td><td>Date created.</td><td></td></tr>
+      <tr class="bg1"><td><b>modified_date</b></td><td>DATETIME</td><td>'0000-00-00</td><td>Date modified.</td><td></td></tr>
     </table>
   </div>
   <p style="margin-top:10px"><b>See also:</b></p>
@@ -2627,124 +2593,6 @@ The core database schema is available in several diagrams (PDF format) here:
   <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#operon_transcript">operon_transcript</a></li>
-    <li><a href="#gene">gene</a></li>
-  </ul>
-
-
-  <div id="qtl" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">qtl</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_qtl" style="cursor:pointer;text-decoration:none" onclick="show_hide('qtl')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Describes the markers (of which there may be up to three) which define Quantitative Trait Loci. Note that QTL is a statistical technique used to find links between certain expressed traits and regions in a genetic map. A QTL is defined by three markers, two flanking and one peak (optional) marker. Its a region (or more often a group of regions) which is likely to affect the phenotype (trait) described in this Qtl.</p>
-
-  <div id="div_qtl" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>qtl_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>trait</b></td><td>VARCHAR(255)</td><td></td><td>Expressed trait.</td><td>key: trait_idx</td></tr>
-      <tr class="bg1"><td><b>lod_score</b></td><td>FLOAT</td><td></td><td>LOD score for QTL.</td><td></td></tr>
-      <tr class="bg2"><td><b>flank_marker_id_1</b></td><td>INT(10)</td><td></td><td>Flanking marker 1.</td><td></td></tr>
-      <tr class="bg1"><td><b>flank_marker_id_2</b></td><td>INT(10)</td><td></td><td>Flanking marker 2.</td><td></td></tr>
-      <tr class="bg2"><td><b>peak_marker_id</b></td><td>INT(10)</td><td></td><td>Peak marker.</td><td></td></tr>
-    </table>
-  </div>
-  <p style="margin-top:10px"><b>See also:</b></p>
-  <ul>
-    <li><a href="#qtl_synonym">qtl_synonym</a></li>
-  </ul>
-
-
-  <div id="qtl_feature" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">qtl_feature</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_qtl_feature" style="cursor:pointer;text-decoration:none" onclick="show_hide('qtl_feature')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Describes Quantitative Trail Loci (QTL) positions as obtained from inbreeding experiments. Note the values in this table are in chromosomal co-ordinates. Also, this table is not populated for all schemas.</p>
-
-  <div id="div_qtl_feature" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>key: loc_idx</td></tr>
-      <tr class="bg2"><td><b>seq_region_start</b></td><td>INT(10)</td><td></td><td>Sequence start position.</td><td>key: loc_idx</td></tr>
-      <tr class="bg1"><td><b>seq_region_end</b></td><td>INT(10)</td><td></td><td>Sequence end position.</td><td></td></tr>
-      <tr class="bg2"><td><b>qtl_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#qtl">qtl</a> table.</td><td>key: qtl_idx</td></tr>
-      <tr class="bg1"><td><b>analysis_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: analysis_idx</td></tr>
-    </table>
-  </div>
-  <p style="margin-top:10px"><b>See also:</b></p>
-  <ul>
-    <li><a href="#qtl">qtl</a></li>
-    <li><a href="#qtl_synonym">qtl_synonym</a></li>
-    <li><a href="#seq_region">seq_region</a></li>
-    <li><a href="#analysis">analysis</a></li>
-  </ul>
-
-
-  <div id="qtl_synonym" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">qtl_synonym</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_qtl_synonym" style="cursor:pointer;text-decoration:none" onclick="show_hide('qtl_synonym')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Describes alternative names for Quantitative Trait Loci (QTLs).</p>
-
-  <div id="div_qtl_synonym" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>qtl_synonym_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>qtl_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#qtl">qtl</a> table.</td><td>key: qtl_idx</td></tr>
-      <tr class="bg1"><td><b>source_database</b></td><td>ENUM("rat genome database", "ratmap")</td><td></td><td>Synonym source database.</td><td></td></tr>
-      <tr class="bg2"><td><b>source_primary_id</b></td><td>VARCHAR(255)</td><td></td><td>Source database primary ID.</td><td></td></tr>
-    </table>
-  </div>
-  <p style="margin-top:10px"><b>See also:</b></p>
-  <ul>
-    <li><a href="#qtl">qtl</a></li>
-  </ul>
-
-
-  <div id="unconventional_transcript_association" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#000;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">unconventional_transcript_association</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_unconventional_transcript_association" style="cursor:pointer;text-decoration:none" onclick="show_hide('unconventional_transcript_association')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Describes transcripts that do not link to a single gene in the normal way.</p>
-
-  <div id="div_unconventional_transcript_association" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>key: transcript_idx</td></tr>
-      <tr class="bg2"><td><b>gene_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#gene">gene</a> table.</td><td>key: gene_idx</td></tr>
-      <tr class="bg1"><td><b>interaction_type</b></td><td>ENUM("antisense","sense_intronic","sense_overlaping_exonic","chimeric_sense_exonic")</td><td></td><td>Type of interaction: 'antisense','sense_intronic','sense_overlaping_exonic','chimeric_sense_exonic'.</td><td></td></tr>
-    </table>
-  </div>
-  <p style="margin-top:10px"><b>See also:</b></p>
-  <ul>
-    <li><a href="#transcript">transcript</a></li>
     <li><a href="#gene">gene</a></li>
   </ul>
 
