@@ -11,7 +11,7 @@ my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     'Multi', 'compara', 'MethodLinkSpeciesSet');
 
 # Fetching the MethodLinkSpeciesSet object corresponding to LASTZ_NET alignments between human and mouse genomic sequences:
-my $human_mouse_blastz_net_mlss =
+my $human_mouse_lastz_net_mlss =
     $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
         "LASTZ_NET",
         [$human_genome_db, $mouse_genome_db]
