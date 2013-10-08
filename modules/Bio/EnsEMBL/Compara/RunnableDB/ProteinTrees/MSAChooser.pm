@@ -69,7 +69,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'treebreak_gene_count'  => 400,                     # if the resulting cluster is bigger, it is dataflown to QuickTreeBreak
         'mafft_gene_count'      => 200,                     # if the cluster is biggger, automatically switch to Mafft
         'mafft_runtime'         => 7200,                    # if the previous run was longer, automatically switch to mafft
     };
@@ -90,7 +89,7 @@ sub fetch_input {
     my( $self) = @_;
 
     # Getting parameters and objects from the database
-    my $protein_tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $protein_tree_id = $self->param_required('gene_tree_id');
 
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($protein_tree_id);
     die "Unfetchable tree root_id=$protein_tree_id\n" unless $tree;
@@ -100,14 +99,6 @@ sub fetch_input {
     $tree->root->release_tree;
     $tree->clear;
     
-    if ($gene_count > $self->param('treebreak_gene_count')) {
-        # Create an alignment job and the waiting quicktree break job
-        $self->dataflow_output_id($self->input_id, 4);
-        $self->dataflow_output_id($self->input_id, 5);
-        $self->input_job->incomplete(0);
-        die "Cluster root_id=$protein_tree_id over threshold (gene_count=$gene_count > ".($self->param('treebreak_gene_count'))."), dataflowing to QuickTreeBreak\n";
-    }
-
     # The tree follows the "normal" path: create an alignment job
     my $reuse_aln_runtime = $tree->get_tagvalue('reuse_aln_runtime', 0) / 1000;
 
