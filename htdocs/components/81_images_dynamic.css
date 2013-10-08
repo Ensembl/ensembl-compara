@@ -129,7 +129,7 @@ body.ie8 div.image_resize_overlay .bg                           { background: 0;
 body.ie8 div.image_resize_overlay .ui-tooltip                   { display: none; }
 
 /* Styles for sprite mouseovers */
-a.icon_link                   { text-decoration: none; }
+a.icon_link                   { text-decoration: none; color: [[PAGE_TEXT]]; }
 div.icon                      { padding: 4px 8px 4px 0; }
 .sprite,
 .sprite_disabled              { display: inline-block; height: 16px; width: 16px; background: no-repeat 0 0; cursor: pointer; }
