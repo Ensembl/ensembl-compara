@@ -49,9 +49,7 @@ The pipeline can connect to a "master" database to initialize. Please refer to t
 set it up. You will have to import all the genome_dbs (the species on which you want to run the pipeline) with:
  - ensembl-compara/scripts/pipeline/update_genome.pl for the Ensembl / Ensembl Genomes species
  - a manual SQL INSERT. Currently, the species that are defined in the JSON file have to be also defined in the master database manually
- - INSERT INTO genome_db (taxon_id, name, assembly, assembly_default, genebuild, locator) VALUES \
-    ( ... /the same values as in the JSON file/ ..., 'Bio::EnsEMBL::Compara::GenomeMF/filename=${PATH_TO_JSON_FILE};index=${INDEX_IN_JSON_FILE}');
-    ${INDEX_IN_JSON_FILE} starts at 1.
+ - INSERT INTO genome_db (taxon_id, name, assembly, assembly_default, genebuild) VALUES ( ... /the same values as in the JSON file/ ...);
 
 
 2. General structure of the pipeline
