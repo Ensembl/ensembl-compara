@@ -53,7 +53,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf ;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
