@@ -8,11 +8,12 @@ This document describes how to run ensembl-compara ProteinTrees pipeline.
 	* Perl DBI API 1.6   (or higher)
 
 EnsEMBL and BioPerl software:
-	* bioperl-live 1.6.9   - Base of the BioPerl distribution. Mainly needed to provide I/O for alignments
-	* bioperl-run 1.6.9    - Needed for the CodeML runnable/parser
-	* ensembl v73          - Core API on which the rest of ensembl APIs are based
-	* ensembl-compara v73  - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
-	* ensembl-hive stable  - The system to run pipelines
+	* bioperl-live (version 1.6.9)               - Base of the BioPerl distribution. Mainly needed to provide I/O for alignments
+	* bioperl-run (version 1.6.9)                - Needed for the CodeML runnable/parser
+	* ensembl ("branch-ensembl-74" tag)          - Core API on which the rest of ensembl APIs are based
+	* ensembl-compara ("branch-ensembl-74" tag)  - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
+	* ensembl-hive ("stable" tag)                - The system to run pipelines
+!! Please ensure that your PERL5LIB is included all of these modules
 
 Refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
@@ -37,7 +38,7 @@ Here is the list of the versions that we used for the e73 production:
 	* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
 	* MAFFT 7.017          - http://mafft.cbrc.jp/alignment/software/
       * hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
-	* treebest             - Please ask on the dev mailing list (dev@ensembl.org)
+	* treebest             - git.internal.sanger.ac.uk:/repos/git/ensembl/compara/treebest.git if you have a Sanger account, https://github.com/muffato/treebest otherwise
 	* quicktree 1.1        - http://www.sanger.ac.uk/resources/software/quicktree/
 	* hmmbuild 3.0         - (part of the HMMER package) http://hmmer.janelia.org/
 	* codeml 4.3           - (part of the PAML package) http://abacus.gene.ucl.ac.uk/software/paml.html WARNING: The pipeline does not support more recent versions
