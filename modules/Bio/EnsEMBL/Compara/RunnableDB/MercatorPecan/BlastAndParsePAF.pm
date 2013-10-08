@@ -65,9 +65,7 @@ sub get_queries {
 
     my $start_member_id = $self->param_required('start_member_id');
     my $end_member_id   = $self->param_required('end_member_id');
-
-    my $debug           = $self->debug() || $self->param('debug') || 0;
-    my $genome_db_id    = $self->param('genome_db_id');
+    my $genome_db_id    = $self->param_required('genome_db_id');
 
     #Get list of members and sequences
     return $self->compara_dba->get_MemberAdaptor->generic_fetch("genome_db_id=$genome_db_id AND member_id BETWEEN $start_member_id AND $end_member_id");
