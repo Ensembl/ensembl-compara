@@ -237,15 +237,14 @@ sub store_gene_and_all_transcripts {
     $canonical_transcript_stable_id = $canonical_transcript->stable_id;
   };
   if (!defined($canonical_transcript) && !defined($self->param('force_unique_canonical'))) {
-    print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n" if ($self->debug);
-    return 1;
+    die $gene->stable_id." has no canonical transcript\n";
   }
   my $longestTranslation = undef;
 
     if (!defined($self->param('force_unique_canonical'))) {
       if ($canonical_transcript->biotype ne $gene->biotype) {
         # This can happen when the only transcripts are, e.g., NMDs
-        print STDERR "INFO: ", $canonical_transcript->stable_id, " biotype ", $canonical_transcript->biotype, " is canonical\n" if ($self->debug);
+        $self->warning($canonical_transcript->stable_id." biotype ".$canonical_transcript->biotype." is canonical");
       }
     }
 
@@ -333,6 +332,7 @@ sub store_gene_and_all_transcripts {
 
   # Some of the "polymorphic_pseudogene" have a non-translatable canonical peptide. This is a hack to get the longest translation
   if (not defined $canonicalPeptideMember and $self->param('find_canonical_translations_for_polymorphic_pseudogene') and $gene->biotype eq 'polymorphic_pseudogene') {
+      $self->warning($gene->stable_id."'s canonical transcript does not have a translation. Will use the longest peptide instead: ".$longestTranslation->stable_id);
       $canonicalPeptideMember = $longestTranslation;
   }
 
