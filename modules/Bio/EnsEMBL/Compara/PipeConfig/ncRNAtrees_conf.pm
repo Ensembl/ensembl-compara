@@ -682,7 +682,7 @@ sub pipeline_analyses {
                             'tag_split_genes'   => 0,
                             'mlss_id' => $self->o('mlss_id'),
             },
-            -flow_into  => [ 'hc_tree_attributes', 'hc_homologies' ],
+            -flow_into  => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
            -rc_name => 'default',
         },
 
