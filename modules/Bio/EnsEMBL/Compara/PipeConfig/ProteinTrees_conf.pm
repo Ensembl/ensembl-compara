@@ -115,12 +115,12 @@ sub default_options {
     # executable locations:
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
-        #'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
+        #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
         #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-        #'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.0/binaries/hmmbuild',
+        #'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
-        #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
+        #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
 
     # HMM specific parameters
         #'hmm_clustering'            => 0, ## by default run blastp clustering
