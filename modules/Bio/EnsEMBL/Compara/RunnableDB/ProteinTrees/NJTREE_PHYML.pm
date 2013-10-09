@@ -203,7 +203,12 @@ sub store_filtered_align {
     my %hash_filtered_strings = ();
     {
         my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
-        my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$filename'";
+        my $aln = $alignio->next_aln;
+        
+        unless ($aln) {
+            $self->warning("Cannot store the filtered alignment for this tree\n");
+            return;
+        }
 
         foreach my $seq ($aln->each_seq) {
             $hash_filtered_strings{$seq->display_id()} = $seq->seq();
