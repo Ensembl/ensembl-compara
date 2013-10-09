@@ -24,7 +24,7 @@ Perl libraries:
 	 (mandatory)
 	* Statistics::Descriptive    - Used during the dN/dS computation
 	* Parse::RecDescent          - To export trees in newick
-	
+
 	 (optional)
 	* JSON                       - Used to configure the non-Ensembl species on which the pipeline has to run
 	* FamLibBuilder              - Only needed for the HMM-based clustering. Part of the Panther distribution
@@ -37,12 +37,12 @@ Here is the list of the versions that we used for the e73 production:
 	* NCBI-blast 2.2.27+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 	* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
 	* MAFFT 7.017          - http://mafft.cbrc.jp/alignment/software/
-      * hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
+	* hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
 	* treebest             - git.internal.sanger.ac.uk:/repos/git/ensembl/compara/treebest.git if you have a Sanger account, https://github.com/muffato/treebest otherwise
 	* quicktree 1.1        - http://www.sanger.ac.uk/resources/software/quicktree/
 	* hmmbuild 3.0         - (part of the HMMER package) http://hmmer.janelia.org/
 	* codeml 4.3           - (part of the PAML package) http://abacus.gene.ucl.ac.uk/software/paml.html WARNING: The pipeline does not support more recent versions
-      * Ktreedist 1.0        - http://molevol.cmima.csic.es/castresana/Ktreedist.html
+	* Ktreedist 1.0        - http://molevol.cmima.csic.es/castresana/Ktreedist.html
 
 
 The pipeline can connect to a "master" database to initialize. Please refer to the file "README-master_database" to correctly
