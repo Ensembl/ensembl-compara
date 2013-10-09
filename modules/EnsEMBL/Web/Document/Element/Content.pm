@@ -227,12 +227,14 @@ sub content_panel {
   
   my $panel          = $self->new_panel('Navigation', $controller, %params);
   my @all_components = @{$node->data->{'components'}};
-  my @components     = qw(__messages EnsEMBL::Web::Component::Messages);
+  my @components     = qw(__urgent_messages EnsEMBL::Web::Component::Messages::Urgent);
   
   for (my $i = 0; $i < $#all_components; $i += 2) {
     push @components, $all_components[$i], $all_components[$i + 1] unless $all_components[$i] eq 'summary';
   }
-  
+ 
+  push @components, qw(__other_messages EnsEMBL::Web::Component::Messages::Other);
+ 
   $panel->add_components(@components);
   $self->add_panel($panel);
 }
