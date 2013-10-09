@@ -180,6 +180,7 @@ sub default_options {
 
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        #'curr_core_registry'        => "registry.conf",
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
@@ -210,7 +211,8 @@ sub pipeline_create_commands {
     # There must be some species on which to compute trees
     die "There must be some species on which to compute trees"
         if ref $self->o('curr_core_sources_locs') and not scalar(@{$self->o('curr_core_sources_locs')})
-        and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')});
+        and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')})
+        and not $self->o('curr_core_registry');
 
     # If the pipeline should use genome_db_ids, the user MUST provide a species tree
     die "use_genomedb_id is only possible with a custom species tree" if $self->o('use_genomedb_id') and not $self->o('species_tree_input_file');
@@ -446,6 +448,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
+                'registry_conf_file'  => $self->o('curr_core_registry'),
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
@@ -468,6 +471,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_all_genomedbs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs',
             -parameters => {
+                'registry_conf_file'  => $self->o('curr_core_registry'),
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),

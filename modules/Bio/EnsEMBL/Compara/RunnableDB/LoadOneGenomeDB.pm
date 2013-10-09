@@ -199,11 +199,21 @@ sub store_and_dataflow_genome_db {
 sub iterate_through_registered_species {
     my $self = shift;
 
+    my $registry_conf_file = $self->param('registry_conf_file');
     my $registry_dbs = $self->param('registry_dbs') || [];
     my $registry_files = $self->param('registry_files') || [];
-    $registry_dbs || $registry_files || die "unless 'locator' is specified, 'registry_dbs' or 'registry_files' become obligatory parameter";
+    $registry_conf_file || $registry_dbs || $registry_files || die "unless 'locator' is specified, 'registry_conf_file', 'registry_dbs' or 'registry_files' become obligatory parameter";
 
     my @core_dba_list = ();
+
+    if ($registry_conf_file) {
+
+        Bio::EnsEMBL::Registry->load_all( $registry_conf_file );
+        my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('species_name'), 'core');
+
+        push @core_dba_list, $this_core_dba if ($this_core_dba);
+
+    }
 
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
         Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );

@@ -48,11 +48,17 @@ sub write_output {
 sub get_all_core_dbas {
     my $self = shift;
 
+    my $registry_conf_file = $self->param('registry_conf_file');
     my $registry_dbs = $self->param('registry_dbs') || [];
     my $registry_files = $self->param('registry_files') || [];
     $registry_dbs || $registry_files || die "'registry_dbs' or 'registry_files' become obligatory parameter";
 
     my @core_dba_list = ();
+
+    if ($registry_conf_file) {
+        Bio::EnsEMBL::Registry->load_all( $registry_conf_file );
+        push @core_dba_list, @{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')};
+    }
 
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
         Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );
