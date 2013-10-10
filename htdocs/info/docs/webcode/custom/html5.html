@@ -10,6 +10,9 @@
 
 <p>We are in the process of moving away from XHTML to HTML5. What this means in practice is that whilst we are limiting the use of HTML5-specific tags, we are relaxing our markup specifications a little in line with the new HTML5 standards. However for the sake of consistent, readable code, we recommend adhering to XHTML-style markup as a best practice.</p>
 
+<p>In addition, there are some conventions we follow that provide "hooks" for Javascript 
+functionality and make the site more consistent in its behaviour.</p>
+
 <h2>Syntax Recommendations</h2>
 
 <ol>
@@ -59,6 +62,32 @@ e.g. &lt;a&nbsp;href="/Homo_sapiens/Location/View?db=core;r=1:1-100000"&gt;</p>
 </ol>
 
 <h2>HTML Elements and Attributes</h2>
+
+<h3>Linking to other pages</h3>
+
+<ol>
+
+<li>
+<p><b>Internal links should not include the site URL</b></p>
+<p>e.g. /Homo_sapiens/Info/Index not www.ensembl.org/Homo_sapiens/Info/Index<br />
+This is to ensure that links don't break on archives. However in a few circumstances,
+e.g. contact forms, we do want to link to, e.g. the live site, so that the visitor
+always gets up-to-date information even if visiting an old archive.</p>
+</li>
+
+<li>
+<p><b>Relative internal links should not trace back up the document tree</b></p>
+<p>i.e. they should not contain paths with ../ in them. This is because such 
+links will break if the document is ever moved. Link from the HTML root, e.g.
+/info/docs/api/index.html, for preference.</p>
+</li>
+
+<li>
+<p><b>Links to external sites should be marked as such:</b></p>
+<p>e.g. &lt;a href="http://www.google.com" rel="external"&gt;Google&lt;/a&gt;</p>
+</li>
+
+</ol>
 
 <h3>Deprecated presentational tags - use CSS instead!</h3>
 
