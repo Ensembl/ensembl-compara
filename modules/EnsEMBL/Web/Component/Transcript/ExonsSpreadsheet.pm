@@ -53,7 +53,7 @@ sub initialize {
   my ($upstream, $downstream, $offset) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
   
   if ($upstream) {
-    $self->add_line_numbers($config, $config->{'flanking'}, undef, $offset) if $config->{'number'} =~ /^(gene|slice)$/;
+    $self->add_line_numbers('upstream', $config, $config->{'flanking'}, $offset);
     
     push @data, $export ? $upstream : {
       exint    => "5' upstream sequence", 
@@ -101,7 +101,7 @@ sub initialize {
   }
   
   if ($downstream) {
-    $self->add_line_numbers($config, $config->{'flanking'}) if $config->{'number'} =~ /^(gene|slice)$/;
+    $self->add_line_numbers('downstream', $config, $config->{'flanking'});
     
     push @data, $export ? $downstream : { 
       exint    => "3' downstream sequence", 
@@ -155,10 +155,9 @@ sub get_exon_sequence_data {
   my $utr_end      = $coding_end   && $coding_end   < $exon_end;   # exon ends with UTR
   my $class        = $coding_start && $coding_end ? 'e0' : 'eu';   # if the transcript is entirely UTR, use utr class for the whole sequence
   my @sequence     = map {{ letter => $_, class => $class }} split '', $seq;
+  my ($coding_length, $utr_length);
   
   if ($utr_start || $utr_end) {
-    my ($coding_length, $utr_length);
-    
     if ($strand == 1) {
       $coding_length = $seq_length - ($exon_end - $coding_end);
       $utr_length    = $coding_start - $exon_start;
@@ -181,10 +180,18 @@ sub get_exon_sequence_data {
   }
   
   $config->{'last_number'} = $strand == 1 ? $exon_start - 1 : $exon_end + 1 if $config->{'number'} eq 'slice'; # Ensures that line numbering is correct if there are no introns
-  $config->{'key'}{'exons/Introns'}{$coding_start && $coding_end  ? 'exon' : 'utr'} = 1;
+  $config->{'key'}{'exons/Introns'}{$coding_start && $coding_end ? 'exon' : 'utr'} = 1;
   
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
-  $self->add_line_numbers($config, $seq_length)                    if $config->{'number'}      ne 'off';
+  
+  if ($config->{'number'} eq 'cds') {
+    if (defined $coding_start && (!defined $utr_length || $utr_length > 0 || $coding_length > 0)) {
+      my $skip = $utr_start ? $utr_length : 0;
+      $self->add_line_numbers('exon', $config, ($utr_end ? $coding_length : $seq_length) - $skip, $skip);
+    }
+  } else {
+    $self->add_line_numbers('exon', $config, $seq_length);
+  }
 
   return \@sequence;
 }
@@ -194,7 +201,7 @@ sub get_intron_sequence_data {
   my $display_width = $config->{'display_width'};
   my $strand        = $config->{'strand'};
   my $sscon         = $config->{'sscon'};
-  my @dots          = map {{ letter => $_, class => 'e1' }} split '', '.' x ($display_width - 2*($sscon % ($display_width/2)));
+  my @dots          = map {{ letter => $_, class => 'e1' }} split '', '.' x ($display_width - 2 * ($sscon % ($display_width / 2)));
   my @sequence;
   
   eval {
@@ -209,7 +216,7 @@ sub get_intron_sequence_data {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
-      $self->add_line_numbers($config, $intron_length, 1) if $config->{'number'} =~ /^(gene|slice)$/;
+      $self->add_line_numbers('intron', $config, $intron_length, 1);
       
       @sequence = $strand == 1 ? (@{$start->{'sequence'}}, @dots, @{$end->{'sequence'}}) : (@{$end->{'sequence'}}, @dots, @{$start->{'sequence'}});
     } else {
@@ -218,7 +225,7 @@ sub get_intron_sequence_data {
       @sequence = map {{ letter => $_, class => 'e1' }} split '', lc $slice->seq;
       
       $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'yes';
-      $self->add_line_numbers($config, $intron_length)   if $config->{'number'} =~ /^(gene|slice)$/;
+      $self->add_line_numbers('intron', $config, $intron_length);
     }
   };
   
@@ -318,26 +325,48 @@ sub add_variations {
 }
 
 sub add_line_numbers {
-  my ($self, $config, $seq_length, $truncated, $offset) = @_;
-  my $i      = $config->{'export'} ? $config->{'lines'}++ : 0;
-  my $start  = $config->{'last_number'};
-  my $strand = $config->{'number'} eq 'slice' ? $config->{'strand'} : 1;
-  my $length = $start + ($seq_length * $strand);
+  my ($self, $type, $config, $seq_length, $arg) = @_;
+  
+  return if $config->{'number'} eq 'off';
+  return $config->{'lines'}++ if $seq_length < 1;
+  return $config->{'lines'}++ unless $type eq 'exon' || $config->{'number'} =~ /^(gene|slice)$/;
+  
+  my $i            = $config->{'export'} ? $config->{'lines'}++ : 0;
+  my $start        = $config->{'last_number'};
+  my $strand       = $config->{'number'} eq 'slice' ? $config->{'strand'} : 1;
+  my $length       = $start + ($seq_length * $strand);
+  my $truncated    = $type eq 'intron'   ? $arg : undef;
+  my $offset       = $type eq 'upstream' ? $arg : undef;
+  my $skip         = $type eq 'exon'     ? $arg : undef;
+  my $total_length = $length + $skip;
   my $end;
   
   if ($truncated) {
     $end = $length;
     push @{$config->{'line_numbers'}{$i}}, { start => $start + $strand, end => $end };
   } else {
-    while (($strand == 1 && $end < $length) || ($strand == -1 && $start > $length)) {
-      $end  = $start + ($config->{'display_width'} * $strand);
+    while (($strand == 1 && $end < $total_length) || ($strand == -1 && $start > $total_length)) {
+      $end = $start + ($config->{'display_width'} * $strand);
+      
+      if ($skip > $start) {
+        if ($skip < $end) {
+          $end -= $skip;
+        } else {
+          push @{$config->{'line_numbers'}{$i}}, {};
+          $skip -= $config->{'display_width'} * $strand;
+          next;
+        }
+      }
+      
       $end -= $strand * $offset if $offset;
       $end  = $length if ($strand == 1 && $end > $length) || ($strand == -1 && $end < $length);
       
       push @{$config->{'line_numbers'}{$i}}, { start => $start + $strand, end => $end };
       
       $start  = $end;
-      $offset = 0;
+      $offset = $skip = 0;
+      
+      last if ($strand == 1 && $end >= $length) || ($strand == -1 && $start && $start <= $length);
     }
   }
   

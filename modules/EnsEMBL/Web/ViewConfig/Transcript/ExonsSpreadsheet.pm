@@ -69,10 +69,11 @@ sub form {
     name   => 'line_numbering',
     label  => 'Line numbering',
     values => [
-      { value => 'gene',  name => 'Relative to the gene'           },
-      { value => 'cdna',  name => 'Relative to the cDNA'           },
-      { value => 'slice', name => 'Relative to coordinate systems' },
-      { value => 'off',   name => 'None'                           },
+      { value => 'gene',  name => 'Relative to the gene'            },
+      { value => 'cdna',  name => 'Relative to the cDNA'            },
+      { value => 'cds',   name => 'Relative to the coding sequence' },
+      { value => 'slice', name => 'Relative to coordinate systems'  },
+      { value => 'off',   name => 'None'                            },
     ]
   });
   
