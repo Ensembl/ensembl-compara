@@ -23,16 +23,16 @@ sub content {
     my $type = 'Gene';
     my $species = $object->species;
 
-    my @annotations = $user->annotations;
+    my $annotations = $user->annotations;
     my @gene_annotations;
-    foreach my $record (@annotations) {
+    foreach my $record (@$annotations) {
       next unless $record->stable_id eq $id;
       push @gene_annotations, $record;
     }
     if (scalar(@gene_annotations)) {
       foreach my $annotation (@gene_annotations) {
         $html = '<h2>'.$annotation->title.'</h2><pre>'.$annotation->annotation.'</pre>';
-        $html .= qq(<p><a href="/Account/Annotation/Edit?id=).$annotation->id.qq(;species=$species" class="modal_link">Edit this annotation</a>.</p>);
+        $html .= qq(<p><a href="/Account/Annotation/Edit?id=).$annotation->record_id.qq(;species=$species" class="modal_link">Edit this annotation</a>.</p>);
       }
     }
     else {
