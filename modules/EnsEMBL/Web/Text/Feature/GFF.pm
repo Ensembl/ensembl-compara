@@ -75,6 +75,7 @@ sub id       {
   return $self->{'__raw__'}->[2];
 }
 
+sub attrib { my ($self, $attrib) = @_; return $self->{'__attribs__'} ? $self->{'__attribs__'}{$attrib} : undef ;  }
 sub attribs { my $self = shift; return $self->{'__attribs__'} ? $self->{'__attribs__'} : {} ;  }
 sub hstart  { my $self = shift; return $self->{'__extra__'}{'hstart'}  ? $self->{'__extra__'}{'hstart'}[0]  : undef ;  }
 sub hend    { my $self = shift; return $self->{'__extra__'}{'hend'}    ? $self->{'__extra__'}{'hend'}[0]    : undef ; }
