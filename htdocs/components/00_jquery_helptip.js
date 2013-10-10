@@ -25,14 +25,16 @@
       delete options.content;
       delete options.position;
       
-      return this.tooltip($.extend({
-        track:   track,
-        show:    { delay: 100, duration: 1 },
-        hide:    false,
-        items:   tip ? '*' : undefined,
-        position: position,
-        content: function () { return (tip || this.title).replace(/\n/g, '<br />'); }
-      }, options));
+      return this.map(function () {
+        return $(this).data('uiTooltip') ? this : $(this).tooltip($.extend({
+          track:   track,
+          show:    { delay: 100, duration: 1 },
+          hide:    false,
+          items:   tip ? '*' : undefined,
+          position: position,
+          content: function () { return (tip || this.title).replace(/\n/g, '<br />'); }
+        }, options))[0];
+      });
     }
   };
 })(jQuery);
