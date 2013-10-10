@@ -391,7 +391,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   $name = undef if ($pairwise || $singleton);
 
   if ($species_set_name) {
-      $new_mlss->store_tag('name', $species_set_name);
+      $species_set->store_tag('name', $species_set_name);
   }
 
 }
