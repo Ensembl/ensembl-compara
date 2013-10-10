@@ -54,6 +54,7 @@ use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
+use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -130,7 +131,7 @@ sub createPairAlignerJobs
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $dnafrag_chunk_adaptor = $self->compara_dba->get_DnaFragChunkAdaptor;
   my $dnafrag_chunk_set_adaptor = $self->compara_dba->get_DnaFragChunkSetAdaptor;
-  
+
   my $count=0;
   foreach my $target_dnafrag_chunk_set (@{$target_dnafrag_chunk_set_list}) {
     my $pairaligner_hash = {};
