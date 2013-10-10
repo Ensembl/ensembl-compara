@@ -320,7 +320,7 @@ sub delete_remote {
     $track_name = "url_$code";
     $session->purge_data(type => 'url', code => $code);
   }
-  warn $code;
+  
   # Remove all shared data with this code and source
   EnsEMBL::Web::Data::Session->search(code => $code, type => 'url')->delete_all if $code =~ /_$session_id$/;
   
