@@ -176,7 +176,7 @@ sub feature_title {
 sub href {
   ### Links to /Location/Genome
   my ($self, $f) = @_;
-  my $href = $f->can('attrib') ? $f->attrib('url') : $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'url'};
+  my $href = $f->can('attrib') && $f->attrib('url') ? $f->attrib('url') : $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'url'};
   $href =~ s/\$\$/$f->id/e;
   return $href;
 }
