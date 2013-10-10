@@ -75,14 +75,14 @@ sub populate_tree {
   ));
   
   my $go_menu = $self->create_submenu('GO', 'Ontology ([[counts::go]])');
-  $go_menu->append($self->create_node('Ontology/Image', 'Ontology graph ([[counts::go]])',
+  $go_menu->append($self->create_node('Ontology/Image', 'GO graph ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Goimage )],
-    { 'availability' => 'transcript has_go', 'concise' => 'Ontology graph' }
+    { 'availability' => 'transcript has_go', 'concise' => 'GO graph' }
   ));
 
-  $go_menu->append($self->create_node('Ontology/Table', 'Ontology table ([[counts::go]])',
+  $go_menu->append($self->create_node('Ontology/Table', 'GO table ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Go )],
-    { 'availability' => 'transcript has_go', 'concise' => 'Ontology table' }
+    { 'availability' => 'transcript has_go', 'concise' => 'GO table' }
   ));
 
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
