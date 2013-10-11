@@ -41,11 +41,15 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_filter   { float: right; text-align: right; position: relative; }
 .dataTables_export   { float: right; position: relative; top: -3px; width: 25px; height: 25px; margin-left: 10px; background: url(/i/export_csv.png) no-repeat; cursor: pointer; }
 
-.dataTables_paginate                                      { float: right; text-align: right; color: [[PAGE_TEXT]]; font-size: 10px; }
-.dataTables_paginate span.first                           { border-radius: 4px 0 0 4px; -moz-border-radius: 4px 0 0 4px; -webkit-border-radius: 4px 0 0 4px; }
-.dataTables_paginate span.last                            { border-radius: 0 4px 4px 0; -moz-border-radius: 0 4px 4px 0; -webkit-border-radius: 0 4px 4px 0; }
-.dataTables_paginate span.paginate_button_disabled        { color: [[NEUTRAL_BORDER]]; cursor: default; }
-.dataTables_paginate span.paginate_button_disabled:hover  { background-color: [[TINT_BG]] !important;   }
+.dataTables_paginate                                 { float: right; text-align: right; font-size: 10px; }
+.dataTables_paginate .first                          { border-radius: 4px 0 0 4px; -moz-border-radius: 4px 0 0 4px; -webkit-border-radius: 4px 0 0 4px; }
+.dataTables_paginate .last                           { border-radius: 0 4px 4px 0; -moz-border-radius: 0 4px 4px 0; -webkit-border-radius: 0 4px 4px 0; }
+.dataTables_paginate .paginate_button,
+.dataTables_paginate .paginate_active                { color: [[PAGE_TEXT]]; background-color: #99B3FF; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
+.dataTables_paginate .paginate_button                { background-color: [[TINT_BG]]; }
+.dataTables_paginate .paginate_button:hover          { background-color: #BFD0FF; }
+.dataTables_paginate .paginate_button_disabled       { color: [[NEUTRAL_BORDER]]; cursor: default; }
+.dataTables_paginate .paginate_button_disabled:hover { background-color: [[TINT_BG]] !important;   }
 
 .dataTables_length select,
 .dataTables_filter input    { border: 1px solid [[NEUTRAL_BORDER]]; }
@@ -53,12 +57,6 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_filter .overlay { position: absolute; color: #999999; left: 2px; top: 2px; line-height: 16px; }
 
 body.ie6 .dataTables_filter input { height: 20px; }
-
-.dataTables_paginate span.paginate_button,
-.dataTables_paginate span.paginate_active       { border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
-.dataTables_paginate span.paginate_button       { background-color: [[TINT_BG]]; }
-.dataTables_paginate span.paginate_button:hover { background-color: #BFD0FF; }
-.dataTables_paginate span.paginate_active       { background-color: #99B3FF; }
 
 .dataTables_export .floating_popup   { color: [[PAGE_TEXT]]; right: 0; width: 125px; }
 .dataTables_export .floating_popup a { display: block; padding: 0 2px 3px }
