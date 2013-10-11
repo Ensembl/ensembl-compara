@@ -136,7 +136,7 @@ Ensembl.DataTable = {
       }
       
       return rtn;
-    });
+    }).toArray();
     
     if (length > 10) {
       options.sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
