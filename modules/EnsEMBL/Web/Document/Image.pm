@@ -235,11 +235,12 @@ sub karyotype {
 
   # create the container object and add it to the image
   $self->drawable_container = Bio::EnsEMBL::VDrawableContainer->new({
-    sa  => $sa, 
-    ka  => $ka, 
-    da  => $da, 
-    chr => $chr_name,
-    format =>$hub->param('export')
+    web_species => $species,
+    sa          => $sa,
+    ka          => $ka,
+    da          => $da,
+    chr         => $chr_name,
+    format      => $hub->param('export')
   }, $image_config, \@highlights) if($hub->param('_format') ne 'Excel');
 
   return undef; # successful
@@ -251,15 +252,15 @@ sub add_pointers {
   my $config_name = $extra->{'config_name'};
   my @data        = @{$extra->{'features'}};
   my $species     = $hub->species;
-  my $color       = lc($extra->{'color'} || $hub->param('col')) || 'red';     # set sensible defaults
+  my $color       = lc($extra->{'color'} || $hub->param('col'))   || 'red';     # set sensible defaults
   my $style       = lc($extra->{'style'} || $hub->param('style')) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
-  my ($p_value_sorted, $html_id, $max_colour);
+  my ($p_value_sorted, $max_colour);
   my $i = 1;
   
   # colour gradient 
-  my @gradient = @{$extra->{'gradient'}||[]};
-  if ($color eq 'gradient' && scalar @gradient) {    
+  my @gradient = @{$extra->{'gradient'} || []};
+  if ($color eq 'gradient' && scalar @gradient) {
     my @colour_scale = $hub->colourmap->build_linear_gradient(@gradient); # making an array of the colour scale
 
     foreach my $colour (@colour_scale) {
@@ -270,24 +271,17 @@ sub add_pointers {
   }
 
   foreach my $row (@data) {
-    my $chr = $row->{'chr'} || $row->{'region'};
-    $html_id =  ($row->{'html_id'}) ? $row->{'html_id'} : '';    
-    my $col = $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})};
-
+    my $chr   = $row->{'chr'} || $row->{'region'};
     my $point = {
-      start   => $row->{'start'},
-      end     => $row->{'end'},
-      id      => $row->{'label'},
-      col     => $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})} || $max_colour || $color,
-      href    => $row->{'href'},
-      html_id => $html_id,
+      start     => $row->{'start'},
+      end       => $row->{'end'},
+      id        => $row->{'label'},
+      col       => $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})} || $max_colour || $color,
+      href      => $row->{'href'},
+      html_id   => $row->{'html_id'} || '',
     };
-    
-    if (exists $high->{$chr}) {
-      push @{$high->{$chr}}, $point;
-    } else {
-      $high->{$chr} = [ $point ];
-    }
+
+    push @{$high->{$chr}}, $point;
   }
   
   return $high;
