@@ -149,7 +149,7 @@ sub merge_overlapping_target_regions { #merge overlapping target regions hit by 
 		                                        print STDERR "possible palindromic sequences: $anchor ", 
 								"$mapped_anchors->{$anchor}{$targ_info}->[$i]->[2] ", 
 								$mapped_anchors->{$anchor}{$targ_info}->[$i+1]->[2], "\n";
-		                                        $mapped_anchors->{$anchor}{$targ_info}->[$i]->[2] = 0;
+		                                        $mapped_anchors->{$anchor}{$targ_info}->[$i]->[2] = 1; # arbitrarily set the strand to 1 in the merged hit
 		                                }       
 		                                if($mapped_anchors->{$anchor}{$targ_info}->[$i]->[1] < 
 							$mapped_anchors->{$anchor}{$targ_info}->[$i+1]->[1]) {
