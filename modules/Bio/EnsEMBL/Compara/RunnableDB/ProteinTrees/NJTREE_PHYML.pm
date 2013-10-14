@@ -215,7 +215,13 @@ sub store_filtered_align {
         $member->stable_id($self->_name_for_prot($member));
     }
 
-    $aln->load_cigars_from_fasta($filename, 1);
+    eval {
+        $aln->load_cigars_from_fasta($filename, 1);
+    };
+    if ($@) {
+        $self->warning("Cannot store the filtered alignment for this tree: $@\n");
+        return;
+    }
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
     foreach my $member (@{$aln->get_all_Members}) {
