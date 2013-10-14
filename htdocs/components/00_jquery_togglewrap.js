@@ -1,10 +1,49 @@
-(function($) {
-  var obj = {
-    update: function (els) {
-      $('.heightWrap', els).each(function () {
-        var el    = $(this);
+(function ($) {
+  $.togglewrap = function (elements, arg) {
+    function init() {
+      elements.each(function () {
+        var el = $(this);
+        
+        if (!el.data('togglewrap')) {
+          if (this.nodeName === 'TABLE') {
+            if (el.css('table-layout') !== 'fixed') {
+              $('th, td', el).width(function (i, w) { return w; });
+              el.css('table-layout', 'fixed');
+            }
+          }
+          
+          $(window).on('resize.togglewrap', function (e) {
+            // jquery ui resizable events cause window.resize to fire (all events bubble to window)
+            // if target has no tagName it is window or document. Don't resize unless this is the case
+            if (!e.target.tagName) {
+              update();
+            }
+          });
+          
+          el.data('togglewrap', true).find('.toggle_div').each(function () { $(this).data('togglewrap', {}); });
+        }
+        
+        update();
+        rememberSizes();
+        
+        el = null;
+      });
+    }
+    
+    function update() {
+      $('.height_wrap', elements).each(function () {
+        var el      = $(this);
+        var toggler = el.children('span.toggle_img');
+        
+        if (!toggler.length) {
+          toggler = $('<span class="toggle_img" />').appendTo(this).on('click', function () {
+            toggle($(this));
+            return false;
+          });
+        }
+        
         var open  = el.hasClass('open');
-        var val   = el.children();
+        var val   = el.children('.val');
         var empty = val.text() === '';
         
         if (open) {
@@ -14,138 +53,130 @@
         val[empty ? 'addClass' : 'removeClass']('empty');
         
         // check if content is hidden by overflow: hidden
-        el.children('span.toggle_img')[el.height() < val.height() ? 'show' : 'hide']();
+        toggler[el.height() < val.height() ? 'show' : 'hide']();
         
         if (open) {
           el.addClass('open');
           
           if (empty) {
-            el.children('span.toggle_img').trigger('click');
+            toggler.trigger('click');
           }
         }
         
-        el = null;
+        el = val = toggler = null;
       });
+    }
+    
+    function toggle(els) {
+      rememberSize(els);       
+      els.toggleClass('open').parents().first().toggleClass('open');
+      els = null
+    }
+    
+    function toggleblock(els) {
+      return els.parents().filter(function () {
+        return $(this).css('display') !== 'inline';
+      }).first();
       
       els = null;
-    },
+    }
     
-    toggleblock: function($what) {
-      return $what.parents().filter(function() {
-          return $(this).css('display') != 'inline';
-      }).first();
-
-    },
-    
-    remember_size: function($what) {
-      if(!$what.hasClass('toggle_img')) {
-        $what = $('.toggle_img',$what);
-      }
-      var $fix = $what.parents('.toggleblock');
-      if(!$fix.length) {
-        $fix = obj.toggleblock($what.parents('.toggle_div'));
-      }
-      $fix.data('fix-width',$fix.width());
-    },
-    
-    toggle: function($what) {
-      obj.remember_size($what);       
-      $what.toggleClass('open').parents().first().toggleClass('open');
-    },
-    
-    // duty_cycle: do as many as possible at same time but don't cause delays
-    duty_cycle_step: function(num,action,done,more) {
+    // dutyCycle: do as many as possible at same time but don't cause delays
+    function dutyCycleStep(num, action, done, more) {
       var timeout = 1;
-      if(more) {
-        var start = new Date().getTime();
-        var ret = action(num);
-        var end = new Date().getTime();
-        if(!ret) {
-          if(done)
+      
+      if (more) {
+        var start = $.now();
+        var ret   = action(num);
+        var end   = $.now();
+        
+        if (!ret) {
+          if (done) {
             done();
+          }
+          
           return;
         }
-        var actual = end-start;
-        if(actual > 100) { num /= 2; }
-        if(actual < 25)  { num *= 2; }
-        timeout = Math.min(actual * 10,2000);
+        
+        var actual = end - start;
+        
+        if (actual > 100) { num /= 2; }
+        if (actual < 25)  { num *= 2; }
+        
+        timeout = Math.min(actual * 10, 2000);
       }
-      setTimeout(function() { obj.duty_cycle_step(num,action,done,1); },timeout);
-    },
-
-    duty_cycle: function(jq,action,done) {
-      var start = 0;
-      obj.duty_cycle_step(1,function(times) {
-        jq.slice(start,start+times).each(action);
+      
+      setTimeout(function () { dutyCycleStep(num, action, done, 1); }, timeout);
+    }
+    
+    function dutyCycle(action, done) {
+      var start   = 0;
+      var toggler = $('.toggle_div', elements);
+      
+      dutyCycleStep(1, function (times) {
+        toggler.slice(start, start + times).each(action);
         start += times;
-        return start < jq.length && jq.length;
-      },done);
-    },
-
-    remember_sizes: function(table,done) {
-      obj.duty_cycle($('.toggle_div',table),function($slice) {
-        obj.remember_size($(this));
-      },done);
-    },
-
-    are_summaries_superfluous: function(table,done) {
-      obj.duty_cycle($('.toggle_div',table),function($slice) {
-        $(this).data('inner-width',$('.cell_detail',this).width());
-        $(this).data('summary-width',$('.toggle_summary',this).width());
-      },done);
-    },
-
-    remove_superfluous_summaries: function(table) {
-      obj.duty_cycle($('.toggle_div',table),function($slice) {
-        var $cell = $(this);
-        var width = obj.toggleblock($cell).data('fix-width')-16;
-        if($cell.data('inner-width') < width) {
-          $cell.replaceWith($('.cell_detail',$cell).removeClass('cell_detail'));
-        } else if(width > $cell.data('summary-width')+100) {
-          $('span.toggle-img',$cell).addClass('limpet');
-        }        
+        return start < toggler.length && toggler.length;
+      }, done);
+    }
+    
+    function rememberSize(els) {
+      if (!els.hasClass('toggle_img')) {
+        els = $('.toggle_img', els);
+      }
+      
+      var fix = els.parents('.toggleblock');
+      
+      if (!fix.length) {
+        fix = toggleblock(els.parents('.toggle_div'));
+      }
+      
+      fix.data('togglewrap.fixWidth', fix.width() - 16);
+      
+      els = fix = null;
+    }
+    
+    function rememberSizes() {
+      dutyCycle(function () {
+        rememberSize($(this));
+      }, function () {
+        areSummariesSuperfluous();
       });
-    },
-
-    init: function(what,options) {
-      var settings = { // no settings for now
-      };
-      $.extend(settings,options);
-            
-      return what.andSelf().find('.heightwrap_inside,.cellwrap_inside').each(function() {
-        var table = $(this);
-
-        if(table.css('table-layout') !== 'fixed') {
-          $('th,td',table).each(function() {
-            $(this).width($(this).width());
-          });
-          table.css('table-layout','fixed');
+    }
+    
+    function areSummariesSuperfluous() {
+      dutyCycle(function () {
+        $(this).data('togglewrap.innerWidth', $('.cell_detail', this).width()).data('togglewrap.summaryWidth', $('.toggle_summary', this).width() + 100);
+      }, function () {
+        removeSuperfluousSummaries();
+      });
+    }
+    
+    function removeSuperfluousSummaries() {
+      dutyCycle(function () {
+        var toggler = $(this);
+        var width   = toggleblock(toggler).data('togglewrap.fixWidth');
+        
+        if (toggler.data('togglewrap.innerWidth') < width) {
+          toggler.replaceWith($('.cell_detail', toggler).removeClass('cell_detail'));
+        } else if (width > toggler.data('togglewrap.summaryWidth')) {
+          $('span.toggle-img', toggler).addClass('limpet');
         }
         
-        $('<span class="toggle_img"/>').appendTo($('.heightWrap',table));
-        $(window).resize(function() { obj.update(table); });
-        obj.update(table);
-        table.off('click','span.toggle_img');
-        table.on('click','span.toggle_img', function() {
-          obj.toggle($(this));
-          return false;
-        });
-        obj.remember_sizes(table,function() {
-          obj.are_summaries_superfluous(table,function() {
-            obj.remove_superfluous_summaries(table);
-          });
-        });
+        toggler = null;
       });
     }
-  };
-
-  $.fn.togglewrap = function(arg) {
-    if(arg === 'update') {
-      // update
-      obj.update(this);
+    
+    if (arg === 'update') {
+      update();
     } else {
-      // initialise
-      obj.init(this,arg);
+      var classes = '.heightwrap_inside, .cellwrap_inside';
+      elements = elements.filter(classes).add(elements.find(classes));
+      init();
     }
+  }
+  
+  $.fn.togglewrap = function (arg) {
+    return this.each(function () { $.togglewrap($(this), arg); });
   };
 })(jQuery);
