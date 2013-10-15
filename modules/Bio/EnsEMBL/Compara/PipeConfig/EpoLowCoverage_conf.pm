@@ -13,38 +13,39 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-	'release'       => 67,
-	'prev_release'  => 66,
+	'release'       => 74,
+	'prev_release'  => 73,
         'release_suffix'=> '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-        'pipeline_name' => 'LOW35_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'LOW37_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
-	'pairwise_exception_location' => { 576 => 'mysql://ensro@compara1/sf5_hsap_stri_lastz_67'},
+	'pairwise_exception_location' => { 656 => 'mysql://ensro@compara4/sf5_hsap_dnov_lastz_74'},
 	#'pairwise_exception_location' => { },
 
-        'host' => 'compara1',
+        'host' => 'compara4',
         'pipeline_db' => {
             -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_epo_35way_'.$self->o('release').$self->o('release_suffix'),
+            -dbname => $ENV{USER}.'_epo_37way_'.$self->o('release').$self->o('release_suffix'),
+	    -driver => 'mysql',
         },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'mm14_ensembl_compara_67',
+	    -dbname => 'lg4_ensembl_compara_73',
 #	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@compara3:3306/sf5_compara_epo_12way_68',
+	'epo_db' => 'mysql://ensro@compara5:3306/sf5_epo_mammals_15_NEW_mappings_74',
 
 	master_db => { 
             -host   => 'compara1',
