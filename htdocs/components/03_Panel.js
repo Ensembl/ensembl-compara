@@ -44,7 +44,7 @@ Ensembl.Panel = Base.extend({
     
     $('input.js_param', this.el).each(function () {
       if (!panel.params[this.name]) {
-        panel.params[this.name] = this.value;
+        panel.params[this.name] = $(this).hasClass('json') ? JSON.parse(this.value) : this.value;
       }
     });
     
