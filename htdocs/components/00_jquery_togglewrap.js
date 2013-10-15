@@ -4,24 +4,32 @@
       elements.each(function () {
         var el = $(this);
         
-        if (!el.data('togglewrap')) {
-          if (this.nodeName === 'TABLE') {
-            if (el.css('table-layout') !== 'fixed') {
-              $('th, td', el).width(function (i, w) { return w; });
-              el.css('table-layout', 'fixed');
-            }
-          }
-          
-          $(window).on('resize.togglewrap', function (e) {
-            // jquery ui resizable events cause window.resize to fire (all events bubble to window)
-            // if target has no tagName it is window or document. Don't resize unless this is the case
-            if (!e.target.tagName) {
-              update();
-            }
-          });
-          
-          el.data('togglewrap', true).find('.toggle_div').each(function () { $(this).data('togglewrap', {}); });
+        if (el.data('togglewrap')) {
+          el = null;
+          return;
         }
+        
+        if (this.nodeName === 'TABLE') {
+          if (el.css('table-layout') !== 'fixed') {
+            $('th, td', el).width(function (i, w) { return w; });
+            el.css('table-layout', 'fixed');
+          }
+        }
+        
+        $(window).on('resize.togglewrap', function (e) {
+          // jquery ui resizable events cause window.resize to fire (all events bubble to window)
+          // if target has no tagName it is window or document. Don't resize unless this is the case
+          if (!e.target.tagName) {
+            update();
+          }
+        });
+        
+        el.on('click', '.height_wrap .toggle_img', function () {
+          toggle($(this));
+          return false;
+        }).data('togglewrap', true).find('.toggle_div').each(function () {
+          $(this).data('togglewrap', {});
+        });
         
         update();
         rememberSizes();
@@ -36,10 +44,7 @@
         var toggler = el.children('span.toggle_img');
         
         if (!toggler.length) {
-          toggler = $('<span class="toggle_img" />').appendTo(this).on('click', function () {
-            toggle($(this));
-            return false;
-          });
+          toggler = $('<span class="toggle_img" />').appendTo(this);
         }
         
         var open  = el.hasClass('open');
