@@ -1,0 +1,65 @@
+# Proxy object to adapt TranscriptMapper genomic2pep and pep2genomic methods
+# to the core Mapper interface.
+# Differences:
+#   TranscriptMapper uses different named methods to do conversions rather than
+#     having a Mapper per pair of coordinate systems.
+#   Transcript Mapper uses slice-relative coordinates...
+package Bio::EnsEMBL::ExternalData::DAS::GenomicPeptideMapper;
+
+use strict;
+use warnings;
+use Bio::EnsEMBL::TranscriptMapper;
+use base qw(Bio::EnsEMBL::Mapper);
+
+sub new {
+  my ( $proto, $from, $to, $from_cs, $to_cs, $transcript ) = @_;
+  my $class = ref $proto || $proto;
+  
+  my $self = {
+    '_mapper' => Bio::EnsEMBL::TranscriptMapper->new( $transcript->transfer($transcript->slice->seq_region_Slice) ),
+    'from'    => $from,
+    'to'      => $to,
+    'from_cs' => $from_cs,
+    'to_cs'   => $to_cs,
+  };
+  bless $self, $class;
+  
+  my $is_forward = $to_cs->name =~ m/peptide/;
+  $self->{'genomic_id'} = $transcript->slice->seq_region_name;
+  $self->{'peptide_id'} = $transcript->translation->stable_id;
+  $self->{'genomic'}    = $is_forward ? $from : $to;
+  $self->{'peptide'}    = $is_forward ? $to   : $from;
+  $self->{'genomic_cs'} = $is_forward ? $from_cs : $to_cs;
+  $self->{'peptide_cs'} = $is_forward ? $to_cs   : $from_cs;
+  
+  return $self;
+}
+
+sub map_coordinates {
+  my $self = shift;
+  
+  my (@coords, $out_id, $out_cs);
+  # Query is genomic
+  if ( $_[4] eq $self->{'genomic'} ) {
+    @coords = $self->{'_mapper'}->genomic2pep(@_[1 .. 3]);
+    $out_id = $self->{'peptide_id'};
+    $out_cs = $self->{'peptide_cs'};
+  # Query is peptide
+  } elsif ( $_[4] eq $self->{'peptide'} ) {
+    @coords = $self->{'_mapper'}->pep2genomic(@_[1 .. 2]);
+    $out_id = $self->{'genomic_id'};
+    $out_cs = $self->{'genomic_cs'};
+  } else {
+    throw($_[4].' is neither the genomic or peptide coordinate system');
+  }
+  
+  for my $c ( @coords ) {
+    if ($c->isa('Bio::EnsEMBL::Mapper::Coordinate')) {
+      $c->id( $out_id );
+      $c->coord_system( $out_cs ); # TranscriptMapper doesn't set this
+    }
+  }
+  return @coords;
+}
+
+1;
