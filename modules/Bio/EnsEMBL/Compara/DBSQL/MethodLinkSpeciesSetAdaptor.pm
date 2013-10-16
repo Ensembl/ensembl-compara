@@ -162,10 +162,10 @@ sub store {
 
         my $helper = Bio::EnsEMBL::Utils::SqlHelper->new( -DB_CONNECTION => $self->dbc );
         my $val = $helper->transaction(
-            -RETRY => 2,
+            -RETRY => 3,
             -CALLBACK => sub {
-                eval {$self->dbc->do('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')};
-                die $@ if $@ and not $@ =~ m/row-based logging/;
+                #eval {$self->dbc->do('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')};
+                #die $@ if $@ and not $@ =~ m/row-based logging/;
                 my $sth2 = $self->prepare("INSERT INTO method_link_species_set $columns SELECT
                     IF(
                         MAX(method_link_species_set_id) = $max_mlss_id,
