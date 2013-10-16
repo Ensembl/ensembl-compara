@@ -114,9 +114,9 @@ sub default_options {
     outgroups => {},
 
     #Trees
-    use_genomedb_id         =>  0,
-#    tree_dir                =>  $self->o('ensembl_cvs_root_dir').'/../ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
-#    species_tree_input_file =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
+    use_genomedb_id         =>  1,
+    tree_dir                =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
+    species_tree_input_file =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
 
     # hive_capacity values for some analyses:
     'reuse_capacity'            =>   4,
@@ -191,7 +191,7 @@ sub default_options {
        -host   => 'mysql-eg-staging-1.ebi.ac.uk',
        -port   => 4160,
        -user   => 'ensro',       
-       -dbname => 'ensembl_compara_metazoa_19_72'
+       -dbname => 'ensembl_compara_fungi_19_72'
     },
 
     prev_release              => 0,   # 0 is the default and it means "take current release number and subtract 1"
@@ -235,6 +235,7 @@ sub resource_classes {
          '250Mb_job'    => {'LSF' => '-q production-rh6 -M250   -R"select[mem>250]   rusage[mem=250]"' },
          '500Mb_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+	'4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '500Mb_long_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
