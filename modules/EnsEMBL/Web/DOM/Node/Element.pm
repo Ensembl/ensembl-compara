@@ -153,9 +153,10 @@ sub remove_attribute {
 sub set_attribute {
   ## Sets attribute of the element
   ## @param Attribute name
-  ## @param Attribute value
+  ## @param Attribute value (can be a string, or an arrayref for 'class', or a hashref for 'style' attrib)
+  ## @param Flag if on, will html-encode the value (does not work for 'class' and 'style' attribs) (off by default)
   ## @return No return value
-  my ($self, $attrib, $value) = @_;
+  my ($self, $attrib, $value, $needs_encoding) = @_;
 
   return unless defined $value;
   $value  =~ s/^\s+|\s+$//g unless ref $value; #trim
@@ -170,7 +171,7 @@ sub set_attribute {
       return;
     }
 
-    # if class attribute value is an array, join it with a space first since that array can containt space seperated strings
+    # if class attribute value is an array, join it with a space first since that array can contain space seperated strings
     $value = join ' ', @$value if $attrib eq 'class' && ref $value eq 'ARRAY';
 
     my $delimiter = {'class' => qr/\s+/, 'style' => qr/\s*;\s*/};
@@ -180,15 +181,15 @@ sub set_attribute {
     }
   }
   else {
-    $self->{'_attributes'}{$attrib} = $value;
+    $self->{'_attributes'}{$attrib} = $needs_encoding ? $self->encode_htmlentities($value) : $value;
   }
 }
 
 sub set_attributes {
   ## Sets multiple attributes to the element
-  ## @param HashRef {attrib1 => ?, attrib2 => ? ...}
+  ## @param HashRef {$attrib1 => $value1, $attrib2 => [$value2, $needs_encoding], 'class' => \@classes ...}
   my ($self, $attribs) = @_;
-  $self->set_attribute($_, $attribs->{$_}) for (keys %$attribs);
+  $self->set_attribute($_, $_ !~ /^(class|style)$/ && ref $attribs->{$_} eq 'ARRAY' ? @{$attribs->{$_}} : $attribs->{$_}) for keys %$attribs;
 }
 
 sub _access_attribute {
