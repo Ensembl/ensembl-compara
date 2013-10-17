@@ -234,7 +234,7 @@ sub add_hidden {
   ##  - name          Name attribute
   ##  - value         Value attribute
   ##  - class         Class attribute
-  ##  - is_encoded    Flag kept on, is value does not need any HTML encoding
+  ##  - is_encoded    Flag kept on, if value does not need any HTML encoding
   ## @return Input object added OR ArrayRef of all Input objects in case of multiple addition
   my ($self, $params) = @_;
   
@@ -246,7 +246,7 @@ sub add_hidden {
 
   warn 'Hidden element needs to have a name.' and return undef unless exists $params->{'name'};
   $params->{'value'} = '' unless exists $params->{'value'};
-  $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
+  $params->{'value'} = [ $params->{'value'}, 1 ] unless $params->{'is_encoded'};
 
   my $hidden = $self->dom->create_element('inputhidden', {
     'name'  => $params->{'name'},

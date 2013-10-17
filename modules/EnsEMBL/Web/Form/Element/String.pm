@@ -21,7 +21,7 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
 
-  $params->{'value'}  = $self->encode_htmlentities($params->{'value'}) if exists $params->{'value'} && !$params->{'is_encoded'};
+  $params->{'value'}  = [ $params->{'value'}, 1 ] if exists $params->{'value'} && !$params->{'is_encoded'};
 
   $self->set_attribute($_, $params->{$_}) for grep exists $params->{$_}, qw(id name value size class maxlength style);
   $self->set_attribute('class', [$self->VALIDATION_CLASS, $params->{'required'} ? $self->CSS_CLASS_REQUIRED : $self->CSS_CLASS_OPTIONAL]);

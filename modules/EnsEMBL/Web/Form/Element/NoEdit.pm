@@ -27,7 +27,7 @@ sub configure {
 
   return if $params->{'no_input'};
 
-  $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
+  $params->{'value'} = [ $params->{'value'}, 1 ] unless $params->{'is_encoded'};
 
   my $input = $self->append_child('inputhidden');
   exists $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id name class value);
