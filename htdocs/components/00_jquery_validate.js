@@ -16,8 +16,8 @@
 
 $.extend($.fn, {
   validate: function (options) {
-    if (this.length) {
-      if (this[0].nodeName === 'FORM') {
+    return this.each(function () {
+      if (this.nodeName === 'FORM') {
         var validator = $(this).data('validator');
         
         if (!validator) {
@@ -26,20 +26,15 @@ $.extend($.fn, {
         }
         
         validator.validateInputs(null, 'initial');
-        
       } else {
-        this.each(function () {
-          if (this.nodeName.match(/SELECT|INPUT|TEXTAREA/)) {
-            var inp = $(this);
-            if (inp.parents('form').data('validator')) {
-              inp.data('required', options === false ? false : true);
-            }
+        if (this.nodeName.match(/SELECT|INPUT|TEXTAREA/)) {
+          var inp = $(this);
+          if (inp.parents('form').data('validator')) {
+            inp.data('required', options === false ? false : true);
           }
-        });
+        }
       }
-    }
-    
-    return this;
+    });
   }
 });
 
