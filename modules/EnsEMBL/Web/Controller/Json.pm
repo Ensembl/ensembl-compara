@@ -26,18 +26,18 @@ sub new {
 
     my @path      = ($hub->type, $hub->action || (), $hub->function || ());
     my $method    = sprintf 'json_%s', pop @path;
+    my $json_page = 'EnsEMBL::Web::JSONServer';
+       $json_page = $self->dynamic_use_fallback(reverse map {$json_page = "${json_page}::$_"} @path);
 
-    my $json_page = $self->dynamic_use_fallback(sprintf 'EnsEMBL::Web::JSONServer::%s', join '::', @path)->new($hub);
-    $json         = $json_page->can($method) ? $json_page->$method : {'header' => {'status' => '404'}};
+    $json         = $json_page && ($json_page = $json_page->new($hub)) && $json_page->can($method) ? $json_page->$method : {'header' => {'status' => '404'}};
     $json->{'header'}{'status'} ||= 200;
-    $json         = $self->jsonify($json);
 
   } catch {
     warn $_;
-    $json         = $self->jsonify({'header' => {'status' => 500}, 'exception' => {'type' => $_->type, 'message' => $_->message, 'stack' => $_->stack_trace}});
+    $json         = {'header' => {'status' => 500}, 'exception' => {'type' => $_->type, 'message' => $_->message, 'stack' => $_->stack_trace}};
   };
 
-  print $json;
+  print $self->jsonify($json);
 
   return $self;
 }
