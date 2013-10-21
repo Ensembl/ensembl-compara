@@ -17,35 +17,37 @@ sub default_options {
 	'prev_release'  => 73,
         'release_suffix'=> '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-        'pipeline_name' => 'LOW37_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'LOW7saurop_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
-	'pairwise_exception_location' => { 656 => 'mysql://ensro@compara4/sf5_hsap_dnov_lastz_74'},
-	#'pairwise_exception_location' => { },
-
+#	'pairwise_exception_location' => { 656 => 'mysql://ensro@compara4/sf5_hsap_dnov_lastz_74'},
+#	'pairwise_exception_location' => { },
+	'pairwise_exception_location' => { 657 => 'mysql://ensro@compara2/sf5_ggal_psin_lastz_74'},
+	#'pairwise_exception_location' => { 649 => 'mysql://ensro@compara5/kb3_olat_amex_lastz_74', 
+		#			653 => 'mysql://ensro@compara5/kb3_olat_locu_lastz_74',},
         'host' => 'compara4',
         'pipeline_db' => {
             -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_epo_37way_'.$self->o('release').$self->o('release_suffix'),
+            -dbname => $ENV{USER}.'_epo_7way_sauropsids_'.$self->o('release').$self->o('release_suffix'),
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
-            -host   => 'compara2',
+            -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'lg4_ensembl_compara_73',
+	    -dbname => 'ensembl_compara_73',
 #	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@compara5:3306/sf5_epo_mammals_15_NEW_mappings_74',
+	'epo_db' => 'mysql://ensro@compara4:3306/sf5_epo_4sauropsids_74',
 
 	master_db => { 
             -host   => 'compara1',
@@ -84,7 +86,9 @@ sub default_options {
 	'ce_mlss_id' => $self->o('ce_mlss_id'),             #mlss_id for low coverage constrained elements
 	'cs_mlss_id' => $self->o('cs_mlss_id'),             #mlss_id for low coverage conservation scores
 	#'master_db_name' => 'sf5_ensembl_compara_master',   
-	'ref_species' => 'homo_sapiens',                    #ref species for pairwise alignments
+	'ref_species' => 'gallus_gallus',                    #ref species for pairwise alignments
+#	'ref_species' => 'oryzias_latipes',
+	#'ref_species' => 'homo_sapiens',
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
@@ -240,7 +244,7 @@ sub pipeline_analyses {
                     '1->A' => {
                                'make_species_tree' => [
                                                        {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
-                                                       {'newick_format'     => 'njtree' },                                                   #taxon_tree
+                                             #          {'newick_format'     => 'njtree' },                                                   #taxon_tree
                                                        ],
                                },
 
@@ -254,11 +258,11 @@ sub pipeline_analyses {
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
 				  },
-	        -flow_into  => {
-                   3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'taxon_tree', 'value' => '#species_tree_string#' } },
+	     #   -flow_into  => {
+            #       3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'taxon_tree', 'value' => '#species_tree_string#' } },
 		   # 4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
 
-                },
+              #  },
 		-rc_name => '100Mb',
 	    },
 
@@ -357,7 +361,7 @@ sub pipeline_analyses {
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
 		-hive_capacity   => 600,
-		-rc_name => '1Gb',
+		-rc_name => '1.8Gb',
 	    },
 
 # ---------------------------------------------------[Delete high coverage alignment]-----------------------------------------------------
