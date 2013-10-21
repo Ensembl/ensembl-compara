@@ -75,7 +75,7 @@ sub default_options {
 #            -dbname => $ENV{USER}.'_'.$self->o('dbname'),    
         },
 
-	'master_db' => '',
+	'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
 	'staging_loc1' => {
             -host   => 'mysql-eg-staging-1.ebi.ac.uk',
@@ -304,7 +304,7 @@ sub resource_classes {
             '1Gb'   => { 'LSF' => '-q production-rh6 -M1000' .' -R" rusage[mem=1000]"' },
             '1.8Gb' => { 'LSF' => '-q production-rh6 -M1800' .' -R" rusage[mem=1800]"' },
             '3.6Gb' => { 'LSF' => '-q production-rh6 -M3600' .' -R"rusage[mem=3600]"' },
-
+	    '8.4Gb' => { 'LSF' => '-q production-rh6 -M8400' .' -R"rusage[mem=8400]"' },
     };
 }
 
@@ -345,7 +345,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
 			     },
-	       -rc_name => '1Gb',
+	       -rc_name => '1.8Gb',
 	    },
 
 	    #Need reg_conf, conf_file or registry_dbs to define the location of the core dbs
@@ -413,7 +413,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { }, 
 	       -can_be_empty  => 1, 
-	       -rc_name => '1.8Gb',
+	       -rc_name => '3.6Gb',
   	    },
 	    {  -logic_name => 'dump_dna_factory',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
@@ -448,7 +448,7 @@ sub pipeline_analyses {
 			       1 => [ 'remove_inconsistencies_after_pairaligner' ],
 			       2 => [ $self->o('pair_aligner_logic_name')  ],
 			   },
-	       -rc_name => '1Gb',
+	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => $self->o('pair_aligner_logic_name'),
  	       -module     => $self->o('pair_aligner_module'),
@@ -460,7 +460,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => '3.6Gb',
 	    },
 	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
  	       -module     => $self->o('pair_aligner_module'),
@@ -471,7 +471,7 @@ sub pipeline_analyses {
  	       -batch_size => $self->o('pair_aligner_batch_size'),
  	       -program    => $self->o('pair_aligner_program'), 
 	       -can_be_empty  => 1, 
-	       -rc_name => '3.6Gb',
+	       -rc_name => '8.4Gb',
 	    },
 	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
@@ -593,7 +593,7 @@ sub pipeline_analyses {
 			      2 => [ 'alignment_chains' ],
 			     },
  	       -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
-	       -rc_name => '1Gb',
+	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => 'alignment_chains',
  	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -638,7 +638,7 @@ sub pipeline_analyses {
 			       2 => [ 'alignment_nets' ],
 			      },
  	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
-	       -rc_name => '1Gb',
+	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => 'set_internal_ids',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
@@ -657,7 +657,7 @@ sub pipeline_analyses {
 			      -1 => [ 'alignment_nets_himem' ],  # MEMLIMIT
 			     },
 	       -wait_for => [ 'set_internal_ids' ],
-	       -rc_name => '1Gb',
+	       -rc_name => '1.8Gb',
  	    },
 	    {  -logic_name => 'alignment_nets_himem',
  	       -hive_capacity => $self->o('net_hive_capacity'),
@@ -665,7 +665,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
 	       -can_be_empty  => 1, 
-	       -rc_name => '1.8Gb',
+	       -rc_name => '3.6Gb',
  	    },
 	    {
 	     -logic_name => 'remove_inconsistencies_after_net',
