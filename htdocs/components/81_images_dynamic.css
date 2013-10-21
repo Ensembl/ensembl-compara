@@ -154,5 +154,6 @@ span.sprite                   { float: left; width: 16px; margin: 2px 4px 0 4px;
 .stop_icon     { background-image: url(/i/16/swp/stop.png);         }
 .bookmark_icon { background-image: url(/i/16/swp/bookmark.png);     }
 .cross_icon    { background-image: url(/i/16/swp/cross.png);        }
-.check_icon    { background-image: url(/i/16/swp/check.png);         }
-
+.check_icon    { background-image: url(/i/16/swp/check.png);        }
+.view_icon     { background-image: url(/i/16/swp/search.png);       }
+.search_icon   { background-image: url(/i/16/swp/search.png);       }
