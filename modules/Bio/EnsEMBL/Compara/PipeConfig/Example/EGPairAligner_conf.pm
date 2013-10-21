@@ -384,7 +384,7 @@ sub pipeline_analyses {
 			       8 => [ 'healthcheck' ],
 			       9 => [ 'dump_dna_factory' ],
 			      },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
   	    },
 
  	    {  -logic_name => 'chunk_and_group_dna',
