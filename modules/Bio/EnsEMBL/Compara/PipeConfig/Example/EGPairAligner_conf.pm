@@ -64,10 +64,10 @@ sub default_options {
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-        'host'        => 'mysql-eg-prod-3.ebi.ac.uk',                        #separate parameter to use the resources aswell
+        'host'        => 'mysql-eg-prod-1.ebi.ac.uk',                        #separate parameter to use the resources aswell
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'mysql-eg-prod-3.ebi.ac.uk',
-            -port   => 4243,
+            -host   => 'mysql-eg-prod-1.ebi.ac.uk',
+            -port   => 4238,
             -user   => 'ensrw',
             -pass   => $self->o('password'), 
 	    -dbname => $self ->o('dbname'),
