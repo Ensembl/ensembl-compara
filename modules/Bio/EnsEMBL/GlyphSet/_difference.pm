@@ -467,7 +467,7 @@ sub draw_cigar_difference {
     } else {
       @features = @tmp;
     }
-    $self->{'config'}->{'_difference_legend'} = 1; # instruct to draw legend
+    $self->{'config'}->{'_difference_legend'} = 1 if(@features); # instruct to draw legend
     foreach my $f (@features) {
       my %parts;
       my $cigar;
