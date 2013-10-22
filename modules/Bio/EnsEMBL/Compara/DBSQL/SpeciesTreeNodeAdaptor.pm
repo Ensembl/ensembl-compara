@@ -91,7 +91,7 @@ sub store_node {
     my $parent_id = $node->parent->node_id if($node->parent);
     my $root_id = $node->root->node_id;
 
-    my $node_name = $node->name;
+    my $node_name = $node->node_name || $node->name;
     my ($taxon_id, $genome_db_id);
 
     $taxon_id = $node->taxon_id;
