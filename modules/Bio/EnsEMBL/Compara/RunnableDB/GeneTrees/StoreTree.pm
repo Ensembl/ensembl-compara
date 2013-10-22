@@ -102,6 +102,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   my $sa = $gene_tree->get_SimpleAlign(
      -id_type => 'MEMBER',
      -stop2x => 1,
+     -SEQ_TYPE => 'cds',
      %sa_params,
   );
   if ($self->param('check_split_genes')) {
