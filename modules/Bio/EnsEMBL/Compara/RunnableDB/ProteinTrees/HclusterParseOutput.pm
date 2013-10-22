@@ -110,6 +110,7 @@ sub parse_hclusteroutput {
     my $self = shift;
 
     my $filename      = $self->param('cluster_dir') . '/hcluster.out';
+    my $division      = $self->param('division'),
 
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
@@ -130,6 +131,7 @@ sub parse_hclusteroutput {
         # If it's a singleton, we don't store it as a protein tree
         next if (2 > scalar(@cluster_list));
         $allclusters{$cluster_id} = { 'members' => \@cluster_list };
+        $allclusters{$cluster_id}->{'division'} = $division if $division;
     }
     close FILE;
 
