@@ -110,6 +110,7 @@ sub copy {
   my $mycopy = $self->SUPER::copy(@_);
   bless $mycopy, 'Bio::EnsEMBL::Compara::SeqMember';
   
+  $mycopy->sequence($self->sequence);
   $mycopy->sequence_id($self->sequence_id);
   $mycopy->gene_member_id($self->gene_member_id);
   
