@@ -69,10 +69,10 @@ GenerateSSPict.pl -- Generate secondary structure of Ensembl ncRNA trees
 Options:
     --url                 [Optional] URL for Ensembl databases
     --compara_url         [Optional] URL for Ensembl Compara database
-    --conf | --registry    [Optional] Path to a configuration file
-    --id   | --member_id              Ensembl gene member stable id
+    --conf | --registry   [Optional] Path to a configuration file
+    --id   | --member_id             Ensembl gene member stable id
     --r2r_exe                        Path to the r2r executable
-                                    [Defaults to /software/ensembl/compara/R2R-1.0.3/src/r2r]
+                                     [Defaults to /software/ensembl/compara/R2R-1.0.3/src/r2r]
     --thumbnail           [Optional] If present, only a thumbnail of the family is created
     --help                [Optional] Print this message & exit
 
@@ -103,10 +103,13 @@ my $seqMemberAdaptor  = $compara_dba->get_SeqMemberAdaptor();
 my $geneTreeAdaptor   = $compara_dba->get_GeneTreeAdaptor();
 
 my $member = $geneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $member_id);
+check($member, "member", $member_id);
 my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($member->member_id);
-
+check($transc, "transcript", $member_id);
 my $geneTree = $geneTreeAdaptor->fetch_default_for_Member($member);
+check($geneTree, "GeneTree", $member_id);
 my $model_name = $geneTree->get_tagvalue('model_name');
+check($model_name, "model_name", $member_id);
 my $ss_cons = $geneTree->get_tagvalue('ss_cons');
 my $input_aln = $geneTree->get_SimpleAlign( -id => 'MEMBER' );
 my $aln_filename = dumpMultipleAlignment($input_aln, $model_name, $ss_cons);
@@ -192,10 +195,19 @@ sub run_r2r_and_check {
     die "$r2r_exe doesn't exist\n" unless (-e $r2r_exe);
 
     my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
-    print STDERR "CMD: $cmd\n";
+#    print STDERR "CMD: $cmd\n";
     system($cmd);
     if (! -e $outfile) {
         die "Problem running r2r: $outfile doesn't exist\nThis is the command I tried to run:\n$cmd\n";
     }
     return;
+}
+
+
+sub check {
+    my ($val, $type, $member_id) = @_;
+    unless (defined $val) {
+        print STDERR "No $type found for $member_id in the database\n";
+        exit(1);
+    }
 }
