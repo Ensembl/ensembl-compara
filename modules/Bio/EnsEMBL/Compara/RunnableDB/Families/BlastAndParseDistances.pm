@@ -79,7 +79,7 @@ sub name2index { # can load the name2index mapping from db/file if necessary
 sub fetch_input {
     my $self = shift @_;
 
-    my $start_seq_id            = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $start_seq_id            = $self->param_required('sequence_id');
     my $minibatch               = $self->param('minibatch')   || 1;
     my $debug                   = $self->debug() || $self->param('debug') || 0;
 
@@ -152,12 +152,12 @@ sub run {
     }
 
     my $blastdb_dir             = $self->param('blastdb_dir');
-    my $blastdb_name            = $self->param('blastdb_name')  || die "'blastdb_name' is an obligatory parameter";
+    my $blastdb_name            = $self->param_required('blastdb_name');
 
     my $start_seq_id            = $self->param('sequence_id');
     my $minibatch               = $self->param('minibatch')     || 1;
 
-    my $blast_bin_dir           = $self->param('blast_bin_dir') || die "'blast_bin_dir' is an obligatory parameter";
+    my $blast_bin_dir           = $self->param_required('blast_bin_dir');
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;

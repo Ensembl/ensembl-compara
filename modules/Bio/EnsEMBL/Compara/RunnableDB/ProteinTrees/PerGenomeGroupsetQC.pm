@@ -67,7 +67,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub run {
     my $self = shift @_;
-    my $genome_db_id            = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
+    my $genome_db_id            = $self->param_required('genome_db_id');
 
     my $this_orphans            = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id);
     my $total_orphans_num       = scalar keys (%$this_orphans);

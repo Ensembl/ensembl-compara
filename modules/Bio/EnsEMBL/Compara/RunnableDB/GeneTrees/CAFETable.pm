@@ -73,18 +73,14 @@ sub fetch_input {
     print STDERR "SPECIES TREE STRING IS: ", $self->param('species_tree_string'), "\n";
     $self->get_cafe_tree_from_string();
 
-    unless ( $self->param('mlss_id') ) {
-        die ('mlss_id is mandatory');
-    }
+    $self->param_required('mlss_id');
 
 ## Needed for lambda calculation
     if (! defined $self->param('lambda') && ! defined $self->param('cafe_shell')) {
         die ('cafe_shell is mandatory if lambda is not provided');
     }
 
-    unless ( $self->param('type') ) {
-        die ('type is mandatory [prot|nc]');
-    }
+    $self->param_required('type');
 
     $self->param('adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 

@@ -75,9 +75,7 @@ sub fetch_input {
     ## We assume that 'raxml_number_of_cores' param is set to the number of cores specified in the resource description
     $ENV{'OMP_NUM_THREADS'} = $self->param('raxml_number_of_cores');
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory parameter\n";
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
     $self->param('nc_tree', $nc_tree);
@@ -149,8 +147,7 @@ sub _run_fasttree {
     my $root_id = $self->param('nc_tree')->root_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
 
-    my $fasttree_exe = $self->param('fasttree_exe')
-        or die "'fasttree_exe' is an obligatory parameter";
+    my $fasttree_exe = $self->param_required('fasttree_exe');
 
     die "Cannot execute '$fasttree_exe'" unless(-x $fasttree_exe);
 
@@ -182,8 +179,7 @@ sub _run_parsimonator {
     my $root_id = $self->param('nc_tree')->root_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
 
-    my $parsimonator_exe = $self->param('parsimonator_exe')
-        or die "'parsimonator_exe' is an obligatory parameter";
+    my $parsimonator_exe = $self->param_required('parsimonator_exe');
 
     die "Cannot execute '$parsimonator_exe'" unless(-x $parsimonator_exe);
 
@@ -212,8 +208,7 @@ sub _run_raxml_light {
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
 
-    my $raxmlLight_exe = $self->param('raxmlLight_exe')
-        or die "'raxmlLight_exe' is an obligatory parameter";
+    my $raxmlLight_exe = $self->param_required('raxmlLight_exe');
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
 
     die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);

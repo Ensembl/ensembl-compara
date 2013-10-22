@@ -67,8 +67,8 @@ sub param_defaults {
 sub get_msa_command_line {
     my $self = shift;
 
-    my $mafft_home = $self->param('mafft_home') or die "'mafft_home' is an obligatory parameter";
-    my $mafft_exe = $self->param('mafft_exe') or die "'mafft_exe' is an obligatory parameter";
+    my $mafft_home = $self->param_required('mafft_home');
+    my $mafft_exe = $self->param_required('mafft_exe');
     die "Cannot execute '$mafft_exe' in '$mafft_home'" unless(-x $mafft_home.'/'.$mafft_exe);
 
     return sprintf('%s/%s --anysymbol --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $self->param('input_fasta'), $self->param('msa_output'));

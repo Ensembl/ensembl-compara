@@ -34,8 +34,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id     = $self->param('mlss_id')
-                        or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id     = $self->param_required('mlss_id');
 
     my $mlss        = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
     my $genome_dbs  = $mlss->species_set_obj->genome_dbs();
@@ -62,8 +61,7 @@ sub fetch_input {
 
     ###
 
-    my $taxlevels   = $self->param('taxlevels')
-                        or die "'taxlevels' is an obligatory parameter";
+    my $taxlevels   = $self->param_required('taxlevels');
 
     my @species_sets = ();
 

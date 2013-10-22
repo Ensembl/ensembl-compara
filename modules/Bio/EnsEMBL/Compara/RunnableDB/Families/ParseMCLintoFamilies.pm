@@ -18,7 +18,7 @@ sub run {   # nothing to run, just write_output()
 sub write_output {
     my $self = shift @_;
 
-    my $mcl_name        = $self->param('mcl_name')      || die "'mcl_name' is an obligatory parameter, please set it in the input_id hashref";
+    my $mcl_name        = $self->param_required('mcl_name');
     my $family_prefix   = $self->param('family_prefix') || 'ENSF';
     my $family_offset   = $self->param('family_offset') || 0;
 

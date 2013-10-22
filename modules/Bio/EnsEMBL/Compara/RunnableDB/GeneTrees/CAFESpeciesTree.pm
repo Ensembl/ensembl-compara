@@ -70,7 +70,7 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    die "mlss_id is an obligatory parameter\n" unless (defined $self->param('mlss_id'));
+    $self->param_required('mlss_id');
 
     my $speciesTree_Adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
     $self->param('speciesTree_Adaptor', $speciesTree_Adaptor);

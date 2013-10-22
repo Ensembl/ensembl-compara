@@ -50,7 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id = $self->param_required('mlss_id');
 
     if(my $codeml_parameters_file = $self->param('codeml_parameters_file')) {
         if(-r $codeml_parameters_file) {
@@ -77,7 +77,7 @@ sub run {
     my $self = shift @_;
 
     my $homologies        = $self->param('homologies');
-    my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
+    my $codeml_parameters = $self->param_required('codeml_parameters');
 
     my @updated_homologies = ();
 

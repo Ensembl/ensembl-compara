@@ -77,9 +77,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $self->param('model_id', $nc_tree->get_tagvalue('clustering_id'));
@@ -137,8 +135,7 @@ sub run_ncrecoversearch {
 
   next unless(keys %{$self->param('recovered_members')});
 
-  my $cmsearch_exe = $self->param('cmsearch_exe')
-      or die "'cmsearch_exe' is an obligatory parameter";
+  my $cmsearch_exe = $self->param_required('cmsearch_exe');
 
   die "Cannot execute '$cmsearch_exe'" unless(-x $cmsearch_exe);
 

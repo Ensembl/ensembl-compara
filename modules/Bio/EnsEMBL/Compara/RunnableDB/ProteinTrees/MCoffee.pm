@@ -200,14 +200,14 @@ sub get_msa_command_line {
     my $cmd       = '';
     my $prefix    = '';
 
-    my $mcoffee_home = $self->param('mcoffee_home') or die "'mcoffee_home' is an obligatory parameter";
-    my $mcoffee_bin_dir = $self->param('mcoffee_bin_dir') or die "'mcoffee_bin_dir' is an obligatory parameter";
-    my $mcoffee_exe_name = $self->param('mcoffee_exe_name') or die "'mcoffee_exe_name' is an obligatory parameter";
-    my $mcoffee_exe_dir = $self->param('mcoffee_exe_dir') or die "'mcoffee_exe_dir' is an obligatory parameter";
+    my $mcoffee_home = $self->param_required('mcoffee_home');
+    my $mcoffee_bin_dir = $self->param_required('mcoffee_bin_dir');
+    my $mcoffee_exe_name = $self->param_required('mcoffee_exe_name');
+    my $mcoffee_exe_dir = $self->param_required('mcoffee_exe_dir');
     die "Cannot find directory '$mcoffee_bin_dir' in '$mcoffee_home'" unless(-d $mcoffee_home.'/'.$mcoffee_bin_dir);
     
-    my $mafft_home = $self->param('mafft_home') or die "'mafft_home' is an obligatory parameter";
-    my $mafft_bin_dir = $self->param('mafft_bin_dir') or die "'mafft_bin_dir' is an obligatory parameter";
+    my $mafft_home = $self->param_required('mafft_home');
+    my $mafft_bin_dir = $self->param_required('mafft_bin_dir');
     die "Cannot find directory '$mafft_bin_dir' in '$mafft_home'" unless(-d $mafft_home.'/'.$mafft_bin_dir);
 
     $cmd = "$mcoffee_home/$mcoffee_exe_dir/$mcoffee_exe_name";

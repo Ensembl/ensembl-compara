@@ -81,9 +81,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
     $self->param('gene_tree', $nc_tree);
@@ -183,8 +181,7 @@ sub _run_bootstrap_raxml {
 
     my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
 
-    my $raxml_exe = $self->param('raxml_exe')
-        or die "'raxml_exe' is an obligatory parameter";
+    my $raxml_exe = $self->param_required('raxml_exe');
 
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 

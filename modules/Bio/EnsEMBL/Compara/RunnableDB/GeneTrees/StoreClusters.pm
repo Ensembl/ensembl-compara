@@ -117,7 +117,7 @@ sub create_clusterset {
     my $self = shift;
     my $clusterset_id = shift;
 
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id = $self->param_required('mlss_id');
 
     # Create the clusterset and associate mlss
     my $clusterset = new Bio::EnsEMBL::Compara::GeneTree(

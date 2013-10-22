@@ -12,7 +12,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $start_family_id = $self->param('family_id') || die "'family_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $start_family_id = $self->param_required('family_id');
     my $minibatch       = $self->param('minibatch') || 1;
     my $end_family_id   = $start_family_id+$minibatch-1;
 

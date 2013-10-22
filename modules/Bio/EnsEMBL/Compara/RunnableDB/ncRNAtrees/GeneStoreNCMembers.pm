@@ -65,10 +65,8 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $genome_db_id = $self->param('genome_db_id') || die "'genome_db_id' parameter is an obligatory one, please specify";
-    my $stable_id = $self->param('stable_id')       || die "'stable_id' parameter is an obligatory one, please specify";
-    $self->input_job->transient_error(1);
+    my $genome_db_id = $self->param_required('genome_db_id');
+    my $stable_id = $self->param_required('stable_id');
 
         # fetch the Compara::GenomeDB object for the genome_db_id
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with id=$genome_db_id";

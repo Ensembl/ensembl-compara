@@ -70,11 +70,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my $self = shift @_;
 
-  $self->input_job->transient_error(0);
-  my $mlss_id    = $self->param('mlss_id')      || die "'mlss_id' is an obligatory numeric parameter\n";
-  my $epo_db     = $self->param('epo_db')       || die "'epo_db' is an obligatory hash parameter\n";
-  my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
-  $self->input_job->transient_error(1);
+  my $mlss_id    = $self->param_required('mlss_id');
+  my $epo_db     = $self->param_required('epo_db');
+  my $nc_tree_id = $self->param_required('gene_tree_id');
 
   $self->param('nc_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id));
 

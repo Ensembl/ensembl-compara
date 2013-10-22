@@ -62,8 +62,7 @@ sub fetch_input {
 
     die "blast_bin_dir has to be set\n" if (!defined $self->param('blast_bin_dir'));
 
-    my $pantherScore_path = $self->param('pantherScore_path');
-    $self->throw('pantherScore_path is an obligatory parameter') unless (defined $pantherScore_path);
+    my $pantherScore_path = $self->param_required('pantherScore_path');
 
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;

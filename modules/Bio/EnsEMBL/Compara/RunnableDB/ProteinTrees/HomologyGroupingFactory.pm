@@ -62,7 +62,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id = $self->param_required('mlss_id');
 
     my $sql = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description NOT IN ("putative_gene_split", "contiguous_gene_split") ORDER BY homology_id';
     my $sth = $self->compara_dba->dbc->prepare($sql);

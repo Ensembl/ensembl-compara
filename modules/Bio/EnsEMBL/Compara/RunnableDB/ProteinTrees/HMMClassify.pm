@@ -67,23 +67,19 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    my $pantherScore_path = $self->param('pantherScore_path');
-    $self->throw('pantherScore_path is an obligatory parameter') unless (defined $pantherScore_path);
+    my $pantherScore_path = $self->param_required('pantherScore_path');
 
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;
 #    import FamLibBuilder;
 
-    my $genome_db_id = $self->param('genome_db_id');
-    if (! defined $genome_db_id) {
-        $self->throw('genome_db_id is an obligatory parameter');
-    }
+    my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     $self->param('genome_db', $genome_db);
 
-    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
-    $self->throw('blast_bin_dir is an obligatory parameter') unless (defined $self->param('blast_bin_dir'));
-    $self->throw('hmm_library_basedir is an obligatory parameter') unless (defined $self->param('hmm_library_basedir'));
+    $self->param_required('cluster_dir');
+    $self->param_required('blast_bin_dir');
+    $self->param_required('hmm_library_basedir');
     my $hmmLibrary = FamLibBuilder->new($self->param('hmm_library_basedir'), 'prod');
     $self->throw('No valid HMM library found at ' . $self->param('library_path')) unless ($hmmLibrary->exists());
     $self->param('hmmLibrary', $hmmLibrary);

@@ -46,13 +46,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $release    = $self->param('release')    || die "'release' is an obligatory numeric parameter, please set it in the input_id hashref";
-    my $tf_release = $self->param('tf_release') || die "'tf_release' is an obligatory numeric parameter, please set it in the input_id hashref";
+    my $release    = $self->param_required('release');
+    my $tf_release = $self->param_required('tf_release');
     my $tf_type    = $self->param('tf_type')    || 'c';     # 'c' means 'CLEAN', 'w' means 'FULL'
 
-    unless(defined($self->param('tag_prefix'))) {  # we prefer to check this parameter now, not after everything has been computed.
-        die "'tag_prefix' is an obligatory parameter, even if set to empty string; plase set it in the input_id hashref";
-    }
+    $self->param_required('tag_prefix');
 
     my $adaptor = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
 

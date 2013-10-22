@@ -88,7 +88,7 @@ sub fetch_input {
     my( $self) = @_;
 
     # Getting parameters and objects from the database
-    my $nc_tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($nc_tree_id);
     die "Unfetchable tree root_id=$nc_tree_id\n" unless $tree;

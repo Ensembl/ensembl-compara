@@ -62,7 +62,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $species_set       = $self->param('species_set') or die "'species_set' is an obligatory parameter";
+    my $species_set       = $self->param_required('species_set');
     my $method_link_types = $self->param('method_link_types');
 
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;

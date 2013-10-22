@@ -260,7 +260,7 @@ sub _get_alignment_filtering_cmd {
 sub _get_treebest_cmd {
     my ($self, $args) = @_;
 
-    my $treebest_exe = $self->param('treebest_exe') or die "'treebest_exe' is an obligatory parameter";
+    my $treebest_exe = $self->param_required('treebest_exe');
     die "Cannot execute '$treebest_exe'" unless (-x $treebest_exe);
 
     return sprintf('%s %s', $treebest_exe, $args);

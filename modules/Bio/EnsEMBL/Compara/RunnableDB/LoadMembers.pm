@@ -80,8 +80,7 @@ sub fetch_input {
         $self->param('verbose', $self->debug == 2);
     }
 
-    my $genome_db_id = $self->param('genome_db_id')
-        or die "'genome_db_id' is an obligatory parameter";
+    my $genome_db_id = $self->param_required('genome_db_id');
 
     my $compara_dba = $self->compara_dba();
 
@@ -349,7 +348,7 @@ sub store_all_coding_exons {
 
   return 1 if (scalar @$genes == 0);
 
-  my $min_exon_length = $self->param('min_length') or die "'min_length' is an obligatory parameter";
+  my $min_exon_length = $self->param_required('min_length');
 
   my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
   my $genome_db = $self->param('genome_db');

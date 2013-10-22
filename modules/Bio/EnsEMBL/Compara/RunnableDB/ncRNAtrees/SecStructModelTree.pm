@@ -60,9 +60,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') or $self->throw("A 'gene_tree_id' is mandatory");  # Better to have a nc_tree instead?
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $self->param('gene_tree',$nc_tree);
@@ -89,18 +87,17 @@ sub run {
 
     my ($self) = @_;
 
-    my $model = $self->param('model') or die "A model is mandatory";
+    my $model = $self->param_required('model');
     my $nc_tree = $self->param('gene_tree');
     my $aln_file = $self->param('input_aln');
-    my $struct_file = $self->param('struct_aln') or die "An struct_aln is mandatory";
-    my $bootstrap_num = $self->param('bootstrap_num') or die "A boostrap_num is mandatory";
+    my $struct_file = $self->param_required('struct_aln');
+    my $bootstrap_num = $self->param_required('bootstrap_num');
     my $root_id = $nc_tree->root_id;
 
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
     $self->param('raxml_tag', $raxml_tag);
 
-    my $raxml_exe = $self->param('raxml_exe')
-        or die "'raxml_exe' is an obligatory parameter";
+    my $raxml_exe = $self->param_required('raxml_exe');
 
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 

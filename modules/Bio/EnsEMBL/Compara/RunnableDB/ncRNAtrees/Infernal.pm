@@ -87,9 +87,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $nc_tree->preload();
@@ -227,8 +225,7 @@ sub run_infernal {
   my $stk_output = $self->worker_temp_directory . "output.stk";
   my $nc_tree_id = $self->param('gene_tree_id');
 
-  my $cmalign_exe = $self->param('cmalign_exe')
-    or die "'cmalign_exe' is an obligatory parameter";
+  my $cmalign_exe = $self->param_required('cmalign_exe');
 
   die "Cannot execute '$cmalign_exe'" unless(-x $cmalign_exe);
 
@@ -284,8 +281,7 @@ sub run_infernal {
   my $refined_stk_output = $stk_output . ".refined";
   my $refined_profile = $self->param('profile_file') . ".refined";
 
-  my $cmbuild_exe = $self->param('cmbuild_exe')
-    or die "'cmbuild_exe' is an obligatory parameter";
+  my $cmbuild_exe = $self->param_required('cmbuild_exe');
 
   die "Cannot execute '$cmbuild_exe'" unless(-x $cmbuild_exe);
 

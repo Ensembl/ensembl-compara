@@ -52,7 +52,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $uniprot_source  = $self->param('uniprot_source') or die "'uniprot_source' is an obligatory parameter and has to be defined";
+    my $uniprot_source  = $self->param_required('uniprot_source');
     my $source_name = 'Uniprot/'.$uniprot_source;
     my $ids         = $self->param('ids');
 

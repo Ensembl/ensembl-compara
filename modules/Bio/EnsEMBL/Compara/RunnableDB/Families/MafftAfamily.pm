@@ -8,7 +8,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $family_id               = $self->param('family_id')   || die "'family_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $family_id               = $self->param_required('family_id');
 
     my $family = $self->compara_dba()->get_FamilyAdaptor()->fetch_by_dbID($family_id)
                 || die "family $family_id could not have been fetched by the adaptor";
@@ -65,7 +65,7 @@ sub run {
     my $self = shift @_;
 
     my $family_id               = $self->param('family_id');
-    my $mafft_root_dir          = $self->param('mafft_root_dir') || die "'mafft_root_dir' is an obligatory parameter";
+    my $mafft_root_dir          = $self->param_required('mafft_root_dir');
     my $mafft_executable        = $self->param('mafft_exec')     || ( $mafft_root_dir . '/bin/mafft' );
     my $mafft_args              = $self->param('mafft_args')     || '';
 

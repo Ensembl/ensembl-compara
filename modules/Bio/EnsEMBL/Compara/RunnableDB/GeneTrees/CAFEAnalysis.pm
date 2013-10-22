@@ -67,17 +67,9 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    unless ( $self->param('fam_id') ) {
-        die ('fam_id is not set');
-    }
-
-    unless ( $self->param('mlss_id') ) {
-        die ('mlss_id must be set')
-    }
-
-    unless ( $self->param('lambda') ) {
-        die ('lambda is an obligatory parameter');
-    }
+    $self->param_required('fam_id');
+    $self->param_required('mlss_id');
+    $self->param_required('lambda');
 
     my $cafeTree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor;
     $self->param('cafeTree_Adaptor', $cafeTree_Adaptor);

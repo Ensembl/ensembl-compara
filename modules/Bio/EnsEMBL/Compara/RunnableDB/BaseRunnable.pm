@@ -102,7 +102,7 @@ sub get_species_tree_file {
 sub load_species_tree_from_db {
     my ($self) = @_;
 
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter to get the default species_tree";
+    my $mlss_id = $self->param_required('mlss_id');
     my $label = $self->param('label') || 'default';
     my $species_tree_string = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, $label)->species_tree();
     $self->param('species_tree_string', $species_tree_string);

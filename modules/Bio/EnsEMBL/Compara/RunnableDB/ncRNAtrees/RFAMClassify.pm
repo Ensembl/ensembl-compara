@@ -91,9 +91,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter\n";
-    $self->input_job->transient_error(1);
+    my $mlss_id = $self->param_required('mlss_id');
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch MLSS with dbID=$mlss_id";
 

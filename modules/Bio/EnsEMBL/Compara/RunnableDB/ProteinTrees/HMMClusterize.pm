@@ -58,7 +58,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
+    $self->param_required('cluster_dir');
 }
 
 

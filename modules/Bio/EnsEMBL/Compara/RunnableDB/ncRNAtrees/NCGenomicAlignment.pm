@@ -168,13 +168,11 @@ sub run_mafft {
     my $mafft_output = $self->worker_temp_directory . "/mafft_".$nc_tree_id . ".msa";
     $self->param('mafft_output',$mafft_output);
 
-    my $mafft_exe      = $self->param('mafft_exe')
-        or die "'mafft_exe' is an obligatory parameter";
+    my $mafft_exe      = $self->param_required('mafft_exe');
 
     die "Cannot execute '$mafft_exe'" unless(-x $mafft_exe);
 
-    my $mafft_binaries = $self->param('mafft_binaries')
-        or die "'mafft_binaries' is an obligatory parameter";
+    my $mafft_binaries = $self->param_required('mafft_binaries');
 
     $ENV{MAFFT_BINARIES} = $mafft_binaries;
 
@@ -201,8 +199,7 @@ sub run_RAxML {
 
     $self->param('raxml_output',"$raxml_outdir/RAxML_bestTree.$raxml_outfile");
 
-    my $raxml_exe = $self->param('raxml_exe')
-        or die "'raxml_exe' is an obligatory parameter";
+    my $raxml_exe = $self->param_required('raxml_exe');
 
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
@@ -268,8 +265,7 @@ sub run_prank {
     # For now, we will be using #1
     my $prank_output = $self->worker_temp_directory . "/prank_${nc_tree_id}.prank";
 
-    my $prank_exe = $self->param('prank_exe')
-        or die "'prank_exe' is an obligatory parameter";
+    my $prank_exe = $self->param_required('prank_exe');
 
     die "Cannot execute '$prank_exe'" unless(-x $prank_exe);
 

@@ -80,7 +80,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $protein_tree_id     = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $protein_tree_id     = $self->param_required('gene_tree_id');
     my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
@@ -123,7 +123,7 @@ sub fetch_input {
 
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
-    my $buildhmm_exe = $self->param('buildhmm_exe') or die "'buildhmm_exe' is an obligatory parameter";
+    my $buildhmm_exe = $self->param_required('buildhmm_exe');
     die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
 
     return
