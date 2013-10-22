@@ -7,8 +7,6 @@ package EnsEMBL::Web::Command;
 
 use strict;
 
-use EnsEMBL::Web::Interface;
-
 use base qw(EnsEMBL::Web::Root); 
 
 sub new {
@@ -34,12 +32,6 @@ sub script_name {
 sub ajax_redirect {
   my ($self, $url, $param, $anchor, $redirect_type, $modal_tab) = @_;
   $self->page->ajax_redirect($self->url($url, $param, $anchor), $redirect_type, $modal_tab);
-}
-
-sub interface {
-  my $self = shift;
-  $self->{'interface'} ||= EnsEMBL::Web::Interface->new;
-  return $self->{'interface'};
 }
 
 1;

@@ -94,13 +94,6 @@ sub _availability {
   return $hash;
 }
 
-# Data interface attached to object
-sub interface {
-  my $self = shift;
-  $self->{'interface'} = shift if @_;
-  return $self->{'interface'};
-}
-
 # Command object attached to proxy object
 sub command {
   my $self = shift;
