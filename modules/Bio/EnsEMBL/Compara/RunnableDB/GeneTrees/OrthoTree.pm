@@ -563,8 +563,8 @@ sub store_gene_link_as_homology {
   $homology->method_link_species_set($mlss);
   $homology->{_species_tree_node_id} = $ancestor->get_value_for_tag('species_tree_node_id');
   
-  $homology->add_Member($gene1->copy);
-  $homology->add_Member($gene2->copy);
+  $homology->add_Member($gene1->Bio::EnsEMBL::Compara::AlignedMember::copy);
+  $homology->add_Member($gene2->Bio::EnsEMBL::Compara::AlignedMember::copy);
   $homology->update_alignment_stats;
 
   my $key = $mlss->dbID . "_" . $gene1->dbID;
