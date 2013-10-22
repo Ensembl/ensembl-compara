@@ -51,7 +51,7 @@ sub content {
     }
   }
   else {
-    $html = qq(<p>Unable to retrieve sequence for $hit_id</p>);
+    $html = qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db. Please try again later.</p>);
   }
   return $html;
 }		
