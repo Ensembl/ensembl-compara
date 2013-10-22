@@ -73,13 +73,7 @@ sub default_options {
     'user'   => 'ottadmin',
 
     # the master database for synchronization of various ids
-    'master_db' => {
-      -host   => 'vegabuild',
-      -port   => 5304,
-      -user   => 'ottadmin',
-      -pass   => $self->o('password'),
-      -dbname => 'vega_compara_master',
-    },
+    'master_db' => 'mysql://ottro@vegabuild:5304/vega_compara_master',
 
     # switch off the reuse:
     'prev_core_sources_locs'   => [ ],

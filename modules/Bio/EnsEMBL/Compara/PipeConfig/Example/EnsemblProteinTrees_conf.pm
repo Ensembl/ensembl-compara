@@ -131,13 +131,7 @@ sub default_options {
         'host' => 'compara1',
 
         # the master database for synchronization of various ids
-        'master_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master',
-        },
+        'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
 
         # Ensembl-specific databases
         'staging_loc1' => {                     # general location of half of the current release core databases
@@ -174,7 +168,7 @@ sub default_options {
         'prev_rel_db' => 'mysql://ensro@compara2:3306/lg4_ensembl_compara_73',
 
         # To run without a master database
-        #'use_master_db'             => 0,
+        #'master_db'                 => undef,
         #'do_stable_id_mapping'      => 0,
         #'mlss_id'                   => undef,
         #'ncbi_db'                   => $self->o('livemirror_loc'),

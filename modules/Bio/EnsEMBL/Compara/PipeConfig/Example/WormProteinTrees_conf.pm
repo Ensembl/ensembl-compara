@@ -59,13 +59,8 @@ sub default_options {
         'dbowner'       => 'worm',
         'pipeline_name' => 'compara_homology_'.$self->o('rel_with_suffix'),
 
-        'master_db' => {                        # the master database for synchronization of various ids
-            -host   => 'farmdb1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'worm_compara_master',
-        },
+        # the master database for synchronization of various ids
+        'master_db'     => 'mysql://ensro@farmdb1:3306/worm_compara_master',
 
     # switch off the reuse:
         'reuse_core_sources_locs'   => [ ],

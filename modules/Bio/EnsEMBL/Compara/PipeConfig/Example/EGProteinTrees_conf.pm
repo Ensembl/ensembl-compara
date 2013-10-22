@@ -140,13 +140,7 @@ sub default_options {
 
     ###### DB WORK
 
-    master_db => {
-      -host   => 'mysql-eg-pan-1.ebi.ac.uk',
-      -port   => 4276,
-      -user   => 'ensro',
-      -pass   => '',
-      -dbname => 'ensembl_compara_master',
-    },
+    master_db => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs

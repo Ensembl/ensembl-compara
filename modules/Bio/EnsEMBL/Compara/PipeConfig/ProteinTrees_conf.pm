@@ -158,17 +158,10 @@ sub default_options {
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
         #'host' => 'compara1',
 
-        # the master database for synchronization of various ids
-        #'master_db' => {
-        #    -host   => 'compara1',
-        #    -port   => 3306,
-        #    -user   => 'ensro',
-        #    -pass   => '',
-        #    -dbname => 'sf5_ensembl_compara_master',
-        #},
+        # the master database for synchronization of various ids (use undef if you don't have a master database)
+        #'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
         'master_db' => undef,
         'ncbi_db' => $self->o('master_db'),
-        'use_master_db'         => 1,
 
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
@@ -201,13 +194,14 @@ sub pipeline_create_commands {
     die "use_genomedb_id is only possible with a custom species tree" if $self->o('use_genomedb_id') and not $self->o('species_tree_input_file');
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
-    die "The master dabase must be defined with a mlss_id" if $self->o('use_master_db') and not ($self->o('master_db') and $self->o('mlss_id'));
-    die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('use_master_db');
-    die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('use_master_db');
+    die "The master dabase must be defined with a mlss_id" if $self->o('master_db') and not $self->o('mlss_id');
+    die "mlss_id can not be defined in the absence of a master dabase" if $self->o('mlss_id') and not $self->o('master_db');
+    die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('master_db');
+    die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('master_db');
     die "Species reuse is only possible with some previous core databases" if $self->o('prev_rel_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
 
     # Without a master database, we must provide other parameters
-    die if not $self->o('use_master_db') and not $self->o('ncbi_db');
+    die if not $self->o('master_db') and not $self->o('ncbi_db');
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
@@ -368,9 +362,6 @@ sub pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'copy_ncbi_table'  ],
                 'A->1' => [ 'select_method_links_source' ],
-                #$self->o('use_master_db') ? 'populate_method_links_from_db' : 'populate_method_links_from_file' ],
-                #'A->1' => [ $self->o('use_master_db') ? 'populate_method_links_from_db' : 'populate_method_links_from_file' ],
-                # 9999  => [ $self->o('use_master_db') ? 'populate_method_links_from_file' : 'populate_method_links_from_db' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -388,8 +379,8 @@ sub pipeline_analyses {
         {   -logic_name => 'select_method_links_source',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => {
-                ($self->o('use_master_db') ? 1 : 999) => [ 'populate_method_links_from_db' ],
-                ($self->o('use_master_db') ? 999 : 1) => [ 'populate_method_links_from_file' ],
+                ($self->o('master_db') ? 1 : 999) => [ 'populate_method_links_from_db' ],
+                ($self->o('master_db') ? 999 : 1) => [ 'populate_method_links_from_file' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -466,10 +457,10 @@ sub pipeline_analyses {
 
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
-            -parameters => $self->o('use_master_db') ? {
+            -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
                 'master_db' => $self->o('master_db'),
-            } : {},
+            },
             -flow_into => [ 'make_species_tree', 'check_reuse_factory' ],
             -meadow_type    => 'LOCAL',
         },
