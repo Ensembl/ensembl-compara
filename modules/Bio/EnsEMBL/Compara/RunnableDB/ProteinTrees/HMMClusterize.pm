@@ -102,11 +102,10 @@ sub load_hmmer_classifications {
         if (scalar keys %{$allclusters{$model_name}{members}} == 1) {
             delete $allclusters{$model_name};
         } else {
-            # If it is not a singleton, we add the name of the model to store in the db
             print STDERR Dumper $allclusters{$model_name};
-            my @members = keys %{$allclusters{$model_name}{members}};
-            delete $allclusters{$model_name}{members};
-            @{$allclusters{$model_name}{members}} = @members;
+            # We have to transform the hash into an array-ref
+            $allclusters{$model_name}{members} = [keys %{$allclusters{$model_name}{members}}];
+            # If it is not a singleton, we add the name of the model to store in the db
             $allclusters{$model_name}{model_name} = $model_name;
         }
     }
