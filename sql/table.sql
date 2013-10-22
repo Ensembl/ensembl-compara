@@ -804,6 +804,7 @@ CREATE TABLE member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
+  KEY (canonical_member_id),
   KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1722,4 +1723,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_f.sql|homology_node_ids');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_g.sql|homology_perc_size');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_73_74_h.sql|canonical_member');
 

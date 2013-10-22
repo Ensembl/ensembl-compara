@@ -133,7 +133,7 @@ my $config = {
         tests => [
             {
                 description => 'Clusters should only contain canonical members',
-                query => 'SELECT * FROM gene_tree_node gtn LEFT JOIN member mg ON gtn.member_id = mg.canonical_member_id WHERE mg.member_id IS NULL',
+                query => 'SELECT * FROM gene_tree_node gtn LEFT JOIN member mg ON gtn.member_id = mg.canonical_member_id WHERE gtn.member_id IS NOT NULL AND mg.member_id IS NULL',
             }
         ],
     },
