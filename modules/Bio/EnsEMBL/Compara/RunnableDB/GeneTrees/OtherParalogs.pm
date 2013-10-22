@@ -92,6 +92,14 @@ sub fetch_input {
     $self->param('homology_consistency', {});
     $self->param('homology_links', []);
     $self->delete_old_homologies;
+
+    my $mlss_id = $self->param_required('mlss_id');
+    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
+    my %gdb_id2stn = ();
+    foreach my $taxon (@{$species_tree->root->get_all_leaves}) {
+        $gdb_id2stn{$taxon->genome_db_id} = $taxon;
+    }
+    $self->param('gdb_id2stn', \%gdb_id2stn);
 }
 
 sub write_output {
@@ -116,6 +124,7 @@ sub run_analysis {
 
     my $tmp_time = time();
     print "build paralogs graph\n" if ($self->debug);
+    $gene_tree->print_tree if $self->debug;
     my $ngenepairlinks = $self->rec_add_paralogs($gene_tree);
     print "$ngenepairlinks pairings\n" if ($self->debug);
 
@@ -138,9 +147,7 @@ sub rec_add_paralogs {
     $child2->print_node if ($self->debug);
 
     # All the homologies will share this information
-    $self->get_ancestor_taxon_level($ancestor);
-    my $taxon_name = $ancestor->get_tagvalue('taxon_name');
-    print "taxon_name: $taxon_name\n" if ($self->debug);
+    my $this_taxon = $ancestor->get_value_for_tag('species_tree_node_id');
 
     # The node_type of the root
     unless ($self->param('_readonly')) {
@@ -149,7 +156,7 @@ sub rec_add_paralogs {
         if ($ancestor->get_tagvalue('is_dup', 0)) {
             $ancestor->store_tag('node_type', 'duplication');
             $self->duplication_confidence_score($ancestor);
-        } elsif (($child1->get_tagvalue('taxon_name') eq $taxon_name) or ($child2->get_tagvalue('taxon_name') eq $taxon_name)) {
+        } elsif (($child1->get_value_for_tag('species_tree_node_id') == $this_taxon) or ($child2->get_value_for_tag('species_tree_node_id') == $this_taxon)) {
             $ancestor->store_tag('node_type', 'dubious');
             $ancestor->store_tag('duplication_confidence_score', 0);
         } else {
@@ -167,8 +174,6 @@ sub rec_add_paralogs {
             foreach my $gene2 (@{$child2->get_tagvalue('gene_hash')->{$genome_db_id}}) {
                 my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2, 0);
                 $genepairlink->add_tag("ancestor", $ancestor);
-                $genepairlink->add_tag("taxon_name", $taxon_name);
-                $genepairlink->add_tag("tree_node_id", $ancestor->tree->root_id);
                 $genepairlink->add_tag("orthotree_type", 'other_paralog');
                 $genepairlink->add_tag("is_tree_compliant", 1);
                 $ngenepairlinks++;
@@ -201,6 +206,7 @@ sub get_ancestor_species_hash
 
     print $node->node_id, " is a ", $node->tree->tree_type, "\n" if ($self->debug);
     my $gene_hash = {};
+    my @sub_taxa = ();
 
     if ($node->is_leaf) {
   
@@ -217,6 +223,7 @@ sub get_ancestor_species_hash
         foreach my $leaf (@$leaves) {
             $leaf->print_member if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
+            push @sub_taxa, $self->param('gdb_id2stn')->{$leaf->genome_db_id};
             push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->member_id};
         }
    
@@ -228,6 +235,7 @@ sub get_ancestor_species_hash
         foreach my $child (@{$node->children}) {
             print "child: ", $child->node_id, "\n" if ($self->debug);
             my $t_species_hash = $self->get_ancestor_species_hash($child);
+            push @sub_taxa, $child->get_value_for_tag('lca_taxon');
             foreach my $genome_db_id (keys(%$t_species_hash)) {
                 $is_dup ||= (exists $species_hash->{$genome_db_id});
                 $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id} + ($species_hash->{$genome_db_id} || 0);
@@ -239,9 +247,16 @@ sub get_ancestor_species_hash
  
     }
 
-    print $node->node_id, " contains ", scalar(keys %$species_hash), " species\n" if ($self->debug);
+    my $lca_taxon = shift @sub_taxa;
+    foreach my $this_taxon (@sub_taxa) {
+        $lca_taxon = $lca_taxon->find_first_shared_ancestor($this_taxon);
+    }
+
+    printf("%s is a '%s' and contains %d species\n", $node->node_id, $lca_taxon->node_name, scalar(keys %$species_hash)) if ($self->debug);
     $node->add_tag("species_hash", $species_hash);
     $node->add_tag("gene_hash", $gene_hash);
+    $node->add_tag('lca_taxon', $lca_taxon);
+    $node->add_tag('species_tree_node_id', $lca_taxon->node_id);
 
     return $species_hash;
 }
