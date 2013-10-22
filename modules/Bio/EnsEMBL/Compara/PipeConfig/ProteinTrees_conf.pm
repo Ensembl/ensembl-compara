@@ -72,21 +72,23 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'release'               => '68',
-        #'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        #'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        #'ensembl_release'       => 68,      # it defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
+    # custom pipeline name, in case you don't like the default one
+        #'pipeline_name'         => 'compara_homology_'.$self->o('ensembl_release'),
+        'division'              => undef,       # Tag attached to every single tree
 
     # dependent parameters: updating 'work_dir' should be enough
+        #'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
 
     # blast parameters:
         'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
-        'per_species_blast_min_length'   => 5,
 
         'protein_members_range'     => 100000000, # highest member_id for a protein member
 
@@ -118,8 +120,9 @@ sub default_options {
         #'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
+        #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
 
-    # HMM specific parameters
+    # HMM specific parameters (set to 0 or undef if not in use)
         #'hmm_clustering'            => 0, ## by default run blastp clustering
         #'cm_file_or_directory'      => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
         #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
@@ -139,7 +142,7 @@ sub default_options {
         #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
         #'build_hmm_capacity'        => 200,
-        #'ktreedist_capacity'        =>  50,
+        #'ktreedist_capacity'        => 150,
         #'merge_supertrees_capacity' => 100,
         #'other_paralogs_capacity'   => 100,
         #'homology_dNdS_capacity'    => 200,
@@ -148,7 +151,7 @@ sub default_options {
         #'HMMer_classify_capacity'   => 100,
 
     # hive priority for non-LOCAL health_check analysis:
-        'hc_priority'               => 10,
+        'hc_priority'               => -10,
 
     # connection parameters to various databases:
 
@@ -161,11 +164,13 @@ sub default_options {
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
         'master_db' => undef,
-        'ncbi_db' => $self->o('master_db'),
+        'ncbi_db'   => $self->o('master_db'),
 
+        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         #'curr_core_registry'        => "registry.conf",
+        'curr_core_registry'        => undef,
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
@@ -175,7 +180,7 @@ sub default_options {
         #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
 
         # Force a full re-run of blastp
-        'force_blast_run'           => 1,
+        'force_blast_run'           => 0,
 
     };
 }
@@ -189,9 +194,6 @@ sub pipeline_create_commands {
         if ref $self->o('curr_core_sources_locs') and not scalar(@{$self->o('curr_core_sources_locs')})
         and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')})
         and not $self->o('curr_core_registry');
-
-    # If the pipeline should use genome_db_ids, the user MUST provide a species tree
-    die "use_genomedb_id is only possible with a custom species tree" if $self->o('use_genomedb_id') and not $self->o('species_tree_input_file');
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
     die "The master dabase must be defined with a mlss_id" if $self->o('master_db') and not $self->o('mlss_id');
@@ -925,6 +927,7 @@ sub pipeline_analyses {
             -parameters => {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
+                'division'                  => $self->o('division'),
             },
             -rc_name => '250Mb_job',
             -flow_into => [ 'hc_clusters' ],

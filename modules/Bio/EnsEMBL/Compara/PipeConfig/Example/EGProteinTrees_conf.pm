@@ -49,98 +49,100 @@
 
 =cut
 
-
 package Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 
-use base qw(Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf);
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
 
 sub default_options {
-  my ($self) = @_;
+    my ($self) = @_;
 
-  #Parent defaults
-  my $parent = $self->SUPER::default_options();
+    return {
+        %{$self->SUPER::default_options},   # inherit the generic ones
 
-  #Local defaults
-  my %options = (
+    # parameters that are likely to change from execution to another:
+        #mlss_id => 40043,
+        #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
 
-    #Globals
-#    mlss_id => 40043,
-#    division_name => 'pyrococcus_collection',
+    # custom pipeline name, in case you don't like the default one
+        dbowner => 'ensembl_compara',       # Used to prefix the database name (in HiveGeneric_conf)
+        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('release'),
 
-    # Used to name the database and the LSF jobs
-    dbowner => 'ensembl_compara',
-    pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('release'),
+    # dependent parameters: updating 'work_dir' should be enough
+        'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
+        'base_dir'              =>  '/nfs/nobackup2/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara',
+        'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
-    #Dirs
-#    ensembl_cvs_root_dir  =>  '',
-    exe_dir               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
-    base_dir              =>  '/nfs/nobackup2/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara',
-    work_dir              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
-  #  blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'/blastTmp',
+    # blast parameters:
 
-    #Executables
-    hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
-    mcoffee_exe     =>  $self->o('exe_dir').'/t_coffee',
-    mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee', 	
-    mafft_home      =>  '/nfs/panda/ensemblgenomes/external/mafft',
-    treebest_exe    =>  $self->o('exe_dir').'/treebest',
-    quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
-    buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
-    codeml_exe      =>  $self->o('exe_dir').'/codeml',
-    ktreedist_exe   =>  $self->o('exe_dir').'/ktreedist',
-   'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+    # clustering parameters:
+        'outgroups'                     => {},      # affects 'hcluster_dump_input_per_genome'
 
-    # HMM specific parameters
-   'hmm_clustering'            => 0, ## by default run blastp clustering
-   'cm_file_or_directory'      => '/nfs/production/panda/ensemblgenomes/data/PANTHER7.2/',
-   'hmm_library_basedir'       => '/nfs/production/panda/ensemblgenomes/data/PANTHER7.2/',
-   'pantherScore_path'         => '/nfs/panda/ensemblgenomes/data/pantherScore1.03/',
-   'hmmer_path'                => '/nfs/panda/ensemblgenomes/external/hmmer-2.3.2-x86_64-Linux/src/',
+    # tree building parameters:
+        'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
+        'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
+
+    # homology_dnds parameters:
+        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
+        'taxlevels'                 => ['cellular organisms'],
+        'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
+
+    # mapping parameters:
+
+    # executable locations:
+        hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
+        mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee',
+        mafft_home      =>  '/nfs/panda/ensemblgenomes/external/mafft',
+        treebest_exe    =>  $self->o('exe_dir').'/treebest',
+        quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
+        buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
+        codeml_exe      =>  $self->o('exe_dir').'/codeml',
+        ktreedist_exe   =>  $self->o('exe_dir').'/ktreedist',
+        'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+
+    # HMM specific parameters (set to 0 or undef if not in use)
+        'hmm_clustering'            => 0, ## by default run blastp clustering
+        'cm_file_or_directory'      => undef,
+        'hmm_library_basedir'       => undef,
+        'pantherScore_path'         => undef,
+        'hmmer_path'                => undef,
 
 
-    #Clustering
-    outgroups => {},
-
-    #Trees
-    use_genomedb_id         =>  1,
-    tree_dir                =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
-    species_tree_input_file =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
 
     # hive_capacity values for some analyses:
-    'reuse_capacity'            =>   4,
-    'blast_factory_capacity'    =>  50,
-    'blastp_capacity'           => 200,
-    'mcoffee_capacity'          => 200,
-    'split_genes_capacity'      => 200,
-    'njtree_phyml_capacity'     => 200,
-    'ortho_tree_capacity'       => 200,
-    'ortho_tree_annot_capacity' => 300,
-    'quick_tree_break_capacity' => 100,
-    'build_hmm_capacity'        => 200,
-    'ktreedist_capacity'        => 150,
-    'merge_supertrees_capacity' => 100,
-    'other_paralogs_capacity'   => 100,
-    'homology_dNdS_capacity'    => 200,
-    'qc_capacity'               =>   4,
-    'hc_capacity'               =>   4,
-    'HMMer_classify_capacity'   => 100,
+        'reuse_capacity'            =>   4,
+        'blast_factory_capacity'    =>  50,
+        'blastp_capacity'           => 200,
+        'mcoffee_capacity'          => 200,
+        'split_genes_capacity'      => 200,
+        'njtree_phyml_capacity'     => 200,
+        'ortho_tree_capacity'       => 200,
+        'ortho_tree_annot_capacity' => 300,
+        'quick_tree_break_capacity' => 100,
+        'build_hmm_capacity'        => 200,
+        'ktreedist_capacity'        => 150,
+        'merge_supertrees_capacity' => 100,
+        'other_paralogs_capacity'   => 100,
+        'homology_dNdS_capacity'    => 200,
+        'qc_capacity'               =>   4,
+        'hc_capacity'               =>   4,
+        'HMMer_classify_capacity'   => 100,
 
     # hive priority for non-LOCAL health_check analysis:
-    'hc_priority'               => 10,
 
-    #DNDS
-    codeml_parameters_file  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-    taxlevels               => ['cellular organisms'],
-    filter_high_coverage    => 0,
+    # connection parameters to various databases:
 
-    ###### DB WORK
+        # Uncomment and update the database locations
 
-    master_db => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+        # the production database itself (will be created)
+        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+
+        # the master database for synchronization of various ids (use undef if you don't have a master database)
+        'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
@@ -166,35 +168,19 @@ sub default_options {
       -db_version => $self->o('release')
     },
 
-    # Add the database location of the previous Compara release
-    prev_rel_db => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
+        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
+        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+        'curr_core_sources_locs' => [ $self->o('prod_1') ],
+        # Add the database entries for the core databases of the previous release
+        'prev_core_sources_locs'   => [ $self->o('staging_1') ],
 
-    curr_core_sources_locs => [ $self->o('prod_1') ],
-    # Add the database entries for the core databases of the previous release
-    'prev_core_sources_locs'   => [ $self->o('staging_1') ],
-      
-    # do_not_reuse_list => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
 
-  );
-
-  #Combine & return
-  return {%{$parent}, %options};
+    };
 }
 
-sub pipeline_wide_parameters {
-  my ($self) = @_;
-  return {
-    %{$self->SUPER::pipeline_wide_parameters()},
-    'email'         => $self->o('email')
-  };
-}
 
-sub pipeline_create_commands {
-  my ($self) = @_;
-  return [
-    @{$self->SUPER::pipeline_create_commands()},
-  ];
-}
 
 sub resource_classes {
   my ($self) = @_;
@@ -203,51 +189,13 @@ sub resource_classes {
          '250Mb_job'    => {'LSF' => '-q production-rh6 -M250   -R"select[mem>250]   rusage[mem=250]"' },
          '500Mb_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-	'4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '500Mb_long_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          'msa'      => {'LSF' => '-q production-rh6 -W 24:00' },
          'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]" -W 24:00' },
   };
-}
-
-sub pipeline_analyses {
-  my ($self) = @_;
-  my $analyses = $self->SUPER::pipeline_analyses();
-  my $new_analyses = $self->_new_analyses();
-  push(@{$analyses}, @{$new_analyses});
-  $self->_modify_analyses($analyses);
-  return $analyses;
-}
-
-sub _new_analyses {
-  my ($self) = @_;
-  return [
-    {
-      -logic_name => 'divison_tag_protein_trees',
-      -module => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-      -parameters => { },
-      -flow_into => {
-        1 => { 'mysql:////gene_tree_root_tag' => { root_id => '#gene_tree_id#', tag => 'division', value => $self->o('division') } }
-      }
-    },
-  ];
-}
-
-sub _modify_analyses {
-  my ($self, $list) = @_;
-
-  foreach my $analysis (@{$list}) {
-    if ($analysis->{'-logic_name'} eq 'ortho_tree') {
-      #Get normal flow to send a job to division_tag_protein_trees all the time
-      #rather than having the flow do the write; for some reason this old
-      #version stopped working
-	push(@{$analysis->{-flow_into}}, 'divison_tag_protein_trees'); 
-    }
-  }
-
 }
 
 1;

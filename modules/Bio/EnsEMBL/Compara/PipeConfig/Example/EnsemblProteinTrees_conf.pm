@@ -47,6 +47,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf;
 
 use strict;
 use warnings;
+
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
 
@@ -57,18 +59,19 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
-        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        'rel_with_suffix'       => $self->o('ensembl_release'), # You can add a letter to distinguish this run from other runs on the same release
+
+    # custom pipeline name, in case you don't like the default one
+        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'division'              => 'ensembl',       # Tag attached to every single tree
 
     # dependent parameters: updating 'work_dir' should be enough
-        'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
-        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # blast parameters:
 
     # clustering parameters:
-        'outgroups'             => { 'saccharomyces_cerevisiae' => 2},   # affects 'hcluster_dump_input_per_genome'
+        'outgroups'             => { 'saccharomyces_cerevisiae' => 2 },   # affects 'hcluster_dump_input_per_genome'
 
     # tree building parameters:
 
@@ -88,17 +91,14 @@ sub default_options {
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
 
-    # HMM specific parameters
+    # HMM specific parameters (set to 0 or undef if not in use)
         'hmm_clustering'            => 0, ## by default run blastp clustering
-        'cm_file_or_directory'      => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        #'cm_file_or_directory'      => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii', ## Panther DB
-        #'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
-        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'cm_file_or_directory'      => undef,
+        'hmm_library_basedir'       => undef,
+        'pantherScore_path'         => undef,
+        'hmmer_path'                => undef,
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   4,
@@ -120,7 +120,6 @@ sub default_options {
         'HMMer_classify_capacity'   => 100,
 
     # hive priority for non-LOCAL health_check analysis:
-        'hc_priority'               => 10,
 
     # connection parameters to various databases:
 
@@ -130,7 +129,7 @@ sub default_options {
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
         'host' => 'compara1',
 
-        # the master database for synchronization of various ids
+        # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
 
         # Ensembl-specific databases
@@ -155,6 +154,7 @@ sub default_options {
             -pass   => '',
         },
 
+        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
@@ -164,14 +164,16 @@ sub default_options {
         'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
-        # Add the database location of the previous Compara release
-        'prev_rel_db' => 'mysql://ensro@compara2:3306/lg4_ensembl_compara_73',
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        'prev_rel_db' => 'mysql://ensro@compara2:3306/lg4_compara_homology_73'
 
         # To run without a master database
         #'master_db'                 => undef,
         #'do_stable_id_mapping'      => 0,
         #'mlss_id'                   => undef,
         #'ncbi_db'                   => $self->o('livemirror_loc'),
+
+        # Force a full re-run of blastp
 
     };
 }
