@@ -56,11 +56,11 @@ sub fetch_input {
   my $type         = $self->param('type')         || die "'type' is a required parameter, please set it in the input_id hashref to 'f' or 't'";
   my $curr_release = $self->param('release')      || die "'release' is a required numeric parameter, please set it in the input_id hashref";
   looks_like_number($curr_release)                || die "'release' is a numeric parameter. Check your input";
-  my $prev_release = $self->param('prev_release') || $curr_release - 1;
-  my $prev_rel_dbc = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db)->dbc();
+  my $prev_rel_dba = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db);
+  my $prev_release = $prev_rel_dba->get_MetaContainer->get_schema_version;
 
   my $adaptor   = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
-  my $from_ncs  = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dbc);
+  my $from_ncs  = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dba->dbc());
   my $to_ncs    = $adaptor->fetch_ncs($curr_release, $type, $self->compara_dba->dbc());
   my $ncsl      = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 
@@ -79,7 +79,6 @@ sub run {
 
   my $type         = $self->param('type');
   my $curr_release = $self->param('release');
-  my $prev_release = $self->param('prev_release');
 
   my $ncsl = $self->param('ncsl');
   my $postmap = $ncsl->maximum_name_reuse();

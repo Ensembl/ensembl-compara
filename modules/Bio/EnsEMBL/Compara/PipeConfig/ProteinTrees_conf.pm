@@ -185,20 +185,11 @@ sub default_options {
         # Add the database entries for the core databases of the previous release
         #'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
 
-        # Add the database location of the previous Compara release
-        #'prev_rel_db' => {
-        #   -host   => 'compara3',
-        #   -port   => 3306,
-        #   -user   => 'ensro',
-        #   -pass   => '',
-        #   -dbname => 'mm14_compara_homology_67',
-        #},
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
 
-        # Are we reusing the dbIDs and the blastp alignments ?
-        'reuse_from_prev_rel_db'    => 0,
+        # Force a full re-run of blastp
         'force_blast_run'           => 1,
-
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
     };
 }
@@ -219,9 +210,8 @@ sub pipeline_create_commands {
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
     die "The master dabase must be defined with a mlss_id" if $self->o('use_master_db') and not ($self->o('master_db') and $self->o('mlss_id'));
     die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('use_master_db');
-    die "Species reuse is only possible with a master database" if $self->o('reuse_from_prev_rel_db') and not $self->o('use_master_db');
-    die "Species reuse is only possible with a previous compara database" if $self->o('reuse_from_prev_rel_db') and not $self->o('prev_rel_db');
-    die "Species reuse is only possible with some previous core databases" if $self->o('reuse_from_prev_rel_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
+    die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('use_master_db');
+    die "Species reuse is only possible with some previous core databases" if $self->o('prev_rel_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
 
     # Without a master database, we must provide other parameters
     die if not $self->o('use_master_db') and not $self->o('ncbi_db');
@@ -512,10 +502,9 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
-                $self->o('reuse_from_prev_rel_db' ) ? ('reuse_db' => $self->o('prev_rel_db')) : (),
+                'reuse_db'          => $self->o('prev_rel_db'),
                 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'release'           => $self->o('ensembl_release'),
-                'prev_release'      => $self->o('prev_release'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,
@@ -1328,7 +1317,6 @@ sub pipeline_analyses {
                 'master_db'     => $self->o('master_db'),
                 'prev_rel_db'   => $self->o('prev_rel_db'),
                 'release'       => $self->o('ensembl_release'),
-                'prev_release'  => $self->o('prev_release'),
                 'type'          => 't',
             },
             -rc_name => '1Gb_job',

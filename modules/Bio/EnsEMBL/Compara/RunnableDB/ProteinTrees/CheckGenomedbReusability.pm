@@ -20,9 +20,6 @@ supported keys:
     'release'       => <number>
         number of the current release
 
-    'prev_release'  => <number>
-        (optional) number of the previous release for reuse purposes (may coincide, may be 2 or more releases behind, etc)
-
     'registry_dbs'  => <list_of_dbconn_hashes>
         list of hashes with registry connection parameters (tried in succession).
 
@@ -77,7 +74,6 @@ sub fetch_input {
     }
 
     my $curr_release = $self->param('release');
-    my $prev_release = $self->param('prev_release') || ($curr_release - 1);
 
     if(my $reuse_db = $self->param('reuse_db')) {
 
@@ -117,6 +113,8 @@ sub fetch_input {
             # now use the registry to find the previous release core database candidate:
 
             Bio::EnsEMBL::Registry->no_version_check(1);
+
+            my $prev_release = $reuse_compara_dba->get_MetaContainer->get_schema_version;
 
             # load the prev.release registry:
             foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {

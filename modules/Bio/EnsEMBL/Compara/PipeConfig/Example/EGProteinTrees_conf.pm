@@ -187,21 +187,9 @@ sub default_options {
     },
 
     # Add the database location of the previous Compara release
-    prev_rel_db => {
-       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-       -port   => 4160,
-       -user   => 'ensro',       
-       -dbname => 'ensembl_compara_fungi_19_72'
-    },
-
-    prev_release              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-
-    # Are we reusing the dbIDs and the blastp alignments ?
-    'reuse_from_prev_rel_db'    => 0,
-    'force_blast_run'           => 1,
+    prev_rel_db => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
 
     curr_core_sources_locs => [ $self->o('prod_1') ],
-    reuse_from_prev_rel_db => 0,  #Set this to 1 to enable the reuse
     # Add the database entries for the core databases of the previous release
     'prev_core_sources_locs'   => [ $self->o('staging_1') ],
       

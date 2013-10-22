@@ -167,7 +167,6 @@ sub default_options {
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-       'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
        'reuse_db' => {   # usually previous pecan production database
            -host   => 'compara2',
@@ -196,7 +195,6 @@ sub default_options {
         },
 #        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
 #        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
-#        'prev_release'              => 61,   # 0 is the default and it means "take current release number and subtract 1"
 #        'reuse_db' => {   # usually previous production database
 #           -host   => 'compara4',
 #           -port   => 3306,
@@ -369,7 +367,6 @@ sub pipeline_analyses {
 		'reuse_db'      => $self->o('reuse_db'),
                 'registry_dbs'  => $self->o('reuse_core_sources_locs'),
                 'release'       => $self->o('release'),
-                'prev_release'  => $self->o('prev_release'),
 		'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,    # allow for parallel execution

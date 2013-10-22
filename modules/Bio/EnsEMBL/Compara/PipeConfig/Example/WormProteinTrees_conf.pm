@@ -71,8 +71,7 @@ sub default_options {
 
     # switch off the reuse:
         'reuse_core_sources_locs'   => [ ],
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-        'reuse_db'                  => 0,
+        'reuse_db'                  => undef,
     };
 }
 

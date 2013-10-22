@@ -176,26 +176,13 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release
-        'prev_rel_db' => {
-           -host   => 'compara3',
-           -port   => 3306,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'kb3_ensembl_compara_72',
-        },
-
-        # Are we reusing the blastp alignments ?
-        'reuse_from_prev_rel_db'    => 1,
+        'prev_rel_db' => 'mysql://ensro@compara2:3306/lg4_ensembl_compara_73',
 
         # To run without a master database
         #'use_master_db'             => 0,
         #'do_stable_id_mapping'      => 0,
-        #'reuse_from_prev_rel_db'    => 0,
         #'mlss_id'                   => undef,
         #'ncbi_db'                   => $self->o('livemirror_loc'),
-
-        #'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-        #'prev_release'            => $self->o('release'),
 
     };
 }
