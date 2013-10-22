@@ -100,7 +100,6 @@ sub default_options {
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
-        'use_genomedb_id'           => 0,       # affects 'njtree_phyml' and 'ortho_tree'
         'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
 
     # homology_dnds parameters:
@@ -553,7 +552,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-                               'mlss_id' => $self->o('mlss_id'),
+                               'for_gene_trees' => 1,
             },
             # -flow_into  => {
             #     3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
@@ -1158,7 +1157,6 @@ sub pipeline_analyses {
                 'bootstrap'                 => 1,
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
-                'use_genomedb_id'           => $self->o('use_genomedb_id'),
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
@@ -1193,7 +1191,6 @@ sub pipeline_analyses {
         {   -logic_name => 'ortho_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
-                'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'tag_split_genes'   => 1,
             },
             -hive_capacity      => $self->o('ortho_tree_capacity'),
@@ -1232,7 +1229,6 @@ sub pipeline_analyses {
         {   -logic_name => 'ortho_tree_annot',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
-                'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
             },
@@ -1290,7 +1286,6 @@ sub pipeline_analyses {
         {   -logic_name     => 'other_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
             -parameters     => {
-                'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'dataflow_subclusters' => 1,
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),

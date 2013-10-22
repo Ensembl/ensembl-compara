@@ -201,7 +201,6 @@ sub run_analysis {
   # duplication confidence scores
   foreach my $node (@{$gene_tree->get_all_nodes}) {
       next unless scalar(@{$node->children});
-      $self->get_ancestor_taxon_level($node);
       if ($node->get_tagvalue('node_type') ne 'speciation') {
           $self->duplication_confidence_score($node);
       } else {
@@ -562,6 +561,7 @@ sub store_gene_link_as_homology {
   $homology->is_tree_compliant($is_tree_compliant);
   $homology->gene_tree_node($ancestor);
   $homology->method_link_species_set($mlss);
+  $homology->{_species_tree_node_id} = $ancestor->get_value_for_tag('species_tree_node_id');
   
   $homology->add_Member($gene1->copy);
   $homology->add_Member($gene2->copy);

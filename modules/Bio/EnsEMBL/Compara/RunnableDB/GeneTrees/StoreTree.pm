@@ -14,10 +14,15 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub _name_for_prot {
+
+sub prepareTemporaryMemberNames {
     my $self = shift;
-    my $prot = shift;
-    return ($prot->member_id)."_".($self->param('use_genomedb_id') ? $prot->genome_db_id : $prot->taxon_id);
+    my $gene_tree = shift;
+
+    my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
+    foreach my $member (@{$gene_tree->get_all_Members}) {
+        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $lookup->{$member->genome_db_id});
+    }
 }
 
 sub dumpTreeMultipleAlignmentToWorkdir {
@@ -35,11 +40,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
     print("aln_file = '$aln_file'\n");
   }
-
-  # Using append_taxon_id will give nice seqnames_taxonids needed for
-  # njtree species_tree matching
-  my %sa_params = $self->param('use_genomedb_id') ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-  $sa_params{'-seq_type'} = 'cds' if $self->param('cdna');
 
   print STDERR "fetching alignment\n" if ($self->debug);
 
@@ -62,7 +62,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
-      my $name1 = $self->_name_for_prot($protein1);
       my $cdna = $protein1->alignment_string('cds');
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
@@ -79,10 +78,9 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       foreach my $node2 (@$partial_genes) {
         my $protein2 = $gene_tree->root->find_leaf_by_node_id($node2->[0]);
         #print STDERR "node2 ", $node2, " ", $protein2, "\n";
-        my $name2 = $self->_name_for_prot($protein2);
-        $split_genes{$name2} = $name1;
+        $split_genes{$protein2->{_tmp_name}} = $protein1->{_tmp_name};
         #print STDERR Dumper(%split_genes);
-        print STDERR "Joining in ", $protein1->stable_id, " / $name1 and ", $protein2->stable_id, " / $name2 in input cdna alignment\n" if ($self->debug);
+        print STDERR "Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
         my $other_cdna = $protein2->alignment_string('cds');
         print STDERR "cnda2 $other_cdna\n" if $self->debug;
         $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
@@ -100,10 +98,9 @@ sub dumpTreeMultipleAlignmentToWorkdir {
  
   # Getting the multiple alignment
   my $sa = $gene_tree->get_SimpleAlign(
-     -id_type => 'MEMBER',
+     -id_type => 'TMP',
      -stop2x => 1,
      -SEQ_TYPE => 'cds',
-     %sa_params,
   );
   if ($self->param('check_split_genes')) {
     foreach my $gene_to_remove (keys %{$self->param('split_genes')}) {
@@ -224,11 +221,14 @@ sub store_node_tags
         my $n_lost = $node->get_tagvalue("E");
         $n_lost =~ s/.{2}//;        # get rid of the initial $-
         my @lost_taxa = split('-', $n_lost);
+        my $topup = 0;
         foreach my $taxon (@lost_taxa) {
-            print "lost_taxon_id : $taxon\n" if ($self->debug);
-            $node->store_tag('lost_taxon_id', $taxon, 1);
+            print "lost_species_tree_node_id : $taxon\n" if ($self->debug);
+            $node->store_tag('lost_species_tree_node_id', $taxon, $topup);
+            $topup = 1;
         }
     }
+    return if $node->is_leaf;
 
     $node->delete_tag('tree_support');
     if ($node->has_tag('T') and $self->param('store_tree_support')) {
@@ -244,7 +244,7 @@ sub store_node_tags
         }
     }
 
-    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'S' => 'treebest_taxon_id');
+    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'S' => 'species_tree_node_id');
     foreach my $tag (keys %mapped_tags) {
         my $db_tag = $mapped_tags{$tag};
         if ($node->has_tag($tag)) {
@@ -438,7 +438,6 @@ sub fetch_or_create_other_tree {
         # Reformat things
         foreach my $member (@{$newtree->get_all_Members}) {
             $member->cigar_line(undef);
-            $member->stable_id($self->_name_for_prot($member));
             $member->{'_children_loaded'} = 1;
         }
         $newtree->ref_root_id($tree->root_id);

@@ -389,6 +389,7 @@ sub get_SimpleAlign {
         my $seqID = $member->stable_id;
         $seqID = $member->sequence_id if $id_type and $id_type eq 'SEQ';
         $seqID = $member->member_id if $id_type and $id_type eq 'MEMBER';
+        $seqID = $member->{_tmp_name} if $id_type and $id_type eq 'TMP';
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
 

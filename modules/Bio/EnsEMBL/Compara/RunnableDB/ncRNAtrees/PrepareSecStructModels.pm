@@ -264,15 +264,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
 
-    # Using append_taxon_id will give nice seqnames_taxonids needed for
-    # njtree species_tree matching
-    my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-
-    my $sa = $tree->get_SimpleAlign
-        (
-         -id_type => 'MEMBER',
-         %sa_params,
-        );
+    $self->prepareTemporaryMemberNames($tree);
+    my $sa = $tree->get_SimpleAlign(-id_type => 'TMP');
     $sa->set_displayname_flat(1);
 
     # Phylip header

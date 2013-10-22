@@ -56,7 +56,24 @@ sub fetch_input {
         $species_tree_string = `cat $species_tree_input_file`;
 #        chomp $species_tree_string;
 
-        $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $species_tree_string );
+        $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $species_tree_string, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
+
+        # Let's try to find genome_dbs and ncbi taxa
+        my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
+        my $ncbi_taxa_a = $self->compara_dba->get_NCBITaxonAdaptor;
+        foreach my $node (reverse @{$species_tree_root->get_all_nodes}) {
+            if ($node->is_leaf) {
+                my $gdb = $gdb_a->fetch_by_name_assembly($node->name) or die $node->name." is not a valid GenomeDB name";
+                $node->genome_db_id($gdb->dbID);
+                $node->taxon_id($gdb->taxon_id);
+                $node->node_name($gdb->taxon->name);
+                $node->{_tmp_gdb} = $gdb;
+            } else {
+                my $int_taxon = $ncbi_taxa_a->fetch_first_shared_ancestor_indexed(map {$_->{_tmp_gdb}->taxon} @{$node->get_all_leaves});
+                $node->taxon_id($int_taxon->taxon_id);
+                $node->node_name($int_taxon->name) unless $node->name;
+            }
+        }
 
     } else {    # generate the tree from the database+params
 
@@ -79,17 +96,22 @@ sub fetch_input {
             $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree ( -compara_dba => $self->compara_dba, @tree_creation_args );
         }
 
-        my $newick_format   = $self->param('newick_format');
-        $species_tree_string = $species_tree_root->newick_format( $newick_format );
 
     }
+    $self->param('species_tree_root', $species_tree_root);
+}
 
-    # my $speciesTreeNode_adaptor = $self->compara_dba->get_SpeciesTreeNodeAdaptor();
-    # $species_tree_root->adaptor($speciesTreeNode_adaptor);
+
+sub write_output {
+    my $self = shift @_;
+
+    my $species_tree_root = $self->param('species_tree_root');
+    my $newick_format = $self->param('newick_format');
+    my $species_tree_string = $species_tree_root->newick_format( $newick_format );
 
     my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
     $species_tree->species_tree($species_tree_string);
-    $species_tree->method_link_species_set_id($self->param('mlss_id'));
+    $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
     $species_tree->root($species_tree_root);
 
     my $label = $self->param('label') || 'default';
@@ -98,12 +120,11 @@ sub fetch_input {
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
     $speciesTree_adaptor->store($species_tree);
 
-#    $self->param('species_tree_string', $species_tree_string);
-}
-
-
-sub write_output {
-    my $self = shift @_;
+    if ($self->param('for_gene_trees')) {
+        # We need to create a fast lookup: genome_db_id => species_tree_node_id
+        my $str = '{'.join(', ', map {sprintf('%d=>%d', $_->genome_db_id, $_->node_id)} @{$species_tree_root->get_all_leaves} ).'}';
+        $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'))->store_tag('gdb2stn', $str);
+    }
 }
 
 
