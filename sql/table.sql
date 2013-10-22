@@ -1539,9 +1539,9 @@ CREATE TABLE homology_member (
   member_id                   int(10) unsigned NOT NULL, # FK member.member_id
   peptide_member_id           int(10) unsigned, # FK member.member_id
   cigar_line                  mediumtext,
-  perc_cov                    int(10),
-  perc_id                     int(10),
-  perc_pos                    int(10),
+  perc_cov                    tinyint unsigned default 0,
+  perc_id                     tinyint unsigned default 0,
+  perc_pos                    tinyint unsigned default 0,
 
   FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
@@ -1720,4 +1720,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_e.sql|homology_types');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_f.sql|homology_node_ids');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_73_74_g.sql|homology_perc_size');
 
