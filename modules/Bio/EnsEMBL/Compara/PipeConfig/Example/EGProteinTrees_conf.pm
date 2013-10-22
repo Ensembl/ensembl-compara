@@ -58,14 +58,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base qw(Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf);
 
-sub _pipeline_db_options {
-  my ($self) = @_;
-  return {
-    prefix => 'ensembl_compara',
-    suffix => 'hom_'.$self->o('eg_release').'_'.$self->o('release'),
-    db_name => $self->o('prefix').q{_}.$self->o('division').q{_}.$self->o('suffix'),
-  };
-}
 
 sub default_options {
   my ($self) = @_;
@@ -79,15 +71,16 @@ sub default_options {
     #Globals
 #    mlss_id => 40043,
 #    division_name => 'pyrococcus_collection',
-    %{$self->_pipeline_db_options()},
 
-    pipeline_name => 'PT_'.$self->o('mlss_id'),
+    # Used to name the database and the LSF jobs
+    dbowner => 'ensembl_compara',
+    pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('release'),
 
     #Dirs
 #    ensembl_cvs_root_dir  =>  '',
     exe_dir               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
     base_dir              =>  '/nfs/nobackup2/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara',
-    work_dir              =>  $self->o('base_dir').'/'.$self->o('db_name'),
+    work_dir              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
   #  blast_tmp_dir         =>  '/tmp/'.$self->o('mlss_id').'/blastTmp',
 
     #Executables
@@ -146,13 +139,6 @@ sub default_options {
     filter_high_coverage    => 0,
 
     ###### DB WORK
-    pipeline_db => {
-      -host   => $self->o('host'),
-      -port   => $self->o('port'),
-      -user   => $self->o('username'),
-      -pass   => $self->o('password'),
-      -dbname => $self->o('db_name'),
-    },
 
     master_db => {
       -host   => 'mysql-eg-pan-1.ebi.ac.uk',

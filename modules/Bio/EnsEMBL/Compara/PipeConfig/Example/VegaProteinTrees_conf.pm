@@ -49,7 +49,6 @@ sub resource_classes {
 # each run you will need to specify and uncomment: mlss_id, release, work_dir, dbname
 sub default_options {
   my ($self) = @_;
-  my $version = 'vega_genetree_20130211_71_step3'; #edit this each time
   return {
     %{$self->SUPER::default_options},
     # inherit the generic ones
@@ -58,8 +57,10 @@ sub default_options {
     'mlss_id'               => '25',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
     'release'               => '71',
 
+    'pipeline_name'         => 'vega_genetree_20130211_71_step3', #edit this each time
+
     'rel_suffix'            => 'vega',
-    'work_dir'              => '/lustre/scratch109/sanger/'.$ENV{'USER'}.'/compara_generation/'.$version,
+    'work_dir'              => '/lustre/scratch109/sanger/'.$ENV{'USER'}.'/compara_generation/'.$self->o('pipeline_name'),
     'outgroups'             => { },   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
@@ -67,13 +68,9 @@ sub default_options {
     # connection parameters to various databases:
 
     # the production database itself (will be created)
-    'pipeline_db' => { 
-      -host   => 'vegabuild',
-      -port   => 5304,
-      -user   => 'ottadmin',
-      -pass   => $self->o('password'),
-      -dbname => $self->o('ENV', 'USER').'_'.$version,
-    },
+    'host'   => 'vegabuild',
+    'port'   => 5304,
+    'user'   => 'ottadmin',
 
     # the master database for synchronization of various ids
     'master_db' => {

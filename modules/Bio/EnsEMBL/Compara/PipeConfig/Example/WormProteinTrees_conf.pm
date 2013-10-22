@@ -53,13 +53,11 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'farmdb1',
-            -port   => 3306,
-            -user   => 'wormadmin',
-            -pass   => $self->o('password'),                    
-            -dbname => 'worm_compara_homology_'.$self->o('rel_with_suffix'),
-        },
+        # The production database
+        'host'          => 'farmdb1',
+        'user'          => 'wormadmin',
+        'dbowner'       => 'worm',
+        'pipeline_name' => 'compara_homology_'.$self->o('rel_with_suffix'),
 
         'master_db' => {                        # the master database for synchronization of various ids
             -host   => 'farmdb1',

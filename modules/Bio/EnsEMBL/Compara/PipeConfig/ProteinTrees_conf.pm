@@ -80,8 +80,6 @@ sub default_options {
 
 
     # dependent parameters: updating 'work_dir' should be enough
-        'pipeline_basename' => 'PT',
-        'pipeline_name'         => $self->o('pipeline_basename'),   # name the pipeline to differentiate the submitted processes
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -157,13 +155,8 @@ sub default_options {
         # Uncomment and update the database locations
 
         # the production database itself (will be created)
-        #'pipeline_db' => {
-        #    -host   => 'compara3',
-        #    -port   => 3306,
-        #    -user   => 'ensadmin',
-        #    -pass   => $self->o('password'),
-        #    -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
-        #},
+        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+        #'host' => 'compara1',
 
         # the master database for synchronization of various ids
         #'master_db' => {

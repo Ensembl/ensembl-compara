@@ -63,7 +63,7 @@ sub default_options {
 
     # dependent parameters: updating 'work_dir' should be enough
         'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
-        'pipeline_name'         => $self->o('pipeline_basename') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
     # blast parameters:
 
@@ -126,14 +126,9 @@ sub default_options {
 
         # Uncomment and update the database locations
 
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
-            -driver => 'mysql',
-        },
+        # the production database itself (will be created)
+        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+        'host' => 'compara1',
 
         # the master database for synchronization of various ids
         'master_db' => {
