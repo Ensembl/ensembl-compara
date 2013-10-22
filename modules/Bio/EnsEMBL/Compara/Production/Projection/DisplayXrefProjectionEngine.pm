@@ -231,8 +231,8 @@ sub _homology_predicate_builder {
   
   $self->log()->debug('Creating default Homology predicate');
   
-  my @one_types = qw(ortholog_one2one apparent_ortholog_one2one);
-  my @many_types = qw(ortholog_one2many apparent_ortholog_one2many);  
+  my @one_types = qw(ortholog_one2one);
+  my @many_types = qw(ortholog_one2many);  
   my @types = @one_types;
   push(@types, @many_types) if $self->one_to_many();
   

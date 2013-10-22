@@ -126,10 +126,9 @@ sub keep_homology_in_mind {
     my $self          = shift;
     my $trans_gene1   = shift;
     my $trans_gene2   = shift;
-    my $homology_type = shift;
 
-    $self->param('stored_homologies')->{$trans_gene1->stable_id} = [$trans_gene2->stable_id, $homology_type];
-    $self->param('stored_homologies')->{$trans_gene2->stable_id} = [$trans_gene1->stable_id, $homology_type];
+    $self->param('stored_homologies')->{$trans_gene1->stable_id} = $trans_gene2->stable_id;
+    $self->param('stored_homologies')->{$trans_gene2->stable_id} = $trans_gene1->stable_id;
 }
 
 sub run {
@@ -167,11 +166,9 @@ TRANSCRIPT:
         #print 'Projected transcript '.$proj_transcript->stable_id()."\n";
         #check if cdna/transcript seq altered in projection
         my $alt_seq = 'cdna/transcript seq unchanged';
-        my $homology_type = 'projection_unchanged';
         foreach my $t_attrib (@{$proj_transcript->get_all_Attributes}){
             if($t_attrib->name =~ m/Projection altered sequence/){
                 $alt_seq = 'cdna/transcript seq altered in projection';
-                $homology_type = 'projection_altered';
             }
         }
 
@@ -198,7 +195,7 @@ TRANSCRIPT:
                 my $proj_gene_member = $self->fetch_or_store_gene($proj_gene, \$count_proj_gene);
 
                 # Keep in a hash the homology
-                $self->keep_homology_in_mind($orig_gene, $proj_gene, $homology_type);
+                $self->keep_homology_in_mind($orig_gene, $proj_gene);
                 print $proj_gene->stable_id.' '.$orig_gene->stable_id.' '.$patch_type.' '.$alt_seq."\n";
 
                 next TRANSCRIPT;
@@ -217,10 +214,9 @@ sub store_homology {
     my $self          = shift;
     my $trans_member1 = shift;
     my $trans_member2 = shift;
-    my $homology_type = shift;
 
     my $homology = new Bio::EnsEMBL::Compara::Homology;
-    $homology->description($homology_type);
+    $homology->description('alt_allele');
     $homology->method_link_species_set($self->param('mlss'));
     bless $trans_member1, 'Bio::EnsEMBL::Compara::AlignedMember';
     $homology->add_Member($trans_member1);
@@ -246,11 +242,11 @@ sub write_output {
 
     my $count_homology = 0;
     foreach my $gene1 (keys %stored_homologies) {
-        my ($gene2, $homology_type) = @{$stored_homologies{$gene1}};
+        my $gene2 = $stored_homologies{$gene1};
         next unless $gene1 lt $gene2;
         die $gene1 unless $self->param('member_hash')->{$gene1};
         die $gene2 unless $self->param('member_hash')->{$gene2};
-        $self->store_homology($self->param('member_hash')->{$gene1}, $self->param('member_hash')->{$gene2}, $homology_type);
+        $self->store_homology($self->param('member_hash')->{$gene1}, $self->param('member_hash')->{$gene2});
         $count_homology ++;
     }
 

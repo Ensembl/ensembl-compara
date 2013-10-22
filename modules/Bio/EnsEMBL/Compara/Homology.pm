@@ -78,6 +78,25 @@ sub subtype {
 }
 
 
+=head2 is_tree_compliant
+
+  Arg [1]    : float $is_tree_compliant (optional)
+  Example    : $is_compliant = $homology->is_tree_compliant();
+               $homology->is_tree_compliant(1);
+  Description: getter/setter for a flag that shows whether the homology is fully compliant with the tree
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub is_tree_compliant {
+  my $self = shift;
+  $self->{'_is_tree_compliant'} = shift if(@_);
+  return $self->{'_is_tree_compliant'};
+}
+
+
 =head2 taxonomy_level
 
   Arg [1]    : string $taxonomy_level (optional)

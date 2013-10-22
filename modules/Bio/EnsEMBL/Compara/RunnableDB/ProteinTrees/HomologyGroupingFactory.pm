@@ -64,7 +64,7 @@ sub fetch_input {
 
     my $mlss_id = $self->param_required('mlss_id');
 
-    my $sql = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description NOT IN ("putative_gene_split", "contiguous_gene_split") ORDER BY homology_id';
+    my $sql = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description != "gene_split" ORDER BY homology_id';
     my $sth = $self->compara_dba->dbc->prepare($sql);
 
     my @homology_ids = ();

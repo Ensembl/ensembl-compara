@@ -170,6 +170,7 @@ sub rec_add_paralogs {
                 $genepairlink->add_tag("taxon_name", $taxon_name);
                 $genepairlink->add_tag("tree_node_id", $ancestor->tree->root_id);
                 $genepairlink->add_tag("orthotree_type", 'other_paralog');
+                $genepairlink->add_tag("is_tree_compliant", 1);
                 $ngenepairlinks++;
                 $self->store_gene_link_as_homology($genepairlink) if $self->param('store_homologies');
                 $genepairlink->dealloc;

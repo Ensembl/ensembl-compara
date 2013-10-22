@@ -24,7 +24,7 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
                                                      -port   => 5306,
                                                      -dbname   => $dbname);
 
-my @desc = qw(ortholog_one2one apparent_ortholog_one2one ortholog_one2many ortholog_many2many within_species_paralog between_species_paralog possible_ortholog);
+my @desc = qw(ortholog_one2one ortholog_one2many ortholog_many2many within_species_paralog between_species_paralog);
 
 my %pair_count;
 

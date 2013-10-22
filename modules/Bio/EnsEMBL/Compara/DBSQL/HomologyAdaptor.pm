@@ -581,6 +581,7 @@ sub _columns {
   return qw (h.homology_id
              h.method_link_species_set_id
              h.description
+             h.is_tree_compliant
              h.subtype
              h.dn
              h.ds
@@ -594,11 +595,11 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $description, $dn, $ds, $n, $s, $lnl,
+  my ($homology_id, $description, $is_tree_compliant, $dn, $ds, $n, $s, $lnl,
       $method_link_species_set_id, $subtype, $ancestor_node_id, $tree_node_id);
 
   $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
-                     \$description, \$subtype, \$dn, \$ds,
+                     \$description, \$is_tree_compliant, \$subtype, \$dn, \$ds,
                      \$n, \$s, \$lnl, \$ancestor_node_id, \$tree_node_id);
 
   my @homologies = ();
@@ -608,6 +609,7 @@ sub _objs_from_sth {
             '_adaptor'                      => $self,           # field name NOT in sync with Bio::EnsEMBL::Storable
             '_dbID'                         => $homology_id,    # field name NOT in sync with Bio::EnsEMBL::Storable
             '_description'                  => $description,
+            '_is_tree_compliant'            => $is_tree_compliant,
             '_method_link_species_set_id'   => $method_link_species_set_id,
             '_subtype'                      => $subtype,
             '_dn'                           => $dn,
@@ -656,9 +658,9 @@ sub store {
   $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   
   unless($hom->dbID) {
-    my $sql = 'INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?)';
+    my $sql = 'INSERT INTO homology (method_link_species_set_id, description, is_tree_compliant, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?,?)';
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
+    $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->is_tree_compliant, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 

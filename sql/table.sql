@@ -1252,6 +1252,7 @@ CREATE TABLE hmm_profile (
 @column homology_id                    Unique internal ID
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
 @column description                    A normalized, short description of the homology relationship
+@column is_tree_compliant              Whether the homology is fully compliant with the tree and the definition of orthology / paralogy
 @column subtype                        Taxonomic name this homology refers to
 @column dn                             The dn score
 @column ds                             The ds score
@@ -1271,7 +1272,8 @@ CREATE TABLE hmm_profile (
 CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS', 'projection_unchanged','projection_altered'),
+  description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele'),
+  is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
   subtype                     varchar(40) NOT NULL DEFAULT '',
   dn                          float(10,5),
   ds                          float(10,5),
@@ -1717,4 +1719,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_c.sql|species_tree');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_d.sql|threshold_on_ds');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_73_74_e.sql|homology_types');
 
