@@ -94,13 +94,11 @@ sub fetch_input {
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($protein_tree_id);
     die "Unfetchable tree root_id=$protein_tree_id\n" unless $tree;
 
-    my $gene_count = scalar(@{$tree->get_all_Members});
+    my $gene_count = $tree->get_value_for_tag('gene_count');
     die "Unfetchable leaves root_id=$protein_tree_id\n" unless $gene_count;
-    $tree->root->release_tree;
-    $tree->clear;
     
     # The tree follows the "normal" path: create an alignment job
-    my $reuse_aln_runtime = $tree->get_tagvalue('reuse_aln_runtime', 0) / 1000;
+    my $reuse_aln_runtime = $tree->get_value_for_tag('reuse_aln_runtime', 0) / 1000;
 
     if ($gene_count > $self->param('mafft_gene_count')) {
         # Cluster too large
