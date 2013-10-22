@@ -130,7 +130,7 @@ sub dumpAlignedMemberSetAsStockholm {
     my $self = shift;
     my $gene_tree = shift;
 
-    my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
+    my $file_root = $self->worker_temp_directory.'/align';
     $file_root =~ s/\/\//\//g;  # converts any // in path to /
 
     print STDERR "fetching alignment\n" if ($self->debug);
