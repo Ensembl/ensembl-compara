@@ -136,10 +136,7 @@ sub taxonomy_alias {
 
     my $self = shift;
 
-    my $ancestor_node_id = $self->ancestor_node_id;
-    return unless $ancestor_node_id;
-
-    my $ancestor_node = $self->adaptor->db->get_GeneTreeNodeAdaptor->fetch_node_by_node_id($ancestor_node_id);
+    my $ancestor_node = $self->gene_tree_node;
     return unless $ancestor_node;
 
     my $taxon_id = $ancestor_node->get_tagvalue('taxon_id');
@@ -379,65 +376,98 @@ sub homology_key {
 }
 
 
-=head2 node_id
+=head2 gene_tree_node
 
-  Arg [1]    : int $node_id (optional)
-  Example    : $node_id = $homology->node_id();
-               $homology->subtype($node_id);
-  Description: getter/setter of integer that refer to a node_id in the protein_tree data.
-  Returntype : int
+  Arg [1]    : GeneTreeNode $node (optional)
+  Example    : $node = $homology->gene_tree_node();
+  Description: getter/setter for the GeneTreeNode this homology refers to
+  Returntype : GeneTreeNode
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub node_id {
-  my $self = shift;
+sub gene_tree_node {
+    my $self = shift;
 
-  $self->{'_ancestor_node_id'} = shift if(@_);
-  return $self->{'_ancestor_node_id'};
-  
+    if (@_) {
+        $self->{_gene_tree_node} = shift;
+        $self->{_gene_tree} = $self->{_gene_tree_node}->tree;
+        $self->{_gene_tree_node_id} = $self->{_gene_tree_node}->node_id;
+        $self->{_gene_tree_root_id} = $self->{_gene_tree_node}->{_root_id};
+    } elsif (not exists $self->{_gene_tree_node} and defined $self->{_gene_tree_node_id}) {
+        $self->{_gene_tree_node} = $self->adaptor->db->get_GeneTreeNodeAdaptor->fetch_node_by_node_id($self->{_gene_tree_node_id});
+        $self->{_gene_tree} = $self->{_gene_tree_node}->tree;
+    }
+    return $self->{_gene_tree_node};
+}
+
+
+=head2 gene_tree
+
+  Arg [1]    : GeneTree $node (optional)
+  Example    : $tree = $homology->gene_tree();
+  Description: getter for the GeneTree this homology refers to
+  Returntype : GeneTree
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub gene_tree {
+    my $self = shift;
+
+    $self->gene_tree_node;         # to load the gene tree objects
+    return $self->{_gene_tree};
+}
+
+
+
+
+
+
+
+
+
+
+
+=head2 node_id
+
+  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. node_id() will be removed in e75
+
+=cut
+
+sub node_id {  ## DEPRECATED
+  my $self = shift;
+  deprecate('$self->node_id() is deprecated and will be removed in e75. Use $self->gene_tree_node()->node_id() instead.');
+  $self->{'_gene_tree_node_id'} = shift if(@_);
+  return $self->{'_gene_tree_node_id'};
 }
 
 =head2 ancestor_node_id
 
-  Arg [1]    : int $ancestor_node_id (optional)
-  Example    : $ancestor_node_id = $homology->ancestor_node_id();
-               $homology->subtype($ancestor_node_id);
-  Description: getter/setter of integer that refer to the ancestor_node_id in the protein_tree data.
-  Returntype : int
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. ancestor_tree_node_id() will be removed in e75
 
 =cut
 
-sub ancestor_node_id {
+sub ancestor_node_id { ## DEPRECATED
   my $self = shift;
-
-  $self->{'_ancestor_node_id'} = shift if(@_);
-  return $self->{'_ancestor_node_id'};
-  
+  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e75. Use $self->gene_tree_node()->node_id() instead.');
+  $self->{'_gene_tree_node_id'} = shift if(@_);
+  return $self->{'_gene_tree_node_id'};
 }
 
 
 =head2 tree_node_id
 
-  Arg [1]    : int $tree_node_id (optional)
-  Example    : $tree_node_id = $homology->tree_node_id();
-               $homology->subtype($tree_node_id);
-  Description: getter/setter of integer that refer to the tree node_id in the protein_tree data.
-  Returntype : int
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED: Use $self->gene_tree()->dbID() instead. tree_node_id() will be removed in e75
 
 =cut
 
-sub tree_node_id {
+sub tree_node_id { ## DEPRECATED
   my $self = shift;
-
-  $self->{'_tree_node_id'} = shift if(@_);
-  return $self->{'_tree_node_id'};
-  
+  deprecate('$self->tree_node_id() is deprecated and will be removed in e75. Use $self->gene_tree()->dbID() instead.');
+  return $self->gene_tree()->dbID();
 }
 
 

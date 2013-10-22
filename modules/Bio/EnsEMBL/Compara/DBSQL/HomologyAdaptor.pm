@@ -582,25 +582,25 @@ sub _columns {
              h.method_link_species_set_id
              h.description
              h.is_tree_compliant
-             h.subtype
              h.dn
              h.ds
              h.n
              h.s
              h.lnl
-             h.ancestor_node_id
-             h.tree_node_id);
+             h.species_tree_node_id
+             h.gene_tree_node_id
+             h.gene_tree_root_id);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
   my ($homology_id, $description, $is_tree_compliant, $dn, $ds, $n, $s, $lnl,
-      $method_link_species_set_id, $subtype, $ancestor_node_id, $tree_node_id);
+      $method_link_species_set_id, $species_tree_node_id, $gene_tree_node_id, $gene_tree_root_id);
 
   $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
-                     \$description, \$is_tree_compliant, \$subtype, \$dn, \$ds,
-                     \$n, \$s, \$lnl, \$ancestor_node_id, \$tree_node_id);
+                     \$description, \$is_tree_compliant, \$dn, \$ds,
+                     \$n, \$s, \$lnl, \$species_tree_node_id, \$gene_tree_node_id, \$gene_tree_root_id);
 
   my @homologies = ();
   
@@ -611,15 +611,15 @@ sub _objs_from_sth {
             '_description'                  => $description,
             '_is_tree_compliant'            => $is_tree_compliant,
             '_method_link_species_set_id'   => $method_link_species_set_id,
-            '_subtype'                      => $subtype,
             '_dn'                           => $dn,
             '_ds'                           => $ds,
             '_n'                            => $n,
             '_s'                            => $s,
             '_lnl'                          => $lnl,
             '_this_one_first'               => $self->{'_this_one_first'},
-            '_ancestor_node_id'             => $ancestor_node_id,
-            '_tree_node_id'                 => $tree_node_id,
+            '_species_tree_node_id'         => $species_tree_node_id,
+            '_gene_tree_node_id'            => $gene_tree_node_id,
+            '_gene_tree_root_id'            => $gene_tree_root_id,
        });
   }
   
@@ -658,9 +658,9 @@ sub store {
   $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   
   unless($hom->dbID) {
-    my $sql = 'INSERT INTO homology (method_link_species_set_id, description, is_tree_compliant, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?,?)';
+    my $sql = 'INSERT INTO homology (method_link_species_set_id, description, is_tree_compliant, species_tree_node_id, gene_tree_node_id, gene_tree_root_id) VALUES (?,?,?,?,?,?)';
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->is_tree_compliant, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
+    $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->is_tree_compliant, $hom->{_species_tree_node_id}, $hom->{_gene_tree_node_id}, $hom->{_gene_tree_root_id});
     $hom->dbID($sth->{'mysql_insertid'});
   }
 

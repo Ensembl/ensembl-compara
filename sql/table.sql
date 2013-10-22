@@ -288,6 +288,104 @@ CREATE TABLE method_link_species_set_tag (
 
 
 /**
+@table species_tree_node
+@desc  This table contains the nodes of the species tree used in the gene gain/loss analysis
+@colour   #1E90FF
+
+@column node_id                 Internal unique ID
+@column parent_id               Link to the parent node
+@column root_id                 Link to the root node
+@column left_index              Internal index
+@column right_index             Internal index
+@column distance_to_parent      Phylogenetic distance between this node and its parent
+@column taxon_id                Link to NCBI taxon node
+@column genome_db_id            Link to the genome_db
+@column node_name               A name that can be set to the taxon name or any other arbitrary name
+
+@see species_tree_node_tag
+@see species_tree_root
+@see CAFE_gene_family
+@see CAFE_species_gene
+*/
+
+CREATE TABLE `species_tree_node` (
+  `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int(10) unsigned,
+  `root_id` int(10) unsigned,
+  `left_index` int(10) NOT NULL DEFAULT 0,
+  `right_index` int(10) NOT NULL DEFAULT 0,
+  `distance_to_parent` double DEFAULT '1',
+  `taxon_id` int(10) UNSIGNED,
+  `genome_db_id` int(10) UNSIGNED,
+  `node_name` VARCHAR(255),
+
+  FOREIGN KEY (`taxon_id`) REFERENCES ncbi_taxa_node(taxon_id),
+  FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id), 
+  PRIMARY KEY (`node_id`),
+  KEY `parent_id` (`parent_id`),
+  KEY `root_id` (`root_id`,`left_index`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+/**
+@table species_tree_root
+@desc  This table stores species trees used in compara. Each tree is made of species_tree_node's
+@colour   #1E90FF
+
+@column root_id                       Internal unique ID
+@column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
+@column label                         Label to differentiate different trees with the same mlss_id
+@column species_tree                  Newick formatted version of the whole species_tree
+
+@example   Retrieve all the species trees stored in the database
+    @sql SELECT * FROM species_tree_root
+
+@see species_tree_node
+*/
+
+CREATE TABLE `species_tree_root` (
+  `root_id` int(10) unsigned NOT NULL,
+  `method_link_species_set_id` int(10) unsigned NOT NULL,
+  `label` VARCHAR(20) NOT NULL DEFAULT 'default',
+  `species_tree` mediumtext,
+
+  FOREIGN KEY (root_id) REFERENCES species_tree_node(node_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  UNIQUE KEY (method_link_species_set_id, label),
+
+  PRIMARY KEY (root_id)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+/**
+@table species_tree_node_tag
+@desc  This table contains tag/value data for species_tree_nodes
+@colour   #1E90FF
+
+@column node_id           Internal unique ID
+@column tag               Tag name for the tag/value pair
+@column value             Value for the tag/value pair
+
+@see species_tree_node
+@see species_tree_root
+*/
+
+CREATE TABLE `species_tree_node_tag` (
+  `node_id` int(10) unsigned NOT NULL,
+  `tag` varchar(50) NOT NULL,
+  `value` mediumtext NOT NULL,
+
+  FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
+
+  KEY `node_id_tag` (`node_id`,`tag`),
+  KEY `tag_node_id` (`tag`,`node_id`),
+  KEY `node_id` (`node_id`),
+  KEY `tag` (`tag`)
+  
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+
+/**
 @header Genomic alignments tables
 @desc   These tables store information about genomic alignments in the Compara schema
 @colour #FF8500
@@ -1189,8 +1287,7 @@ CREATE TABLE gene_tree_root_tag (
 
 @column node_id                               External reference to node_id in the @link gene_tree_node table
 @column node_type                             Type of homology
-@column taxon_id                              External reference to taxon_id in the @link ncbi_taxa_node table
-@column taxon_name                            External reference to name in the @link ncbi_taxa_name table where name_class='scientific name'
+@column species_tree_node_id                  Taxon / Ancestral species annotation (given as the node_id in the species tree)
 @column bootstrap                             The bootstrap value of the node in the tree
 @column duplication_confidence_score          The calculated confidence score for duplications
 
@@ -1198,19 +1295,14 @@ CREATE TABLE gene_tree_root_tag (
 @see gene_tree_node_tag
 */
 
-# The following foreign key is honoured in Ensembl Compara
-#  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
-# In some Ensembl Genomes, it should be
-#  FOREIGN KEY (taxon_id) REFERENCES genome_db(genome_db_id),
-
 CREATE TABLE gene_tree_node_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
   node_type                       ENUM("duplication", "dubious", "speciation", "gene_split"),
-  taxon_id                        INT(10) UNSIGNED,
-  taxon_name                      VARCHAR(255),
+  species_tree_node_id            INT(10) UNSIGNED,
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),
 
+  FOREIGN KEY (species_tree_node_id) REFERENCES species_tree_node(node_id),
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
   PRIMARY KEY (node_id)
@@ -1253,14 +1345,14 @@ CREATE TABLE hmm_profile (
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
 @column description                    A normalized, short description of the homology relationship
 @column is_tree_compliant              Whether the homology is fully compliant with the tree and the definition of orthology / paralogy
-@column subtype                        Taxonomic name this homology refers to
 @column dn                             The dn score
 @column ds                             The ds score
 @column n
 @column s
 @column lnl
-@column ancestor_node_id               The node_id of the internal node of the gene-tree node  from which the homology is derived
-@column tree_node_id                   The root_id of the gene-tree from which the homology is derived
+@column species_tree_node_id           The node_id of the species-tree node to which the homology is attached
+@column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
+@column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
 
 @example    See species_names that participate in this parcitular homology entry
     @sql SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 100000001 GROUP BY homology_id;
@@ -1274,23 +1366,25 @@ CREATE TABLE homology (
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele'),
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
-  subtype                     varchar(40) NOT NULL DEFAULT '',
   dn                          float(10,5),
   ds                          float(10,5),
   n                           float(10,1),
   s                           float(10,1),
   lnl                         float(10,3),
-  ancestor_node_id            int(10) unsigned,
-  tree_node_id                int(10) unsigned,
+  species_tree_node_id        int(10) unsigned,
+  gene_tree_node_id           int(10) unsigned,
+  gene_tree_root_id           int(10) unsigned,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-  FOREIGN KEY (ancestor_node_id) REFERENCES gene_tree_node(node_id),
-  FOREIGN KEY (tree_node_id) REFERENCES gene_tree_root(root_id),
+  FOREIGN KEY (species_tree_node_id) REFERENCES species_tree_node(node_id),
+  FOREIGN KEY (gene_tree_node_id) REFERENCES gene_tree_node(node_id),
+  FOREIGN KEY (gene_tree_root_id) REFERENCES gene_tree_root(root_id),
 
   PRIMARY KEY (homology_id),
   KEY (method_link_species_set_id),
-  KEY (ancestor_node_id),
-  KEY (tree_node_id)
+  KEY (species_tree_node_id),
+  KEY (gene_tree_node_id),
+  KEY (gene_tree_root_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1547,103 +1641,6 @@ CREATE TABLE sitewise_aln (
 
 
 /**
-@table species_tree_node
-@desc  This table contains the nodes of the species tree used in the gene gain/loss analysis
-@colour   #1E90FF
-
-@column node_id                 Internal unique ID
-@column parent_id               Link to the parent node
-@column root_id                 Link to the root node
-@column left_index              Internal index
-@column right_index             Internal index
-@column distance_to_parent      Phylogenetic distance between this node and its parent
-@column taxon_id                Link to NCBI taxon node
-@column genome_db_id            Link to the genome_db
-@column node_name               A name that can be set to the taxon name or any other arbitrary name
-
-@see species_tree_node_tag
-@see species_tree_root
-@see CAFE_gene_family
-@see CAFE_species_gene
-*/
-
-CREATE TABLE `species_tree_node` (
-  `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_id` int(10) unsigned,
-  `root_id` int(10) unsigned,
-  `left_index` int(10) NOT NULL DEFAULT 0,
-  `right_index` int(10) NOT NULL DEFAULT 0,
-  `distance_to_parent` double DEFAULT '1',
-  `taxon_id` int(10) UNSIGNED,
-  `genome_db_id` int(10) UNSIGNED,
-  `node_name` VARCHAR(255),
-
-  FOREIGN KEY (`taxon_id`) REFERENCES ncbi_taxa_node(taxon_id),
-  FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id), 
-  PRIMARY KEY (`node_id`),
-  KEY `parent_id` (`parent_id`),
-  KEY `root_id` (`root_id`,`left_index`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-/**
-@table species_tree_root
-@desc  This table stores species trees used in compara. Each tree is made of species_tree_node's
-@colour   #1E90FF
-
-@column root_id                       Internal unique ID
-@column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
-@column label                         Label to differentiate different trees with the same mlss_id
-@column species_tree                  Newick formatted version of the whole species_tree
-
-@example   Retrieve all the species trees stored in the database
-    @sql SELECT * FROM species_tree_root
-
-@see species_tree_node
-*/
-
-CREATE TABLE `species_tree_root` (
-  `root_id` int(10) unsigned NOT NULL,
-  `method_link_species_set_id` int(10) unsigned NOT NULL,
-  `label` VARCHAR(20) NOT NULL DEFAULT 'default',
-  `species_tree` mediumtext,
-
-  FOREIGN KEY (root_id) REFERENCES species_tree_node(node_id),
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-  UNIQUE KEY (method_link_species_set_id, label),
-
-  PRIMARY KEY (root_id)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-
-/**
-@table species_tree_node_tag
-@desc  This table contains tag/value data for species_tree_nodes
-@colour   #1E90FF
-
-@column node_id           Internal unique ID
-@column tag               Tag name for the tag/value pair
-@column value             Value for the tag/value pair
-
-@see species_tree_node
-@see species_tree_root
-*/
-
-CREATE TABLE `species_tree_node_tag` (
-  `node_id` int(10) unsigned NOT NULL,
-  `tag` varchar(50) NOT NULL,
-  `value` mediumtext NOT NULL,
-
-  FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
-
-  KEY `node_id_tag` (`node_id`,`tag`),
-  KEY `tag_node_id` (`tag`,`node_id`),
-  KEY `node_id` (`node_id`),
-  KEY `tag` (`tag`)
-  
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-
-/**
 @table CAFE_gene_family
 @desc  This table holds information about each CAFE gene family
 @colour   #1E90FF
@@ -1721,4 +1718,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_d.sql|threshold_on_ds');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_e.sql|homology_types');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_73_74_f.sql|homology_node_ids');
 

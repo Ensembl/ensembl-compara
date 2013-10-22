@@ -272,8 +272,8 @@ sub delete_node {
   $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
   $self->dbc->do("UPDATE gene_tree_node SET root_id = NULL WHERE node_id = $node_id");
-  $self->dbc->do("DELETE homology_member from homology_member JOIN homology using(homology_id) WHERE ancestor_node_id = $node_id");
-  $self->dbc->do("DELETE from homology WHERE ancestor_node_id = $node_id");
+  $self->dbc->do("DELETE homology_member from homology_member JOIN homology using(homology_id) WHERE gene_tree_node_id = $node_id");
+  $self->dbc->do("DELETE from homology WHERE gene_tree_node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 

@@ -399,19 +399,19 @@ sub duplication_confidence_score {
 sub delete_old_homologies {
     my $self = shift;
 
-    my $tree_node_id = $self->param('gene_tree')->node_id;
+    my $tree_node_id = $self->param('gene_tree_id');
 
     # New method all in one go -- requires key on tree_node_id
     print "deleting old homologies\n" if ($self->debug);
 
     # Delete first the members
-    my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id=?';
+    my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = ?';
     my $sth1 = $self->compara_dba->dbc->prepare($sql1);
     $sth1->execute($tree_node_id);
     $sth1->finish;
 
     # And then the homologies
-    my $sql2 = 'DELETE FROM homology WHERE tree_node_id=?';
+    my $sql2 = 'DELETE FROM homology WHERE gene_tree_root_id = ?';
     my $sth2 = $self->compara_dba->dbc->prepare($sql2);
     $sth2->execute($tree_node_id);
     $sth2->finish;
@@ -560,9 +560,7 @@ sub store_gene_link_as_homology {
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
   $homology->is_tree_compliant($is_tree_compliant);
-  $homology->subtype($subtype);
-  $homology->ancestor_node_id($ancestor->node_id);
-  $homology->tree_node_id($tree_node_id);
+  $homology->gene_tree_node($ancestor);
   $homology->method_link_species_set($mlss);
   
   $homology->add_Member($gene1->copy);
