@@ -587,7 +587,6 @@ sub _columns {
              h.n
              h.s
              h.lnl
-             h.threshold_on_ds
              h.ancestor_node_id
              h.tree_node_id);
 }
@@ -595,12 +594,12 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
+  my ($homology_id, $description, $dn, $ds, $n, $s, $lnl,
       $method_link_species_set_id, $subtype, $ancestor_node_id, $tree_node_id);
 
   $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
                      \$description, \$subtype, \$dn, \$ds,
-                     \$n, \$s, \$lnl, \$threshold_on_ds, \$ancestor_node_id, \$tree_node_id);
+                     \$n, \$s, \$lnl, \$ancestor_node_id, \$tree_node_id);
 
   my @homologies = ();
   
@@ -616,7 +615,6 @@ sub _objs_from_sth {
             '_n'                            => $n,
             '_s'                            => $s,
             '_lnl'                          => $lnl,
-            '_threshold_on_ds'              => $threshold_on_ds,
             '_this_one_first'               => $self->{'_this_one_first'},
             '_ancestor_node_id'             => $ancestor_node_id,
             '_tree_node_id'                 => $tree_node_id,
@@ -701,21 +699,10 @@ sub update_genetic_distance {
     return $self;
   }
 
-  my $sql = "UPDATE homology SET dn=?, ds=?, n=?, s=?, lnl=?";
-
-  if (defined $hom->threshold_on_ds) {
-    $sql .= ", threshold_on_ds=?";
-  }
-
-  $sql .= " WHERE homology_id=?";
+  my $sql = 'UPDATE homology SET dn=?, ds=?, n=?, s=?, lnl=? WHERE homology_id=?';
 
   my $sth = $self->prepare($sql);
-
-  if (defined $hom->threshold_on_ds) {
-    $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->threshold_on_ds, $hom->dbID);
-  } else {
-    $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->dbID);
-  }
+  $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->dbID);
   $sth->finish();
 
   return $self;

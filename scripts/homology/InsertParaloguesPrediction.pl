@@ -14,7 +14,7 @@ $0 options input_data_file
   [--description string]        the description of the homology to be loaded (default is YoungParalogues)
 
 The format of the input file is 22 tab-separated columns. One homology per line.
-dn ds n s lnl threshold_on_ds \
+dn ds n s lnl \
 gene_stable_id1 translation_stable_id1 cigar_line1 \
 cigar_start1 cigar_end1 perc_cov1 perc_id1 perc_pos1 \
 gene_stable_id2 translation_stable_id2 cigar_line2 \
@@ -70,7 +70,7 @@ $mlssa->store($mlss);
 
 while (<>) {
   chomp;
-  my ($dn, $ds, $n, $s, $lnl, $threshold_on_ds,
+  my ($dn, $ds, $n, $s, $lnl,
       $gene_stable_id1, $translation_stable_id1, $cigar_line1,
       $cigar_start1, $cigar_end1, $perc_cov1, $perc_id1, $perc_pos1,
       $gene_stable_id2, $translation_stable_id2, $cigar_line2,
@@ -112,7 +112,6 @@ while (<>) {
   $homology->n($n);
   $homology->s($s);
   $homology->lnl($lnl);
-  $homology->threshold_on_ds($threshold_on_ds);
   $homology->add_Member($peptide_member1);
   $homology->add_Member($peptide_member2);
   print STDERR $homology->stable_id," ready to load\n";

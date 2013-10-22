@@ -1258,7 +1258,6 @@ CREATE TABLE hmm_profile (
 @column n
 @column s
 @column lnl
-@column threshold_on_ds
 @column ancestor_node_id               The node_id of the internal node of the gene-tree node  from which the homology is derived
 @column tree_node_id                   The root_id of the gene-tree from which the homology is derived
 
@@ -1279,7 +1278,6 @@ CREATE TABLE homology (
   n                           float(10,1),
   s                           float(10,1),
   lnl                         float(10,3),
-  threshold_on_ds             float(10,5),
   ancestor_node_id            int(10) unsigned,
   tree_node_id                int(10) unsigned,
 
@@ -1717,3 +1715,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_b.sql|hmm_profile');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_73_74_c.sql|species_tree');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_73_74_d.sql|threshold_on_ds');
+

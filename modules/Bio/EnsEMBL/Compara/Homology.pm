@@ -194,10 +194,12 @@ sub lnl {
 
 =head2 threshold_on_ds
 
-  Arg [1]    : float $threshold_ond_ds (optional)
+  Arg [1]    : float $threshold_on_ds (optional)
   Example    : $lnl = $homology->threshold_on_ds();
                $homology->threshold_on_ds(1.01340);
   Description: getter/setter of the threshold on ds for which the dnds ratio still makes sense.
+               Note that threshold_on_ds is a property of the current MethodLinkSpeciesSet, and
+               is shared by all its homologies
   Returntype : float
   Exceptions : none
   Caller     : general
@@ -206,8 +208,8 @@ sub lnl {
 
 sub threshold_on_ds {
   my $self = shift;
-  $self->{'_threshold_on_ds'} = shift if(@_);
-  return $self->{'_threshold_on_ds'};
+  $self->method_link_species_set->add_tag('threshold_on_ds', shift) if (@_);
+  return $self->method_link_species_set->get_value_for_tag('threshold_on_ds');
 }
 
 =head2 dn
@@ -262,8 +264,8 @@ sub ds {
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
 
   if (defined $self->{'_ds'} && 
-      defined $self->{'_threshold_on_ds'} &&
-      $self->{'_ds'} > $self->{'_threshold_on_ds'}) {
+      defined $self->threshold_on_ds &&
+      $self->{'_ds'} > $self->threshold_on_ds) {
     
     if ($apply_threshold_on_ds) {
       return undef;
