@@ -97,6 +97,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
  
   # Getting the multiple alignment
+  $self->prepareTemporaryMemberNames($gene_tree);
   my $sa = $gene_tree->get_SimpleAlign(
      -id_type => 'TMP',
      -stop2x => 1,

@@ -84,7 +84,7 @@ sub fetch_input {
     $protein_tree->print_tree(10) if($self->debug);
 
     $self->param('protein_tree', $protein_tree);
-    $self->prepareTemporaryMemberNames($protein_tree);
+
 }
 
 
