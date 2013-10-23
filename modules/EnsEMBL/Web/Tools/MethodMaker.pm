@@ -72,6 +72,7 @@ sub self_and_super_path {
     #print "At $current\n" if $Debug;
     push @out, $current;
     no strict 'refs';
+    next unless *{${"$current\::"}{"ISA"}}{ARRAY};
     unshift @in_stack,
       map
         { my $c = $_; # copy, to avoid being destructive
@@ -122,7 +123,7 @@ sub copy_method {
     # Maybe the old method was defiend in a supertype?
     my $old_class = _find_sub_in_self_or_super($class,$old_method);
     next unless defined $old_class;   
- 
+
     # ignore if both methods exist, or none of them exists
     next unless _sub_exists($old_class,$old_method) xor _sub_exists($class,$new_method);
 
