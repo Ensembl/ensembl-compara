@@ -339,6 +339,8 @@ sub store_gene_and_all_transcripts {
     $seq_member_adaptor->_set_member_as_canonical($canonicalPeptideMember);
     # print("     LONGEST " . $canonicalPeptideMember->stable_id . "\n");
   }
+
+  $self->warning($gene->stable_id." is not stored") if $gene_member_not_stored;
   return 1;
 }
 
