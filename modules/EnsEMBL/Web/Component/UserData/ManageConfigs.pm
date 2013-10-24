@@ -9,14 +9,13 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Component);
 
 sub default_groups { return $_[0]{'default_groups'} ||= { map { $_ => 1 } @{$_[0]->hub->species_defs->ENSEMBL_DEFAULT_USER_GROUPS || []} }; }
-sub admin_groups   { return $_[0]{'admin_groups'}   ||= {}; }# $_[0]->hub->user ? map { $_->group_id => 1 } $_[0]->hub->user->find_admin_groups : () }; }
+sub admin_groups   { return $_[0]{'admin_groups'}   ||= { $_[0]->hub->user ? map { $_->group_id => 1 } $_[0]->hub->user->find_admin_groups : () }; }
 sub record_group   { return $_[1]{'record_type'} eq 'group' && $_[0]->default_groups->{$_[1]{'record_type_id'}} ? 'suggested' : $_[1]{'record_type'}; }
 sub empty          { return sprintf '<p>You have no custom configurations%s.</p>', $_[1] ? '' : ' for this page'; }
 sub set_view       {}
 
 sub content {
-  my $self     = shift;
-  my $set_view = $self->set_view;
+  my $self = shift;
   
   return sprintf('
     <input type="hidden" class="subpanel_type" value="ConfigManager" />
@@ -24,7 +23,7 @@ sub content {
       <div class="records">
         %s
       </div>
-      <div class="edit_config_set config_manager%s">
+      <div class="edit_config_set config_manager">
         <h1 class="edit_header">Select %s for <span class="config_header"></span></h1>
         %s
       </div>
@@ -34,8 +33,7 @@ sub content {
       </div>
     </div>',
     $self->records(@_),
-    $set_view ? ' edit_configs'  : '',
-    $set_view ? 'configurations' : 'sets',
+    $self->set_view ? 'configurations' : 'sets',
     $self->edit_table,
     $self->share
   );
