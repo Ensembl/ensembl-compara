@@ -42,9 +42,9 @@ sub init {
     $self->add_entry({
       caption => 'Load configuration',
       class   => 'modal_link',
-      rel     => 'modal_manage_cfg',
+      rel     => 'modal_user_data',
       url     => $hub->url({
-        type    => 'UserConfig',
+        type    => 'UserData',
         action  => 'ManageConfigs',
         __clear => 1 
       })
