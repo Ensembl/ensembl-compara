@@ -10,13 +10,69 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     this.base();
     
-    this.editing = false;
-    
     Ensembl.EventManager.register('modalPanelResize', panel, function () {
       this.el.togglewrap('update');
     });
     
-    this.el.on('click', 'a.edit', function (e) {
+    $('form', this.el).on('submit', function () { return panel.formSubmit($(this)); }); // bind submit function before detaching content for modal overlay
+    
+    this.elLk.recordTypes  = $('.records .record_type', this.el);
+    this.elLk.tables       = $('table',                 this.elLk.recordTypes);
+    this.elLk.shareConfig  = $('.share_config',         this.el).detach(); // will be put into the modal overlay;
+    this.elLk.editSets     = $('.edit_config_set',      this.el).detach(); // will be put into the modal overlay;
+    this.elLk.editTypes    = $('div.record_type',       this.elLk.editSets);
+    this.elLk.editTable    = $('table',                 this.elLk.editTypes);
+    this.elLk.editRecord   = $('.edit_record',          this.elLk.editSets);
+    this.elLk.editSelected = $('input.selected',        this.elLk.editSets);
+    this.elLk.editId       = $('.record_id',            this.elLk.editSets);
+    this.elLk.addSet       = $('.add_set',              this.elLk.editSets);
+    this.elLk.addHeader    = $('.add_header',           this.elLk.editSets);
+    this.elLk.editHeader   = $('.edit_header',          this.elLk.editSets);
+    this.elLk.setsHeader   = $('.config_header',        this.elLk.editHeader);
+    this.elLk.shareHeader  = $('.config_header',        this.elLk.shareConfig);
+    this.elLk.shareURL     = $('.share_url',            this.elLk.shareConfig);
+    this.elLk.shareGroups  = $('.share_groups',         this.elLk.shareConfig);
+    this.elLk.shareGroup   = $('input.group',           this.elLk.shareConfig);
+    this.elLk.shareId      = $('.record_id',            this.elLk.shareConfig);
+        
+    this.elLk.tables.on('click', '.expand, .collapse', function () {
+      var el  = $(this);
+      var row = el.parents('tr');
+      
+      el.add(el.siblings('a')).add(row.siblings('.' + row[0].className.replace(/ /g, '.'))).toggle();
+      
+      if (el.hasClass('expand') && !el.data('hasConfig')) {
+        var table = el.parents('table').dataTable();
+            row   = row[0];
+            
+        table.fnOpen(row, '<div class="spinner"></div>').className = row.className;
+        
+        el.data('hasConfig', $.ajax({
+          url: this.href,
+          success: function (html) {
+            el.data('hasConfig', true);
+            
+            var newRow = $(table.fnOpen(row, html, 'details')).addClass(row.className).togglewrap('update');
+            var sets   = newRow.find('.editables_list');
+            
+            if (sets.children().length === 0) {
+              sets.parent().hide();
+            }
+            
+            table.fnUpdate(row.cells[1].innerHTML + '<div class="hidden">' + html + '</div>', row, 1);
+            
+            el = row = newRow = sets = table = null;
+          }
+        }));
+      } else {
+        el = row = null;
+      }
+      
+      return false;
+    });
+    
+    // Activate and delete buttons
+    this.elLk.tables.on('click', 'a.edit', function (e) {
       e.preventDefault();
       
       $.ajax({
@@ -24,108 +80,122 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
         context: this,
         success: function (response) {
           if (panel[response]) {
-            panel[response]($(this).parents('tr'), this.rel);
-          } else {
-            //an error
+            panel[response]($(this).parents('tr'), this);
           }
-        },
-        error: function () {
-          //an error
         }
       });
-    }).on('click', 'a.add_to_set', function () {
+    });
+    
+    this.elLk.tables.on('click', 'a.share_record', function () {
+      var el     = $(this);
+      var share  = el.data('share');
+      var record = panel.params.records[el.parents('tr').data('configId')];
+      var url, groups;
+      
+      panel.elLk.shareHeader.html(record.name);
+      panel.elLk.shareId.val(record.id);
+      
+      Ensembl.EventManager.trigger('modalOverlayShow', panel.elLk.shareConfig);
+      
+      if (share) {
+        if (share.groups) {
+          panel.elLk.shareGroup.prop('checked', function () { return !!share.groups[this.value]; });
+          groups = true;
+        }
+        
+        if (share.url) {
+          panel.elLk.shareURL.val(share.url).show().select();
+          url = true;
+        }
+      }
+      
+      if (!groups) {
+        panel.elLk.shareGroup.prop('checked', false);
+      }
+      
+      if (!url) {
+        panel.elLk.shareURL.hide();
+      }
+      
+      panel.elLk.shareLink = el;
+      el = null;
+      
+      return false;
+    });
+    
+    this.elLk.tables.on('click', 'a.edit_record', function () {
+      var record = panel.params.records[$(this).parents('tr').data('configId')];
+      var filter = [];
+      
+      panel.elLk.setsHeader.html(record.name);
+      panel.elLk.addSet.add(panel.elLk.addHeader).hide();
+      panel.elLk.editRecord.add(panel.elLk.editHeader).show();
+      panel.elLk.editId.val(record.id);
+      
+      panel.updateEditTable(record.group, record);
+      
+      Ensembl.EventManager.trigger('modalOverlayShow', panel.elLk.editSets);
+      
+      return false;
+    });
+    
+    this.elLk.tables.on('click', '._ht', function () {
+      $(this).data('uiTooltip').close();
+    });
+    
+    this.elLk.editSets.on('click', '.add_to_set', function () {
       var tr = $(this).parents('tr');
       
       if (!tr.hasClass('disabled')) {
-        tr.toggleClass('added').siblings('.' + (this.rel || '_')).toggleClass('disabled');
+        tr.toggleClass('added');
       }
       
-      $(this).attr('title', tr.hasClass('added') ? 'Remove from set' : 'Add to set');
+      var added = tr.hasClass('added');
+      
+      if (panel.params.recordType === 'set') {
+        tr.siblings('.' + (panel.params.editables[this.rel].codes.join(', .') || '_')).not('.added')[added ? 'addClass' : 'removeClass']('disabled');
+      }
+      
+      panel.elLk.editSelected.filter('.' + this.rel).prop('checked', added);
       
       tr = null;
       
       return false;
-    }).on('click', 'a.create_set', function () {
-      var els  = $('.sets > div, .edit_set', panel.el).toggle();
-      var func = $(this).children().toggle().filter(':visible').attr('class') === 'cancel' ? 'show' : 'hide';
+    });
+    
+    $('a.create_set', this.el).on('click', function () {
+      var type = panel.elLk.editSets.find('input.record_type');
       
-      $('form', panel.el).find('fieldset > div')[func]().find('[name=name], [name=description]').val('').removeClass('valid');
-      
-      if (func === 'show') {
-        els.togglewrap('update');
-        panel.editing = false;
+      if (type.length > 1) {
+        type = type.first().prop('checked', true); // Reset form
       }
       
-      els = null;
+      panel.updateEditTable(type.val());
+      
+      panel.elLk.editRecord.add(panel.elLk.editHeader).hide();      
+      panel.elLk.addSet.find('input[name=name], textarea').val('').end().validate(); // Reset form. Validate to remove error messages, but this won't disable the save button
+      panel.elLk.addSet.find('.save').addClass('disabled').prop('disabled', true);   // Disable the save button because a name is required
+      panel.elLk.addSet.add(panel.elLk.addHeader).show();
+      
+      Ensembl.EventManager.trigger('modalOverlayShow', panel.elLk.editSets);
+      
+      type = null;
       
       return false;
-    }).on('click', 'a.edit_record', function () {
-      var els   = $('.edit_set, form .save_button, a.create_set', panel.el).toggle();
-      var show  = $('form', panel.el).toggleClass('edit_configs').find('[name=name]').val('editing').end().hasClass('edit_configs');
-      var group = $(this).parents('.config_group');
-      
-      if (group.length) {
-        $('.config_group', panel.el).not(group).toggle();
-      }
-      
-      if (show) {
-        els.togglewrap('update');
-        panel.editing = this.rel;
-      }
-      
-      $(this).parents('tr').siblings().toggle().end().find('ul li').each(function () {
-        $('input.update[value=' + this.className + ']', this.el).siblings('a.add_to_set').trigger('click');
-      });
-      
-      els = group = null;
-      
-      return false;
-    }).on('click', 'a.share_record', function () {
-      var el      = $(this);
-      var share   = el.data('share');
-      var shareEl = $('.share_config', panel.el);
-      var url, groups;
-      
-      panel.updateShareName(false, this.rel);
-      
-      if (panel.elLk.shareLink[0] === el[0]) {
-        shareEl.toggle();
-      } else {
-        shareEl.show();
-        
-        if (share) {
-          if (share.groups) {
-            shareEl.find('.group').prop('checked', function () { return !!share.groups[this.value]; });
-            groups = true;
-          }
-          
-          if (share.url) {
-            shareEl.find('.share_url').val(share.url).show().select();
-            url = true;
-          }
-        }
-        
-        if (!groups) {
-          shareEl.find('.group').prop('checked', false);
-        }
-        
-        if (!url) {
-          shareEl.find('.share_url').hide();
-        }
-        
-        panel.elLk.shareLink = el;
-      }
-      
-      el = shareEl = null;
-      
-      return false;
-    }).on('click', '.share_config .make_url', function () {
+    });
+    
+    $('input.record_type', this.elLk.editSets).on('click', function () {
+      panel.updateEditTable(this.value);
+    });
+    
+    $('.make_url', this.elLk.shareConfig).on('click', function () {
       var share = panel.elLk.shareLink.data('share');
       
       function showShare(shareURL) {
-        $('.share_config .share_url', panel.el).val(shareURL).show().select();
         share     = share || {};
         share.url = shareURL;
+        
+        panel.elLk.shareURL.val(shareURL).show().select();
         panel.elLk.shareLink.data('share', share);
       }
       
@@ -134,76 +204,183 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       } else {
         $.ajax({ url: panel.elLk.shareLink[0].href, success: showShare });
       }
-    }).on('click', '.share_config input.group', function () {
-      var share = panel.elLk.shareLink.data('share') || {};
+    });
+    
+    this.elLk.shareGroup.on('click', function () {
+      var share   = panel.elLk.shareLink.data('share') || {};
+      var disable = true;
       
       share.groups = share.groups || {};
       share.groups[this.value] = this.checked;
       
-      panel.elLk.shareLink.data('share', share);
-    }).on('click', '.share_config .share_groups', function () {
-      var groups = $.map((panel.elLk.shareLink.data('share') || {}).groups || [], function (v, k) { return v ? k : undefined; });
-      
-      if (!groups.length) {
-        return;
+      for (var i in share.groups) {
+        if (share.groups[i]) {
+          disable = false;
+          break;
+        }
       }
       
-      $.ajax({
-        url: panel.elLk.shareLink[0].href,
-        data: { group: groups },
-        traditional: true,
-        success: $.noop
-      });
+      panel.elLk.shareGroups[disable ? 'addClass' : 'removeClass']('disabled').prop('disabled', disable);
+      panel.elLk.shareLink.data('share', share);
     });
+    
+    this.elLk.shareConfig.add(this.elLk.editSets).find('.save').on('click', function () { Ensembl.EventManager.trigger('modalOverlayHide'); });
   },
   
   initialize: function () {
+    var records = this.params.records;
+    
+    // This must be done before the base initialize, which sets up data tables, adding classes to the table rows
+    $('.records table tbody tr', this.el).each(function () {
+      $(this).data('configId', this.className);
+    });
+    
     this.base();
+  },
+  
+  updateEditTable: function (tableFilter, record) {
+    var table = this.elLk.editTypes.hide().filter('.' + tableFilter).show().find('table').dataTable();
     
-    this.shares = {};
+    this.elLk.editSelected.filter(':checked').prop('checked', false);
     
-    if (this.dataTables) {
-      $.each(this.dataTables, function () {
-        $(this.fnSettings().nTableWrapper).show();
-      });
+    table.find('tr').removeClass('added disabled');
+    table.fnDraw();
+    
+    if (record) {
+      var rows  = table.find('tbody tr');
+      var added = [];
+      
+      for (var i in record.editables) {
+        added.push('.' + i);
+      }
+      
+      rows.filter(added.join(', ')).addClass('added');
+      
+      // When editing the sets for a config, all sets that already have a config of the same code must be disabled
+      rows.filter('.' + (record.codes.join(', .') || '_')).not('.added').addClass('disabled');
+      
+      this.elLk.editSelected.filter(added.join(', ')).prop('checked', true);
+      
+      rows = null;
     }
     
-    tr = null;
+    table = null;
   },
+  
+  // Saves updates to name and description fields in the table
+  saveEdit: function (param, value, td) {
+    var id = td.parent().data('configId');
     
-  saveEdit: function (input, value) {
-    var param    = input.attr('name');
-    var save     = input.siblings('a.save');
-    var configId = save.attr('rel');
+    td.togglewrap('update').find('._ht').helptip();
     
-    input.parent().togglewrap('update');
-    
-    this.updateShareName(input.parents('tr'), value);
+    if (param === 'name') {
+      this.params.records[id].name = value;
+    }
     
     $.ajax({
-      url: save.attr('href'),
+      url: td.find('a.save').attr('href'),
       data: { param: param, value: value },
       success: function (response) {
         if (response === 'success' && param === 'name') {
-          Ensembl.EventManager.trigger('updateSavedConfig', { changed: { id: configId, name: value } });
+          Ensembl.EventManager.trigger('updateSavedConfig', { changed: { id: id, name: value } });
         }
-      },
-      error: function () {
-        //an error
       }
     });
     
-    input = save = null;
+    td = null;
+  },
+    
+  addTableRow: function (data) {
+    var panel = this;
+    
+    $.ajax({
+      url: this.params.updateURL,
+      data: { record_ids: data.recordIds },
+      traditional: true,
+      dataType: 'json',
+      success: function (json) {
+        var table, indexes, rowData, rows, cells, j;
+        
+        for (var i in json.tables) {
+          rows = $(json.tables[i]).find('tbody tr').filter(function () { return !panel.params.records[this.className]; });
+          
+          if (rows.length === 0) {
+            continue;
+          }
+          
+          cells   = rows.first().children();
+          table   = panel.elLk.tables.filter('.' + i).dataTable();
+          indexes = table.fnAddData(rows.map(function () { return $(this).children().map(function () { return this.innerHTML; }).toArray(); }).toArray());
+          rowData = table.fnSettings().aoData;
+          j       = indexes.length;
+          
+          while (j--) {
+            $(rowData[indexes[j]].nTr).addClass(rows[j].className).data('configId', rows[j].className).children().addClass(function (k) { return cells[k].className; }).find('._ht').helptip();
+          }
+          
+          panel.elLk.recordTypes.filter('.' + i).show();
+          table.fnSort(panel.params.recordType === 'config' ? [[ 0, 'asc' ], [ 1, 'asc' ], [ 2, 'asc' ]] : [[ 0, 'asc' ]]);
+          table.togglewrap('update');
+        }
+        
+        $.extend(panel.params.records, json.data);
+        
+        // TODO: updateSavedConfig - will be needed once you can save direct to a group (work out how existing saveAs options are added in Configurator)
+        
+        table = rows = cells = null;
+      }
+    });
   },
   
-  updateShareName: function (tr, name) {
-    if (!tr || tr.find('.share_record').attr('rel', name)[0] === this.elLk.shareLink[0]) {
-      $('.share_header', this.el).html('Sharing ' + name);
+  updateTable: function (data) {
+    var record    = this.params.records[data.id];
+    var rows      = this.elLk.editTable.find('tbody tr');
+    var list      = this.elLk.tables.find('.' + data.id).find('.editables_list');
+    var editables = list.first().children().detach();
+    var added     = data.editables.added   || [];
+    var removed   = data.editables.removed || [];
+    var update, editable, i, j;
+    
+    // FIXME: because this is done in an AJAX callback, you can open another edit in the mean time which won't reflect the correct state wrt disabled rows
+    for (i = 0; i < added.length; i++) {
+      editable  = this.params.editables[added[i]];
+      update    = this.params.recordType === 'config' ? [ editable, record ] : [ record, editable ];
+      editables = editables.add($(this.params.listTemplate).addClass(added[i]).find('.name').html(editable.name).end().find('.conf').html(editable.conf).end());
+      
+      record.editables[added[i]] = 1;
+      
+      update[0].codes = update[0].codes.concat($.grep(update[1].codes, function (v) { return $.inArray(v, update[0].codes) === -1; }));
     }
+    
+    for (i = 0; i < removed.length; i++) {
+      editable  = this.params.editables[removed[i]];
+      update    = this.params.recordType === 'config' ? [ editable, record ] : [ record, editable ];
+      editables = editables.not('.' + removed[i]);
+      
+      delete record.editables[removed[i]];
+      
+      for (j in update[1].codes) {
+        update[0].codes = $.grep(update[0].codes, function (v) { return v !== update[1].codes[j]; }); 
+      }
+    }
+    
+    // Add/remove config code class on set rows so that we know which rows to be disabled (sets cannot contain two configs of the same code)
+    if (this.params.recordType === 'config') {
+      rows.filter('.' + (added.join(', .')   || '_')).addClass(record.codes[0]);
+      rows.filter('.' + (removed.join(', .') || '_')).removeClass(record.codes[0]);
+    }
+    
+    // Schwartzian transform - sort on lower case text of the entries
+    list.html(editables.map(function () {
+      return [[ $(this).text().toLowerCase(), this ]];
+    }).sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; }).map(function () {
+      return this[1];
+    })).parent()[editables.length ? 'show' : 'hide']().siblings('.none')[editables.length ? 'hide' : 'show']().parents('td').togglewrap('update');
+    
+    rows = list = editables = null;
   },
   
-  activateRecord: function (tr, components) {
-    var panel  = this;
+  activateRecord: function (tr) {
     var bg     = tr.css('backgroundColor');
     var height = tr.height() + 'px';
     
@@ -213,7 +390,9 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () { $(this).removeClass('active').css('backgroundColor', ''); })
       .find('.config_used').css({ height: height, lineHeight: height, width: tr.width() - 1, display: 'block' }).delay(1000).fadeOut(500);
     
-    $.each(components.split(' '), function (i, component) {
+    $.each(this.params.records[tr.data('configId')].codes, function (i, code) {
+      var component = code.split('_')[1];
+      
       if (Ensembl.PanelManager.panels[component]) {
         Ensembl.EventManager.trigger('queuePageReload', component, true);
         Ensembl.EventManager.trigger('activateConfig',  component);
@@ -223,31 +402,43 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     tr = null;
   },
   
-  deleteRecord: function (tr, configId) {
-    tr.parents('table').dataTable().fnDeleteRow(tr[0]);
-    
-    Ensembl.EventManager.trigger('updateSavedConfig', { deleted: [ configId ] });
-    
-    tr = null;
+  saveRecord: function (tr, a) {
+    var saved = $('<span class="icon_link sprite_disabled _ht save_icon" title="Saved">&nbsp;</span>').helptip();
+    $(a).replaceWith(saved);
+    tr = a = saved = null;
   },
   
-  removeFromSet: function (tr, configId) {
-    tr.find('li.' + configId).remove();
+  deleteRecord: function (tr) {
+    var table = tr.parents('table');
     
-    tr = null;
-  },
-  
-  formSubmit: function (form) {
-    var data = form.serialize();
+    table.dataTable().fnDeleteRow(tr[0]);
     
-    if (form.hasClass('edit_sets') && this.editing) {
-      data += '&record_id=' + this.editing;
-    } else if (form.hasClass('edit_configs') && this.editing) {
-      data += '&set_id=' + this.editing;
+    if (table.find('.dataTables_empty').length) {
+      table.parents('.record_type').hide();
     }
     
-    $('tr.added input.update', this.el).each(function () { data += '&' + this.name + '=' + this.value; });
+    Ensembl.EventManager.trigger('updateSavedConfig', { deleted: [ tr.data('configId') ] });
     
-    return this.base(form, data);
+    table = tr = null;
+  },
+  
+  // Config view: Editing configs in a set - updateTable, sharing - addTableRow
+  // Set view:    Editing configs in a set - updateTable, sharing - addTableRow, creating a new set - addTableRow
+  formSubmit: function (form) {
+    $.ajax({
+      url: form.attr('action'),
+      type: form.attr('method'),
+      data: form.serialize(),
+      traditional: true,
+      dataType: 'json',
+      context: this,
+      success: function (json) {
+        if (this[json.func]) {
+          this[json.func](json);
+        }
+      }
+    });
+    
+    return false;
   }
 });
