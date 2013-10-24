@@ -49,6 +49,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
         
         el.data('hasConfig', $.ajax({
           url: this.href,
+          cache: false,
           success: function (html) {
             el.data('hasConfig', true);
             
@@ -202,7 +203,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       if (share && share.url) {
         showShare(share.url);
       } else {
-        $.ajax({ url: panel.elLk.shareLink[0].href, success: showShare });
+        $.ajax({ url: panel.elLk.shareLink[0].href, cache: false, success: showShare });
       }
     });
     
@@ -280,6 +281,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     $.ajax({
       url: td.find('a.save').attr('href'),
       data: { param: param, value: value },
+      cache: false,
       success: function (response) {
         if (response === 'success' && param === 'name') {
           Ensembl.EventManager.trigger('updateSavedConfig', { changed: { id: id, name: value } });
@@ -297,6 +299,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       url: this.params.updateURL,
       data: { record_ids: data.recordIds },
       traditional: true,
+      cache: false,
       dataType: 'json',
       success: function (json) {
         var table, indexes, rowData, rows, cells, j;
@@ -430,6 +433,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       type: form.attr('method'),
       data: form.serialize(),
       traditional: true,
+      cache: false,
       dataType: 'json',
       context: this,
       success: function (json) {
