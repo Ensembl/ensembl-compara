@@ -22,10 +22,10 @@ table.padded-cell td,
 table.padded-cell th   { padding: 8px; }
  
 table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; }
-table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
+table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 4px; }
 table.data_table th:first-child,
-table.data_table td:first-child.wrap { padding-left: 2px; }
-table.data_table th.sorting_disabled { cursor: text; padding-right: 5px; }
+table.data_table td:first-child.wrap { padding-left: 4px; }
+table.data_table th.sorting_disabled { cursor: text; padding-right: 4px; }
 table.data_table th div              { height: 19px; padding: 3px 0; }
 table.toggle_table th div            { padding: 0; }
 
@@ -35,11 +35,10 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
 .dataTables_top    { border-bottom: 0; }
 .dataTables_bottom { border-top: 0; }
-
-.dataTables_info     { float: left; line-height: 20px; }
-.dataTables_length   { float: left; width: 33%; }
-.dataTables_filter   { float: right; text-align: right; position: relative; }
-.dataTables_export   { float: right; position: relative; top: -3px; width: 25px; height: 25px; margin-left: 10px; background: url(/i/export_csv.png) no-repeat; cursor: pointer; }
+.dataTables_info   { float: left; line-height: 20px; }
+.dataTables_length { float: left; width: 33%; }
+.dataTables_filter { float: right; text-align: right; position: relative; }
+.dataTables_export { float: right; position: relative; top: -3px; width: 25px; height: 25px; margin-left: 10px; background: url(/i/export_csv.png) no-repeat; cursor: pointer; }
 
 .dataTables_paginate                                 { float: right; text-align: right; font-size: 10px; }
 .dataTables_paginate .first                          { border-radius: 4px 0 0 4px; -moz-border-radius: 4px 0 0 4px; -webkit-border-radius: 4px 0 0 4px; }
