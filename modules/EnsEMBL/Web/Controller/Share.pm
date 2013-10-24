@@ -317,12 +317,12 @@ sub accept {
         <a class="update_panel config-reset" rel="%s" href="%s">Revert to previous configuration%%s</a>',
         $view_config->component,
         $saved_config ?
-          $hub->url({ type => 'UserConfig', action => 'ModifyConfig', function => 'activate', record_id => $saved_config->{'saved'}{'value'}, __clear => 1 }) :
+          $hub->url({ type => 'UserData', action => 'ModifyConfig', function => 'activate', record_id => $saved_config->{'saved'}{'value'}, __clear => 1 }) :
           $hub->url('Config', { action => $view_config->component, function => undef, reset => 'all', __clear => 1 })
       ), ' (' . $view_config->title . ')' ];
       
       if ($saved_config) {
-        $manage ||= sprintf '<a class="modal_link config" rel="modal_manage_cfg" href="%s">View saved configurations</a>', $hub->url({ type => 'UserConfig', action => 'ManageConfigs', function => undef, __clear => 1 });
+        $manage ||= sprintf '<a class="modal_link config" rel="modal_user_data" href="%s">View saved configurations</a>', $hub->url({ type => 'UserData', action => 'ManageConfigs', function => undef, __clear => 1 });
       }
     }
   }
