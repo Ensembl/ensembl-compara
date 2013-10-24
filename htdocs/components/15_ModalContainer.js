@@ -4,12 +4,14 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   constructor: function (id) {
     this.base(id);
     
-    Ensembl.EventManager.register('modalOpen',       this, this.open);
-    Ensembl.EventManager.register('modalClose',      this, this.hide);
-    Ensembl.EventManager.register('queuePageReload', this, this.setPageReload);
-    Ensembl.EventManager.register('addModalContent', this, this.addContent);
-    Ensembl.EventManager.register('setActivePanel',  this, function (panelId) { this.activePanel = panelId; this.elLk.content.filter('#' + panelId).addClass('active'); });
-    Ensembl.EventManager.register('modalReload',     this, function (panelId) { this.modalReload[panelId] = true; });
+    Ensembl.EventManager.register('modalOpen',        this, this.open);
+    Ensembl.EventManager.register('modalClose',       this, this.hide);
+    Ensembl.EventManager.register('modalOverlayShow', this, this.showOverlay);
+    Ensembl.EventManager.register('modalOverlayHide', this, this.hideOverlay);
+    Ensembl.EventManager.register('queuePageReload',  this, this.setPageReload);
+    Ensembl.EventManager.register('addModalContent',  this, this.addContent);
+    Ensembl.EventManager.register('setActivePanel',   this, function (panelId) { this.activePanel = panelId; this.elLk.content.filter('#' + panelId).addClass('active'); });
+    Ensembl.EventManager.register('modalReload',      this, function (panelId) { this.modalReload[panelId] = true; });
   },
   
   init: function () {
@@ -17,12 +19,15 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     this.base();
     
-    this.elLk.content     = $('.modal_content', this.el);
-    this.elLk.title       = $('.modal_title', this.el);
-    this.elLk.menu        = $('ul.tabs', this.el);
-    this.elLk.tabs        = $('li', this.elLk.menu);
-    this.elLk.caption     = $('.modal_caption', this.el);
-    this.elLk.closeButton = $('.modal_close', this.el);
+    this.elLk.content        = $('.modal_content',    this.el);
+    this.elLk.title          = $('.modal_title',      this.el);
+    this.elLk.menu           = $('ul.tabs',           this.el);
+    this.elLk.tabs           = $('li',                this.elLk.menu);
+    this.elLk.caption        = $('.modal_caption',    this.el);
+    this.elLk.closeButton    = $('.modal_close',      this.el).on('click', $.proxy(this.hide, this));
+    this.elLk.overlay        = $('.modal_overlay',    this.el);
+    this.elLk.overlayBg      = $('.modal_overlay_bg', this.el);
+    this.elLk.overlayContent = $('.overlay_content',  this.elLk.overlay);
     
     this.xhr           = false;
     this.reloadURL     = false;
@@ -41,9 +46,9 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       }
       
       return false;
-    }).on('click', '.modal_close', function () {
-      panel.hide();
     });
+    
+    $('.overlay_close', this.elLk.overlay).on('click', $.proxy(this.hideOverlay, this));
     
     this.elLk.content.each(function () {
       $(this).data('tab', panel.elLk.tabs.children('a.' + this.id).parent());
@@ -97,14 +102,25 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.base();
     
     this.elLk.caption.html('');
-    
-    Ensembl.EventManager.trigger('modalHide');
+    this.hideOverlay();
     
     if ((escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) || this.pageReload === 'force') {
       this.setPageReload(false, true);
     } else if ($('.modal_reload', this.el).length) {
       this.setPageReload(false, true, true);
     }
+  },
+  
+  showOverlay: function (el) {
+    this.elLk.overlayContent.children().detach().end().append(el);
+    this.elLk.overlay.show().css({ marginLeft: -this.elLk.overlay.outerWidth() / 2 });
+    this.elLk.overlayBg.show();
+    this.elLk.closeButton.hide();
+  },
+  
+  hideOverlay: function () {
+    this.elLk.closeButton.show();
+    this.elLk.overlayBg.add(this.elLk.overlay).hide();
   },
   
   getContent: function (url, id) {
