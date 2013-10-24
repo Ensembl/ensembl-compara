@@ -208,7 +208,7 @@ sub iterate_through_registered_species {
 
     if ($registry_conf_file) {
 
-        Bio::EnsEMBL::Registry->load_all( $registry_conf_file );
+        Bio::EnsEMBL::Registry->load_all( $registry_conf_file, undef, "no_clear" );
         my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('species_name'), 'core');
 
         push @core_dba_list, $this_core_dba if ($this_core_dba);
