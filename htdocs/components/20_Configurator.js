@@ -26,7 +26,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('changeTrackOrder',    this, this.externalOrder);
     Ensembl.EventManager.register('changeFavourite',     this, this.changeFavourite);
     Ensembl.EventManager.register('syncViewConfig',      this, this.syncViewConfig);
-    Ensembl.EventManager.register('modalHide',           this, this.saveAsHide);
     Ensembl.EventManager.register('updateSavedConfig',   this, this.updateSavedConfig);
     Ensembl.EventManager.register('activateConfig',      this, this.activateConfig);
   },
@@ -57,14 +56,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.viewConfigs       = this.elLk.configDivs.filter('.view_config');
     this.elLk.viewConfigInputs  = $(':input:not([name=select_all])', this.elLk.viewConfigs);
     this.elLk.imageConfigExtras = $('.image_config_notes, .configuration_search', this.el);
-    this.elLk.saveAs            = $('.config_save_as', this.el).insertAfter(this.el); // IE 6 and 7 are stupid and can't deal with z-index correctly
-    this.elLk.saveAsClose       = $('.close', this.elLk.saveAs);
+    this.elLk.saveAs            = $('.config_save_as', this.el).detach(); // will be put into the modal overlay
     this.elLk.saveAsInputs      = $('.name, .desc, .default, .existing', this.elLk.saveAs);
     this.elLk.saveAsRequired    = this.elLk.saveAsInputs.filter('.name, .existing');
     this.elLk.existingConfigs   = this.elLk.saveAsInputs.filter('.existing');
     this.elLk.saveAsSubmit      = $('.fbutton', this.elLk.saveAs);
-    this.elLk.saveAsBg          = this.el.siblings('#config_save_as_bg');
-    this.elLk.modalClose        = this.el.siblings('.modal_title').children('.modal_close');
     this.elLk.popup             = $();
     this.elLk.help              = $();
     
@@ -226,14 +222,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       panel.el.scrollTop(0);
       panel.elLk.saveAsSubmit.prop('disabled', true).addClass('disabled');
-      panel.elLk.saveAs.show().css('marginTop', (panel.elLk.saveAs.height() / -2) - 18);
-      panel.elLk.saveAsBg.show();
-      panel.elLk.modalClose.hide();
+      
+      Ensembl.EventManager.trigger('modalOverlayShow', panel.elLk.saveAs);
       
       return false;
     });
-    
-    this.elLk.saveAsClose.on('click', function () { panel.saveAsHide(); });
     
     function saveAsState() {
       var disabled = !$.grep(panel.elLk.saveAsRequired.not('.disabled'), function (el) { return el.value; }).length;
@@ -250,7 +243,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       if (saveAs.name || saveAs.overwrite) {
         panel.updateConfiguration(true, saveAs);
-        panel.saveAsHide();
+        Ensembl.EventManager.trigger('modalOverlayHide');
       }
     });
     
@@ -903,12 +896,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         this.el.removeClass('active').data('reload', true);
       }
     }
-  },
-  
-  saveAsHide: function () {
-    this.elLk.modalClose.show();
-    this.elLk.saveAs.hide();
-    this.elLk.saveAsBg.hide();
   },
   
   makeSortable: function () {

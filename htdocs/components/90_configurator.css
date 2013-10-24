@@ -153,10 +153,7 @@ div.image_config_notes p                             { clear: both; padding-left
 
 /* save as popup */
 
-div#config_save_as_bg         { top: -20px; left: 0; width: 100%; height: 100%; padding: 20px 2px 0 0; background-color: [[MH_BORDER]]; z-index: 10000; opacity: 0.5; filter: Alpha(Opacity=50); }
-div#config_save_as_bg,
-div.config_save_as            { display: none; position: absolute; }
-div.config_save_as            { top: 50%; left: 50%; z-index: 10001; background-color: #FFF; width: 400px; margin-left: -200px; padding: 10px; border: 2px solid #000; }
+div.config_save_as            { width: 400px; }
 div.config_save_as h1         { display: block!important; }
 div.config_save_as form       { margin: 0; }
 div.config_save_as label      { display: block; font-weight: bold; margin: 0 0 3px; }
@@ -166,6 +163,5 @@ div.config_save_as span input { position: relative; top: 2px; }
 div.config_save_as .desc,
 div.config_save_as .name      { width: 395px; margin-top: 3px; }
 div.config_save_as .desc      { height: 105px; }
-div.config_save_as .fbutton   { width: 100%; margin-bottom: 0; cursor: pointer; }
 div.config_save_as .disabled  { background-color: #999; border-color: #999; cursor: default; }
 div.config_save_as .close     { position: absolute; top: -10px; right: -10px; cursor: pointer; }
