@@ -119,7 +119,7 @@ my $config = {
             {
                 description => 'Each species should have hits against all the other species',
                 query => 'SELECT DISTINCT hgenome_db_id FROM peptide_align_feature_#genome_db_id#',
-                expected_size => '= #species_count',
+                expected_size => '= #species_count#',
             },
         ],
     },
