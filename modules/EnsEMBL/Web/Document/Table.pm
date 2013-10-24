@@ -158,7 +158,7 @@ sub render {
   }
   
   my $class   = join ' ', keys %table_class;
-  my $wrapper = join ' ', grep $_, $width ne '100%' && $table_class{'autocenter'} ? 'autocenter_wrapper' : '', $toggleable && $options->{'id'} ? $options->{'id'} : '';
+  my $wrapper = join ' ', grep $_, $options->{'wrapper_class'}, $width ne '100%' && $table_class{'autocenter'} ? 'autocenter_wrapper' : '', $toggleable && $options->{'id'} ? $options->{'id'} : '';
   my ($head, $body) = $self->process;
   my ($thead, $tbody);
   
