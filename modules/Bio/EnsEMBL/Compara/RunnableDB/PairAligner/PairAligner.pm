@@ -186,10 +186,10 @@ sub run
   $self->compara_dba->dbc->disconnect_when_inactive(1);  
 
   my $starttime = time();
-
+  my $work_dir = $self->worker_temp_directory;
   foreach my $runnable (@{$self->param('runnable')}) {
       throw("Runnable module not set") unless($runnable);
-      $runnable->run();
+      $runnable->run($work_dir);
   }
 
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
