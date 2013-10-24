@@ -50,7 +50,8 @@ sub content {
     </div>
     $panels
     <div id="modal_default" class="modal_content js_panel fixed_width" style="display:none"></div>
-    <div id="config_save_as_bg"></div>
+    <div class="modal_overlay"><img class="overlay_close" title="Cancel" alt="close" src="${img_url}close.png" /><div class="overlay_content"></div></div>
+    <div class="modal_overlay_bg"></div>
   </div>
   };
   
