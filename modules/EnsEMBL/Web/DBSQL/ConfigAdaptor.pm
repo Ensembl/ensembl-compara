@@ -375,7 +375,6 @@ sub activate_set {
   return unless $set;
   
   my $configs = $self->all_configs;
-  
   my %record_ids;
   
   foreach (keys %{$set->{'records'}}) {
@@ -389,18 +388,26 @@ sub activate_set {
 
 sub update_set_record {
   my ($self, $record_id, $ids) = @_;
-  my $dbh     = $self->dbh || return;
+  my $dbh     = $self->dbh || return [];
+  my $configs = $self->all_configs;
   my $sets    = $self->all_sets;
-  my @set_ids = grep $sets->{$_}, @$ids;  
+  my $code    = $configs->{$record_id}{$configs->{$record_id}{'type'} eq 'view_config' ? 'code' : 'link_code'};
+  my @set_ids;
   
-  return unless scalar @set_ids;
+  foreach (grep $sets->{$_}, @$ids) {
+    my %set_has = map { $configs->{$_}{$configs->{$_}{'type'} eq 'view_config' ? 'code' : 'link_code'} => 1 } keys %{$sets->{$_}{'records'}};
+    push @set_ids, $_ unless $set_has{$code}; # Don't allow the config to be added to a set if the set already contains a config of that type and code
+  }
   
-  $dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @set_ids), {}, map { $_, $record_id } @set_ids);
+  return [] unless scalar @set_ids;
+  return [] unless $dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @set_ids), {}, map { $_, $record_id } @set_ids);
   
   foreach (@set_ids) {
     $sets->{$_}{'records'}{$record_id}         = 1;
     $self->{'records_to_sets'}{$record_id}{$_} = 1;
   }
+  
+  return \@set_ids;
 }
 
 sub delete_set {
@@ -421,14 +428,22 @@ sub delete_set {
 
 sub add_records_to_set {
   my ($self, $set_id, @record_ids) = @_;
-  my $dbh = $self->dbh || return;
+  my $dbh     = $self->dbh || return [];
+  my $configs = $self->all_configs;
+  my %set_has = map { $configs->{$_}{$configs->{$_}{'type'} eq 'view_config' ? 'code' : 'link_code'} => 1 } keys %{$self->{'all_sets'}{$set_id}{'records'}};
   
-  $dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @record_ids), {}, map { $set_id, $_ } @record_ids);
+  # Don't allow configs to be added to a set if the set already contains a config of that type and code
+  @record_ids = grep $configs->{$_} && !$set_has{$configs->{$_}{$configs->{$_}{'type'} eq 'view_config' ? 'code' : 'link_code'}}, @record_ids;
+  
+  return [] unless scalar @record_ids;
+  return [] unless $dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @record_ids), {}, map { $set_id, $_ } @record_ids);
   
   foreach (@record_ids) {
     $self->{'all_sets'}{$set_id}{'records'}{$_} = 1;
     $self->{'records_to_sets'}{$_}{$set_id}     = 1;
   }
+  
+  return \@record_ids;
 }
 
 sub delete_records_from_sets {
@@ -484,8 +499,10 @@ sub edit_set_records {
   my %record_ids = map { $_ => 1 } @record_ids;
   my @new        = grep !$set->{'records'}{$_}, @record_ids;
   my @delete     = grep !$record_ids{$_}, keys %{$set->{'records'}};
-  my $updated    = $self->delete_records_from_sets($set_id, @delete) if scalar @delete;
-     $updated   += $self->add_records_to_set($set_id, @new)          if scalar @new;
+  my $updated;
+  
+  $updated->{'removed'} = \@delete if scalar @delete && $self->delete_records_from_sets($set_id, @delete);
+  $updated->{'added'}   = $self->add_records_to_set($set_id, @new);
   
   return $updated;
 }
@@ -500,8 +517,30 @@ sub edit_record_sets {
   my %set_ids  = map { $_ => 1 } @set_ids;
   my @new      = grep !$existing{$_}, @set_ids;
   my @delete   = grep !$set_ids{$_}, keys %existing;
-  my $updated  = $self->delete_sets_from_record($record_id, @delete) if scalar @delete;
-     $updated += $self->update_set_record($record_id, \@new)         if scalar @new;
+  my $updated;
+  
+  $updated->{'removed'} = \@delete if scalar @delete && $self->delete_sets_from_record($record_id, @delete);
+  $updated->{'added'}   = $self->update_set_record($record_id, \@new);
+  
+  return $updated;
+}
+
+sub save_to_user {
+  my ($self, $record_id) = @_;
+  my $user_id = $self->user_id || return;
+  my $dbh     = $self->dbh     || return;
+  my $configs = $self->all_configs;
+  my $config  = $configs->{$record_id} || return;
+  
+  return unless $config->{'record_type'} eq 'session';
+  
+  my $updated;
+  
+  foreach (grep $_, $config, $configs->{$config->{'link_id'}}) {
+    $updated += $dbh->do('UPDATE configuration_details SET record_type = "user", record_type_id = ? WHERE record_id = ?', {}, $user_id, $_->{'record_id'});
+    $_->{'record_type'}    = 'user';
+    $_->{'record_type_id'} = $_;
+  }
   
   return $updated;
 }
@@ -509,7 +548,7 @@ sub edit_record_sets {
 # Share a configuration or set with another user
 sub share {
   my ($self, $record_ids, $checksum, $group_id, $link_id) = @_;
-  my $dbh          = $self->dbh;
+  my $dbh          = $self->dbh || return [];
   my $group        = $group_id ? $self->admin_groups->{$group_id} : undef;
   my %record_types = ( session => $self->session_id, user => $self->user_id, group => $group_id );
   my $record_type  = $group ? 'group' : 'session';
@@ -563,7 +602,7 @@ sub share_record {
 
 sub share_set {
   my ($self, $set_id, $checksum, $group_id) = @_;
-  my $dbh          = $self->dbh;
+  my $dbh          = $self->dbh || return;
   my $group        = $group_id ? $self->admin_groups->{$group_id} : undef;
   my %record_types = ( session => $self->session_id, user => $self->user_id, group => $group_id );
   my $record_type  = $group ? 'group' : 'session';
