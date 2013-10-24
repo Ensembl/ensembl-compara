@@ -96,28 +96,38 @@ Ensembl.DataTable = {
         
         parent = null;
       },
-      fnDrawCallback: function (data) {
-        $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', data.nTableWrapper)[data._iDisplayLength === -1 ? 'hide' : 'show']();
+      fnDrawCallback: function (tableSettings) {
+        $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', tableSettings.nTableWrapper)[tableSettings._iDisplayLength === -1 ? 'hide' : 'show']();
         
-        if (data._bInitComplete !== true) {
+        var data          = this.data();
+        var defaultHidden = data.defaultHiddenColumns || [];
+        var hiddenCols    = $.map(tableSettings.aoColumns, function (c, j) { return c.bVisible ^ defaultHidden[j] ? null : j * (defaultHidden[j] ? -1 : 1); }).join(',');
+        var sorting       = $.map(tableSettings.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
+        
+        if (tableSettings._bInitComplete !== true) {
+          this.data({ hiddenCols: hiddenCols, sorting: sorting });
           return;
         }
         
         this.fnSettings().oInit.fnInitComplete.call(this);
         this.data('export', false);
         
-        var defaultHidden = this.data('defaultHiddenColumns') || [];
-        var hidden        = $.map(data.aoColumns, function (c, j) { return c.bVisible ^ defaultHidden[j] ? null : j * (defaultHidden[j] ? -1 : 1); }).join(',');
-        var sorting       = $.map(data.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
+        for (var i = 0; i < tableSettings.aoOpenRows.length; i++) {
+          tableSettings.aoOpenRows[i].nTr.className = tableSettings.aoOpenRows[i].nParent.className;
+        }
         
-        $.ajax({
-          url: '/Ajax/data_table_config',
-          data: {
-            id:             this.data('code'),
-            sorting:        sorting,
-            hidden_columns: hidden
-          }
-        });
+        if (data.hiddenCols !== hiddenCols || data.sorting !== sorting) {
+          this.data({ hiddenCols: hiddenCols, sorting: sorting });
+          
+          $.ajax({
+            url: '/Ajax/data_table_config',
+            data: {
+              id:             this.data('code'),
+              sorting:        sorting,
+              hidden_columns: hiddenCols
+            }
+          });
+        }
         
         Ensembl.EventManager.trigger('dataTableRedraw');
       }
@@ -316,19 +326,21 @@ Ensembl.DataTable = {
       
       var td    = input.parents('td');
       var value = input.hide().val().replace(/<[^>]+>/g, ''); // strip HTML tags
+      var name  = input.attr('name');
       
       input.siblings().show();
       
       if (input.data('oldVal') !== value) {
         input.data('oldVal', value);
         input.parent().find('.val').html(value.replace(/\n/g, '<br />'));
+        input.parents('table').dataTable().fnUpdate(td.html(), td.parent()[0], td.index());
         
         if (typeof panel.saveEdit === 'function') {
-          panel.saveEdit(input, value);
+          panel.saveEdit(name, value, td);
         } else {
           $.ajax({
-            url: input.siblings('a.save').attr('href'),
-            data: { param: input.attr('name'), value: value },
+            url: td.find('a.save').attr('href'),
+            data: { param: name, value: value },
             success: function (response) {
               if (response === 'reload') {
                 if (panel instanceof Ensembl.Panel.ModalContent) {
@@ -340,8 +352,6 @@ Ensembl.DataTable = {
             }
           });
         }
-        
-        input.parents('table').dataTable().fnUpdate(td.html(), td.parent()[0], td.index());
       }
       
       input = td = null;
