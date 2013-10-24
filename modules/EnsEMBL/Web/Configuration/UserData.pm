@@ -17,7 +17,7 @@ sub set_default_action {
 sub populate_tree {
   my $self        = shift;
   my $data_menu   = $self->create_submenu('CustomData',     'Custom Data');
-  my $config_menu = $self->create_submenu('Configurations', 'Configurations');
+  my $config_menu = $self->create_submenu('Configurations', 'Manage Configurations');
   my $tools_menu  = $self->create_submenu('Conversion',     'Online Tools');
 
   ## Upload "wizard"
@@ -86,10 +86,13 @@ sub populate_tree {
   $data_menu->append($self->create_node('FviewRedirect', '', [], { command => 'EnsEMBL::Web::Command::UserData::FviewRedirect'})); 
   
   ## Configuration management
-  $config_menu->append($self->create_node('ManageConfigs', 'Manage configurations', [qw(manage_config EnsEMBL::Web::Component::UserConfig::ManageConfigs)]));
-  $config_menu->append($self->create_node('ManageSets',    'Manage sets',           [qw(manage_sets   EnsEMBL::Web::Component::UserConfig::ManageSets)]));
+  $config_menu->append($self->create_node('ManageConfigs',           'Configurations for this page', [qw(manage_config EnsEMBL::Web::Component::UserData::ManageConfigs)]));
+  $config_menu->append($self->create_node('ManageConfigs/All',       'All configurations',           [qw(manage_config EnsEMBL::Web::Component::UserData::ManageConfigs/all)]));
+  $config_menu->append($self->create_node('ManageConfigs/Update',    '',                             [qw(manage_config EnsEMBL::Web::Component::UserData::ManageConfigs/update)]));
+  $config_menu->append($self->create_node('ManageConfigSets',        'Configuration sets',           [qw(manage_sets   EnsEMBL::Web::Component::UserData::ManageConfigSets)]));
+  $config_menu->append($self->create_node('ManageConfigSets/Update', '',                             [qw(manage_sets   EnsEMBL::Web::Component::UserData::ManageConfigSets/update)]));
   
-  $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserConfig::ModifyConfig' }));
+  $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyConfig' }));
   
   ## Data conversion
   $tools_menu->append($self->create_node('UploadVariations',  'Variant Effect Predictor', [qw(upload_snps       EnsEMBL::Web::Component::UserData::UploadVariations)]));
