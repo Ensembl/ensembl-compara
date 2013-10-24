@@ -177,14 +177,13 @@ sub save_as {
   
   return qq{
     <div class="config_save_as">
-      <img class="close" src="/i/close.png" alt="close" title="Cancel" />
       <h1>Save configuration</h1>
       <form>
         $existing
         $save_to
         <p><label>Name:</label><input class="name" type="text" name="name" maxlength="255" /></p>
         <p><label>Description:</label><textarea class="desc" name="description" rows="5"/></p>
-        <p style="margin-bottom:0"><input class="fbutton disabled" type="button" value="Save" /></p>
+        <p style="margin:0"><input class="fbutton disabled" type="button" value="Save" /></p>
       </form>
     </div>
   };
