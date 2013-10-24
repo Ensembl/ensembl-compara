@@ -48,6 +48,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   initialize: function () {
+    this.addSubPanel();
     this.setSelectAll();
     
     this.elLk.dataTable = $('table.data_table', this.el);
@@ -58,15 +59,13 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       }
       
       this.dataTableInit();
+      this.el.togglewrap();
     }
     
-    this.el.togglewrap();
     Ensembl.EventManager.trigger('validateForms', this.el);
     
     this.el.find('._ht').helptip();
     this.el.find('._stt').selectToToggle({}, this.el);
-    
-    this.addSubPanel();
   },
   
   getContent: function (link, url) {
