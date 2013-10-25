@@ -10,9 +10,9 @@ sub features {
   my $self           = shift;
   my @genes          = @_;
   my $slice          = $self->{'container'};
+  my $display        = $self->{'display'};
   my $db_alias       = $self->my_config('db');
   my $analyses       = $self->my_config('logic_names');
-  my $display        = $self->my_config('display');
   my $selected_gene  = $self->my_config('g') || $self->core('g');
   my $selected_trans = $self->core('t')      || $self->core('pt');
   my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /transcript/ ? 'highlight1' : 'highlight2' : undef;

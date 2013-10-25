@@ -8,11 +8,11 @@ sub label { return undef; }
 
 sub draw_features {
   my ($self, $wiggle) = @_;
-  my $config           = $self->{'config'};  
+  my $config           = $self->{'config'};
+  my $display          = $self->{'display'};  
   my $cell_line        = $self->my_config('cell_line'); 
   my $set              = $self->my_config('set');
   my $label            = $self->my_config('label');
-  my $display          = $self->my_config('display');
   my $reg_view         = $config->hub->type eq 'Regulation';
   my $data             = $config->{'data_by_cell_line'}{$cell_line}; 
   my $colours          = $config->{'fg_multi_wiggle_colours'} ||= $self->get_colours;
