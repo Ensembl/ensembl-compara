@@ -158,7 +158,7 @@ Ensembl.LayoutManager.extend({
       return Ensembl.redirect(url);
     }
     
-    $('#messages').hide();
+    $('.session_messages').hide();
   },
   
   validateForms: function (context) {
