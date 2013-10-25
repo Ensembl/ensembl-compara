@@ -23,7 +23,7 @@
 .config_manager table td div.config_used                  { position: absolute; left: 1px; display: none; width: 100%; background: #80CC74; margin-top: -18px; text-align: center; z-index: 100; }
 .config_manager table td div.none                         { display: none; }
 .config_manager table td div.none.show                    { display: block; }
-.config_manager table td .height_wrap                     { position: relative; overflow: hidden; height: 16px; line-height: 16px; padding-right: 20px; }
+.config_manager table td .height_wrap                     { overflow: hidden; height: 16px; line-height: 16px; padding-right: 20px; }
 .config_manager table td.editable .height_wrap .val       { height: auto!important; }
 .config_manager table td.editable .height_wrap .val.empty { height: 100%!important; }
 .config_manager table td div.open                         { overflow: auto; height: auto!important; }
@@ -62,7 +62,7 @@
 .edit_config_set .ftextarea          { width: 376px; }
 .edit_config_set .form-field         { margin-bottom: 16px; }
 
-body.ie67 .config_manager td div.config_used { margin-top: -1px; }
-body.ie6  .config_manager td .height_wrap    { overflow: auto; height: auto; line-height: auto; margin-right: 0; }
-body.ie6  .config_manager td .ellipsis       { display: none; }
-body.ie7  .config_manager td img.toggle      { top: 4px; }
+body.ie67 .config_manager table td div.config_used { margin-top: -1px; }
+body.ie6  .config_manager table td .height_wrap    { overflow: inherit; height: auto; line-height: auto; margin-right: 0; }
+body.ie6  .config_manager table td .ellipsis       { display: none; }
+body.ie7  .config_manager table td img.toggle      { top: 4px; }
