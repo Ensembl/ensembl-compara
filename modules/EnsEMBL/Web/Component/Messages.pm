@@ -18,14 +18,8 @@ sub _init {
 
 sub content {
   my ($self, @priority) = @_; 
-  @priority = EnsEMBL::Web::Constants::MESSAGE_PRIORITY unless scalar(@priority);
-  my $hub = $self->hub;
-  
-  return unless $hub->can('session');
-  
-  my $session  = $hub->session;
-  my %messages;
-  my $html;
+  my $session = $self->hub->session;
+  my (%messages, $html);
 
   # Group messages by type
   # Set a default order of 100 - we probably aren't going to have 100 messages on the page at once, and this allows us to force certain messages to the bottom by giving order > 100
@@ -33,9 +27,8 @@ sub content {
   
   $session->purge_data(type => 'message');
   
-  foreach (@priority) {
+  foreach (scalar @priority ? @priority : EnsEMBL::Web::Constants::MESSAGE_PRIORITY) {
     next unless $messages{$_};
-    my @A = @{$messages{$_}};
     
     my $func    = $self->can($_) ? $_ : '_info';
     my $caption = $func eq '_info' ? 'Information' : ucfirst substr $func, 1, length $func;   
@@ -46,7 +39,7 @@ sub content {
     $html .= '<br />';
   }
   
-  return qq{<div id="messages">$html</div>};
+  return qq{<div class="session_messages">$html</div>};
 }
 
 1;
