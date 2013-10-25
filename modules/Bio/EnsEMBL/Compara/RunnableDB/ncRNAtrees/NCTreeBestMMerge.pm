@@ -58,7 +58,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 sub param_defaults {
