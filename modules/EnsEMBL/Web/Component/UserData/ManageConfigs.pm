@@ -52,7 +52,7 @@ sub content_update {
 }
 
 sub content_config {
-  my ($self, $record_id) = @_;
+  my $self      = shift;
   my $hub       = $self->hub;
   my $record_id = $hub->param('record_id');
   
@@ -67,7 +67,6 @@ sub content_config {
   my ($vc, $ic) = $record->{'type'} eq 'view_config' ? ($record, $all_configs->{$record->{'link_id'}}) : ($all_configs->{$record->{'link_id'}}, $record);
   my $all_sets  = $adaptor->all_sets;
   my @sets      = sort { $a->[1] cmp $b->[1] } map [ $all_sets->{$_}{'record_id'}, $all_sets->{$_}{'name'} ], $adaptor->record_to_sets($record_id);
-  my $list      = '<li class="%s">' . $self->templates->{'wrap'} . '</li>';
   my (@config, $html);
   
   if ($vc) {
@@ -105,7 +104,7 @@ sub content_config {
   }
   
   $html .= sprintf '<div><h4>Configuration</h4><ul>%s</ul></div>',                  join '', map qq{<li>$_->[0]: $_->[1]</li>}, sort { $a->[0] cmp $b->[0] } @config if scalar @config;
-  $html .= sprintf '<div><h4>In sets</h4><ul class="editables_list">%s</ul></div>', join '', map sprintf($list, @$_), @sets;
+  $html .= sprintf '<div><h4>In sets</h4><ul class="editables_list">%s</ul></div>', join '', map sprintf($self->templates->{'list'}, @$_), @sets;
   
   return $html;
 }
@@ -183,7 +182,7 @@ sub records_html {
     $self->records_tables($columns, $rows),
     $self->ajax_url('update', { update_panel => 1 }),
     $self->set_view ? 'set' : 'config',
-    encode_entities(sprintf($self->templates->{'list'}) || sprintf('<li>%s</li>', $self->templates->{'wrap'})),
+    encode_entities(sprintf($self->templates->{'list'})), # remove any %s inside the list template
     encode_entities($self->jsonify($json)),
     encode_entities($self->jsonify({ map { $_ => {
       name  => $self->{'editables'}{$_}{'name'},
@@ -225,6 +224,7 @@ sub templates {
     icon     => '<a class="icon_link sprite _ht %s_icon %s" title="%s" href="%s">&nbsp;</a>%s',
     disabled => '<span class="icon_link sprite_disabled _ht %s_icon" title="%s">&nbsp;</span>',
     add      => '<a class="add_to_set" href="#" rel="%s"><span class="removed _ht" title="Add to set">&nbsp;</span><span class="added _ht" title="Remove from set">&nbsp;</span></a>',
+    list     => '<li class="%s"><span class="name">%s</span></li>',
     icon_col => { title => '', width => '16px', align => 'center' },
   };
 }
