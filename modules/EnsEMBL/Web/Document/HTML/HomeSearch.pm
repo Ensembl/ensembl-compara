@@ -75,7 +75,10 @@ sub render {
 
   # search input box & submit button
   my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 'query input inactive'};
-  $q_params->{'value'} = "Search $species_name..." unless $is_home_page;
+  unless ($is_home_page) {
+    $q_params->{'value'}      = "Search $species_name&hellip;";
+    $q_params->{'is_encoded'} = 1;
+  }
   $field->add_element($q_params, 1);
   $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
