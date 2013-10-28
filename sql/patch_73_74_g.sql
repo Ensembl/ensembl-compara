@@ -8,9 +8,9 @@
 SET session sql_mode='TRADITIONAL';
 
 ALTER TABLE homology_member 
-	MODIFY COLUMN perc_cov unsigned tinyint default 0,
-	MODIFY COLUMN perc_id  unsigned tinyint default 0,
-	MODIFY COLUMN perc_pos unsigned tinyint default 0;
+	MODIFY COLUMN perc_cov tinyint unsigned default 0,
+	MODIFY COLUMN perc_id  tinyint unsigned default 0,
+	MODIFY COLUMN perc_pos tinyint unsigned default 0;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
