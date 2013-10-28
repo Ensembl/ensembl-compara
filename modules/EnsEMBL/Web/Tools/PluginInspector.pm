@@ -1,4 +1,4 @@
-package EnsEMBL::Web::PluginInspector;
+package EnsEMBL::Web::Tools::PluginInspector;
 
 ## TODO
 
