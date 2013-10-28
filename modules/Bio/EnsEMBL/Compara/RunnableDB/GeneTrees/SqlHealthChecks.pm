@@ -240,23 +240,23 @@ my $config = {
         tests => [
             {
                 description => 'A pair of gene can only appear in 1 homology at most',
-                query => 'SELECT hm1.member_id, hm2.member_id FROM homology_member hm1 JOIN homology_member hm2 USING (homology_id) JOIN homology h USING (homology_id) WHERE hm1.member_id<hm2.member_id AND tree_node_id = #gene_tree_id# GROUP BY hm1.member_id, hm2.member_id HAVING COUNT(*) > 1',
+                query => 'SELECT hm1.member_id, hm2.member_id FROM homology_member hm1 JOIN homology_member hm2 USING (homology_id) JOIN homology h USING (homology_id) WHERE hm1.member_id<hm2.member_id AND gene_tree_root_id = #gene_tree_id# GROUP BY hm1.member_id, hm2.member_id HAVING COUNT(*) > 1',
             },
             {
-                description => 'Checks that all the relevant fiels of the homology table are non-NULL or non-zero',
-                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id = #gene_tree_id# AND (description IS NULL OR peptide_member_id IS NULL OR cigar_line IS NULL OR LENGTH(cigar_line) = 0 OR perc_id IS NULL OR perc_pos IS NULL)',
+                description => 'Checks that all the relevant fields of the homology table are non-NULL or non-zero',
+                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# AND (description IS NULL OR peptide_member_id IS NULL OR cigar_line IS NULL OR LENGTH(cigar_line) = 0 OR perc_id IS NULL OR perc_pos IS NULL)',
             },
             {
                 description => 'Checks that the member_id column of the homology_member table only links to ENSEMBLGENE members',
-                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) JOIN member USING (member_id) WHERE tree_node_id = #gene_tree_id# AND source_name != "ENSEMBLGENE"',
+                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) JOIN member USING (member_id) WHERE gene_tree_root_id = #gene_tree_id# AND source_name != "ENSEMBLGENE"',
             },
             {
                 description => 'Checks that the peptide_member_id column of the homology_member table only links to canonical peptides',
-                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) JOIN member USING (member_id) WHERE tree_node_id = #gene_tree_id# AND canonical_member_id != peptide_member_id',
+                query => 'SELECT * FROM homology JOIN homology_member USING (homology_id) JOIN member USING (member_id) WHERE gene_tree_root_id = #gene_tree_id# AND canonical_member_id != peptide_member_id',
             },
             {
                 description => 'Checks that the members involved in one2one orthologies are not involved in any other orthologies',
-                query => 'SELECT method_link_species_set_id, hm.member_id FROM homology h JOIN homology_member hm USING (homology_id) WHERE tree_node_id = #gene_tree_id# GROUP BY method_link_species_set_id, hm.member_id HAVING COUNT(*)>1 AND GROUP_CONCAT(h.description) LIKE "%one2one%"',
+                query => 'SELECT method_link_species_set_id, hm.member_id FROM homology h JOIN homology_member hm USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# GROUP BY method_link_species_set_id, hm.member_id HAVING COUNT(*)>1 AND GROUP_CONCAT(h.description) LIKE "%one2one%"',
             },
 
         ],
