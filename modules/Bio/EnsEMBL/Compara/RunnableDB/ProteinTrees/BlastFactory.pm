@@ -73,7 +73,7 @@ sub write_output {
     my $self = shift @_;
 
     my $step = $self->param('step');
-    my @member_id_list = map {$_->dbID} @{$self->param('query_members')};
+    my @member_id_list = sort {$a <=> $b} (map {$_->dbID} @{$self->param('query_members')});
     my @target_genome_db_ids = sort {$a <=> $b} (map {$_->dbID} @{$self->param('target_genome_dbs')});
 
     while (@member_id_list) {
