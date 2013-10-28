@@ -30,7 +30,7 @@ UPDATE homology
   WHERE description = "putative_gene_split";
 
 UPDATE homology
-  SET new_description = 'alt_allele';
+  SET new_description = 'alt_allele'
   WHERE description IN ('projection_unchanged','projection_altered');
 
 DELETE FROM homology
