@@ -1,58 +1,71 @@
 package LoadPlugins;
 
-### Loop through the plugin directories, requiring files determined by the condition supplied.
-### MUST be required rather than used. The require should be done at the point when the plugin code needs to be executed.
-### SiteDefs MUST be used somewhere in the codebase before LoadPlugins is required for the first time.
-###
-### Usage:
-###   require LoadPlugins;
-###   LoadPlugins::plugin(sub { /\.pm$/; });
+### Adds a subroutine in the @INC array that gets called everytime a file is 'require'd.
+### The subroutine checks and loads (in the required order) all the files related to the file being required from the plugin directries after loading the core file
+### SiteDefs MUST be used somewhere in the codebase before LoadPlugins is used since it needs to know about the ENSEMBL_LIB_DIRS and ENSEMBL_PLUGINS.
 
 use strict;
-
-use File::Find;
+use warnings;
 
 use SiteDefs;
 
+my $IMPORTED;
+
 sub plugin {
-  my $condition   = shift || undef;
-  my @plugin_dirs = map !/::/ && -e "$_/modules" ? "$_/modules" : (), reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
-  
-  unshift @INC, reverse @plugin_dirs;
-  
-  my $wanted = sub {
-    if (!$condition || &$condition($_)) {
-      my $dir  = $File::Find::topdir;
-      my $file = $File::Find::name;
-      
-      (my $relative_file = $file) =~ s/^$dir\///;    
-      (my $package = $relative_file) =~ s/\//::/g;
-      $package =~ s/\.pm$//g;
-      
-      # Regex matches all namespaces which are EnsEMBL:: but not EnsEMBL::Web
-      # Therefore the if statement is true for EnsEMBL::Web:: and Bio:: packages, which are the ones we need to overload
-      if ($package !~ /^EnsEMBL::(?!Web)/) {
-        no strict 'refs';
-        
-        # Require the base module first, unless it already exists
-        if (!exists ${"$package\::"}{'ISA'}) {
-          foreach (grep -e "$_/$relative_file", @SiteDefs::ENSEMBL_LIB_DIRS) {
-            eval "require '$_/$relative_file'";
-            warn $@ if $@;
-            last if exists ${"$package\::"}{'ISA'};
+
+  return if $IMPORTED;
+
+  my @lib_dirs    = map [ 'core', $_ ], @SiteDefs::ENSEMBL_LIB_DIRS;
+  my @all_plugins = reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
+  my @plugins;
+
+  while (my ($dir, $plugin_name) = splice @all_plugins, 0, 2) {
+    push @plugins, [ $plugin_name, "$dir/modules" ] if -e "$dir/modules";
+  }
+
+  foreach my $index (0..1) {
+    die qq(ERROR: Duplicate plugins found. Please check your conf/Plugins.pm\n) if @plugins != scalar keys %{{ map { $_->[$index] => 1 } @plugins }};
+  }
+
+  unshift @INC, sub {
+    ## This subroutine gets called the first thing when we 'require' any package
+    ## If a package can have plugins, it loads the core one first, and then loads any plugins if found
+    my ($coderef, $filename) = @_;
+
+    my @inc;
+
+    return unless substr($filename, 0, 12) eq 'EnsEMBL/Web/' || substr($filename, 0, 4) eq 'Bio/';
+
+    {
+      local $SIG{'__WARN__'} = sub { warn $_[0] unless $_[0]=~ /Subroutine .+ redefined/; };
+
+      for (@lib_dirs, @plugins) {
+        my $filename  = "$_->[1]/$filename" =~ s/\/+/\//gr;
+        if (-e $filename) {
+          eval "require '$filename'";
+          if ($@) {
+            warn $@;
+          } else {
+            push @inc, [ $_->[0], $filename ];
           }
         }
-        
-        eval "require '$file'"; # Require the plugin module
-        warn $@ if $@;
       }
     }
-  };
-  
-  
-  local $SIG{'__WARN__'} = sub { my $str = "@_"; print STDERR @_ unless $str =~ /Subroutine .+ redefined/; };
-  
-  find($wanted, @plugin_dirs);
+
+    # this is not really needed by perl afterwards, it's only for us to keep a
+    # record of how many plugins does one particular file has
+    # See EnsEMBL::Web::Tools::PluginInspector
+    if (@inc) {
+      if (@inc == 1 && $inc[0][0] eq 'core') {
+        $INC{$filename} = $inc[0][1];
+      } else {
+        $INC{$_} = \@inc for map($_->[1], @inc), $filename;
+      }
+      return sub { $_ = 1; return 0; };
+    }
+  }, map($_->[1], @plugins);
+
+  $IMPORTED = 1;
 }
 
 1;
