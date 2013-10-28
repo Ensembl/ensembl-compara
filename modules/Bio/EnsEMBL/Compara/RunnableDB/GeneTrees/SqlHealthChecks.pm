@@ -211,8 +211,8 @@ my $config = {
         params => [ 'gene_tree_id' ],
         tests => [
             {
-                description => 'All the internal tree nodes should have a node_type and taxon information',
-                query => 'SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND member_id IS NULL AND (node_type IS NULL OR taxon_id IS NULL OR taxon_name IS NULL)',
+                description => 'All the internal tree nodes should have a node_type and species tree information',
+                query => 'SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND member_id IS NULL AND (node_type IS NULL OR species_tree_node_id IS NULL)',
             },
             {
                 description => 'Leaves should not have attributes',
