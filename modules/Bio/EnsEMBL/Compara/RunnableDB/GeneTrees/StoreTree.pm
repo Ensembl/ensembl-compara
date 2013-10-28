@@ -101,7 +101,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   my $sa = $gene_tree->get_SimpleAlign(
      -id_type => 'TMP',
      -stop2x => 1,
-     -SEQ_TYPE => 'cds',
+     $self->param('cdna') ? (-seq_type => 'cds') : (),
   );
   if ($self->param('check_split_genes')) {
     foreach my $gene_to_remove (keys %{$self->param('split_genes')}) {
