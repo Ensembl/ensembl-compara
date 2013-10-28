@@ -15,9 +15,9 @@ package EnsEMBL::Web::Object::Gene;
 
 use strict;
 
+use EnsEMBL::Web::Constants; 
 use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::GenomeDB;
-
 
 use Time::HiRes qw(time);
 
