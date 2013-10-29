@@ -144,6 +144,7 @@ sub convert_to_drawing_parameters {
         genes       => join(', ', @assoc_gene_links) || '-',
         phe_sources => $sources,
         phe_studies => $self->_pf_external_reference_link($phenotypes_studies{$name}),
+        orig_source => (keys %{$phenotypes_sources{$name}})[0],
         'p-values'  => ($p_value_logs{$name} ? sprintf('%.1f', $p_value_logs{$name}) : '-'), 
       },
     };
@@ -192,6 +193,17 @@ sub _pf_external_reference_link {
 sub _pf_source_link {
   my ($self, $obj_name, $source, $ext_id, $ext_ref_id) = @_;
   
+  if($source eq 'Animal QTLdb') {
+    $source =~ s/ /\_/g;
+    my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $self->hub->species)));
+    
+    return $self->hub->get_ExtURL_link(
+      $source,
+      $source,
+      { ID => $obj_name, SP => $species}
+    );
+  }
+  
   my $source_uc = uc $source;
      $source_uc = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
      $source_uc =~ s/\s/_/g;
@@ -208,7 +220,7 @@ sub _pf_source_link {
   } 
   elsif ($url =~ /omim/) {
   #  if ($code) {
-     $name = "search?search=".$obj_name;
+     $name = "search?search=".($ext_id || $obj_name);
   #  }
   #  else {
   #    $ext_ref_id =~ s/MIM\://; 
