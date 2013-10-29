@@ -35,7 +35,7 @@ sub form {
   my $menu          = $hub->param('menu');
   my $menu_node     = $tree->get_node($menu);
   my $matrix_data   = $menu_node->data->{'matrix'};
-  my @matrix_rows   = sort { $a->{'group_order'} <=> $b->{'group_order'} || lc $a->{'group'} cmp lc $b->{'group'} || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
+  my @matrix_rows   = sort { $a->{'group_order'} <=> $b->{'group_order'} || lc ($a->{'group'} || 'zzzzz') cmp lc ($b->{'group'} || 'zzzzz') || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
   my @filters       = ([ '', 'All classes' ]);
   my (@columns, %renderer_counts, %cells, %features);
   
@@ -191,7 +191,7 @@ sub form {
     
     if ($group ne $last_group) {
       # No versions of IE are capable of correctly drawing borders when there is an interaction between colspan on a cell and border-collapse, so we must draw empty cells instead of using colspan
-      push @rows, [ 'gap', { tag => 'th', html => $group, class => 'first' }, map { tag => 'th' }, @columns ];
+      push @rows, [ 'gap' . ($group ? '' : ' empty'), { tag => 'th', html => $group, class => 'first' }, map { tag => 'th' }, @columns ];
       $gaps{$#rows} = 1;
       $last_group   = $group;
       
@@ -203,7 +203,7 @@ sub form {
   
   my $cols           = scalar @{$rows[0]} - 1;
   my $tutorial_col   = $cols > 5 ? 6 : $cols;
-  my ($tutorial_row) = sort { $a <=> $b } 5, scalar(grep { $_->[0] ne 'gap' } @rows) - 1;
+  my ($tutorial_row) = sort { $a <=> $b } 5, scalar(grep { $_->[0] !~ /gap/ } @rows) - 1;
   my $wrapper_class  = scalar @rows - $tutorial_row < 3 ? ' short' : '';
   
   $tutorial_row++ for grep { $_ < $tutorial_row } sort { $a <=> $b } keys %gaps;
