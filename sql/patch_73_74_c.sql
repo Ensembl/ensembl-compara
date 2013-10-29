@@ -14,8 +14,11 @@
 #    CAFE_species_gene: + The taxon_id column has been dropped
 
 # species_tree_root
-ALTER TABLE species_tree_root ADD COLUMN `label` varchar(20) NOT NULL DEFAULT 'default' AFTER method_link_species_set_id;
-ALTER TABLE species_tree_root DROP COLUMN `pvalue_lim`;
+ALTER TABLE species_tree_root
+      ADD COLUMN `label` varchar(20) NOT NULL DEFAULT 'default' AFTER method_link_species_set_id,
+      DROP COLUMN `pvalue_lim`,
+      DROP KEY `method_link_species_set_id`,
+      ADD FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id);
 
 ALTER TABLE species_tree_node 
       ADD COLUMN `taxon_id` int(10) unsigned DEFAULT NULL,
