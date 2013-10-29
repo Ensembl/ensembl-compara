@@ -42,6 +42,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   print STDERR "fetching alignment\n" if ($self->debug);
+  $self->prepareTemporaryMemberNames($gene_tree);
 
   ########################################
   # Gene split mirroring code
@@ -97,7 +98,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
  
   # Getting the multiple alignment
-  $self->prepareTemporaryMemberNames($gene_tree);
   my $sa = $gene_tree->get_SimpleAlign(
      -id_type => 'TMP',
      -stop2x => 1,
