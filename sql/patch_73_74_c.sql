@@ -17,7 +17,13 @@
 ALTER TABLE species_tree_root ADD COLUMN `label` varchar(20) NOT NULL DEFAULT 'default' AFTER method_link_species_set_id;
 ALTER TABLE species_tree_root DROP COLUMN `pvalue_lim`;
 
-ALTER TABLE species_tree_node ADD COLUMN `taxon_id` int(10) unsigned DEFAULT NULL, ADD COLUMN `genome_db_id` int(10) unsigned DEFAULT NULL, ADD COLUMN `node_name` varchar(255) DEFAULT NULL;
+ALTER TABLE species_tree_node 
+      ADD COLUMN `taxon_id` int(10) unsigned DEFAULT NULL,
+      ADD COLUMN `genome_db_id` int(10) unsigned DEFAULT NULL,
+      ADD COLUMN `node_name` varchar(255) DEFAULT NULL,
+      ADD FOREIGN KEY (`taxon_id`) REFERENCES ncbi_taxa_node(taxon_id),
+      ADD FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id);
+
 UPDATE species_tree_node JOIN CAFE_species_gene USING(node_id) SET species_tree_node.taxon_id = CAFE_species_gene.taxon_id;
 ALTER TABLE CAFE_species_gene DROP COLUMN taxon_id;
 UPDATE species_tree_node JOIN genome_db using(taxon_id) SET species_tree_node.genome_db_id=genome_db.genome_db_id;
