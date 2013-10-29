@@ -187,6 +187,7 @@ sub get_msa_command_line {
     print OUTPARAMS "-mode=mcoffee\n";
     print OUTPARAMS "-output=fasta_aln,score_ascii" . $extra_output . "\n";
     print OUTPARAMS "-outfile=$msa_output\n";
+    print OUTPARAMS "-n_core=1\n";
     print OUTPARAMS "-newtree=$tree_temp\n";
     close OUTPARAMS;
 
