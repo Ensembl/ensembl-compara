@@ -17,8 +17,7 @@
 ALTER TABLE species_tree_root
       ADD COLUMN `label` varchar(20) NOT NULL DEFAULT 'default' AFTER method_link_species_set_id,
       DROP COLUMN `pvalue_lim`,
-      DROP KEY `method_link_species_set_id`,
-      ADD FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id);
+      ADD UNIQUE KEY (method_link_species_set_id, label);
 
 ALTER TABLE species_tree_node 
       ADD COLUMN `taxon_id` int(10) unsigned DEFAULT NULL,
