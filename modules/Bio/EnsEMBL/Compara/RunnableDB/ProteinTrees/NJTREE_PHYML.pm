@@ -161,6 +161,7 @@ sub run_njtree_phyml {
     if (scalar(@{$protein_tree->get_all_Members}) == 2) {
 
         warn "Number of elements: 2 leaves, N/A split genes\n";
+        $self->prepareTemporaryMemberNames($protein_tree);
         my @goodgenes = map {$_->{_tmp_name}} @{$protein_tree->get_all_Members};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
@@ -176,7 +177,7 @@ sub run_njtree_phyml {
 
         if ($genes_for_treebest == 2) {
 
-            my @goodgenes = grep {not exists $self->param('split_genes')->{$_->{_tmp_name}}} @{$protein_tree->get_all_Members};
+            my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {$_->{_tmp_name}} @{$protein_tree->get_all_Members});
             $newick = $self->run_treebest_sdi_genepair(@goodgenes);
 
         } else {
