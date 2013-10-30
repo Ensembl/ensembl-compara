@@ -21,7 +21,7 @@
 
 =head1 DESCRIPTION  
 
-    The PipeConfig example file for Vega group's version of ProteinTrees pipeline
+  The PipeConfig example file for Vega group's version of ProteinTrees pipeline
 
 =head1 CONTACT
 
@@ -41,31 +41,31 @@ sub resource_classes {
   my ($self) = @_;
   return {
     %{$self->SUPER::resource_classes},
-    'urgent_hcluster'   => {'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]" -q yesterday' },
+    'urgent_hcluster'   => {'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]" -q yesterday' },
+    '4Gb_job'          => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
   };
 }
 
 
-# each run you will need to specify and uncomment: mlss_id, release, work_dir, dbname
+# each run you will need to edit and uncomment: version, mlss_id, (release) and maybe work_dir
 sub default_options {
   my ($self) = @_;
-  my $version = 'vega_genetree_20130211_71_step3'; #edit this each time
+  my $version = 'vega_genetree_20130722_73_2'; #edit this each time
   return {
     %{$self->SUPER::default_options},
     # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-    'mlss_id'               => '25',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
-    'release'               => '71',
+    'mlss_id'               => '100032',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
+#    'release'               => '73',
 
     'rel_suffix'            => 'vega',
-    'work_dir'              => '/lustre/scratch109/sanger/'.$ENV{'USER'}.'/compara_generation/'.$version,
+    'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/'.$version,
     'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
 
     # connection parameters to various databases:
-
     # the production database itself (will be created)
     'pipeline_db' => { 
       -host   => 'vegabuild',
@@ -85,10 +85,13 @@ sub default_options {
     },
 
     # switch off the reuse:
-    'prev_core_sources_locs'   => [ ],
+    'prev_core_sources_locs'    => [ ],
     'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
     'reuse_from_prev_rel_db'    => 0,
     'do_stable_id_mapping'      => 0,
+
+    # we're not interested in treefam
+    'do_treefam_xref'           => 0,
 
     # hive_capacity values for some analyses:
     'store_sequences_capacity'  => 50,
@@ -104,24 +107,38 @@ sub default_options {
 }
 
 #
-# We don't really want to have to maintain our own analysis pipeline, if needed we just want to alter the existing one
+# Rather than maintain our own analysis pipeline just want to alter the existing one
 #
 
 sub pipeline_analyses {
   my ($self) = @_;
 
-  #include non-reference slices
+  #not needed for Vega
+  my %analyses_to_ignore = map { $_ => 1 } qw(overall_qc);# treefam_xref_idmap);
+
   my $analyses = $self->SUPER::pipeline_analyses;
-  foreach (@$analyses) {
-    my $name = $_->{'-logic_name'};
+  for (my $i = @$analyses; $i >= 0; --$i) {
+    my $analysis = $analyses->[$i];
+    my $name = $analysis->{'-logic_name'};
+    next unless $name;
+    if ($analyses_to_ignore{$name}) {
+      splice @$analyses, $i, 1;
+    }
+
+    if ($name eq 'run_qc_tests') {
+      if (grep {$_ eq 'overall_qc'} @{$analyses->[$i]{'-flow_into'}{'1->A'}}) {
+         print "Vega fix - removed flow control rule from run_qc_tests to overall_qc\n";
+         delete $analyses->[$i]{'-flow_into'}{'1->A'};
+       }
+    }
+
+    #include non-reference slices
     if ($name eq 'load_fresh_members') {
       $_->{'-parameters'}{'include_nonreference'} = 1;
       $_->{'-parameters'}{'include_reference'} = 1;
     }
   }
-
   return $analyses;
-
 }
 
 1;

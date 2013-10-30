@@ -53,7 +53,7 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
-    'release'               => '71',
+    'release'               => '73',
     #'dbname'               => '', #Define on the command line via the conf_file
 
     # dependent parameters:
@@ -65,7 +65,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20130211_71',
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20130722_73',
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -78,7 +78,7 @@ sub default_options {
 #	'conf_file' => '',
 
 	#directory to dump nib files
-    'dump_dir' => '/lustre/scratch109/sanger/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+    'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	#min length to dump dna as nib file
 #	'dump_min_size' => 11500000, 
@@ -103,9 +103,8 @@ sub default_options {
 	#Default pairaligner config
 	#
 #    'skip_pairaligner_stats' => 0, #skip this module if set to 1
-#    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20120611_'.$self->o('release').'_4',
-    'output_dir' => '/lustre/scratch109/sanger/ds23/compara_generation/vega_ga_20130211_71',
-    'bed_dir' => '/lustre/scratch109/sanger/ds23/compara_generation/vega_ga_20130211_71/pair_aligner/bed_dir/release_71/',
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20130722_'.$self->o('release'),
+    'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20130722_'.$self->o('release') .'/bed_dir',
     };
 }
 
@@ -113,8 +112,8 @@ sub default_options {
 sub resource_classes {
   my ($self) = @_;
   my $resources = $self->SUPER::resource_classes;
-  $resources->{'7.5Gb'}    = { -desc => 'himem2, 8h',     'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' };
-  $resources->{'basement'} = { -desc => 'himem3, notime', 'LSF' => '-C0 -M17000000 -R"select[mem>17000] rusage[mem=17000]" -q "basement"' };
+  $resources->{'7.5Gb'}    = { -desc => 'himem2, 8h',     'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' };
+  $resources->{'basement'} = { -desc => 'himem3, notime', 'LSF' => '-C0 -M17000 -R"select[mem>17000] rusage[mem=17000]" -q "basement"' };
   return $resources;
 }
 
