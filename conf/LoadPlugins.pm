@@ -10,19 +10,27 @@ use warnings;
 use SiteDefs;
 
 my $IMPORTED;
+my %LOADING;
 
-sub plugin {
+sub plugin { #TODO change this to 'import' and change it's usage accordingly
 
-  return if $IMPORTED;
+  # Importing LoadPlugins more than once will pollute the @INC
+  if ($IMPORTED) {
+    my @caller = caller;
+    warn qq(Useless attempt to import LoadPlugins at $caller[1] line $caller[2]\n);
+    return;
+  }
 
   my @lib_dirs    = map [ 'core', $_ ], @SiteDefs::ENSEMBL_LIB_DIRS;
   my @all_plugins = reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
   my @plugins;
 
+  # Only need to plugin in the perl files inside the 'module' folders
   while (my ($dir, $plugin_name) = splice @all_plugins, 0, 2) {
     push @plugins, [ $plugin_name, "$dir/modules" ] if -e "$dir/modules";
   }
 
+  # Duplicate plugins will cause problems
   foreach my $index (0..1) {
     die qq(ERROR: Duplicate plugins found. Please check your conf/Plugins.pm\n) if @plugins != scalar keys %{{ map { $_->[$index] => 1 } @plugins }};
   }
@@ -34,13 +42,28 @@ sub plugin {
 
     my @inc;
 
+    # We don't want to plugin any of the packages that don't start
+    # with EnsEMBL::Web:: or Bio::
     return unless substr($filename, 0, 12) eq 'EnsEMBL/Web/' || substr($filename, 0, 4) eq 'Bio/';
+
+    # If the file being plugged in (file A) has circular dependency with
+    # another file (B) in the core code or any of the plugins, then while
+    # requiring file A in the second attempt (when called from inside B)
+    # we don't actually want to require the file (or any of it's plugins)
+    # again. We don't even want to set the INC for file A since it will
+    # tell perl to not requiring it at all (we'll set INC later in the
+    # end when all files are loaded successfully).
+    return sub { $_ = 1; delete $INC{$filename}; return 0; } if exists $LOADING{$filename};
+
+    # Set the flag before loading
+    $LOADING{$filename} = 1;
 
     {
       local $SIG{'__WARN__'} = sub { warn $_[0] unless $_[0]=~ /Subroutine .+ redefined/; };
 
+      # Load the core file first, then all the existing plugin files
       for (@lib_dirs, @plugins) {
-        my $filename  = "$_->[1]/$filename" =~ s/\/+/\//gr;
+        my $filename = "$_->[1]/$filename" =~ s/\/+/\//gr;
         if (-e $filename) {
           eval "require '$filename'";
           if ($@) {
@@ -52,8 +75,13 @@ sub plugin {
       }
     }
 
-    # this is not really needed by perl afterwards, it's only for us to keep a
-    # record of how many plugins does one particular file has
+    # Unset the flag once loading is complete
+    delete $LOADING{$filename};
+
+    # We need to set INC since we may have removed it in case of circular
+    # dependency. The extra info that we provide here is not really needed
+    # by perl afterwards, it's only for us to keep a record of how many
+    # plugins does one particular file have.
     # See EnsEMBL::Web::Tools::PluginInspector
     if (@inc) {
       if (@inc == 1 && $inc[0][0] eq 'core') {
