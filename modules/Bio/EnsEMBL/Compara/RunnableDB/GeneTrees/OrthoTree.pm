@@ -573,7 +573,7 @@ sub store_gene_link_as_homology {
   # at this stage, gene_split have been retrieved from the node types
   if ($self->param('tag_split_genes')) {
     # Potential split genes: within_species_paralog that do not overlap at all
-    if ($type eq 'within_species_paralog' && 0 == $gene1->perc_id && 0 == $gene2->perc_id && 0 == $gene1->perc_pos && 0 == $gene2->perc_pos) {
+    if (($type eq 'within_species_paralog') and ($homology->get_all_Members->[0]->perc_cov == 0) and ($homology->get_all_Members->[1]->perc_cov == 0)) {
         $self->param('orthotree_homology_counts')->{'within_species_paralog'}--;
         $homology->description('gene_split');
         $homology->is_tree_compliant(0);
