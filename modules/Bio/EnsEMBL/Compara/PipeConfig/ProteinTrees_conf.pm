@@ -329,19 +329,6 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'group_genomes_under_taxa' ],
-                'A->1'  => [ 'backbone_fire_name_mapping' ],
-            },
-        },
-
-        {   -logic_name => 'backbone_fire_name_mapping',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -parameters => {
-                'table_list'    => 'peptide_align_feature_%',
-                'exclude_list'  => 1,
-                'filename'      => 'snapshot_6_before_name_mapping.sql',
-            },
-            -flow_into  => {
-                '1->A'  => [ 'fire_enabled_mappings' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -1027,6 +1014,10 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
+            -flow_into  => [
+                $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
+                $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
+            ],
             -analysis_capacity  => $self->o('hc_capacity'),
             -priority           => $self->o('hc_priority'),
         },
@@ -1291,14 +1282,6 @@ sub pipeline_analyses {
 
 
 # -------------------------------------------[name mapping step]---------------------------------------------------------------------
-
-        {   -logic_name => 'fire_enabled_mappings',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [
-                $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
-                $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
-            ],
-        },
 
         {
             -logic_name => 'stable_id_mapping',
