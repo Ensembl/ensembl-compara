@@ -263,7 +263,7 @@ sub load_compara_ncs {
                     JOIN gene_tree_root gtr USING (root_id)
                     JOIN gene_tree_root_tag gtrt ON gtr.root_id=gtrt.root_id AND gtrt.tag = "model_name"
                     LEFT JOIN gene_tree_member gtm USING (node_id)
-                    LEFT JOIN member mp USING (member_id)
+                    LEFT JOIN member m USING (member_id)
                     WHERE (gtn.node_id = gtn.root_id OR m.member_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY gtr.root_id, left_index
             };
