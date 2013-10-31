@@ -48,13 +48,12 @@ sub fetch_input {
 
     my $release    = $self->param_required('release');
     my $tf_release = $self->param_required('tf_release');
-    my $tf_type    = $self->param('tf_type')    || 'c';     # 'c' means 'CLEAN', 'w' means 'FULL'
 
     $self->param_required('tag_prefix');
 
     my $adaptor = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
 
-    my $from_ncs = $adaptor->fetch_ncs($tf_release, $tf_type);
+    my $from_ncs = $adaptor->fetch_ncs($tf_release, 'tf');
     my $to_ncs   = $adaptor->fetch_ncs($release,    't',     $self->compara_dba->dbc);
     my $ncsl     = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 

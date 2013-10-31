@@ -41,11 +41,7 @@ sub new {
 sub treefam_dbh {
     my ($self, $release) = @_;
 
-    if ($release =~ /^[0-9]+_[0-9]+$/) {
-        return DBI->connect("DBI:mysql:mysql_use_result=1;host=mysql-treefam-public.ebi.ac.uk;port=4418;database=treefam_production_${release}", 'treefam_ro', '');
-    } else {
-        return DBI->connect("DBI:mysql:mysql_use_result=1;host=db.treefam.org;port=3308;database=treefam_${release}", 'anonymous', '');
-    }
+    return DBI->connect("DBI:mysql:mysql_use_result=1;host=mysql-treefam-public.ebi.ac.uk;port=4418;database=treefam_production_${release}", 'treefam_ro', '');
 }
 
 sub dbh_from_dgsuffix_dbname {
@@ -59,9 +55,7 @@ sub dbh_from_dgsuffix_dbname {
 sub guess_dbh {     # only works if you have .my.cnf properly pre-filled with connection parameters
     my ($self, $release, $type) = @_;
 
-    if(($type eq 'c') or ($type eq 'w')) {
-
-        require Treefam::Tree;
+    if($type eq 'tf')) {
 
         warn "${type}${release} - going to load the data from 'treefam_${release}'\n";
 
@@ -100,60 +94,13 @@ sub fetch_ncs {
 
     my $ncs = Bio::EnsEMBL::Compara::StableId::NamedClusterSet->new(-TYPE => $type, -RELEASE => $release);
 
-    if( ($type eq 'f') or ($type eq 't') ) {
+    if( ($type eq 'f') or ($type eq 't') or ($type eq 'tf') ) {
         $self->load_compara_ncs($ncs, $dbh);
-    } elsif( ($type eq 'c') or ($type eq 'w') ) {
-        if ($release =~ /^[0-9]+_[0-9]+/) {
-            $self->load_compara_ncs($ncs, $dbh);
-        } else {
-            $self->load_treefam_ncs($ncs, $dbh);
-        }
     }
 
     return $ncs;
 }
 
-sub load_treefam_ncs {
-    my ($self, $ncs, $dbh) = @_;
-
-    my $step = 30000;
-    my $tree_type = ($ncs->type() eq 'c') ? 'CLEAN' : 'FULL';
-    my $sql = qq{ SELECT TRIM(LEADING 'TF' FROM ac), ac, tree FROM trees WHERE type = ?};
-    my $sth = $dbh->prepare($sql);
-    warn "\t- waiting for the data to start coming\n";
-    $sth->execute($tree_type);
-    warn "\t- done waiting\n";
-    my $counter = 0;
-
-    my $dummy_dbc = {}; # let's see if it works
-
-    while(my($tree_id, $tree_name, $tree_code) = $sth->fetchrow()) {
-        next if (!$tree_code or ($tree_code eq ';') or ($tree_code eq ',_null_;') or ($tree_code eq '_null_;;[&&NHX:O=_null_;;];') );
-
-        eval {
-            my $tree = Treefam::Tree->new($dummy_dbc, $tree_name, $tree_type, $tree_code);
-            foreach my $leaf ($tree->get_leaves()) {
-                if(my $member = $leaf->sequence_id()) {
-                    $member=~s/\.\d+$//;
-
-                    $ncs->mname2clid($member, $tree_id);
-                    $ncs->clid2clname($tree_id, $tree_name);
-
-                    unless(++$counter % $step) {
-                        warn "\t- $counter\n";
-                    }
-                }
-            }
-        };
-        if($@) {
-            warn "Problem with tree '$tree_name' ($@) \n TreeCode = [ $tree_code ]\n";
-        }
-    }
-    $sth->finish();
-    warn "\t- total of $counter members fetched\n";
-
-    return $ncs;
-}
 
 sub load_compara_ncs {
     my ($self, $ncs, $dbh) = @_;
