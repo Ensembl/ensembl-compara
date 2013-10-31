@@ -126,7 +126,6 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.tables.on('click', 'a.edit_record', function () {
       var record = panel.params.records[$(this).parents('tr').data('configId')];
-      var filter = [];
       
       panel.elLk.setsHeader.html(record.name);
       panel.elLk.addSet.add(panel.elLk.addHeader).hide();
@@ -229,8 +228,6 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   },
   
   initialize: function () {
-    var records = this.params.records;
-    
     // This must be done before the base initialize, which sets up data tables, adding classes to the table rows
     $('.records table tbody tr', this.el).each(function () {
       $(this).data('configId', this.className);
