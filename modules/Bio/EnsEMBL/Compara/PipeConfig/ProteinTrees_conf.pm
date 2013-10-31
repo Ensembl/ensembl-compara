@@ -1321,9 +1321,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
-            -parameters => {
-                'method_link_types'  => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES'],
-            },
             -flow_into => {
                 2 => [ 'homology_factory' ],
             },

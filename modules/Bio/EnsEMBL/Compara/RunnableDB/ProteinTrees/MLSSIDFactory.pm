@@ -52,34 +52,17 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub param_defaults {
-    return {
-            'method_link_types'  => ['ENSEMBL_ORTHOLOGUES'],
-    };
-}
-
-
 sub fetch_input {
     my $self = shift @_;
 
     my $species_set       = $self->param_required('species_set');
-    my $method_link_types = $self->param('method_link_types');
-
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
     my @mlss_ids = ();
     while (my $genome_db_id1 = shift @{$species_set}) {
-        foreach my $mlt (@$method_link_types) {
-            if(my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($mlt,[$genome_db_id1])) {
-                push @mlss_ids, $mlss->dbID;
-            }
-        }
+        push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_PARALOGUES', [$genome_db_id1])->dbID;
         foreach my $genome_db_id2 (@{$species_set}) {
-            foreach my $mlt (@$method_link_types) {
-                if(my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($mlt,[$genome_db_id1,$genome_db_id2])) {
-                    push @mlss_ids, $mlss->dbID;
-                }
-            }
+            push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2])->dbID;
         }
     }
 
