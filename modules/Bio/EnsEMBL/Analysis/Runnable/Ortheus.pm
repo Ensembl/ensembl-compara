@@ -50,8 +50,6 @@ the evolution of both substitutions, insertions and deletions.
 =cut
 
 
-# $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/Ortheus.pm,v $
-# $Revision: 1.12 $
 package Bio::EnsEMBL::Analysis::Runnable::Ortheus;
 
 use strict;
