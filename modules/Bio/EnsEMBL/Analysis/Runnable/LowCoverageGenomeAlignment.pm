@@ -44,8 +44,6 @@ This module creates a new tree for those alignments which contain a segmental du
 =cut
 
 
-# $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/LowCoverageGenomeAlignment.pm,v $
-# $Revision: 1.6 $
 package Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment;
 
 use strict;
