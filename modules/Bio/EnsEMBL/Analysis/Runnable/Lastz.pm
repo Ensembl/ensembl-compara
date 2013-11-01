@@ -65,8 +65,6 @@ Other options can be passed to the lastz program using the -options method
 
 =cut
 
-# $Source: /tmp/ENSCOPY-ENSEMBL-ANALYSIS/modules/Bio/EnsEMBL/Analysis/Runnable/Lastz.pm,v $
-# $Revision: 1.6 $
 package Bio::EnsEMBL::Analysis::Runnable::Lastz;
 
 
