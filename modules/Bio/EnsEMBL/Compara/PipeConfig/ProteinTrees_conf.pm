@@ -229,6 +229,13 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
     my ($self) = @_;
+
+    my %hc_analysis_params = (
+            -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
+            -batch_size         => 20,
+    );
+
     return [
 
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
@@ -587,8 +594,7 @@ sub pipeline_analyses {
                 mode            => 'members_per_genome',
                 hc_member_type  => 'ENSEMBLPEP',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
 
@@ -645,8 +651,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'members_globally',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
@@ -848,8 +853,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'peptide_align_features',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
@@ -928,8 +932,7 @@ sub pipeline_analyses {
                 mode            => 'clusters',
             },
             -flow_into          => [ 'run_qc_tests' ],
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
 # ---------------------------------------------[Pluggable QC step]----------------------------------------------------------
@@ -1018,8 +1021,7 @@ sub pipeline_analyses {
                 $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
                 $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
             ],
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'msa_chooser',
@@ -1107,8 +1109,7 @@ sub pipeline_analyses {
                 mode            => 'alignment',
             },
             -flow_into          => [ 'split_genes' ],
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name     => 'split_genes',
@@ -1144,8 +1145,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_tree_structure',
@@ -1153,8 +1153,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'ortho_tree',
@@ -1172,8 +1171,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_attributes',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_tree_homologies',
@@ -1181,8 +1179,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name    => 'ktreedist',
@@ -1192,6 +1189,7 @@ sub pipeline_analyses {
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
+            -batch_size => 5,
             -rc_name       => '2Gb_job',
         },
 
@@ -1203,7 +1201,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('ortho_tree_annot_capacity'),
             -rc_name => '250Mb_job',
-            -batch_size => 5,
+            -batch_size => 20,
             -flow_into  => [ 'hc_tree_attributes' ],
         },
 
@@ -1238,8 +1236,7 @@ sub pipeline_analyses {
                 mode            => 'alignment',
             },
             -flow_into          => [ 'quick_tree_break' ],
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'quick_tree_break',
@@ -1353,8 +1350,7 @@ sub pipeline_analyses {
                 mode            => 'homology_dnds',
             },
             -flow_into          => [ 'threshold_on_dS' ],
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'threshold_on_dS',
