@@ -2968,7 +2968,7 @@ sub add_structural_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
   
-  return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
+  return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'counts'}})) > 0;
   
   my $sv_menu             = $self->create_submenu('structural_variation', 'Structural variants');
   my $structural_variants = $self->create_submenu('structural_variants',  'Structural variants');
@@ -3186,7 +3186,7 @@ sub add_somatic_structural_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('somatic');
   
-  return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
+  return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'somatic'}{'counts'}})) > 0;
   
   my $somatic = $self->create_submenu('somatic_structural_variation', 'Somatic structural variants');
   
