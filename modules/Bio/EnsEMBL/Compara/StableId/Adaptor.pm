@@ -55,7 +55,7 @@ sub dbh_from_dgsuffix_dbname {
 sub guess_dbh {     # only works if you have .my.cnf properly pre-filled with connection parameters
     my ($self, $release, $type) = @_;
 
-    if($type eq 'tf')) {
+    if($type eq 'tf') {
 
         warn "${type}${release} - going to load the data from 'treefam_${release}'\n";
 
