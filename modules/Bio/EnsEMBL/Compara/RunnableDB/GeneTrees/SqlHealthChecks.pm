@@ -84,8 +84,12 @@ my $config = {
                 query => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             {
-                description => 'Peptides should have CDS sequences',
-                query => 'SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
+                description => 'Peptides should have CDS sequences (which are made of only ACGTN)',
+                query => 'SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR sequence REGEXP "[^ACGTN]")',
+            },
+            {
+                description => 'The protein sequences should not be only ACGTN (unless 5aa-long, for an immunoglobulin gene)',
+                query => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND sequence REGEXP "^[ACGTN]*$" AND LENGTH(sequence) > 5',
             },
             {
                 description => 'Members should have chromosome coordinates',
