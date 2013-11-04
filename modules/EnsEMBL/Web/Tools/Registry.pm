@@ -33,6 +33,8 @@ sub configure {
     USERDATA            => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     COMPARA_MULTIPLE    => undef,
     WEBSITE             => undef,
+    WEB_HIVE            => undef,
+    WEB_TOOLS           => undef,
     ARCHIVE             => undef,
     HEALTHCHECK         => undef,
     BLAST               => undef,
