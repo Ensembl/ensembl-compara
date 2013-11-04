@@ -41,6 +41,12 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
+# We want to force the cache
+sub ignore_cache_override {
+    return 1;
+}
+
+
 =head2 fetch_all
 
   Description: Returns all the objects from this adaptor
