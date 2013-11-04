@@ -534,20 +534,6 @@ sub dumpVariation {
        FROM variation_hgvs
       GROUP by variation_id" )} };
 
-  my $locations = {};
-  #66 - human ran out of memory so since we don't need location info don't retrieve it
-#  print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
-#  my $query = qq(
-#    SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start, '-',  vf.seq_region_end, ':', vf.seq_region_strand ) as location
-#      FROM variation_feature vf, seq_region sr
-#     WHERE vf.seq_region_id = sr.seq_region_id);
-#  $sth = $conf->{'variation_dbh'}->prepare($query);
-#  $sth->execute;
-#  while ( my $rows = $sth->fetchrow_arrayref() ) {
-#    push @{$locations->{$rows->[0]}},$rows->[1];
-#  }
-#  print LOG "     Retrieved SNP location info ".&date_and_mem()."\n";
-
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ".&date_and_mem()."\n";
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'variation_dbh'}->selectall_arrayref(
@@ -713,8 +699,6 @@ sub dumpVariation {
       my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variation';
       my $snp_source       = $sources->{ $source_id };
       my $desc;
-      my $locs = $locations->{$variation_id};
-
       my $x = $snp_extra{$variation_id};
       if( $x ) {
         foreach my $g ($x->[3]) {
@@ -737,10 +721,10 @@ sub dumpVariation {
                        @genes       ? ' Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
                        $failed_desc ? " $failed_desc."                                         : '');
       if ($somatic_mutation){
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $locs, $type, $snp_source, $desc, $counter2 ), $fh2);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $desc, $counter2 ), $fh2);
       }
       else {
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $locs, $type, $snp_source, $desc, $counter ), $fh);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $desc, $counter ), $fh);
       }
     }
   }
@@ -759,7 +743,7 @@ sub dumpVariation {
 }
 
 sub VariationLine {
-  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $hgvs_names, $locs, $type, $source, $desc, $counter ) = @_;
+  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $hgvs_names, $type, $source, $desc, $counter ) = @_;
   my $url = sprintf(qq(%s/Variation/Summary?v=%s),
                     $species,
                     $name);
