@@ -342,26 +342,32 @@ sub set_exons {
     }
   }
   
+  if ($config->{'mapper'}) {
+    my $slice_name = $slice->seq_region_name;
+    push @$_, $config->{'mapper'}->map_coordinates($slice_name, $_->[1]->seq_region_start, $_->[1]->seq_region_end, $slice_strand, 'ref_slice') for @all_exons;
+  }
+  
   foreach (@all_exons) {
-    my $type = $_->[0];
-    my $exon = $_->[1];
+    my ($type, $exon, @mappings) = @$_;
     
     next unless $exon->seq_region_start && $exon->seq_region_end;
     
-    my $start = $exon->start - ($type eq 'gene' ? $slice_start : 1);
-    my $end   = $exon->end   - ($type eq 'gene' ? $slice_start : 1);
-    my $id    = $exon->can('stable_id') ? $exon->stable_id : '';
-    
-    ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $type eq 'gene' && $slice_strand < 0 && $exon->strand < 0;
-    
-    next if $end < 0 || $start >= $slice_length;
-    
-    $start = 0 if $start < 0;
-    $end   = $slice_length - 1 if $end >= $slice_length;
-    
-    for ($start..$end) {          
-      push @{$markup->{'exons'}{$_}{'type'}}, $type;          
-      $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $id unless $markup->{'exons'}{$_}{'id'} =~ /$id/;
+    foreach (scalar @mappings ? @mappings : $exon) {
+      my $start = $_->start - ($type eq 'gene' ? $slice_start : 1);
+      my $end   = $_->end   - ($type eq 'gene' ? $slice_start : 1);
+      my $id    = $exon->can('stable_id') ? $exon->stable_id : '';
+      
+      ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $type eq 'gene' && $slice_strand < 0 && $exon->strand < 0;
+      
+      next if $end < 0 || $start >= $slice_length;
+      
+      $start = 0                 if $start < 0;
+      $end   = $slice_length - 1 if $end >= $slice_length;
+      
+      for ($start..$end) {          
+        push @{$markup->{'exons'}{$_}{'type'}}, $type;          
+        $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $id unless $markup->{'exons'}{$_}{'id'} =~ /$id/;
+      }
     }
   }
 }
@@ -433,10 +439,6 @@ sub markup_exons {
     other   => 'eo',
     gene    => 'eg',
     compara => 'e2',
-    
-    xxx=>'xxx',
-    yyy=>'yyy',
-    eu=>'eu',
   };
   
   foreach my $data (@$markup) {
@@ -524,8 +526,7 @@ sub markup_comparisons {
   
   foreach (@{$config->{'slices'}}) {
     $name = $_->{'display_name'} || $_->{'name'};
-    
-    push (@{$config->{'seq_order'}}, $name);
+    push @{$config->{'seq_order'}}, $name;
     
     $length     = length $self->strip_HTML($name);
     $max_length = $length if $length > $max_length;
@@ -576,12 +577,9 @@ sub markup_conservation {
 
 sub markup_line_numbers {
   my ($self, $sequence, $config) = @_;
- 
-  # Keep track of which element of $sequence we are looking at
-  my $n = 0;
-
-  # If we only have only one species, $config->{'seq_order'} won't exist yet (it's created in markup_comparisons)
-  $config->{'seq_order'} = [ $config->{'species'} ] unless $config->{'seq_order'};
+  my $n = 0; # Keep track of which element of $sequence we are looking at
+  
+  $config->{'seq_order'} = [ $config->{'species'} ] unless $config->{'seq_order'}; # If we only have only one species, $config->{'seq_order'} won't exist yet (it's created in markup_comparisons)
   
   foreach my $sl (@{$config->{'slices'}}) {
     my $slice       = $sl->{'slice'};
@@ -660,12 +658,12 @@ sub markup_line_numbers {
       # Comparison species
       if ($align_slice) {
         # Build a segment containing the current line of sequence
-        my $segment         = substr $slice->{'seq'}, $s, $config->{'display_width'};
-        (my $seq_length_seg = $segment) =~ s/\.//g;
-        my $seq_length      = length $seq_length_seg; # The length of the sequence which does not consist of a .
-        my $first_bp_pos    = 0; # Position of first letter character
-        my $last_bp_pos     = 0; # Position of last letter character
-        my $old_label       = '';
+        my $segment        = substr $slice->{'seq'}, $s, $config->{'display_width'};
+        my $seq_length_seg = $segment =~ s/\.//rg;
+        my $seq_length     = length $seq_length_seg; # The length of the sequence which does not consist of a .
+        my $first_bp_pos   = 0; # Position of first letter character
+        my $last_bp_pos    = 0; # Position of last letter character
+        my $old_label      = '';
         
         if ($segment =~ /\w/) {
           $segment      =~ /(^\W*).*\b(\W*$)/;
@@ -722,19 +720,16 @@ sub markup_line_numbers {
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  my $line_numbers = $config->{'line_numbers'};
-  my $s            = 0;
+  my $line_numbers   = $config->{'line_numbers'};
+  my %class_to_style = %{$self->class_to_style}; # Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
+  my $single_line    = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
+  my $s              = 0;
   my ($html, @output);
   
-  # Temporary patch because Firefox doesn't copy/paste anything but inline styles
-  # If we remove this patch, look at version 1.79 for the correct code to revert to
-  my %class_to_style = %{$self->class_to_style};
-  my $single_line    = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
-  
   foreach my $lines (@$sequence) {
-    my %current  = ( tag => 'span', class=> '', title => '', href => '' );
-    my %previous = ( tag => 'span', class=> '', title => '', href => '' );
-    my %new_line = ( tag => 'span', class=> '', title => '', href => '' );
+    my %current  = ( tag => 'span', class => '', title => '', href => '' );
+    my %previous = ( tag => 'span', class => '', title => '', href => '' );
+    my %new_line = ( tag => 'span', class => '', title => '', href => '' );
     my ($row, $pre, $post, $count, $i);
     
     foreach my $seq (@$lines) {
@@ -843,8 +838,7 @@ sub build_sequence {
       if ($config->{'number'}) {
         my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
         my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
-
-        $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
+           $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
       }
       
       $line .= ' ' x ($config->{'display_width'} - $_->[$x]{'length'}) if $x == $length && ($config->{'end_number'} || $_->[$x]{'post'});
