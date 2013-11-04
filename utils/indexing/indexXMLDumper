@@ -568,15 +568,7 @@ sub dumpVariation {
   ORDER BY v.variation_id"
    )};
 
-
-#  warn Data::Dumper::Dumper(\%snp_extra);
-
   print LOG "     Retrieved extra SNP info ".&date_and_mem()."\n";
-
-  #disconnect and then connect to free up memory
-  my $variation = $conf->{'variation_details'};
-  $conf->{'variation_dbh'}->disconnect;
-  $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}", $variation->{'USER'}, $variation->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
   my ($ssid_sth, $stmt,$ssid_hash);
   # the mouse and human databases are so big that that dumping in one go runs out of memory even with 48Gb!
@@ -586,26 +578,16 @@ sub dumpVariation {
                       GROUP_CONCAT('ss',subsnp_id) as ssid
                  FROM subsnp_map
              GROUP BY variation_id};
-
-    #if variation forget to build subsnp_map then can use this, but slower
-#    $stmt = qq{SELECT a.variation_id,
-#                      GROUP_CONCAT(DISTINCT CONCAT('ss',a.subsnp_id)) AS ssid
-# 	  	 FROM $VariationDB.allele a
-#                WHERE a.subsnp_id IS NOT NULL
-#             GROUP BY a.variation_id};
     $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
     $ssid_sth->execute();
     print LOG "     ...executed SQL, now retrieving data ".&date_and_mem()."\n";
+
     # Get a hashref of the results with the variation_id as key
     $ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
     print LOG "     Retrieved extra ssID info ".&date_and_mem()."\n";
-
-    #disconnect and then connect to free up memory
-    $conf->{'variation_dbh'}->disconnect;
-    $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}", $variation->{'USER'}, $variation->{'PASS'}, { PrintError => 0, RaiseError => 0} );
   }
   else {
-    #for human we need to get the extra allele info as we go along
+    #for human and mouse we need to get the extra allele info as we go along
     print LOG "    Will get extra ssID info as we go along ".&date_and_mem()."\n";
     $stmt = qq{SELECT GROUP_CONCAT('ss',subsnp_id) as ssid
                  FROM subsnp_map
@@ -800,7 +782,12 @@ sub dumpPhenotype {
   header($fh);
 
   my %synonyms = ();
-  my $phenotype_info = $conf->{'variation_dbh'}->selectall_hashref("select description, phenotype_id from phenotype",'description');
+  my $phenotype_info = $conf->{'variation_dbh'}->selectall_hashref(qq(
+     SELECT p.description, p.phenotype_id
+       FROM phenotype p, phenotype_feature pf
+      WHERE p.phenotype_id = pf.phenotype_id
+        AND pf.is_significant = 1
+      GROUP BY p.phenotype_id),'description');
   foreach my $phen (keys %$phenotype_info) {
     my $syns = $synonyms{$phenotype_info->{$phen}{'phenotype_id'}} || [];
     &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, $counter ), $fh);
@@ -895,6 +882,7 @@ sub dumpStructuralVariation {
 
 sub StrucVarLine {
   my ($species, $id, $evidence, $study, $location, $desc, $action, $params, $counter ) = @_;
+
 # $location, $action and $params contain info for location view, no point in adding it until we can pass this info from StructuralVariation/Summary
 
   my $url = sprintf(qq(%s/StructuralVariation/Summary?sv=%s),
@@ -1826,11 +1814,6 @@ sub dumpGene {
       print LOG "    Got $gc gene and $tc transcript synonyms ".&date_and_mem()."\n";
     }
 
-    #disconnect and then connect to free up memory
-    my $core = $conf->{'core_details'};
-    $conf->{'dbh'}->disconnect;
-    $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
-
     my %exons = ();
     my $sql = qq(
        SELECT distinct t.gene_id, e.stable_id
@@ -2133,11 +2116,6 @@ sub dumpTranscript {
       }
       print LOG "    Got transcript synonyms ".&date_and_mem()."\n";
     }
-
-    #disconnect and then connect to free up memory
-    my $core = $conf->{'core_details'};
-    $conf->{'dbh'}->disconnect;
-    $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
     my %exons = ();
     my $sql = qq(
@@ -2721,7 +2699,7 @@ sub LRGLine {
 
 #######################################################################
 
-#deal with those pesky non-standard characters in gene names and descriptions (order of regexps is important)
+#XML encode those non-standard characters in gene names and descriptions (order of regexps is important)
 sub clean {
   my ($text,$field) = @_;
   $text =~ s/&/&amp;/g;
