@@ -1246,7 +1246,7 @@ sub pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '1Gb_job',
+            -rc_name   => '2Gb_job',
             -flow_into => [ 'other_paralogs' ],
         },
 
