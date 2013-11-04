@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Digest::MD5 qw(md5_hex);
-use EnsEMBL::Web::Tools::FileHandler;
+use EnsEMBL::Web::Tools::FileHandler qw(file_get_contents file_put_contents);
 
 sub new {
   my ($proto,$prefix) = @_;
