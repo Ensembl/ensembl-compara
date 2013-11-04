@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#! /usr/bin/env perl
 
 use strict;
 package indexXMLDumper;
@@ -21,19 +21,19 @@ use XML::Parser;
 use Data::Dumper;
 use Getopt::Long;
 use POSIX qw(strftime);
-use URI;
 use HTML::Strip;
-
-use constant INC_SPECIES => 0;
-use CGI;
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$debug,$log,$dir,$help);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$sub_host,$sub_port,$sub_user,$no_sub,$debug,$log,$dir,$help);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
            'ignore_index=s'   => \$ignore_indexes_list,
+           'sub_host=s'       => \$sub_host,
+           'sub_port=s'       => \$sub_port,
+           'sub_user=s'       => \$sub_user,
+           'no_sub'           => \$no_sub,
            'debug'            => \$debug,
            'log=s'            => \$log,
            'dir=s'            => \$dir,
@@ -50,23 +50,23 @@ my @ignore_species = split ',',$ignore_species_list;
 my @indexes        = split ',',$indexes_list;
 my @ignore_indexes = split ',',$ignore_indexes_list;
 
-our $SD         = EnsEMBL::Web::SpeciesDefs->new();
-our $release    = $SD->ENSEMBL_VERSION;
-our $parser     =  new XML::Parser( 'ErrorContext' => 3 );
+my $SD          = EnsEMBL::Web::SpeciesDefs->new();
+my $release     = $SD->ENSEMBL_VERSION;
+my $parser      = new XML::Parser( 'ErrorContext' => 3 ); #used to check xml is well formed
 my $sitetype    = $SD->ENSEMBL_SITETYPE || 'Ensembl';
 my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
                 : $sitetype eq 'Pre'  ? 'http://pre.ensembl.org/'
-                : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
+                : 'http://www.ensembl.org';
 
+# used to boost certain records
 my %db_boost = (
   core => '40',
 );
-
 my %region_boost = (
   'is_ref' => '10',
 );
 
-#redirect STDOUT and maybe STDERR to a file
+# redirect STDOUT and STDERR to a file if not in debug mode
 if ($debug) {
   $log = '>-';
 }
@@ -81,12 +81,15 @@ else {
   $log = $l;
 }
 
-open (LOG,    ">$log") or die "Can't open $log: $!";
+open (LOG, ">$log") or die "Can't open $log: $!";
 LOG->autoflush(1); #normally file output is buffered but better to see output after every print
 unless ($debug) {
   open (STDERR, ">&LOG") or die "Can't open $log: $!";
 }
 
+my $conf = {};
+
+# grab all dumper methods
 my @available_indexes;
 foreach my $method (sort keys %indexXMLDumper::) {
   if ($method =~ s/dump(\w+)/$1/) {
@@ -94,7 +97,6 @@ foreach my $method (sort keys %indexXMLDumper::) {
   }
 }
 
-## HACK 1 - if the INDEX is set to ALL grab all dumper methods...
 if ($indexes_list eq 'ALL'){
   @indexes = ();
   my %ignored;
@@ -117,7 +119,24 @@ else {
   }
 }
 
-#where are xml files put on the filesystem ?
+if (grep {$_ eq 'Sequence'} @indexes) {
+  if (! $no_sub) {
+    unless ( $sub_host && $sub_port && $sub_user ) {
+      print "Please either (i) enter db connection details for submissions database, or (ii)_rerun with '--no_sub' option\n";
+      exit;
+    }
+    $conf->{'sub'}{'dbh'} = DBI->connect("DBI:mysql:host=$sub_host;port=$sub_port;database=submissions",
+                                         $sub_user,
+                                         undef,
+                                         { PrintError => 1, RaiseError => 0}
+                                       );
+  }
+  else {
+    $conf->{'sub'}{'no_sub'} = 1;
+  }
+}
+
+# where are xml files put on the filesystem ?
 my %shards = (
   Domain              => 'ensembl_core',	
   Family              => 'ensembl_core',
@@ -135,6 +154,11 @@ my %shards = (
   Help                => 'ensembl_core',
   Variation           => 'ensembl_variation',
 );
+if ($sitetype ne 'Ensembl') {
+  foreach my $feature_type (keys %shards) {
+    $shards{$feature_type} = lc($sitetype).'_core';
+  }
+}
 foreach (@indexes) {
   unless ($shards{$_}) {
     print LOG "WARNING - the location of files for the $_ index is not defined, please add:\n";
@@ -143,7 +167,7 @@ foreach (@indexes) {
 }
 
 
-## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
+# if the SPECIES is set to ALL grab them all from the config...
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
 my $input_c = @species;
 if( $species_list eq 'ALL' ) {
@@ -165,15 +189,12 @@ else {
 }
 
 # path to files
-my $file_root = "solr/".lc($sitetype)."_$release";
 my $dir = $dir ? $dir : 'input';
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
 
 my $start_time = time;
 my $total_c;
-my $conf = {};
-
 foreach my $index (@indexes) {
   my $loc = "$dir/".$shards{$index}."_$release/";
   my $start = time;
@@ -193,7 +214,10 @@ foreach my $index (@indexes) {
     $conf->{'core_details'}            = $core;
 
     if (my $variation = $dbs{'DATABASE_VARIATION'}) {
-      $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}", $variation->{'USER'}, $variation->{'PASS'}, { PrintError => 1, RaiseError => 0} );
+      $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}",
+                                               $variation->{'USER'},
+                                               $variation->{'PASS'},
+                                               { PrintError => 1, RaiseError => 0} );
       $conf->{'variation_details'} = $variation;
     }
 
@@ -201,15 +225,16 @@ foreach my $index (@indexes) {
       $single_species = 1;
       my $website = $SD->multidb->{DATABASE_WEBSITE};
       $conf->{'website'}{'name'} = $website->{'NAME'};
-      $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}", $website->{'USER'}, $website->{'PASS'}, { PrintError => 1, RaiseError => 0} );
+      $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}",
+                                                $website->{'USER'},
+                                                $website->{'PASS'},
+                                                { PrintError => 1, RaiseError => 0} );
     }
     else {
-#      next unless ($species =~ /^[N-Z]/);
-#      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
-      $conf->{'species'}                = $species;
-      $conf->{'species_sci_name'}       = $species;
-      $conf->{'authority'}              = $SD->get_config($species,'AUTHORITY');
-      $conf->{'species_common_name'}    = $SD->get_config($species,'SPECIES_COMMON_NAME');
+      $conf->{'species'}             = $species;
+      $conf->{'species_sci_name'}    = $species;
+      $conf->{'authority'}           = $SD->get_config($species,'AUTHORITY');
+      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');
     }
 
     my $no_success = 1;
@@ -217,34 +242,44 @@ foreach my $index (@indexes) {
     print LOG "Starting: $index $species\n";
     while ($no_success) {
       $c++;
-      $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 1, RaiseError => 0} );
+      $conf->{'dbh'} = DBI->connect("dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
+                                    $core->{'USER'},
+                                    $core->{'PASS'},
+                                    {PrintError => 1, RaiseError => 0}
+                                  );
       if ( ! $conf->{'dbh'}) {
-        print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}.", will retry\n";
-        $no_success = 0;
-        next;
+        print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}."\n";
+        exit;
       }
       if ($index =~ /Family|GeneTree/) {
         my $compara = $SD->multidb->{DATABASE_COMPARA};
-        $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}", $compara->{'USER'}, $compara->{'PASS'} );
+        $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
+                                              $compara->{'USER'},
+                                              $compara->{'PASS'},
+                                              {PrintError => 1, RaiseError => 0}
+                                            );
       }
       my $function = "dump$index";
       no strict "refs";
+
+      #do the dumping!
       eval {
         $total_c += &$function( $conf );
       };
       if ($@) {
         unless ($debug) {
+          #if the query dumping fails try four more times in case it's just a db connection issue
 	  if ( $conf->{'dbh'}->errstr()) {
 	    if ($c < 6) {
 	      print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
 	      sleep (5*60);}
 	    else {
-	      print LOG "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
+	      print LOG "WARNING: Error when dumping. you'll need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
 	      $no_success = 0;
 	    }
 	  }
 	  else {
-	    print LOG "WARNING: Error when dumping, probably due to a syntax error, you need to retry this later (error is $@)\n";
+	    print LOG "WARNING: Error when dumping, you'll need to retry this one later (error is $@)\n";
 	    $no_success = 0;
 	  }
 	}
@@ -292,7 +327,7 @@ sub dumpHelp {
     my $db_type   = $type;
     my $fh;
     open( $fh, ">$file" ) or die "Can't open $file: $!";
-    print LOG "  Dumping $dbname Help to $file ... ", format_datetime($start_time), "\n";
+    print LOG "  Dumping $dbname Help to $file ".&date_and_mem()."\n";
     header($fh);
 
     if ($type eq 'View') {
@@ -360,13 +395,13 @@ sub helpLine {
   $title =~ s/<\/?\w+>//g;
   $title = &clean($title);
 
-  my $xml;
   my $url = $type eq 'FAQ'      ? "Help/Faq#faq$id"
     : $type eq 'Glossary' ? "Help/Glossary?id=$id"
     : $type eq 'View'     ? "Help/View?id=$id"
     : '';
   print LOG "NO URL available for feature type $type, please check\n" unless $url;
-  $xml = qq(
+
+  my $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="description">$description</field>
@@ -399,7 +434,7 @@ sub dumpMarker {
   my ($marker_present) = $conf->{'dbh'}->selectrow_array(qq(SELECT count(*) from marker_feature));
   return unless $marker_present;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ".&date_and_mem()."\n";
   header($fh);
   my $sth = $conf->{'dbh'}->prepare("
    SELECT m.marker_id, ms2.name, ms1.name
@@ -438,12 +473,11 @@ sub markerLine {
                     $species,
                     $key);
   $species =~ s/_/ /;
-  my $xml;
   my $desc = 'A marker with '.@synonyms.' synonym';
   $desc .= 's' if (@synonyms > 1);
   $desc .= 's' unless (@synonyms);
   return '' unless $key;
-  $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$key</field>);
   foreach my $syn (@synonyms) {
@@ -477,7 +511,7 @@ sub dumpVariation {
   my $db = 'variation';
   my $fh;
   open( $fh,  ">$file"  ) or die "Can't open $file: $!";
-  print LOG "  Dumping $VariationDB Variations to $file... ", &date_and_mem , "\n";
+  print LOG "  Dumping $VariationDB Variations to $file... ".&date_and_mem()."\n";
   header($fh);
   my ($counter2,$file2,$fh2);
   my $somatic = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, somatic_status from source" )} };
@@ -486,14 +520,14 @@ sub dumpVariation {
     $counter2 = make_counter(0);
     $file2 = $conf->{'directory_somatic_mutations'}."/${VariationDB}_SomaticMutation.xml";
     open( $fh2, ">$file2" ) or die "Can't open $file2: $!";
-    print LOG "  Dumping $VariationDB SomaticMutations to $file2 ... ", &date_and_mem, "\n";
+    print LOG "  Dumping $VariationDB SomaticMutations to $file2 ... ".&date_and_mem()."\n";
     header($fh);
   }
 
   my $sources = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, name from source" )} };
 
   my $sth;
-  print LOG "    Preparing to get HGVS data ", &date_and_mem, "\n";
+  print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
   my $all_hgvs_names = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref(
     "SELECT variation_id,
             group_concat(hgvs_name SEPARATOR ';') AS names
@@ -512,9 +546,9 @@ sub dumpVariation {
 #  while ( my $rows = $sth->fetchrow_arrayref() ) {
 #    push @{$locations->{$rows->[0]}},$rows->[1];
 #  }
-#  print LOG "     Retrieved SNP location info ", &date_and_mem, "\n";
+#  print LOG "     Retrieved SNP location info ".&date_and_mem()."\n";
 
-  print LOG "    Preparing to get extra SNP info (phenotypes etc) ", &date_and_mem, "\n";
+  print LOG "    Preparing to get extra SNP info (phenotypes etc) ".&date_and_mem()."\n";
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'variation_dbh'}->selectall_arrayref(
      "SELECT v.variation_id,
@@ -551,7 +585,7 @@ sub dumpVariation {
 
 #  warn Data::Dumper::Dumper(\%snp_extra);
 
-  print LOG "     Retrieved extra SNP info ", &date_and_mem, "\n";
+  print LOG "     Retrieved extra SNP info ".&date_and_mem()."\n";
 
   #disconnect and then connect to free up memory
   my $variation = $conf->{'variation_details'};
@@ -561,7 +595,7 @@ sub dumpVariation {
   my ($ssid_sth, $stmt,$ssid_hash);
   # the mouse and human databases are so big that that dumping in one go runs out of memory even with 48Gb!
   if ($dbspecies !~ /Homo_sapiens|Mus_musculus/) {
-    print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
+    print LOG "    Preparing to get extra ssID info ".&date_and_mem()."\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
                  FROM subsnp_map
@@ -575,10 +609,10 @@ sub dumpVariation {
 #             GROUP BY a.variation_id};
     $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
     $ssid_sth->execute();
-    print LOG "     ...executed SQL, now retrieving data ", &date_and_mem, "\n";
+    print LOG "     ...executed SQL, now retrieving data ".&date_and_mem()."\n";
     # Get a hashref of the results with the variation_id as key
     $ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
-    print LOG "     Retrieved extra ssID info ", &date_and_mem, "\n";
+    print LOG "     Retrieved extra ssID info ".&date_and_mem()."\n";
 
     #disconnect and then connect to free up memory
     $conf->{'variation_dbh'}->disconnect;
@@ -586,7 +620,7 @@ sub dumpVariation {
   }
   else {
     #for human we need to get the extra allele info as we go along
-    print LOG "    Will get extra ssID info as we go along ", &date_and_mem, "\n";
+    print LOG "    Will get extra ssID info as we go along ".&date_and_mem()."\n";
     $stmt = qq{SELECT GROUP_CONCAT('ss',subsnp_id) as ssid
                  FROM subsnp_map
                 WHERE variation_id = ?};
@@ -594,7 +628,7 @@ sub dumpVariation {
   }
 
   # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
-  print LOG "    Preparing to get all SNPs ", &date_and_mem, "\n";
+  print LOG "    Preparing to get all SNPs ".&date_and_mem()."\n";
   $sth = $conf->{'variation_dbh'}->prepare(qq{
     SELECT
         v.variation_id,
@@ -620,7 +654,7 @@ sub dumpVariation {
 
   $sth->execute() or die "Error:", $DBI::errstr;
 
-  print LOG "     ...executed SQL, now retrieving data and generating xml ", &date_and_mem,  "\n";
+  print LOG "     ...executed SQL, now retrieving data and generating xml ".&date_and_mem()."\n";
 
   my $new_syn_c = 0;
   while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
@@ -696,9 +730,7 @@ sub dumpVariation {
 
       my $hgvs_names;
       if ($hgvs_names = $all_hgvs_names->{$variation_id}) {
-#        warn "variation_id --> ".Data::Dumper::Dumper($hgvs_names);
         push @hgvs_names, split ';', $hgvs_names;
-#        warn "@hgvs_names";exit;
       }
       $desc = sprintf( "A $snp_source $type.%s%s%s",
                        @phenotypes  ? ' Phenotype(s): ' .         (join ', ', @phenotypes) . '.' : '',
@@ -712,7 +744,7 @@ sub dumpVariation {
       }
     }
   }
-  print LOG "    All SNPs dumped to file ", &date_and_mem,  "\n";
+  print LOG "    All SNPs dumped to file ".&date_and_mem()."\n";
 
   my $c = footer( $counter->(), $fh, 'Variation');
   if ($somatic_present) {
@@ -732,8 +764,7 @@ sub VariationLine {
                     $species,
                     $name);
   $species =~ s/_/ /;
-  my $xml;
-  $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$name</field>
   <field name="description">$desc</field>);
@@ -781,20 +812,10 @@ sub dumpPhenotype {
   my $db = 'variation';
   my $fh;
   open $fh, '>', $file  or die "Can't open $file: $!";
-  print LOG "  Dumping $VariationDB Phenotype info to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $VariationDB Phenotype info to $file ... ".&date_and_mem()."\n";
   header($fh);
 
-  #phenotype synonyms - modify this to use db when it comes along
   my %synonyms = ();
-  my $in;
-#  open $in, '<', 'phenotype_synonyms.txt';
-#  while (<$in>) {
-#    my ($id,$name,$desc,$syn) = split '\t', $_;
-#    chomp $syn;
-#    push @{$synonyms{$id}},$syn;
-#  }
-
-  #phenotype info
   my $phenotype_info = $conf->{'variation_dbh'}->selectall_hashref("select description, phenotype_id from phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
     my $syns = $synonyms{$phenotype_info->{$phen}{'phenotype_id'}} || [];
@@ -811,8 +832,7 @@ sub PhenLine {
                     $id);
   $species =~ s/_/ /;
   $name = &clean($name,'name');
-  my $xml;
-  $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="name">$name</field>);
@@ -841,7 +861,7 @@ sub dumpStructuralVariation {
   my $db = 'variation';
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $VariationDB to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $VariationDB to $file ... ".&date_and_mem()."\n";
   header($fh);
 
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
@@ -891,16 +911,13 @@ sub dumpStructuralVariation {
 
 sub StrucVarLine {
   my ($species, $id, $evidence, $study, $location, $desc, $action, $params, $counter ) = @_;
+# $location, $action and $params contain info for location view, no point in adding it until we can pass this info from StructuralVariation/Summary
+
   my $url = sprintf(qq(%s/StructuralVariation/Summary?sv=%s),
                     $species,
                     $id);
   $species =~ s/_/ /;
-  my $xml;
-
-# $location, $action and $params contain info for location view, no point in adding it until we can pass it from
-# StructuralVariation/Summary
-
-  $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="description">$desc</field>);
@@ -946,7 +963,7 @@ sub dumpGenomicAlignment {
     my $start_time = time;
     my $fh;
     open( $fh, ">$file" ) or die "Can't open $file: $!";
-    print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+    print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header($fh);
 
     foreach my $table ( keys %tables ) {
@@ -1001,16 +1018,14 @@ sub dumpGenomicAlignment {
 
 sub GenomicAlignmentLine {
   my ($species, $id, $desc, $db_name, $db, $ftype, $params, $counter ) = @_;
+# $params contains what's needed to switch the track on region in detail but there's no point in using it since we get to this via Location/Genome
+
   my $url = sprintf(qq(%s/Location/Genome?ftype=%s;id=%s%s),
                     $species,
                     $ftype,
                     $id,
                     $db ne 'core' ? ";db=$db" : '');
   $species =~ s/_/ /;
-
-# $params contains what's needed to switch the track on region in detail but there's
-# no point in using it since we get to this via Location/Genome and lose the parameter)
-
   my $xml = qq(
 <doc>
   <field name="id">$id</field>
@@ -1041,7 +1056,7 @@ sub dumpOligoProbe {
   my $db = 'funcgen';
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $FUNCDB to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $FUNCDB to $file ... ".&date_and_mem()."\n";
   header($fh);
 
   my $sth    = $conf->{'dbh'}->prepare(
@@ -1122,7 +1137,7 @@ sub dumpDomain {
   my $db = 'core';
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header($fh);
 
   my $sth = $conf->{'dbh'}->prepare(
@@ -1163,7 +1178,6 @@ sub DomainLine {
                     $species,
                     $acc);
   $species =~ s/_/ /;
-
   my $ids = join ',', @$IDS;
   my $description = "$desc $count associated external database identifiers: $ids";
   my $xml = qq(
@@ -1189,7 +1203,7 @@ sub dumpGeneTree {
   my $conf   = shift;
   my ($gt_present) = $conf->{'dbh_compara'}->selectrow_array(qq(SELECT count(*) FROM gene_tree_root WHERE stable_id IS NOT null));
   if (! $gt_present) {
-    print LOG "  Error - can't find any gene trees to dump", format_datetime($start_time), "\n";
+    print LOG "  Error - can't find any gene trees to dump".&date_and_mem()."\n";
   }
   my $multi_species;
   my $dbspecies = $conf->{'species'};
@@ -1202,9 +1216,9 @@ sub dumpGeneTree {
     $start_time = time;
     $fh;
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
-    print LOG "  Dumping $compara_dbname to $compara_file ... ", format_datetime($start_time), "\n";
+    print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
     header($fh);
-    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT null ));
+    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT NULL));
     $sth->execute();
     while( my( $gt_id) = $sth->fetchrow_array()) {
       &p( GeneTreeLine($gt_id,$counter,'',$multi_species), $fh);
@@ -1218,7 +1232,7 @@ sub dumpGeneTree {
   my $file = $conf->{'directory'}."/${dbname}_GeneTree.xml";
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $dbname gene trees to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname gene trees to $file ... ".&date_and_mem()."\n";
   header($fh);
   my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select g.stable_id, x.display_label from gene g, xref x where g.display_xref_id = x.xref_id" )} };
   my $sql = qq(
@@ -1293,7 +1307,6 @@ sub dumpFamily {
   my ($family_present) = $conf->{'dbh_compara'}->selectrow_array(qq(SELECT count(*) from family));
   return unless $family_present;
 
-
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${dbname}_Family.xml";
@@ -1301,7 +1314,7 @@ sub dumpFamily {
   my $db = 'core';
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header($fh);
 
   ( my $species = $conf->{'species'} ) =~ s/_/ /g;
@@ -1375,7 +1388,6 @@ sub dumpFamily {
       my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
       my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
       my $full_desc = qq($X protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
-#      my $full_desc = qq(Ensembl protein family $fid: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species.\nDescription: $desc);
       &p( FamilyLine($dbspecies,$fid,$full_desc,\@genes,\@proteins,\@uniprots,$counter ), $fh);
     }
   }
@@ -1425,7 +1437,10 @@ sub FamilyLine {
 
 sub dumpSequence {
   my $conf = shift;
-  my $sanger = sanger_project_names( $conf );
+  my $sanger = {};
+  unless ($conf->{'sub'}{'no_sub'}) {
+    $sanger = sanger_project_names( $conf );
+  }
   my @misc_feat_disallowed = (); #features that we know we don't want to dump if we ever decide to do this (not implemented)
   my @name_order = (qw(name well_name clone_name sanger_project synonym embl_acc)); #defines the order of attribute_type we use to get the name for misc_features (comes from B::E::G::_clone.pm)
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
@@ -1436,7 +1451,7 @@ sub dumpSequence {
   my $db = 'core';
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
-  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header($fh);
 
   my $lrgs = &findLRGs($conf);
@@ -1541,7 +1556,7 @@ sub dumpSequence {
   }
 
 
-  #for vega - get ensembl chromosome names if they're different from the vega names
+  #for Vega - get Ensembl chromosome names if they're different from the vega names
   my %enames = ();
   if ($sitetype eq 'Vega') {
     $sth = $conf->{'dbh'}->prepare(qq(
@@ -1578,7 +1593,7 @@ sub dumpSequence {
     }
   }
 
-  ## haplotypes
+  #haplotypes
   $sth = $conf->{'dbh'}->prepare(qq(
        SELECT sr.name, ae.seq_region_start, ae.seq_region_end
          FROM assembly_exception ae, seq_region sr
@@ -1721,15 +1736,13 @@ sub sanger_project_names {
   my $sanger_species_name = $SPECIES{$conf->{'species'}};
   return {} unless $sanger_species_name;
   my $clones = {};
-  my $host = 'otterlive';
-  my $port = '3324';
-  my $dbh = DBI->connect("DBI:mysql:host=$host;port=$port;database=submissions", 'ottro', undef, {RaiseError => 1});
+  my $dbh = $conf->{'sub'}{'dbh'};
   unless( $dbh ) {
-    print LOG "WARNING: Can't connect to submissions database on $host:$port", DBI::errstr();
+    print LOG "WARNING: Can't connect to submissions database", DBI::errstr();
     return $clones;
   }
   my $sth = $dbh->prepare(
-    "SELECT distinct a.project_name, a.accession 
+    "SELECT distinct a.project_name, a.accession
        FROM project_acc a, project_dump d,
             sequence s, species_chromosome c
       WHERE a.sanger_id = d.sanger_id AND d.seq_id = s.seq_id
@@ -1749,7 +1762,6 @@ sub sanger_project_names {
 #contains hacks to exclude rnaseq, refseq and ccds_import
 
 sub dumpGene {
-#  print LOG "Initial memory usage = ".&date_and_mem()."\n";
   my $conf      = shift;
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
@@ -1757,9 +1769,7 @@ sub dumpGene {
   my $RNASEQDB = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
-
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
-
   my $total_c;
  DB:
   foreach my $db ( sort { $b cmp $a } keys %dbs) {
@@ -1800,7 +1810,7 @@ sub dumpGene {
           'xref_id'         => $_->[5],
         };
       }
-#      print LOG "    $type xref query done ".&date_and_mem()."\n";
+      print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
 
     my %gene_trans_syns = ();
@@ -1849,7 +1859,7 @@ sub dumpGene {
       $exons{$r->[0]}{$r->[1]}=1;
     }
     $sth->finish;
-#    print LOG "    Exon query done ".&date_and_mem()."\n";
+    print LOG "    Exon query done ".&date_and_mem()."\n";
 
     $sql = qq(
       SELECT g.stable_id, sr.name as sr_name, g.seq_region_start, g.seq_region_end, g.seq_region_strand, cs.name as sr_type, cs.version,
@@ -2000,7 +2010,6 @@ sub dumpGene {
           $fh);
       $c++;
     }
-#    print LOG "    Gene info query done and xml generated ".&date_and_mem()."\n";
     print LOG "    Querying done, added $c entries ".&date_and_mem()."\n";
 
     #archive Stable IDs
@@ -2009,6 +2018,7 @@ sub dumpGene {
     print LOG "    Stable_id mapping querying done, added $other_count entries ".&date_and_mem()."\n";
     $total_c += footer( $counter->(), $fh);
 
+    #this code for unmapped entries has not been used for a long time and will not work
     while (0) {
       $other_count = 0;
       my %unmapped_queries = (
@@ -2022,7 +2032,7 @@ sub dumpGene {
              uo.external_db_id = e.external_db_id and
              uo.unmapped_reason_id = ur.unmapped_reason_id and
                uo.ensembl_id = 0
-    ),
+       ),
        'Transcript' => qq(
       select a.logic_name, e.db_display_name,
              uo.identifier, ur.summary_description,
@@ -2035,7 +2045,7 @@ sub dumpGene {
              uo.ensembl_id = t.transcript_id and
              uo.ensembl_object_type = 'Transcript' and
              t.gene_id       = g.gene_id
-    ),
+       ),
         'Translation' => qq(
       select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
              concat( 'Protein: ',tr.stable_id,'; Transcript: ', t.stable_id, '; Gene: ',g.stable_id )
@@ -2048,16 +2058,15 @@ sub dumpGene {
              tr.transcript_id = t.transcript_id and
              uo.ensembl_object_type = 'Translation' and
              t.gene_id = gsi.gene_id
-    )
-    );
-
+       ),
+      );
       foreach my $FLAG (keys %unmapped_queries) {
         my $SQL = $unmapped_queries{$FLAG};
         my $sth = $conf->{'dbh'}->prepare($SQL);
         $sth->execute;
         while( my $T = $sth->fetchrow_arrayref() ) {
           print O join "\t",
-            (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
+            qq(Unmapped feature),
               "$T->[1] $T->[2]",
                 "/$conf->{'species'}/Location/Genome?ftype=Gene;id=$T->[2]",
                   "$T->[2] $T->[4]",
@@ -2081,7 +2090,7 @@ sub dumpTranscript {
   my $RNASEQDB  = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
-#  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull!
+#  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull
   my $total_c;
 
  DB:
@@ -2745,7 +2754,6 @@ sub clean {
   $text =~ s/ & / &amp; /g;
   $text =~ s/</&lt;/g;
   $text =~ s/>/&gt;/g;
-
 
   if ($text =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $text in field $field\n";
