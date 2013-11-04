@@ -29,17 +29,15 @@ use CGI;
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$search_engine,$debug,$dump_real,$log,$dir,$help);
-GetOptions('species=s' => \$species_list,
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$debug,$log,$dir,$help);
+GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
-           'index|indices=s'   => \$indexes_list,
-           'ignore_index=s' => \$ignore_indexes_list,
-           'engine=s'  => \$search_engine,
-           'debug'     => \$debug,
-           'dump_real' => \$dump_real,
-           'log=s'     => \$log,
-           'dir=s'     => \$dir,
-	   'help'      => \$help,
+           'index|indices=s'  => \$indexes_list,
+           'ignore_index=s'   => \$ignore_indexes_list,
+           'debug'            => \$debug,
+           'log=s'            => \$log,
+           'dir=s'            => \$dir,
+	   'help'             => \$help,
          );
 
 if ($help){
@@ -52,16 +50,13 @@ my @ignore_species = split ',',$ignore_species_list;
 my @indexes        = split ',',$indexes_list;
 my @ignore_indexes = split ',',$ignore_indexes_list;
 
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
-our $release = $SD->ENSEMBL_VERSION;
-our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
-our $parser =  new XML::Parser( 'ErrorContext' => 3 );
-my $sitetype = $SD->ENSEMBL_SITETYPE || 'Ensembl';
+our $SD         = EnsEMBL::Web::SpeciesDefs->new();
+our $release    = $SD->ENSEMBL_VERSION;
+our $parser     =  new XML::Parser( 'ErrorContext' => 3 );
+my $sitetype    = $SD->ENSEMBL_SITETYPE || 'Ensembl';
 my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
                 : $sitetype eq 'Pre'  ? 'http://pre.ensembl.org/'
                 : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
-
-$search_engine ||= 'solr';
 
 my %db_boost = (
   core => '40',
@@ -170,9 +165,8 @@ else {
 }
 
 # path to files
-my $index_root =  '/exalead-data/search_indices/';
-my $file_root = ($search_engine eq 'solr') ? "solr/".lc($sitetype)."_$release" : "lucene/".lc($sitetype)."_$release";
-my $dir = $dir ? $dir : $dump_real ? $index_root.$file_root : 'input';
+my $file_root = "solr/".lc($sitetype)."_$release";
+my $dir = $dir ? $dir : 'input';
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
 
@@ -181,13 +175,13 @@ my $total_c;
 my $conf = {};
 
 foreach my $index (@indexes) {
-  my $loc = ($search_engine eq 'solr') ? "$dir/".$shards{$index}."_$release/" : "$dir/";
+  my $loc = "$dir/".$shards{$index}."_$release/";
   my $start = time;
   $conf->{'directory'} = $loc . lc($sitetype)."_$index";
   system( "mkdir -p $conf->{'directory'}") unless -e $conf->{'directory'};
 
   if ($index eq 'Variation') {
-    $conf->{'directory_somatic_mutations'} = ($search_engine eq 'solr') ? "$dir/".$shards{'SomaticMutation'}."_$release/".lc($sitetype).'_SomaticMutation' : $loc . lc($sitetype)."_SomaticMutation";
+    $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."_$release/".lc($sitetype).'_SomaticMutation';
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
@@ -294,20 +288,12 @@ sub dumpHelp {
   foreach my $type (@types) {
     my $counter   = make_counter(0);
     my $file = $conf->{'directory'}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
-    $file .= ".gz" unless $nogzip;
     my $dbname    = $conf->{'website'}{'name'};
     my $db_type   = $type;
     my $fh;
-    unless ($nogzip) {
-      $fh = new IO::Zlib;
-      $fh->open( "$file", "wb9" )
-        or die("Can't open compressed stream to $file: $!");
-    }
-    else {
-      open( $fh, ">$file" ) or die "Can't open $file: $!";
-    }
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
     print LOG "  Dumping $dbname Help to $file ... ", format_datetime($start_time), "\n";
-    header( $dbname, 'Help', 'Help', $nogzip, $fh, $release );
+    header($fh);
 
     if ($type eq 'View') {
       my $sth = $conf->{'website'}{'dbh'}->prepare(qq(
@@ -327,7 +313,7 @@ sub dumpHelp {
         my $title        = "$page_url View";
            $title        =~ s/\// /g;
 
-        &p(helpLine($id, $title, $keywords, $description, undef, $type, $counter), $nogzip, $fh); #### need to parse it
+        &p(helpLine($id, $title, $keywords, $description, undef, $type, $counter), $fh); #### need to parse it
       }
     } else {
       my $sth = $conf->{'website'}{'dbh'}->prepare(qq(
@@ -351,10 +337,10 @@ sub dumpHelp {
           $title        = $data->{'question'};
         }
 
-        &p(helpLine($id, $title, $keywords, $description, $extra, $type, $counter), $nogzip, $fh); #### need to parse it
+        &p(helpLine($id, $title, $keywords, $description, $extra, $type, $counter), $fh); #### need to parse it
       }
     }
-    $total_c += footer($counter->(), $nogzip, $fh, $type);
+    $total_c += footer($counter->(), $fh, $type);
   }
   return $total_c;
 }
@@ -375,47 +361,26 @@ sub helpLine {
   $title = &clean($title);
 
   my $xml;
-  if ($search_engine eq 'solr') {
-    my $url = $type eq 'FAQ'      ? "Help/Faq#faq$id"
-            : $type eq 'Glossary' ? "Help/Glossary?id=$id"
-            : $type eq 'View'     ? "Help/View?id=$id"
-            : '';
-    print LOG "NO URL available for feature type $type, please check\n" unless $url;
-    $xml = qq(
+  my $url = $type eq 'FAQ'      ? "Help/Faq#faq$id"
+    : $type eq 'Glossary' ? "Help/Glossary?id=$id"
+    : $type eq 'View'     ? "Help/View?id=$id"
+    : '';
+  print LOG "NO URL available for feature type $type, please check\n" unless $url;
+  $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="description">$description</field>
   <field name="article_title">$title</field>);
-    foreach my $kw (@keywords) {
-      $xml .= qq(
+  foreach my $kw (@keywords) {
+    $xml .= qq(
   <field name="keyword">$kw</field>);
-    }
-    $xml .= &common_fields('','Documentation','');
-    $xml .= qq(
+  }
+  $xml .= &common_fields('','Documentation','');
+  $xml .= qq(
   <field name="feature_subtype">$type</field>);
-    $xml .= qq(
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$id">
-  <description>$description</description>
-  <additional_fields>
-    <field name="featuretype">$type</field>
-    <field name="displayname">$title</field>);
-    foreach my $kw (@keywords) {
-      $xml .= qq(
-    <field name="keyword">$kw</field>);
-    }
-    foreach my $kw (@$extra) {
-      $xml .= qq(
-    <field name="keyword">$kw</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -428,23 +393,14 @@ sub dumpMarker {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${dbname}_Marker.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
   my $fh;
   my ($marker_present) = $conf->{'dbh'}->selectrow_array(qq(SELECT count(*) from marker_feature));
   return unless $marker_present;
-
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-  }
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
-  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+  header($fh);
   my $sth = $conf->{'dbh'}->prepare("
    SELECT m.marker_id, ms2.name, ms1.name
      FROM marker_synonym as ms1, marker as m
@@ -464,14 +420,14 @@ LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_syno
       push @$names, $synonym;
     } else {
       if ($old_ID) {
-        &p( markerLine( $dbspecies, $names, $params, $counter ), $nogzip, $fh);
+        &p( markerLine( $dbspecies, $names, $params, $counter ), $fh);
       }
       $names    = [ $synonym ];
       $old_ID  = $ID;
     }
   }
-  &p( markerLine( $dbspecies, $names, $params, $counter ), $nogzip, $fh);
-  return footer( $counter->(),$nogzip,$fh);
+  &p( markerLine( $dbspecies, $names, $params, $counter ), $fh);
+  return footer( $counter->(), $fh);
 }
 
 sub markerLine {
@@ -487,41 +443,21 @@ sub markerLine {
   $desc .= 's' if (@synonyms > 1);
   $desc .= 's' unless (@synonyms);
   return '' unless $key;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  $xml = qq(
 <doc>
   <field name="id">$key</field>);
-    foreach my $syn (@synonyms) {
-      $xml .= qq(
-  <field name="synonym">$syn</field>);
-    }
-    while (my ($param,$value) = each %$params) {
-      $xml .= qq(
-  <field name="$param">$value</field>);
-    }
-    $xml .= &common_fields($species,'Marker','core');
+  foreach my $syn (@synonyms) {
     $xml .= qq(
+  <field name="synonym">$syn</field>);
+  }
+  while (my ($param,$value) = each %$params) {
+    $xml .= qq(
+  <field name="$param">$value</field>);
+  }
+  $xml .= &common_fields($species,'Marker','core');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$key">
-  <description>$desc</description>
-  <additional_fields>);
-    $xml .= &common_fields($species,'Marker');
-    foreach my $syn (@synonyms) {
-      $xml .= qq(
-    <field name="synonym">$syn</field>);
-    }
-    while (my ($param,$value) = each %$params) {
-      $xml .= qq(
-    <field name="$param">$value</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -537,38 +473,21 @@ sub dumpVariation {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_Variation.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh,  ">$file"  ) or die "Can't open $file: $!";
-  }
+  open( $fh,  ">$file"  ) or die "Can't open $file: $!";
   print LOG "  Dumping $VariationDB Variations to $file... ", &date_and_mem , "\n";
-  header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
-
+  header($fh);
   my ($counter2,$file2,$fh2);
   my $somatic = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, somatic_status from source" )} };
   my $somatic_present = ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
   if ($somatic_present) {
     $counter2 = make_counter(0);
     $file2 = $conf->{'directory_somatic_mutations'}."/${VariationDB}_SomaticMutation.xml";
-    $file2 .= ".gz" unless $nogzip;
-    unless ($nogzip) {
-      $fh2 = new IO::Zlib;
-      $fh2->open( "$file", "wb9" )
-	or die("Can't open compressed stream to $file2: $!");
-    }
-    else {
-      open( $fh2, ">$file2" ) or die "Can't open $file2: $!";
-    }
+    open( $fh2, ">$file2" ) or die "Can't open $file2: $!";
     print LOG "  Dumping $VariationDB SomaticMutations to $file2 ... ", &date_and_mem, "\n";
-    header( $VariationDB, $dbspecies, 'somatic mutation', $nogzip, $fh2, $release );
+    header($fh);
   }
 
   my $sources = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, name from source" )} };
@@ -786,18 +705,18 @@ sub dumpVariation {
                        @genes       ? ' Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
                        $failed_desc ? " $failed_desc."                                         : '');
       if ($somatic_mutation){
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $locs, $type, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $locs, $type, $snp_source, $desc, $counter2 ), $fh2);
       }
       else {
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $locs, $type, $snp_source, $desc, $counter ), $nogzip, $fh);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $locs, $type, $snp_source, $desc, $counter ), $fh);
       }
     }
   }
   print LOG "    All SNPs dumped to file ", &date_and_mem,  "\n";
 
-  my $c = footer( $counter->(),$nogzip,$fh,'Variation');
+  my $c = footer( $counter->(), $fh, 'Variation');
   if ($somatic_present) {
-    $c += footer( $counter2->(),$nogzip,$fh2,'Somatic Mutation');
+    $c += footer( $counter2->(), $fh2, 'Somatic Mutation');
   }
   print LOG "  $new_syn_c synonyms added from the subsnp_map table\n";
 
@@ -814,77 +733,37 @@ sub VariationLine {
                     $name);
   $species =~ s/_/ /;
   my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  $xml = qq(
 <doc>
   <field name="id">$name</field>
   <field name="description">$desc</field>);
-#
-#Variation originally wanted locations but then found users were following these rather than the real link so don't put in XML
-#    foreach (@$locs) {
-#      $xml .= qq(
-#  <field name="location">$_</field>);
-#    }
-    foreach (@$synonyms) {
-      $xml .= qq(
+  foreach (@$synonyms) {
+    $xml .= qq(
   <field name="synonym">$_</field>);
-    }
-    foreach (@$genes) {
-      $xml .= qq(
+  }
+  foreach (@$genes) {
+    $xml .= qq(
   <field name="assoc_gene">$_</field>);
-    }
-    foreach (@$phenotypes) {
-      $xml .= qq(
+  }
+  foreach (@$phenotypes) {
+    $xml .= qq(
   <field name="phenotype">$_</field>);
-    }
-    foreach my $hgvs_name (@$hgvs_names) {
-      $hgvs_name = &clean($hgvs_name,'hgvs_name');
-      $xml .= qq(
+  }
+  foreach my $hgvs_name (@$hgvs_names) {
+    $hgvs_name = &clean($hgvs_name,'hgvs_name');
+    $xml .= qq(
   <field name="hgvs_name">$hgvs_name</field>);
-    }
-    foreach (@$studys ) {
-      $xml .= qq(
+  }
+  foreach (@$studys ) {
+    $xml .= qq(
   <field name="study">$_</field>);
-    }
-    $xml .= qq(
+  }
+  $xml .= qq(
   <field name="variation_source">$source</field>);
-    $xml .= &common_fields($species,$type,'variation');
-    $xml .= qq(
+  $xml .= &common_fields($species,$type,'variation');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$name">
-  <description>$desc</description>
-  <additional_fields>);
-    $xml .= &common_fields($species,'Variation');
-#    foreach (@$locs) {
-#      $xml .= qq(
-#    <field name="location">$_</field>);
-#    }
-    foreach (@$synonyms) {
-      $xml .= qq(
-    <field name="synonym">$_</field>);
-    }
-    foreach (@$genes) {
-      $xml .= qq(
-    <field name="assoc_gene">$_</field>);
-    }
-    foreach (@$phenotypes) {
-      $xml .= qq(
-    <field name="phenotype">$_</field>);
-    }
-    foreach (@$studys ) {
-      $xml .= qq(
-    <field name="study">$_</field>);
-    }
-    $xml .= qq(
-    <field name="source">$source</field>
-  </additional_fields>
-</entry>);
-  }
-
   $counter->();
   return $xml;
 }
@@ -898,20 +777,12 @@ sub dumpPhenotype {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_Phenotype.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open $fh, '>', $file  or die "Can't open $file: $!";
-  }
+  open $fh, '>', $file  or die "Can't open $file: $!";
   print LOG "  Dumping $VariationDB Phenotype info to $file ... ", format_datetime($start_time), "\n";
-  header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+  header($fh);
 
   #phenotype synonyms - modify this to use db when it comes along
   my %synonyms = ();
@@ -927,10 +798,10 @@ sub dumpPhenotype {
   my $phenotype_info = $conf->{'variation_dbh'}->selectall_hashref("select description, phenotype_id from phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
     my $syns = $synonyms{$phenotype_info->{$phen}{'phenotype_id'}} || [];
-    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, $counter ), $nogzip, $fh);
+    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, $counter ), $fh);
   }
 
-  return footer( $counter->(),$nogzip,$fh);
+  return footer( $counter->(), $fh);
 }
 
 sub PhenLine {
@@ -941,34 +812,18 @@ sub PhenLine {
   $species =~ s/_/ /;
   $name = &clean($name,'name');
   my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="name">$name</field>);
-    foreach my $syn (@$synonyms) {
-      $xml .= qq(
+  foreach my $syn (@$synonyms) {
+    $xml .= qq(
   <field name="synonym">$syn</field>);
   }
-    $xml .= &common_fields($species,'Phenotype','variation');
-    $xml .= qq(
+  $xml .= &common_fields($species,'Phenotype','variation');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$id">
-  <description>$name</description>
-  <additional_fields>);
-    foreach my $syn (@$synonyms) {
-      $xml .= qq(
-    <field name="synonym">$syn</field>);
-  }
-    $xml .= &common_fields($species,'Phenotype');
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -982,20 +837,12 @@ sub dumpStructuralVariation {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_StructuralVariations.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-  }
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $VariationDB to $file ... ", format_datetime($start_time), "\n";
-  header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+  header($fh);
 
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
@@ -1037,9 +884,9 @@ sub dumpStructuralVariation {
     else {
       $desc = qq(A structural variation from $row->[2], identified by $row->[3].);
     }
-    &p( StrucVarLine( $dbspecies, $id, $evidence, $study, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
+    &p( StrucVarLine( $dbspecies, $id, $evidence, $study, $location, $desc, $action, $params, $counter ), $fh);
   }
-  return footer( $counter->(),$nogzip,$fh);
+  return footer( $counter->(), $fh);
 }
 
 sub StrucVarLine {
@@ -1049,55 +896,26 @@ sub StrucVarLine {
                     $id);
   $species =~ s/_/ /;
   my $xml;
-  if ($search_engine eq 'solr') {
 
-#####
 # $location, $action and $params contain info for location view, no point in adding it until we can pass it from
 # StructuralVariation/Summary
-#####
 
-    $xml = qq(
+  $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="description">$desc</field>);
-    foreach (split ',', $evidence) {
-      $xml .= qq(
-  <field name="supporting_evidence">$_</field>);
-    }
-    if ($study) {
-      $xml .= qq(
-  <field name="study">$study</field>);
-    }
-    $xml .= &common_fields($species,'StructuralVariation','variation');
+  foreach (split ',', $evidence) {
     $xml .= qq(
+  <field name="supporting_evidence">$_</field>);
+  }
+  if ($study) {
+    $xml .= qq(
+  <field name="study">$study</field>);
+  }
+  $xml .= &common_fields($species,'StructuralVariation','variation');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$id">
-  <description>$desc</description>
-  <additional_fields>);
-    $xml .= &common_fields($species,'StructuralVariation');
-    foreach (split ',', $evidence) {
-      $xml .= qq(
-    <field name="evidence">$_</field>);
-    }
-    if ($study) {
-      $xml .= qq(
-    <field name="study">$study</field>);
-    }
-    $xml .= qq(
-    <field name="location">$location</field>
-    <field name="action">$action</field>);
-    while (my ($param,$value) = each %$params) {
-      $xml .= qq(
-    <field name="$param">$value</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -1125,18 +943,11 @@ sub dumpGenomicAlignment {
     my $counter    = make_counter(0);
     my $dbname     = $dbs{$db};
     my $file       = $conf->{'directory'}."/${dbname}_GenomicAlignment.xml";
-    $file         .= ".gz" unless $nogzip;
     my $start_time = time;
     my $fh;
-    unless ($nogzip) {
-      $fh = new IO::Zlib;
-      $fh->open( "$file", "wb9" ) or die("Can't open compressed stream to $file: $!");
-    }
-    else {
-      open( $fh, ">$file" ) or die "Can't open $file: $!";
-    }
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
     print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
-    header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+    header($fh);
 
     foreach my $table ( keys %tables ) {
       my $source = $tables{ $table }[0];
@@ -1162,7 +973,7 @@ sub dumpGenomicAlignment {
         (my $track_name = $table) =~ s/feature//;
         my $renderer = $track_name . $db . '_' . lc($logic_name) . '=stack' ;
         my $params = { 'contigviewbottom' => $renderer };
-        &p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $tables{$table}->[0], $params, $counter ), $nogzip, $fh);
+        &p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $tables{$table}->[0], $params, $counter ), $fh);
       }
       print LOG "  ...Dumped $c $table entries\n";
     }
@@ -1179,11 +990,11 @@ sub dumpGenomicAlignment {
         $c++;
         $label ||= '';
         my $desc = "$label $hid fails to map to the genome. Reason: $reason.";
-        &p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', {}, $counter ), $nogzip, $fh);
+        &p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', {}, $counter ), $fh);
       }
       print LOG "  ...Dumped $c Unmapped features\n";
     }
-    $total_af_c += footer( $counter->(),$nogzip,$fh);
+    $total_af_c += footer( $counter->(), $fh);
   }
   return $total_af_c;
 }
@@ -1196,55 +1007,22 @@ sub GenomicAlignmentLine {
                     $id,
                     $db ne 'core' ? ";db=$db" : '');
   $species =~ s/_/ /;
-  my $xml;
-  if ($search_engine eq 'solr') {
 
-#####
 # $params contains what's needed to switch the track on region in detail but there's
 # no point in using it since we get to this via Location/Genome and lose the parameter)
-####
 
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="description">$desc</field>);
-    $xml .= &common_fields($species,'GenomicAlignment',$db);
-    if ($db_name) {
-      $xml .= qq(
-  <field name="external_source">$db_name</field>);
-    }
+  $xml .= &common_fields($species,'GenomicAlignment',$db);
+  if ($db_name) {
     $xml .= qq(
+  <field name="external_source">$db_name</field>);
+  }
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$id">
-  <description>$desc</description>);
-    $xml .= qq(
-  <additional_fields>);
-    if ($db_name) {
-      $xml .= qq(
-    <field name="xref_source">$db_name</field>
-    <field name="xref">$id</field>);
-    }
-    $xml .= &common_fields($species,$ftype);
-    unless ($db eq 'core') {
-      $xml .= qq(
-    <field name="db">$db</field>);
-    }
-    while (my ($param,$value) = each %$params) {
-      $xml .= qq(
-    <field name="$param">$value</field>);
-    }
-    if ( $id =~ /^(\w+)\.\d+$/) {
-      $xml .= qq(
-    <field name="non_versioned">$1</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -1259,20 +1037,12 @@ sub dumpOligoProbe {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${FUNCDB}_OligoProbe.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'funcgen';
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-  }
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $FUNCDB to $file ... ", format_datetime($start_time), "\n";
-  header( $FUNCDB, $dbspecies, $db, $nogzip, $fh, $release );
+  header($fh);
 
   my $sth    = $conf->{'dbh'}->prepare(
     "select ps.name, count(distinct pf.probe_feature_id) as hits, a.vendor
@@ -1291,7 +1061,7 @@ sub dumpOligoProbe {
   while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
     next unless $hid;
     my $desc =  qq($type probeset $hid hits the genome in $count locations.);
-    &p( OligoProbeLine($dbspecies,$hid,$desc,'pset',$db,$counter ), $nogzip, $fh);
+    &p( OligoProbeLine($dbspecies,$hid,$desc,'pset',$db,$counter ), $fh);
   }
 
   my $sth    = $conf->{'dbh'}->prepare(
@@ -1311,9 +1081,9 @@ sub dumpOligoProbe {
   while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
     next unless $hid;
     my $desc = qq($type probe $hid hits the genome in $count locations.);
-    &p( OligoProbeLine($dbspecies,$hid,$desc,'probe',$db,$counter ), $nogzip, $fh);
+    &p( OligoProbeLine($dbspecies,$hid,$desc,'probe',$db,$counter ), $fh);
   }
-  return footer( $counter->(),$nogzip,$fh);
+  return footer( $counter->(), $fh);
 }
 
 sub OligoProbeLine {
@@ -1322,35 +1092,19 @@ sub OligoProbeLine {
                     $species,
                     $hid);
   $species =~ s/_/ /;
-  my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$hid</field>
   <field name="description">$desc</field>);
 
 #what's this one for ?
-    $xml .= qq(
+  $xml .= qq(
   <field name="ptype">$pset</field>);
 
-    $xml .= &common_fields($species,'ProbeFeature',$db);
-    $xml .= qq(
+  $xml .= &common_fields($species,'ProbeFeature',$db);
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$hid">
-  <description>$desc</description>);
-    $xml .= qq(
-  <additional_fields>);
-    $xml .= &common_fields($species,'ProbeFeature');
-    $xml .= qq(
-    <field name="db">$db</field>
-    <field name="ptype">$pset</field>
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -1364,20 +1118,12 @@ sub dumpDomain {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${dbname}_Domain.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-  }
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
-  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+  header($fh);
 
   my $sth = $conf->{'dbh'}->prepare(
     "select x.dbprimary_acc, i.id, x.description
@@ -1398,7 +1144,7 @@ sub dumpDomain {
     else {
       if ($old_acc) {
         $description = "Interpro domain $old_acc [$old_desc] has";
-        &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $nogzip, $fh);
+        &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $fh);
       }
       $IDS      = [ $id ];
       $old_acc  = $acc;
@@ -1407,8 +1153,8 @@ sub dumpDomain {
     }
   }
   $description = "Interpro domain $old_acc [$old_desc] has";
-  &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $nogzip, $fh);
-  return footer( $counter->(),$nogzip,$fh);
+  &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $fh);
+  return footer( $counter->(), $fh);
 }
 
 sub DomainLine {
@@ -1420,35 +1166,18 @@ sub DomainLine {
 
   my $ids = join ',', @$IDS;
   my $description = "$desc $count associated external database identifiers: $ids";
-  my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$acc</field>
   <field name="description">$description</field>);
-    foreach my $id (@$IDS) {
-      $xml .= qq(
+  foreach my $id (@$IDS) {
+    $xml .= qq(
   <field name="synonym">$id</field>);
   }
-    $xml .= &common_fields($species,'Protein Domain','core');
-    $xml .= qq(
+  $xml .= &common_fields($species,'Protein Domain','core');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$acc">
-  <description>$description</description>
-  <additional_fields>);
-    $xml .= &common_fields($species,'Domain');
-    foreach my $id (@$IDS) {
-      $xml .= qq(
-    <field name="synonym">$id</field>);
-  }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -1474,13 +1203,13 @@ sub dumpGeneTree {
     $fh;
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
     print LOG "  Dumping $compara_dbname to $compara_file ... ", format_datetime($start_time), "\n";
-    header('','','',$nogzip,$fh,'' );
+    header($fh);
     my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT null ));
     $sth->execute();
     while( my( $gt_id) = $sth->fetchrow_array()) {
-      &p( GeneTreeLine($gt_id,$counter,'',$multi_species), $nogzip, $fh);
+      &p( GeneTreeLine($gt_id,$counter,'',$multi_species), $fh);
     }
-    my $c = footer( $counter->(),$nogzip,$fh);
+    my $c = footer( $counter->(), $fh);
   }
   $multi_species = 0;
   $counter   = make_counter(0);
@@ -1490,7 +1219,7 @@ sub dumpGeneTree {
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname gene trees to $file ... ", format_datetime($start_time), "\n";
-  header('','','',$nogzip,$fh,'' );
+  header($fh);
   my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select g.stable_id, x.display_label from gene g, xref x where g.display_xref_id = x.xref_id" )} };
   my $sql = qq(
         SELECT gtr.stable_id, mg.stable_id
@@ -1506,50 +1235,46 @@ sub dumpGeneTree {
   while (my ($gt_id, $gid) = $sth->fetchrow_array() ) {
     next unless $gt_id;
     my $name = $gene_names->{$gid};
-    &p( GeneTreeLine($gt_id,$counter,$dbspecies,$multi_species,$gid,$name), $nogzip, $fh);
+    &p( GeneTreeLine($gt_id,$counter,$dbspecies,$multi_species,$gid,$name), $fh);
   }
-  return footer( $counter->(),$nogzip,$fh);
+  return footer( $counter->(), $fh);
 }
 
 sub GeneTreeLine {
   my($gt_id,$counter,$dbspecies,$ms,$gid,$name) = @_;
   my ($url,$xml,$desc);
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  $xml = qq(
 <doc>
   <field name="id">$gt_id</field>);
-    if ($ms) {
-      $xml .= qq(
+  if ($ms) {
+    $xml .= qq(
   <field name="name">$gt_id</field>);
-      $xml .= &common_fields('','GeneTree','compara');
-      $url = sprintf(qq(Multi/GeneTree?gt=%s),$gt_id);
-      $xml .= qq(
+    $xml .= &common_fields('','GeneTree','compara');
+    $url = sprintf(qq(Multi/GeneTree?gt=%s),$gt_id);
+    $xml .= qq(
   <field name="domain_url">$url</field>);
-    }
-    else {
-      if ($name && ($name ne $gid)) {
-        $desc = "Gene $name ($gid) is a member of GeneTree $gt_id";
-        $xml .= qq(
+  }
+  else {
+    if ($name && ($name ne $gid)) {
+      $desc = "Gene $name ($gid) is a member of GeneTree $gt_id";
+      $xml .= qq(
   <field name="name">$name</field>
   <field name="assoc_gene">$gid</field>
   <field name="description">$desc</field>);
-      }
-      else {
-        $desc = "Gene $gid is a member of GeneTree $gt_id";
-        $xml .= qq(
+    }
+    else {
+      $desc = "Gene $gid is a member of GeneTree $gt_id";
+      $xml .= qq(
   <field name="name">$gid</field>
   <field name="description">$desc</field>);
-      }
-      $xml .= &common_fields($dbspecies,'GeneTree','core');
-      $url = sprintf(qq($dbspecies/Gene/Compara_Tree?g=%s),$gid);
-      $xml .= qq(
-  <field name="domain_url">$url</field>);
     }
+    $xml .= &common_fields($dbspecies,'GeneTree','core');
+    $url = sprintf(qq($dbspecies/Gene/Compara_Tree?g=%s),$gid);
     $xml .= qq(
+  <field name="domain_url">$url</field>);
+  }
+  $xml .= qq(
 </doc>);
-  }
-  else {
-  }
   $counter->();
   return $xml;
 }
@@ -1572,20 +1297,12 @@ sub dumpFamily {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${dbname}_Family.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-  }
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
-  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+  header($fh);
 
   ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
@@ -1659,10 +1376,10 @@ sub dumpFamily {
       my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
       my $full_desc = qq($X protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
 #      my $full_desc = qq(Ensembl protein family $fid: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species.\nDescription: $desc);
-      &p( FamilyLine($dbspecies,$fid,$full_desc,\@genes,\@proteins,\@uniprots,$counter ), $nogzip, $fh);
+      &p( FamilyLine($dbspecies,$fid,$full_desc,\@genes,\@proteins,\@uniprots,$counter ), $fh);
     }
   }
-  return footer( $counter->(),$nogzip,$fh);
+  return footer( $counter->(), $fh);
 }
 
 sub FamilyLine {
@@ -1675,44 +1392,30 @@ sub FamilyLine {
                   );
   $species =~ s/_/ /;
   $desc = &clean($desc,'desc');
-  my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$fid</field>
   <field name="description">$desc</field>);
-    foreach my $g (@$genes){
-      my $id   = $g->{'stable_id'};
-      my $name = $g->{'display_label'};
-      $xml .= qq(
+  foreach my $g (@$genes){
+    my $id   = $g->{'stable_id'};
+    my $name = $g->{'display_label'};
+    $xml .= qq(
   <field name="assoc_gene">$id</field>
   <field name="assoc_gene_name">$name</field>);
-    }
-    foreach my $p (@$proteins){
-      my $id   = $p->{'stable_id'};
-      $xml .= qq(
-  <field name="assoc_protein">$id</field>);
-    }
-    foreach my $up (@$uniprots){
-      $xml .= qq(
-  <field name="assoc_protein">$up</field>);
-    }
-    $xml .= &common_fields($species,'Protein Family','core');
+  }
+  foreach my $p (@$proteins){
+    my $id   = $p->{'stable_id'};
     $xml .= qq(
+  <field name="assoc_protein">$id</field>);
+  }
+  foreach my $up (@$uniprots){
+    $xml .= qq(
+  <field name="assoc_protein">$up</field>);
+  }
+  $xml .= &common_fields($species,'Protein Family','core');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$fid">
-  <description>$desc</description>);
-    $xml .= qq(
-  <additional_fields>);
-    $xml .= &common_fields($species,'Family');
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -1729,20 +1432,12 @@ sub dumpSequence {
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${dbname}_Sequence.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-  }
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
-  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+  header($fh);
 
   my $lrgs = &findLRGs($conf);
   if (@$lrgs) {
@@ -1795,7 +1490,7 @@ sub dumpSequence {
       else {
         if ($old_ID) {
           my ($name, $synonyms) = &sort_mf_names($NAMES,\@name_order);
-          &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
+          &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $fh);
           $NAMES = undef;
           $ftype = undef;
         }
@@ -1812,7 +1507,7 @@ sub dumpSequence {
       }
     }
     my ( $name, $synonyms) = sort_mf_names($NAMES,\@name_order);
-    &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
+    &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $fh);
   }
 
   #identify current default top level
@@ -1918,7 +1613,7 @@ sub dumpSequence {
     }
     else {
       if ($old_name) {
-        &p( SeqLine($dbspecies,$old_name,$old_type,$old_start,$old_end,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
+        &p( SeqLine($dbspecies,$old_name,$old_type,$old_start,$old_end,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $fh);
       }
       $old_name = $name;
       $old_type = $type;
@@ -1944,8 +1639,8 @@ sub dumpSequence {
       }
     }
   }
-  &p( SeqLine($dbspecies,$old_name,$old_type,$old_start,$old_end,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
-  return footer( $counter->(),$nogzip,$fh);
+  &p( SeqLine($dbspecies,$old_name,$old_type,$old_start,$old_end,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $fh);
+  return footer( $counter->(), $fh);
 }
 
 #decide which of the possible many name entries we should be using, the rest will be synonyms
@@ -2000,39 +1695,18 @@ sub SeqLine {
 
   $desc .= $extra_desc;
 
-  my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$name</field>
   <field name="description">$desc</field>);
-    foreach my $syn (@$synonyms, @$other_names) {
-      $xml .= qq(
-  <field name="synonym">$syn</field>);
-    }
-    $xml .= &common_fields($species,'Sequence','core');
+  foreach my $syn (@$synonyms, @$other_names) {
     $xml .= qq(
+  <field name="synonym">$syn</field>);
+  }
+  $xml .= &common_fields($species,'Sequence','core');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$name">
-  <description>$desc</description>);
-    $xml .= qq(
-  <additional_fields>);
-    $xml .= &common_fields($species,'Sequence');
-    $xml .= qq(
-    <field name="location">$r</field>
-    <field name="action">$action</field>);
-    foreach my $syn (@$synonyms, @$other_names) {
-      $xml .= qq(
-    <field name="synonym">$syn</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   $counter->();
   return $xml;
 }
@@ -2092,19 +1766,11 @@ sub dumpGene {
     my $dbname    = $dbs{$db};
     my $counter   = make_counter(0);
     my $file = $conf->{'directory'}."/${dbname}_Gene.xml";
-    $file .= ".gz" unless $nogzip;
     my $start_time = time;
     my $fh;
-    unless ($nogzip) {
-      $fh = new IO::Zlib;
-      $fh->open( "$file", "wb9" )
-        or die("Can't open compressed stream to $file: $!");
-    }
-    else {
-      open( $fh, ">$file" ) or die "Can't open $file: $!";
-    }
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
-    header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+    header($fh);
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_name, db_display_name
@@ -2245,7 +1911,7 @@ sub dumpGene {
                        $gene_locations->{$old_gsi},
                        $db,
                        $counter),
-              $nogzip, $fh);
+              $fh);
           $c++;
         }
 
@@ -2331,7 +1997,7 @@ sub dumpGene {
                         $gene_locations->{$old_gsi},
                         $db,
                         $counter),
-          $nogzip, $fh);
+          $fh);
       $c++;
     }
 #    print LOG "    Gene info query done and xml generated ".&date_and_mem()."\n";
@@ -2341,7 +2007,7 @@ sub dumpGene {
     my $other_count = &do_archive_stable_ids( [ 'gene' ], $dbname, $db, $fh, $counter );
 
     print LOG "    Stable_id mapping querying done, added $other_count entries ".&date_and_mem()."\n";
-    $total_c += footer( $counter->(),$nogzip,$fh);
+    $total_c += footer( $counter->(), $fh);
 
     while (0) {
       $other_count = 0;
@@ -2423,19 +2089,11 @@ sub dumpTranscript {
     my $dbname    = $dbs{$db};
     my $counter   = make_counter(0);
     my $file = $conf->{'directory'}."/${dbname}_Transcript.xml";
-    $file .= ".gz" unless $nogzip;
     my $start_time = time;
     my $fh;
-    unless ($nogzip) {
-      $fh = new IO::Zlib;
-      $fh->open( "$file", "wb9" )
-        or die("Can't open compressed stream to $file: $!");
-    }
-    else {
-      open( $fh, ">$file" ) or die "Can't open $file: $!";
-    }
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
-    header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+    header($fh);
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_name, db_display_name
@@ -2566,7 +2224,7 @@ sub dumpTranscript {
                         $trans_locations->{$old_tsi},
                         $db,
                         $counter),
-              $nogzip, $fh);
+              $fh);
           $c++;
         }
 
@@ -2647,7 +2305,7 @@ sub dumpTranscript {
                         $trans_locations->{$old_tsi},
                         $db,
                         $counter),
-          $nogzip, $fh) if ($old->{'tsid'});
+          $fh) if ($old->{'tsid'});
       $c++;
     }
     print LOG "    Transcript info query done and xml generated, $c entries added ".&date_and_mem()."\n";
@@ -2655,7 +2313,7 @@ sub dumpTranscript {
     my $other_count = &do_archive_stable_ids(  [ (qw(transcript translation)) ], $dbname, $db, $fh, $counter );
     print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
 
-    $total_c += footer( $counter->(),$nogzip,$fh);
+    $total_c += footer( $counter->(), $fh);
   }
   return $total_c;
 }
@@ -2691,206 +2349,106 @@ sub GeneTransLine {
   $desc = &clean($desc,'desc');
   $disp_xref = &clean($disp_xref,'name');
   my $description = $desc . " [Type: $biotype $ad_label]";
-
-  my $xml;
-
   my $doc = $boost ? qq(doc boost="$boost") : 'doc';
-
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <$doc>
   <field name="id">$sid</field>
   <field name="id_ver">$sid.$sid_ver</field>
   <field name="name">$disp_xref</field>
   <field name="description">$desc</field>);
-    if (my $db_boost_value = $db_boost{$db}) {
-      $xml .= qq(
+  if (my $db_boost_value = $db_boost{$db}) {
+    $xml .= qq(
   <field name="db_boost">$db_boost_value</field>);
-    }
-    if (my $ref_boost_value = $region_boost{$is_ref}) {
-      $xml .= qq(
+  }
+  if (my $ref_boost_value = $region_boost{$is_ref}) {
+    $xml .= qq(
   <field name="ref_boost">$ref_boost_value</field>);
-    }
-    $xml .= &common_fields($species,$type,$db);
-    my (%seen_labels,%seen_syns,%seen_sources);
-    foreach my $xref (@$xrefs) {
-      my $dbname   = $xref->{'db_name'};
-      my $dbkey    = $xref->{'label'};
-      my $dbacc    = $xref->{'db_acc'};
+  }
+  $xml .= &common_fields($species,$type,$db);
+  my (%seen_labels,%seen_syns,%seen_sources);
+  foreach my $xref (@$xrefs) {
+    my $dbname   = $xref->{'db_name'};
+    my $dbkey    = $xref->{'label'};
+    my $dbacc    = $xref->{'db_acc'};
 
-      #xref synonyms
-      foreach my $syn (@{$xref->{'synonyms'}}) {
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
-        $xml .= qq(
+    #xref synonyms
+    foreach my $syn (@{$xref->{'synonyms'}}) {
+      next if $seen_syns{$syn};
+      $seen_syns{$syn} = 1;
+      $syn = &clean($syn,'syn');
+      $xml .= qq(
   <field name="_xr_$dbname">$syn</field>);
-      }
-      next if $seen_labels{$dbkey};
-      $seen_labels{$dbkey} = 1;
-      $dbkey = &clean($dbkey,'dbkey');
-      $dbacc = &clean($dbacc,'dbacc');
-      if (! $dbname) {
-        print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-      }
-      else {
-        if (! $seen_sources{$dbname}) {
-          $seen_sources{$dbname} = 1;
-          $xml .= qq(
+    }
+    next if $seen_labels{$dbkey};
+    $seen_labels{$dbkey} = 1;
+    $dbkey = &clean($dbkey,'dbkey');
+    $dbacc = &clean($dbacc,'dbacc');
+    if (! $dbname) {
+      print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+    }
+    else {
+      if (! $seen_sources{$dbname}) {
+        $seen_sources{$dbname} = 1;
+        $xml .= qq(
   <field name="_xr_$dbname">$dbkey</field>);
-          if ($dbkey ne $dbacc) {
-            $xml .= qq(
+        if ($dbkey ne $dbacc) {
+          $xml .= qq(
   <field name="_xr_${dbname}_dbacc">$dbacc</field>);
-          }
         }
       }
     }
-    foreach my $xref_description (keys %{$xref_descriptions}) {
-      if ($xref_description) {
-        $xref_description = &clean($xref_description,'xref description');
-        $xml .= qq(
+  }
+  foreach my $xref_description (keys %{$xref_descriptions}) {
+    if ($xref_description) {
+      $xref_description = &clean($xref_description,'xref description');
+      $xml .= qq(
   <field name="xref_description">$xref_description</field>);
-      }
     }
-    my %seen_syns;
-    foreach my $syn (@$synonyms) {
-      next if $seen_syns{$syn};
-      $seen_syns{$syn} = 1;
-      $xml .= qq(
+  }
+  my %seen_syns;
+  foreach my $syn (@$synonyms) {
+    next if $seen_syns{$syn};
+    $seen_syns{$syn} = 1;
+    $xml .= qq(
   <field name="name_synonym">$syn"</field>);
-    }
-    if (my $t_count = keys %$tsids) {
-      $xml .= qq(
+  }
+  if (my $t_count = keys %$tsids) {
+    $xml .= qq(
   <field name="transcript_count">$t_count</field>);
-      while (my ($tsi,$tsi_ver) = each %$tsids) {
-        $xml .= qq(
+    while (my ($tsi,$tsi_ver) = each %$tsids) {
+      $xml .= qq(
   <field name="transcript">$tsi</field>
   <field name="transcript_ver">$tsi.$tsi_ver</field>);
-      }
     }
-    if (my $tl_count = keys %$tlsids) {
-      $xml .= qq(
+  }
+  if (my $tl_count = keys %$tlsids) {
+    $xml .= qq(
   <field name="translation_count">$tl_count</field>);
-      while ( my ($tlsi, $tlsi_ver) = each %$tlsids) {
-        $xml .= qq(
+    while ( my ($tlsi, $tlsi_ver) = each %$tlsids) {
+      $xml .= qq(
   <field name="peptide">$tlsi</field>
   <field name="peptide_ver">$tlsi.$tlsi_ver</field>);
-      }
     }
-    if (my $e_count = keys %$exons) {
-      $xml .= qq(
-  <field name="exon_count">$e_count</field>);
-      foreach my $esi (keys %$exons) {
-        $xml .= qq(
-  <field name="exon">$esi</field>);
-      }
-    }
-
-    #these are not to be searchable, but would be good to facete on database
-    if ($loc) {
-      $xml .= qq(
-  <field name="location">$loc</field>);
-    }
-    $xml .= qq(
-  <field name="source">$ad_label</field>
-  <field name="domain_url">$url</field>);
-    $xml .= qq(
-</doc>);
   }
-
-  else {
-    $xml = qq(
-<entry id="$sid">
-  <name>$disp_xref</name>
-  <description>$description</description>);
-
+  if (my $e_count = keys %$exons) {
     $xml .= qq(
-  <additional_fields>
-    <field name="id_version">$sid.$sid_ver</field>);
-    my (%seen_sources,%seen_syns,%seen_labels);
-    foreach my $xref (@$xrefs) {
-      my $dbname = $xref->{'db_name'};
-      my $dbkey  = $xref->{'label'};
-      my $dbacc  = $xref->{'db_acc'};
-
-      foreach my $syn (@{$xref->{'synonyms'}}) {
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
-        $xml .= qq(
-    <field name="xref_synonym">$syn"</field>);
-      }
-      next if $seen_labels{$dbkey};
-      $seen_labels{$dbkey} = 1;
-      if (! $dbname) {
-        print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-      }
-      else {
-        if (! $seen_sources{$dbname}) {
-          $seen_sources{$dbname} = 1;
-          $xml .= qq(
-    <field name="xref_source">$dbname</field>);
-        }
-        $dbkey = &clean($dbkey,'dbkey');
-        $dbacc = &clean($dbacc,'dbacc');
-        $xml .= qq(
-    <field name="xref">$dbkey</field>);
-        if ($dbacc ne $dbkey) {
-          $xml .= qq(
-    <field name="xref_dbacc">$dbacc</field>);
-        }
-        if ($dbkey =~ /^(\w+)\.\d+$/) {
-          my $k = $1;
-          next if $seen_labels{$k};
-          $seen_labels{$dbkey} = $k;
-          $xml .= qq(
-    <field name="xref_non_versioned">$k</field>);
-        }
-      }
-    }
-    foreach my $xref_description (keys %{$xref_descriptions}) {
-      if ($xref_description) {
-        $xref_description = &clean($xref_description,'xref description');
-        $xml .= qq(
-    <field name="xref_description">$xref_description</field>);
-      }
-    }
-    foreach my $syn (@$synonyms) {
-      next if $seen_syns{$syn};
-      $seen_syns{$syn} = 1;
-      $xml .= qq(
-    <field name="name_synonym">$syn"</field>);
-    }
-    $xml .= &common_fields($species,$type);
-    $xml .= qq(
-    <field name="action">Summary</field>
-    <field name="source">$ad_label</field>);
-    if ($loc) {
-      $xml .= qq(
-    <field name="location">$loc</field>);
-    }
-    unless ($db eq 'core') {
-      $xml .= qq(
-    <field name="db">$db</field>);
-    }
-    while ( my ($tsi,$tver) = each %$tsids) {
-      $xml .= qq(
-    <field name="transcript">$tsi</field>
-    <field name="transcript_version">$tsi.$tver</field>);
-    }
-    while (my ($tlsi, $tlver) = each %$tlsids) {
-      $xml .= qq(
-    <field name="peptide">$tlsi</field>
-    <field name="peptide_version">$tlsi.$tlver</field>);
-    }
+  <field name="exon_count">$e_count</field>);
     foreach my $esi (keys %$exons) {
       $xml .= qq(
-    <field name="exon">$esi</field>);
+  <field name="exon">$esi</field>);
     }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
   }
+
+  #these are not to be searchable, but would be good to facete on database
+  if ($loc) {
+    $xml .= qq(
+  <field name="location">$loc</field>);
+  }
+  $xml .= qq(
+  <field name="source">$ad_label</field>
+  <field name="domain_url">$url</field>);
+  $xml .= qq(
+</doc>);
 
   $counter->();
   return $xml;
@@ -2960,19 +2518,19 @@ sub do_archive_stable_ids {
         elsif ($current_id_c) {
           $desc .= "It has been mapped to $cur_txt.";
         }
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter), $fh);
       }
       elsif( @deprecated_sis ) {
         $other_count++;
         my $deprecated_id_c = scalar(@deprecated_sis);
         my $id = $deprecated_id_c > 1 ? 'identifiers' : 'identifier';
         my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $deprecated_id_c deprecated $id.);
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter), $fh);
       }
       else {
         $other_count++;
         my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers.);
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter), $fh);
       }
     }
   }
@@ -2986,9 +2544,7 @@ sub StableIdMappingLine {
                     ucfirst($type),
                     $type eq 'gene' ? "g=$osi" : $type eq 'transcript' ? "t=$osi" : "protein=$osi");
   $species =~ s/_/ /;
-  my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$osi</field>
   <field name="description">$desc</field>);
@@ -2997,24 +2553,6 @@ sub StableIdMappingLine {
   <field name="domain_url">$url</field>);
     $xml .= qq(
 </doc>);
-  }
-  elsif ($search_engine eq 'lucene') {
-    $xml = qq(
-<entry id="$osi">
-  <description>$desc</description>
-  <name>"Retired Ensembl $type stable ID"</name>
-  <additional_fields>);
-    $type = 'IDHistory_'.$type;
-
-    $xml .= &common_fields($species,$type);
-    $xml .= qq(
-    <field name="action">Idhistory</field>
-    <field name="db">$db</field>
-  </additional_fields>);
-    $xml .= qq(
-</entry>);
-  }
-
   $counter->();
   return $xml;
 }
@@ -3030,19 +2568,11 @@ sub dumpRegulatoryFeature {
   my $db = 'regulatoryfeatures';
   my $counter   = make_counter(0);
   my $file = $conf->{'directory'}."/${dbname}_RegulatoryFeature.xml";
-  $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $fh;
-  unless ($nogzip) {
-    $fh = new IO::Zlib;
-    $fh->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file: $!");
-  }
-  else {
-    open( $fh, ">$file" ) or die "Can't open $file: $!";
-  }
+  open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
-  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+  header($fh);
 
   my $ftype = 'RegulatoryFeature';
   my $params;
@@ -3065,7 +2595,7 @@ sub dumpRegulatoryFeature {
     my $ids = [ ];
     my $r = $row->[1] .":".$row->[2] . "-" . $row->[3];
     $params = { 'r' => $r, 'subtype' => 'RegulatoryFeature' };
-    &p (RegulatoryFeatureLine($dbspecies,$desc,$id,$ids,$ftype,$params,$db,$counter),$nogzip, $fh);
+    &p (RegulatoryFeatureLine($dbspecies,$desc,$id,$ids,$ftype,$params,$db,$counter), $fh);
   }
 
 ## External Features...
@@ -3087,9 +2617,9 @@ sub dumpRegulatoryFeature {
     my @ids = split ' ', $f_name;
     $params = { 'fs_name' => $fs_name, 'subtype' => 'RegulatoryFactor' };
     my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
-    &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@ids,$ftype,$params,$db,$counter),$nogzip, $fh);
+    &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@ids,$ftype,$params,$db,$counter), $fh);
   }
-  return footer( $counter->(),$nogzip,$fh);
+  return footer( $counter->(), $fh);
 }
 
 sub RegulatoryFeatureLine {
@@ -3106,47 +2636,27 @@ sub RegulatoryFeatureLine {
                    $id);
   }
   $species =~ s/_/ /;
-  my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$id</field>
   <field name="description">$desc</field>);
-    foreach my $syn (@$ids) {
-      $xml .= qq(
-  <field name="synonym">$syn</field>);
-    }
-
-    #what's this for ?
-    if (my $fs_name = $params->{'fs_name'}) {
-      $xml .= qq(
-  <field name="fs_name">$fs_name</field>);
-    }
-    $xml .= &common_fields($species,$ftype,'regulatoryfeatures');
+  foreach my $syn (@$ids) {
     $xml .= qq(
+  <field name="synonym">$syn</field>);
+  }
+
+  #what's this for ?
+  if (my $fs_name = $params->{'fs_name'}) {
+    $xml .= qq(
+  <field name="fs_name">$fs_name</field>);
+  }
+  $xml .= &common_fields($species,$ftype,'regulatoryfeatures');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$id">
-  <description>$desc</description>
-  <additional_fields>);
-    $xml .= &common_fields($species,$ftype);
-    foreach my $syn (@$ids) {
-      $xml .= qq(
-    <field name="synonym">$syn</field>);
-    }
-    while (my ($param,$value) = each %$params) {
-      $xml .= qq(
-    <field name="$param">$value</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
-    $counter->();
-    return $xml;
+
+  $counter->();
+  return $xml;
 }
 
 ########################################################################## LRGs
@@ -3181,7 +2691,7 @@ sub sort_lrgs {
     else {
       if ($prev_gsi) {
         &p(LRGLine($dbspecies,$type,$prev_gsi,$prev_disp_label,$prev_db_name,$query_terms,$prev_length),
-           $nogzip, $fh);
+           $fh);
       }
       $prev_gsi        = $gsi;
       $prev_disp_label = $rec->[1];
@@ -3199,42 +2709,20 @@ sub LRGLine {
                     $gsi);
   $species =~ s/_/ /;
   my $description = "$gsi is a fixed reference sequence of length $length with a fixed transcript(s) for reporting purposes. It was created for $dbname gene $dbkey";
-  my $xml;
-  if ($search_engine eq 'solr') {
-    $xml = qq(
+  my $xml = qq(
 <doc>
   <field name="id">$gsi</field>
   <field name="description">$description</field>);
-    $xml .= qq(
+  $xml .= qq(
   <field name="xref">$dbkey</field>);
-    foreach my $tsi (@$tsids) {
-      $xml .= qq(
-  <field name="transcript">$tsi</field>);
-    }
-    $xml .= &common_fields($species,$type,'core');
+  foreach my $tsi (@$tsids) {
     $xml .= qq(
+  <field name="transcript">$tsi</field>);
+  }
+  $xml .= &common_fields($species,$type,'core');
+  $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
-  }
-  else {
-    $xml = qq(
-<entry id="$gsi">
-  <description>$description</description>);
-    $xml .= qq(
-  <additional_fields>);
-    $xml .= qq(
-    <field name="xref">$dbkey</field>);
-    $xml .= &common_fields($species,$type);
-    $xml .= qq(
-    <field name="action">LRG_Summary</field>);
-    foreach my $tsi (@$tsids) {
-      $xml .= qq(
-    <field name="transcript">$tsi</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
   return $xml
 }
 
@@ -3271,80 +2759,39 @@ sub make_counter {
 }
 
 sub header {
-  my ( $dbname, $dbspecies, $dbtype, $nogzip, $fh, $release ) = @_;
-  if ($search_engine eq 'lucene') {
-    $dbspecies =~ s/_/ /;
-    p("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>",$nogzip,$fh,1);
-    p("<!DOCTYPE database [ <!ENTITY auml \"&#228;\">]>",$nogzip,$fh,1);
-    p("<database>",$nogzip,$fh,1);
-    p("<name>$dbname</name>",$nogzip,$fh,1);
-    p("<description>$sitetype $dbspecies $dbtype database</description>",$nogzip,$fh,1);
-    p("<release>$release</release>",$nogzip,$fh,1);
-    p("",$nogzip,$fh,1);
-    p("<entries>",$nogzip,$fh,1);
-  }
-  elsif ($search_engine eq 'solr') {
-    p(q(<add>),$nogzip,$fh,1);
-  }
-  else {
-    print LOG "Incorrect data format -$search_engine- specified. Please correct\n";
-  }
+  my ($fh) = @_;
+  p(q(<add>), $fh, 1);
 }
 
 sub footer {
-  my ($ecount,$nogzip,$fh,$type) = @_;
-  if ($search_engine eq 'lucene') {
-    p("</entries>",$nogzip,$fh,1);
-    p("<entry_count>$ecount</entry_count>",$nogzip,$fh,1);
-    p("</database>",$nogzip,$fh,1);
-  }
-  elsif ($search_engine eq 'solr') {
-    p("</add>",$nogzip,$fh,1);
-  }
+  my ($ecount, $fh, $type) = @_;
+  p("</add>", $fh, 1);
   my $text = $type ? "  ...Dumped $ecount $type entries\n" : "  ...Dumped $ecount entries\n";
   print LOG $text;
-  if ($nogzip) {
-    close($fh) or die $!;
-  }
-  else {
-    $fh->close();
-  }
+  $fh->close();
   return $ecount;
 }
 
 sub common_fields {
   my ($species,$feature_type,$db) = @_;
-  my $xml;
-  if ($search_engine eq 'solr') {
-    my $species_name = $conf->{'species_common_name'};
-    $xml = qq(
+  my $species_name = $conf->{'species_common_name'};
+  my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
-    if ($species) {
-      $xml .= qq(
+  if ($species) {
+    $xml .= qq(
   <field name="species">$species_name</field>
   <field name="species_name">$species</field>);
-    }
-    if ($db) {
-      $xml .= qq(
-  <field name="database_type">$db</field>);
-    }
   }
-
-  else {
-    my $sp_common_name = $conf->{'species_common_name'};
-    my $sci_name = $conf->{'species_sci_name'};
-    $xml = qq(
-    <field name="species">$species</field>
-    <field name="species_name">$sci_name</field>
-    <field name="species_common_name">$sp_common_name</field>
-    <field name="featuretype">$feature_type</field>);
+  if ($db) {
+    $xml .= qq(
+  <field name="database_type">$db</field>);
   }
   return $xml;
 }
 
 sub p {
-  my ($str,$nogzip,$fh,$no_parse) = @_;
+  my ($str, $fh, $no_parse) = @_;
   return unless $str;
   unless ($no_parse) {
     eval { $parser->parse($str); };
@@ -3353,15 +2800,8 @@ sub p {
       exit;
     }
   }
-
-  # TODO - encoding
   $str .= "\n";
-  if ($nogzip) {
-    print $fh $str or die "Can't write to file ", $!;
-  }
-  else {
-    print $fh $str or die "Can't write string: $str";
-  }
+  print $fh $str or die "Can't write string: $str";
 }
 
 sub format_datetime {
@@ -3400,7 +2840,7 @@ sub about {
   print STDERR <<ABOUT_END;
 
 usage:
-./indexXMLDumper --species=aaa,bbb|ALL --index=vvv,xxx|ALL (--ignore_species=ccc,ddd) (--ignore_index=yyy,zzz) (--debug) (-dump_real) (--log=index.log) (--dir=dir)
+./indexXMLDumper --species=aaa,bbb|ALL --index=vvv,xxx|ALL (--ignore_species=ccc,ddd) (--ignore_index=yyy,zzz) (--debug) (--log=index.log) (--dir=dir)
 
 'ALL' can be used for both 'species' and 'index'
 
@@ -3409,7 +2849,7 @@ unless --debug is specified in which case it will exit on the first failure.
 
 In the abscence of --debug option, STDOUT and STDERR are sent to a log file (dumping_$release.log unless specified otherwise). If you run with --debug then output is sent to STDOUT
 
-The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped to 'input' unless the -dump_real option is chosen, in which case it dumps to the correct location for indexing (/nfs/web_data/search/lucene|solr/ensembl_$release - note you have to be a member of the www-search UNIX group to write here)
+The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped to 'input'.
 
 Examine the log file for 'WARNING' messages, particularly 'WARNING XML' - this will identify any entries identified by XML::Parser as not being well formed and which would crash index production. These are not added to the xml file but the record count in the footer *will* include them. Either manaully fix and add the entry(ies) to the xml file, or else fix the database / script to account for it and rerun.
 
@@ -3418,8 +2858,7 @@ Examine the log file for 'WARNING' messages, particularly 'WARNING XML' - this w
 Examples:
 
 ./indexXMLDumper --species=ALL --index=ALL --debug --log=debug.log  #all log output to debug.log; xml to input; all indices for all species, only each one once
-./indexXMLDumper --species=ALL --index=ALL --dump_real              #all log output to dumping_$release.log; xml to /nfs/web_data/search/lucene/ensembl_$release; all indices for all species
-./indexXMLDumper --species=ALL --index=ALL --dir=input              #all log output to dumping_$release.log; xml to input; all indices for all species
+./indexXMLDumper --species=ALL --index=ALL                          #all log output to dumping_$release.log; xml to input; all indices for all species
 ./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/web_data/search/lucene/ensembl_$release; Variations for all species but human
 ./indexXMLDumper --species=ALL --ignore_index=Variation --log=no_variations.log  #log output to no_variations.log; xml to  /nfs/web_data/search/lucene/ensembl_$release; All indexes apart from Variations for for all species
 ./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log #output in format for solr (for testing, only works for genes as yet)
