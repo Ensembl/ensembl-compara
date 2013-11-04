@@ -281,7 +281,7 @@ sub OTHER_MARKUP_OPTIONS {
       'name'   => 'title_display',
       'label'  => 'Display pop-up information on mouseover',
       'values' => [
-        { 'value' => 'all', 'name' => 'Yes' },
+        { 'value' => 'yes', 'name' => 'Yes' },
         { 'value' => 'off', 'name' => 'No'  },
       ],
     },
