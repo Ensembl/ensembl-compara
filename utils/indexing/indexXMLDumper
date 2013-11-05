@@ -882,7 +882,6 @@ sub dumpStructuralVariation {
 
 sub StrucVarLine {
   my ($species, $id, $evidence, $study, $location, $desc, $action, $params, $counter ) = @_;
-
 # $location, $action and $params contain info for location view, no point in adding it until we can pass this info from StructuralVariation/Summary
 
   my $url = sprintf(qq(%s/StructuralVariation/Summary?sv=%s),
@@ -2596,7 +2595,7 @@ sub dumpRegulatoryFeature {
 sub RegulatoryFeatureLine {
   my ($species,$desc,$id,$ids,$ftype,$params,$db,$counter) = @_;
   my $url;
-  if ($id =~ /ENSR|ENSMUSR/) {
+  if ($params->{'subtype'} eq 'RegulatoryFeature') {
     $url = sprintf(qq(%s/Regulation/Cell_line?rf=%s),
                    $species,
                    $id);
