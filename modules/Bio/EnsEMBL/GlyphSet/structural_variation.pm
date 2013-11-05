@@ -51,7 +51,7 @@ sub features {
     if ($set_name) {
       $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', $var_db)->fetch_by_name($set_name), $var_db);
     } elsif ($study_name) {
-      $features = $slice->get_all_StructuralVariationFeatures_by_Study($self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db)->fetch_by_name($study_name), $var_db);
+      $features = $slice->get_all_StructuralVariationFeatures_by_Study($self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db)->fetch_by_name($study_name), undef, $var_db);
     } else {
       my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
       my $source   = $self->my_config('source');
