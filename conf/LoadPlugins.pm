@@ -12,7 +12,7 @@ use SiteDefs;
 my $IMPORTED;
 my %LOADING;
 
-sub plugin { #TODO change this to 'import' and change it's usage accordingly
+sub import {
 
   # Importing LoadPlugins more than once will pollute the @INC
   if ($IMPORTED) {
