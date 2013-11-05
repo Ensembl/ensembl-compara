@@ -46,19 +46,19 @@ sub import {
     # prefix, but different from methods being renamed in
     # some other plugin.
 
-    my $target_package  = $caller[0];
-    my $method_prefix   = _method_prefix(@caller);
-
+    my $target_package = $caller[0];
+    my $method_prefix  = _method_prefix(@caller);
+    
     no strict qw(refs);
-
+    
     for (@methods) {
-
+    
       # If the method being renamed is not defined in the package,
       # we won't create an empty method to avoid causing any other
       # problems.
-
-      if (defined ${"${target_package}::"}{$_} && defined *{${"${target_package}::"}{$_}}{CODE}) {
-        *{"${target_package}::${method_prefix}_$_"} = \&{"${target_package}::$_"};
+    
+      if (my $coderef = $target_package->can($_)) {
+        *{"${target_package}::${method_prefix}_$_"} = $coderef;
       } else {
         warn qq(Method "$_" exists neither in the core web code nor in the already loaded plugins at $caller[1] line $caller[2].\n);
       }
@@ -83,8 +83,10 @@ sub AUTOLOAD {
   my $object_class  = ref $object || $object;
   my $called_method = $AUTOLOAD =~ s/^PREV:://r;
   my @caller        = caller;
-  my $coderef       = $object_class->can(sprintf '%s_%s', previous::_method_prefix(@caller), $called_method);
-
+  my $method_name   = sprintf '%s_%s', previous::_method_prefix(@caller), $called_method;
+  my $coderef       = $object_class ne $caller[0] && $object_class->isa($caller[0]) ? $caller[0]->can($method_name) : undef;
+     $coderef     ||= $object_class->can($method_name);
+  
   die qq(No PREV method for "$called_method" via package "$object_class" at $caller[1] line $caller[2].\n) unless $coderef;
 
   goto &$coderef;
