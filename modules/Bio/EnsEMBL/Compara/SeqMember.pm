@@ -149,12 +149,14 @@ sub new_from_transcript {
   $self->taxon_id($genome_db->taxon_id);
   $self->genome_db_id($genome_db->dbID);
   $self->chr_name($transcript->seq_region_name);
-  $self->dnafrag_start($transcript->coding_region_start);
-  $self->dnafrag_end($transcript->coding_region_end);
   $self->dnafrag_strand($transcript->seq_region_strand);
   $self->display_label($transcript->display_xref->display_id) if $transcript->display_xref;
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
+      # coordinates
+    $self->dnafrag_start($transcript->coding_region_start);
+    $self->dnafrag_end($transcript->coding_region_end);
+
     if(not defined($transcript->translation)) {
       throw("request to translate a transcript without a defined translation",
             $transcript->stable_id);
@@ -187,6 +189,9 @@ sub new_from_transcript {
       $self->sequence($seq_string);
     }
   } elsif ($translate eq 'ncrna') {
+    # Coordinates
+    $self->dnafrag_start($transcript->seq_region_start);
+    $self->dnafrag_end($transcript->seq_region_end);
     unless (defined $transcript->stable_id) {
       throw("COREDB error: does not contain transcript stable id for transcript_id ".$transcript->dbID."\n");
     }
