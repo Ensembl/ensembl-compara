@@ -2801,7 +2801,7 @@ sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
   
-  foreach my $menu_item(@{$hashref->{'menu'}}) {
+  foreach my $menu_item(sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} =~  /^sv_/; # exclude structural variant items
     
     my $node;
