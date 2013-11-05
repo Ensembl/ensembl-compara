@@ -62,19 +62,6 @@ sub fetch_input {
     $self->param('seq_member_adaptor', $self->compara_dba->get_SeqMemberAdaptor);
     $self->param('homology_adaptor', $self->compara_dba->get_HomologyAdaptor);
 
-    my @projected_genes;
-
-    #the projected logic names (same as the core but with proj_ at the start)
-    #NB: there are some logic_names that start with proj_ at transcript level
-    foreach my $analysis (@{$genome_db->db_adaptor->get_AnalysisAdaptor->fetch_all()}){
-        if($analysis->logic_name() =~ m/^proj_/){
-            #print $analysis->logic_name()."\n";
-            push @projected_genes, @{$genome_db->db_adaptor->get_GeneAdaptor->fetch_all_by_logic_name($analysis->logic_name)};
-            print $analysis->logic_name.' '.scalar(@projected_genes)."\n" if $self->debug;
-        }
-    }
-
-    $self->param('projected_genes', \@projected_genes);
     $self->param('stored_homologies', {});
     $self->param('member_hash', {});
 }
@@ -85,7 +72,6 @@ sub fetch_input {
 sub fetch_or_store_gene {
     my $self = shift;
     my $gene = shift;
-    my $counter = shift;
 
     # Gene Member
     my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
@@ -95,7 +81,6 @@ sub fetch_or_store_gene {
         $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
         $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
         print "NEW: $gene_member "; $gene_member->print_member();
-        ${$counter} ++;
     }
 
     # Transcript Member
@@ -112,7 +97,7 @@ sub fetch_or_store_gene {
                 );
         $trans_member->gene_member_id($gene_member->dbID);
         $self->param('seq_member_adaptor')->store($trans_member) unless $self->param('dry_run');
-        $self->param('seq_member_adaptor')->_set_member_as_canonical($trans_member);
+        $self->param('seq_member_adaptor')->_set_member_as_canonical($trans_member) unless $self->param('dry_run');
         print "NEW: $trans_member "; $trans_member->print_member();
     }
 
@@ -134,81 +119,31 @@ sub keep_homology_in_mind {
 sub run {
     my $self = shift @_;
 
-my $count_orig_gene = 0;
-my $count_proj_gene = 0;
-my $transcript_count = 0;
+    my $core_sa = $self->param('species_dba')->get_SliceAdaptor;
+    my $core_ga = $self->param('species_dba')->get_GeneAdaptor;
 
-$self->param('missing_genes', []);
-
-#get adaptors
-my $core_ga = $self->param('species_dba')->get_GeneAdaptor;
-my $core_ta = $self->param('species_dba')->get_TranscriptAdaptor;
-
-#work out the relationships
-foreach my $proj_gene (@{$self->param('projected_genes')}){
-    #print 'Projected gene '.$proj_gene->stable_id()."\n";
-
-    my @proj_transcripts = @{$proj_gene->get_all_Transcripts()};
-    #print scalar(@proj_transcripts)." transcripts\n";
-    $transcript_count = $transcript_count + scalar(@proj_transcripts); 
-    my $patch_type = '';
-
-    #check patch type
-    foreach my $slice_attrib (@{$proj_gene->slice->get_all_Attributes()}){
-        if($slice_attrib->name() =~ m/Assembly Patch/){
-            $patch_type = $slice_attrib->name();
-            #print $patch_type."\n";
-        }
-    }
-
-TRANSCRIPT:
-    foreach my $proj_transcript (@proj_transcripts){
-        #print 'Projected transcript '.$proj_transcript->stable_id()."\n";
-        #check if cdna/transcript seq altered in projection
-        my $alt_seq = 'cdna/transcript seq unchanged';
-        foreach my $t_attrib (@{$proj_transcript->get_all_Attributes}){
-            if($t_attrib->name =~ m/Projection altered sequence/){
-                $alt_seq = 'cdna/transcript seq altered in projection';
-            }
-        }
-
-        my $orig_transcript_id = '';
-        my @supp_feat_pairs = @{$proj_transcript->get_all_supporting_features()};
-        foreach my $feat_pair (@supp_feat_pairs){
-            if($feat_pair->db_display_name =~ m/^Ensembl .* Transcript$/){
-                $orig_transcript_id = $feat_pair->hseqname;
-                #print $proj_transcript->stable_id().' '.$feat_pair->hseqname."\n";
-
-                my $orig_gene = $core_ga->fetch_by_transcript_stable_id($orig_transcript_id);
-                my $orig_transcript = $core_ta->fetch_by_stable_id($orig_transcript_id);
-
-                if (not defined $orig_gene or not defined $orig_transcript) {
-                    warn "\$core_ga->fetch_by_transcript_stable_id($orig_transcript_id) returned undef" unless $orig_gene;
-                    warn "\$core_ta->fetch_by_stable_id($orig_transcript_id) returned undef" unless $orig_transcript;
-                    push @{$self->param('missing_genes')}, $orig_transcript_id;
-                    next TRANSCRIPT;
-                }
+    foreach my $slice (@{$core_sa->fetch_all('toplevel')}) {
+        next unless $slice->is_reference;
+        foreach my $orig_gene (@{$slice->get_all_Genes}) {
+            my $group = $self->param('species_dba')->get_AltAlleleGroupAdaptor->fetch_by_gene_id($orig_gene->dbID) || next;
+            print "Gene ".$orig_gene->stable_id." dbID ".$orig_gene->dbID." found in alt allele group ".$group->dbID."\n";
+            foreach my $proj_gene (@{$group->get_all_Genes}) {
+                next if $proj_gene->dbID == $orig_gene->dbID;
 
                 # Create the original gene member if necessary
-                my $orig_gene_member = $self->fetch_or_store_gene($orig_gene, \$count_orig_gene);
+                my $orig_gene_member = $self->fetch_or_store_gene($orig_gene);
                 # Create the patch gene member if necessary
-                my $proj_gene_member = $self->fetch_or_store_gene($proj_gene, \$count_proj_gene);
+                my $proj_gene_member = $self->fetch_or_store_gene($proj_gene);
 
                 # Keep in a hash the homology
                 $self->keep_homology_in_mind($orig_gene, $proj_gene);
-                print $proj_gene->stable_id.' '.$orig_gene->stable_id.' '.$patch_type.' '.$alt_seq."\n";
 
-                next TRANSCRIPT;
+                print "Alt slice... gene ".$orig_gene->stable_id." (".$orig_gene->slice->seq_region_name.")in same allele group as ".$proj_gene->stable_id." (".$proj_gene->slice->seq_region_name.")\n";
             }
         }
     }
 }
 
-print "total transcripts fetched: $transcript_count\n";
-print "$count_orig_gene ref genes\n";
-print "$count_proj_gene projected genes\n";
-
-}
 
 sub store_homology {
     my $self          = shift;
@@ -232,11 +167,6 @@ sub store_homology {
 
 sub write_output {
     my $self = shift @_;
-
-    my $missing_genes = join("\n", @{$self->param('missing_genes')});
-    if ($missing_genes) {
-        die "!! Some genes are referenced to, but are not present in the core gene set !!\n$missing_genes";
-    }
 
     my %stored_homologies = %{$self->param('stored_homologies')};
 

@@ -24,14 +24,9 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'host'            => 'compara3',    # where the pipeline database will be created
-        'release'         => '73',          # current ensembl release number
-        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
 
-        'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
+        'rel_with_suffix' => $self->o('ensembl_release'),
         'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
-
-        # GenomeDB names of the species with patches
-        'patch_species'   => ['homo_sapiens', 'mus_musculus'],
 
         # URLs of other databases (from which we inherit the members and sequences, and base objects)
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
@@ -118,35 +113,26 @@ sub pipeline_analyses {
                     'ALTER TABLE homology       AUTO_INCREMENT=300000001',
                 ],
             },
-            -flow_into => [ 'species_factory', 'member_display_labels_factory' ],
-        },
-
-        {   -logic_name => 'species_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'         => $self->o('patch_species'),
-                'column_names'      => ['species'],
-            },
-            -flow_into => {
-                2 => [ 'import_projections_as_homologies' ],
-            },
-        },
-
-        {   -logic_name => 'import_projections_as_homologies',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportPatchProjectionsAsHomologies',
-            -rc_name    => 'patch_import',
+            -flow_into => [ 'species_factory' ],
         },
 
         {
-            -logic_name => 'member_display_labels_factory',
+            -logic_name => 'species_factory',
             -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'    => 'SELECT genome_db_id FROM genome_db',
             },
             -flow_into => {
-                2 => { 'update_member_display_labels' => { genome_db_ids => ['#genome_db_id#'] } },
+                2 => [ 'import_projections_as_homologies' ],
             },
             -meadow_type    => 'LOCAL',
+        },
+
+
+        {   -logic_name => 'import_projections_as_homologies',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportPatchProjectionsAsHomologies',
+            -rc_name    => 'patch_import',
+            -flow_into  => [ 'update_member_display_labels' ],
         },
 
         {
@@ -155,6 +141,7 @@ sub pipeline_analyses {
             -parameters => {
                 'die_if_no_core_adaptor'  => 1,
                 'replace'                 => 1,
+                'genome_db_ids'           => [ '#genome_db_id#' ],
             },
             -flow_into => [ 'update_member_descriptions' ],
             -rc_name => '500Mb_job',
@@ -167,6 +154,7 @@ sub pipeline_analyses {
                 'die_if_no_core_adaptor'  => 1,
                 'replace'                 => 1,
                 'mode'                    => 'description',
+                'genome_db_ids'           => [ '#genome_db_id#' ],
             },
             -rc_name => '500Mb_job',
         },
