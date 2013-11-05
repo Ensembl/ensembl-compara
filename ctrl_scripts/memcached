@@ -19,7 +19,7 @@ BEGIN {
   die "Can't use SiteDefs.pm - $@\n" if $@;
   
   require LoadPlugins;
-  LoadPlugins::plugin(sub { /^Cache\.pm$/; });
+  LoadPlugins->import;
   
   eval { require EnsEMBL::Web::Cache; };
   
