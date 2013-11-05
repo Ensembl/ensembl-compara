@@ -15,38 +15,39 @@
 
 CREATE TEMPORARY TABLE tmp_ngenes
 	SELECT
-		taxon_id,
+		genome_db_id,
 		SUM(source_name='ENSEMBLGENE') AS nb_genes,
 		SUM(source_name='ENSEMBLPEP') AS nb_pep
 	FROM
 		member
 	GROUP BY
-		taxon_id
+		genome_db_id
 	WITH ROLLUP;
-ALTER TABLE tmp_ngenes ADD KEY(taxon_id);
+ALTER TABLE tmp_ngenes ADD KEY(genome_db_id);
 OPTIMIZE TABLE tmp_ngenes;
 
 CREATE TEMPORARY TABLE tmp_ntrees
 	SELECT
-		member.taxon_id,
-		SUM(gene_tree_node_attr.taxon_id = member.taxon_id) AS nb_pep_spectree,
-		SUM(gene_tree_node_attr.taxon_id IS NOT NULL AND gene_tree_node_attr.taxon_id != member.taxon_id) AS nb_pep_anctree
+		member.genome_db_id,
+		COUNT(species_tree_node.genome_db_id) AS nb_pep_spectree,
+		SUM(species_tree_node.genome_db_id IS NULL) AS nb_pep_anctree
 	FROM
 		member
 		JOIN gene_tree_node USING (member_id)
 		JOIN gene_tree_root USING (root_id)
 		JOIN gene_tree_node_attr ON (gene_tree_node.root_id = gene_tree_node_attr.node_id)
+		JOIN species_tree_node ON (species_tree_node.node_id = gene_tree_node_attr.species_tree_node_id)
 	WHERE
 		clusterset_id = 'default'
 	GROUP BY
-		member.taxon_id
+		member.genome_db_id
 	WITH ROLLUP;
-ALTER TABLE tmp_ntrees ADD KEY(taxon_id);
+ALTER TABLE tmp_ntrees ADD KEY(genome_db_id);
 OPTIMIZE TABLE tmp_ntrees;
 
 SELECT
-	IF(taxon_id, taxon_id, "") AS taxon_id,
-	IF(taxon_id, ncbi_taxa_name.name, "Total") AS taxon_name,
+	IFNULL(genome_db_id, "") AS genome_db_id,
+	IFNULL(node_name, "Total") AS node_name,
 	nb_pep,
 	nb_genes AS nb_canon_pep,
 	nb_pep_spectree,
@@ -58,12 +59,8 @@ SELECT
 
 FROM
 	tmp_ngenes
-	JOIN tmp_ntrees USING (taxon_id)
-	LEFT JOIN ncbi_taxa_name USING (taxon_id)
-	LEFT JOIN ncbi_taxa_node USING (taxon_id)
-WHERE
-	name_class IS NULL
-	OR name_class = "scientific name"
+	JOIN tmp_ntrees USING (genome_db_id)
+	LEFT JOIN species_tree_node USING (genome_db_id)
 ORDER BY
 	IF(left_index, left_index, 1e7);
 
@@ -78,10 +75,9 @@ ORDER BY
 CREATE TEMPORARY TABLE tmp_root_properties
 	SELECT
 		gene_tree_node_attr.node_id,
-		gene_tree_node_attr.taxon_id,
-		gene_tree_node_attr.taxon_name,
+		gene_tree_node_attr.species_tree_node_id,
 		COUNT(member_id) AS nb_pep,
-		COUNT(DISTINCT member.taxon_id) AS nb_spec
+		COUNT(DISTINCT member.genome_db_id) AS nb_spec
 	FROM
 		member
 		JOIN gene_tree_node USING (member_id)
@@ -91,14 +87,13 @@ CREATE TEMPORARY TABLE tmp_root_properties
 		clusterset_id = 'default'
 	GROUP BY
 		gene_tree_node_attr.node_id;
-ALTER TABLE tmp_root_properties ADD KEY (taxon_id);
+ALTER TABLE tmp_root_properties ADD KEY (species_tree_node_id);
 OPTIMIZE TABLE tmp_root_properties;
 
 CREATE TEMPORARY TABLE tmp_root_properties_sum
 	SELECT
 		node_id,
-		NULL AS taxon_id,
-		NULL AS taxon_name,
+		NULL AS species_tree_node_id,
 		nb_pep,
 		nb_spec
 	FROM
@@ -106,8 +101,8 @@ CREATE TEMPORARY TABLE tmp_root_properties_sum
 
 
 SELECT
-	IF(taxon_id, taxon_id, "") AS taxon_id,
-	IF(taxon_id, taxon_name, "Total") AS taxon_name,
+	IF(species_tree_node_id IS NULL, "", taxon_id) AS taxon_id,
+	IFNULL(node_name, "Total") AS node_name,
 	COUNT(*) AS nb_trees,
 	SUM(nb_pep) AS tot_nb_pep,
 	ROUND(AVG(nb_pep),2) AS avg_nb_pep,
@@ -121,9 +116,9 @@ FROM
 		UNION ALL
 		SELECT * FROM tmp_root_properties_sum
 	) tt
-	LEFT JOIN ncbi_taxa_node USING (taxon_id)
+	LEFT JOIN species_tree_node ON species_tree_node.node_id = species_tree_node_id
 GROUP BY
-	taxon_id
+	species_tree_node_id
 ORDER BY
 	IF(left_index, left_index, 1e7)
 ;
@@ -137,37 +132,37 @@ ORDER BY
 */
 
 CREATE TEMPORARY TABLE tmp_taxa
-	(taxon_id INT NOT NULL PRIMARY KEY, taxon_name VARCHAR(255))
 	SELECT
-		DISTINCT taxon_id, taxon_name
+		node_id AS species_tree_node_id, node_name
 	FROM
-		gene_tree_node_attr
+		species_tree_node
 	UNION ALL
-		SELECT 1e7+1, "Total (ancestral species)"
+		SELECT 1e9+1, "Total (ancestral species)"
 	UNION ALL
-		SELECT 1e7+2, "Total (extant species)"
+		SELECT 1e9+2, "Total (extant species)"
 	UNION ALL
-		SELECT 1e7+3, "Total";
+		SELECT 1e9+3, "Total";
 OPTIMIZE TABLE tmp_taxa;
 
 
 CREATE TEMPORARY TABLE tmp_stats
 	SELECT
-		taxon_id, taxon_name AS ref_taxon_name, node_type, duplication_confidence_score, bootstrap
+		species_tree_node_id, taxon_id, species_tree_node.left_index, genome_db_id, node_type, duplication_confidence_score, bootstrap
 	FROM
 		gene_tree_node_attr
 		JOIN gene_tree_node USING (node_id)
 		JOIN gene_tree_root USING (root_id)
+		JOIN species_tree_node ON species_tree_node.node_id = gene_tree_node_attr.species_tree_node_id
 	WHERE
 		tree_type = 'tree'
 		AND clusterset_id = 'default';
-ALTER TABLE tmp_stats ADD KEY (taxon_id);
+ALTER TABLE tmp_stats ADD KEY (species_tree_node_id);
 OPTIMIZE TABLE tmp_stats;
 
 
 SELECT
-	IF(sort_taxon_id<1e7, sort_taxon_id, '') AS sort_taxon_id,
-	taxon_name,
+	taxon_id,
+	node_name,
 	COUNT(*) AS nb_nodes,
 	SUM(node_type="speciation") AS nb_spec_nodes,
 	SUM(node_type="duplication") AS nb_dup_nodes,
@@ -176,26 +171,17 @@ SELECT
 	ROUND(AVG(duplication_confidence_score),2) AS avg_dupscore,
 	ROUND(AVG(IF(node_type="duplication",duplication_confidence_score,NULL)),2) AS avg_dupscore_nondub
 FROM
-	(
-		SELECT
-			tmp_taxa.taxon_id AS sort_taxon_id,
-			tmp_taxa.taxon_name,
-			tmp_stats.*
-		FROM
-			tmp_taxa
-			JOIN tmp_stats ON (
-				tmp_taxa.taxon_id = tmp_stats.taxon_id
-				OR (tmp_taxa.taxon_id = 1e7+1 AND ref_taxon_name NOT LIKE "% %")
-				OR (tmp_taxa.taxon_id = 1e7+2 AND ref_taxon_name LIKE "% %")
-				OR (tmp_taxa.taxon_id = 1e7+3)
-			)
-
-	) tt
-	LEFT JOIN ncbi_taxa_node ON tt.sort_taxon_id = ncbi_taxa_node.taxon_id
+	tmp_taxa
+	JOIN tmp_stats ON (
+		tmp_taxa.species_tree_node_id = tmp_stats.species_tree_node_id
+		OR (tmp_taxa.species_tree_node_id = 1e9+1 AND genome_db_id IS NULL)
+		OR (tmp_taxa.species_tree_node_id = 1e9+2 AND genome_db_id IS NOT NULL)
+		OR (tmp_taxa.species_tree_node_id = 1e9+3)
+	)
 GROUP BY
-	tt.sort_taxon_id
+	tmp_taxa.species_tree_node_id
 ORDER BY
-	IF(left_index, left_index, tt.sort_taxon_id)
+	IF(tmp_taxa.species_tree_node_id > 1e9, tmp_taxa.species_tree_node_id, left_index)
 ;
 
 
