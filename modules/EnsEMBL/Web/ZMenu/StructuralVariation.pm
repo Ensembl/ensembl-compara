@@ -10,6 +10,7 @@ sub content {
   my $self       = shift;
   my $hub        = $self->hub;
   my $svf        = $hub->param('svf');
+  my $db         = $hub->param('vdb');
   my $click_data = $self->click_data;
   my @features;
   
@@ -17,18 +18,14 @@ sub content {
     @features = @{Bio::EnsEMBL::GlyphSet::structural_variation->new($click_data)->features};
     @features = () if $svf && !(grep $_->dbID eq $svf, @features);
   }
-  ## Check which variation db this track is using
-  my $image_config = $hub->get_imageconfig($hub->param('config'));
-  my $node         = $image_config ? $image_config->get_node($hub->param('track')) : undef;
-  my $db           = $node->{'data'}{'db'} || 'variation';
   
   @features = $hub->database($db)->get_StructuralVariationFeatureAdaptor->fetch_by_dbID($svf) if $svf && !scalar @features;
   
-  $self->feature_content($_, $db) for @features;
+  $self->feature_content($_) for @features;
 }
 
 sub feature_content {
-  my ($self, $feature, $db) = @_;
+  my ($self, $feature) = @_;
   my $hub         = $self->hub;
   my $variation   = $feature->structural_variation;
   my $sv_id       = $feature->variation_name;
@@ -38,7 +35,7 @@ sub feature_content {
   my $class       = $variation->var_class;
   my $vstatus     = $variation->get_all_validation_states;
   my $study       = $variation->study;
-  my $ssvs        = $variation->get_all_SupportingStructuralVariants;
+  my $ssvs        = $variation->isa('Bio::EnsEMBL::Variation::SupportingStructuralVariation') ? [ $variation ] : $variation->get_all_SupportingStructuralVariants;
   my $description = $variation->source_description;
   my $position    = $start;
   my $length      = $end - $start;
@@ -104,7 +101,7 @@ sub feature_content {
   if ($is_breakpoint) {
     $self->add_entry({
       type       => 'Location',
-      label_html => $self->get_locations($sv_id, $db),
+      label_html => $self->get_locations($sv_id),
     });
 	} else {
     $self->add_entry({
