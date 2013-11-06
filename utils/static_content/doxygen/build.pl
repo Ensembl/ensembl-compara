@@ -62,7 +62,7 @@ if ($apis[0] ne 'edocs') {
   );
 
   my %config_template = (
-    PROJECT_NUMBER    => $SiteDefs::VERSION,
+    PROJECT_NUMBER    => $SiteDefs::ENSEMBL_VERSION,
     PROJECT_NAME      => '"Ensembl %s"',
     PROJECT_BRIEF     => '"EnsEMBL %s API reference"',
     OUTPUT_DIRECTORY  => "$html/%s-api",
