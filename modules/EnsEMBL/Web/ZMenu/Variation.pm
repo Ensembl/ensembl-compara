@@ -12,6 +12,7 @@ sub content {
   my $self       = shift;
   my $hub        = $self->hub;
   my $vf         = $hub->param('vf');
+  my $db         = $hub->param('vdb');
   my $click_data = $self->click_data;
   my $i          = 0;
   my @features;
@@ -20,9 +21,9 @@ sub content {
     @features = @{Bio::EnsEMBL::GlyphSet::_variation->new($click_data)->features};
     @features = () unless grep $_->dbID eq $vf, @features;
   } elsif (!$vf) {
-    my $adaptor         = $hub->database('variation')->get_VariationAdaptor;
-    my @variation_names = split /,/, $hub->param('v');
-    my @regions         = split /,/, $hub->param('regions');
+    my $adaptor         = $hub->database($db)->get_VariationAdaptor;
+    my @variation_names = split ',', $hub->param('v');
+    my @regions         = split ',', $hub->param('regions');
     
     for (0..$#variation_names) {
       my ($chr, $start, $end) = split /\W/, $regions[$_];
@@ -30,15 +31,15 @@ sub content {
     }
   }
   
-  @features = $hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) unless scalar @features;
+  @features = $hub->database($db)->get_VariationFeatureAdaptor->fetch_by_dbID($vf) unless scalar @features;
   
   $self->{'feature_count'} = scalar @features;
   
-  $self->feature_content($_, $i++) for @features;
+  $self->feature_content($_, $db, $i++) for @features;
 }
 
 sub feature_content {
-  my ($self, $feature, $i) = @_;
+  my ($self, $feature, $db, $i) = @_;
   my $hub           = $self->hub;
   my $snp_fake      = $hub->param('snp_fake');
   my $var_box       = $hub->param('var_box');
@@ -180,7 +181,7 @@ sub feature_content {
     }
   }
   
-  if (scalar @{$hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_VariationFeature_list([ $feature ]) || []}) {
+  if (scalar @{$hub->database($db)->get_PhenotypeFeatureAdaptor->fetch_all_by_VariationFeature_list([ $feature ]) || []}) {
     $self->add_entry({
       label_html => 'Phenotype data',
       link       => $hub->url({
