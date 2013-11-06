@@ -12,13 +12,13 @@
         # compute and store the mapping between TreeFam v.7 and ProteinTrees of rel.64:
 
     time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper \
-        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -release 64 -tf_release 7 -tag_prefix ''
+        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -tf_release 7 -tag_prefix ''
 
 
         # compute and store the mapping between TreeFam v.8 and ProteinTrees of rel.64:
 
     time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper \
-        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -release 64 -tf_release 8 -tag_prefix 'dev_'
+        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -tf_release 8 -tag_prefix 'dev_'
 
 =cut
 
@@ -46,7 +46,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $release    = $self->param_required('release');
+    my $release    = $self->compara_dba->get_MetaContainer->get_schema_version;
     my $tf_release = $self->param_required('tf_release');
 
     $self->param_required('tag_prefix');

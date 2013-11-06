@@ -1287,7 +1287,6 @@ sub pipeline_analyses {
             -parameters => {
                 'master_db'     => $self->o('master_db'),
                 'prev_rel_db'   => $self->o('prev_rel_db'),
-                'release'       => $self->o('ensembl_release'),
                 'type'          => 't',
             },
             -rc_name => '1Gb_job',
@@ -1296,7 +1295,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'treefam_xref_idmap',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper',
             -parameters    => {
-                'release'     => $self->o('ensembl_release'),
                 'tf_release'  => $self->o('tf_release'),
                 'tag_prefix'  => '',
             },

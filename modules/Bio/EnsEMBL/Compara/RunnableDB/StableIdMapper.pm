@@ -13,7 +13,7 @@
     time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper \
         -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" \
         -master_db "mysql://ensadmin:${ENSADMIN_PSW}@compara1/sf5_ensembl_compara_master" \
-        -prev_rel_db "mysql://ensro@compara1/lg4_ensembl_compara_63" -release 64 -type t
+        -prev_rel_db "mysql://ensro@compara1/lg4_ensembl_compara_63" -type t
 
 =cut
 
@@ -54,8 +54,7 @@ sub fetch_input {
 
   $self->param('master_db')                       || die "'master_db' is a required parameter";
   my $type         = $self->param('type')         || die "'type' is a required parameter, please set it in the input_id hashref to 'f' or 't'";
-  my $curr_release = $self->param('release')      || die "'release' is a required numeric parameter, please set it in the input_id hashref";
-  looks_like_number($curr_release)                || die "'release' is a numeric parameter. Check your input";
+  my $curr_release = $self->compara_dba->get_MetaContainer->get_schema_version;
   my $prev_rel_dba = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db);
   my $prev_release = $prev_rel_dba->get_MetaContainer->get_schema_version;
 
@@ -78,7 +77,6 @@ sub run {
   return if ! $self->param('prev_rel_db'); #bail out early
 
   my $type         = $self->param('type');
-  my $curr_release = $self->param('release');
 
   my $ncsl = $self->param('ncsl');
   my $postmap = $ncsl->maximum_name_reuse();
