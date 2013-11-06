@@ -1364,7 +1364,7 @@ sub render_sift_polyphen {
   
   return qq{
     <span class="hidden">$rank</span><span class="hidden export">$pred(</span>
-    <div align="center"><div title="$pred" class="score score_$classes{$pred}">$rank_str</div></div>
+    <div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div>
     <span class="hidden export">)</span>
   };
 }
