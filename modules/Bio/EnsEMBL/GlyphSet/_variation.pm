@@ -167,6 +167,7 @@ sub href {
     type     => 'Variation',
     v        => $f->variation_name,
     vf       => $f->dbID,
+    vdb      => $self->my_config('db'),
     snp_fake => 1,
     config   => $self->{'config'}{'type'},
     track    => $self->type
