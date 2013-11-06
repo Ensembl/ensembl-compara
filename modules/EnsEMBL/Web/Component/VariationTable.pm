@@ -208,8 +208,31 @@ sub stats_table {
     %counts       = %{$gene_object->__data->{'conscounts'}};
     $total_counts = $counts{'ALL'};
   }
+  my $species_name = $hub->species;
+  my ($species_name_first, $species_name_second) = split('_', $species_name);
+  my $first_letter = lc substr($species_name_first, 0, 1);
+  my $mart_species_name = $first_letter . $species_name_second; 
+  my $mart_url = 'http://www.ensembl.org/biomart/martview/?VIRTUALSCHEMANAME=default';
+  my @mart_attribute_values = ("$mart_species_name\_snp.default.snp.refsnp_id|",
+                            "$mart_species_name\_snp.default.snp.refsnp_source|",
+                            "$mart_species_name\_snp.default.snp.chr_name|",
+                            "$mart_species_name\_snp.default.snp.chrom_start|",
+                            "$mart_species_name\_snp.default.snp.validated|",
+                            "$mart_species_name\_snp.default.snp.consequence_type_tv|",
+                            "$mart_species_name\_snp.default.snp.consequence_allele_string|",
+                            "$mart_species_name\_snp.default.snp.ensembl_peptide_allele|",
+                            "$mart_species_name\_snp.default.snp.translation_start|",
+                            "$mart_species_name\_snp.default.snp.translation_end|",
+                            "$mart_species_name\_snp.default.snp.sift_prediction|");
+  if ($species_name eq 'Homo_sapiens') {
+    push @mart_attribute_values, ("$mart_species_name\_snp.default.snp.minor_allele_freq|", "$mart_species_name\_snp.default.snp.polyphen_prediction|");
+  }
+  my $mart_attributes =  '&ATTRIBUTES=' . join('', @mart_attribute_values); 
+  my $mart_gene_filter = "&FILTERS=$mart_species_name\_snp.default.filters.ensembl_gene.&quot;###GENE_ID###&quot;";
+  my $mart_con_type_filter = "|$mart_species_name\_snp.default.filters.so_parent_name.&quot;###SO_TERM###&quot;";
+  my $mart_result_panel = '&VISIBLEPANEL=resultspanel';
+  my $warning_text = '';
   
-  my $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>};
   my @rows;
   
   foreach my $con (keys %descriptions) {
@@ -217,8 +240,20 @@ sub stats_table {
     
     if ($counts{$con}) {
       my $count = $counts{$con};
-      my $warning = $count > 5000 ? $warning_text : '';
-      
+      if ($count > 5000) {
+        # Biomart link
+        my $gene_id = $gene_object->stable_id;
+        if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
+          $mart_gene_filter =~ s/###GENE_ID###/$gene_id/;
+		  $mart_con_type_filter =~ s/###SO_TERM###/$con/;
+          my $mart_variation_table_url = join('', $mart_url, $mart_attributes, $mart_gene_filter, $mart_con_type_filter, $mart_result_panel);
+          $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!) <a href="$mart_variation_table_url">View list in BioMart</a></span>};
+		  $mart_con_type_filter =~ s/$con/###SO_TERM###/;
+        }
+      }
+
+      my $warning = $count > 5000 ? "$warning_text" : '';
+     
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
         desc  => "$descriptions{$con} $warning",
@@ -238,9 +273,19 @@ sub stats_table {
   }
   
   # add the row for ALL variations if there are any
+  $warning_text = '';
   if ($total_counts) {
     my $hidden_span = '<span class="hidden">-</span>'; # create a hidden span to add so that ALL is always last in the table
-    my $warning     = $total_counts > 5000 ? $warning_text : '';
+    if ($total_counts > 5000) {
+      # Biomart link
+      my $gene_id = $gene_object->stable_id;
+      if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
+        $mart_gene_filter =~ s/###GENE_ID###/$gene_id/;
+        my $mart_variation_table_url = join('', $mart_url, $mart_attributes, $mart_gene_filter, $mart_result_panel);
+        $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!) <a href="$mart_variation_table_url">View list in BioMart</a></span>};
+      }
+    }
+    my $warning = $total_counts > 5000 ? $warning_text : '';
     
     push @rows, {
       type  => $hidden_span . 'ALL',
