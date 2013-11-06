@@ -17,9 +17,6 @@ supported keys:
     'genome_db_id'  => <number>
         the id of the genome to be checked (main input_id parameter)
         
-    'release'       => <number>
-        number of the current release
-
     'registry_dbs'  => <list_of_dbconn_hashes>
         list of hashes with registry connection parameters (tried in succession).
 
@@ -72,8 +69,6 @@ sub fetch_input {
             }
         }
     }
-
-    my $curr_release = $self->param('release');
 
     if(my $reuse_db = $self->param('reuse_db')) {
 

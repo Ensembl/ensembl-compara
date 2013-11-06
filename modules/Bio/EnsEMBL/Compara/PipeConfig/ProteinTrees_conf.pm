@@ -485,7 +485,6 @@ sub pipeline_analyses {
             -parameters => {
                 'reuse_db'          => $self->o('prev_rel_db'),
                 'registry_dbs'      => $self->o('prev_core_sources_locs'),
-                'release'           => $self->o('ensembl_release'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,
