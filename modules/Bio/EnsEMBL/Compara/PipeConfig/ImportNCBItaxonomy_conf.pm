@@ -69,7 +69,7 @@ sub pipeline_create_commands {
 
             # additional tables that we use here (taken from ensembl-compara schema):
 
-        $self->db_execute_command('pipeline_db', qq{
+        $self->db_cmd(qq{
             CREATE TABLE ncbi_taxa_node (
               taxon_id                        INT(10) UNSIGNED NOT NULL,
               parent_id                       INT(10) UNSIGNED NOT NULL,
@@ -89,7 +89,7 @@ sub pipeline_create_commands {
             )
         }),
 
-        $self->db_execute_command('pipeline_db', qq{
+        $self->db_cmd(qq{
             CREATE TABLE ncbi_taxa_name (
               taxon_id                    INT(10) UNSIGNED NOT NULL,
 

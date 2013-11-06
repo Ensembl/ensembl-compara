@@ -71,7 +71,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},                                                              # inherit database and Hive tables' creation
 
-        $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl/sql/table.sql',     # add Core tables
+        $self->db_cmd().' <'.$self->o('ensembl_cvs_root_dir').'/ensembl/sql/table.sql',     # add Core tables
     ];
 }
 
