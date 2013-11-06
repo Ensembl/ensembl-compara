@@ -12,26 +12,17 @@ ALTER TABLE homology
   ADD COLUMN new_description ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog', 'gene_split','between_species_paralog','alt_allele') AFTER description,
   ADD COLUMN is_tree_compliant tinyint(1) NOT NULL DEFAULT 0 AFTER new_description;
 
-
 UPDATE homology JOIN gene_tree_node_attr ON ancestor_node_id = node_id
-  SET new_description = description, is_tree_compliant = IF (node_type = "dubious", 0, 1)
-  WHERE description IN ('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog');
-
-UPDATE homology
-  SET new_description = "ortholog_one2one"
-  WHERE description = "apparent_ortholog_one2one";
-
-UPDATE homology
-  SET new_description = "gene_split", is_tree_compliant = 1
-  WHERE description = "contiguous_gene_split";
-
-UPDATE homology
-  SET new_description = "gene_split"
-  WHERE description = "putative_gene_split";
-
-UPDATE homology
-  SET new_description = 'alt_allele'
-  WHERE description IN ('projection_unchanged','projection_altered');
+  SET new_description = CASE
+    WHEN description IN ('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog') THEN description
+    WHEN description = "apparent_ortholog_one2one" THEN "ortholog_one2one"
+    WHEN description IN ("contiguous_gene_split", "putative_gene_split") THEN "gene_split"
+    WHEN description IN ('projection_unchanged','projection_altered') THEN "alt_allele",
+  SET is_tree_compliant = CASE
+    WHEN description IN ('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog') AND node_type != "dubious" THEN 1
+    WHEN description = "contiguous_gene_split" THEN 1
+    ELSE 0
+;
 
 DELETE FROM homology
   WHERE description = "possible_ortholog";
