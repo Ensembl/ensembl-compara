@@ -75,6 +75,7 @@ sub make_table {
     { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => 'Evidence codes reflect the data supporting
                                                                                                                        the variant.  They are: Multiple Observations,
                                                                                                                        Frequency, HapMap, 1000 Genomes, and Cited.'   },
+    { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                         },
     { key => 'snptype',  width => '12u', sort => 'string',          label => 'Type',                          help => 'Consequence type'                              }, 
     { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                       },
     { key => 'aacoord',  width => '6u',  sort => 'position',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                        }
@@ -439,6 +440,7 @@ sub variation_table {
         if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
           #my $var                  = $snp->variation;
           my $evidence             = $snp->get_all_evidence_values || [];
+          my $clin_sig             = $snp->get_all_clinical_significance_states || [];
           my $variation_name       = $snp->variation_name;
           my $var_class            = $snp->var_class;
           my $translation_start    = $transcript_variation->translation_start;
@@ -485,6 +487,15 @@ sub variation_table {
             } @$evidence
           );
           
+          $clin_sig = join("",
+            map {
+              sprintf(
+                '<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                $_, $_, $_
+              )
+            } @$clin_sig
+          );
+          
           push @rows, {
             ID         => qq{<a href="$url">$variation_name</a>},
             class      => $var_class,
@@ -492,6 +503,7 @@ sub variation_table {
             Ambiguity  => $snp->ambig_code,
             gmaf       => $gmaf   || '-',
             status     => $status || '-',
+            clinsig    => $clin_sig || '-',
             chr        => "<span class=\"hidden\">$chr:".($start > $end ? $end : $start)."</span>$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
             Source     => $source,
             Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
