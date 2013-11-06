@@ -5,7 +5,7 @@ package EnsEMBL::Web::Component::Gene::GenePhenotype;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
-
+use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -399,6 +399,43 @@ sub gene_phenotypes {
     # OMIA needs tax ID
     my $tax = $hub->species_defs->TAXONOMY_ID;
     if ($species eq 'Mouse') {
+      my $features;
+      foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
+        my $phen   = $pf->phenotype->description;
+        my $ext_id = $pf->external_id;
+        my $source = $pf->source;
+        my $strain = $pf->strain;
+        my $strain_name = encode_entities($strain->name);
+        my $strain_gender = $strain->gender;
+        my $allele_symbol = encode_entities($pf->allele_symbol);
+        if ($ext_id && $source) {
+          $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
+        }
+        my $locs = sprintf(
+            '<a href="%s">View on Karyotype</a>',
+            $hub->url({
+              type    => 'Phenotype',
+              action  => 'Locations',
+              ph      => $pf->phenotype->dbID
+             })
+        );
+        # display one row for phenotype associated with male and female strain
+        my $pf_id = $pf->id;
+        my $key = join("\t", ($phen, $strain_name, $allele_symbol));
+        $features->{$key}->{source} = $source;
+        push @{$features->{$key}->{gender}}, $strain_gender;
+        $features->{$key}->{locations} = $locs;
+      }
+      foreach my $key (sort keys %$features) {
+        my ($phenotype, $strain_name, $allele_symbol) = split("\t", $key);
+        push @rows, {
+          source => $features->{$key}->{source},
+          phenotype => $phenotype,
+          allele => $allele_symbol,
+          strain => $strain_name .  " (" . join(', ', sort @{$features->{$key}->{gender}}) . ")",
+          locations =>  $features->{$key}->{locations},
+        };
+      }
     } else {    
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phen   = $pf->phenotype->description;
@@ -424,16 +461,16 @@ sub gene_phenotypes {
   }
   if ($species eq 'Mouse') {
 	return $html . $self->new_table([
-      { key => 'source',    align => 'left', title => 'Source'        },
-      { key => 'phenotype', align => 'left', title => 'Phenotype'     },
-      { key => 'strain', align => 'left', title => 'Strain'     },
-      { key => 'allele', align => 'left', title => 'Allele'     },
-      { key => 'locations', align => 'left', title => 'Locations'     },
+      { key => 'phenotype', align => 'left', title => 'Phenotype' },
+      { key => 'source',    align => 'left', title => 'Source'    },
+      { key => 'strain',    align => 'left', title => 'Strain'    },
+      { key => 'allele',    align => 'left', title => 'Allele'    },
+      { key => 'locations', align => 'left', title => 'Locations' },
     ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
   } else {  
       return $html . $self->new_table([ 
-      { key => 'source',    align => 'left', title => 'Source'        },
       { key => 'phenotype', align => 'left', title => 'Phenotype'     },
+      { key => 'source',    align => 'left', title => 'Source'        },
       { key => 'locations', align => 'left', title => 'Locations'     },
     ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
   }
