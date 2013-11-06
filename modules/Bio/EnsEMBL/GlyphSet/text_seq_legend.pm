@@ -77,7 +77,7 @@ sub _init {
       }));
     }
     
-    foreach (sort { $legend{$type}{$a}{'text'} cmp $legend{$type}{$b}{'text'} } keys %{$legend{$type}}) {
+    foreach (sort { $legend{$type}{$a}{'order'} <=> $legend{$type}{$b}{'order'} || $legend{$type}{$a}{'text'} cmp $legend{$type}{$b}{'text'} } keys %{$legend{$type}}) {
       my ($legend, $bg_colour, $colour) = ($legend{$type}{$_}{'text'}, $legend{$type}{$_}{'default'}, $legend{$type}{$_}{'label'});
       my $pos_x = (($box_width + 20) * $x) + $label_width;
       my $pos_y = $y * ($th + 7) + 2;
