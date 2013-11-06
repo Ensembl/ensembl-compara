@@ -399,33 +399,6 @@ sub gene_phenotypes {
     # OMIA needs tax ID
     my $tax = $hub->species_defs->TAXONOMY_ID;
     if ($species eq 'Mouse') {
-      my $unique_desc_source_pairs;
-      my $pfs;
-      foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
-        my $desc = $pf->phenotype->description;
-        my $source = $pf->source;
-        my $marker_accession_id = $pf->marker_accession_id;
-        my $strain = $pf->strain;
-        my $strain_name = $strain->name;
-        my $strain_gender = $strain->gender;
-        my $allele_symbol = $pf->allele_symbol;
-        $unique_desc_source_pairs->{join("\t", ($desc, $source, $marker_accession_id, $strain_name, $strain_gender, $allele_symbol))} = 1;
-        $pfs->{$desc} = $pf;
-      } 
-      foreach my $desc_source (sort keys %$unique_desc_source_pairs) {
-		my ($desc, $source, $marker_accession_id, $strain_name, $strain_gender, $allele_symbol) =split("\t", $desc_source);
-        my $source_link = $self->source_link($source, $marker_accession_id);
-		my $pf = $pfs->{$desc};
-        my $locs = sprintf(
-          '<a href="%s">View on Karyotype</a>',
-          $hub->url({
-            type    => 'Phenotype',
-            action  => 'Locations',
-            ph      => $pf->phenotype->dbID
-          })
-        );
-        push @rows, {source => $source_link, phenotype => $desc, strain => "$strain_name ($strain_gender)", allele => $allele_symbol, locations => $locs};
-	  }
     } else {    
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phen   = $pf->phenotype->description;
