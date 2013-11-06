@@ -110,6 +110,7 @@ sub default_options {
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 0,
+        #'tf_release'                => '9_69',     # The TreeFam release to map to
 
     # executable locations:
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
@@ -1296,7 +1297,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper',
             -parameters    => {
                 'release'     => $self->o('ensembl_release'),
-                'tf_release'  => 9,
+                'tf_release'  => $self->o('tf_release'),
                 'tag_prefix'  => '',
             },
             -rc_name => '1Gb_job',

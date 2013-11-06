@@ -81,6 +81,7 @@ sub default_options {
 
     # mapping parameters:
         'do_treefam_xref'           => 1,
+        'tf_release'                => '9_69',
 
     # executable locations:
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
