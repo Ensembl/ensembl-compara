@@ -79,16 +79,10 @@ package PREV;
 our $AUTOLOAD;
 
 sub AUTOLOAD {
-  my $object        = $_[0];
-  my $object_class  = ref $object || $object;
-  my $called_method = $AUTOLOAD =~ s/^PREV:://r;
-  my @caller        = caller;
-  my $method_name   = sprintf '%s_%s', previous::_method_prefix(@caller), $called_method;
-  my $coderef       = $object_class ne $caller[0] && $object_class->isa($caller[0]) ? $caller[0]->can($method_name) : undef;
-     $coderef     ||= $object_class->can($method_name);
+  my $method  = $AUTOLOAD =~ s/^PREV:://r;
+  my @caller  = caller;
+  my $coderef = $caller[0]->can(join '_', previous::_method_prefix(@caller), $method) || die qq(No PREV method for "$method" via package "$caller[0]" at $caller[1] line $caller[2].\n);
   
-  die qq(No PREV method for "$called_method" via package "$object_class" at $caller[1] line $caller[2].\n) unless $coderef;
-
   goto &$coderef;
 }
 
