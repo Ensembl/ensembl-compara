@@ -281,6 +281,8 @@ sub synonyms {
   }
   
   $count_sources = scalar @synonyms_list;
+
+  return () if ($count_sources == 0);  
  
   # Large text display
   if ($count_sources > 1) { # Collapsed div display 
@@ -296,7 +298,7 @@ sub synonyms {
     ];
 
   } else {
-    return ['Synonyms', $count_sources ? $synonyms_list[0] : 'None currently in the database'];
+    return ['Synonyms', $synonyms_list[0] ];
   }
 }
 
