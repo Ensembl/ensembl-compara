@@ -42,19 +42,11 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'ncbi_taxonomy',            # name used by the beekeeper to prefix job names on the farm
+        # name used by the beekeeper for the database, and to prefix job names on the farm
+        'pipeline_name' => 'ncbi_taxonomy'.$self->o('ensembl_release'),
 
-        'name_prefix'   => $self->o('ENV', 'USER').'_', # use a non-empty value if you want to test the pipeline
-        'name_suffix'   => '_66c',                      # use a non-empty value if you want to test the pipeline
-
-        'pipeline_db' => {
-#            -host   => 'ens-livemirror',
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('name_prefix').$self->o('pipeline_name').$self->o('name_suffix'),
-        },
+        # 'pipeline_db' is defined in HiveGeneric_conf. We only need to redefine a few parameters
+        'host' => 'compara3',
 
         'taxdump_loc'   => 'ftp://ftp.ncbi.nih.gov/pub/taxonomy',   # the original location of the dump
         'taxdump_file'  => 'taxdump.tar.gz',                        # the filename of the dump
@@ -186,7 +178,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'build_left_right_indices',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'cmd'       => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url '.$self->dbconn_2_url('pipeline_db').' -index',
+                'cmd'       => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url '.$self->pipeline_url().' -index',
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -wait_for => ['load_names'],
@@ -234,15 +226,14 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'add_import_date',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'inputquery'      => 'SELECT distinct taxon_id, CURRENT_TIMESTAMP this_moment FROM ncbi_taxa_node WHERE parent_id=0',
+                'sql'   => 'INSERT INTO ncbi_taxa_name (taxon_id, name_class, name) SELECT taxon_id, "import date", CURRENT_TIMESTAMP FROM ncbi_taxa_node WHERE parent_id=0 GROUP BY taxon_id',
             },
             -wait_for => [ 'build_left_right_indices' ],
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'cleanup' ],
-                2 => { ':////ncbi_taxa_name' => { 'taxon_id' => '#taxon_id#', 'name' => '#this_moment#', 'name_class' => 'import date' } },
             },
         },
 
