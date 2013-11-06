@@ -298,7 +298,7 @@ sub href {
     type => 'StructuralVariation',
     sv   => $f->variation_name,
     svf  => $f->dbID,
-    vdb  => 'variation'
+    vdb  => $self->my_config('db')
   });
 }
 
