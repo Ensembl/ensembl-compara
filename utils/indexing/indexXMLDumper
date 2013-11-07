@@ -1044,14 +1044,16 @@ sub dumpOligoProbe {
       group by ps.name, a.vendor"
   );
   $sth->execute();
-  while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
-    next unless $hid;
-    my $desc =  qq($type probeset $hid hits the genome in $count locations.);
-    &p( OligoProbeLine($dbspecies,$hid,$desc,'pset',$db,$counter ), $fh);
+  print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
+  while( my( $probe_name, $count, $type ) = $sth->fetchrow_array ) {
+    next unless $probe_name;
+    my $locations_c = $count > 1 ? 'locations' : 'location';
+    my $desc =  qq($type probeset $probe_name hits the genome in $count $locations_c.);
+    &p( OligoProbeLine($dbspecies,$probe_name,$desc,'','pset',$db,$counter ), $fh);
   }
 
   my $sth    = $conf->{'dbh'}->prepare(
-    "select group_concat(distinct p.name), count(distinct pf.probe_feature_id) as hits, a.vendor
+    "select p.probe_id, p.name, a.vendor, a.name, count(distinct pf.probe_feature_id) as hits
         from $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
       where sn.name='MART_DISPLAYABLE'
         and sn.status_name_id=s.status_name_id
@@ -1061,31 +1063,81 @@ sub dumpOligoProbe {
         and p.probe_id = pf.probe_id
         and p.array_chip_id = ac.array_chip_id
         and ac.array_id = a.array_id
-      group by p.probe_id, a.vendor"
+      group by p.name"
   );
   $sth->execute();
-  while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
-    next unless $hid;
-    my $desc = qq($type probe $hid hits the genome in $count locations.);
-    &p( OligoProbeLine($dbspecies,$hid,$desc,'probe',$db,$counter ), $fh);
+  print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
+  my $old;
+  while( my( $pid, $pname, $vendor, $aname, $count ) = $sth->fetchrow_array ) {
+    if( $old->{'pid'} != $pid ) {
+      if( $old->{'pid'}) {
+        my ($p_probe_name,$desc) = &get_oligo_terms($old);
+        &p( OligoProbeLine($dbspecies,$p_probe_name,$desc,$old->{'array_dets'},'probe',$db,$counter ), $fh);
+      }
+      $old = {
+        'pid'        => $pid,
+        'array_dets' => [ [ $aname, $pname] ],
+        'vendor'     => $vendor,
+        'count'      => $count,
+      };
+    }
+    else {
+      push @{$old->{'array_dets'}}, [ $aname, $pname ];
+    }
+  }
+  if( $old->{'pid'} ) {
+    my ($p_probe_name,$desc) = &get_oligo_terms($old);
+    &p( OligoProbeLine($dbspecies,$p_probe_name,$desc,$old->{'array_dets'},'probe',$db,$counter ), $fh);
   }
   return footer( $counter->(), $fh);
 }
 
+sub get_oligo_terms {
+  my $old = shift;
+  my $primary_probe  = shift @{$old->{'array_dets'}};
+  my ($p_array_name,$p_probe_name) = @$primary_probe;
+  my $type  = $old->{'vendor'};
+  my $count = $old->{'count'};
+  my $locations_c = $count > 1 ? 'locations' : 'location';
+  my $desc = "$type probe $p_probe_name ($p_array_name array) hits the genome in $count $locations_c.";
+  if ($old->{'array_dets'}) {
+    my $c = scalar(@{$old->{'array_dets'}});
+    if ($c) {
+      my $synonyms_c = $c > 1 ? 'synonyms' : 'synonym';
+      $desc .= " It has $c $synonyms_c:";
+      foreach (@{$old->{'array_dets'}}) {
+        my ($array_name,$probe_name) = @$_;
+        $desc .= " $probe_name ($array_name array),";
+      }
+      $desc =~ s/,$//;
+      $desc .= '.';
+    }
+  }
+  return $p_probe_name,$desc;
+}
+
 sub OligoProbeLine {
-  my ($species,$hid,$desc,$pset,$db,$counter) = @_; 
-  my $url = sprintf(qq(%s/Location/Genome?ftype=OligoProbe;id=%s),
-                    $species,
-                    $hid);
+  my ($species,$hid,$desc,$syns,$pset,$db,$counter) = @_; 
+  my $url = sprintf(qq(%s/Location/Genome?fdb=%s;ftype=ProbeFeature;id=%s),
+                   $species,
+                   $db,
+                   $hid);
+  $url .= ";ptype=$pset" if $pset eq 'pset';
   $species =~ s/_/ /;
   my $xml = qq(
 <doc>
   <field name="id">$hid</field>
   <field name="description">$desc</field>);
 
-#what's this one for ?
-  $xml .= qq(
-  <field name="ptype">$pset</field>);
+  #not used but could be if we ever need the client to distinguish between probes and probe sets
+#  $xml .= qq(
+#  <field name="ptype">$pset</field>);
+
+  foreach my $syn (@{$syns||[]}) {
+    my ($array_name,$probe_name) = @$syn;
+    $xml .= qq(
+  <field name="synonym">$probe_name</field>);
+  }
 
   $xml .= &common_fields($species,'ProbeFeature',$db);
   $xml .= qq(
