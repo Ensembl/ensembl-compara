@@ -6,7 +6,7 @@ use strict;
 
 use Apache2::Const qw(:common :http :methods);
 
-use SiteDefs qw(:APACHE);
+use SiteDefs;
 
 use Bio::EnsEMBL::Registry;
 
@@ -14,18 +14,17 @@ use EnsEMBL::Web::Controller::DAS;
 
 sub handler_das {
   my ($r, $cookies, $das_species, $path_segments, $querystring) = @_;
-  
   my $DSN = $path_segments->[0];
   
   # These are static content files due to the time to generate.
   # These files are created by utils/initialised_das.pl
   # Fall through - this is a static page
-  if( $DSN eq 'sources' || $DSN eq 'dsn' || $path_segments->[1] eq 'entry_points' 
-        && -e "$ENSEMBL_SERVERROOT/htdocs/das/$DSN/entry_points" ) { 
+  if ($DSN eq 'sources' || $DSN eq 'dsn' || $path_segments->[1] eq 'entry_points' && -e "$SiteDefs::ENSEMBL_SERVERROOT/htdocs/das/$DSN/entry_points") { 
     $r->headers_out->add('Access-Control-Allow-Origin', '*'); 
     $r->headers_out->add('Access-Control-Expose-Headers', 'X-DAS-Version X-DAS-Status X-DAS-Capabilities'); 
     $r->headers_out->add('X-DAS-Status', '200'); 
     $r->headers_out->add('X-DAS-Server', 'Ensembl'); 
+    
     return undef; 
   }
 
@@ -64,7 +63,7 @@ sub handler_das {
     }
     
     # in case no macth was found go to the default site species to report the page with no features
-    $das_species ||= $ENSEMBL_PRIMARY_SPECIES;
+    $das_species ||= $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
   }
   
   return DECLINED unless $das_species;

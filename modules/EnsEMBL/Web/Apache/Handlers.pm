@@ -13,7 +13,7 @@ use Sys::Hostname;
 use Time::HiRes qw(time);
 use URI::Escape qw(uri_escape);
 
-use SiteDefs qw(:APACHE);
+use SiteDefs;# qw(:APACHE);
 
 use Bio::EnsEMBL::Registry;
 
@@ -65,7 +65,7 @@ sub childInitHandler {
   $ENSEMBL_WEB_REGISTRY->timer->set_process_child_count(0);
   $ENSEMBL_WEB_REGISTRY->timer->set_process_start_time(time);
   
-  warn sprintf "Child initialised: %7d %04d-%02d-%02d %02d:%02d:%02d\n", $$, $X[5]+1900, $X[4]+1, $X[3], $X[2], $X[1], $X[0] if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  warn sprintf "Child initialised: %7d %04d-%02d-%02d %02d:%02d:%02d\n", $$, $X[5]+1900, $X[4]+1, $X[3], $X[2], $X[1], $X[0] if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 }
 
 
@@ -132,8 +132,8 @@ sub redirect_to_nearest_mirror {
         if ( $species_defs->ENSEMBL_MIRRORS && keys %{ $species_defs->ENSEMBL_MIRRORS } ) {
             my $geo_details;
             my $record;   my $geo;
-            my $geocity_dat_file =  $species_defs->GEOCITY_DAT ||  $species_defs->ENSEMBL_SERVERROOT . 'sanger-plugins/sanger/geocity/GeoLiteCity.dat';
-            my $geocity_dat_file = $ENSEMBL_SERVERROOT;
+            my $geocity_dat_file =  $species_defs->GEOCITY_DAT || $species_defs->ENSEMBL_SERVERROOT . 'sanger-plugins/sanger/geocity/GeoLiteCity.dat';
+            my $geocity_dat_file = $species_defs->ENSEMBL_SERVERROOT;
             $geocity_dat_file .= $species_defs->GEOCITY_DAT || '/geocity/GeoLiteCity.dat';
             my $ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
             if ( -e $geocity_dat_file ) {
@@ -205,15 +205,15 @@ sub postReadRequestHandler {
   my $cookies = EnsEMBL::Web::Cookie->fetch($r);
   my $width   = $cookies->{'ENSEMBL_WIDTH'} && $cookies->{'ENSEMBL_WIDTH'}->value ? $cookies->{'ENSEMBL_WIDTH'}->value : 0;  
   my $window_width = $cookies->{'WINDOW_WIDTH'} && $cookies->{'WINDOW_WIDTH'}->value ? $cookies->{'WINDOW_WIDTH'}->value : 0;
- 
+  
   $r->subprocess_env->{'WINDOW_WIDTH'}          = $window_width; # use for mobile website to determine device windows size
-  $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $width || $ENSEMBL_IMAGE_WIDTH || 800;
+  $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $width || $SiteDefs::ENSEMBL_IMAGE_WIDTH || 800;
   $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies->{'DYNAMIC_WIDTH'} && $cookies->{'DYNAMIC_WIDTH'}->value ? 1 : $width ? 0 : 1;
 
   $ENSEMBL_WEB_REGISTRY->timer_push('Post read request handler completed', undef, 'Apache');
   
   # Ensembl DEBUG cookie
-  $r->headers_out->add('X-MACHINE' => $ENSEMBL_SERVER) if $cookies->{'ENSEMBL_DEBUG'};
+  $r->headers_out->add('X-MACHINE' => $SiteDefs::ENSEMBL_SERVER) if $cookies->{'ENSEMBL_DEBUG'};
   
   return;
 }
@@ -250,14 +250,13 @@ sub handler {
   my $u           = $r->parsed_uri;
   my $file        = $u->path;
   my $querystring = $u->query;
-  
-  my @web_cookies = EnsEMBL::Web::Cookie->retrieve($r, map {'name' => $_, 'encrypted' => 1}, $ENSEMBL_SESSION_COOKIE, $ENSEMBL_USER_COOKIE);
+  my @web_cookies = EnsEMBL::Web::Cookie->retrieve($r, map {'name' => $_, 'encrypted' => 1}, $SiteDefs::ENSEMBL_SESSION_COOKIE, $SiteDefs::ENSEMBL_USER_COOKIE);
   my $cookies     = {
-    'session_cookie'  => $web_cookies[0] || EnsEMBL::Web::Cookie->new($r, {'name' => $ENSEMBL_SESSION_COOKIE, 'encrypted' => 1}),
-    'user_cookie'     => $web_cookies[1] || EnsEMBL::Web::Cookie->new($r, {'name' => $ENSEMBL_USER_COOKIE,    'encrypted' => 1})
+    'session_cookie'  => $web_cookies[0] || EnsEMBL::Web::Cookie->new($r, {'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1}),
+    'user_cookie'     => $web_cookies[1] || EnsEMBL::Web::Cookie->new($r, {'name' => $SiteDefs::ENSEMBL_USER_COOKIE,    'encrypted' => 1})
   };
 
-  my @raw_path = split m|/|, $file;
+  my @raw_path = split '/', $file;
   shift @raw_path; # Always empty
 
   ## Simple redirect to VEP
@@ -276,10 +275,10 @@ sub handler {
     %$aliases,
     common => 'common',
     multi  => 'Multi',
-    perl   => $ENSEMBL_PRIMARY_SPECIES,
-    map { lc($_) => $ENSEMBL_SPECIES_ALIASES->{$_} } keys %$ENSEMBL_SPECIES_ALIASES
+    perl   => $SiteDefs::ENSEMBL_PRIMARY_SPECIES,
+    map { lc($_) => $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} } keys %$SiteDefs::ENSEMBL_SPECIES_ALIASES
   );
-
+  
   $species_map{lc $_} = $_ for values %species_map; # Self-mapping
   
   ## Identify the species element, if any
@@ -287,46 +286,49 @@ sub handler {
  
   ## Check for stable id URL (/id/ENSG000000nnnnnn) 
   ## and malformed Gene/Summary URLs from external users
-  if (($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) 
-    || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ ))
-  {
+  if (($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
     my ($stable_id, $object_type, $db_type, $uri);
+    
     if ($raw_path[0] =~ /^id$/i) {
       $stable_id = $raw_path[1];
-    }
-    else {
+    } else {
       $querystring =~ /g=(\w+)/;
       $stable_id = $1;
     }
+    
     my $unstripped_stable_id = $stable_id;
-    if ($stable_id =~ /^ENS/) {
-	    $stable_id =~ s/\.[0-9]+$//; ## Remove versioning for Ensembl ids
-    }
+    
+    $stable_id =~ s/\.[0-9]+$// if $stable_id =~ /^ENS/; ## Remove versioning for Ensembl ids
 
     ## Try to register stable_id adaptor so we can use that db (faster lookup)
-    my %db = %{$species_defs->multidb->{'DATABASE_STABLE_IDS'}||{}};
+    my %db = %{$species_defs->multidb->{'DATABASE_STABLE_IDS'} || {}};
+    
     if (keys %db) {
       my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-                               '-species' => 'multi',
-                               '-group'   => 'stable_ids',
-                               '-host'    => $db{'HOST'},
-                               '-port'    => $db{'PORT'},
-                               '-user'    => $db{'USER'},
-                               '-pass'    => $db{'PASS'},
-                               '-dbname'  => $db{'NAME'});
+        -species => 'multi',
+        -group   => 'stable_ids',
+        -host    => $db{'HOST'},
+        -port    => $db{'PORT'},
+        -user    => $db{'USER'},
+        -pass    => $db{'PASS'},
+        -dbname  => $db{'NAME'}
+      );
     }
 
     ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
-    if(!$species || !$object_type) {
+    
+    if (!$species || !$object_type) {
       ## Maybe that wasn't versioning after all!
       ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id);
       $stable_id = $unstripped_stable_id if($species && $object_type);
     }
+    
     my $dir = $species ? "/$species/" : '/Multi/';
     my $uri = $dir."psychic?q=$stable_id";  
 
     if ($object_type) {
       $uri = $dir;
+      
       if ($object_type eq 'Gene') {
         $uri .= "Gene/Summary?g=$stable_id";
       } elsif ($object_type eq 'Transcript') {
@@ -349,20 +351,21 @@ sub handler {
 
   my %lookup = map { $_ => 1 } $species_defs->valid_species;
   my $lookup_args = {
-    'sd'      => $species_defs,
-    'map'     => \%species_map,
-    'lookup'  => \%lookup,
-    'uri'     => $r->unparsed_uri,
+    sd     => $species_defs,
+    map    => \%species_map,
+    lookup => \%lookup,
+    uri    => $r->unparsed_uri,
   };
-
+  
   foreach (@raw_path) {
     $lookup_args->{'dir'} = $_;
+    
     my $check = _check_species($lookup_args);
+    
     if ($check && $check =~ /^http/) {
       $r->headers_out->set( Location => $check );
       return REDIRECT;
-    }
-    elsif ($check && !$species) {
+    } elsif ($check && !$species) {
       $species = $_;
     } else {
       push @path_segments, $_;
@@ -375,14 +378,14 @@ sub handler {
       shift @path_segments;
     } elsif ($path_segments[0] eq 'Gene' && $querystring) {
       my %param = split ';|=', $querystring;
+      
       if (my $gene_stable_id = $param{'g'}) {
         my ($id_species) = Bio::EnsEMBL::Registry->get_species_and_object_type($gene_stable_id);
-        
-        $species = $id_species if $id_species;
+            $species     = $id_species if $id_species;
       }  
     }
   }
- 
+  
   @path_segments = @raw_path unless $species;
   
   # Some memcached tags (mainly for statistics)
@@ -426,7 +429,7 @@ sub handler {
   
   if (defined $return) {
     if ($return == OK) {
-      push_script_line($r) if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+      push_script_line($r) if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
       
       $r->push_handlers(PerlCleanupHandler => \&cleanupHandler_script);
       $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler);
@@ -462,7 +465,7 @@ sub handler {
   # Exclude static files (and no, html is not a static file in ensembl)
   if ($path !~ /\.(\w{2,3})$/) {
     if (!$filename) {
-      foreach my $dir (grep { -d $_ && -r $_ } @ENSEMBL_HTDOCS_DIRS) {
+      foreach my $dir (grep { -d $_ && -r $_ } @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
         my $f = "$dir/$path";
         
         if (-d $f || -r $f) {
@@ -503,8 +506,7 @@ sub _check_species {
 ## Do this in a private function so it's more easily pluggable, e.g. on Pre!
 ## This default version just checks if this is a valid species for the site
   my $args = shift;
-  my %lookup = map { $_ => 1 } $args->{'sd'}->valid_species;
-  return $lookup{$args->{'map'}{lc $args->{'dir'}}};
+  return $args->{'lookup'}{$args->{'map'}{lc $args->{'dir'}}};
 }
 
 sub logHandler {
@@ -532,7 +534,7 @@ sub cleanupHandler {
   my $start_time = $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time;
   my $length     = $end_time - $start_time;
   
-  if ($length >= $ENSEMBL_LONGPROCESS_MINTIME) {
+  if ($length >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
     my $u      = $r->parsed_uri;
     my $file   = $u->path;
     my $query  = $u->query . $r->subprocess_env->{'ENSEMBL_REQUEST'};
@@ -546,7 +548,7 @@ sub cleanupHandler {
     
     $r->subprocess_env->{'ENSEMBL_ENDTIME'} = $end_time;
     
-    if ($ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
+    if ($SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
       my @X = localtime($start_time);
       
       warn sprintf(
@@ -559,7 +561,7 @@ sub cleanupHandler {
   }
 
   # Now we check if the die file has been touched...
-  my $die_file = $ENSEMBL_SERVERROOT . '/logs/ensembl.die';
+  my $die_file = $SiteDefs::ENSEMBL_SERVERROOT . '/logs/ensembl.die';
   
   if (-e $die_file) {
     my @temp = stat $die_file;
@@ -583,17 +585,17 @@ sub cleanupHandler_script {
   
   $ENSEMBL_WEB_REGISTRY->timer_push('Cleaned up', undef, 'Cleanup');
   
-  warn $ENSEMBL_WEB_REGISTRY->timer->render if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER;
+  warn $ENSEMBL_WEB_REGISTRY->timer->render if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER;
   
-  push_script_line($r, 'ENDSCR', sprintf '%10.3f', time - $r->subprocess_env->{'LOG_TIME'}) if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  push_script_line($r, 'ENDSCR', sprintf '%10.3f', time - $r->subprocess_env->{'LOG_TIME'}) if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
   
-  cleanupHandler_blast($r) if $ENSEMBL_BLASTSCRIPT;
+  cleanupHandler_blast($r) if $SiteDefs::ENSEMBL_BLASTSCRIPT;
 }
 
 sub cleanupHandler_blast {
   my $r = shift;
   
-  my $directory = $ENSEMBL_TMP_DIR_BLAST . '/pending';
+  my $directory = $SiteDefs::ENSEMBL_TMP_DIR_BLAST . '/pending';
   my $FLAG  = 0;
   my $count = 0;
   my $ticket;
@@ -654,7 +656,7 @@ sub cleanupHandler_blast {
         
         flock FH, LOCK_UN;
         
-        my $COMMAND = "$ENSEMBL_BLASTSCRIPT $blast_file $FILE2";
+        my $COMMAND = "$SiteDefs::ENSEMBL_BLASTSCRIPT $blast_file $FILE2";
         
         warn "BLAST: $COMMAND";
         
@@ -676,7 +678,7 @@ sub cleanupHandler_blast {
 sub childExitHandler {
   my $r = shift;
   
-  if ($ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
+  if ($SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
     my $size;
     
     if ($Apache2::SizeLimit::HOW_BIG_IS_IT) {

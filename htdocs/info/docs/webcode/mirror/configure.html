@@ -258,9 +258,9 @@ requires a user license and could not be distributed as part of the Ensembl web 
 <p>cd into your server root and run the following commands:</p>
 <pre class="code">
   mkdir logs
-  chown -R $ENSEMBL_USER:$ENSEMBL_GROUP .
+  chown -R $SiteDefs::ENSEMBL_USER:$SiteDefs::ENSEMBL_GROUP .
 </pre>
-<p>where $ENSEMBL_USER and $ENSEMBL_GROUP are the web server user &amp; group you configured in
+<p>where $SiteDefs::ENSEMBL_USER and $SiteDefs::ENSEMBL_GROUP are the web server user &amp; group you configured in
 SiteDefs.</p>
 
 <p>Your Ensembl site should now be ready to start up.</p>

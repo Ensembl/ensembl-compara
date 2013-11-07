@@ -54,7 +54,7 @@ use Storable qw(lock_nstore lock_retrieve thaw);
 use Time::HiRes qw(time);
 use Fcntl qw(O_WRONLY O_CREAT);
 
-use SiteDefs qw(:ALL);
+use SiteDefs;# qw(:ALL);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
@@ -87,8 +87,8 @@ sub new {
     timer       => undef
   }, $class);
 
-  my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/'. $ENSEMBL_CONFIG_FILENAME;
-
+  my $conffile = "$SiteDefs::ENSEMBL_CONF_DIRS[0]/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
+  
   $self->{'_filename'} = $conffile;
 
   # TODO - these need to be pulled in dynamically from appropriate modules
@@ -144,7 +144,7 @@ sub name {
   ### returns the name of the current species
   ## TO DO - rename method to 'species'
 
-  return $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
+  return $ENV{'ENSEMBL_SPECIES'} || $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
 }
 
 sub valid_species {
@@ -155,16 +155,18 @@ sub valid_species {
   my $self          = shift;
   my %test_species  = map { $_ => 1 } @_;
   my @valid_species = @{$self->{'_valid_species'} || []};
+  
   if (!@valid_species) {
-    foreach my $sp (@$ENSEMBL_DATASETS) {
+    foreach my $sp (@$SiteDefs::ENSEMBL_DATASETS) {
       my $config = $self->get_config($sp, 'DB_SPECIES');
+      
       if ($config->[0]) {
         push @valid_species, @{$config};
-      }
-      else {
+      } else {
         warn "Species $sp is misconfigured: please check generation of packed file";
       }
     }
+    
     $self->{'_valid_species'} = [ @valid_species ]; # cache the result
   }
 
@@ -187,8 +189,8 @@ sub AUTOLOAD {
   ### a
   
   my $self    = shift;
-  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
-  $species    = $ENSEMBL_PRIMARY_SPECIES if $species eq 'Multi';
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
+  $species    = $SiteDefs::ENSEMBL_PRIMARY_SPECIES if $species eq 'Multi';
   
   my $var = our $AUTOLOAD;
   $var =~ s/.*:://;
@@ -213,7 +215,7 @@ sub get_config {
   
   my $self    = shift;
   my $species = shift;
-  $species    = $ENSEMBL_PRIMARY_SPECIES if $species eq 'common';
+  $species    = $SiteDefs::ENSEMBL_PRIMARY_SPECIES if $species eq 'common';
   
   my $var = shift || $species;
 
@@ -234,7 +236,7 @@ sub get_config {
   return ${$S}  if defined ${$S};
   return \@{$S} if defined @{$S};
   
-  warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $ENSEMBL_DEBUG_FLAGS & 4;
+  warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & 4;
   
   return undef;
 }
@@ -359,7 +361,7 @@ sub _load_in_webtree {
   if (-e $web_tree_packed) {
     $web_tree = lock_retrieve($web_tree_packed);
   } else {
-    EnsEMBL::Web::Tools::WebTree::read_tree($web_tree, $_) for reverse @ENSEMBL_HTDOCS_DIRS;
+    EnsEMBL::Web::Tools::WebTree::read_tree($web_tree, $_) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
     
     lock_nstore($web_tree, $web_tree_packed);
   }
@@ -377,7 +379,7 @@ sub _load_in_species_pages {
   if (-e $spp_tree_packed) {
     $spp_tree = lock_retrieve($spp_tree_packed);
   } else {
-    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $ENSEMBL_DATASETS) for reverse @ENSEMBL_HTDOCS_DIRS;
+    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $SiteDefs::ENSEMBL_DATASETS) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
     lock_nstore($spp_tree, $spp_tree_packed);
   }
   
@@ -461,17 +463,17 @@ sub _expand_database_templates {
   
   if (exists $tree->{'databases'}) {
     foreach my $key (keys %{$tree->{'databases'}}) {
-      my $DB_NAME = $tree->{'databases'}{$key};
-      my $VERSION = $tree->{'general'}{"${key}_VERSION"} || $SiteDefs::ENSEMBL_VERSION;
+      my $db_name = $tree->{'databases'}{$key};
+      my $version = $tree->{'general'}{"${key}_VERSION"} || $SiteDefs::ENSEMBL_VERSION;
       
-      if ($DB_NAME =~ /^%_(\w+)_%_%$/) {
-        $DB_NAME = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
-      } elsif ($DB_NAME =~ /^%_(\w+)_%$/) {
-        $DB_NAME = lc(sprintf '%s_%s_%s_%s', $filename , $1, $VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
-      } elsif ($DB_NAME =~/^%_(\w+)$/) {
-        $DB_NAME = lc(sprintf '%s_%s_%s', $filename , $1, $VERSION);
-      } elsif ($DB_NAME =~/^(\w+)_%$/) {
-        $DB_NAME = lc(sprintf '%s_%s', $1, $VERSION);
+      if ($db_name =~ /^%_(\w+)_%_%$/) {
+        $db_name = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+      } elsif ($db_name =~ /^%_(\w+)_%$/) {
+        $db_name = lc(sprintf '%s_%s_%s_%s', $filename , $1, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+      } elsif ($db_name =~/^%_(\w+)$/) {
+        $db_name = lc(sprintf '%s_%s_%s', $filename , $1, $version);
+      } elsif ($db_name =~/^(\w+)_%$/) {
+        $db_name = lc(sprintf '%s_%s', $1, $version);
       }
       
       if ($tree->{'databases'}{$key} eq '') {
@@ -481,7 +483,7 @@ sub _expand_database_templates {
           my %cnf = %{$tree->{$key}};
           
           $tree->{'databases'}{$key} = {
-            NAME   => $DB_NAME,
+            NAME   => $db_name,
             HOST   => exists $cnf{'HOST'}   ? $cnf{'HOST'}   : $HOST,
             USER   => exists $cnf{'USER'}   ? $cnf{'USER'}   : $USER,
             PORT   => exists $cnf{'PORT'}   ? $cnf{'PORT'}   : $PORT,
@@ -492,7 +494,7 @@ sub _expand_database_templates {
           delete $tree->{$key};
         } else {
           $tree->{'databases'}{$key} = {
-            NAME   => $DB_NAME,
+            NAME   => $db_name,
             HOST   => $HOST,
             USER   => $USER,
             PORT   => $PORT,
@@ -601,7 +603,7 @@ sub _parse {
   # IF  the DB/DAS packed files exist expand them
   # o/w attach the species databases/parse the DAS registry, 
   # load the data and store the DB/DAS packed files
-  foreach my $species (@$ENSEMBL_DATASETS, 'MULTI') {
+  foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
     $config_packer->species($species);
     
     $self->process_ini_files($species, 'db', $config_packer, $defaults);
@@ -616,7 +618,7 @@ sub _parse {
   $self->_info_log('Parser', 'Post processing ini files');
   
   # Loop over each tree and make further manipulations
-  foreach my $species (@$ENSEMBL_DATASETS, 'MULTI') {
+  foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
     $config_packer->species($species);
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
@@ -774,7 +776,7 @@ sub set_write_access {
   
   my $self = shift;
   my $type = shift;
-  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
   
   if ($type =~ /DATABASE_(\w+)/) {
     my $key    = $1;      # If the value is defined then we will create the adaptor here

@@ -13,7 +13,7 @@ use HTTP::Date;
 use Apache2::Const qw(:common :methods :http);
 use Apache2::Util;
 
-use SiteDefs qw(:ALL);
+use SiteDefs;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Cache;
 
@@ -46,7 +46,7 @@ BEGIN {
 sub handler {
   my $r       = shift;
   my $uri     = $r->uri;
-  my $content = $MEMD ? $MEMD->get("$ENSEMBL_STATIC_SERVER$uri") : undef;
+  my $content = $MEMD ? $MEMD->get("$SiteDefs::ENSEMBL_STATIC_SERVER$uri") : undef;
 
   if ($content) {
     $r->headers_out->set('X-MEMCACHED'    => 'yes');
@@ -64,7 +64,7 @@ sub handler {
     return FORBIDDEN if $file =~ /\.\./;
     
     ## Not temporary static files are pluggable:
-    unless ($file =~ s/^$ENSEMBL_TMP_URL_IMG/$ENSEMBL_TMP_DIR_IMG/g + $file =~ s/^$ENSEMBL_TMP_URL/$ENSEMBL_TMP_DIR/g) {
+    unless ($file =~ s/^$SiteDefs::ENSEMBL_TMP_URL_IMG/$SiteDefs::ENSEMBL_TMP_DIR_IMG/g + $file =~ s/^$SiteDefs::ENSEMBL_TMP_URL/$SiteDefs::ENSEMBL_TMP_DIR/g) {
       ## walk through plugins tree and search for the file in all htdocs dirs
       foreach my $dir (@HTDOCS_TRANS_DIRS) {
         my $f = sprintf $dir, $file;
@@ -86,7 +86,7 @@ sub handler {
         close FILE;
       }
       
-      $MEMD->set("$ENSEMBL_STATIC_SERVER$uri", $content, undef, 'STATIC') if $MEMD;
+      $MEMD->set("$SiteDefs::ENSEMBL_STATIC_SERVER$uri", $content, undef, 'STATIC') if $MEMD;
       
       my @file_info = stat($file);
       $r->headers_out->set('Last-Modified'  => HTTP::Date::time2str($file_info[9]));

@@ -49,7 +49,7 @@ BEGIN {
   unshift @INC, "$serverroot/conf";
 };
 
-use SiteDefs qw(:ALL);
+use SiteDefs;
 
 ## Walk through the plugin tree and see if there's 'ctrl_scripts/*' in there
 ## any files starting with 00_start* to 49_start* will be executed before apache
@@ -162,7 +162,7 @@ warn "==========================================================================
 
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
 my $cmd     = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
-my $defines = join ' ', map "-D$_", grep /\S/, split(' ', $SiteDefs::APACHE_DEFINE), @defines;
+my $defines = $SiteDefs::APACHE_DEFINE ? join ' ', map "-D$_", grep /\S/, split(' ', $SiteDefs::APACHE_DEFINE), @defines : '';
 my $exe     =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR . '/bin/httpd');
    $cmd    .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf $defines" . ($single ? ' -X' : '');
 

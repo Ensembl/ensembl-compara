@@ -6,7 +6,7 @@ use strict;
 
 use Apache2::Const qw(:common :http :methods);
 
-use SiteDefs qw(:APACHE);
+use SiteDefs;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::OldLinks qw(get_redirect);
@@ -24,10 +24,10 @@ sub handler_species {
   
   # Parse the initial path segments, looking for valid ENSEMBL_TYPE values
   my $seg    = shift @path_segments;
-  my $script = $OBJECT_TO_SCRIPT->{$seg};
+  my $script = $SiteDefs::OBJECT_TO_SCRIPT->{$seg};
   
   if ($seg eq 'Component' || $seg eq 'ZMenu' || $seg eq 'Config' || $seg eq 'Json') {
-    $type   = shift @path_segments if $OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'ZMenu' || $seg eq 'Json';
+    $type   = shift @path_segments if $SiteDefs::OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'ZMenu' || $seg eq 'Json';
     $plugin = shift @path_segments if $seg eq 'Component';
   } else {
     $type = $seg;
@@ -75,7 +75,7 @@ sub handler_species {
   
   if ($redirect) {
     my $newfile = join '/', '', $species, $redirect;
-    warn "OLD LINK REDIRECT: $script $newfile" if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+    warn "OLD LINK REDIRECT: $script $newfile" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     
     $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
     $r->child_terminate;
@@ -98,7 +98,7 @@ sub handler_species {
   if (!$to_execute) {
     my @dirs;
     
-    foreach (grep { -d $_ && -r $_ } @ENSEMBL_PERL_DIRS) {
+    foreach (grep { -d $_ && -r $_ } @SiteDefs::ENSEMBL_PERL_DIRS) {
       push @dirs, "$_/%s";
       push @dirs, "$_/multi"   if -d "$_/multi"   && -r "$_/multi";
       push @dirs, "$_/private" if -d "$_/private" && -r "$_/private";

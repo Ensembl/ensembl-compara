@@ -167,7 +167,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
     my $T = $conf->ENSEMBL_DEBUG_FLAGS;
     $extra .= '
 
- Debug flags:        ' . join "\n                     ", grep { $T & (($i <<= 1) >> 1) } @{$conf->ENSEMBL_FLAG_NAMES_HR};
+ Debug flags:        ' . join "\n                     ", map { $T & (($i <<= 1) >> 1) ? ucfirst lc =~ s/_/ /rg : () } @{$conf->ENSEMBL_DEBUG_FLAG_NAMES};
 
     $i = 0;
     $extra .= '

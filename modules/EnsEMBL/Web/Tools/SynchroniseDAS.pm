@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::SpeciesDefs;
-use SiteDefs qw(:ALL);
+use SiteDefs;
 use Bio::EnsEMBL::Utils::Exception qw(info warning);
 use Digest::MD5;
 use File::Spec;
@@ -29,7 +29,7 @@ sub rebuild_das {
   info('Calculating checksum for existing DAS packed files');
   
   # Calculate a checksum for all the packed files, and remove them
-  foreach my $species ( @$ENSEMBL_DATASETS ) {
+  foreach my $species ( @$SiteDefs::ENSEMBL_DATASETS ) {
     $packed_filename = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed',"$species.das.packed");
     if ( open (FH, '<', $packed_filename) ) {
       $digest->addfile( *FH );
@@ -50,7 +50,7 @@ sub rebuild_das {
   
   # Go back through the species' and calculate the new checksum
   $digest->reset;
-  foreach my $species ( @$ENSEMBL_DATASETS ) {
+  foreach my $species ( @$SiteDefs::ENSEMBL_DATASETS ) {
     $packed_filename = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed',"$species.das.packed");
     if ( open (FH, '<', $packed_filename) ) {
       $digest->addfile( *FH );

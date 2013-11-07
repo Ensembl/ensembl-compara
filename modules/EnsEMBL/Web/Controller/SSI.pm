@@ -6,7 +6,7 @@ use strict;
 
 use Apache2::Const qw(:common :methods :http);
 
-use SiteDefs qw(:APACHE);
+use SiteDefs;
 
 use EnsEMBL::Web::Document::HTML::Movie;
 
@@ -124,7 +124,7 @@ sub template_SPECIES {
 }
 
 sub template_RELEASE {
-  return shift->species_defs->VERSION;
+  return shift->species_defs->ENSEMBL_VERSION;
 }
 
 sub template_INCLUDE {
@@ -141,7 +141,7 @@ sub template_INCLUDE {
   
   $include =~ s/\{\{([A-Z]+)::([^\}]+)\}\}/my $m = "template_$1"; $self->$m($2);/ge;
   
-  foreach my $root (@ENSEMBL_HTDOCS_DIRS) {
+  foreach my $root (@SiteDefs::ENSEMBL_HTDOCS_DIRS) {
     my $filename = "$root/$include";
     
     if (-f $filename && -e $filename) { 
