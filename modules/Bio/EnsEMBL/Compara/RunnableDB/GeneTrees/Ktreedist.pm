@@ -71,6 +71,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
   my( $self) = @_;
 
+  $self->param('linked_trees', []);
     # Fetch sequences:
   $self->param('gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')) );
   $self->param('gene_tree')->preload();
@@ -133,6 +134,9 @@ sub post_cleanup {
   if(my $gene_tree = $self->param('gene_tree')) {
     $gene_tree->release_tree;
     $self->param('gene_tree', undef);
+  }
+  foreach my $gene_tree (@{$self->param('linked_trees')}) {
+    $gene_tree->release_tree;
   }
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
@@ -223,6 +227,7 @@ sub load_input_trees {
         print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         my $tag = $other_tree->clusterset_id;
         $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
+        push @{$self->param('linked_trees')}, $other_tree;
     }
     return 1;
 }
@@ -260,7 +265,7 @@ sub store_ktreedist_score {
     my $tree = $self->param('gene_tree'),
 
     my %other_trees;
-    for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+    for my $other_tree (@{$self->param('linked_trees')}) {
         print STDERR "OTHER TREE FOUND: ", $other_tree->root_id, "WITH CLUSTERSET_ID", $other_tree->clusterset_id, "\n" if ($self->debug());
         $other_trees{$other_tree->clusterset_id} = $other_tree;
     }
