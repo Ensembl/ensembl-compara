@@ -18,7 +18,8 @@ sub content {
   
   return $self->non_coding_error unless $object->translation_object;
 
-  my $hub    = $self->hub;
+  my $hub         = $self->hub;
+  my $glossary    = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
   my $cons_format = $hub->param('consequence_format');
   my $show_scores = $hub->param('show_scores');
   my @data;
@@ -43,6 +44,14 @@ sub content {
     my $tva    = $snp->{'tva'};
     my $var_allele = $tva->variation_feature_seq;
     
+    # Evidence status
+    my $evidence = $snp->{'vf'}->get_all_evidence_values || [];
+    my $status = join("",
+                   map {
+                     sprintf('<img src="/i/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>', $_, $_, $_)
+                   } @$evidence
+                 );
+
     # Check allele size (for display issues)
     if (length($allele)>10) {
       $allele = $self->trim_large_allele_string($allele,'allele_'.$snp->{'snp_id'},10);
@@ -66,6 +75,7 @@ sub content {
       res    => $snp->{'position'},
       id     => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Variation', action => 'Mappings', v => $snp->{'snp_id'}, vf => $snp->{'vdbid'}, vdb => 'variation' }), $snp->{'snp_id'}),
       type   => $type,
+      status => $status,
       allele => $allele,
       ambig  => $snp->{'ambigcode'} || '-',
       alt    => $snp->{'pep_snp'} || '-',
@@ -73,22 +83,26 @@ sub content {
       sift   => $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score),
       poly   => $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score),
     };
-  }
-  
+  } 
+   
   my $columns = [
-    { key => 'res',    title => 'Residue',            width => '5%',  sort => 'numeric' },
-    { key => 'id',     title => 'Variation ID',       width => '10%', sort => 'html'    }, 
-    { key => 'type',   title => 'Variation type',     width => '20%', sort => 'string'  },
-    { key => 'allele', title => 'Alleles',            width => '10%', sort => 'string'  },
-    { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  sort => 'string'  },
-    { key => 'alt',    title => 'Residues',           width => '10%', sort => 'string'  },
-    { key => 'codons', title => 'Codons',             width => '10%', sort => 'string'  },
+    { key => 'res',    title => 'Residue',            width => '5%',  sort => 'numeric', help => 'Residue number on the protein sequence'},
+    { key => 'id',     title => 'Variation ID',       width => '10%', sort => 'html',    help => 'Variant identifier' }, 
+    { key => 'type',   title => 'Variation type',     width => '20%', sort => 'string',  help => 'Consequence type' }, 
+    { key => 'status', title => 'Evidence',           width => '10%', sort => 'string',  help =>  $self->strip_HTML($glossary->{'Evidence status (variant)'}) },
+    { key => 'allele', title => 'Alleles',            width => '10%', sort => 'string',  help => 'Alternative nucleotides' },
+    { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  sort => 'string',  help => 'IUPAC nucleotide ambiguity code' },
+    { key => 'alt',    title => 'Residues',           width => '10%', sort => 'string',  help => 'Resulting amino acid(s)'  },
+    { key => 'codons', title => 'Codons',             width => '10%', sort => 'string',  help => 'Resulting codon(s), with the allele(s) displayed in bold' },
   ];
-  
-  push @$columns, (
-    { key => 'sift',   title => 'SIFT',               width => '15%', align => 'center', sort => 'position_html'  },
-    { key => 'poly',   title => 'PolyPhen',           width => '15%', align => 'center', sort => 'position_html'  }
-  ) if $hub->species =~ /homo_sapiens/i;
+ 
+  # add SIFT for supported species
+  if ($hub->species =~ /homo_sapiens|bos_taurus|canis_familiaris|danio_rerio|gallus_gallus|mus_musculus|rattus_norvegicus|sus_scrofa/i) {
+    push @$columns, ({ key => 'sift', title => 'SIFT', width => '10%', align => 'center', sort => 'position_html', $self->strip_HTML($glossary->{'SIFT'}) });
+  }
+  if ($hub->species =~ /homo_sapiens/i) {
+    push @$columns, ({ key => 'poly', title => 'PolyPhen', width => '10%', align => 'center', sort => 'position_html', $self->strip_HTML($glossary->{'PolyPhen'}) });
+  }
   
   my $html = $self->new_table($columns, \@data, { data_table => 1, sorting => [ 'res asc' ], class => 'cellwrap_inside fast_fixed_table' })->render;
   
