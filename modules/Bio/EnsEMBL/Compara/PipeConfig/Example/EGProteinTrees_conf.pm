@@ -92,6 +92,7 @@ sub default_options {
         'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
     # mapping parameters:
+        'tf_release'                => '9_69',
 
     # executable locations:
         hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
