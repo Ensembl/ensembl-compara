@@ -27,7 +27,6 @@ sub content {
 
   my $source      = $object->source;
   my $name        = $object->name;
-  my $cons_format = $hub->param('consequence_format');
   my $show_scores = $hub->param('show_scores');
   my $vf          = $hub->param('vf');
   my $html        = qq{<a id="$self->{'id'}_top"></a>};
@@ -206,15 +205,7 @@ sub content {
       my $strand = $trans->strand < 1 ? '-' : '+';
       
       # consequence type
-      my $type;
-      
-      if ($cons_format eq 'so') {
-        $type = join ', ', map { $hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$tva->get_all_OverlapConsequences};
-      } else {
-        # Avoid duplicated Ensembl terms
-        my %ens_term = map { $_->display_term() => 1 } @{$tva->get_all_OverlapConsequences};
-        $type = join ', ', keys(%ens_term);
-      }
+      my $type = $self->render_type($tva);
       
       # consequence rank
       my ($rank) = sort map $_->rank, @{$tva->get_all_OverlapConsequences};
@@ -288,15 +279,7 @@ sub content {
       $url .= ';regulation_view=variation_feature_variation=normal';
         for my $rf (@$rfs) { 
           for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-            my $type;
-            if ($cons_format eq 'so') {
-              $type = join ', ', map { $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$rfva->get_all_OverlapConsequences};
-            } elsif ($cons_format eq 'ncbi') {
-              # not all terms have an ncbi equiv so default to SO
-              $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$rfva->get_all_OverlapConsequences};
-            } else {
-              $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$rfva->get_all_OverlapConsequences};
-            }
+            my $type = $self->render_type($rfva);
             
             my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
             
@@ -340,16 +323,7 @@ sub content {
       $url .= ';regulation_view=variation_feature_variation=normal';
       
       for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
-        my $type;
-        
-        if ($cons_format eq 'so') {
-          $type = join ', ', map { $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$mfva->get_all_OverlapConsequences};
-        } elsif ($cons_format eq 'ncbi') {
-          # not all terms have an ncbi equiv so default to SO
-          $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$mfva->get_all_OverlapConsequences};
-        } else {
-          $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$mfva->get_all_OverlapConsequences};
-        }
+        my $type = $self->render_type($mfva);
         
         my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$rf->stable_id,25);
         
@@ -429,6 +403,26 @@ sub render_motif_score {
   }
   
   return qq{<div align="center"><div class="hidden">$sort_score</div><div class="hidden export" style="float: left;">$message</div><div class="$class" title="$message"></div>$score_text</div>};
+}
+
+sub render_type {
+  my $self = shift;
+  my $tva = shift;
+  my $var_styles  = $self->hub->species_defs->colour('variation');
+  my $colourmap   = $self->hub->colourmap;
+  
+  return join ' ', keys %{{map {$_ => 1}
+    map {
+      sprintf(
+        '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
+        '<span class="_ht conhelp" title="%s">%s</span></nobr>',
+        $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : 'no_colour',
+        $_->description,
+        $_->label
+      )
+    }
+    @{$tva->get_all_OverlapConsequences || []}
+  }};
 }
 
 sub detail_panel {
