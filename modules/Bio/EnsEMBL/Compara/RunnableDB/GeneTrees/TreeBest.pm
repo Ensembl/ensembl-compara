@@ -61,7 +61,7 @@ sub load_species_tree_from_db {
     my ($self) = @_;
     my $mlss_id = $self->param_required('mlss_id');
     my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
-    $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}'))
+    $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}'))
 }
 
 
