@@ -39,7 +39,6 @@ no warnings 'uninitialized';
 use FindBin qw($Bin);
 use File::Basename qw(dirname);
 use POSIX qw(strftime);
-use Net::Domain;
 use Getopt::Long;
 
 my ($help, $rmconfig, $single, $flush, @defines);
@@ -50,7 +49,7 @@ BEGIN {
   unshift @INC, "$serverroot/conf";
 };
 
-use SiteDefs;
+use SiteDefs qw(:ALL);
 
 ## Walk through the plugin tree and see if there's 'ctrl_scripts/*' in there
 ## any files starting with 00_start* to 49_start* will be executed before apache
@@ -60,9 +59,9 @@ use SiteDefs;
 
 my @start_before;
 my @start_after;
-my @T = reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
+my @plugins = reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
 
-while(my ($dir, $name) = splice @T, 0, 2) {
+while(my ($dir, $name) = splice @plugins, 0, 2) {
   $dir = "$dir/ctrl_scripts";
   
   if (opendir(DIR, $dir)) {
@@ -77,6 +76,7 @@ while(my ($dir, $name) = splice @T, 0, 2) {
 @start_after  = sort @start_after;
 
 my $confdir = 'conf';
+
 &GetOptions(
   "confdir=s" => \$confdir,
   "rmconfig"  => \$rmconfig,
@@ -119,9 +119,16 @@ if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
   close LOG; 
 }
 
-my $hostname = Net::Domain::hostfqdn;
+if (! -e "$SiteDefs::ENSEMBL_CONF_DIRS[0]/packed") {
+  warn " Creating directory for packed files at $SiteDefs::ENSEMBL_CONF_DIRS[0]/packed\n";
+  system("mkdir -p $SiteDefs::ENSEMBL_CONF_DIRS[0]/packed");
+}
 
-# start the server
+if ($SiteDefs::ENSEMBL_JSCSS_TYPE && ! -e "$SiteDefs::ENSEMBL_SERVERROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE") {
+  warn " Creating directory for compress js and css at $SiteDefs::ENSEMBL_SERVERROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE\n";
+  system("mkdir -p $SiteDefs::ENSEMBL_SERVERROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE");
+}
+
 if ($rmconfig) {
   warn " Removing config.packed...\n";
   
@@ -154,23 +161,20 @@ if ($flush || $rmconfig) {
 warn "==============================================================================\n";
 
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
-my $cmd  = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
+my $cmd     = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
+my $defines = join ' ', map "-D$_", grep /\S/, split(' ', $SiteDefs::APACHE_DEFINE), @defines;
+my $exe     =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR . '/bin/httpd');
+   $cmd    .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf $defines" . ($single ? ' -X' : '');
 
-my $defines = join(" ",map { "-D$_" } grep { /\S/ } (split(/ /,$SiteDefs::APACHE_DEFINE),@defines));
-my $exe  =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR . '/bin/httpd');
-   $cmd .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf $defines" . ($single ? ' -X' : '');
-
-
-if($single) {
+if ($single) {
   require $_ for @start_before;
   require $_ for @start_after; # Better than not at all?
   warn "About to exec: $cmd\n";
   exec("$cmd");
   die " Could not start server: $!.\n[FATAL] Server start failed.\n";
-
 } else {
   require $_ for @start_before;
-
+  
   system("$cmd") == 0 or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
 
   require $_ for @start_after;
