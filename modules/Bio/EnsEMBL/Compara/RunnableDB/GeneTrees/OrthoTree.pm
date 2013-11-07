@@ -547,6 +547,7 @@ sub store_gene_link_as_homology {
 
   # get the mlss from the database
   my $mlss_type = ($type =~ /^ortholog/ ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES');
+  $mlss_type = 'ENSEMBL_PROJECTIONS' if $type eq 'alt_allele';
   my $gdbs;
   if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
       $gdbs = [$gene1->genome_db];
