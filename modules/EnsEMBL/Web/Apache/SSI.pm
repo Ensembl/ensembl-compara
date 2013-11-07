@@ -5,8 +5,6 @@ use strict;
 use Apache2::Const qw(:common :methods :http);
 use Compress::Zlib;
 
-use SiteDefs qw(:APACHE);
-
 use EnsEMBL::Web::Controller::Doxygen;
 use EnsEMBL::Web::Controller::SSI;
 
@@ -17,7 +15,7 @@ sub handler {
   my ($r, $cookies) = @_;
   my $i = 0;
   ## First of all check that we should be doing something with the page...
-
+  
   ## Pick up DAS entry points requests and
   ## uncompress them dynamically
   
