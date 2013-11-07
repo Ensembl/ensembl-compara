@@ -42,7 +42,7 @@ sub content {
     $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
   }
   
-  $msg .= qq(<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/docs/variation/predicted_data.html#consequence_type_table">More information about this table</a>.</p>);
+  $msg .= qq(<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/genome/variation/predicted_data.html#consequence_type_table">More information about this table</a>.</p>);
 
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
@@ -67,18 +67,16 @@ sub make_table {
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
-    { key => 'ID',       width => '12u', sort => 'html',                                                      help => 'Variant identifier'                            },
-    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $self->strip_HTML($glossary->{'Chr:bp'})        },
-    { key => 'Alleles',  width => '16u', sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                       },
-    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $self->strip_HTML($glossary->{'Class'})         },
-    { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $self->strip_HTML($glossary->{'Source'})        },
-    { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => 'Evidence codes reflect the data supporting
-                                                                                                                       the variant.  They are: Multiple Observations,
-                                                                                                                       Frequency, HapMap, 1000 Genomes, and Cited.'   },
-    { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                         },
-    { key => 'snptype',  width => '12u', sort => 'string',          label => 'Type',                          help => 'Consequence type'                              }, 
-    { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                       },
-    { key => 'aacoord',  width => '6u',  sort => 'position',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                        }
+    { key => 'ID',       width => '12u', sort => 'html',                                                      help => 'Variant identifier'                                        },
+    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $self->strip_HTML($glossary->{'Chr:bp'})                    },
+    { key => 'Alleles',  width => '16u', sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                                   },
+    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $self->strip_HTML($glossary->{'Class'})                     },
+    { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $self->strip_HTML($glossary->{'Source'})                    },
+    { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => $self->strip_HTML($glossary->{'Evidence status (variant)'}) },
+    { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                                     },
+    { key => 'snptype',  width => '12u', sort => 'string',          label => 'Type',                          help => 'Consequence type'                                          }, 
+    { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                                   },
+    { key => 'aacoord',  width => '6u',  sort => 'position',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                                    }
   ];
   
   # submitter data for LRGs
