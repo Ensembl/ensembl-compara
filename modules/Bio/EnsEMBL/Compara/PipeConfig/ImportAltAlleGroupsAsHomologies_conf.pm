@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::PipeConfig::ImportPatchProjectionsAsHomologies_conf
+    Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf
 
 =head1 DESCRIPTION  
 
@@ -12,7 +12,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::ImportPatchProjectionsAsHomologies_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf;
 
 use strict;
 use warnings;
@@ -25,17 +25,27 @@ sub default_options {
 
         'host'            => 'compara3',    # where the pipeline database will be created
 
-        'rel_with_suffix' => $self->o('ensembl_release'),
-        'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
+        'pipeline_name'   => 'homology_projections_'.$self->o('ensembl_release'),   # also used to differentiate submitted processes
 
         # URLs of other databases (from which we inherit the members and sequences, and base objects)
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'family_db'       => 'mysql://ensro@compara2/lg4_compara_families_73',
-        'ncrnatrees_db'   => 'mysql://ensro@compara3/mp12_compara_nctrees_73',
+        'family_db'       => 'mysql://ensro@compara2/lg4_compara_families_74_with_sheep',
+        'ncrnatrees_db'   => 'mysql://ensro@compara4/mp12_compara_nctrees_74sheep',
 
+        # Tables to copy and merge
+        'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+        'tables_to_merge'       => [ 'member', 'sequence' ],
+        'tables_to_copy'        => [ 'genome_db' ],
     };
 }
 
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    }
+}
 
 
 sub resource_classes {
@@ -43,8 +53,8 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-         '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
-        'patch_import'  => { 'LSF' => '-C0 -M250000 -R"select[mem>250] rusage[mem=250]"' },
+         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+        'patch_import'  => { 'LSF' => '-C0 -M250 -R"select[mem>250] rusage[mem=250]"' },
     };
 }
 
@@ -53,17 +63,23 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
+        {   -logic_name => 'pipeline_start_analysis',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -input_ids => [ { }, ],
+            -flow_into => {
+                '1->A' => [ 'copy_from_master_factory', 'copy_from_familydb_factory', 'merge_tables_factory' ],
+                'A->1' => [ 'offset_tables' ],
+            },
+        },
+
         {   -logic_name => 'copy_from_master_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'     => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+                'inputlist'     => $self->o('tables_from_master'),
                 'column_names'  => [ 'table' ],
             },
-            -input_ids => [ { }, ],
             -flow_into => {
-                '1->A' => [ 'copy_from_familydb_factory' ],
-                '2->A' => [ 'copy_table_from_master_db'  ],
-                'A->1' => [ 'offset_tables' ],
+                2 => [ 'copy_table_from_master_db'  ],
             },
         },
 
@@ -78,21 +94,32 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_from_familydb_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'     => [ 'genome_db', 'sequence', 'member' ],
+                'inputlist'     => $self->o('tables_to_copy'),
                 'column_names'  => [ 'table' ],
             },
             -flow_into => {
-                2 => [ 'copy_table_from_family_db'  ],
+                2 => [ 'topup_table_from_family_db'  ],
             },
         },
 
-        {   -logic_name    => 'copy_table_from_family_db',
+        {   -logic_name => 'merge_tables_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'     => $self->o('tables_to_merge'),
+                'column_names'  => [ 'table' ],
+            },
+            -flow_into => {
+                2 => [ 'topup_table_from_ncrna_db' ],
+            },
+        },
+
+ 
+        {   -logic_name    => 'topup_table_from_family_db',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
                 'src_db_conn'   => $self->o('family_db'),
-                'mode'          => 'overwrite',
+                'mode'          => 'topup',
             },
-            -flow_into     => [ 'topup_table_from_ncrna_db' ],
         },
 
         {   -logic_name    => 'topup_table_from_ncrna_db',
@@ -101,6 +128,7 @@ sub pipeline_analyses {
                 'src_db_conn'   => $self->o('ncrnatrees_db'),
                 'mode'          => 'topup',
             },
+            -flow_into      => [ 'topup_table_from_family_db' ],
         },
 
 
@@ -123,16 +151,29 @@ sub pipeline_analyses {
                 'inputquery'    => 'SELECT genome_db_id FROM genome_db',
             },
             -flow_into => {
-                2 => [ 'import_projections_as_homologies' ],
+                2   => [ 'altallegroup_factory' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {
+            -logic_name => 'altallegroup_factory',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_dbID', '#genome_db_id#'], 'db_adaptor', 'get_AltAlleleGroupAdaptor', 'fetch_all' ],
+                'column_names2getters'  => { 'alt_allele_group_id' => 'dbID' },
+            },
+            -flow_into => {
+                '2->A' => [ 'import_projections_as_homologies' ],
+                'A->1' => [ 'update_member_display_labels' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
 
         {   -logic_name => 'import_projections_as_homologies',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportPatchProjectionsAsHomologies',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
             -rc_name    => 'patch_import',
-            -flow_into  => [ 'update_member_display_labels' ],
         },
 
         {
