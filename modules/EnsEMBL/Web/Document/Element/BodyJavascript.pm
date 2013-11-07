@@ -20,15 +20,9 @@ sub debug      { return $_[0]{'debug'} ||= $_[0]->hub->param('debug') eq 'js'; }
 sub content    { return $_[0]{'scripts'}; }
 sub add_script { $_[0]{'scripts'} .= qq{  <script type="text/javascript">\n$_[1]</script>\n} if $_[1]; }
 
-sub add_plugin_sources {
-  my $self = shift;
-  $self->$_ for grep /^add_sources_\w+$/, sort keys %EnsEMBL::Web::Document::Element::BodyJavascript::;
-}
-
 sub init {
   my $self = shift;
   $self->add_sources('components', 'ENSEMBL_JS_NAME', sub { $_[0] =~ /^\d/ && -f "$_[1]/$_[0]"; });
-  $self->add_plugin_sources;
 }
 
 sub add_sources {

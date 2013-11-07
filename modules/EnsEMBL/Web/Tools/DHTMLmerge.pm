@@ -19,11 +19,8 @@ use JavaScript::Minifier;
 sub merge_all {
   my $species_defs = shift;
   
-  $species_defs->{'_storage'}{'ENSEMBL_CSS_NAME'}   = merge($species_defs, 'css');
-  $species_defs->{'_storage'}{'ENSEMBL_JS_NAME'}    = merge($species_defs, 'js');
-  
-  no strict 'refs';
-  &$_($species_defs) for grep /^merge_plugin_\w+$/, sort keys %EnsEMBL::Web::Tools::DHTMLmerge::;
+  $species_defs->{'_storage'}{'ENSEMBL_CSS_NAME'} = merge($species_defs, 'css');
+  $species_defs->{'_storage'}{'ENSEMBL_JS_NAME'}  = merge($species_defs, 'js');
   
   $species_defs->store;
 }

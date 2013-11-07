@@ -15,11 +15,6 @@ sub new {
   });
 }
 
-sub add_plugin_sheets {
-  my $self = shift;
-  $self->$_ for grep /^add_sheets_\w+$/, sort keys %EnsEMBL::Web::Document::Element::Stylesheet::;
-}
-
 sub init {
   my $self         = shift;
   my $controller   = shift;
@@ -50,8 +45,6 @@ sub init {
       $self->add_sheet($attrs{'media'} || 'all', $attrs{'href'}) if $attrs{'href'};
     }
   }
-  
-  $self->add_plugin_sheets;
 }
 
 sub add_sheet {
