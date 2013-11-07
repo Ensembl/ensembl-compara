@@ -370,6 +370,10 @@ sub variation_table {
     source => undef,
   });
   
+  # colourmap
+  my $var_styles = $hub->species_defs->colour('variation');
+  my $colourmap  = $hub->colourmap;
+  
   if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
     my $gene_stable_id        = $transcripts->[0] && $transcripts->[0]->gene ? $transcripts->[0]->gene->stable_id : undef;
        $url_transcript_prefix = 'lrgt';
@@ -453,9 +457,20 @@ sub variation_table {
           
           # sort out consequence type string
           # Avoid duplicated Ensembl terms
-          my %term   = map { $hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession) => 1 } @{$tva->get_all_OverlapConsequences || []};
-          my $type   = join ',<br />', keys %term;
-             $type ||= '-';
+          my $type = join ' ',
+            keys %{{map {$_ => 1}
+              map {
+                sprintf(
+                  '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
+                  '<span class="_ht conhelp" title="%s">%s</span></nobr>',
+                  $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : 'no_colour',
+                  $_->description,
+                  $_->label
+                )
+              }
+              @{$tva->get_all_OverlapConsequences || []}
+            }};
+          $type ||= '-';
           
           my $sift = $self->render_sift_polyphen($tva->sift_prediction,     $tva->sift_score);
           my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
