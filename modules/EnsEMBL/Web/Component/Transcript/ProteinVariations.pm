@@ -19,8 +19,9 @@ sub content {
   return $self->non_coding_error unless $object->translation_object;
 
   my $hub         = $self->hub;
+  my $var_styles  = $self->hub->species_defs->colour('variation');
+  my $colourmap   = $self->hub->colourmap;
   my $glossary    = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
-  my $cons_format = $hub->param('consequence_format');
   my $show_scores = $hub->param('show_scores');
   my @data;
   
@@ -59,17 +60,19 @@ sub content {
     $allele =~ s/$var_allele/<b>$var_allele<\/b>/ if $allele =~ /\//;
     
     # consequence type
-    my $type;
-    
-    if($cons_format eq 'so') {
-      $type = join ", ", map {$hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession)} @{$tva->get_all_OverlapConsequences};
-    }
-    
-    else {
-      # Avoid duplicated Ensembl terms
-      my %ens_term = map { '<span title="'.$_->description.'">'.$_->display_term.'</span>' => 1 } @{$tva->get_all_OverlapConsequences};
-      $type = join ', ', keys(%ens_term);
-    }
+    my $type = join ' ',
+      keys %{{map {$_ => 1}
+        map {
+          sprintf(
+            '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
+            '<span class="_ht conhelp" title="%s">%s</span></nobr>',
+            $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : 'no_colour',
+            $_->description,
+            $_->label
+          )
+        }
+        @{$tva->get_all_OverlapConsequences || []}
+      }};
     
     push @data, {
       res    => $snp->{'position'},
@@ -86,29 +89,25 @@ sub content {
   } 
    
   my $columns = [
-    { key => 'res',    title => 'Residue',            width => '5%',  sort => 'numeric', help => 'Residue number on the protein sequence'},
+    { key => 'res',    title => 'Residue',            width => '8%',  sort => 'numeric', help => 'Residue number on the protein sequence'},
     { key => 'id',     title => 'Variation ID',       width => '10%', sort => 'html',    help => 'Variant identifier' }, 
-    { key => 'type',   title => 'Variation type',     width => '20%', sort => 'string',  help => 'Consequence type' }, 
+    { key => 'type',   title => 'Type',               width => '20%', sort => 'string',  help => 'Consequence type' }, 
     { key => 'status', title => 'Evidence',           width => '10%', sort => 'string',  help =>  $self->strip_HTML($glossary->{'Evidence status (variant)'}) },
     { key => 'allele', title => 'Alleles',            width => '10%', sort => 'string',  help => 'Alternative nucleotides' },
-    { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  sort => 'string',  help => 'IUPAC nucleotide ambiguity code' },
+    { key => 'ambig',  title => 'Ambig. code',        width => '8%',  sort => 'string',  help => 'IUPAC nucleotide ambiguity code' },
     { key => 'alt',    title => 'Residues',           width => '10%', sort => 'string',  help => 'Resulting amino acid(s)'  },
     { key => 'codons', title => 'Codons',             width => '10%', sort => 'string',  help => 'Resulting codon(s), with the allele(s) displayed in bold' },
   ];
  
   # add SIFT for supported species
   if ($hub->species =~ /homo_sapiens|bos_taurus|canis_familiaris|danio_rerio|gallus_gallus|mus_musculus|rattus_norvegicus|sus_scrofa/i) {
-    push @$columns, ({ key => 'sift', title => 'SIFT', width => '10%', align => 'center', sort => 'position_html', $self->strip_HTML($glossary->{'SIFT'}) });
+    push @$columns, ({ key => 'sift', title => 'SIFT', width => '8%', align => 'center', sort => 'position_html', $self->strip_HTML($glossary->{'SIFT'}) });
   }
   if ($hub->species =~ /homo_sapiens/i) {
-    push @$columns, ({ key => 'poly', title => 'PolyPhen', width => '10%', align => 'center', sort => 'position_html', $self->strip_HTML($glossary->{'PolyPhen'}) });
+    push @$columns, ({ key => 'poly', title => 'PolyPhen', width => '8%', align => 'center', sort => 'position_html', $self->strip_HTML($glossary->{'PolyPhen'}) });
   }
   
-  my $html = $self->new_table($columns, \@data, { data_table => 1, sorting => [ 'res asc' ], class => 'cellwrap_inside fast_fixed_table' })->render;
-  
-  $html .= $self->_info('Information','<p><span style="color:red;">*</span> SO terms are shown when no NCBI term is available</p>', '50%') if $cons_format eq 'ncbi';
-  
-  return $html;
+  return $self->new_table($columns, \@data, { data_table => 1, sorting => [ 'res asc' ], class => 'cellwrap_inside fast_fixed_table' })->render;
 }
 
 1;
