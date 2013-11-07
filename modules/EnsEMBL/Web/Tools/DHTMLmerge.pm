@@ -19,7 +19,6 @@ use JavaScript::Minifier;
 sub merge_all {
   my $species_defs = shift;
   
-  $species_defs->{'_storage'}{'ENSEMBL_JSCSS_TYPE'} = 'minified';
   $species_defs->{'_storage'}{'ENSEMBL_CSS_NAME'}   = merge($species_defs, 'css');
   $species_defs->{'_storage'}{'ENSEMBL_JS_NAME'}    = merge($species_defs, 'js');
   
