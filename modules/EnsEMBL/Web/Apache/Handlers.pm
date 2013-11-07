@@ -136,6 +136,8 @@ sub redirect_to_nearest_mirror {
             my $geocity_dat_file = $species_defs->ENSEMBL_SERVERROOT;
             $geocity_dat_file .= $species_defs->GEOCITY_DAT || '/geocity/GeoLiteCity.dat';
             my $ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
+              ($ip) = split /,/, $ip; # ignore IP6
+
             if ( -e $geocity_dat_file ) {
                 require Geo::IP;
                 eval {
