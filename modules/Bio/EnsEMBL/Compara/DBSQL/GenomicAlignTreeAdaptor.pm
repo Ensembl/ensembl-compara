@@ -431,7 +431,7 @@ sub fetch_by_genomic_align_block_id {
                 fetch_all_by_genomic_align_block_id. Retrieve the corresponding
                Bio::EnsEMBL::Compara::GenomicAlignTree object. 
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree object. 
-  Exceptions : Returns ref. to an empty array if no matching
+  Exceptions : Returns undef if no 
                Bio::EnsEMBL::Compara::GenomicAlignTree object can be retrieved
   Caller     : $object->method_name
   Status     : At risk
@@ -458,6 +458,9 @@ sub _fetch_by_genomic_align_block {
   my ($root_id) = $sth->fetchrow_array();
   $sth->finish();
 
+  #return unless a root_id has been found
+  return undef unless ($root_id);
+
   #print STDERR "root_id $root_id\n";
   #whole tree
   $sql = "SELECT " . join(",", $self->_columns) .  
@@ -479,7 +482,7 @@ sub _fetch_by_genomic_align_block {
     warning("Found more than 1 tree. This shouldn't happen. Returning the first one only");
   }
   if (@$genomic_align_trees == 0) {
-    return;
+    return undef;
   }
   my $genomic_align_tree = $genomic_align_trees->[0];
 
