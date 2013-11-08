@@ -196,6 +196,7 @@ sub dynamic_use {
     cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~ /^Can't locate $path/;
     
     $FAILED_MODULES{$classname} = $@;
+    $@ = undef;
     return 0;
   }
   
