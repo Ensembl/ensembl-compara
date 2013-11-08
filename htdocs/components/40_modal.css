@@ -50,14 +50,15 @@ body.ie6 #modal_panel .modal_title ul           { position: relative; }
 body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 
 
-#modal_panel .modal_overlay_bg             { top: -20px; left: 0; width: 100%; height: 100%; padding: 20px 2px 0 0; background-color: [[MH_BORDER]]; z-index: 10000; opacity: 0.5; filter: Alpha(Opacity=50); }
+#modal_panel .modal_overlay_bg              { top: -20px; left: 0; width: 100%; height: 100%; padding: 20px 2px 0 0; background-color: [[MH_BORDER]]; z-index: 10000; opacity: 0.5; filter: Alpha(Opacity=50); }
 #modal_panel .modal_overlay_bg,
-#modal_panel .modal_overlay                { display: none; position: absolute; }
-#modal_panel .modal_overlay                { top: 32px; left: 50%; z-index: 10001; background-color: #FFF; padding: 16px; border: 2px solid #000; }
-#modal_panel .modal_overlay .overlay_close { position: absolute; top: -10px; right: -10px; cursor: pointer; }
-#modal_panel .modal_overlay form           { margin: 0; }
-#modal_panel .modal_overlay input.fbutton  { width: 100%; margin-bottom: 0; cursor: pointer; }
-#modal_panel .modal_overlay h1             { margin-bottom: 16px; border-bottom: 1px solid [[PANEL_TEXT]]; word-break: break-all; }
+#modal_panel .modal_overlay                 { display: none; position: absolute; }
+#modal_panel .modal_overlay                 { top: 32px; left: 50%; z-index: 10001; background-color: #FFF; padding: 16px; border: 2px solid #000; }
+#modal_panel .modal_overlay .overlay_close  { position: absolute; top: -10px; right: -10px; cursor: pointer; }
+#modal_panel .modal_overlay .overlay_scroll { height: 300px; padding-right: 26px; overflow-x: hidden; overflow-y: auto; }
+#modal_panel .modal_overlay form            { margin: 0; }
+#modal_panel .modal_overlay input.fbutton   { width: 100%; margin-bottom: 0; cursor: pointer; }
+#modal_panel .modal_overlay h1              { margin-bottom: 16px; border-bottom: 1px solid [[PANEL_TEXT]]; word-break: break-all; }
 
 .modal_content                   { position: absolute; height: 100%; width: 100%; overflow: auto; border: solid [[PANEL_TEXT]]; border-width: 0 1px 1px; background-color: [[PANEL_BG]]; }
 .modal_content .panel            { padding: 0; margin: 0; }
