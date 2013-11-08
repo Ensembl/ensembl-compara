@@ -51,11 +51,11 @@
 .share_config .fbutton              { width: auto!important; }
 .share_config fieldset.group h2 .or { font-size: 16px; left: -13px; position: absolute; top: -1px; padding-bottom: 8px; background: #FFF; }
 
-.edit_config_set                     { width: 600px; }
+.edit_config_set                     { position: relative; width: 600px; }
 .edit_config_set .dataTables_length  { display: none; }
 .edit_config_set label.ff-label      { width: 220px; }
 .edit_config_set div.ff-right        { padding-left: 220px; }
-.edit_config_set .fnotes             { position: absolute; bottom: 60px; margin: 0; }
+.edit_config_set .fnotes             { position: absolute; bottom: 42px; margin: 0; }
 .edit_config_set .ff-checklist       { float: left; margin-bottom: 0; }
 .edit_config_set .ff-checklist input { position: relative; top: 2px; }
 .edit_config_set input.ftext         { width: 246px; }
