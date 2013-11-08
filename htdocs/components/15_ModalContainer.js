@@ -8,6 +8,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     Ensembl.EventManager.register('modalClose',       this, this.hide);
     Ensembl.EventManager.register('modalOverlayShow', this, this.showOverlay);
     Ensembl.EventManager.register('modalOverlayHide', this, this.hideOverlay);
+    Ensembl.EventManager.register('modalPanelResize', this, this.resizeOverlay);
     Ensembl.EventManager.register('queuePageReload',  this, this.setPageReload);
     Ensembl.EventManager.register('addModalContent',  this, this.addContent);
     Ensembl.EventManager.register('setActivePanel',   this, function (panelId) { this.activePanel = panelId; this.elLk.content.filter('#' + panelId).addClass('active'); });
@@ -112,15 +113,35 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   },
   
   showOverlay: function (el) {
+    this.overlayShown = true;
+    
     this.elLk.overlayContent.children().detach().end().append(el);
     this.elLk.overlay.show().css({ marginLeft: -this.elLk.overlay.outerWidth() / 2 });
+    
+    this.resizeOverlay();
+    
     this.elLk.overlayBg.show();
     this.elLk.closeButton.hide();
   },
   
   hideOverlay: function () {
+    this.overlayShown = false;
+    
     this.elLk.closeButton.show();
     this.elLk.overlayBg.add(this.elLk.overlay).hide();
+  },
+  
+  resizeOverlay: function () {
+    if (this.overlayShown) {
+      this.elLk.overlayContent.removeClass('overlay_scroll').height('auto');
+      
+      var panelHeight   = this.el.height();
+      var overlayHeight = this.elLk.overlay.outerHeight();
+      
+      if (this.elLk.overlay.offset().top + overlayHeight > this.el.offset().top + panelHeight) {
+        this.elLk.overlayContent.height(panelHeight - this.elLk.overlay.position().top * 2 - (overlayHeight - this.elLk.overlay.height())).addClass('overlay_scroll');
+      }
+    }
   },
   
   getContent: function (url, id) {
