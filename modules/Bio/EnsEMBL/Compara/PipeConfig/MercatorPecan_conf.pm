@@ -51,13 +51,13 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '71',
+        'release'               => '74',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
-	'dbname'                => $ENV{USER}.'_pecan_20way_'.$self->o('release').$self->o('release_suffix'),
+	'dbname'                => $ENV{USER}.'_pecan_21way_'.$self->o('release').$self->o('release_suffix'),
         'work_dir'              => '/lustre/scratch109/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
-	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
-#	'do_not_reuse_list'     => [ 87 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+#	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
         'species_set' => undef, 
 
@@ -125,13 +125,13 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        'host'        => 'compara3',            #separate parameter to use the resources aswell
+        'host'        => 'compara5',            #separate parameter to use the resources aswell
         'pipeline_db' => {                      # the production database itself (will be created)
             -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_pecan_20way_'.$self->o('rel_with_suffix'),
+            -dbname => $ENV{'USER'}.'_pecan_21way_'.$self->o('rel_with_suffix'),
 	    -driver => 'mysql',
         },
 
@@ -169,11 +169,11 @@ sub default_options {
        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
 
        'reuse_db' => {   # usually previous pecan production database
-           -host   => 'compara2',
+           -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'kb3_pecan_20way_70',
+           -dbname => 'kb3_pecan_20way_71',
 	   -driver => 'mysql',
         },
 
@@ -293,8 +293,8 @@ sub pipeline_analyses {
 		-parameters => {
 				'mlss_id' => $self->o('mlss_id'),
 				'sql'   => [
-					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr(($mlss_id * 10**10) + 1)expr#',
-					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr(($mlss_id * 10**10) + 1)expr#',
+					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#mlss_id# * 10**10) + 1)expr#',
+					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#mlss_id# * 10**10) + 1)expr#',
 					   ],
 			       },
 		-flow_into => {
@@ -661,6 +661,8 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem1'),
                  'mlss_id'                    => $self->o('mlss_id'),
 		 'jar_file'                   => $self->o('jar_file'),
+                 'exonerate'                  => $self->o('exonerate_exe'),
+                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -679,6 +681,8 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem2'),
                  'mlss_id'                    => $self->o('mlss_id'),
                  'jar_file'                   => $self->o('jar_file'),
+                 'exonerate'                  => $self->o('exonerate_exe'),
+                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -697,6 +701,8 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem3'),
                  'mlss_id'                    => $self->o('mlss_id'),
                  'jar_file'                   => $self->o('jar_file'),
+                 'exonerate'                  => $self->o('exonerate_exe'),
+                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -720,7 +726,7 @@ sub pipeline_analyses {
              },
              -hive_capacity => 500,  
              -flow_into => {
-		 2 => [ 'gerp_himem'], #retry with more memory
+		 -1 => [ 'gerp_himem'], #retry with more memory
              },
 	     -rc_name => 'gerp',
          },
@@ -731,6 +737,7 @@ sub pipeline_analyses {
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
                  'mlss_id'         => $self->o('mlss_id'),  #to retrieve species_tree from mlss_tag table
+                 'do_transactions' => $self->o('do_transactions'),
              },
             -hive_capacity => 500,  
 	     -rc_name => 'higerp',
