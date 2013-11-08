@@ -56,7 +56,7 @@ sub default_options {
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '73',
+	'release'               => '74',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
@@ -384,7 +384,7 @@ sub pipeline_analyses {
 	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => 'store_sequence',
- 	       -hive_capacity => 100,
+ 	       -hive_capacity => 50,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { },
 	       -flow_into => {
@@ -551,6 +551,7 @@ sub pipeline_analyses {
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
+                               'overwrite'=>1,
 			      },
 	       -can_be_empty  => 1, 
 	       -hive_capacity => 10,
@@ -564,6 +565,7 @@ sub pipeline_analyses {
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
+                               'overwrite'=>1,
 			      },
 	       -hive_capacity => 10,
 	       -can_be_empty  => 1, 
