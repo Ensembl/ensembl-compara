@@ -305,11 +305,6 @@ sub append_HTML {
   return 1;
 }
 
-sub add_attribute {
-  #Use &set_attribute, not &add_attribute
-  return shift->set_attribute(@_);
-}
-
 sub _parse_HTML_to_nodes {
   ## private method used in &inner_HTML
   ## function to parse HTML from a string to tree structure
