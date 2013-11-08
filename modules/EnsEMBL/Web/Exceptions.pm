@@ -52,7 +52,7 @@ sub try (&$) {
   eval { &$try };
   if ($@) {
     local $_ = ref $@ && UNIVERSAL::isa($@, $EXCEPTION_BASE) ? $@ : $EXCEPTION_BASE->new($@);
-    local $@ = undef;
+    $@ = undef;
     &$catch;
   }
 }
