@@ -131,9 +131,8 @@ sub dumpNibFiles {
 
       my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
-      #don't dump nibfile if it already exists
-      unless (-e $nibfile) {
-
+      #don't dump nibfile if it already exists and don't want to overwrite. Default is to overwrite
+      if (! -e $nibfile || $self->param("overwrite")) {
           my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
           
           #$dna_object->dump_to_fasta_file($fastafile);
