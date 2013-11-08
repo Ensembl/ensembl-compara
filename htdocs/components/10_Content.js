@@ -56,19 +56,28 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $('.navbar', this.el).width(Ensembl.width);
     
     this.elLk.ajaxLoad.each(function () {
-      var url = $('input.ajax_load', this).val();
-      
+      var input = $('input.ajax_load', this);
+      var url   = input.val();
+      var type  = input.hasClass('post') ? 'post' : 'get';
+      var data;
+
       if (!url) {
         return;
       }
       
       if (url.match(/\?/)) {
         url = Ensembl.replaceTimestamp(url);
-      } else {
+        
+        if (type === 'post') {
+          url  = url.split('?');
+          data = url[1];
+          url  = url[0];
+        }
+      } else if (type === 'get') {
         url += '?';
       }
       
-      panel.getContent(url, $(this), { updateURL: url + ';update_panel=1' });
+      panel.getContent(url, $(this), { updateURL: url + ';update_panel=1', updateType: type, updateData: data });
     });
   },
   
@@ -104,9 +113,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     this.xhr = $.ajax({
       url: url,
-      data: typeof newContent === 'object' ? newContent : {},
+      data: params.updateData || (typeof newContent === 'object' ? newContent : {}),
       dataType: 'html',
       context: this,
+      type: params.updateType,
       success: function (html) {
         if (html) {
           Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class="[^<]*panel_type[^<]*"[^<]*>/) || [])[0]).val() || 'Content', html, el, params);

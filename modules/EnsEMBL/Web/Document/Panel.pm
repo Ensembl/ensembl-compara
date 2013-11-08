@@ -380,7 +380,8 @@ sub component_content {
     }
     
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
-    if ($component->ajaxable && !$ajax_request && $is_html) {
+    my $ajaxable = $component->ajaxable;
+    if ($ajaxable && !$ajax_request && $is_html) {
       my $url   = $component->ajax_url($content_function);
       my $class = 'initial_panel' . ($component->has_image == 1 ? ' image_panel' : ''); # classes required by the javascript
       
@@ -389,7 +390,7 @@ sub component_content {
       # Without this, ajax panels don't load, or load the wrong content.
       my ($panel_name) = $self =~ /\((.+)\)$/;
       
-      $html .= sprintf qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url);
+      $html .= sprintf qq{<div class="ajax $class"><input type="hidden" class="ajax_load%s" name="$panel_name" value="%s" /></div>}, $ajaxable eq 'post' ? ' post' : '', encode_entities($url);
     } else {
       my $content;
       
