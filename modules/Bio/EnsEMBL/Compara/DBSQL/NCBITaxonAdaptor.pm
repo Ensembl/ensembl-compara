@@ -140,6 +140,37 @@ sub fetch_node_by_genome_db_id {
 }
 
 
+=head2 fetch_all_nodes_by_name
+
+  Arg [1]    : $name: the name to search in the database. It can be
+                a MySQL pattern (e.g. with '%' or '_')
+  Arg [2]    : $name_class: a name class to restrict the search to
+                (such as 'synonym', 'common name', etc)
+  Example    : $dogs = $nbcitaxonDBA->fetch_all_nodes_by_name('Canis%');
+  Description: Returns the list of NCBITaxon objects that match $name
+                (and $name_class if given)
+  Returntype : arrayref of Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_all_nodes_by_name {
+    my ($self, $name, $name_class) = @_;
+
+    if ($name_class) {
+        my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = ? AND t.taxon_id = n2.taxon_id']];
+        $self->bind_param_generic_fetch($name, SQL_VARCHAR);
+        $self->bind_param_generic_fetch($name_class, SQL_VARCHAR);
+        return $self->generic_fetch('n2.name LIKE ?', $join);
+    } else{
+        my $join = [[['ncbi_taxa_name', 'n2'], 't.taxon_id = n2.taxon_id']];
+        $self->bind_param_generic_fetch($name, SQL_VARCHAR);
+        return $self->generic_fetch('n2.name LIKE ?', $join);
+    }
+}
+
+
 #
 # Methods reimplemented because of the SQL column taxon_id (instead of node_id)
 ################################################################################
