@@ -219,10 +219,10 @@ foreach my $spp (@valid_spp) {
     my %glossary_lookup   = (
       'coding'              => 'Protein coding',
       'alt_coding'          => 'Protein coding',
-      'shortnoncoding'      => 'Short Non coding',
-      'alt_shortnoncoding'  => 'Short Non coding',
-      'longnoncoding'       => 'Long Non coding',
-      'alt_longnoncoding'   => 'Long Non coding',
+      'shortnoncoding'      => 'Short non coding gene',
+      'alt_shortnoncoding'  => 'Short non coding gene',
+      'longnoncoding'       => 'Long non coding gene',
+      'alt_longnoncoding'   => 'Long non coding gene',
       'pseudogene'          => 'Pseudogene',
       'alt_pseudogene'      => 'Pseudogene',
       'transcript'          => 'Transcript',
@@ -231,16 +231,16 @@ foreach my $spp (@valid_spp) {
 
     my %gene_title        = (
       'coding'              => 'Coding genes',
-      'shortnoncoding'      => 'Short Non coding genes',
-      'longnoncoding'       => 'Long Non coding genes',
+      'shortnoncoding'      => 'Short non coding genes',
+      'longnoncoding'       => 'Long non coding genes',
       'pseudogene'          => 'Pseudogenes',
       'transcript'          => 'Gene transcripts'
     );
 
     my %alt_gene_title        = (
       'alt_coding'          => 'Coding genes',
-      'alt_shortnoncoding'  => 'Short Non coding genes',
-      'alt_longnoncoding'   => 'Long Non coding genes',
+      'alt_shortnoncoding'  => 'Short non coding genes',
+      'alt_longnoncoding'   => 'Long non coding genes',
       'alt_pseudogene'      => 'Pseudogenes',
       'alt_transcript'      => 'Gene transcripts'
     );
