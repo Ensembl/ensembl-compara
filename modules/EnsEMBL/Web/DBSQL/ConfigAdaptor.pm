@@ -21,7 +21,7 @@ sub new {
     hub        => $hub,
     session_id => $hub->session->session_id,
     user_id    => $user ? $user->id : undef,
-    group_ids  => $user ? [ map { $_->group_id => 1 } $user->get_groups ] : [],
+    group_ids  => [ $user ? map($_->group_id, $user->get_groups) : (), @{$species_defs->ENSEMBL_DEFAULT_USER_GROUPS || []} ], 
     servername => $species_defs->ENSEMBL_SERVERNAME,
     site_type  => $species_defs->ENSEMBL_SITETYPE,
     version    => $species_defs->ENSEMBL_VERSION,
@@ -35,13 +35,13 @@ sub new {
   return $self;
 }
 
-sub hub          { return $_[0]{'hub'};          }
-sub user_id      { return $_[0]{'user_id'};      }
-sub servername   { return $_[0]{'servername'};   }
-sub site_type    { return $_[0]{'site_type'};    }
-sub version      { return $_[0]{'version'};      }
-sub cache_tags   { return $_[0]{'cache_tags'};   }
-sub group_ids    { return @{$_[0]{'group_ids'}}; }
+sub hub          { return $_[0]{'hub'};        }
+sub user_id      { return $_[0]{'user_id'};    }
+sub servername   { return $_[0]{'servername'}; }
+sub site_type    { return $_[0]{'site_type'};  }
+sub version      { return $_[0]{'version'};    }
+sub cache_tags   { return $_[0]{'cache_tags'}; }
+sub group_ids    { return $_[0]{'group_ids'};  }
 sub admin_groups { return $_[0]{'admin_groups'} ||= { map { $_->group_id => $_ } $_[0]->hub->user->find_admin_groups }; }
 sub session_id   { return $_[0]{'session_id'}   ||= $_[0]->hub->session->session_id; }
 
@@ -65,7 +65,7 @@ sub dbh {
 sub record_type_query {
   my $self   = shift;
   my @ids    = grep $_, $self->session_id, $self->user_id;
-  my @groups = $self->group_ids;
+  my @groups = @{$self->group_ids};
   my $where  = '(cd.record_type = "session" AND cd.record_type_id = ?)';
      $where .= qq{ OR (cd.record_type = "user" AND cd.record_type_id = ?)} if scalar @ids == 2;
      $where .= sprintf qq{ OR (cd.record_type = "group" AND cd.record_type_id IN (%s))}, join ',', map '?', @groups if scalar @groups;
