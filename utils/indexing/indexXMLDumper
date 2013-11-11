@@ -22,6 +22,7 @@ use Data::Dumper;
 use Getopt::Long;
 use POSIX qw(strftime);
 use HTML::Strip;
+use Digest::MD5 qw(md5_hex);
 
 $| = 1;
 
@@ -1806,7 +1807,7 @@ sub dumpGene {
     header($fh);
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
-      'select external_db_id, db_name, db_display_name
+      'select external_db_id, db_display_name
          from external_db', 'external_db_id'
        );
     my $external_synonyms;
@@ -1817,24 +1818,43 @@ sub dumpGene {
 
     my %xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
+      my $t = lc($type);
       my $sql = qq(
-         SELECT ox.ensembl_id, x.display_label, x.dbprimary_acc,
-                x.description, x.external_db_id, x.xref_id
-           FROM $dbname.object_xref as ox, $dbname.xref as x
-          WHERE ox.ensembl_object_type = '$type'
-            AND ox.xref_id = x.xref_id );
+         SELECT f.stable_id, x.external_db_id, x.display_label, x.description, x.xref_id
+           FROM $dbname.$t as f, $dbname.object_xref as ox, $dbname.xref as x
+          WHERE f.${t}_id = ox.ensembl_id
+            AND ox.xref_id = x.xref_id 
+            AND ox.ensembl_object_type = '$type');
       my $T = $conf->{'dbh'}->selectall_arrayref($sql);
       foreach (@$T) {
-        push @{$xrefs{$type}{$_->[0]}{$external_dbs->{$_->[4]}{'db_name'}}}, {
-          'xref_description'=> $_->[3],
-          'db_acc'          => $_->[2],
-          'label'           => $_->[1],
-          'external_db_id'  => $_->[4],
-          'xref_id'         => $_->[5],
+        my $stable_id         = $_->[0];
+        my $external_db_label = $_->[2];
+        my $external_db_desc  = $_->[3];
+        my $xref_id           = $_->[4];
+        my $external_db = $external_dbs->{$_->[1]}{'db_display_name'};
+        my $desc        = qq($type $stable_id has a $external_db record of $external_db_label);
+        my $search_term = "$external_db_label";
+        if ($external_db_desc) {
+          $desc .= " ($external_db_desc)";
+          $search_term .= " $external_db_desc";
+        }
+        if ($external_synonyms->{$xref_id}) {
+          $desc .= ' which has synonyms of';
+          foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+            $search_term .= " $syn";
+            $desc .= " $syn,";
+          }
+          $desc =~ s/,$//;
+        }
+        push @{$xrefs{$type}{$stable_id}},{
+          id          => $external_db_label,
+          search_term => $search_term,
+          desc        => $desc,
         };
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
+    #    warn Dumper(\%xrefs); exit;
 
     my %gene_trans_syns = ();
     if ($sitetype eq 'Vega') {
@@ -1934,7 +1954,6 @@ sub dumpGene {
                        $old->{'disp_xref'},
                        $old->{'desc'},
                        $old->{'xrefs'},
-                       $old->{'xref_descriptions'},
                        $old->{'synonyms'},
                        $gene_locations->{$old_gsi},
                        $db,
@@ -1953,7 +1972,6 @@ sub dumpGene {
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
           'xrefs'     => [],
-          'xref_descriptions' => {},
           'synonyms'  => [ @{$gene_trans_syns{$gsid}||[]}, @{$gene_trans_syns{$tsid}||[]} ],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel gene",
           'status'    => $status,
@@ -1965,20 +1983,12 @@ sub dumpGene {
 
         #add xref details
         foreach my $type (qw(Gene Transcript Translation)) {
-          my $id = ($type eq 'Gene')        ? $gid
-                 : ($type eq 'Transcript')  ? $tid
-                 : ($type eq 'Translation') ? $tlid
+          my $id = ($type eq 'Gene')        ? $gsid
+                 : ($type eq 'Transcript')  ? $tsid
+                 : ($type eq 'Translation') ? $tlsid
                  : '';
-          while (my ($db_name,$xrefs) = each %{$xrefs{$type}{$id}}) {
-            foreach my $dets (@$xrefs) {
-              my $xref_id = $dets->{'xref_id'};
-              $dets->{'db_name'} = $db_name;
-              $old->{'xref_descriptions'}{$dets->{'xref_description'}}++ ;
-              foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
-                push @{$dets->{'synonyms'}},$syn;
-              }
-              push @{$old->{'xrefs'}}, $dets;
-            }
+          foreach my $xref (@{$xrefs{$type}{$id}}) {
+            push @{$old->{'xrefs'}}, $xref;
           }
         }
       }
@@ -1989,20 +1999,12 @@ sub dumpGene {
 
         #add xref details
         foreach my $type (qw(Gene Transcript Translation)) {
-          my $id = ($type eq 'Gene')        ? $gid
-                 : ($type eq 'Transcript')  ? $tid
-                 : ($type eq 'Translation') ? $tlid
+          my $id = ($type eq 'Gene')        ? $gsid
+                 : ($type eq 'Transcript')  ? $tsid
+                 : ($type eq 'Translation') ? $tlsid
                  : '';
-          while (my ($db_name,$xrefs) = each %{$xrefs{$type}{$id}}) {
-            foreach my $dets (@$xrefs) {
-              my $xref_id = $dets->{'xref_id'};
-              $dets->{'db_name'} = $db_name;
-              $old->{'xref_descriptions'}{$dets->{'xref_description'}}++;
-              foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
-                push @{$dets->{'synonyms'}},$syn;
-              }
-              push @{$old->{'xrefs'}}, $dets;
-            }
+          foreach my $xref (@{$xrefs{$type}{$id}}) {
+            push @{$old->{'xrefs'}}, $xref;
           }
         }
       }
@@ -2020,7 +2022,6 @@ sub dumpGene {
                         $old->{'disp_xref'},
                         $old->{'desc'},
                         $old->{'xrefs'},
-                        $old->{'xref_descriptions'},
                         $old->{'synonyms'},
                         $gene_locations->{$old_gsi},
                         $db,
@@ -2123,7 +2124,7 @@ sub dumpTranscript {
     header($fh);
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
-      'select external_db_id, db_name, db_display_name
+      'select external_db_id, db_name, db_display_name, description
          from external_db', 'external_db_id'
        );
     my $external_synonyms;
@@ -2133,24 +2134,43 @@ sub dumpTranscript {
     }
     my %xrefs = ();
     foreach my $type( qw(Transcript Translation) ) {
+      my $t = lc($type);
       my $sql = qq(
-         SELECT ox.ensembl_id, x.display_label, x.dbprimary_acc,
-                x.description, x.external_db_id, x.xref_id
-           FROM $dbname.object_xref as ox, $dbname.xref as x
-          WHERE ox.ensembl_object_type = '$type'
-            AND ox.xref_id = x.xref_id );
+         SELECT f.stable_id, x.external_db_id, x.display_label, x.description, x.xref_id
+           FROM $dbname.$t as f, $dbname.object_xref as ox, $dbname.xref as x
+          WHERE f.${t}_id = ox.ensembl_id
+            AND ox.xref_id = x.xref_id
+            AND ox.ensembl_object_type = '$type');
       my $T = $conf->{'dbh'}->selectall_arrayref($sql);
       foreach (@$T) {
-        push @{$xrefs{$type}{$_->[0]}{$external_dbs->{$_->[4]}{'db_name'}}}, {
-          'xref_description'=> $_->[3],
-          'db_acc'          => $_->[2],
-          'label'           => $_->[1],
-          'external_db_id'  => $_->[4],
-          'xref_id'         => $_->[5],
+        my $stable_id         = $_->[0];
+        my $external_db_label = $_->[2];
+        my $external_db_desc  = $_->[3];
+        my $xref_id           = $_->[4];
+        my $external_db = $external_dbs->{$_->[1]}{'db_display_name'};
+        my $desc        = qq($type $stable_id has a $external_db record of $external_db_label);
+        my $search_term = "$external_db_label";
+        if ($external_db_desc) {
+          $desc .= " ($external_db_desc)";
+          $search_term .= " $external_db_desc";
+        }
+        if ($external_synonyms->{$xref_id}) {
+          $desc .= ' which has synonyms of';
+          foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+            $search_term .= " $syn";
+            $desc .= " $syn,";
+          }
+          $desc =~ s/,$//;
+        }
+        push @{$xrefs{$type}{$stable_id}},{
+          id          => $external_db_label,
+          search_term => $search_term,
+          desc        => $desc,
         };
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
+#    warn Dumper(\%xrefs); exit;
 
     my %trans_syns = ();
     if ($sitetype eq 'Vega') {
@@ -2241,7 +2261,6 @@ sub dumpTranscript {
                         $old->{'disp_xref'},
                         $old->{'desc'},
                         $old->{'xrefs'},
-                        $old->{'xref_descriptions'},
                         $old->{'synonyms'},
                         $trans_locations->{$old_tsi},
                         $db,
@@ -2259,7 +2278,6 @@ sub dumpTranscript {
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
           'xrefs'     => [],
-          'xref_descriptions' => {},
           'synonyms'  => $trans_syns{$tsid} || [],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel transcript",
           'status'    => $status,
@@ -2271,19 +2289,11 @@ sub dumpTranscript {
 
         #add xref details
         foreach my $type (qw(Transcript Translation)) {
-          my $id = ($type eq 'Transcript')  ? $tid
-                 : ($type eq 'Translation') ? $tlid
+          my $id = ($type eq 'Transcript')  ? $tsid
+                 : ($type eq 'Translation') ? $tlsid
                  : '';
-          while (my ($db_name,$xrefs) = each %{$xrefs{$type}{$id}}) {
-            foreach my $dets (@$xrefs) {
-              my $xref_id = $dets->{'xref_id'};
-              $dets->{'db_name'} = $db_name;
-              $old->{'xref_descriptions'}{$dets->{'xref_description'}}++ ;
-              foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
-                push @{$dets->{'synonyms'}},$syn;
-              }
-              push @{$old->{'xrefs'}}, $dets;
-            }
+          foreach my $xref (@{$xrefs{$type}{$id}}) {
+            push @{$old->{'xrefs'}}, $xref;
           }
         }
       }
@@ -2292,19 +2302,11 @@ sub dumpTranscript {
         push @{$old->{'synonyms'}}, @{$trans_syns{$tsid}||[]};
         #add xref details
         foreach my $type (qw(Transcript Translation)) {
-          my $id = ($type eq 'Transcript')  ? $tid
-                 : ($type eq 'Translation') ? $tlid
+          my $id = ($type eq 'Transcript')  ? $tsid
+                 : ($type eq 'Translation') ? $tlsid
                  : '';
-          while (my ($db_name,$xrefs) = each %{$xrefs{$type}{$id}}) {
-            foreach my $dets (@$xrefs) {
-              my $xref_id = $dets->{'xref_id'};
-              $dets->{'db_name'} = $db_name;
-              $old->{'xref_descriptions'}{$dets->{'xref_description'}}++;
-              foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
-                push @{$dets->{'synonyms'}},$syn;
-              }
-              push @{$old->{'xrefs'}}, $dets;
-            }
+          foreach my $xref (@{$xrefs{$type}{$id}}) {
+            push @{$old->{'xrefs'}}, $xref;
           }
         }
       }
@@ -2322,7 +2324,6 @@ sub dumpTranscript {
                         $old->{'disp_xref'},
                         $old->{'desc'},
                         $old->{'xrefs'},
-                        $old->{'xref_descriptions'},
                         $old->{'synonyms'},
                         $trans_locations->{$old_tsi},
                         $db,
@@ -2341,7 +2342,7 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $feat_loc, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $feat_loc, $db, $counter) = @_;
 
   #get stable ID of object
   my ($sid,$sid_ver);
@@ -2389,42 +2390,30 @@ sub GeneTransLine {
   $xml .= &common_fields($species,$type,$db);
   my (%seen_labels,%seen_syns,%seen_sources);
   foreach my $xref (@$xrefs) {
-    my $dbname   = $xref->{'db_name'};
-    my $dbkey    = $xref->{'label'};
-    my $dbacc    = $xref->{'db_acc'};
+    my $search_term = $xref->{'search_term'};
+    my $xref_id     = $xref->{'id'};
+    my $desc        = $xref->{'desc'};
 
-    #xref synonyms
-    foreach my $syn (@{$xref->{'synonyms'}}) {
-      next if $seen_syns{$syn};
-      $seen_syns{$syn} = 1;
-      $syn = &clean($syn,'syn');
+    #remove any duplicates
+    next if $seen_labels{$xref_id};
+    $seen_labels{$xref_id}++;
+
+    #remove any records where the hit is an Ensembl stable ID
+    next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} $tsids, $tlsids);
+
+    $search_term = &clean($search_term);
+    $desc        = &clean($desc);
+    my $hr_key;
+#    $hr_key = '_hr'.md5_hex($species.$db.$desc);
+    if ($hr_key) {
       $xml .= qq(
-  <field name="_xr_$dbname">$syn</field>);
-    }
-    next if $seen_labels{$dbkey};
-    $seen_labels{$dbkey} = 1;
-    $dbkey = &clean($dbkey,'dbkey');
-    $dbacc = &clean($dbacc,'dbacc');
-    if (! $dbname) {
-      print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+  <field name="xref">$search_term $hr_key</field>);
+    $xml .= qq(
+  <field name="$hr_key">$desc</field>);
     }
     else {
-      if (! $seen_sources{$dbname}) {
-        $seen_sources{$dbname} = 1;
-        $xml .= qq(
-  <field name="_xr_$dbname">$dbkey</field>);
-        if ($dbkey ne $dbacc) {
-          $xml .= qq(
-  <field name="_xr_${dbname}_dbacc">$dbacc</field>);
-        }
-      }
-    }
-  }
-  foreach my $xref_description (keys %{$xref_descriptions}) {
-    if ($xref_description) {
-      $xref_description = &clean($xref_description,'xref description');
       $xml .= qq(
-  <field name="xref_description">$xref_description</field>);
+  <field name="xref">$search_term</field>);
     }
   }
   my %seen_syns;
