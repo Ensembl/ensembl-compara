@@ -535,6 +535,12 @@ sub dumpVariation {
        FROM variation_hgvs
       GROUP by variation_id" )} };
 
+  my $all_hgnc_names = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref(
+    "SELECT variation_id,
+            group_concat(gene_name SEPARATOR ';') AS names
+       FROM variation_genename
+      GROUP by variation_id" )} };
+
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ".&date_and_mem()."\n";
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'variation_dbh'}->selectall_arrayref(
@@ -673,7 +679,7 @@ sub dumpVariation {
           $new_syn_c++;
         }
       }
-      my (@syns, @genes, @phenotypes, @studies, @hgvs_names);
+      my (@syns, %genes, @phenotypes, @studies, @hgvs_names);
       foreach my $syn (keys %synonyms) {
         push @syns, $syn;
       }
@@ -686,7 +692,7 @@ sub dumpVariation {
       if( $x ) {
         foreach my $g ($x->[3]) {
           foreach (split ';', $g) {
-            push @genes, $_ if $_;
+            push $genes{$_}++ if $_;
           }
         }
         push @syns,       split ';', $x->[1];
@@ -699,15 +705,21 @@ sub dumpVariation {
       if ($hgvs_names = $all_hgvs_names->{$variation_id}) {
         push @hgvs_names, split ';', $hgvs_names;
       }
+      if ($hgvs_names = $all_hgnc_names->{$variation_id}) {
+        foreach (split ';', $hgvs_names) {
+          $genes{$_}++;
+        }
+      }
       $desc = sprintf( "A $snp_source $type.%s%s%s",
-                       @phenotypes  ? ' Phenotype(s): ' .         (join ', ', @phenotypes) . '.' : '',
-                       @genes       ? ' Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
+                       @phenotypes  ? ' Phenotype(s): '        . (join ', ', @phenotypes)         . '.' : '',
+                       %genes       ? ' Gene Association(s): ' . (join ', ', keys %genes)           . '.' : '',
+                       @hgvs_names  ? ' HGVS Name(s): '        . &clean((join ', ', @hgvs_names)) . '.' : '',
                        $failed_desc ? " $failed_desc."                                         : '');
       if ($somatic_mutation){
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $desc, $counter2 ), $fh2);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $desc, $counter2 ), $fh2);
       }
       else {
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $desc, $counter ), $fh);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $desc, $counter ), $fh);
       }
     }
   }
@@ -739,7 +751,7 @@ sub VariationLine {
     $xml .= qq(
   <field name="synonym">$_</field>);
   }
-  foreach (@$genes) {
+  foreach (keys %$genes) {
     $xml .= qq(
   <field name="assoc_gene">$_</field>);
   }
