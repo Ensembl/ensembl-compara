@@ -99,7 +99,7 @@ sub init_config {
     $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
     $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
   } else {
-    $form->add_element(type => 'Hidden', name => 'component', value => $action, class => 'component');
+    $form->add_hidden({ name => 'component', value => $action, class => 'component' });
     $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config));
   }
   
