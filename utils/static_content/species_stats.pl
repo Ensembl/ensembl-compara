@@ -21,7 +21,7 @@ use File::Basename qw( dirname );
 
 use Pod::Usage;
 use Getopt::Long;
-use JSON::Parse qw /json_to_perl valid_json/;
+use JSON;
 use List::MoreUtils qw /first_index/;
 use HTML::Entities qw(encode_entities);
 
@@ -1280,11 +1280,12 @@ sub get_resources {
   open FILE, "<".$SiteDefs::ENSEMBL_SERVERROOT."/eg-plugins/common/htdocs/species_metadata.json";
   my $file_contents = do { local $/; <FILE> };
   close FILE;
-
-  if (valid_json ($file_contents)) {
-    my $data = json_to_perl ($file_contents);
-    return $data->{genome};
-  }
+  
+  my $data;
+  
+  eval { $data = from_json($file_contents); };
+  
+  return $data->{genome} unless $@;
 }
 
 
