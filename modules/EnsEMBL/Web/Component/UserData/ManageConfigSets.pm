@@ -44,9 +44,9 @@ sub records {
       push @confs, [ $_->{'record_id'}, $_->{'name'}, $_->{'conf_name'}, $_->{'conf_codes'} ] if $_->{'conf_name'};
     }
     
-    my ($row, $row_key, $json_group) = $self->row($_, \@confs);
+    my ($row, $group_key, $json_group) = $self->row($_, \@confs);
     
-    push @{$rows->{$row_key}}, $row;
+    push @{$rows->{$group_key}}, $row;
     
     $json->{$record_id} = {
       id        => $record_id,
@@ -96,9 +96,10 @@ sub row {
 
 sub columns {
   return $_[0]->SUPER::columns([
-    { key => 'name',  title => 'Name',           width => '20%' },
-    { key => 'desc',  title => 'Description',    width => '30%' },
-    { key => 'confs', title => 'Configurations', width => '45%' },
+    { key => 'name',  title => 'Name',  width => '20%' },
+    sub { return $_[0] eq 'group' ? { key => 'group', title => 'Group',  width => '10%' } : (); },
+    { key => 'desc',  title => 'Description', width => '30%' },
+    sub { return { key => 'confs', title => 'Configurations', width => $_[0] eq 'group' ? '35%' : '45%' }; },
   ]);
 }
 

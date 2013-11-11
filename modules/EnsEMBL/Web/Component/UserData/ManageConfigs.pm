@@ -147,9 +147,9 @@ sub records {
     my $component     = $view_config->component;
     my @sets          = $adaptor->record_to_sets($record_id);
     
-    my ($row, $row_key, $json_group) = $self->row($_, { type => $type, conf => $view_config->title });
+    my ($row, $group_key, $json_group) = $self->row($_, { type => $type, conf => $view_config->title });
     
-    push @{$rows->{$row_key}}, $row;
+    push @{$rows->{$group_key}}, $row;
     push @{$self->{'editables'}{$_}{'conf_codes'}}, "${type}_$code" for @sets;
     
     $json->{$record_id} = {
@@ -264,11 +264,16 @@ sub row {
     $row->{'share'}  = sprintf $templates->{'icon'}, 'share',  'share_record', 'Share',  $hub->url({ function => 'share',  %params }) unless $group;
     $row->{'edit'}   = sprintf $templates->{'icon'}, 'edit',   'edit_record',  $text->[2], '#';
     
-    if ($record->{'record_type'} eq 'user') {
-      $row->{'save'} = sprintf $templates->{'disabled'}, 'save', 'Saved';
-    } else {
+    if ($record->{'record_type'} eq 'session') {
       $row->{'save'} = sprintf $templates->{'icon'}, 'save', 'edit', 'Save to account', $hub->url({ function => 'save', %params });
+    } elsif ($record->{'record_type'} eq 'user') {
+      $row->{'save'} = sprintf $templates->{'disabled'}, 'save', 'Saved';
     }
+  }
+  
+  if ($record_group eq 'group') {
+    my $group_object = $hub->user->get_group($record->{'record_type_id'});
+    $row->{'group'} = { value => sprintf($templates->{'wrap'}, $group_object->name), class => 'wrap' } if $group_object;
   }
   
   $row->{'name'}{'sort'} = $record->{'name'};
@@ -285,24 +290,28 @@ sub columns {
     { key => 'expand', %icon_col },
     { key => 'type', title => 'Type',          width => '15%' },
     { key => 'conf', title => 'Configuration', width => '20%' },
-    { key => 'name', title => 'Name',          width => '30%' },
-    { key => 'desc', title => 'Description',   width => '30%' },
+    sub {
+      return $_[0] eq 'group' ? (
+          { key => 'name',  title => 'Name',  width => '15%' },
+          { key => 'group', title => 'Group', width => '15%' }
+      ) : { key => 'name',  title => 'Name',  width => '30%' };
+    },
+    { key => 'desc', title => 'Description', width => '20%' },
   ];
   
   my $columns = [
     @$cols,
     { key => 'active', %icon_col },
-    { key => 'save',   %icon_col },
-    { key => 'edit',   %icon_col },
-    { key => 'share',  %icon_col },
+    sub { return $_[0] eq 'user'  ? { key => 'save',  %icon_col } : (); },
+    sub { return $editable{$_[0]} ? { key => 'edit',  %icon_col } : (); },
+    sub { return $_[0] eq 'user'  ? { key => 'share', %icon_col } : (); },
     { key => 'delete', %icon_col },
   ];
   
   $editable{$self->record_group($_)} = 1 for values %{$self->{'editables'}};
   
-  foreach (qw(user group suggested)) {
-    my $regex = sprintf '^(%s)$', join '|', $_ eq 'user' ? () : qw(save share), $editable{$_} ? () : 'edit';
-    $groups->{$_} = [ grep $_->{'key'} !~ /$regex/, @$columns ];
+  foreach my $type (qw(user group suggested)) {
+    $groups->{$type} = [ map { ref eq 'CODE' ? &$_($type) : $_ } @$columns ];
   }
   
   return $groups;
