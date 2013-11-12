@@ -1204,21 +1204,23 @@ sub get_oligo_probe_data {
   # First retrieve data for Probes linked to transcript
   foreach my $probe (@transcript_xrefd_probes) {
     my ($array_name, $probe_name, $vendor, @info);
-    
-    ($array_name, $probe_name) = split /:/, $_ for @{$probe->get_all_complete_names}; 
-    $vendor = $_->vendor for values %{$probe->get_names_Arrays};
-    @info = ('probe', $_->linkage_annotation) for @{$probe->get_all_Transcript_DBEntries};
- 
-    my $key = "$vendor $array_name";
-    $key = $vendor if $vendor eq $array_name;
+   
+    foreach my $complete (@{$probe->get_all_complete_names}) {
+      ($array_name,$probe_name) = split /:/,$complete;
+      $vendor = $_->vendor for(values %{$probe->get_names_Arrays});
+      @info = ('probe', $_->linkage_annotation) for @{$probe->get_all_Transcript_DBEntries};
 
-    if (exists $probe_data{$key}) {
-      my %probes = %{$probe_data{$key}};
-      $probes{$probe_name} = \@info;
-      $probe_data{$key} = \%probes;
-    } else {
-      my %probes = ($probe_name, \@info);
-      $probe_data{$key} = \%probes;
+      my $key = "$vendor $array_name";
+      $key = $vendor if $vendor eq $array_name;
+
+      if (exists $probe_data{$key}) {
+        my %probes = %{$probe_data{$key}};
+        $probes{$probe_name} = \@info;
+        $probe_data{$key} = \%probes;
+      } else {
+        my %probes = ($probe_name, \@info);
+        $probe_data{$key} = \%probes;
+      }
     }
   }
 
