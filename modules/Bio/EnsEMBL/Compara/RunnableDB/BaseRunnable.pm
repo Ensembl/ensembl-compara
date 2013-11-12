@@ -85,7 +85,7 @@ sub get_species_tree_file {
             my @leaves = @{$eval_species_tree->get_all_leaves};
         };
         if($@) {
-            die "Error parsing species tree from the string '$species_tree_string'";
+            die "Error '$@' parsing species tree from the string '$species_tree_string'";
         }
 
             # store the string in a local file:
