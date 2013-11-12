@@ -80,7 +80,7 @@ sub content {
     { key => 'gene',      title => 'Gene',                             sort => 'html'                        },
     { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
     { key => 'allele',    title => 'Allele (transcript allele)',       sort => 'string',   width => '7%'     },
-    { key => 'type',      title => 'Type'  ,                           sort => 'position_html'               },
+    { key => 'type',      title => 'Consequence Type',                 sort => 'position_html'               },
     { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'center' },
     { key => 'cds_pos',   title => 'Position in CDS',                  sort => 'position', align => 'center' },
     { key => 'prot_pos',  title => 'Position in protein',              sort => 'position', align => 'center' },
@@ -105,19 +105,19 @@ sub content {
   
   # create a regfeat table as well
   my @reg_columns = (
-    { key => 'rf',       title => 'Regulatory feature',    sort => 'html'                             },
+    { key => 'rf',       title => 'Regulatory feature',     sort => 'html'                             },
     { key => 'cell_type',title => 'Cell type',              sort => 'string'                           },
     { key => 'ftype',    title => 'Feature type',           sort => 'string'                           },
-    { key => 'allele',   title => 'Allele',                 sort => 'string',                          },
+    { key => 'allele',   title => 'Allele',                 sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
   my @motif_columns = (
     { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
     { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
-    { key => 'allele',   title => 'Allele',                    sort => 'string',                          },
+    { key => 'allele',   title => 'Allele',                    sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
-    { key => 'matrix',   title => 'Motif name',                sort => 'string',                          },
+    { key => 'matrix',   title => 'Motif name',                sort => 'string'                           },
     { key => 'pos',      title => 'Motif position',            sort => 'numeric'                          },
     { key => 'high_inf', title => 'High information position', sort => 'string'                           },
     { key => 'score',    title => 'Motif score change',        sort => 'position_html', align => 'center' },
@@ -205,13 +205,7 @@ sub content {
       my $strand = $trans->strand < 1 ? '-' : '+';
       
       # consequence type
-      my $type = $self->render_type($tva);
-      
-      # consequence rank
-      my ($rank) = sort map $_->rank, @{$tva->get_all_OverlapConsequences};
-      
-      $type = qq{<span class="hidden">$rank</span>$type};
-      
+      my $type = $self->render_consequence_type($tva);
       
       my $a = $transcript_data->{'vf_allele'};
       
@@ -279,7 +273,7 @@ sub content {
       $url .= ';regulation_view=variation_feature_variation=normal';
         for my $rf (@$rfs) { 
           for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-            my $type = $self->render_type($rfva);
+            my $type = $self->render_consequence_type($rfva);
             
             my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
             
@@ -323,7 +317,7 @@ sub content {
       $url .= ';regulation_view=variation_feature_variation=normal';
       
       for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
-        my $type = $self->render_type($mfva);
+        my $type = $self->render_consequence_type($mfva);
         
         my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$rf->stable_id,25);
         
@@ -402,27 +396,7 @@ sub render_motif_score {
     $score_text = sprintf('<span class="small">(%.3f)</span>', $score);
   }
   
-  return qq{<div align="center"><div class="hidden">$sort_score</div><div class="hidden export" style="float: left;">$message</div><div class="$class" title="$message"></div>$score_text</div>};
-}
-
-sub render_type {
-  my $self = shift;
-  my $tva = shift;
-  my $var_styles  = $self->hub->species_defs->colour('variation');
-  my $colourmap   = $self->hub->colourmap;
-  
-  return join ' ', keys %{{map {$_ => 1}
-    map {
-      sprintf(
-        '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-        '<span class="_ht conhelp" title="%s">%s</span></nobr>',
-        $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : 'no_colour',
-        $_->description,
-        $_->label
-      )
-    }
-    @{$tva->get_all_OverlapConsequences || []}
-  }};
+  return qq{<div align="center"><span class="hidden">$sort_score</span><span class="hidden export">$message</span><div class="$class" title="$message"></div>$score_text</div>};
 }
 
 sub detail_panel {
