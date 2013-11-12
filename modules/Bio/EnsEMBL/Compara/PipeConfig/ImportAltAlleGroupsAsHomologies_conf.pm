@@ -6,8 +6,8 @@
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for the pipeline that imports projections from reference
-    sequences to patches as homologies.
+    The PipeConfig file for the pipeline that imports alternative alleles
+    as homologies.
 
 =cut
 
@@ -164,15 +164,18 @@ sub pipeline_analyses {
                 'column_names2getters'  => { 'alt_allele_group_id' => 'dbID' },
             },
             -flow_into => {
-                '2->A' => [ 'import_projections_as_homologies' ],
+                '2->A' => [ 'import_altalleles_as_homologies' ],
                 'A->1' => [ 'update_member_display_labels' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
 
-        {   -logic_name => 'import_projections_as_homologies',
+        {   -logic_name => 'import_altalleles_as_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
+            -parameters => {
+                'mafft_home' => '/software/ensembl/compara/mafft-7.113/',
+            },
             -rc_name    => 'patch_import',
         },
 
