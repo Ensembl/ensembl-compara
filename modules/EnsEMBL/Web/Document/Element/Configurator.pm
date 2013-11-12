@@ -144,15 +144,24 @@ sub add_image_config_notes {
 
 sub save_as {
   my ($self, $user, $view_config, $image_config) = @_;
-  
-  my $hub  = $self->hub;
-  my $data = $hub->config_adaptor->filtered_configs({ code => $image_config ? [ $view_config->code, $image_config ] : $view_config->code, active => '' });
+  my $hub          = $self->hub;
+  my $data         = $hub->config_adaptor->filtered_configs({ code => $image_config ? [ $view_config->code, $image_config ] : $view_config->code, active => '' });
+  my %admin_groups = $user ? map { $_->group_id => $_->name } $user->find_admin_groups : ();
   my ($configs, %seen);
   
   foreach (sort { $a->{'name'} cmp $b->{'name'} } values %$data) {
     next if $seen{$_->{'record_id'}};
-    $configs .= sprintf '<option value="%s" class="%s">%s</option>', $_->{'record_id'}, $_->{'record_id'}, $_->{'name'};
+    
     $seen{$_} = 1 for $_->{'record_id'}, $_->{'link_id'};
+    
+    next if $_->{'record_type'} eq 'group' && !$admin_groups{$_->{'record_type_id'}};
+    
+    $configs .= sprintf(
+      '<option value="%s" class="%1$s">%s%s</option>',
+      $_->{'record_id'},
+      $_->{'name'},
+      $user ? sprintf(' (%s%s)', $_->{'record_type'} eq 'user' ? 'Account' : ucfirst $_->{'record_type'}, $_->{'record_type'} eq 'group' ? ": $admin_groups{$_->{'record_type_id'}}" : '') : ''
+    ); 
   }
   
   my $existing = sprintf('
