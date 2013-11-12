@@ -1369,6 +1369,35 @@ sub render_sift_polyphen {
   };
 }
 
+# render consequence type(s) with colour(s) a hidden span with a rank for sorting
+sub render_consequence_type {
+  my $self        = shift;
+  my $tva         = shift;
+  my $most_severe = shift;
+  my $var_styles  = $self->hub->species_defs->colour('variation');
+  my $colourmap   = $self->hub->colourmap;
+
+  my $overlap_consequences = ($most_severe) ? [$tva->most_severe_OverlapConsequence] || [] : $tva->get_all_OverlapConsequences || [];
+
+  # Sort by rank, with only one copy per consequence type
+  my @consequences = sort {$a->rank <=> $b->rank} (values %{{map {$_->label => $_} @{$overlap_consequences}}});
+
+  my $type = join ' ',
+    map {
+      sprintf(
+        '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
+        '<span class="_ht conhelp" title="%s">%s</span></nobr>',
+        $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
+        $_->description,
+        $_->label
+      )
+    }
+    @consequences;
+  my $rank = $consequences[0]->rank;
+      
+  return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
+}
+
 
 sub trim_large_string {
   my $self        = shift;
