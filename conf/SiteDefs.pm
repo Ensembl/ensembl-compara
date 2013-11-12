@@ -333,8 +333,8 @@ sub set_species_aliases {
   
   our $ENSEMBL_SPECIES_ALIASES = {};
   
-  push @$ENSEMBL_DATASETS, sort keys %__species_aliases;
-  
+  $ENSEMBL_DATASETS = [ sort keys %__species_aliases ] unless scalar @$ENSEMBL_DATASETS; 
+ 
   foreach my $name (@$ENSEMBL_DATASETS) {
     $ENSEMBL_SPECIES_ALIASES->{lc $_} = $name for @{$__species_aliases{$name}};
     
