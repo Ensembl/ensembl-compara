@@ -239,7 +239,16 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.saveAsSubmit.on('click', function () {
       var saveAs = { save_as: 1 };
       
-      $.each($(this).parents('form').serializeArray(), function () { saveAs[this.name] = this.value.replace(/<[^>]+>/g, ''); });
+      $.each($(this).parents('form').serializeArray(), function () {
+        var val = this.value.replace(/<[^>]+>/g, '');
+        
+        if (saveAs[this.name]) {
+          saveAs[this.name] = $.isArray(saveAs[this.name]) ? saveAs[this.name] : [ saveAs[this.name] ];
+          saveAs[this.name].push(val);
+        } else {
+          saveAs[this.name] = val;
+        }
+      });
       
       if (saveAs.name || saveAs.overwrite) {
         panel.updateConfiguration(true, saveAs);
@@ -852,6 +861,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       url:  this.elLk.form.attr('action'),
       type: this.elLk.form.attr('method'),
       data: $.extend(data, Ensembl.coreParams), 
+      traditional: true,
       dataType: 'json',
       async: false,
       success: function (json) {
@@ -873,8 +883,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.elLk.existingConfigs.children('.' + configIds.deleted.join(', .')).remove();
     }
     
-    if (configIds.saved && !this.elLk.existingConfigs.children('.' + configIds.saved.value).length) {
-      $('<option>', configIds.saved).appendTo(this.elLk.existingConfigs);
+    if (configIds.saved) {
+      for (var i in configIds.saved) {
+        if (!this.elLk.existingConfigs.children('.' + configIds.saved[i].value).length) {
+          $('<option>', configIds.saved[i]).appendTo(this.elLk.existingConfigs);
+        }
+      }
     }
     
     if (configIds.changed) {

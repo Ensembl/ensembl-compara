@@ -39,9 +39,8 @@ sub update_configuration {
   
   if ($hub->param('save_as')) {
     my %params = map { $_ => decode_utf8($hub->param($_)) } qw(record_type name description);
-    $params{'record_type_id'} = $params{'record_type'} eq 'session' ? $session->create_session_id : $hub->user ? $hub->user->id : undef;
-    
-    $existing_config = $self->save_config($code, $image_config, %params) if $params{'record_type_id'};
+    $params{'record_type_ids'} = $params{'record_type'} eq 'group' ? [ $hub->param('group') ] : $params{'record_type'} eq 'session' ? $session->create_session_id : $hub->user ? $hub->user->id : undef;
+    $existing_config = $self->save_config($code, $image_config, %params);
   }
   
   if ($hub->param('submit')) {

@@ -337,11 +337,13 @@ sub add_error {
 sub save_config {
   my ($self, $view_config, $image_config, %params) = @_;
   my $hub       = $self->hub;
+  my $user      = $hub->user;
+  my %groups    = $user ? map { $_->group_id => $_->name } $user->find_admin_groups : ();
   my $adaptor   = $hub->config_adaptor;
   my $configs   = $adaptor->all_configs;
   my $overwrite = $hub->param('overwrite');
      $overwrite = undef unless exists $configs->{$overwrite}; # check that the overwrite id belongs to this user
-  my (@links, %existing, $existing_config);
+  my (%existing, $existing_config);
   
   if ($overwrite) {
     foreach my $id ($overwrite, $configs->{$overwrite}{'link_id'} || ()) {
@@ -351,23 +353,38 @@ sub save_config {
     }
   }
   
-  foreach (qw(view_config image_config)) {
-    ($params{'code'}, $params{'link'}) = $_ eq 'view_config' ? ($view_config, [ 'image_config', $image_config ]) : ($image_config, [ 'view_config', $view_config ]);
+  my $record_type_ids = delete $params{'record_type_ids'};
+  
+  foreach my $record_type_id (ref $record_type_ids eq 'ARRAY' ? @$record_type_ids : $record_type_ids) {
+    my (@links, $saved_config);
     
-    my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_} || {}}, type => $_, data => $adaptor->get_config($_, $params{'code'}));
-    
-    push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_ids => $params{'set_ids'} };
-    
-    if ($deleted) {
-      push @{$existing_config->{'deleted'}}, $deleted;
-    } elsif ($saved) {
-      $existing_config->{'saved'} ||= { value => $saved, class => $saved, html => $configs->{$saved}{'name'} }; # only provide one saved entry for a linked pair
+    foreach (qw(view_config image_config)) {
+      ($params{'code'}, $params{'link'}) = $_ eq 'view_config' ? ($view_config, [ 'image_config', $image_config ]) : ($image_config, [ 'view_config', $view_config ]);
+      
+      my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_} || {}}, type => $_, record_type_id => $record_type_id, data => $adaptor->get_config($_, $params{'code'}));
+      
+      push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_ids => $params{'set_ids'} };
+      
+      if ($deleted) {
+        push @{$existing_config->{'deleted'}}, $deleted;
+      } elsif ($saved) {
+        my $conf = $configs->{$saved};
+        
+         # only provide one saved entry for a linked pair
+        $saved_config ||= {
+          value => $saved,
+          class => $saved,
+          html  => $conf->{'name'} . ($user ? sprintf(' (%s%s)', $conf->{'record_type'} eq 'user' ? 'Account' : ucfirst $conf->{'record_type'}, $conf->{'record_type'} eq 'group' ? ": $groups{$record_type_id}" : '') : '')
+        };
+      }
     }
+    
+    push @{$existing_config->{'saved'}}, $saved_config if $saved_config;
+    
+    $adaptor->link_configs(@links);
   }
   
-  $adaptor->link_configs(@links);
-  
-  delete $existing_config->{'saved'} if $overwrite && $configs->{$existing_config->{'saved'}{'value'}}{'link_id'};
+  $existing_config->{'saved'} = [ grep !$configs->{$_->{'value'}}{'link_id'}, @{$existing_config->{'saved'}} ] if $overwrite;
   
   return $existing_config;
 }
