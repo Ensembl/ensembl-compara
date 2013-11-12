@@ -104,7 +104,7 @@ sub fetch_input {
             my %reuse_ss_hash = ( map { $_->dbID() => 1 } @$reused_genome_dbs );
 
             if ($reuse_ss_hash{$self->param('genome_db_id')}) {
-                $genome_db_list = grep {not $reuse_ss_hash{$_->dbID}} @$species_set;
+                $genome_db_list = [ grep {not $reuse_ss_hash{$_->dbID}} @$species_set ];
             }
         }
     }
