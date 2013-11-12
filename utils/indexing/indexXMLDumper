@@ -60,12 +60,15 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
                 : 'http://www.ensembl.org';
 
 # used to boost certain records
-my %db_boost = (
-  core => '40',
-);
-my %region_boost = (
-  'is_ref' => '10',
-);
+my $boosts = {
+  'GeneTrans' => {
+    'core'    => '40',
+    'is_ref' => '10',
+  },
+  'Family' => {
+    'All' => '50',
+  },
+};
 
 # redirect STDOUT and STDERR to a file if not in debug mode
 if ($debug) {
@@ -1440,8 +1443,10 @@ sub FamilyLine {
                   );
   $species =~ s/_/ /;
   $desc = &clean($desc,'desc');
+  my $boost = $boosts->{'Family'}{'All'};
+  my $doc = $boost ? qq(doc boost="$boost") : 'doc';
   my $xml = qq(
-<doc>
+<$doc>
   <field name="id">$fid</field>
   <field name="description">$desc</field>);
   foreach my $g (@$genes){
@@ -2375,9 +2380,9 @@ sub GeneTransLine {
     ($sid,$sid_ver) = each %$id;
   }
   my $boost = 0;
-  $boost += $db_boost{$db};
+  $boost += $boosts->{'GeneTrans'}{$db};
   my $is_ref = $feat_loc->{'non_ref'} ? '' : 'is_ref';
-  $boost += $region_boost{$is_ref};
+  $boost += $boosts->{'GeneTrans'}{$is_ref};
 
   my $url = sprintf(qq(%s/%s/Summary?%s=%s&amp;db=%s),
                     $species,
@@ -2401,11 +2406,11 @@ sub GeneTransLine {
   <field name="id_ver">$sid.$sid_ver</field>
   <field name="name">$disp_xref</field>
   <field name="description">$desc</field>);
-  if (my $db_boost_value = $db_boost{$db}) {
+  if (my $db_boost_value = $boosts->{'GeneTrans'}{$db}) {
     $xml .= qq(
   <field name="db_boost">$db_boost_value</field>);
   }
-  if (my $ref_boost_value = $region_boost{$is_ref}) {
+  if (my $ref_boost_value =  $boosts->{'GeneTrans'}{$is_ref}) {
     $xml .= qq(
   <field name="ref_boost">$ref_boost_value</field>);
   }
