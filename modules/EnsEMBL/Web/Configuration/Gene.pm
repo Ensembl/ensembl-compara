@@ -155,8 +155,12 @@ sub populate_tree {
   $compara_menu->append($fam_node);
   
 	$self->create_node('Phenotype',  'Phenotype',
-    [qw( phenotype EnsEMBL::Web::Component::Gene::GenePhenotype )],
-    { 'availability' => 'phenotype' }
+    [qw(
+      phenotype EnsEMBL::Web::Component::Gene::GenePhenotype
+      variation EnsEMBL::Web::Component::Gene::GenePhenotypeVariation
+      orthologue EnsEMBL::Web::Component::Gene::GenePhenotypeOrthologue
+    )],
+    { 'availability' => 1 }#'phenotype' }
   );
 	
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
