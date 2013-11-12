@@ -60,19 +60,7 @@ sub content {
     $allele =~ s/$var_allele/<b>$var_allele<\/b>/ if $allele =~ /\//;
     
     # consequence type
-    my $type = join ' ',
-      keys %{{map {$_ => 1}
-        map {
-          sprintf(
-            '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-            '<span class="_ht conhelp" title="%s">%s</span></nobr>',
-            $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : 'no_colour',
-            $_->description,
-            $_->label
-          )
-        }
-        @{$tva->get_all_OverlapConsequences || []}
-      }};
+    my $type = $self->render_consequence_type($tva);    
     
     push @data, {
       res    => $snp->{'position'},
@@ -89,14 +77,14 @@ sub content {
   } 
    
   my $columns = [
-    { key => 'res',    title => 'Residue',            width => '8%',  sort => 'numeric', help => 'Residue number on the protein sequence'},
-    { key => 'id',     title => 'Variation ID',       width => '10%', sort => 'html',    help => 'Variant identifier' }, 
-    { key => 'type',   title => 'Type',               width => '20%', sort => 'string',  help => 'Consequence type' }, 
-    { key => 'status', title => 'Evidence',           width => '10%', sort => 'string',  help =>  $self->strip_HTML($glossary->{'Evidence status (variant)'}) },
-    { key => 'allele', title => 'Alleles',            width => '10%', sort => 'string',  help => 'Alternative nucleotides' },
-    { key => 'ambig',  title => 'Ambig. code',        width => '8%',  sort => 'string',  help => 'IUPAC nucleotide ambiguity code' },
-    { key => 'alt',    title => 'Residues',           width => '10%', sort => 'string',  help => 'Resulting amino acid(s)'  },
-    { key => 'codons', title => 'Codons',             width => '10%', sort => 'string',  help => 'Resulting codon(s), with the allele(s) displayed in bold' },
+    { key => 'res',    title => 'Residue',      width => '8%',  sort => 'numeric',       help => 'Residue number on the protein sequence'                     },
+    { key => 'id',     title => 'Variation ID', width => '10%', sort => 'html',          help => 'Variant identifier'                                         }, 
+    { key => 'type',   title => 'Type',         width => '20%', sort => 'position_html', help => 'Consequence type'                                           }, 
+    { key => 'status', title => 'Evidence',     width => '10%', sort => 'string',        help =>  $self->strip_HTML($glossary->{'Evidence status (variant)'}) },
+    { key => 'allele', title => 'Alleles',      width => '10%', sort => 'string',        help => 'Alternative nucleotides'                                    },
+    { key => 'ambig',  title => 'Ambig. code',  width => '8%',  sort => 'string',        help => 'IUPAC nucleotide ambiguity code'                            },
+    { key => 'alt',    title => 'Residues',     width => '10%', sort => 'string',        help => 'Resulting amino acid(s)'                                    },
+    { key => 'codons', title => 'Codons',       width => '10%', sort => 'string',        help => 'Resulting codon(s), with the allele(s) displayed in bold'   },
   ];
  
   # add SIFT for supported species
