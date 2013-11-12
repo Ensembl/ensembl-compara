@@ -1844,20 +1844,25 @@ sub dumpGene {
         my $external_db_desc  = $_->[3];
         my $xref_id           = $_->[4];
         my $external_db = $external_dbs->{$_->[1]}{'db_display_name'};
-        my $desc        = qq($type $stable_id has a $external_db record of $external_db_label);
+        my $desc        = "$external_db_label ($external_db";
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
-          $desc .= " ($external_db_desc)";
+          $external_db_desc =~ s/ $//;
+          $desc .= " record with a description of $external_db_desc)";
           $search_term .= " $external_db_desc";
         }
+        else {
+          $desc .= ')'; 
+        }
         if ($external_synonyms->{$xref_id}) {
-          $desc .= ' which has synonyms of';
+          my $syn_c = keys(%{$external_synonyms->{$xref_id}});
+          $desc .= $syn_c > 1 ? ', with synonyms of' : ', with a synonym of';
           foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
             $search_term .= " $syn";
             $desc .= " $syn,";
           }
-          $desc =~ s/,$//;
         }
+        $desc .= " is associated with $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
@@ -2160,20 +2165,25 @@ sub dumpTranscript {
         my $external_db_desc  = $_->[3];
         my $xref_id           = $_->[4];
         my $external_db = $external_dbs->{$_->[1]}{'db_display_name'};
-        my $desc        = qq($type $stable_id has a $external_db record of $external_db_label);
+        my $desc        = "$external_db_label ($external_db";
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
-          $desc .= " ($external_db_desc)";
+          $external_db_desc =~ s/ $//;
+          $desc .= " record with a description of $external_db_desc)";
           $search_term .= " $external_db_desc";
         }
+        else {
+          $desc .= ')'; 
+        }
         if ($external_synonyms->{$xref_id}) {
-          $desc .= ' which has synonyms of';
+          my $syn_c = keys(%{$external_synonyms->{$xref_id}});
+          $desc .= $syn_c > 1 ? ', with synonyms of' : ', with a synonym of';
           foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
             $search_term .= " $syn";
             $desc .= " $syn,";
           }
-          $desc =~ s/,$//;
         }
+        $desc .= " is associated with $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
