@@ -91,7 +91,9 @@ sub go {
 
   my $endpoints = $self->endpoints;
   $self->endpoint_log("ALL","got ".scalar(@$endpoints)." endpoints",1);
-  foreach my $endpoint (@$endpoints) {
+  my @early_endpoints = @$endpoints;
+  my $last_endpoint = pop @early_endpoints;
+  foreach my $endpoint (@early_endpoints) {
     $self->endpoint_log($endpoint,"Attempting $endpoint",1);
     my $is_dead = $self->is_dead($endpoint);
     if($is_dead == 1) {
@@ -119,7 +121,8 @@ sub go {
     $self->endpoint_log($endpoint,"Marking as dead");
     $self->is_dead($endpoint,1);
   }
-  return undef;
+  $self->endpoint_log($last_endpoint,"Attempting (no fallback) $last_endpoint",1);
+  return $self->attempt($last_endpoint,$payload,1);
 }
 
 1;
