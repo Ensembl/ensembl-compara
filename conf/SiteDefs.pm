@@ -167,6 +167,7 @@ our $MINI_BIOPERL_161_DIR = "$ENSEMBL_SERVERROOT/mini-bioperl-161";
 ## Choice of species...
 ###############################################################################
 
+our $ENSEMBL_DATASETS         = [];
 our $ENSEMBL_PRIMARY_SPECIES  = 'Homo_sapiens'; # Default species
 our $ENSEMBL_SECONDARY_SPECIES;
 
@@ -331,7 +332,8 @@ sub set_species_aliases {
   ## And one without the _ in...
   
   our $ENSEMBL_SPECIES_ALIASES = {};
-  our $ENSEMBL_DATASETS        = [ sort keys %__species_aliases ];
+  
+  push @$ENSEMBL_DATASETS, sort keys %__species_aliases;
   
   foreach my $name (@$ENSEMBL_DATASETS) {
     $ENSEMBL_SPECIES_ALIASES->{lc $_} = $name for @{$__species_aliases{$name}};
