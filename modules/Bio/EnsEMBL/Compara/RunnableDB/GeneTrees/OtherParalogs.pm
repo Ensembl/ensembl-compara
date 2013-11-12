@@ -256,7 +256,7 @@ sub get_ancestor_species_hash
     $node->add_tag("species_hash", $species_hash);
     $node->add_tag("gene_hash", $gene_hash);
     $node->add_tag('lca_taxon', $lca_taxon);
-    $node->add_tag('species_tree_node_id', $lca_taxon->node_id);
+    $node->store_tag('species_tree_node_id', $lca_taxon->node_id);
 
     return $species_hash;
 }
