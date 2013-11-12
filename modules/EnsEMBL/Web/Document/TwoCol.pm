@@ -44,4 +44,11 @@ sub add_row {
   return $row;
 }
 
+sub add_rows {
+  ## Wrapper around add_row to add multiple rows
+  ## @params List of ArrayRefs of arguments as accepted by add_row
+  my $self = shift;
+  return map $self->add_row(@$_), @_;
+}
+
 1;
