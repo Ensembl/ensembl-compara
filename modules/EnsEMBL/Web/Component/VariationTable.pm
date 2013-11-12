@@ -74,7 +74,7 @@ sub make_table {
     { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $self->strip_HTML($glossary->{'Source'})                    },
     { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => $self->strip_HTML($glossary->{'Evidence status (variant)'}) },
     { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                                     },
-    { key => 'snptype',  width => '12u', sort => 'string',          label => 'Type',                          help => 'Consequence type'                                          }, 
+    { key => 'snptype',  width => '12u', sort => 'position_html',   label => 'Type',                          help => 'Consequence type'                                          }, 
     { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                                   },
     { key => 'aacoord',  width => '6u',  sort => 'position',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                                    }
   ];
@@ -455,22 +455,8 @@ sub variation_table {
              $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 20) if length $allele_string > 20; # Check allele string size (for display issues)
              $allele_string        =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//; # highlight variant allele in allele string
           
-          # sort out consequence type string
-          # Avoid duplicated Ensembl terms
-          my $type = join ' ',
-            keys %{{map {$_ => 1}
-              map {
-                sprintf(
-                  '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-                  '<span class="_ht conhelp" title="%s">%s</span></nobr>',
-                  $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : 'no_colour',
-                  $_->description,
-                  $_->label
-                )
-              }
-              @{$tva->get_all_OverlapConsequences || []}
-            }};
-          $type ||= '-';
+          # Sort out consequence type string
+          my $type = $self->render_consequence_type($tva);
           
           my $sift = $self->render_sift_polyphen($tva->sift_prediction,     $tva->sift_score);
           my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
@@ -490,7 +476,7 @@ sub variation_table {
           
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
-         # my $status = join '', map qq{<img height="20px" width="20px" title="$_" src="/i/val/val_$_.gif"/><span class="hidden export">$_,</span>}, @$validation; # validation
+
           my $status = join("",
             map {
               sprintf(
