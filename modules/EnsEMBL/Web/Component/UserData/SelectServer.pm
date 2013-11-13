@@ -19,7 +19,7 @@ sub content {
   my $other    = $hub->param('other_das');
   my $filter   = $hub->param('das_name_filter');
   my $sitename = $hub->species_defs->ENSEMBL_SITETYPE; 
-  my $form     = $self->modal_form('select_server', $hub->url({ function => 'CheckServer', __clear => 1 }), { wizard => 1, no_back_button => 1 });
+  my $form     = $self->modal_form('select_server', $hub->url({ action => 'CheckServer', __clear => 1 }), { wizard => 1, no_back_button => 1 });
   
   $form->add_notes({
     heading => 'Tip',
