@@ -624,37 +624,25 @@ sub most_severe_consequence {
 
   return () if (!$vf);
 
-  my $button = qq{<img src="/i/16/cross.png" onclick="document.getElementById('test1').style.display='none'"  style="cursor:pointer;width:10px;height:10px"/>};
-
-  my $var_styles = $hub->species_defs->colour('variation');
   foreach my $vf_object (@$variation_features) {
     if ($vf_object->dbID == $vf) {
-      my $consequence = $vf_object->display_consequence;
-      my $SO_term = $consequence;
-      my $colour = $hub->colourmap->hex_by_name($var_styles->{lc($consequence)}{'default'});
-      $consequence =~ s/_/ /g;
 
-      my $so_accession = $vf_object->most_severe_OverlapConsequence->SO_accession;
-      my $so_description = $vf_object->most_severe_OverlapConsequence->description;
-      $so_accession = $hub->get_ExtURL_link($so_accession, 'SEQUENCE_ONTOLOGY', $so_accession);
- 
       my $url = $hub->url({
-         type             => 'Variation',
-         action           => 'Mappings',
-         v                => $self->object->name,
-      }); 
+         type   => 'Variation',
+         action => 'Mappings',
+         v      => $self->object->name,
+      });
+ 
+      my $html = sprintf(
+         '%s | <a href="%s">See all consequences</a>',
+         $self->render_consequence_type($vf_object,1),
+         $url
+      );
 
-      my $html = qq{
-      <p>
-        <span style="float:left;box-shadow:1px 1px 2px #aaaaaa;background-color:$colour;margin:3px 4px 0px 0px;padding:6px"></span> $consequence  
-        <a href="/info/docs/variation/predicted_data.html#$SO_term" class="_ht" title="$so_description"><img src="/i/16/info.png" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" /></a    > | 
-        <a href="$url">See all consequences</a>  
-      </p>};
       return [ 'Most severe consequence' , $html];
     }
   }
   return ();
 }
-
 
 1;
