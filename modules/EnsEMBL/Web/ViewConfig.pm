@@ -318,7 +318,7 @@ sub add_form_element {
   }
   
   $self->add_fieldset('Display options') unless $self->get_form->has_fieldset;
-  $self->get_form->add_element(%$element); ## TODO- modify it for the newer version of Form once all child classes are modified
+  $self->get_form->add_field($element);
   
   $self->{'labels'}{$element->{'name'}}       ||= $element->{'label'};
   $self->{'value_labels'}{$element->{'name'}} ||= { map { $_->{'value'} => $_->{'caption'} } @{$element->{'values'}} } if $element->{'values'};
