@@ -64,10 +64,10 @@ sub default_options {
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-        'host'        => 'mysql-eg-prod-1.ebi.ac.uk',                        #separate parameter to use the resources aswell
+        'host'        => 'mysql-eg-prod-2.ebi.ac.uk',                        #separate parameter to use the resources aswell
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'mysql-eg-prod-1.ebi.ac.uk',
-            -port   => 4238,
+            -host   => 'mysql-eg-prod-2.ebi.ac.uk',
+            -port   => 4239,
             -user   => 'ensrw',
             -pass   => $self->o('password'), 
 	    -dbname => $self ->o('dbname'),
@@ -96,7 +96,7 @@ sub default_options {
             -pass   => '',
 	    -db_version => 74,
         },
-	        'livemirror_loc' => {
+	'livemirror_loc' => {
             -host   => 'mysql-eg-mirror.ebi.ac.uk',
             -port   => 4205,
             -user   => 'ensro',
@@ -210,8 +210,8 @@ sub default_options {
 	'linear_gap' => 'loose',
 
   	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe')}, 
-  	'chain_batch_size' => 1,
-  	'chain_hive_capacity' => 20,
+  	'chain_batch_size' => 5,
+  	'chain_hive_capacity' => 50,
 
 	#
         #Default set_internal_ids
@@ -301,9 +301,11 @@ sub resource_classes {
             #%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 	    'default' => {'LSF' => '-q production-rh6'},
             '100Mb' => { 'LSF' => '-q production-rh6 -M100' .' -R" rusage[mem=100]"' },
+	    '500Mb' => { 'LSF' => '-q production-rh6 -M500' .' -R" rusage[mem=500]"' },
             '1Gb'   => { 'LSF' => '-q production-rh6 -M1000' .' -R" rusage[mem=1000]"' },
             '1.8Gb' => { 'LSF' => '-q production-rh6 -M1800' .' -R" rusage[mem=1800]"' },
             '3.6Gb' => { 'LSF' => '-q production-rh6 -M3600' .' -R"rusage[mem=3600]"' },
+	    '4.2Gb' => { 'LSF' => '-q production-rh6 -M4200' .' -R"rusage[mem=4200]"' },
 	    '8.4Gb' => { 'LSF' => '-q production-rh6 -M8400' .' -R"rusage[mem=8400]"' },
     };
 }
@@ -399,17 +401,17 @@ sub pipeline_analyses {
 	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => 'store_sequence',
- 	       -hive_capacity => 100,
+ 	       -hive_capacity => 50,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { },
 	       -flow_into => {
  	          -1 => [ 'store_sequence_again' ],
  	       },
-	       -rc_name => '1.8Gb',
+	       -rc_name => '1Gb',
   	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
  	    {  -logic_name => 'store_sequence_again',
- 	       -hive_capacity => 100,
+ 	       -hive_capacity => 50,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { }, 
 	       -can_be_empty  => 1, 
@@ -499,7 +501,7 @@ sub pipeline_analyses {
 	        -flow_into => {
 			       2 => [ 'filter_duplicates' ], 
 			     },
-	       -rc_name => '1Gb',
+	       -rc_name => '1.8Gb',
  	    },
  	     {  -logic_name   => 'filter_duplicates',
  	       -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
@@ -559,13 +561,14 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      2 => [ 'dump_large_nib_for_chains' ],
 			     },
-	       -rc_name => '1Gb',
+	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
+			       'overwrite'=>1,
 			      },
 	       -can_be_empty  => 1, 
 	       -hive_capacity => 10,
@@ -579,6 +582,7 @@ sub pipeline_analyses {
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
+			       'overwrite'=>1,
 			      },
 	       -hive_capacity => 10,
 	       -can_be_empty  => 1, 
@@ -593,7 +597,7 @@ sub pipeline_analyses {
 			      2 => [ 'alignment_chains' ],
 			     },
  	       -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
-	       -rc_name => '1.8Gb',
+	       -rc_name => '3.6Gb',
  	    },
  	    {  -logic_name => 'alignment_chains',
  	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -603,7 +607,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => '1Gb',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
  	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -711,7 +715,7 @@ sub pipeline_analyses {
                               1 => [ 'coding_exon_stats_summary' ],
 			      2 => [ 'coding_exon_stats' ],
 			     },
-	      -rc_name => '1Gb',
+	      -rc_name => '1.8Gb',
 	    },
             {   -logic_name => 'coding_exon_stats',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
