@@ -317,7 +317,7 @@ sub accept {
         <a class="update_panel config-reset" rel="%s" href="%s">Revert to previous configuration%%s</a>',
         $view_config->component,
         $saved_config ?
-          $hub->url({ type => 'UserData', action => 'ModifyConfig', function => 'activate', record_id => $saved_config->{'saved'}{'value'}, __clear => 1 }) :
+          $hub->url({ type => 'UserData', action => 'ModifyConfig', function => 'activate', record_id => $saved_config->{'saved'}[0]{'value'}, __clear => 1 }) :
           $hub->url('Config', { action => $view_config->component, function => undef, reset => 'all', __clear => 1 })
       ), ' (' . $view_config->title . ')' ];
       
