@@ -1064,7 +1064,7 @@ sub dumpOligoProbe {
   while( my( $probe_name, $count, $type ) = $sth->fetchrow_array ) {
     next unless $probe_name;
     my $locations_c = $count > 1 ? 'locations' : 'location';
-    my $desc =  qq($type probeset $probe_name hits the genome in $count $locations_c.);
+    my $desc =  qq($type probeset $probe_name has probes which hit the genome in $count $locations_c.);
     &p( OligoProbeLine($dbspecies,$probe_name,$desc,'','pset',$db,$counter ), $fh);
   }
 
