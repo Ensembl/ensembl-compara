@@ -153,15 +153,20 @@ div.image_config_notes p                             { clear: both; padding-left
 
 /* save as popup */
 
-div.config_save_as            { width: 400px; }
-div.config_save_as h1         { display: block!important; }
-div.config_save_as form       { margin: 0; }
-div.config_save_as label      { display: block; font-weight: bold; margin: 0 0 3px; }
-div.config_save_as select     { width: 100%; margin-bottom: 16px; }
-div.config_save_as span       { padding-right: 30px; }
-div.config_save_as span input { position: relative; top: 2px; }
+div.config_save_as             { width: 400px; }
+div.config_save_as h1          { display: block!important; }
+div.config_save_as form        { margin: 0; }
+div.config_save_as label       { display: block; font-weight: bold; margin: 0 0 3px; }
+div.config_save_as label.group { font-weight: normal; }
+div.config_save_as select      { width: 100%; margin-bottom: 16px; }
+div.config_save_as span        { padding-right: 30px; }
+div.config_save_as span input  { position: relative; top: 2px; }
+div.config_save_as p,
+div.config_save_as .groups     { margin-bottom: 16px; }
+div.config_save_as .groups     { display: none; }
+div.config_save_as .groups h4  { color: [[PAGE_TEXT]]; margin-bottom: 8px; }
 div.config_save_as .desc,
-div.config_save_as .name      { width: 395px; margin-top: 3px; }
-div.config_save_as .desc      { height: 105px; }
-div.config_save_as .disabled  { background-color: #999; border-color: #999; cursor: default; }
-div.config_save_as .close     { position: absolute; top: -10px; right: -10px; cursor: pointer; }
+div.config_save_as .name       { width: 395px; margin-top: 3px; }
+div.config_save_as .desc       { height: 105px; }
+div.config_save_as .disabled   { background-color: #999; border-color: #999; cursor: default; }
+div.config_save_as .close      { position: absolute; top: -10px; right: -10px; cursor: pointer; }

@@ -57,9 +57,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.viewConfigInputs  = $(':input:not([name=select_all])', this.elLk.viewConfigs);
     this.elLk.imageConfigExtras = $('.image_config_notes, .configuration_search', this.el);
     this.elLk.saveAs            = $('.config_save_as', this.el).detach(); // will be put into the modal overlay
-    this.elLk.saveAsInputs      = $('.name, .desc, .default, .existing', this.elLk.saveAs);
+    this.elLk.saveAsInputs      = $('.name, .desc, .default, .existing, input.group', this.elLk.saveAs);
     this.elLk.saveAsRequired    = this.elLk.saveAsInputs.filter('.name, .existing');
     this.elLk.existingConfigs   = this.elLk.saveAsInputs.filter('.existing');
+    this.elLk.saveTo            = $('.save_to', this.elLk.saveAs);
+    this.elLk.saveAsGroup       = $('.groups',  this.elLk.saveAs);
     this.elLk.saveAsSubmit      = $('.fbutton', this.elLk.saveAs);
     this.elLk.popup             = $();
     this.elLk.help              = $();
@@ -213,6 +215,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         if (el.hasClass('default')) {
           el.prop('checked', true);
+        } else if (this.type === 'checkbox') {
+          el.prop('checked', false);
         } else {
           el.val('');
         }
@@ -222,6 +226,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       panel.el.scrollTop(0);
       panel.elLk.saveAsSubmit.prop('disabled', true).addClass('disabled');
+      panel.elLk.saveAsGroup.hide();
       
       Ensembl.EventManager.trigger('modalOverlayShow', panel.elLk.saveAs);
       
@@ -235,6 +240,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.saveAsInputs.filter('.name').on('keyup blur input', saveAsState);
     this.elLk.existingConfigs.on('change', saveAsState);
+    
+    this.elLk.saveTo.on('click', function () {
+      panel.elLk.saveAsGroup[this.value === 'group' ? 'show' : 'hide']();
+    });
     
     this.elLk.saveAsSubmit.on('click', function () {
       var saveAs = { save_as: 1 };

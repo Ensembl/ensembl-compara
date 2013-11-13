@@ -144,23 +144,23 @@ sub add_image_config_notes {
 
 sub save_as {
   my ($self, $user, $view_config, $image_config) = @_;
-  my $hub          = $self->hub;
-  my $data         = $hub->config_adaptor->filtered_configs({ code => $image_config ? [ $view_config->code, $image_config ] : $view_config->code, active => '' });
-  my %admin_groups = $user ? map { $_->group_id => $_->name } $user->find_admin_groups : ();
-  my ($configs, %seen);
+  my $hub    = $self->hub;
+  my $data   = $hub->config_adaptor->filtered_configs({ code => $image_config ? [ $view_config->code, $image_config ] : $view_config->code, active => '' });
+  my %groups = $user ? map { $_->group_id => $_ } $user->find_admin_groups : ();
+  my ($configs, %seen, $save_to);
   
   foreach (sort { $a->{'name'} cmp $b->{'name'} } values %$data) {
     next if $seen{$_->{'record_id'}};
     
     $seen{$_} = 1 for $_->{'record_id'}, $_->{'link_id'};
     
-    next if $_->{'record_type'} eq 'group' && !$admin_groups{$_->{'record_type_id'}};
+    next if $_->{'record_type'} eq 'group' && !$groups{$_->{'record_type_id'}};
     
     $configs .= sprintf(
       '<option value="%s" class="%1$s">%s%s</option>',
       $_->{'record_id'},
       $_->{'name'},
-      $user ? sprintf(' (%s%s)', $_->{'record_type'} eq 'user' ? 'Account' : ucfirst $_->{'record_type'}, $_->{'record_type'} eq 'group' ? ": $admin_groups{$_->{'record_type_id'}}" : '') : ''
+      $user ? sprintf(' (%s%s)', $_->{'record_type'} eq 'user' ? 'Account' : ucfirst $_->{'record_type'}, $_->{'record_type'} eq 'group' ? ": $groups{$_->{'record_type_id'}}" : '') : ''
     ); 
   }
   
@@ -178,11 +178,37 @@ sub save_as {
     $configs
   );
   
-  my $save_to = $user ? qq{
-    <p><label>Save to:</label><span>Account <input type="radio" name="record_type" value="user" class="default" checked /></span><span>Session <input type="radio" name="record_type" value="session" /></span></p>
-  } : qq{
-    <input type="hidden" name="record_type" value="session" />
-  };
+  if ($user) {
+    $save_to = sprintf('
+      <p>
+        <label>Save to:</label>
+        <span>Account <input type="radio" name="record_type" value="user" class="default save_to" checked /></span>
+        <span>Session <input type="radio" name="record_type" value="session" class="save_to" /></span>
+        %s
+      </p>',
+      scalar keys %groups ? '<span>Groups you administer <input type="radio" name="record_type" value="group" class="save_to" /></span>' : ''
+    );
+    
+    if (scalar keys %groups) {
+      my %default_groups = map { $_ => 1 } @{$hub->species_defs->ENSEMBL_DEFAULT_USER_GROUPS || []};
+      
+      $save_to .= '<div class="groups"><h4>Groups:</h4>';
+      
+      foreach (sort { ($a->[0] <=> $b->[0]) || ($a->[1] cmp $b->[1]) } map [ $default_groups{$_->group_id}, lc $_->name, $_ ], values %groups) {
+        $save_to .= sprintf('
+          <div class="form-field">
+            <label class="group ff-label">%s:</label>
+            <div class="ff-right"><input type="checkbox" value="%s" name="group" class="group" /></div>
+          </div>',
+          $_->[2]->name, $_->[2]->group_id
+        );
+      }
+      
+      $save_to .= '</div>';
+    }
+  } else {
+    $save_to = '<input type="hidden" name="record_type" value="session" />';
+  }
   
   return qq{
     <div class="config_save_as">
@@ -192,7 +218,7 @@ sub save_as {
         $save_to
         <p><label>Name:</label><input class="name" type="text" name="name" maxlength="255" /></p>
         <p><label>Description:</label><textarea class="desc" name="description" rows="5"/></p>
-        <p style="margin:0"><input class="fbutton disabled" type="button" value="Save" /></p>
+        <input class="fbutton disabled" type="button" value="Save" />
       </form>
     </div>
   };
