@@ -78,8 +78,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       success: function (json) {
         if (json.redirectURL && json.redirectType === 'modal') {
           return this.getContent(link, json.redirectURL);
-        }
-        if (json.redirectType === 'page') {
+        } else if (json.redirectType === 'page') {
           return Ensembl.redirect(json.redirectURL);
         }
         
