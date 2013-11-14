@@ -36,6 +36,8 @@
 .config_manager .records a.toggle                         { background-image: none; text-decoration: underline; }
 .config_manager .records a.create_set                     { font-weight: bold; }
 .config_manager .records a.create_set span.cancel         { display: none; float: right; text-decoration: underline; cursor: pointer; }
+.config_manager .reset_all .warning                       { display: inline-block; margin: 0; }
+.config_manager .reset_all .warning .fbutton              { margin: 0; }
 
 .share_config                       { width: 632px; }
 .share_config.narrow                { width: 300px; }

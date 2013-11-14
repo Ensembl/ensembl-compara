@@ -416,11 +416,15 @@ sub reset_all {
   return sprintf('
     <div class="reset_all%s">
       <h2>Reset all configurations</h2>
-      <p><strong style="color:red">WARNING!</strong> This will reset all of your configurations to default.</p>
-      <form action="%s"><input class="fbutton" type="submit" value="Reset" /></form>
+      %s
     </div>',
     grep($configs->{$_}{'active'} eq 'y', keys %$configs) ? '' : ' hidden',
-    $hub->url({ action => 'ModifyConfig', function => 'reset_all', __clear => 1 })
+    $self->warning_panel('WARNING!', sprintf('
+      <p>This will reset all of your configurations to default.</p>
+      <p>Saved configurations will not be affected.</p>
+      <form action="%s"><input class="fbutton" type="submit" value="Reset" /></form>',
+      $hub->url({ action => 'ModifyConfig', function => 'reset_all', __clear => 1 })
+    ))
   );
 }
 
