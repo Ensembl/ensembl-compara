@@ -23,6 +23,7 @@ sub content {
       <div class="records">
         %s
       </div>
+      %s
       <div class="edit_config_set config_manager">
         <h1 class="edit_header">Select %s for <span class="config_header"></span></h1>
         %s
@@ -33,7 +34,7 @@ sub content {
       </div>
     </div>',
     $self->records(@_),
-    $self->set_view ? 'configurations' : 'sets',
+    $self->set_view ? ('', 'configurations') : ($self->reset_all, 'sets'),
     $self->edit_table,
     $self->share
   );
@@ -405,6 +406,22 @@ sub share {
   $form->append_child('p', { class => 'invisible' });
   
   return ($class, $form->render);
+}
+
+sub reset_all {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $configs = $hub->config_adaptor->all_configs;
+  
+  return sprintf('
+    <div class="reset_all%s">
+      <h2>Reset all configurations</h2>
+      <p><strong style="color:red">WARNING!</strong> This will reset all of your configurations to default.</p>
+      <form action="%s"><input class="fbutton" type="submit" value="Reset" /></form>
+    </div>',
+    grep($configs->{$_}{'active'} eq 'y', keys %$configs) ? '' : ' hidden',
+    $hub->url({ action => 'ModifyConfig', function => 'reset_all', __clear => 1 })
+  );
 }
 
 1;

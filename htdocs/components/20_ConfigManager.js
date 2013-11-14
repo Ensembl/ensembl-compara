@@ -20,6 +20,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.tables       = $('table',                 this.elLk.recordTypes);
     this.elLk.shareConfig  = $('.share_config',         this.el).detach(); // will be put into the modal overlay;
     this.elLk.editSets     = $('.edit_config_set',      this.el).detach(); // will be put into the modal overlay;
+    this.elLk.resetAll     = $('.reset_all',            this.el);
     this.elLk.editTypes    = $('div.record_type',       this.elLk.editSets);
     this.elLk.editTable    = $('table',                 this.elLk.editTypes);
     this.elLk.editRecord   = $('.edit_record',          this.elLk.editSets);
@@ -225,6 +226,10 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     });
     
     this.elLk.shareConfig.add(this.elLk.editSets).find('.save').on('click', function () { Ensembl.EventManager.trigger('modalOverlayHide'); });
+    
+    $('form', this.elLk.resetAll).on('submit', function () {
+      panel.elLk.resetAll.hide();
+    });
   },
   
   initialize: function () {
@@ -383,21 +388,19 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   activateRecord: function (tr) {
     var bg     = tr.css('backgroundColor');
     var height = tr.height() + 'px';
+    var data   = this.params.records[tr.data('configId')];
     
-    tr.siblings('.active').stop(true, true).removeClass('active').css('backgroundColor', '')
-      .find('.config_used').stop(true, true).hide();
+    tr.siblings('.active').stop(true, true).removeClass('active').css('backgroundColor', '').find('.config_used').stop(true, true).hide();
     
-    tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () { $(this).removeClass('active').css('backgroundColor', ''); })
-      .find('.config_used').css({ height: height, lineHeight: height, width: tr.width() - 1, display: 'block' }).delay(1000).fadeOut(500);
+    tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () {
+      $(this).removeClass('active').css('backgroundColor', '');
+    }).find('.config_used').css({ height: height, lineHeight: height, width: tr.width() - 1, display: 'block' }).delay(1000).fadeOut(500);
     
-    $.each(this.params.records[tr.data('configId')].codes, function (i, code) {
-      var component = code.split('_')[1];
-      
-      if (Ensembl.PanelManager.panels[component]) {
-        Ensembl.EventManager.trigger('queuePageReload', component, true);
-        Ensembl.EventManager.trigger('activateConfig',  component);
-      }
-    });
+    this.updatePanels(data);
+    
+    if (data.codes.length) {
+      this.elLk.resetAll.show();
+    }
     
     tr = null;
   },
@@ -420,6 +423,19 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.trigger('updateSavedConfig', { deleted: [ tr.data('configId') ] });
     
     table = tr = null;
+  },
+  
+  updatePanels: function (data) {
+    var component;
+    
+    for (var i in data.codes) {
+      component = data.codes[i].split('_')[1];
+      
+      if (Ensembl.PanelManager.panels[component]) {
+        Ensembl.EventManager.trigger('queuePageReload', component, true);
+        Ensembl.EventManager.trigger('activateConfig',  component);
+      }
+    }
   },
   
   // Config view: Editing configs in a set - updateTable, sharing - addTableRow
