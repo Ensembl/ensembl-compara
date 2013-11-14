@@ -80,12 +80,10 @@ sub all_configs {
   if (!$self->{'all_configs'}) {
     $self->{'all_configs'} = $self->filtered_configs;
     
-    # Prioritize user records over session records when setting active config
-    # If both a user and session record are active and the user logs in, the user record will be the one used, and the session record will be ignored
-    foreach (sort {($b->{'record_type'} eq 'user') <=> ($a->{'record_type'} eq 'user')} values %{$self->{'all_configs'}}) {
+    foreach (values %{$self->{'all_configs'}}) {
       $_->{'raw_data'} = $_->{'data'};
       $_->{'data'}     = eval($_->{'data'}) || {};
-      $self->{'active_config'}{$_->{'type'}}{$_->{'code'}} ||= $_->{'record_id'} if $_->{'active'} eq 'y';
+      $self->{'active_config'}{$_->{'record_type'}}{$_->{'type'}}{$_->{'code'}} ||= $_->{'record_id'} if $_->{'active'} eq 'y';
     }
   }
   
@@ -111,14 +109,25 @@ sub filtered_configs {
 }
 
 sub active_config {
-  my ($self, $type, $code) = @_;
+  my ($self, $type, $code, $record_type) = @_;
   $self->all_configs unless $self->{'all_configs'};
-  return $self->{'active_config'}{$type}{$code};
+  return $self->{'active_config'}{$record_type || ($self->user_id ? 'user' : 'session')}{$type}{$code};
 }
 
 sub get_config {
   my $self   = shift;
   my $config = $self->all_configs->{$self->active_config(@_)};
+  
+  # If there is no user record, but there is a session record, move the session record to the user account.
+  # This means that users retain their settings when logging in after making a configuration
+  if (!$config && $self->user_id) {
+    my $record_id = $self->active_config(@_, 'session');
+    
+    if ($record_id) {
+      $self->save_to_user($record_id);
+      $config = $self->all_configs->{$record_id};
+    }
+  }
   
   $self->set_cache_tags($config);
   
@@ -153,7 +162,7 @@ sub save_config {
   if ($data) {
     $saved = $record_id ? $self->set_data($record_id, $data) : $self->new_config(%args, data => $data);
   } elsif ($record_id) {
-    ($deleted) = $self->delete_config($record_id);
+    ($deleted) = $self->delete_config($record_id, $args{'record_type'} eq 'user' ? $self->active_config($args{'type'}, $args{'code'}, 'session') : ());
   }
   
   return ($saved, $deleted);
@@ -186,7 +195,7 @@ sub new_config {
   $self->all_configs->{$record_id}{'data'}     = eval($args{'data'}) || {} unless ref $args{'data'};
   $self->all_configs->{$record_id}{'raw_data'} = $data;
   
-  $self->{'active_config'}{$args{'type'}}{$args{'code'}} = $record_id if $args{'active'};
+  $self->{'active_config'}{$args{'record_type'}}{$args{'type'}}{$args{'code'}} = $record_id if $args{'active'};
   
   return $record_id;
 }
@@ -539,7 +548,7 @@ sub save_to_user {
   foreach (grep $_, $config, $configs->{$config->{'link_id'}}) {
     $updated += $dbh->do('UPDATE configuration_details SET record_type = "user", record_type_id = ? WHERE record_id = ?', {}, $user_id, $_->{'record_id'});
     $_->{'record_type'}    = 'user';
-    $_->{'record_type_id'} = $_;
+    $_->{'record_type_id'} = $user_id;
   }
   
   return $updated;
