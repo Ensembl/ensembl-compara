@@ -227,7 +227,7 @@ sub render {
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
   if ($data_table) {
     $wrapper = qq{ class="$wrapper"} if $wrapper; 
-    $table   = qq{<div$wrapper>$table</div>};
+    $table   = qq{<div$wrapper>$options->{'wrapper_html'}$table</div>};
   }
   
   return $table;
