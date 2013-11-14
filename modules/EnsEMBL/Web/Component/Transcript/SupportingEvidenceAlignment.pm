@@ -84,7 +84,7 @@ sub content {
     $txt   .= ", length = $ext_seq_length $label" if $ext_seq_length;
     $table->add_row('External record', $txt);
   } else {
-    $table->add_row('External record', "Unable to retrieve sequence for $hit_id");
+    $table->add_row('External record', "Unable to fetch sequence for $hit_id from the $hit_db_name database at this time.");
   }
 
   if ($seq_type eq 'PEP' && $translation) {
@@ -144,7 +144,7 @@ sub content {
 
     if ($ext_seq) {
       if (!$e_sequence && $seq_type eq 'PEP') {
-        $table->add_row('Exon alignment:', "Unable to retrieve translation for $exon_id");
+        $table->add_row('Exon alignment:', "Unable to fetch translation for $exon_id from the $hit_db_name database at this time.");
         $html .= $table->render;
       }
       else {
