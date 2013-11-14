@@ -13,14 +13,30 @@ located as described here then everything should work OK.
   <p>
     The site structure is as follows (using "/usr/local/ensembl" as an example server-root):
   </p>
-  <table>
+  <table style="margin-bottom:1em">
   <tr>
     <td colspan="4"><kbd>`--&nbsp;/usr/local/ensembl</kbd></td>
   </tr>
   <tr>
-    <td rowspan="20" style="width: 3em">&nbsp; &nbsp;</td>
+    <td rowspan="20" style="width: 1em">&nbsp; &nbsp;</td>
+    <td colspan="3"><kbd>|--&nbsp;apache2</kbd> </td>
+    <td>Apache web server (default installation location)</td>
+  </tr>
+  <tr>
     <td colspan="3"><kbd>|--&nbsp;bioperl-live</kbd></td>
     <td>bio-modelling tools that Ensembl is based upon</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;cbuild</kbd> </td>
+    <td>Directory used by website when rendering BAM files</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ctrl-scripts</kbd> </td>
+    <td>Scripts for stopping and starting Apache, etc</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;conf</kbd> </td>
+    <td>Website configuration files</td>
   </tr>
   <tr>
     <td colspan="3"><kbd>|--&nbsp;ensembl</kbd> </td>
@@ -43,32 +59,36 @@ located as described here then everything should work OK.
     <td>Code to access the functional genomics data</td>
   </tr>
   <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl-orm</kbd> </td>
+    <td>Interface to non-genomic databases</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl-tools</kbd> </td>
+    <td>API scripts used by online tools such as the VEP</td>
+  </tr>
+  <tr>
     <td colspan="3"><kbd>|--&nbsp;ensembl-variation</kbd> </td>
     <td>Code to access the variation (SNP) data</td>
-  </tr>
-  <tr>
-    <td colspan="3"><kbd>|--&nbsp;perl</kbd> </td>
-    <td>Website mod_perl modules</td>
-  </tr>
-  <tr>
-    <td colspan="3"><kbd>|--&nbsp;modules</kbd> </td>
-    <td>Website accessory modules</td>
-  </tr>
-  <tr>
-    <td colspan="3"><kbd>|--&nbsp;conf</kbd> </td>
-    <td>Website configuration files</td>
   </tr>
   <tr>
     <td colspan="3"><kbd>|--&nbsp;htdocs</kbd> </td>
     <td>Website HTML and image files</td>
   </tr>
   <tr>
-    <td colspan="3"><kbd>|--&nbsp;utils</kbd> </td>
-    <td>Utility scripts</td>
+    <td colspan="3"><kbd>|--&nbsp;modules</kbd> </td>
+    <td>Website accessory modules</td>
   </tr>
   <tr>
-    <td colspan="3"><kbd>`--&nbsp;public-plugins</kbd></td>
+    <td colspan="3"><kbd>|--&nbsp;perl</kbd> </td>
+    <td>Website mod_perl modules</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;public-plugins</kbd></td>
     <td>Public plugin modules</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>`--&nbsp;utils</kbd> </td>
+    <td>Utility scripts</td>
   </tr>
 </table>
 
