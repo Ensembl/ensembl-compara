@@ -10,11 +10,11 @@ use base qw(EnsEMBL::Web::Document::Element::ToolButtons);
 
 sub label_classes {
   return {
-    'Save as...'          => 'save',
-    'Load configuration'  => 'config-load',
-    'Reset configuration' => 'config-reset',
-    'Reset track order'   => 'order-reset',
-    'Add your data'    => 'data',
+    'Save configuration as...' => 'save',
+    'Load configuration'       => 'config-load',
+    'Reset configuration'      => 'config-reset',
+    'Reset track order'        => 'order-reset',
+    'Add your data'            => 'data',
   };
 }
 
@@ -30,7 +30,7 @@ sub init {
        $rel         .= '_' . lc $hub->species if $image_config && $image_config->multi_species && $hub->referer->{'ENSEMBL_SPECIES'} ne $hub->species;
 
     $self->add_entry({
-      caption => 'Save as...',
+      caption => 'Save configuration as...',
       class   => 'save_configuration',
       url     => $hub->url({
         type    => 'UserData',
