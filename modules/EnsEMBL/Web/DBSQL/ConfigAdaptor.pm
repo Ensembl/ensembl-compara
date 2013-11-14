@@ -504,10 +504,13 @@ sub edit_set_records {
   my $set = $self->all_sets->{$set_id};
   
   return unless $set;
-  
-  my %record_ids = map { $_ => 1 } @record_ids;
-  my @new        = grep !$set->{'records'}{$_}, @record_ids;
-  my @delete     = grep !$record_ids{$_}, keys %{$set->{'records'}};
+ 
+  my $record_type    = $set->{'record_type'};
+  my $record_type_id = $set->{'record_type_id'};
+  my $configs        = $self->all_configs;
+  my %record_ids     = map { $_ => 1 } @record_ids;
+  my @new            = grep $record_type eq $configs->{$_}{'record_type'} && $record_type_id eq $configs->{$_}{'record_type_id'} && !$set->{'records'}{$_}, @record_ids;
+  my @delete         = grep $record_type eq $configs->{$_}{'record_type'} && $record_type_id eq $configs->{$_}{'record_type_id'} && !$record_ids{$_}, keys %{$set->{'records'}};
   my $updated;
   
   $updated->{'removed'} = \@delete if scalar @delete && $self->delete_records_from_sets($set_id, @delete);
@@ -519,13 +522,17 @@ sub edit_set_records {
 # update sets for a record
 sub edit_record_sets {
   my ($self, $record_id, @set_ids) = @_;
+  my $record = $self->all_configs->{$record_id};
   
-  return unless $self->all_configs->{$record_id};
+  return unless $record;
   
-  my %existing = map { $_ => 1 } $self->record_to_sets($record_id);
-  my %set_ids  = map { $_ => 1 } @set_ids;
-  my @new      = grep !$existing{$_}, @set_ids;
-  my @delete   = grep !$set_ids{$_}, keys %existing;
+  my $record_type    = $record->{'record_type'};
+  my $record_type_id = $record->{'record_type_id'};
+  my $sets           = $self->all_sets;
+  my %existing       = map { $_ => 1 } $self->record_to_sets($record_id);
+  my %set_ids        = map { $_ => 1 } @set_ids;
+  my @new            = grep $record_type eq $sets->{$_}{'record_type'} && $record_type_id eq $sets->{$_}{'record_type_id'} && !$existing{$_}, @set_ids;
+  my @delete         = grep $record_type eq $sets->{$_}{'record_type'} && $record_type_id eq $sets->{$_}{'record_type_id'} && !$set_ids{$_}, keys %existing;
   my $updated;
   
   $updated->{'removed'} = \@delete if scalar @delete && $self->delete_sets_from_record($record_id, @delete);
