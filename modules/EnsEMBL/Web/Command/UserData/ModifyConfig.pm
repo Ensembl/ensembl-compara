@@ -34,10 +34,18 @@ sub edit_details {
 }
 
 sub save {
-  my $self = shift;
-  my $hub  = $self->hub;
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $redirect = $hub->param('redirect');
   
-  print 'saveRecord' if $hub->config_adaptor->save_to_user($hub->param('record_id')); # FIXME: when saving a set, save all the configs in the set too
+  # FIXME: when saving a set, save all the configs in the set too
+  if ($hub->config_adaptor->save_to_user($hub->param('record_id'))) {
+    if ($redirect) {
+      $self->ajax_redirect($redirect, undef, undef, 'modal', 'modal_user_data');
+    } else {
+      print 'saveRecord';
+    }
+  }
 }
 
 sub delete {
@@ -133,7 +141,7 @@ sub reset_all {
   my $self       = shift;
   my $hub        = $self->hub;
   my $adaptor    = $hub->config_adaptor;
-  my $configs    = $adaptor->all_configs;;
+  my $configs    = $adaptor->all_configs;
   my @config_ids = grep $configs->{$_}{'active'} eq 'y', keys %$configs;
   my @codes      = map { ($configs->{$_}{'type'} eq 'image_config' && $configs->{$_}{'link_code'} ? $configs->{$_}{'link_code'} : $configs->{$_}{'code'}) =~ s/::/_/rg } @config_ids;
   
