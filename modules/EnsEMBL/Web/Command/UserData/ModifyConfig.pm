@@ -129,4 +129,17 @@ sub share {
   }
 }
 
+sub reset_all {
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $adaptor    = $hub->config_adaptor;
+  my $configs    = $adaptor->all_configs;;
+  my @config_ids = grep $configs->{$_}{'active'} eq 'y', keys %$configs;
+  my @codes      = map { ($configs->{$_}{'type'} eq 'image_config' && $configs->{$_}{'link_code'} ? $configs->{$_}{'link_code'} : $configs->{$_}{'code'}) =~ s/::/_/rg } @config_ids;
+  
+  $adaptor->delete_config(@config_ids);
+  
+  print $self->jsonify({ func => 'updatePanels', codes => \@codes })
+}
+
 1;
