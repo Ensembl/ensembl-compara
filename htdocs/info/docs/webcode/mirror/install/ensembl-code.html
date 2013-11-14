@@ -21,6 +21,13 @@ instance using the new standalone Tomcat-based interface, available from
 illustration, we will use /usr/local/ensembl. When following these instructions, replace /usr/local/ensembl 
 with your chosen server-root.</p>
 
+<div class="tinted-box">
+<p><b>Important notice</b>: As of Release 75 we will be moving development into git. 
+For the next several releases, the new branch will still be made available via CVS 
+at release time, but there will be no further work on the CVS HEAD.
+Please see our blog for announcements about access to the new git repositories.</p> 
+</div>
+
 <ol>
 <li>Go to the server-root directory:
 <code>cd /usr/local/ensembl</code>
@@ -35,7 +42,9 @@ Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/ensembl
 CVS password: CVSUSER 
 </pre>
   </li>
-  <li>To check out the most recent stable version of the ensembl API and web code from CVS (i.e. to download the code from the Sanger CVS server onto your local machine) you need to use the latest branch of the code.  Please note the code on the CVS HEAD is under development and unstable.  Use the following command making sure you use the code that matches your databases:
+  <li>To check out the most recent stable version of the ensembl API and web code from CVS (i.e. to download the code from the Sanger CVS server onto your local machine) you need to use the latest branch of the code.</p> 
+
+<p>Use the following command making sure you use the release version that matches your databases:</p>
   <pre class="code">
 $ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-api ensembl-website 
 </pre>
@@ -90,8 +99,8 @@ blastview code.</p>
 of BioPerl <strong>version 1.2.3</strong> (unfortunately no longer available through
 the BioPerl CVS repository), not a more recent version. Starting with 1.2.4, major
 changes were made to the BioPerl API which make it incompatible with Ensembl blastview.</p> 
-<p>We are aiming to resolve this issue in the not-too-distant future, by rewriting 
-the Ensembl BLAST interface and parser.</p> 
+<p>We will be launching a new Ensembl BLAST interface and parser in early 2014
+which will remove this problem.</p> 
 </div>
 
   <ol>
