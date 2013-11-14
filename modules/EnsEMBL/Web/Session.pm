@@ -93,8 +93,10 @@ sub store {
   
   my $self       = shift;
   my $session_id = $self->create_session_id;
-  my $adaptor    = $self->hub->config_adaptor;
-  my %params     = ( record_type => 'session', record_type_id => $session_id, active => 'y' );
+  my $hub        = $self->hub;
+  my $adaptor    = $hub->config_adaptor;
+  my $user       = $hub->user;
+  my %params     = ( record_type => $user ? 'user' : 'session', record_type_id => $user ? $user->user_id : $session_id, active => 'y' );
   my (@data, %links);
   
   foreach my $type (qw(view_config image_config)) {
