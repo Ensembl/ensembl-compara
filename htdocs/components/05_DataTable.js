@@ -212,7 +212,7 @@ Ensembl.DataTable = {
       var th = $(this.nTh);
       
       $('<li>', {
-        html: '<input type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
+        html: '<input data-role="none" type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
         click: function () {
           var input  = $('input', this);
           var tables, visibility, index, textCheck;
