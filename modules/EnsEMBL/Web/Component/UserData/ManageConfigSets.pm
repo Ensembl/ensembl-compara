@@ -52,6 +52,7 @@ sub records {
       id        => $record_id,
       name      => $_->{'name'},
       group     => $json_group,
+      groupId   => $_->{'record_type_id'},
       codes     => [ map @{$_->[3]}, @confs ],
       editables => { map { $_->[0] => 1 } @confs }
     };

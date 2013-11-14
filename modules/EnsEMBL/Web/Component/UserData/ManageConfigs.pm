@@ -157,6 +157,7 @@ sub records {
       id        => $record_id,
       name      => $_->{'name'},
       group     => $json_group,
+      groupId   => $_->{'record_type_id'},
       codes     => [ "${type}_$code" ],
       editables => { map { $self->{'editables'}{$_}{'record_id'} => 1 } @sets }
     };
@@ -354,30 +355,47 @@ sub edit_table_row {
   $row->{'name'}    = { value => sprintf($templates->{'wrap'}, $record->{'name'}),        class => 'wrap', sort => $record->{'name'} };
   $row->{'desc'}    = { value => sprintf($templates->{'wrap'}, $record->{'description'}), class => 'wrap' };
   $row->{'add'}     = sprintf $templates->{'add'}, $record->{'record_id'};
-  $row->{'options'} = { class => join(' ', $record->{'record_id'}, @{$record->{'conf_codes'} || []}), table => $self->record_group($_) };
+  $row->{'options'} = { class => join(' ', $record->{'record_id'}, @{$record->{'conf_codes'} || []}), record => $record };
   
   return $row;
 }
 
 sub edit_table_html {
   my ($self, $columns, $rows) = @_;
+  my $user     = $self->hub->user;
+  my $set_view = $self->set_view;
   my $form     = $self->new_form({ action => $self->hub->url({ action => 'ModifyConfig', function => 'edit_sets', __clear => 1 }), method => 'post', class => 'edit_record' });
   my $fieldset = $form->add_fieldset;
-  
-  $fieldset->append_child('input', { type => 'checkbox', class => "selected hidden $_", name => 'update_id', value => $_              }) for keys %{$self->{'editables'}};
-  $fieldset->append_child('input', { type => 'hidden',   class => 'record_id',          name => 'record_id', value => ''              });
-  $fieldset->append_child('input', { type => 'hidden',                                  name => 'is_set',    value => $self->set_view });
-  $fieldset->append_child('input', { type => 'submit',   class => 'save fbutton',                            value => 'Save'          });
-  
   my %tables;
-  push @{$tables{delete $_->{'options'}{'table'}}}, $_ for @$rows;
+  
+  $fieldset->append_child('input', { type => 'checkbox', class => "selected hidden $_", name => 'update_id', value => $_        }) for keys %{$self->{'editables'}};
+  $fieldset->append_child('input', { type => 'hidden',   class => 'record_id',          name => 'record_id', value => ''        });
+  $fieldset->append_child('input', { type => 'hidden',                                  name => 'is_set',    value => $set_view });
+  $fieldset->append_child('input', { type => 'submit',   class => 'save fbutton',                            value => 'Save'    });
+  
+  foreach (@$rows) {
+    my $record = delete $_->{'options'}{'record'};
+    push @{$tables{$self->record_group($record) . ' ' . $record->{'record_type_id'}}}, $_
+  }
   
   return join('',
-    map($self->new_table(
-      [ @$columns, { key => 'add', %{$self->templates->{'icon_col'}} } ],
-      [ sort { $a->{'type'} cmp $b->{'type'} || $a->{'conf'} cmp $b->{'conf'} || $a->{'name'}{'sort'} cmp $b->{'name'}{'sort'} } @{$tables{$_}} ],
-      { data_table => 'no_col_toggle no_sort', exportable => 0, class => 'fixed heightwrap_inside', wrapper_class => "record_type $_", data_table_config => { iDisplayLength => 10 } }
-    )->render, sort keys %tables),
+    map($self->new_table([
+      @$columns, { key => 'add', %{$self->templates->{'icon_col'}} }
+    ], [
+      sort { $a->{'type'} cmp $b->{'type'} || $a->{'conf'} cmp $b->{'conf'} || $a->{'name'}{'sort'} cmp $b->{'name'}{'sort'} } @{$tables{$_}}
+    ], { 
+      data_table        => 'no_col_toggle no_sort',
+      data_table_config => { iDisplayLength => 10 },
+      exportable        => 0,
+      class             => 'fixed heightwrap_inside',
+      wrapper_class     => "record_type $_",
+      wrapper_html      => $user ? sprintf(
+        '<p>%s from %s%s</p>',
+        $set_view ? 'Configurations' : 'Sets',
+        /user|session/ ? 'your ' : '',
+        /user/ ? 'account' : /session/ ? 'session' : $user->get_group([split ' ']->[1])->name 
+      ) : '',
+    })->render, sort keys %tables),
     $form->render
   );
 }
