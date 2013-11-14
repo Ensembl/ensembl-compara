@@ -133,7 +133,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       panel.elLk.editRecord.add(panel.elLk.editHeader).show();
       panel.elLk.editId.val(record.id);
       
-      panel.updateEditTable(record.group, record);
+      panel.updateEditTable(record.group + '.' + record.groupId, record);
       
       Ensembl.EventManager.trigger('modalOverlayShow', panel.elLk.editSets);
       
