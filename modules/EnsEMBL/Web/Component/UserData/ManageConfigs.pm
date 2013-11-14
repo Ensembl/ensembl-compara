@@ -5,6 +5,7 @@ package EnsEMBL::Web::Component::UserData::ManageConfigs;
 use strict;
 
 use HTML::Entities qw(encode_entities);
+use URI::Escape    qw(uri_escape);
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -32,11 +33,13 @@ sub content {
         <h1>Sharing <span class="config_header"></span></h1>
         %s
       </div>
-    </div>',
+    </div>
+    %s',
     $self->records(@_),
     $self->set_view ? ('', 'configurations') : ($self->reset_all, 'sets'),
     $self->edit_table,
-    $self->share
+    $self->share,
+    $self->hub->param('reload') ? '<div class="modal_reload"></div>' : ''
   );
 }
 
@@ -266,8 +269,17 @@ sub row {
     $row->{'share'}  = sprintf $templates->{'icon'}, 'share',  'share_record', 'Share',  $hub->url({ function => 'share',  %params }) unless $group;
     $row->{'edit'}   = sprintf $templates->{'icon'}, 'edit',   'edit_record',  $text->[2], '#';
     
-    if ($record->{'record_type'} eq 'session') {
-      $row->{'save'} = sprintf $templates->{'icon'}, 'save', 'edit', 'Save to account', $hub->url({ function => 'save', %params });
+    if ($record->{'record_type'} eq 'session' && $hub->users_available) {
+      my $save_url = $hub->url({ function => 'save', %params });
+      
+      $row->{'save'} = sprintf(
+        $templates->{'icon'},
+        'save', $hub->user ? ('edit', 'Save to account', $save_url) : (
+          'modal_link" rel="modal_user_data',
+          'Log in to save',
+          $hub->url({ type => 'Account', action => 'Login', __clear => 1, modal_tab => 'modal_user_data', then => uri_escape("$save_url;redirect=" . $hub->url({ __clear => 1, reload => 1 })) })
+        )
+      );
     } elsif ($record->{'record_type'} eq 'user') {
       $row->{'save'} = sprintf $templates->{'disabled'}, 'save', 'Saved';
     }
@@ -285,7 +297,10 @@ sub row {
 
 sub columns {
   my ($self, $cols) = @_;
-  my %icon_col = %{$self->templates->{'icon_col'}};
+  my $hub           = $self->hub;
+  my %icon_col      = %{$self->templates->{'icon_col'}};
+  my $admin_groups  = $self->admin_groups;
+  my $admin_default = scalar grep $admin_groups->{$_}, keys %{$self->default_groups};
   my ($groups, %editable);
   
   $cols ||= [
@@ -304,13 +319,17 @@ sub columns {
   my $columns = [
     @$cols,
     { key => 'active', %icon_col },
-    sub { return $_[0] eq 'user'  ? { key => 'save',  %icon_col } : (); },
-    sub { return $editable{$_[0]} ? { key => 'edit',  %icon_col } : (); },
-    sub { return $_[0] eq 'user'  ? { key => 'share', %icon_col } : (); },
-    { key => 'delete', %icon_col },
+    sub { return $_[0] eq 'user' && $hub->users_available ? { key => 'save',   %icon_col } : (); },
+    sub { return $editable{$_[0]}                         ? { key => 'edit',   %icon_col } : (); },
+    sub { return $_[0] eq 'user'                          ? { key => 'share',  %icon_col } : (); },
+    sub { return $_[0] ne 'suggested' || $admin_default   ? { key => 'delete', %icon_col } : (); },
   ];
   
-  $editable{$self->record_group($_)} = 1 for values %{$self->{'editables'}};
+  foreach (values %{$self->{'editables'}}) {
+    my $group = $self->record_group($_);
+    $editable{$group} = 1 if $group ne 'suggested' || $admin_default;
+  }
+  
   $editable{'user'} ||= $editable{'session'};
   
   foreach my $type (qw(user group suggested)) {
@@ -438,7 +457,7 @@ sub reset_all {
       %s
     </div>',
     grep($configs->{$_}{'active'} eq 'y', keys %$configs) ? '' : ' hidden',
-    $self->warning_panel('WARNING!', sprintf('
+    $self->warning_panel('WARNING', sprintf('
       <p>This will reset all of your configurations to default.</p>
       <p>Saved configurations will not be affected.</p>
       <form action="%s"><input class="fbutton" type="submit" value="Reset" /></form>',
