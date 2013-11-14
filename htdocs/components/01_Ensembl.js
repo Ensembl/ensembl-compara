@@ -217,7 +217,10 @@ Ensembl.extend({
   },
   
   updateURL: function (params, inputURL) {
-    var url = inputURL ? (inputURL + (inputURL.match(/\?/) ? '' : '?')) : window.location[this.locationURL];
+    var url = inputURL || window.location[this.locationURL];
+    if (!url.match(/\?/)) {
+      url += '?';
+    }
     
     for (var i in params) {
       if (params[i] === false) {
