@@ -151,7 +151,7 @@ sub new_set_form {
       label_first   => 1,
     });
   } else {
-    $fieldset->append_child('input', { type => 'hidden', name => 'record_type', value => 'session' });
+    $fieldset->append_child('input', { type => 'hidden', name => 'record_type', class => 'record_type', value => 'session' });
   }
   
   $fieldset->add_field({ type => 'String', name => 'name',        label => 'Configuration set name', required => 1, maxlength => 255 });

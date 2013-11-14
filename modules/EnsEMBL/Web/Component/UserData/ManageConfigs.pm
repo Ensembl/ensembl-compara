@@ -310,6 +310,7 @@ sub columns {
   ];
   
   $editable{$self->record_group($_)} = 1 for values %{$self->{'editables'}};
+  $editable{'user'} ||= $editable{'session'};
   
   foreach my $type (qw(user group suggested)) {
     $groups->{$type} = [ map { ref eq 'CODE' ? &$_($type) : $_ } @$columns ];
