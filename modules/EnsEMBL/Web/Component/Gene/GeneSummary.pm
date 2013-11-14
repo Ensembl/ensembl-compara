@@ -186,6 +186,10 @@ sub content {
 sub draw_structure {
   my $self = shift;
   my $html = '';
+
+  my $svg_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r';
+  $self->make_directory($svg_path.'/');
+
   my $database = $self->hub->database('compara');
   if ($database) {
     my $gma = $database->get_GeneMemberAdaptor();
@@ -202,7 +206,6 @@ sub draw_structure {
     my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
     my $aln_file    = $self->_dump_multiple_alignment($input_aln, $model_name, $ss_cons);
     my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id);
-    my $svg_path    = $self->hub->species_defs->ENSEMBL_TMP_URL_IMG.'/r2r';
     $html .= qq(<object data="$svg_path/$thumbnail" type="image/svg+xml"></object>
 <br /><a href="$svg_path/$plot">[click to enlarge]</a>);
   }
