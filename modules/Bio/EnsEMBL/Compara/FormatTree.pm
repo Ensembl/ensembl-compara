@@ -151,8 +151,11 @@ Code        : Letter_code
 
 # C(name)
 my $name_cb = sub {
-  my ($self) = @_;
-  return $self->{tree}->name;
+    my ($self) = @_;
+    if ($self->{tree}->can('node_name') && defined $self->{tree}->node_name) {
+        return $self->{tree}->node_name;
+    }
+    return $self->{tree}->name;
 };
 
 my $distance_to_parent_cb = sub {
