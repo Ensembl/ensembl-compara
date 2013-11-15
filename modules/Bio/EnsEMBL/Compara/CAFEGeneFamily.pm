@@ -146,6 +146,25 @@ sub lca_id {
     return $self->{'_lca_id'};
 }
 
+=head2 lca_taxon_id
+
+    Arg[1]      : [none]
+    Example     : $taxon_id = $species_tree->lca_taxon_id();
+    Description : Getter to get the taxon_id of the lca node
+    ReturnType  : Scalar
+    Exceptions  : none
+    Caller      : general
+
+=cut
+
+sub lca_taxon_id {
+    my ($self) = @_;
+
+    my $lca_id = $self->lca_id();
+    my $lca_node = $self->root->lca_reroot($lca_id);
+    return $lca_node->taxon_id;
+}
+
 =head2 gene_tree_root_id
 
     Arg[1]      : (opt.) <int> Internal ID
@@ -176,9 +195,9 @@ sub root {
     }
 
     if (not defined $self->{'_root'}) {
-        if (defined $self->{'_root_id'} and defined $self->adaptor) {
+        if (defined $self->cafe_gene_family_id and defined $self->adaptor) {
             my $stn_adaptor = $self->adaptor->db->get_CAFEGeneFamilyNodeAdaptor;
-            $self->{'_root'} = $stn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+            $self->{'_root'} = $stn_adaptor->fetch_tree_by_cafe_gene_family_id($self->cafe_gene_family_id());
         }
     }
     return $self->{'_root'};
