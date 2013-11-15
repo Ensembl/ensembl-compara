@@ -92,7 +92,7 @@ sub toString {
 
     my $taxon_id    = $self->get_tagvalue('taxon_id');
     my $name        = $self->get_tagvalue('name');
-    return ref($self).": dbID=".($self->dbID || '?').($taxon_id ? ", taxon_id=$taxon_id" : '').", name='".($name || '?')."', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} @{ $self->genome_dbs })."]";
+    return ref($self).": dbID=".($self->dbID || '?').($taxon_id ? ", taxon_id=$taxon_id" : '').", name='".($name || '?')."', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} sort {$a->dbID <=> $b->dbID} @{ $self->genome_dbs })."]";
 }
 
 
