@@ -26,7 +26,7 @@ use Digest::MD5 qw(md5_hex);
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$sub_host,$sub_port,$sub_user,$no_sub,$debug,$log,$dir,$help);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$sub_host,$sub_port,$sub_user,$no_sub,$create_elevate,$debug,$log,$dir,$help);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
@@ -35,6 +35,7 @@ GetOptions('species=s'        => \$species_list,
            'sub_port=s'       => \$sub_port,
            'sub_user=s'       => \$sub_user,
            'no_sub'           => \$no_sub,
+           'create_elevate'   => \$create_elevate,
            'debug'            => \$debug,
            'log=s'            => \$log,
            'dir=s'            => \$dir,
@@ -170,7 +171,6 @@ foreach (@indexes) {
   }
 }
 
-
 # if the SPECIES is set to ALL grab them all from the config...
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
 my $input_c = @species;
@@ -199,6 +199,7 @@ mkdir $dir, 0777 unless -e "$dir";
 
 my $start_time = time;
 my $total_c;
+my $elevate;
 foreach my $index (@indexes) {
   my $loc = "$dir/".$shards{$index}."_$release/";
   my $start = time;
@@ -241,67 +242,79 @@ foreach my $index (@indexes) {
       $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');
     }
 
-    my $no_success = 1;
-    my $c;
-    print LOG "Starting: $index $species\n";
-    while ($no_success) {
-      $c++;
-      $conf->{'dbh'} = DBI->connect("dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
-                                    $core->{'USER'},
-                                    $core->{'PASS'},
-                                    {PrintError => 1, RaiseError => 0}
-                                  );
-      if ( ! $conf->{'dbh'}) {
-        print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}."\n";
-        exit;
-      }
-      if ($index =~ /Family|GeneTree/) {
-        my $compara = $SD->multidb->{DATABASE_COMPARA};
-        $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
-                                              $compara->{'USER'},
-                                              $compara->{'PASS'},
-                                              {PrintError => 1, RaiseError => 0}
-                                            );
-      }
-      my $function = "dump$index";
-      no strict "refs";
-
-      #do the dumping!
-      eval {
-        $total_c += &$function( $conf );
-      };
-      if ($@) {
-        unless ($debug) {
-          #if the query dumping fails try four more times in case it's just a db connection issue
-	  if ( $conf->{'dbh'}->errstr()) {
-	    if ($c < 6) {
-	      print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
-	      sleep (5*60);}
-	    else {
-	      print LOG "WARNING: Error when dumping. you'll need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
-	      $no_success = 0;
-	    }
-	  }
-	  else {
-	    print LOG "WARNING: Error when dumping, you'll need to retry this one later (error is $@)\n";
-	    $no_success = 0;
-	  }
-	}
-        else {
-           print LOG "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
-           exit;
-         }
-      }
-      else {
-        $no_success = 0;
-      }
+    if ($create_elevate) {
+      &create_elevate($conf);
     }
-    eval { $conf->{'dbh'}->disconnect; };
-    if ($@) { print LOG "WARNING: Problems disconnecting database handle, don't understand this!"; }
-    last if $single_species;
+    else {
+      my $no_success = 1;
+      my $c;
+      print LOG "Starting: $index $species\n";
+      while ($no_success) {
+        $c++;
+        $conf->{'dbh'} = DBI->connect("dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
+                                      $core->{'USER'},
+                                      $core->{'PASS'},
+                                      {PrintError => 1, RaiseError => 0}
+                                    );
+        if ( ! $conf->{'dbh'}) {
+          print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}."\n";
+          exit;
+        }
+        if ($index =~ /Family|GeneTree/) {
+          my $compara = $SD->multidb->{DATABASE_COMPARA};
+          $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
+                                                $compara->{'USER'},
+                                                $compara->{'PASS'},
+                                                {PrintError => 1, RaiseError => 0}
+                                              );
+        }
+        my $function = "dump$index";
+        no strict "refs";
+
+        #do the dumping!
+        eval {
+          $total_c += &$function( $conf );
+        };
+        if ($@) {
+          unless ($debug) {
+            #if the query dumping fails try four more times in case it's just a db connection issue
+            if ( $conf->{'dbh'}->errstr()) {
+              if ($c < 6) {
+                print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+                sleep (5*60);}
+              else {
+                print LOG "WARNING: Error when dumping. you'll need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
+                $no_success = 0;
+              }
+            }
+            else {
+              print LOG "WARNING: Error when dumping, you'll need to retry this one later (error is $@)\n";
+              $no_success = 0;
+            }
+          }
+          else {
+            print LOG "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+            exit;
+          }
+        }
+        else {
+          $no_success = 0;
+        }
+      }
+      eval { $conf->{'dbh'}->disconnect; };
+      if ($@) { print LOG "WARNING: Problems disconnecting database handle, don't understand this!"; }
+      last if $single_species;
+    }
+    print LOG "  Time for $index is " . &elapsed_time($start) . "\n\n";
   }
-  print LOG "  Time for $index is " . &elapsed_time($start) . "\n\n";
 }
+
+if ($create_elevate) {
+  if ($elevate) {
+    print LOG $elevate;
+  }
+}
+
 
 #prune empty directories
 foreach my $subdir (<$dir/*>) {
@@ -313,6 +326,27 @@ foreach my $subdir (<$dir/*>) {
 print LOG "\nDumped $total_c records in total\n";
 print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
 exit;
+
+
+sub create_elevate {
+  my ($conf) = @_;
+  my $species     = $conf->{'species'};
+  my $url = $website_url . "/$species/Info/Index";
+  my $common_name = $conf->{'species_common_name'};
+  my $variant1 = lc($common_name);
+  my %names;
+  foreach my $name ($common_name, $variant1, $species) {
+    foreach (split ' ', $name) {
+      $names{$_}++;
+    }
+  }
+  my $text = join ' ', keys %names;
+
+  $elevate .= qq(
+  <query text="$text">
+    <doc id="$url" />
+  </query>);
+}
 
 ## Now for all the dump functions...............................
 
@@ -1046,8 +1080,43 @@ sub dumpOligoProbe {
   print LOG "  Dumping $FUNCDB to $file ... ".&date_and_mem()."\n";
   header($fh);
 
-  my $sth    = $conf->{'dbh'}->prepare(
-    "select ps.name, count(distinct pf.probe_feature_id) as hits, a.vendor
+  #gene details
+  my $gene_dets;
+  my $sql = qq(
+    SELECT t.stable_id, g.stable_id, x.display_label
+      FROM transcript t, gene g, xref x
+     WHERE t.gene_id = g.gene_id
+       AND g.display_xref_id = x.xref_id);
+  my $sth = $conf->{'dbh'}->prepare($sql);
+  $sth->execute;
+  while( my( $tsi, $gsi, $gname) = $sth->fetchrow_array ) {
+    $gene_dets->{$tsi} = {
+      'gene_id'   => $gsi,
+      'gene_name' => $gname
+    };
+  }
+
+  my $probe_set_trans_dets;
+  $sql = qq(
+    SELECT ps.probe_set_id, x.dbprimary_acc, x.display_label
+      FROM $FUNCDB.probe_set ps, $FUNCDB.object_xref ox, $FUNCDB.xref x, $FUNCDB.external_db edb
+     WHERE ps.probe_set_id = ox.ensembl_id 
+       AND ox.xref_id = x.xref_id
+       AND x.external_db_id = edb.external_db_id
+       AND ox.ensembl_object_type='ProbeSet'
+       AND edb.db_name = '${dbspecies}_core_Transcript');
+  $sth = $conf->{'dbh'}->prepare($sql);
+  $sth->execute;
+  while( my( $probe_set_id, $tsi, $display_label) = $sth->fetchrow_array ) {
+    my $gene_label = $gene_dets->{$tsi}{'gene_name'};
+    push @{$probe_set_trans_dets->{$probe_set_id}{$gene_label}}, {
+      'stable_id'     => $tsi,
+      'display_label' => $display_label,
+    };
+  };
+
+  $sth    = $conf->{'dbh'}->prepare(
+    "select ps.name, ps.probe_set_id, count(distinct pf.probe_feature_id) as hits, a.vendor
         from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
       where sn.name='MART_DISPLAYABLE'
         and sn.status_name_id=s.status_name_id
@@ -1061,14 +1130,46 @@ sub dumpOligoProbe {
   );
   $sth->execute();
   print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
-  while( my( $probe_name, $count, $type ) = $sth->fetchrow_array ) {
+  while( my( $probe_name, $pset_id, $count, $type ) = $sth->fetchrow_array ) {
     next unless $probe_name;
     my $locations_c = $count > 1 ? 'locations' : 'location';
     my $desc =  qq($type probeset $probe_name has probes which hit the genome in $count $locations_c.);
+    if (my @gname = keys %{$probe_set_trans_dets->{$pset_id} || {}}) {
+      my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
+      $desc .= " They hit transcripts in the following $gene_c:";
+      foreach my $gene (@gname) {
+        $desc .= " $gene (";
+        foreach my $trans (@{$probe_set_trans_dets->{$pset_id}{$gene}}) {
+          $desc .= $trans->{'stable_id'}.', ';
+        }
+        $desc =~ s/, $//;
+        $desc .= '),';
+      }
+      $desc =~ s/,$/\./;
+    }
     &p( OligoProbeLine($dbspecies,$probe_name,$desc,'','pset',$db,$counter ), $fh);
   }
 
-  my $sth    = $conf->{'dbh'}->prepare(
+  my $probe_trans_dets;
+  $sql = qq(
+    SELECT p.probe_id, x.dbprimary_acc, x.display_label
+      FROM $FUNCDB.probe p, $FUNCDB.object_xref ox, $FUNCDB.xref x, $FUNCDB.external_db edb
+     WHERE p.probe_id = ox.ensembl_id 
+       AND ox.xref_id = x.xref_id
+       AND x.external_db_id = edb.external_db_id
+       AND ox.ensembl_object_type='Probe'
+       AND edb.db_name = '${dbspecies}_core_Transcript');
+  $sth = $conf->{'dbh'}->prepare($sql);
+  $sth->execute;
+  while( my( $probe_id, $tsi, $display_label) = $sth->fetchrow_array ) {
+    my $gene_label = $gene_dets->{$tsi}{'gene_name'};
+    push @{$probe_trans_dets->{$probe_id}{$gene_label}}, {
+      'stable_id' => $tsi,
+      'display_label' => $display_label,
+    };
+  };
+
+  $sth    = $conf->{'dbh'}->prepare(
     "select p.probe_id, p.name, a.vendor, a.name, count(distinct pf.probe_feature_id) as hits
         from $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
       where sn.name='MART_DISPLAYABLE'
@@ -1088,6 +1189,19 @@ sub dumpOligoProbe {
     if( $old->{'pid'} != $pid ) {
       if( $old->{'pid'}) {
         my ($p_probe_name,$desc) = &get_oligo_terms($old);
+        if (my @gname = keys %{$probe_trans_dets->{$pid} || {}}) {
+          my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
+          $desc .= " It hits transcripts in the following $gene_c:";
+          foreach my $gene (@gname) {
+            $desc .= " $gene (";
+            foreach my $trans (@{$probe_trans_dets->{$pid}{$gene}}) {
+              $desc .= $trans->{'stable_id'}. ', ';
+            }
+            $desc =~ s/, $//;
+            $desc .= '),';
+          }
+          $desc =~ s/,$/\./;
+        }
         &p( OligoProbeLine($dbspecies,$p_probe_name,$desc,$old->{'array_dets'},'probe',$db,$counter ), $fh);
       }
       $old = {
