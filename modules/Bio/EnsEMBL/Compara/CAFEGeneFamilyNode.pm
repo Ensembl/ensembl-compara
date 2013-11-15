@@ -190,5 +190,28 @@ sub is_contraction {
     return 0;
 }
 
+=head2 lca_reroot
+
+  Arg[1]      : -none-
+  Example     : my $lca_tree = $tree->lca_reroot
+  Description : Returns the lowest common ancestor of the tree
+  ReturnType  : Bio::EnsEMBL::Compara::CAFEGeneFamily
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub lca_reroot {
+    my ($self, $lca_id) = @_;
+    for my $node (@{$self->get_all_nodes}) {
+        if ($node->node_id == $lca_id) {
+            return $node;
+            # my $lca_tree = $self->adaptor->fetch_lca_tree($node);
+            # return $lca_tree;
+        }
+    }
+    $self->throw("LCA node not found in the tree");
+}
+
 
 1;
