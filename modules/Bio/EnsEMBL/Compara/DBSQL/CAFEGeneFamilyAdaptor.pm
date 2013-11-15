@@ -73,18 +73,18 @@ sub fetch_all_by_method_link_species_set_id {
     my ($self, $mlss_id) = @_;
 
     my $species_tree_adaptor = $self->db->get_SpeciesTreeAdaptor;
-    my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id($mlss_id);
+    my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'cafe');
     my $root_id = $species_tree->root->node_id();
 
-    my $constraint = "root_id=$root_id";
+    my $constraint = "str.root_id=$root_id";
     return $self->generic_fetch($constraint);
 }
 
 sub store {
     my ($self, $tree) = @_;
 
-    my $sth = $self->prepare("INSERT INTO CAFE_gene_family (root_id, lca_id, gene_tree_root_id, pvalue_avg, lambdas, pvalue_lim) VALUES (?,?,?,?,?,?)");
-    $sth->execute($tree->root->node_id, $tree->lca_id, $tree->gene_tree_root_id, $tree->pvalue_avg, $tree->lambdas, $tree->pvalue_lim);
+    my $sth = $self->prepare("INSERT INTO CAFE_gene_family (root_id, lca_id, gene_tree_root_id, pvalue_avg, lambdas) VALUES (?,?,?,?,?)");
+    $sth->execute($tree->root->node_id, $tree->lca_id, $tree->gene_tree_root_id, $tree->pvalue_avg, $tree->lambdas);
     my $cafe_gene_family_id = $sth->{'mysql_insertid'};
     $sth->finish;
 
