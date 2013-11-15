@@ -373,7 +373,7 @@ sub _build_tree_from_nodes {
   #next add children to their parents
   my $root = undef;
   foreach my $node (@{$node_list}) {
-    my $parent = $node_hash{$node->_parent_id};
+    my $parent = $node->_parent_id ? $node_hash{$node->_parent_id} : undef;
     if($parent) { $parent->add_child($node); }
     else { $root = $node; }
   }
