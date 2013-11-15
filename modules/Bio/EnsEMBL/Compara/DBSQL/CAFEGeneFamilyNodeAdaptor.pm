@@ -118,13 +118,14 @@ sub init_instance_from_rowhash {
     $node->adaptor($self);
 }
 
-sub fetch_tree_by_root_id {
-  my ($self, $root_id) = @_;
-
-  my $table = ($self->_tables)[1]->[1];
-  my $constraint = "$table.root_id = ?";
-  $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
-  return $self->_build_tree_from_nodes($self->generic_fetch($constraint));
+sub fetch_tree_by_cafe_gene_family_id {
+    my ($self, $cafe_gene_family_id) = @_;
+    my $table = ($self->_tables)[0]->[1];
+    my $constraint = "$table.cafe_gene_family_id = ?";
+    $self->bind_param_generic_fetch($cafe_gene_family_id, SQL_INTEGER);
+    my $nodes = $self->generic_fetch($constraint);
+    my $tree = $self->_build_tree_from_nodes($nodes);
+    return $tree;
 }
 
 
