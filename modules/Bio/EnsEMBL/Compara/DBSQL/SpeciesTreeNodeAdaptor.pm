@@ -83,13 +83,17 @@ sub new_from_NestedSet {
                 $node->node_name($name);
             }
 
+            my $genomeDB;
             if (defined $node->taxon_id) {
-                my $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
-                next unless (defined $genomeDB);
-                $node->genome_db_id($genomeDB->dbID);
-#                $node->taxon_id($genomeDB->taxon_id); ## taxon_id shouldn't be in the taxon node already?
-
+                $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
+            } elsif (defined $node->node_name) {
+                $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($node->node_name);
             }
+            if (defined $genomeDB) {
+                $node->genome_db_id($genomeDB->dbID);
+                $node->taxon_id($genomeDB->taxon_id)
+            }
+
         } else {
             my $taxon_node;
             if (defined $taxon_id) {
