@@ -27,9 +27,7 @@ sub content {
   my (%rows, %all_pops, %pop_names);
   my $flag_children = 0;
   my $allele_string = $self->object->alleles;
-  my @colour_order  = qw(blue red green);
-  my %colours       = map { $_ => shift @colour_order || 'black' } split /\//, $allele_string;
-  
+  my $al_colours = $self->object->get_allele_genotype_colours;
   
   foreach my $ind_id (sort { $ind_data{$a}{'Name'} cmp $ind_data{$b}{'Name'} } keys %ind_data) {
     my $data     = $ind_data{$ind_id};
@@ -58,10 +56,10 @@ sub content {
       }
     }
     
-    $genotype =~ s/A/<span style="color:green">A<\/span>/g;
-    $genotype =~ s/C/<span style="color:blue">C<\/span>/g;
-    $genotype =~ s/G/<span style="color:orange">G<\/span>/g;
-    $genotype =~ s/T/<span style="color:red">T<\/span>/g;
+    # Colour the genotype
+    foreach my $al (keys(%$al_colours)) {
+      $genotype =~ s/$al/$al_colours->{$al}/g;
+    } 
     
     my $row = {
       Individual  => sprintf("<small id=\"$data->{'Name'}\">$data->{'Name'} (%s)</small>", substr($data->{'Gender'}, 0, 1)),

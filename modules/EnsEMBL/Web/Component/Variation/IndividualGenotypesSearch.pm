@@ -89,18 +89,18 @@ sub content_results {
   if (scalar (@matching_ind_gt_objs)) {
     my %ind_data;
     my $rows;
-    
+    my $al_colours = $self->object->get_allele_genotype_colours;    
+
     # Retrieve individidual & individual genotype information
     foreach my $ind_gt_obj (@matching_ind_gt_objs) {
     
       my $genotype = $object->individual_genotype($ind_gt_obj);
       next if $genotype eq '(indeterminate)';
       
-      $genotype =~ s/A/<span style="color:green">A<\/span>/g;
-      $genotype =~ s/C/<span style="color:blue">C<\/span>/g;
-      $genotype =~ s/G/<span style="color:orange">G<\/span>/g;
-      $genotype =~ s/T/<span style="color:red">T<\/span>/g;
-      
+      # Colour the genotype
+      foreach my $al (keys(%$al_colours)) {
+        $genotype =~ s/$al/$al_colours->{$al}/g;
+      }
       
       my $ind_obj = $ind_gt_obj->individual;
       my $ind_id  = $ind_obj->dbID;
