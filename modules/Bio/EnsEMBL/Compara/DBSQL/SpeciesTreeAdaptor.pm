@@ -41,8 +41,25 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::SpeciesTree;
+use Bio::EnsEMBL::Compara::SpeciesTreeNode;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
+
+sub new_from_newick {
+    my ($self, $newick, $label, $name_method, $taxon_id_method) = @_;
+
+    my $st = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
+
+    my $st_root = $self->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($st, $name_method, $taxon_id_method);
+
+    my $speciesTree = Bio::EnsEMBL::Compara::SpeciesTree->new();
+    $speciesTree->label($label);
+    $speciesTree->species_tree($newick);
+    $speciesTree->root($st_root);
+
+    return $speciesTree;
+}
 
 sub fetch_all {
     my ($self) = @_;
