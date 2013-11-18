@@ -31,13 +31,13 @@ sub form {
     label  => 'Length of reference flanking sequence to display',
     name   => 'flank_size',
     values => [
-      { value => '100',  name => '100bp'  },
-      { value => '200',  name => '200bp'  },
-      { value => '300',  name => '300bp'  },
-      { value => '400',  name => '400bp'  },
-      { value => '500',  name => '500bp'  },
-      { value => '500',  name => '500bp'  },
-      { value => '1000', name => '1000bp' },
+      { value => '100',  caption => '100bp'  },
+      { value => '200',  caption => '200bp'  },
+      { value => '300',  caption => '300bp'  },
+      { value => '400',  caption => '400bp'  },
+      { value => '500',  caption => '500bp'  },
+      { value => '500',  caption => '500bp'  },
+      { value => '1000', caption => '1000bp' },
     ]
   });  
 
@@ -47,9 +47,9 @@ sub form {
     name   => 'select_sequence',
     label  => 'Sequence selection',
     values => [
-      { value => 'both',  name => "Upstream and downstream sequences"   },
-      { value => 'up',   name => "Upstream sequence only (5')"   },
-      { value => 'down', name => "Downstream sequence only (3')" },
+      { value => 'both', caption => "Upstream and downstream sequences"   },
+      { value => 'up',   caption => "Upstream sequence only (5')"   },
+      { value => 'down', caption => "Downstream sequence only (3')" },
     ]
   });
   

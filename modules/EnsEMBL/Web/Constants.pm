@@ -150,8 +150,8 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'   => 'snp_display',
       'label'  => 'Show variations',
       'values' => [
-        { 'value' => 'off', 'name' => 'No'  },
-        { 'value' => 'yes', 'name' => 'Yes' },
+        { 'value' => 'off', 'caption' => 'No'  },
+        { 'value' => 'yes', 'caption' => 'Yes' },
       ]
     },
     'line_numbering' => {
@@ -160,9 +160,9 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'   => 'line_numbering',
       'label'  => 'Line numbering',
       'values' => [
-        { 'value' => 'sequence', 'name' => 'Relative to this sequence'      },
-        { 'value' => 'slice',    'name' => 'Relative to coordinate systems' },
-        { 'value' => 'off',      'name' => 'None'                           },
+        { 'value' => 'sequence', 'caption' => 'Relative to this sequence'      },
+        { 'value' => 'slice',    'caption' => 'Relative to coordinate systems' },
+        { 'value' => 'off',      'caption' => 'None'                           },
       ]
     },
     'exon_ori' => {
@@ -171,9 +171,9 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'   => 'exon_ori',
       'label'  => 'Orientation of additional exons',
       'values' => [
-        { 'value' => 'fwd', 'name' => 'Display same orientation exons only'    },
-        { 'value' => 'rev', 'name' => 'Display reverse orientation exons only' },
-        { 'value' => 'all', 'name' => 'Display exons in both orientations'     },
+        { 'value' => 'fwd', 'caption' => 'Display same orientation exons only'    },
+        { 'value' => 'rev', 'caption' => 'Display reverse orientation exons only' },
+        { 'value' => 'all', 'caption' => 'Display exons in both orientations'     },
       ],
     },
     'pop_filter' => {
@@ -182,7 +182,7 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'   => 'population_filter',
       'label'  => 'Filter variations by population',
       'notes'  => 'Warning: This could cause the page to take a long time to load',
-      'values' => [{ 'value' => 'off', 'name' => 'None' }]
+      'values' => [{ 'value' => 'off', 'caption' => 'None' }]
     },
     'pop_min_freq' => {
       'type'  => 'NonNegFloat', 
@@ -197,7 +197,7 @@ sub GENERAL_MARKUP_OPTIONS {
       'select'   => 'select',
       'name'     => 'consequence_filter',
       'label'    => 'Filter variations by consequence type',
-      'values'   => [{ 'value' => 'off', 'name' => 'No filter' }]
+      'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
     },
     'hide_long_snps' => {
       'type'   => 'DropDown', 
@@ -205,8 +205,8 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'   => 'hide_long_snps',
       'label'  => 'Hide variations longer than 10bp',
       'values' => [
-        { 'value' => 'yes', 'name' => 'Yes' },
-        { 'value' => 'off', 'name' => 'No'  },
+        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'off', 'caption' => 'No'  },
       ]
     },
   );
@@ -235,9 +235,9 @@ sub GENE_MARKUP_OPTIONS {
       'name'   => 'exon_display',
       'label'  => 'Additional exons to display',
       'values' => [
-        { 'value' => 'off',       'name' => 'No exon markup'  },
-        { 'value' => 'Ab-initio', 'name' => 'Ab-initio exons' },
-        { 'value' => 'core',      'name' => 'Core exons'      },
+        { 'value' => 'off',       'caption' => 'No exon markup'  },
+        { 'value' => 'Ab-initio', 'caption' => 'Ab-initio exons' },
+        { 'value' => 'core',      'caption' => 'Core exons'      },
       ],
     },
   );
@@ -252,7 +252,7 @@ sub OTHER_MARKUP_OPTIONS {
       'name'   => 'display_width',
       'label'  => 'Number of base pairs per row',
       'values' => [
-        map { { 'value' => $_, 'name' => "$_ bps" } } map { $_*15 } (2..12)
+        map { { 'value' => $_, 'caption' => "$_ bps" } } map { $_*15 } (2..12)
       ],
     },
     'strand' => {
@@ -261,8 +261,8 @@ sub OTHER_MARKUP_OPTIONS {
       'name'   => 'strand',
       'label'  => 'Strand',
       'values' => [
-        { 'value' => '1',  'name' => 'Forward' },
-        { 'value' => '-1', 'name' => 'Reverse' }
+        { 'value' => '1',  'caption' => 'Forward' },
+        { 'value' => '-1', 'caption' => 'Reverse' }
     ]
     },
     'codons_display' => {
@@ -271,8 +271,8 @@ sub OTHER_MARKUP_OPTIONS {
       'name'   => 'codons_display',
       'label'  => 'Codons',
       'values' => [
-        { 'value' => 'all', 'name' => 'START/STOP codons'  },
-        { 'value' => 'off', 'name' => 'Do not show codons' },
+        { 'value' => 'all', 'caption' => 'START/STOP codons'  },
+        { 'value' => 'off', 'caption' => 'Do not show codons' },
       ],
     },
     'title_display' => {
@@ -281,8 +281,8 @@ sub OTHER_MARKUP_OPTIONS {
       'name'   => 'title_display',
       'label'  => 'Display pop-up information on mouseover',
       'values' => [
-        { 'value' => 'yes', 'name' => 'Yes' },
-        { 'value' => 'off', 'name' => 'No'  },
+        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'off', 'caption' => 'No'  },
       ],
     },
   );

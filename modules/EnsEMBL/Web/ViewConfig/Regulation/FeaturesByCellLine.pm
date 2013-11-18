@@ -24,14 +24,14 @@ sub form {
     name   => 'context',
     label  => 'Context',
     values => [
-      { value => 20,   name => '20bp'   },
-      { value => 50,   name => '50bp'   },
-      { value => 100,  name => '100bp'  },
-      { value => 200,  name => '200bp'  },
-      { value => 500,  name => '500bp'  },
-      { value => 1000, name => '1000bp' },
-      { value => 2000, name => '2000bp' },
-      { value => 5000, name => '5000bp' }
+      { value => 20,   caption => '20bp'   },
+      { value => 50,   caption => '50bp'   },
+      { value => 100,  caption => '100bp'  },
+      { value => 200,  caption => '200bp'  },
+      { value => 500,  caption => '500bp'  },
+      { value => 1000, caption => '1000bp' },
+      { value => 2000, caption => '2000bp' },
+      { value => 5000, caption => '5000bp' }
     ]
   });
   

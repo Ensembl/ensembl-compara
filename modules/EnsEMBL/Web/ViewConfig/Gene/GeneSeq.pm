@@ -32,8 +32,8 @@ sub form {
   my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
   my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;
   
-  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega',          name => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
-  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', name => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
+  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
+  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
   
   $self->add_form_element($gene_markup_options{'flank5_display'});
   $self->add_form_element($gene_markup_options{'flank3_display'});

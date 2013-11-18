@@ -51,8 +51,8 @@ sub form {
     my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS; # options shared with resequencing and marked-up sequence
     my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;   # options shared with resequencing
     
-    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega',          name => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
-    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', name => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
+    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
+    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
     
     if (!$self->{'no_flanking'}) {
       $self->add_form_element($gene_markup_options{'flank5_display'});
@@ -73,11 +73,11 @@ sub form {
       type     => 'DropDown',
       select   => 'select',
       values   => [{
-        value => 'all',
-        name  => 'All conserved regions'
+        value   => 'all',
+        caption => 'All conserved regions'
       }, {
-        value => 'off',
-        name  => 'None'
+        value   => 'off',
+        caption => 'None'
       }]
     });
     $self->add_form_element({
@@ -86,11 +86,11 @@ sub form {
       type   => 'DropDown',
       select => 'select',
       values => [{
-        value => 'yes',
-        name  => 'Yes'
+        value   => 'yes',
+        caption => 'Yes'
       }, {
-        value => 'off',
-        name  => 'No'
+        value   => 'off',
+        caption => 'No'
       }]
     });
     

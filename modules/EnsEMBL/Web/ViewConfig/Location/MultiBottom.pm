@@ -51,9 +51,9 @@ sub form {
       name   => "opt_pairwise_$_->[0]",
       label  => $_->[1],
       values => [
-        { value => 0,         name => 'Off'     },
-        { value => 'normal',  name => 'Normal'  },
-        { value => 'compact', name => 'Compact' },
+        { value => 0,         caption => 'Off'     },
+        { value => 'normal',  caption => 'Normal'  },
+        { value => 'compact', caption => 'Compact' },
       ],
     });
   }

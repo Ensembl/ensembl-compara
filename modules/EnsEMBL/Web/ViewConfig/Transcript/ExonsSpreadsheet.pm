@@ -39,7 +39,7 @@ sub form {
     name   => 'display_width',
     label  => 'Number of base pairs per row',
     values => [
-      map {{ value => $_, name => "$_ bps" }} map $_*15, 2..8
+      map {{ value => $_, caption => "$_ bps" }} map $_*15, 2..8
     ]
   });
   
@@ -69,15 +69,15 @@ sub form {
     name   => 'line_numbering',
     label  => 'Line numbering',
     values => [
-      { value => 'gene',  name => 'Relative to the gene'            },
-      { value => 'cdna',  name => 'Relative to the cDNA'            },
-      { value => 'cds',   name => 'Relative to the coding sequence' },
-      { value => 'slice', name => 'Relative to coordinate systems'  },
-      { value => 'off',   name => 'None'                            },
+      { value => 'gene',  caption => 'Relative to the gene'            },
+      { value => 'cdna',  caption => 'Relative to the cDNA'            },
+      { value => 'cds',   caption => 'Relative to the coding sequence' },
+      { value => 'slice', caption => 'Relative to coordinate systems'  },
+      { value => 'off',   caption => 'None'                            },
     ]
   });
   
-  $self->variation_options({ populations => [ 'fetch_all_LD_Populations' ], snp_display => [{ value => 'exon', name => 'In exons only' }], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
+  $self->variation_options({ populations => [ 'fetch_all_LD_Populations' ], snp_display => [{ value => 'exon', caption => 'In exons only' }], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
   
   $_->set_flag($self->SELECT_ALL_FLAG) for @{$self->get_form->fieldsets};
 }

@@ -40,8 +40,8 @@ sub form {
     name   => 'line_numbering',
     label  => 'Line numbering',
     values => [
-      { value => 'sequence', name => 'Yes' },
-      { value => 'off',      name => 'No'  },
+      { value => 'sequence', caption => 'Yes' },
+      { value => 'off',      caption => 'No'  },
     ]
   });
 }

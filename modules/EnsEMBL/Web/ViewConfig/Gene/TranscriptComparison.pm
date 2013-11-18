@@ -44,7 +44,7 @@ sub form {
   my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;   # shared with compara_markup
   
   $self->add_form_element($other_markup_options{'display_width'});
-  $self->add_form_element({ type => 'DropDown', name => 'exons_only', select => 'select', label => 'Show exons only', 'values' => [{ 'value' => 'yes', 'name' => 'Yes' }, { 'value' => 'off', 'name' => 'No' }] });
+  $self->add_form_element({ type => 'DropDown', name => 'exons_only', select => 'select', label => 'Show exons only', values => [{ value => 'yes', caption => 'Yes' }, { value => 'off', caption => 'No' }] });
   $self->variation_options({ snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
   $self->add_form_element($general_markup_options{'line_numbering'});
   $self->add_form_element($other_markup_options{'title_display'});

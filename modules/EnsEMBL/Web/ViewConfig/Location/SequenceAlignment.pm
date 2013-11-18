@@ -44,7 +44,7 @@ sub form {
   my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS; # shared with compara_markup and marked-up sequence
   my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;   # shared with compara_markup
   
-  push @{$general_markup_options{'exon_ori'}{'values'}}, { value => 'off', name => 'None' };
+  push @{$general_markup_options{'exon_ori'}{'values'}}, { value => 'off', caption => 'None' };
   $general_markup_options{'exon_ori'}{'label'} = 'Exons to highlight';
   
   $self->add_form_element($other_markup_options{'display_width'});
@@ -57,8 +57,8 @@ sub form {
     name   => 'match_display',
     label  => 'Matching basepairs',
     values => [
-      { value => 'off', name => 'Show all' },
-      { value => 'dot', name => 'Replace matching bp with dots' }
+      { value => 'off', caption => 'Show all' },
+      { value => 'dot', caption => 'Replace matching bp with dots' }
     ]
   });
   

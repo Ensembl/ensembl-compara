@@ -30,10 +30,10 @@ sub form {
     label   => 'Number of rows of chromosomes',
     select  => 'select',
     values  => [
-      { name => 1, value => 1 },
-      { name => 2, value => 2 },
-      { name => 3, value => 3 },
-      { name => 4, value => 4 },
+      { caption => 1, value => 1 },
+      { caption => 2, value => 2 },
+      { caption => 3, value => 3 },
+      { caption => 4, value => 4 },
     ],
   });
 

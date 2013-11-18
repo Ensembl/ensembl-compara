@@ -34,18 +34,18 @@ sub init {
 sub form {
   my $self = shift;
   
-    $self->add_fieldset('Display options');
-
-    $self->add_form_element({
-      type   => 'DropDown',
-      select => 'select',
-      name   => 'collapsability',
-      label  => 'Viewing options for tree image',
-      values => [ 
-        { value => 'all',          name => 'View full species tree' },
-        { value => 'part',         name => 'View minimal species tree' }
-      ]
-    });    
+  $self->add_fieldset('Display options');
+  
+  $self->add_form_element({
+    type   => 'DropDown',
+    select => 'select',
+    name   => 'collapsability',
+    label  => 'Viewing options for tree image',
+    values => [ 
+      { value => 'all',  caption => 'View full species tree' },
+      { value => 'part', caption => 'View minimal species tree' }
+    ]
+  });    
 }
 
 1;

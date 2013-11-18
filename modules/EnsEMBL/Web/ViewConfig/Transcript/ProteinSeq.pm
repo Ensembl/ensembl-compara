@@ -28,7 +28,7 @@ sub form {
     name   => 'display_width',
     label  => 'Number of amino acids per row',
     values => [
-      map {{ value => $_, name => "$_ aa" }} map 10*$_, 3..20
+      map {{ value => $_, caption => "$_ aa" }} map 10*$_, 3..20
     ]
   });
   

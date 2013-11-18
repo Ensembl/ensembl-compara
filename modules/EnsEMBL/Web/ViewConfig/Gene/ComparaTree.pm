@@ -71,7 +71,7 @@ sub form {
       select => 'select',
       name   => 'text_format',
       label  => 'Output format for sequence alignment',
-      values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
+      values => [ map {{ value => $_, caption => $formats{$_} }} sort keys %formats ]
     });
   } elsif ($function eq 'Text' or $function eq 'Text_pan_compara') {
     my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
@@ -83,7 +83,7 @@ sub form {
       select => 'select',
       name   => 'tree_format',
       label  => 'Output format for tree',
-      values => [ map {{ value => $_, name => $formats{$_}{'caption'} }} sort keys %formats ]
+      values => [ map {{ value => $_, caption => $formats{$_}{'caption'} }} sort keys %formats ]
     });
 
     $self->add_form_element({
@@ -100,7 +100,7 @@ sub form {
       select => 'select',
       name   => 'newick_mode',
       label  => 'Mode for Newick tree dumping',
-      values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
+      values => [ map {{ value => $_, caption => $formats{$_} }} sort keys %formats ]
     });
 
     %formats = EnsEMBL::Web::Constants::NHX_OPTIONS;
@@ -110,7 +110,7 @@ sub form {
       select => 'select',
       name   => 'nhx_mode',
       label  => 'Mode for NHX tree dumping',
-      values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
+      values => [ map {{ value => $_, caption => $formats{$_} }} sort keys %formats ]
     });
   } else {
     $self->add_fieldset('Display options');
@@ -121,10 +121,10 @@ sub form {
       name   => 'collapsability',
       label  => 'Viewing options for tree image',
       values => [ 
-        { value => 'gene',         name => 'View current gene only' },
-        { value => 'paralogs',     name => 'View paralogs of current gene' },
-        { value => 'duplications', name => 'View all duplication nodes' },
-        { value => 'all',          name => 'View fully expanded tree' }
+        { value => 'gene',         caption => 'View current gene only' },
+        { value => 'paralogs',     caption => 'View paralogs of current gene' },
+        { value => 'duplications', caption => 'View all duplication nodes' },
+        { value => 'all',          caption => 'View fully expanded tree' }
       ]
     });
 
@@ -134,8 +134,8 @@ sub form {
       name   => 'clusterset_id',
       label  => 'Model used for the tree reconstruction',
       values => [
-        { value => 'default', name => 'Final (merged) tree' },
-        map {{ value => $_, name => $_ }} sort keys %other_clustersets,
+        { value => 'default', caption => 'Final (merged) tree' },
+        map {{ value => $_, caption => $_ }} sort keys %other_clustersets,
       ]
     });
 
@@ -161,9 +161,9 @@ sub form {
         name   => 'colouring',
         label  => 'Colour tree according to taxonomy',
         values => [ 
-          { value => 'none',       name => 'No colouring' },
-          { value => 'background', name => 'Background' },
-          { value => 'foreground', name => 'Foreground' } 
+          { value => 'none',       caption => 'No colouring' },
+          { value => 'background', caption => 'Background' },
+          { value => 'foreground', caption => 'Foreground' } 
         ]
       });
     }
@@ -175,14 +175,13 @@ sub form {
         name   => "group_${group}_display",
         label  => "Display options for $group",
         values => [ 
-          { value => 'default',  name => 'Default behaviour' },
-          { value => 'hide',     name => 'Hide genes' },
-          { value => 'collapse', name => 'Collapse genes' } 
+          { value => 'default',  caption => 'Default behaviour' },
+          { value => 'hide',     caption => 'Hide genes' },
+          { value => 'collapse', caption => 'Collapse genes' } 
         ]
       });
     }
   }  
 }
-
 
 1;

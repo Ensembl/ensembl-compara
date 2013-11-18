@@ -18,7 +18,7 @@ sub init {
     text_format => 'clustalw',
   });
 
-  $self->title= 'Homologs';
+  $self->title = 'Homologs';
 }
 
 sub form {
@@ -32,7 +32,7 @@ sub form {
     select => 'select',     
     name   => 'seq',
     label  => 'View as cDNA or Protein',
-    values => [ map {{ value => $_, name => $_ }} qw(cDNA Protein) ]
+    values => [ map {{ value => $_, caption => $_ }} qw(cDNA Protein) ]
   });
   
   $self->add_form_element({
@@ -40,7 +40,7 @@ sub form {
     select => 'select',      
     name   => 'text_format',
     label  => 'Output format for sequence alignment',
-    values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
+    values => [ map {{ value => $_, caption => $formats{$_} }} sort keys %formats ]
   });
   
   $self->SUPER::form if $self->hub->referer->{'ENSEMBL_ACTION'} eq 'Compara_Ortholog';;
