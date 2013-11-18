@@ -2412,8 +2412,8 @@ sub dumpTranscript {
 
         $old = {
           'tid'       => $tid,
-          'tsid'      => { $tsid=>$tver },
-          'tlsids'    => { $tlsid ? ($tlsid=>$tlver):()},
+          'tsid'      => { $tsid => $tver },
+          'tlsids'    => { $tlsid ? ( $tlsid=>$tlver ):()},
           'desc'      => $desc,
           'exons'     => {},
           'biotype'   => $biotype,
@@ -2439,7 +2439,7 @@ sub dumpTranscript {
         }
       }
       else {
-        $old->{'tlsids'}{$tlsid}=1 if $tlsid;
+        $old->{'tlsids'}{$tlsid} = $tlver if $tlsid;
         push @{$old->{'synonyms'}}, @{$trans_syns{$tsid}||[]};
         #add xref details
         foreach my $type (qw(Transcript Translation)) {
@@ -2508,6 +2508,12 @@ sub GeneTransLine {
   if ($feat_loc) {
     $loc = $feat_loc->{'sr_name'} .':'. $feat_loc->{'seq_region_start'} .'-'. $feat_loc->{'seq_region_end'} .':'. $feat_loc->{'seq_region_strand'};
   }
+
+  my $quick_links;
+  if ($type eq 'Transcript') {
+    $quick_links = %{$tlsids} ? 'protein:1' : 'protein:0';
+  }
+
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
@@ -2529,6 +2535,10 @@ sub GeneTransLine {
   <field name="ref_boost">$ref_boost_value</field>);
   }
   $xml .= &common_fields($species,$type,$db);
+  if ($quick_links) {
+   $xml .=qq(
+  <field name="quick_links">$quick_links</field>);
+  }
   my (%seen_labels,%seen_syns,%seen_sources);
   foreach my $xref (@$xrefs) {
     my $search_term = $xref->{'search_term'};
@@ -2540,12 +2550,12 @@ sub GeneTransLine {
     $seen_labels{$xref_id}++;
 
     #remove any records where the hit is an Ensembl stable ID
-    next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} $tsids, $tlsids);
+    next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} keys(%$tsids), keys(%$tlsids));
 
     $search_term = &clean($search_term);
     $desc        = &clean($desc);
     my $hr_key;
-#    $hr_key = '_hr'.md5_hex($species.$db.$desc);
+    $hr_key = '_hr_'.md5_hex($species.$db.$desc);
     if ($hr_key) {
       $xml .= qq(
   <field name="xref">$search_term $hr_key</field>);
@@ -2702,7 +2712,8 @@ sub StableIdMappingLine {
   <field name="description">$desc</field>);
     $xml .= &common_fields($species,ucfirst($type),$db);
     $xml .= qq(
-  <field name="domain_url">$url</field>);
+  <field name="domain_url">$url</field>
+  <field name="quick_links">none</field>);
     $xml .= qq(
 </doc>);
   $counter->();
