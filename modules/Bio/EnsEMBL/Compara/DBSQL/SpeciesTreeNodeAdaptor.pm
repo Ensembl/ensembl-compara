@@ -74,7 +74,6 @@ sub new_from_NestedSet {
     for my $node (@{$tree->get_all_nodes}) {
         my $name = $node->$name_method;
         my $taxon_id = $node->$taxon_id_method;
-
         if ($node->is_leaf) {
             if (defined $taxon_id) {
                 $node->taxon_id($taxon_id);
@@ -85,9 +84,13 @@ sub new_from_NestedSet {
 
             my $genomeDB;
             if (defined $node->taxon_id) {
-                $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
+                eval {
+                    $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
+                };
             } elsif (defined $node->node_name) {
-                $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($node->node_name);
+                eval {
+                    $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($node->node_name);
+                };
             }
             if (defined $genomeDB) {
                 $node->genome_db_id($genomeDB->dbID);
