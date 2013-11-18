@@ -63,7 +63,7 @@ sub init {
   # structural variations
   $self->modify_configs(
     ['variation_feature_structural_larger'],
-    { display => 'compact', depth => 1 }
+    { display => 'compact' }
   );
   $self->modify_configs(
     ['variation_feature_structural_smaller'],
