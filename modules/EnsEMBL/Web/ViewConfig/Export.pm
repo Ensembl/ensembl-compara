@@ -70,10 +70,10 @@ sub form {
   $self->add_fieldset;
   
   $self->add_form_element({
-    type    => 'Hidden',
-    name    => 'panel_type',
-    classes => [ 'panel_type' ],
-    value   => 'Exporter'
+    type  => 'Hidden',
+    name  => 'panel_type',
+    class => 'panel_type',
+    value => 'Exporter'
   });
   
   foreach (keys %{$form_action->[1]}) {
@@ -121,7 +121,7 @@ sub form {
   
   foreach my $c (sort keys %$config) {
     foreach (@{$config->{$c}->{'formats'}}) {
-      push (@output_values, { group => $config->{$c}->{'label'}, value => $_->[0], name => $_->[1] });
+      push (@output_values, { group => $config->{$c}->{'label'}, value => $_->[0], caption => $_->[1] });
     }
   }
   
@@ -131,7 +131,7 @@ sub form {
       select   => 'select',
       required => 'yes',
       name     => 'output',
-      classes  => [ '_stt' ],
+      class    => '_stt',
       label    => 'Output',
       values   => \@output_values
     });
@@ -156,9 +156,9 @@ sub form {
       name     => 'strand',
       label    => 'Strand',
       values   => [
-        { value => 'feature', name => 'Feature strand' },
-        { value => '1',       name => 'Forward strand' },
-        { value => '-1',      name => 'Reverse strand' }
+        { value => 'feature', caption => 'Feature strand' },
+        { value => '1',       caption => 'Forward strand' },
+        { value => '-1',      caption => 'Reverse strand' }
       ]
     });
   }
@@ -181,15 +181,15 @@ sub form {
       
       if ($f->[0] eq 'fasta') {
         my $genomic = [
-          { value => 'unmasked',     name => 'Unmasked' },
-          { value => 'soft_masked',  name => 'Repeat Masked (soft)' },
-          { value => 'hard_masked',  name => 'Repeat Masked (hard)' },
-          { value => '5_flanking',   name => "5' Flanking sequence" },
-          { value => '3_flanking',   name => "3' Flanking sequence" },
-          { value => '5_3_flanking', name => "5' and 3' Flanking sequences" }
+          { value => 'unmasked',     caption => 'Unmasked' },
+          { value => 'soft_masked',  caption => 'Repeat Masked (soft)' },
+          { value => 'hard_masked',  caption => 'Repeat Masked (hard)' },
+          { value => '5_flanking',   caption => "5' Flanking sequence" },
+          { value => '3_flanking',   caption => "3' Flanking sequence" },
+          { value => '5_3_flanking', caption => "5' and 3' Flanking sequences" }
         ];
 
-        push @$genomic, { value => 'off', name => 'None' } unless $action eq 'Location';
+        push @$genomic, { value => 'off', caption => 'None' } unless $action eq 'Location';
         
         $self->add_form_element({
           type     => 'DropDown', 
