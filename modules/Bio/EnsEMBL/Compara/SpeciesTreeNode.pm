@@ -52,51 +52,6 @@ sub _complete_cast_node {
     $self->node_name($orig->name);
 }
 
-=head2 new_from_NestedSet
-
-    Arg[1]      : An object that inherits from NestedSet
-    Arg[2](opt) : A method in the object to obtain the TaxonID in the non-leaf nodes (defaults to "name");
-    Example     : my $st_node = Bio::EnsEMBL::Compara::SpeciesTreeNode->new_from_NestedSet($tree);
-    Description : Constructor for species tree nodes. Given an object that inherits from NestedSet (possibly a tree), creates a new SpeciesTreeNode (possibly a tree).
-    ReturnType  : EnsEMBL::Compara::SpeciesTreeNode
-    Exceptions  : none
-    Caller      : General
-
-=cut
-
-sub new_from_NestedSet {
-    my ($self, $nestedSet_tree, $name_method) = @_;
-
-    my $method = $name_method || "name";
-    my $genomeDB_Adaptor = $nestedSet_tree->adaptor->db->get_GenomeDBAdaptor;
-    my $NCBITaxon_Adaptor = $nestedSet_tree->adaptor->db->get_NCBITaxonAdaptor;
-#    my $speciesTreeNode_Adaptor = $nestedSet_tree->adaptor->db->get_SpeciesTreeNodeAdaptor;
-
-#    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $speciesTreeNode_Adaptor);
-    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
-    for my $node (@{$tree->get_all_nodes}) {
-        if ($node->is_leaf) {
-#            my $name = $self->_normalize_species_name($node->name);
-#            my $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($name);
-            my $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
-            next unless (defined $genomeDB);
-            $node->genome_db_id($genomeDB->dbID);
-            $node->taxon_id($genomeDB->taxon_id); ## taxon_id shouldn't be in the taxon node already?
-        } else {
-            my $name = $node->$method;
-            $node->taxon_id($NCBITaxon_Adaptor->fetch_node_by_name($name)->taxon_id);
-        }
-    }
-    return $tree;
-}
-
-# sub _normalize_species_name {
-#     my ($self, $name) = @_;
-#     $name =~ s/\./_/g;  ## TODO: Very specific to CAFE TREES? Fix?.
-#     $name =~ s/ /_/g;
-#     $name = lc($name);
-#     return $name;
-# }
 
 sub find_nodes_by_field_value {
     my ($self, $field, $expected) = @_;
