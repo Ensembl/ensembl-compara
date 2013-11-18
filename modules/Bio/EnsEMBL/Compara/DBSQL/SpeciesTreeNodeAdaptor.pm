@@ -47,6 +47,64 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
 
+=head2 new_from_NestedSet
+
+    Arg[1]      : An object that inherits from NestedSet
+    Arg[2](opt) : A method in the object to obtain the TaxonID in the non-leaf nodes (defaults to "name");
+    Example     : my $st_node = Bio::EnsEMBL::Compara::SpeciesTreeNode->new_from_NestedSet($tree);
+    Description : Constructor for species tree nodes. Given an object that inherits from NestedSet (possibly a tree), creates a new SpeciesTreeNode (possibly a tree).
+    ReturnType  : EnsEMBL::Compara::SpeciesTreeNode
+    Exceptions  : none
+    Caller      : General
+
+=cut
+
+sub new_from_NestedSet {
+    my ($self, $nestedSet_tree, $name_method, $taxon_id_method) = @_;
+    # It would be better if name_method and taxon_id_method are callbacks
+    # (or callbacks are allowed?)
+
+    $name_method = $name_method || "name";
+    $taxon_id_method = $taxon_id_method || "taxon_id";
+
+    my $genomeDB_Adaptor = $self->db->get_GenomeDBAdaptor;
+    my $NCBITaxon_Adaptor = $self->db->get_NCBITaxonAdaptor;
+
+    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    for my $node (@{$tree->get_all_nodes}) {
+        my $name = $node->$name_method;
+        my $taxon_id = $node->$taxon_id_method;
+
+        if ($node->is_leaf) {
+            if (defined $taxon_id) {
+                $node->taxon_id($taxon_id);
+            }
+            if (defined $name) {
+                $node->node_name($name);
+            }
+
+            if (defined $node->taxon_id) {
+                my $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
+                next unless (defined $genomeDB);
+                $node->genome_db_id($genomeDB->dbID);
+#                $node->taxon_id($genomeDB->taxon_id); ## taxon_id shouldn't be in the taxon node already?
+
+            }
+        } else {
+            my $taxon_node;
+            if (defined $taxon_id) {
+                $taxon_node = $NCBITaxon_Adaptor->fetch_node_by_taxon_id($taxon_id)
+            } elsif (defined $name) {
+                $taxon_node = $NCBITaxon_Adaptor->fetch_node_by_name($name);
+            }
+            if (defined $taxon_node) {
+                $node->taxon_id($taxon_node->taxon_id);
+            }
+        }
+    }
+    return $tree;
+}
+
 
 ## TODO: This is very similar to GeneTreeNodeAdaptor's store_nodes_rec, maybe we can
 ## abstract out this code in NestedSetAdaptor
