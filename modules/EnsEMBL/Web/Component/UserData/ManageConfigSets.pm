@@ -137,7 +137,7 @@ sub edit_table_html {
 sub new_set_form {
   my $self     = shift;
   my $hub      = $self->hub;
-  my $form     = $self->new_form({ action => $hub->url({ action => 'ModifyConfig', function => 'add_set' }), method => 'post', class => 'add_set' });
+  my $form     = $self->new_form({ action => $hub->url({ action => 'ModifyConfig', function => 'add_set' }), method => 'post', class => 'add_set', skip_validation => 1 });
   my $fieldset = $form->add_fieldset;
   
   if ($hub->user) {
