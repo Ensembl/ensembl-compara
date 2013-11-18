@@ -942,7 +942,8 @@ sub original_sequence {
 
   } elsif (!defined($self->{'original_sequence'})) {
     # Try to get the data from other sources...
-    if ($self->{'aligned_sequence'} and $self->{'cigar_line'} !~ /I/) {
+    #cigar_line is not necessarily defined so call the method rather than $self->{'cigar_line'} directly
+    if ($self->{'aligned_sequence'} and $self->cigar_line !~ /I/) {
       # ...from the aligned sequence
       $self->{'original_sequence'} = $self->{'aligned_sequence'};
       $self->{'original_sequence'} =~ s/\-//g;
