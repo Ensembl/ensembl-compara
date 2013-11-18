@@ -163,7 +163,7 @@ $.extend($.validator, {
           }
           
           setClass[state](this);
-          el.data('valid', state);
+          el.data('valid', state === null && input.required ? false : state);
           
           if (state === false) {
             if (input.required && !this.value) {
@@ -212,6 +212,10 @@ $.extend($.validator, {
             isValid = false;
             break;
           }
+        }
+        
+        if (typeof validator.settings.validate === 'function') {
+          isValid = validator.settings.validate.call(validator, isValid, inputs, flag);
         }
         
         if (isValid) {
