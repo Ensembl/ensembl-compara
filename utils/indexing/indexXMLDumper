@@ -2690,11 +2690,11 @@ sub do_archive_stable_ids {
 }
 
 sub StableIdMappingLine {
-  my ($species,$desc,$osi,$type,$db,$counter) = @_;
-  my $url = sprintf(qq(%s/%s/Idhistory?%s),
+  my ($species,$desc,$osi,$type,$db,$counter) = @_; 
+  my $url = sprintf(qq(%s/%s/Idhistory%s),
                     $species,
-                    ucfirst($type),
-                    $type eq 'gene' ? "g=$osi" : $type eq 'transcript' ? "t=$osi" : "protein=$osi");
+                    $type eq 'gene' ? ucfirst($type) : 'Transcript',
+                    $type eq 'gene' ? "?g=$osi" : $type eq 'transcript' ? "?t=$osi" : "/Protein?t=$osi");
   $species =~ s/_/ /;
   my $xml = qq(
 <doc>
