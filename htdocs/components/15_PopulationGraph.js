@@ -4,11 +4,12 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.Piechart.extend({
   init: function () {
     // Allele colours
     this.graphColours = {
-      'A'       : '#00BB00',
+      'A'       : '#00A000',
       'T'       : '#FF0000',
-      'G'       : '#FFD700',
+      'G'       : '#FFCC00',
       'C'       : '#0000FF',
-      'default' : [ '#222222', '#FF00FF', '#008080', '#7B68EE' ] // Other colours if the allele is not A, T, G or C
+      '-'       : '#000000',
+      'default' : [ '#008080', '#FF00FF', '#7B68EE' ] // Other colours if the allele is not A, T, G, C or -
     };
     
     this.base();
