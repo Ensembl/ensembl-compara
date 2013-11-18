@@ -35,7 +35,17 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.shareGroups  = $('.share_groups',         this.elLk.shareConfig);
     this.elLk.shareGroup   = $('input.group',           this.elLk.shareConfig);
     this.elLk.shareId      = $('.record_id',            this.elLk.shareConfig);
+    
+    this.elLk.addSet.validate({
+      validate: function (isValid) {
+        if (isValid) {
+          isValid = !!panel.elLk.addSet.find('input.selected:checked').length;
+        }
         
+        return isValid;
+      }
+    });
+    
     this.elLk.tables.on('click', '.expand, .collapse', function () {
       var el  = $(this);
       var row = el.parents('tr');
@@ -158,6 +168,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       }
       
       panel.elLk.editSelected.filter('.' + this.rel).prop('checked', added);
+      panel.elLk.addSet.filter(function () { return this.style.display !== 'none'; }).validate();
       
       tr = null;
       
@@ -173,7 +184,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       
       panel.updateEditTable(type.val());
       
-      panel.elLk.editRecord.add(panel.elLk.editHeader).hide();      
+      panel.elLk.editRecord.add(panel.elLk.editHeader).hide();
       panel.elLk.addSet.find('input[name=name], textarea').val('').end().validate(); // Reset form. Validate to remove error messages, but this won't disable the save button
       panel.elLk.addSet.find('.save').addClass('disabled').prop('disabled', true);   // Disable the save button because a name is required
       panel.elLk.addSet.add(panel.elLk.addHeader).show();
