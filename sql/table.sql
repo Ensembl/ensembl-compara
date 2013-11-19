@@ -345,7 +345,7 @@ CREATE TABLE `species_tree_node` (
 CREATE TABLE `species_tree_root` (
   `root_id` int(10) unsigned NOT NULL,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
-  `label` VARCHAR(20) NOT NULL DEFAULT 'default',
+  `label` VARCHAR(256) NOT NULL DEFAULT 'default',
   `species_tree` mediumtext,
 
   FOREIGN KEY (root_id) REFERENCES species_tree_node(node_id),
