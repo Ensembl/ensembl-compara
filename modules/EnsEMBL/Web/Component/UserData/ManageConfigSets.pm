@@ -16,10 +16,7 @@ sub records {
   my $hub     = $self->hub;
   my $adaptor = $hub->config_adaptor;
   my @sets    = values %{$adaptor->all_sets};
-
-  return $self->empty unless scalar @sets;
-  
-  my ($rows, $json);
+  my $empty   = $self->empty;
   
   $self->{'editables'} = { map { $_->{'type'} eq 'image_config' && $_->{'link_id'} ? () : ($_->{'record_id'} => $_) } values %{$self->deepcopy($adaptor->filtered_configs({ active => '' }))} };
   
@@ -32,6 +29,12 @@ sub records {
     $_->{'conf_name'}  = join ' - ', $view_config->type, $view_config->title;
     $_->{'conf_codes'} = [ join '_', @config_code ];
   }
+  
+  my $new_set = scalar keys %{$self->{'editables'}} ? '<p><a href="#" class="create_set">Create a new configuration set</a></p>' : '<p>You must save some configurations before you can create a new configuration set.</p>';
+  
+  return "$empty$new_set" unless scalar @sets;
+  
+  my ($rows, $json);
   
   foreach (sort { $a->{'name'} cmp $b->{'name'} } @sets) {
     my $record_id = $_->{'record_id'};
@@ -61,7 +64,7 @@ sub records {
   my $columns = $self->columns;
   
   return ($columns, $rows, $json) if $record_ids;
-  return $self->records_html($columns, $rows, $json) . '<p><a href="#" class="create_set">Create a new configuration set</a></p>';
+  return $self->records_html($columns, $rows, $json) . qq{<div class="hidden no_records">$empty</div>$new_set};
 }
 
 sub records_tables {
