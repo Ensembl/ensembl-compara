@@ -8,7 +8,7 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::UserData::ManageConfigs);
 
-sub empty    { return sprintf '<p>You have no configuration sets.</p>'; }
+sub empty    { return sprintf '<h2>Your configuration sets</h2><p>You have no configuration sets.</p>'; }
 sub set_view { return 1; }
 
 sub records {
