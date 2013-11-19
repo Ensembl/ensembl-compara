@@ -31,7 +31,7 @@
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division> -eg_release <egrelease> -release <release>
+        -division <eg_division> -eg_release <egrelease>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -70,7 +70,7 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         dbowner => 'ensembl_compara',       # Used to prefix the database name (in HiveGeneric_conf)
-        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('release'),
+        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release'),
 
     # dependent parameters: updating 'work_dir' should be enough
         'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
@@ -152,21 +152,21 @@ sub default_options {
       -host   => 'mysql-eg-prod-1.ebi.ac.uk',
       -port   => 4238,
       -user   => 'ensro',
-      -db_version => $self->o('release')
+      -db_version => $self->o('ensembl_release')
     },
 
     staging_1 => {
       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
       -port   => 4160,
       -user   => 'ensro',
-      -db_version => $self->o('release')
+      -db_version => $self->o('ensembl_release')
     },
 
     staging_2 => {
       -host   => 'mysql-eg-staging-2.ebi.ac.uk',
       -port   => 4275,
       -user   => 'ensro',
-      -db_version => $self->o('release')
+      -db_version => $self->o('ensembl_release')
     },
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
