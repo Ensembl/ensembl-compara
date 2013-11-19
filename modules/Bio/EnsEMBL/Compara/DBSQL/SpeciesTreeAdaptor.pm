@@ -87,12 +87,17 @@ sub fetch_by_root_id {
 }
 
 sub store {
-    my ($self, $tree) = @_;
+    my ($self, $tree, $mlss_id) = @_;
+    
+    if($mlss_id){
+     $tree->method_link_species_set_id($mlss_id);
+    } else {
+     $mlss_id = $tree->method_link_species_set_id;
+    }
 
     my $species_tree_node_adaptor = $self->db->get_SpeciesTreeNodeAdaptor();
 
     # Store the nodes
-    my $mlss_id = $tree->method_link_species_set_id;
     my $root_id = $species_tree_node_adaptor->store($tree->root, $mlss_id);
     $tree->{'_root_id'} = $root_id;
 
