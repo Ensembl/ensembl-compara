@@ -15,7 +15,7 @@
 
 # species_tree_root
 ALTER TABLE species_tree_root
-      ADD COLUMN `label` varchar(20) NOT NULL DEFAULT 'default' AFTER method_link_species_set_id,
+      ADD COLUMN `label` varchar(256) NOT NULL DEFAULT 'default' AFTER method_link_species_set_id,
       DROP COLUMN `pvalue_lim`,
       ADD UNIQUE KEY (method_link_species_set_id, label);
 
