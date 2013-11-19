@@ -20,6 +20,8 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.tables       = $('table',                 this.elLk.recordTypes);
     this.elLk.shareConfig  = $('.share_config',         this.el).detach(); // will be put into the modal overlay;
     this.elLk.editSets     = $('.edit_config_set',      this.el).detach(); // will be put into the modal overlay;
+    this.elLk.saveAll      = $('.save_all_config_set',  this.el).detach(); // will be put into the modal overlay;
+    this.elLk.noRecords    = $('.no_records',           this.el);
     this.elLk.resetAll     = $('.reset_all',            this.el);
     this.elLk.editTypes    = $('div.record_type',       this.elLk.editSets);
     this.elLk.editTable    = $('table',                 this.elLk.editTypes);
@@ -30,11 +32,14 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.addHeader    = $('.add_header',           this.elLk.editSets);
     this.elLk.editHeader   = $('.edit_header',          this.elLk.editSets);
     this.elLk.setsHeader   = $('.config_header',        this.elLk.editHeader);
-    this.elLk.shareHeader  = $('.config_header',        this.elLk.shareConfig);
+    this.elLk.saveSets     = $('.sets ul',              this.elLk.saveAll);
+    this.elLk.saveConfigs  = $('.configs ul',           this.elLk.saveAll);
+    this.elLk.saveHeader   = $('.config_header',        this.elLk.saveAll);
     this.elLk.shareURL     = $('.share_url',            this.elLk.shareConfig);
     this.elLk.shareGroups  = $('.share_groups',         this.elLk.shareConfig);
     this.elLk.shareGroup   = $('input.group',           this.elLk.shareConfig);
     this.elLk.shareId      = $('.record_id',            this.elLk.shareConfig);
+    this.elLk.shareHeader  = $('.config_header',        this.elLk.shareConfig);
     
     this.elLk.addSet.validate({
       validate: function (isValid) {
@@ -83,16 +88,17 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       return false;
     });
     
-    // Activate and delete buttons
+    // Activate, save and delete buttons
     this.elLk.tables.on('click', 'a.edit', function (e) {
       e.preventDefault();
       
       $.ajax({
         url: this.href,
         context: this,
-        success: function (response) {
-          if (panel[response]) {
-            panel[response]($(this).parents('tr'), this);
+        dataType: 'json',
+        success: function (json) {
+          if (panel[json.func]) {
+            panel[json.func]($(this).parents('tr'), json);
           }
         }
       });
@@ -416,10 +422,66 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     tr = null;
   },
   
-  saveRecord: function (tr, a) {
-    var saved = $('<span class="icon_link sprite_disabled _ht save_icon" title="Saved">&nbsp;</span>').helptip();
-    $(a).replaceWith(saved);
-    tr = a = saved = null;
+  saveRecord: function (tr, json) {
+    var session      = this.elLk.editTypes.filter('.session');
+    var user         = this.elLk.editTypes.filter('.user');
+    var sessionTable = session.find('table').dataTable();
+    var userTable    = user.find('table').dataTable();
+    var saved        = $('<span class="icon_link sprite_disabled _ht save_icon" title="Saved">&nbsp;</span>').helptip();
+    
+    this.elLk.tables.find('tr').filter('.' + json.ids.join(', .')).find('a.save_icon').replaceWith(saved);
+    
+    var rows    = sessionTable.find('tr').filter('.' + json.ids.join(', .'));
+    var cells   = rows.first().children();
+    var indexes = userTable.fnAddData(rows.map(function () { return $(this).children().map(function () { return this.innerHTML; }); }).toArray());
+    var rowData = userTable.fnSettings().aoData;
+    var i       = indexes.length;
+    
+    while (i--) {
+      $(rowData[indexes[i]].nTr).addClass(rows[i].className).children().addClass(function (j) { return cells[j].className; }).find('._ht').helptip();
+    }
+    
+    rows.each(function () { sessionTable.fnDeleteRow(this); });
+    
+    userTable.fnSort(this.params.recordType === 'set' ? [[ 0, 'asc' ], [ 1, 'asc' ], [ 2, 'asc' ]] : [[ 0, 'asc' ]]);
+    userTable.togglewrap('update');
+    
+    for (var i in json.ids) {
+      if (this.params.records[json.ids[i]]) {
+        this.params.records[json.ids[i]].group   = 'user';
+        this.params.records[json.ids[i]].groupId = this.params.userId;
+      }
+    }
+    
+    tr = rows = session = user = sessionTable = userTable = saved = null;
+  },
+  
+  saveAll: function (tr, json) {
+    var link    = tr.find('a.save_icon');
+    var lists = { sets: '', configs: '' };
+    var i, j;
+    
+    json.sets    = (json.sets    || []).sort();
+    json.configs = (json.configs || []).sort();
+    
+    for (i in lists) {
+      for (j in json[i]) {
+        lists[i] += '<li>' + json[i][j] + '</li>';
+      }
+      
+      this.elLk[i === 'sets' ? 'saveSets' : 'saveConfigs'].html(lists[i]).parent()[lists[i] ? 'show' : 'hide']();
+    }
+    
+    this.elLk.saveHeader.html(this.params.records[tr.data('configId')].name);
+    
+    $('.continue', this.elLk.saveAll).on('click', function () { // FIXME: messy.
+      Ensembl.EventManager.trigger('modalOverlayHide');
+      link.clone().hide().removeClass('_ht').attr('href', function (i, href) { return href + ';save_all=1'; }).insertAfter(link).trigger('click').remove();
+    });
+    
+    Ensembl.EventManager.trigger('modalOverlayShow', this.elLk.saveAll);
+    
+    tr = overlay = null;
   },
   
   deleteRecord: function (tr) {
@@ -428,7 +490,9 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     table.dataTable().fnDeleteRow(tr[0]);
     
     if (table.find('.dataTables_empty').length) {
-      table.parents('.record_type').hide();
+      if (!table.parents('.record_type').hide().siblings('.record_type').filter(':visible').length) {
+        this.elLk.noRecords.show();
+      }
     }
     
     Ensembl.EventManager.trigger('updateSavedConfig', { deleted: [ tr.data('configId') ] });
