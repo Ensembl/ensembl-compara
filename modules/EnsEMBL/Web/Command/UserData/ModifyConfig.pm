@@ -34,17 +34,54 @@ sub edit_details {
 }
 
 sub save {
-  my $self     = shift;
-  my $hub      = $self->hub;
-  my $redirect = $hub->param('redirect');
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $redirect  = $hub->param('redirect');
+  my $record_id = $hub->param('record_id');
+  my $adaptor   = $hub->config_adaptor;
+  my $func      = $hub->param('is_set') ? 'all_sets' : 'all_configs';
+  my (%save_ids, $success);
   
-  # FIXME: when saving a set, save all the configs in the set too
-  if ($hub->config_adaptor->save_to_user($hub->param('record_id'))) {
-    if ($redirect) {
-      $self->ajax_redirect($redirect, undef, undef, 'modal', 'modal_user_data');
-    } else {
-      print 'saveRecord';
+  $self->get_linked_configs($adaptor->$func->{$record_id}, $adaptor, \%save_ids);
+  
+  if (scalar keys %save_ids > 1 && !$hub->param('save_all')) {
+    my ($configs, $sets) = ($adaptor->all_configs, $adaptor->all_sets);
+    my %json;
+    
+    push @{$json{"$save_ids{$_}s"}}, $save_ids{$_} eq 'set' ? $sets->{$_}{'name'} : $configs->{$_}{'name'} for keys %save_ids;
+    
+    print $self->jsonify({ func => 'saveAll', %json });
+    
+    return;
+  }
+  
+  $success += $adaptor->save_to_user($_, $save_ids{$_} eq 'set') for keys %save_ids;
+  
+  return unless $success;
+  
+  if ($redirect) {
+    $self->ajax_redirect($redirect, undef, undef, 'modal', 'modal_user_data');
+  } else {
+    print $self->jsonify({ func => 'saveRecord', ids => [ keys %save_ids ] });
+  }
+}
+
+sub get_linked_configs {
+  my ($self, $record, $adaptor, $save_ids) = @_;
+  
+  return if $save_ids->{$record->{'record_id'}};
+  
+  $save_ids->{$record->{'record_id'}} = $record->{'is_set'} eq 'y' ? 'set' : 'config';
+  
+  my $sets = $adaptor->all_sets;
+  
+  if ($record->{'is_set'} eq 'y') {
+    foreach (keys %{$record->{'records'}}) {
+      $save_ids->{$_} = 'config';
+      $self->get_linked_configs($sets->{$_}, $adaptor, $save_ids) for grep $_ != $record->{'record_id'}, $adaptor->record_to_sets($_);
     }
+  } else {
+    $self->get_linked_configs($sets->{$_}, $adaptor, $save_ids) for $adaptor->record_to_sets($record->{'record_id'});
   }
 }
 
@@ -53,7 +90,7 @@ sub delete {
   my $hub  = $self->hub;
   my $func = $hub->param('is_set') ? 'delete_set' : 'delete_config';
   
-  print 'deleteRecord' if $hub->config_adaptor->$func($hub->param('record_id'), $hub->param('link_id'));
+  print $self->jsonify({ func => 'deleteRecord' }) if $hub->config_adaptor->$func($hub->param('record_id'), $hub->param('link_id'));
 }
 
 sub activate {
@@ -61,7 +98,7 @@ sub activate {
   my $hub  = $self->hub;
   my $func = $hub->param('is_set') ? 'activate_set' : 'update_active';
   
-  print 'activateRecord' if $hub->config_adaptor->$func($hub->param('record_id'));
+  print $self->jsonify({ func => 'activateRecord' }) if $hub->config_adaptor->$func($hub->param('record_id'));
 }
 
 sub edit_sets {
