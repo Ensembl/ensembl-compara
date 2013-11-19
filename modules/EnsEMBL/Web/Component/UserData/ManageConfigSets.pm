@@ -18,11 +18,12 @@ sub records {
   my @sets    = values %{$adaptor->all_sets};
   my $empty   = $self->empty;
      $empty   = qq{<div class="hidden no_records">$empty</div>} if scalar @sets;
-  my $new_set = scalar keys %{$self->{'editables'}} ? '<p><a href="#" class="create_set">Create a new configuration set</a></p>' : '<p>You must save some configurations before you can create a new configuration set.</p>';
   my $json    = {};
   my $rows    = {};
   
   $self->{'editables'} = { map { $_->{'type'} eq 'image_config' && $_->{'link_id'} ? () : ($_->{'record_id'} => $_) } values %{$self->deepcopy($adaptor->filtered_configs({ active => '' }))} };
+  
+  my $new_set = scalar keys %{$self->{'editables'}} ? '<p><a href="#" class="create_set">Create a new configuration set</a></p>' : '<p>You must save some configurations before you can create a new configuration set.</p>';
   
   foreach (values %{$self->{'editables'}}) {
     my @config_code = split '::', $_->{'type'} eq 'view_config' ? $_->{'code'} : $_->{'link_code'};
