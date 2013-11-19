@@ -99,6 +99,8 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
         success: function (json) {
           if (panel[json.func]) {
             panel[json.func]($(this).parents('tr'), json);
+          } else if (json.redirectURL) {
+            Ensembl.EventManager.trigger('modalOpen', { href: json.redirectURL, rel: json.modalTab });
           }
         }
       });
@@ -422,6 +424,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     tr = null;
   },
   
+  // FIXME: merge with addTableRow
   saveRecord: function (tr, json) {
     var session      = this.elLk.editTypes.filter('.session');
     var user         = this.elLk.editTypes.filter('.user');
