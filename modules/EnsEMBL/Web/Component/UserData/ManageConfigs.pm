@@ -320,16 +320,8 @@ sub row {
     }
     
     if ($record->{'record_type'} eq 'session' && $hub->users_available) {
-      my $save_url = $hub->url({ function => 'save', %params });
-      
-      $row->{'save'} = sprintf(
-        $templates->{'icon'},
-        'save', $hub->user ? ('edit', 'Save to account', $save_url) : (
-          'modal_link" rel="modal_user_data',
-          'Log in to save',
-          $hub->url({ type => 'Account', action => 'Login', __clear => 1, modal_tab => 'modal_user_data', then => uri_escape("$save_url;redirect=" . $hub->url({ __clear => 1, reload => 1 })) })
-        )
-      );
+      $params{'then'} = uri_escape($hub->url({ __clear => 1, reload => 1 })) unless $hub->user;
+      $row->{'save'}  = sprintf $templates->{'icon'}, 'save', 'edit', $hub->user ? 'Save to account' : 'Log in to save', $hub->url({ function => 'save', %params });
     } elsif ($record->{'record_type'} eq 'user') {
       $row->{'save'} = sprintf $templates->{'disabled'}, 'save', 'Saved';
     }

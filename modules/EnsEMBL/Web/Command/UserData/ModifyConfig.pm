@@ -33,13 +33,16 @@ sub edit_details {
   print 'success' if $hub->config_adaptor->edit_details($hub->param('record_id'), $param, decode_utf8($hub->param('value')), $hub->param('is_set'));
 }
 
+use URI::Escape    qw(uri_escape);
+
 sub save {
   my $self      = shift;
   my $hub       = $self->hub;
+  my $then      = $hub->param('then');
   my $redirect  = $hub->param('redirect');
   my $record_id = $hub->param('record_id');
-  my $adaptor   = $hub->config_adaptor;
   my $func      = $hub->param('is_set') ? 'all_sets' : 'all_configs';
+  my $adaptor   = $hub->config_adaptor;
   my (%save_ids, $success);
   
   $self->get_linked_configs($adaptor->$func->{$record_id}, $adaptor, \%save_ids);
@@ -53,6 +56,16 @@ sub save {
     print $self->jsonify({ func => 'saveAll', %json });
     
     return;
+  }
+  
+  if ($then) {
+    return $self->ajax_redirect($hub->url({
+      type      => 'Account',
+      action    => 'Login',
+      then      => uri_escape($hub->url({ redirect => $then, then => undef }, undef, 1)),
+      modal_tab => 'modal_user_data',
+      __clear   => 1,
+    }), undef, undef, 'modal', 'modal_user_data');
   }
   
   $success += $adaptor->save_to_user($_, $save_ids{$_} eq 'set') for keys %save_ids;
