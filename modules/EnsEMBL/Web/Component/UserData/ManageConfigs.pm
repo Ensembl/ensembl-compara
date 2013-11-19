@@ -12,8 +12,28 @@ use base qw(EnsEMBL::Web::Component);
 sub default_groups { return $_[0]{'default_groups'} ||= { map { $_ => 1 } @{$_[0]->hub->species_defs->ENSEMBL_DEFAULT_USER_GROUPS || []} }; }
 sub admin_groups   { return $_[0]{'admin_groups'}   ||= { $_[0]->hub->user ? map { $_->group_id => 1 } $_[0]->hub->user->find_admin_groups : () }; }
 sub record_group   { return $_[1]{'record_type'} eq 'group' && $_[0]->default_groups->{$_[1]{'record_type_id'}} ? 'suggested' : $_[1]{'record_type'}; }
-sub empty          { return sprintf '<p>You have no custom configurations%s.</p>', $_[1] ? '' : ' for this page'; }
+sub empty          { return sprintf '<h2>Your configurations</h2><p>You have no saved configurations%s.</p>', $_[1] ? '' : ' for this page'; }
 sub set_view       {}
+
+sub allow_edits {
+  my $self = shift;
+  
+  if (!$self->{'allow_edits'}) {
+    my $admin_groups  = $self->admin_groups;
+    my $admin_default = scalar grep $admin_groups->{$_}, keys %{$self->default_groups};
+    
+    $self->{'allow_edits'} = {};
+    
+    foreach (values %{$self->{'editables'}}) {
+      my $group = $self->record_group($_);
+      $self->{'allow_edits'}{"$group $_->{'record_type_id'}"} = $self->{'allow_edits'}{$group} = 1 if $group ne 'suggested' || $admin_default;
+    }
+    
+    $self->{'allow_edits'}{'user'} ||= $self->{'allow_edits'}{'session'};
+  }
+  
+  return $self->{'allow_edits'};
+}
 
 sub content {
   my $self = shift;
@@ -33,12 +53,28 @@ sub content {
         <h1>Sharing <span class="config_header"></span></h1>
         %s
       </div>
+      <div class="save_all_config_set">
+        <h1>Save <span class="config_header"></span></h1>
+        <h4>All linked configurations and sets will also be saved to your account</h4>
+        <p>This %s which will also be saved, along with other %s.</p>
+        <p>The following will be saved:</p>
+        <div class="sets">
+          <h4>Sets</h4>
+          <ul></ul>
+        </div>
+        <div class="configs">
+          <h4>Configurations</h4>
+          <ul></ul>
+        </div>
+        <input type="button" class="fbutton continue" value="Continue" />
+      </div>
     </div>
     %s',
     $self->records(@_),
     $self->set_view ? ('', 'configurations') : ($self->reset_all, 'sets'),
     $self->edit_table,
     $self->share,
+    $self->set_view ? ('set contains configurations', 'sets those configurations are in') : ('configuration is in a set', 'configurations in that set'),
     $self->hub->param('reload') ? '<div class="modal_reload"></div>' : ''
   );
 }
@@ -171,7 +207,7 @@ sub records {
   my $columns = $self->columns;
   
   return ($columns, $rows, $json) if $record_ids;
-  return $self->records_html($columns, $rows, $json);
+  return $self->records_html($columns, $rows, $json) . qq{<div class="hidden no_records">$none</div>};
 }
 
 sub records_html {
@@ -181,12 +217,14 @@ sub records_html {
     %s
     <input type="hidden" class="js_param" name="updateURL" value="%s" />
     <input type="hidden" class="js_param" name="recordType" value="%s" />
+    <input type="hidden" class="js_param" name="userId" value="%s" />
     <input type="hidden" class="js_param" name="listTemplate" value="%s" />
     <input type="hidden" class="js_param json" name="records" value="%s" />
     <input type="hidden" class="js_param json" name="editables" value="%s" />',
     $self->records_tables($columns, $rows),
     $self->ajax_url('update', { update_panel => 1 }),
     $self->set_view ? 'set' : 'config',
+    $self->hub->user ? $self->hub->user->user_id : '',
     encode_entities(sprintf($self->templates->{'list'})), # remove any %s inside the list template
     encode_entities($self->jsonify($json)),
     encode_entities($self->jsonify({ map { $_ => {
@@ -267,7 +305,19 @@ sub row {
     $row->{'desc'}   = { value => sprintf($templates->{'editable'}, $desc,             '<textarea rows="5" name="description"></textarea>', $edit_url), class => 'editable wrap' };
     $row->{'delete'} = sprintf $templates->{'icon'}, 'delete', 'edit',         'Delete', $hub->url({ function => 'delete', %params, link_id => $record->{'link_id'} });
     $row->{'share'}  = sprintf $templates->{'icon'}, 'share',  'share_record', 'Share',  $hub->url({ function => 'share',  %params }) unless $group;
-    $row->{'edit'}   = sprintf $templates->{'icon'}, 'edit',   'edit_record',  $text->[2], '#';
+    
+    if ($self->allow_edits->{"$record_group $record->{'record_type_id'}"}) {
+      $row->{'edit'} = sprintf $templates->{'icon'}, 'edit', 'edit_record', $text->[2], '#';
+    } else {
+      my %group_text = (
+        session   => 'your session',
+        user      => 'your account',
+        group     => 'this group',
+        suggested => 'this group',
+      );
+      
+      $row->{'edit'} = sprintf $templates->{'disabled'}, 'edit', sprintf('There are no configuration%ss for %s', $set_view ? '' : ' set', $group_text{$record_group});
+    }
     
     if ($record->{'record_type'} eq 'session' && $hub->users_available) {
       my $save_url = $hub->url({ function => 'save', %params });
@@ -301,7 +351,7 @@ sub columns {
   my %icon_col      = %{$self->templates->{'icon_col'}};
   my $admin_groups  = $self->admin_groups;
   my $admin_default = scalar grep $admin_groups->{$_}, keys %{$self->default_groups};
-  my ($groups, %editable);
+  my $groups;
   
   $cols ||= [
     { key => 'expand', %icon_col },
@@ -320,17 +370,10 @@ sub columns {
     @$cols,
     { key => 'active', %icon_col },
     sub { return $_[0] eq 'user' && $hub->users_available ? { key => 'save',   %icon_col } : (); },
-    sub { return $editable{$_[0]}                         ? { key => 'edit',   %icon_col } : (); },
+    sub { return $self->allow_edits->{$_[0]}              ? { key => 'edit',   %icon_col } : (); },
     sub { return $_[0] eq 'user'                          ? { key => 'share',  %icon_col } : (); },
     sub { return $_[0] ne 'suggested' || $admin_default   ? { key => 'delete', %icon_col } : (); },
   ];
-  
-  foreach (values %{$self->{'editables'}}) {
-    my $group = $self->record_group($_);
-    $editable{$group} = 1 if $group ne 'suggested' || $admin_default;
-  }
-  
-  $editable{'user'} ||= $editable{'session'};
   
   foreach my $type (qw(user group suggested)) {
     $groups->{$type} = [ map { ref eq 'CODE' ? &$_($type) : $_ } @$columns ];
