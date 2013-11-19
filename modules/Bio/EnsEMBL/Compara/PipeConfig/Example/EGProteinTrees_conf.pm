@@ -199,4 +199,20 @@ sub resource_classes {
   };
 }
 
+sub pipeline_analyses {
+    my $self = shift;
+    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
+    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+
+    ## Extend this section to redefine the resource names of some analysis
+    if ($self->o('division') eq 'plants') {
+        $analyses_by_name{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
+        $analyses_by_name{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
+        $analyses_by_name{'blastp'}->{'-rc_name'} = '500Mb_job';
+    }
+
+    return $all_analyses;
+}
+
+
 1;
