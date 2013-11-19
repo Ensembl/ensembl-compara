@@ -542,17 +542,18 @@ sub edit_record_sets {
 }
 
 sub save_to_user {
-  my ($self, $record_id) = @_;
+  my ($self, $record_id, $is_set) = @_;
   my $user_id = $self->user_id || return;
   my $dbh     = $self->dbh     || return;
   my $configs = $self->all_configs;
-  my $config  = $configs->{$record_id} || return;
+  my $records = $is_set ? $self->all_sets : $configs;
+  my $record  = $records->{$record_id} || return;
   
-  return unless $config->{'record_type'} eq 'session';
+  return unless $record->{'record_type'} eq 'session';
   
   my $updated;
   
-  foreach (grep $_, $config, $configs->{$config->{'link_id'}}) {
+  foreach (grep $_, $record, $configs->{$record->{'link_id'}}) {
     $updated += $dbh->do('UPDATE configuration_details SET record_type = "user", record_type_id = ? WHERE record_id = ?', {}, $user_id, $_->{'record_id'});
     $_->{'record_type'}    = 'user';
     $_->{'record_type_id'} = $user_id;
