@@ -156,9 +156,9 @@ sub records {
   my $hub     = $self->hub;
   my $adaptor = $hub->config_adaptor;
   my $configs = $adaptor->all_configs;
-  my $none    = $self->empty($show_all || !scalar keys %$configs);
+  my $empty   = $self->empty($show_all || !scalar keys %$configs);
   
-  return $none unless scalar keys %$configs;
+  return $empty unless scalar keys %$configs;
   
   my (%components, $rows, $json);
   
@@ -202,12 +202,12 @@ sub records {
     };
   }
   
-  return $none unless scalar keys %$rows;
+  return $empty unless scalar keys %$rows;
   
   my $columns = $self->columns;
   
   return ($columns, $rows, $json) if $record_ids;
-  return $self->records_html($columns, $rows, $json) . qq{<div class="hidden no_records">$none</div>};
+  return $self->records_html($columns, $rows, $json) . qq{<div class="hidden no_records">$empty</div>};
 }
 
 sub records_html {
