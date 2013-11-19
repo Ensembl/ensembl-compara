@@ -21,7 +21,7 @@
 .config_manager table td.details h4                       { text-decoration: underline; margin-bottom: 8px; }
 .config_manager table td.wrap                             { padding-left: 4px!important; }
 .config_manager table td div.config_used                  { position: absolute; left: 1px; display: none; width: 100%; background: #80CC74; margin-top: -18px; text-align: center; z-index: 100; }
-.config_manager table td div.none                         { display: none; }
+.config_manager table td div.none                         { display: none; word-break: normal; }
 .config_manager table td div.none.show                    { display: block; }
 .config_manager table td .height_wrap                     { overflow: hidden; height: 16px; line-height: 16px; padding-right: 20px; }
 .config_manager table td.editable .height_wrap .val       { height: auto!important; }
@@ -31,7 +31,7 @@
 .config_manager table td img.toggle                       { position: absolute; right: 4px; top: 2px; display: none; }
 .config_manager table td ul.configs                       { margin: 0 0 -8px; padding: 0; list-style: none; }
 .config_manager table td ul.configs li                    { margin-bottom: 8px; list-style-image: none; }
-.config_manager table td ul.configs li span.conf          { margin: 4px 0 0 16px; display: block; }
+.config_manager table td ul.configs li span.conf          { margin: 4px 0 0 16px; display: block; word-break: normal; }
 .config_manager table td .spinner                         { height: 66px; }
 .config_manager .records a.toggle                         { background-image: none; text-decoration: underline; }
 .config_manager .records a.create_set                     { font-weight: bold; }
@@ -63,6 +63,8 @@
 .edit_config_set input.ftext         { width: 246px; }
 .edit_config_set .ftextarea          { width: 376px; }
 .edit_config_set .form-field         { margin-bottom: 16px; }
+
+.save_all_config_set                 { width: 400px; }
 
 body.ie67 .config_manager table td div.config_used { margin-top: -1px; }
 body.ie6  .config_manager table td .height_wrap    { overflow: inherit; height: auto; line-height: auto; margin-right: 0; }
