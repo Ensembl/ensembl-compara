@@ -85,6 +85,7 @@ sub _columns {
                   stn.genome_db_id
                   stn.node_name
 
+                  csg.cafe_gene_family_id
                   csg.n_members
                   csg.pvalue
                   csg.node_id
@@ -111,7 +112,7 @@ sub init_instance_from_rowhash {
     my ($self, $node, $rowhash) = @_;
 
     $self->SUPER::init_instance_from_rowhash($node, $rowhash);
-#    $node->cafe_gene_family_id($rowhash->{cafe_gene_family_id});
+    $node->cafe_gene_family_id($rowhash->{cafe_gene_family_id});
     $node->n_members($rowhash->{n_members});
     $node->pvalue($rowhash->{pvalue});
 
