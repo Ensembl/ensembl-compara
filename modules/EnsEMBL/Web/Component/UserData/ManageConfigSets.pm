@@ -97,10 +97,10 @@ sub row {
 
 sub columns {
   return $_[0]->SUPER::columns([
-    { key => 'name',  title => 'Name',  width => '20%' },
-    sub { return $_[0] eq 'group' ? { key => 'group', title => 'Group',  width => '10%' } : (); },
-    { key => 'desc',  title => 'Description', width => '30%' },
-    sub { return { key => 'confs', title => 'Configurations', width => $_[0] eq 'group' ? '35%' : '45%' }; },
+    { key => 'name', title => 'Name', width => '20%' },
+    sub { return $_[0] eq 'group' ? { key => 'group', title => 'Group', width => '20%' } : (); },
+    sub { return { key => 'desc',  title => 'Description',    width => $_[0] eq 'group' ? '20%' : '30%' }; },
+    sub { return { key => 'confs', title => 'Configurations', width => $_[0] eq 'group' ? '25%' : '35%' }; },
   ]);
 }
 
