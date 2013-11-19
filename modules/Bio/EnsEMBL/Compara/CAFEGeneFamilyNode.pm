@@ -57,6 +57,17 @@ sub find_nodes_by_taxon_id_or_species_name {
     return $self->find_nodes_by_field_value('taxon_id', $val);
 }
 
+# For now, lambdas are fetched from the root table.
+# In the future we would need to have links from the nodes to the header object
+sub lambdas {
+    my ($self) = @_;
+    my $cafe_gene_family_id = $self->cafe_gene_family_id;
+    my $sql = "SELECT lambdas FROM CAFE_gene_family WHERE CAFE_gene_family_id = ?";
+    my $sth = $self->adaptor->prepare($sql);
+    $sth->execute($cafe_gene_family_id);
+    my ($lambdas) = $sth->fetchrow_array();
+    return $lambdas;
+}
 
 sub new_from_SpeciesTree {
     my ($self, $tree) = @_;
@@ -64,6 +75,14 @@ sub new_from_SpeciesTree {
     return $tree->cast('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode');
 }
 
+
+sub cafe_gene_family_id {
+    my ($self, $id) = @_;
+    if (defined $id) {
+        $self->{'_cafe_gene_family_id'} = $id
+    }
+    return $self->{'_cafe_gene_family_id'};
+}
 
 =head2 taxon_id
 
