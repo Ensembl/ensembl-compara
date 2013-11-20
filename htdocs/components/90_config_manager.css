@@ -32,6 +32,7 @@
 .config_manager table td ul.configs                       { margin: 0 0 -8px; padding: 0; list-style: none; }
 .config_manager table td ul.configs li                    { margin-bottom: 8px; list-style-image: none; }
 .config_manager table td ul.configs li span.conf          { margin: 4px 0 0 16px; display: block; word-break: normal; }
+.config_manager table td a.save_all                       { display: none; }
 .config_manager table td .spinner                         { height: 66px; }
 .config_manager .records a.toggle                         { background-image: none; text-decoration: underline; }
 .config_manager .records a.create_set                     { font-weight: bold; }
@@ -65,6 +66,7 @@
 .edit_config_set .form-field         { margin-bottom: 16px; }
 
 .save_all_config_set                 { width: 400px; }
+.save_all_config_set .fbutton        { width: 49% !important; }
 
 body.ie67 .config_manager table td div.config_used { margin-top: -1px; }
 body.ie6  .config_manager table td .height_wrap    { overflow: inherit; height: auto; line-height: auto; margin-right: 0; }
