@@ -416,6 +416,9 @@ sub delete_tree {
     unless ($tree->ref_root_id) {
         # The alignment
         $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id);
+
+        # The HMM profile
+        $self->dbc->do("DELETE FROM hmm_profile WHERE model_id = '$root_id'");
     }
 
     # Finally remove the root node
