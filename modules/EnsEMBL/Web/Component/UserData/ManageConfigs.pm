@@ -10,10 +10,21 @@ use URI::Escape    qw(uri_escape);
 use base qw(EnsEMBL::Web::Component);
 
 sub default_groups { return $_[0]{'default_groups'} ||= { map { $_ => 1 } @{$_[0]->hub->species_defs->ENSEMBL_DEFAULT_USER_GROUPS || []} }; }
-sub admin_groups   { return $_[0]{'admin_groups'}   ||= { $_[0]->hub->user ? map { $_->group_id => 1 } $_[0]->hub->user->find_admin_groups : () }; }
+sub admin_groups   { return $_[0]{'admin_groups'}   ||= { $_[0]->hub->user ? map { $_->group_id => $_ } $_[0]->hub->user->find_admin_groups : () }; }
 sub record_group   { return $_[1]{'record_type'} eq 'group' && $_[0]->default_groups->{$_[1]{'record_type_id'}} ? 'suggested' : $_[1]{'record_type'}; }
 sub empty          { return sprintf '<h2>Your configurations</h2><p>You have no saved configurations%s.</p>', $_[1] ? '' : ' for this page'; }
 sub set_view       {}
+
+sub sorted_admin_groups {
+  my $self = shift;
+  
+  if (!$self->{'sorted_admin_groups'}) {
+    my $default_groups = $self->default_groups;
+    $self->{'sorted_admin_groups'} = [ map $_->[2], sort { ($a->[0] <=> $b->[0]) || ($a->[1] cmp $b->[1]) } map [ $default_groups->{$_->group_id}, lc $_->name, $_ ], values %{$self->admin_groups} ];
+  }
+  
+  return $self->{'sorted_admin_groups'};
+}
 
 sub allow_edits {
   my $self = shift;
@@ -433,7 +444,15 @@ sub edit_table_html {
     push @{$tables{$self->record_group($record) . ' ' . $record->{'record_type_id'}}}, $_
   }
   
-  $tables{'user ' . $user->user_id} ||= [] if $user; # Make sure there is at least an empty user edit table, so that when records are saved there is always a table to move the editables to
+  # Make sure there is at least an empty table
+  $tables{'session ' . $hub->session->session_id} ||= [];
+  
+  if ($user) {
+    my $default_groups = $self->default_groups;
+    
+    $tables{'user ' . $user->user_id} ||= [];
+    $tables{($default_groups->{$_} ? 'suggested' : 'group') . " $_"} ||= [] for keys %{$self->admin_groups};
+  }
   
   return join('',
     map($self->new_table([
@@ -460,9 +479,8 @@ sub edit_table_html {
 sub share {
   my $self     = shift;
   my $hub      = $self->hub;
-  my $user     = $hub->user;
   my $form     = $self->new_form({ action => $hub->url({ action => 'ModifyConfig', function => 'share', __clear => 1 }), method => 'post' });
-  my @groups   = $user ? $user->find_admin_groups : ();
+  my $groups   = $self->sorted_admin_groups;
   my $fieldset = $form->add_fieldset({ legend => 'Generate a URL to share with another user' });
   my $class;
   
@@ -471,9 +489,9 @@ sub share {
   $fieldset->append_child('input', { type => 'hidden', class => 'record_id', name => 'record_id' });
   $fieldset->append_child('input', { type => 'hidden', name => 'is_set', value => $self->set_view });
   
-  if (scalar @groups) {
+  if (scalar @$groups) {
     $form->add_fieldset({ legend => '<span class="or">OR</span>Share with groups you administer', class => 'group' });
-    $form->add_field({ type => 'Checkbox', value => $_->group_id, label => $_->name, class => 'group', name => 'group' }) for @groups;
+    $form->add_field({ type => 'Checkbox', value => $_->group_id, label => $_->name, class => 'group', name => 'group' }) for @$groups;
     $form->add_element({ type => 'Submit', value => 'Share', class => 'share_groups save disabled', disabled => 1 });
   } else {
     $class = ' narrow';

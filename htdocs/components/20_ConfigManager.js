@@ -29,6 +29,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.editSelected = $('input.selected',        this.elLk.editSets);
     this.elLk.editId       = $('.record_id',            this.elLk.editSets);
     this.elLk.addSet       = $('.add_set',              this.elLk.editSets);
+    this.elLk.saveToGroup  = $('.groups',               this.elLk.addSet);
     this.elLk.addHeader    = $('.add_header',           this.elLk.editSets);
     this.elLk.editHeader   = $('.edit_header',          this.elLk.editSets);
     this.elLk.setsHeader   = $('.config_header',        this.elLk.editHeader);
@@ -205,7 +206,14 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     });
     
     $('input.record_type', this.elLk.editSets).on('click', function () {
-      panel.updateEditTable(this.value);
+      panel.elLk.saveToGroup[this.value === 'group' ? 'show' : 'hide']();
+      panel.updateEditTable(this.value + (this.value === 'group' ? '.' + panel.elLk.saveToGroup.find('input.group:checked').val() : ''));
+      Ensembl.EventManager.trigger('modalPanelResize');
+    });
+    
+    $('input.group', this.elLk.saveToGroup).on('click', function () {
+      panel.updateEditTable(($(this).hasClass('suggested') ? 'suggested' : 'group') + '.' + this.value);
+      Ensembl.EventManager.trigger('modalPanelResize');
     });
     
     $('.make_url', this.elLk.shareConfig).on('click', function () {
@@ -354,6 +362,8 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
           table.fnSort(panel.params.recordType === 'config' ? [[ 0, 'asc' ], [ 1, 'asc' ], [ 2, 'asc' ]] : [[ 0, 'asc' ]]);
           table.togglewrap('update');
         }
+        
+        panel.elLk.noRecords.hide();
         
         $.extend(panel.params.records, json.data);
         

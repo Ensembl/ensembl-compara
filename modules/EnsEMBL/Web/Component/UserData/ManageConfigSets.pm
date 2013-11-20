@@ -8,7 +8,7 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::UserData::ManageConfigs);
 
-sub empty    { return sprintf '<h2>Your configuration sets</h2><p>You have no configuration sets.</p>'; }
+sub empty    { return sprintf '<div class="no_records%s"><h2>Your configuration sets</h2><p>You have no configuration sets.</p></div>', $_[1] ? ' hidden' : ''; }
 sub set_view { return 1; }
 
 sub records {
@@ -16,8 +16,6 @@ sub records {
   my $hub     = $self->hub;
   my $adaptor = $hub->config_adaptor;
   my @sets    = values %{$adaptor->all_sets};
-  my $empty   = $self->empty;
-     $empty   = qq{<div class="hidden no_records">$empty</div>} if scalar @sets;
   my $json    = {};
   my $rows    = {};
   
@@ -63,7 +61,7 @@ sub records {
   my $columns = $self->columns;
   
   return ($columns, $rows, $json) if $record_ids;
-  return $self->records_html($columns, $rows, $json) . "$empty$new_set";
+  return $self->records_html($columns, $rows, $json) . $self->empty(scalar @sets) . $new_set;
 }
 
 sub records_tables {
@@ -139,20 +137,37 @@ sub edit_table_html {
 sub new_set_form {
   my $self     = shift;
   my $hub      = $self->hub;
+  my $user     = $hub->user;
   my $form     = $self->new_form({ action => $hub->url({ action => 'ModifyConfig', function => 'add_set' }), method => 'post', class => 'add_set', skip_validation => 1 });
   my $fieldset = $form->add_fieldset;
   
-  if ($hub->user) {
+  if ($user) {
+    my $groups = $self->sorted_admin_groups;
+    
     $fieldset->add_field({
       wrapper_class => 'save_to',
       type          => 'Radiolist',
       name          => 'record_type',
       class         => 'record_type',
       label         => 'Save to:',
-      values        => [{ value => 'user', caption => 'Account' }, { value => 'session', caption => 'Session' }],
+      values        => [{ value => 'user', caption => 'Account' }, { value => 'session', caption => 'Session' }, scalar @$groups ? { value => 'group', caption => 'Groups you administer' } : ()],
       value         => 'user',
       label_first   => 1,
     });
+    
+    if (scalar @$groups) {
+      my $default_groups = $self->default_groups;
+      
+      $fieldset->add_field({
+        field_class => 'groups hidden',
+        type        => 'Radiolist',
+        name        => 'group',
+        label       => 'Groups:',
+        values      => [ map { value => $_->group_id, caption => $_->name, class => [ 'group', $default_groups->{$_->group_id} ? 'suggested' : () ] }, @$groups ],
+        value       => $groups->[0]->group_id,
+        label_first => 1,
+      });
+    }
   } else {
     $fieldset->append_child('input', { type => 'hidden', name => 'record_type', class => 'record_type', value => 'session' });
   }

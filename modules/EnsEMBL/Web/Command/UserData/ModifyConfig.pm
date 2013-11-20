@@ -129,11 +129,18 @@ sub add_set {
   my $self       = shift;
   my $hub        = $self->hub;
   my @record_ids = $hub->param('record_id');
+  my $user       = $hub->user;
   my %params     = map { $_ => decode_utf8($hub->param($_)) } qw(record_type name description);
-  my $set_id     = $hub->config_adaptor->create_set(
-    %params,
-    record_type_id => $params{'record_type'} eq 'session' ? $hub->session->create_session_id : $hub->user ? $hub->user->id : undef,
-    record_ids     => \@record_ids
+  
+  if ($params{'record_type'} eq 'group' && $user) {
+    my $group = decode_utf8($hub->param('group'));
+    $params{'record_type_id'} = $group if $user->is_admin_of($group);
+  }
+  
+  my $set_id = $hub->config_adaptor->create_set(
+    record_type_id => $params{'record_type'} eq 'session' ? $hub->session->create_session_id : $user ? $user->id : undef,
+    record_ids     => \@record_ids,
+    %params
   );
   
   print $self->jsonify({ func => 'addTableRow', recordIds => [ $set_id ] }) if $set_id;
