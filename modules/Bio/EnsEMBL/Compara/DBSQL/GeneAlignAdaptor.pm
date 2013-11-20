@@ -135,5 +135,23 @@ sub store {
 }
 
 
+=head2 delete
+
+ Arg [1]    : Bio::EnsEMBL::Compara::AlignedMemberSet $aln
+ Example    : $AlignedMemberAdaptor->delete($aln)
+ Description: Deletes an AlignedMemberSet object from a Compara database
+ Returntype : none
+ Exceptions : none
+ Caller     : general
+
+=cut
+
+sub delete {
+    my ($self, $aln) = @_;
+
+    my $dbID = ref($aln) ? $aln->dbID : $aln;
+    $self->dbc->do("DELETE FROM gene_align_member WHERE gene_align_id = $dbID");
+    $self->dbc->do("DELETE FROM gene_align        WHERE gene_align_id = $dbID");
+}
 
 1;
