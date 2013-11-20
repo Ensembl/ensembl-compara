@@ -630,6 +630,11 @@ sub features {
     my %genes;
     my %leaves;
 
+    my $species_tree_node_id = $tree->get_tagvalue('species_tree_node_id');
+    my $speciesTreeNode      = $tree->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($species_tree_node_id);
+    my $taxon_id             = $speciesTreeNode->taxon_id;
+
+
     foreach my $leaf (@{$tree->get_all_leaves}) {
       my $dist = $leaf->distance_to_ancestor($tree);
       $leaf_count++;
@@ -647,7 +652,7 @@ sub features {
     $f->{'_genome_dbs'}         = \%genome_dbs;
     $f->{'_genes'}              = \%genes;
     $f->{'_leaves'}             = \%leaves;
-    $f->{'label'}               = sprintf '%s: %d homologs', ($self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$tree->get_tagvalue('taxon_id')} || $tree->get_tagvalue('taxon_name')), $leaf_count;
+    $f->{'label'}               = sprintf '%s: %d homologs', ($self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$taxon_id}, $leaf_count);
 
   }
   
