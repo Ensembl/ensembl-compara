@@ -6,6 +6,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 use Encode      qw(decode_utf8);
+use URI::Escape qw(uri_escape);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -32,8 +33,6 @@ sub edit_details {
   
   print 'success' if $hub->config_adaptor->edit_details($hub->param('record_id'), $param, decode_utf8($hub->param('value')), $hub->param('is_set'));
 }
-
-use URI::Escape    qw(uri_escape);
 
 sub save {
   my $self      = shift;
