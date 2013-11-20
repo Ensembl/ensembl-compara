@@ -56,33 +56,30 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $('.navbar', this.el).width(Ensembl.width);
     
     this.elLk.ajaxLoad.each(function () {
-      var input = $('input.ajax_load', this);
-      var url   = input.val();
-      var type  = input.hasClass('post') ? 'post' : 'get';
-      var data;
-
+      var el    = $(this);
+      var url   = el.find('input.ajax_load').val();
+      var data  = {};
+      
       if (!url) {
         return;
       }
       
       if (url.match(/\?/)) {
         url = Ensembl.replaceTimestamp(url);
-        
-        if (type === 'post') {
-          url  = url.split('?');
-          data = url[1];
-          url  = url[0];
-        }
-      } else if (type === 'get') {
+      } else {
         url += '?';
       }
       
-      panel.getContent(url, $(this), { updateURL: url + ';update_panel=1', updateType: type, updateData: data });
+      el.find('input.ajax_post').each(function(i, inp) {
+        data[inp.name] = inp.value;
+      });
+      
+      panel.getContent(url, $(this), { updateURL: url + ';update_panel=1', updateType: $.isEmptyObject(data) ? 'get' : 'post', updateData: data });
     });
   },
   
   getContent: function (url, el, params, newContent) {
-    var node;
+    var node, data;
     
     if (typeof el === 'string') {
       el = $(el, this.el).empty();
@@ -111,9 +108,21 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       Ensembl.updateURL(newContent); // A link was clicked that needs to add parameters to the url
     }
     
+    data = params.updateData || (typeof newContent === 'object' ? newContent : {}) || {};
+    
+    // Add the URL params as POST params in case of POST request
+    if (params.updateType === 'post') {
+      $.each((url.split(/\?/)[1] || '').split(/&|;/), function(i, param) {
+        param = param.split('=');
+        if (typeof param[0] !== 'undefined' && !(param[0] in data)) {
+          data[param[0]] = param[1];
+        }
+      });
+    }
+    
     this.xhr = $.ajax({
       url: url,
-      data: params.updateData || (typeof newContent === 'object' ? newContent : {}),
+      data: data,
       dataType: 'html',
       context: this,
       type: params.updateType,
