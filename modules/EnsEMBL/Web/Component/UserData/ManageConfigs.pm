@@ -55,18 +55,18 @@ sub content {
       </div>
       <div class="save_all_config_set">
         <h1>Save <span class="config_header"></span></h1>
-        <h4>All linked configurations and sets will also be saved to your account</h4>
-        <p>This %s which will also be saved, along with other %s.</p>
+        <p>All linked configurations and sets will also be saved to your account.</p>
         <p>The following will be saved:</p>
-        <div class="sets">
-          <h4>Sets</h4>
-          <ul></ul>
-        </div>
         <div class="configs">
           <h4>Configurations</h4>
           <ul></ul>
         </div>
+        <div class="sets">
+          <h4>Sets</h4>
+          <ul></ul>
+        </div>
         <input type="button" class="fbutton continue" value="Continue" />
+        <input type="button" class="fbutton cancel" value="Cancel" />
       </div>
     </div>
     %s',
@@ -74,7 +74,6 @@ sub content {
     $self->set_view ? ('', 'configurations') : ($self->reset_all, 'sets'),
     $self->edit_table,
     $self->share,
-    $self->set_view ? ('set contains configurations', 'sets those configurations are in') : ('configuration is in a set', 'configurations in that set'),
     $self->hub->param('reload') ? '<div class="modal_reload"></div>' : ''
   );
 }
@@ -322,6 +321,7 @@ sub row {
     if ($record->{'record_type'} eq 'session' && $hub->users_available) {
       $params{'then'} = uri_escape($hub->url({ __clear => 1, reload => 1 })) unless $hub->user;
       $row->{'save'}  = sprintf $templates->{'icon'}, 'save', 'edit', $hub->user ? 'Save to account' : 'Log in to save', $hub->url({ function => 'save', %params });
+      $row->{'save'} .= sprintf $templates->{'icon'}, '', 'edit save_all', '', $hub->url({ function => 'save', %params, save_all => 1 });
     } elsif ($record->{'record_type'} eq 'user') {
       $row->{'save'} = sprintf $templates->{'disabled'}, 'save', 'Saved';
     }
@@ -416,9 +416,10 @@ sub edit_table_row {
 
 sub edit_table_html {
   my ($self, $columns, $rows) = @_;
-  my $user     = $self->hub->user;
+  my $hub      = $self->hub;
+  my $user     = $hub->user;
   my $set_view = $self->set_view;
-  my $form     = $self->new_form({ action => $self->hub->url({ action => 'ModifyConfig', function => 'edit_sets', __clear => 1 }), method => 'post', class => 'edit_record' });
+  my $form     = $self->new_form({ action => $hub->url({ action => 'ModifyConfig', function => 'edit_sets', __clear => 1 }), method => 'post', class => 'edit_record' });
   my $fieldset = $form->add_fieldset;
   my %tables;
   
@@ -431,6 +432,8 @@ sub edit_table_html {
     my $record = delete $_->{'options'}{'record'};
     push @{$tables{$self->record_group($record) . ' ' . $record->{'record_type_id'}}}, $_
   }
+  
+  $tables{'user ' . $user->user_id} ||= [] if $user; # Make sure there is at least an empty user edit table, so that when records are saved there is always a table to move the editables to
   
   return join('',
     map($self->new_table([
