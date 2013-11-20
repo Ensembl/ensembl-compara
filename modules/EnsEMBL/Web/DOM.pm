@@ -58,6 +58,11 @@ sub create_element {
   ## @exception DOMException - if node name is not valid
   my ($self, $element_name, $attributes)  = @_;
 
+  if (ref $element_name eq 'HASH') {
+    $attributes   = $element_name;
+    $element_name = delete $attributes->{'node_name'};
+  }
+
   $element_name = lc $element_name;
   $attributes ||= {};
   
