@@ -12,7 +12,7 @@ sub render_normal {
   my $container          = $self->{'container'};
   my $other_gene         = $self->{'highlights'}[5];
   my $highlight_ancestor = $self->{'highlights'}[6];
-  my $cafe               = $container->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily');
+  my $cafe               = $container->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode');
   my @nodes;
   
   $self->init_legend($cafe ? 4 : 6);

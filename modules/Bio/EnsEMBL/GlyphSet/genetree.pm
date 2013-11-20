@@ -79,12 +79,13 @@ sub _init {
   # | nodes_width | labels_width |                       |
   # +----------------------------------------------------+
   # Set 60% to the tree, and 40% to the alignments
-  my $tree_bitmap_width  = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? int( $bitmap_width * 0.95 )  : int( $bitmap_width * 0.6 );
+  
+  my $tree_bitmap_width  = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? int( $bitmap_width * 0.95 )  : int( $bitmap_width * 0.6 );
       
   my $align_bitmap_width = $bitmap_width - $tree_bitmap_width;
   # Calculate space to reserve for the labels
   my( $fontname, $fontsize ) = $self->get_font_details( 'small' );
-  $fontsize = 8 if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily'));
+  $fontsize = 8 if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode'));
   my( $longest_label ) = ( sort{ length($b) <=> length($a) } 
                            map{$_->{label}} @nodes );
   my @res = $self->get_text_width( 0, $longest_label, '', 
@@ -120,7 +121,7 @@ sub _init {
     my $parent_node = $Nodes{$f->{_parent}} || {x=>0};
     my $min_x = $parent_node->{x} + 4;
 
-    $f->{_x_offset} = $max_x_offset if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') && $f->{label});  #Align all the ending nodes with labels in the cafe tree
+    $f->{_x_offset} = $max_x_offset if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && $f->{label});  #Align all the ending nodes with labels in the cafe tree
     ($f->{x}) = sort{$b<=>$a} int($f->{_x_offset} * $nodes_scale), $min_x;
     
     if ($f->{_cigar_line}){
@@ -138,7 +139,7 @@ sub _init {
       $node_colour = 'SandyBrown';
     } 
     #node colour categorisation for cafetree/speciestree/gainloss tree
-    if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {      
+    if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) {      
       $border_colour = 'black';
       $node_colour = 'grey' if($f->{_n_members} == 0 );      
       $node_colour = '#FEE391' if($f->{_n_members} >= 1 && $f->{_n_members} <= 5);
@@ -177,13 +178,13 @@ sub _init {
       $bold = 1;
     }
     $label_colour = 'red' if exists $f->{_subtree_ref};
-    $label_colour = "red" if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') && $f->{label} =~ /$current_gene/ );
+    $label_colour = "red" if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && $f->{label} =~ /$current_gene/ );
     $node_colour = "navyblue" if (!$node_colour); # Default colour
     $label_colour = "black" if (!$label_colour); # Default colour
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
     #cafetree zmenu else comparatree zmenu
-    if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')){
+    if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')){
       $node_href = $self->_url({ 
         action      => "SpeciesTree",
         node        => $f->{'_id'},
@@ -256,7 +257,7 @@ sub _init {
     }
     elsif( $f->{_child_count} ){ # Expanded internal node   
 # Draw n_members label on top of the node
-      $f->{_n_members} = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') && !$f->{_n_members}) ? '0 ' : $f->{_n_members}; #adding a space hack to get it display 0 as label
+      $f->{_n_members} = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && !$f->{_n_members}) ? '0 ' : $f->{_n_members}; #adding a space hack to get it display 0 as label
       my $nodes_label = $self->Text
           ({
             'text'       => $f->{_n_members},
@@ -280,7 +281,7 @@ sub _init {
             'width'     => 5 + 2 * $bold,
             'height'    => 5 + 2 * $bold,
             'colour'    => $node_colour,
-            'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? 'black' : $node_colour,            
+            'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? 'black' : $node_colour,            
             'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
             'href'      => $node_href
           });
@@ -315,8 +316,8 @@ sub _init {
     else{ # Leaf node  
     my $type = $f->{_node_type};
     
-    my $colour = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? $node_colour : '';
-    my $bordercolour = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? "black" : $node_colour;
+    my $colour = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? $node_colour : '';
+    my $bordercolour = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? "black" : $node_colour;
     
       push @node_glyphs, Sanger::Graphics::Glyph::Rect->new
           ({
@@ -324,8 +325,8 @@ sub _init {
             'y'         => $f->{y},
             'width'     => 5,
             'height'    => 5,
-            'colour'    => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? $node_colour : 'white',
-            'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') ? "black" : $bordercolour,
+            'colour'    => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? $node_colour : 'white',
+            'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? "black" : $bordercolour,
             'zindex'    => -20,
             'href'      => $node_href,
           });
@@ -333,7 +334,7 @@ sub _init {
     
     # Leaf label or collapsed node label, coloured for focus gene/species
     if ($f->{label}) {
-      $label_colour = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') && !$f->{_n_members}) ? 'Grey' : $label_colour;      
+      $label_colour = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && !$f->{_n_members}) ? 'Grey' : $label_colour;      
       # Draw the label      
       my $txt = $self->Text
           ({
@@ -583,7 +584,7 @@ sub features {
   
   $x_offset += $distance;  
 
-  if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
+  if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) {
      if ($tree->is_node_significant) {
        if ($tree->is_expansion) {
           #print "expansion\n";
@@ -600,8 +601,8 @@ sub features {
   # Create the feature for this recursion
   my $node_id  = $tree->node_id;
   my @features;
-  my $n_members = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily'))? $tree->n_members : '';
-  $cut = 0 if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')); #only for cafe tree, cut is 0 so that the branch are single blue line (no dotted or other colours)
+  my $n_members = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode'))? $tree->n_members : '';
+  $cut = 0 if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')); #only for cafe tree, cut is 0 so that the branch are single blue line (no dotted or other colours)
 
   my $f = {
     _distance    => $distance,
@@ -612,7 +613,7 @@ sub features {
     _parent      => $parent_id,
     _cut         => $cut,
     _n_members   => $n_members,
-    _cafetree    => ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) ? 1 : 0, 
+    _cafetree    => ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) ? 1 : 0, 
   };
   
   # Initialised colouring
@@ -674,7 +675,7 @@ sub features {
     $f->{'y_to'} = $CURRENT_Y;    
   }
   
-   if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily') && $tree->genome_db) {
+   if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && $tree->genome_db) {
      $f->{'_species'} = ucfirst $tree->genome_db->name; # This will be used in URLs     
      
      #adding extra space after the n members so as to align the species name
