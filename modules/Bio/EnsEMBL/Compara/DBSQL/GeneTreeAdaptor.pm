@@ -412,6 +412,12 @@ sub delete_tree {
     $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
     $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $root_id");
 
+    # Only for "default" trees
+    unless ($tree->ref_root_id) {
+        # The alignment
+        $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id);
+    }
+
     # Finally remove the root node
     $gene_tree_node_Adaptor->delete_node($tree->root);
 }
