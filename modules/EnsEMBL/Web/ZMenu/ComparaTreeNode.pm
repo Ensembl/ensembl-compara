@@ -54,7 +54,7 @@ sub content {
   my $taxon_id             = $speciesTreeNode->taxon_id;
      $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf && not $is_supertree;
   my $NCBITaxon            = $tree->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_node_id($taxon_id);
-  my $taxon_name           = $NCBITaxon->ensembl_alias_name();
+  my $taxon_name           = $NCBITaxon->scientific_name();
      $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf && not $is_supertree;
 
   my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
