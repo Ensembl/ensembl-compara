@@ -729,7 +729,7 @@ sub dumpVariation {
       if( $x ) {
         foreach my $g ($x->[3]) {
           foreach (split ';', $g) {
-            push $genes{$_}++ if $_;
+            $genes{$_}++ if $_;
           }
         }
         push @syns,       split ';', $x->[1];
@@ -2539,7 +2539,7 @@ sub GeneTransLine {
    $xml .=qq(
   <field name="quick_links">$quick_links</field>);
   }
-  my (%seen_labels,%seen_syns,%seen_sources);
+  my (%seen_labels,%seen_syns,%seen_sources,@labels);
   foreach my $xref (@$xrefs) {
     my $search_term = $xref->{'search_term'};
     my $xref_id     = $xref->{'id'};
@@ -2553,20 +2553,14 @@ sub GeneTransLine {
     next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} keys(%$tsids), keys(%$tlsids));
 
     $search_term = &clean($search_term);
+    push @labels, $search_term;
     $desc        = &clean($desc);
-    my $hr_key;
-    $hr_key = '_hr_'.md5_hex($species.$db.$desc);
-    if ($hr_key) {
-      $xml .= qq(
-  <field name="xref">$search_term $hr_key</field>);
     $xml .= qq(
-  <field name="$hr_key">$desc</field>);
-    }
-    else {
-      $xml .= qq(
-  <field name="xref">$search_term</field>);
-    }
+  <field name="_hr">$desc</field>);
   }
+  my $xrefs = join ' ', @labels;
+    $xml .= qq(
+  <field name="xrefs">$xrefs</field>);
   my %seen_syns;
   foreach my $syn (@$synonyms) {
     next if $seen_syns{$syn};
