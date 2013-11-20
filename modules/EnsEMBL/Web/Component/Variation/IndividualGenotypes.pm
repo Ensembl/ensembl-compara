@@ -152,6 +152,11 @@ sub summary_tables {
       $table = $od_table;
       $other_row_count++;
     }
+
+    if ($pop_name =~ /^.+\:.+$/) {
+      $pop_name =~ s/\:/\:<b>/;
+      $pop_name .= '</b>';
+    }
     
     $table->add_row({
       Population  => $pop_name,
@@ -214,12 +219,13 @@ sub format_parent {
 sub pop_url {
   my ($self, $pop_name, $pop_dbSNP) = @_;
   
+  my $img_info = qq{<img src="/i/16/info.png" class="_ht" style="float:right;position:relative;top:2px;width:12px;height:12px;margin-left:4px" title="Click to see more information about the population" alt="i    nfo" />};
   my $pop_url;
   if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $pop_name.'&nbsp;'.$self->hub->get_ExtURL_link('[info]', '1KG_POP', $pop_name);
+    $pop_url = $pop_name.$self->hub->get_ExtURL_link($img_info, '1KG_POP', $pop_name);
   }
   else {
-    $pop_url = $pop_dbSNP ? $pop_name.'&nbsp;'.$self->hub->get_ExtURL_link('[info]', 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+    $pop_url = $pop_dbSNP ? $pop_name.$self->hub->get_ExtURL_link($img_info, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
   }
   
   return $pop_url;

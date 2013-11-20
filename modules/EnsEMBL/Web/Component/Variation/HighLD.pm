@@ -69,7 +69,8 @@ sub summary_table {
     }
   }
   
-  
+  my $img_info = qq{<img src="/i/16/info.png" class="_ht" style="float:right;position:relative;top:2px;width:12px;height:12px;margin-left:4px" title="Click to see more information about the population" alt=    "info" />}; 
+ 
   foreach my $pop (@pops) {
     my $description = $pop->description;
     
@@ -84,18 +85,27 @@ sub summary_table {
     
     # get tagging info
     my ($tagged, $tagged_by) = @{$self->tag_data($vf, $pop)};
-    
-    my $pop_syns = $pop->get_all_synonyms('dbSNP');
-    my $pop_link;
-    if($pop->name =~ /^1000GENOMES/) {
-      $pop_link = $self->hub->get_ExtURL_link($pop->name, '1KG_POP'); 
+ 
+    my $pop_name  = $pop->name;    
+    my $pop_dbSNP = $pop->get_all_synonyms('dbSNP');
+
+    my $pop_label = $pop_name;
+    if ($pop_label =~ /^.+\:.+$/) {
+      $pop_label =~ s/\:/\:<b>/;
+      $pop_label .= '</b>';
+    }
+
+    # Population external links
+    my $pop_url;
+    if ($pop_name =~ /^1000GENOMES/) { 
+      $pop_url = $pop_label.$self->hub->get_ExtURL_link($img_info, '1KG_POP', $pop_name);
     }
     else {
-      $pop_link = $pop_syns ? $self->hub->get_ExtURL_link($pop->name, 'DBSNPPOP', $pop_syns->[0]) : $pop->name;
+      $pop_url = $pop_dbSNP ? $pop_label.$self->hub->get_ExtURL_link($img_info, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_label;
     }
     
     my $row = {
-      name    => $pop_link,
+      name    => $pop_url,
       desc    => $description,
       tags    => $tagged,
       tagged  => $tagged_by,
