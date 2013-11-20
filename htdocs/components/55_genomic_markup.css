@@ -61,7 +61,7 @@ div.swatch-legend span { text-decoration: line-through; font-size: 20px; white-s
 
 div.population_genetics_pie                      { overflow: hidden; clear: both; }
 div.population_genetics_pie div.pie_chart_holder { float: left; margin: 0 4px 16px 0; }
-div.population_genetics_pie div.pie_chart        { border: [[PANEL_BORDER]] solid 1px; padding: 0 2px 2px; margin-bottom: 6px; }
+div.population_genetics_pie div.pie_chart        { border: [[PANEL_BORDER]] solid 1px; padding: 0 2px 2px; margin-bottom: 4px; border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 div.population_genetics_pie div.pie_chart h4     { padding: 4px; margin: 0; color: [[PAGE_TEXT]]; }
 div.population_genetics_pie div.all_population   { border-width: 2px; margin-right: 16px; padding-bottom: 0; }
 
