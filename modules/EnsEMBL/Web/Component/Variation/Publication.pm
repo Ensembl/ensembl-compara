@@ -21,18 +21,18 @@ sub content {
   
   return $self->_info('No citation data is available') unless scalar @$data;
   
-  my $html = ('<b>' . $object->name() .' is mentioned in the following publications</b>'); 
+  my $html = ('<h3>' . $object->name() .' is mentioned in the following publications</h3>'); 
 
   my ($table_rows ) = $self->table_data($data);
-  my $table         = $self->new_table([], [], { data_table => 1 });
+  my $table         = $self->new_table([], [], { data_table => 1, sorting => [ 'year desc' ] });
    
 
   $table->add_columns(   
-    { key => 'pmid',   title => 'PMID',      align => 'left', sort => 'html' },  
-    { key => 'title',  title => 'Title',     align => 'left', sort => 'html' },  
-    { key => 'author', title => 'Author(s)', align => 'left', sort => 'html' },
-    { key => 'text',   title => 'Full text', align => 'left', sort => 'html' },  
-    { key => 'year',   title => 'Year',      align => 'left', sort => 'html' },  
+    { key => 'year',   title => 'Year',      align => 'left', sort => 'numeric' },
+    { key => 'pmid',   title => 'PMID',      align => 'left', sort => 'html'    },  
+    { key => 'title',  title => 'Title',     align => 'left', sort => 'html'    },  
+    { key => 'author', title => 'Author(s)', align => 'left', sort => 'html'    },
+    { key => 'text',   title => 'Full text', align => 'left', sort => 'html'    },  
   );
 
   $table->add_columns( { key => 'ucsc',   title => 'UCSC', align => 'left', sort => 'html' }) if $self->hub->species eq 'Homo_sapiens';
@@ -56,17 +56,15 @@ sub table_data {
                  
   foreach my $cit (@$citation_data) { 
       
-      my $row = {
-	  year    => $cit->year(),
-	  pmid    => defined $cit->pmid() ? $hub->get_ExtURL_link($cit->pmid(), "PUBMED", $cit->pmid()) : undef,
-	  title   => $cit->title(),
-	  author  => $cit->authors(),
-	  text    => defined $cit->pmcid() ? $hub->get_ExtURL_link($cit->pmcid(), "EPMC", $cit->pmcid()) : undef,
-	  ucsc    => defined $cit->ucsc_id() ? "<a href=\"" . $ucsc_url . $object->name() ."&pubsFilterExtId=". $cit->ucsc_id() . "\">View</a>" : undef 
-
-     
+    my $row = {
+	  year   => $cit->year(),
+	  pmid   => defined $cit->pmid() ? $hub->get_ExtURL_link($cit->pmid(), "PUBMED", $cit->pmid()) : undef,
+	  title  => $cit->title(),
+	  author => $cit->authors(),
+	  text   => defined $cit->pmcid() ? $hub->get_ExtURL_link($cit->pmcid(), "EPMC", $cit->pmcid()) : undef,
+	  ucsc   => defined $cit->ucsc_id() ? "<a href=\"" . $ucsc_url . $object->name() ."&pubsFilterExtId=". $cit->ucsc_id() . "\">View</a>" : undef 
     };
-  
+ 
     push @data_rows, $row;
 
   } 
