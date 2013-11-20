@@ -38,9 +38,13 @@ sub content {
 
   if ($is_leaf and $is_supertree) {
     my $child = $node->adaptor->fetch_node_by_node_id($node->{_subtree}->root_id);
+<<<<<<< ComparaTreeNode.pm
+    $node->add_tag('species_tree_node_id', $child->get_tagvalue('species_tree_node_id'));
+=======
     $node->add_tag('species_tree_node_id', $child->add_tag('species_tree_node_id'));
     $node->add_tag('taxon_name', $child->get_tagvalue('taxon_name'));
     $node->add_tag('taxon_id', $child->get_tagvalue('taxon_id'));
+>>>>>>> 1.35
     my $members = $node->adaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
     $node->{_sub_leaves_count} = scalar(@$members);
     my $link_gene = $members->[0];
@@ -50,6 +54,20 @@ sub content {
     $node->{_sub_reference_gene} = $link_gene->gene_member;
   }
 
+<<<<<<< ComparaTreeNode.pm
+  my $tagvalues       = $node->get_tagvalue_hash;
+  my $species_tree_node_id = $tagvalues->{'species_tree_node_id'};
+  my $speciesTreeNode      = $tree->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($species_tree_node_id);
+  my $taxon_id             = $speciesTreeNode->taxon_id;
+     $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf && not $is_supertree;
+  my $NCBITaxon            = $tree->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_node_id($taxon_id);
+  my $taxon_name           = $NCBITaxon->ensembl_alias_name();
+     $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf && not $is_supertree;
+
+  my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
+  my $taxon_alias     = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$taxon_id};
+  my $caption         = 'Taxon: ';
+=======
   my $tagvalues            = $node->get_tagvalue_hash;
   my $species_tree_node_id = $tagvalues->{'species_tree_node_id'};
   my $speciesTreeNode      = $tree->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($species_tree_node_id);
@@ -62,6 +80,7 @@ sub content {
   my $taxon_mya            = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
   my $taxon_alias          = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$taxon_id};
   my $caption              = 'Taxon: ';
+>>>>>>> 1.35
   
   if (defined $taxon_alias) {
     $caption .= $taxon_alias;
