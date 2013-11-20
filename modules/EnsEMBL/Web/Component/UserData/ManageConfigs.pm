@@ -48,10 +48,13 @@ sub allow_edits {
 
 sub content {
   my $self = shift;
+  my $hub  = $self->hub;
+  my %help = $hub->species_defs->multiX('ENSEMBL_HELP');
   
   return sprintf('
     <input type="hidden" class="subpanel_type" value="ConfigManager" />
     <div class="config_manager">
+      <a title="Click for help (opens in new window)" class="popup constant sprite config_manager_help info_icon _ht" href="/Help/View?id=%s#manage_configs"></a>
       <div class="records">
         %s
       </div>
@@ -81,11 +84,12 @@ sub content {
       </div>
     </div>
     %s',
+    $help{join '/', $hub->type, $hub->action},
     $self->records(@_),
     $self->set_view ? ('', 'configurations') : ($self->reset_all, 'sets'),
     $self->edit_table,
     $self->share,
-    $self->hub->param('reload') ? '<div class="modal_reload"></div>' : ''
+    $hub->param('reload') ? '<div class="modal_reload"></div>' : ''
   );
 }
 
