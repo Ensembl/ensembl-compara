@@ -339,7 +339,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       cache: false,
       dataType: 'json',
       success: function (json) {
-        var table, indexes, rowData, rows, cells, j;
+        var table, rows;
         
         for (var i in json.tables) {
           rows = $(json.tables[i]).find('tbody tr').filter(function () { return !panel.params.records[this.className]; });
@@ -348,15 +348,9 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
             continue;
           }
           
-          cells   = rows.first().children();
-          table   = panel.elLk.tables.filter('.' + i).dataTable();
-          indexes = table.fnAddData(rows.map(function () { return $(this).children().map(function () { return this.innerHTML; }).toArray(); }).toArray());
-          rowData = table.fnSettings().aoData;
-          j       = indexes.length;
+          table = panel.elLk.tables.filter('.' + i).dataTable();
           
-          while (j--) {
-            $(rowData[indexes[j]].nTr).addClass(rows[j].className).data('configId', rows[j].className).children().addClass(function (k) { return cells[k].className; }).find('._ht').helptip();
-          }
+          panel.addDataTableRows(table, rows, true);
           
           panel.elLk.recordTypes.filter('.' + i).show();
           table.fnSort(panel.params.recordType === 'config' ? [[ 0, 'asc' ], [ 1, 'asc' ], [ 2, 'asc' ]] : [[ 0, 'asc' ]]);
@@ -369,7 +363,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
         
         // TODO: updateSavedConfig - will be needed once you can save direct to a group (work out how existing saveAs options are added in Configurator)
         
-        table = rows = cells = null;
+        table = rows = null;
       }
     });
   },
@@ -440,9 +434,8 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     }
     
     tr = null;
-  },
+  },  
   
-  // FIXME: merge with addTableRow
   saveRecord: function (tr, json) {
     var session      = this.elLk.editTypes.filter('.session');
     var user         = this.elLk.editTypes.filter('.user');
@@ -452,15 +445,9 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.tables.find('tr').filter('.' + json.ids.join(', .')).find('a.save_icon').replaceWith(saved);
     
-    var rows    = sessionTable.find('tr').filter('.' + json.ids.join(', .'));
-    var cells   = rows.first().children();
-    var indexes = userTable.fnAddData(rows.map(function () { return $(this).children().map(function () { return this.innerHTML; }); }).toArray());
-    var rowData = userTable.fnSettings().aoData;
-    var i       = indexes.length;
+    var rows = sessionTable.find('tr').filter('.' + json.ids.join(', .'));
     
-    while (i--) {
-      $(rowData[indexes[i]].nTr).addClass(rows[i].className).children().addClass(function (j) { return cells[j].className; }).find('._ht').helptip();
-    }
+    this.addDataTableRows(userTable, rows);
     
     rows.each(function () { sessionTable.fnDeleteRow(this); });
     
@@ -527,6 +514,23 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
         Ensembl.EventManager.trigger('activateConfig',  component);
       }
     }
+  },
+  
+  addDataTableRows: function (table, rows, hasData) {
+    var cells   = rows.first().children();
+    var indexes = table.fnAddData(rows.map(function () { return $(this).children().map(function () { return this.innerHTML; }); }).toArray());
+    var rowData = table.fnSettings().aoData;
+    var i       = indexes.length;
+    
+    while (i--) {
+      $(rowData[indexes[i]].nTr).addClass(rows[i].className).children().addClass(function (j) { return cells[j].className; }).find('._ht').helptip();
+      
+      if (hasData) {
+        $(rowData[indexes[i]].nTr).data('configId', rows[i].className) 
+      }
+    }
+    
+    table = rows = cells = null;
   },
   
   // Config view: Editing configs in a set - updateTable, sharing - addTableRow
