@@ -315,19 +315,8 @@ sub row {
     $row->{'desc'}   = { value => sprintf($templates->{'editable'}, $desc,             '<textarea rows="5" name="description"></textarea>', $edit_url), class => 'editable wrap' };
     $row->{'delete'} = sprintf $templates->{'icon'}, 'delete', 'edit',         'Delete', $hub->url({ function => 'delete', %params, link_id => $record->{'link_id'} });
     $row->{'share'}  = sprintf $templates->{'icon'}, 'share',  'share_record', 'Share',  $hub->url({ function => 'share',  %params }) unless $group;
-    
-    if ($self->allow_edits->{"$record_group $record->{'record_type_id'}"}) {
-      $row->{'edit'} = sprintf $templates->{'icon'}, 'edit', 'edit_record', $text->[2], '#';
-    } else {
-      my %group_text = (
-        session   => 'your session',
-        user      => 'your account',
-        group     => 'this group',
-        suggested => 'this group',
-      );
-      
-      $row->{'edit'} = sprintf $templates->{'disabled'}, 'edit', sprintf('There are no configuration%ss for %s', $set_view ? '' : ' set', $group_text{$record_group});
-    }
+    $row->{'edit'}   = sprintf $templates->{'icon'}, 'edit',   'edit_record',  $text->[2], '#';
+
     
     if ($record->{'record_type'} eq 'session' && $hub->users_available) {
       $params{'then'} = uri_escape($hub->url({ __clear => 1, reload => 1 })) unless $hub->user;
@@ -432,7 +421,8 @@ sub edit_table_html {
   my $set_view = $self->set_view;
   my $form     = $self->new_form({ action => $hub->url({ action => 'ModifyConfig', function => 'edit_sets', __clear => 1 }), method => 'post', class => 'edit_record' });
   my $fieldset = $form->add_fieldset;
-  my %tables;
+  my $type     = $set_view ? 'configurations' : 'sets';
+  my (%tables, $html);
   
   $fieldset->append_child('input', { type => 'checkbox', class => "selected hidden $_", name => 'update_id', value => $_        }) for keys %{$self->{'editables'}};
   $fieldset->append_child('input', { type => 'hidden',   class => 'record_id',          name => 'record_id', value => ''        });
@@ -454,26 +444,24 @@ sub edit_table_html {
     $tables{($default_groups->{$_} ? 'suggested' : 'group') . " $_"} ||= [] for keys %{$self->admin_groups};
   }
   
-  return join('',
-    map($self->new_table([
+  foreach (sort keys %tables) {
+    my $text = join '', /user|session/ ? 'your ' : '', /user/ ? 'account' : /session/ ? 'session' : $user->get_group([split ' ']->[1])->name;
+    
+    $html .= $self->new_table([
       @$columns, { key => 'add', %{$self->templates->{'icon_col'}} }
     ], [
       sort { $a->{'type'} cmp $b->{'type'} || $a->{'conf'} cmp $b->{'conf'} || $a->{'name'}{'sort'} cmp $b->{'name'}{'sort'} } @{$tables{$_}}
-    ], { 
+    ], {
       data_table        => 'no_col_toggle no_sort',
-      data_table_config => { iDisplayLength => 10 },
+      data_table_config => { iDisplayLength => 10, oLanguage => { sEmptyTable => "There are no $type from $text" } },
       exportable        => 0,
       class             => 'fixed heightwrap_inside',
       wrapper_class     => "record_type $_",
-      wrapper_html      => $user ? sprintf(
-        '<p>%s from %s%s</p>',
-        $set_view ? 'Configurations' : 'Sets',
-        /user|session/ ? 'your ' : '',
-        /user/ ? 'account' : /session/ ? 'session' : $user->get_group([split ' ']->[1])->name 
-      ) : '',
-    })->render, sort keys %tables),
-    $form->render
-  );
+      wrapper_html      => $user ? sprintf('<p>%s from %s</p>', ucfirst $type, $text) : '',
+    })->render;
+  }
+  
+  return $html . $form->render;
 }
 
 sub share {
