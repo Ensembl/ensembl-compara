@@ -305,7 +305,7 @@ sub data_table_config {
   my $code      = $self->code;
   my $col_count = scalar @{$self->{'columns'}};
   
-  return unless $code && scalar @{$self->{'rows'}} && $col_count;
+  return unless $code && $col_count;
   
   my $i              = 0;
   my %columns        = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
