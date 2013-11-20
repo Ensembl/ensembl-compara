@@ -324,14 +324,18 @@ sub url {
   my $type    = exists $params->{'type'}     ? $params->{'type'}     : $self->type;
   my $action  = exists $params->{'action'}   ? $params->{'action'}   : $self->action;
   my $fn      = exists $params->{'function'} ? $params->{'function'} : $action eq $self->action ? $self->function : undef;
+  my $c_pars  = $self->core_params;
   my %pars;
   
   if ($all_params) {
-    # Parse the existing query string to get params if flag is on
-    push @{$pars{$_->[0]}}, $_->[1] for map { /^time=/ || /=$/ ? () : [ split /=/ ]} split /;|&/, uri_unescape($self->input->query_string);
+    my $input   = $self->input;
+    my $is_post = $input->request_method eq 'POST';
+    my $method  = $is_post ? 'url_param' : 'param';
+
+    $pars{$_} = $input->$method($_) for $input->$method, $is_post ? keys %$c_pars : ();
 
   } elsif (!$params->{'__clear'}) { # add the core params only if clear flag is not on
-    %pars = %{$self->core_params};
+    %pars = %$c_pars;
 
     # Remove any unused params
     foreach (keys %pars) {
