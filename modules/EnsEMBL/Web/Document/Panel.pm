@@ -382,7 +382,8 @@ sub component_content {
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
     my $ajaxable = $component->ajaxable;
     if ($ajaxable && !$ajax_request && $is_html) {
-      my $url   = $component->ajax_url($content_function);
+    
+      my $url   = encode_entities($component->ajax_url($content_function)),
       my $class = 'initial_panel' . ($component->has_image == 1 ? ' image_panel' : ''); # classes required by the javascript
       
       # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
@@ -390,7 +391,11 @@ sub component_content {
       # Without this, ajax panels don't load, or load the wrong content.
       my ($panel_name) = $self =~ /\((.+)\)$/;
       
-      $html .= sprintf qq{<div class="ajax $class"><input type="hidden" class="ajax_load%s" name="$panel_name" value="%s" /></div>}, $ajaxable eq 'post' ? ' post' : '', encode_entities($url);
+      # If there are some params that needs to be a part of the POST request, add them as hidden fields
+      my $ajax_post = ref $ajaxable ? join('', map { my $val = $hub->param($_); $val ? qq(<input class="ajax_post" type="hidden" name="$_" value="$val" />) : '' } @$ajaxable) : '';
+      
+      $html .= qq(<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="$url">$ajax_post</div>);
+      
     } else {
       my $content;
       
