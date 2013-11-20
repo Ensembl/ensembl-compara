@@ -236,7 +236,7 @@ sub name {
 sub inner_HTML {
   ## Sets/Gets inner HTML of an element
   ## If intended to set parsed HTML, string is converted to tree format and appended to the node after removing the existing child nodes.
-  ## @param innerHTML string (or ArrayRef of all the three arguments)
+  ## @param innerHTML string (or ArrayRef containing both arguments)
   ## @param flag to tell whether or not to parse the HTML - off (no parsing) by default.
   ## @return final HTML string
   ## @exception HTMLParsingException if there is some error in parsing the HTML
