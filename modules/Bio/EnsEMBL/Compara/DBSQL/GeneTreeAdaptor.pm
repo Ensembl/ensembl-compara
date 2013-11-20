@@ -396,6 +396,17 @@ sub delete_tree {
         $gene_tree_node_Adaptor->delete_node($node);
     }
 
+    # Only for "default" trees
+    unless ($tree->ref_root_id) {
+
+        # Linked trees must be removed as well
+        foreach my $other_tree (@{$self->fetch_all_linked_trees($tree)}) {
+            $other_tree->preload();
+            $self->delete_tree($other_tree);
+            $other_tree->release_tree();
+        }
+    }
+
     # Then remove the tree
     my $root_id = $tree->root->node_id;
     $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
