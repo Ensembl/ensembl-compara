@@ -226,6 +226,14 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       }
     });
     
+    $('.cancel, .continue', this.elLk.saveAll).on('click', function () {
+      Ensembl.EventManager.trigger('modalOverlayHide');
+      
+      if ($(this).hasClass('continue')) {
+        panel.elLk.saveAllLink.trigger('click');
+      }
+    });
+    
     this.elLk.shareGroup.on('click', function () {
       var share   = panel.elLk.shareLink.data('share') || {};
       var disable = true;
@@ -460,14 +468,13 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   },
   
   saveAll: function (tr, json) {
-    var link    = tr.find('a.save_icon');
     var lists = { sets: '', configs: '' };
-    var i, j;
+    var j;
     
     json.sets    = (json.sets    || []).sort();
     json.configs = (json.configs || []).sort();
     
-    for (i in lists) {
+    for (var i in lists) {
       for (j in json[i]) {
         lists[i] += '<li>' + json[i][j] + '</li>';
       }
@@ -476,15 +483,11 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     }
     
     this.elLk.saveHeader.html(this.params.records[tr.data('configId')].name);
-    
-    $('.continue', this.elLk.saveAll).on('click', function () { // FIXME: messy.
-      Ensembl.EventManager.trigger('modalOverlayHide');
-      link.clone().hide().removeClass('_ht').attr('href', function (i, href) { return href + ';save_all=1'; }).insertAfter(link).trigger('click').remove();
-    });
+    this.elLk.saveAllLink = tr.find('a.save_all');
     
     Ensembl.EventManager.trigger('modalOverlayShow', this.elLk.saveAll);
     
-    tr = overlay = null;
+    tr = null;
   },
   
   deleteRecord: function (tr) {
