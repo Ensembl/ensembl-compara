@@ -31,7 +31,7 @@ sub content {
   my @inputs = (
     q{<input class="graph_config" type="hidden" name="legendpos" value="'east'" />},
     q{<input class="graph_config" type="hidden" name="legendmark" value="'arrow'" />},
-    '<input class="graph_dimensions" type="hidden" value="[25,25,20]" />',
+    q{<input class="graph_dimensions" type="hidden" value="[25,25,20]" />},
   );
   
   # Get alleles list
@@ -87,7 +87,7 @@ sub content {
     if ($short_name =~ /ALL/) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
-          <div class="pie_chart%s" title="%s">
+          <div class="pie_chart%s _ht" title="%s">
             <h4>%s</h4>
             <div id="graphHolder%s" style="width:118px;height:%spx"></div>
           </div>
@@ -96,23 +96,23 @@ sub content {
     } elsif ($pop_tree->{$short_name}) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
-          <div class="pie_chart" title="%s">
+          <div class="pie_chart _ht" title="%s">
             <h4>%s</h4>
             <div id="graphHolder%s" style="width:118px;height:%spx"></div>
           </div>
-          <a class="toggle set_cookie %s" href="#" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
+          <a class="toggle set_cookie %s" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
         </div>
       ', $pop_desc, $short_name, $graph_id, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
     } else {
       foreach (grep $pop_tree->{$_}{$short_name}, keys %$pop_tree) {
-        push @{$sub_pops{$_}}, qq{
+        push @{$sub_pops{$_}}, sprintf('
           <div class="pie_chart_holder">
-            <div class="pie_chart" title="$pop_desc">
-              <h4>$short_name</h4>
-              <div id="graphHolder$graph_id" style="width:118px;height:${height}px"></div>
+            <div class="pie_chart _ht" title="%s">
+              <h4>%s</h4>
+              <div id="graphHolder%s" style="width:118px;height:%spx"></div>
             </div>
           </div>
-        };
+        ', $pop_desc, $short_name, $graph_id, $height);
       }
     }
     
