@@ -4,7 +4,7 @@ package EnsEMBL::Web::ZMenu;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
+use HTML::Entities qw(encode_entities decode_entities);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -177,7 +177,7 @@ sub render {
         } else {
           $value = sprintf(
             '<a href="%s"%s%s>%s%s%s</a>',
-            encode_entities($entry->{'link'}),
+            encode_entities(decode_entities($entry->{'link'})), # Decode links before encoding them stops double encoding when the link is created by EnsEMBL::Web::ExtURL->get_url
             $entry->{'external'} ? ' rel="external"' : '',
             $entry->{'link_class'} ? qq{ class="$entry->{'link_class'}"} : '',
             encode_entities($entry->{'label'}),
