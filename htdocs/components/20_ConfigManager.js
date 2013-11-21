@@ -526,7 +526,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       $(rowData[indexes[i]].nTr).addClass(rows[i].className).children().addClass(function (j) { return cells[j].className; }).find('._ht').helptip();
       
       if (hasData) {
-        $(rowData[indexes[i]].nTr).data('configId', rows[i].className) 
+        $(rowData[indexes[i]].nTr).data('configId', rows[i].className);
       }
     }
     
