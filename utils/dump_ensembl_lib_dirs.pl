@@ -10,9 +10,10 @@ BEGIN {
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-require LoadPlugins;
-LoadPlugins::plugin(sub {/SiteDefs.pm$/});
+use LoadPlugins;
 
-print join(":", @INC) . "\n";
+my @libs = grep { ref $_ ne 'CODE' } @INC; ## ugh, why are there coderefs in @INC!?
+
+print join(":", @libs) . "\n";
 
 1;
