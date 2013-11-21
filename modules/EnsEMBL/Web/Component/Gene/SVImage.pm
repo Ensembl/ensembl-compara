@@ -34,6 +34,8 @@ sub content {
 
   my $image = $self->new_image($slice, $image_config, [ $object->stable_id ]);
   
+  return if $self->_export_image($image);
+  
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Drag to select region');
