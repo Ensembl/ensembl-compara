@@ -332,7 +332,8 @@ sub url {
     my $is_post = $input->request_method eq 'POST';
     my $method  = $is_post ? 'url_param' : 'param';
 
-    $pars{$_} = $input->$method($_) for $input->$method, $is_post ? keys %$c_pars : ();
+    $pars{$_} = $input->$method($_) for $input->$method;                # In case of a POST request, ignore the POST params while adding params to the URL,
+    $pars{$_} = $input->param($_)   for $is_post ? keys %$c_pars : ();  # except if the param is a core param
 
   } elsif (!$params->{'__clear'}) { # add the core params only if clear flag is not on
     %pars = %$c_pars;
