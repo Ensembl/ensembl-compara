@@ -435,14 +435,14 @@ sub _summarise_variation_db {
  my $s_aref = $dbh->selectall_arrayref( 'select version from source where name = "dbSNP"' );
  foreach (@$s_aref){
     my ($version) = @$_;
-    $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'dbSNP_VERSION'} = $version;   
+    $self->db_details($db_name)->{'dbSNP_VERSION'} = $version;   
   }
 
 #--------- Does this species have structural variants?
  my $sv_aref = $dbh->selectall_arrayref('select count(*) from structural_variation');
  foreach (@$sv_aref){
     my ($count) = @$_;
-    $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'} = $count;
+    $self->db_details($db_name)->{'STRUCTURAL_VARIANT_COUNT'} = $count;
  }
 
 #---------- Add in information about the display type from the sample table
@@ -464,12 +464,12 @@ sub _summarise_variation_db {
      elsif ($type eq 'LD'){ push (@ld, $name); } 
    }
    $self->db_details($db_name)->{'tables'}{'individual.reference_strain'} = $reference;
-   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'REFERENCE_STRAIN'} = $reference; 
+   $self->db_details($db_name)->{'REFERENCE_STRAIN'} = $reference; 
    $self->db_details($db_name)->{'meta_info'}{'individual.default_strain'} = \@default;
-   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} = \@default;  
+   $self->db_details($db_name)->{'DEFAULT_STRAINS'} = \@default;  
    $self->db_details($db_name)->{'meta_info'}{'individual.display_strain'} = \@display;
-   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} = \@display; 
-   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'LD_POPULATIONS'} = \@ld;
+   $self->db_details($db_name)->{'DISPLAY_STRAINS'} = \@display; 
+   $self->db_details($db_name)->{'LD_POPULATIONS'} = \@ld;
 #---------- Add in strains contained in read_coverage_collection table
   if ($self->db_details($db_name)->{'tables'}{'read_coverage_collection'}){
     my $r_aref = $dbh->selectall_arrayref(
@@ -617,7 +617,7 @@ sub _summarise_variation_db {
     $somatic_mutations{$_->[0]}->{'none'} = 'none' ;
   } 
 	
-  $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'} = \%somatic_mutations;
+  $self->db_details($db_name)->{'SOMATIC_MUTATIONS'} = \%somatic_mutations;
 
   ## Do we have SIFT and/or PolyPhen predictions?
   my $prediction_aref = $dbh->selectall_arrayref(
@@ -625,18 +625,18 @@ sub _summarise_variation_db {
   );
   foreach (@$prediction_aref) {
     if ($_->[0] =~ /sift/i) {
-      $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SIFT'} = 1;
+      $self->db_details($db_name)->{'SIFT'} = 1;
     }
     if ($_->[0] =~ /^polyphen/i) {
-      $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'POLYPHEN'} = 1;
+      $self->db_details($db_name)->{'POLYPHEN'} = 1;
     }
   }
   
   # get possible values from attrib tables
-  @{$self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SIFT_VALUES'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+  @{$self->db_details($db_name)->{'SIFT_VALUES'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
     'SELECT a.value FROM attrib a, attrib_type t WHERE a.attrib_type_id = t.attrib_type_id AND t.code = "sift_prediction";'
   )};
-  @{$self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'POLYPHEN_VALUES'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+  @{$self->db_details($db_name)->{'POLYPHEN_VALUES'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
     'SELECT a.value FROM attrib a, attrib_type t WHERE a.attrib_type_id = t.attrib_type_id AND t.code = "polyphen_prediction";'
   )};
 
