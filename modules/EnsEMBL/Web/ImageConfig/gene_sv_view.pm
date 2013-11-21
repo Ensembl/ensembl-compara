@@ -63,7 +63,8 @@ sub init {
     { display => 'gene_nolabel', depth => 50 }
   );
   
-  $self->storable = 0;
+  $self->storable     = 0;
+  $self->image_resize = 1;
 }
 
 1;
