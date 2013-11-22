@@ -559,7 +559,7 @@ sub dumpVariation {
     $file2 = $conf->{'directory_somatic_mutations'}."/${VariationDB}_SomaticMutation.xml";
     open( $fh2, ">$file2" ) or die "Can't open $file2: $!";
     print LOG "  Dumping $VariationDB SomaticMutations to $file2 ... ".&date_and_mem()."\n";
-    header($fh);
+    header($fh2);
   }
 
   my $sources = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, name from source" )} };
