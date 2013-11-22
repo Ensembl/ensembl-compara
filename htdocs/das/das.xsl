@@ -53,7 +53,7 @@ h3.boxed { margin: 0 0 0.5em 0; padding: 0.5em; background-color: #8fa0c4 }
     <div class="twocol-right right unpadded">
       <a href="http://www.ensembl.org/info/about/intro.html">About Ensembl</a> | 
       <a href="http://www.ensembl.org/info/about/contact/">Contact Us</a> | 
-      <a href="/info/website/help/">Help</a> 
+      <a href="/info/website/">Help</a> 
     </div>
   </div>
 </body>

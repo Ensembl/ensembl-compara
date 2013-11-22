@@ -59,6 +59,7 @@ sub init {
     pairwise_blastz
     pairwise_tblat
     pairwise_other
+    dna_align_compara
     oligo
     repeat
     external_data

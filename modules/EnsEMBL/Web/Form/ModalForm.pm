@@ -29,6 +29,7 @@ sub new {
     'action'          => $params->{'action'} || '#',
     'method'          => $params->{'method'},
     'skip_validation' => $params->{'skip_validation'},
+    'enctype'         => $params->{'enctype'},
   });
 
   $self->set_attribute('class', $params->{'class'}) if $params->{'class'};
