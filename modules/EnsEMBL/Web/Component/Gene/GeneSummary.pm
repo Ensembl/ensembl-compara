@@ -4,9 +4,6 @@ package EnsEMBL::Web::Component::Gene::GeneSummary;
 
 use strict;
 
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::TmpFile::Image;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -176,120 +173,16 @@ sub content {
   $table->add_row('Alternative genes', $alt_genes) if $alt_genes; # add alternative gene info
 
   if ($object->gene_type =~ /RNA/ && $self->hub->species_defs->R2R_BIN) {
-    my $structure = $self->draw_structure;
-    $table->add_row('Secondary structure', $structure) if $structure;
+    my $svg_path = $self->draw_structure($display_name, 1);
+    my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
+    my $html = qq(<object data="$svg_path" type="image/svg+xml"></object>
+<br /><a href="$fullsize">[click to enlarge]</a>);
+
+    $table->add_row('Secondary structure', $html);
   }
 
   return $table->render;
 }
-
-sub draw_structure {
-  my $self = shift;
-  my $html = '';
-
-  my $svg_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r';
-  $self->make_directory($svg_path.'/');
-
-  my $database = $self->hub->database('compara');
-  if ($database) {
-    my $gma = $database->get_GeneMemberAdaptor();
-    my $sma = $database->get_SeqMemberAdaptor();
-    my $gta = $database->get_GeneTreeAdaptor();
-
-    my $member  = $gma->fetch_by_source_stable_id(undef, $self->object->stable_id);
-    my $peptide = $sma->fetch_canonical_for_gene_member_id($member->member_id);
-
-    my $gene_tree   = $gta->fetch_default_for_Member($member);
-    return unless $gene_tree;
-    my $model_name  = $gene_tree->get_tagvalue('model_name');
-    my $ss_cons     = $gene_tree->get_tagvalue('ss_cons');
-    my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
-    my $aln_file    = $self->_dump_multiple_alignment($input_aln, $model_name, $ss_cons);
-    my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id);
-    $html .= qq(<object data="$svg_path/$thumbnail" type="image/svg+xml"></object>
-<br /><a href="$svg_path/$plot">[click to enlarge]</a>);
-  }
-  return $html;
-}
-
-sub _dump_multiple_alignment {
-    my ($self, $aln, $model_name, $ss_cons) = @_;
-    if ($ss_cons =~ /^\.+$/) {
-      warn "The tree has no structure\n";
-      return undef;
-    }
-
-    my $aln_file  = EnsEMBL::Web::TmpFile::Text->new(
-                        prefix   => 'r2r/'.$self->hub->species,
-                        filename => "${model_name}.sto",
-                    ); 
-
-    my $content = "# STOCKHOLM 1.0\n";
-    for my $aln_seq ($aln->each_seq) {
-      $content .= sprintf ("%-20s %s\n", $aln_seq->display_id, $aln_seq->seq);
-    }
-    $content .= sprintf ("%-20s\n", "#=GF R2R keep allpairs");
-    $content .= sprintf ("%-20s %s\n//\n", "#=GC SS_cons", $ss_cons);
-
-    $aln_file->print($content);
-    return $aln_file;
-}
-
-sub _get_aln_file {
-  my ($self, $aln_file) = @_;
-
-  my $input_path  = $aln_file->{'full_path'};
-  my $output_path = $input_path . ".cons";
-  ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
-  $self->_run_r2r_and_check("--GSC-weighted-consensus", $input_path, $output_path, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
-
-  return $output_path;
-}
-
-sub _draw_structure {
-    my ($self, $aln_file, $tree, $peptide_id) = @_;
-
-    my $output_path = $self->_get_aln_file($aln_file);
-    my $r2r_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r/';
-
-    my $th_meta = EnsEMBL::Web::TmpFile::Text->new(
-                        prefix   => 'r2r/'.$self->hub->species,
-                        filename => $aln_file->filename . "-thumbnail.meta",
-                    );
-    my $th_content = "$output_path\tskeleton-with-pairbonds\n";
-    $th_meta->print($th_content);
-    my $thumbnail = $aln_file->filename.".thumbnail.svg";
-    $self->_run_r2r_and_check("", $th_meta->{'full_path'}, $r2r_path.$thumbnail, "");
-
-    my $meta_file  = EnsEMBL::Web::TmpFile::Text->new(
-                        prefix   => 'r2r/'.$self->hub->species,
-                        filename => $aln_file->filename . ".meta",
-                    ); 
-    my $content = "$output_path\n";
-    $content .= $aln_file->{'full_path'}."\toneseq\t$peptide_id\n";
-    $meta_file->print($content);
-
-    my $plot_file = $aln_file->filename."-${peptide_id}.svg";
-    $self->_run_r2r_and_check("", $meta_file->{'full_path'}, $r2r_path.$plot_file, "");
-
-    return ($thumbnail, $plot_file);
-}
-
-sub _run_r2r_and_check {
-    my ($self, $opts, $infile, $outfile, $extra_params) = @_;
-    my $r2r_exe = $self->hub->species_defs->R2R_BIN; 
-    warn "$r2r_exe doesn't exist" unless ($r2r_exe);
-
-    my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
-    system($cmd);
-    if (! -e $outfile) {
-       warn "Problem running r2r: $outfile doesn't exist\nThis is the command I tried to run:\n$cmd\n";
-    }
-    return;
-}
-
-
-
 
 sub get_synonyms {
   my ($self, $match_id, @matches) = @_;
