@@ -11,9 +11,7 @@ BEGIN {
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-require LoadPlugins;
-LoadPlugins::plugin(sub {/(SpeciesDefs.pm)$/});
-
+use LoadPlugins;
 use EnsEMBL::Web::SpeciesDefs;
 
 my $sd = EnsEMBL::Web::SpeciesDefs->new;
