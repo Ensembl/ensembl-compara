@@ -771,7 +771,7 @@ sub do_pan_compara_species {
     }
 
     my $html;
-    $html .= qq(<a href="/info/docs/compara/pan.nh" class="constant">Species Newick Tree</a><br><br>);
+    $html .= qq(<a href="/info/genome/compara/pan.nh" class="constant">Species Newick Tree</a><br><br>);
     $html .= qq{<table>};
     foreach my $key ( sort { $a cmp $b} keys %division){
 
