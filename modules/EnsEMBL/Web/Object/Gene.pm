@@ -44,13 +44,15 @@ sub availability {
 
       $availability->{'history'}              = !!$rows;
       $availability->{'gene'}                 = 1;
+      $availability->{'is_rna'}               = $self->gene_type =~ /RNA/;
+      $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
       $availability->{'core'}                 = $self->get_db eq 'core';
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
       $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
       $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0;  
       $availability->{'family'}               = !!$counts->{families};
-      $availability->{'not_rnaseq'}    = $self->get_db eq 'rnaseq' ? 0 : 1;
+      $availability->{'not_rnaseq'}           = $self->get_db eq 'rnaseq' ? 0 : 1;
       $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
