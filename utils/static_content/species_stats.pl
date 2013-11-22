@@ -783,6 +783,7 @@ sub do_pan_compara_species {
 
       ## Reset total to number of cells required for a complete table
       $total = $break * 3;
+      my @all_under_division_sorted = sort {$a cmp $b} @{$division{$key}};
 
       for (my $i=0; $i < $total; $i++) {
         my $col = int($i % 3);
@@ -792,7 +793,7 @@ sub do_pan_compara_species {
 	      my $row = int($i/3);
 	      my $j = $row + $break * $col;
 
-        my $current_species =  defined $division{$key}->[$j] ? $division{$key}->[$j] : '' ;
+        my $current_species =  defined $all_under_division_sorted[$j] ? $all_under_division_sorted[$j] : '' ;
         my $species = $spec_sci_name{$current_species} || $current_species;
         my $url_hash        = $SD->ENSEMBL_EXTERNAL_URLS($current_species) || $SD->ENSEMBL_EXTERNAL_URLS;
 
