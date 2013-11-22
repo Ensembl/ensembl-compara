@@ -88,6 +88,7 @@ sub render {
 
   $major_unit = $major;
   $minor_unit = $major_unit / $div;
+  $minor_unit = $major_unit if $minor_unit < 1;
 
   # Black bar all the way along
   $self->push($self->Rect({
