@@ -45,10 +45,18 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
   );
 
-  $self->create_node('Sequence', 'Sequence',
+  my $seq_menu = $self->create_node('Sequence', 'Sequence',
     [qw( sequence EnsEMBL::Web::Component::Gene::GeneSeq )],
     { 'availability' => 'gene', 'concise' => 'Marked-up sequence' }
   );
+
+  if ($self->object->availability->{'is_rna'} && $self->hub->species_defs->R2R_BIN) {
+    $seq_menu->append($self->create_node('SecondaryStructure', 'Secondary Structure',
+      [qw(
+        secondary EnsEMBL::Web::Component::Gene::RnaSecondaryStructure
+      )],
+    ));
+  }
 
   $self->create_node('Matches', 'External references',
     [qw( matches EnsEMBL::Web::Component::Gene::SimilarityMatches )],
