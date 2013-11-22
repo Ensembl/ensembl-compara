@@ -44,6 +44,7 @@ sub scale {
   elsif($d*4 <= $max) { $unit /=4; $skip = 2; $div = 1; }
   elsif($d*2 <= $max) { $unit /=2; $skip = 2; }
   $skip = 1 unless $d > 2;
+  $unit = 1 if $unit < 1;
   return [$unit,$div,$unit*$skip];
 }
 
