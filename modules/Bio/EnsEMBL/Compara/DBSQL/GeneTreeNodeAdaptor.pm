@@ -274,6 +274,13 @@ sub delete_node {
   $self->dbc->do("UPDATE gene_tree_node SET root_id = NULL WHERE node_id = $node_id");
   $self->dbc->do("DELETE homology_member from homology_member JOIN homology using(homology_id) WHERE gene_tree_node_id = $node_id");
   $self->dbc->do("DELETE from homology WHERE gene_tree_node_id = $node_id");
+
+  # The node is actually a root. We have to clear the entry in gene_tree_root
+  if ($node_id == $node->tree->root->node_id) {
+    $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $node_id");
+    $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $node_id");
+  }
+
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 

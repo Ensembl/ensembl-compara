@@ -399,7 +399,7 @@ sub delete_tree {
     # Only for "default" trees
     unless ($tree->ref_root_id) {
 
-        # Linked trees must be removed as well
+        # Linked trees must be removed as well as they refer to the default tree
         foreach my $other_tree (@{$self->fetch_all_linked_trees($tree)}) {
             $other_tree->preload();
             $self->delete_tree($other_tree);
@@ -407,10 +407,8 @@ sub delete_tree {
         }
     }
 
-    # Then remove the tree
-    my $root_id = $tree->root->node_id;
-    $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
-    $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $root_id");
+    # Finally remove the root node
+    $gene_tree_node_Adaptor->delete_node($tree->root);
 
     # Only for "default" trees
     unless ($tree->ref_root_id) {
@@ -418,11 +416,10 @@ sub delete_tree {
         $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id);
 
         # The HMM profile
+        my $root_id = $tree->root->node_id;
         $self->dbc->do("DELETE FROM hmm_profile WHERE model_id = '$root_id'");
     }
 
-    # Finally remove the root node
-    $gene_tree_node_Adaptor->delete_node($tree->root);
 }
 
 
