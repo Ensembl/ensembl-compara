@@ -1015,7 +1015,7 @@ sub _summarise_compara_db {
       $self->db_tree->{$db_name}{$key}{$id}{'species'}{'ancestral_sequences'} = 1 unless exists $self->db_tree->{$db_name}{$key}{$id};
     }
     
-    $vega = 0 if $species eq 'Sarcophilus_harrisii';
+    $vega = 0 if $species eq 'Ailuropoda_melanoleuca';
     
     if ($intra_species{$species_set_id}) {
       $intra_species_constraints{$species}{$_} = 1 for keys %{$intra_species{$species_set_id}};

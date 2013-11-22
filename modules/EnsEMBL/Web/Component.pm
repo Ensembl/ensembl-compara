@@ -468,8 +468,8 @@ sub modal_form {
   my $params            = {};
   $params->{'action'}   = $params->{'next'} = $action;
   $params->{'current'}  = $hub->action;
-  $params->{$_}         = $options->{$_} for qw(class method wizard label no_back_button no_button buttons_on_top buttons_align skip_validation);
-  $params->{'name'} = $name;
+  $params->{'name'}     = $name;
+  $params->{$_}         = $options->{$_} for qw(class method wizard label no_back_button no_button buttons_on_top buttons_align skip_validation enctype);
 
   if ($options->{'wizard'}) {
     my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;

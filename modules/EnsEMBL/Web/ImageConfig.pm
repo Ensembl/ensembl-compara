@@ -147,6 +147,7 @@ sub menus {
     simple              => [ 'Simple features',         'seq_assembly' ],
     ditag               => [ 'Ditag features',          'seq_assembly' ],
     dna_align_other     => [ 'GRC alignments',          'seq_assembly' ],
+    dna_align_compara   => [ 'Imported alignments',     'seq_assembly' ],
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
@@ -1863,7 +1864,11 @@ sub add_dna_align_features {
         }
       }
       
-      my $display  = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
+      # my $display = (grep { $data->{$key_2}{'display'} eq $_ } @$alignment_renderers )             ? $data->{$key_2}{'display'}
+      #             : (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}} ) ? $data->{$key_2}{'display'}
+      #             : 'off'; # needed because the same logic_name can be a gene and an alignment
+
+      my $display  = $data->{$key_2}{'display'} ? $data->{$key_2}{'display'} : 'off';
       my $glyphset = '_alignment';
       my $strand   = 'b';
       

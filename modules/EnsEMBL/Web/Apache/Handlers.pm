@@ -262,8 +262,21 @@ sub handler {
   shift @raw_path; # Always empty
 
   ## Simple redirect to VEP
-  if ($raw_path[0] && $raw_path[0] =~ /^VEP$/i) {
-    $r->uri('/info/vep.html');
+  my $redirect = 0;
+
+  if ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
+    $r->uri('/info/docs/tools/vep/script/index.html');
+    $redirect = 1;
+  } elsif (($raw_path[0] && $raw_path[0] =~ /^VEP$/i) || $file =~ /\/info\/docs\/variation\/vep\//) {
+    $r->uri('/info/docs/tools/vep/index.html');
+    $redirect = 1;
+  } elsif ($file =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
+    $file =~ s/docs/genome/;
+    $r->uri($file);
+    $redirect = 1;
+  }
+  
+  if ($redirect) {
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
       
@@ -325,11 +338,8 @@ sub handler {
       $stable_id = $unstripped_stable_id if($species && $object_type);
     }
     
-    my $dir = $species ? "/$species/" : '/Multi/';
-    my $uri = $dir."psychic?q=$stable_id";  
-
     if ($object_type) {
-      $uri = $dir;
+      $uri = $species ? "/$species/" : '/Multi/';
       
       if ($object_type eq 'Gene') {
         $uri .= "Gene/Summary?g=$stable_id";
@@ -339,16 +349,28 @@ sub handler {
         $uri .= "Transcript/ProteinSummary?t=$stable_id";
       } elsif ($object_type eq 'GeneTree') {
         $uri = "/Multi/GeneTree?gt=$stable_id";
-      } 
-    }
+      } else {
+        $uri .= "psychic?q=$stable_id";
+      }
       
-    $r->uri($uri);
+      $r->uri($uri);
+      $r->headers_out->add('Location' => $r->uri);
+      $r->child_terminate;
+      
+      $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
+    
+      return HTTP_MOVED_PERMANENTLY;
+    }
+    
+    ## In case the given ID is retired, which means no species 
+    ## can be returned by the API call above
+    $r->uri('/');
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
-      
+    
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
     
-    return HTTP_MOVED_PERMANENTLY;
+    return NOT_FOUND;
   }
 
   my %lookup = map { $_ => 1 } $species_defs->valid_species;
