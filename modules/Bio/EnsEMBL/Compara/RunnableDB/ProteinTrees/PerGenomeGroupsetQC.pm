@@ -78,7 +78,7 @@ sub run {
 
     return unless $self->param('reuse_this');
 
-    my $reuse_db                = $self->param('reuse_db') or die "'reuse_db' connection parameters hash has to be defined in reuse mode";
+    my $reuse_db                = $self->param_required('reuse_db');
     my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
 
     my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);

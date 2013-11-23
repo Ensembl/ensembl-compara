@@ -123,7 +123,7 @@ sub get_cons_aln {
 sub get_plot {
     my ($self) = @_;
 
-    my $r2r_exe = $self->param('r2r_exe') || die "path to r2r is not specified\n";
+    my $r2r_exe = $self->param_required('r2r_exe');
     my $aln_file = $self->param('aln_file');
     my $tree = $self->param('nc_tree');
 
@@ -187,7 +187,7 @@ sub fix_aln_file {
 sub run_r2r_and_check {
     my ($self, $opts, $infile, $outfile, $extra_params) = @_;
 
-    my $r2r_exe = $self->param('r2r_exe') || die "path to r2r is undefined\n";
+    my $r2r_exe = $self->param_required('r2r_exe');
     my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
     my $runCmd = $self->run_command($cmd);
 

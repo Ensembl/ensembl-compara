@@ -59,7 +59,7 @@ sub run {
     my $self = shift @_;
 
     my $compara_dba     = $self->compara_dba()          or die "Definitely need a Compara database to store a Compara object";
-    my $object_type     = $self->param('object_type')   or die "Object type has to be specified";
+    my $object_type     = $self->param_required('object_type');
     my $arglist         = $self->param('arglist') || [];
 
     if(my $reference_db = $self->param('reference_db')) {

@@ -52,8 +52,8 @@ sub fetch_input {
     return;
   }
 
-  $self->param('master_db')                       || die "'master_db' is a required parameter";
-  my $type         = $self->param('type')         || die "'type' is a required parameter, please set it in the input_id hashref to 'f' or 't'";
+  $self->param_required('master_db');
+  my $type         = $self->param_required('type');     # must be 't' or 'f'
   my $curr_release = $self->compara_dba->get_MetaContainer->get_schema_version;
   my $prev_rel_dba = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db);
   my $prev_release = $prev_rel_dba->get_MetaContainer->get_schema_version;

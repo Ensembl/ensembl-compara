@@ -69,7 +69,7 @@ sub fetch_input {
 #    import FamLibBuilder;
 
 
-    my $basedir = $self->param('hmm_library_basedir') or die "The base dir of the library is needed\n";
+    my $basedir = $self->param_required('hmm_library_basedir');
     my $hmmLibrary = FamLibBuilder->new($basedir, "prod");
 
     my $code = $hmmLibrary->create();

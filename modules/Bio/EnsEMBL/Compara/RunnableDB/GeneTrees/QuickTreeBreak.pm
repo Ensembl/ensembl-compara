@@ -97,7 +97,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEM
 sub fetch_input {
     my $self = shift @_;
 
-    my $gene_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' must be defined";
+    my $gene_tree_id = $self->param_required('gene_tree_id');
     my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
     $self->param('gene_tree', $gene_tree);
 
