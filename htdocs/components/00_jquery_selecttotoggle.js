@@ -6,12 +6,12 @@
  **/
 (function ($) {
   $.selectToToggle = function (el, options, wrapper) {
-    
-    var toggle = function() {
+    var toggle = function () {
       for (var val in options) {
         if (val != this.value) {
           wrapper.find(options[val]).hide().removeAttr('selected checked').filter('option').each(function() { // if hiding an option element, also disable it to make it work in webkit
             var option = $(this);
+            
             if (typeof option.data('_stt_disabled') === 'undefined') {
               option.data('_stt_disabled', !!this.disabled); // remember original disabled attribute
             }
@@ -32,7 +32,8 @@
     if (options === 'trigger') {
       el.trigger('change.selectToToggle');
     } else {
-      el.on('change.selectToToggle', toggle);
+      el.off('.selectToToggle').on('change.selectToToggle', toggle);
+      
       if (el[0].nodeName == 'SELECT' || el[0].checked) {
         toggle.apply(el[0]);
       }
@@ -46,11 +47,13 @@
     
     return this.each(function () {
       var input = $(this);
+      
       if (options === 'trigger') {
         $.selectToToggle(input, 'trigger', wrapper);
       } else {
         var tMap  = $.extend({}, options);
         wrapper   = wrapper || $(document.body);
+        
         if ($.isEmptyObject(tMap)) {
           (this.nodeName == 'SELECT' ? input.find('option') : wrapper.find('input[name=' + this.name + ']')).each(function() {
             if (this.value) {
@@ -58,6 +61,7 @@
             }
           });
         }
+        
         $.selectToToggle(input, tMap, wrapper);
       }
     });
