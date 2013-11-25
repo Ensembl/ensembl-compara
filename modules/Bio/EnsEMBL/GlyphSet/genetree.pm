@@ -729,7 +729,7 @@ sub features {
       
       if ($show_exons) {
         eval {
-          my $aligned_sequences_bounded_by_exon = $tree->alignment_string_bounded;
+          my $aligned_sequences_bounded_by_exon = $tree->alignment_string('exon_bounded');
           my (@bounded_exons) = split ' ', $aligned_sequences_bounded_by_exon;
           pop @bounded_exons;
           
