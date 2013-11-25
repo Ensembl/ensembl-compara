@@ -26,6 +26,7 @@ my $user;
 my $dbname;
 my $port;
 my $help;
+my $urls;
 
 my $desc = "
 USAGE dump_features.pl [options] --feature FEATURE
@@ -68,6 +69,7 @@ Options:
 GetOptions(
   'reg_conf=s' => \$reg_conf,
   'url=s' => \$url,
+  'urls=s' => \@$urls,
   'compara_url=s' => \$compara_url,
   'species=s' => \$species,
   'regions=s' => \$regions,
@@ -106,6 +108,10 @@ if ($reg_conf) {
     -species => $species, 
     -group => 'core',
     -dbname => $dbname);
+} elsif ($urls && @$urls > 0) {
+    foreach my $this_url (@$urls) {
+        $reg->load_registry_from_url($this_url);
+    }
 } else {
   $reg->load_registry_from_url($url);
 }
