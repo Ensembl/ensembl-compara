@@ -56,25 +56,27 @@ sub default_options {
 	'ensembl_cvs_root_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 	   # parameters that are likely to change from execution to another:
-	'release'               => '80',
+	'release'               => '74',
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
-	'core_db_version' => 72, # version of the dbs from which to get the pairwise alignments
+	'core_db_version' => 74, # version of the dbs from which to get the pairwise alignments
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
 	'password' 		=> $ENV{'ENSADMIN_PSW'},
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara2',
+		-host   => 'compara4',
+                -driver => 'mysql',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_TEST_gen_anchors_'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_6fish_gen_anchors_'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the pairwise alignments needed to get the overlaps
 	'compara_pairwise_db' => {
 		-user => 'ensro',
 		-port => 3306,
 		-host => 'ens-livemirror',
+		-driver => 'mysql',
 		-pass => '',
 		-dbname => 'ensembl_compara_72',
 	},
@@ -84,6 +86,7 @@ sub default_options {
             -user => 'ensro',
             -port => 3306,
             -host => 'ens-livemirror',
+	    -driver => 'mysql',
             -dbname => '',
             -db_version => $self->o('core_db_version'),
           },

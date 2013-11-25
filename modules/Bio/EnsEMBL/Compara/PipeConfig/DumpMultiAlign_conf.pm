@@ -32,13 +32,14 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'       => 71,
+	'release'       => 74,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
         'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
 
         'pipeline_db' => {                               # connection parameters
-            -host   => 'compara2',
+            -driver => 'mysql',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -68,6 +69,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
+            -driver => 'mysql',
         },
 
 	#Location of core and, optionally, compara db

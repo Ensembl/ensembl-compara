@@ -57,25 +57,27 @@ sub default_options {
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara2',
+		-driver => 'mysql',
+		-host   => 'compara3',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_bird_lizard_epo_anchor_mappings'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_15mammals_epo_anchor_mappings'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the anchors for mapping
 	'compara_anchor_db' => {
 		-user => 'ensro',
 		-port => 3306,
-		-host => 'compara2',
+		-host => 'compara3',
+		-driver => 'mysql',
 		-pass => '',
 		-group => 'compara',
-		-dbname => 'sf5_TEST_gen_anchors_x10_80',
+		-dbname => 'sf5_TEST_gen_anchors_mammals_cat_100',
 	},
 	  # genome_db_id(s) to which to map the anchors
-	'genome_db_ids_of_species_to_map' => '142,112,111,87',
+	'genome_db_ids_of_species_to_map' => '31,60,61,90,108,117,122,123,125,132,134,135,140,146,139',
 	  # location of species core dbs to map to
-	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/73' ],
+	'core_db_urls' => [ 'mysql://ensro@ensdb-archive.internal.sanger.ac.uk:5304/73','mysql://ensro@compara1:3306/73' ],
 	# 'core_db_urls' => [ 'mysql://ensro@ens-staging1:3306/68', 'mysql://ensro@ens-staging2:3306/68' ],
 	'mapping_exe' => "/software/ensembl/compara/exonerate/exonerate",
 	'species_set_id' => 10000, # dummy value - should not need to change
@@ -98,15 +100,17 @@ sub default_options {
 	'compara_mapping_db' => {
 		-user => 'ensadmin',
 		-host   => 'compara4',
+		-driver => 'mysql',
 		-port   => 3306,
 		-pass   => $self->o('password'),
 	},
 	'compara_master' => {
 		-user => 'ensro',
 		-port => 3306,
-		-host => 'compara1',
+		-host => 'compara3',
+		-driver => 'mysql',
 		-pass => '',
-		-dbname => 'sf5_ensembl_compara_master',
+		-dbname => 'sf5_test_74_mammal_master',
 	},
      };
 }
@@ -269,8 +273,8 @@ sub pipeline_analyses {
 			2 => [ 'map_anchors' ],
 		},
 		-wait_for  => [ 'import_dnafrags' ],
-		-rc_name => 'mem3500',
-		-hive_capacity => 10,
+		-rc_name => 'mem7500',
+		-hive_capacity => 2,
 		-max_retry_count => 3,
 	    },
 
