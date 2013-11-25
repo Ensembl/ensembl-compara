@@ -14,7 +14,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       this.el.togglewrap('update');
     });
     
-    $('form', this.el).on('submit', function () { return panel.formSubmit($(this)); }); // bind submit function before detaching content for modal overlay
+    var forms = $('form', this.el); // make reference to forms before detaching content for modal overlay
     
     this.elLk.recordTypes  = $('.records .record_type', this.el);
     this.elLk.tables       = $('table',                 this.elLk.recordTypes);
@@ -51,6 +51,8 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
         return isValid;
       }
     });
+    
+    forms.on('submit', function () { return panel.formSubmit($(this)); });
     
     this.elLk.tables.on('click', '.expand, .collapse', function () {
       var el  = $(this);
@@ -260,11 +262,13 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       panel.elLk.shareLink.data('share', share);
     });
     
-    this.elLk.shareConfig.add(this.elLk.editSets).find('.save').on('click', function () { Ensembl.EventManager.trigger('modalOverlayHide'); });
+    this.elLk.shareConfig.add(this.elLk.editSets).find('form').on('submit', function () { Ensembl.EventManager.trigger('modalOverlayHide'); });
     
     $('form', this.elLk.resetAll).on('submit', function () {
       panel.elLk.resetAll.hide();
     });
+    
+    forms = null;
   },
   
   initialize: function () {

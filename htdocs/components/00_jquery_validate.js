@@ -163,7 +163,7 @@ $.extend($.validator, {
           }
           
           setClass[state](this);
-          el.data('valid', state === null && input.required ? false : state);
+          el.data('valid', state);
           
           if (state === false) {
             if (input.required && !this.value) {
