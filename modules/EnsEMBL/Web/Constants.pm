@@ -46,20 +46,24 @@ sub HOMOLOGY_TYPES {
 sub GENE_JOIN_TYPES {
   return {
     'ortholog_one2one'          => 'orthologue',
-    'apparent_ortholog_one2one' => 'orthologue',
     'ortholog_one2many'         => 'orthologue_multi',
     'ortholog_many2many'        => 'orthologue_multi',
+    'within_species_paralog'    => 'paralogue',
+    'other_paralog'             => 'paralogue',
+    'alt_allele'                => 'projection',
+    'gene_split'                => 'hidden',
+    # last seen in e73
+    'apparent_ortholog_one2one' => 'orthologue',
     'possible_ortholog'         => 'possible_ortholog',
+    'projection_unchanged'      => 'projection',
+    'putative_gene_split'       => 'hidden',
+    'contiguous_gene_split'     => 'hidden',
+    # last seen a long long time ago (before e60)
     'UBRH'                      => 'orthologue',
     'BRH'                       => 'orthologue',
     'MBRH'                      => 'orthologue',
     'RHS'                       => 'orthologue',
-    'within_species_paralog'    => 'paralogue',
-    'other_paralog'             => 'paralogue',
     'between_species_paralog'   => 'paralogue',
-    'projection_unchanged'      => 'projection',
-    'putative_gene_split'       => 'hidden',
-    'contiguous_gene_split'     => 'hidden',
   }
 }
 
