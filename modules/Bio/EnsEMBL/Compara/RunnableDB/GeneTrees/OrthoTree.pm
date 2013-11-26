@@ -562,7 +562,7 @@ sub store_gene_link_as_homology {
   $homology->is_tree_compliant($is_tree_compliant);
   $homology->gene_tree_node($ancestor) if $ancestor;
   $homology->method_link_species_set($mlss);
-  $homology->{_species_tree_node_id} = $ancestor->get_value_for_tag('species_tree_node_id') if $ancestor;
+  $homology->_species_tree_node_id($ancestor->get_value_for_tag('species_tree_node_id')) if $ancestor;
   
   $homology->add_Member($gene1->Bio::EnsEMBL::Compara::AlignedMember::copy);
   $homology->add_Member($gene2->Bio::EnsEMBL::Compara::AlignedMember::copy);
