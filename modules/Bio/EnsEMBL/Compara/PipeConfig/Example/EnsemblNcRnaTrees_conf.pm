@@ -60,9 +60,9 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'mlss_id'          => 40092,
-            'release'          => '73',
-            'rel_suffix'       => '',
+            'mlss_id'          => 40094,
+            'release'          => '74',
+            'rel_suffix'       => 'c',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
@@ -71,21 +71,25 @@ sub default_options {
             'rel_with_suffix'  => $self->o('release').$self->o('rel_suffix'),
             'pipeline_name'    => $self->o('pipeline_basename') . '_' . $self->o('rel_with_suffix'),
 
+
+            # tree break
+            'treebreak_gene_count'     => 400,
+
             # capacity values for some analysis:
-            'load_members_capacity'           => 100,
+            'load_members_capacity'           => 10,
             'quick_tree_break_capacity'       => 100,
-            'msa_chooser_capacity'            => 100,
-            'other_paralogs_capacity'         => 100,
-            'merge_supertrees_capacity'       => 100,
+            'msa_chooser_capacity'            => 200,
+            'other_paralogs_capacity'         => 200,
+            'merge_supertrees_capacity'       => 200,
             'aligner_for_tree_break_capacity' => 200,
             'infernal_capacity'               => 200,
             'orthotree_capacity'              => 200,
             'treebest_capacity'               => 400,
-            'genomic_tree_capacity'           => 200,
-            'genomic_alignment_capacity'      => 200,
-            'fast_trees_capacity'             => 200,
-            'raxml_capacity'                  => 200,
-            'recover_capacity'                => 150,
+            'genomic_tree_capacity'           => 300,
+            'genomic_alignment_capacity'      => 300,
+            'fast_trees_capacity'             => 300,
+            'raxml_capacity'                  => 300,
+            'recover_capacity'                => 250,
             'ss_picts_capacity'               => 200,
             'hc_capacity'                     => 4,
 
@@ -100,7 +104,7 @@ sub default_options {
             'mafft_binaries'        => '/software/ensembl/compara/mafft-7.017/binaries',
             'raxml_exe'             => '/software/ensembl/compara/raxml/standard-RAxML/raxmlHPC-PTHREADS-SSE3',
             'prank_exe'             => '/software/ensembl/compara/prank/090707/src/prank',
-            'raxmlLight_exe'        => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight',
+            'raxmlLight_exe'        => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight-PTHREADS',
             'parsimonator_exe'      => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',
             'ktreedist_exe'         => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
             'fasttree_exe'          => '/software/ensembl/compara/fasttree/FastTree',
@@ -114,7 +118,7 @@ sub default_options {
             # connection parameters
             'pipeline_db' => {
                               -driver => 'mysql',
-                              -host   => 'compara3',
+                              -host   => 'compara4',
                               -port   => 3306,
                               -user   => 'ensadmin',
                               -pass   => $self->o('password'),
@@ -144,11 +148,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara3',
+                         -host   => 'compara2',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'kb3_ensembl_compara_72',
+                         -dbname => 'lg4_ensembl_compara_73',
                         },
 
 
@@ -158,13 +162,15 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_;
     return {
-            'default'        => { 'LSF' => '-M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-            'default_2cores' => { 'LSF' => '-C0 -n2 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
-            '1Gb_job'        => { 'LSF' => '-C0         -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '4Gb_job'        => { 'LSF' => '-C0         -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-            '4Gb_long_job'   => { 'LSF' => '-C0 -q basement -M4000 -R"select[mem>4000]  rusage[mem=4000]"' },
-            '1Gb_long_job'   => { 'LSF' => '-C0 -q long -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '2Gb_basement'   => { 'LSF' => '-C0 -n2 -q basement -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"'},
+            'default'                 => { 'LSF' => '-M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+            'default_2cores'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') .' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
+            '1Gb_job'                 => { 'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+            '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+            '4Gb_long_job'            => { 'LSF' => '-C0 -q long -M4000 -R"select[mem>4000]  rusage[mem=4000]"' },
+            '1Gb_long_job'            => { 'LSF' => '-C0 -q long -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+            '2Gb_basement_ncores_job' => { 'LSF' => '-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"'},
+            '4Gb_basement_ncores_job' => { 'LSF' => '-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"'},
+            '8Gb_basement_ncores_job' => { 'LSF' => '-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"'}
            };
 }
 
