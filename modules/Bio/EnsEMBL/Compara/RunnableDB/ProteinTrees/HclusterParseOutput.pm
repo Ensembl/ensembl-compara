@@ -65,20 +65,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 sub param_defaults {
     return {
             'sort_clusters'         => 1,
-            'immediate_dataflow'    => 1,
             'member_type'           => 'protein',
     };
 }
 
-
-# If the job is being re-run, make sure we don't have any clusters left from the previous run
-sub pre_cleanup {
-    my $self = shift;
-    $self->compara_dba->dbc->do('UPDATE gene_tree_node SET root_id = NULL, parent_id = NULL');
-    foreach my $table (qw(gene_tree_root_tag gene_tree_root gene_tree_node)) {
-        $self->compara_dba->dbc->do("DELETE FROM $table");
-    }
-}
 
 sub run {
     my $self = shift @_;
@@ -90,6 +80,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
+    $self->clear_gene_tree_tables;
     $self->store_clusterset('default', $self->param('allclusters'));
 
     if (defined $self->param('additional_clustersets')) {
