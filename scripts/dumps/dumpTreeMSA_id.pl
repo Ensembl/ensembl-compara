@@ -20,7 +20,6 @@ my $fasta_cds_out;
 my $nh_out;
 my $nhx_out;
 my $orthoxml;
-my $orthoxml_possorthol;
 my $phyloxml;
 my $aa = 1;
 my $dirpath;
@@ -37,7 +36,6 @@ GetOptions('help'           => \$help,
            'nh|nh_out=s'    => \$nh_out,
            'nhx|nhx_out=s'  => \$nhx_out,
            'oxml|orthoxml=s'    => \$orthoxml,
-           'oxmlp|orthoxml_possorthol=s'   => \$orthoxml_possorthol,
            'pxml|phyloxml=s'    => \$phyloxml,
            'aa=s'           => \$aa,
            'dirpath=s'      => \$dirpath,
@@ -63,7 +61,6 @@ string is the filename extension. If string is 1, the default extension will be 
 --fasta_out string      amino-acid multiple alignment in FASTA format (aa.fasta)
 --fasta_cds_out string  nucleotide multiple alignment in FASTA format (cds.fasta)
 --orthoxml string               tree in OrthoXML format (orthoxml.xml)
---orthoxml_possorthol string   tree in OrthoXML format -including possible orthlogs- (orthoxml_possorthol.xml)
 --phyloxml string               tree in PhyloXML format (phyloxml.xml)
 
 This scripts assumes that the compara db is linked to all the core dbs
@@ -139,7 +136,6 @@ foreach my $tree_id (@tree_ids) {
   dump_if_wanted($fasta_out, $tree_id, 'aa.fasta', \&dumpTreeFasta, $root, [0]);
   dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]);
   dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $root, [0]);
-  dump_if_wanted($orthoxml_possorthol, $tree_id, 'orthoxml_possorthol.xml', \&dumpTreeOrthoXML, $root, [1]);
   dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $root);
 
   $root->release_tree;
@@ -221,9 +217,8 @@ sub dumpTreeFasta {
 sub dumpTreeOrthoXML {
     my $tree = shift;
     my $fh = shift;
-    my $poss_ortho = shift;
 
-    my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(-SOURCE => 'compara', -SOURCE_VERSION => software_version(), -HANDLE => $fh, -POSSIBLE_ORTHOLOGS => $poss_ortho, -NO_RELEASE_TREES => 1);
+    my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(-SOURCE => 'compara', -SOURCE_VERSION => software_version(), -HANDLE => $fh, -NO_RELEASE_TREES => 1);
     $w->write_trees($tree);
     $w->finish();
 }
