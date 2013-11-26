@@ -47,75 +47,80 @@ sub render {
     }
 
     ## Sort and dedupe records
-    my (@sorted, %seen);
-    if ($hub->species) {
-      foreach (@changes) {
+    my ($sorted, %seen, %ok_cats);
+    foreach (@changes) {
+      if ($hub->species) {
         next if $seen{$_->{'id'}};
         next if ($_->{'team'} eq 'Variation' && !exists $hub->species_defs->databases->{'DATABASE_VARIATION'});
         next if ($_->{'team'} eq 'Funcgen' && !exists $hub->species_defs->databases->{'DATABASE_FUNCGEN'});
-        push @sorted, $_;
         $seen{$_->{'id'}}++;
       }
+      $ok_cats{$_->{'category'}}++;
+      if ($sorted->{$_->{'category'}}) {
+        push @{$sorted->{$_->{'category'}}}, $_;
+      }
+      else {
+        $sorted->{$_->{'category'}} = [$_];
+      }
     }
-    else {
-      @sorted = @changes;
-    }
-    @sorted = sort {$a->{'team'} cmp $b->{'team'} || $a->{'priority'} <=> $b->{'priority'}} @sorted;
- 
-    if (scalar(@sorted) > 0) {
 
-      my ($record, $prev_team);;
+    if (scalar(@changes) > 0) {
 
-      ## Quick'n'dirty TOC
-      $html .= qq(<h2>Teams</h2>
+      my $record;
+      my @cat_order = qw(web genebuild variation regulation alignment schema other);
+      my %cat_lookup = (
+                      'web'         => 'New web displays and tools',
+                      'genebuild'   => 'New species, assemblies and genebuilds',
+                      'variation'   => 'New variation data',
+                      'regulation'  => 'New regulation data',
+                      'alignment'   => 'New alignments',
+                      'schema'      => 'API and schema changes',
+                      'other'       => 'Other updates',
+                      );
+
+      ## TOC
+      $html .= qq(<h2>News categories</h2>
                 <ul>\n);
-      foreach $record (@sorted) {
-        if ($record->{'team'} ne $prev_team) {
-          $html .= sprintf '<li><a href="#team-%s">%s</a></li>', $record->{'team'}, $record->{'team'};
-        }
-        $prev_team = $record->{'team'};
+      foreach my $cat (@cat_order) {
+        next unless $ok_cats{$cat};
+        my $title   = $cat_lookup{$cat};
+        $html .= sprintf '<li><a href="#cat-%s">%s</a></li>', $cat, $title;
       }
       $html .= "</ul>\n\n";
-      $prev_team = undef;
-
 
       ## format news changes
-      foreach my $record (@sorted) {
-
-        ## is it a new category?
-        if ($prev_team ne $record->{'team'}) {
-          $html .= sprintf '<h2 id="team-%s">%s</h2>', $record->{'team'}, $record->{'team'};;
-        }
-
-        $prev_team = $record->{'team'};
-        $html .= '<h3 id="change_'.$record->{'id'}.'">'.$record->{'title'};
-        my @species = @{$record->{'species'}}; 
-        my $sp_text;
+      foreach my $cat (@cat_order) {
+        next unless $ok_cats{$cat};
+        my @records = @{$sorted->{$cat}||[]};  
+        my $title   = $cat_lookup{$cat};
+        $html .= sprintf '<h2 id="cat-%s">%s</h2>', $cat, $title;
+        foreach my $record (@records) {
+          $html .= '<h3 id="change_'.$record->{'id'}.'">'.$record->{'title'};
+          my @species = @{$record->{'species'}}; 
+          my $sp_text;
   
-        if (!@species || !$species[0]) {
-          $sp_text = 'all species';
-        }
-        elsif (@species > 5) {
-          $sp_text = 'multiple species';
-        }
-        else {
-          my @names;
-          foreach my $sp (@species) {
-            if ($sp->{'web_name'} =~ /\./) {
-              push @names, '<i>'.$sp->{'web_name'}.'</i>';
-            }
-            else {
-              push @names, $sp->{'web_name'};
-            } 
+          if (!@species || !$species[0]) {
+            $sp_text = 'all species';
           }
-          $sp_text = join(', ', @names);
+          elsif (@species > 5) {
+            $sp_text = 'multiple species';
+          }
+          else {
+            my @names;
+            foreach my $sp (@species) {
+              if ($sp->{'web_name'} =~ /\./) {
+                push @names, '<i>'.$sp->{'web_name'}.'</i>';
+              }
+              else {
+                push @names, $sp->{'web_name'};
+              }  
+            }
+            $sp_text = join(', ', @names);
+          }
+          $html .= " ($sp_text)</h3>\n";
+          my $content = $record->{'content'};
+          $html .= $content."\n\n";
         }
-        $html .= " ($sp_text)</h3>\n";
-        my $content = $record->{'content'};
-        #if ($content !~ /^</) { ## wrap bare content in a <p> tag
-        #  $content = "<p>$content</p>";
-        #}
-        $html .= $content."\n\n";
       }
     }
     else {
