@@ -80,9 +80,28 @@ sub taxon_id {
     my ($self, $taxon_id) = @_;
     if (defined $taxon_id) {
         $self->{'_taxon_id'} = $taxon_id;
+        delete $self->{'_taxon'};
     }
     return $self->{'_taxon_id'};
 }
+
+sub taxon {
+    my ($self, $taxon) = @_;
+
+    if (defined $taxon) {
+        $self->{'_taxon_id'} = $taxon->dbID;
+        $self->{'_taxon'} = $taxon;
+
+    } elsif (defined $self->{'_taxon_id'}) {
+       $self->{'_taxon'} = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($self->{'_taxon_id'});
+
+    } else {
+        throw("taxon_id is not defined. Can't fetch Taxon without a taxon_id");
+    }
+
+    return $self->{'_taxon'};
+}
+
 
 sub genome_db_id {
     my ($self, $genome_db_id) = @_;
