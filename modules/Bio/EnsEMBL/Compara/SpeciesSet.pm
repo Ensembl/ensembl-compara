@@ -3,6 +3,8 @@ package Bio::EnsEMBL::Compara::SpeciesSet;
 use strict;
 use warnings;
 
+use Scalar::Util qw(looks_like_number);
+
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::GenomeDB;
@@ -61,6 +63,10 @@ sub genome_dbs {
 
             if(ref($gdb) eq 'HASH') {
                 $gdb = Bio::EnsEMBL::Compara::GenomeDB->new( %$gdb ) or die "Could not automagically create a GenomeDB\n";
+
+            } elsif (looks_like_number($gdb)) {
+                # probably a genome_db_id
+                $gdb = $self->adaptor->get_GenomeDBAdaptor->fetch_by_dbID($gdb) or die "Could not automagicallycreate a GenomeDB from '$gdb'\n";
             }
 
             my $hash_key = join('--', $gdb->name, $gdb->assembly, $gdb->genebuild );
