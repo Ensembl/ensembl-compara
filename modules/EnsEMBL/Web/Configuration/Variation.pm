@@ -23,7 +23,7 @@ sub tree_cache_key {
 
 sub populate_tree {
   my $self    = shift;
-  my $somatic = $self->object ? $self->object->Obj->is_somatic : undef;
+  my $somatic = $self->object ? $self->object->Obj->has_somatic_source : undef;
 
   $self->create_node('Explore', 'Explore this variation',
     [qw(
