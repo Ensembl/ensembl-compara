@@ -217,7 +217,7 @@ sub store_node_tags
         print "node_type: $node_type\n" if ($self->debug);
     }
 
-    $node->delete_tag('lost_taxon_id');
+    $node->delete_tag('lost_species_tree_node_id');
     if ($node->has_tag("E")) {
         my $n_lost = $node->get_tagvalue("E");
         $n_lost =~ s/.{2}//;        # get rid of the initial $-
