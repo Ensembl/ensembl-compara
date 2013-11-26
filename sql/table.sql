@@ -1355,8 +1355,8 @@ CREATE TABLE hmm_profile (
 @column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
 
-@example    See species_names that participate in this parcitular homology entry
-    @sql SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 100000001 GROUP BY homology_id;
+@example    See species_names that participate in this particular homology entry
+    @sql SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 38845580 GROUP BY homology_id;
 
 @see homology_member
 @see method_link_species_set
@@ -1520,8 +1520,8 @@ The alignment will be:<br />
 </table>
 @colour   #1E90FF
 
-@example    The following query refers to the two homologue sequences defined by the homology.homology_id 100000001. Gene and peptide sequence of the second homologue can retrieved in the same way.
-   @sql                       SELECT * FROM homology_member WHERE homology_id = 100000001;
+@example    The following query refers to the two homologue sequences defined by the homology.homology_id 38845580. Gene and peptide sequence of the second homologue can retrieved in the same way.
+   @sql                       SELECT * FROM homology_member WHERE homology_id = 38845580;
 
 @column homology_id        External reference to homology_id in the @link homology table
 @column member_id          External reference to member_id in the @link member table. Refers to the corresponding "ENSMBLGENE" entry
