@@ -411,7 +411,7 @@ sub dnafrag {
 
 =cut
 
-sub chr_name {  # DEPRECATED
+sub chr_name {
     my $self = shift;
     if (@_) {
         $self->{'_chr_name'} = shift;
@@ -424,39 +424,39 @@ sub chr_name {  # DEPRECATED
 
 =head2 chr_start
 
-  Description: DEPRECATED. Use dnafrag_start() instead
+  Description: Alias for dnafrag_start()
 
 =cut
 
-sub chr_start {  # DEPRECATED
+sub chr_start {
   my $self = shift;
-  deprecate('chr_start() is deprecated and will be removed in e75. Use dnafrag_start() instead.');
+  #deprecate('chr_start() is deprecated and will be removed in e75. Use dnafrag_start() instead.');
   return $self->dnafrag_start(@_);
 }
 
 
 =head2 chr_end
 
-  Description: DEPRECATED. Use dnafrag_end() instead
+  Description: Alias for dnafrag_end()
 
 =cut
 
-sub chr_end {  # DEPRECATED
+sub chr_end {
   my $self = shift;
-  deprecate('chr_end() is deprecated and will be removed in e75. Use dnafrag_end() instead.');
+  #deprecate('chr_end() is deprecated and will be removed in e75. Use dnafrag_end() instead.');
   return $self->dnafrag_end(@_);
 }
 
 
 =head2 chr_strand
 
-  Description: DEPRECATED. Use dnafrag_strand() instead
+  Description: Alias for dnafrag_strand()
 
 =cut
 
-sub chr_strand {  # DEPRECATED
+sub chr_strand {
   my $self = shift;
-  deprecate('chr_strand() is deprecated and will be removed in e75. Use dnafrag_strand() instead.');
+  #deprecate('chr_strand() is deprecated and will be removed in e75. Use dnafrag_strand() instead.');
   return $self->dnafrag_strand(@_);
 }
 
