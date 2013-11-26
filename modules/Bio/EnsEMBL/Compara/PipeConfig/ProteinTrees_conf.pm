@@ -579,7 +579,7 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '500Mb_job',
             -flow_into => {
-                2 => [ 'mysql:////sequence' ],
+                2 => [ ':////sequence' ],
                 1 => [ 'member_table_reuse' ],
             },
         },
@@ -608,7 +608,7 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '1Gb_job',
             -flow_into => {
-                2 => [ 'mysql:////other_member_sequence' ],
+                2 => [ ':////other_member_sequence' ],
                 1 => [ 'hc_members_per_genome' ],
             },
         },
