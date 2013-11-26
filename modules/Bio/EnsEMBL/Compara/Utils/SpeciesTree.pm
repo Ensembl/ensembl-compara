@@ -127,8 +127,7 @@ sub create_species_tree {
         }
     }
 
-#    return $root->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
-    return Bio::EnsEMBL::Compara::SpeciesTreeNode->new_from_NestedSet($root);
+    return $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
 }
 
 
