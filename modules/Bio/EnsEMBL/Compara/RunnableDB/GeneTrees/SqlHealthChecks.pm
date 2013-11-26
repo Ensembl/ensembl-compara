@@ -130,20 +130,6 @@ my $config = {
 
 
 
-    ### Clusters
-    ##############
-
-    clusters => {
-        tests => [
-            {
-                description => 'Clusters should only contain canonical members',
-                query => 'SELECT * FROM gene_tree_node gtn LEFT JOIN member mg ON gtn.member_id = mg.canonical_member_id WHERE gtn.member_id IS NOT NULL AND mg.member_id IS NULL',
-            }
-        ],
-    },
-
-
-
     ### Alignments
     #################
 
@@ -272,6 +258,11 @@ my $config = {
 
     global_tree_set => {
         tests => [
+            {
+                description => 'Clusters should only contain canonical members',
+                query => 'SELECT * FROM gene_tree_node gtn LEFT JOIN member mg ON gtn.member_id = mg.canonical_member_id WHERE gtn.member_id IS NOT NULL AND mg.member_id IS NULL',
+            },
+
             {
                 description => 'root_id cannot be NULL in the gene_tree_node table',
                 query => 'SELECT * FROM gene_tree_node WHERE root_id IS NULL',

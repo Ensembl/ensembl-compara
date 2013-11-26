@@ -929,7 +929,7 @@ sub pipeline_analyses {
         {   -logic_name         => 'hc_clusters',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
-                mode            => 'clusters',
+                mode            => 'global_tree_set',
             },
             -flow_into          => [ 'run_qc_tests' ],
             %hc_analysis_params,
