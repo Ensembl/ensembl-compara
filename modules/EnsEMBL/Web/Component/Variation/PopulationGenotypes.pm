@@ -27,13 +27,13 @@ sub content {
     $html .= $table_array->[0]->[1]->render; # only one table to render (non-human or if no 1KG data)
   } else {
     my %table_order = (
-      1000     => 1,
-      HapMap   => 2,
-      ESP      => 3,
-      Mouse    => 4,
-      Other    => 5,
-      Inconsistent   => 6,
-      Observed => 7,
+      1000         => 1,
+      HapMap       => 2,
+      ESP          => 3,
+      Mouse        => 4,
+      Other        => 5,
+      Inconsistent => 6,
+      Observed     => 7,
     );
     
     my $species = $self->hub->species;
@@ -46,7 +46,7 @@ sub content {
       if ($title =~ /other|inconsistent|population/i) {
         $id = $title =~ /other/i ? 'other' : ($title =~ /inconsistent/i ? 'inconsistent' : 'nopop');
         my $expanded = ($id eq 'other' && $species ne 'Homo_sapiens') ? 1 : ($id eq 'nopop' && $main_tables_not_empty == 0) ? 1 : 0;
-        $html .= $self->toggleable_table($title, $id, $table, $expanded);
+        $html .= $self->toggleable_table($title, $id, $table, $expanded) if (scalar(@{$table->{'rows'}}) > 0);
       } else {
         $id = lc($title);
         $id =~ s/ //g;
@@ -63,7 +63,9 @@ sub content {
 sub format_frequencies {
   my ($self, $freq_data, $tg_flag) = @_;
   my $hub        = $self->hub;
-  my $is_somatic = $self->object->Obj->is_somatic;
+
+  my $is_somatic = $self->object->Obj->has_somatic_source;
+
   my (%columns, @rows, @table_array);
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
@@ -122,6 +124,7 @@ sub format_frequencies {
     }
   }
     
+  # Other projects/populations
   foreach my $pop_id (keys %$freq_data) {
     my $pop_info = $freq_data->{$pop_id}{'pop_info'};
     
@@ -163,7 +166,7 @@ sub format_frequencies {
       $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
       $pop_row{'pop'}              = $self->pop_url($pop_info->{'Name'}, $pop_info->{'PopLink'});
       $pop_row{'Description'}      = $pop_info->{'Description'} if $is_somatic;
-      $pop_row{'failed'}           = $data->{'failed_desc'}             if $tg_flag =~ /Inconsistent/i;
+      $pop_row{'failed'}           = $data->{'failed_desc'} if $tg_flag =~ /Inconsistent/i;
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
       $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id) if ($pop_info->{Size});;
