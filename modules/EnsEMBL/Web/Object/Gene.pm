@@ -44,7 +44,8 @@ sub availability {
 
       $availability->{'history'}              = !!$rows;
       $availability->{'gene'}                 = 1;
-      $availability->{'is_rna'}               = $self->gene_type =~ /RNA/;
+      warn ">>> GENE TYPE ".$self->gene_type;
+      $availability->{'is_rna'}               = $self->gene_type =~ /RNA/ && $self->gene_type !~ /lincRNA/;
       $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
       $availability->{'core'}                 = $self->get_db eq 'core';
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
