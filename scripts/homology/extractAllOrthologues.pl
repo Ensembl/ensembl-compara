@@ -103,7 +103,7 @@ sub _recursive_get_orthocluster {
 		next if $gene->genome_db_id eq $genome_db_id;
 
 		# list of orthologues
-		my $homologies = $homology_adaptor->fetch_all_by_Member_MethodLinkSpeciesSet($gene->gene_member, $mlss_cache{$gene->genome_db_id}->{$genome_db_id});
+		my $homologies = $homology_adaptor->fetch_all_by_Member($gene->gene_member, -METHOD_LINK_SPECIES_SET => $mlss_cache{$gene->genome_db_id}->{$genome_db_id});
 
 		# stop iteration if an unwanted species is found
 		return 0 if (($genomedbid_list{$gene->genome_db_id} == 0) and (scalar(@{$homologies}) != 0));
