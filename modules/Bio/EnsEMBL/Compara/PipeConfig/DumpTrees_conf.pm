@@ -235,7 +235,7 @@ sub pipeline_analyses {
             -parameters => {
                 'name_root'         => $self->o('name_root'),
                 'protein_tree_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
-                'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
+                'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'nt.fasta' ],
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
             },

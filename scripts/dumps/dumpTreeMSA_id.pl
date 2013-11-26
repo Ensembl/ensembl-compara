@@ -129,11 +129,12 @@ foreach my $tree_id (@tree_ids) {
   my $root = $tree->root;
 
   $tree_id = "tree.".$tree_id;
+  my %fasta_names = ('protein' => 'aa.fasta', 'ncrna' => 'nt.fasta');
 
   dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $root, []);
   dump_if_wanted($nh_out, $tree_id, 'nh.emf', \&dumpNewickTree, $root, [0]);
   dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
-  dump_if_wanted($fasta_out, $tree_id, 'aa.fasta', \&dumpTreeFasta, $root, [0]);
+  dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
   dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]);
   dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $root, [0]);
   dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $root);
