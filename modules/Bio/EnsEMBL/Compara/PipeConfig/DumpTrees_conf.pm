@@ -197,10 +197,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'query'                 => sprintf 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
+                'inputquery'                 => sprintf 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
             },
             -input_ids => [
-                { 'inputquery' => '#query#', },
+                {},
             ],
             -meadow_type => 'LOCAL',
             -flow_into => {
