@@ -891,8 +891,8 @@ sub string_node {
         $str .= "DD  ";
        $str .= 'SIS=0 ';
     }
-    if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->get_tagvalue("bootstrap"); $str .= "B=$bootstrap_value "; }
     if($self->has_tag("taxon_name")) { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
+    if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->bootstrap(); $str .= "B=$bootstrap_value "; }
     $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
     $str .= sprintf("%s\n", $self->name || '');
     return $str;
@@ -934,7 +934,7 @@ my %ryo_modes = (
 );
 
 my $nhx0 = '%{n-_|T(taxon_name)}:%{d}';
-my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="T(bootstrap)}';
+my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="C(bootstrap)}';
 my $nhx2 = ':T=%{-x}%{T(taxon_id)-}';
 
 my %nhx_ryo_modes_1 = (

@@ -389,7 +389,8 @@ sub _genetreenode_body {
   
    # Scores
   foreach my $tag (qw(duplication_confidence_score bootstrap)) {
-    my $value = $node->get_value_for_tag($tag);
+    next unless $node->has_tag($tag);
+    my $value = $node->$tag;
     if (defined $value and $value ne '') {
       $w->emptyTag('score', 'id' => $tag, 'value' => $value);
     }
