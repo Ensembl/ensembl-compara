@@ -399,26 +399,26 @@ sub taxonomy_level {
 
 =head2 node_id
 
-  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. node_id() will be removed in e75
+  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. node_id() will be removed in e76
 
 =cut
 
 sub node_id {  ## DEPRECATED
   my $self = shift;
-  deprecate('$self->node_id() is deprecated and will be removed in e75. Use $self->gene_tree_node()->node_id() instead.');
+  deprecate('$self->node_id() is deprecated and will be removed in e76. Use $self->gene_tree_node()->node_id() instead.');
   $self->{'_gene_tree_node_id'} = shift if(@_);
   return $self->{'_gene_tree_node_id'};
 }
 
 =head2 ancestor_node_id
 
-  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. ancestor_tree_node_id() will be removed in e75
+  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. ancestor_tree_node_id() will be removed in e76
 
 =cut
 
 sub ancestor_node_id { ## DEPRECATED
   my $self = shift;
-  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e75. Use $self->gene_tree_node()->node_id() instead.');
+  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e76. Use $self->gene_tree_node()->node_id() instead.');
   $self->{'_gene_tree_node_id'} = shift if(@_);
   return $self->{'_gene_tree_node_id'};
 }
@@ -426,13 +426,13 @@ sub ancestor_node_id { ## DEPRECATED
 
 =head2 tree_node_id
 
-  Description: DEPRECATED: Use $self->gene_tree()->dbID() instead. tree_node_id() will be removed in e75
+  Description: DEPRECATED: Use $self->gene_tree()->dbID() instead. tree_node_id() will be removed in e76
 
 =cut
 
 sub tree_node_id { ## DEPRECATED
   my $self = shift;
-  deprecate('$self->tree_node_id() is deprecated and will be removed in e75. Use $self->gene_tree()->dbID() instead.');
+  deprecate('$self->tree_node_id() is deprecated and will be removed in e76. Use $self->gene_tree()->dbID() instead.');
   return $self->gene_tree()->dbID();
 }
 

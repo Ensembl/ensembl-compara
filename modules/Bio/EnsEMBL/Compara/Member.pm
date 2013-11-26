@@ -430,7 +430,7 @@ sub chr_name {
 
 sub chr_start {
   my $self = shift;
-  #deprecate('chr_start() is deprecated and will be removed in e75. Use dnafrag_start() instead.');
+  #deprecate('chr_start() is deprecated and will be removed in e76. Use dnafrag_start() instead.');
   return $self->dnafrag_start(@_);
 }
 
@@ -443,7 +443,7 @@ sub chr_start {
 
 sub chr_end {
   my $self = shift;
-  #deprecate('chr_end() is deprecated and will be removed in e75. Use dnafrag_end() instead.');
+  #deprecate('chr_end() is deprecated and will be removed in e76. Use dnafrag_end() instead.');
   return $self->dnafrag_end(@_);
 }
 
@@ -456,7 +456,7 @@ sub chr_end {
 
 sub chr_strand {
   my $self = shift;
-  #deprecate('chr_strand() is deprecated and will be removed in e75. Use dnafrag_strand() instead.');
+  #deprecate('chr_strand() is deprecated and will be removed in e76. Use dnafrag_strand() instead.');
   return $self->dnafrag_strand(@_);
 }
 

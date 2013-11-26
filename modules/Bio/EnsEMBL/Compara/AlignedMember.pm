@@ -352,26 +352,26 @@ sub alignment_string {
 
 =head2 alignment_string_bounded
 
-  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e75
+  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e76
 
 =cut
 
 sub alignment_string_bounded {  ## DEPRECATED
     my $self = shift;
-    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e75. Please use SeqMember::alignment_string("exon_bounded") instead');
+    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("exon_bounded") instead');
     return $self->alignment_string('exon_bounded');
 }
 
 
 =head2 cdna_alignment_string
 
-  Description : DEPRECATED: Use alignment_string('cds') instead. cdna_alignment_string() will be removed in e75
+  Description : DEPRECATED: Use alignment_string('cds') instead. cdna_alignment_string() will be removed in e76
 
 =cut
 
 sub cdna_alignment_string { ## DEPRECATED
     my $self = shift;
-    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e75. Please use SeqMember::alignment_string("cds") instead');
+    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("cds") instead');
     return $self->alignment_string('cds');
 }
 
