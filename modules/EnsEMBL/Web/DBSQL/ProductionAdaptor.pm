@@ -46,12 +46,12 @@ sub fetch_changelog {
   my $species_filter  = $criteria->{'species'}  ? ' s.species_id DESC, ' : '';
   my $filter          = $criteria->{'limit'}
     ? "ORDER BY $species_filter c.priority DESC LIMIT $criteria->{'limit'}"
-    : "ORDER BY c.team, $species_filter c.priority DESC";
+    : "ORDER BY$species_filter c.priority DESC";
 
   if ($criteria->{'species'}) {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team, s.species_id
+        c.changelog_id, c.title, c.content, c.team, c.category, s.species_id
       FROM
         changelog as c
       LEFT JOIN 
@@ -73,7 +73,7 @@ sub fetch_changelog {
   else {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team
+        c.changelog_id, c.title, c.content, c.team, c.category
       FROM
         changelog as c
       WHERE 
@@ -142,6 +142,7 @@ sub fetch_changelog {
       'title'         => $data[1],
       'content'       => $data[2],
       'team'          => $data[3],
+      'category'      => $data[4],
       'species'       => $species,
     };
     push @$changes, $record;
