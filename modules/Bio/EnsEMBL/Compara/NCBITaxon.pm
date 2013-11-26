@@ -441,31 +441,6 @@ sub get_short_name {
 }
 
 
-sub RAP_species_format {
-  my $self = shift;
-  my $newick = "";
-  
-  if($self->get_child_count() > 0) {
-    $newick .= "(";
-    my $first_child=1;
-    foreach my $child (@{$self->sorted_children}) {  
-      $newick .= "," unless($first_child);
-      $newick .= $child->newick_format;
-      $first_child = 0;
-    }
-    $newick .= ")";
-  }
-  
-  $newick .= sprintf("\"%s\"", $self->name,);
-  $newick .= sprintf(":%1.4f", $self->distance_to_parent) if($self->distance_to_parent > 0);
-
-  if(!($self->has_parent)) {
-    $newick .= ";";
-  }
-  return $newick;
-}
-
-
 sub print_node {
   my $self  = shift;
   printf("(%s", $self->node_id);
