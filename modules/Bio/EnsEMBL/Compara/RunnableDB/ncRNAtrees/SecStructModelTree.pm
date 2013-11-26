@@ -125,6 +125,7 @@ sub run {
     $cmd .= " -S $struct_file";
     $cmd .= " -A $model";
     $cmd .= " -n $raxml_tag.$model";
+    $cmd .= " -p12345";
     $cmd .= " -N ".$bootstrap_num if (defined $bootstrap_num);
 
     my $command = $self->run_command("cd $worker_temp_directory; $cmd");
