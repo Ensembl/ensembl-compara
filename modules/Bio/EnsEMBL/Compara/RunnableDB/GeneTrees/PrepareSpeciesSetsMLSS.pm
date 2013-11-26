@@ -11,7 +11,7 @@ Used to create all the species set / MLSS objects needed for a gene-tree pipelin
 
  - the main MLSS of the pipeline
  - all the single-species paralogues MLSS
- - all the pairwise orthologues + paralogues MLSS
+ - all the pairwise orthologues MLSS
  - two empty species sets for reuse / nonreuse lists
 
 If the master_db and mlss_id parameters, the Runnable will copy over the MLSS
@@ -79,7 +79,7 @@ sub write_output {
             next if $genome_db1->dbID >= $genome_db2->dbID;
 
             my $ss12 = $self->_write_ss( [$genome_db1, $genome_db2] );
-            my $mlss_p12 = $self->_write_mlss( $ss12, $self->param('ml_para') );
+            #my $mlss_p12 = $self->_write_mlss( $ss12, $self->param('ml_para') );
             my $mlss_o12 = $self->_write_mlss( $ss12, $self->param('ml_ortho') );
         }
     }
