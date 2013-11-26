@@ -299,20 +299,22 @@ sub binarize {
     $newTree->taxon_id($orig_tree->taxon_id);
     $newTree->genome_db_id($orig_tree->genome_db_id);
     $newTree->node_id('0');
-    _binarize($orig_tree, $newTree);
+    _binarize($orig_tree, $newTree, {});
     return $newTree;
 }
 
 sub _binarize {
-    my ($origTree, $binTree) = @_;
+    my ($origTree, $binTree, $taxon_ids) = @_;
     my $children = $origTree->children();
     for my $child (@$children) {
         my $newNode = $child->new();
         $newNode->taxon_id($child->taxon_id);
+        $taxon_ids->{$child->parent->taxon_id}++;
         $newNode->genome_db_id($child->genome_db_id);
         $newNode->name($child->name() || $child->taxon_id); 
         $newNode->node_id($child->node_id());
         $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
+        $newNode->node_name($child->name);
         if (scalar @{$binTree->children()} > 1) {
             $child->disavow_parent();
             my $newBranch = $child->new();
@@ -324,9 +326,11 @@ sub _binarize {
             $newBranch->name($newBranch->parent->name);
             $newBranch->taxon_id($newBranch->parent->taxon_id);
             $newBranch->genome_db_id($newBranch->parent->genome_db_id);
+            my $suffix = $taxon_ids->{$newBranch->parent->taxon_id} ? ".dup" . $taxon_ids->{$newBranch->parent->taxon_id} : "";
+            $newBranch->node_name($newBranch->parent->name . $suffix);
         }
         $binTree->add_child($newNode);
-        _binarize($child, $newNode);
+        _binarize($child, $newNode, $taxon_ids);
     }
 }
 
@@ -383,6 +387,10 @@ sub remove_nodes {
                 }
                 $node->disavow_parent();
                 if ($parent->has_parent) {
+                    ## We avoid having "_dup" nodes without no "_dup" versions
+                    if ($siblings->[0]->node_name =~ /_dup$/) {
+                        $siblings->[0]->node_name($parent->node_name);
+                    }
                     my $grandpa = $parent->parent();
                     my $dtg = $parent->distance_to_parent();
                     $parent->disavow_parent();
