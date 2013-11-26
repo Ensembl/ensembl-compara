@@ -78,11 +78,11 @@ sub content {
     my $img   = 'var_'.$button->{'img'};
     my $url   = $button->{'url'};
     if ($url) {
-      $html .= qq(<a href="$url"><img src="/i/96/${img}.png" class="portal" alt="$title" title="$title" /></a>);
+      $html .= qq(<a href="$url"><img src="/i/96/${img}.png" class="portal _ht" alt="$title" title="$title" /></a>);
     }
     else {
       $title .= ' (NOT AVAILABLE)';
-      $html  .= qq(<img src="/i/96/${img}_off.png" class="portal" alt="$title" title="$title" />);
+      $html  .= qq(<img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" />);
     }
   }
 
