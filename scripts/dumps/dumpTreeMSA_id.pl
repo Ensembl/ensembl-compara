@@ -167,6 +167,11 @@ sub dumpTreeMultipleAlignment {
 # will need to update the script when we will produce omega score for each column
 # of the alignment.
 # print "SCORE NULL\n";
+
+  # Here come the trees
+  print $fh "TREE newick ", $tree->newick_format('simple'), "\n";
+  print $fh "TREE nhx ", $tree->nhx_format, "\n";
+
   print $fh "DATA\n";
   print $fh join("\n", @aligned_seqs);
   print $fh "\n//\n\n";
