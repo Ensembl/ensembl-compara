@@ -25,7 +25,7 @@ sub content {
     $info_box = $self->multiple_locations($feature_slice, $variation->failed_description); 
   }
 
-  my $summary_table      = $self->new_twocol(
+  my $summary_table = $self->new_twocol(
     $self->variation_source,
     $self->alleles($feature_slice),
     $self->location,
@@ -207,7 +207,8 @@ sub co_located {
     if (scalar keys %by_source) {
       my $html;
       foreach (keys %by_source) {
-        $html .= " <b>$_</b> ";
+        $html .= ($html) ? ' ; ': ' ';
+        $html .= "<b>$_</b> ";
         $html .= join ', ', @{$by_source{$_}};
       }
 
@@ -320,7 +321,8 @@ sub alleles {
   my $maf        = $variation->minor_allele;
      $maf        = " | MAF: <strong>$freq</strong> ($maf)" if $maf;
   my $html;   
-     
+  my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : ''; 
+   
   # Check allele string size (for display issues)
   my $large_allele = 0;
   my $display_alleles;
@@ -340,18 +342,21 @@ sub alleles {
     
     $alleles = join("/<br />", @l_alleles);
     my $show = $self->hub->get_cookie_value('toggle_Alleles') eq 'open';
-    $html = sprintf('Reference/Alternative%s: 
-      <a class="toggle %s set_cookie" href="#" rel="Alleles" style="font-weight:bold;font-size:1.2em" title="Click to toggle alleles">%s</a>
+
+    $html = sprintf(
+     '<a class="toggle _ht %s set_cookie" href="#" rel="Alleles" style="font-weight:bold;font-size:1.2em" title="Click to toggle Reference/Alternative%s alleles%s">%s</a>
       <small>Click the plus to show all of the alleles</small>%s
       <div class="Alleles"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
-      $alt_string,
       $show ? 'open' : 'closed',
+      $alt_string,
+      $alleles_strand,
       $display_alleles, "$ancestor$ambiguity$maf",
       $show ? '' : 'display:none',
       "<pre>$alleles</pre>");
   }
   else {
-    $html = qq{Reference/Alternative$alt_string: <span style="font-weight:bold;font-size:1.2em">$alleles</span>$ancestor$ambiguity$maf};
+    my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string$alleles_strand"} : qq{$alleles$alleles_strand};
+    $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em;cursor:default" title="$allele_title">$alleles</span>$ancestor$ambiguity$maf};
   }
 
   # Check somatic mutation base matches reference
@@ -366,12 +371,12 @@ sub alleles {
       if ($sequence ne $allele) {
         $html .= '<br />' if ($large_allele == 0);
         if (length $sequence < 50) {
-          $html .= "<em>Note</em>: The reference $seq for this mutation ($allele) does not match the Ensembl reference $seq ($sequence) at this location.";
+          $html .= "<em>Note</em>: The reference $seq for this variant ($allele) does not match the Ensembl reference $seq ($sequence) at this location.";
         }
         else {
           $allele = substr($allele,0,50).'...' if (length $allele > 50);
           my $show2 = $self->hub->get_cookie_value('toggle_Sequence') eq 'open';
-          $html  .= sprintf('<em>Note</em>: The reference %s for this mutation (%s) does not match the Ensembl reference %s at this location.
+          $html  .= sprintf('<em>Note</em>: The reference %s for this variant (%s) does not match the Ensembl reference %s at this location.
                              <a class="toggle %s set_cookie" href="#" rel="Sequence" title="Click to toggle Sequence"></a><small>Click the plus to show all of the sequence</small></a>
                              <div class="Sequence"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
                             $seq,
@@ -515,14 +520,17 @@ sub evidence_status {
   my $html = join("",
     map {
       sprintf(
-        '<img class="_ht" style="margin-right: 5px; vertical-align:top;" src="/i/val/evidence_%s.png" title="%s"/>',
-        #$_ =~ /1000|hap/i ? '#336' : 'white',
+        '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="/i/val/evidence_%s.png" title="%s"/>',
         $_, $_
       )
     } sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$status
   );
 
-  return ['Evidence status', $html];
+  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the evidence status descriptions"/>}; 
+  my $info_link = qq{<a href="/info/genome/variation/data_description.html#evidence_status" target="_blank">$img</a>};
+
+  return [ "Evidence status $info_link" , $html ];
+  #return ['Evidence status', $html];
 }
 
 
@@ -531,20 +539,19 @@ sub clinical_significance {
   my $object = $self->object;
   my $hub    = $self->hub; 
   my $clin_sign = $object->clinical_significance;
-  my $c_link = $hub->get_ExtURL_link("View explanation", "DBSNP_CLIN", '');
-  if (scalar(keys(%$clin_sign))) {
-    my $cs_content;
-    while (my ($cs,$colour) = each %$clin_sign) {
-      $cs_content .= ($cs_content) ? ', ' : '<p>';
-      $cs_content .= qq{<span style="color:$colour">$cs</span>};
-    }
-    return [
-    {'title' => 'Clinical significance', 'inner_text' => 'Clinical significance'},
-    qq{$cs_content (from dbSNP) | $c_link</p>}]
+
+  return unless (scalar(keys(%$clin_sign)));
+
+  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the dbSNP website)" />};
+  my $info_link = $hub->get_ExtURL_link($img, "DBSNP_CLIN", '');
+
+  my $cs_content;
+  while (my ($cs,$colour) = each %$clin_sign) {
+    $cs_content .= ($cs_content) ? '<span>, </span>' : '<p>';
+    $cs_content .= qq{<span style="color:$colour">$cs</span>};
   }
-  else {
-    return ();
-  }
+
+  return [ "Clinical significance $info_link" , $cs_content ];
 }
 
 sub hgvs {
@@ -634,7 +641,7 @@ sub most_severe_consequence {
       });
  
       my $html = sprintf(
-         '%s | <a href="%s">See all consequences</a>',
+         '%s | <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a>',
          $self->render_consequence_type($vf_object,1),
          $url
       );
