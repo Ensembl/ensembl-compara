@@ -46,8 +46,8 @@ sub availability {
           ## only show these if a mapping available
           $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
       }
-      $availability->{'is_somatic'}  = $obj->is_somatic;
-      $availability->{'not_somatic'} = !$obj->is_somatic;
+      $availability->{'is_somatic'}  = $obj->has_somatic_source;
+      $availability->{'not_somatic'} = !$obj->has_somatic_source;
     }
     
     $self->{'_availability'} = $availability;
@@ -130,7 +130,7 @@ sub count_individuals {
   my $var  = $self->Obj;
   
   # somatic variations don't have genotypes currently
-  return 0 if $var->is_somatic;
+  return 0 if $var->has_somatic_source;
   
   my $gts = $var->get_all_IndividualGenotypes();
   
