@@ -93,7 +93,7 @@ sub render {
         next unless $ok_cats{$cat};
         my @records = @{$sorted->{$cat}||[]};  
         my $title   = $cat_lookup{$cat};
-        $html .= sprintf '<h2 id="cat-%s">%s</h2>', $cat, $title;
+        $html .= sprintf '<h2 id="cat-%s" class="news-category">%s</h2>', $cat, $title;
         foreach my $record (@records) {
           $html .= '<h3 id="change_'.$record->{'id'}.'">'.$record->{'title'};
           my @species = @{$record->{'species'}}; 
