@@ -208,8 +208,18 @@ Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_reg_name or $to_reg_name);
 my $to_dba = get_DBAdaptor($to_url, $to_reg_name);
 my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
 my $from_ga_adaptor = $from_dba->get_GenomicAlignAdaptor();
+my $from_cs_adaptor = $from_dba->get_ConservationScoreAdaptor();
+my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
 
 print "\n\n";   # to clear from possible warnings
+
+my %type_to_adaptor = (
+                       'EPO' => $from_ga_adaptor,
+                       'EPO_LOW_COVERAGE' => $from_ga_adaptor,
+                       'PECAN' => $from_ga_adaptor,
+                       'GERP_CONSERVATION_SCORE' => $from_cs_adaptor,
+                       'GERP_CONSTRAINED_ELEMENT' => $from_ce_adaptor,
+);
 
 my %all_mlss_objects = ();
 
@@ -220,11 +230,15 @@ foreach my $one_method_link_type (@method_link_types) {
         foreach my $one_mlss_object (@$group_mlss_objects) {
             my $one_mlss_id = $one_mlss_object->dbID;
             my $one_mlss_name = $one_mlss_object->name;
-            if(my $ga_count = $from_ga_adaptor->count_by_mlss_id($one_mlss_id)) {
-                $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
-                print "Will be adding MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type' ($ga_count GenomicAligns)\n";
+            if (my $adaptor = $type_to_adaptor{$one_method_link_type}) {
+                if(my $count = $adaptor->count_by_mlss_id($one_mlss_id)) {
+                    $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
+                    print "Will be adding MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type' ($count entries)\n";
+                } else {
+                    print "\tSkipping empty MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
+                }
             } else {
-                print "\tSkipping empty MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
+                die ("Not recognised mlss_type ($one_method_link_type)");
             }
         }
     } else {
@@ -267,7 +281,24 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
 
-      #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
+  #Copy the species_tree_node data if present
+  copy_data($from_dba, $to_dba,
+            "species_tree_node",
+            undef, undef, undef,
+            "SELECT stn.* " .
+            " FROM species_tree_node stn" .
+            " JOIN species_tree_root str using(root_id)" .
+            " WHERE str.method_link_species_set_id = $mlss_id");
+
+  #Copy the species_tree_root data if present
+  copy_data($from_dba, $to_dba,
+            "species_tree_root",
+            undef, undef, undef,
+            "SELECT * " .
+            " FROM species_tree_root" .
+            " WHERE method_link_species_set_id = $mlss_id");
+
+  #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
   copy_data($from_dba, $to_dba,
 	  "method_link_species_set_tag",
 	  undef, undef, undef,
