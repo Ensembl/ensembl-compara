@@ -102,7 +102,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    $self->tag_assembly_coverage_depth;
+#    $self->tag_assembly_coverage_depth;
     $self->load_mirbase_families;
     $self->run_rfamclassify;
 }
@@ -140,7 +140,6 @@ sub run_rfamclassify {
     my $counter = 1;
     foreach my $cm_id (keys %{$self->param('rfamcms')->{'model_id'}}) {
         print STDERR "++ $cm_id\n" if ($self->debug);
-        print STDERR Dumper $self->param('rfamclassify');
         next if not defined($self->param('rfamclassify')->{$cm_id});
         my @cluster_list = keys %{$self->param('rfamclassify')->{$cm_id}};
         # If it's a singleton, we don't store it as a nc tree
@@ -172,17 +171,16 @@ sub build_hash_models {
 
   # We only take the canonical transcripts.
   # Right now, this only affects a few transcripts in Drosophila, but it's safer this way.
-  my $sql = 
-    q/SELECT gene.member_id, gene.description, transcript.member_id, transcript.description
-    FROM member gene JOIN member transcript ON (gene.canonical_member_id = transcript.member_id)
-    WHERE
-    gene.source_name='ENSEMBLGENE' AND transcript.source_name='ENSEMBLTRANS'
-    AND transcript.description not like '%Acc:NULL%'
-    AND transcript.description not like '%Acc:'/;
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute;
-  while( my $ref  = $sth->fetchrow_arrayref() ) {
-    my ($gene_member_id, $gene_description, $transcript_member_id, $transcript_description) = @$ref;
+  my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
+  my $all_genes_Iterator = $gene_member_adaptor->fetch_all_by_source_Iterator('ENSEMBLGENE');
+
+  while (my $gene = $all_genes_Iterator->next) {
+      my $transc = $gene->get_canonical_SeqMember;
+      my $gene_member_id = $gene->member_id;
+      my $gene_description = $gene->description;
+      my $transcript_member_id = $transc->member_id;
+      my $transcript_description = $transc->description;
+
     $transcript_description =~ /Acc:(\w+)/;
     my $transcript_model_id = $1;
     if ($transcript_model_id =~ /MI\d+/) {
@@ -215,9 +213,8 @@ sub build_hash_models {
     unless (defined($self->param('rfamcms')->{'model_id'}{$transcript_model_id}) || defined($self->param('rfamcms')->{'name'}{$transcript_model_id})) {
       $self->param('orphan_transcript_model_id')->{$transcript_model_id}++;     # NB: this data is never used afterwards
     }
-  }
+   }
 
-  $sth->finish;
   return 1;
 }
 
