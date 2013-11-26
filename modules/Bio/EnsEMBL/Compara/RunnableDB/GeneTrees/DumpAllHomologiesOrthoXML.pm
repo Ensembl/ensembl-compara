@@ -68,7 +68,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        "ortholog_method_link_id" => 201,
+        "ortholog_method_link_id"   => 201,
+        "strict_orthologies"        => 0,
            };
 }
 
@@ -113,6 +114,9 @@ sub run {
         my $range = $self->param('id_range');
         $range =~ s/-/ AND /;
         $sql .= " AND homology_id BETWEEN $range";
+    }
+    if ($self->param('strict_orthologies')) {
+        $sql .= " AND is_tree_compliant = 1";
     }
     $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
 

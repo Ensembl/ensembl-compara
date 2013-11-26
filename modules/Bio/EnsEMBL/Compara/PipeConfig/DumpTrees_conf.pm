@@ -164,10 +164,11 @@ sub pipeline_analyses {
             },
             -input_ids => [
                 {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
+                {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
             ],
             -flow_into => {
                 1 => {
-                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml', },
+                    'archive_long_files' => { 'full_name' => '#file#', },
                     }
             },
         },
