@@ -205,6 +205,9 @@ sub pipeline_analyses {
     my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
 
     ## Extend this section to redefine the resource names of some analysis
+    $analyses_by_name{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
+
+    # Some parameters can be division-specific
     if ($self->o('division') eq 'plants') {
         $analyses_by_name{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
