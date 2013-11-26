@@ -879,8 +879,7 @@ sub string_node {
     my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
 
     if ($isdup) {
-        my $taxon_name = $self->get_tagvalue('taxon_name', '');
-        if ($taxon_name =~ /\S+\ \S+/) {
+        if ($self->species_tree_node->genome_db_id) {
             $str .= "Dup ";
         } else {
             $str .= "DUP ";
