@@ -66,36 +66,74 @@ use base ('Bio::EnsEMBL::Compara::NestedSet');
 
 # Attributes / tags
 
-=head2 taxon_id
+=head2 species_tree_node
 
-  Description: Getter for the taxon ID (cf the NCBI database) of that node in the gene tree
+  Description: Getter for the node in the species tree the current node refers to
 
 =cut
 
-sub taxon_id {
+sub species_tree_node {
     my $self = shift;
-    return $self->get_value_for_tag('taxon_id');
+    if ($self->get_value_for_tag('species_tree_node_id') and not $self->{_species_tree_node}) {
+        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->get_value_for_tag('species_tree_node_id'));
+    }
+    return $self->{_species_tree_node};
+}
+
+
+=head2 _species_tree_node_id
+
+  Description: Internal getter for the node ID of the species tree node related
+               to the current gene tree node
+
+=cut
+
+sub _species_tree_node_id {
+    my $self = shift;
+    return $self->get_value_for_tag('species_tree_node_id')
+}
+
+
+=head2 taxonomy_level
+
+  Example    : $taxonomy_level = $homology->taxonomy_level();
+  Description: getter of string description of homology taxonomy_level.
+               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub taxonomy_level {
+    my $self = shift;
+    return $self->species_tree_node()->node_name();
+}
+
+
+=head2 taxon_id
+
+  Description: DEPRECATED: GeneTreeNode::taxon_id is deprecated and will be removed in e76. Please use GeneTreeNode::species_tree_node()->taxon_id() instead
+
+=cut
+
+sub taxon_id {  ## DEPRECATED
+    my $self = shift;
+    deprecate('GeneTreeNode::taxon_id is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon_id() instead');
+    return $self->species_tree_node()->taxon_id;
 }
 
 
 =head2 taxon
 
-  Description: Getterfor the NCBITaxon object refering to the species containing that member
+  Description: DEPRECATED: GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead
 
 =cut
 
-sub taxon {
-  my $self = shift;
-
-    unless (defined $self->{'_taxon'}) {
-      unless (defined $self->taxon_id) {
-        throw("can't fetch Taxon without a taxon_id");
-      }
-      my $NCBITaxonAdaptor = $self->adaptor->db->get_NCBITaxonAdaptor;
-      $self->{'_taxon'} = $NCBITaxonAdaptor->fetch_node_by_taxon_id($self->taxon_id);
-    }
-
-  return $self->{'_taxon'};
+sub taxon {  ## DEPRECATED
+    my $self = shift;
+    deprecate('GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead');
+    return $self->species_tree_node()->taxon;
 }
 
 
@@ -122,7 +160,14 @@ sub node_type {
 
 sub lost_taxa {
     my $self = shift;
-    return $self->get_all_values_for_tag('lost_taxon_id');
+    unless ($self->{_lost_species_tree_nodes}) {
+        my @nodes;
+        foreach my $dbID (@{$self->get_all_values_for_tag('lost_species_tree_node_id')}) {
+            push @nodes, $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($dbID);
+        }
+        $self->{_lost_species_tree_nodes} = \@nodes;
+    }
+    return $self->{_lost_species_tree_nodes};
 }
 
 
