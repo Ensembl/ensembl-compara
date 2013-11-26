@@ -221,7 +221,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_job',
         },
 
         {   -logic_name => 'generate_collations',
