@@ -52,6 +52,13 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
   proteinTrees pipeline:
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40090 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_71_CAFE -analysis_topup -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_name mp12_compara_homology_72 -host compara3 -cafe_species []
 
+  Release 74:
+  ncRNAtrees_pipeline:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40094 -work_dir /lustre/scratch109/ensembl/mp12/nc_trees_74 -analysis_topup -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_name mp12_compara_nctrees_74clean2 -host compara2 -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+
+  proteinTrees pipeline:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40093 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_74_CAFE -analysis_topup -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_name mm14_protein_trees_74_with_sheep -host compara1 -cafe_species []
+
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
