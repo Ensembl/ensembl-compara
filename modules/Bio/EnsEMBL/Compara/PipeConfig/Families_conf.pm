@@ -46,7 +46,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30042,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#       'mlss_id'         => 30043,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara2',    # where the pipeline database will be created
         'rel_suffix'      => '',            # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
@@ -80,14 +80,16 @@ sub default_options {
         'himafft_gigs'    => 14,
         'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara4, but will have to be set manually otherwise
         'blast_capacity'  => 1000,                                  # work both as hive_capacity and resource-level throttle
-       'mafft_capacity'  =>  400,
+        'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
+        'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara1/mm14_compara_homology_'.$self->o('ensembl_release'),
+#        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
+        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('rel_with_suffix'),
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/kb3_ensembl_compara_72',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara2/lg4_ensembl_compara_73',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -133,12 +135,12 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
         'urgent'       => { 'LSF' => '-q yesterday' },
-        'LongBlast'    => { 'LSF' => '-C0 -M'.$self->o('blast_gigs').'000000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"' },
-        'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
-        'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
-        '4GigMem'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
-        '2GigMem'      => { 'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+        'LongBlast'    => { 'LSF' => '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"' },
+        'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
+        'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
+        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
+        '4GigMem'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
+        '2GigMem'      => { 'LSF' => '-C0 -M2'.$self->o('reservation_sfx').'000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
@@ -157,13 +159,12 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'       => $self->o('homology_db'),
                 'inputlist'     => [
-                                        [ $self->o('homology_db')   => 'ncbi_taxa_node' ],
-                                        [ $self->o('homology_db')   => 'ncbi_taxa_name' ],
-                                        [ $self->o('homology_db')   => 'genome_db' ],       # we need them in "located" state
-                                        [ $self->o('homology_db')   => 'sequence' ],
-                                        [ $self->o('homology_db')   => 'member' ],
+                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_node' ],
+                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_name' ],
+                                        [ $self->o('protein_trees_db')   => 'genome_db' ],       # we need them in "located" state
+                                        [ $self->o('protein_trees_db')   => 'sequence' ],
+                                        [ $self->o('protein_trees_db')   => 'member' ],
                                         [ $self->o('master_db')     => 'method_link' ],
                                         [ $self->o('master_db')     => 'species_set' ],
                                         [ $self->o('master_db')     => 'method_link_species_set' ],
@@ -182,7 +183,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'mode'          => 'overwrite',
             },
-            -hive_capacity => 10,
+            -analysis_capacity => 10,
         },
 
         {   -logic_name => 'offset_and_innodbise_tables',
@@ -221,7 +222,6 @@ sub pipeline_analyses {
                 'include_patches'       => 1,
                 'include_reference'     => 0,
             },
-            -hive_capacity => -1,
             -rc_name => '2GigMem',
         },
 
@@ -257,7 +257,7 @@ sub pipeline_analyses {
             -parameters => {
                 'uniprot_version'   => $self->o('uniprot_version'),
             },
-            -hive_capacity => 3,
+            -analysis_capacity => 3,
             -flow_into => {
                 2 => [ 'load_uniprot' ],
             },
@@ -269,17 +269,16 @@ sub pipeline_analyses {
             -parameters => {
                 'seq_loader_name'   => 'pfetch', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
             },
-            -hive_capacity => 20,
+            -analysis_capacity => 20,
             -batch_size    => 100,
             -rc_name => '2GigMem',
         },
 
         {   -logic_name => 'snapshot_after_load_uniprot',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
+                'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql',
                 'blastdb_name'  => $self->o('blastdb_name'),
-                'cmd'           => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 1).' >#work_dir#/#filename#',
-                'filename'      => $self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
             },
             -flow_into => {
                 1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
@@ -353,10 +352,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'snapshot_after_blast',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 1).' >#work_dir#/#filename#',
-                'filename'  => $self->o('pipeline_name').'_snapshot_after_blast.sql',
+                'output_file'  => '#work_dir#/snapshot_after_blast.sql',
             },
             -flow_into => {
                 1 => [ 'mcxload_matrix' ],
@@ -549,6 +547,25 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.74 stats
+
+    sequences to cluster:       5,293,375           [ SELECT count(*) from sequence; ]
+    distances by Blast:         1,000,667,203       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 27 minutes to run
+
+    non-reference genes:         3090               [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:         10006               [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:          9.3d               [ call time_analysis('%'); ]
+    uniprot_loading time:        2.8h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               5.2d               [ call time_analysis('blast%'); ]
+    mcxload running time:        1.5d               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:            1.8d               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     25.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         ?G                  [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.73 stats
 
