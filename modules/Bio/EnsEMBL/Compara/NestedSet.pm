@@ -934,7 +934,7 @@ my %ryo_modes = (
 );
 
 my $nhx0 = '%{n-_|T(taxon_name)}:%{d}';
-my $nhx1 = ':D=%{-E"N"}%{T(node_type,duplication,Y)-}%{T(node_type,dubious,Y)-}%{T(node_type,gene_split,Y)-}%{T(node_type,speciation,N)}%{":B="T(bootstrap)}';
+my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="T(bootstrap)}';
 my $nhx2 = ':T=%{-x}%{T(taxon_id)-}';
 
 my %nhx_ryo_modes_1 = (

@@ -150,6 +150,14 @@ sub node_type {
     return $self->get_value_for_tag('node_type');
 }
 
+sub _newick_dup_code {
+    my $self = shift;
+    my $node_type = $self->node_type;
+    return 'D=N' if ($node_type eq 'speciation');
+    return 'DD=Y' if ($node_type eq 'dubious');
+    return 'D=Y';
+}
+
 
 =head2 lost_taxa
 
