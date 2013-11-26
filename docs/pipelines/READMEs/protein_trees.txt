@@ -13,7 +13,7 @@ EnsEMBL and BioPerl software:
 	* ensembl ("branch-ensembl-74" tag)          - Core API on which the rest of ensembl APIs are based
 	* ensembl-compara ("branch-ensembl-74" tag)  - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
 	* ensembl-hive ("stable" tag)                - The system to run pipelines
-!! Please ensure that your PERL5LIB is included all of these modules
+!! Please ensure that your PERL5LIB includes all of these modules
 
 Refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
@@ -32,13 +32,13 @@ Perl libraries:
 
 
 Any compiled binaries mentioned in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblProteinTrees_conf.pm
-Here is the list of the versions that we used for the e73 production:
+Here is the list of the versions that we used for the e74 production:
 
-	* NCBI-blast 2.2.27+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+	* NCBI-blast 2.2.2+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 	* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
-	* MAFFT 7.017          - http://mafft.cbrc.jp/alignment/software/
+	* MAFFT 7.113          - http://mafft.cbrc.jp/alignment/software/
 	* hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
-	* treebest             - git.internal.sanger.ac.uk:/repos/git/ensembl/compara/treebest.git if you have a Sanger account, https://github.com/muffato/treebest otherwise
+	* treebest             - https://github.com/muffato/treebest
 	* quicktree 1.1        - http://www.sanger.ac.uk/resources/software/quicktree/
 	* hmmbuild 3.0         - (part of the HMMER package) http://hmmer.janelia.org/
 	* codeml 4.3           - (part of the PAML package) http://abacus.gene.ucl.ac.uk/software/paml.html WARNING: The pipeline does not support more recent versions
@@ -106,7 +106,7 @@ with the QuickTree program (using a Mafft alignment)
 
    2.7. dnds
 
-At this step, the pipeline will compute dN/dS values on all the homologies (this can be parametrized)
+At this step, the pipeline will compute dN/dS values on all the homologies (this can be parameterized)
 
    2.8 namemapping
 
@@ -154,8 +154,8 @@ If you are going to use Ensembl data, you may want to add the following database
 },
 'curr_core_sources_locs' => [ $self->o('ensembl_srv') ],
 
-If you are going to run the pipeline on species that are not in Ensembl, you have to define the "curr_file_sources_locs" parameter with a list
-of JSON file of the following format:
+If you are going to run the pipeline on species that are not in Ensembl, you have to define the "curr_file_sources_locs" parameter with a JSON formatted file.
+The JSON file needs to contain meta data for each species and should have the following format:
 
 [
 {
@@ -184,7 +184,12 @@ Please make sure that 'prev_release' contains the version number of the reuse da
    3.3. More general parameters (pipeline-related)
 
  - mlss_id: the method_link_species_set_id created by scripts/pipeline/create_mlss.pl
-   This defines the instance of the pipeline (which species to work on). It is only needed if you run the pipeline with a master dabase. Otherwise, the pipeline will create its own one.
+   This defines the instance of the pipeline (which species to work on). It is only needed if you run the pipeline with a master database. Otherwise, the pipeline will create its own one.
+
+   To get it from the master database, run the following query:
+   > SELECT * FROM method_link_species_set WHERE method_link_id = 401;
+   You can check the content of a species_set_id XXX this way:
+   > SELECT name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = XXX ORDER BY name;
 
  - release: the API version of your CVS checkout
 
@@ -198,15 +203,16 @@ Please make sure that 'prev_release' contains the version number of the reuse da
 
  - outgroups: the list of outgroup species (genome_db names)
    This is used by hcluster_sg to produce more relevant clusters. It allows two levels of outgroups (named as "2" and "4", "4" being the most out)
-   In the Ensembl run, we only define S.cerevisae as outgroup (level 2)
+   In the Ensembl run, we only define S.cerevisae as outgroup (level 2). Hence the configuration: {'saccharomyces_cerevisiae' => 2}
 
  - taxlevels: on which clades should the pipeline try to compute dN/dS values.
-   Those values are only available for close enough species and it is genereally not a good idea to use very large clades (like Metazoa).
-   We only use mammals, some birds and some fish.
+   Those values are only available for close enough species and it is generally not a good idea to use very large clades (like the animal kingdom.
+   The parameter is a list of taxa (given by their names in the NCBI taxonomy). The list can be empty to skip this step of the pipeline.
+   In Ensembl, we only use mammals, some birds and some fish, in the config file this is shown as ['Theria', 'Sauria', 'Tetraodontiformes']
 
    3.4. beekeeper parameters
 
-All the *_capacity parameters are tuned to fit the capacity of our MySQL servers. You migh want to initially reduce them, and gradually increase
+All the *_capacity parameters are tuned to fit the capacity of our MySQL servers. You might want to initially reduce them, and gradually increase
 them "as long as the database holds" :) The relative proportion of each analysis should probably stay the same
 
 The "resource_classes" of the configuration file defined how beekeeper should run each category of job. These are LSF parameters that you may only
