@@ -7,6 +7,11 @@ Compara.{release}.protein.allhomologies.orthoxml.xml.gz
   Contains all the orthologies in a single OrthoXML file. Each orthology is
   stored as an orthologGroup containing two genes.
 
+Compara.{release}.protein.allhomologies_strict.orthoxml.xml.gz
+  Contains all the "strict" orthologies in a single OrthoXML file. Each
+  orthology is stored as an orthologGroup containing two genes.
+  In this file, all the homologies are fully compliant with the species tree
+
 Compara.{release}.protein.alltrees.orthoxml.xml.gz
   Contains all the trees in a single OrthoXML file. All the trees are
   attached to the root 'groups' tag.
@@ -24,10 +29,6 @@ CAUTION: Be aware that untaring any of these files will create in your current
 
 Compara.{release}.protein.tree.orthoxml.tar.gz
   Each file will contain one tree, in OrthoXML format.
-
-Compara.{release}.protein.tree_possorthol.orthoxml.tar.gz
-  Each file will contain one tree, in OrthoXML format. Here again, duplication
-  nodes with a low confidence score are edited.
 
 Compara.{release}.protein.tree.phyloxml.tar.gz
   Each file will contain one tree, in PhyloXML format.
