@@ -95,7 +95,7 @@ sub fetch_input {
 
     my %model_id_hash = ();
     my @no_acc_members = ();
-    foreach my $member (${$nc_tree->get_all_Members}) {
+    foreach my $member (@{$nc_tree->get_all_Members}) {
         my $description = $member->description;
         unless (defined($description) && $description =~ /Acc\:(\w+)/) {
             warn "No accession for [$description]";
