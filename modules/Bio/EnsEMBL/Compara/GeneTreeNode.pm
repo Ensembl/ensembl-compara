@@ -284,7 +284,7 @@ sub get_AlignedMemberSet {
         -adaptor => $self->adaptor,
         -method_link_species_set_id => $self->tree->method_link_species_set_id,
         -stable_id => $self->tree->stable_id,
-        -version => sprintf("%d.%d", $self->tree->version, $self->node_id),
+        -version => sprintf("%d.%d", $self->tree->version || 0, $self->node_id),
     );
     foreach my $member (@{$self->get_all_leaves}) {
         $set->add_Member($member) if $member->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
