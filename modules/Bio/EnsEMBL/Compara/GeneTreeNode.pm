@@ -362,5 +362,36 @@ sub keep_nodes_by_taxon_ids {
 
 }
 
+
+sub _load_tags {
+    my $self = shift;
+    return if exists $self->{'_tags'};
+    $self->SUPER::_load_tags;
+    if ($self->has_tag('species_tree_node_id')) {
+        $self->add_tag('taxon_id', $self->species_tree_node->taxon_id);
+        $self->add_tag('taxon_name', $self->species_tree_node->node_name);
+    }
+    warn;
+}
+
+sub get_tagvalue {
+    my $self = shift;
+    my $tag = shift;
+    my $default = shift;
+
+    my %deprecated_tags = (
+        'taxon_id' => 'The taxon_id tag has been deprecated. Please use species_tree_node() from the gene-tree node to get taxon information',
+        'taxon_name' => 'The taxon_name tag has been deprecated. Please use species_tree_node() from the gene-tree node to get taxon information',
+        #'node_type' => 'The node_type tag has been deprecated. Please call directly node_type() on the node',
+        #'bootstrap' => 'The bootstrap tag has been deprecated. Please call directly bootstrap() on the node',
+        #'duplication_confidence_score' => 'The duplication_confidence_score tag has been deprecated. Please call directly duplication_confidence_score() on the node',
+    );
+    if (exists $deprecated_tags{lc $tag}) {
+        deprecate($deprecated_tags{lc $tag});
+    }
+    return $self->SUPER::get_tagvalue($tag, $default);
+}
+
+
 1;
 

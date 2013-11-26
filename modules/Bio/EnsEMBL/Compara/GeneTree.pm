@@ -271,6 +271,13 @@ sub preload {
     # Loads all the tags in one go
     $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $self->root->get_all_nodes );
 
+    # For retro-compatibility, we need to fill in taxon_id and taxon_name
+    foreach my $node (@{$self->root->get_all_nodes}) {
+        next unless $node->has_tag('species_tree_node_id');
+        $node->add_tag('taxon_id', $node->species_tree_node->taxon_id);
+        $node->add_tag('taxon_name', $node->species_tree_node->node_name);
+    }
+
     # Loads all the gene members in one go
     my %leaves;
     foreach my $pm (@{$self->root->get_all_leaves}) {
