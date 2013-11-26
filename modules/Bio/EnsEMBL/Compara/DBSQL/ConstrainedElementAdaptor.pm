@@ -416,4 +416,16 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 	}
 }
 
+sub count_by_mlss_id {
+    my ($self, $mlss_id) = @_;
+
+    my $sql = "SELECT count(*) FROM constrained_element WHERE method_link_species_set_id=?";
+    my $sth = $self->prepare($sql);
+    $sth->execute($mlss_id);
+    my ($count) = $sth->fetchrow_array();
+    $sth->finish();
+
+    return $count;
+}
+
 1;

@@ -1843,5 +1843,19 @@ sub _get_all_ref_genomic_aligns {
     return $light_genomic_aligns;
 }
 
+sub count_by_mlss_id {
+    my ($self, $mlss_id) = @_;
+
+    my $sql = "SELECT count(*) FROM conservation_score cs JOIN genomic_align_block gab USING(genomic_align_block_id) JOIN method_link_species_set_tag mlss_tag ON(gab.method_link_species_set_id=mlss_tag.value) WHERE mlss_tag.tag = 'msa_mlss_id' AND mlss_tag.method_link_species_set_id = ?";
+
+    my $sth = $self->prepare($sql);
+    $sth->execute($mlss_id);
+    my ($count) = $sth->fetchrow_array();
+    $sth->finish();
+
+    return $count;
+}
+
+
 1;
 
