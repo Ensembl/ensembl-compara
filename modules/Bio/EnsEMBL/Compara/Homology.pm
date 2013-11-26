@@ -58,26 +58,6 @@ The rest of the documentation details each of the object methods. Internal metho
 =cut
 
 
-=head2 subtype
-
-  Arg [1]    : string $subtype (optional)
-  Example    : $subtype = $homology->subtype();
-               $homology->subtype($subtype);
-  Description: getter/setter of string description of homology subtype.
-               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub subtype {
-  my $self = shift;
-  # deprecate("Use taxonomy_level() instead.");
-  return $self->taxonomy_level(@_);
-}
-
-
 =head2 is_tree_compliant
 
   Arg [1]    : float $is_tree_compliant (optional)
@@ -96,57 +76,6 @@ sub is_tree_compliant {
   return $self->{'_is_tree_compliant'};
 }
 
-
-=head2 taxonomy_level
-
-  Arg [1]    : string $taxonomy_level (optional)
-  Example    : $taxonomy_level = $homology->taxonomy_level();
-               $homology->taxonomy_level($taxonomy_level);
-  Description: getter/setter of string description of homology taxonomy_level.
-               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub taxonomy_level {
-  my $self = shift;
-  $self->{'_subtype'} = shift if(@_);
-  $self->{'_subtype'} = '' unless($self->{'_subtype'});
-  return $self->{'_subtype'};
-}
-
-
-=head2 taxonomy_alias
-
-  Arg [1]    : string $taxonomy_alias (optional)
-  Example    : $taxonomy_alias = $homology->taxonomy_alias();
-               $homology->taxonomy_alias($taxonomy_alias);
-  Description: get string description of homology taxonomy_alias.
-               Examples: 'Chordates', 'Bony vertebrates', 'Homo sapiens'
-               Defaults to taxonomy_level if alias is not in the db
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub taxonomy_alias {
-
-    my $self = shift;
-
-    my $ancestor_node = $self->gene_tree_node;
-    return unless $ancestor_node;
-
-    my $taxon_id = $ancestor_node->get_tagvalue('taxon_id');
-    return unless $taxon_id;
-
-    my $taxon = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
-    return unless $taxon;
-
-    return $taxon->ensembl_alias();
-}
 
 
 ## dN/dS methods
@@ -422,11 +351,48 @@ sub gene_tree {
 }
 
 
+sub _species_tree_node_id {
+    my $self = shift;
+    $self->{_species_tree_node_id} = shift if @_;
+    return $self->{_species_tree_node_id};
+}
 
 
+=head2 species_tree_node
+
+  Example    : $species_tree_node = $homology->species_tree_node();
+  Description: getter for the GeneTree this homology refers to
+  Returntype : GeneTree
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub species_tree_node {
+    my $self = shift;
+
+    if ($self->get_value_for_tag('species_tree_node_id') and not $self->{_species_tree_node}) {
+        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->{_species_tree_node_id});
+    }
+    return $self->{_species_tree_node};
+}
 
 
+=head2 taxonomy_level
 
+  Example    : $taxonomy_level = $homology->taxonomy_level();
+  Description: getter of string description of homology taxonomy_level.
+               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub taxonomy_level {
+    my $self = shift;
+    return $self->species_tree_node()->node_name();
+}
 
 
 
@@ -468,6 +434,32 @@ sub tree_node_id { ## DEPRECATED
   my $self = shift;
   deprecate('$self->tree_node_id() is deprecated and will be removed in e75. Use $self->gene_tree()->dbID() instead.');
   return $self->gene_tree()->dbID();
+}
+
+
+=head2 subtype
+
+  Description:  DEPRECATED . Homology::subtype() is deprecated and will be removed in e76. Use taxonomy_level() instead
+
+=cut
+
+sub subtype {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::subtype() is deprecated and will be removed in e76. Use taxonomy_level() instead.");
+    return $self->taxonomy_level();
+}
+
+
+=head2 taxonomy_alias
+
+  Description:  DEPRECATED . Homology::taxonomy_alias() is deprecated and will be removed in e76. Use species_tree_node()->taxon()->ensembl_alias() instead
+
+=cut
+
+sub taxonomy_alias {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e76. Use species_tree_node()->taxon()->ensembl_alias() instead.");
+    return $self->species_tree_node()->taxon()->ensembl_alias();
 }
 
 
