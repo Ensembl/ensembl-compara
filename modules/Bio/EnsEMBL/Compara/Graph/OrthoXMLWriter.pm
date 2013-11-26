@@ -419,19 +419,19 @@ sub _genetreenode_body {
   
    # Scores
   foreach my $tag (qw(duplication_confidence_score bootstrap)) {
-    my $value = $node->get_tagvalue($tag);
+    my $value = $node->get_value_for_tag($tag);
     if (defined $value and $value ne '') {
       $w->emptyTag('score', 'id' => $tag, 'value' => $value);
     }
   }
   
   # Properties
-  foreach my $tag (qw(taxon_id taxon_name)) {
-    my $value = $node->get_tagvalue($tag);
-    if (defined $value and $value ne '') {
-      $w->emptyTag('property', 'name' => $tag, 'value' => $value);
+  my $tax_level = $node->taxonomy_level;
+  if ($tax_level) {
+      $w->emptyTag('property', 'name' => 'taxon_name', 'value' => $tax_level);
+      my $tax_id    = $node->species_tree_node->taxon_id;
+      $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id) if $tax_id;
     }
-  }
 
   # dubious_duplication is in another field
   if ($node->get_tagvalue('node_type', '') eq 'dubious') {

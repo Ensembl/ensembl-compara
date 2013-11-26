@@ -379,10 +379,9 @@ sub _genetreenode_tag {
 sub _genetreenode_body {
   my ($self, $node, $defer_taxonomy) = @_;
   
-  my $type  = $node->get_tagvalue('node_type');
-  my $boot  = $node->get_tagvalue('bootstrap');
-  my $taxid = $node->get_tagvalue('taxon_id');
-  my $tax   = $node->get_tagvalue('taxon_name');
+  my $type  = $node->node_type();
+  my $boot  = $node->bootstrap();
+  my $stn   = $node->species_tree_node();
   
   my $w = $self->_writer();
   
@@ -390,8 +389,8 @@ sub _genetreenode_body {
     $w->dataElement('confidence', $boot, 'type' => 'bootstrap');
   }
   
-  if(!$defer_taxonomy && $taxid) {
-    $self->_write_taxonomy($taxid, $tax);
+  if(!$defer_taxonomy && $stn) {
+    $self->_write_species_tree_node($stn);
   }
   
   if((defined $type) and ($type eq "duplication" || $type eq "dubious")) {
@@ -480,6 +479,17 @@ sub _write_taxonomy {
   $w->endTag();
   return;
 }
+
+sub _write_species_tree_node {
+  my ($self, $stn) = @_;
+  my $w = $self->_writer();
+  $w->startTag('taxonomy');
+  $w->dataElement('id', $stn->taxon_id) if $stn->taxon_id;
+  $w->dataElement('scientific_name', $stn->node_name);
+  $w->endTag();
+  return;
+}
+
 
 
 1;
