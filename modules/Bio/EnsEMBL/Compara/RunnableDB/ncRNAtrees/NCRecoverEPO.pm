@@ -51,6 +51,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO;
 
 use strict;
+
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -317,9 +318,10 @@ sub run_low_coverage_best_in_alignment {
 
   $self->param('epo_low_cov_gdbs', {});
 
-  my $epo_low_mlss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')->[0];
-  foreach my $genome_db (@{$epo_low_mlss->species_set_obj->genome_dbs()}) {
-    $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
+  for my $epo_low_mlss (@{$self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')}) {
+      foreach my $genome_db (@{$epo_low_mlss->species_set_obj->genome_dbs()}) {
+          $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
+      }
   }
 
   my %epo_low_restricted_gab_hash = ();
@@ -381,7 +383,7 @@ sub run_low_coverage_best_in_alignment {
     }
     print STDERR "# EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $low_cov_genomic_align_block (@$low_cov_genomic_align_blocks) {
-      unless ($low_cov_genomic_align_block->{original_dbID} == $max_gabID) {
+      if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
@@ -402,11 +404,9 @@ sub run_low_coverage_best_in_alignment {
         my $coord_level1 = $slice1->coord_system->is_top_level;
         my $slice2 = $low_cov_slice_seqs{$genome_db_id}{$member_id2};
         my $coord_level2 = $slice2->coord_system->is_top_level;
-        if (0 < abs($coord_level1-$coord_level2)) {
-          if ($coord_level2 < $coord_level1) {
+        if ($coord_level2 < $coord_level1) {
             my $temp_slice = $slice1; $slice1 = $slice2; $slice2 = $temp_slice;
             my $temp_member_id = $member_id1; $member_id1 = $member_id2; $member_id2 = $temp_member_id;
-          }
         }
         my $mapped_slice2 = $slice2->project($slice1->coord_system->name)->[0];
         next unless(defined($mapped_slice2)); # no projection, so pair of slices are different
@@ -430,6 +430,7 @@ sub run_low_coverage_best_in_alignment {
       $self->param('low_cov_leaves_to_delete_pmember_id')->{$member_id2} = $stable_id2;
     }
   }
+
 }
 
 sub remove_low_cov_predictions {
