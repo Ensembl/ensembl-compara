@@ -474,7 +474,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => [ 'check_reusability' ],
-                'A->1' => [ 'extra_sql_prepare' ],
+                'A->1' => [ 'fire_ss_creation' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -490,13 +490,38 @@ sub pipeline_analyses {
             -hive_capacity => 10,
             -rc_name => '500Mb_job',
             -flow_into => {
-                2 => {
-                    'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
-                },
-                3 => {
-                    'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#nonreuse_ss_id#' },
-                },
+                2 => [ ':////accu?reused_gdb_ids=[genome_db_id]' ],
+                3 => [ ':////accu?nonreused_gdb_ids=[genome_db_id]' ],
             },
+        },
+
+        {   -logic_name     => 'fire_ss_creation',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into      => {
+                '1->A'  => {
+                    'store_ss' => [
+                        { 'ss_name' => 'reuse_ss_id', 'gdb_list' => '#reused_gdb_ids#', },
+                        { 'ss_name' => 'nonreuse_ss_id', 'gdb_list' => '#nonreused_gdb_ids#', },
+                    ],
+                },
+                'A->1'  => 'extra_sql_prepare',
+            },
+        },
+
+        {   -logic_name     => 'store_ss',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
+            -parameters     => {
+                'object_type'   => 'SpeciesSet',
+                'arglist'       => [
+                    -genome_dbs     => '#gdb_list#',
+                ],
+            },
+            -meadow_type    => 'LOCAL',
+            -flow_into      => {
+                2 => {
+                    ':////meta'    => { 'meta_key' => '#ss_name#', 'meta_value' => '#dbID#' },
+                }
+            }
         },
 
         {   -logic_name    => 'extra_sql_prepare',

@@ -12,7 +12,6 @@ Used to create all the species set / MLSS objects needed for a gene-tree pipelin
  - the main MLSS of the pipeline
  - all the single-species paralogues MLSS
  - all the pairwise orthologues MLSS
- - two empty species sets for reuse / nonreuse lists
 
 If the master_db and mlss_id parameters, the Runnable will copy over the MLSS
 from the master database. Otherwise, it will create new ones from the list of
@@ -82,13 +81,6 @@ sub write_output {
             #my $mlss_p12 = $self->_write_mlss( $ss12, $self->param('ml_para') );
             my $mlss_o12 = $self->_write_mlss( $ss12, $self->param('ml_ortho') );
         }
-    }
-
-    foreach my $ss_id (qw(reuse_ss_id nonreuse_ss_id)) {
-        my $ss = Bio::EnsEMBL::Compara::SpeciesSet->new;
-        $self->compara_dba->get_SpeciesSetAdaptor->store($ss);
-        # Should be a pipeline-wide parameter
-        $self->compara_dba->get_MetaContainer->store_key_value($ss_id, $ss->dbID);
     }
 }
 
