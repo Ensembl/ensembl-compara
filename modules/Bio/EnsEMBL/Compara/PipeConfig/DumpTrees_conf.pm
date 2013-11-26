@@ -52,14 +52,7 @@ sub default_options {
 
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
-        'rel_db'      => {
-            -host         => 'compara2',
-            -dbname       => sprintf('%s_ensembl_compara_%s', $self->o('rel_coord'), $self->o('ensembl_release')),
-            -port         => 3306,
-            -user         => 'ensro',
-            -pass         => '',
-            -driver       => 'mysql',
-        },
+        'rel_db'            => sprintf('mysql://ensro@%s/%s_ensembl_compara_%s', $self->o('rel_db_host'), $self->o('rel_coord'), $self->o('ensembl_release')),
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
@@ -131,7 +124,7 @@ sub pipeline_analyses {
           { -logic_name => 'dump_for_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
+                'db_conn'       => $self->o('rel_db'),
                 'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('ensembl_release')),
                 'target_dir'    => $self->o('target_dir'),
                 'query'         => sprintf q|
@@ -152,7 +145,7 @@ sub pipeline_analyses {
                 |, $self->o('member_type'), 'default'
             },
             -input_ids => [
-                {'cmd' => 'mysql #db_conn# -N -q -e "#query#" > #target_dir#/#file_name#',},
+                {'cmd' => 'echo "#query# | db_cmd.pl -url #db_conn# -extra "-N -q" > #target_dir#/#file_name#',},
             ],
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
@@ -218,7 +211,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'db_url'            => $self->dbconn_2_url('rel_db'),
+                'db_url'            => $self->o('rel_db'),
                 'dump_script'       => $self->o('dump_script'),
                 'work_dir'          => $self->o('work_dir'),
                 'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1',
