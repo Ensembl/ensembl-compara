@@ -172,7 +172,7 @@ sub content {
 
   $table->add_row('Alternative genes', $alt_genes) if $alt_genes; # add alternative gene info
 
-  if ($object->gene_type =~ /RNA/ && $self->hub->species_defs->R2R_BIN) {
+  if ($object->{_availability}{'is_rna'} && $object->{'_availability'}{'can_r2r'}) {
     my $svg_path = $self->draw_structure($display_name, 1);
     my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
     my $html = qq(<object data="$svg_path" type="image/svg+xml"></object>
