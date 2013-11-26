@@ -293,7 +293,7 @@ sub parse_cafe_output {
         my $lca_taxon_id = $tree->root->name;
         print STDERR "LCA TAXON ID IS $lca_taxon_id\n" if ($self->debug);
 
-        my $lca_node = $speciesTree->root->find_nodes_by_field_value('taxon_id', $lca_taxon_id)->[0];
+        my $lca_node = $speciesTree->root->find_nodes_by_field_value('node_name', $lca_taxon_id)->[0]; # Allows _dup
         my $lca_node_id = $lca_node->node_id();
         $cafeGeneFamily->lca_id($lca_node_id);
         $cafeGeneFamily->gene_tree_root_id($gene_tree_root_id);
