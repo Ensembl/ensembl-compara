@@ -197,7 +197,7 @@ sub store_ncrna_gene {
         }
     }
     if (defined $longest_ncrna_member) {
-        $selq_member_adaptor->_set_member_as_canonical($longest_ncrna_member); ## Watchout merged genes!
+        $seq_member_adaptor->_set_member_as_canonical($longest_ncrna_member); ## Watchout merged genes!
     }
 
 }

@@ -80,7 +80,7 @@ foreach my $taxon_id (sort keys %taxon_id_2_latest_ss) {
 
     if ($uptodate_ss) {
         # Comparing the content of the species_sets
-        if ($update_ss->toString eq $tag_containing_ss->toString) {
+        if ($uptodate_ss->toString eq $tag_containing_ss->toString) {
             print "The SpeciesSet for '$ss_name' is up-to-date, no need to create a new set or transfer any tags\n";
         } else {
             die "There is an up-to-date SpeciesSet for '$ss_name',\n\t".$uptodate_ss->toString()."\n\t, but it is not the latest tag-bearing one. You may want to investigate this before going further.";
