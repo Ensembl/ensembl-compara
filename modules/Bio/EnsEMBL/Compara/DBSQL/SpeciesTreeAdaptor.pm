@@ -87,6 +87,13 @@ sub fetch_by_method_link_species_set_id_label {
     return $sp_trees->[0];
 }
 
+sub fetch_all_by_method_link_species_set_id_label_pattern {
+ my ($self, $mlss_id, $label) = @_; 
+ $label = 'default' unless (defined $label);
+ my $constraint = "method_link_species_set_id = $mlss_id AND label LIKE '%$label%'";
+ return  $self->generic_fetch($constraint);
+}
+
 sub fetch_by_root_id {
     my ($self, $root_id) = @_;
 
