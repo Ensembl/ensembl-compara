@@ -432,6 +432,7 @@ sub pipeline_analyses {
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
+            -flow_into  => [ 'check_reusability' ],
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
         },
@@ -461,34 +462,6 @@ sub pipeline_analyses {
         },
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
 
-        {   -logic_name => 'create_mlss_ss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
-            -parameters => {
-                'mlss_id'   => $self->o('mlss_id'),
-                'master_db' => $self->o('master_db'),
-            },
-            -flow_into => [ 'make_species_tree', 'check_reuse_factory' ],
-            -meadow_type    => 'LOCAL',
-        },
-
-
-
-        {   -logic_name => 'check_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
-            },
-            -flow_into  => {
-                '2->A' => [ 'check_reusability' ],
-                'A->1' => [ 'fire_ss_creation' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
@@ -499,47 +472,25 @@ sub pipeline_analyses {
             -hive_capacity => 10,
             -rc_name => '500Mb_job',
             -flow_into => {
-                2 => [ ':////accu?reused_gdb_ids=[genome_db_id]' ],
-                3 => [ ':////accu?nonreused_gdb_ids=[genome_db_id]' ],
+                2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
+                3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
             },
         },
 
-        {   -logic_name     => 'fire_ss_creation',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into      => {
-                '1->A'  => {
-                    'store_ss' => [
-                        { 'ss_name' => 'reuse_ss_id', 'gdb_list' => '#reused_gdb_ids#', },
-                        { 'ss_name' => 'nonreuse_ss_id', 'gdb_list' => '#nonreused_gdb_ids#', },
-                    ],
-                },
-                'A->1'  => 'extra_sql_prepare',
+        {   -logic_name => 'create_mlss_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+            -parameters => {
+                'mlss_id'   => $self->o('mlss_id'),
+                'master_db' => $self->o('master_db'),
             },
-        },
-
-        {   -logic_name     => 'store_ss',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
-            -parameters     => {
-                'object_type'   => 'SpeciesSet',
-                'arglist'       => [
-                    -genome_dbs     => '#gdb_list#',
-                ],
-            },
+            -flow_into => [ 'make_species_tree', 'extra_sql_prepare' ],
             -meadow_type    => 'LOCAL',
-            -flow_into      => {
-                2 => {
-                    ':////meta'    => { 'meta_key' => '#ss_name#', 'meta_value' => '#dbID#' },
-                }
-            }
         },
 
         {   -logic_name    => 'extra_sql_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [
-                    # Stores the species sets in CSV format
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "reuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#reuse_ss_id#',
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "nonreuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#nonreuse_ss_id#',
                     # Non species-set related query. Speeds up the split-genes search
                     'ALTER TABLE member ADD KEY gene_list_index (source_name, taxon_id, chr_name, chr_strand, chr_start)',
                     # Counts the number of species
