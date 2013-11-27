@@ -30,6 +30,7 @@ Used to create all the species set / MLSS objects needed for a gene-tree pipelin
  - the main MLSS of the pipeline
  - all the single-species paralogues MLSS
  - all the pairwise orthologues MLSS
+ - two empty species sets for reuse / nonreuse lists
 
 If the master_db and mlss_id parameters, the Runnable will copy over the MLSS
 from the master database. Otherwise, it will create new ones from the list of
@@ -50,6 +51,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'tree_method_link'  => 'PROTEIN_TREES',
+        'reused_gdb_ids'    => [],
+        'nonreused_gdb_ids' => [],
     };
 }
 
@@ -100,6 +103,19 @@ sub write_output {
             my $mlss_o12 = $self->_write_mlss( $ss12, $self->param('ml_ortho') );
         }
     }
+
+    my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
+
+    my @reuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('reused_gdb_ids')};
+    my $reuse_ss = $self->_write_ss( \@reuse_gdbs );
+    $self->compara_dba->get_MetaContainer->store_key_value('reuse_ss_id', $reuse_ss->dbID);
+    $self->compara_dba->get_MetaContainer->store_key_value('reuse_ss_csv', join(',', -1, @{$self->param('reused_gdb_ids')}));
+
+    my @nonreuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('nonreused_gdb_ids')};
+    my $nonreuse_ss = $self->_write_ss( \@nonreuse_gdbs );
+    $self->compara_dba->get_MetaContainer->store_key_value('nonreuse_ss_id', $nonreuse_ss->dbID);
+    $self->compara_dba->get_MetaContainer->store_key_value('nonreuse_ss_csv', join(',', -1, @{$self->param('nonreused_gdb_ids')}));
+
 }
 
 sub _write_ss {
