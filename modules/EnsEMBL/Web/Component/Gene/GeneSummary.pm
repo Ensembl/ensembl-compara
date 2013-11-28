@@ -190,12 +190,17 @@ sub content {
 
   $table->add_row('Alternative genes', $alt_genes) if $alt_genes; # add alternative gene info
 
-  if ($object->{_availability}{'is_rna'} && $object->{'_availability'}{'can_r2r'}) {
+  if ($object->{'_availability'}{'can_r2r'}) {
     my $svg_path = $self->draw_structure($display_name, 1);
-    my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
-    my $html = qq(<object data="$svg_path" type="image/svg+xml"></object>
+    my $html;
+    if ($svg_path) {
+      my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
+      $html = qq(<object data="$svg_path" type="image/svg+xml"></object>
 <br /><a href="$fullsize">[click to enlarge]</a>);
-
+    }
+    else {
+      $html .= 'Sorry, no secondary structure is available for this gene';
+    }
     $table->add_row('Secondary structure', $html);
   }
 
