@@ -122,6 +122,7 @@ check($geneTree, "GeneTree", $member_id);
 my $model_name = $geneTree->get_tagvalue('model_name');
 check($model_name, "model_name", $member_id);
 my $ss_cons = $geneTree->get_tagvalue('ss_cons');
+check($ss_cons, "ss_cons", $member_id);
 my $input_aln = $geneTree->get_SimpleAlign( -id => 'MEMBER' );
 my $aln_filename = dumpMultipleAlignment($input_aln, $model_name, $ss_cons);
 
