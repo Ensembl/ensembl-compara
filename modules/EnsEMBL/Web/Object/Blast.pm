@@ -330,7 +330,7 @@ sub sort_table_values {
     $sorted++;
     last;
   }
-  foreach my $stat qw( score evalue pvalue identity length ){
+  foreach my $stat (qw(score evalue pvalue identity length)) {
     last if $sorted;
     next if $stat ne $sort_by;
     my $method = $stat;
