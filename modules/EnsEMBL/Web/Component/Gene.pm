@@ -50,11 +50,16 @@ sub draw_structure {
       return unless $gene_tree;
       my $model_name  = $gene_tree->get_tagvalue('model_name');
       my $ss_cons     = $gene_tree->get_tagvalue('ss_cons');
-      my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
-      my $aln_file    = $self->_dump_multiple_alignment($input_aln, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id);
-      $filename = $is_thumbnail ? $thumbnail : $plot;
-      $svg_path = $r2r_path.'/'.$filename;
+      if ($ss_cons) {
+        my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
+        my $aln_file    = $self->_dump_multiple_alignment($input_aln, $model_name, $ss_cons);
+        my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id);
+        $filename = $is_thumbnail ? $thumbnail : $plot;
+        $svg_path = $r2r_path.'/'.$filename;
+      }
+      else {
+        $svg_path = undef;
+      }
     }
   }
   return $svg_path;
