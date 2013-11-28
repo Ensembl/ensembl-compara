@@ -26,10 +26,10 @@ sub render {
   my $self = shift;
 
   my $sets = [
-    {'name' => 'birds',     'label' => 'neognath birds'},
-    {'name' => 'fish',      'label' => 'teleost fish'},
-    {'name' => 'primates',  'label' => 'primates'},
-    {'name' => 'mammals',   'label' => 'eutherian mammals'},
+    {'name' => 'fish',        'label' => 'teleost fish'},
+    {'name' => 'sauropsids',  'label' => 'saurian reptiles'},
+    {'name' => 'primates',    'label' => 'primates'},
+    {'name' => 'mammals',     'label' => 'eutherian mammals'},
   ];
 
   return $self->format_list('EPO', $sets);
