@@ -222,7 +222,7 @@ sub content {
   $form->add_element(
     type   => 'DropDown',
     select =>, 'select',
-    label  => 'SIFT predictions (Chicken, Cow, Dog, Human, Mouse, Pig, Rat and Zebrafish)',
+    label  => 'SIFT predictions (chicken, cow, dog, human, mouse, pig, rat and zebrafish)',
     name   => 'sift',
     values => [
       { value => 'no',    name => 'No'                   },
@@ -237,7 +237,7 @@ sub content {
   $form->add_element(
     type   => 'DropDown',
     select =>, 'select',
-    label  => 'PolyPhen predictions (Human)',
+    label  => 'PolyPhen predictions (human)',
     name   => 'polyphen',
     values => [
       { value => 'no',    name => 'No'                   },
