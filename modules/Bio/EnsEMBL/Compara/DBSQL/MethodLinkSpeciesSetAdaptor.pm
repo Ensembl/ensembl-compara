@@ -555,7 +555,7 @@ sub fetch_by_method_link_type_species_set_name {
 
     if ($method) {
         foreach my $this_species_set (@$all_species_sets) {
-            my $mlss = $self->fetch_by_method_link_id_species_set_id($method->dbID, $this_species_set->dbID);
+            my $mlss = $self->fetch_by_method_link_id_species_set_id($method->dbID, $this_species_set->dbID, 1);  # final 1, before we don't want a warning here if any is missing
             return $mlss if $mlss;
         }
     }
