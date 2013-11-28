@@ -62,14 +62,16 @@ sub availability {
 
       $availability->{'history'}              = !!$rows;
       $availability->{'gene'}                 = 1;
-      warn ">>> GENE TYPE ".$self->gene_type;
-      $availability->{'is_rna'}               = $self->gene_type =~ /RNA/ && $self->gene_type !~ /lincRNA/;
-      $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
       $availability->{'core'}                 = $self->get_db eq 'core';
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
       $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
-      $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0;  
+      $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0; 
+      $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
+      if ($availability->{'can_r2r'}) {
+        my $tree = $self->database('compara') ? $self->database('compara')->get_GeneTreeAdaptor->fetch_default_for_Member($member) : undef;
+        $availability->{'has_2ndary'}         = $tree && $tree->get_tagvalue('ss_cons') ? 1 : 0; 
+      }
       $availability->{'family'}               = !!$counts->{families};
       $availability->{'not_rnaseq'}           = $self->get_db eq 'rnaseq' ? 0 : 1;
       $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
