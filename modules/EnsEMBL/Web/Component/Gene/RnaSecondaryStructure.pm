@@ -37,7 +37,7 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $html;
 
-  $html .= '<h4>Key</h4><img src="/img/r2r_legend.png" />';
+  $html .= '<h4>Key</h4><img src="/img/r2r_legend.png" /><br />';
 
   my ($display_name) = $object->display_xref;
 
