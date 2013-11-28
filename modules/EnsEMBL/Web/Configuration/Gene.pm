@@ -72,7 +72,7 @@ sub populate_tree {
     [qw(
       secondary EnsEMBL::Web::Component::Gene::RnaSecondaryStructure
     )],
-  { 'availability' => 'gene is_rna can_r2r'}
+  { 'availability' => 'gene has_2ndary can_r2r'}
   ));
 
   $self->create_node('Matches', 'External references',
