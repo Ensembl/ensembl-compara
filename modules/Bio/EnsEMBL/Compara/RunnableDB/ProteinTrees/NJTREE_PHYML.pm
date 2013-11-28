@@ -70,6 +70,7 @@ sub param_defaults {
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
             'do_transactions'   => 1,
+            'extra_lk_scale'    => undef,
     };
 }
 
@@ -186,7 +187,11 @@ sub run_njtree_phyml {
 
         } else {
 
-            $newick = $self->run_treebest_best($input_aln);
+            my $extra_lk_scale = $self->param('extra_lk_scale');
+            if ((defined $extra_lk_scale) and ($extra_lk_scale < 0)) {
+                $extra_lk_scale = -$extra_lk_scale * $gene_tree->get_value_for_tag('aln_num_residues') / $gene_tree->get_value_for_tag('gene_count');
+            }
+            $newick = $self->run_treebest_best($input_aln, $extra_lk_scale);
         }
     }
 

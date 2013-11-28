@@ -81,7 +81,7 @@ sub _load_species_tree_string_from_db {
 =cut
 
 sub run_treebest_best {
-    my ($self, $input_aln) = @_;
+    my ($self, $input_aln, $lk_scale) = @_;
 
     my $species_tree_file = $self->get_species_tree_file();
     my $max_diff_lk;
@@ -95,6 +95,7 @@ sub run_treebest_best {
         $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
         $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
+        $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
 
         my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);
