@@ -22,6 +22,11 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use LWP::UserAgent;
+use File::Basename qw(fileparse);
+use File::Spec;
+use File::stat qw(stat);
+
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
 sub check_data {
@@ -34,6 +39,7 @@ sub check_data {
     $error = "The bam file could not be added - FTP is not supported, please use HTTP.";
   } 
   else {
+    $self->_check_cached_index;
     # try to open and use the bam file and its index -
     # this checks that the bam and index files are present and correct, 
     # and should also cause the index file to be downloaded and cached in /tmp/ 
@@ -59,6 +65,25 @@ sub check_data {
     }
   }
   return $error;
+}
+
+# Ensure there is no out-of-date cached BAM index by deleting the local 
+# version if it exists and is older than the remote version. Samtools will
+# then fetch a fresh copy of the index if needed.
+sub _check_cached_index {
+  my ($self) = @_;
+  my $index_url = $self->{url} . '.bai';
+  my $tmp_file  = File::Spec->tmpdir . '/' . fileparse($index_url);
+  
+  if (-f $tmp_file) {
+    my $local_time  = int stat($tmp_file)->[9];   
+    my $remote_time = int eval { LWP::UserAgent->new->head($index_url)->last_modified };
+    
+    if ($local_time <= $remote_time) {
+      warn "Cached BAM index is older than remote - deleting $tmp_file";
+      unlink $tmp_file;
+    } 
+  } 
 }
 
 1;
