@@ -96,9 +96,11 @@ sub run_treebest_best {
         $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
         $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
+        $args .= ' -D';
 
         my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);
+        $self->param('treebest_stderr', $run_cmd->err);
         return $run_cmd->out unless ($run_cmd->exit_code);
 
         my $full_cmd = $run_cmd->cmd;

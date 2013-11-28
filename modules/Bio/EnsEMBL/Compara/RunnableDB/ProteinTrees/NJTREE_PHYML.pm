@@ -71,6 +71,7 @@ sub param_defaults {
             'intermediate_prefix'   => 'interm',
             'do_transactions'   => 1,
             'extra_lk_scale'    => undef,
+            'treebest_stderr'   => undef,
     };
 }
 
@@ -104,6 +105,16 @@ sub write_output {
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
     $self->store_genetree($self->param('gene_tree'), \@ref_support);
     $self->param('gene_tree')->store_tag('treebest_runtime_msec', $self->param('treebest_runtime'));
+
+    if ($self->param('treebest_stderr')) {
+        foreach my $stderr_line (split /\n/, $self->param('treebest_stderr')) {
+            if ($stderr_line =~ / ([\w-]*) \(Loglk,LoglkSpec\) = \((.*),(.*)\)$/) {
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk', $1), $2);
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk_spec', $1), $3);
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk_seq', $1), $2-$3);
+            }
+        }
+    }
 
     my @dataflow = ();
     if ($self->param('store_intermediate_trees')) {
