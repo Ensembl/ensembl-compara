@@ -389,7 +389,7 @@ sub _species_tree_node_id {
 sub species_tree_node {
     my $self = shift;
 
-    if ($self->get_value_for_tag('species_tree_node_id') and not $self->{_species_tree_node}) {
+    if ($self->{_species_tree_node_id} and not $self->{_species_tree_node}) {
         $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->{_species_tree_node_id});
     }
     return $self->{_species_tree_node};
