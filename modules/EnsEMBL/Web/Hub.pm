@@ -130,7 +130,7 @@ sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::Co
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return $_[0]{'referer'}   ||= $_[0]->parse_referer;                                  }
 sub colourmap         { return $_[0]{'colourmap'} ||= Bio::EnsEMBL::ColourMap->new($_[0]->species_defs);      }
-sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
+sub is_ajax_request   { exists $_[0]{'is_ajax'} or $_[0]{'is_ajax'} = $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; return $_[0]{'is_ajax'}; }
 
 sub species_path      { return shift->species_defs->species_path(@_);       }
 sub table_info        { return shift->species_defs->table_info(@_);         }
