@@ -309,7 +309,7 @@ sub row {
   my $hub          = $self->hub;
   my $set_view     = $self->set_view;
   my $templates    = $self->templates;
-  my $desc         = $record->{'description'} =~ s|\n|<br />|rg;
+  (my $desc        = $record->{'description'}) =~ s|\n|<br />|g;
   my $record_id    = $record->{'record_id'};
   my %params       = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, ($set_view ? (is_set => 1) : ()) );
   my $edit_url     = $hub->url({ function => 'edit_details', %params });

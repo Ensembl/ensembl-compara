@@ -106,8 +106,10 @@ sub import {
 
 sub _method_prefix {
   my ($package, $filename) = @_;
-  my $package_path = "$package.pm" =~ s/::/\//gr;
-  return md5_hex($filename =~ s/\/+/\//gr =~ s/$package_path$//r);
+  (my $package_path = "$package.pm") =~ s/::/\//g;
+  $filename =~ s/\/+/\//g;
+  $filename =~ s/$package_path$//;
+  return md5_hex($filename);
 }
 
 # Secret package
@@ -117,7 +119,7 @@ package PREV;
 our $AUTOLOAD;
 
 sub AUTOLOAD {
-  my $method  = $AUTOLOAD =~ s/^PREV:://r;
+ ( my $method = $AUTOLOAD) =~ s/^PREV:://;
   my @caller  = caller;
   my $coderef = $caller[0]->can(join '_', previous::_method_prefix(@caller), $method) || die qq(No PREV method for "$method" via package "$caller[0]" at $caller[1] line $caller[2].\n);
   

@@ -81,7 +81,7 @@ sub import {
 
       # Load the core file first, then all the existing plugin files
       for (@lib_dirs, @plugins) {
-        my $filename = "$_->[1]/$filename" =~ s/\/+/\//gr;
+        (my $filename = "$_->[1]/$filename") =~ s/\/+/\//g;
         if (-e $filename) {
           eval "require '$filename'";
           if ($@) {

@@ -217,7 +217,9 @@ sub reset_all {
   my $adaptor    = $hub->config_adaptor;
   my $configs    = $adaptor->all_configs;
   my @config_ids = grep $configs->{$_}{'active'} eq 'y', keys %$configs;
-  my @codes      = map { ($configs->{$_}{'type'} eq 'image_config' && $configs->{$_}{'link_code'} ? $configs->{$_}{'link_code'} : $configs->{$_}{'code'}) =~ s/::/_/rg } @config_ids;
+  my @codes      = map { $configs->{$_}{'type'} eq 'image_config' && $configs->{$_}{'link_code'} ? $configs->{$_}{'link_code'} : $configs->{$_}{'code'} } @config_ids;
+
+  s/::/_/g for @codes;
   
   $adaptor->delete_config(@config_ids);
   

@@ -677,7 +677,7 @@ sub markup_line_numbers {
       if ($align_slice) {
         # Build a segment containing the current line of sequence
         my $segment        = substr $slice->{'seq'}, $s, $config->{'display_width'};
-        my $seq_length_seg = $segment =~ s/\.//rg;
+        (my $seq_length_seg = $segment) =~ s/\.//g;
         my $seq_length     = length $seq_length_seg; # The length of the sequence which does not consist of a .
         my $first_bp_pos   = 0; # Position of first letter character
         my $last_bp_pos    = 0; # Position of last letter character
