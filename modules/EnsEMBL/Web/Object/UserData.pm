@@ -962,7 +962,7 @@ sub consequence_table {
       });
       
       # transcript
-      if ($feature_type = 'Transcript') {
+      if ($feature_type eq 'Transcript') {
         my $feature_url = $hub->url({
           species => $species,
           type    => 'Transcript',
