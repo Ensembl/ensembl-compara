@@ -25,6 +25,7 @@ use strict;
 
 use Math::Round;
 use EnsEMBL::Web::Document::Table;
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -167,7 +168,7 @@ sub get_species_info {
     return [] unless $compara_db;
     my $lookup = {};
 
-    my $tree = $compara_db->get_adaptor('SpeciesTree')->create_species_tree();
+    my $tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -compara_dba => $compara_db);
     ## Compara now uses full trinomials for all species
     foreach (@$species_order) {
       my $full_name = $hub->species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME');
