@@ -1751,6 +1751,7 @@ sub add_matrix {
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
   my $caption      = $data->{'caption'};
+  my $after        = $data->{'track_after'};
   my $column       = $matrix->{'column'};
   my $subset       = $matrix->{'menu'};
   my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
@@ -1759,13 +1760,16 @@ sub add_matrix {
   
   if (!($column_track && $column_track->parent_node)) {
     $column_track = $self->create_track($column_key, $data->{'track_name'} || $column, {
-      renderers => $data->{'renderers'},
-      label_x   => $column,
-      display   => 'off',
-      subset    => $subset,
+      renderers   => $data->{'renderers'},
+      label_x     => $column,
+      display     => 'off',
+      subset      => $subset,
+      track_after => $after,
       $matrix->{'row'} ? (matrix => 'column') : (),
       %{$data->{'column_data'} || {}}
     });
+    
+    $after = $column_track if $after;
     
     $self->alphabetise_tracks($column_track, $menu, 'label_x');
   }
@@ -2737,8 +2741,9 @@ sub add_regulation_builds {
     
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
       $self->add_matrix({
-        track_name => "$evidence_info->{$_}{'name'}$label",
-        matrix     => {
+        track_name  => "$evidence_info->{$_}{'name'}$label",
+        track_after => $prev_track,
+        matrix      => {
           menu   => $matrix_menus{$_}->id,
           column => $cell_line,
           rows   => [ values %{$matrix_rows{$cell_line}{$_}} ],
