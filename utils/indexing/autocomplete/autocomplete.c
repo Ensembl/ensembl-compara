@@ -498,7 +498,7 @@ char * size(off_t amt) {
   out = _sz(10);
   for(i=0;mult[i];i++) {
     if(amt<1024) {
-      sprintf(out,"%d%c",amt,mult[i]);
+      sprintf(out,"%ld%c",amt,mult[i]);
       return out;
     }
     amt /= 1024;
@@ -583,15 +583,15 @@ void process_file(char *fn) {
       //dump_prefix_counter(prefixes);
       //dump_word_counter(words);
       total = (stat_naughty+stat_good+1);
-      fprintf(stderr,"Run : %dMb in %ds (%ds).\nMem : "
-             "n/g(%)=%s/%s (%d) p/s=%s/%s. a=%d.\n",
+      fprintf(stderr,"Run : %dMb in %lds (%lds).\nMem : "
+             "n/g(%%)=%s/%s (%lld) p/s=%s/%s. a=%d.\n",
              meg,block_end-all_start,block_end-block_start,
              size(stat_good),size(stat_naughty),
              stat_good*100/total,
              size(prefixes->num),size(stat_words),
              annoyingness_threshold(max_index_size));
       eta = block_end+(block_end-all_start)*stat_all/stat_read;
-      fprintf(stderr,"ETA : read/all = %s/%s (%d%%) at %s\n",
+      fprintf(stderr,"ETA : read/all = %s/%s (%ld%%) at %s\n",
              size(stat_read),size(stat_all),stat_read*100/stat_all,
              time_str(eta));
       fsize();
