@@ -137,6 +137,13 @@ my $phylo_uri = 'http://www.phyloxml.org';
   Arg[NO_RELEASE_TREES] : Boolean; if set to true this will force the writer
                           to avoid calling C<release_tree()> on every tree
                           given. Defaults to false
+  Arg[NO_BRANCH_LENGTHS]: Boolean; if set to true no branch length will written.
+                          Defaults to B<false>.
+  Arg[COMPACT_ALIGNMENTS]: Boolean; if set to true the fragmented alignments 
+                           of the low coveage species will be concatenated.
+                           Defaults to B<true>.
+                           
+                          
   Description : Creates a new tree writer object. 
   Returntype  : Instance of the writer
   Exceptions  : None
@@ -152,8 +159,8 @@ sub new {
   $class = ref($class) || $class;
   my $self = $class->SUPER::new(@args);
   
-  my ($cdna, $source, $aligned, $no_sequences, $no_release_trees) = 
-    rearrange([qw(cdna source aligned no_sequences no_release_trees)], @args);
+  my ($cdna, $source, $aligned, $no_sequences, $no_release_trees, $no_branch_lengths, $compact_alignments) = 
+    rearrange([qw(cdna source aligned no_sequences no_release_trees no_branch_lengths compact_alignments)], @args);
 
   $source ||= 'Unknown';
   $cdna ||= 0;
@@ -166,6 +173,8 @@ sub new {
   $self->aligned($aligned);
   $self->no_sequences($no_sequences);
   $self->no_release_trees($no_release_trees);
+  $self->no_branch_lengths($no_branch_lengths);
+  $self->compact_alignments($compact_alignments);
   
   return $self;
 }
@@ -237,6 +246,38 @@ sub no_release_trees {
   my ($self, $no_release_trees) = @_;
   $self->{no_release_trees} = $no_release_trees if defined $no_release_trees;
   return $self->{no_release_trees};
+}
+
+=pod
+
+=head2 no_branch_lengths()
+
+  Arg [0] : Boolean; indiciates we do not wish to add branch lengths
+  Returntype : Boolean
+  Exceptions : None
+  Status     : Stable
+ 
+=cut
+
+sub no_branch_lengths {
+  my ($self, $no_branch_lengths) = @_;
+  $self->{no_branch_lengths} = $no_branch_lengths if defined $no_branch_lengths;
+  return $self->{no_branch_lengths};
+}
+
+=head2 compact_alignments()
+
+  Arg [0] : Boolean; indiciates we wish to comapct the alignments of fragmented regions of low coverage species
+  Returntype : Boolean
+  Exceptions : None
+  Status     : Stable
+ 
+=cut
+
+sub compact_alignments {
+  my ($self, $compact_alignments) = @_;
+  $self->{compact_alignments} = $compact_alignments if defined $compact_alignments;
+  return $self->{compact_alignments};
 }
 
 =pod
@@ -324,16 +365,16 @@ sub _write_tree {
   my $w = $self->_writer();
   
   my %attr = (rooted => 'true');
-  
   if(check_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
     $attr{type} = 'gene tree';
+  } elsif (check_ref($tree, 'Bio::EnsEMBL::Compara::GenomicAlignTree')) {
+      $attr{type} = 'genomic align tree';
   }
-  
+
   $w->startTag('phylogeny', %attr);
   $w->dataElement('id', $tree->stable_id()) if $tree->can("stable_id");
   $self->_process($tree);
   $w->endTag('phylogeny');
-  
   $tree->release_tree() if ! $self->no_release_trees;
   
   return;
@@ -356,6 +397,10 @@ sub _dispatch_tag {
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
     return $self->_genetreenode_tag($node);
   }
+  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GenomicAlignTree')) {
+    return $self->_genomicaligntree_tag($node);
+  } 
+
   my $ref = ref($node);
   throw("Cannot process type $ref");
 }
@@ -367,6 +412,9 @@ sub _dispatch_body {
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
     $self->_genetreenode_body($node);
+  }
+  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GenomicAlignTree')) {
+    return $self->_genomicaligntree_body($node);
   }
   else {
     my $ref = ref($node);
@@ -476,6 +524,98 @@ sub _genetreemember_body {
     'applies_to' => 'clade'
   );
   
+  return;
+}
+
+sub _genomicaligntree_tag {
+  my ($self, $node) = @_;
+  if ($self->no_branch_lengths) {
+      return ['clade'];
+  } else {
+      return ['clade', {branch_length => $node->distance_to_parent()}];
+  }
+}
+
+sub _genomicaligntree_body {
+  my ($self, $node) = @_;
+  
+  my $w = $self->_writer();
+
+  my $compact_alignments = $self->compact_alignments;
+  my $all_genomic_aligns = $node->get_all_genomic_aligns_for_node();
+  my $genomic_align_group = $node->genomic_align_group;
+
+  #Tag duplications
+  my $type = $node->node_type;
+  if((defined $type) and ($type eq "duplication")) {
+    $w->startTag('events');
+    $w->dataElement('type', 'speciation_or_duplication');
+    $w->dataElement('duplications', 1);
+    $w->endTag();
+  }
+
+  #Number of genomic_aligns = 0 for ancestral nodes in EPO_LOW_COVERAGE
+  if ($all_genomic_aligns && @$all_genomic_aligns > 0) {
+
+    #Unique name to handle duplications as opposed to scientific name
+    if ($node->is_leaf()) {
+      $w->dataElement('name', $node->name);
+    } else {
+      $w->dataElement('name', $all_genomic_aligns->[0]->dnafrag->name);
+    }
+    
+    #Get taxon for extant species only (genomic_aligns are for a single species)
+    if ($all_genomic_aligns->[0]->genome_db->name ne "ancestral_sequences") {
+      my $taxon = $all_genomic_aligns->[0]->genome_db->taxon();
+      #Taxon
+      $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
+    }
+    
+    if ($compact_alignments) {
+      #join together locations of multiple GenomicAlign objects
+      my @locations;
+      
+      #Dealing with Sequence
+      $w->startTag('sequence');
+      
+      #Append the location strings together
+      foreach my $genomic_align (@$all_genomic_aligns) {
+	push @locations, sprintf('%s:%d-%d',$genomic_align->dnafrag->name, $genomic_align->dnafrag_start(), $genomic_align->dnafrag_end());
+      }
+      my $location = join ",", @locations;
+      $w->dataElement('location', $location);
+      
+      #Do I need type?
+      #$w->dataElement('type', 'dna'); 
+      
+      my $mol_seq = ($self->aligned()) ? $genomic_align_group->aligned_sequence : $genomic_align_group->original_sequence;
+
+      $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
+      $w->endTag('sequence');  
+
+    } else {
+
+      #Write each location and sequence out separately
+      foreach my $genomic_align (@$all_genomic_aligns) {
+	#Dealing with Sequence
+	$w->startTag('sequence');
+	
+	my $location = sprintf('%s:%d-%d',$genomic_align->dnafrag->name, $genomic_align->dnafrag_start(), $genomic_align->dnafrag_end());
+	$w->dataElement('location', $location);
+
+	my $mol_seq = ($self->aligned()) ? $genomic_align->aligned_sequence : $genomic_align->original_sequence;
+
+	$w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
+	$w->endTag('sequence');  
+      }
+    }
+  }
+
+  if($node->get_child_count()) {
+    foreach my $child (@{$node->children()}) {
+      $self->_process($child);
+    }
+  }
   return;
 }
 
