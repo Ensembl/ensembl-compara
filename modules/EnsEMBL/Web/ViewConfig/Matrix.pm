@@ -71,7 +71,7 @@ sub form {
         renderers => $renderers,
       };
       
-      $cells{$x} = { map { $_->data->{'caption'} => $_ } $_->nodes };
+      $cells{$x} = { map { $_->data->{'name'} => $_ } $_->nodes };
       $renderer_counts{$_}++ for keys %renderer_hash;
     } else {
       push @{$features{$_->data->{'option_key'}}}, $_;
