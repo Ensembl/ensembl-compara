@@ -1803,6 +1803,7 @@ sub add_matrix {
       menu      => 'no',
       display   => $_->{'on'} ? 'on' : 'off',
       renderers => [qw(on on off off)],
+      caption   => "$column - $_->{'row'}",
     }));
     
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'} };
