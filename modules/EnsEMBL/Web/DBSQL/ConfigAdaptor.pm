@@ -316,8 +316,17 @@ sub update_active {
       push @new_ids, $self->set_data($active, $config->{'data'});
       $self->delete_config($configs->{$active}{'link_id'}) if $configs->{$active}{'link_id'} && !$config->{'link_id'};
     } else {
-      # clone the selected config's record
-      push @new_ids, $self->new_config(%$config, data => $config->{'data'}, active => 'y', name => '', description => '');
+      # clone the selected config's record, but change record_type and record_type_id if it belongs to a group
+      my %record_type;
+      
+      if ($config->{'record_type'} eq 'group') {
+        my $user_id = $self->user_id;
+        
+        $record_type{'record_type'}    = $user_id ? 'user' : 'session';
+        $record_type{'record_type_id'} = $user_id || $self->session_id;
+      }
+      
+      push @new_ids, $self->new_config(%$config, %record_type, data => $config->{'data'}, active => 'y', name => '', description => '');
       $self->delete_config($self->active_config($config->{'type'} eq 'view_config' ? 'image_config' : 'view_config', $config->{'link_code'})) if $config->{'link_code'} && !$config->{'link_id'};
     }
     
