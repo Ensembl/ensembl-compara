@@ -492,6 +492,41 @@ sub aligned_sequence {
   return $aligned_sequence;
 }
 
+=head2 original_sequence
+
+  Arg [1]     : -none-
+  Example     : $original_sequence = $object->original_sequence();
+  Description : Get the original sequence for this group. When the group
+                contains one single sequence, returns its original sequence.
+                For composite segments, returns the combined original seq.
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk
+
+=cut
+
+sub original_sequence {
+  my $self = shift;
+
+  my $original_sequence;
+  foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
+    if (!$original_sequence) {
+      $original_sequence = $this_genomic_align->original_sequence;
+    } else {
+      my $pos = 0;
+      foreach my $substr (grep {$_} split(/(\.+)/, $this_genomic_align->original_sequence)) {
+        if ($substr =~ /^\.+$/) {
+          $pos += length($substr);
+        } else {
+          substr($original_sequence, $pos, length($substr), $substr);
+        }
+      }
+    }
+  }
+
+  return $original_sequence;
+}
 
 
 1;
