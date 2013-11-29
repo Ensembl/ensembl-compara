@@ -100,8 +100,10 @@ sub render {
       { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
       { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
       { key => 'pre',         title => 'Pre assembly',    width => '5%', align => 'left' },
-  ], [], { data_table => 1, exportable => 1});
-
+  ], [], { data_table => 1, exportable => 1 });
+  
+  $table->filename = 'Species';
+  
   foreach my $info (sort {$a->{'common'} cmp $b->{'common'}} values %species) {
     next unless $info;
     my $dir       = $info->{'dir'};
