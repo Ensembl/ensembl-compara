@@ -21,7 +21,6 @@
   only column nodes appear in track order - need all sortable nodes somehow
   
   TODO: 
-  update link count correctly when column track in main panel is turned on/off
   filter subtracks
   filter classes (<select>) for datahubs?
   
