@@ -178,7 +178,7 @@ sub save_as {
       '<option value="%s" class="%1$s">%s%s</option>',
       $_->{'record_id'},
       $_->{'name'},
-      $user ? sprintf(' (%s%s)', $_->{'record_type'} eq 'user' ? 'Account' : ucfirst $_->{'record_type'}, $_->{'record_type'} eq 'group' ? ": $groups{$_->{'record_type_id'}}" : '') : ''
+      $user ? sprintf(' (%s%s)', $_->{'record_type'} eq 'user' ? 'Account' : ucfirst $_->{'record_type'}, $_->{'record_type'} eq 'group' ? ': ' . $groups{$_->{'record_type_id'}}->name : '') : ''
     ); 
   }
   
