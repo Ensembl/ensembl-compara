@@ -155,8 +155,7 @@ sub table_data {
     
     my $clin_sign = $pf->clinical_significance;
     if ($clin_sign) {
-      my $clin_sign_colour = $object->clinical_significance_colour($clin_sign);
-      $clin_sign = qq{<span style="color:$clin_sign_colour">$clin_sign</span>};
+      $clin_sign = qq{<span class="hidden export">$clin_sign</span><img class="_ht" style="margin-right:5px;vertical-align:top" src="/i/val/clinsig_$clin_sign.png" title="$clin_sign" />};
       $column_flags{'clin_sign'} = 1;
     }
     
