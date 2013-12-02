@@ -61,7 +61,7 @@ sub process {
     
     my $nearest = $parser->nearest;
     
-    if ($nearest && $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /\W/, $nearest)) {
+    if ($nearest && $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /^[\w|\.]/, $nearest)) {
       $data->{'format'} ||= $parser->format;
       $data->{'style'}    = $parser->style;
       $data->{'nearest'}  = $nearest;
