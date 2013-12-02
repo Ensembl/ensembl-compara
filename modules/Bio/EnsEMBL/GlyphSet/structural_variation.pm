@@ -70,17 +70,24 @@ sub features {
       $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', $var_db)->fetch_by_name($set_name), $var_db);
     } elsif ($study_name) {
       $features = $slice->get_all_StructuralVariationFeatures_by_Study($self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db)->fetch_by_name($study_name), undef, $var_db);
-    } else {
-      my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
-      my $source   = $self->my_config('source');
+    }
+    else {
+      my $source     = $self->my_config('source');
       my $min_size = $self->my_config('min_size');
       my $max_size = $self->my_config('max_size');
       my $start    = $slice->start;
       my $end      = $slice->end;
       my @display_features;
-      $source = undef unless ($source =~ /^\w/);
       
-      $features = $slice->$func($source, $var_db);
+      # By source
+      if ($source) {
+        my $func  = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures_by_source' : 'get_all_StructuralVariationFeatures_by_source';
+        $features = $slice->$func($source, undef, $var_db);
+      }
+      else {
+        my $func  = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
+        $features = $slice->$func(undef, $var_db);
+      }
       
       if ($min_size || $max_size) {
         for (my $i = 0; $i < scalar @$features; $i++) {
