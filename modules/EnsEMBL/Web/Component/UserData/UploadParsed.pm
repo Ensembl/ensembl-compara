@@ -81,7 +81,7 @@ sub content_ajax {
       if ($content) {      
         my $error   = $parser->parse($content, $data->{'format'});
         my $nearest = $parser->nearest;
-           $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /\W/, $nearest); # Make sure we have a valid location
+           $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest); # Make sure we have a valid location
         
         if ($nearest) {
           $data->{'format'}  ||= $parser->format;
