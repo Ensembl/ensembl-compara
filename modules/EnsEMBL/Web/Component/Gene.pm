@@ -44,6 +44,7 @@ sub draw_structure {
       my $gta = $database->get_GeneTreeAdaptor();
 
       my $member  = $gma->fetch_by_source_stable_id(undef, $self->object->stable_id);
+      return unless $member;
       my $peptide = $sma->fetch_canonical_for_gene_member_id($member->member_id);
 
       my $gene_tree   = $gta->fetch_default_for_Member($member);
