@@ -106,10 +106,10 @@ sub format_frequencies {
         $freq_data->{$pop_id}{'pop_info'}{'Name'} .= '</b>';
       }
       foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
-        
+
         if ($freq_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'}) {
-          $fv_data->{$pop_id}{'ssid'}{$ssid}                = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-          $fv_data->{$pop_id}{'pop_info'}                 = $freq_data->{$pop_id}{'pop_info'};
+          $fv_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+          $fv_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
           $fv_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
         } elsif ($name =~ /^1000genomes\:phase.*/i) {
           $tg_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
@@ -128,11 +128,11 @@ sub format_frequencies {
     }
     
     # recurse this method with just the tg_data and a flag to indicate it
-    push @table_array,  @{$self->format_frequencies($tg_data, '1000 Genomes')} if $tg_data;
-    push @table_array,  @{$self->format_frequencies($hm_data, 'HapMap')}       if $hm_data;
-    push @table_array,  @{$self->format_frequencies($fv_data, 'Inconsistent data')}  if $fv_data;
-    push @table_array,  @{$self->format_frequencies($mgp_data, 'Mouse Genomes Project')}  if $mgp_data;
-    push @table_array,  @{$self->format_frequencies($esp_data, 'ESP')}  if $esp_data;
+    push @table_array,  @{$self->format_frequencies($tg_data,  '1000 Genomes')}          if $tg_data;
+    push @table_array,  @{$self->format_frequencies($hm_data,  'HapMap')}                if $hm_data;
+    push @table_array,  @{$self->format_frequencies($fv_data,  'Inconsistent data')}     if $fv_data;
+    push @table_array,  @{$self->format_frequencies($mgp_data, 'Mouse Genomes Project')} if $mgp_data;
+    push @table_array,  @{$self->format_frequencies($esp_data, 'ESP')}                   if $esp_data;
 
     # special method for data with no pop/freq data
     if ($no_pop_data) {
@@ -166,7 +166,7 @@ sub format_frequencies {
         
         $pop_row{'Allele count'}{$gt}      = "$allele_count <strong>($gt)</strong>" if defined $allele_count;
         $gt = substr($gt,0,10).'...' if (length($gt)>10);
-        $pop_row{"Alleles $gt"} = $self->format_number(shift @allele_freq);
+        $pop_row{"Allele $gt"} = $self->format_number(shift @allele_freq);
       }
       
       $pop_row{'Allele count'} = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Allele count'}} if $pop_row{'Allele count'};
@@ -178,7 +178,7 @@ sub format_frequencies {
         my $genotype_count = shift @{$data->{'GenotypeCount'}} || undef;
         
         $pop_row{'Genotype count'}{$gt} = "$genotype_count <strong>($gt)</strong>" if defined $genotype_count;
-        $pop_row{"Genotypes $gt"}       = $self->format_number(shift @genotype_freq);
+        $pop_row{"Genotype $gt"}        = $self->format_number(shift @genotype_freq);
       }
       
       $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
@@ -224,14 +224,15 @@ sub format_frequencies {
   # Format table columns
   my @header_row;
   
-  foreach my $col (sort { $b cmp $a } keys %columns) {
-    next if $col =~ /pop|ssid|submitter|Description|detail|count|failed/;
+  # Allele frequency columns
+  foreach my $col (sort { $a cmp $b } keys %columns) {
+    next if $col =~ /pop|ssid|submitter|Description|detail|count|failed|Genotype/; # Exclude all but 'Allele X'
     my ($type, $al_gen) = split (' ',$col);
     foreach my $al (keys(%$al_colours)) {
       $al_gen =~ s/$al/$al_colours->{$al}/g;
     }
     my $coloured_col = "$type $al_gen";
-    unshift @header_row, { key => $col, align => 'left', label => $coloured_col, sort => 'numeric' };
+    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => 'numeric' };
   }
   
   if (exists $columns{'ssid'}) {
@@ -242,6 +243,19 @@ sub format_frequencies {
   unshift @header_row, { key => 'Description',    align => 'left', label => 'Description',                           sort => 'none'   } if exists $columns{'Description'};
   unshift @header_row, { key => 'pop',            align => 'left', label => ($is_somatic ? 'Sample' : 'Population'), sort => 'html'   };
   push    @header_row, { key => 'Allele count',   align => 'left', label => 'Allele count',                          sort => 'none'   } if exists $columns{'Allele count'};
+  
+
+  # Genotype frequency columns
+  foreach my $col (sort { $a cmp $b } keys %columns) {
+    next if $col =~ /pop|ssid|submitter|Description|detail|count|failed|Allele/; # Exclude all but 'Genotype X|X'
+    my ($type, $al_gen) = split (' ',$col);
+    foreach my $al (keys(%$al_colours)) {
+      $al_gen =~ s/$al/$al_colours->{$al}/g;
+    }
+    my $coloured_col = "$type $al_gen"; 
+    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => 'numeric' };
+  }
+
   push    @header_row, { key => 'Genotype count', align => 'left', label => 'Genotype count',                        sort => 'none'   } if exists $columns{'Genotype count'};
   push    @header_row, { key => 'detail',         align => 'left', label => 'Genotype detail',                       sort => 'none'   } if $self->object->counts->{'individuals'};
   push    @header_row, { key => 'failed',         align => 'left', label => 'Comment', width => '25%',               sort => 'string' } if $columns{'failed'};
