@@ -155,8 +155,8 @@ perl filter_vep.pl -i out.txt -o out_filtered.txt -filter "[filter_text]"</pre>
     <p> For certain fields you may only be interested in whether it is defined;
     in this case the operator and value can be left out: </p>
     
-    <pre class="code"># match entries where HGNC gene symbol is defined
---filter "HGNC"</pre>
+    <pre class="code"># match entries where the gene symbol is defined
+--filter "SYMBOL"</pre>
     
     <p> Filter strings can also be linked together by the logical operators "or"
     and "and", and inverted by prefixing with "not": </p>
@@ -211,7 +211,7 @@ perl filter_vep.pl -i out.txt -o out_filtered.txt -filter "[filter_text]"</pre>
         comma-separated list or a file containing values on separate lines. Each
         list item is compared using the "is" operator.
         <pre class="code"># find variants in a list of gene names
---filter "HGNC in BRCA1,BRCA2"
+--filter "SYMBOL in BRCA1,BRCA2"
 
 # filter using a file of MotifFeatures
 --filter "Feature in /data/files/motifs_list.txt"</pre></li>
