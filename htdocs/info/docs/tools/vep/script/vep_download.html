@@ -49,6 +49,7 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 	
 	<div id="div_versions" style="display:none;">
 	<ul>
+		<li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-72">Download version 73</a> (Ensembl 73) </li>
 		<li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-72">Download version 72</a> (Ensembl 72) </li>
 		<li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-71">Download version 71</a> (Ensembl 71) </li>
 		<li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-70">Download version 2.8</a> (Ensembl 70) </li>
@@ -64,6 +65,18 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 	</div><hr/>
 	<h2 id="new">What's new</h2>
 	
+	<h4> New in version 74 <i>(December 2013)</i> </h4>
+	
+	<ul>
+		<li>retrieve the <a href="http://genetics.bwh.harvard.edu/pph2/dokuwiki/overview#prediction" rel="external">humDiv PolyPhen prediction</a> instead of humVar using <a href="vep_options.html#opt_humdiv">--humdiv</a></li>
+		<li>source for gene symbol available with <a href="vep_options.html#opt_symbol">--symbol</a></li>
+	</ul>
+	
+	<h4 id="history"> Previous version history: <a href="#history"
+	onclick="show_hide('history');"	id="a_history">Show</a> </h4>
+	
+	<div id="div_history" style="display: none;">
+	
 	<h4> New in version 73 <i>(August 2013)</i> </h4>
 	
 	<ul>
@@ -77,11 +90,6 @@ tr:nth-child(odd) {background-color: #f0f0f0;}
 		<li>use <a href="vep_options.html#opt_total_length">--total_length</a> to give the total length of cDNA, CDS and protein sequences</li>
         <li>add data from VCF INFO fields when using <a href="vep_custom.html">custom annotations</a></li>
 	</ul>
-	
-	<h4 id="history"> Previous version history: <a href="#history"
-	onclick="show_hide('history');"	id="a_history">Show</a> </h4>
-	
-	<div id="div_history" style="display: none;">
 	
 	<h4> New in version 72 <i>(June 2013)</i> </h4>
 	
