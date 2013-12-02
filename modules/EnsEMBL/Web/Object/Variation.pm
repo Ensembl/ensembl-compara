@@ -622,8 +622,11 @@ sub freqs {
 
   my $self = shift;
 
-
   ## show genotypes for unmapped variants - get alleles from variation not variation feature
+
+  # Force to display the failed alleles
+  $self->Obj->adaptor->db->get_db_adaptor('variation')->include_failed_variations(1);
+
   my $allele_list = $self->vari->get_all_Alleles;
   return {} unless $allele_list;
   
