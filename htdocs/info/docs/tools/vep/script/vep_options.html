@@ -357,8 +357,20 @@ host          useastdb.ensembl.org</pre>
 				impact of an amino acid substitution on the structure and
 				function of a human protein using straightforward physical and
 				comparative considerations. The VEP can output the
-				<b>p</b>rediction term, <b>s</b>core or <b>b</b>oth. <i>Not used
-				by default</i>
+        <b>p</b>rediction term, <b>s</b>core or <b>b</b>oth. The VEP uses the
+        humVar score by default - use <a href="#opt_humdiv">--humdiv</a> to
+        retrieve the humDiv score. <i>Not used by default</i>
+			</td>
+		</tr>
+		<tr id="opt_humdiv">
+			<td><pre>--humdiv</pre></td>
+			<td>&nbsp;</td>
+			<td>
+				<span style="color:red;">Human only</span>
+        Retrieve the <a
+        href="http://genetics.bwh.harvard.edu/pph2/dokuwiki/overview#prediction"
+        rel="external">humDiv PolyPhen prediction</a> instead of the defaulat
+        humVar. <i>Not used by default</i>
 			</td>
 		</tr>
 		<tr id="opt_regulatory">
