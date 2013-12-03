@@ -281,8 +281,15 @@ sub preload {
     $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $self->root->get_all_nodes );
 
     # For retro-compatibility, we need to fill in taxon_id and taxon_name
+    my %cache_stns = ();
     foreach my $node (@{$self->root->get_all_nodes}) {
         next unless $node->has_tag('species_tree_node_id');
+        my $stn_id = $node->get_value_for_tag('species_tree_node_id');
+        if (exists $cache_stns{$stn_id}) {
+            $node->{_species_tree_node} = $cache_stns{$stn_id};
+        } else {
+            $cache_stns{$stn_id} = $node->species_tree_node;
+        }
         $node->add_tag('taxon_id', $node->species_tree_node->taxon_id);
         $node->add_tag('taxon_name', $node->species_tree_node->node_name);
     }
