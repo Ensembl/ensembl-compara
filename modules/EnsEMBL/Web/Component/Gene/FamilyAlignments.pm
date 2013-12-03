@@ -81,21 +81,28 @@ sub _embed_jalview {
   
   return unless $outcount;
 
+    #<applet archive="$BASE/jalview/jalview.jar"
   return qq(
   <p class="space-below">$count $type members of this family:
-    <applet archive="$BASE/jalview/jalview.jar"
-        code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
+    <applet archive="$BASE/jalview/jalviewApplet.jar"
+        code="jalview.bin.JalviewLite" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
-      <param name="input" value="$BASE$URL" />
-      <param name="type" value="URL" />
-      <param name=format value="FASTA" />
-      <param name="fontsize" value="10" />
-      <param name="Consensus" value="*" />
+
+      <param name="file" value="$BASE$URL" />
+      <param name="showFullId" value="false" />
+      <param name="defaultColour" value="clustal" />
+      <param name="showSequenceLogo" value="true" />
+      <param name="showGroupConsensus" value="true" />
+
+      <param name="application_url" value="http://www.jalview.org/services/launchApp" />
+
       <strong>Java must be enabled to view alignments</strong>
     </applet>
   </p>
 );
 }
 
+        #code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
+      #<param name="application_url" value="http://www.jalview.org/services/launchApp"> 
 
 1;
