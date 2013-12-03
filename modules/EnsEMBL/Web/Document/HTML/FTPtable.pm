@@ -42,6 +42,7 @@ sub render {
   my %title = (
     dna       => 'Masked and unmasked genome sequences associated with the assembly (contigs, chromosomes etc.)',
     cdna      => 'cDNA sequences for Ensembl or "ab initio" predicted genes',
+    CDS       => 'CDS sequences for Ensembl or "ab initio" predicted genes',
     prot      => 'Protein sequences for Ensembl or "ab initio" predicted genes',
     rna       => 'Non-coding RNA gene predictions',
     embl      => 'Ensembl database dumps in EMBL nucleotide sequence database format',
@@ -68,6 +69,7 @@ sub render {
     { key => 'species', title => 'Species',                      align => 'left',   width => '10%', sort => 'html' },
     { key => 'dna',     title => 'DNA (FASTA)',                  align => 'center', width => '10%', sort => 'none' },
     { key => 'cdna',    title => 'cDNA (FASTA)',                 align => 'center', width => '10%', sort => 'none' },
+    { key => 'cds',     title => 'CDS (FASTA)',                  align => 'center', width => '10%', sort => 'none' },
     { key => 'ncrna',   title => 'ncRNA (FASTA)',                align => 'center', width => '10%', sort => 'none' },
     { key => 'protseq', title => 'Protein sequence (FASTA)',     align => 'center', width => '10%', sort => 'none' },
     { key => 'embl',    title => 'Annotated sequence (EMBL)',    align => 'center', width => '10%', sort => 'none' },
@@ -117,6 +119,7 @@ sub render {
       species => sprintf('<b>%s</b><br /><i>%s</i>', $sp->{'common_name'}, $sp->{'sci_name'}),
       dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'},    $rel, $sp_dir),
+      cds	  => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'},    $rel, $sp_dir),
       ncrna   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a>', $title{'rna'},     $rel, $sp_dir),
       protseq => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a>',   $title{'prot'},    $rel, $sp_dir),
       embl    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a>',         $title{'embl'},    $rel, $sp_dir),
@@ -197,7 +200,7 @@ sub required_types_for_species {
     bos_taurus canis_familiaris danio_rerio drosophila_melanogaster 
     equus_caballus felis_catus gallus_gallus homo_sapiens 
     saccharomyces_cerevisiae monodelphis_domestica mus_musculus 
-    ornithorhynchus_anatinus pan_troglodytes pongo_pygmaeus 
+    nomascus_leucogenys ornithorhynchus_anatinus ovis_aries pan_troglodytes pongo_pygmaeus 
     rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
     pongo_abelii macaca_mulatta
   )};
@@ -206,8 +209,8 @@ sub required_types_for_species {
   $required_lookup{'var4'} = { map { $_ => 1 } qw(
     bos_taurus canis_familiaris danio_rerio drosophila_melanogaster 
     equus_caballus felis_catus gallus_gallus homo_sapiens 
-    saccharomyces_cerevisiae monodelphis_domestica mus_musculus 
-    ornithorhynchus_anatinus pan_troglodytes pongo_pygmaeus 
+    saccharomyces_cerevisiae monodelphis_domestica mus_musculus nomascus_leucogenys
+    ornithorhynchus_anatinus ovis_aries pan_troglodytes pongo_pygmaeus 
     rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
     pongo_abelii macaca_mulatta
   )};
@@ -224,8 +227,8 @@ sub required_types_for_species {
   
   # BAM
   $required_lookup{'bam'} = { map { $_ => 1 } qw(
-    anolis_carolinensis canis_familiaris danio_rerio ficedula_albicollis gallus_gallus monodelphis_domestica mustela_putorius_furo
-    oreochromis_niloticus ornithorhynchus_anatinus oryctolagus_cuniculus pan_troglodytes pelodiscus_sinensis
+    anolis_carolinensis astyanax_mexicanus canis_familiaris danio_rerio dasypus_novemcinctus ficedula_albicollis gallus_gallus lepisosteus_oculatus monodelphis_domestica mustela_putorius_furo
+    oreochromis_niloticus ornithorhynchus_anatinus oryctolagus_cuniculus ovis_aries pan_troglodytes pelodiscus_sinensis
     pongo_abelii sarcophilus_harrisii sus_scrofa xiphophorus_maculatus homo_sapiens felis_catus
   )};
   
