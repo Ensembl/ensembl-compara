@@ -31,7 +31,7 @@ foreach my $homology (@{$homologies}) {
   # You will find different kind of description
   # see ensembl-compara/docs/docs/schema_doc.html for more details
 
-  print $homology->description," ", $homology->subtype,"\n";
+  print $homology->description," ", $homology->taxonomy_level,"\n";
 
   # And if they are defined dN and dS related values
 
