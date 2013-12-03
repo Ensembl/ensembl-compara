@@ -10,7 +10,7 @@
 <h1>Compara API Tutorial</h1>
 
 
-<h2>Introduction</h2>
+<h2 id="intro">Introduction</h2>
 
 <p>
 This tutorial is an introduction to the <a href="index.html">EnsEMBL Compara API</a>.
@@ -23,14 +23,25 @@ from the EnsEMBL CVS repository, and while is not necessary for this tutorial,
 an understanding of the database tables may help as many of the adaptor modules are table-specific.
 </p>
 
+<p>
+The latest API course at the moment is still related to the version 73 of the API.
+However, most of the examples should work.
+The materials can be found on our <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-compara/docs/workshop/?root=ensembl&pathrev=branch-ensembl-73">CVS repository</a>.
+Extra information is also available on the instructors websites: <a href="http://www.ebi.ac.uk/~muffato/workshops/2013_12_Cambridge/">gene-based resources</a> and <a href="http://www.ebi.ac.uk/~stephenf/Workshops/Cam_dec_2013/">sequence-based resources</a>.
+</p>
 
-<h2>Installing the API</h2>
+<p>
+You can also visit our filmed API course on the EBI's <a href="http://www.ebi.ac.uk/training/online/course/ensembl-filmed-api-workshop">Training online Platform</a>.
+The API was in version 71 at that time.
+</p>
+
+<h2 id="install">Installing the API</h2>
 
 <p>
 <a href="/info/docs/api/api_installation.html">API installation</a> and updating is the same as per the core API.
 </p>
 
-<h2>Connecting to an EnsEMBL Compara database</h2>
+<h2 id="connection">Connecting to an EnsEMBL Compara database</h2>
 
 <h3>Connection parameters</h3>
 
@@ -96,7 +107,7 @@ in addition to the ones needed by the Registry is the <code>-dbname</code>, whic
 [[INCLUDE::/info/docs/api/compara/tut_registry3.inc]]
 </pre>
 
-<h2>EnsEMBL Compara object-specific adaptors</h2>
+<h2 id="adaptors">EnsEMBL Compara object-specific adaptors</h2>
 
 <p>
 EnsEMBL Compara adaptors are used to fetch data from the database. Data are returned as EnsEMBL objects.
@@ -139,7 +150,7 @@ Compara database, you will need the following command:
 database is 'compara'.
 </p>
 
-<h2>Code Conventions</h2>
+<h2 id="code_intro">Code Conventions</h2>
 
 <p>
 Refer to the <a href="/info/docs/api/core/index.html">EnsEMBL core tutorial</a> for a good description of the coding conventions normally used in EnsEMBL.
@@ -157,7 +168,7 @@ We can divide the fetching methods of the ObjectAdaptors into two categories: th
 [[INCLUDE::/info/docs/api/compara/tut_genomedb3.inc]]
 </pre>
 
-<h2>Whole Genome Alignments</h2>
+<h2 id="genomic_align">Whole Genome Alignments</h2>
 
 <p>
 The Compara database contains a number of different types of whole genome alignments.
@@ -212,7 +223,7 @@ Here is an example script with all of this:
 [[INCLUDE::/info/docs/api/compara/tut_align4.inc]]
 </pre>
 
-<h2>Homologies and Protein clusters</h2>
+<h2 id="gene_resources">Homologies and Protein clusters</h2>
 
 <p>
 All the homologies and families refer to GeneMembers and SeqMembers. Homology objects store orthologous and paralogous relationships between members and Family objects are clusters of members.
@@ -336,7 +347,7 @@ similar to the previous ones.
 </pre>
 
 
-<h2>Further help</h2>
+<h2 id="help">Further help</h2>
 
 <p>
 For additional information or help mail the <a href="mailto:dev&#64;ensembl.org">ensembl dev</a> mailing list.

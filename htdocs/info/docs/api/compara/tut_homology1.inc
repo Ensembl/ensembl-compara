@@ -17,7 +17,7 @@
   <span class="comp_tut slc"># You will find different kind of description</span>
   <span class="comp_tut slc"># see ensembl-compara/docs/docs/schema_doc.html for more details</span>
 
-  <span class="comp_tut kwc">print</span> <span class="comp_tut kwb">$homology</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">description</span><span class="comp_tut opt">,</span><span class="comp_tut str">&quot; &quot;</span><span class="comp_tut opt">,</span> <span class="comp_tut kwb">$homology</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">subtype</span><span class="comp_tut opt">,</span><span class="comp_tut str">&quot;</span><span class="comp_tut esc">\n</span><span class="comp_tut str">&quot;</span><span class="comp_tut opt">;</span>
+  <span class="comp_tut kwc">print</span> <span class="comp_tut kwb">$homology</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">description</span><span class="comp_tut opt">,</span><span class="comp_tut str">&quot; &quot;</span><span class="comp_tut opt">,</span> <span class="comp_tut kwb">$homology</span><span class="comp_tut opt">-&gt;</span><span class="comp_tut kwd">taxonomy_level</span><span class="comp_tut opt">,</span><span class="comp_tut str">&quot;</span><span class="comp_tut esc">\n</span><span class="comp_tut str">&quot;</span><span class="comp_tut opt">;</span>
 
   <span class="comp_tut slc"># And if they are defined dN and dS related values</span>
 
