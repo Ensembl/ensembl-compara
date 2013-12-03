@@ -1751,7 +1751,6 @@ sub add_matrix {
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
   my $caption      = $data->{'caption'};
-  my $after        = $data->{'track_after'};
   my $column       = $matrix->{'column'};
   my $subset       = $matrix->{'menu'};
   my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
@@ -1760,16 +1759,13 @@ sub add_matrix {
   
   if (!($column_track && $column_track->parent_node)) {
     $column_track = $self->create_track($column_key, $data->{'track_name'} || $column, {
-      renderers   => $data->{'renderers'},
-      label_x     => $column,
-      display     => 'off',
-      subset      => $subset,
-      track_after => $after,
+      renderers => $data->{'renderers'},
+      label_x   => $column,
+      display   => 'off',
+      subset    => $subset,
       $matrix->{'row'} ? (matrix => 'column') : (),
       %{$data->{'column_data'} || {}}
     });
-    
-    $after = $column_track if $after;
     
     $self->alphabetise_tracks($column_track, $menu, 'label_x');
   }
@@ -1803,7 +1799,6 @@ sub add_matrix {
       menu      => 'no',
       display   => $_->{'on'} ? 'on' : 'off',
       renderers => [qw(on on off off)],
-      caption   => "$column - $_->{'row'}",
     }));
     
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'} };
@@ -2742,9 +2737,8 @@ sub add_regulation_builds {
     
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
       $self->add_matrix({
-        track_name  => "$evidence_info->{$_}{'name'}$label",
-        track_after => $prev_track,
-        matrix      => {
+        track_name => "$evidence_info->{$_}{'name'}$label",
+        matrix     => {
           menu   => $matrix_menus{$_}->id,
           column => $cell_line,
           rows   => [ values %{$matrix_rows{$cell_line}{$_}} ],
@@ -2996,6 +2990,7 @@ sub add_phenotypes {
 sub add_structural_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
+  my @A = keys $hashref;
   
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'counts'}})) > 0;
   
@@ -3004,7 +2999,6 @@ sub add_structural_variations {
   my $desc                = 'The colours correspond to the structural variant classes.';
      $desc               .= '<br />For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.';
   my %options             = (
-    db         => $key,
     glyphset   => 'structural_variation',
     strand     => 'r', 
     bump_width => 0,
@@ -3018,6 +3012,7 @@ sub add_structural_variations {
   # Complete overlap (Larger structural variants)
   $structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
     %options,
+    db         => 'variation',
     caption     => 'Larger structural variants',
     sources     => undef,
     description => "Structural variants from all sources which are at least 1Mb in length. $desc",
@@ -3027,6 +3022,7 @@ sub add_structural_variations {
   # Partial overlap (Smaller structural variants)
   $structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
     %options,
+    db         => 'variation',
     caption     => 'Smaller structural variants',
     sources     => undef,
     description => "Structural variants from all sources which are less than 1Mb in length. $desc",
@@ -3035,8 +3031,11 @@ sub add_structural_variations {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
+    ## FIXME - Nasty hack to get variation tracks correctly configured
+    my $db = $key_2 =~ /DECIPHER/ ? 'variation_private' : 'variation';
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
+      db          => $db,
       caption     => $key_2,
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
