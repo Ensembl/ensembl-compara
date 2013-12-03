@@ -64,7 +64,7 @@ package Bio::EnsEMBL::Compara::SeqMember;
 use strict;
 #use warnings;
 
-use feature qw(switch);
+#use feature qw(switch);
 
 use Bio::Seq;
 
@@ -458,20 +458,14 @@ sub other_sequence {
 sub _prepare_cds_sequence {
     my $self = shift;
 
-    given ($self->source_name) {
-        when ('ENSEMBLPEP') {
-            $self->{_sequence_cds} = $self->get_Transcript->translateable_seq;
-        }
-        when ('ENSEMBLTRANS') {
-            die "ncRNA transcripts don't have CDS sequences. Their nucleotide sequence is directly accessible with SeqMember::sequence().\n";
-        }
-        when (/^Uniprot/) {
-            die "Uniprot entries don't have CDS sequences. They are only defined at the protein level.\n";
-        }
-        default {
-            warn "SeqMember doesn't know how to get a CDS sequence for ", $self->source_name;
-            $self->{_sequence_cds} = '';
-        }
+    die "ncRNA transcripts don't have CDS sequences. Their nucleotide sequence is directly accessible with SeqMember::sequence().\n" if $self->source_name eq 'ENSEMBLTRANS';
+    die "Uniprot entries don't have CDS sequences. They are only defined at the protein level.\n" if $self->source_name =~ m/^Uniprot/;
+
+    if ($self->source_name eq 'ENSEMBLPEP') {
+        $self->{_sequence_cds} = $self->get_Transcript->translateable_seq;
+    } else {
+        warn "SeqMember doesn't know how to get a CDS sequence for ", $self->source_name;
+        $self->{_sequence_cds} = '';
     }
 }
 
@@ -629,14 +623,12 @@ sub bioseq {
     my $alphabet = $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
     $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
-    my $seqname;
-    given ($id_type || '') {
-        when (/^SEQ/i) {$seqname = $self->sequence_id}
-        when (/^MEM/i) {$seqname = $self->member_id}
-        when (/^STA/i) {$seqname = $self->stable_id}
-        when (/^VER/i) {$seqname = $self->stable_id.($self->version ? '.'.$self->version : '')}
-        when (/^SOU/i) {$seqname = $self->source_name . ':' . $self->stable_id}
-        default {$seqname = $self->member_id}
+    my $seqname = $self->member_id;
+    if ($id_type) {
+        $seqname = $self->sequence_id if $id_type =~ m/^SEQ/i;
+        $seqname = $self->stable_id if $id_type =~ m/^STA/i;
+        $seqname = $self->stable_id.($self->version ? '.'.$self->version : '') if $id_type =~ m/^VER/i;
+        $seqname = $self->source_name . ':' . $self->stable_id if $id_type =~ m/^SOU/i;
     };
 
     return Bio::Seq->new(
