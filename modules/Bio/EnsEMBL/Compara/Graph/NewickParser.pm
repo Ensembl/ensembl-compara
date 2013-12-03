@@ -59,7 +59,6 @@ package Bio::EnsEMBL::Compara::Graph::NewickParser;
 use strict;
 use warnings;
 
-use Switch;
 
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
@@ -95,8 +94,7 @@ sub parse_newick_into_tree
   while(defined($token)) {
     if($debug) { printf("state %d : '%s'\n", $state, $token); };
     
-    switch ($state) {
-      case 1 { #new node
+    if ($state == 1) { #new node
         $node = new Bio::EnsEMBL::Compara::NestedSet;
 	  if (defined $class) {
           # Make sure that the class is loaded
@@ -116,7 +114,7 @@ sub parse_newick_into_tree
           $state = 2;
         }
       }
-      case 2 { #naming a node
+      elsif ($state == 2) { #naming a node
         if(!($token =~ /[\[\:\,\)\;]/)) { 
           $node->name($token);
           if($debug) { print("    naming leaf"); $node->print_node; }
@@ -124,7 +122,7 @@ sub parse_newick_into_tree
         }
         $state = 3;
       }
-      case 3 { # optional : and distance
+      elsif ($state == 3) { # optional : and distance
         if($token eq ':') {
           $token = next_token(\$newick, "[,);");
           $node->distance_to_parent($token);
@@ -135,7 +133,7 @@ sub parse_newick_into_tree
         }
         $state = 4;
       }
-      case 4 { # optional NHX tags
+      elsif ($state == 4) { # optional NHX tags
         if($token =~ /\[\&\&NHX/) {
             # careful: this regexp gets rid of all NHX wrapping in one step
             $token =~ /\[\&\&NHX\:(\S+)\]/;
@@ -176,7 +174,7 @@ sub parse_newick_into_tree
         }
         $state = 5;
       }
-      case 5 { # end node
+      elsif ($state == 5) { # end node
         if($token eq ')') {
           if($debug) { print("end set : "); $lastset->print_node; }
           $node = $lastset;        
@@ -203,10 +201,9 @@ sub parse_newick_into_tree
         }
       }
 
-      case 13 {
+      elsif ($state == 13) {
         throw("parse error: nothing expected after ;");
       }
-    }
   }
   # Tags of the root node are lost otherwise
   $root->{_tags} = $node->{_tags} unless $root eq $node;
