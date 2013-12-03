@@ -454,6 +454,7 @@ sub markup_exons {
     exon0   => 'e0',
     exon1   => 'e1',
     exon2   => 'e2',
+    eu      => 'eu',
     other   => 'eo',
     gene    => 'eg',
     compara => 'e2',
@@ -931,7 +932,7 @@ sub class_to_style {
     my $styles       = $species_defs->colour('sequence_markup');
     my $var_styles   = $species_defs->colour('variation');
     my $i            = 1;
-    
+   
     my %class_to_style = (
       con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}{'default'}" } ],
       dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}{'default'}" } ],
