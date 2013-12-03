@@ -74,9 +74,9 @@ sub feature_content {
     $position = "$start-$end";
   }
   
-	if (defined $feature->breakpoint_order && $feature->is_somatic == 1) {
-	  $is_breakpoint = 1;
-	} elsif ($length > $max_length) {
+  if (defined $feature->breakpoint_order && $feature->is_somatic == 1) {
+    $is_breakpoint = 1;
+  } elsif ($length > $max_length) {
     $location_link = $hub->url({
       type     => 'Location',
       action   => 'Overview',
@@ -107,15 +107,18 @@ sub feature_content {
   
   $self->caption($class eq 'CNV_PROBE' ? 'CNV probe: ' : 'Structural variation: ' . $sv_id);
   
-  $self->add_entry({
-    label_html => "$sv_id properties",
-    link       => $hub->url({
-      type     => 'StructuralVariation',
-      action   => 'Summary',
-      sv       => $sv_id,
-    })
-  });
-  
+  # Display link to SV page only for the non private data
+  if ($hub->param('vdb') eq 'variation') {
+    $self->add_entry({
+      label_html => "$sv_id properties",
+      link       => $hub->url({
+        type     => 'StructuralVariation',
+        action   => 'Summary',
+        sv       => $sv_id,
+      })
+    });
+  }
+
   if ($is_breakpoint) {
     $self->add_entry({
       type       => 'Location',
@@ -165,6 +168,18 @@ sub feature_content {
       type  => 'Validation',
       label => join(',', @$vstatus),
     });    
+  }
+
+  # Display associated phenotype for private database
+  if ($hub->param('vdb') ne 'variation') {
+    my $phenotypes_list = $variation->get_all_PhenotypeFeatures;
+    if (scalar(@$phenotypes_list)) {
+      my $phenotypes = join(', ', map { $_->phenotype->description } @$phenotypes_list);
+      $self->add_entry({
+        type  => 'Phenotype'.(scalar @$phenotypes_list > 1 ? 's' : ''),
+        label => $phenotypes,
+      });
+    }
   }
 }
 
