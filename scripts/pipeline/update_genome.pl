@@ -24,9 +24,6 @@ my $description = q{
 ## AUTHORS
 ##    Javier Herrero (jherrero@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script takes the new core DB and a compara DB in production fase
 ##    and updates it in several steps:

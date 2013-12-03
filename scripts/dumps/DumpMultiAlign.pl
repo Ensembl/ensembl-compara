@@ -23,9 +23,6 @@ my $description = q{
 ##    Abel Ureta-Vidal (abel@ebi.ac.uk)
 ##    Javier Herrero (jherrero@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This modules is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script dumps (pairwise or multiple) genomic alignments from
 ##    an EnsEMBL Compara Database.

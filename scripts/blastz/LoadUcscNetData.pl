@@ -23,9 +23,6 @@ my $description = q{
 ##    Abel Ureta-Vidal (abel@ebi.ac.uk)
 ##    Javier Herrero (jherrero@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script read BLASTz alignments from a UCSC database and store
 ##    them in an EnsEMBL Compara database

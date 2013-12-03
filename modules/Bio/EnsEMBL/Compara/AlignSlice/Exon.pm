@@ -76,11 +76,6 @@ The end_phase is set to -1 by default.
 
 Javier Herrero (jherrero@ebi.ac.uk)
 
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2013. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
 
 =head1 CONTACT
 

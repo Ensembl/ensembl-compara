@@ -55,11 +55,6 @@ This script uses a small compara database build following the specifitions given
 
 Javier Herrero (jherrero@ebi.ac.uk)
 
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2013. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
 
 =head1 CONTACT
 

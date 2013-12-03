@@ -25,9 +25,6 @@ my $description = q{
 ## AUTHORS
 ##    Javier Herrero (jherrero@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This modules is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script dumps aligned genes. Genes are aligned using the either
 ##    pairwise or multiple genomic alignments.

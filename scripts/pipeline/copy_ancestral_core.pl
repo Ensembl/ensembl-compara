@@ -25,9 +25,6 @@ my $description = q{
 ## AUTHORS
 ##    Kathryn Beal (kbeal@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script copies ancestral data over core DBs. It has been
 ##    specifically developed to copy data from a production to a

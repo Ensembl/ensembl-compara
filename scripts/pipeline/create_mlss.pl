@@ -25,9 +25,6 @@ my $description = q{
 ## AUTHORS
 ##    Javier Herrero (jherrero@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script creates a new MethodLinkSpeciesSet based on the
 ##    information provided through the command line and tries to store
