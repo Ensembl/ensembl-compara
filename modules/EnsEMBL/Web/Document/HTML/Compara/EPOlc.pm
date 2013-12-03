@@ -29,7 +29,7 @@ sub render {
 
   my $sets = [
     {'name' => 'mammals', 'label' => 'eutherian mammals'},
-    {'name' => 'sauropsids',  'label' => 'saurian reptiles'},
+    {'name' => 'sauropsids',  'label' => 'sauropsids'},
     {'name' => 'fish',      'label' => 'teleost fish'},
   ];
 
