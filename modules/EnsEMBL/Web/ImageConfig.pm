@@ -3004,7 +3004,6 @@ sub add_structural_variations {
   my $desc                = 'The colours correspond to the structural variant classes.';
      $desc               .= '<br />For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.';
   my %options             = (
-    db         => $key,
     glyphset   => 'structural_variation',
     strand     => 'r', 
     bump_width => 0,
@@ -3018,6 +3017,7 @@ sub add_structural_variations {
   # Complete overlap (Larger structural variants)
   $structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
     %options,
+    db          => 'variation',
     caption     => 'Larger structural variants',
     sources     => undef,
     description => "Structural variants from all sources which are at least 1Mb in length. $desc",
@@ -3027,6 +3027,7 @@ sub add_structural_variations {
   # Partial overlap (Smaller structural variants)
   $structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
     %options,
+    db          => 'variation',
     caption     => 'Smaller structural variants',
     sources     => undef,
     description => "Structural variants from all sources which are less than 1Mb in length. $desc",
@@ -3035,8 +3036,10 @@ sub add_structural_variations {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
+    my $db = $key_2 =~ /DECIPHER/ ? 'variation_private' : 'variation';
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
+      db          => $db,
       caption     => $key_2,
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
