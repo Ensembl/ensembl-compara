@@ -137,4 +137,9 @@ sub node_name {
     return $self->{_node_name};
 }
 
+sub name {
+    my $self = shift;
+    return $self->node_name(@_);
+}
+
 1;
