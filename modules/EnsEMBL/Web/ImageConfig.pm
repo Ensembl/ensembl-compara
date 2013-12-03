@@ -1769,8 +1769,6 @@ sub add_matrix {
       %{$data->{'column_data'} || {}}
     });
     
-    $after = $column_track if $after;
-    
     $self->alphabetise_tracks($column_track, $menu, 'label_x');
   }
   
@@ -1808,6 +1806,8 @@ sub add_matrix {
     
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'} };
   }
+  
+  return $column_track;
 }
 
 sub add_das_tracks {
@@ -2741,7 +2741,7 @@ sub add_regulation_builds {
     );
     
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
-      $self->add_matrix({
+      $prev_track = $self->add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         track_after => $prev_track,
         matrix      => {
@@ -3017,7 +3017,7 @@ sub add_structural_variations {
   # Complete overlap (Larger structural variants)
   $structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
     %options,
-    db          => 'variation',
+    db         => 'variation',
     caption     => 'Larger structural variants',
     sources     => undef,
     description => "Structural variants from all sources which are at least 1Mb in length. $desc",
@@ -3027,7 +3027,7 @@ sub add_structural_variations {
   # Partial overlap (Smaller structural variants)
   $structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
     %options,
-    db          => 'variation',
+    db         => 'variation',
     caption     => 'Smaller structural variants',
     sources     => undef,
     description => "Structural variants from all sources which are less than 1Mb in length. $desc",
@@ -3036,6 +3036,7 @@ sub add_structural_variations {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
+    ## FIXME - Nasty hack to get variation tracks correctly configured
     my $db = $key_2 =~ /DECIPHER/ ? 'variation_private' : 'variation';
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
