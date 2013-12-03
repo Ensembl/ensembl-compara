@@ -356,7 +356,7 @@ sub get_cell_line_data {
       $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
       
       foreach ($node->nodes) {
-        my $feature_name = $_->data->{'caption'};
+        my $feature_name = $_->data->{'name'};
         
         $data->{$cell_line}{$set}{'available'}{$feature_name} = 1; 
         $data->{$cell_line}{$set}{'on'}{$feature_name}        = 1 if $_->get('display') eq 'on'; # add to configured features if turned on
