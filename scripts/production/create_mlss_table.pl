@@ -22,9 +22,6 @@ my $description = q{
 ## AUTHORS
 ##    Javier Herrero (jherrero@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This modules is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script creates an HTML table from the information in the
 ##    method_link_species_set and method_link tables. The HTML table

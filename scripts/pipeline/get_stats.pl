@@ -23,9 +23,6 @@ my $description = q{
 ## AUTHORS
 ##    Javier Herrero (jherrero@ebi.ac.uk)
 ##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
-##
 ## DESCRIPTION
 ##    This script calculates some stats from a compara DB
 ##

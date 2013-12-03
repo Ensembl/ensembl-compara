@@ -16,15 +16,6 @@ limitations under the License.
 
 =cut
 
-=head1 LICENSE
-
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited. All rights reserved.
-
-  This software is distributed under a modified Apache License.
-  For license details, please see
-
-    http://www.ensembl.org/info/about/code_license.html
 
 =head1 CONTACT
 
