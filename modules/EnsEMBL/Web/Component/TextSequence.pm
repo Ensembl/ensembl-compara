@@ -454,6 +454,7 @@ sub markup_exons {
     exon0   => 'e0',
     exon1   => 'e1',
     exon2   => 'e2',
+    eu      => 'eu',
     other   => 'eo',
     gene    => 'eg',
     compara => 'e2',
