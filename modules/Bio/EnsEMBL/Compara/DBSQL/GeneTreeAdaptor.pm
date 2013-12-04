@@ -421,8 +421,8 @@ sub delete_tree {
 
     # Only for "default" trees
     unless ($tree->ref_root_id) {
-        # The alignment
-        $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id);
+        # The alignment only if it exists (In NCRecoverEPO we don't have an alignment yet)
+        $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id) if (defined $tree->gene_align_id);
 
         # The HMM profile
         my $root_id = $tree->root->node_id;
