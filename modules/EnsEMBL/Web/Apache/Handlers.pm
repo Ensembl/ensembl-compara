@@ -88,122 +88,91 @@ sub childInitHandler {
 
 
 sub redirect_to_nearest_mirror {
-    my $r = shift;
-# warn Dumper $r->headers_in;
-# Check that host is ENSEMBL_SERVERNAME - if not content is coming from static server, where the redirect cookie will never be set. In this case, don't redirect
-#     warn Dumper $r->headers_in;
-    if (
-        $species_defs->ENSEMBL_MIRRORS
-                 && (   $r->headers_in->{'Host'} eq $species_defs->ENSEMBL_SERVERNAME
-                     || $r->headers_in->{'X-Forwarded-Host'} eq $species_defs->ENSEMBL_SERVERNAME )
-       )
-    {
-        my $unparsed_uri = $r->unparsed_uri;
-        my $user_agent   = $r->headers_in->{'User-Agent'};
-        ## Check url
-        if ( $unparsed_uri =~ /redirect=mirror/ ) {
-            my ($referrer) = $unparsed_uri =~ /source=([\w\.-]+)/;
+  ## This does not do an actual HTTP redirect, but sets a cookie that tells the JavaScript to perform a client side redirect after specified time interval
+  my $r           = shift;
+  my $server_name = $species_defs->ENSEMBL_SERVERNAME;
 
-            ## Display the redirect message (but only if user comes from other mirror)
-            if (   $referrer
-                && $referrer ne $species_defs->ENSEMBL_SERVERNAME
-                && _referrer_is_mirror( $species_defs->ENSEMBL_MIRRORS, $referrer ) )
-            {
+  # redirect only if we have mirrors, and the ENSEMBL_SERVERNAME is same as headers HOST (this is to prevent redirecting a static server request)
+  if (keys %{ $species_defs->ENSEMBL_MIRRORS || {} } && ( $r->headers_in->{'Host'} eq $server_name || $r->headers_in->{'X-Forwarded-Host'} eq $server_name )) {
+    my $unparsed_uri    = $r->unparsed_uri;
+       $unparsed_uri    =~ /redirect=([^\&\;]+)/;
+    my $redirect_flag   = $1;
+    my $redirect_cookie = EnsEMBL::Web::Cookie->retrieve($r, {'name' => 'redirect_mirror'}) || EnsEMBL::Web::Cookie->new($r, {'name' => 'redirect_mirror'});
 
-                my $back = 'http://' . $referrer . $unparsed_uri;
-                $back =~ s/;?source=$referrer//;
+    # If the user clicked on a link that's explicitly supposed to take him to
+    # another mirror, it should have an extra param 'redirect=no' in it. We save
+    # the 'redirect' cookie with value 'no' in that case to avoid redirecting
+    # any further requests. If there's a param in the url that says redirect=force,
+    # we always give precedence to that one.
+    if ($redirect_flag eq 'force') {
+    
+      # If the cookie has already been set with its value as the nearest mirror,
+      # no further action is required, otherwise if cookie is 'no', clear it's value (don't remove it)
+      return DECLINED if $redirect_cookie->value && $redirect_cookie->value ne 'no';
+      $redirect_cookie->value('');
+      $redirect_cookie->bake;
 
-                my $user_message =
-                  qq{You've been redirected to your nearest mirror - } . $species_defs->ENSEMBL_SERVERNAME . "\n";
-                $user_message .= qq{<p>Take me back to <a href="$back">$referrer</a></p>};
+    } else {
+      if ($redirect_flag eq 'no') {
+        $redirect_cookie->value('no');
+        $redirect_cookie->bake;
+      }
 
-                EnsEMBL::Web::Cookie->bake($r, {
-                  'name'        => 'user_message',
-                  'value'       => uri_escape($user_message),
-                  'expires'     => '+1m',
-                  'err_headers' => 1
-                });
-
-                ## Redirecting to same page, but without redirect params in url
-
-                $unparsed_uri =~ s/;?source=$referrer//;
-                $unparsed_uri =~ s/;?redirect=mirror//;
-                $unparsed_uri =~ s/\?$//;
-
-                $r->headers_out->set( Location => 'http://' . $species_defs->ENSEMBL_SERVERNAME . $unparsed_uri );
-                
-                return REDIRECT;
-            }
-
-            EnsEMBL::Web::Cookie->bake($r, {
-              'name'        => 'redirect',
-              'value'       => 'mirror',
-              'err_headers' => 1
-            });
-
-            return DECLINED;
-        }
-        ## Check "don't redirect me" cookie
-        my $redirect_cookie = EnsEMBL::Web::Cookie->retrieve($r, {'name' => 'redirect'});
-
-        return DECLINED if $redirect_cookie && $redirect_cookie->value eq 'mirror';
-        if ( $species_defs->ENSEMBL_MIRRORS && keys %{ $species_defs->ENSEMBL_MIRRORS } ) {
-            my $geo_details;
-            my $record;   my $geo;
-            my $geocity_dat_file =  $species_defs->GEOCITY_DAT || $species_defs->ENSEMBL_SERVERROOT . 'sanger-plugins/sanger/geocity/GeoLiteCity.dat';
-            my $geocity_dat_file = $species_defs->ENSEMBL_SERVERROOT;
-            $geocity_dat_file .= $species_defs->GEOCITY_DAT || '/geocity/GeoLiteCity.dat';
-            my $ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
-              ($ip) = split /,/, $ip; # ignore IP6
-
-            if ( -e $geocity_dat_file ) {
-                require Geo::IP;
-                eval {
-                    $geo = Geo::IP->open( $geocity_dat_file, 'GEOIP_MEMORY_CACHE' );
-                    $record = $geo->record_by_addr($ip) if $geo;
-          };
-          warn $@ if $@;
-
-                 $geo_details = [ $record->country_code, $record->region ] if $record;
-            }
-            else {
-                require Geo::IP;
-                warn "** GeoIP city dat file not found at [ $geocity_dat_file ] falling back to country based lookup... Set GEOCITY_DAT location in DEFAULTS.ini **";
-                eval ' 
-                     $geo = Geo::IP->new(GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE);
-                    $geo_details = [ $geo->country_code_by_addr($ip), undef ] if $geo;
-                ';
-                warn $@ if $@;
-            }
-            ## Ok, so which country you from
-            if ( $geo_details && $user_agent !~ /Googlebot/ ) {
-                my $ip_location = $species_defs->ENSEMBL_MIRRORS->{ $geo_details->[0] }
-                  || $species_defs->ENSEMBL_MIRRORS->{MAIN};
-                my $mirror =
-                  ref $ip_location eq 'HASH'
-                  ? $ip_location->{ $geo_details->[1] } || $ip_location->{DEFAULT}
-                  : $ip_location;
-
-                if ($mirror and grep { $_ eq $mirror } @SiteDefs::ENSEMBL_MIRRORS_UP) {
-                    return DECLINED if $mirror eq $species_defs->ENSEMBL_SERVERNAME;
-
-                    ## Deleting cookie for current site
-                    EnsEMBL::Web::Cookie->clear($r, {'name' => 'redirect', 'err_headers' => 1});
-
-                    $unparsed_uri .= $unparsed_uri =~ /\?/ ? ';redirect=mirror' : '?redirect=mirror';
-                    $unparsed_uri .= ';source=' . $species_defs->ENSEMBL_SERVERNAME;
-
-                    $r->headers_out->set( Location => "http://$mirror$unparsed_uri" );
-
-                    return REDIRECT;
-                }
-            }
-        }
+      # Now if the redirect_cookie has some value, it is either 'no' or the url path
+      # to which the JavaScript should redirect the browser (set later in this subroutine)
+      # Either ways, we don't need any further action.
+      return DECLINED if $redirect_cookie->value;
     }
 
-    return DECLINED;
-}
+    my $remote_ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
+       $remote_ip =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/; # not very accurate regexp, but solves the purpose
+       $remote_ip = $1;
 
+    # Just leave a warning if remote ip is not valid
+    unless ($remote_ip) {
+      warn "MIRROR REDIRECTION FAILED: Remote IP address could not be parsed.";
+      return DECLINED;
+    }
+
+    # Just leave another warning if the GEOCITY file is missing
+    my $geocity_file = $species_defs->GEOCITY_DAT || '';
+    unless ($geocity_file && -e $geocity_file) {
+      warn "MIRROR REDIRECTION FAILED: GEOCITY_DAT file ($geocity_file) was not found.";
+      return DECLINED;
+    }
+
+    # Get the location record the for remote IP
+    my $record;
+    eval {
+      require Geo::IP;
+      my $geo = Geo::IP->open($geocity_file, 'GEOIP_MEMORY_CACHE');
+      $record = $geo->record_by_addr($remote_ip) if $geo;
+    };
+    if ($@ || !$record) {
+      warn sprintf 'MIRROR REDIRECTION FAILED: %s', $@ || "Geo::IP could not find details for IP address $remote_ip";
+      return DECLINED;
+    }
+
+    # Find our the nearest mirror according to the remote IP's location
+    my $mirror_map  = $species_defs->ENSEMBL_MIRRORS;
+
+    my $destination = $mirror_map->{$record->country_code || 'MAIN'} || $mirror_map->{'MAIN'};
+       $destination = $destination->{$record->region} || $destination->{'DEFAULT'} if ref $destination eq 'HASH';
+
+    # Don't let it be an infinite loop!
+    return DECLINED if $destination eq $server_name;
+
+    # Redirect if the destination mirror is up
+    if (grep { $_ eq $destination } @SiteDefs::ENSEMBL_MIRRORS_UP) { # ENSEMBL_MIRRORS_UP contains a list of mirrors that are currently up
+      $unparsed_uri   =~ s/(\&|\;)?redirect\=(force|no)//;
+      $unparsed_uri  .= $unparsed_uri =~ /\?/ ? ';redirect=no' : '?redirect=no';
+      $redirect_cookie->value(sprintf '%s|%s|http://%1$s%s', $destination, $species_defs->ENSEMBL_MIRRORS_REDIRECT_TIME || 9, $unparsed_uri);
+      $redirect_cookie->bake;
+    }
+  }
+
+  return DECLINED;
+}
 
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
