@@ -329,7 +329,7 @@ sub add_element {
   ## Call new add_element method if argument is HashRef or ArrayRef
   return $self->_add_element($_[0]) if ref($_[0]) =~ /^(HASH|ARRAY)$/;
   
-  warn "Method add_element is deprecated. Please use an appropriate method at $caller[1] line $caller[2].\n";
+#  warn "Method add_element is deprecated. Please use an appropriate method at $caller[1] line $caller[2].\n";
 
   my %params = @_;
 
