@@ -133,7 +133,7 @@ sub content {
     $self->add_subheader('<span align="center">Motif Information</span>');
 
     my $pwm_table = '
-    <table cellpadding="0" cellspacing="0" style="border:0; padding:0px; margin:0px;">
+    <table cellpadding="0" cellspacing="0" class="zmenu" style="border:0; padding:0px; margin:0px;">
       <tr>
         <th>Name</th>
         <th>PWM ID</th>
