@@ -145,22 +145,8 @@ Ensembl.LayoutManager.extend({
       'hashchange.ensembl': $.proxy(this.popState, this),
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
-    
-    var userMessage = unescape(Ensembl.cookie.get('user_message'));
-    
-    if (userMessage) {
-      userMessage = userMessage.split('\n');
-      
-      $([
-        '<div class="hint right-margin left-margin">',
-        ' <h3><img src="/i/close.png" alt="Hide" title="Hide" />', userMessage[0], '</h3>',
-        ' <div class="message-pad">', userMessage[1], '</div>',
-        '</div>'
-      ].join('')).prependTo('#main').find('h3 img, a').on('click', function () {
-        $(this).parents('div.hint').remove();
-        Ensembl.cookie.set('user_message', '');
-      });
-    }
+
+    this.handleMirrorRedirect();
   },
   
   reloadPage: function (args, url) {
@@ -256,6 +242,39 @@ Ensembl.LayoutManager.extend({
     var modal = $('#modal_panel');
     $('.navbar, div.info, div.hint, div.warning, div.error').not('.fixed_width').not(function () { return modal.find(this).length; }).width(Ensembl.width);
     modal = null;
+  },
+  
+  handleMirrorRedirect: function() {
+    
+    var redirectCode = unescape(Ensembl.cookie.get('redirect_mirror'));
+
+    if (redirectCode && redirectCode !== 'no') {
+      redirectCode      = redirectCode.split(/\|/);
+      var mirrorName    = redirectCode.shift();
+      var remainingTime = parseInt(redirectCode.shift());
+      var mirrorURL     = redirectCode.join('|');
+      var messageDiv    = $([
+        '<div class="_redirect_message info right-margin left-margin">',
+        ' <h3>Redirecting to nearest mirror</h3>',
+        ' <div class="message-pad"><p>You are being redirected to <b>', mirrorName, '</b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a href="#">here</a> if you don\'t wish to be redirected.</p></div>',
+        '</div>'
+      ].join('')).prependTo('#main').find('a').on('click', function (e) {
+        e.preventDefault();
+        Ensembl.cookie.set('redirect_mirror', 'no');
+        clearInterval(messageDiv.data('countdown'));
+        window.location.replace(window.location.href.replace(/(\&|\;)?redirect=(force|no)/, ''));
+      }).end().data({
+        remainingTime : remainingTime,
+        mirrorURL     : mirrorURL,
+        countdown     : setInterval(function() {
+          var time  = messageDiv.data('remainingTime') - 1;
+          messageDiv.data('remainingTime', time).find('._redirect_countdown').html(time > 0 ? time > 1 ? 'in ' + time + ' seconds' : 'in 1 second' : 'now');
+          if (time <= 0) {
+            clearInterval(messageDiv.data('countdown'));
+            window.location.replace(messageDiv.data('mirrorURL'));
+          }
+        }, 1000)
+      });
+    }
   }
 });
-
