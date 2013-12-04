@@ -258,7 +258,7 @@ Ensembl.LayoutManager.extend({
         ' <h3>Redirecting to nearest mirror</h3>',
         ' <div class="message-pad"><p>You are being redirected to <b>', mirrorName, '</b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a href="#">here</a> if you don\'t wish to be redirected.</p></div>',
         '</div>'
-      ].join('')).prependTo('#main').find('a').on('click', function (e) {
+      ].join('')).prependTo($('#widemain, #main').first()).find('a').on('click', function (e) {
         e.preventDefault();
         Ensembl.cookie.set('redirect_mirror', 'no');
         clearInterval(messageDiv.data('countdown'));
