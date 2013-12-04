@@ -190,8 +190,10 @@ sub fetch_all_by_GenomeDB_region {
   $self->bind_param_generic_fetch($gdb_id, SQL_INTEGER);
 
   if(defined $coord_system_name) {
+   unless ($coord_system_name eq "toplevel"){
     $sql .= ' AND df.coord_system_name = ?';
     $self->bind_param_generic_fetch($coord_system_name, SQL_VARCHAR);
+   }
   }
 
   if(defined $name) {
