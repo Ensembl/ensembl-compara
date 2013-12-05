@@ -266,11 +266,11 @@ my $taxon_id_cb = sub {
 my $sp_name_cb = sub {
   my ($self) = @_;
   my $species_name;
-  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+  if ($self->{tree}->can('genome_db')) {
       $species_name = $self->{tree}->genome_db->name;
       $species_name =~ s/\ /\_/g;
       return $species_name;
-  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')){
+  } elsif ($self->{tree}->can('taxon_id')) {
       my $taxon_id = $self->{tree}->taxon_id();
       my $genome_db_adaptor = $self->{tree}->adaptor->db->get_GenomeDBAdaptor;
       my $genome_db;
