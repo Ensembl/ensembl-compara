@@ -250,31 +250,33 @@ Ensembl.LayoutManager.extend({
 
     if (redirectCode && redirectCode !== 'no') {
       redirectCode      = redirectCode.split(/\|/);
-      var mirrorName    = redirectCode.shift();
-      var remainingTime = parseInt(redirectCode.shift());
-      var mirrorURL     = redirectCode.join('|');
-      var messageDiv    = $([
-        '<div class="_redirect_message info right-margin left-margin">',
-        ' <h3>Redirecting to nearest mirror</h3>',
-        ' <div class="message-pad"><p>You are being redirected to <b>', mirrorName, '</b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a href="#">here</a> if you don\'t wish to be redirected.</p></div>',
-        '</div>'
-      ].join('')).prependTo($('#widemain, #main').first()).find('a').on('click', function (e) {
-        e.preventDefault();
-        Ensembl.cookie.set('redirect_mirror', 'no');
-        clearInterval(messageDiv.data('countdown'));
-        window.location.replace(window.location.href.replace(/(\&|\;)?redirect=(force|no)/, ''));
-      }).end().data({
-        remainingTime : remainingTime,
-        mirrorURL     : mirrorURL,
-        countdown     : setInterval(function() {
-          var time  = messageDiv.data('remainingTime') - 1;
-          messageDiv.data('remainingTime', time).find('._redirect_countdown').html(time > 0 ? time > 1 ? 'in ' + time + ' seconds' : 'in 1 second' : 'now');
-          if (time <= 0) {
-            clearInterval(messageDiv.data('countdown'));
-            window.location.replace(messageDiv.data('mirrorURL'));
-          }
-        }, 1000)
-      });
+      if (redirectCode.length >= 3 && redirectCode[2]) {
+        var mirrorName    = redirectCode.shift();
+        var remainingTime = parseInt(redirectCode.shift());
+        var mirrorURL     = redirectCode.join('|');
+        var messageDiv    = $([
+          '<div class="_redirect_message info right-margin left-margin">',
+          ' <h3>Redirecting to nearest mirror</h3>',
+          ' <div class="message-pad"><p>You are being redirected to <b>', mirrorName, '</b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a href="#">here</a> if you don\'t wish to be redirected.</p></div>',
+          '</div>'
+        ].join('')).prependTo($('#widemain, #main').first()).find('a').on('click', function (e) {
+          e.preventDefault();
+          Ensembl.cookie.set('redirect_mirror', 'no');
+          clearInterval(messageDiv.data('countdown'));
+          window.location.replace(window.location.href.replace(/(\&|\;)?redirect=(force|no)/, ''));
+        }).end().data({
+          remainingTime : remainingTime,
+          mirrorURL     : mirrorURL,
+          countdown     : setInterval(function() {
+            var time  = messageDiv.data('remainingTime') - 1;
+            messageDiv.data('remainingTime', time).find('._redirect_countdown').html(time > 0 ? time > 1 ? 'in ' + time + ' seconds' : 'in 1 second' : 'now');
+            if (time <= 0) {
+              clearInterval(messageDiv.data('countdown'));
+              window.location.replace(messageDiv.data('mirrorURL'));
+            }
+          }, 1000)
+        });
+      }
     }
   }
 });
