@@ -30,9 +30,7 @@ sub colour_key { return $_[1]->analysis->logic_name; }
 
 sub _init {
   my $self = shift;
-  
   return $self->render_text if $self->{'text_export'};
-  
   my $protein = $self->{'container'};
 
   $self->_init_bump;
@@ -42,11 +40,14 @@ sub _init {
   my $depth        = $self->depth;
   my $font_details = $self->get_text_simple(undef, 'innertext');
   my $pix_per_bp   = $self->scalex;
+  my $count = 0;
 
   foreach my $logic_name (@{$self->my_config('logic_names') || []}) {
     my (%hash, $colour);
+    my $prot_features = $protein->get_all_ProteinFeatures($logic_name);
+    $count += scalar(@{$prot_features||[]});
     
-    push @{$hash{$_->hseqname}}, $_ for @{$protein->get_all_ProteinFeatures($logic_name)};
+    push @{$hash{$_->hseqname}}, $_ for @{$prot_features||[]};
     
     foreach my $key (keys %hash) {
       my (@rect, $prsave, $minx, $maxx);
@@ -120,6 +121,7 @@ sub _init {
       $self->push($composite);
     }
   }
+  $self->no_features unless $count;
 }
 
 sub render_text {
