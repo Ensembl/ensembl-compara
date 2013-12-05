@@ -116,7 +116,7 @@ sub process_wiggle_data {
 
     @features = sort { $a->scores->[0] <=> $b->scores->[0] } @features;
     
-    my ($f_min_score, $f_max_score) = sort @{$features[0]->get_min_max_scores};
+    my ($f_min_score, $f_max_score) = @{$features[0]->get_min_max_scores};
 
     if ($wsize == 0) {
       $f_min_score = $features[0]->scores->[0]; 
