@@ -95,17 +95,19 @@ sub redirect_to_nearest_mirror {
   # redirect only if we have mirrors, and the ENSEMBL_SERVERNAME is same as headers HOST (this is to prevent redirecting a static server request)
   if (keys %{ $species_defs->ENSEMBL_MIRRORS || {} } && ( $r->headers_in->{'Host'} eq $server_name || $r->headers_in->{'X-Forwarded-Host'} eq $server_name )) {
     my $unparsed_uri    = $r->unparsed_uri;
-       $unparsed_uri    =~ /redirect=([^\&\;]+)/;
-    my $redirect_flag   = $1;
+    my $redirect_flag   = $unparsed_uri =~ /redirect=([^\&\;]+)/ ? $1 : '';
+    my $debug_ip        = $unparsed_uri =~ /debugip=([^\&\;]+)/ ?  $1 : '';
     my $redirect_cookie = EnsEMBL::Web::Cookie->retrieve($r, {'name' => 'redirect_mirror'}) || EnsEMBL::Web::Cookie->new($r, {'name' => 'redirect_mirror'});
 
     # If the user clicked on a link that's explicitly supposed to take him to
     # another mirror, it should have an extra param 'redirect=no' in it. We save
     # the 'redirect' cookie with value 'no' in that case to avoid redirecting
     # any further requests. If there's a param in the url that says redirect=force,
-    # we always give precedence to that one.
-    if ($redirect_flag eq 'force') {
-    
+    # we always give precedence to that one. If debug ip param is set, ignore
+    # we any existing cookie, deal it as a forced redirect.
+    # IMPORTANT: To make debug ip work, make sure there's no cookie set with redirect address
+    if ($redirect_flag eq 'force' || $debug_ip) {
+
       # If the cookie has already been set with its value as the nearest mirror,
       # no further action is required, otherwise if cookie is 'no', clear it's value (don't remove it)
       return DECLINED if $redirect_cookie->value && $redirect_cookie->value ne 'no';
@@ -124,15 +126,15 @@ sub redirect_to_nearest_mirror {
       return DECLINED if $redirect_cookie->value;
     }
 
-    my $remote_ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
-       $remote_ip =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/; # not very accurate regexp, but solves the purpose
-       $remote_ip = $1;
+    # Getting the correct remote IP address isn't straight forward. We check all the possible
+    # ip addresses to get the correct one that is valid and isn't an internal address.
+    # If debug ip is provided, then the others are ignored.
+    my ($remote_ip) = grep {
+      $_ =~ /(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/ && !($1 > 255 || $2 > 255 || $3 > 255 || $4 > 255 || $1 == 10 || $1 == 172 && $2 >= 16 && $2 <= 31 || $1 == 192 && $2 == 168);
+    } $debug_ip ? $debug_ip : (split(/\s*\,\s*/, $r->headers_in->{'X-Forwarded-For'}), $r->connection->remote_ip);
 
-    # Just leave a warning if remote ip is not valid
-    unless ($remote_ip) {
-      warn "MIRROR REDIRECTION FAILED: Remote IP address could not be parsed.";
-      return DECLINED;
-    }
+    # If there is no IP address, don't do any redirect (there's a possibility this is Amazon's loadbalancer trying to do some healthcheck ping)
+    return DECLINED unless $remote_ip;
 
     # Just leave another warning if the GEOCITY file is missing
     my $geocity_file = $species_defs->GEOCITY_DAT || '';
@@ -159,8 +161,13 @@ sub redirect_to_nearest_mirror {
     my $destination = $mirror_map->{$record->country_code || 'MAIN'} || $mirror_map->{'MAIN'};
        $destination = $destination->{$record->region} || $destination->{'DEFAULT'} if ref $destination eq 'HASH';
 
-    # Don't let it be an infinite loop!
-    return DECLINED if $destination eq $server_name;
+    # If the user is already on the nearest mirror, save a cookie
+    # to avoid doing these checks for further requests from the same machine
+    if ($destination eq $server_name) {
+      $redirect_cookie->value('no');
+      $redirect_cookie->bake;
+      return DECLINED;
+    }
 
     # Redirect if the destination mirror is up
     if (grep { $_ eq $destination } @SiteDefs::ENSEMBL_MIRRORS_UP) { # ENSEMBL_MIRRORS_UP contains a list of mirrors that are currently up
