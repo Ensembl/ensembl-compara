@@ -82,7 +82,7 @@ sub content {
           </div>
           <div>
             <label class="hidden" for="se_q">Search terms</label>
-            <input class="query inactive" id="se_q" type="text" name="q" value="$options_hash{$search_code}{'label'}&hellip;" />
+            <input class="query inactive" id="se_q" type="text" name="q" value="$options_hash{$search_code}{'label'}&hellip;" data-role="none" />
           </div>
           <div class="button"><input type="image" src="${img_url}16/search.png" alt="Search&nbsp;&raquo;" /></div>
         </div>
