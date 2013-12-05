@@ -100,7 +100,7 @@ sub content {
           <div>
             <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
             %s
-            <a class="go-button" href="">Go</a>
+            <a class="go-button alignment-go" href="">Go</a>
           </div>
         </form>
       </div>
