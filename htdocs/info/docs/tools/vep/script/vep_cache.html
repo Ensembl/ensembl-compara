@@ -185,9 +185,9 @@ perl variant_effect_predictor.pl -offline -i my_species_variants.vcf -s my_speci
 	large (25GB for human). An example set of commands for setting up the data
 	for human follows: </p>
 	
-	<pre class="code">wget ftp://ftp.ensembl.org/pub/release-[[SPECIESDEFS::ENSEMBL_VERSION]]/fasta/homo_sapiens/dna/Homo_sapiens.GRCh27.[[SPECIESDEFS::ENSEMBL_VERSION]].dna.primary_assembly.fa.gz
-gzip -d Homo_sapiens.GRCh27.[[SPECIESDEFS::ENSEMBL_VERSION]].dna.primary_assembly.fa.gz
-perl variant_effect_predictor.pl -i input.vcf --offline --hgvs --fasta Homo_sapiens.GRCh27.[[SPECIESDEFS::ENSEMBL_VERSION]].dna.primary_assembly.fa</pre>
+	<pre class="code">wget ftp://ftp.ensembl.org/pub/release-[[SPECIESDEFS::ENSEMBL_VERSION]]/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.[[SPECIESDEFS::ENSEMBL_VERSION]].dna.primary_assembly.fa.gz
+gzip -d Homo_sapiens.GRCh37.[[SPECIESDEFS::ENSEMBL_VERSION]].dna.primary_assembly.fa.gz
+perl variant_effect_predictor.pl -i input.vcf --offline --hgvs --fasta Homo_sapiens.GRCh37.[[SPECIESDEFS::ENSEMBL_VERSION]].dna.primary_assembly.fa</pre>
 	
 	
 	<hr/>
