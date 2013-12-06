@@ -263,7 +263,7 @@ Ensembl.LayoutManager.extend({
           e.preventDefault();
           Ensembl.cookie.set('redirect_mirror', 'no');
           clearInterval(messageDiv.data('countdown'));
-          window.location.replace(window.location.href.replace(/(\&|\;)?redirect=(force|no)/, ''));
+          window.location.replace(window.location.href.replace(/(\&|\;)?redirect=(force|no)/, '').replace(/(\&|\;)?debugip=[^\&|\;]+/, ''));
         }).end().data({
           remainingTime : remainingTime,
           mirrorURL     : mirrorURL,
