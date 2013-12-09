@@ -260,10 +260,7 @@ sub _run_conservation_jobs_test {
 sub _run_conservation_scores_test {
   my ($self, $parameters) = @_;
 
-  my $method_link_species_set_id = 0;
-  $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
-
-  $method_link_species_set_id = $self->param('mlss_id') if (defined($self->param('mlss_id')));
+  my $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
 
   $self->test_table("conservation_score");
   $self->test_table("genomic_align_block");
