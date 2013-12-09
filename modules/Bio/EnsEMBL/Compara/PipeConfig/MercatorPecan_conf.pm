@@ -316,32 +316,10 @@ sub pipeline_analyses {
 					   ],
 			       },
 		-flow_into => {
-			       '1->A' => { 'create_species_sets' => [
-                        { 'species_set_id_name' => 'reuse_ss_id' },
-                        { 'species_set_id_name' => 'nonreuse_ss_id' },
-                    ], },
-			       'A->1' => [ 'load_genomedb_factory' ],
+                               1 => [ 'load_genomedb_factory' ],
 			      },
 		-rc_name => '100Mb',
 	    },
-
-# ---------------------------------------------[generate two empty species_sets for reuse / non-reuse (to be filled in at a later stage)]---------
-
-        {   -logic_name => 'create_species_sets',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
-            -parameters => {
-                'object_type'   => 'SpeciesSet',
-                'arglist'       => [
-                    -genome_dbs => [],
-                ],
-            },
-            -flow_into => {
-                2 => {
-                    'mysql:////meta'    => { 'meta_key' => '#species_set_id_name#', 'meta_value' => '#dbID#' },
-                },
-            },
-            -meadow_type    => 'LOCAL',
-        },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
@@ -358,7 +336,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'load_genomedb' ],
-		'A->1' => [ 'finish_species_sets' ],
+                'A->1' => [ 'create_mlss_ss' ],
             },
 	    -rc_name => '100Mb',
 	},
@@ -375,8 +353,6 @@ sub pipeline_analyses {
 	    -rc_name => '100Mb',
         },
 
-
-
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
 
         {   -logic_name => 'check_reusability',
@@ -389,13 +365,10 @@ sub pipeline_analyses {
             },
             -hive_capacity => 10,    # allow for parallel execution
             -flow_into => {
-                2 => { 
-		      'check_reuse_db'        => undef,
-                      'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
-                },
-                3 => {
-                      'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#nonreuse_ss_id#' },
-                },
+                2 => {'check_reuse_db'                  => undef, 
+                      ':////accu?reused_gdb_ids=[]'     => { 'reused_gdb_ids' => '#genome_db_id#'} 
+                     },
+                3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
             },
 	    -rc_name => '1Gb',
         },
@@ -408,19 +381,14 @@ sub pipeline_analyses {
 	    -rc_name => '1Gb',
         },
 
-        {   -logic_name    => 'finish_species_sets',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+        {   -logic_name => 'create_mlss_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
             -parameters => {
-                'sql' => [
-                    # Stores the species sets in CSV format
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "reuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#reuse_ss_id#',
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "nonreuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#nonreuse_ss_id#',
-                ],
+                'mlss_id'   => $self->o('mlss_id'),
+                'master_db' => $self->o('master_db'),
             },
-            -flow_into => {
-                1 => [ 'make_species_tree' ],
-            },
-            -rc_name => '100Mb',
+            -flow_into => [ 'make_species_tree' ],
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'make_species_tree',
@@ -764,12 +732,11 @@ sub pipeline_analyses {
  	 {  -logic_name => 'update_max_alignment_length',
 	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	    -parameters => { 
-#			    'quick'                      => $self->o('quick'),
 			    'method_link_species_set_id' => $self->o('mlss_id'),
 
 			   },
 	    -flow_into => { 
-			    '2->A' => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
+			    '1->A' => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
 			    'A->1' => ['stats_factory'],
 			   },
 
