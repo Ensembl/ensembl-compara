@@ -231,7 +231,6 @@ sub delete_fasta_dumps_but_these {
 
 sub write_output {
   my( $self) = @_;
-
   my $starttime = time();
 
   #since the Blast runnable takes in analysis parameters rather than an
@@ -304,21 +303,40 @@ sub dumpChunkSetToWorkdir
 
   my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
-  
+
+  #Load all sequences in a dnafrag_chunk_set and set masking options
+  my $sequence_ids;
   foreach my $chunk (@$chunk_array) {
     $chunk->masking_options($dna_collection->masking_options);
+    push @$sequence_ids, $chunk->sequence_id;
+  }
+
+  #Retrieve all sequences except those with sequence_id=0 (too big to be stored). 
+  #Returned in the same order as the sequence_ids which are in the same order as the chunks in chunk_array
+  my $sequences =  $self->compara_dba->get_SequenceAdaptor->fetch_by_dbIDs($sequence_ids, $self->param('sequence_batch_size'));
+
+  foreach my $chunk (@$chunk_array) {
+      #only have sequences for chunks with sequence_id > 0 - but this resets the sequence_id to 0. Why?
+
+      my $this_seq_id = $chunk->sequence_id; #save seq_id
+      $chunk->sequence(shift $sequences) if ($chunk->sequence_id > 0); #this sets sequence_id=0
+      $chunk->sequence_id($this_seq_id); #reset seq_id
+
+      #Retrieve sequences with sequence_id=0 (ie too big to store in the sequence table)
     my $bioseq = $chunk->bioseq;
+
+    # This may not be necessary now as already have all the sequences in the sequence table
     if($chunk->sequence_id==0) {
-      $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
+      my $this_seq_id = $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
     }
 
     $output_seq->write_seq($bioseq);
   }
+
   close OUTSEQ;
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
   return $fastafile
 }
-
 
 sub dumpChunkToWorkdir
 {
