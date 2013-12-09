@@ -106,12 +106,14 @@ sub fetch_input {
         my $species_set     = $mlss->species_set_obj->genome_dbs;
 
         $genome_db_list = $species_set;
-
         # If reusing this genome_db, only need to blast against the 'fresh' genome_dbs
         if ($self->param('reuse_ss_id')) {
-            my $reused_genome_dbs = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'))->genome_dbs;
-            my %reuse_ss_hash = ( map { $_->dbID() => 1 } @$reused_genome_dbs );
+            my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
+            #Check if species_set contains any species
+            my $reused_genome_dbs = $reused_species_set->genome_dbs if ($reused_species_set);
 
+#            my $reused_genome_dbs = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'))->genome_dbs;
+            my %reuse_ss_hash = ( map { $_->dbID() => 1 } @$reused_genome_dbs );
             if ($reuse_ss_hash{$self->param('genome_db_id')}) {
                 $genome_db_list = [ grep {not $reuse_ss_hash{$_->dbID}} @$species_set ];
             }
@@ -221,6 +223,7 @@ sub run {
     my $blast_outfile = $worker_temp_directory . 'blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
     if($debug) {
+        print "blast_infile $blast_infile\n";
         $self->param('query_set')->print_sequences_to_file(-file => $blast_infile, -format => 'fasta');
     }
 
@@ -236,7 +239,6 @@ sub run {
 
             #Don't blast against self if asked
             if (($genome_db->dbID != $self->param('genome_db_id')) or $self->param('allow_same_species_hits')) {
-
                 #Run blastp
                 my $cig_cmd = $self->param('no_cigars') ? '' : 'qseq sseq';
                 my $cmd = "${blast_bin_dir}/blastp -db $cross_genome_dbfile $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue score nident pident qstart qend sstart send length positive ppos $cig_cmd'";
