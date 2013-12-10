@@ -257,9 +257,9 @@ Ensembl.LayoutManager.extend({
         var mirrorURI     = currentURI.replace(window.location.host, mirrorName);
         var messageDiv    = $([
           '<div class="redirect-message hidden">',
-          ' <p>You are being redirected to <b>', mirrorName, '</b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a href="#">here</a> if you don\'t wish to be redirected.</p>',
+          ' <p>You are being redirected to <b><a href="' + mirrorURI + '">', mirrorName, '</a></b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a class="_redirect_no" href="#">here</a> if you don\'t wish to be redirected.</p>',
           '</div>'
-        ].join('')).appendTo($('body').prepend($('<div class="redirect-message-padding hidden"></div>').slideDown())).slideDown().find('a').on('click', function (e) {
+        ].join('')).appendTo($('body').prepend($('<div class="redirect-message-padding hidden"></div>').slideDown())).slideDown().find('a._redirect_no').on('click', function (e) {
           e.preventDefault();
           Ensembl.cookie.set('redirect_mirror', 'no');
           clearInterval(messageDiv.data('countdown'));
