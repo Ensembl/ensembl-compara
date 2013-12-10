@@ -22,6 +22,8 @@ package EnsEMBL::Web::ZMenu::Transcript;
 
 use strict;
 
+use Bio::EnsEMBL::SubSlicedFeature;
+
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
@@ -33,12 +35,32 @@ sub content {
   my $translation = $transcript->translation;
   my @xref        = $object->display_xref;
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $stable_id : 'Novel transcript');
+
+  ## Has user clicked on an exon (or exons)?
+  my @exons;
+  my @click = $self->click_location;
+  foreach (@{$transcript->get_all_Exons||[]}) {
+    if ($click[1] > $_->start && $click[2] < $_->end) {
+      push @exons, $_;
+    }
+  }
+  ## Only link to an individual exon if the user has clicked squarely 
+  ## on an exon! (i.e. ignore when zoomed out or exons are tiny)
+  if (scalar(@exons) == 1) {
+    my $exon_id = $exons[0]->stable_id;
+    $self->add_entry({
+      type    => 'Exon',
+      label   => $exon_id,
+      link    => $hub->url({ type => 'Transcript', action => 'Exons', 'exon' => $exon_id })
+    });
+  }
+  
   $self->add_entry({
     type  => 'Transcript',
     label => $stable_id, 
     link  => $hub->url({ type => 'Transcript', action => 'Summary' })
   });
-  
+
   # Only if there is a gene (not Prediction transcripts)
   if ($object->gene) {
     $self->add_entry({
