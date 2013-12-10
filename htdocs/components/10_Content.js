@@ -245,7 +245,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           this.elLk[rel] = $('.' + rel, this.el);
         }
         
-        if (!this.elLk[rel].filter('.toggleable').add(this.elLk[rel].find('.toggleable')).first().toggle().length) {
+        if (!this.elLk[rel].find('.toggleable:first').addBack('.toggleable').toggle().length) {
           el.siblings('.toggleable').toggle();
         }
       }
