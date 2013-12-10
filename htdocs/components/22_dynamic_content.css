@@ -152,3 +152,10 @@ ul.variation_consequence_tree ul          { line-height: 24px; padding-left: 22p
 ul.variation_consequence_tree li img      { margin-bottom: -2px; }
 ul.variation_consequence_tree li a.toggle { margin-left: 0!important; }
 ul.variation_consequence_tree li a.leaf   { margin-left: -10px!important; }
+
+
+/* 'redirecting to mirror' message*/
+div.redirect-message-padding  { height: 40px; }
+div.redirect-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: #fff; background-color: #000; }
+div.redirect-message p        { margin: 0; line-height: 40px; text-align: center; }
+div.redirect-message p a      { color: inherit; font-weight: bold; }
