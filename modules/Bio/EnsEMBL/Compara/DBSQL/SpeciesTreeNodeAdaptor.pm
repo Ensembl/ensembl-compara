@@ -54,7 +54,7 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 =head2 new_from_NestedSet
 
@@ -179,6 +179,12 @@ sub store_node {
 }
 
 
+#
+# tagging
+#
+sub _tag_capabilities {
+    return ('species_tree_node_tag', undef, 'node_id', 'node_id');
+}
 
 
 #################################################
