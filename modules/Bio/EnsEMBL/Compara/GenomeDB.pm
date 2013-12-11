@@ -112,7 +112,32 @@ sub new {
     my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild) =
         rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD)], @_);
 
-    $db_adaptor   && $self->db_adaptor($db_adaptor);
+    # If there is a Core DBAdaptor, we can get most of the info from there
+    if ($db_adaptor) {
+        $self->db_adaptor($db_adaptor);
+
+        my $meta_container      = $db_adaptor->get_MetaContainer;
+
+        # We check that the asked parameters are the same as in the core database
+        my @parameters = (
+            [ 'assembly_name', \$assembly, $db_adaptor->assembly_name() ],
+            [ 'taxon_id', \$taxon_id, $meta_container->get_taxonomy_id() ],
+            [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
+            [ 'name', \$name, $meta_container->get_production_name() ],
+        );
+
+        foreach my $test (@parameters) {
+            if (not defined $test->[2]) {
+                warn "'$test->[0]' is not defined in the core database\n";
+                next;
+            }
+            if (defined ${$test->[1]} and (${$test->[1]} ne $test->[2])) {
+                die "The required $test->[0] ('${$test->[1]}') is different from the one found in the database ('$test->[2]'), please investigate\n";
+            }
+            ${$test->[1]} = $test->[2];
+        }
+    }
+
     $name         && $self->name($name);
     $assembly     && $self->assembly($assembly);
     $taxon_id     && $self->taxon_id($taxon_id);
@@ -406,8 +431,9 @@ sub toString {
         .", name='".$self->name
         ."', assembly='".$self->assembly
         ."', genebuild='".$self->genebuild
-        ."', assembly_default='".$self->assembly_default
+        ."', default='".$self->assembly_default
         ."', taxon_id='".$self->taxon_id
+        ."', karyotype='".$self->has_karyotype
         ."', locator='".$self->locator
         ."'";
 }
