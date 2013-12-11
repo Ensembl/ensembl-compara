@@ -314,7 +314,8 @@ sub render_transcripts {
         y      => $y,
         height => $h,
         title  => $self->title($transcript, $gene),
-        href   => $self->href($gene, $transcript)
+        href   => $self->href($gene, $transcript),
+        class  => 'group',
       });
 
       my $colour_key = $self->colour_key($gene, $transcript);
@@ -355,7 +356,7 @@ sub render_transcripts {
           # calculate exon region within boundaries of slice
           $box_start = max($exon->start, 1);
           $box_end   = min($exon->end, $length);
-          
+        
           if ($exons[$i][1] eq 'border') {
             $composite2->push($self->Rect({
               x            => $box_start - 1 ,
@@ -363,7 +364,7 @@ sub render_transcripts {
               width        => $box_end - $box_start + 1,
               height       => $non_coding_height,
               bordercolour => $colour,
-              absolutey    => 1
+              absolutey    => 1,
             }));
           } elsif ($exons[$i][1] eq 'fill') {
             my $fill_start = max($exon->start + $exons[$i][2], 1);
@@ -376,7 +377,7 @@ sub render_transcripts {
                 width     => $fill_end - $fill_start + 1,
                 height    => $h,
                 colour    => $colour,
-                absolutey => 1
+                absolutey => 1,
               }));
             }
           }
@@ -553,7 +554,7 @@ sub render_alignslice_transcript {
               width        => $box_end - $box_start + 1,
               height       => 3 * $h/4,
               bordercolour => $colour,
-              absolutey    => 1
+              absolutey    => 1,
             }));
           }
           
@@ -570,7 +571,7 @@ sub render_alignslice_transcript {
               width     => $filled_end - $filled_start + 1,
               height    => $h,
               colour    => $colour,
-              absolutey => 1
+              absolutey => 1,
             }));
           }
         } 
