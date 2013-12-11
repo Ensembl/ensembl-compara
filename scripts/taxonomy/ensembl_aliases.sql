@@ -912,6 +912,135 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 -- </rel.74>
 
 
+-- Web display information
+-- <rel.75>
+SET @this_taxon_id=7898;
+SET @this_value='fish';
+SET @this_name_class='ensembl web display';
+
+SET @this_taxon_id=7898;
+SET @this_value='lightblue1';
+SET @this_name_class='genetree_bgcolour';
+
+SET @this_taxon_id=7898;
+SET @this_value='royalblue4';
+SET @this_name_class='genetree_fgcolour';
+
+SET @this_taxon_id=7898;
+SET @this_value='default';
+SET @this_name_class='genetree_display';
+
+--
+
+SET @this_taxon_id=40674;
+SET @this_value='mammals';
+SET @this_name_class='ensembl web display';
+
+SET @this_taxon_id=40674;
+SET @this_value='d0fad0';
+SET @this_name_class='genetree_bgcolour';
+
+SET @this_taxon_id=40674;
+SET @this_value='005000';
+SET @this_name_class='genetree_fgcolour';
+
+SET @this_taxon_id=40674;
+SET @this_value='default';
+SET @this_name_class='genetree_display';
+
+--
+
+SET @this_taxon_id=7742;
+SET @this_value='vertebrates';
+SET @this_name_class='ensembl web display';
+
+SET @this_taxon_id=7742;
+SET @this_value='ffe0f0';
+SET @this_name_class='genetree_bgcolour';
+
+SET @this_taxon_id=7742;
+SET @this_value='tomato3';
+SET @this_name_class='genetree_fgcolour';
+
+SET @this_taxon_id=7742;
+SET @this_value='default';
+SET @this_name_class='genetree_display';
+
+--
+
+SET @this_taxon_id=314147;
+SET @this_value='glires';
+SET @this_name_class='ensembl web display';
+
+SET @this_taxon_id=314147;
+SET @this_value='fff0e0';
+SET @this_name_class='genetree_bgcolour';
+
+SET @this_taxon_id=314147;
+SET @this_value='403000';
+SET @this_name_class='genetree_fgcolour';
+
+SET @this_taxon_id=314147;
+SET @this_value='default';
+SET @this_name_class='genetree_display';
+
+--
+
+SET @this_taxon_id=9443;
+SET @this_value='primates';
+SET @this_name_class='ensembl web display';
+
+SET @this_taxon_id=9443;
+SET @this_value='f0f0ff';
+SET @this_name_class='genetree_bgcolour';
+
+SET @this_taxon_id=9443;
+SET @this_value='000050';
+SET @this_name_class='genetree_fgcolour';
+
+SET @this_taxon_id=9443;
+SET @this_value='default';
+SET @this_name_class='genetree_display';
+
+--
+
+SET @this_taxon_id=314145;
+SET @this_value='laurasiatheria';
+SET @this_name_class='ensembl web display';
+
+SET @this_taxon_id=314145;
+SET @this_value='d0fafa';
+SET @this_name_class='genetree_bgcolour';
+
+SET @this_taxon_id=314145;
+SET @this_value='005050';
+SET @this_name_class='genetree_fgcolour';
+
+SET @this_taxon_id=314145;
+SET @this_value='default';
+SET @this_name_class='genetree_display';
+
+--
+
+SET @this_taxon_id=8457;
+SET @this_value='sauropsids';
+SET @this_name_class='ensembl web display';
+
+SET @this_taxon_id=8457;
+SET @this_value='lemonchiffon';
+SET @this_name_class='genetree_bgcolour';
+
+SET @this_taxon_id=8457;
+SET @this_value='yellow4';
+SET @this_name_class='genetree_fgcolour';
+
+SET @this_taxon_id=8457;
+SET @this_value='default';
+SET @this_name_class='genetree_display';
+
+-- </rel.75>
+-- / Web display information
+
 -- -- Use these to add new mya estimates
 -- SET @this_taxon_id=;
 -- SET @this_value='';
