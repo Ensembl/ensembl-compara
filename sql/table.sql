@@ -137,6 +137,7 @@ CREATE TABLE ncbi_taxa_name (
 @column assembly          Assembly version of the genome
 @column assembly_default  Boolean value describing if this assembly is the default one or not, so that we can handle more than one assembly version for a given species.
 @column genebuild         Version of the genebuild
+@column has_karyotype     Whether the genome has a karyotype
 @column locator           Used for production purposes or for user configuration in in-house installation.
 
 */
@@ -148,6 +149,7 @@ CREATE TABLE genome_db (
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   assembly_default            tinyint(1) DEFAULT 1,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
+  has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   locator                     varchar(400),
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
@@ -1725,4 +1727,6 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_74_75_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_74_75_b.sql|genome_db_has_karyo');
 
