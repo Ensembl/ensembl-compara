@@ -404,7 +404,7 @@ sub species_tree_node {
 
 sub taxonomy_level {
     my $self = shift;
-    return $self->species_tree_node()->node_name();
+    return $self->species_tree_node() ? $self->species_tree_node()->node_name() : undef;
 }
 
 
