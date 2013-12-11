@@ -48,7 +48,7 @@ sub run {
 
     my @genome_dbs;
     foreach my $core_dba (@{$self->param('all_core_dbas')}) {
-        next unless $core_dba->extract_assembly_name;
+        next unless $core_dba->assembly_name;
         push @genome_dbs, $self->create_genome_db($core_dba);
     }
     $self->param('genome_dbs', \@genome_dbs);
