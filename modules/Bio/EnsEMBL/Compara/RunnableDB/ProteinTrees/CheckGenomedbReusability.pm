@@ -231,14 +231,14 @@ sub hash_all_exons_from_dbc {
            AND et.exon_id=e.exon_id
            AND t.seq_region_id = sr.seq_region_id
            AND sr.coord_system_id = cs.coord_system_id
-           AND t.biotype=?
+           AND t.canonical_translation_id IS NOT NULL
            AND cs.species_id =?
     };
 
     my %exon_set = ();
 
     my $sth = $dbc->prepare($sql);
-    $sth->execute('protein_coding', $dba->species_id());
+    $sth->execute($dba->species_id());
 
     while(my ($key) = $sth->fetchrow()) {
         $exon_set{$key} = 1;
