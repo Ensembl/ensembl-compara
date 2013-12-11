@@ -152,7 +152,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $genome_db = $self->create_genome_db($self->param('core_dba'), $self->param('genome_db_id'), $self->param('assembly_name'), $self->param('taxon_id'), $self->param('locator'));
+    my $genome_db = $self->create_genome_db($self->param('core_dba'), $self->param('genome_db_id'), $self->param('assembly_name'), $self->param('taxon_id'), $self->param('locator'), $self->param('has_karyotype'));
 
     $self->param('genome_db', $genome_db);
 }
@@ -166,7 +166,7 @@ sub write_output {      # store the genome_db and dataflow
 # ------------------------- non-interface subroutines -----------------------------------
 
 sub create_genome_db {
-    my ($self, $core_dba, $asked_genome_db_id, $asked_assembly_name, $asked_taxon_id, $asked_locator) = @_;
+    my ($self, $core_dba, $asked_genome_db_id, $asked_assembly_name, $asked_taxon_id, $asked_locator, $asked_has_karyotype) = @_;
 
     my $locator         = $asked_locator || $core_dba->locator($suffix_separator);
 
@@ -175,6 +175,7 @@ sub create_genome_db {
 
         -TAXON_ID => $asked_taxon_id,
         -ASSEMBLY => $asked_assembly_name,
+        -HAS_KARYOTYPE => $asked_has_karyotype,
     );
     $genome_db->dbID( $asked_genome_db_id ) if $asked_genome_db_id;
     $genome_db->locator( $locator );
