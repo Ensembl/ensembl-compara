@@ -34,25 +34,34 @@ sub content {
   my $transcript  = $object->Obj;
   my $translation = $transcript->translation;
   my @xref        = $object->display_xref;
+  my @click       = $self->click_location;
+  
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $stable_id : 'Novel transcript');
-
-  ## Has user clicked on an exon (or exons)?
-  my @exons;
-  my @click = $self->click_location;
-  foreach (@{$transcript->get_all_Exons||[]}) {
-    if ($click[1] > $_->start && $click[2] < $_->end) {
-      push @exons, $_;
+  
+  if (scalar @click) {
+    ## Has user clicked on an exon (or exons)?
+    my @exons;
+    
+    foreach (@{$transcript->get_all_Exons}) {
+      my ($s, $e) = ($_->start, $_->end);
+      
+      if (
+        ($s <= $click[1] && $e >= $click[2]) || # click is completely inside exon
+        ($s >= $click[1] && $e <= $click[2])    # click completely contains exon
+      ) {
+        push @exons, $_->stable_id;
+      }
     }
-  }
-  ## Only link to an individual exon if the user has clicked squarely 
-  ## on an exon! (i.e. ignore when zoomed out or exons are tiny)
-  if (scalar(@exons) == 1) {
-    my $exon_id = $exons[0]->stable_id;
-    $self->add_entry({
-      type    => 'Exon',
-      label   => $exon_id,
-      link    => $hub->url({ type => 'Transcript', action => 'Exons', 'exon' => $exon_id })
-    });
+    
+    ## Only link to an individual exon if the user has clicked squarely 
+    ## on an exon (i.e. ignore when zoomed out or exons are tiny)
+    if (scalar @exons == 1) {
+      $self->add_entry({
+        type  => 'Exon',
+        label => $exons[0],
+        link  => $hub->url({ type => 'Transcript', action => 'Exons', exon => $exons[0] })
+      });
+    }
   }
   
   $self->add_entry({
@@ -60,7 +69,16 @@ sub content {
     label => $stable_id, 
     link  => $hub->url({ type => 'Transcript', action => 'Summary' })
   });
-
+  
+  # Protein coding transcripts only
+  if ($translation) {
+    $self->add_entry({
+      type  => 'Protein',
+      label => $translation->stable_id || $stable_id,
+      link  => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
+    });
+  }
+  
   # Only if there is a gene (not Prediction transcripts)
   if ($object->gene) {
     $self->add_entry({
@@ -109,13 +127,6 @@ sub content {
   
   # Protein coding transcripts only
   if ($translation) {
-    $self->add_entry({
-      type     => 'Protein',
-      label    => $translation->stable_id || $stable_id,
-      link     => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
-      position => 3
-    });
-    
     $self->add_entry({
       type  => 'Amino acids',
       label => $self->thousandify($translation->length)
