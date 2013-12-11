@@ -339,9 +339,9 @@ sub store {
     if($self->_synchronise($gdb)) {
         return $self->update($gdb);
     } else {
-        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, has_karyotype, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator )
+        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->has_karyotype, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator )
             or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')\n";
 
         $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
@@ -450,6 +450,7 @@ sub _columns {
         g.taxon_id
         g.assembly_default
         g.genebuild
+        g.has_karyotype
         g.locator
     )
 }
@@ -468,8 +469,8 @@ sub _objs_from_sth {
     my ($self, $sth) = @_;
     my @genome_db_list = ();
 
-    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
-    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
+    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $has_karyotype, $locator);
+    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$has_karyotype, \$locator);
     while ($sth->fetch()) {
 
         my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
@@ -479,6 +480,7 @@ sub _objs_from_sth {
             'assembly'  => $assembly,
             'assembly_default' => $assembly_default,
             'genebuild' => $genebuild,
+            'has_karyotype' => $has_karyotype,
             'taxon_id'  => $taxon_id,
             'locator'   => $locator,
         } );
