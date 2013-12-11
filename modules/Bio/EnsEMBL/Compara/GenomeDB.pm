@@ -79,6 +79,8 @@ use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
@@ -146,6 +148,9 @@ sub new_fast {
   Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBAdaptor $dba
                The DBAdaptor containing sequence information for the genome
                represented by this object.
+  Arg [2]    : (optional) Boolean $update_other_fields
+               In setter mode, asks the object to update all the relevant
+               fields from the new db_adaptor (genebuild, assembly, etc)
   Example    : $gdb->db_adaptor($dba);
   Description: Getter/Setter for the DBAdaptor containing sequence 
                information for the genome represented by this object.
@@ -156,12 +161,19 @@ sub new_fast {
 =cut
 
 sub db_adaptor {
-    my ( $self, $dba ) = @_;
+    my ( $self, $dba, $update_other_fields ) = @_;
 
     if($dba) {
         $self->{'_db_adaptor'} = ($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor'))
             ? $dba
             : undef;
+        if ($self->{'_db_adaptor'}) {
+            $self->name( $self->{'_db_adaptor'}->get_MetaContainer->get_production_name );
+            $self->assembly( $self->{'_db_adaptor'}->assembly_name );
+            $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
+            $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
+            $self->has_karyotype( $self->{'_db_adaptor'}->has_karyotype );
+        }
     }
 
     unless (exists $self->{'_db_adaptor'}) {
