@@ -109,8 +109,8 @@ sub new {
 
     my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
-    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild) =
-        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD)], @_);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE)], @_);
 
     # If there is a Core DBAdaptor, we can get most of the info from there
     if ($db_adaptor) {
@@ -124,6 +124,7 @@ sub new {
             [ 'taxon_id', \$taxon_id, $meta_container->get_taxonomy_id() ],
             [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
             [ 'name', \$name, $meta_container->get_production_name() ],
+            [ 'has_karyotype', \$has_karyotype, $db_adaptor->has_karyotype() ],
         );
 
         foreach my $test (@parameters) {
@@ -142,6 +143,7 @@ sub new {
     $assembly     && $self->assembly($assembly);
     $taxon_id     && $self->taxon_id($taxon_id);
     $genebuild    && $self->genebuild($genebuild);
+    defined $has_karyotype  && $self->has_karyotype($has_karyotype);
 
     return $self;
 }
@@ -412,6 +414,25 @@ sub locator {
   my $self = shift;
   $self->{'locator'} = shift if (@_);
   return $self->{'locator'} || '';
+}
+
+
+=head2 has_karyotype
+
+  Arg [1]    : (optional) boolean
+  Example    : if ($gdb->has_karyotype()) { ... }
+  Description: Whether the genomeDB has a karyotype
+  Returntype : boolean
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub has_karyotype {
+  my $self = shift;
+  $self->{'has_karyotype'} = shift if (@_);
+  return $self->{'has_karyotype'};
 }
 
 
