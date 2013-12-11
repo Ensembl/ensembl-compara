@@ -50,12 +50,14 @@ use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 my $verbose = 0;
 
-my $suffix_separator = '__cut_here__';
+#my $suffix_separator = '__cut_here__';
 
 sub fetch_input {
     my ($self) = @_;
@@ -357,8 +359,7 @@ sub get_species {
 	    next;
 	}
 
-
-	$self->get_locator($genome_db);
+      $genome_db->locator($genome_db->db_adaptor->locator);
     }
 }
 
@@ -690,7 +691,7 @@ sub parse_defaults {
 	#foreach my $genome_db (@$genome_dbs) {
 	foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
 	    #get and store locator
-	    $self->get_locator($genome_db);
+          $genome_db->locator($genome_db->db_adaptor->locator);
 	    $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
 	    
 	    push @genome_db_ids, $genome_db->dbID;
@@ -1187,63 +1188,10 @@ sub print_pair_aligner {
     }
 }
 
-#
-#This should probably go elsewhere eventually
-#
-sub get_locator {
-    my ($self, $genome_db) = @_;
-    my $no_alias_check = 1;
-
-    my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core', $no_alias_check);
-    if (!defined $this_core_dba) {
-	die("Unable to find a suitable core database for ". $genome_db->name . " from the registry\n");
-    }
-    my $this_assembly = $this_core_dba->extract_assembly_name();
-    my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
-    
-    my $genebuild = $genome_db->genebuild;
-    my $assembly_name = $genome_db->assembly;
-    
-    $genebuild ||= $this_start_date;
-    $assembly_name ||= $this_assembly;
-    
-    my $core_dba;
-    if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
-	$core_dba = $this_core_dba;
-    } else {
-	#The assembly.default and coord_system.version names should be the same
-	throw "Found assembly '$this_assembly' when looking for '$assembly_name' or '$this_start_date' when looking for '$genebuild'";
-    }
-    
-    if (defined $core_dba) {
-	#print "locator " . $core_dba->locator . "\n";
-	$genome_db->locator($core_dba->locator);
-    }
-
-}
 
 #
 #Taken from LoadOneGenomeDB
 #
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {  # with much regret I have to introduce the highly demanded method this way
-    my $self = shift @_;
-
-    my ($cs) = @{$self->get_CoordSystemAdaptor->fetch_all()};
-    my $assembly_name = $cs->version;
-
-    return $assembly_name;
-}
-
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::locator {  # this is another similar hack (to be included or at least offered for inclusion into Core codebase)
-    my $self         = shift @_;
-
-    my $dbc = $self->dbc();
-
-    return sprintf(
-          "%s/host=%s;port=%s;user=%s;pass=%s;dbname=%s;species=%s;species_id=%s;disconnect_when_inactive=%d",
-          ref($self), $dbc->host(), $dbc->port(), $dbc->username(), $dbc->password(), $dbc->dbname(), $self->species, $self->species_id, 1,
-    );
-}
 
 
 sub load_registry_dbs {
@@ -1299,13 +1247,13 @@ sub populate_database_from_core_db {
 							     -port => $port,
 							     -species => $species->{species},
 							     -dbname => $species->{dbname});
-	$genome_db = update_genome_db($species_dba, $self->compara_dba, 0, $species->{genome_db_id});
+	$genome_db = update_genome_db($species_dba, $self->compara_dba, $species->{genome_db_id});
 	update_dnafrags($self->compara_dba, $genome_db, $species_dba);
 
     } elsif ($species->{-dbname}) {
 	#Load form curr_core_dbs_locs in default_options file
 	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
-	$genome_db = update_genome_db($species_dba, $self->compara_dba, 0);
+	$genome_db = update_genome_db($species_dba, $self->compara_dba);
 	update_dnafrags($self->compara_dba, $genome_db, $species_dba);	
     }
 
@@ -1314,81 +1262,19 @@ sub populate_database_from_core_db {
 
 #Taken from update_genome.pl
 sub update_genome_db {
-    my ($species_dba, $compara_dba, $force, $genome_db_id) = @_;
-    my $species_name;         #if not in core
-    my $taxon_id;             #if not in core
+    my ($species_dba, $compara_dba, $genome_db_id) = @_;
 
     my $compara = $compara_dba->dbc->dbname;
-
-    my $slice_adaptor = $species_dba->get_adaptor("Slice");
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-    my $meta_container = $species_dba->get_MetaContainer;
     
-    my $primary_species_binomial_name;
-    if (defined($species_name)) {
-	$primary_species_binomial_name = $species_name;
-    } else {
-	$primary_species_binomial_name = $meta_container->get_production_name();
-	if (!$primary_species_binomial_name) {
-	    throw "Cannot get the species name from the database. Use the --species_name option";
-	}
-    }
-    my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-    my $primary_species_assembly = $highest_cs->version();
-    my $genome_db = eval {$genome_db_adaptor->fetch_by_name_assembly(
-								     $primary_species_binomial_name,
-								     $primary_species_assembly
-								    )};
-    if ($genome_db and $genome_db->dbID) {
-	return $genome_db if ($force);
-	throw "GenomeDB with this name [$primary_species_binomial_name] and assembly".
-	  " [$primary_species_assembly] is already in the compara DB [$compara]\n".
-	    "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
-    } elsif ($force) {
-	print "GenomeDB with this name [$primary_species_binomial_name] and assembly".
-	  " [$primary_species_assembly] is not in the compara DB [$compara]\n".
-	    "You don't need the --force option!!";
-	print "Press [Enter] to continue or Ctrl+C to cancel...";
-	<STDIN>;
-    }
-    
-    my ($assembly) = @{$meta_container->list_value_by_key('assembly.default')};
-    if (!defined($assembly)) {
-	warning "Cannot find assembly.default in meta table for $primary_species_binomial_name";
-	$assembly = $primary_species_assembly;
-    }
-    
-    my $genebuild = $meta_container->get_genebuild();
-    if (! $genebuild) {
-	warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
-	$genebuild = '';
-    }
-    
-    print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
-    
-    $genome_db = eval {
-	$genome_db_adaptor->fetch_by_name_assembly($primary_species_binomial_name,
-						   $assembly)
-    };
-    
-    ## New genebuild!
+    my $genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
+
     if ($genome_db) {
-
-        $genome_db->genebuild( $genebuild );
-        $genome_db_adaptor->update($genome_db);
-
+      my $species_production_name = $genome_db->name;
+      my $this_assembly = $genome_db->assembly;
+	throw "GenomeDB with this name [$species_production_name] and assembly".
+	  " [$this_assembly] is already in the compara DB [$compara]\n";
     }
-    ## New genome or new assembly!!
-    else {
-	
-	if (!defined($taxon_id)) {
-	    ($taxon_id) = @{$meta_container->list_value_by_key('species.taxonomy_id')};
-	}
-	if (!defined($taxon_id)) {
-	    throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
-	      "   You can use the --taxon_id option";
-	}
-	print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
 
 	#Need to remove FOREIGN KEY to ncbi_taxa_node which is not necessary for pairwise alignments
 	#Check if foreign key exists
@@ -1409,24 +1295,24 @@ sub update_genome_db {
 	    $compara_dba->dbc()->do('ALTER TABLE genome_db DROP FOREIGN KEY genome_db_ibfk_1');
 	}
 
-	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
-	$sth->execute($primary_species_binomial_name);
-	$sth->finish();
-	
-      $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
-      $genome_db->taxon_id( $taxon_id );
-      $genome_db->name( $primary_species_binomial_name );
-      $genome_db->assembly( $assembly );
-      $genome_db->genebuild( $genebuild );
+      $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
+          -DB_ADAPTOR => $species_dba,
+      );
 
-	#New ID search if $offset is true
+      if (not defined $genome_db->name) {
+	    throw "Cannot get the species name from the database ".$species_dba->dbname;
+      } elsif (not defined $genome_db->taxon_id) {
+          my $species_name = $genome_db->name;
+          throw "Cannot find species.taxonomy_id in meta table for $species_name.\n";
+      }
+      print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
+
 	if (defined $genome_db_id) {
           $genome_db->dbID($genome_db_id);
 	}
 
       $genome_db_adaptor->store($genome_db);
 
-    }
     return $genome_db;
 }
 
