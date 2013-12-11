@@ -1792,18 +1792,8 @@ sub _get_all_ref_genomic_aligns {
 	return $light_genomic_aligns;
     }
 
-    my $gdb_a = $self->db->get_GenomeDBAdaptor();
-    my $meta_container = $slice->adaptor->db->get_MetaContainer();
-    my $primary_species_name = $meta_container->get_production_name();
-    my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-    my $primary_species_assembly = $highest_cs->version();
-    my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-		        $primary_species_name,
-                        $primary_species_assembly);
     my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
-    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
-			    $genome_db, $slice->seq_region_name);
+    my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
     next if (!$dnafrag);
 
     my $max_alignment_length = $mlss->max_alignment_length;
