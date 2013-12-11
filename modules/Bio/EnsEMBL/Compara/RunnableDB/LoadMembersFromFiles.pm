@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB
+Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles
 
 =head1 DESCRIPTION
 
