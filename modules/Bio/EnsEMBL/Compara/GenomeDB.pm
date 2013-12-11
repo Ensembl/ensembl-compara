@@ -406,6 +406,7 @@ sub toString {
         .", name='".$self->name
         ."', assembly='".$self->assembly
         ."', genebuild='".$self->genebuild
+        ."', assembly_default='".$self->assembly_default
         ."', taxon_id='".$self->taxon_id
         ."', locator='".$self->locator
         ."'";
