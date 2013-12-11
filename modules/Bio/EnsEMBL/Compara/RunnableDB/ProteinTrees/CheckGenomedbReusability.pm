@@ -144,8 +144,8 @@ sub fetch_input {
         if ($prev_core_dba) {
             my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
 
-            my $curr_assembly = $curr_core_dba->extract_assembly_name;
-            my $prev_assembly = $prev_core_dba->extract_assembly_name;
+            my $curr_assembly = $curr_core_dba->assembly_name;
+            my $prev_assembly = $prev_core_dba->assembly_name;
 
             if($curr_assembly ne $prev_assembly) {
 
@@ -217,15 +217,6 @@ sub comes_from_core_database {
     my $genome_db = shift;
     return 1 unless defined $genome_db->locator;
     return ($genome_db->locator =~ /^Bio::EnsEMBL::Compara::GenomeMF/ ? 0 : 1);
-}
-
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {
-    my $self = shift @_;
-
-    my ($cs) = @{$self->get_CoordSystemAdaptor->fetch_all()};
-    my $assembly_name = $cs->version;
-
-    return $assembly_name;
 }
 
 
