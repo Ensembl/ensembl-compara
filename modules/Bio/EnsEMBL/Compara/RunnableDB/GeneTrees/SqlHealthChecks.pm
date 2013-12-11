@@ -64,7 +64,6 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 my $config = {
 
-
     ### Members
     #############
 
@@ -122,6 +121,28 @@ my $config = {
     },
 
 
+    ### EPO Removed members
+    #########################
+
+     epo_removed_members => {
+                             params => [ 'gene_tree_id' ],
+                             tests => [
+                                       {
+                                        description => 'All the removed members should not be in the clusters anymore',
+                                        query       => 'SELECT gtn.node_id FROM removed_member JOIN member gene USING(stable_id) JOIN member transc ON(gene.canonical_member_id = transc.member_id) JOIN gene_tree_node gtn ON(transc.member_id=gtn.member_id) WHERE gtn.root_id = #gene_tree_id#;',
+                                       },
+                                      ],
+                            },
+
+
+     epo_removed_members_globally => {
+                             tests => [
+                                       {
+                                        description => 'We should have removed members on all the low-coverage-assembly species',
+                                        query       => 'SELECT name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_tag USING(species_set_id) WHERE value="low-coverage-assembly" AND name NOT IN(SELECT DISTINCT(name) FROM removed_member JOIN genome_db USING(genome_db_id));',
+                                       },
+                                      ],
+                            },
 
     ### Blast hits
     ###############
@@ -146,14 +167,12 @@ my $config = {
         params => [ 'gene_tree_id' ],
         tests => [
             {
-                ## FIXME: only for protein trees
                 description => 'Checks that the tree has not lost any genes since the backup',
-                query => 'SELECT protein_tree_backup.member_id FROM protein_tree_backup LEFT JOIN gene_tree_node USING (root_id, member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.member_id IS NULL',
+                query => 'SELECT gene_tree_backup.member_id FROM gene_tree_backup LEFT JOIN gene_tree_node USING (root_id, member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.member_id IS NULL',
             },
             {
-                ## FIXME: only for protein trees
                 description => 'Checks that the tree has not gained any genes since the backup',
-                query => 'SELECT gene_tree_node.member_id FROM gene_tree_node LEFT JOIN protein_tree_backup USING (root_id, member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.member_id IS NOT NULL AND protein_tree_backup.member_id IS NULL',
+                query => 'SELECT gene_tree_node.member_id FROM gene_tree_node LEFT JOIN gene_tree_backup USING (root_id, member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.member_id IS NOT NULL AND gene_tree_backup.member_id IS NULL',
             },
             {
                 description => 'Checks that the tree has an alignment',
@@ -164,14 +183,12 @@ my $config = {
                 query => 'SELECT * FROM gene_tree_root JOIN gene_align_member USING (gene_align_id) WHERE root_id = #gene_tree_id# AND (cigar_line IS NULL OR LENGTH(cigar_line) = 0)',
             },
             {
-                ## FIXME: only for protein trees
                 description => 'Checks that the alignment has not lost any genes since the backup',
-                query => 'SELECT protein_tree_backup.member_id FROM protein_tree_backup JOIN gene_tree_root USING (root_id) LEFT JOIN gene_align_member USING (gene_align_id, member_id) WHERE root_id = #gene_tree_id# AND gene_align_member.member_id IS NULL',
+                query => 'SELECT gene_tree_backup.member_id FROM gene_tree_backup JOIN gene_tree_root USING (root_id) LEFT JOIN gene_align_member USING (gene_align_id, member_id) WHERE root_id = #gene_tree_id# AND gene_align_member.member_id IS NULL',
             },
             {
-                ## FIXME: only for protein trees
                 description => 'Checks that the alignment has not gained any genes since the backup',
-                query => 'SELECT gene_align_member.member_id FROM protein_tree_backup JOIN gene_tree_root USING (root_id) RIGHT JOIN gene_align_member USING (gene_align_id, member_id) WHERE root_id = #gene_tree_id# AND protein_tree_backup.member_id IS NULL',
+                query => 'SELECT gene_align_member.member_id FROM gene_tree_backup JOIN gene_tree_root USING (root_id) RIGHT JOIN gene_align_member USING (gene_align_id, member_id) WHERE root_id = #gene_tree_id# AND gene_tree_backup.member_id IS NULL',
             },
         ],
     },
@@ -304,7 +321,6 @@ my $config = {
 
         ],
     },
-
 
 
     ### Homology dN/dS step
