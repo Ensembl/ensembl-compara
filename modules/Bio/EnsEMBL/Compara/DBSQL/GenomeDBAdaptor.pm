@@ -302,11 +302,10 @@ sub fetch_all_by_low_coverage {
 =cut
 
 sub fetch_by_core_DBAdaptor {
-	my ($self, $core_dba) = @_;
-	my $species_name = $core_dba->get_MetaContainer->get_production_name();
-	my ($highest_cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
-  my $species_assembly = $highest_cs->version();
-  return $self->fetch_by_name_assembly($species_name, $species_assembly);
+    my ($self, $core_dba) = @_;
+    my $species_name = $core_dba->get_MetaContainer->get_production_name();
+    my $species_assembly = $core_dba->assembly_name();
+    return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
 
@@ -416,8 +415,7 @@ sub _find_missing_DBAdaptors {
         # Get the production name and assembly to compare to our GenomeDBs
         my $mc = $db_adaptor->get_MetaContainer();
         my $that_species = $mc->get_production_name();
-        my ($highest_cs) = @{$db_adaptor->get_CoordSystemAdaptor->fetch_all()};
-        my $that_assembly = $highest_cs->version();
+        my $that_assembly = $db_adaptor->assembly();
         $db_adaptor->dbc->disconnect_if_idle();
 
         eval {
