@@ -119,6 +119,7 @@ sub variation_content {
   
   push @entries, (
     { type  => 'Types',   label_html => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
+    { link  => $hub->url({ action => 'Summary', %url_params}), label => 'Explore this variation'},
     { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
   );
   
