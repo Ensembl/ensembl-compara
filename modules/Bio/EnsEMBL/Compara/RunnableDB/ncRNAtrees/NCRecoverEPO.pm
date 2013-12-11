@@ -49,8 +49,11 @@ $nc_recover_epo->write_output(); #writes to DB
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please email comments or questions to the public Ensembl 
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>
 
 =cut
 
@@ -66,6 +69,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO;
 
 use strict;
+
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -139,7 +143,7 @@ sub fetch_input {
 sub run {
   my $self = shift @_;
 
-  $self->run_ncrecoverepo;
+  # $self->run_ncrecoverepo;
   $self->run_low_coverage_best_in_alignment;
 }
 
@@ -158,9 +162,9 @@ sub run {
 sub write_output {
   my $self = shift @_;
 
-  $self->param('predictions_to_add', {});
+#  $self->param('predictions_to_add', {});
   $self->remove_low_cov_predictions;
-  $self->add_matching_predictions;
+#  $self->add_matching_predictions;
 }
 
 
@@ -332,9 +336,11 @@ sub run_low_coverage_best_in_alignment {
 
   $self->param('epo_low_cov_gdbs', {});
 
-  my $epo_low_mlss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')->[0];
-  foreach my $genome_db (@{$epo_low_mlss->species_set_obj->genome_dbs()}) {
-    $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
+  my $epo_low_mlsss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE'); ## This is now an array
+  for my $epo_low_mlss (@{$epo_low_mlsss}) {
+      foreach my $genome_db (@{$epo_low_mlss->species_set_obj->genome_dbs()}) {
+          $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
+      }
   }
 
   my %epo_low_restricted_gab_hash = ();
@@ -348,7 +354,14 @@ sub run_low_coverage_best_in_alignment {
     next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
     my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     next unless (defined($slice));
-    my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
+    my $genomic_align_blocks = [];
+    for my $epo_low_mlss (@{$epo_low_mlsss}) {
+        my $gabs = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss, $slice);
+        if (defined $gabs) {
+            $genomic_align_blocks = [@$genomic_align_blocks, @$gabs];
+        }
+    }
+#    my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     next unless(0 < scalar(@$genomic_align_blocks));
     print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $genomic_align_block (@$genomic_align_blocks) {
@@ -376,6 +389,13 @@ sub run_low_coverage_best_in_alignment {
     if ($count > $max) {$max = $count; $max_gabID = $gabID};
   }
 
+  ## Once we have the max_gabID, we fix the mlss:
+  my $gab = $self->param('epo_gab_adaptor')->fetch_by_dbID($max_gabID);
+  my $epo_low_mlss;
+  if (defined $gab) {
+      $epo_low_mlss = $gab->method_link_species_set();
+  }
+
   my %low_cov_leaves_pmember_id_slice_to_check_coord_system = ();
   my %low_cov_slice_seqs = ();
   $self->param('low_cov_leaves_to_delete_pmember_id', {});
@@ -385,6 +405,11 @@ sub run_low_coverage_best_in_alignment {
     my $gdb_name = $leaf->genome_db->name;
     next unless (defined($self->param('low_cov_gdbs')->{$leaf->genome_db_id}));
     next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
+    if (! defined $epo_low_mlss) {
+        ## We delete this leaf because it is a low_cov slice that is not in the epo_low_cov
+        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
+        next;
+    }
     my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     $self->throw("Unable to fetch slice for this genome_db leaf: $gdb_name") unless (defined($slice));
     $low_cov_slice_seqs{$leaf->genome_db_id}{$leaf->member_id} = $slice;
@@ -396,7 +421,7 @@ sub run_low_coverage_best_in_alignment {
     }
     print STDERR "# EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $low_cov_genomic_align_block (@$low_cov_genomic_align_blocks) {
-      unless ($low_cov_genomic_align_block->{original_dbID} == $max_gabID) {
+      if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
@@ -417,11 +442,9 @@ sub run_low_coverage_best_in_alignment {
         my $coord_level1 = $slice1->coord_system->is_top_level;
         my $slice2 = $low_cov_slice_seqs{$genome_db_id}{$member_id2};
         my $coord_level2 = $slice2->coord_system->is_top_level;
-        if (0 < abs($coord_level1-$coord_level2)) {
-          if ($coord_level2 < $coord_level1) {
+        if ($coord_level2 < $coord_level1) {
             my $temp_slice = $slice1; $slice1 = $slice2; $slice2 = $temp_slice;
             my $temp_member_id = $member_id1; $member_id1 = $member_id2; $member_id2 = $temp_member_id;
-          }
         }
         my $mapped_slice2 = $slice2->project($slice1->coord_system->name)->[0];
         next unless(defined($mapped_slice2)); # no projection, so pair of slices are different
@@ -445,6 +468,7 @@ sub run_low_coverage_best_in_alignment {
       $self->param('low_cov_leaves_to_delete_pmember_id')->{$member_id2} = $stable_id2;
     }
   }
+
 }
 
 sub remove_low_cov_predictions {
