@@ -482,16 +482,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     return $all_genomic_align_blocks;
   }
 
-  my $gdb_a = $self->db->get_GenomeDBAdaptor();
-	my $meta_container = $reference_slice->adaptor->db->get_MetaContainer();
-	my $primary_species_name = $meta_container->get_production_name();
-  my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-  my $primary_species_assembly = $highest_cs->version();
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
-  my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_name,
-          $primary_species_assembly
-      );
+  my $genome_db = $genome_db_adaptor->fetch_by_Slice($reference_slice);
 
 #  my $projection_segments = $reference_slice->project('toplevel');
   my $filter_projections = 1;
