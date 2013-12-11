@@ -305,6 +305,29 @@ sub _unique_attributes {
 # fetch_* methods #
 ###################
 
+=head2 fetch_all_by_species_set_id
+
+  Arg 1       : int $species_set_id
+  Example     : my $method_link_species_set =
+                  $mlss_adaptor->fetch_all_by_species_set_id($ss->dbID)
+  Description : Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+                corresponding to the given species_set_id
+  Returntype  : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions  : none
+
+=cut
+
+sub fetch_all_by_species_set_id {
+    my ($self, $species_set_id, $no_warning) = @_;
+
+    my $mlss = $self->_id_cache->get_all_by_additional_lookup('species_set_id', $species_set_id);
+    if (not $mlss and not $no_warning) {
+        warning("Unable to find method_link_species_set with species_set='$species_set_id'");
+    }
+    return $mlss;
+}
+
+
 =head2 fetch_by_method_link_id_species_set_id
 
   Arg 1      : int $method_link_id
