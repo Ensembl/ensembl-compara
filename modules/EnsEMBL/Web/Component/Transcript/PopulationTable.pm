@@ -44,10 +44,18 @@ sub content {
       push @samples, $param;
     }
   }
-  
   my $snp_data = $self->get_page_data(\@samples);
+
+  
   my $columns  = [
     { key => 'ID',          sort => 'html'                                               },
+  ];
+
+  if ($hub->param('data_grouping') eq 'by_variant') {
+    push @$columns, { key => 'sample', sort => 'string',  title => 'Population'};
+  }
+
+  push @$columns,
     { key => 'consequence', sort => 'string',   title => 'Type'                          },
     { key => 'chr' ,        sort => 'position', title => 'Chr: bp'                       },
     { key => 'ref_alleles', sort => 'string',   title => 'Ref. allele'                   },
@@ -60,25 +68,47 @@ sub content {
     { key => 'Class',       sort => 'string'                                             },
     { key => 'Source',      sort => 'string'                                             },
     { key => 'Status',      sort => 'string',   title => 'Validation'                    }
-  ];
+  ;
  
- 
-  foreach my $sample (@samples) {
-    my @rows = map @{$snp_data->{$_}{$sample} || []}, sort keys %$snp_data;
-    
-    if (scalar @rows) {      
-      $tables{$sample} = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc' ] })->render;
-    } else {
-      $tables{$sample} = '
+  my $message = '
         <p>
-          There are no variations in this region in this strain, or the variations have been filtered out by the options set in the page configuration. 
+          There are no variations in this region in %s, or the variations have been filtered out by the options set in the page configuration. 
           To change the filtering options select the "Configure this page" link from the menu on the left hand side of this page.
         </p><br />
       ';
+
+  if ($hub->param('data_grouping') eq 'by_variant') {
+    $html .= "<h2>Variations in position</h2>";
+    my (@rows, @missing);
+    foreach my $sample (@samples) {
+      my @data = map @{$snp_data->{$_}{$sample} || []}, sort keys %$snp_data;
+      if (@data) {
+        push @rows, @data;
+      }
+      else {
+        push @missing, $sample;
+      }
     }
+    if (@missing) {
+      $html .= $self->_info('Configuring the display', sprintf($message, join(',', @missing)));
+    }
+
+    my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc', 'ID asc' ] })->render;
+    $html .= $table;
   }
-  
+  else { 
+    foreach my $sample (@samples) {
+      my @rows = map @{$snp_data->{$_}{$sample} || []}, sort keys %$snp_data;
+    
+      if (scalar @rows) {      
+        $tables{$sample} = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc' ] })->render;
+      } else {
+        $tables{$sample} = sprintf($message, 'this strain');
+      }
+    }  
   $html .= "<h2>Variations in $_:</h2>$tables{$_}" for keys %tables;
+  }
+
   $html .= $self->_info('Configuring the display', sprintf('
     <p>These %ss are displayed by default: <b>%s.</b><br />
     Select the "Configure this page" link in the left hand menu to customise which %ss and types of variation are displayed in the tables above.</p>',
@@ -194,6 +224,7 @@ sub get_page_data {
       my $row = {
         ID          => sprintf('<a href="%s">%s</a>', $url, $allele->variation_name),
         Class       => $class                     || '-',
+        sample      => $sample,
         Source      => $sources                   || '-',
         ref_alleles => $allele->ref_allele_string || '-',
         Alleles     => $allele->allele_string     || '-',
