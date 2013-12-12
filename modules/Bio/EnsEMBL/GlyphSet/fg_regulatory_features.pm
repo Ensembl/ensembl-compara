@@ -167,8 +167,9 @@ sub render_tag {
 
 sub highlight {
   my ($self, $f, $composite, $pix_per_bp, $h) = @_;
-  my %highlights = map { $_ => 1 } $self->highlights;
-  
+  return unless $self->{'config'}->get_option('opt_highlight_feature') != 0;
+
+  my %highlights = map { $_ => 1 } $self->highlights;  
   return unless $highlights{$f->stable_id};
   
   $self->unshift($self->Rect({

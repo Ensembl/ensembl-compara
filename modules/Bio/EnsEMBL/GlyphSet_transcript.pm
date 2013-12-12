@@ -437,7 +437,7 @@ sub render_transcripts {
       
       # shift the composite container by however much we're bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlights->{$transcript_stable_id}) if $highlights->{$transcript_stable_id} && !defined $target;
+      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
       $self->push($composite);
     }
   }
@@ -644,7 +644,7 @@ sub render_alignslice_transcript {
       
       # shift the composite container by however much we've bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlights->{$transcript_stable_id}) if $highlights->{$transcript_stable_id} && !defined $target;
+      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
       $self->push($composite);
       
       if ($target) {
@@ -823,7 +823,7 @@ sub render_alignslice_collapsed {
     
     # shift the composite container by however much we're bumped
     $composite->y($composite->y - $strand * $bump_height * $row);
-    $composite->colour($highlights->{$gene_stable_id}) if $highlights->{$gene_stable_id};
+    $composite->colour($highlights->{$gene_stable_id}) if $config->get_option('opt_highlight_feature') !=0 && $highlights->{$gene_stable_id};
     $self->push($composite);
   }
   
@@ -924,7 +924,7 @@ sub render_genes {
       title     => $rect->{'title'},
       gene      => $gene,
       col       => $gene_col,
-      highlight => $highlights->{$gene_stable_id},
+      highlight => $config->get_option('opt_highlight_feature') != 0 ? $highlights->{$gene_stable_id} : undef,
       type      => $gene_type
     };
     
@@ -976,7 +976,7 @@ sub render_genes {
     
     $self->push($rect);
     
-    if ($highlights->{$gene_stable_id}) {
+    if ($config->get_option('opt_highlight_feature') != 0 && $highlights->{$gene_stable_id}) {
       $self->unshift($self->Rect({
         x         => ($start - 1) - 1/$pix_per_bp,
         y         => $rect->y - 1,
@@ -1056,7 +1056,7 @@ sub render_genes {
           })
         );
         
-        if ($gr->{'highlight'}) {
+        if ($config->get_option('opt_highlight_feature') != 0 && $gr->{'highlight'}) {
           $self->unshift($self->Rect({
             x         => $gr->{'start'} - 1 - (1 / $pix_per_bp),
             y         => $label->y + 1,

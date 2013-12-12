@@ -344,7 +344,7 @@ sub highlight {
   my $id = $f->variation_name;  
      $id =~ s/^rs//;
  
-  return unless $highlights{$id} || $highlights{"rs$id"};
+  return unless $self->{'config'}->get_option('opt_highlight_feature') != 0 && ($highlights{$id} || $highlights{"rs$id"});
   
   $composite->z(20);
   

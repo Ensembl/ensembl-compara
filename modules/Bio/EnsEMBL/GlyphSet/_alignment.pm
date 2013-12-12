@@ -421,7 +421,7 @@ sub render_normal {
         }));
       }
       
-      if (exists $highlights{$i}) {
+      if ($self->{'config'}->get_option('opt_highlight_feature') != 0 && exists $highlights{$i}) {
         $self->unshift($self->Rect({
           x         => $composite->{'x'} - 1/$pix_per_bp,
           y         => $composite->{'y'} - 1,

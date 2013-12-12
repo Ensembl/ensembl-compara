@@ -323,7 +323,7 @@ sub highlight {
   my ($f, $composite, $pix_per_bp, $height) = @_;
   
   ## Are we going to highlight this item?
-  if ($f->can('display_name') && grep $_ eq $f->display_name, $self->highlights) {
+  if ($self->{'config'}->get_option('opt_highlight_feature') != 0 && $f->can('display_name') && grep $_ eq $f->display_name, $self->highlights) {
     $self->unshift($self->Rect({
       x         => $composite->x - 1/$pix_per_bp,
       y         => $composite->y - 1,
