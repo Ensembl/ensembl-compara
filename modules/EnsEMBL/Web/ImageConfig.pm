@@ -1554,6 +1554,7 @@ sub load_tracks {
   }
   
   $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]) unless $self->get_parameter('opt_empty_tracks') eq '0';
+  $self->add_options('information', [ 'opt_highlight_feature', 'Highlight current feature', undef, undef, 'normal' ]);
   $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
 }
 
