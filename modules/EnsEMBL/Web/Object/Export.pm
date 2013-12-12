@@ -56,6 +56,29 @@ sub get_genetic_variations { return shift->get_object->get_genetic_variations(@_
 sub stable_id              { return shift->get_object->stable_id;                                       }
 sub availability           { return shift->get_object->availability;                                    }
 
+sub dbs {
+  my $self = shift;
+  my $species_defs = $self->species_defs;
+  my @dbs = ('core');
+  push @dbs, 'vega'          if $species_defs->databases->{'DATABASE_VEGA'};
+  push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
+  push @dbs, 'vega_update'   if $species_defs->databases->{'DATABASE_VEGA_UPDATE'};
+  return \@dbs;
+}
+
+sub gene_source {
+  my $self = shift;
+  my ($g,$db) = @_;
+  my $source;
+  if ($self->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+    $source = $g->analysis->display_label;
+  }
+  else {
+    $source = $db eq 'vega' ? 'Vega' : 'Ensembl';
+  }
+  return $source;
+}
+
 sub slice {
   my $self     = shift;
   my $location = $self->get_location_object;
@@ -290,15 +313,16 @@ sub process {
   my $o              = $hub->param('output');
   my $strand         = $hub->param('strand');
 
-  my $object         = $self->get_object;   
+  my $object         = $self->get_object;
   my @inputs         = ($hub->function eq 'Gene' || $hub->function eq 'LRG') ? $object->get_all_transcripts : @_;  
   @inputs            = [$object] if($hub->function eq 'Transcript');  
 
   my $slice          = $object->slice('expand');
   $slice             = $self->slice if($slice == 1);
-   
+
   my $feature_strand = $slice->strand;
-  $strand            = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically  
+
+  $strand            = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
   $slice             = $slice->invert if $strand && $strand != $feature_strand;
   my $params         = { feature_strand => $feature_strand };
   my $html_format    = $self->html_format;
@@ -327,10 +351,10 @@ sub process {
       %$custom_outputs
     };
 
-    if ($outputs->{$o}) {      
+    if ($outputs->{$o}) {
       map { $params->{$_} = 1 if $_ } $hub->param('param');
       map { $params->{'misc_set'}->{$_} = 1 if $_ } $hub->param('misc_set'); 
-      $self->params = $params;      
+      $self->params = $params;
       $outputs->{$o}();
     }
   }
@@ -363,6 +387,7 @@ sub phyloxml{
   ); 
   $self->writexml($cdb, $handle, $w);
 }
+
 sub orthoxml{
   my ($self,$cdb) = @_;
   my $params = $self->params;
@@ -375,6 +400,7 @@ sub orthoxml{
   ); 
   $self->writexml($cdb, $handle, $w);
 }
+
 sub writexml{
   my ($self,$cdb,$handle,$w) = @_;
   my $hub             = $self->hub;
@@ -390,6 +416,7 @@ sub writexml{
   }unless $hub->param('_format') eq 'TextGz';
   $self->string($out);
 }
+
 sub fasta {
   my ($self, $trans_objects) = @_;
 
@@ -468,12 +495,10 @@ sub fasta {
       }
     } else {
       $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $masking)->seq : $slice->seq;
-      
       $self->string(">$seq_region_name dna:$seq_region_type $slice_name");
       $self->string($fasta) while $fasta = substr $seq, 0, 60, '';
     }
   }
-
 }
 
 sub flat {
@@ -562,7 +587,7 @@ sub features {
     delim         => $format eq 'csv' ? ',' : "\t"
   };
   
-  if($format ne 'bed'){$self->string(join $self->{'config'}->{'delim'}, @common_fields, @extra_fields) unless $format eq 'gff';}
+  if ($format ne 'bed'){$self->string(join $self->{'config'}->{'delim'}, @common_fields, @extra_fields) unless $format eq 'gff';}
   
   if ($params->{'similarity'}) {
     foreach (@{$slice->get_all_SimilarityFeatures}) {
@@ -611,22 +636,18 @@ sub features {
   }
   
   if ($params->{'gene'}) {
-    my $species_defs = $self->hub->species_defs;
-    
-    my @dbs = ('core');
-    push @dbs, 'vega'          if $species_defs->databases->{'DATABASE_VEGA'};
-    push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
-    
-    foreach my $db (@dbs) {
+    my $dbs = $self->dbs;
+    foreach my $db (@{$dbs}) {
       foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
+        my $source = $self->gene_source($g,$db);
         foreach my $t (@{$g->get_all_Transcripts}) {
-          foreach my $e (@{$t->get_all_Exons}) {            
+          foreach my $e (@{$t->get_all_Exons}) {
             $self->feature('gene', $e, { 
                exon_id       => $e->stable_id, 
                transcript_id => $t->stable_id, 
                gene_id       => $g->stable_id, 
                gene_type     => $g->status . '_' . $g->biotype
-            }, { source => $db eq 'vega' ? 'Vega' : 'Ensembl' });
+            }, { source => $source });
           }
         }
       }
@@ -747,7 +768,6 @@ sub get_user_data {
 
 sub psl_features {
   my $self = shift;
-   
 }
 
 sub gff3_features {
@@ -780,39 +800,35 @@ sub gff3_features {
     #      protein_align      => { func => 'get_all_ProteinAlignFeatures',      type => 'protein_match' }
     #    }
   };
-  
-  my @dbs = ('core');
-  push @dbs, 'vega'          if $species_defs->databases->{'DATABASE_VEGA'};
-  push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
-  
+
   my ($g_id, $t_id);
-  
-  foreach my $db (@dbs) {
-    my $properties = { source => $db eq 'vega' ? 'Vega' : 'Ensembl' };
-    
+  my $dbs = $self->dbs;
+  foreach my $db (@{$dbs}) {
     foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
+      my $properties = { source => $self->gene_source($g,$db) };
+
       if ($params->{'gene'}) {
         $g_id = $g->stable_id;
         $self->feature('gene', $g, { ID => $g_id, Name => $g_id, biotype => $g->biotype }, $properties);
       }
-      
+
       foreach my $t (@{$g->get_all_Transcripts}) {
         if ($params->{'transcript'}) {
           $t_id = $t->stable_id;
           $self->feature('transcript', $t, { ID => $t_id, Parent => $g_id, Name => $t_id, biotype => $t->biotype }, $properties);
         }
-        
+
         if ($params->{'intron'}) {
           for my $intron (@{$t->get_all_Introns}){
             next unless $intron->length;
             $self->feature('intron', $intron, { Parent => $t_id, Name => $self->id_counter('intron') }, $properties);
           }
         }
-        
+
         if ($params->{'exon'} || $params->{'cds'}) {
           foreach my $e (@{$t->get_all_Exons}) {
             $self->feature('exon', $e, { Parent => $t_id, Name => $e->stable_id }, $properties) if $params->{'exon'};
-            
+ 
             if ($params->{'cds'}) {
               my $start = $e->coding_region_start($t);
               next unless $start; # $start will be undef if the exon is not coding
