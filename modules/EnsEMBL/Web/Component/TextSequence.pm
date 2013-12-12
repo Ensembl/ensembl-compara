@@ -1183,7 +1183,7 @@ sub tool_buttons {
     <div class="other_tool">
       <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
     </div>', 
-    $self->ajax_url('rtf', { filename => join('_', $hub->type, $hub->action, $hub->species, $self->object->Obj->stable_id), _format => 'RTF' })
+    $self->ajax_url('rtf', { filename => join('_', $hub->type, $hub->action, $hub->species, $self->object->Obj->stable_id), _format => 'RTF', display_width => 60 })
   );
   
   if ($blast_seq && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
