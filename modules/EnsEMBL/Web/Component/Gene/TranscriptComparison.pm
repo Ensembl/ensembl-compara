@@ -27,7 +27,7 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene)
 sub _init { $_[0]->SUPER::_init(100); }
 
 sub initialize {
-  my ($self, $slice, $start, $end) = @_;
+  my ($self, $start, $end) = @_;
   my $hub         = $self->hub;
   my @consequence = $hub->param('consequence_filter');
   
@@ -67,7 +67,7 @@ sub content {
   my $self   = shift;
   my $slice  = $self->object->slice; # Object for this section is the slice
   my $length = $slice->length;
-  my $html;
+  my $html   = $self->tool_buttons;
   
   if (!$self->hub->param('t1')) {
     $html = $self->_info(
@@ -80,23 +80,20 @@ sub content {
   } elsif ($length >= $self->{'subslice_length'}) {
     $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
   } else {
-    $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
+    $html .= $self->content_sub_slice; # Direct call if the sequence length is short enough
   }
   
   return $html;
 }
 
 sub content_sub_slice {
-  my ($self, $slice) = @_;
+  my $self   = shift;
   my $hub    = $self->hub;
   my $start  = $hub->param('subslice_start');
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
   
-  $slice ||= $self->object->slice;
-  $slice   = $slice->sub_Slice($start, $end) if $start && $end;
-  
-  my ($sequence, $config) = $self->initialize($slice, $start, $end);
+  my ($sequence, $config) = $self->initialize($start, $end);
   
   if ($end && $end == $length) {
     $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
@@ -110,6 +107,11 @@ sub content_sub_slice {
   $self->id('');
   
   return $self->build_sequence($sequence, $config);
+}
+
+sub content_rtf {
+  my $self = shift;
+  return $self->export_sequence($self->initialize);
 }
 
 sub get_sequence_data {
