@@ -37,6 +37,8 @@ sub init {
 
   $defaults->{"opt_pop_$_"} = 'off' for @{$variations->{'DISPLAY_STRAINS'}};
   $defaults->{"opt_pop_$_"} = 'on'  for @{$variations->{'DEFAULT_STRAINS'}};
+  ## Only applies to table, but easier to put here!
+  $defaults->{'data_grouping'} = 'normal';
 
   # Add source information if we have a variation database
   foreach (keys %{$variations->{'tables'}{'source'}{'counts'} || {}}){

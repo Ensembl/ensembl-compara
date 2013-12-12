@@ -24,4 +24,23 @@ use strict;
 
 use base qw(EnsEMBL::Web::ViewConfig::Transcript::PopulationImage);
 
+sub form {
+  my $self = shift;
+  $self->SUPER::form;
+
+  # Add layout
+  $self->add_fieldset('Grouping');
+
+  $self->add_form_element({
+    type   => 'DropDown',
+    select =>, 'select',
+    label  => 'Group data by',
+    name   => 'data_grouping',
+    values => [
+      { value => 'normal',   caption => 'By individual/population' },
+      { value => 'by_variant',  caption => 'By variation ID and position' },
+    ]
+  });
+}
+
 1;
