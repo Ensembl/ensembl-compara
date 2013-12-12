@@ -1432,11 +1432,13 @@ sub _sort_and_restrict_GenomicAlignBlocks {
         $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions($last_end + 1, undef);
       } else {
 	  warning("Ignoring GenomicAlignBlock because it overlaps".
-                " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
+                " previous GenomicAlignBlock ");
+#                " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
         next;
       }
     }
     $last_end = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
+
     push(@$sorted_genomic_align_blocks, $this_genomic_align_block);
   }
 
