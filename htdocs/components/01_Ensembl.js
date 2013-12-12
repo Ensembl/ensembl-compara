@@ -55,14 +55,14 @@ Ensembl.extend({
     
     if (this.dynamicWidth && !window.name.match(/^popup_/)) {
       var width = this.imageWidth();
-
+      
       if (width > 0 && this.width !== width) {
         this.width = width;
         this.cookie.set('ENSEMBL_WIDTH', width);
       }
     }
     
-    this.cookie.set('WINDOW_WIDTH', ($(window).width()-30));
+    this.cookie.set('WINDOW_WIDTH', $(window).width());
     
     if (hints) {
       $.each(hints.split(/:/), function () {
@@ -121,7 +121,7 @@ Ensembl.extend({
   },
   
   imageWidth: function () {
-    return Math.floor(($(window).width() - 240 ) / 100) * 100;
+    return Math.floor(($(window).width() - 240) / 100) * 100;
   },
   
   setWidth: function (w, changed) {
