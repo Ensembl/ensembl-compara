@@ -44,6 +44,8 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .drag_select { cursor: pointer; position: relative; }
 
 .hover_label                              { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
+.hover_label.name_only                    { padding: 0; }
+.hover_label.name_only p.header           { margin: 0; }
 .hover_label img,
 .hover_label a.favourite                  { margin: 0 4px; }
 .hover_label a.favourite                  { display: inline-block; width: 16px; height: 16px; background: url(/i/16/swp/star.png) no-repeat 0 0; }
