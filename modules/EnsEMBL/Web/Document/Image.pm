@@ -438,8 +438,8 @@ sub hover_labels {
         %s
         %s
         %s
-        <a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>
-        <a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}16/cross.png" alt="Turn track off" title="Turn track off" /></a>
+        %s
+        %s
         <div class="desc">%s</div>
         <div class="config">%s</div>
         <div class="url">%s</div>
@@ -447,14 +447,14 @@ sub hover_labels {
       </div>),
       $label->{'class'},
       $label->{'header'},
-      $label->{'desc'}     ? qq(<img class="desc" src="${img_url}16/info.png" alt="Info" title="Info" />)                                  : '',
-      $renderers           ? qq(<img class="config" src="${img_url}16/setting.png" alt="Change track style" title="Change track style" />) : '',
-      $label->{'conf_url'} ? qq(<img class="url" src="${img_url}16/link.png" alt="Link" title="URL to turn this track on" />)              : '',
-
-      $label->{'fav'}[0]   ? ' selected' : '',
+      $label->{'desc'}     ? qq{<img class="desc" src="${img_url}16/info.png" alt="Info" title="Info" />}                                  : '',
+      $renderers           ? qq{<img class="config" src="${img_url}16/setting.png" alt="Change track style" title="Change track style" />} : '',
+      $label->{'conf_url'} ? qq{<img class="url" src="${img_url}16/link.png" alt="Link" title="URL to turn this track on" />}              : '',
+      $label->{'fav'}      ? sprintf(qq{<a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>}, $label->{'fav'}[0] ? ' selected' : '') : '',
+      $label->{'off'}      ? qq{<a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}16/cross.png" alt="Turn track off" title="Turn track off" /></a>} : '',
       $desc,
-      $renderers           ? qq(<p>Change track style:</p><ul>$renderers</ul>)                                                : '',
-      $label->{'conf_url'} ? qq(<p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p>) : ''
+      $renderers           ? qq{<p>Change track style:</p><ul>$renderers</ul>}                                                : '',
+      $label->{'conf_url'} ? qq{<p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p>} : ''
     );
   }
   
