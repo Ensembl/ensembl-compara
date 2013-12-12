@@ -164,7 +164,25 @@ sub new {
     ## set the X-locations for each of the bump labels
     foreach my $glyphset (@glyphsets) {
       next unless defined $glyphset->label;
-      my @res = $glyphset->get_text_width($label_width, $glyphset->label->{'text'}, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
+      
+      my $text = $glyphset->label->{'text'};
+      my @res  = $glyphset->get_text_width($label_width, $text, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
+      
+      if ($res[1] eq 'truncated') {
+        my $label_class = join('_', $glyphset->species, $glyphset->type) =~ s/\W/_/rg;
+        
+        if (!$config->{'hover_labels'}{$label_class}) {
+          $label_class = $text  =~ s/\W/_/rg;
+          
+          $config->{'hover_labels'}{$label_class} ||= {
+            header => $text,
+            class  => "name_only $label_class"
+          };
+          
+          $glyphset->label->{'class'} = "label $label_class";
+          $glyphset->label->{'hover'} = 1;
+        }
+      }
       
       $glyphset->label->{'font'}        ||= $config->{'_font_face'} || 'arial';
       $glyphset->label->{'ptsize'}      ||= $config->{'_font_size'} || 100;
@@ -176,7 +194,8 @@ sub new {
       $glyphset->label->{'ellipsis'}      = 1;
       $glyphset->label->{'text'}          = $res[0];
       $glyphset->label->{'width'}         = $res[2];
-      $glyphset->label->x(-$label_width - $margin) if defined $glyphset->label;
+      
+      $glyphset->label->x(-$label_width - $margin);
     }
     
     ## pull out alternating background colours for this script
