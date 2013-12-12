@@ -1371,8 +1371,11 @@ sub update_track_renderer {
   return unless $node;
 
   my $renderers = $node->data->{'renderers'};
-  my %valid     = @$renderers;
-  my $flag      = 0;
+  
+  return unless $renderers;
+  
+  my %valid = @$renderers;
+  my $flag  = 0;
 
   ## Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
   $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
