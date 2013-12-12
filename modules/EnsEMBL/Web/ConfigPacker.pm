@@ -1680,6 +1680,7 @@ sub _munge_meta {
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
     species.sql_name              SYSTEM_NAME
+    genome.assembly_type          GENOME_ASSEMBLY_TYPE
   );
   
   my @months    = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
