@@ -268,29 +268,41 @@ sub _init {
 
 sub strain_name_text {
   my ($self, $th, $fontname, $fontsize, $offset, $name, $Config, $fully_inbred) = @_;
-  (my $url_name = $name) =~ s/Compare to |^\s+//;
-  
+  my $width     = 105;
+  my $url_name  = $name =~ s/Compare to |^\s+//r;
+  my @text      = $self->get_text_width($width, $name, '', ellipsis => 1, font => $fontname, ptsize => $fontsize);
   my $textglyph = $self->Text({
-      'x'             => -$self->get_parameter('__left_hand_margin'),
-      'y'             => $offset+1,
-      'height'        => $th,
-      'font'          => $fontname,
-      'ptsize'        => $fontsize,
-      'colour'        => 'black',
-      'text'          => $name,
-      'halign'        => 'left',
-      'width'         => 105,
-      'absolutex'     => 1,
-      'absolutey'     => 1,
-      'absolutewidth' => 1,
-      'href'          => $self->_url({ 'action' => 'Reference', 'reference' => $url_name })
+    x             => -$self->get_parameter('__left_hand_margin'),
+    y             => $offset + 1,
+    height        => $th,
+    font          => $fontname,
+    ptsize        => $fontsize,
+    colour        => 'black',
+    text          => $text[0],
+    halign        => 'left',
+    width         => $width,
+    absolutex     => 1,
+    absolutey     => 1,
+    absolutewidth => 1,
+    href          => $self->_url({ action => 'Reference', reference => $url_name })
   });
-
+  
+  if ($text[1] eq 'truncated') {
+    my $label_class = "compare_$name" =~ s/\W/_/rg;
+    
+    if (!$Config->{'hover_labels'}{$label_class}) {
+      $Config->{'hover_labels'}{$label_class} = {
+        header => $name,
+        class  => "name_only $label_class"
+      };
+      
+      $textglyph->{'class'} = "label $label_class";
+      $textglyph->{'hover'} = 1;
+    }
+  }
+  
   $self->push($textglyph);
 }
-
-
-
 
 sub do_glyphs {
   my ($self, $offset, $th, $tmp_width, $pix_per_bp, $fontname, $fontsize, $Config, $label, $start, $end, $colour, $allele_string, $text_colour) = @_;
