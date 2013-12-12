@@ -75,7 +75,7 @@ sub init_transcript {
   
   $self->modify_configs(
     [ 'variation_feature_variation' ],
-    { display => 'normal', caption => 'Variations', strand => 'f' }
+    { display => 'compact', caption => 'Variations', strand => 'f' }
   );
 }
 
