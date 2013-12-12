@@ -1728,5 +1728,5 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_74_75_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_74_75_b.sql|genome_db_has_karyo');
+  VALUES (NULL, 'patch', 'patch_74_75_b.sql|genome_db_haskaryo_highcov');
 

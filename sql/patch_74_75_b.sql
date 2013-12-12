@@ -14,15 +14,20 @@
 
 # patch_74_75_b.sql
 #
-# Title: New column in genome_db: has_karyotype
+# Title: New columns in genome_db: has_karyotype and high_coverage
 #
 # Description:
-#   Introduce a new column in genome_db: has_karyotype
-#   It is a boolean that is populated after reading from the code database
-#   whether there is at least 1 slice in the karyotype
+#   Introduce two new columns in genome_db: has_karyotype and high_coverage
+#   "has_karyotype" is a boolean that is true if there is at least 1 slice
+#    in the karyotype
+#   "high_coverage" is a boolean that is true if the assembly has a high,
+#    which is a proxy for the quality of the gene annotation
+#   Both are normally automatically populated from the core database
 
-ALTER TABLE genome_db ADD COLUMN has_karyotype TINYINT(1) NOT NULL DEFAULT 0 AFTER genebuild;
+ALTER TABLE genome_db
+	ADD COLUMN has_karyotype TINYINT(1) NOT NULL DEFAULT 0 AFTER genebuild,
+	ADD COLUMN high_coverage TINYINT(1) NOT NULL DEFAULT 0 AFTER has_karyotype;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_74_75_b.sql|genome_db_has_karyo');
+  VALUES (NULL, 'patch', 'patch_74_75_b.sql|genome_db_haskaryo_highcov');
