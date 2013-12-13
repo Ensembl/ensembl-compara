@@ -1931,10 +1931,9 @@ sub restrict {
 
         ## We don't want to end with an insertion. Trim it!
         while (@$cigar_arrayref and $cigar_arrayref->[-1] =~ "I") {
-          my $cigar_type = substr($cigar_arrayref->[0], -1, 1);
-          my $cigar_num = substr($cigar_arrayref->[0], 0 , -1);
+          my $cigar_type = substr($cigar_arrayref->[-1], -1, 1);
+          my $cigar_num = substr($cigar_arrayref->[-1], 0 , -1);
           $cigar_num = 1 if ($cigar_num eq "");
-
           $counter_of_trimmed_base_pairs += $cigar_num;
           pop(@$cigar_arrayref);
         }
