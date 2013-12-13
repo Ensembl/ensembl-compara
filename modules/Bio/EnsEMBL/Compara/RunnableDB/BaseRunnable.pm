@@ -94,9 +94,7 @@ sub get_species_tree_file {
 
     unless( $self->param('species_tree_file') ) {
 
-        $self->load_species_tree_from_db unless $self->param('species_tree_string');
-
-        my $species_tree_string = $self->param('species_tree_string');
+        my $species_tree_string = $self->get_species_tree_string();
         eval {
             use Bio::EnsEMBL::Compara::Graph::NewickParser;
             my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
@@ -117,7 +115,7 @@ sub get_species_tree_file {
     return $self->param('species_tree_file');
 }
 
-sub load_species_tree_from_db {
+sub _load_species_tree_string_from_db {
     my ($self) = @_;
 
     my $mlss_id = $self->param_required('mlss_id');
@@ -142,7 +140,7 @@ sub get_species_tree_string {
         if( my $species_tree_file = $self->param('species_tree_file') ) {
             $self->param('species_tree_string', $self->_slurp( $species_tree_file ));
         } else {
-            $self->load_species_tree_from_db;
+            $self->_load_species_tree_atring_from_db;
         }
     }
     return  $self->param('species_tree_string');
