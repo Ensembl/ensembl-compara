@@ -63,13 +63,7 @@ sub fetch_input {
 
     foreach my $genome_db (@$genome_dbs) {
         if($filter_high_coverage) {
-            my $core_adaptor = $genome_db->db_adaptor()
-                    or die "Could not connect to core database adaptor";
-
-            my $coverage_depth = $core_adaptor->get_MetaContainer()->list_value_by_key('assembly.coverage_depth')->[0]
-                    or die "'assembly.coverage_depth' is not defined in core database's meta table". $core_adaptor->dbc->dbname; 
-
-            if( ($coverage_depth eq 'high') or ($coverage_depth eq '6X')) {
+            if ($genome_db->is_high_coverage) {
                 $selected_gdb_ids{$genome_db->dbID} = 1;
             }
         } else {    # take all of them

@@ -273,14 +273,9 @@ sub fetch_all_by_low_coverage {
     foreach my $curr_gdb (@$all_genome_dbs) {
         next if (!$curr_gdb->assembly_default);
         next if ($curr_gdb->name eq "ancestral_sequences");
-        next if ($curr_gdb->name eq "caenorhabditis_elegans");  # why?
 
-        my $core_dba = $curr_gdb->db_adaptor
-            or throw "Cannot connect to ".$curr_gdb->name." core DB";
-        my $meta_container = $core_dba->get_MetaContainer;
-        my $coverage_depth = $meta_container->list_value_by_key("assembly.coverage_depth")->[0];
-        if ($coverage_depth eq "low") {
-            push(@low_coverage_genome_dbs, $curr_gdb);
+        if (not $curr_gdb->is_high_coverage) {
+            push @low_coverage_genome_dbs, $curr_gdb
         }
     }
 
