@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Controller::Psychic;
 
 ### Psychic search - tries to guess where the user wanted to go 

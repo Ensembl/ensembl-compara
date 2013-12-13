@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Transcript::Go;
 
 # GO:0005575          cellular_component

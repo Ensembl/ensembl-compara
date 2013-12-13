@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::HTML::WhatsNew;
 
 ### This module outputs a selection of news headlines from either 

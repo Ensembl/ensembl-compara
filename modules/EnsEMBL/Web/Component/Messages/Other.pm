@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Messages::Other;
 
 ### Module to output info messages from session, etc

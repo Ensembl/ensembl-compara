@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Object::Export;
 
 ### NAME: EnsEMBL::Web::Object::Export

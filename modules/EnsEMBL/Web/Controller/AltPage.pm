@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Controller::AltPage;
 
 ### Alternative dynamic page with fluid layout

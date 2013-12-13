@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.DataTable = {
   dataTableInit: function () {
     var panel = this;

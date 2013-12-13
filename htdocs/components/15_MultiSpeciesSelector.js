@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.MultiSpeciesSelector = Ensembl.Panel.MultiSelector.extend({
   updateSelection: function () {
     var params            = [ 's', 'r', 'g' ]; // Multi-species parameters

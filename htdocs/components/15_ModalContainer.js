@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   constructor: function (id) {
     this.base(id);

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::ModalTabs;
 
 # Generates the global context navigation menu, used in dynamic pages

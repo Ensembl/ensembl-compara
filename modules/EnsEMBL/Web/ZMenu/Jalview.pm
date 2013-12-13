@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 # Constructs the html needed to launch jalview for fasta and nh file urls
 
 package EnsEMBL::Web::ZMenu::Jalview;

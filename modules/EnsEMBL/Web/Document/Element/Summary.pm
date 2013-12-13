@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::Summary;
 
 # Generates the top summary panel in dynamic pages

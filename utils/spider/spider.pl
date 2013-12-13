@@ -5,7 +5,6 @@ use strict;
 # This is set to where Swish-e's "make install" installed the helper modules.
 # use lib ( '@@perlmoduledir@@' );
 
-# $Id$
 #
 # "prog" document source for spidering web servers
 #

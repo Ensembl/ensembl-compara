@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.Content = Ensembl.Panel.extend({
   init: function () {
     this.base();

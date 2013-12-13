@@ -16,7 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
 package EnsEMBL::Web::Object::LRG;
 
 use strict;

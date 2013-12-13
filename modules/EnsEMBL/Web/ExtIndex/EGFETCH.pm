@@ -16,10 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Source$
-# $Revision$
-# $Date$
-# $Author$
 # module for retrieving sequences using the EBI dbfetch REST service
 
 package EnsEMBL::Web::ExtIndex::EGFETCH;

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.LayoutManager = new Base();
 
 Ensembl.LayoutManager.extend({

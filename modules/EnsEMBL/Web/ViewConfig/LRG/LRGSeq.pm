@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::ViewConfig::LRG::LRGSeq;
 
 use strict;

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Controller::DAS;
 
 ### Prints the dynamically created components. Loaded either via AJAX (if available) or parallel HTTP requests.

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Hub;
 
 ### NAME: EnsEMBL::Web::Hub 

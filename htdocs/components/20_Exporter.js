@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   init: function () {
     var panel = this;

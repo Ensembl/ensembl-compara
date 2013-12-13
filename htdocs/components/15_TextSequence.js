@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   constructor: function () {
     this.base.apply(this, arguments);

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Command::UserData::CheckConvert;
 
 ### Upload some data and add relevant parameters to the wizard workflow

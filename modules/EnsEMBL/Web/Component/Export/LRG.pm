@@ -16,7 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id $
 # Move to Export/Output.pm
 
 package EnsEMBL::Web::Component::Export::LRG;

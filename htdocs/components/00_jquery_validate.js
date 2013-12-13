@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 /*
  * This is based loosely on the jQuery validation plugin 1.6 available at 
  * http://bassistance.de/jquery-plugins/jquery-plugin-validation/

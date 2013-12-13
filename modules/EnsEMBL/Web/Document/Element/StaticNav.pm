@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::StaticNav;
 
 # Container HTML for left sided navigation menu on static pages 

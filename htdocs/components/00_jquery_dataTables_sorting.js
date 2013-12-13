@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
 // Custom sorting functions for dataTable
 
 $.extend($.fn.dataTableExt.oSort, {

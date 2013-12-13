@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Object::Regulation;
 
 ### NAME: EnsEMBL::Web::Object::Regulation

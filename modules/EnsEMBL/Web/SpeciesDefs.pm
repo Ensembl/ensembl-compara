@@ -16,7 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
 package EnsEMBL::Web::SpeciesDefs;
 
 ### SpeciesDefs - Ensembl web configuration accessor

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Share = {
   shareInit: function (options) {
     var panel = this;

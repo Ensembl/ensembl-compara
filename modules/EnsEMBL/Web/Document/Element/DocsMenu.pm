@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::DocsMenu;
 
 ### Generates navigation menu for documentation (/info/)

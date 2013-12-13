@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::HTML::MovieList;
 
 ### This module outputs a selection of news headlines for the home page, 

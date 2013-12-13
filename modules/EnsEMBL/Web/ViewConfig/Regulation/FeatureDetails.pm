@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::ViewConfig::Regulation::FeatureDetails;
 
 use strict;

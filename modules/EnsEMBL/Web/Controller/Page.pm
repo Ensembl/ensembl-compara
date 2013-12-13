@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Controller::Page;
 
 ### Prints the main web page - header, footer, navigation etc, and non dynamically loaded content.

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::ToolButtons;
 
 # Generates the tools buttons below the left menu - configuration, data export, etc.

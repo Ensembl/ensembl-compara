@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::ImageConfig::Vertical;
 
 ## Alternative configuration for karyotype used in BlastView

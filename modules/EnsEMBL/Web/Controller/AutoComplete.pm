@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Controller::AutoComplete;
 
 ### Provides JSON results for autocomplete dropdown in location navigation bar

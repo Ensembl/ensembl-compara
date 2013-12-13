@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Command::UserData::FviewRedirect;
 
 ### Redirects from the 'FeatureView' form to Location/Genome

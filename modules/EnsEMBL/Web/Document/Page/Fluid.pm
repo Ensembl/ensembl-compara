@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Page::Fluid;
 
 ### A simplified dynamic page with a more variable layout

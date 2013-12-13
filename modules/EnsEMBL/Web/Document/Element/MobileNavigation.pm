@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::MobileNavigation;
 
 # Alternative to the left sided navigation menu, shown on mobile devices

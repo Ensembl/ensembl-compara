@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 var Ensembl = new Base();
 
 Ensembl.extend({

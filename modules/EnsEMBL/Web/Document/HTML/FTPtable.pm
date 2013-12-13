@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::HTML::FTPtable;
 
 ### This module outputs a table of links to the FTP site

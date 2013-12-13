@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.EventManager = {
   // The repository for all event data
   registry: {},

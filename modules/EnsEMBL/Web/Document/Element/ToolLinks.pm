@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::ToolLinks;
 
 ### Generates links to site tools - BLAST, help, login, etc (currently in masthead)

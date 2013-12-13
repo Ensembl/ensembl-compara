@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Object::Slice;
 
 ### NAME: EnsEMBL::Web::Object::Slice

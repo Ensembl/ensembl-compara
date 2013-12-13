@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   constructor: function (id, params) {
     if (params.trackIds) {

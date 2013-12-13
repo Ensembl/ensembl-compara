@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::Logo;
 
 ### Generates the logo wrapped in a link to the homepage

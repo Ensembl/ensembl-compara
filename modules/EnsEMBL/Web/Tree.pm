@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Tree;
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::Generic);

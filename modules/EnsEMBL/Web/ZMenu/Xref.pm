@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::ZMenu::Xref;
 ### NAME: EnsEMBL::Web::ZMenu::Xref
 ### Base class - wrapper around a EnsEMBL::Web::ZMenu API object 

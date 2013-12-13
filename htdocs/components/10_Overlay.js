@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   constructor: function (id) {
     this.base(id);

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 # this will only work for new user code as old user code will return undef for user->get_group
 
 package EnsEMBL::Web::Command::ShareRecord;

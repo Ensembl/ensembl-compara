@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Location::SyntenyMatches;
 
 ### Module to replace part of the former SyntenyView, in this case displaying 

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Command;
 
 ### Parent module for "Command" steps, in a wizard-type process, which 

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Gene::FamilyProteins;
 
 ### Displays information about all peptides belonging to a protein family

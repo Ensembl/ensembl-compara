@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Object::UserData;
 
 ### NAME: EnsEMBL::Web::Object::UserData

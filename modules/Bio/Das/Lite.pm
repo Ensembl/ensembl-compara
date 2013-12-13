@@ -2,10 +2,6 @@
 # Author:        rpettett@cpan.org
 # Maintainer:    rpettett@cpan.org
 # Created:       2005-08-23
-# Last Modified: $Date$ $Author$
-# Source:        $Source$
-# Id:            $Id$
-# $HeadURL $
 #
 package Bio::Das::Lite;
 use strict;

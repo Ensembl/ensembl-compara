@@ -16,7 +16,6 @@ limitations under the License.
 
 =cut
 
-#$Id$
 package EnsEMBL::Web::Data::Bio::Xref;
 
 ### NAME: EnsEMBL::Web::Data::Bio::Xref

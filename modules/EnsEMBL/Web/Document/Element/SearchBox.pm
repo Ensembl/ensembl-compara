@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::SearchBox;
 
 ### Generates small search box (used in top left corner of pages)

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::Modal;
 
 # Generates the modal context navigation menu, used in dynamic pages

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::Copyright;
 
 ### Copyright notice for footer (basic version with no logos)

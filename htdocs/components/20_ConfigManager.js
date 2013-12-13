@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   constructor: function (id, params) {
     this.base(id, params);

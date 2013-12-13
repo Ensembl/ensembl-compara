@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Document::Element::ModalButtons;
 
 # Generates the tools buttons below the control panel left menu - add track, reset configuration, save configuration

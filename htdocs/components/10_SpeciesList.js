@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({  
   init: function () {
     this.base();

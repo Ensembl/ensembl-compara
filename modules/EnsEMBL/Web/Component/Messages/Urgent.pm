@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Messages::Urgent;
 
 ### Module to output warning messages from session, etc

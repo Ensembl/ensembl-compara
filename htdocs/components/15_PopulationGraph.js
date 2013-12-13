@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.PopulationGraph = Ensembl.Panel.Piechart.extend({
   init: function () {
     // Allele colours

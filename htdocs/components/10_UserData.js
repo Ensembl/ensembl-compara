@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
 // JavaScript to dynamically change form action on the UserData upload page according to the option selected (or radio buttons checked) and do validation on the form
 
 Ensembl.Panel.UserData = Ensembl.Panel.extend({

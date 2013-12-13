@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   constructor: function (id, data) {
     this.base(id);

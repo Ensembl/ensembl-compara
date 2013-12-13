@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.Piechart = Ensembl.Panel.Content.extend({  
   init: function () {
     var panel = this;

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Gene::SupportingEvidence;
 
 ### Displays supporting evidence for all transcripts of a gene

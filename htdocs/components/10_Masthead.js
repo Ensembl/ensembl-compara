@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   constructor: function (id) {
     this.longTabs        = false;

@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Gene::Family;
 
 ### Displays a list of protein families for this gene

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 // Stop console commands causing problems
 if (!('console' in window)) {
   (function () {

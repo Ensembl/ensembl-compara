@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 /** FIXME:
   hover labels for tracks don't link correctly to subtracks in popups
   only column nodes appear in track order - need all sortable nodes somehow

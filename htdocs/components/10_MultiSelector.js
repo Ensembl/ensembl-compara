@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// $Revision$
-
 Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id);
