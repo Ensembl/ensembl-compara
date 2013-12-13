@@ -26,19 +26,20 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 DESCRIPTION
 
-This script is used to populate the new "has_karyotype" field of the genome_db
-table. Most likely, you will need to run this script only once, on your master
+This script is used to populate the new "has_karyotype" and "is_high_coverage"
+fields of the genome_db table. Most likely, you will need to run this script
+only once, on your master
 database.
 Make sure that you have patched the schema before running the script !
 
 It is advised to first run the script with the "-dry_run 1" option and to
-inspect the list of found karyotypes.
+inspect the list of found karyotypes / coverages.
 
 The scripts tries to update all the species that have assembly_default=1
 
 =head1 SYNOPSIS
 
-perl scripts/production/populate_genome_db_has_karyotype.pl -reg_conf PATH_TO_A_REGISTRY_FILE -compara_reg_name INSERT_HERE_YOUR_ALIAS_TO_MASTER [-dry_run 1]
+perl scripts/production/populate_genome_db_has_karyotype_high_coverage.pl -reg_conf PATH_TO_A_REGISTRY_FILE -compara_reg_name INSERT_HERE_YOUR_ALIAS_TO_MASTER [-dry_run 1]
 
 =cut
 
@@ -77,17 +78,23 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_name, "compara");
 
-my $sql = 'UPDATE genome_db SET has_karyotype = ? WHERE genome_db_id = ?';
+my $sql = 'UPDATE genome_db SET has_karyotype = ?, is_high_coverage = ? WHERE genome_db_id = ?';
 my $sth = $compara_dba->dbc->prepare($sql);
 
 my $adaptor = $compara_dba->get_GenomeDBAdaptor;
 foreach my $genome_db (@{$adaptor->fetch_all}) {
     next unless $genome_db->assembly_default;
     next unless $genome_db->db_adaptor;
+
     my $has_karyotype = $genome_db->db_adaptor->has_karyotype;
     next unless defined $has_karyotype;
     printf("has_karyotype=%d for %s/%s\n", $has_karyotype, $genome_db->name, $genome_db->assembly);
-    $sth->execute($has_karyotype, $genome_db->dbID) unless $dry_run;
+
+    my $is_high_coverage = $genome_db->db_adaptor->is_high_coverage;
+    next unless defined $is_high_coverage;
+    printf("is_high_coverage=%d for %s/%s\n", $is_high_coverage, $genome_db->name, $genome_db->assembly);
+
+    $sth->execute($has_karyotype, $is_high_coverage, $genome_db->dbID) unless $dry_run;
 }
 
 
