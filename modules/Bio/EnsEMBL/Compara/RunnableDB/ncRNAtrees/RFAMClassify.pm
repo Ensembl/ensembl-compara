@@ -314,17 +314,10 @@ sub tag_assembly_coverage_depth {
   my @high_coverage = ();
 
   foreach my $gdb (@{$self->param('cluster_mlss')->species_set_obj->genome_dbs()}) {
-    my $name = $gdb->name;
-    my $coreDBA = $gdb->db_adaptor;
-    my $metaDBA = $coreDBA->get_MetaContainerAdaptor;
-    my $assembly_coverage_depth = $metaDBA->list_value_by_key('assembly.coverage_depth')->[0];
-    next unless (defined($assembly_coverage_depth) || $assembly_coverage_depth ne '');
-    if ($assembly_coverage_depth eq 'low' || $assembly_coverage_depth eq '2x') {
-      push @low_coverage, $gdb;
-    } elsif ($assembly_coverage_depth eq 'high' || $assembly_coverage_depth eq '6x' || $assembly_coverage_depth >= 6) {
+    if ($gdb->is_high_coverage) {
       push @high_coverage, $gdb;
     } else {
-      $self->throw("Unrecognised assembly.coverage_depth value in core meta table: $assembly_coverage_depth [$name]\n");
+      push @low_coverage, $gdb;
     }
   }
   return undef unless(scalar(@low_coverage));
