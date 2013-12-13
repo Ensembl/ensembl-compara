@@ -1,0 +1,161 @@
+/*
+ * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+
+/* The CSS for the panel headings */
+
+/*
+OLD PRE-68 STYLES - REMOVE AFTER BROWSER TESTING
+div#content, div.content { margin:0 0 0 240px; padding:0; border: none; }
+body.static div#content { margin-left: 240px; }
+@media print {
+   div#content { margin: 0; padding:0; border:none; }
+}
+div#content div.panel { background-color:[[PANEL_BG]]; }
+*/
+
+a.help-header                       { color: [[PAGE_HEADER]]; text-decoration: none; position: relative; }
+a.help-header span                  { margin-right: 6px; display: inline-block; }
+a.help-header span.sprite           { float: none; background-position: 0 0; position: relative; top: 1px; }
+a.help-header:hover span.sprite     { background-position: 0 -18px; }
+body.ie67 a.help-header span.sprite { position: absolute; }
+body.ie6  a.help-header span.sprite { width: 18px; font-size: 14px; }
+
+p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
+
+/* Variation "icons" */
+div.icon-holder { width: 650px; }
+img.portal  { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
+
+/************************************
+             table stuff
+ ************************************/
+
+.toggle_img { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 4px; top: 2px; }
+.toggle_img.open { background: url(/i/open2.gif); }
+.toggle_img.limpet { display: inline-block; position: static; vertical-align: -2px; margin-left: 4px; }
+
+.toggle_div { position: relative; padding-right: 16px; }
+.toggle_summary { display: inline; }
+.toggle_summary { position: static; visibility: visible; } /* experiment */
+body.ie .cell_detail { position: static; visibility: visible; display: none; } /* works */
+.cell_detail { position: absolute; visibility: hidden; } /* experiment */
+.open .cell_detail { position: static; visibility: visible; } /* experiment */
+
+.fast_fixed_table { table-layout: fixed; }
+
+.summary_trunc { display: block; word-wrap: normal; overflow-wrap: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+body.ie .open .toggle_summary { position: static; visibility: visible; display: none; } /* works */
+.open .toggle_summary { position: absolute; visibility: hidden; } /* experiment */
+.open .cell_detail { display: inline; }
+
+.cell_detail { word-wrap: break-word; overflow-wrap: break-word; }
+.data_table { word-wrap: break-word; overflow-wrap: break-word; }
+html .hyphenated { word-wrap: normal; text-align: left; }
+
+body.ie .dataTables_wrapper { zoom: 1; }
+body.ie .open .cell_detail { display: block; }
+
+/************************************
+             other stuff
+*************************************/
+
+.ajax_add span               { display: none;   }
+.ajax_add.closed span.closed { display: inline; }
+.ajax_add.open span.open     { display: inline; }
+.toggle span.closed,
+.toggle span.open            { display: none;   }
+.toggle.closed span.closed   { display: inline; }
+.toggle.open span.open       { display: inline; }
+a.toggle.no_img              { background-image:none; padding:0; }
+a.button                      { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; color: [[PAGE_BG]]!important; padding: 3px 6px 1px!important; margin-right: 4px!important; text-decoration: none; display: inline-block; }
+
+div.reorder_species ul li          { cursor: n-resize; }
+body.mac div.reorder_species ul li { cursor: ns-resize; }
+
+div.toggleable_table             { clear: both; }
+div.toggleable_table h2          { float: left; }
+div.toggleable_table h2 a.toggle { background-position: right 50%; }
+
+form.data_table_config,
+form.data_table_export { display: none; }
+
+
+/***********************************
+           helptip stuff
+***********************************/
+.ht                                                { border-bottom: [[PAGE_TEXT]] dotted 1px; }
+.ht-rev                                            { border-bottom: [[PAGE_BG]] dotted 1px; }
+img.helptip-icon                                   { vertical-align: middle; }
+
+div.ui-tooltip                                     { position: absolute; z-index: 999999; }
+div.ui-tooltip div.ui-tooltip-content              { position: relative; background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px; margin: 6px; line-height: 16px; border-radius: 4px; max-width: 300px; }
+div.ui-tooltip div.ui-tooltip-content p:last-child { margin-bottom: 0; }
+
+/* IE is stupid and can't cope with :before and :after on different classnames, so have to use .helptip-top/.helptip-bottom instead of .ui-tooltip */
+div.helptip-top    div.ui-tooltip-content:before,
+div.helptip-top    div.ui-tooltip-content:after,
+div.helptip-bottom div.ui-tooltip-content:before,
+div.helptip-bottom div.ui-tooltip-content:after  { border-style: solid; border-color: transparent [[PAGE_TEXT]]; content: ""; display: block; position: absolute; width: 0; }
+div.helptip-top    div.ui-tooltip-content:before { border-width: 8px 8px 0 0; top: -8px;    right: 50%; }
+div.helptip-top    div.ui-tooltip-content:after  { border-width: 8px 0 0 8px; top: -8px;    left:  50%; }
+div.helptip-bottom div.ui-tooltip-content:before { border-width: 0 8px 8px 0; bottom: -8px; right: 50%; }
+div.helptip-bottom div.ui-tooltip-content:after  { border-width: 0 0 8px 8px; bottom: -8px; left:  50%; }
+
+body.ie67 div.helptip-top    div.ui-tooltip-content { top: -8px; }
+body.ie67 div.helptip-bottom div.ui-tooltip-content { top:  8px; }
+
+/************************************
+             generic tree
+ ************************************/
+
+ul.tree                       { padding: 0; list-style: none; white-space: nowrap; }
+ul.tree li                    { width: 100%; list-style-image: none; margin: 0 0 0 -7px; overflow: hidden; background-image: url(/i/line.gif); background-repeat: repeat-y; }
+ul.tree li ul                 { list-style: none; border: 0; padding: 0 0 0 28px; margin: 0; }
+ul.tree li img                { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 0; }
+ul.tree li.parent > a.toggle,  
+ul.tree li.last   > a.toggle  { margin-left: -6px; }
+ul.tree li.last               { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
+ul.tree li.last ul            { background: 0; }
+ul.tree li.active             { font-weight: bold; background-color: [[TINT_BG]]; }
+ul.tree li.active ul          { background-color: [[PANEL_BG]]; }
+ul.tree li.active li          { font-weight: normal; }
+ul.tree li.closed ul          { display: none; }
+ul.tree li .disabled          { color: [[PAGE_TEXT]]; }
+ul.tree a                     { color: [[MENU_LINK]]; text-decoration: none; }
+ul.tree a.open                { font-weight: bold; color: #C00; }
+
+
+
+/************************************
+      variation consequence tree
+ ************************************/
+ 
+ul.variation_consequence_tree .no_colour  { margin-left: 3px; }
+ul.variation_consequence_tree .colour     { margin-right: 6px; padding: 0 6px; }
+ul.variation_consequence_tree ul          { line-height: 24px; padding-left: 22px!important; }
+ul.variation_consequence_tree li img      { margin-bottom: -2px; }
+ul.variation_consequence_tree li a.toggle { margin-left: 0!important; }
+ul.variation_consequence_tree li a.leaf   { margin-left: -10px!important; }
+
+
+/* 'redirecting to mirror' message*/
+div.redirect-message-padding  { height: 40px; }
+div.redirect-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: #fff; background-color: #000; }
+div.redirect-message p        { margin: 0; line-height: 40px; text-align: center; }
+div.redirect-message p a      { color: inherit; font-weight: bold; }
