@@ -109,8 +109,8 @@ sub new {
 
     my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
-    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype) =
-        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE)], @_);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $is_high_coverage) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE IS_HIGH_COVERAGE)], @_);
 
     # If there is a Core DBAdaptor, we can get most of the info from there
     if ($db_adaptor) {
@@ -125,6 +125,7 @@ sub new {
             [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
             [ 'name', \$name, $meta_container->get_production_name() ],
             [ 'has_karyotype', \$has_karyotype, $db_adaptor->has_karyotype() ],
+            [ 'is_high_coverage', \$is_high_coverage, $db_adaptor->is_high_coverage() ],
         );
 
         foreach my $test (@parameters) {
@@ -143,7 +144,8 @@ sub new {
     $assembly     && $self->assembly($assembly);
     $taxon_id     && $self->taxon_id($taxon_id);
     $genebuild    && $self->genebuild($genebuild);
-    defined $has_karyotype  && $self->has_karyotype($has_karyotype);
+    defined $has_karyotype      && $self->has_karyotype($has_karyotype);
+    defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
 
     return $self;
 }
@@ -436,6 +438,25 @@ sub has_karyotype {
 }
 
 
+=head2 is_high_coverage
+
+  Arg [1]    : (optional) boolean
+  Example    : if ($gdb->is_high_coverage()) { ... }
+  Description: Whether the genomeDB has a high-coverage genome
+  Returntype : boolean
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub is_high_coverage {
+  my $self = shift;
+  $self->{'is_high_coverage'} = shift if (@_);
+  return $self->{'is_high_coverage'};
+}
+
+
 =head2 toString
 
   Args       : (none)
@@ -455,6 +476,7 @@ sub toString {
         ."', default='".$self->assembly_default
         ."', taxon_id='".$self->taxon_id
         ."', karyotype='".$self->has_karyotype
+        ."', high_coverage='".$self->is_high_coverage
         ."', locator='".$self->locator
         ."'";
 }
