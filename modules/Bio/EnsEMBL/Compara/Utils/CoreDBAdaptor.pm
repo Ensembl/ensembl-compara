@@ -30,6 +30,7 @@ objects. Ideally, these methods should be included in the Core API:
 - has_karyotype: checks whether there is a non-empty karyotype
 - assembly_name: returns the assembly name
 - locator: builds a Locator string
+- is_high_coverage: checks whether the genome is high coverage
 
 They are all declared under the namespace Bio::EnsEMBL::DBSQL::DBAdaptor
 so that they can be called directly on $genome_db->db_adaptor
@@ -66,6 +67,37 @@ sub has_karyotype {
     my $count = scalar(@{$core_dba->get_SliceAdaptor->fetch_all_karyotype()});
 
     return $count ? 1 : 0;
+}
+
+
+=head2 is_high_coverage
+
+  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Example    : my $is_high_coverage = $genome_db->db_adaptor->is_high_coverage;
+  Description: Tests whether the species has a high coverage genome
+  Returntype : boolean
+  Exceptions : if the information from the meta table cannot be interpreted
+
+=cut
+
+sub is_high_coverage {
+    my $core_dba = shift;
+
+    return undef unless $core_dba;
+    return undef unless $core_dba->group eq 'core';
+
+    my $coverage_depth = lc $core_dba->get_MetaContainer()->single_value_by_key('assembly.coverage_depth', 1);
+
+    if ($coverage_depth eq 'high') {
+        return 1;
+    } elsif (($coverage_depth eq 'low') or ($coverage_depth eq 'medium')) {
+        return 0;
+    } elsif ($coverage_depth =~ /^([0-9]+)x$/) {
+        return $1<6 ? 0 : 1;
+    } else {
+        warn "Cannot interpret '$coverage_depth' as 'assembly.coverage_depth' for '".($core_dba->dbname)."'. Assuming the species is low-coverage.\n";
+        return 0;
+    }
 }
 
 
