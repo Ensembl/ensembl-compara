@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package Sanger::Graphics::Glyph::Triangle;
 
 ### Usage:

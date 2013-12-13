@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package Bio::EnsEMBL::GlyphSet::Vuserdata;
 
 use strict;

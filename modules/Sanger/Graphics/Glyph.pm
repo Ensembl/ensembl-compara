@@ -20,10 +20,6 @@ limitations under the License.
 # Author:        rmp@sanger.ac.uk
 # Maintainer:    webmaster@sanger.ac.uk
 # Created:       2001
-# Last Modified: $Date$
-# Id:            $Id$
-# Source:        $Source$
-# $HeadURL$
 #
 package Sanger::Graphics::Glyph;
 use strict;
