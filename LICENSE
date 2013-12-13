@@ -295,6 +295,22 @@ Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
 Everyone is permitted to copy and distribute verbatim copies
 of this license document, but changing it is not allowed.
 
+COMPONENT: htdocs/jalview/
+
+The Jalview source is made available under the GNU General Public License (v3) as a gzipped tar file, which expands to a directory named jalview.
+
+COMPONENT: utils/compression/compiler.jar
+
+The Google Closure Compiler is distributed under Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+
+COMPONENT: utils/compression/yuicompressor-2.4.7.jar
+
+All code specific to YUI Compressor is issued under a BSD license (http://yui.github.io/yui/license.html). 
+YUI Compressor extends and implements code from Mozilla's Rhino project (http://www.mozilla.org/rhino/). 
+Rhino is issued under the Mozilla Public License (MPL) (http://www.mozilla.org/MPL/), and MPL applies to the Rhino source and binaries that are distributed with YUI Compressor, 
+including Rhino modifications made by YUI Compressor. 
+YUI Compressor also makes use of and distributes a binary of JArgs (http://jargs.sourceforge.net/); the JArgs BSD license applies to this binary.
+
 COMPONENT: utils/spider/spider.pl
 
 Copyright (C) 2001-2003 Bill Moseley swishscript@hank.org
