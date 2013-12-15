@@ -388,8 +388,16 @@ sub _get_mapping_session_id {
   my $prefix = $generator->prefix();
   my $prefix_to_remove = { f => 'FM', t => 'GT' }->{$type} || die "Do not know the extension for type '${type}'";
   $prefix =~ s/$prefix_to_remove \Z//xms;
-  
-  my $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
+
+  my $ms_sth = $master_dbh->prepare( "SELECT mapping_session_id FROM mapping_session WHERE type = ? AND rel_from = ? AND rel_to = ? AND prefix = ?" );
+  $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $prefix);
+  my ($mapping_session_id) = $ms_sth->fetchrow_array();
+  if (defined $mapping_session_id) {
+    warn "reusing previously generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+    return $mapping_session_id;
+  }
+
+  $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
   $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
   my $mapping_session_id = $ms_sth->{'mysql_insertid'};
   warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
