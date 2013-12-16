@@ -66,10 +66,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 # First of all, we need a tree of node_ids, since our foreign keys are based on that
 
-sub load_species_tree_from_db {
+sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $mlss_id = $self->param_required('mlss_id');
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
+    my $species_tree = $self->param('gene_tree')->species_tree;
     $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}'))
 }
 
