@@ -32,10 +32,10 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 # The majority of core databases live on two staging servers:
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging1/74');
+  'mysql://ensro@ens-staging1/75');
 
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging2/74');
+  'mysql://ensro@ens-staging2/75');
 
 # Extra core databases that live on genebuilders' servers:
 
@@ -58,7 +58,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_ptrees',
-    -dbname => 'mm14_protein_trees_74_with_sheep',
+    -dbname => 'mm14_protein_trees_75',
 );
 
 # Individual pipeline database for ncRNAtrees:
