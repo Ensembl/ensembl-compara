@@ -32,14 +32,6 @@ Used as a base for
 
 See inline
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 REQUIREMENTS
 
 =over 8

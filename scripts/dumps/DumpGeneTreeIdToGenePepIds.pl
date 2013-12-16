@@ -164,16 +164,4 @@ remove the uncompressed dump
 
 =back
 
-=head1 AUTHOR
-
-ayates
-
-=head1 MAINTAINER
-
-$Author$
-
-=head1 VERSION
-
-$Revision$
-
 =cut

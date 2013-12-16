@@ -87,15 +87,6 @@ a new XML document create a new instance of this object.
 
 See inline
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
-
 =head1 CONTACT
 
  Please email comments or questions to the public Ensembl

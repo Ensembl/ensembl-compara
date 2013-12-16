@@ -1,7 +1,6 @@
 # This is an adapted  version of Algorithm::Diff. 
 # The original is committed at Algorithm::DiffOld.
 # Adaptations by Anton Enright, @ ebi.ac.uk
-# $Id$
 #
 
 package Bio::EnsEMBL::Compara::Production::AlgorithmDiff;

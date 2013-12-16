@@ -51,14 +51,6 @@ being stored at the transcript level. If the DB changes this will break.
 
 Andy Yates
 
-=head1 MAINTANER
-
-$Author$
-
-=head1 VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

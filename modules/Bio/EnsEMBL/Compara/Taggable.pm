@@ -33,14 +33,6 @@ Bio::EnsEMBL::Compara::Taggable
 
 Base class for objects supporting tags / attributes
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

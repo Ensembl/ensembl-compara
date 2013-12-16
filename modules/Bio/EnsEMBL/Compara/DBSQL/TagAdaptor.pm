@@ -35,14 +35,6 @@ Generic adaptor that gives a database backend for tags / attributes (to
 use with Bio::EnsEMBL::Compara::Taggable). There can be any number of
 values for tags, but at most one for each attribute.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

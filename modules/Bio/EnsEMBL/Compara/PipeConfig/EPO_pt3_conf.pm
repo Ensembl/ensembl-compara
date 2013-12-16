@@ -56,14 +56,6 @@ limitations under the License.
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author: compara
-
-=head VERSION
-
-$Revision: 
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
