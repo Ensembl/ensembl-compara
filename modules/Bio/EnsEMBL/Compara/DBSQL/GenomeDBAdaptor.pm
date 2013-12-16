@@ -273,14 +273,9 @@ sub fetch_all_by_low_coverage {
     foreach my $curr_gdb (@$all_genome_dbs) {
         next if (!$curr_gdb->assembly_default);
         next if ($curr_gdb->name eq "ancestral_sequences");
-        next if ($curr_gdb->name eq "caenorhabditis_elegans");  # why?
 
-        my $core_dba = $curr_gdb->db_adaptor
-            or throw "Cannot connect to ".$curr_gdb->name." core DB";
-        my $meta_container = $core_dba->get_MetaContainer;
-        my $coverage_depth = $meta_container->list_value_by_key("assembly.coverage_depth")->[0];
-        if ($coverage_depth eq "low") {
-            push(@low_coverage_genome_dbs, $curr_gdb);
+        if (not $curr_gdb->is_high_coverage) {
+            push @low_coverage_genome_dbs, $curr_gdb
         }
     }
 
@@ -302,11 +297,10 @@ sub fetch_all_by_low_coverage {
 =cut
 
 sub fetch_by_core_DBAdaptor {
-	my ($self, $core_dba) = @_;
-	my $species_name = $core_dba->get_MetaContainer->get_production_name();
-	my ($highest_cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
-  my $species_assembly = $highest_cs->version();
-  return $self->fetch_by_name_assembly($species_name, $species_assembly);
+    my ($self, $core_dba) = @_;
+    my $species_name = $core_dba->get_MetaContainer->get_production_name();
+    my $species_assembly = $core_dba->assembly_name();
+    return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
 
@@ -340,9 +334,9 @@ sub store {
     if($self->_synchronise($gdb)) {
         return $self->update($gdb);
     } else {
-        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, has_karyotype, is_high_coverage, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
         my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator )
+        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->has_karyotype, $gdb->is_high_coverage, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator )
             or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')\n";
 
         $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
@@ -416,8 +410,7 @@ sub _find_missing_DBAdaptors {
         # Get the production name and assembly to compare to our GenomeDBs
         my $mc = $db_adaptor->get_MetaContainer();
         my $that_species = $mc->get_production_name();
-        my ($highest_cs) = @{$db_adaptor->get_CoordSystemAdaptor->fetch_all()};
-        my $that_assembly = $highest_cs->version();
+        my $that_assembly = $db_adaptor->assembly();
         $db_adaptor->dbc->disconnect_if_idle();
 
         eval {
@@ -452,6 +445,8 @@ sub _columns {
         g.taxon_id
         g.assembly_default
         g.genebuild
+        g.has_karyotype
+        g.is_high_coverage
         g.locator
     )
 }
@@ -470,8 +465,8 @@ sub _objs_from_sth {
     my ($self, $sth) = @_;
     my @genome_db_list = ();
 
-    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
-    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
+    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $has_karyotype, $is_high_coverage, $locator);
+    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$has_karyotype, \$is_high_coverage, \$locator);
     while ($sth->fetch()) {
 
         my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
@@ -481,6 +476,8 @@ sub _objs_from_sth {
             'assembly'  => $assembly,
             'assembly_default' => $assembly_default,
             'genebuild' => $genebuild,
+            'has_karyotype' => $has_karyotype,
+            'is_high_coverage' => $is_high_coverage,
             'taxon_id'  => $taxon_id,
             'locator'   => $locator,
         } );

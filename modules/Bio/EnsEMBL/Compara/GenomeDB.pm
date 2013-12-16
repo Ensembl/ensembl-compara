@@ -79,6 +79,8 @@ use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
@@ -107,14 +109,43 @@ sub new {
 
     my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
-    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild) =
-        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD)], @_);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $is_high_coverage) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE IS_HIGH_COVERAGE)], @_);
 
-    $db_adaptor   && $self->db_adaptor($db_adaptor);
+    # If there is a Core DBAdaptor, we can get most of the info from there
+    if ($db_adaptor) {
+        $self->db_adaptor($db_adaptor);
+
+        my $meta_container      = $db_adaptor->get_MetaContainer;
+
+        # We check that the asked parameters are the same as in the core database
+        my @parameters = (
+            [ 'assembly_name', \$assembly, $db_adaptor->assembly_name() ],
+            [ 'taxon_id', \$taxon_id, $meta_container->get_taxonomy_id() ],
+            [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
+            [ 'name', \$name, $meta_container->get_production_name() ],
+            [ 'has_karyotype', \$has_karyotype, $db_adaptor->has_karyotype() ],
+            [ 'is_high_coverage', \$is_high_coverage, $db_adaptor->is_high_coverage() ],
+        );
+
+        foreach my $test (@parameters) {
+            if (not defined $test->[2]) {
+                warn "'$test->[0]' is not defined in the core database\n";
+                next;
+            }
+            if (defined ${$test->[1]} and (${$test->[1]} ne $test->[2])) {
+                die "The required $test->[0] ('${$test->[1]}') is different from the one found in the database ('$test->[2]'), please investigate\n";
+            }
+            ${$test->[1]} = $test->[2];
+        }
+    }
+
     $name         && $self->name($name);
     $assembly     && $self->assembly($assembly);
     $taxon_id     && $self->taxon_id($taxon_id);
     $genebuild    && $self->genebuild($genebuild);
+    defined $has_karyotype      && $self->has_karyotype($has_karyotype);
+    defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
 
     return $self;
 }
@@ -146,6 +177,9 @@ sub new_fast {
   Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBAdaptor $dba
                The DBAdaptor containing sequence information for the genome
                represented by this object.
+  Arg [2]    : (optional) Boolean $update_other_fields
+               In setter mode, asks the object to update all the relevant
+               fields from the new db_adaptor (genebuild, assembly, etc)
   Example    : $gdb->db_adaptor($dba);
   Description: Getter/Setter for the DBAdaptor containing sequence 
                information for the genome represented by this object.
@@ -156,12 +190,19 @@ sub new_fast {
 =cut
 
 sub db_adaptor {
-    my ( $self, $dba ) = @_;
+    my ( $self, $dba, $update_other_fields ) = @_;
 
     if($dba) {
         $self->{'_db_adaptor'} = ($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor'))
             ? $dba
             : undef;
+        if ($self->{'_db_adaptor'}) {
+            $self->name( $self->{'_db_adaptor'}->get_MetaContainer->get_production_name );
+            $self->assembly( $self->{'_db_adaptor'}->assembly_name );
+            $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
+            $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
+            $self->has_karyotype( $self->{'_db_adaptor'}->has_karyotype );
+        }
     }
 
     unless (exists $self->{'_db_adaptor'}) {
@@ -378,6 +419,44 @@ sub locator {
 }
 
 
+=head2 has_karyotype
+
+  Arg [1]    : (optional) boolean
+  Example    : if ($gdb->has_karyotype()) { ... }
+  Description: Whether the genomeDB has a karyotype
+  Returntype : boolean
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub has_karyotype {
+  my $self = shift;
+  $self->{'has_karyotype'} = shift if (@_);
+  return $self->{'has_karyotype'};
+}
+
+
+=head2 is_high_coverage
+
+  Arg [1]    : (optional) boolean
+  Example    : if ($gdb->is_high_coverage()) { ... }
+  Description: Whether the genomeDB has a high-coverage genome
+  Returntype : boolean
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub is_high_coverage {
+  my $self = shift;
+  $self->{'is_high_coverage'} = shift if (@_);
+  return $self->{'is_high_coverage'};
+}
+
+
 =head2 toString
 
   Args       : (none)
@@ -394,7 +473,10 @@ sub toString {
         .", name='".$self->name
         ."', assembly='".$self->assembly
         ."', genebuild='".$self->genebuild
+        ."', default='".$self->assembly_default
         ."', taxon_id='".$self->taxon_id
+        ."', karyotype='".$self->has_karyotype
+        ."', high_coverage='".$self->is_high_coverage
         ."', locator='".$self->locator
         ."'";
 }
