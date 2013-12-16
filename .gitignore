@@ -2,6 +2,7 @@
 !/cbuild/README.txt
 /conf/Plugins.pm
 /conf/packed/*.packed
+/conf/config.packed
 /htdocs/das/*
 !/htdocs/das/das.xsl
 /htdocs/minified/*
