@@ -71,7 +71,10 @@ sub import {
     # again. We don't even want to set the INC for file A since it will
     # tell perl to not requiring it at all (we'll set INC later in the
     # end when all files are loaded successfully).
-    return sub { $_ = 1; delete $INC{$filename}; return 0; } if exists $LOADING{$filename};
+    if (exists $LOADING{$filename}) {
+      my $true_returned;
+      return sub { delete $INC{$filename}; return $true_returned ? 0 : ($_ = $true_returned = 1); };
+    }
 
     # Set the flag before loading
     $LOADING{$filename} = 1;
@@ -107,7 +110,8 @@ sub import {
       } else {
         $INC{$_} = \@inc for map($_->[1], @inc), $filename;
       }
-      return sub { $_ = 1; return 0; };
+      my $true_returned;
+      return sub { return $true_returned ? 0 : ($_ = $true_returned = 1); };
     }
   }, map($_->[1], @plugins);
 
