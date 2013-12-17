@@ -56,14 +56,11 @@ if ($apis[0] ne 'edocs') {
       STRIP_FROM_PATH => "$root/ensembl-compara/modules/",
       TAGFILES        => "ensembl.tag=../core-api/ \\ \n                         hive.tag=../hive-api/",
     },
-    external => {
-      STRIP_FROM_PATH => "$root/ensembl-external/modules/Bio/",
-    },
-    functgenomics => {
+    funcgen => {
       PROJECT_NAME     => '"Ensembl FuncGen"',
       PROJECT_BRIEF    => '"EnsEMBL FuncGen API reference"',
       OUTPUT_DIRECTORY => "$html/funcgen-api",
-      STRIP_FROM_PATH  => "$root/ensembl-functgenomics/modules/Bio/",
+      STRIP_FROM_PATH  => "$root/ensembl-funcgen/modules/Bio/",
     },
     ensemblgenomes => {
       PROJECT_NAME     => '"Ensembl Genomes"',

@@ -65,14 +65,14 @@ CSS_URL="/pdoc.css"
 F2=ensembl
 F3=ensembl-analysis
 F4=ensembl-compara
-F5=ensembl-external
+#F5=ensembl-external
 F6=ensembl-pipeline
 F7=perl
 F8=ensembl-variation
 F9=ensembl-hive
 F10=biomart-perl
 F11=public-plugins
-F12=ensembl-functgenomics
+F12=ensembl-funcgen
 
 rm -f $P2WDOC_LOC/make_html_docs.*
 
@@ -86,8 +86,7 @@ cd $PERLMOD_LOC
 echo "Check out ensembl-pipeline, ensembl-analysis ensembl-hive"
 cvs co ensembl-pipeline ensembl-analysis ensembl-hive
 
-#for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
-for i in ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
+for i in ensembl ensembl-analysis ensembl-compara ensembl-funcgen ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
 do
   mkdir $PDOC_LOC/$i
   echo "CURRENT MODULE: $i"
