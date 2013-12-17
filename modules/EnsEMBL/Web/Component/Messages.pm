@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id: Messages.pm,v 1.14 2013-12-17 15:58:50 sb23 Exp $
-
 package EnsEMBL::Web::Component::Messages;
 
 ### Module to output messages from session, etc
