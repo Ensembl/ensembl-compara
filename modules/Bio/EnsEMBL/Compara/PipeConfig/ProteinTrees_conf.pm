@@ -245,7 +245,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -input_ids  => [ {
-                'output_file'   => $self->o('dump_dir').'/#filename#',
+                'output_file'   => $self->o('dump_dir').'/#filename#.gz',
             } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
