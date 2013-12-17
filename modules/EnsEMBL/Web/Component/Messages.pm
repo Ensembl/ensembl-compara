@@ -33,7 +33,7 @@ sub _init {
 }
 
 sub content {
-  my ($self, @priority) = @_; ;
+  my ($self, @priority) = @_;
   my $session = $self->hub->session;
   my %using   = map { $_ => 1 } scalar @priority ? @priority : EnsEMBL::Web::Constants::MESSAGE_PRIORITY;
   my @data    = grep $using{$_->{'function'}}, $session->get_data(type => 'message');
