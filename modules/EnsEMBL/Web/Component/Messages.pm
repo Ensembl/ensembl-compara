@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::Component::Messages;
 
 ### Module to output messages from session, etc
@@ -35,17 +33,17 @@ sub _init {
 }
 
 sub content {
-  my ($self, @priority) = @_; 
+  my ($self, @priority) = @_; ;
   my $session = $self->hub->session;
+  my %using   = map { $_ => 1 } scalar @priority ? @priority : EnsEMBL::Web::Constants::MESSAGE_PRIORITY;
+  my @data    = grep $using{$_->{'function'}}, $session->get_data(type => 'message');
   my (%messages, $html);
-
+  
   # Group messages by type
   # Set a default order of 100 - we probably aren't going to have 100 messages on the page at once, and this allows us to force certain messages to the bottom by giving order > 100
-  push @{$messages{$_->{'function'} || '_info'}}, $_->{'message'} for sort { $a->{'order'} || 100 <=> $b->{'order'} || 100 } $session->get_data(type => 'message');
+  push @{$messages{$_->{'function'} || '_info'}}, $_->{'message'} for sort { $a->{'order'} || 100 <=> $b->{'order'} || 100 } @data;
   
-  $session->purge_data(type => 'message');
-  
-  foreach (scalar @priority ? @priority : EnsEMBL::Web::Constants::MESSAGE_PRIORITY) {
+  foreach (@priority) {
     next unless $messages{$_};
     
     my $func    = $self->can($_) ? $_ : '_info';
@@ -56,6 +54,8 @@ sub content {
     $html .= $self->$func($caption, $msg);
     $html .= '<br />';
   }
+  
+  $session->purge_data(type => 'message', code => $_->{'code'}) for @data;
   
   return qq{<div class="session_messages">$html</div>};
 }

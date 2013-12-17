@@ -16,8 +16,6 @@ limitations under the License.
 
 =cut
 
-# $Id$
-
 package EnsEMBL::Web::ImageConfig;
 
 use strict;
@@ -1303,6 +1301,27 @@ sub update_from_url {
           $n = $menu_name;
         } else {
           $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+        }
+        
+        # Don't add if the URL or menu are the same as an existing track
+        if ($session->get_data(type => 'url', code => $code)) {
+          $session->add_data(
+            type     => 'message',
+            function => '_warning',
+            code     => "duplicate_url_track_$code",
+            message  => "You have already attached the URL $p. No changes have been made for this data source.",
+          );
+          
+          next;
+        } elsif (grep $_->{'name'} eq $n, $session->get_data(type => 'url')) {
+          $session->add_data(
+            type     => 'message',
+            function => '_error',
+            code     => "duplicate_url_track_$n",
+            message  => qq{Sorry, the menu "$n" is already in use. Please change the value of "menu" in your URL and try again.},
+          );
+          
+          next;
         }
         
         # We have to create a URL upload entry in the session
