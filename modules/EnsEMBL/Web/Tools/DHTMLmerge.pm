@@ -108,7 +108,7 @@ sub get_contents {
 
 sub compress {
   my ($species_defs, $type, $contents, $jquery) = @_;
-  my $root_dir        = $species_defs->ENSEMBL_SERVERROOT;
+  my $root_dir        = $species_defs->ENSEMBL_WEBROOT;
   my $compression_dir = "$root_dir/utils/compression/";
   my $filename        = md5_hex("$jquery$contents");
   my $minified        = "$root_dir/htdocs/minified/$filename.$type";

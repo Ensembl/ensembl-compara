@@ -21,16 +21,16 @@ package EnsEMBL::Web::SpeciesDefs;
 ### SpeciesDefs - Ensembl web configuration accessor
 
 ### This module provides programatic access to the web site configuration
-### data stored in the $ENSEMBL_SERVERROOT/conf/*.ini (INI) files. See
-### $ENSEMBL_SERVERROOT/conf/ini.README for details.
+### data stored in the $ENSEMBL_WEBROOT/conf/*.ini (INI) files. See
+### $ENSEMBL_WEBROOT/conf/ini.README for details.
 
 ### Owing to the overhead implicit in parsing the INI files, two levels of
 ### caching (memory, filesystem) have been implemented. To update changes
 ### made to an INI file, the running process (e.g. httpd) must be halted,
-### and the $ENSEMBL_SERVERROOT/conf/config.packed file removed. In the
+### and the $ENSEMBL_WEBROOT/conf/config.packed file removed. In the
 ### absence of a cache, the INI files are automatically parsed parsed at
 ### object instantiation. In the case of the Ensembl web site, this occurs
-### at server startup via the $ENSEMBL_SERVERROOT/conf/perl.startup
+### at server startup via the $ENSEMBL_WEBROOT/conf/perl.startup
 ### script. The filesystem cache is not enabled by default; the
 ### SpeciesDefs::store method is used to do this explicitly.
 

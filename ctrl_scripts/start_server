@@ -135,9 +135,9 @@ if (! -e "$SiteDefs::ENSEMBL_CONF_DIRS[0]/packed") {
   system("mkdir -p $SiteDefs::ENSEMBL_CONF_DIRS[0]/packed");
 }
 
-if ($SiteDefs::ENSEMBL_JSCSS_TYPE && ! -e "$SiteDefs::ENSEMBL_SERVERROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE") {
-  warn " Creating directory for compress js and css at $SiteDefs::ENSEMBL_SERVERROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE\n";
-  system("mkdir -p $SiteDefs::ENSEMBL_SERVERROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE");
+if ($SiteDefs::ENSEMBL_JSCSS_TYPE && ! -e "$SiteDefs::ENSEMBL_WEBROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE") {
+  warn " Creating directory for compress js and css at $SiteDefs::ENSEMBL_WEBROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE\n";
+  system("mkdir -p $SiteDefs::ENSEMBL_WEBROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE");
 }
 
 if ($rmconfig) {

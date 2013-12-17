@@ -40,27 +40,15 @@ sub create {
   ### Returns: none
   my $species = shift;
   my $sd      = shift;
-  my $root    = $sd->ENSEMBL_SERVERROOT . '/htdocs';
+  my $root    = $sd->ENSEMBL_WEBROOT . '/htdocs';
   my @allowed = @{$sd->ENSEMBL_EXTERNAL_SEARCHABLE||[]};
 
-  #check if directory for creating .cvsignore and robots.txt exist
+  #check if directory for creating robots.txt exist
   make_path($root) unless(-e $root);
-
-  my %ignore = qw(robots.txt 1 .cvsignore 1);
-  if( -e "$root/.cvsignore" ) {
-    open I, "$root/.cvsignore";
-    while(<I>) {
-      $ignore{$1}=1 if/(\S+)/;
-    }
-    close I;
-  }
+   
   warn _box("Placing .cvsignore and robots.txt into $root");
 
-  open O, ">$root/.cvsignore";
-  print O join "\n", sort keys %ignore;
-  close O;
-
-  my $server_root = $sd->ENSEMBL_SERVERROOT;
+  my $server_root = $sd->ENSEMBL_WEBROOT;
   unless(open FH, ">$root/robots.txt") {
     warn _box("UNABLE TO CREATE ROBOTS.TXT FILE IN $root/");
     return;

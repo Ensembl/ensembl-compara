@@ -28,7 +28,7 @@ sub init {
   $self->set_parameters({
     sortable_tracks => 1,  # allow the user to reorder tracks
     opt_lines       => 1,  # register lines
-    spritelib       => { default => $self->species_defs->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
+    spritelib       => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' }
   });
 
   # Add menus in the order you want them for this display

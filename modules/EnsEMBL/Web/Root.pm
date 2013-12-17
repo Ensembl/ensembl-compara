@@ -50,7 +50,7 @@ use Geo::IP;
 BEGIN {
   if($ENV{'PERLDB'}) {
     require Inline;
-    Inline->import(C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_SERVERROOT/cbuild");
+    Inline->import(C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT/cbuild");
     Inline->import(C => "void lvalues_nodebug(CV* cv) { CvNODEBUG_on(cv); }");
   }
 }

@@ -36,11 +36,12 @@ our $ENSEMBL_RELEASE_DATE      = 'December 2013';
 ##########################################################################
 my ($volume, $dir) = File::Spec->splitpath(__FILE__);
 
-our $ENSEMBL_SERVERROOT = File::Spec->catpath($volume, [split '/conf', $dir]->[0]) || '.';
+our $ENSEMBL_SERVERROOT = File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
+our $ENSEMBL_WEBROOT    = "$ENSEMBL_SERVERROOT/ensembl-webcode";
 our $ENSEMBL_PLUGINS;
 
 ## Define Plugin directories
-eval qq(require '$ENSEMBL_SERVERROOT/conf/Plugins.pm');
+eval qq(require '$ENSEMBL_WEBROOT/conf/Plugins.pm');
 error("Error requiring plugin file:\n$@") if $@;
 
 # Needed for parsing BAM files
@@ -149,9 +150,9 @@ our %ENSEMBL_SETENV = (
 # @ENSEMBL_PERL_DIRS   locates mod-perl scripts
 # @ENSEMBL_HTDOCS_DIRS locates static content
 our @ENSEMBL_LIB_DIRS;
-our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_SERVERROOT/conf");
-our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_SERVERROOT/perl");
-our @ENSEMBL_HTDOCS_DIRS  = ("$ENSEMBL_SERVERROOT/htdocs", "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");
+our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");
+our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");
+our @ENSEMBL_HTDOCS_DIRS  = ("$ENSEMBL_WEBROOT/htdocs", "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");
 
 our $APACHE_DIR           = "$ENSEMBL_SERVERROOT/apache2";
 our $APACHE_BIN           = "$APACHE_DIR/bin/httpd";
@@ -310,13 +311,12 @@ sub update_conf {
   }
   
   push @ENSEMBL_LIB_DIRS, (
-    "$ENSEMBL_SERVERROOT/modules",
+    "$ENSEMBL_WEBROOT/modules",
     $MINI_BIOPERL_161_DIR,
     $BIOPERL_DIR,
     "$ENSEMBL_SERVERROOT/biomart-perl/lib",
     "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-external/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-functgenomics/modules",
+    "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
     "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
     "$ENSEMBL_SERVERROOT/ensembl-draw/modules",
     "$ENSEMBL_SERVERROOT/ensembl-compara/modules",

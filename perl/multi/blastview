@@ -63,7 +63,7 @@ BEGIN {
 }
 
 # Path to HTML templates (used by HTML::Template)
-$ENV{HTML_TEMPLATE_ROOT} = $SPECIES_DEFS->ENSEMBL_SERVERROOT.'/modules/EnsEMBL/Web/BlastView';
+$ENV{HTML_TEMPLATE_ROOT} = $SPECIES_DEFS->ENSEMBL_WEBROOT.'/modules/EnsEMBL/Web/BlastView';
 
 # Package globals
 
@@ -362,7 +362,7 @@ warn "STORED....";
 # Check whether page has been manually suspended
 sub is_script_suspended{
   my $script = $ENV{ENSEMBL_SCRIPT};
-  my $suspend_file = ( $SPECIES_DEFS->ENSEMBL_SERVERROOT.
+  my $suspend_file = ( $SPECIES_DEFS->ENSEMBL_WEBROOT.
                        '/perl/multi/'.
                        $script.'.suspend' );
   return -e $suspend_file;
