@@ -392,16 +392,18 @@ sub _get_mapping_session_id {
   my $ms_sth = $master_dbh->prepare( "SELECT mapping_session_id FROM mapping_session WHERE type = ? AND rel_from = ? AND rel_to = ? AND prefix = ?" );
   $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $prefix);
   my ($mapping_session_id) = $ms_sth->fetchrow_array();
+  $ms_sth->finish();
+
   if (defined $mapping_session_id) {
     warn "reusing previously generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
-    return $mapping_session_id;
-  }
 
-  $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
-  $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
-  my $mapping_session_id = $ms_sth->{'mysql_insertid'};
-  warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
-  $ms_sth->finish();
+  } else {
+    $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
+    $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
+    $mapping_session_id = $ms_sth->{'mysql_insertid'};
+    warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+    $ms_sth->finish();
+  }
 
   if($dbh != $master_dbh) {   # replicate it in the release database:
       my $ms_sth2 = $dbh->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
