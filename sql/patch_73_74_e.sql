@@ -27,19 +27,22 @@ ALTER TABLE homology
   ADD COLUMN is_tree_compliant tinyint(1) NOT NULL DEFAULT 0 AFTER new_description;
 
 UPDATE homology JOIN gene_tree_node_attr ON ancestor_node_id = node_id
-  SET new_description = CASE
+  SET new_description = (CASE
     WHEN description IN ('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog') THEN description
     WHEN description = "apparent_ortholog_one2one" THEN "ortholog_one2one"
     WHEN description IN ("contiguous_gene_split", "putative_gene_split") THEN "gene_split"
-    WHEN description IN ('projection_unchanged','projection_altered') THEN "alt_allele",
-  SET is_tree_compliant = CASE
+    WHEN description IN ('projection_unchanged','projection_altered') THEN "alt_allele"
+    ELSE NULL
+    END),
+  is_tree_compliant = (CASE
     WHEN description IN ('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog') AND node_type != "dubious" THEN 1
     WHEN description = "contiguous_gene_split" THEN 1
     ELSE 0
+    END)
 ;
 
 DELETE FROM homology
-  WHERE description = "possible_ortholog";
+  WHERE new_description IS NULL;
 
 ALTER TABLE homology
   DROP COLUMN description,
