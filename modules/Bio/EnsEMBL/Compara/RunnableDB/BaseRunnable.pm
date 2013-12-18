@@ -140,7 +140,7 @@ sub get_species_tree_string {
         if( my $species_tree_file = $self->param('species_tree_file') ) {
             $self->param('species_tree_string', $self->_slurp( $species_tree_file ));
         } else {
-            $self->_load_species_tree_atring_from_db;
+            $self->_load_species_tree_string_from_db;
         }
     }
     return  $self->param('species_tree_string');
