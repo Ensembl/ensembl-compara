@@ -79,13 +79,13 @@ sub fetch_input {
 
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
-    my $protein_tree_id     = $self->param_required('gene_tree_id');
-    my $protein_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $protein_tree_id )
-                                        or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
-    $protein_tree->preload();
-    $protein_tree->print_tree(10) if($self->debug);
+    my $gene_tree_id     = $self->param_required('gene_tree_id');
+    my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id )
+                                        or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    $gene_tree->preload();
+    $gene_tree->print_tree(10) if($self->debug);
 
-    $self->param('protein_tree', $protein_tree);
+    $self->param('gene_tree', $gene_tree);
 
 }
 
@@ -101,7 +101,7 @@ sub write_output {
     my $self = shift;
 
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
-    $self->store_genetree($self->param('protein_tree'), \@ref_support);
+    $self->store_genetree($self->param('gene_tree'), \@ref_support);
 
     my @dataflow = ();
     if ($self->param('store_intermediate_trees')) {
@@ -111,7 +111,7 @@ sub write_output {
             next if $clusterset_id eq 'mmerge';
             next if $clusterset_id eq 'phyml';
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
-            my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('protein_tree'));
+            my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('gene_tree'));
             push @dataflow, $newtree->root_id;
         }
     }
@@ -134,10 +134,10 @@ sub write_output {
 sub post_cleanup {
   my $self = shift;
 
-  if(my $protein_tree = $self->param('protein_tree')) {
+  if(my $gene_tree = $self->param('gene_tree')) {
     printf("NJTREE_PHYML::post_cleanup  releasing tree\n") if($self->debug);
-    $protein_tree->release_tree;
-    $self->param('protein_tree', undef);
+    $gene_tree->release_tree;
+    $self->param('gene_tree', undef);
   }
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
@@ -154,32 +154,32 @@ sub post_cleanup {
 sub run_njtree_phyml {
     my $self = shift;
 
-    my $protein_tree = $self->param('protein_tree');
+    my $gene_tree = $self->param('gene_tree');
     my $newick;
 
     my $starttime = time()*1000;
     
 
-    if (scalar(@{$protein_tree->get_all_Members}) == 2) {
+    if (scalar(@{$gene_tree->get_all_Members}) == 2) {
 
         warn "Number of elements: 2 leaves, N/A split genes\n";
-        $self->prepareTemporaryMemberNames($protein_tree);
-        my @goodgenes = map {$_->{_tmp_name}} @{$protein_tree->get_all_Members};
+        $self->prepareTemporaryMemberNames($gene_tree);
+        my @goodgenes = map {$_->{_tmp_name}} @{$gene_tree->get_all_Members};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
     } else {
 
-        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($protein_tree);
+        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree);
         $self->param('input_aln', $input_aln);
         
-        warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$protein_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
+        warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$gene_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
 
-        my $genes_for_treebest = scalar(@{$protein_tree->get_all_Members}) - scalar(keys %{$self->param('split_genes')});
+        my $genes_for_treebest = scalar(@{$gene_tree->get_all_Members}) - scalar(keys %{$self->param('split_genes')});
         $self->throw("Cannot build a tree with $genes_for_treebest genes (exclud. split genes)") if $genes_for_treebest < 2;
 
         if ($genes_for_treebest == 2) {
 
-            my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {$_->{_tmp_name}} @{$protein_tree->get_all_Members});
+            my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {$_->{_tmp_name}} @{$gene_tree->get_all_Members});
             $newick = $self->run_treebest_sdi_genepair(@goodgenes);
 
         } else {
@@ -189,12 +189,12 @@ sub run_njtree_phyml {
     }
 
     #parse the tree into the datastucture:
-    unless ($self->parse_newick_into_tree( $newick, $self->param('protein_tree') )) {
+    unless ($self->parse_newick_into_tree( $newick, $self->param('gene_tree') )) {
         $self->input_job->transient_error(0);
         $self->throw('The filtered alignment is empty. Cannot build a tree');
     }
 
-    $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', time()*1000-$starttime);
+    $gene_tree->store_tag('NJTREE_PHYML_runtime_msec', time()*1000-$starttime);
 }
 
 
@@ -229,7 +229,7 @@ sub store_filtered_align {
     }
 
     my $removed_columns = Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
-    $self->param('protein_tree')->store_tag('removed_columns', $removed_columns);
+    $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
 }
 
 
