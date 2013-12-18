@@ -104,7 +104,7 @@ if ($apis[0] ne 'edocs') {
     my $api_dir = $config{API_DIR} || ('ensembl' . ($api eq 'core' ? '' : "-$api"));
     $api_dir = 'ensemblgenomes-api' if ($api eq 'ensemblgenomes');
     
-    system("cd $root; cvs co $api_dir") unless -e "$root/$api_dir";
+    system("cd $root; git clone https://github.com/Ensembl/$api_dir") unless -e "$root/$api_dir";
     
     # Run doxygen
     system("

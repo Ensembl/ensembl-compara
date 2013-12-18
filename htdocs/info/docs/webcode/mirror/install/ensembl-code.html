@@ -36,57 +36,19 @@ access to the new git repositories.</p>
 
 <li id="cvs_co"><strong>Install the Ensembl modules</strong>
   <ol>
-  <li>Log into the Sanger CVS server (using a password of "CVSUSER"):
+  <li><p>Clone Ensembl git tools from GitHub</p>
   <pre class="code">
-$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl  login
-Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/ensembl
-CVS password: CVSUSER 
+$ git clone https://github.com/Ensembl/ensembl-git-tools.git
+$ export PATH=$PWD/ensembl-git-tools/bin:$PATH
 </pre>
   </li>
-  <li>To check out the most recent stable version of the ensembl API and web code from CVS (i.e. to download the code from the Sanger CVS server onto your local machine) you need to use the latest branch of the code.</p> 
-
-<p>Use the following command making sure you use the release version that matches your databases:</p>
+  <li><p>To check out the most recent stable version of the ensembl API and web code from GitHub you need to use the latest branch of the code. This will be set as the default branch in GitHub.</p> 
   <pre class="code">
-$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-api ensembl-website 
+$ git ensembl --clone web
 </pre>
   </li>
   </ol>
-
-  <p>A listing of your server-root should now look something like:</p>
-  <table cellpadding="10">
-    <tr>
-      <td>
-      apache2<br />
-      cbuild<br />
-      conf
-      </td>
-      <td>
-      ctrl-scripts<br />
-      ensembl<br />
-      ensembl-compara
-      </td>
-      <td>
-      ensembl-draw<br />
-      ensembl-funcgen
-      </td>
-      <td>
-      ensembl-orm<br />
-      ensembl-tools<br />
-      ensembl-variation
-      </td>
-      <td>
-      htdocs<br />
-      modules<br />
-      perl
-      </td>
-      <td>
-      public-plugins<br />
-      utils
-      </td>
-    </tr>
-  </table>
-
-  <p>N.B. You can also <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/?root=ensembl" rel="external">view the Ensembl CVS repository</a> in your web browser.</p>
+  <p>N.B. You can also <a href="https://github.com/Ensembl" rel="external">view the Ensembl GitHub repository</a> in your web browser.</p>
 </li>
 
 <li><strong>Install the BioPerl modules</strong>
@@ -104,48 +66,27 @@ which will remove this problem.</p>
 </div>
 
   <ol>
-  <li>Log into the BioPerl CVS server (using a password of: cvs):
+  <li><p>Log into the BioPerl CVS server (using a password of: cvs):</p>
   <pre class="code">cvs -d :pserver:cvs@cvs.open-bio.org:/home/repository/bioperl login</pre>
   </li>
-  <li>Check-out the BioPerl code:
+  <li><p>Check-out the BioPerl code:</p>
   <pre class="code">cvs -d :pserver:cvs@cvs.open-bio.org:/home/repository/bioperl \
 &nbsp; co bioperl-live</pre>
   </li>
   </ol>
   <p>A listing of your server-root should now look something like:</p>
-  <table cellpadding="10">
-    <tr>
-      <td>
-      apache2<br />
-      bioperl-live<br />
-      cbuild<br />
-      </td>
-      <td>
-      conf<br />
-      ctrl-scripts<br />
-      ensembl
-      </td>
-      <td>
-      ensembl-compara<br />
-      ensembl-draw
-      </td>
-      <td>
-      ensembl-funcgen<br />
-      ensembl-orm<br />
-      ensembl-tools
-      </td>
-      <td>
-      ensembl-variation<br />
-      htdocs<br />
-      modules
-      </td>
-      <td>
-      perl<br />
-      public-plugins<br />
-      utils
-      </td>
-    </tr>
-  </table>
+  <pre>
+ensembl
+ensembl-compara
+ensembl-draw
+ensembl-funcgen
+ensembl-git-tools
+ensembl-orm
+ensembl-tools
+ensembl-variation
+ensembl-webcode
+public-plugins</pre>
+
 </li>
 </ol>
 

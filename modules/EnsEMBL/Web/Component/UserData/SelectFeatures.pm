@@ -41,6 +41,7 @@ sub content {
 
   if (scalar @mapping_species) {
     my $user      = $hub->user;
+    my $version   = $species_defs->ENSEMBL_VERSION;
     my $subheader = 'Upload file';
     my $form      = $self->modal_form('select', $hub->url({ action => 'CheckConvert', __clear => 1 }));
     my (@forward, @backward, @species_values);
@@ -58,7 +59,7 @@ sub content {
           <a href="/info/website/upload/psl.html">PSL</a>
         </p>
         <p>N.B. Export is currently in GFF only</p>
-        <p>For large data sets, you may find it more efficient to use our <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/assembly_converter/?root=ensembl">ready-made converter script</a>.</p>
+        <p>For large data sets, you may find it more efficient to use our <a href="https://github.com/Ensembl/ensembl-tools/tree/release/$version/scripts/assembly_converter" rel="external">ready-made converter script</a>.</p>
       }
     });
     

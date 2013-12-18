@@ -65,19 +65,13 @@ Export the bioperl-live package:
 <pre>$ cvs -d :pserver:cvs@code.open-bio.org:/home/repository/bioperl export bioperl-live</pre>
 </li>
 <li>
-Log into the EnsEMBL CVS server at Sanger (using "CVSUSER" for password):
-<pre>$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
-Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/ensembl
-CVS password: CVSUSER</pre>
-</li>
-<li>
-Export ensembl and ensembl-hive CVS modules:
-<pre>$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl
-$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-hive</pre>
+Clone ensembl and ensembl-hive from GitHub:
+<pre>$ git clone https://github.com/Ensembl/ensembl
+$ git clone https://github.com/Ensembl/ensembl-hive</pre>
 </li>
 <li>
 In the likely case you are going to use eHive in the context of Compara pipelines, you will also need to install ensembl-compara:
-<pre>$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-compara</pre>
+<pre>$ git clone https://github.com/Ensembl/ensembl-compara</pre>
 </li>
 <li>
 Add new packages to the PERL5LIB variable:

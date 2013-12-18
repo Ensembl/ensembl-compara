@@ -41,10 +41,10 @@
     users</a> before starting. </p>
     
     <p> Have you downloaded the VEP yet? Click this link to <img src="/i/16/download.png" height="12px"> <a
-    href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]">download</a> if you haven't already. If you prefer to do things on
+    href="https://github.com/Ensembl/ensembl-tools/archive/release/[[SPECIESDEFS::ENSEMBL_VERSION]].zip">download</a> if you haven't already. If you prefer to do things on
     the terminal, you can use curl to grab and unpack the VEP archive: </p>
     
-    <pre class="code"><b>&gt; curl "http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor.tar.gz?view=tar&root=ensembl&pathrev=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]" | tar xz
+    <pre class="code"><b>&gt; wget "https://github.com/Ensembl/ensembl-tools/archive/release/[[SPECIESDEFS::ENSEMBL_VERSION]].zip"; unzip -j [[SPECIESDEFS::ENSEMBL_VERSION]].zip ensembl-tools-release-[[SPECIESDEFS::ENSEMBL_VERSION]]/scripts/variant_effect_predictor/* -d variant_effect_predictor; rm [[SPECIESDEFS::ENSEMBL_VERSION]].zip
 &gt; cd variant_effect_predictor</b></pre>
     
     <p> If you clicked the download link, let's find the file and unpack it ourselves. Typically the file will be in your <b>Downloads</b> folder: </p>

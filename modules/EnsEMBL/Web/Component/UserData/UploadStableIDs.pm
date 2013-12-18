@@ -33,6 +33,7 @@ sub content {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $species      = $hub->data_species;
+  my $version      = $species_defs->ENSEMBL_VERSION;
   my $id_limit     = 30;
   my $form         = $self->modal_form('select', $hub->url({ action => 'CheckConvert', __clear => 1 }));
   
@@ -40,7 +41,7 @@ sub content {
     heading => 'IMPORTANT NOTE:', 
     text    => qq{
       <p>Please note that we limit the number of ID's processed to $id_limit. If the uploaded file contains more entries than this only the first $id_limit will be mapped.</p>
-      <p>If you would like to convert more IDs, please use our <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/id_history_converter/?root=ensembl">api script</a>.</p>
+      <p>If you would like to convert more IDs, please use our <a href="https://github.com/Ensembl/ensembl-tools/tree/release/$version/scripts/id_history_converter" rel="external">api script</a>.</p>
     }
   });
 
