@@ -94,10 +94,8 @@ sub fetch_input {
     $self->param('homology_links', []);
     $self->delete_old_homologies;
 
-    my $mlss_id = $self->param_required('mlss_id');
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
     my %gdb_id2stn = ();
-    foreach my $taxon (@{$species_tree->root->get_all_leaves}) {
+    foreach my $taxon (@{$self->param('gene_tree')->tree->species_tree->root->get_all_leaves}) {
         $gdb_id2stn{$taxon->genome_db_id} = $taxon;
     }
     $self->param('gdb_id2stn', \%gdb_id2stn);
