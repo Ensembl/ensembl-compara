@@ -69,6 +69,7 @@ sub param_defaults {
 		'check_split_genes' => 1,
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
+            'do_transactions'   => 1,
     };
 }
 
