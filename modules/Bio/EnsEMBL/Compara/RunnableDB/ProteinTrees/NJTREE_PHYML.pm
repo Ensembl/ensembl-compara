@@ -100,7 +100,7 @@ sub fetch_input {
     $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
-    my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
+    my $protein_tree_id     = $self->param('gene_tree_id') or die "'protein_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $protein_tree->preload();

@@ -43,12 +43,12 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   if ($self->param('check_split_genes')) {
     my %split_genes;
     my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ?');
-    $sth->execute($self->param('protein_tree_id'));
+    $sth->execute($self->param('gene_tree_id'));
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
     $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ? AND gene_split_id = ?');
     foreach my $gene_split (@$gene_splits) {
-      $sth->execute($self->param('protein_tree_id'), $gene_split->[0]);
+      $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->find_leaf_by_node_id($node1->[0]);
